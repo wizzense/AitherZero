@@ -304,7 +304,7 @@ if (-not (Get-Command Initialize-CoreApplication -ErrorAction SilentlyContinue))
                 }
 
                 if (-not $env:PWSH_MODULES_PATH) {
-                    $env:PWSH_MODULES_PATH = Join-Path $env:PROJECT_ROOT "core-runner/modules"
+                    $env:PWSH_MODULES_PATH = Join-Path $env:PROJECT_ROOT "aither-core/modules"
                     Write-CustomLog -Message "Set PWSH_MODULES_PATH: $env:PWSH_MODULES_PATH" -Level 'INFO'
                 }
 

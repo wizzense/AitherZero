@@ -37,9 +37,9 @@
         Path = @(
             'aither-core/core-runner.ps1',
             'aither-core/CoreApp.psm1',
-            'core-runner/modules/Logging/*.ps1',
-            'core-runner/modules/LabRunner/*.ps1',
-            'core-runner/modules/TestingFramework/*.ps1'
+            'aither-core/modules/Logging/*.ps1',
+            'aither-core/modules/LabRunner/*.ps1',
+            'aither-core/modules/TestingFramework/*.ps1'
         )
         OutputFormat = 'JaCoCo'
         OutputPath = 'tests/results/coverage.xml'

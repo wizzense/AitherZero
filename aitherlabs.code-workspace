@@ -6,7 +6,7 @@
         },
         {
             "name": "PowerShell Modules",
-            "path": "./core-runner/modules"
+            "path": "./aither-core/modules"
         },
         {
             "name": "Core Application",
