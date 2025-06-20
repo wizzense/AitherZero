@@ -109,7 +109,7 @@
             "BeforeDiscovery {",
             "    \\$ProjectRoot = Split-Path -Parent \\$PSScriptRoot",
             "    \\$ModuleName = '${1:ModuleName}'",
-            "    \\$ModulePath = Join-Path \\$ProjectRoot \"core-runner/modules/\\$ModuleName\"",
+            "    \\$ModulePath = Join-Path \\$ProjectRoot \"aither-core/modules/\\$ModuleName\"",
             "}",
             "",
             "Describe '${2:ComponentName}' {",

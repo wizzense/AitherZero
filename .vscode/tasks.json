@@ -94,7 +94,7 @@
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Get-ChildItem -Path 'core-runner/modules' -Directory | ForEach-Object { Import-Module $_.FullName -Force -Verbose }"
+                "Get-ChildItem -Path 'aither-core/modules' -Directory | ForEach-Object { Import-Module $_.FullName -Force -Verbose }"
             ],
             "group": "build",
             "presentation": {
@@ -203,7 +203,7 @@
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Get-ChildItem -Path 'core-runner/modules' -Filter '*.psd1' -Recurse | ForEach-Object { Write-Host \"Validating $($_.Name)\"; Test-ModuleManifest $_.FullName }"
+                "Get-ChildItem -Path 'aither-core/modules' -Filter '*.psd1' -Recurse | ForEach-Object { Write-Host \"Validating $($_.Name)\"; Test-ModuleManifest $_.FullName }"
             ],
             "group": "test",
             "presentation": {
@@ -398,7 +398,7 @@
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/PatchManager' -Force; Invoke-PatchWorkflow -PatchDescription '${input:patchDescription}' -PatchOperation { ${input:patchOperation} } -CreatePR -DryRun"
+                "Import-Module './aither-core/modules/PatchManager' -Force; Invoke-PatchWorkflow -PatchDescription '${input:patchDescription}' -PatchOperation { ${input:patchOperation} } -CreatePR -DryRun"
             ],
             "group": "build",
             "presentation": {
@@ -420,7 +420,7 @@
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/PatchManager' -Force; Invoke-PatchWorkflow -PatchDescription '${input:patchDescription}' -PatchOperation { ${input:patchOperation} } -TestCommands @('${input:testCommand}') -CreatePR"
+                "Import-Module './aither-core/modules/PatchManager' -Force; Invoke-PatchWorkflow -PatchDescription '${input:patchDescription}' -PatchOperation { ${input:patchOperation} } -TestCommands @('${input:testCommand}') -CreatePR"
             ],
             "group": "build",
             "presentation": {
@@ -442,7 +442,7 @@
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/PatchManager' -Force; New-PatchIssue -Description '${input:patchDescription}' -Priority '${input:priority}' -DryRun"
+                "Import-Module './aither-core/modules/PatchManager' -Force; New-PatchIssue -Description '${input:patchDescription}' -Priority '${input:priority}' -DryRun"
             ],
             "group": "build",
             "presentation": {
@@ -464,7 +464,7 @@
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/PatchManager' -Force; Invoke-PatchWorkflow -PatchDescription '${input:patchDescription}' -PatchOperation { ${input:patchOperation} } -CreateIssue:$false"
+                "Import-Module './aither-core/modules/PatchManager' -Force; Invoke-PatchWorkflow -PatchDescription '${input:patchDescription}' -PatchOperation { ${input:patchOperation} } -CreateIssue:$false"
             ],
             "group": "build",
             "presentation": {
@@ -486,7 +486,7 @@
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/PatchManager' -Force; Invoke-PatchRollback -RollbackType 'LastCommit' -CreateBackup -DryRun"
+                "Import-Module './aither-core/modules/PatchManager' -Force; Invoke-PatchRollback -RollbackType 'LastCommit' -CreateBackup -DryRun"
             ],
             "group": "build",
             "presentation": {
@@ -508,7 +508,7 @@
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/PatchManager' -Force; Invoke-PatchWorkflow -PatchDescription 'Validate all modules' -PatchOperation { Get-ChildItem 'core-runner/modules' -Directory | ForEach-Object { Import-Module $_.FullName -Force -Verbose } } -TestCommands @('Get-Module | Where-Object { $_.Path -like \"*core-runner/modules*\" }') -DryRun"
+                "Import-Module './aither-core/modules/PatchManager' -Force; Invoke-PatchWorkflow -PatchDescription 'Validate all modules' -PatchOperation { Get-ChildItem 'aither-core/modules' -Directory | ForEach-Object { Import-Module $_.FullName -Force -Verbose } } -TestCommands @('Get-Module | Where-Object { $_.Path -like \"*aither-core/modules*\" }') -DryRun"
             ],
             "group": "test",
             "presentation": {
@@ -734,7 +734,7 @@
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/PatchManager' -Force; $result = Invoke-UnicodeSanitizer -DryRun; Write-Host 'Sanitization complete. Run without -DryRun to apply changes.' -ForegroundColor Green"
+                "Import-Module './aither-core/modules/PatchManager' -Force; $result = Invoke-UnicodeSanitizer -DryRun; Write-Host 'Sanitization complete. Run without -DryRun to apply changes.' -ForegroundColor Green"
             ],
             "group": "build",
             "presentation": {
@@ -756,7 +756,7 @@
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/PatchManager' -Force; $result = Invoke-UnicodeSanitizer; Write-Host \"Sanitized $($result.FilesModified) files, removed $($result.CharactersRemoved) characters\" -ForegroundColor Green"
+                "Import-Module './aither-core/modules/PatchManager' -Force; $result = Invoke-UnicodeSanitizer; Write-Host \"Sanitized $($result.FilesModified) files, removed $($result.CharactersRemoved) characters\" -ForegroundColor Green"
             ],
             "group": "build",
             "presentation": {
