@@ -485,7 +485,7 @@ Export-ModuleMember -Function @(
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/TestingFramework' -Force; Invoke-IntegratedTesting -TestSuite Unit -ExecutionMode Parallel -VSCodeIntegration"
+                "Import-Module './aither-core/modules/TestingFramework' -Force; Invoke-IntegratedTesting -TestSuite Unit -ExecutionMode Parallel -VSCodeIntegration"
             ],
             "group": {
                 "kind": "test",
@@ -506,7 +506,7 @@ Export-ModuleMember -Function @(
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/TestingFramework' -Force; Invoke-IntegratedTesting -TestSuite All -ExecutionMode Intelligent -SetupEnvironment -GenerateReport -VSCodeIntegration -CleanupAfter"
+                "Import-Module './aither-core/modules/TestingFramework' -Force; Invoke-IntegratedTesting -TestSuite All -ExecutionMode Intelligent -SetupEnvironment -GenerateReport -VSCodeIntegration -CleanupAfter"
             ],
             "group": "test",
             "presentation": {
@@ -521,7 +521,7 @@ Export-ModuleMember -Function @(
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/TestingFramework' -Force; Invoke-IntegratedTesting -TestSuite Smoke -ExecutionMode Sequential -VSCodeIntegration"
+                "Import-Module './aither-core/modules/TestingFramework' -Force; Invoke-IntegratedTesting -TestSuite Smoke -ExecutionMode Sequential -VSCodeIntegration"
             ],
             "group": "test",
             "presentation": {
@@ -535,7 +535,7 @@ Export-ModuleMember -Function @(
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/TestingFramework' -Force; $results = Invoke-IntegratedTesting -TestSuite Unit -ExecutionMode Parallel -VSCodeIntegration; if ($results.FailedCount -eq 0) { Write-Host '✅ All tests passed - ready for patch creation' -ForegroundColor Green } else { Write-Host '❌ Tests failed - review issues before patching' -ForegroundColor Red }"
+                "Import-Module './aither-core/modules/TestingFramework' -Force; $results = Invoke-IntegratedTesting -TestSuite Unit -ExecutionMode Parallel -VSCodeIntegration; if ($results.FailedCount -eq 0) { Write-Host '✅ All tests passed - ready for patch creation' -ForegroundColor Green } else { Write-Host '❌ Tests failed - review issues before patching' -ForegroundColor Red }"
             ],
             "group": "build",
             "dependsOrder": "sequence",
@@ -576,7 +576,7 @@ Export-ModuleMember -Function @(
 ### **Step 1: Backup Current Implementation**
 ```powershell
 # Create backup of current TestingFramework
-Copy-Item "./core-runner/modules/TestingFramework" "./core-runner/modules/TestingFramework.backup" -Recurse
+Copy-Item "./aither-core/modules/TestingFramework" "./aither-core/modules/TestingFramework.backup" -Recurse
 ```
 
 ### **Step 2: Implement Enhanced TestingFramework**

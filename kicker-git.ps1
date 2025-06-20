@@ -790,7 +790,7 @@ function Test-BootstrapHealth {
 
     $healthItems = @(
         @{ Path = Join-Path $RepoPath "core-runner/core_app/CoreApp.psm1"; Name = "CoreApp Module" }
-        @{ Path = Join-Path $RepoPath "core-runner/modules"; Name = "Core Modules Directory" }
+        @{ Path = Join-Path $RepoPath "aither-core/modules"; Name = "Core Modules Directory" }
         @{ Path = Join-Path $RepoPath "tests"; Name = "Test Framework" }
         @{ Path = Join-Path $RepoPath "opentofu"; Name = "OpenTofu Configuration" }
     )

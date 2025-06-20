@@ -8,7 +8,7 @@ aither-core/
 ├── aither-core.ps1          # Main application (renamed from core-runner.ps1)
 ├── AitherCore.psd1          # Module manifest (renamed from CoreApp.psd1)
 ├── AitherCore.psm1          # Module implementation (renamed from CoreApp.psm1)
-├── modules/                 # All PowerShell modules (moved from core-runner/modules)
+├── modules/                 # All PowerShell modules (moved from aither-core/modules)
 ├── scripts/                 # Core automation scripts (moved from core-runner/core_app/scripts)
 └── default-config.json      # Configuration (updated paths)
 ```
@@ -47,7 +47,7 @@ aither-core/
 
 ### **OLD (Deprecated):**
 ```powershell
-Import-Module './core-runner/modules/ModuleName' -Force
+Import-Module './aither-core/modules/ModuleName' -Force
 pwsh ./core-runner/core_app/core-runner.ps1
 ```
 

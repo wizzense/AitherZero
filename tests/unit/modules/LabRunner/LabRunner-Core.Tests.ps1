@@ -30,7 +30,7 @@ BeforeAll {
 Describe "LabRunner Module Tests" {
     Context "Module Import" {
         It "Should import without errors" {
-            { Import-Module (Join-Path $projectRoot "core-runner/modules/LabRunner") -Force } | Should -Not -Throw
+            { Import-Module (Join-Path $projectRoot "aither-core/modules/LabRunner") -Force } | Should -Not -Throw
         }
     }
     

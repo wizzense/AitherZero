@@ -30,7 +30,7 @@ BeforeAll {
 Describe "UnifiedMaintenance Module Tests" {
     Context "Module Import" {
         It "Should import without errors" {
-            { Import-Module (Join-Path $projectRoot "core-runner/modules/UnifiedMaintenance") -Force } | Should -Not -Throw
+            { Import-Module (Join-Path $projectRoot "aither-core/modules/UnifiedMaintenance") -Force } | Should -Not -Throw
         }
     }
     

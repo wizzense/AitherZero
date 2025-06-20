@@ -337,8 +337,8 @@ dvd_drives {
 
 ```powershell
 # Import core modules
-Import-Module "./core-runner/modules/PatchManager"
-Import-Module "./core-runner/modules/LabRunner"
+Import-Module "./aither-core/modules/PatchManager"
+Import-Module "./aither-core/modules/LabRunner"
 
 # Run infrastructure automation
 Invoke-ParallelLabRunner -ConfigPath "./configs/infrastructure_config.yaml"
@@ -349,7 +349,7 @@ Invoke-ParallelLabRunner -ConfigPath "./configs/infrastructure_config.yaml"
 
 ## Project Structure
 
-- **/core-runner/modules/**: PowerShell modules (PatchManager, LabRunner, BackupManager)
+- **/aither-core/modules/**: PowerShell modules (PatchManager, LabRunner, BackupManager)
 - **/aither-core/scripts/**: Core automation scripts (0000-0114 series)
 - **/scripts/**: Additional automation and maintenance scripts
 - **/opentofu/**: Infrastructure as Code configurations

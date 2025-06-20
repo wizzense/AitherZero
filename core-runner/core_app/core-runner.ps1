@@ -424,7 +424,7 @@ try {
         # Optionally auto-create PatchManager issue for tracking (only in detailed mode to avoid spam)
         if ($Verbosity -eq 'detailed' -and -not $NonInteractive) {
             try {
-                Import-Module "$repoRoot/core-runner/modules/PatchManager" -Force -ErrorAction SilentlyContinue
+                Import-Module "$repoRoot/aither-core/modules/PatchManager" -Force -ErrorAction SilentlyContinue
                 if (Get-Command New-PatchIssue -ErrorAction SilentlyContinue) {
                     $issueDescription = "Scripts with no visible output detected: $($script:NoOutputScripts.ScriptName -join ', ')"
                     $affectedFiles = $script:NoOutputScripts.ScriptPath

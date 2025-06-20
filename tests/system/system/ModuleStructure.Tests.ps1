@@ -1,7 +1,7 @@
 BeforeAll {
     # Ensure we're using the correct module path - tests directory is one level down from project root
     $projectRoot = Split-Path $PSScriptRoot -Parent
-    $env:PWSH_MODULES_PATH = Join-Path $projectRoot "core-runner/modules"
+    $env:PWSH_MODULES_PATH = Join-Path $projectRoot "aither-core/modules"
 }
 
 Describe "Module Structure Validation" {
@@ -11,9 +11,9 @@ Describe "Module Structure Validation" {
             $errorHandlingFiles.Count | Should -Be 1
             $errorHandlingFiles | Should -Be "PatchManager\Public\ErrorHandling.ps1"
         }
-          It "Should not have src/core-runner/modules directory" {
+          It "Should not have src/aither-core/modules directory" {
             $projectRoot = Split-Path $PSScriptRoot -Parent
-            $srcModulesPath = Join-Path $projectRoot "src/core-runner/modules"
+            $srcModulesPath = Join-Path $projectRoot "src/aither-core/modules"
             Test-Path $srcModulesPath | Should -Be $false
         }
     }
@@ -42,14 +42,14 @@ Describe "Module Structure Validation" {
     Context "Test Configuration" {
         It "Should have updated test files pointing to correct module path" {
             $dynamicTestsContent = Get-Content "tests\Invoke-DynamicTests.ps1" -Raw
-            $dynamicTestsContent | Should -Match 'core-runner/modules'
-            $dynamicTestsContent | Should -Not -Match 'src/core-runner/modules'
+            $dynamicTestsContent | Should -Match 'aither-core/modules'
+            $dynamicTestsContent | Should -Not -Match 'src/aither-core/modules'
         }
         
         It "Should have updated master tests pointing to correct module path" {
             $masterTestsContent = Get-Content "tests\Run-MasterTests.ps1" -Raw
-            $masterTestsContent | Should -Match 'core-runner/modules'
-            $masterTestsContent | Should -Not -Match 'src/core-runner/modules'
+            $masterTestsContent | Should -Match 'aither-core/modules'
+            $masterTestsContent | Should -Not -Match 'src/aither-core/modules'
         }
     }
 }

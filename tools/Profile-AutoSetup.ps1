@@ -2,9 +2,9 @@
 # Add this to your PowerShell profile: $PROFILE
 
 # Set PROJECT_ROOT if in the project directory
-if (Test-Path "core-runner/modules" -and Test-Path "PROJECT-MANIFEST.json") {
+if (Test-Path "aither-core/modules" -and Test-Path "PROJECT-MANIFEST.json") {
     $env:PROJECT_ROOT = (Get-Location).Path
-    $env:PWSH_MODULES_PATH = "$env:PROJECT_ROOT/core-runner/modules"
+    $env:PWSH_MODULES_PATH = "$env:PROJECT_ROOT/aither-core/modules"
     
     Write-Host "🚀 OpenTofu Lab Environment Auto-Configured" -ForegroundColor Green
     Write-Host "   PROJECT_ROOT: $env:PROJECT_ROOT" -ForegroundColor Cyan

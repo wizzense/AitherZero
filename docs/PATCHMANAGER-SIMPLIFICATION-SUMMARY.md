@@ -85,11 +85,11 @@ New-SimplePRForPatch -PatchDescription "Fix bug" -BranchName "patch/fix-bug" -Is
 ## 📊 Files Modified
 
 ### Core PatchManager Files
-- `core-runner/modules/PatchManager/Public/Invoke-SimplifiedPatchWorkflow.ps1` (NEW)
-- `core-runner/modules/PatchManager/Public/Invoke-GitControlledPatch.ps1` (UPDATED)
-- `core-runner/modules/PatchManager/Public/Invoke-EnhancedGitOperations.ps1` (EMOJI REMOVAL)
-- `core-runner/modules/PatchManager/Public/Invoke-ValidationFailureHandler.ps1` (EMOJI REMOVAL)
-- `core-runner/modules/PatchManager/PatchManager.psd1` (EXPORTS UPDATED)
+- `aither-core/modules/PatchManager/Public/Invoke-SimplifiedPatchWorkflow.ps1` (NEW)
+- `aither-core/modules/PatchManager/Public/Invoke-GitControlledPatch.ps1` (UPDATED)
+- `aither-core/modules/PatchManager/Public/Invoke-EnhancedGitOperations.ps1` (EMOJI REMOVAL)
+- `aither-core/modules/PatchManager/Public/Invoke-ValidationFailureHandler.ps1` (EMOJI REMOVAL)
+- `aither-core/modules/PatchManager/PatchManager.psd1` (EXPORTS UPDATED)
 
 ### Documentation and Instructions
 - `.github/instructions/patchmanager-workflows.instructions.md` (UPDATED)

@@ -69,7 +69,7 @@ pwsh -File test-rebranding.ps1
 # Ctrl+Shift+P → "Tasks: Run Task" → Select test
 
 # Individual module testing
-pwsh -c "Import-Module './core-runner/modules/ModuleName' -Force"
+pwsh -c "Import-Module './aither-core/modules/ModuleName' -Force"
 
 # Static analysis
 pwsh -c "Invoke-ScriptAnalyzer -Path './core-runner/core_app/core-runner.ps1'"

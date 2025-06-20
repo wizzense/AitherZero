@@ -6,7 +6,7 @@ param(
 )
 
 Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force
-Import-Module "$env:PROJECT_ROOT/core-runner/modules/Logging" -Force
+Import-Module "$env:PROJECT_ROOT/aither-core/modules/Logging" -Force
 
 Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
 if ($Config.InstallCA -eq $true) {

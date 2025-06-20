@@ -66,7 +66,7 @@ Invoke-PatchWorkflow -PatchDescription "Quick fix" -CreateIssue:$false -PatchOpe
 
 ### Core Application
 - `/aither-core/core-runner.ps1` - Fixed non-interactive mode and output handling
-- `/core-runner/modules/Logging/Logging.psm1` - Fixed temp path handling
+- `/aither-core/modules/Logging/Logging.psm1` - Fixed temp path handling
 
 ### Testing Framework
 - `/tests/Run-BulletproofTests.ps1` - Removed emojis, improved output
@@ -75,7 +75,7 @@ Invoke-PatchWorkflow -PatchDescription "Quick fix" -CreateIssue:$false -PatchOpe
 - `/tests/integration/KickerGit-EndpointCompatibility.Tests.ps1` - New integration tests
 
 ### PatchManager (Major Refactor)
-- `/core-runner/modules/PatchManager/Public/Invoke-PatchWorkflow.ps1` - Complete redesign
+- `/aither-core/modules/PatchManager/Public/Invoke-PatchWorkflow.ps1` - Complete redesign
 - `.github/instructions/patchmanager-workflows.instructions.md` - Updated documentation
 - `.vscode/tasks.json` - Updated VS Code tasks for new workflow
 

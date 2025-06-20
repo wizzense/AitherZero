@@ -2,7 +2,7 @@
 . (Join-Path $PSScriptRoot '..' 'helpers' 'TestHelpers.ps1')
 Describe 'UnifiedMaintenance Module Tests' {
     BeforeAll {
-        $ModulePath = './core-runner/modules/UnifiedMaintenance/UnifiedMaintenance.psm1'
+        $ModulePath = './aither-core/modules/UnifiedMaintenance/UnifiedMaintenance.psm1'
     }
 
     Context 'Module Structure' {
@@ -39,7 +39,7 @@ Describe 'UnifiedMaintenance Module Tests' {
 
 Describe 'TestingFramework Module Tests' {
     BeforeAll {
-        $ModulePath = './core-runner/modules/TestingFramework/TestingFramework.psm1'
+        $ModulePath = './aither-core/modules/TestingFramework/TestingFramework.psm1'
     }
 
     Context 'Module Structure' {        It 'Should have module file' {
@@ -58,7 +58,7 @@ Describe 'TestingFramework Module Tests' {
 
 Describe 'ScriptManager Module Tests' {
     BeforeAll {
-        $ModulePath = './core-runner/modules/ScriptManager/ScriptManager.psm1'
+        $ModulePath = './aither-core/modules/ScriptManager/ScriptManager.psm1'
     }
 
     Context 'Module Structure' {

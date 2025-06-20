@@ -44,7 +44,7 @@ function Import-ProjectModule {
         }
         
         # Set standard module path with forward slashes
-        $modulePath = "$env:PROJECT_ROOT/core-runner/modules/$ModuleName"
+        $modulePath = "$env:PROJECT_ROOT/aither-core/modules/$ModuleName"
         
         # Create hashtable for splatting import parameters
         $importParams = @{

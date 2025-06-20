@@ -11,7 +11,7 @@ Successfully integrated automatic Unicode/emoji sanitization into the PatchManag
 
 ### 1. Automatic Unicode Sanitization Integration
 
-**File**: `core-runner/modules/PatchManager/Public/Invoke-PatchWorkflow.ps1`
+**File**: `aither-core/modules/PatchManager/Public/Invoke-PatchWorkflow.ps1`
 
 - Added automatic Unicode/emoji sanitization before every commit
 - Sanitization runs on all changed files detected by `git diff --name-only HEAD`
@@ -27,7 +27,7 @@ Successfully integrated automatic Unicode/emoji sanitization into the PatchManag
 
 ### 2. Enhanced Pull Request Creation
 
-**File**: `core-runner/modules/PatchManager/Public/New-PatchPR.ps1`
+**File**: `aither-core/modules/PatchManager/Public/New-PatchPR.ps1`
 
 - **Rich System Information**: PowerShell version, OS, hostname, user context
 - **Comprehensive Git Details**: Current branch, last commit, repository URL, working tree status
@@ -63,7 +63,7 @@ Both tasks integrate with the existing PatchManager task workflow for consistent
 
 ### Unicode Sanitizer Function
 
-**File**: `core-runner/modules/PatchManager/Private/Invoke-UnicodeSanitizer.ps1`
+**File**: `aither-core/modules/PatchManager/Private/Invoke-UnicodeSanitizer.ps1`
 
 - **Coverage**: 15+ Unicode ranges including all major emoji sets
 - **Conversion Map**: Common emoji to text equivalents (✅ → [OK], 🚀 → [ROCKET], etc.)
@@ -141,12 +141,12 @@ Files Affected: Files will be identified during patch review
 ## File Changes Summary
 
 ### Modified Files
-- `core-runner/modules/PatchManager/Public/Invoke-PatchWorkflow.ps1` - Added Unicode sanitization
-- `core-runner/modules/PatchManager/Public/New-PatchPR.ps1` - Enhanced with rich details
+- `aither-core/modules/PatchManager/Public/Invoke-PatchWorkflow.ps1` - Added Unicode sanitization
+- `aither-core/modules/PatchManager/Public/New-PatchPR.ps1` - Enhanced with rich details
 - `.vscode/tasks.json` - Added sanitization tasks
 
 ### New Files
-- `core-runner/modules/PatchManager/Private/Invoke-UnicodeSanitizer.ps1` - Already created
+- `aither-core/modules/PatchManager/Private/Invoke-UnicodeSanitizer.ps1` - Already created
 
 ### Validation Status
 - ✅ All PowerShell syntax errors resolved

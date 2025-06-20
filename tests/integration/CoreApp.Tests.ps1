@@ -20,7 +20,7 @@ BeforeAll {
         $env:PROJECT_ROOT = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
     }
     if (-not $env:PWSH_MODULES_PATH) {
-        $env:PWSH_MODULES_PATH = Join-Path $env:PROJECT_ROOT "core-runner/modules"
+        $env:PWSH_MODULES_PATH = Join-Path $env:PROJECT_ROOT "aither-core/modules"
     }
     
     # Import required modules and helpers  
@@ -210,7 +210,7 @@ Describe "Core Application Integration Tests" -Tag @('Important', 'CoreApp', 'In
         
         It "should be compatible with PatchManager workflow" {
             # Test that CoreApp can be used within PatchManager
-            { Import-Module "$env:PROJECT_ROOT/core-runner/modules/PatchManager/" -Force } | Should -Not -Throw
+            { Import-Module "$env:PROJECT_ROOT/aither-core/modules/PatchManager/" -Force } | Should -Not -Throw
             { Import-Module "$script:CoreAppPath/" -Force } | Should -Not -Throw
         }
         
