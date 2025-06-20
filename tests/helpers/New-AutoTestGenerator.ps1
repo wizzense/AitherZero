@@ -3,21 +3,21 @@
 Automatically generates Pester tests for new PowerShell scripts
 
 .DESCRIPTION
-This script monitors the core-runner/core_app/scripts directory for new scripts and automatically:
+This script monitors the aither-core/scripts directory for new scripts and automatically:
 - Creates corresponding .Tests.ps1 files
 - Generates boilerplate test code based on script analysis
 - Follows naming conventions and test patterns
 - Integrates with the extensible test framework
 
 .EXAMPLE
-./New-AutoTestGenerator.ps1 -WatchDirectory "core-runner/core_app/scripts"
+./New-AutoTestGenerator.ps1 -WatchDirectory "aither-core/scripts"
 
 .EXAMPLE
-./New-AutoTestGenerator.ps1 -ScriptPath "core-runner/core_app/scripts/0301_Install-NewTool.ps1" -Force
+./New-AutoTestGenerator.ps1 -ScriptPath "aither-core/scripts/0301_Install-NewTool.ps1" -Force
 #>
 
 param(
-    string$WatchDirectory = "core-runner/core_app/scripts",
+    string$WatchDirectory = "aither-core/scripts",
     string$ScriptPath,
     string$OutputDirectory = "tests",
     switch$Force,

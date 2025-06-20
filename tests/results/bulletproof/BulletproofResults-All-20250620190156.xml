@@ -1,0 +1,1361 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="OpenTofu Lab Automation - Bulletproof All Tests" total="136" errors="0" failures="57" not-run="182" inconclusive="0" ignored="0" skipped="2" invalid="0" date="2025-06-20" time="19:01:57">
+  <environment os-version="6.8.0-1027-azure" platform="Linux" user-domain="" cwd="/workspaces/AitherLabs" clr-version="9.0.4" machine-name="codespaces-5a091d" user="codespace" nunit-version="2.5.8.0" />
+  <culture-info current-culture="" current-uiculture="" />
+  <test-suite type="TestFixture" name="OpenTofu Lab Automation - Bulletproof All Tests" executed="True" result="Failure" success="False" time="65.0315" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="/workspaces/AitherLabs/tests/unit/modules/CoreApp/BulletproofCoreRunner.Tests.ps1" executed="True" result="Failure" success="False" time="21.8031" asserts="0" description="/workspaces/AitherLabs/tests/unit/modules/CoreApp/BulletproofCoreRunner.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Core Runner Bulletproof Tests" executed="True" result="Failure" success="False" time="21.0758" asserts="0" description="Core Runner Bulletproof Tests">
+            <results>
+              <test-suite type="TestFixture" name="Core Runner Bulletproof Tests.Script Structure and Syntax Validation" executed="True" result="Success" success="True" time="0.4636" asserts="0" description="Core Runner Bulletproof Tests.Script Structure and Syntax Validation">
+                <results>
+                  <test-case description="Should have valid PowerShell syntax" name="Core Runner Bulletproof Tests.Script Structure and Syntax Validation.Should have valid PowerShell syntax" time="0.2894" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should require PowerShell 7.0+" name="Core Runner Bulletproof Tests.Script Structure and Syntax Validation.Should require PowerShell 7.0+" time="0.0254" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should have CmdletBinding with SupportsShouldProcess" name="Core Runner Bulletproof Tests.Script Structure and Syntax Validation.Should have CmdletBinding with SupportsShouldProcess" time="0.0295" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should have comprehensive parameter definitions" name="Core Runner Bulletproof Tests.Script Structure and Syntax Validation.Should have comprehensive parameter definitions" time="0.032" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should have proper help documentation" name="Core Runner Bulletproof Tests.Script Structure and Syntax Validation.Should have proper help documentation" time="0.0206" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Core Runner Bulletproof Tests.Non-Interactive Mode Bulletproofing" executed="True" result="Failure" success="False" time="9.5288" asserts="0" description="Core Runner Bulletproof Tests.Non-Interactive Mode Bulletproofing">
+                <results>
+                  <test-case description="Should exit with code 0 when no scripts specified in non-interactive mode" name="Core Runner Bulletproof Tests.Non-Interactive Mode Bulletproofing.Should exit with code 0 when no scripts specified in non-interactive mode" time="1.9074" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle Auto mode correctly in non-interactive mode" name="Core Runner Bulletproof Tests.Non-Interactive Mode Bulletproofing.Should handle Auto mode correctly in non-interactive mode" time="1.0279" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle specific script execution in non-interactive mode" name="Core Runner Bulletproof Tests.Non-Interactive Mode Bulletproofing.Should handle specific script execution in non-interactive mode" time="1.0039" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle missing scripts gracefully in non-interactive mode" name="Core Runner Bulletproof Tests.Non-Interactive Mode Bulletproofing.Should handle missing scripts gracefully in non-interactive mode" time="1.0543" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle empty script parameter gracefully" name="Core Runner Bulletproof Tests.Non-Interactive Mode Bulletproofing.Should handle empty script parameter gracefully" time="0.6501" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $false.</message>
+                      <stack-trace>at $result.Success | Should -Be $true, /workspaces/AitherLabs/tests/unit/modules/CoreApp/BulletproofCoreRunner.Tests.ps1:221
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/BulletproofCoreRunner.Tests.ps1:221</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should maintain consistent exit codes across multiple runs" name="Core Runner Bulletproof Tests.Non-Interactive Mode Bulletproofing.Should maintain consistent exit codes across multiple runs" time="3.4112" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Core Runner Bulletproof Tests.Error Handling and Edge Cases" executed="True" result="Failure" success="False" time="13.9574" asserts="0" description="Core Runner Bulletproof Tests.Error Handling and Edge Cases">
+                <results>
+                  <test-case description="Should handle missing configuration files gracefully" name="Core Runner Bulletproof Tests.Error Handling and Edge Cases.Should handle missing configuration files gracefully" time="0.7703" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle invalid verbosity levels gracefully" name="Core Runner Bulletproof Tests.Error Handling and Edge Cases.Should handle invalid verbosity levels gracefully" time="0.5986" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle concurrent executions without conflicts" name="Core Runner Bulletproof Tests.Error Handling and Edge Cases.Should handle concurrent executions without conflicts" time="3.0554" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected a collection with size 3, because All concurrent jobs should complete, but got an empty collection.</message>
+                      <stack-trace>at $results | Should -HaveCount 3 -Because "All concurrent jobs should complete", /workspaces/AitherLabs/tests/unit/modules/CoreApp/BulletproofCoreRunner.Tests.ps1:279
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/BulletproofCoreRunner.Tests.ps1:279</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Core Runner Bulletproof Tests.Performance and Reliability" executed="True" result="Success" success="True" time="16.4594" asserts="0" description="Core Runner Bulletproof Tests.Performance and Reliability">
+                <results>
+                  <test-case description="Should complete basic execution within time limits" name="Core Runner Bulletproof Tests.Performance and Reliability.Should complete basic execution within time limits" time="0.7207" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle auto mode within reasonable time" name="Core Runner Bulletproof Tests.Performance and Reliability.Should handle auto mode within reasonable time" time="1.0047" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should be memory efficient" name="Core Runner Bulletproof Tests.Performance and Reliability.Should be memory efficient" time="0.7727" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Core Runner Bulletproof Tests.Cross-Platform Compatibility" executed="True" result="Success" success="True" time="17.224" asserts="0" description="Core Runner Bulletproof Tests.Cross-Platform Compatibility">
+                <results>
+                  <test-case description="Should work correctly on current platform" name="Core Runner Bulletproof Tests.Cross-Platform Compatibility.Should work correctly on current platform" time="0.7522" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle path separators correctly" name="Core Runner Bulletproof Tests.Cross-Platform Compatibility.Should handle path separators correctly" time="0.0043" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should use cross-platform compatible commands" name="Core Runner Bulletproof Tests.Cross-Platform Compatibility.Should use cross-platform compatible commands" time="0.0048" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Core Runner Bulletproof Tests.Integration Testing" executed="True" result="Ignored" success="True" time="18.0527" asserts="0" description="Core Runner Bulletproof Tests.Integration Testing">
+                <results>
+                  <test-case description="Should integrate properly with CoreApp module" name="Core Runner Bulletproof Tests.Integration Testing.Should integrate properly with CoreApp module" time="0.015" asserts="0" success="False" result="Ignored" executed="False" />
+                  <test-case description="Should work with different configuration files" name="Core Runner Bulletproof Tests.Integration Testing.Should work with different configuration files" time="0.8106" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Core Runner Bulletproof Tests.Logging and Output Validation" executed="True" result="Success" success="True" time="21.0503" asserts="0" description="Core Runner Bulletproof Tests.Logging and Output Validation">
+                <results>
+                  <test-case description="Should create proper log entries with timestamps" name="Core Runner Bulletproof Tests.Logging and Output Validation.Should create proper log entries with timestamps" time="0.7925" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should respect verbosity levels" name="Core Runner Bulletproof Tests.Logging and Output Validation.Should respect verbosity levels" time="1.4829" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include module initialization messages" name="Core Runner Bulletproof Tests.Logging and Output Validation.Should include module initialization messages" time="0.7179" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1" executed="True" result="Failure" success="False" time="0.4258" asserts="0" description="/workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Core Runner Script Validation Tests" executed="True" result="Failure" success="False" time="0.0256" asserts="0" description="Core Runner Script Validation Tests">
+            <results>
+              <test-suite type="TestFixture" name="Core Runner Script Validation Tests.Script file existence and basic validation" executed="True" result="Failure" success="False" time="0.0227" asserts="0" description="Core Runner Script Validation Tests.Script file existence and basic validation">
+                <results>
+                  <test-case description="should have core-runner.ps1 script" name="Core Runner Script Validation Tests.Script file existence and basic validation.should have core-runner.ps1 script" time="0.0092" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected path '/workspaces/AitherLabs/aither-core/core-runner.ps1' to exist, but it did not exist.</message>
+                      <stack-trace>at $script:CoreRunnerScript | Should -Exist, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:46
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:46</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should have valid PowerShell syntax in core-runner.ps1" name="Core Runner Script Validation Tests.Script file existence and basic validation.should have valid PowerShell syntax in core-runner.ps1" time="0.01" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected 0, because core-runner.ps1 should have valid PowerShell syntax, but got 1.</message>
+                      <stack-trace>at $errorCount | Should -Be 0 -Because 'core-runner.ps1 should have valid PowerShell syntax', /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:54
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:54</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Core Runner Script Structure Tests" executed="True" result="Failure" success="False" time="0.0984" asserts="0" description="Core Runner Script Structure Tests">
+            <results>
+              <test-suite type="TestFixture" name="Core Runner Script Structure Tests.core-runner.ps1 structure validation" executed="True" result="Failure" success="False" time="0.0655" asserts="0" description="Core Runner Script Structure Tests.core-runner.ps1 structure validation">
+                <results>
+                  <test-case description="should require PowerShell 7.0 or later" name="Core Runner Script Structure Tests.core-runner.ps1 structure validation.should require PowerShell 7.0 or later" time="0.0198" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected regular expression '#Requires -Version 7\.0' to match $null, because Script should require PowerShell 7.0+, but it did not match.</message>
+                      <stack-trace>at $script:CoreRunnerContent | Should -Match '#Requires -Version 7\.0' -Because 'Script should require PowerShell 7.0+', /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:68
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:68</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should have proper CmdletBinding with SupportsShouldProcess" name="Core Runner Script Structure Tests.core-runner.ps1 structure validation.should have proper CmdletBinding with SupportsShouldProcess" time="0.0071" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected regular expression '\[CmdletBinding\([^)]*SupportsShouldProcess[^)]*\)\]' to match $null, because Script should support -WhatIf parameter, but it did not match.</message>
+                      <stack-trace>at $script:CoreRunnerContent | Should -Match '\[CmdletBinding\([^)]*SupportsShouldProcess[^)]*\)\]' -Because 'Script should support -WhatIf parameter', /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:72
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:72</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should have comprehensive parameter definitions" name="Core Runner Script Structure Tests.core-runner.ps1 structure validation.should have comprehensive parameter definitions" time="0.0061" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected regular expression 'param\s*\(' to match $null, because Script should have parameter block, but it did not match.</message>
+                      <stack-trace>at $script:CoreRunnerContent | Should -Match 'param\s*\(' -Because 'Script should have parameter block', /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:76
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:76</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should have expected parameters" name="Core Runner Script Structure Tests.core-runner.ps1 structure validation.should have expected parameters" time="0.0072" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected regular expression '\$Quiet' to match $null, because Script should have Quiet parameter, but it did not match.</message>
+                      <stack-trace>at $script:CoreRunnerContent | Should -Match "\`$$param" -Because "Script should have $param parameter", /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:90
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:90</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should have parameter validation attributes" name="Core Runner Script Structure Tests.core-runner.ps1 structure validation.should have parameter validation attributes" time="0.0081" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected regular expression '\[ValidateSet\(' to match $null, because Script should use ValidateSet for constrained parameters, but it did not match.</message>
+                      <stack-trace>at $script:CoreRunnerContent | Should -Match '\[ValidateSet\(' -Because 'Script should use ValidateSet for constrained parameters', /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:95
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:95</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should have comprehensive help documentation" name="Core Runner Script Structure Tests.core-runner.ps1 structure validation.should have comprehensive help documentation" time="0.0082" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected regular expression '\.SYNOPSIS' to match $null, because Script should have synopsis documentation, but it did not match.</message>
+                      <stack-trace>at $script:CoreRunnerContent | Should -Match '\.SYNOPSIS' -Because 'Script should have synopsis documentation', /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:99
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:99</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Core Runner Parameter Validation Tests" executed="True" result="Failure" success="False" time="0.2299" asserts="0" description="Core Runner Parameter Validation Tests">
+            <results>
+              <test-suite type="TestFixture" name="Core Runner Parameter Validation Tests.core-runner.ps1 parameter validation" executed="True" result="Failure" success="False" time="0.1287" asserts="0" description="Core Runner Parameter Validation Tests.core-runner.ps1 parameter validation">
+                <results>
+                  <test-case description="should accept Quiet parameter as switch" name="Core Runner Parameter Validation Tests.core-runner.ps1 parameter validation.should accept Quiet parameter as switch" time="0.0196" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, but an exception "The term '/workspaces/AitherLabs/aither-core/core-runner.ps1' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:109 char:17
+    +             { &amp; $script:CoreRunnerScript -Quiet -Scripts "0200_Get-Sy …
+    +                 ~~~~~~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { &amp; $script:CoreRunnerScript -Quiet -Scripts "0200_Get-SystemInfo" -WhatIf } | Should -Not -Throw, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:109
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:109</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should accept valid Verbosity values" name="Core Runner Parameter Validation Tests.core-runner.ps1 parameter validation.should accept valid Verbosity values" time="0.0119" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, because Should accept verbosity level: silent, but an exception "The term '/workspaces/AitherLabs/aither-core/core-runner.ps1' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:116 char:21
+    +                 { &amp; $script:CoreRunnerScript -Verbosity $level -Scrip …
+    +                     ~~~~~~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { &amp; $script:CoreRunnerScript -Verbosity $level -Scripts "0200_Get-SystemInfo" -WhatIf } | Should -Not -Throw -Because "Should accept verbosity level: $level", /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:116
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:116</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should reject invalid Verbosity values" name="Core Runner Parameter Validation Tests.core-runner.ps1 parameter validation.should reject invalid Verbosity values" time="0.0092" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should accept ConfigFile parameter" name="Core Runner Parameter Validation Tests.core-runner.ps1 parameter validation.should accept ConfigFile parameter" time="0.017" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, but an exception "The term '/workspaces/AitherLabs/aither-core/core-runner.ps1' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:129 char:21
+    +                 { &amp; $script:CoreRunnerScript -ConfigFile $tempConfig. …
+    +                     ~~~~~~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { &amp; $script:CoreRunnerScript -ConfigFile $tempConfig.FullName -Scripts "0200_Get-SystemInfo" -WhatIf } | Should -Not -Throw, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:129
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:129</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should accept Auto parameter as switch" name="Core Runner Parameter Validation Tests.core-runner.ps1 parameter validation.should accept Auto parameter as switch" time="0.0218" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, but an exception "The term '/workspaces/AitherLabs/aither-core/core-runner.ps1' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:136 char:17
+    +             { &amp; $script:CoreRunnerScript -Auto -WhatIf } | Should -No …
+    +                 ~~~~~~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { &amp; $script:CoreRunnerScript -Auto -WhatIf } | Should -Not -Throw, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:136
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:136</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should accept Scripts parameter" name="Core Runner Parameter Validation Tests.core-runner.ps1 parameter validation.should accept Scripts parameter" time="0.0121" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, but an exception "The term '/workspaces/AitherLabs/aither-core/core-runner.ps1' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:140 char:17
+    +             { &amp; $script:CoreRunnerScript -Scripts 'test-script' -What …
+    +                 ~~~~~~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { &amp; $script:CoreRunnerScript -Scripts 'test-script' -WhatIf } | Should -Not -Throw, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:140
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:140</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should accept Force parameter as switch" name="Core Runner Parameter Validation Tests.core-runner.ps1 parameter validation.should accept Force parameter as switch" time="0.0134" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, but an exception "The term '/workspaces/AitherLabs/aither-core/core-runner.ps1' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:144 char:17
+    +             { &amp; $script:CoreRunnerScript -Force -Scripts "0200_Get-Sy …
+    +                 ~~~~~~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { &amp; $script:CoreRunnerScript -Force -Scripts "0200_Get-SystemInfo" -WhatIf } | Should -Not -Throw, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:144
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:144</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should accept NonInteractive parameter as switch" name="Core Runner Parameter Validation Tests.core-runner.ps1 parameter validation.should accept NonInteractive parameter as switch" time="0.0103" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, but an exception "The term '/workspaces/AitherLabs/aither-core/core-runner.ps1' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:148 char:17
+    +             { &amp; $script:CoreRunnerScript -NonInteractive -Scripts "02 …
+    +                 ~~~~~~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { &amp; $script:CoreRunnerScript -NonInteractive -Scripts "0200_Get-SystemInfo" -WhatIf } | Should -Not -Throw, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:148
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:148</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should support parameter sets correctly" name="Core Runner Parameter Validation Tests.core-runner.ps1 parameter validation.should support parameter sets correctly" time="0.0096" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, but an exception "The term '/workspaces/AitherLabs/aither-core/core-runner.ps1' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:153 char:17
+    +             { &amp; $script:CoreRunnerScript -Quiet -Scripts "0200_Get-Sy …
+    +                 ~~~~~~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { &amp; $script:CoreRunnerScript -Quiet -Scripts "0200_Get-SystemInfo" -WhatIf } | Should -Not -Throw, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:153
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:153</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Core Runner Cross-Platform Compatibility Tests" executed="True" result="Success" success="True" time="0.2677" asserts="0" description="Core Runner Cross-Platform Compatibility Tests">
+            <results>
+              <test-suite type="TestFixture" name="Core Runner Cross-Platform Compatibility Tests.Path handling and platform-specific code" executed="True" result="Success" success="True" time="0.0285" asserts="0" description="Core Runner Cross-Platform Compatibility Tests.Path handling and platform-specific code">
+                <results>
+                  <test-case description="should not use Windows-specific path formats in core-runner.ps1" name="Core Runner Cross-Platform Compatibility Tests.Path handling and platform-specific code.should not use Windows-specific path formats in core-runner.ps1" time="0.0126" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should use environment variables for paths" name="Core Runner Cross-Platform Compatibility Tests.Path handling and platform-specific code.should use environment variables for paths" time="0.0056" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should not use Windows-specific cmdlets" name="Core Runner Cross-Platform Compatibility Tests.Path handling and platform-specific code.should not use Windows-specific cmdlets" time="0.007" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Core Runner Cross-Platform Compatibility Tests.PowerShell version compatibility" executed="True" result="Success" success="True" time="0.0352" asserts="0" description="Core Runner Cross-Platform Compatibility Tests.PowerShell version compatibility">
+                <results>
+                  <test-case description="should use PowerShell 7.0+ compatible syntax" name="Core Runner Cross-Platform Compatibility Tests.PowerShell version compatibility.should use PowerShell 7.0+ compatible syntax" time="0.0035" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Core Runner Error Handling Tests" executed="True" result="Failure" success="False" time="0.3018" asserts="0" description="Core Runner Error Handling Tests">
+            <results>
+              <test-suite type="TestFixture" name="Core Runner Error Handling Tests.Error handling patterns" executed="True" result="Failure" success="False" time="0.0311" asserts="0" description="Core Runner Error Handling Tests.Error handling patterns">
+                <results>
+                  <test-case description="should handle missing configuration files gracefully" name="Core Runner Error Handling Tests.Error handling patterns.should handle missing configuration files gracefully" time="0.0125" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, because Should handle missing config files gracefully in non-interactive mode, but an exception "The term '/workspaces/AitherLabs/aither-core/core-runner.ps1' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:214 char:17
+    +             { &amp; $script:CoreRunnerScript -ConfigFile $nonExistentConf …
+    +                 ~~~~~~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { &amp; $script:CoreRunnerScript -ConfigFile $nonExistentConfig -WhatIf } | Should -Not -Throw -Because 'Should handle missing config files gracefully in non-interactive mode', /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:214
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:214</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should validate input parameters" name="Core Runner Error Handling Tests.Error handling patterns.should validate input parameters" time="0.0115" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, because Should handle empty ConfigFile parameter gracefully in non-interactive mode, but an exception "The term '/workspaces/AitherLabs/aither-core/core-runner.ps1' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:219 char:17
+    +             { &amp; $script:CoreRunnerScript -ConfigFile '' -WhatIf } | S …
+    +                 ~~~~~~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { &amp; $script:CoreRunnerScript -ConfigFile '' -WhatIf } | Should -Not -Throw -Because 'Should handle empty ConfigFile parameter gracefully in non-interactive mode', /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:219
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:219</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should set appropriate error action preference" name="Core Runner Error Handling Tests.Error handling patterns.should set appropriate error action preference" time="0.0038" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Core Runner Integration Tests" executed="True" result="Failure" success="False" time="0.3511" asserts="0" description="Core Runner Integration Tests">
+            <results>
+              <test-suite type="TestFixture" name="Core Runner Integration Tests.Basic functionality testing" executed="True" result="Failure" success="False" time="0.0461" asserts="0" description="Core Runner Integration Tests.Basic functionality testing">
+                <results>
+                  <test-case description="should execute with WhatIf parameter successfully" name="Core Runner Integration Tests.Basic functionality testing.should execute with WhatIf parameter successfully" time="0.018" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, because Script should support WhatIf execution, but an exception "The term '/workspaces/AitherLabs/aither-core/core-runner.ps1' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:236 char:17
+    +             { &amp; $script:CoreRunnerScript -WhatIf } | Should -Not -Thr …
+    +                 ~~~~~~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { &amp; $script:CoreRunnerScript -WhatIf } | Should -Not -Throw -Because 'Script should support WhatIf execution', /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:236
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:236</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should accept and process multiple parameters" name="Core Runner Integration Tests.Basic functionality testing.should accept and process multiple parameters" time="0.0131" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, but an exception "The term '/workspaces/AitherLabs/aither-core/core-runner.ps1' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:244 char:21
+    +                 { &amp; $script:CoreRunnerScript -ConfigFile $tempConfig. …
+    +                     ~~~~~~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { &amp; $script:CoreRunnerScript -ConfigFile $tempConfig.FullName -Verbosity detailed -Auto -WhatIf } | Should -Not -Throw, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:244
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:244</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should handle default configuration when no ConfigFile specified" name="Core Runner Integration Tests.Basic functionality testing.should handle default configuration when no ConfigFile specified" time="0.0115" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, because Script should handle default configuration, but an exception "The term '/workspaces/AitherLabs/aither-core/core-runner.ps1' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:251 char:17
+    +             { &amp; $script:CoreRunnerScript -WhatIf } | Should -Not -Thr …
+    +                 ~~~~~~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { &amp; $script:CoreRunnerScript -WhatIf } | Should -Not -Throw -Because 'Script should handle default configuration', /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:251
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1:251</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1" executed="True" result="Failure" success="False" time="22.7385" asserts="0" description="/workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="CoreApp Master Bulletproof Tests" executed="True" result="Failure" success="False" time="22.6556" asserts="0" description="CoreApp Master Bulletproof Tests">
+            <results>
+              <test-suite type="TestFixture" name="CoreApp Master Bulletproof Tests.Module Loading and Initialization" executed="True" result="Failure" success="False" time="5.7477" asserts="0" description="CoreApp Master Bulletproof Tests.Module Loading and Initialization">
+                <results>
+                  <test-case description="Should import CoreApp module successfully" name="CoreApp Master Bulletproof Tests.Module Loading and Initialization.Should import CoreApp module successfully" time="2.2836" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $false.</message>
+                      <stack-trace>at $result.Success | Should -Be $true, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:187
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:187</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should initialize CoreApp ecosystem" name="CoreApp Master Bulletproof Tests.Module Loading and Initialization.Should initialize CoreApp ecosystem" time="1.1138" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $false.</message>
+                      <stack-trace>at $result.Success | Should -Be $true, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:202
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:202</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should load required modules successfully" name="CoreApp Master Bulletproof Tests.Module Loading and Initialization.Should load required modules successfully" time="1.2324" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $false.</message>
+                      <stack-trace>at $result.Success | Should -Be $true, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:217
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:217</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should validate module status and health" name="CoreApp Master Bulletproof Tests.Module Loading and Initialization.Should validate module status and health" time="1.111" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $false.</message>
+                      <stack-trace>at $result.Success | Should -Be $true, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:235
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:235</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="CoreApp Master Bulletproof Tests.Core Functionality Testing" executed="True" result="Failure" success="False" time="9.0502" asserts="0" description="CoreApp Master Bulletproof Tests.Core Functionality Testing">
+                <results>
+                  <test-case description="Should execute core-runner in non-interactive mode" name="CoreApp Master Bulletproof Tests.Core Functionality Testing.Should execute core-runner in non-interactive mode" time="0.4867" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $false.</message>
+                      <stack-trace>at $result.Success | Should -Be $true, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:253
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:253</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle auto mode execution" name="CoreApp Master Bulletproof Tests.Core Functionality Testing.Should handle auto mode execution" time="0.5588" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $false.</message>
+                      <stack-trace>at $result.Success | Should -Be $true, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:268
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:268</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should validate configuration handling" name="CoreApp Master Bulletproof Tests.Core Functionality Testing.Should validate configuration handling" time="1.122" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $false.</message>
+                      <stack-trace>at $result.Success | Should -Be $true, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:284
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:284</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should perform health checks successfully" name="CoreApp Master Bulletproof Tests.Core Functionality Testing.Should perform health checks successfully" time="1.126" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $false.</message>
+                      <stack-trace>at $result.Success | Should -Be $true, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:299
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:299</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="CoreApp Master Bulletproof Tests.Error Handling and Resilience" executed="True" result="Failure" success="False" time="12.5625" asserts="0" description="CoreApp Master Bulletproof Tests.Error Handling and Resilience">
+                <results>
+                  <test-case description="Should handle missing configuration files gracefully" name="CoreApp Master Bulletproof Tests.Error Handling and Resilience.Should handle missing configuration files gracefully" time="0.4338" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle module import failures gracefully" name="CoreApp Master Bulletproof Tests.Error Handling and Resilience.Should handle module import failures gracefully" time="1.1278" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $false.</message>
+                      <stack-trace>at $result.Success | Should -Be $true, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:338
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:338</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle concurrent access safely" name="CoreApp Master Bulletproof Tests.Error Handling and Resilience.Should handle concurrent access safely" time="1.947" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $false.</message>
+                      <stack-trace>at $result.Success | Should -Be $true, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:362
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:362</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="CoreApp Master Bulletproof Tests.Performance and Scalability" executed="True" result="Success" success="True" time="16.6609" asserts="0" description="CoreApp Master Bulletproof Tests.Performance and Scalability">
+                <results>
+                  <test-case description="Should meet performance benchmarks for module loading" name="CoreApp Master Bulletproof Tests.Performance and Scalability.Should meet performance benchmarks for module loading" time="1.1451" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle memory usage efficiently" name="CoreApp Master Bulletproof Tests.Performance and Scalability.Should handle memory usage efficiently" time="1.1961" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should scale with multiple operations" name="CoreApp Master Bulletproof Tests.Performance and Scalability.Should scale with multiple operations" time="1.7536" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="CoreApp Master Bulletproof Tests.Cross-Platform Compatibility" executed="True" result="Failure" success="False" time="19.7289" asserts="0" description="CoreApp Master Bulletproof Tests.Cross-Platform Compatibility">
+                <results>
+                  <test-case description="Should detect platform correctly" name="CoreApp Master Bulletproof Tests.Cross-Platform Compatibility.Should detect platform correctly" time="1.213" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $false.</message>
+                      <stack-trace>at $result.Success | Should -Be $true, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:449
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:449</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle paths correctly on current platform" name="CoreApp Master Bulletproof Tests.Cross-Platform Compatibility.Should handle paths correctly on current platform" time="1.8516" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="CoreApp Master Bulletproof Tests.Integration and End-to-End Testing" executed="True" result="Failure" success="False" time="22.6501" asserts="0" description="CoreApp Master Bulletproof Tests.Integration and End-to-End Testing">
+                <results>
+                  <test-case description="Should complete full workflow successfully" name="CoreApp Master Bulletproof Tests.Integration and End-to-End Testing.Should complete full workflow successfully" time="1.1036" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $false.</message>
+                      <stack-trace>at $result.Success | Should -Be $true, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:504
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/MasterBulletproofTests.Tests.ps1:504</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should integrate with external tools" name="CoreApp Master Bulletproof Tests.Integration and End-to-End Testing.Should integrate with external tools" time="1.8019" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/workspaces/AitherLabs/tests/unit/modules/CoreApp/NonInteractiveMode.Tests.ps1" executed="True" result="Ignored" success="True" time="15.1766" asserts="0" description="/workspaces/AitherLabs/tests/unit/modules/CoreApp/NonInteractiveMode.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="CoreApp Non-Interactive Mode" executed="True" result="Ignored" success="True" time="13.022" asserts="0" description="CoreApp Non-Interactive Mode">
+            <results>
+              <test-suite type="TestFixture" name="CoreApp Non-Interactive Mode.Basic Non-Interactive Mode" executed="True" result="Success" success="True" time="2.9226" asserts="0" description="CoreApp Non-Interactive Mode.Basic Non-Interactive Mode">
+                <results>
+                  <test-case description="Should exit gracefully with helpful message when no scripts specified" name="CoreApp Non-Interactive Mode.Basic Non-Interactive Mode.Should exit gracefully with helpful message when no scripts specified" time="0.7719" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should respect verbosity levels in non-interactive mode" name="CoreApp Non-Interactive Mode.Basic Non-Interactive Mode.Should respect verbosity levels in non-interactive mode" time="1.4806" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle missing configuration files gracefully" name="CoreApp Non-Interactive Mode.Basic Non-Interactive Mode.Should handle missing configuration files gracefully" time="0.6668" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="CoreApp Non-Interactive Mode.Auto Mode Non-Interactive" executed="True" result="Success" success="True" time="5.802" asserts="0" description="CoreApp Non-Interactive Mode.Auto Mode Non-Interactive">
+                <results>
+                  <test-case description="Should execute all scripts in WhatIf mode without errors" name="CoreApp Non-Interactive Mode.Auto Mode Non-Interactive.Should execute all scripts in WhatIf mode without errors" time="0.8999" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle Auto mode with Force parameter" name="CoreApp Non-Interactive Mode.Auto Mode Non-Interactive.Should handle Auto mode with Force parameter" time="0.8601" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should complete within reasonable time limits" name="CoreApp Non-Interactive Mode.Auto Mode Non-Interactive.Should complete within reasonable time limits" time="1.1128" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="CoreApp Non-Interactive Mode.Specific Script Execution" executed="True" result="Success" success="True" time="8.038" asserts="0" description="CoreApp Non-Interactive Mode.Specific Script Execution">
+                <results>
+                  <test-case description="Should execute a specific script in WhatIf mode" name="CoreApp Non-Interactive Mode.Specific Script Execution.Should execute a specific script in WhatIf mode" time="0.7764" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle multiple specific scripts" name="CoreApp Non-Interactive Mode.Specific Script Execution.Should handle multiple specific scripts" time="0.7178" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle nonexistent script gracefully" name="CoreApp Non-Interactive Mode.Specific Script Execution.Should handle nonexistent script gracefully" time="0.7367" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="CoreApp Non-Interactive Mode.Error Handling and Edge Cases" executed="True" result="Success" success="True" time="11.4577" asserts="0" description="CoreApp Non-Interactive Mode.Error Handling and Edge Cases">
+                <results>
+                  <test-case description="Should handle empty script parameter gracefully" name="CoreApp Non-Interactive Mode.Error Handling and Edge Cases.Should handle empty script parameter gracefully" time="0.5929" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should properly detect non-interactive mode automatically" name="CoreApp Non-Interactive Mode.Error Handling and Edge Cases.Should properly detect non-interactive mode automatically" time="0.6532" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should maintain consistent exit codes across runs" name="CoreApp Non-Interactive Mode.Error Handling and Edge Cases.Should maintain consistent exit codes across runs" time="2.1695" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="CoreApp Non-Interactive Mode.Logging and Output Verification" executed="True" result="Success" success="True" time="13.0115" asserts="0" description="CoreApp Non-Interactive Mode.Logging and Output Verification">
+                <results>
+                  <test-case description="Should create proper log entries with timestamps" name="CoreApp Non-Interactive Mode.Logging and Output Verification.Should create proper log entries with timestamps" time="0.8558" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include module initialization messages" name="CoreApp Non-Interactive Mode.Logging and Output Verification.Should include module initialization messages" time="0.6953" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="CoreApp Non-Interactive Mode.Integration with CoreApp Module" executed="True" result="Ignored" success="True" time="13.0195" asserts="0" description="CoreApp Non-Interactive Mode.Integration with CoreApp Module">
+                <results>
+                  <test-case description="Should successfully invoke CoreApp module directly" name="CoreApp Non-Interactive Mode.Integration with CoreApp Module.Should successfully invoke CoreApp module directly" time="0.0049" asserts="0" success="False" result="Ignored" executed="False" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="CoreApp Cross-Platform Compatibility" executed="True" result="Success" success="True" time="14.9572" asserts="0" description="CoreApp Cross-Platform Compatibility">
+            <results>
+              <test-suite type="TestFixture" name="CoreApp Cross-Platform Compatibility.Path Handling" executed="True" result="Success" success="True" time="1.9329" asserts="0" description="CoreApp Cross-Platform Compatibility.Path Handling">
+                <results>
+                  <test-case description="Should handle paths correctly on current platform" name="CoreApp Cross-Platform Compatibility.Path Handling.Should handle paths correctly on current platform" time="0.6376" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should work with different configuration file paths" name="CoreApp Cross-Platform Compatibility.Path Handling.Should work with different configuration file paths" time="1.2927" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/workspaces/AitherLabs/tests/integration/Config-TrustedHosts.Tests.ps1" executed="True" result="Failure" success="False" time="0.0515" asserts="0" description="/workspaces/AitherLabs/tests/integration/Config-TrustedHosts.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Config-TrustedHosts Tests" executed="True" result="Failure" success="False" time="0.0236" asserts="0" description="Config-TrustedHosts Tests">
+            <results>
+              <test-suite type="TestFixture" name="Config-TrustedHosts Tests.Module Loading" executed="True" result="Failure" success="False" time="0" asserts="0" description="Config-TrustedHosts Tests.Module Loading">
+                <results>
+                  <test-case description="should load required modules" name="Config-TrustedHosts Tests.Module Loading.should load required modules" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Config-TrustedHosts Tests.Functionality Tests" executed="True" result="Failure" success="False" time="0" asserts="0" description="Config-TrustedHosts Tests.Functionality Tests">
+                <results>
+                  <test-case description="should execute without errors" name="Config-TrustedHosts Tests.Functionality Tests.should execute without errors" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1" executed="True" result="Failure" success="False" time="0.7094" asserts="0" description="/workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="CoreApp Module Tests" executed="True" result="Failure" success="False" time="0.1006" asserts="0" description="CoreApp Module Tests">
+            <results>
+              <test-suite type="TestFixture" name="CoreApp Module Tests.Module Structure Validation" executed="True" result="Failure" success="False" time="0.0254" asserts="0" description="CoreApp Module Tests.Module Structure Validation">
+                <results>
+                  <test-case description="should have valid module manifest" name="CoreApp Module Tests.Module Structure Validation.should have valid module manifest" time="0.0058" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected path '/workspaces/AitherLabs/aither-core/CoreApp.psd1' to exist, but it did not exist.</message>
+                      <stack-trace>at $manifestPath | Should -Exist, /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:62
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:62</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should have module implementation file" name="CoreApp Module Tests.Module Structure Validation.should have module implementation file" time="0.0055" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected path '/workspaces/AitherLabs/aither-core/CoreApp.psm1' to exist, but it did not exist.</message>
+                      <stack-trace>at $modulePath | Should -Exist, /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:69
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:69</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should have default configuration file" name="CoreApp Module Tests.Module Structure Validation.should have default configuration file" time="0.0068" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should have scripts directory with core scripts" name="CoreApp Module Tests.Module Structure Validation.should have scripts directory with core scripts" time="0.005" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="CoreApp Module Tests.Module Import and Loading" executed="True" result="Failure" success="False" time="0.0986" asserts="0" description="CoreApp Module Tests.Module Import and Loading">
+                <results>
+                  <test-case description="should import CoreApp module successfully" name="CoreApp Module Tests.Module Import and Loading.should import CoreApp module successfully" time="0.0047" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should export Invoke-CoreApplication function" name="CoreApp Module Tests.Module Import and Loading.should export Invoke-CoreApplication function" time="0.0626" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected a value, but got $null or empty.</message>
+                      <stack-trace>at Get-Command -Module CoreApp -Name "Invoke-CoreApplication" | Should -Not -BeNullOrEmpty, /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:101
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:101</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should have proper environment variable support" name="CoreApp Module Tests.Module Import and Loading.should have proper environment variable support" time="0.0037" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Core Application Scripts Tests" executed="True" result="Failure" success="False" time="0.244" asserts="0" description="Core Application Scripts Tests">
+            <results>
+              <test-suite type="TestFixture" name="Core Application Scripts Tests.Script Syntax and Structure Validation" executed="True" result="Failure" success="False" time="0.0556" asserts="0" description="Core Application Scripts Tests.Script Syntax and Structure Validation">
+                <results>
+                  <test-case description="should have valid PowerShell syntax for all core scripts" name="Core Application Scripts Tests.Script Syntax and Structure Validation.should have valid PowerShell syntax for all core scripts" time="0.0158" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected 0, because Script 0100_Enable-WinRM.ps1 should have valid syntax, but got 2.</message>
+                      <stack-trace>at $errorCount | Should -Be 0 -Because "Script $($script.Name) should have valid syntax", /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:123
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:123</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should follow PowerShell 7.0+ requirements" name="Core Application Scripts Tests.Script Syntax and Structure Validation.should follow PowerShell 7.0+ requirements" time="0.0297" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should use proper error handling patterns" name="Core Application Scripts Tests.Script Syntax and Structure Validation.should use proper error handling patterns" time="0.0076" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected regular expression 'try\s*\{[\s\S]*?\}\s*catch' to match '#Requires -Version 7.0
+[CmdletBinding(SupportsShouldProcess)]
+param(
+    [Parameter(Mandatory, ValueFromPipeline)]
+    [object]$Config
+)
+Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force
+Import-Module "$env:PROJECT_ROOT/core-runner/modules/Logging" -Force
+Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
+Invoke-LabStep -Config $Config -Body {
+    Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
+    # Check if WinRM is already configured
+    $winrmStatus = Get-Service -Name WinRM -ErrorAction SilentlyContinue
+    if ($winrmStatus -and $winrmStatus.Status -eq 'Running') {
+        Write-CustomLog 'WinRM is already enabled and running.'
+    } else {
+        Write-CustomLog 'Enabling WinRM via Enable-PSRemoting -Force'
+        # WinRM QuickConfig
+        Enable-PSRemoting -Force
+        Write-CustomLog 'Enable-PSRemoting executed'
+        # Optionally configure additional authentication methods, etc.:
+        # e.g.: Set-Item -Path WSMan:\localhost\Service\Auth\Basic -Value $true
+    }
+}
+    Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
+}
+    Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
+}
+', because 0100_Enable-WinRM.ps1 should use try-catch error handling, but it did not match.</message>
+                      <stack-trace>at $content | Should -Match 'try\s*\{[\s\S]*?\}\s*catch' -Because "$($script.Name) should use try-catch error handling", /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:141
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:141</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Core Application Scripts Tests.Script Content Analysis" executed="True" result="Failure" success="False" time="0.1345" asserts="0" description="Core Application Scripts Tests.Script Content Analysis">
+                <results>
+                  <test-case description="should define expected functions in numbered scripts" name="Core Application Scripts Tests.Script Content Analysis.should define expected functions in numbered scripts" time="0.0095" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected regular expression 'function\s+Install-ValidationTools' to match '#Requires -Version 7.0
+[CmdletBinding()]
+param(
+    [Parameter()]
+    [object]$Config
+)
+Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force
+Import-Module "$env:PROJECT_ROOT/core-runner/modules/Logging" -Force
+Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
+function Install-Cosign {
+    [CmdletBinding()]
+    param()
+    # Check if cosign is available in the current PATH
+    if (-not (Test-Path (Join-Path $Config.CosignPath 'cosign-windows-amd64.exe') -ErrorAction SilentlyContinue)) {
+        Write-CustomLog 'Cosign is not found. Installing cosign...' -Level 'INFO'
+        # Define the installation directory and destination file path
+        $installDir = $Config.CosignPath
+        $destination = Join-Path $installDir 'cosign-windows-amd64.exe'
+        # Create the installation folder if it doesn't exist
+        if (-not (Test-Path $installDir)) {
+            if ($PSCmdlet.ShouldProcess($installDir, 'Create directory')) {
+                New-Item -ItemType Directory -Path $installDir -Force | Out-Null
+            }
+        }
+        if (-not (Test-Path $destination)) {
+            try {
+                if ($PSCmdlet.ShouldProcess($destination, 'Download cosign')) {
+                    # Download the cosign executable
+                    Invoke-LabWebRequest -Uri $Config.CosignURL -OutFile $destination -UseBasicParsing
+                    Write-CustomLog "Cosign downloaded and installed at $destination" -Level 'INFO'
+                }
+            } catch {
+                Write-Error "Failed to download cosign from $($Config.CosignURL). Please check your internet connection and try again."
+                return
+            }
+        }
+        # Add the installation folder to the user's PATH if not already present
+        $userPath = [Environment]::GetEnvironmentVariable('PATH', 'User')
+        if (-not $userPath) { $userPath = '' }
+        if (-not $userPath.Contains($installDir)) {
+            if ($PSCmdlet.ShouldProcess('User PATH', 'Update environment variable')) {
+                [Environment]::SetEnvironmentVariable('PATH', "$userPath;$installDir", 'User')
+                Write-CustomLog "Added $installDir to your user PATH. You may need to restart your session for this change to take effect." -Level 'INFO'
+            }
+        }
+    } else {
+        Write-CustomLog 'Cosign is already installed.' -Level 'INFO'
+    }
+}
+function Find-Gpg {
+    # Check if gpg is available in the current PATH
+    if (-not (Get-Command gpg -ErrorAction SilentlyContinue)) {
+        Write-CustomLog 'GPG is not found.' -Level 'WARN'
+        Write-CustomLog 'Please install Gpg4win from https://www.gpg4win.org/ and ensure it is added to your PATH.' -Level 'WARN'
+    } else {
+        Write-CustomLog 'GPG is already installed.' -Level 'INFO'
+    }
+}
+Invoke-LabStep -Config $Config -Body {
+    Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
+    # Execute based on provided switches
+    if ($Config.InstallCosign -eq $true) {
+        Install-Cosign
+    } elseif ($Config.InstallGpg -eq $true) {
+        Find-Gpg
+    }
+    if (-not $Config.InstallCosign -and -not $Config.InstallGpg) {
+        Write-CustomLog 'No installation option specified. Use -InstallCosign and/or -InstallGpg when running this script.' -Level 'WARN'
+    }
+    Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
+}
+Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
+', because 0006_Install-ValidationTools.ps1 should define Install-ValidationTools function, but it did not match.</message>
+                      <stack-trace>at $content | Should -Match "function\s+$expectedFunctionName" -Because "$($script.Name) should define $expectedFunctionName function", /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:155
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:155</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should have main execution logic" name="Core Application Scripts Tests.Script Content Analysis.should have main execution logic" time="0.0308" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should use standardized logging" name="Core Application Scripts Tests.Script Content Analysis.should use standardized logging" time="0.0265" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Core Application Integration Tests" executed="True" result="Failure" success="False" time="0.4682" asserts="0" description="Core Application Integration Tests">
+            <results>
+              <test-suite type="TestFixture" name="Core Application Integration Tests.Invoke-CoreApplication Function Tests" executed="True" result="Failure" success="False" time="0.1429" asserts="0" description="Core Application Integration Tests.Invoke-CoreApplication Function Tests">
+                <results>
+                  <test-case description="should accept ConfigPath parameter" name="Core Application Integration Tests.Invoke-CoreApplication Function Tests.should accept ConfigPath parameter" time="0.0772" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>RuntimeException: You cannot call a method on a null-valued expression.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:189</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should validate configuration file exists" name="Core Application Integration Tests.Invoke-CoreApplication Function Tests.should validate configuration file exists" time="0.032" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, but an exception "The term 'Invoke-CoreApplication' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:197 char:19
+    +                 { Invoke-CoreApplication -ConfigPath $tempConfig } |  …
+    +                   ~~~~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { Invoke-CoreApplication -ConfigPath $tempConfig } | Should -Not -Throw, /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:197
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:197</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should handle missing configuration gracefully" name="Core Application Integration Tests.Invoke-CoreApplication Function Tests.should handle missing configuration gracefully" time="0.0303" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Core Application Integration Tests.PatchManager Integration" executed="True" result="Failure" success="False" time="0.2222" asserts="0" description="Core Application Integration Tests.PatchManager Integration">
+                <results>
+                  <test-case description="should be compatible with PatchManager workflow" name="Core Application Integration Tests.PatchManager Integration.should be compatible with PatchManager workflow" time="0.0046" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should support PatchManager change tracking" name="Core Application Integration Tests.PatchManager Integration.should support PatchManager change tracking" time="0.0723" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected a value, but got $null or empty.</message>
+                      <stack-trace>at $patchManager | Should -Not -BeNullOrEmpty, /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:220
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:220</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Core Application Cross-Platform Tests" executed="True" result="Failure" success="False" time="0.5118" asserts="0" description="Core Application Cross-Platform Tests">
+            <results>
+              <test-suite type="TestFixture" name="Core Application Cross-Platform Tests.Platform Compatibility" executed="True" result="Failure" success="False" time="0.0408" asserts="0" description="Core Application Cross-Platform Tests.Platform Compatibility">
+                <results>
+                  <test-case description="should work on current platform" name="Core Application Cross-Platform Tests.Platform Compatibility.should work on current platform" time="0.0142" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected collection @('Windows', 'Linux', 'macOS') to contain $null, but it was not found.</message>
+                      <stack-trace>at $env:PLATFORM | Should -BeIn @('Windows', 'Linux', 'macOS'), /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:230
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:230</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should handle platform-specific scripts appropriately" name="Core Application Cross-Platform Tests.Platform Compatibility.should handle platform-specific scripts appropriately" time="0.0099" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected regular expression '(IsWindows|Skip|platform)' to match '#Requires -Version 7.0
+[CmdletBinding(SupportsShouldProcess)]
+param(
+    [Parameter(Mandatory, ValueFromPipeline)]
+    [object]$Config
+)
+Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force
+Import-Module "$env:PROJECT_ROOT/core-runner/modules/Logging" -Force
+Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
+Invoke-LabStep -Config $Config -Body {
+    Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
+    # Check if WinRM is already configured
+    $winrmStatus = Get-Service -Name WinRM -ErrorAction SilentlyContinue
+    if ($winrmStatus -and $winrmStatus.Status -eq 'Running') {
+        Write-CustomLog 'WinRM is already enabled and running.'
+    } else {
+        Write-CustomLog 'Enabling WinRM via Enable-PSRemoting -Force'
+        # WinRM QuickConfig
+        Enable-PSRemoting -Force
+        Write-CustomLog 'Enable-PSRemoting executed'
+        # Optionally configure additional authentication methods, etc.:
+        # e.g.: Set-Item -Path WSMan:\localhost\Service\Auth\Basic -Value $true
+    }
+}
+    Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
+}
+    Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
+}
+', because 0100_Enable-WinRM.ps1 should handle non-Windows platforms, but it did not match.</message>
+                      <stack-trace>at $content | Should -Match '(IsWindows|Skip|platform)' -Because "$($script.Name) should handle non-Windows platforms", /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:240
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:240</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should use cross-platform paths" name="Core Application Cross-Platform Tests.Platform Compatibility.should use cross-platform paths" time="0.0091" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected regular expression '\\\\|C:\\' to not match '#Requires -Version 7.0
+Param([object]$Config)
+Import-Module "$env:PROJECT_ROOT/core-runner/modules/LabRunner/" -Force
+Write-CustomLog "Starting $MyInvocation.MyCommand"
+Invoke-LabStep -Config $Config -Body {
+    Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
+    &lt;#
+.SYNOPSIS
+    Removes the cloned repo and infra directories.
+.DESCRIPTION
+    Deletes the repository directory derived from RepoUrl under LocalPath
+    and the InfraRepoPath directory if they exist.
+#&gt;
+    $tempPath = Get-CrossPlatformTempPath
+    Push-Location -Path $tempPath
+    try {
+        $localBase = if ($Config.LocalPath) {
+            $Config.LocalPath
+        } else {
+            Get-CrossPlatformTempPath
+        }
+        $localBase = System.Environment::ExpandEnvironmentVariables($localBase)
+        $repoName = ($Config.RepoUrl -split '/') - 1 -replace '\.git$', ''
+        $repoPath = Join-Path $localBase $repoName
+        if (Test-Path $repoPath) {
+            Write-CustomLog "Removing repo path '$repoPath'..."
+            Remove-Item -Recurse -Force -Path $repoPath -ErrorAction Stop
+        } else {
+            Write-CustomLog "Repo path '$repoPath' not found; skipping."
+        }
+        $infraPath = if ($Config.InfraRepoPath) { $Config.InfraRepoPath } else { 'C:\\Temp\\base-infra' }
+        if (Test-Path $infraPath) {
+            Write-CustomLog "Removing infra path '$infraPath'..."
+            Remove-Item -Recurse -Force -Path $infraPath -ErrorAction Stop
+        } else {
+            Write-CustomLog "Infra path '$infraPath' not found; skipping."
+        }
+        Write-CustomLog 'Cleanup completed successfully.'
+    } catch {
+        Write-Error -Message "Cleanup failed: $($PSItem.Exception.Message)`n$($PSItem.ScriptStackTrace)"
+        exit 1
+    } finally {
+        try {
+            Pop-Location -ErrorAction Stop
+        } catch {
+            Set-Location $tempPath
+        }
+    }
+    Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
+}
+', because 0000_Cleanup-Files.ps1 should use cross-platform paths, but it did match.</message>
+                      <stack-trace>at $content | Should -Not -Match '\\\\|C:\\' -Because "$($script.Name) should use cross-platform paths", /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:249
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:249</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Automated Test Generation and Validation" executed="True" result="Failure" success="False" time="0.6305" asserts="0" description="Automated Test Generation and Validation">
+            <results>
+              <test-suite type="TestFixture" name="Automated Test Generation and Validation.Continuous Test Coverage" executed="True" result="Failure" success="False" time="0.1073" asserts="0" description="Automated Test Generation and Validation.Continuous Test Coverage">
+                <results>
+                  <test-case description="should have tests for all core scripts" name="Automated Test Generation and Validation.Continuous Test Coverage.should have tests for all core scripts" time="0.0179" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected regular expression '0000_Cleanup-Files' to match '#Requires -Version 7.0
+#Requires -Module Pester
+&lt;#
+.SYNOPSIS
+    Comprehensive Pester tests for the CoreApp module and its scripts
+    
+.DESCRIPTION
+    Tests the core application functionality including:
+    - Module loading and configuration
+    - Individual script execution
+    - Cross-platform compatibility
+    - Error handling and validation
+    - Integration with PatchManager workflow
+#&gt;
+BeforeAll {
+    # Set up environment variables if not already set
+    if (-not $env:PROJECT_ROOT) {
+        $env:PROJECT_ROOT = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+    }
+    if (-not $env:PWSH_MODULES_PATH) {
+        $env:PWSH_MODULES_PATH = Join-Path $env:PROJECT_ROOT "core-runner/modules"
+    }
+    
+    # Import required modules and helpers  
+    try {
+        Import-Module "$env:PWSH_MODULES_PATH/Logging/" -Force -ErrorAction SilentlyContinue
+        Import-Module "$env:PWSH_MODULES_PATH/PatchManager/" -Force -ErrorAction SilentlyContinue
+    } catch {
+        Write-Warning "Some modules could not be loaded: $_"
+    }
+    
+    # Import test helpers if they exist
+    $testHelpersPath = "$env:PROJECT_ROOT/tests/helpers/TestHelpers.ps1"
+    if (Test-Path $testHelpersPath) {
+        . $testHelpersPath
+    }
+    
+    $scriptAstPath = "$env:PROJECT_ROOT/tests/helpers/Get-ScriptAst.ps1"
+    if (Test-Path $scriptAstPath) {
+        . $scriptAstPath
+    }
+    
+    # Set up test environment
+    $script:CoreAppPath = "$env:PROJECT_ROOT/aither-core"
+    $script:DefaultConfigPath = "$script:CoreAppPath/default-config.json"
+    $script:TestResults = @{}
+    
+    # Ensure test coverage directory exists
+    if (-not (Test-Path "$env:PROJECT_ROOT/coverage")) {
+        New-Item -ItemType Directory -Path "$env:PROJECT_ROOT/coverage" -Force | Out-Null
+    }
+}
+Describe "CoreApp Module Tests" -Tag @('Critical', 'CoreApp', 'Module') {
+    
+    Context "Module Structure Validation" {
+        
+        It "should have valid module manifest" {
+            $manifestPath = Join-Path $script:CoreAppPath "CoreApp.psd1"
+            $manifestPath | Should -Exist
+            
+            { Test-ModuleManifest -Path $manifestPath } | Should -Not -Throw
+        }
+        
+        It "should have module implementation file" {
+            $modulePath = Join-Path $script:CoreAppPath "CoreApp.psm1"
+            $modulePath | Should -Exist
+              # Validate PowerShell syntax
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($modulePath, [ref]$null, [ref]$errors) | Out-Null
+            $errorCount = if ($errors) { $errors.Count } else { 0 }
+            $errorCount | Should -Be 0
+        }
+        
+        It "should have default configuration file" {
+            $script:DefaultConfigPath | Should -Exist
+            
+            # Validate JSON structure
+            { Get-Content $script:DefaultConfigPath | ConvertFrom-Json } | Should -Not -Throw
+        }
+        
+        It "should have scripts directory with core scripts" {
+            $scriptsPath = Join-Path $script:CoreAppPath "scripts"
+            $scriptsPath | Should -Exist
+            
+            $coreScripts = Get-ChildItem -Path $scriptsPath -Filter "*.ps1"
+            $coreScripts.Count | Should -BeGreaterThan 10
+        }
+    }
+    
+    Context "Module Import and Loading" {
+        
+        It "should import CoreApp module successfully" {
+            { Import-Module "$script:CoreAppPath/" -Force } | Should -Not -Throw
+        }
+        
+        It "should export Invoke-CoreApplication function" {
+            Import-Module "$script:CoreAppPath/" -Force
+            Get-Command -Module CoreApp -Name "Invoke-CoreApplication" | Should -Not -BeNullOrEmpty
+        }
+        
+        It "should have proper environment variable support" {
+            $env:PROJECT_ROOT | Should -Not -BeNullOrEmpty
+            $env:PWSH_MODULES_PATH | Should -Not -BeNullOrEmpty
+        }
+    }
+}
+Describe "Core Application Scripts Tests" -Tag @('Important', 'CoreApp', 'Scripts') {
+    
+    BeforeAll {
+        $script:CoreScripts = Get-ChildItem -Path "$script:CoreAppPath/scripts" -Filter "*.ps1"
+    }
+    
+    Context "Script Syntax and Structure Validation" {
+        
+        It "should have valid PowerShell syntax for all core scripts" {            foreach ($script in $script:CoreScripts) {
+                $errors = $null
+                [System.Management.Automation.Language.Parser]::ParseFile($script.FullName, [ref]$null, [ref]$errors) | Out-Null
+                $errorCount = if ($errors) { $errors.Count } else { 0 }
+                $errorCount | Should -Be 0 -Because "Script $($script.Name) should have valid syntax"
+            }
+        }
+        
+        It "should follow PowerShell 7.0+ requirements" {
+            foreach ($script in $script:CoreScripts) {
+                $content = Get-Content $script.FullName -Raw
+                if ($content -match '#Requires') {
+                    $content | Should -Match '#Requires -Version 7\.0' -Because "$($script.Name) should require PowerShell 7.0+"
+                }
+            }
+        }
+        
+        It "should use proper error handling patterns" {
+            foreach ($script in $script:CoreScripts) {
+                $content = Get-Content $script.FullName -Raw
+                # Check for try-catch blocks in scripts that are likely to have them
+                if ($script.Name -match '^(0[12]|Install-)') {
+                    $content | Should -Match 'try\s*\{[\s\S]*?\}\s*catch' -Because "$($script.Name) should use try-catch error handling"
+                }
+            }
+        }
+    }
+    
+    Context "Script Content Analysis" {
+        
+        It "should define expected functions in numbered scripts" {
+            $installerScripts = $script:CoreScripts | Where-Object { $_.Name -match '^0\d+_Install-' }
+            
+            foreach ($script in $installerScripts) {
+                $content = Get-Content $script.FullName -Raw
+                $expectedFunctionName = ($script.BaseName -replace '^\d+_', '')
+                $content | Should -Match "function\s+$expectedFunctionName" -Because "$($script.Name) should define $expectedFunctionName function"
+            }
+        }
+        
+        It "should have main execution logic" {
+            foreach ($script in $script:CoreScripts) {
+                $content = Get-Content $script.FullName -Raw
+                # Check for main execution patterns
+                ($content -match 'param\s*\(' -or $content -match '\$Config' -or $content -match 'Write-CustomLog') | 
+                    Should -BeTrue -Because "$($script.Name) should have main execution logic"
+            }
+        }
+        
+        It "should use standardized logging" {
+            foreach ($script in $script:CoreScripts) {
+                $content = Get-Content $script.FullName -Raw
+                if ($content -match 'Write-') {
+                    $content | Should -Match 'Write-CustomLog' -Because "$($script.Name) should use Write-CustomLog for standardized logging"
+                }
+            }
+        }
+    }
+}
+Describe "Core Application Integration Tests" -Tag @('Important', 'CoreApp', 'Integration') {
+    
+    Context "Invoke-CoreApplication Function Tests" {
+        
+        BeforeAll {
+            Import-Module "$script:CoreAppPath/" -Force
+        }
+        
+        It "should accept ConfigPath parameter" {
+            $function = Get-Command Invoke-CoreApplication
+            $function.Parameters.ContainsKey('ConfigPath') | Should -BeTrue
+        }
+        
+        It "should validate configuration file exists" {
+            $tempConfig = Join-Path ([System.IO.Path]::GetTempPath()) "test-config.json"
+            '{"test": true}' | Set-Content -Path $tempConfig
+            
+            try {
+                { Invoke-CoreApplication -ConfigPath $tempConfig } | Should -Not -Throw
+            } finally {
+                Remove-Item $tempConfig -Force -ErrorAction SilentlyContinue
+            }
+        }
+        
+        It "should handle missing configuration gracefully" {
+            $nonExistentConfig = Join-Path ([System.IO.Path]::GetTempPath()) "nonexistent-config.json"
+            { Invoke-CoreApplication -ConfigPath $nonExistentConfig } | Should -Throw
+        }
+    }
+    
+    Context "PatchManager Integration" {
+        
+        It "should be compatible with PatchManager workflow" {
+            # Test that CoreApp can be used within PatchManager
+            { Import-Module "$env:PROJECT_ROOT/core-runner/modules/PatchManager/" -Force } | Should -Not -Throw
+            { Import-Module "$script:CoreAppPath/" -Force } | Should -Not -Throw
+        }
+        
+        It "should support PatchManager change tracking" {
+            # Verify that changes to CoreApp can be tracked by PatchManager
+            $patchManager = Get-Command New-PatchOperation -ErrorAction SilentlyContinue
+            $patchManager | Should -Not -BeNullOrEmpty
+        }
+    }
+}
+Describe "Core Application Cross-Platform Tests" -Tag @('Maintenance', 'CoreApp', 'CrossPlatform') {
+    
+    Context "Platform Compatibility" {
+        
+        It "should work on current platform" {
+            $env:PLATFORM | Should -BeIn @('Windows', 'Linux', 'macOS')
+        }
+        
+        It "should handle platform-specific scripts appropriately" {
+            $windowsScripts = $script:CoreScripts | Where-Object { $_.Name -match '^01\d+_' }
+            
+            foreach ($script in $windowsScripts) {
+                $content = Get-Content $script.FullName -Raw
+                if ($env:PLATFORM -ne 'Windows') {
+                    # On non-Windows, these scripts should either skip or handle gracefully
+                    $content | Should -Match '(IsWindows|Skip|platform)' -Because "$($script.Name) should handle non-Windows platforms"
+                }
+            }
+        }
+        
+        It "should use cross-platform paths" {
+            foreach ($script in $script:CoreScripts) {
+                $content = Get-Content $script.FullName -Raw
+                # Check for Windows-specific paths
+                $content | Should -Not -Match '\\\\|C:\\' -Because "$($script.Name) should use cross-platform paths"
+            }
+        }
+    }
+}
+Describe "Automated Test Generation and Validation" -Tag @('Critical', 'CoreApp', 'Automation') {
+    
+    Context "Continuous Test Coverage" {
+        
+        It "should have tests for all core scripts" {
+            $coreScriptNames = $script:CoreScripts.BaseName
+            $testFile = Get-Content $PSCommandPath -Raw
+            
+            foreach ($scriptName in $coreScriptNames) {
+                if ($scriptName -match '^0\d+_') {
+                    $testFile | Should -Match $scriptName -Because "Should have test coverage for $scriptName"
+                }
+            }
+        }
+        
+        It "should validate test completeness" {
+            $testCounts = @{
+                'Syntax' = 0
+                'Function' = 0
+                'Integration' = 0
+                'Platform' = 0
+            }
+            
+            $testFile = Get-Content $PSCommandPath -Raw
+            $testCounts.Syntax = ($testFile | Select-String -Pattern 'syntax|parse' -AllMatches).Matches.Count
+            $testCounts.Function = ($testFile | Select-String -Pattern 'function|define' -AllMatches).Matches.Count
+            $testCounts.Integration = ($testFile | Select-String -Pattern 'integration|invoke' -AllMatches).Matches.Count
+            $testCounts.Platform = ($testFile | Select-String -Pattern 'platform|cross' -AllMatches).Matches.Count
+            
+            $testCounts.Syntax | Should -BeGreaterThan 0
+            $testCounts.Function | Should -BeGreaterThan 0
+            $testCounts.Integration | Should -BeGreaterThan 0
+            $testCounts.Platform | Should -BeGreaterThan 0
+        }
+        
+        It "should enforce PatchManager usage for changes" {
+            # Verify that any changes to CoreApp go through PatchManager
+            $patchManagerCommands = @(
+                'New-PatchOperation'
+                'Invoke-PatchValidation' 
+                'Submit-PatchForReview'
+            )
+            
+            foreach ($cmd in $patchManagerCommands) {
+                Get-Command $cmd -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty -Because "$cmd should be available for PatchManager workflow"
+            }
+        }
+    }
+    
+    Context "Test Result Analysis" {
+        
+        It "should generate comprehensive test reports" {
+            $script:TestResults['CoreApp'] = @{
+                TotalTests = (Get-ChildItem $PSCommandPath | Measure-Object).Count
+                Timestamp = Get-Date
+                Platform = $env:PLATFORM
+                PowerShellVersion = $PSVersionTable.PSVersion
+            }
+            
+            $script:TestResults.Count | Should -BeGreaterThan 0
+        }
+        
+        It "should validate against test quality metrics" {
+            # Ensure we have adequate test coverage
+            $totalTests = 25  # Minimum expected tests
+            $actualTests = (Select-String -Path $PSCommandPath -Pattern '\s+It\s+"' | Measure-Object).Count
+            
+            $actualTests | Should -BeGreaterOrEqual $totalTests -Because "Should have at least $totalTests tests for comprehensive coverage"
+        }
+    }
+}
+AfterAll {
+    # Clean up test environment
+    Write-CustomLog "CoreApp tests completed. Results: $($script:TestResults | ConvertTo-Json -Depth 2)" -Level INFO
+    
+    # Generate test coverage report if running in CI
+    if ($env:CI -or $env:GITHUB_ACTIONS) {
+        $coverageReport = @{
+            TestFile = $PSCommandPath
+            Results = $script:TestResults
+            Timestamp = Get-Date
+            Environment = @{
+                Platform = $env:PLATFORM
+                PowerShell = $PSVersionTable.PSVersion
+                ProjectRoot = $env:PROJECT_ROOT
+            }
+        }
+        
+        $reportPath = "$env:PROJECT_ROOT/coverage/CoreApp-TestReport.json"
+        $coverageReport | ConvertTo-Json -Depth 3 | Set-Content -Path $reportPath
+        Write-CustomLog "Test coverage report saved to: $reportPath" -Level SUCCESS
+    }
+}
+', because Should have test coverage for 0000_Cleanup-Files, but it did not match.</message>
+                      <stack-trace>at $testFile | Should -Match $scriptName -Because "Should have test coverage for $scriptName", /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:265
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:265</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="should validate test completeness" name="Automated Test Generation and Validation.Continuous Test Coverage.should validate test completeness" time="0.0129" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should enforce PatchManager usage for changes" name="Automated Test Generation and Validation.Continuous Test Coverage.should enforce PatchManager usage for changes" time="0.0736" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected a value, because New-PatchOperation should be available for PatchManager workflow, but got $null or empty.</message>
+                      <stack-trace>at Get-Command $cmd -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty -Because "$cmd should be available for PatchManager workflow", /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:299
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/integration/CoreApp.Tests.ps1:299</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Automated Test Generation and Validation.Test Result Analysis" executed="True" result="Success" success="True" time="0.1165" asserts="0" description="Automated Test Generation and Validation.Test Result Analysis">
+                <results>
+                  <test-case description="should generate comprehensive test reports" name="Automated Test Generation and Validation.Test Result Analysis.should generate comprehensive test reports" time="0.0035" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should validate against test quality metrics" name="Automated Test Generation and Validation.Test Result Analysis.should validate against test quality metrics" time="0.0035" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/workspaces/AitherLabs/tests/integration/Customize-ISO.Tests.ps1" executed="True" result="Failure" success="False" time="0.0345" asserts="0" description="/workspaces/AitherLabs/tests/integration/Customize-ISO.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Customize-ISO Tests" executed="True" result="Failure" success="False" time="0.0116" asserts="0" description="Customize-ISO Tests">
+            <results>
+              <test-suite type="TestFixture" name="Customize-ISO Tests.Module Loading" executed="True" result="Failure" success="False" time="0" asserts="0" description="Customize-ISO Tests.Module Loading">
+                <results>
+                  <test-case description="should load required modules" name="Customize-ISO Tests.Module Loading.should load required modules" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Customize-ISO Tests.Functionality Tests" executed="True" result="Failure" success="False" time="0" asserts="0" description="Customize-ISO Tests.Functionality Tests">
+                <results>
+                  <test-case description="should execute without errors" name="Customize-ISO Tests.Functionality Tests.should execute without errors" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/workspaces/AitherLabs/tests/integration/CustomLint.Tests.ps1" executed="True" result="Failure" success="False" time="0.0209" asserts="0" description="/workspaces/AitherLabs/tests/integration/CustomLint.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="CustomLint Tests" executed="True" result="Failure" success="False" time="0.0054" asserts="0" description="CustomLint Tests">
+            <results>
+              <test-suite type="TestFixture" name="CustomLint Tests.Module Loading" executed="True" result="Failure" success="False" time="0" asserts="0" description="CustomLint Tests.Module Loading">
+                <results>
+                  <test-case description="should load required modules" name="CustomLint Tests.Module Loading.should load required modules" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="CustomLint Tests.Functionality Tests" executed="True" result="Failure" success="False" time="0" asserts="0" description="CustomLint Tests.Functionality Tests">
+                <results>
+                  <test-case description="should execute without errors" name="CustomLint Tests.Functionality Tests.should execute without errors" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/workspaces/AitherLabs/tests/integration/ModuleIntegration.Tests.ps1" executed="True" result="Failure" success="False" time="3.4628" asserts="0" description="/workspaces/AitherLabs/tests/integration/ModuleIntegration.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Module Integration Tests" executed="True" result="Failure" success="False" time="0.4017" asserts="0" description="Module Integration Tests">
+            <results>
+              <test-suite type="TestFixture" name="Module Integration Tests.Module Import and Dependency Resolution" executed="True" result="Success" success="True" time="0.0285" asserts="0" description="Module Integration Tests.Module Import and Dependency Resolution">
+                <results>
+                  <test-case description="Should import all core modules successfully" name="Module Integration Tests.Module Import and Dependency Resolution.Should import all core modules successfully" time="0.0056" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should have all expected functions available" name="Module Integration Tests.Module Import and Dependency Resolution.Should have all expected functions available" time="0.0072" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should not have function name conflicts" name="Module Integration Tests.Module Import and Dependency Resolution.Should not have function name conflicts" time="0.0125" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Module Integration Tests.Logging Integration with Other Modules" executed="True" result="Success" success="True" time="0.1051" asserts="0" description="Module Integration Tests.Logging Integration with Other Modules">
+                <results>
+                  <test-case description="Should use Write-CustomLog across all modules" name="Module Integration Tests.Logging Integration with Other Modules.Should use Write-CustomLog across all modules" time="0.0394" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle logging configuration consistently" name="Module Integration Tests.Logging Integration with Other Modules.Should handle logging configuration consistently" time="0.0335" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Module Integration Tests.PatchManager with Other Module Dependencies" executed="True" result="Success" success="True" time="0.3653" asserts="0" description="Module Integration Tests.PatchManager with Other Module Dependencies">
+                <results>
+                  <test-case description="Should work with logging for patch operations" name="Module Integration Tests.PatchManager with Other Module Dependencies.Should work with logging for patch operations" time="0.1803" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create issues in dry run mode" name="Module Integration Tests.PatchManager with Other Module Dependencies.Should create issues in dry run mode" time="0.0743" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Module Integration Tests.Cross-Module Configuration Consistency" executed="True" result="Failure" success="False" time="0.3988" asserts="0" description="Module Integration Tests.Cross-Module Configuration Consistency">
+                <results>
+                  <test-case description="Should use consistent path handling" name="Module Integration Tests.Cross-Module Configuration Consistency.Should use consistent path handling" time="0.0116" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle cross-platform operations" name="Module Integration Tests.Cross-Module Configuration Consistency.Should handle cross-platform operations" time="0.0147" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>SessionStateUnauthorizedAccessException: Cannot overwrite variable IsWindows because it is read-only or constant.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/integration/ModuleIntegration.Tests.ps1:135</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Workflow Integration Tests" executed="True" result="Failure" success="False" time="2.9104" asserts="0" description="Workflow Integration Tests">
+            <results>
+              <test-suite type="TestFixture" name="Workflow Integration Tests.Development Workflow Simulation" executed="True" result="Failure" success="False" time="0.1123" asserts="0" description="Workflow Integration Tests.Development Workflow Simulation">
+                <results>
+                  <test-case description="Should simulate a complete development workflow" name="Workflow Integration Tests.Development Workflow Simulation.Should simulate a complete development workflow" time="0.037" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, but an exception "A parameter with the name 'WhatIf' was defined multiple times for the command." was thrown from /workspaces/AitherLabs/aither-core/modules/DevEnvironment/Public/Initialize-DevelopmentEnvironment.ps1:88 char:17
+    +                 Resolve-ModuleImportIssues -Force:$Force
+    +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { Initialize-DevelopmentEnvironment -WhatIf } | Should -Not -Throw, /workspaces/AitherLabs/tests/integration/ModuleIntegration.Tests.ps1:151
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/integration/ModuleIntegration.Tests.ps1:151</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle error scenarios gracefully" name="Workflow Integration Tests.Development Workflow Simulation.Should handle error scenarios gracefully" time="0.0725" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Workflow Integration Tests.Module Performance Integration" executed="True" result="Success" success="True" time="2.5058" asserts="0" description="Workflow Integration Tests.Module Performance Integration">
+                <results>
+                  <test-case description="Should complete integrated operations within reasonable time" name="Workflow Integration Tests.Module Performance Integration.Should complete integrated operations within reasonable time" time="0.2005" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle concurrent module operations" name="Workflow Integration Tests.Module Performance Integration.Should handle concurrent module operations" time="2.1896" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Configuration and Environment Integration" executed="True" result="Success" success="True" time="2.9677" asserts="0" description="Configuration and Environment Integration">
+            <results>
+              <test-suite type="TestFixture" name="Configuration and Environment Integration.Configuration File Validation" executed="True" result="Success" success="True" time="0.0439" asserts="0" description="Configuration and Environment Integration.Configuration File Validation">
+                <results>
+                  <test-case description="Should validate core configuration files" name="Configuration and Environment Integration.Configuration File Validation.Should validate core configuration files" time="0.0069" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate module manifest files" name="Configuration and Environment Integration.Configuration File Validation.Should validate module manifest files" time="0.0336" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Configuration and Environment Integration.Environment Consistency" executed="True" result="Success" success="True" time="0.0545" asserts="0" description="Configuration and Environment Integration.Environment Consistency">
+                <results>
+                  <test-case description="Should maintain consistent environment variables" name="Configuration and Environment Integration.Environment Consistency.Should maintain consistent environment variables" time="0.0028" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle workspace paths consistently" name="Configuration and Environment Integration.Environment Consistency.Should handle workspace paths consistently" time="0.0048" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>

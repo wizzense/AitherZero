@@ -71,8 +71,8 @@
   "GitHubCLIInstallerUrl": "https://github.com/cli/cli/releases/download/v2.67.0/gh_2.67.0_windows_amd64.msi",
   "RepoUrl": "https://github.com/Aitherium/AitherLabs.git",
   "LocalPath": "C:/temp",
-  "RunnerScriptName": "core-runner/core_app/core-runner.ps1",
-  "ConfigFile": "./core-runner/core_app/default-config.json",
+  "RunnerScriptName": "aither-core/core-runner.ps1",
+  "ConfigFile": "./aither-core/default-config.json",
   "Go": {
     "InstallerUrl": "https://go.dev/dl/go1.24.1.windows-amd64.msi"
   },
@@ -106,7 +106,7 @@
   },
   "scripts": {
     "autorun": false,
-    "path": "scripts",
+    "path": "../../aither-core/scripts",
     "timeout": 3600
   },
   "environment": {

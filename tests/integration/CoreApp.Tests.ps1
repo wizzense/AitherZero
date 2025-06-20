@@ -43,7 +43,7 @@ BeforeAll {
     }
     
     # Set up test environment
-    $script:CoreAppPath = "$env:PROJECT_ROOT/core-runner/core_app"
+    $script:CoreAppPath = "$env:PROJECT_ROOT/aither-core"
     $script:DefaultConfigPath = "$script:CoreAppPath/default-config.json"
     $script:TestResults = @{}
     

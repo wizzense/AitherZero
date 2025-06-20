@@ -37,7 +37,7 @@ if ($params.IsWhatIfMode) {
 Use the provided utility script:
 
 ```powershell
-.\tools\Update-ScriptParameters.ps1 -Path "core-runner/core_app/scripts" -WhatIf
+.\tools\Update-ScriptParameters.ps1 -Path "aither-core/scripts" -WhatIf
 ```
 
 For more information, see the [Standardized Parameters Documentation](docs/StandardizedParameters.md).

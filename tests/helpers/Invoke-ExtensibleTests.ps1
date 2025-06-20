@@ -302,7 +302,7 @@ try {
     if ($EnableCodeCoverage) {
     
         $pesterConfig.CodeCoverage.Enabled = $true
-        $pesterConfig.CodeCoverage.Path = @('core-runner/core_app/scripts', 'core-runner/modules')
+        $pesterConfig.CodeCoverage.Path = @('aither-core/scripts', 'core-runner/modules')
         $pesterConfig.CodeCoverage.OutputPath = Join-Path $OutputPath 'coverage.xml'
         
     }

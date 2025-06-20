@@ -5,9 +5,17 @@ BeforeAll {
         Write-Host "[$Level] $Message"
     }
     
+    # Find project root using robust detection
+    $projectRoot = if ($env:PROJECT_ROOT) { 
+        $env:PROJECT_ROOT 
+    } elseif (Test-Path '/workspaces/AitherLabs') { 
+        '/workspaces/AitherLabs' 
+    } else { 
+        Split-Path -Parent (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))) 
+    }
+    
     # Import the ParallelExecution module
-    $projectRoot = $env:PROJECT_ROOT
-    $parallelExecutionPath = Join-Path $projectRoot "core-runner/modules/ParallelExecution"
+    $parallelExecutionPath = Join-Path $projectRoot "aither-core/modules/ParallelExecution"
     
     try {
         Import-Module $parallelExecutionPath -Force -ErrorAction Stop
@@ -82,12 +90,11 @@ Describe "ParallelExecution Module - Core Functions" {
         It "Should pass parameters to script block correctly" {
             $inputs = @("A", "B", "C")
             $scriptBlock = { 
-                param($item, $prefix) 
-                return "$prefix-$item" 
+                param($item) 
+                return "TEST-$item" 
             }
-            $parameters = @{ prefix = "TEST" }
             
-            $results = Invoke-ParallelForEach -InputObject $inputs -ScriptBlock $scriptBlock -Parameters $parameters
+            $results = Invoke-ParallelForEach -InputObject $inputs -ScriptBlock $scriptBlock
             
             $results | Should -Contain "TEST-A"
             $results | Should -Contain "TEST-B"

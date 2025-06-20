@@ -27,8 +27,8 @@ BeforeAll {
         $script:ProjectRoot = Split-Path $PSScriptRoot -Parent | Split-Path -Parent | Split-Path -Parent | Split-Path -Parent
     }
 
-    $script:CoreRunnerScript = Join-Path $script:ProjectRoot "core-runner/core_app/core-runner.ps1"
-    $script:ConfigFile = Join-Path $script:ProjectRoot "core-runner/core_app/default-config.json"
+    $script:CoreRunnerScript = Join-Path $script:ProjectRoot "aither-core/aither-core.ps1"
+    $script:ConfigFile = Join-Path $script:ProjectRoot "aither-core/default-config.json"
     $script:TestLogDir = Join-Path $script:ProjectRoot "logs/bulletproof-tests"
 
     # Ensure test log directory exists
@@ -352,7 +352,7 @@ Describe "Core Runner Bulletproof Tests" -Tag @('Bulletproof', 'CoreRunner', 'Cr
     Context "Integration Testing" {
 
         It "Should integrate properly with CoreApp module" {
-            $coreAppPath = Join-Path $script:ProjectRoot "core-runner/core_app/CoreApp.psm1"
+            $coreAppPath = Join-Path $script:ProjectRoot "aither-core/CoreApp.psm1"
 
             if (Test-Path $coreAppPath) {
                 Import-Module $coreAppPath -Force

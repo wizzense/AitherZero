@@ -74,15 +74,15 @@ Always test core-runner in all modes:
 
 ```powershell
 # Test basic non-interactive mode
-$result = & "./core-runner/core_app/core-runner.ps1" -NonInteractive -Verbosity silent
+$result = & "./aither-core/aither-core.ps1" -NonInteractive -Verbosity silent
 if ($LASTEXITCODE -ne 0) { throw "Core-runner failed in non-interactive mode" }
 
 # Test auto mode with WhatIf
-$result = & "./core-runner/core_app/core-runner.ps1" -NonInteractive -Auto -WhatIf -Verbosity detailed
+$result = & "./aither-core/aither-core.ps1" -NonInteractive -Auto -WhatIf -Verbosity detailed
 if ($LASTEXITCODE -ne 0) { throw "Core-runner failed in auto mode" }
 
 # Test specific scripts
-$result = & "./core-runner/core_app/core-runner.ps1" -NonInteractive -Scripts "0200_Get-SystemInfo" -WhatIf
+$result = & "./aither-core/aither-core.ps1" -NonInteractive -Scripts "0200_Get-SystemInfo" -WhatIf
 if ($LASTEXITCODE -ne 0) { throw "Core-runner failed with specific scripts" }
 ```
 
@@ -91,7 +91,7 @@ Test module imports comprehensively:
 
 ```powershell
 # Test all modules can be imported
-Get-ChildItem "core-runner/modules" -Directory | ForEach-Object {
+Get-ChildItem "aither-core/modules" -Directory | ForEach-Object {
     try {
         Import-Module $_.FullName -Force -ErrorAction Stop
         Write-Host "✓ Successfully imported: $($_.Name)" -ForegroundColor Green
@@ -195,7 +195,7 @@ pwsh -File "./tests/Run-BulletproofTests.ps1" -TestSuite "All" -CI -GenerateRepo
 pwsh -File "./tests/Run-AllModuleTests.ps1" -TestType "All" -Parallel
 
 # Core functionality validation
-& "./core-runner/core_app/core-runner.ps1" -NonInteractive -Auto -WhatIf -Verbosity detailed
+& "./aither-core/aither-core.ps1" -NonInteractive -Auto -WhatIf -Verbosity detailed
 if ($LASTEXITCODE -ne 0) { throw "Core-runner validation failed" }
 ```
 

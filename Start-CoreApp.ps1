@@ -38,7 +38,7 @@ try {
     Write-Host "🚀 Starting OpenTofu Lab Automation CoreApp..." -ForegroundColor Cyan
 
     # Import CoreApp module
-    $coreAppPath = Join-Path $PSScriptRoot "core-runner/core_app/CoreApp.psm1"
+    $coreAppPath = Join-Path $PSScriptRoot "aither-core/CoreApp.psm1"
 
     if (-not (Test-Path $coreAppPath)) {
         throw "CoreApp module not found at: $coreAppPath"

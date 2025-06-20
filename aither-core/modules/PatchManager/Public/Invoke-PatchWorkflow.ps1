@@ -115,6 +115,11 @@ function Invoke-PatchWorkflow {
 
     process {
         try {
+            # Initialize test capture variables
+            $testOutput = @()
+            $testErrors = @()
+            $testContext = @{}
+            
             # Step 1: Handle existing changes (auto-commit or stash)
             $gitStatus = git status --porcelain 2>&1
             $hasUncommittedChanges = $gitStatus -and ($gitStatus | Where-Object { $_ -match '\S' })
@@ -165,26 +170,106 @@ function Invoke-PatchWorkflow {
                 }
             }
 
-            # Step 3: Create tracking issue (by default, unless explicitly disabled)
+            # Step 3: Run test commands with enhanced output capture FIRST (before issue creation)
+            if ($TestCommands.Count -gt 0) {
+                Write-PatchLog "Running $($TestCommands.Count) test command(s) with output capture..." -Level "INFO"
+
+                foreach ($cmd in $TestCommands) {
+                    Write-PatchLog "Running test: $cmd" -Level "INFO"
+
+                    if (-not $DryRun) {
+                        try {
+                            # Capture both stdout and stderr
+                            $output = Invoke-Expression $cmd 2>&1
+                            
+                            # Separate output and errors
+                            $cmdOutput = @()
+                            $cmdErrors = @()
+                            
+                            foreach ($line in $output) {
+                                if ($line -is [System.Management.Automation.ErrorRecord]) {
+                                    $cmdErrors += $line.ToString()
+                                    $testErrors += $line.ToString()
+                                } else {
+                                    $cmdOutput += $line.ToString()
+                                    $testOutput += $line.ToString()
+                                }
+                            }
+                            
+                            # Check exit code
+                            if ($LASTEXITCODE -ne 0) {
+                                $errorMsg = "Test command failed with exit code $LASTEXITCODE : $cmd"
+                                Write-PatchLog $errorMsg -Level "WARN"
+                                $testErrors += $errorMsg
+                            }
+                            
+                            # Store test context
+                            $testContext[$cmd] = @{
+                                ExitCode = $LASTEXITCODE
+                                OutputLines = $cmdOutput.Count
+                                ErrorLines = $cmdErrors.Count
+                                ExecutionTime = Get-Date
+                            }
+                            
+                        } catch {
+                            $errorMsg = "Test command failed: $cmd - $($_.Exception.Message)"
+                            Write-PatchLog $errorMsg -Level "WARN"
+                            $testErrors += $errorMsg
+                            $testErrors += $_.Exception.Message
+                            
+                            $testContext[$cmd] = @{
+                                ExitCode = -1
+                                OutputLines = 0
+                                ErrorLines = 1
+                                ExecutionTime = Get-Date
+                                Exception = $_.Exception.Message
+                            }
+                        }
+                    } else {
+                        Write-PatchLog "DRY RUN: Would run test command: $cmd" -Level "INFO"
+                    }
+                }
+                
+                # Log test summary
+                Write-PatchLog "Test execution complete. Output lines: $($testOutput.Count), Error lines: $($testErrors.Count)" -Level "INFO"
+            }
+
+            # Step 4: Create tracking issue with enhanced context (NOW with test data available)
             $issueResult = $null
             if ($CreateIssue) {
-                Write-PatchLog "Creating tracking issue (step 1 of workflow)..." -Level "INFO"
+                Write-PatchLog "Creating tracking issue with intelligent analysis (with test data from previous step)..." -Level "INFO"
 
                 if (-not $DryRun) {
-                    $issueResult = New-PatchIssue -Description $PatchDescription -Priority $Priority
+                    $issueParams = @{
+                        Description = $PatchDescription
+                        Priority = $Priority
+                    }
+                    
+                    # Include test data if available for intelligent analysis
+                    if ($testOutput.Count -gt 0 -or $testErrors.Count -gt 0) {
+                        $issueParams.TestOutput = $testOutput
+                        $issueParams.ErrorDetails = $testErrors
+                        $issueParams.TestType = "PatchWorkflow"
+                        $issueParams.TestContext = $testContext
+                        Write-PatchLog "Including test analysis data: $($testOutput.Count) output lines, $($testErrors.Count) error lines" -Level "INFO"
+                    } else {
+                        Write-PatchLog "No test data captured for analysis" -Level "INFO"
+                    }
+
+                    $issueResult = New-PatchIssue @issueParams
                     if ($issueResult.Success) {
                         Write-PatchLog "Issue created: $($issueResult.IssueUrl)" -Level "SUCCESS"
                     } else {
                         Write-PatchLog "Issue creation failed: $($issueResult.Message)" -Level "WARN"
                     }
                 } else {
-                    Write-PatchLog "DRY RUN: Would create GitHub issue" -Level "INFO"
+                    Write-PatchLog "DRY RUN: Would create GitHub issue with test analysis" -Level "INFO"
                 }
             } else {
                 Write-PatchLog "Skipping issue creation (disabled by -CreateIssue:`$false)" -Level "INFO"
             }
 
-            # Step 4: Apply patch operation
+            # Step 5: Apply patch operation
             if ($PatchOperation) {
                 Write-PatchLog "Applying patch operation..." -Level "INFO"
 
@@ -195,27 +280,7 @@ function Invoke-PatchWorkflow {
                 }
             }
 
-            # Step 5: Run test commands
-            if ($TestCommands.Count -gt 0) {
-                Write-PatchLog "Running $($TestCommands.Count) test command(s)..." -Level "INFO"
-
-                foreach ($cmd in $TestCommands) {
-                    Write-PatchLog "Running test: $cmd" -Level "INFO"
-
-                    if (-not $DryRun) {
-                        try {
-                            Invoke-Expression $cmd
-                            if ($LASTEXITCODE -ne 0) {
-                                Write-PatchLog "Test command failed: $cmd" -Level "WARN"
-                            }
-                        } catch {
-                            Write-PatchLog "Test command failed: $cmd - $($_.Exception.Message)" -Level "WARN"
-                        }
-                    } else {
-                        Write-PatchLog "DRY RUN: Would run test command: $cmd" -Level "INFO"
-                    }
-                }
-            }            # Step 6: Sanitize files and commit patch changes
+            # Step 6: Sanitize files and commit patch changes
             if (-not $DryRun) {
                 $gitStatus = git status --porcelain 2>&1
                 if ($gitStatus -and ($gitStatus | Where-Object { $_ -match '\S' })) {

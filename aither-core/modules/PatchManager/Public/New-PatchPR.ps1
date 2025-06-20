@@ -207,11 +207,18 @@ $(if ($IssueNumber) {
                 throw "Failed to push branch $BranchName"
             }
 
+            # Ensure patch label exists
+            $labelCheck = gh label list --search "patch" 2>&1 | Out-String
+            if (-not $labelCheck.Contains("patch")) {
+                Write-PRLog "Creating missing patch label" -Level "INFO"
+                gh label create "patch" --color "0366d6" --description "Auto-created by PatchManager" 2>&1 | Out-Null
+            }
+
             # Create PR with robust error handling
             Write-PRLog "Creating pull request: $prTitle" -Level "INFO"
             $result = gh pr create --title $prTitle --body $prBody --head $BranchName --label "patch" 2>&1
 
-            # Handle label errors gracefully
+            # Handle any remaining label errors gracefully
             if ($LASTEXITCODE -ne 0 -and $result -match "not found") {
                 Write-PRLog "Label issue detected, creating PR without labels" -Level "WARN"
                 $result = gh pr create --title $prTitle --body $prBody --head $BranchName 2>&1

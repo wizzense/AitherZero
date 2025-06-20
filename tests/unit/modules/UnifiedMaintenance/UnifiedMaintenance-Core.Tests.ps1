@@ -5,9 +5,17 @@ BeforeAll {
         Write-Host "[$Level] $Message"
     }
     
+    # Find project root using robust detection
+    $projectRoot = if ($env:PROJECT_ROOT) { 
+        $env:PROJECT_ROOT 
+    } elseif (Test-Path '/workspaces/AitherLabs') { 
+        '/workspaces/AitherLabs' 
+    } else { 
+        Split-Path -Parent (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))) 
+    }
+    
     # Import the UnifiedMaintenance module
-    $projectRoot = $env:PROJECT_ROOT
-    $unifiedMaintenancePath = Join-Path $projectRoot "core-runner/modules/UnifiedMaintenance"
+    $unifiedMaintenancePath = Join-Path $projectRoot "aither-core/modules/UnifiedMaintenance"
     
     try {
         Import-Module $unifiedMaintenancePath -Force -ErrorAction Stop

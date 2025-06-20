@@ -55,10 +55,28 @@ function New-PatchIssue {
         [string[]]$Labels = @(),
 
         [Parameter(Mandatory = $false)]
+        [string[]]$TestOutput = @(),
+
+        [Parameter(Mandatory = $false)]
+        [string[]]$ErrorDetails = @(),
+
+        [Parameter(Mandatory = $false)]
+        [string]$TestType = "Unknown",
+
+        [Parameter(Mandatory = $false)]
+        [hashtable]$TestContext = @{},
+
+        [Parameter(Mandatory = $false)]
         [switch]$DryRun
     )
 
     begin {
+        # Import the test analysis function
+        $analysisPath = Join-Path $PSScriptRoot "../Private/Get-TestAnalysisContext.ps1"
+        if (Test-Path $analysisPath) {
+            . $analysisPath
+        }
+
         function Write-IssueLog {
             param($Message, $Level = "INFO")
             if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
@@ -68,7 +86,7 @@ function New-PatchIssue {
             }
         }
 
-        Write-IssueLog "Creating GitHub issue for: $Description" -Level "INFO"
+        Write-IssueLog "Creating enhanced GitHub issue for: $Description" -Level "INFO"
     }
 
     process {
@@ -76,6 +94,32 @@ function New-PatchIssue {
             # Check GitHub CLI availability
             if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
                 throw "GitHub CLI (gh) not found. Please install and authenticate with GitHub CLI."
+            }
+
+            # Perform intelligent test analysis if test data is provided
+            $analysisResult = $null
+            if ($TestOutput.Count -gt 0 -or $ErrorDetails.Count -gt 0) {
+                Write-IssueLog "Performing intelligent test analysis..." -Level "INFO"
+                
+                $analysisParams = @{
+                    TestOutput = $TestOutput
+                    ErrorDetails = $ErrorDetails
+                    TestType = $TestType
+                    AdditionalContext = $TestContext
+                }
+                
+                if (Get-Command Get-TestAnalysisContext -ErrorAction SilentlyContinue) {
+                    $analysisResult = Get-TestAnalysisContext @analysisParams
+                    
+                    # Merge analysis results with manually specified files
+                    if ($analysisResult.AffectedFiles.Count -gt 0) {
+                        $AffectedFiles = ($AffectedFiles + $analysisResult.AffectedFiles) | Sort-Object -Unique
+                    }
+                    
+                    Write-IssueLog "Analysis complete. Confidence: $($analysisResult.Confidence), Found $($analysisResult.AffectedFiles.Count) files, $($analysisResult.AffectedModules.Count) modules" -Level "INFO"
+                } else {
+                    Write-IssueLog "Test analysis function not available, using manual file list" -Level "WARN"
+                }
             }
 
             # Create issue title and body
@@ -106,10 +150,62 @@ function New-PatchIssue {
 
 ### Files Affected
 $(if ($AffectedFiles.Count -gt 0) {
-    ($AffectedFiles | ForEach-Object { "- ``$_``" }) -join "`n"
+    "**Detected Files** ($($AffectedFiles.Count) total):`n" + (($AffectedFiles | ForEach-Object { "- ``$_``" }) -join "`n")
 } else {
-    "**Detection Status**: No specific files identified`n`n**Methods Attempted**: Stack trace analysis, error context parsing`n**Possible Reasons**: Global system error, configuration issue, or runtime failure not tied to specific files`n**Investigation**: Manual review of error details and logs may be required`n**Context**: Review the error description and system logs for additional clues`n**Note**: Some errors affect the entire system or environment rather than specific files."
+    "**Detection Status**: No specific files identified`n`n**Methods Attempted**: Stack trace analysis, error context parsing, intelligent pattern matching`n**Possible Reasons**: Global system error, configuration issue, or runtime failure not tied to specific files`n**Investigation**: Manual review of error details and logs may be required`n**Context**: Review the error description and system logs for additional clues`n**Note**: Some errors affect the entire system or environment rather than specific files."
 })
+
+$(if ($analysisResult) { @"
+
+### Intelligent Analysis Results
+**Analysis Confidence**: $($analysisResult.Confidence)
+**Analysis Timestamp**: $($analysisResult.AnalysisTimestamp)
+
+#### Affected Modules ($($analysisResult.AffectedModules.Count) detected)
+$(if ($analysisResult.AffectedModules.Count -gt 0) {
+    ($analysisResult.AffectedModules | ForEach-Object { "- ``$_``" }) -join "`n"
+} else {
+    "*No modules specifically identified*"
+})
+
+#### Affected Capabilities ($($analysisResult.AffectedCapabilities.Count) detected)
+$(if ($analysisResult.AffectedCapabilities.Count -gt 0) {
+    ($analysisResult.AffectedCapabilities | ForEach-Object { "- $_" }) -join "`n"
+} else {
+    "*No specific capabilities identified*"
+})
+
+#### Error Categories ($($analysisResult.ErrorCategories.Count) detected)
+$(if ($analysisResult.ErrorCategories.Count -gt 0) {
+    ($analysisResult.ErrorCategories | ForEach-Object { "- $_" }) -join "`n"
+} else {
+    "*No error categories identified*"
+})
+
+#### Failure Analysis
+$(if ($analysisResult.FailureReasons.Count -gt 0) {
+    "**Root Causes**:`n" + (($analysisResult.FailureReasons | ForEach-Object { "- $_" }) -join "`n")
+} else {
+    "*No specific failure reasons identified*"
+})
+
+#### Automated Recommendations
+$(if ($analysisResult.Recommendations.Count -gt 0) {
+    ($analysisResult.Recommendations | ForEach-Object { "- $_" }) -join "`n"
+} else {
+    "*No specific recommendations available*"
+})
+
+#### Technical Details
+- **Test Type**: $($analysisResult.TechnicalDetails.TestType)
+- **Output Lines Analyzed**: $($analysisResult.TechnicalDetails.TotalOutputLines)
+- **Error Lines Analyzed**: $($analysisResult.TechnicalDetails.TotalErrorLines)
+- **Working Directory**: $($analysisResult.TechnicalDetails.WorkingDirectory)
+$(if ($analysisResult.TechnicalDetails.RawErrorSample) {
+    "- **Error Sample**: ``$($analysisResult.TechnicalDetails.RawErrorSample)``"
+})
+
+"@ } else { "" })
 
 ### Review Checklist
 - [ ] Code review completed
@@ -150,15 +246,16 @@ $(if ($AffectedFiles.Count -gt 0) {
 - **Timestamp**: $($systemInfo.Timestamp)
 
 ### Automation Details
-- **Created by**: PatchManager v2.0 (Consolidated)
+- **Created by**: PatchManager v2.1 (Enhanced with Intelligent Analysis)
 - **Operation Type**: Issue Creation
 - **Priority Level**: $Priority
 - **Auto-generated**: Yes
+- **Analysis Engine**: $(if ($analysisResult) { "Enabled (Confidence: $($analysisResult.Confidence))" } else { "Disabled" })
 - **Tracking ID**: PATCH-$(Get-Date -Format 'yyyyMMdd-HHmmss')
 - **Last Updated**: $timestamp
 
 ---
-*Created by PatchManager Consolidated v2.0*
+*Created by PatchManager Enhanced v2.1 with Intelligent Test Analysis*
 "@
 
             if ($DryRun) {
@@ -171,17 +268,31 @@ $(if ($AffectedFiles.Count -gt 0) {
                 }
             }
 
-            # Prepare labels
+            # Prepare labels and ensure they exist
             $allLabels = @("patch") + $Labels
             if ($Priority -eq "High" -or $Priority -eq "Critical") {
                 $allLabels += "priority"
+            }
+
+            # Ensure required labels exist, create them if needed
+            foreach ($label in $allLabels) {
+                $labelCheck = gh label list --search $label 2>&1 | Out-String
+                if (-not $labelCheck.Contains($label)) {
+                    Write-IssueLog "Creating missing label: $label" -Level "INFO"
+                    $labelColor = switch ($label) {
+                        "patch" { "0366d6" }
+                        "priority" { "d93f0b" }
+                        default { "7057ff" }
+                    }
+                    gh label create $label --color $labelColor --description "Auto-created by PatchManager" 2>&1 | Out-Null
+                }
             }
 
             # Create the issue with robust error handling
             Write-IssueLog "Creating GitHub issue: $issueTitle" -Level "INFO"
             $result = gh issue create --title $issueTitle --body $issueBody --label ($allLabels -join ',') 2>&1
 
-            # Handle label errors gracefully
+            # Handle any remaining label errors gracefully
             if ($LASTEXITCODE -ne 0 -and $result -match "not found") {
                 Write-IssueLog "Label issue detected, creating without labels" -Level "WARN"
                 $result = gh issue create --title $issueTitle --body $issueBody 2>&1

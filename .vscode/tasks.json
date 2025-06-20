@@ -220,16 +220,87 @@
             }
         },
         {
-            "label": "🚀 Run Bulletproof Tests - Quick",
+            "label": "🚀 Bulletproof Validation - Quick",
             "type": "shell",
             "command": "pwsh",
             "args": [
                 "-File",
-                "tests/Run-BulletproofTests.ps1",
-                "-TestSuite",
+                "tests/Run-BulletproofValidation.ps1",
+                "-ValidationLevel",
+                "Quick"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🔥 Bulletproof Validation - Standard",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "tests/Run-BulletproofValidation.ps1",
+                "-ValidationLevel",
+                "Standard"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🎯 Bulletproof Validation - Complete",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "tests/Run-BulletproofValidation.ps1",
+                "-ValidationLevel",
+                "Complete"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "⚡ Bulletproof Validation - Quick (Fail-Fast)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "tests/Run-BulletproofValidation.ps1",
+                "-ValidationLevel",
                 "Quick",
-                "-LogLevel",
-                "Detailed"
+                "-FailFast"
             ],
             "group": "test",
             "presentation": {
@@ -246,17 +317,16 @@
             }
         },
         {
-            "label": "🔥 Run Bulletproof Tests - Core",
+            "label": "🔧 Bulletproof Validation - CI Mode",
             "type": "shell",
             "command": "pwsh",
             "args": [
                 "-File",
-                "tests/Run-BulletproofTests.ps1",
-                "-TestSuite",
-                "Core",
-                "-LogLevel",
-                "Detailed",
-                "-GenerateReport"
+                "tests/Run-BulletproofValidation.ps1",
+                "-ValidationLevel",
+                "Standard",
+                "-CI",
+                "-FailFast"
             ],
             "group": "test",
             "presentation": {
@@ -273,17 +343,16 @@
             }
         },
         {
-            "label": "🎯 Run Bulletproof Tests - All",
+            "label": "📊 Bulletproof Validation - Performance Focus",
             "type": "shell",
             "command": "pwsh",
             "args": [
                 "-File",
-                "tests/Run-BulletproofTests.ps1",
-                "-TestSuite",
-                "All",
-                "-LogLevel",
-                "Detailed",
-                "-GenerateReport"
+                "tests/Run-BulletproofValidation.ps1",
+                "-ValidationLevel",
+                "Complete",
+                "-MaxParallelJobs",
+                "4"
             ],
             "group": "test",
             "presentation": {
@@ -300,93 +369,12 @@
             }
         },
         {
-            "label": "⚡ Run Bulletproof Tests - NonInteractive",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "tests/Run-BulletproofTests.ps1",
-                "-TestSuite",
-                "NonInteractive",
-                "-LogLevel",
-                "Verbose",
-                "-GenerateReport"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🔧 Run Bulletproof Tests - CI Mode",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "tests/Run-BulletproofTests.ps1",
-                "-TestSuite",
-                "Core",
-                "-LogLevel",
-                "Normal",
-                "-CI"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "📊 Run Performance Tests",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "tests/Run-BulletproofTests.ps1",
-                "-TestSuite",
-                "Performance",
-                "-LogLevel",
-                "Detailed",
-                "-GenerateReport"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🧹 Clean Bulletproof Test Results",
+            "label": "🧹 Clean Bulletproof Validation Results",
             "type": "shell",
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Remove-Item -Path 'tests/results/bulletproof/*', 'logs/bulletproof*', 'logs/tests/*' -Force -Recurse -ErrorAction SilentlyContinue; Write-Host '🧹 Bulletproof test results and logs cleaned' -ForegroundColor Green"
+                "Remove-Item -Path 'tests/results/bulletproof-validation/*', 'logs/bulletproof-validation/*' -Force -Recurse -ErrorAction SilentlyContinue; Write-Host '🧹 Bulletproof validation results cleaned' -ForegroundColor Green"
             ],
             "group": "build",
             "presentation": {
@@ -540,17 +528,14 @@
         // Testing Workflows
         // ========================================
         {
-            "label": "Tests: Run Bulletproof Suite",
+            "label": "Tests: Run Bulletproof Validation",
             "type": "shell",
             "command": "pwsh",
             "args": [
                 "-File",
-                "./tests/Run-BulletproofTests.ps1",
-                "-TestSuite",
-                "${input:testSuite}",
-                "-LogLevel",
-                "Detailed",
-                "-GenerateReport"
+                "./tests/Run-BulletproofValidation.ps1",
+                "-ValidationLevel",
+                "${input:validationLevel}"
             ],
             "group": "test",
             "presentation": {
@@ -625,7 +610,7 @@
             "command": "pwsh",
             "args": [
                 "-File",
-                "./core-runner/core_app/core-runner.ps1",
+                "./aither-core/core-runner.ps1",
                 "-NonInteractive",
                 "-Scripts",
                 "${input:scriptNames}",
@@ -652,7 +637,7 @@
             "command": "pwsh",
             "args": [
                 "-File",
-                "./core-runner/core_app/core-runner.ps1",
+                "./aither-core/core-runner.ps1",
                 "-NonInteractive",
                 "-Auto",
                 "-WhatIf",
@@ -802,18 +787,14 @@
             "type": "promptString"
         },
         {
-            "id": "testSuite",
-            "description": "Select test suite",
-            "default": "Quick",
+            "id": "validationLevel",
+            "description": "Select validation level",
+            "default": "Standard",
             "type": "pickString",
             "options": [
-                "All",
-                "Core",
-                "Modules",
-                "Integration",
-                "Performance",
                 "Quick",
-                "NonInteractive"
+                "Standard",
+                "Complete"
             ]
         },
         {

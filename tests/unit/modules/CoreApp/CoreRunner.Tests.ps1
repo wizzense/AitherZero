@@ -23,7 +23,7 @@ BeforeAll {
     $env:PESTER_RUN = 'true'
     
     # Set up test environment
-    $script:CoreRunnerPath = "$env:PROJECT_ROOT/core-runner/core_app"
+    $script:CoreRunnerPath = "$env:PROJECT_ROOT/aither-core"
     $script:CoreRunnerScript = "$script:CoreRunnerPath/core-runner.ps1"
 
     

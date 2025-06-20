@@ -9,7 +9,7 @@ Users experienced an off-by-one error when selecting scripts in the interactive 
 
 ## Root Cause
 
-The issue was in the script selection logic in `core-runner/core_app/core-runner.ps1` line 355:
+The issue was in the script selection logic in `aither-core/core-runner.ps1` line 355:
 
 ```powershell
 # BEFORE (problematic)

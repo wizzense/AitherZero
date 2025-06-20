@@ -9,10 +9,10 @@
 - **`kicker-bootstrap-enhanced.ps1`** - Enhanced bootstrap with backward compatibility (v2.1.0)  
 - **`bootstrap-launcher.ps1`** - Minimal web launcher for one-line installation
 
-### **2. Core Application Module (CoreApp)**
-**Location**: `core-runner/core_app/`
-- **`CoreApp.psm1`** - Parent orchestration module managing all other modules
-- **`core-runner.ps1`** - Main runner script for lab automation
+### **2. Core Application Module (AitherCore)**
+**Location**: `aither-core/`
+- **`AitherCore.psm1`** - Parent orchestration module managing all other modules
+- **`aither-core.ps1`** - Main runner script for lab automation
 - **`default-config.json`** - Default configuration settings
 
 **New Orchestration Functions**:
@@ -39,7 +39,7 @@
 - **`UnifiedMaintenance/`** - Centralized maintenance operations
 
 ### **4. Automation Scripts**
-**Location**: `core-runner/core_app/scripts/`
+**Location**: `aither-core/scripts/`
 
 #### **Core Infrastructure Scripts**:
 - **`0000_Cleanup-Files.ps1`** - Remove lab infrastructure repos

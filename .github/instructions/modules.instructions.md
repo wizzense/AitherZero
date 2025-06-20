@@ -5,7 +5,7 @@ description: "Project module usage guidelines and standards"
 
 # Module Guidelines
 
-Import project modules from `core-runner/modules` and use their exported commands instead of writing ad-hoc utilities.
+Import project modules from `aither-core/modules` and use their exported commands instead of writing ad-hoc utilities.
 
 ## Core Project Modules
 
@@ -24,7 +24,7 @@ Import project modules from `core-runner/modules` and use their exported command
 Always import modules with force parameter:
 
 ```powershell
-Import-Module './core-runner/modules/ModuleName' -Force
+Import-Module './aither-core/modules/ModuleName' -Force
 ```
 
 ## Error Handling Standard

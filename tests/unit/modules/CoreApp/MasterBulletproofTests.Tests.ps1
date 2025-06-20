@@ -28,7 +28,7 @@ BeforeAll {
     }
 
     # Test infrastructure paths
-    $script:CoreAppPath = Join-Path $script:ProjectRoot "core-runner/core_app"
+    $script:CoreAppPath = Join-Path $script:ProjectRoot "aither-core"
     $script:ModulesPath = Join-Path $script:ProjectRoot "core-runner/modules"
     $script:TestLogDir = Join-Path $script:ProjectRoot "logs/bulletproof-master"
     $script:ConfigFile = Join-Path $script:CoreAppPath "default-config.json"

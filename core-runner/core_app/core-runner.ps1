@@ -160,7 +160,7 @@ Write-Verbose "Final NonInteractive value: $NonInteractive"
 # Determine repository root - go up one level from core_app to core-runner, then up one more to repo root
 $repoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $env:PROJECT_ROOT = $repoRoot
-$env:PWSH_MODULES_PATH = "$repoRoot/core-runner/modules"
+$env:PWSH_MODULES_PATH = "$repoRoot/aither-core/modules"
 
 Write-Verbose "Repository root: $repoRoot"
 Write-Verbose "Modules path: $env:PWSH_MODULES_PATH"
@@ -271,8 +271,13 @@ try {
     Write-CustomLog "Configuration file: $ConfigFile" -Level DEBUG
     Write-CustomLog "Verbosity level: $Verbosity" -Level DEBUG
 
-    # Get available scripts
-    $scriptsPath = Join-Path $PSScriptRoot 'scripts'
+    # Get available scripts - use path from configuration
+    $scriptsRelativePath = $config.scripts.path ?? './scripts'
+    $scriptsPath = if ([System.IO.Path]::IsPathRooted($scriptsRelativePath)) {
+        $scriptsRelativePath
+    } else {
+        Join-Path $repoRoot $scriptsRelativePath
+    }
     if (Test-Path $scriptsPath) {
         $availableScripts = Get-ChildItem -Path $scriptsPath -Filter '*.ps1' | Sort-Object Name
         Write-CustomLog "Found $($availableScripts.Count) scripts" -Level DEBUG
@@ -361,7 +366,7 @@ try {
                             # Check if input is a menu number (1-2 digits, within menu range)
                             if ($item -match '^\d{1,2}$' -and [int]$item -le $availableScripts.Count -and [int]$item -gt 0) {
                                 $script = $availableScripts[[int]$item - 1]
-                            } 
+                            }
                             # Check if input is a 4-digit script name (like 0002, 0006)
                             elseif ($item -match '^\d{4}$') {
                                 $script = $availableScripts | Where-Object { $_.BaseName -like "*$item*" } | Select-Object -First 1

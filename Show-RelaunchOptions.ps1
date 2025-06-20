@@ -39,7 +39,7 @@ foreach ($script in $scripts) {
 
 Write-Host ""
 Write-Host "💡 Manual Options:" -ForegroundColor Yellow
-Write-Host "  Import-Module './core-runner/core_app/CoreApp.psm1' -Force"
+Write-Host "  Import-Module './aither-core/CoreApp.psm1' -Force"
 Write-Host "  Initialize-CoreApplication"
 Write-Host ""
 

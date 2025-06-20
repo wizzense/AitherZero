@@ -5,9 +5,17 @@ BeforeAll {
         Write-Host "[$Level] $Message"
     }
     
+    # Find project root using robust detection
+    $projectRoot = if ($env:PROJECT_ROOT) { 
+        $env:PROJECT_ROOT 
+    } elseif (Test-Path '/workspaces/AitherLabs') { 
+        '/workspaces/AitherLabs' 
+    } else { 
+        Split-Path -Parent (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))) 
+    }
+    
     # Import the LabRunner module
-    $projectRoot = $env:PROJECT_ROOT
-    $labRunnerPath = Join-Path $projectRoot "core-runner/modules/LabRunner"
+    $labRunnerPath = Join-Path $projectRoot "aither-core/modules/LabRunner"
     
     try {
         Import-Module $labRunnerPath -Force -ErrorAction Stop

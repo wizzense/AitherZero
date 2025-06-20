@@ -25,7 +25,7 @@ Invoke-PatchWorkflow -PatchDescription "Fix non-interactive mode issues" -PatchO
 Invoke-PatchWorkflow -PatchDescription "Update module exports" -PatchOperation {
     # Code changes
     Update-ModuleManifest -Path "Module.psd1" -FunctionsToExport @("Function1")
-} -TestCommands @("pwsh -Command 'Import-Module ./core-runner/modules/LabRunner -Force'") -CreatePR
+} -TestCommands @("pwsh -Command 'Import-Module ./aither-core/modules/LabRunner -Force'") -CreatePR
 
 # Simple patch without GitHub integration
 Invoke-PatchWorkflow -PatchDescription "Quick local fix" -CreateIssue:$false -PatchOperation {

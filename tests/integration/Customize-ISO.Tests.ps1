@@ -1,9 +1,16 @@
 # Required test file header
-. (Join-Path $PSScriptRoot 'helpers' 'TestHelpers.ps1')
+$script:TestRootPath = Split-Path -Parent $PSScriptRoot
+$script:HelpersPath = Join-Path $script:TestRootPath 'helpers' 'TestHelpers.ps1'
+if (Test-Path $script:HelpersPath) {
+    . $script:HelpersPath
+}
 
-Describe 'Customize-ISO Tests' {    BeforeAll {
-        Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force
-    }
+Describe 'Customize-ISO Tests' -Tags @('Integration', 'ISO') {
+    BeforeAll {
+        $script:ModulePath = Join-Path $script:TestRootPath '../aither-core/modules/LabRunner'
+        if (Test-Path $script:ModulePath) {
+            Import-Module $script:ModulePath -Force
+        }
     }
 
     Context 'Module Loading' {
@@ -21,6 +28,7 @@ Describe 'Customize-ISO Tests' {    BeforeAll {
 
     AfterAll {
         # Cleanup test resources
+        Remove-Module LabRunner -Force -ErrorAction SilentlyContinue
     }
 }
 

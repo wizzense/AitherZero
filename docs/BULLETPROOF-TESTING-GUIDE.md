@@ -147,31 +147,31 @@ All bulletproof tests generate comprehensive log files:
 
 #### ✅ **Basic Non-Interactive**
 ```powershell
-core-runner.ps1 -NonInteractive -Verbosity detailed
+aither-core.ps1 -NonInteractive -Verbosity detailed
 # Expected: Exit code 0, helpful message, proper logging
 ```
 
 #### ✅ **Auto Mode**
 ```powershell
-core-runner.ps1 -NonInteractive -Auto -WhatIf -Verbosity detailed
+aither-core.ps1 -NonInteractive -Auto -WhatIf -Verbosity detailed
 # Expected: Exit code 0, all scripts processed, no actual changes
 ```
 
 #### ✅ **Specific Scripts**
 ```powershell
-core-runner.ps1 -NonInteractive -Scripts "0200_Get-SystemInfo" -WhatIf
+aither-core.ps1 -NonInteractive -Scripts "0200_Get-SystemInfo" -WhatIf
 # Expected: Exit code 0, script executed, proper output
 ```
 
 #### ✅ **Error Scenarios**
 ```powershell
-core-runner.ps1 -NonInteractive -Scripts "NonExistentScript" -WhatIf
+aither-core.ps1 -NonInteractive -Scripts "NonExistentScript" -WhatIf
 # Expected: Exit code 0, graceful handling, warning logged
 ```
 
 #### ✅ **Missing Configuration**
 ```powershell
-core-runner.ps1 -NonInteractive -ConfigFile "nonexistent.json" -WhatIf
+aither-core.ps1 -NonInteractive -ConfigFile "nonexistent.json" -WhatIf
 # Expected: Exit code 0 or 1, fallback or graceful error
 ```
 
@@ -288,7 +288,7 @@ stages:
 ```powershell
 # Solution: Check environment variables and module paths
 $env:PROJECT_ROOT = (Get-Location).Path
-$env:PWSH_MODULES_PATH = "$env:PROJECT_ROOT/core-runner/modules"
+$env:PWSH_MODULES_PATH = "$env:PROJECT_ROOT/aither-core/modules"
 ```
 
 #### **Permission Issues**

@@ -83,7 +83,7 @@ $bulletproofDir = Join-Path $resultsDir "bulletproof"
 # Import required modules
 try {
     Import-Module Pester -Force -MinimumVersion 5.0 -ErrorAction Stop
-    Import-Module "$projectRoot/core-runner/modules/Logging" -Force -ErrorAction SilentlyContinue
+    Import-Module "$projectRoot/aither-core/modules/Logging" -Force -ErrorAction SilentlyContinue
 } catch {
     Write-Error "Failed to import required modules: $_"
     exit 1
@@ -231,10 +231,10 @@ $pesterConfig = @{
     CodeCoverage = @{
         Enabled = ($TestSuite -in @('Core', 'All') -and -not $CI)
         Path = @(
-            'core-runner/core_app/core-runner.ps1',
-            'core-runner/core_app/CoreApp.psm1',
-            'core-runner/modules/*/Public/*.ps1',
-            'core-runner/modules/*/*.psm1'
+            'aither-core/aither-core.ps1',
+            'aither-core/AitherCore.psm1',
+            'aither-core/modules/*/Public/*.ps1',
+            'aither-core/modules/*/*.psm1'
         ) | ForEach-Object { Join-Path $projectRoot $_ }
         OutputFormat = 'JaCoCo'
         OutputPath = Join-Path $bulletproofDir "BulletproofCoverage-$TestSuite-$(Get-Date -Format 'yyyyMMddHHmmss').xml"

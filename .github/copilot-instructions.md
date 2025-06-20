@@ -10,7 +10,7 @@ This project is a **PowerShell-based infrastructure automation framework** using
 
 **Code Style**: Follow One True Brace Style (OTBS) with consistent indentation and spacing.
 
-**Module Architecture**: Import modules from `core-runner/modules` using `Import-Module` with `-Force` parameter.
+**Module Architecture**: Import modules from `aither-core/modules` using `Import-Module` with `-Force` parameter.
 
 **Error Handling**: Always implement comprehensive try-catch blocks with detailed logging using the `Logging` module.
 

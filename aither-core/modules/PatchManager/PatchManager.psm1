@@ -85,6 +85,28 @@ try {
     Write-Warning "Error initializing cross-platform environment: $_"
 }
 
+# Load Private Functions
+$privateFunctions = Get-ChildItem -Path (Join-Path $PSScriptRoot 'Private') -Filter '*.ps1' -ErrorAction SilentlyContinue
+foreach ($function in $privateFunctions) {
+    try {
+        . $function.FullName
+        Write-Verbose "Loaded private function: $($function.BaseName)"
+    } catch {
+        Write-Warning "Failed to load private function $($function.Name): $_"
+    }
+}
+
+# Load Public Functions 
+$publicFunctions = Get-ChildItem -Path (Join-Path $PSScriptRoot 'Public') -Filter '*.ps1' -ErrorAction SilentlyContinue
+foreach ($function in $publicFunctions) {
+    try {
+        . $function.FullName
+        Write-Verbose "Loaded public function: $($function.BaseName)"
+    } catch {
+        Write-Warning "Failed to load public function $($function.Name): $_"
+    }
+}
+
 # Export only the 4 core functions 
 Export-ModuleMember -Function @(
     'Invoke-PatchWorkflow',

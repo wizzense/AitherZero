@@ -165,7 +165,7 @@ aitherium/
    - Updates PATH if installed but not found in PATH.
 
 2. **Configuration**: Downloads and loads default configuration file.
-   - Uses `core-runner/core_app/default-config.json` by default
+   - Uses `aither-core/default-config.json` by default
    - Override with `-ConfigFile` parameter
 
 3. **Repository Clone**: Clones this repository to local workspace.
@@ -350,7 +350,7 @@ Invoke-ParallelLabRunner -ConfigPath "./configs/infrastructure_config.yaml"
 ## Project Structure
 
 - **/core-runner/modules/**: PowerShell modules (PatchManager, LabRunner, BackupManager)
-- **/core-runner/core_app/scripts/**: Core automation scripts (0000-0114 series)
+- **/aither-core/scripts/**: Core automation scripts (0000-0114 series)
 - **/scripts/**: Additional automation and maintenance scripts
 - **/opentofu/**: Infrastructure as Code configurations
 - **/tests/**: Pester test files for validation
@@ -393,7 +393,7 @@ After `kicker-git.ps1` completes, you'll be in the project directory with severa
 
 ```powershell
 # If you prefer manual control:
-Import-Module "./core-runner/core_app/CoreApp.psm1" -Force
+Import-Module "./aither-core/CoreApp.psm1" -Force
 Initialize-CoreApplication
 ```
 

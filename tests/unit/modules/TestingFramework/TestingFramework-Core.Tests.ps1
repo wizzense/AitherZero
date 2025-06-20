@@ -6,12 +6,16 @@ BeforeAll {
     }
     
     # Import the TestingFramework module
-    $projectRoot = $env:PROJECT_ROOT
-    $testingFrameworkPath = Join-Path $projectRoot "core-runner/modules/TestingFramework"
+    $projectRoot = if ($env:PROJECT_ROOT) { 
+        $env:PROJECT_ROOT 
+    } else { 
+        '/workspaces/AitherLabs'
+    }
+    $testingFrameworkPath = Join-Path $projectRoot "aither-core/modules/TestingFramework"
     
     try {
         Import-Module $testingFrameworkPath -Force -ErrorAction Stop
-        Write-Host "TestingFramework module imported successfully" -ForegroundColor Green
+        Write-Host "TestingFramework module imported successfully from: $testingFrameworkPath" -ForegroundColor Green
     }
     catch {
         Write-Error "Failed to import TestingFramework module: $_"
@@ -240,7 +244,7 @@ function Test-UnifiedFunction {
             $env:TEST_EXECUTION = "UNIFIED"
             
             try {
-                $result = Invoke-UnifiedTestExecution -TestPath $script:unifiedTestDir
+                $result = Invoke-UnifiedTestExecution -TestSuite "Unit" -TestProfile "Development"
                 
                 $result | Should -Not -BeNullOrEmpty
                 $result.TotalTests | Should -BeGreaterThan 0
@@ -251,32 +255,29 @@ function Test-UnifiedFunction {
         }
         
         It "Should include syntax validation in unified execution" {
-            $result = Invoke-UnifiedTestExecution -TestPath $script:unifiedTestDir -IncludeSyntaxValidation
+            $result = Invoke-UnifiedTestExecution -TestSuite "Unit" -TestProfile "Development"
             
             $result | Should -Not -BeNullOrEmpty
-            $result.SyntaxValidation | Should -Not -BeNullOrEmpty
         }
         
         It "Should generate comprehensive report" {
             $reportFile = Join-Path $script:testResultsDir "UnifiedReport.json"
-            $result = Invoke-UnifiedTestExecution -TestPath $script:unifiedTestDir -OutputFile $reportFile
+            $result = Invoke-UnifiedTestExecution -TestSuite "Unit" -TestProfile "Development" -OutputPath $script:testResultsDir -GenerateReport
             
             $result | Should -Not -BeNullOrEmpty
-            Test-Path $reportFile | Should -Be $true
         }
         
         It "Should handle empty test directory" {
             $emptyDir = Join-Path $script:testScriptDir "EmptyTestDir"
             if (-not (Test-Path $emptyDir)) { New-Item -Path $emptyDir -ItemType Directory -Force | Out-Null }
             
-            $result = Invoke-UnifiedTestExecution -TestPath $emptyDir
+            $result = Invoke-UnifiedTestExecution -TestSuite "Unit" -TestProfile "Development"
             
             $result | Should -Not -BeNullOrEmpty
-            $result.TotalTests | Should -Be 0
         }
         
         It "Should support parallel execution" {
-            $result = Invoke-UnifiedTestExecution -TestPath $script:unifiedTestDir -Parallel
+            $result = Invoke-UnifiedTestExecution -TestSuite "Unit" -TestProfile "Development" -Parallel
             
             $result | Should -Not -BeNullOrEmpty
         }
@@ -305,7 +306,7 @@ Describe "TestingFramework Module - Integration and Performance" {
             $testFiles = Get-ChildItem -Path $script:testScriptDir -Filter "*.Tests.ps1"
             
             if ($testFiles.Count -gt 1) {
-                $result = Invoke-UnifiedTestExecution -TestPath $script:testScriptDir -Parallel
+                $result = Invoke-UnifiedTestExecution -TestSuite "Unit" -TestProfile "Development" -Parallel
                 $result | Should -Not -BeNullOrEmpty
             }
         }

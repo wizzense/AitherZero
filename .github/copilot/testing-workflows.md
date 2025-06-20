@@ -154,7 +154,7 @@ Invoke-Pester -Path "tests/unit/modules/SpecificModule" -Output Diagnostic
 pwsh ./tests/Run-BulletproofTests.ps1 -TestSuite Performance -LogLevel Detailed
 
 # Benchmark specific operations
-Measure-Command { pwsh ./core-runner/core_app/core-runner.ps1 -NonInteractive -Auto -WhatIf }
+Measure-Command { pwsh ./aither-core/core-runner.ps1 -NonInteractive -Auto -WhatIf }
 ```
 
 ### Memory and Resource Testing

@@ -1,0 +1,382 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="OpenTofu Lab Automation - Bulletproof Quick Tests" total="17" errors="0" failures="6" not-run="0" inconclusive="0" ignored="0" skipped="1" invalid="0" date="2025-06-20" time="04:44:54">
+  <environment machine-name="codespaces-5a091d" platform="Linux" user="codespace" os-version="6.8.0-1027-azure" user-domain="" clr-version="9.0.4" nunit-version="2.5.8.0" cwd="/workspaces/AitherLabs" />
+  <culture-info current-culture="" current-uiculture="" />
+  <test-suite type="TestFixture" name="OpenTofu Lab Automation - Bulletproof Quick Tests" executed="True" result="Failure" success="False" time="17.4892" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="/workspaces/AitherLabs/tests/unit/modules/CoreApp/NonInteractiveMode.Tests.ps1" executed="True" result="Failure" success="False" time="17.4892" asserts="0" description="/workspaces/AitherLabs/tests/unit/modules/CoreApp/NonInteractiveMode.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="CoreApp Non-Interactive Mode" executed="True" result="Failure" success="False" time="14.6997" asserts="0" description="CoreApp Non-Interactive Mode">
+            <results>
+              <test-suite type="TestFixture" name="CoreApp Non-Interactive Mode.Basic Non-Interactive Mode" executed="True" result="Failure" success="False" time="4.1663" asserts="0" description="CoreApp Non-Interactive Mode.Basic Non-Interactive Mode">
+                <results>
+                  <test-case description="Should exit gracefully with helpful message when no scripts specified" name="CoreApp Non-Interactive Mode.Basic Non-Interactive Mode.Should exit gracefully with helpful message when no scripts specified" time="1.2224" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected regular expression 'Non-interactive mode: use -Scripts parameter to specify which scripts to run, or -Auto for all scripts' to match '[2025-06-20 04:44:56.571] [SUCCESS] [Initialize-Loggin...] Logging system initialized
+[2025-06-20 04:44:56.577] [DEBUG  ] [core-runner.ps1     ] Core runner started
+[2025-06-20 04:44:56.582] [DEBUG  ] [core-runner.ps1     ] Loading configuration from: /workspaces/AitherLabs/core-runner/core_app/default-config.json
+[2025-06-20 04:44:56.596] [DEBUG  ] [core-runner.ps1     ] Starting Aitherium Infrastructure Automation Core Runner
+[2025-06-20 04:44:56.599] [DEBUG  ] [core-runner.ps1     ] Repository root: /workspaces/AitherLabs
+[2025-06-20 04:44:56.601] [DEBUG  ] [core-runner.ps1     ] Configuration file: /workspaces/AitherLabs/core-runner/core_app/default-config.json
+[2025-06-20 04:44:56.603] [DEBUG  ] [core-runner.ps1     ] Verbosity level: detailed
+[2025-06-20 04:44:56.605] [WARN   ] [core-runner.ps1     ] Scripts directory not found: /workspaces/AitherLabs/core-runner/core_app/scripts
+[2025-06-20 04:44:56.607] [INFO   ] [core-runner.ps1     ] No scripts to execute
+[2025-06-20 04:44:56.609] [DEBUG  ] [core-runner.ps1     ] Core runner completed successfully', but it did not match.</message>
+                      <stack-trace>at $result.OutputString | Should -Match "Non-interactive mode: use -Scripts parameter to specify which scripts to run, or -Auto for all scripts", /workspaces/AitherLabs/tests/unit/modules/CoreApp/NonInteractiveMode.Tests.ps1:124
+at Invoke-Assertion, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:8250
+at Should&lt;End&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:8193
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/NonInteractiveMode.Tests.ps1:124
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2157
+at Invoke-TestItem, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1199
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:835
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:893
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2160
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:940
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:893
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2160
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:940
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:893
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2160
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:940
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1688
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.ps1:3
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:3260
+at Invoke-InNewScriptScope, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:3267
+at Run-Test, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1691
+at Invoke-Test, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2512
+at Invoke-Pester&lt;End&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:4960</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should respect verbosity levels in non-interactive mode" name="CoreApp Non-Interactive Mode.Basic Non-Interactive Mode.Should respect verbosity levels in non-interactive mode" time="1.9133" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle missing configuration files gracefully" name="CoreApp Non-Interactive Mode.Basic Non-Interactive Mode.Should handle missing configuration files gracefully" time="1.0016" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="CoreApp Non-Interactive Mode.Auto Mode Non-Interactive" executed="True" result="Failure" success="False" time="7.0941" asserts="0" description="CoreApp Non-Interactive Mode.Auto Mode Non-Interactive">
+                <results>
+                  <test-case description="Should execute all scripts in WhatIf mode without errors" name="CoreApp Non-Interactive Mode.Auto Mode Non-Interactive.Should execute all scripts in WhatIf mode without errors" time="1.0359" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected regular expression 'Running all scripts in automatic mode' to match 'What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:00.696] [SUCCESS] [Initialize-Loggin...] Logging system initialized
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:00.705] [DEBUG  ] [core-runner.ps1     ] Core runner started
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:00.713] [DEBUG  ] [core-runner.ps1     ] Loading configuration from: /workspaces/AitherLabs/core-runner/core_app/default-config.json
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:00.749] [DEBUG  ] [core-runner.ps1     ] Starting Aitherium Infrastructure Automation Core Runner
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:00.759] [DEBUG  ] [core-runner.ps1     ] Repository root: /workspaces/AitherLabs
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:00.767] [DEBUG  ] [core-runner.ps1     ] Configuration file: /workspaces/AitherLabs/core-runner/core_app/default-config.json
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:00.771] [DEBUG  ] [core-runner.ps1     ] Verbosity level: detailed
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:00.773] [WARN   ] [core-runner.ps1     ] Scripts directory not found: /workspaces/AitherLabs/core-runner/core_app/scripts
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:00.776] [INFO   ] [core-runner.ps1     ] No scripts to execute
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:00.782] [DEBUG  ] [core-runner.ps1     ] Core runner completed successfully
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".', but it did not match.</message>
+                      <stack-trace>at $result.OutputString | Should -Match "Running all scripts in automatic mode", /workspaces/AitherLabs/tests/unit/modules/CoreApp/NonInteractiveMode.Tests.ps1:169
+at Invoke-Assertion, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:8250
+at Should&lt;End&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:8193
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/NonInteractiveMode.Tests.ps1:169
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2157
+at Invoke-TestItem, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1199
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:835
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:893
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2160
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:940
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:893
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2160
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:940
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:893
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2160
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:940
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1688
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.ps1:3
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:3260
+at Invoke-InNewScriptScope, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:3267
+at Run-Test, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1691
+at Invoke-Test, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2512
+at Invoke-Pester&lt;End&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:4960</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle Auto mode with Force parameter" name="CoreApp Non-Interactive Mode.Auto Mode Non-Interactive.Should handle Auto mode with Force parameter" time="1.0394" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected regular expression 'Running all scripts in automatic mode' to match 'What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:01.744] [SUCCESS] [Initialize-Loggin...] Logging system initialized
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:01.750] [DEBUG  ] [core-runner.ps1     ] Core runner started
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:01.758] [DEBUG  ] [core-runner.ps1     ] Loading configuration from: /workspaces/AitherLabs/core-runner/core_app/default-config.json
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:01.778] [DEBUG  ] [core-runner.ps1     ] Starting Aitherium Infrastructure Automation Core Runner
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:01.782] [DEBUG  ] [core-runner.ps1     ] Repository root: /workspaces/AitherLabs
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:01.785] [DEBUG  ] [core-runner.ps1     ] Configuration file: /workspaces/AitherLabs/core-runner/core_app/default-config.json
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:01.788] [DEBUG  ] [core-runner.ps1     ] Verbosity level: detailed
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:01.791] [WARN   ] [core-runner.ps1     ] Scripts directory not found: /workspaces/AitherLabs/core-runner/core_app/scripts
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:01.793] [INFO   ] [core-runner.ps1     ] No scripts to execute
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:01.800] [DEBUG  ] [core-runner.ps1     ] Core runner completed successfully
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".', but it did not match.</message>
+                      <stack-trace>at $result.OutputString | Should -Match "Running all scripts in automatic mode", /workspaces/AitherLabs/tests/unit/modules/CoreApp/NonInteractiveMode.Tests.ps1:182
+at Invoke-Assertion, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:8250
+at Should&lt;End&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:8193
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/NonInteractiveMode.Tests.ps1:182
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2157
+at Invoke-TestItem, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1199
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:835
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:893
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2160
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:940
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:893
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2160
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:940
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:893
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2160
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:940
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1688
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.ps1:3
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:3260
+at Invoke-InNewScriptScope, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:3267
+at Run-Test, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1691
+at Invoke-Test, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2512
+at Invoke-Pester&lt;End&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:4960</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should complete within reasonable time limits" name="CoreApp Non-Interactive Mode.Auto Mode Non-Interactive.Should complete within reasonable time limits" time="0.8477" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="CoreApp Non-Interactive Mode.Specific Script Execution" executed="True" result="Failure" success="False" time="9.3556" asserts="0" description="CoreApp Non-Interactive Mode.Specific Script Execution">
+                <results>
+                  <test-case description="Should execute a specific script in WhatIf mode" name="CoreApp Non-Interactive Mode.Specific Script Execution.Should execute a specific script in WhatIf mode" time="0.8394" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected regular expression 'Executing script: 0200_Get-SystemInfo' to match 'What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:03.493] [SUCCESS] [Initialize-Loggin...] Logging system initialized
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:03.498] [DEBUG  ] [core-runner.ps1     ] Core runner started
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:03.503] [DEBUG  ] [core-runner.ps1     ] Loading configuration from: /workspaces/AitherLabs/core-runner/core_app/default-config.json
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:03.510] [DEBUG  ] [core-runner.ps1     ] Starting Aitherium Infrastructure Automation Core Runner
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:03.513] [DEBUG  ] [core-runner.ps1     ] Repository root: /workspaces/AitherLabs
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:03.516] [DEBUG  ] [core-runner.ps1     ] Configuration file: /workspaces/AitherLabs/core-runner/core_app/default-config.json
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:03.518] [DEBUG  ] [core-runner.ps1     ] Verbosity level: detailed
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:03.521] [WARN   ] [core-runner.ps1     ] Scripts directory not found: /workspaces/AitherLabs/core-runner/core_app/scripts
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:03.523] [INFO   ] [core-runner.ps1     ] No scripts to execute
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:03.525] [DEBUG  ] [core-runner.ps1     ] Core runner completed successfully
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".', but it did not match.</message>
+                      <stack-trace>at $result.OutputString | Should -Match "Executing script: 0200_Get-SystemInfo", /workspaces/AitherLabs/tests/unit/modules/CoreApp/NonInteractiveMode.Tests.ps1:206
+at Invoke-Assertion, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:8250
+at Should&lt;End&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:8193
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/NonInteractiveMode.Tests.ps1:206
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2157
+at Invoke-TestItem, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1199
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:835
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:893
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2160
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:940
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:893
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2160
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:940
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:893
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2160
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:940
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1688
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.ps1:3
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:3260
+at Invoke-InNewScriptScope, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:3267
+at Run-Test, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1691
+at Invoke-Test, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2512
+at Invoke-Pester&lt;End&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:4960</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle multiple specific scripts" name="CoreApp Non-Interactive Mode.Specific Script Execution.Should handle multiple specific scripts" time="0.7431" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected regular expression 'Executing script: 0200_Get-SystemInfo' to match 'What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:04.226] [SUCCESS] [Initialize-Loggin...] Logging system initialized
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:04.231] [DEBUG  ] [core-runner.ps1     ] Core runner started
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:04.236] [DEBUG  ] [core-runner.ps1     ] Loading configuration from: /workspaces/AitherLabs/core-runner/core_app/default-config.json
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:04.243] [DEBUG  ] [core-runner.ps1     ] Starting Aitherium Infrastructure Automation Core Runner
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:04.246] [DEBUG  ] [core-runner.ps1     ] Repository root: /workspaces/AitherLabs
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:04.249] [DEBUG  ] [core-runner.ps1     ] Configuration file: /workspaces/AitherLabs/core-runner/core_app/default-config.json
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:04.251] [DEBUG  ] [core-runner.ps1     ] Verbosity level: detailed
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:04.253] [WARN   ] [core-runner.ps1     ] Scripts directory not found: /workspaces/AitherLabs/core-runner/core_app/scripts
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:04.255] [INFO   ] [core-runner.ps1     ] No scripts to execute
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".
+[2025-06-20 04:45:04.257] [DEBUG  ] [core-runner.ps1     ] Core runner completed successfully
+What if: Performing the operation "Add Content" on target "Path: /tmp/opentofu-lab-automation.log".', but it did not match.</message>
+                      <stack-trace>at $result.OutputString | Should -Match "Executing script: 0200_Get-SystemInfo", /workspaces/AitherLabs/tests/unit/modules/CoreApp/NonInteractiveMode.Tests.ps1:218
+at Invoke-Assertion, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:8250
+at Should&lt;End&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:8193
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/NonInteractiveMode.Tests.ps1:218
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2157
+at Invoke-TestItem, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1199
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:835
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:893
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2160
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:940
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:893
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2160
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:940
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:893
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2160
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:940
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1688
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.ps1:3
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:3260
+at Invoke-InNewScriptScope, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:3267
+at Run-Test, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1691
+at Invoke-Test, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2512
+at Invoke-Pester&lt;End&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:4960</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle nonexistent script gracefully" name="CoreApp Non-Interactive Mode.Specific Script Execution.Should handle nonexistent script gracefully" time="0.6736" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="CoreApp Non-Interactive Mode.Error Handling and Edge Cases" executed="True" result="Failure" success="False" time="13.1185" asserts="0" description="CoreApp Non-Interactive Mode.Error Handling and Edge Cases">
+                <results>
+                  <test-case description="Should handle empty script parameter gracefully" name="CoreApp Non-Interactive Mode.Error Handling and Edge Cases.Should handle empty script parameter gracefully" time="1.0609" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should properly detect non-interactive mode automatically" name="CoreApp Non-Interactive Mode.Error Handling and Edge Cases.Should properly detect non-interactive mode automatically" time="0.7193" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected regular expression 'Non-interactive mode' to match '[2025-06-20 04:45:06.643] [SUCCESS] [Initialize-Loggin...] Logging system initialized
+[2025-06-20 04:45:06.649] [DEBUG  ] [core-runner.ps1     ] Core runner started
+[2025-06-20 04:45:06.654] [DEBUG  ] [core-runner.ps1     ] Loading configuration from: /workspaces/AitherLabs/core-runner/core_app/default-config.json
+[2025-06-20 04:45:06.667] [DEBUG  ] [core-runner.ps1     ] Starting Aitherium Infrastructure Automation Core Runner
+[2025-06-20 04:45:06.670] [DEBUG  ] [core-runner.ps1     ] Repository root: /workspaces/AitherLabs
+[2025-06-20 04:45:06.673] [DEBUG  ] [core-runner.ps1     ] Configuration file: /workspaces/AitherLabs/core-runner/core_app/default-config.json
+[2025-06-20 04:45:06.675] [DEBUG  ] [core-runner.ps1     ] Verbosity level: detailed
+[2025-06-20 04:45:06.677] [WARN   ] [core-runner.ps1     ] Scripts directory not found: /workspaces/AitherLabs/core-runner/core_app/scripts
+[2025-06-20 04:45:06.679] [INFO   ] [core-runner.ps1     ] No scripts to execute
+[2025-06-20 04:45:06.684] [DEBUG  ] [core-runner.ps1     ] Core runner completed successfully', but it did not match.</message>
+                      <stack-trace>at $result.OutputString | Should -Match "Non-interactive mode", /workspaces/AitherLabs/tests/unit/modules/CoreApp/NonInteractiveMode.Tests.ps1:257
+at Invoke-Assertion, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:8250
+at Should&lt;End&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:8193
+at &lt;ScriptBlock&gt;, /workspaces/AitherLabs/tests/unit/modules/CoreApp/NonInteractiveMode.Tests.ps1:257
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2157
+at Invoke-TestItem, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1199
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:835
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:893
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2160
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:940
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:893
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2160
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:940
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:893
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2024
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1985
+at Invoke-ScriptBlock, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2160
+at Invoke-Block, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:940
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1688
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.ps1:3
+at &lt;ScriptBlock&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:3260
+at Invoke-InNewScriptScope, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:3267
+at Run-Test, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:1691
+at Invoke-Test, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:2512
+at Invoke-Pester&lt;End&gt;, /home/codespace/.local/share/powershell/Modules/Pester/5.7.1/Pester.psm1:4960</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should maintain consistent exit codes across runs" name="CoreApp Non-Interactive Mode.Error Handling and Edge Cases.Should maintain consistent exit codes across runs" time="1.9773" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="CoreApp Non-Interactive Mode.Logging and Output Verification" executed="True" result="Success" success="True" time="14.6408" asserts="0" description="CoreApp Non-Interactive Mode.Logging and Output Verification">
+                <results>
+                  <test-case description="Should create proper log entries with timestamps" name="CoreApp Non-Interactive Mode.Logging and Output Verification.Should create proper log entries with timestamps" time="0.7472" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include module initialization messages" name="CoreApp Non-Interactive Mode.Logging and Output Verification.Should include module initialization messages" time="0.7718" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="CoreApp Non-Interactive Mode.Integration with CoreApp Module" executed="True" result="Ignored" success="True" time="14.6705" asserts="0" description="CoreApp Non-Interactive Mode.Integration with CoreApp Module">
+                <results>
+                  <test-case description="Should successfully invoke CoreApp module directly" name="CoreApp Non-Interactive Mode.Integration with CoreApp Module.Should successfully invoke CoreApp module directly" time="0.0254" asserts="0" success="False" result="Ignored" executed="False" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="CoreApp Cross-Platform Compatibility" executed="True" result="Success" success="True" time="16.9013" asserts="0" description="CoreApp Cross-Platform Compatibility">
+            <results>
+              <test-suite type="TestFixture" name="CoreApp Cross-Platform Compatibility.Path Handling" executed="True" result="Success" success="True" time="2.1989" asserts="0" description="CoreApp Cross-Platform Compatibility.Path Handling">
+                <results>
+                  <test-case description="Should handle paths correctly on current platform" name="CoreApp Cross-Platform Compatibility.Path Handling.Should handle paths correctly on current platform" time="0.77" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should work with different configuration file paths" name="CoreApp Cross-Platform Compatibility.Path Handling.Should work with different configuration file paths" time="1.4258" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>

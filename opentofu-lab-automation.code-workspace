@@ -5,16 +5,16 @@
             "path": "."
         },
         {
+            "name": "Aither Core",
+            "path": "./aither-core"
+        },
+        {
             "name": "PowerShell Modules",
-            "path": "./core-runner/modules"
+            "path": "./aither-core/modules"
         },
         {
-            "name": "Core Application",
-            "path": "./core-runner/core_app"
-        },
-        {
-            "name": "Runner Scripts",
-            "path": "./core-runner/core_app/scripts"
+            "name": "Core Scripts",
+            "path": "./aither-core/scripts"
         },
         {
             "name": "OpenTofu Configurations",

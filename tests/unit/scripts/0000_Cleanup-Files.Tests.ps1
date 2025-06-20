@@ -12,7 +12,7 @@
 BeforeAll {
     # Set up paths
     $script:ProjectRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent
-    $script:ScriptPath = Join-Path $ProjectRoot "core-runner/core_app/scripts/0000_Cleanup-Files.ps1"
+    $script:ScriptPath = Join-Path $ProjectRoot "aither-core/scripts/0000_Cleanup-Files.ps1"
     $script:LabRunnerPath = Join-Path $ProjectRoot "pwsh\modules\LabRunner"
     
     # Mock the LabRunner module functions

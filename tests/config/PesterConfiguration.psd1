@@ -35,8 +35,8 @@
     CodeCoverage = @{
         Enabled = $true  # Re-enabled with bulletproof optimizations
         Path = @(
-            'core-runner/core_app/core-runner.ps1',
-            'core-runner/core_app/CoreApp.psm1',
+            'aither-core/core-runner.ps1',
+            'aither-core/CoreApp.psm1',
             'core-runner/modules/Logging/*.ps1',
             'core-runner/modules/LabRunner/*.ps1',
             'core-runner/modules/TestingFramework/*.ps1'

@@ -168,13 +168,13 @@ jobs:
         shell: pwsh
         run: 
           $cfg = Get-Content 'configs/config_files/default-config.json'  ConvertFrom-Json
-          . ./core-runner/core_app/scripts/0201_Install-NodeCore.ps1
+          . ./aither-core/scripts/0201_Install-NodeCore.ps1
           Install-NodeCore -Config $cfg
       - name: Install global packages
         shell: pwsh
         run: 
           $cfg = Get-Content 'configs/config_files/default-config.json'  ConvertFrom-Json
-          . ./core-runner/core_app/scripts/0202_Install-NodeGlobalPackages.ps1
+          . ./aither-core/scripts/0202_Install-NodeGlobalPackages.ps1
           Install-NodeGlobalPackages -Config $cfg
       - name: Verify Node and packages
         shell: pwsh

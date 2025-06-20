@@ -6,12 +6,16 @@ BeforeAll {
     }
     
     # Import the ScriptManager module
-    $projectRoot = $env:PROJECT_ROOT
-    $scriptManagerPath = Join-Path $projectRoot "core-runner/modules/ScriptManager"
+    $projectRoot = if ($env:PROJECT_ROOT) { 
+        $env:PROJECT_ROOT 
+    } else { 
+        '/workspaces/AitherLabs'
+    }
+    $scriptManagerPath = Join-Path $projectRoot "aither-core/modules/ScriptManager"
     
     try {
         Import-Module $scriptManagerPath -Force -ErrorAction Stop
-        Write-Host "ScriptManager module imported successfully" -ForegroundColor Green
+        Write-Host "ScriptManager module imported successfully from: $scriptManagerPath" -ForegroundColor Green
     }
     catch {
         Write-Error "Failed to import ScriptManager module: $_"
