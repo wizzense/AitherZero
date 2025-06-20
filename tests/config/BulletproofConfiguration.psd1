@@ -1,4 +1,4 @@
-# Bulletproof Test Configuration for OpenTofu Lab Automation
+# Bulletproof Test Configuration for Aitherium Infrastructure Automation
 # Enhanced Pester 5.x Configuration with comprehensive coverage
 
 @{
@@ -48,7 +48,7 @@
         Enabled = $true
         OutputFormat = 'NUnitXml'
         OutputPath = 'tests/results/BulletproofTestResults.xml'
-        TestSuiteName = 'OpenTofu Lab Automation - Bulletproof Tests'
+        TestSuiteName = 'Aitherium Infrastructure Automation - Bulletproof Tests'
         OutputEncoding = 'UTF8'
     }
 

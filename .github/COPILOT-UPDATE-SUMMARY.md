@@ -1,7 +1,7 @@
 # GitHub Copilot Configuration Update Summary
 
 ## Overview
-Updated and optimized GitHub Copilot instructions and VS Code settings for the OpenTofu Lab Automation project to leverage the latest Copilot features and enhance development productivity.
+Updated and optimized GitHub Copilot instructions and VS Code settings for the Aitherium Infrastructure Automation project to leverage the latest Copilot features and enhance development productivity.
 
 ## Major Changes
 

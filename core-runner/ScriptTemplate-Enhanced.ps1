@@ -5,7 +5,7 @@
 .DESCRIPTION
  This updated template ensures correct PowerShell syntax by placing Param blocks
  before Import-Module statements, includes proper error handling, consistent
- parameter usage, and follows OpenTofu Lab Automation conventions.
+ parameter usage, and follows Aitherium Infrastructure Automation conventions.
 .PARAMETER Config
  Configuration object passed from the lab runner
 .PARAMETER Verbosity

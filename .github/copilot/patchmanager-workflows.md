@@ -1,6 +1,6 @@
 # PatchManager Workflows - GitHub Copilot Instructions
 
-This guide provides common patterns for using the PatchManager module in the OpenTofu Lab Automation project.
+This guide provides common patterns for using the PatchManager module in the Aitherium Infrastructure Automation project.
 
 ## Quick Start Commands
 

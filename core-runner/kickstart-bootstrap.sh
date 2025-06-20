@@ -13,7 +13,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-KS_URL="https://raw.githubusercontent.com/wizzense/opentofu-lab-automation/refs/heads/${BRANCH}/tools/iso/kickstart.cfg"
+KS_URL="https://raw.githubusercontent.com/aitherium/aitherlabs/refs/heads/${BRANCH}/tools/iso/kickstart.cfg"
 KS_FILE="/tmp/kickstart.cfg"
 
 curl -fsSL "$KS_URL" -o "$KS_FILE"

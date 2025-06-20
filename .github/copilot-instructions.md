@@ -1,4 +1,4 @@
-# OpenTofu Lab Automation - GitHub Copilot Instructions
+# Aitherium Infrastructure Automation - GitHub Copilot Instructions
 
 This project is a **PowerShell-based infrastructure automation framework** using OpenTofu/Terraform for lab environments. Follow these instructions when generating code or providing assistance.
 

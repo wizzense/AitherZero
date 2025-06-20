@@ -1,7 +1,7 @@
 # Script Output Visibility Improvements Summary
 
 ## Overview
-This document summarizes the improvements made to ensure that important script output is visible to users when running the OpenTofu Lab Automation core runner interactively.
+This document summarizes the improvements made to ensure that important script output is visible to users when running the Aitherium Infrastructure Automation core runner interactively.
 
 ## ✅ COMPLETED - Logging Clutter Reduction (Latest Update)
 

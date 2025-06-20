@@ -1,6 +1,6 @@
 # Testing Workflows - GitHub Copilot Instructions
 
-This guide provides patterns for running comprehensive tests in the OpenTofu Lab Automation project.
+This guide provides patterns for running comprehensive tests in the Aitherium Infrastructure Automation project.
 
 ## Quick Test Commands
 

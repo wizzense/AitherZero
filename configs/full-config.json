@@ -8,14 +8,14 @@
   "DisableTCPIP6": true,
   "AllowRemoteDesktop": true,
   "ConfigureFirewall": true,
-  "FirewallPorts": 
+  "FirewallPorts": [
     3389,
     5985,
     5986,
     445,
     135,
     "49152-65535"
-  ,
+  ],
   "ConfigPXE": true,
   "InstallGit": true,
   "InstallGitHubCLI": true,
@@ -32,7 +32,7 @@
   "InstallCA": true,
   "InstallCosign": true,
   "CosignURL": "https://github.com/sigstore/cosign/releases/download/v2.4.3/cosign-windows-amd64.exe",
-  "CosignPath": "C:\\temp\\cosign",
+  "CosignPath": "C:/temp/cosign",
   "InstallGPG": true,
   "InstallPython": true,
   "InstallDockerDesktop": true,
@@ -72,14 +72,14 @@
     "InstallPort": 443
   },
   "GitHubCLIInstallerUrl": "https://github.com/cli/cli/releases/download/v2.67.0/gh_2.67.0_windows_amd64.msi",
-  "RepoUrl": "https://github.com/wizzense/opentofu-lab-automation.git",
+  "RepoUrl": "https://github.com/aitherium/aitherlabs.git",
   "LocalPath": "C:\\temp",
   "RunnerScriptName": "pwsh/runner.ps1",
   "ConfigFile": "./config_files/full-config.json",
   "Go": {
     "InstallerUrl": "https://go.dev/dl/go1.24.1.windows-amd64.msi"
   },
-  "InfraRepoUrl": "https://github.com/wizzense/tofu-base-lab.git",
+  "InfraRepoUrl": "https://github.com/Aitherium/aitherium-infrastructure.git",
   "InfraRepoPath": "C:\\Temp\\base-infra",
   "Directories": {
     "HyperVPath": "C:\\HyperV",
@@ -91,11 +91,11 @@
     "InstallVite": true,
     "InstallNodemon": true,
     "InstallNpm": true,
-    "GlobalPackages": 
+    "GlobalPackages": [
       "yarn",
       "vite",
       "nodemon"
-    ,
+    ],
     "NpmPath": "C:\\Projects\\vde-mvp\\frontend",
     "CreateNpmPath": true,
     "Node": {

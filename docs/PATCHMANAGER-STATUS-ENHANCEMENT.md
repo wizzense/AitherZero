@@ -10,7 +10,7 @@ Success: False
 
 ### ✅ **Current Status (IMPROVED)**
 ```
-[SUCCESS] Pull request already exists: https://github.com/wizzense/opentofu-lab-automation/pull/1857
+[SUCCESS] Pull request already exists: https://github.com/aitherium/aitherlabs/pull/1857
 [INFO] Using existing PR #1857
 Success: True
 Message: Using existing pull request

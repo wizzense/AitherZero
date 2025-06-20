@@ -1,4 +1,4 @@
-# GitHub Copilot Configuration for OpenTofu Lab Automation
+# GitHub Copilot Configuration for Aitherium Infrastructure Automation
 
 This directory contains comprehensive GitHub Copilot configuration optimized for PowerShell automation development, OpenTofu infrastructure management, and Pester testing workflows.
 

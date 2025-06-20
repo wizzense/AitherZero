@@ -5,7 +5,7 @@ description: "PatchManager workflows and common scenarios - UPDATED FOR CONSOLID
 
 # PatchManager Workflows & Instructions (Consolidated v2.1 - IMPROVED)
 
-This file provides comprehensive guidance for using the **IMPROVED CONSOLIDATED PatchManager** in the OpenTofu Lab Automation project.
+This file provides comprehensive guidance for using the **IMPROVED CONSOLIDATED PatchManager** in the Aitherium Infrastructure Automation project.
 
 ## 🎯 Core PatchManager Functions (4 Total)
 

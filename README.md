@@ -1,6 +1,30 @@
-# OpenTofu Lab Automation
+# Aitherium - Infrastructure Beyond the Cloud™
 
-Cross-platform PowerShell automation framework for OpenTofu/Terraform infrastructure management with comprehensive testing and modular architecture.
+```
+     _    _ _   _               _
+    / \  (_) |_| |__   ___ _ __(_)_   _ _ __ ___
+   / _ \ | | __| '_ \ / _ \ '__| | | | | '_ ` _ \
+  / ___ \| | |_| | | |  __/ |  | | |_| | | | | | |
+ /_/   \_\_|\__|_| |_|\___|_|  |_|\__,_|_| |_| |_|
+
+ Infrastructure Automation That Transcends Boundaries
+```
+
+Cross-platform PowerShell automation framework for enterprise infrastructure management with comprehensive testing and modular architecture. Deploy anywhere, manage everything - from bare metal to cloud, Aitherium adapts to your infrastructure needs.
+
+## AitherLabs (Community Edition) vs Aitherium Platform (Enterprise)
+
+**AitherLabs** is the community edition providing:
+- Core infrastructure automation capabilities
+- Cross-platform deployment tools
+- Basic enterprise features
+- Community support and development
+
+**Aitherium Platform** (coming soon) will include:
+- Advanced enterprise management
+- Premium integrations and connectors
+- Professional support and SLA
+- Enhanced security and compliance features
 
 ## Quick Start - Bootstrap Installation
 
@@ -9,16 +33,16 @@ Cross-platform PowerShell automation framework for OpenTofu/Terraform infrastruc
 **Bootstrap with kicker-git.ps1** (Main Entry Point):
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/wizzense/opentofu-lab-automation/main/kicker-git.ps1' -OutFile '.\kicker-git.ps1'; .\kicker-git.ps1"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Aitherium/AitherLabs/main/kicker-git.ps1' -OutFile '.\kicker-git.ps1'; .\kicker-git.ps1"
 ```
 
 **PowerShell 7.x** (Cross-platform):
 
 ```powershell
-pwsh -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/wizzense/opentofu-lab-automation/main/kicker-git.ps1' -OutFile '.\kicker-git.ps1'; .\kicker-git.ps1"
+pwsh -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Aitherium/AitherLabs/main/kicker-git.ps1' -OutFile '.\kicker-git.ps1'; .\kicker-git.ps1"
 ```
 
-[kicker-git.ps1](https://github.com/wizzense/opentofu-lab-automation/blob/main/kicker-git.ps1)
+[kicker-git.ps1](https://github.com/Aitherium/AitherLabs/blob/main/kicker-git.ps1)
 
 ### 📋 Bootstrap Options
 
@@ -57,7 +81,7 @@ If you prefer manual control:
 
 ```powershell
 # 1. Download the modern bootstrap script
-Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/wizzense/opentofu-lab-automation/main/kicker-git.ps1' -OutFile '.\kicker-git.ps1'
+Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/aitherium/aitherlabs/main/kicker-git.ps1' -OutFile '.\kicker-git.ps1'
 
 # 2. Run with your preferred options
 .\kicker-git.ps1
@@ -108,7 +132,7 @@ The bootstrap script automatically sets up:
 ## Project Structure
 
 ```
-opentofu-lab-automation/
+aitherium/
 ├── core-runner/                    # Main automation framework
 │   ├── kicker-bootstrap.ps1       # Legacy bootstrap (being phased out)
 │   ├── kicker-bootstrap-clean.ps1 # Clean bootstrap implementation
@@ -120,7 +144,7 @@ opentofu-lab-automation/
 │   └── modules/                   # PowerShell modules
 │       ├── Logging/               # Centralized logging
 │       ├── PatchManager/          # Git operations and patching
-│       ├── LabRunner/             # Lab management
+│       ├── LabRunner/             # Infrastructure management
 │       ├── BackupManager/         # Backup operations
 │       ├── DevEnvironment/        # Development setup
 │       ├── ParallelExecution/     # Parallel processing
@@ -145,7 +169,7 @@ opentofu-lab-automation/
    - Override with `-ConfigFile` parameter
 
 3. **Repository Clone**: Clones this repository to local workspace.
-   - Default location: `%TEMP%/opentofu-lab-automation`
+   - Default location: `%TEMP%/aitherium`
    - Configurable via configuration file
 
 4. **Core Runner Execution**: Invokes `core-runner.ps1` from the repository.
@@ -164,9 +188,9 @@ To get OpenTofu working, specify these scripts when `core-runner.ps1` is called:
 - **0009_Initialize-OpenTofu.ps1** - Sets up OpenTofu and infrastructure repo
 - **0010_Prepare-HyperVProvider.ps1** - Configures Hyper-V host
 
-**Example Infrastructure Repository**: [tofu-base-lab](https://github.com/wizzense/tofu-base-lab.git)
+**Example Infrastructure Repository**: [aitherium-base-lab](https://github.com/Aitherium/aitherium-base-lab.git)
 
-**Example Config File**: [bootstrap-config.json](https://raw.githubusercontent.com/wizzense/tofu-base-lab/refs/heads/main/configs/bootstrap-config.json)
+**Example Config File**: [bootstrap-config.json](https://raw.githubusercontent.com/Aitherium/aitherium-base-lab/refs/heads/main/configs/bootstrap-config.json)
 
 ## Available Runner Scripts
 
@@ -303,11 +327,11 @@ dvd_drives {
 - **PowerShell 7.4+** cross-platform compatibility
 - **Advanced PowerShell Modules**: PatchManager, LabRunner, BackupManager
 
-### Automation & Maintenance
+### Infrastructure Automation & Maintenance
 
 - **Real-time validation** and error correction
 - **CI/CD Integration**: GitHub Actions workflows with comprehensive testing
-- **Infrastructure as Code**: OpenTofu/Terraform configurations for lab environments
+- **Infrastructure as Code**: OpenTofu/Terraform configurations for infrastructure environments
 
 ### Module Usage
 
@@ -316,8 +340,8 @@ dvd_drives {
 Import-Module "./core-runner/modules/PatchManager"
 Import-Module "./core-runner/modules/LabRunner"
 
-# Run lab automation
-Invoke-ParallelLabRunner -ConfigPath "./configs/lab_config.yaml"
+# Run infrastructure automation
+Invoke-ParallelLabRunner -ConfigPath "./configs/infrastructure_config.yaml"
 
 # Perform maintenance
 ./scripts/maintenance/unified-maintenance.ps1 -Mode "All" -AutoFix
@@ -335,11 +359,15 @@ Invoke-ParallelLabRunner -ConfigPath "./configs/lab_config.yaml"
 
 ## Future Plans
 
-Will probably change repo name to just 'lab-automation'.
+Developing enterprise-grade features for the Aitherium Platform while maintaining the community-focused AitherLabs edition.
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Contributors
+
+Built with ❤️ by the Aitherium community. Infrastructure automation that transcends traditional boundaries.
 
 ## 🔄 After Initial Bootstrap
 

@@ -1,6 +1,6 @@
 # Standardized Parameter System
 
-OpenTofu Lab Automation now features a standardized parameter handling system across all scripts, ensuring consistent behavior and improved reliability.
+Aitherium Infrastructure Automation now features a standardized parameter handling system across all scripts, ensuring consistent behavior and improved reliability.
 
 ## Key Features
 

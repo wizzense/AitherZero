@@ -4,7 +4,7 @@ tools: ['codebase']
 description: 'Generate a PowerShell function following project standards'
 ---
 
-Generate a PowerShell function that follows the OpenTofu Lab Automation project standards.
+Generate a PowerShell function that follows the Aitherium Infrastructure Automation project standards.
 
 Requirements:
 - Use PowerShell 7.0+ cross-platform syntax

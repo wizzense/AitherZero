@@ -1,6 +1,6 @@
 # Standardized Parameter Handling
 
-This document describes the standardized parameter handling system implemented across the OpenTofu Lab Automation project.
+This document describes the standardized parameter handling system implemented across the Aitherium Infrastructure Automation project.
 
 ## Overview
 

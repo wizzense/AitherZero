@@ -2,7 +2,7 @@
 
 <#
 .SYNOPSIS
-    Bulletproof test runner for comprehensive validation of the OpenTofu Lab Automation system
+    Bulletproof test runner for comprehensive validation of the Aitherium Infrastructure Automation system
 
 .DESCRIPTION
     This script orchestrates comprehensive bulletproof testing including:

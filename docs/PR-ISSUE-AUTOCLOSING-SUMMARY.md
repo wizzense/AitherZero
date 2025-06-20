@@ -59,8 +59,8 @@ GitHub recognizes these keywords and automatically closes the referenced issue w
 
 ## Live Demonstration ✅
 
-**Issue Created**: [#1838](https://github.com/wizzense/opentofu-lab-automation/issues/1838)
-**PR Updated**: [#1836](https://github.com/wizzense/opentofu-lab-automation/pull/1836)
+**Issue Created**: [#1838](https://github.com/aitherium/aitherlabs/issues/1838)
+**PR Updated**: [#1836](https://github.com/aitherium/aitherlabs/pull/1836)
 **Auto-Closing**: ✅ PR now contains "Closes #1838"
 
 When PR #1836 is merged, issue #1838 will automatically close.

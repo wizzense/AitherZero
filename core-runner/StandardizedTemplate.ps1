@@ -5,7 +5,7 @@
     Script template with standardized parameter handling
 .DESCRIPTION
     Uses the Initialize-StandardParameters function to implement consistent
-    parameter handling across all OpenTofu Lab Automation scripts.
+    parameter handling across all Aitherium Infrastructure Automation scripts.
 .PARAMETER Config
     Configuration object passed from the lab runner
 .PARAMETER Verbosity

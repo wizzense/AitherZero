@@ -1,6 +1,6 @@
 ## **Project Overview**
 
-**OpenTofu Lab Automation** is a comprehensive cross-platform PowerShell automation framework for OpenTofu/Terraform infrastructure management with a modular architecture, extensive testing, and CI/CD integration.
+**Aitherium** is a comprehensive cross-platform PowerShell automation framework for OpenTofu/Terraform infrastructure management with a modular architecture, extensive testing, and CI/CD integration.
 
 ## **Key Components Found**
 
@@ -113,10 +113,10 @@
 ### **Quick Start**:
 ```powershell
 # One-liner installation
-iex (iwr 'https://raw.githubusercontent.com/wizzense/opentofu-lab-automation/main/kicker-git.ps1').Content
+iex (iwr 'https://raw.githubusercontent.com/Aitherium/AitherLabs/main/kicker-git.ps1').Content
 
 # Traditional download and execute  
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/wizzense/opentofu-lab-automation/main/kicker-git.ps1' -OutFile '.\kicker-git.ps1'; .\kicker-git.ps1"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/aitherium/aitherlabs/main/kicker-git.ps1' -OutFile '.\kicker-git.ps1'; .\kicker-git.ps1"
 ```
 
 ### **CoreApp Orchestration**:

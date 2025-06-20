@@ -62,7 +62,7 @@
     "InstallPort": 443
   },
   "GitHubCLIInstallerUrl": "https://github.com/cli/cli/releases/download/v2.67.0/gh_2.67.0_windows_amd64.msi",
-  "RepoUrl": "https://github.com/wizzense/opentofu-lab-automation.git",
+  "RepoUrl": "https://github.com/aitherium/aitherlabs.git",
   "LocalPath": "C:\\temp",
   "RunnerScriptName": "pwsh/runner.ps1",
   "ConfigFile": "./config_files/default-config.json",
@@ -70,7 +70,7 @@
     "InstallerUrl": "https://go.dev/dl/go1.24.1.windows-amd64.msi"
   },
 
-  "InfraRepoUrl": "https://github.com/wizzense/tofu-base-lab.git",
+  "InfraRepoUrl": "https://github.com/Aitherium/aitherium-infrastructure.git",
   "InfraRepoPath": "C:\\Temp\\base-infra",
 
   "Directories": {

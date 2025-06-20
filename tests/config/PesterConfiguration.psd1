@@ -28,7 +28,7 @@
         Enabled = $true
         OutputFormat = 'NUnitXml'
         OutputPath = 'tests/results/TestResults.xml'
-        TestSuiteName = 'OpenTofu Lab Automation - Enhanced'
+        TestSuiteName = 'Aitherium Infrastructure Automation - Enhanced'
         OutputEncoding = 'UTF8'
     }
 

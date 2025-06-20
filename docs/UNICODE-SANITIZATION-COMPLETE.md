@@ -122,7 +122,7 @@ Files Affected: Files will be identified during patch review
 |----------|-------|
 | **Current Branch** | `main` |
 | **Last Commit** | `9fa910a PatchManager: fix: resolve PatchManager commit and cleanup issues` |
-| **Repository** | https://github.com/wizzense/opentofu-lab-automation.git |
+| **Repository** | https://github.com/aitherium/aitherlabs.git |
 | **Working Tree** | Changes pending |
 
 ### Patch Workflow Status

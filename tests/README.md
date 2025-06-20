@@ -1,6 +1,6 @@
 # Extensible Cross-Platform Testing Framework
 
-This directory contains an extensible testing framework for OpenTofu Lab Automation that provides standardized, cross-platform testing capabilities.
+This directory contains an extensible testing framework for Aitherium Infrastructure Automation that provides standardized, cross-platform testing capabilities.
 
 ## Features
 
