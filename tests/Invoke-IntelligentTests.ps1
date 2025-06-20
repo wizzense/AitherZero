@@ -57,14 +57,14 @@ $ProjectRoot = Split-Path $PSScriptRoot -Parent
 
 # Environment variables for cross-platform compatibility
 $env:PROJECT_ROOT = $ProjectRoot
-$env:PWSH_MODULES_PATH = $env:PWSH_MODULES_PATH
-$env:PYTHON_MODULES_PATH = Join-Path $ProjectRoot "src/python"
+$env:PWSH_MODULES_PATH = "$ProjectRoot/aither-core/modules"  # Updated for aither-core structure
+$env:PYTHON_MODULES_PATH = Join-Path $ProjectRoot "py"
 
 # Import test configuration
 $testConfig = @{
     ProjectRoot = $ProjectRoot
-    ModulesPath = $env:PWSH_MODULES_PATH
-    PythonPath = $env:PYTHON_MODULES_PATH
+    ModulesPath = "$ProjectRoot/aither-core/modules"  # Updated for aither-core structure
+    PythonPath = "$ProjectRoot/py"
     OutputPath = Join-Path $PSScriptRoot "results"
     Timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
 }
