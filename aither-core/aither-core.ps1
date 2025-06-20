@@ -157,10 +157,10 @@ if (-not $NonInteractive) {
 
 Write-Verbose "Final NonInteractive value: $NonInteractive"
 
-# Determine repository root - go up one level from core_app to core-runner, then up one more to repo root
-$repoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+# Determine repository root - aither-core is now at the root level
+$repoRoot = Split-Path $PSScriptRoot -Parent
 $env:PROJECT_ROOT = $repoRoot
-$env:PWSH_MODULES_PATH = "$repoRoot/core-runner/modules"
+$env:PWSH_MODULES_PATH = "$repoRoot/aither-core/modules"
 
 Write-Verbose "Repository root: $repoRoot"
 Write-Verbose "Modules path: $env:PWSH_MODULES_PATH"
