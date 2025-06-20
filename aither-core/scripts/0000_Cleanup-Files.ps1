@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 Param([object]$Config)
-Import-Module "$env:PROJECT_ROOT/core-runner/modules/LabRunner/" -Force
+Import-Module "$env:PROJECT_ROOT/aither-core/modules/LabRunner/" -Force
 Write-CustomLog "Starting $MyInvocation.MyCommand"
 Invoke-LabStep -Config $Config -Body {
     Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"

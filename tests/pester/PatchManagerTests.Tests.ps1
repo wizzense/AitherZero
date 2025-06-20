@@ -1,6 +1,6 @@
 Describe 'PatchManager Function Tests' {
     BeforeAll {
-        $PatchManagerPath = './src/core-runner/modules/PatchManager/Public'
+        $PatchManagerPath = './src/aither-core/modules/PatchManager/Public'
     }    Context 'Function Files Exist' {        It 'Should have Test-PatchingRequirements.ps1' {
             Test-Path "$PatchManagerPath/Test-PatchingRequirements.ps1" | Should -Be $true
         }

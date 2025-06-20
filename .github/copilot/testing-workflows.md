@@ -180,7 +180,7 @@ pwsh ./tests/Invoke-IntelligentTests.ps1 -TestType All -Severity Comprehensive |
 
 ```powershell
 # Fix module import issues
-Import-Module ./core-runner/modules/TestingFramework -Force
+Import-Module ./aither-core/modules/TestingFramework -Force
 
 # Clear test cache
 Remove-Item tests/results/* -Recurse -Force

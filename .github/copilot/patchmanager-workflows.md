@@ -6,7 +6,7 @@ This guide provides common patterns for using the PatchManager module in the Ait
 
 ### 1. Create a Simple Patch
 ```powershell
-Import-Module './core-runner/modules/PatchManager' -Force
+Import-Module './aither-core/modules/PatchManager' -Force
 Invoke-GitControlledPatch -PatchDescription "Fix issue XYZ" -DryRun
 ```
 
@@ -18,7 +18,7 @@ Invoke-GitControlledPatch -PatchDescription "Update module functionality" `
         Update-ModuleFunction -Name "MyFunction"
     } `
     -TestCommands @(
-        "pwsh -NoProfile -Command 'Import-Module ./core-runner/modules/TestingFramework -Force; Invoke-Pester'"
+        "pwsh -NoProfile -Command 'Import-Module ./aither-core/modules/TestingFramework -Force; Invoke-Pester'"
     ) `
     -AutoCommitUncommitted
 ```
@@ -91,9 +91,9 @@ Use these tasks from the Command Palette (Ctrl+Shift+P → "Tasks: Run Task"):
 Invoke-GitControlledPatch -PatchDescription "Fix: Resolve null reference in logging" `
     -PatchOperation {
         # Fix the bug
-        $content = Get-Content "./core-runner/modules/Logging/Logging.psm1"
+        $content = Get-Content "./aither-core/modules/Logging/Logging.psm1"
         $content = $content -replace 'problematic pattern', 'fixed pattern'
-        Set-Content "./core-runner/modules/Logging/Logging.psm1" -Value $content
+        Set-Content "./aither-core/modules/Logging/Logging.psm1" -Value $content
     } `
     -TestCommands @("pwsh tests/unit/modules/Logging/Logging.Tests.ps1") `
     -AutoCommitUncommitted

@@ -16,7 +16,7 @@ Replace the current VS Code tasks with these simplified, powerful alternatives:
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/TestingFramework' -Force; Invoke-UnifiedTestExecution -TestSuite 'Quick' -TestProfile 'Development' -GenerateReport"
+                "Import-Module './aither-core/modules/TestingFramework' -Force; Invoke-UnifiedTestExecution -TestSuite 'Quick' -TestProfile 'Development' -GenerateReport"
             ],
             "group": "test",
             "presentation": {
@@ -38,7 +38,7 @@ Replace the current VS Code tasks with these simplified, powerful alternatives:
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/TestingFramework' -Force; Invoke-UnifiedTestExecution -TestSuite 'All' -TestProfile 'Development' -Parallel -GenerateReport -VSCodeIntegration"
+                "Import-Module './aither-core/modules/TestingFramework' -Force; Invoke-UnifiedTestExecution -TestSuite 'All' -TestProfile 'Development' -Parallel -GenerateReport -VSCodeIntegration"
             ],
             "group": "test",
             "presentation": {
@@ -60,7 +60,7 @@ Replace the current VS Code tasks with these simplified, powerful alternatives:
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/TestingFramework' -Force; Invoke-UnifiedTestExecution -TestSuite 'Modules' -Modules @('${input:moduleName}') -TestProfile 'Development' -GenerateReport"
+                "Import-Module './aither-core/modules/TestingFramework' -Force; Invoke-UnifiedTestExecution -TestSuite 'Modules' -Modules @('${input:moduleName}') -TestProfile 'Development' -GenerateReport"
             ],
             "group": "test",
             "presentation": {
@@ -82,7 +82,7 @@ Replace the current VS Code tasks with these simplified, powerful alternatives:
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/TestingFramework' -Force; Invoke-UnifiedTestExecution -TestSuite 'Unit' -TestProfile 'Development' -Parallel"
+                "Import-Module './aither-core/modules/TestingFramework' -Force; Invoke-UnifiedTestExecution -TestSuite 'Unit' -TestProfile 'Development' -Parallel"
             ],
             "group": "test",
             "presentation": {
@@ -104,7 +104,7 @@ Replace the current VS Code tasks with these simplified, powerful alternatives:
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/TestingFramework' -Force; Invoke-UnifiedTestExecution -TestSuite 'Integration' -TestProfile 'Development' -GenerateReport"
+                "Import-Module './aither-core/modules/TestingFramework' -Force; Invoke-UnifiedTestExecution -TestSuite 'Integration' -TestProfile 'Development' -GenerateReport"
             ],
             "group": "test",
             "presentation": {
@@ -126,7 +126,7 @@ Replace the current VS Code tasks with these simplified, powerful alternatives:
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/TestingFramework' -Force; Invoke-UnifiedTestExecution -TestSuite 'Performance' -TestProfile 'Development' -GenerateReport"
+                "Import-Module './aither-core/modules/TestingFramework' -Force; Invoke-UnifiedTestExecution -TestSuite 'Performance' -TestProfile 'Development' -GenerateReport"
             ],
             "group": "test",
             "presentation": {
@@ -148,7 +148,7 @@ Replace the current VS Code tasks with these simplified, powerful alternatives:
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/TestingFramework' -Force; Invoke-UnifiedTestExecution -TestSuite 'All' -TestProfile 'CI' -Parallel -GenerateReport -VSCodeIntegration"
+                "Import-Module './aither-core/modules/TestingFramework' -Force; Invoke-UnifiedTestExecution -TestSuite 'All' -TestProfile 'CI' -Parallel -GenerateReport -VSCodeIntegration"
             ],
             "group": "test",
             "presentation": {
@@ -170,7 +170,7 @@ Replace the current VS Code tasks with these simplified, powerful alternatives:
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/TestingFramework' -Force; Invoke-UnifiedTestExecution -TestSuite 'NonInteractive' -TestProfile 'CI' -GenerateReport"
+                "Import-Module './aither-core/modules/TestingFramework' -Force; Invoke-UnifiedTestExecution -TestSuite 'NonInteractive' -TestProfile 'CI' -GenerateReport"
             ],
             "group": "test",
             "presentation": {
@@ -192,7 +192,7 @@ Replace the current VS Code tasks with these simplified, powerful alternatives:
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module './core-runner/modules/TestingFramework' -Force; Get-DiscoveredModules | Format-Table Name, Path"
+                "Import-Module './aither-core/modules/TestingFramework' -Force; Get-DiscoveredModules | Format-Table Name, Path"
             ],
             "group": "test",
             "presentation": {
@@ -367,7 +367,7 @@ jobs:
 
     - name: Run Unified Tests
       run: |
-        Import-Module './core-runner/modules/TestingFramework' -Force
+        Import-Module './aither-core/modules/TestingFramework' -Force
         Invoke-UnifiedTestExecution -TestSuite '${{ matrix.test-suite }}' -TestProfile 'CI' -GenerateReport -VSCodeIntegration
 
     - name: Upload Test Results

@@ -6,7 +6,7 @@ param(
 )
 
 Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force
-Import-Module "$env:PROJECT_ROOT/core-runner/modules/Logging" -Force
+Import-Module "$env:PROJECT_ROOT/aither-core/modules/Logging" -Force
 
 Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
 
@@ -33,7 +33,7 @@ function Set-LabProfile {
         $content = @"
 # OpenTofu Lab Automation profile
 `$env:PATH = "$repoRoot;`$env:PATH"
-`$env:PSModulePath = "$repoRoot/core-runner/modules;`$env:PSModulePath"
+`$env:PSModulePath = "$repoRoot/aither-core/modules;`$env:PSModulePath"
 "@
 
         if ($PSCmdlet.ShouldProcess($profilePath, 'Create PowerShell profile')) {

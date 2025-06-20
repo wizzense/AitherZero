@@ -174,7 +174,7 @@ function Initialize-TestEnvironment {
             "label": "🧪 Run Integrated Tests - Quick",
             "type": "shell",
             "command": "pwsh",
-            "args": ["-Command", "Import-Module './core-runner/modules/TestingFramework' -Force; Invoke-IntegratedTesting -TestSuite Unit -ExecutionMode Parallel -VSCodeIntegration"],
+            "args": ["-Command", "Import-Module './aither-core/modules/TestingFramework' -Force; Invoke-IntegratedTesting -TestSuite Unit -ExecutionMode Parallel -VSCodeIntegration"],
             "group": "test",
             "presentation": { "reveal": "always", "panel": "new" }
         },
@@ -182,7 +182,7 @@ function Initialize-TestEnvironment {
             "label": "🔬 Run Integrated Tests - Full Suite",
             "type": "shell",
             "command": "pwsh",
-            "args": ["-Command", "Import-Module './core-runner/modules/TestingFramework' -Force; Invoke-IntegratedTesting -TestSuite All -ExecutionMode Intelligent -SetupEnvironment -GenerateReport -VSCodeIntegration"],
+            "args": ["-Command", "Import-Module './aither-core/modules/TestingFramework' -Force; Invoke-IntegratedTesting -TestSuite All -ExecutionMode Intelligent -SetupEnvironment -GenerateReport -VSCodeIntegration"],
             "group": "test"
         },
 
@@ -191,7 +191,7 @@ function Initialize-TestEnvironment {
             "label": "🛠️ Setup Development Environment",
             "type": "shell",
             "command": "pwsh",
-            "args": ["-Command", "Import-Module './core-runner/modules/DevEnvironment' -Force; Initialize-DevEnvironment -TestMode"],
+            "args": ["-Command", "Import-Module './aither-core/modules/DevEnvironment' -Force; Initialize-DevEnvironment -TestMode"],
             "group": "build"
         },
 
@@ -200,7 +200,7 @@ function Initialize-TestEnvironment {
             "label": "🧹 Run Unified Maintenance",
             "type": "shell",
             "command": "pwsh",
-            "args": ["-Command", "Import-Module './core-runner/modules/UnifiedMaintenance' -Force; Invoke-UnifiedMaintenance -IncludeTestValidation"],
+            "args": ["-Command", "Import-Module './aither-core/modules/UnifiedMaintenance' -Force; Invoke-UnifiedMaintenance -IncludeTestValidation"],
             "group": "build"
         },
 
@@ -209,7 +209,7 @@ function Initialize-TestEnvironment {
             "label": "🚀 Create Patch with Tests",
             "type": "shell",
             "command": "pwsh",
-            "args": ["-Command", "Import-Module './core-runner/modules/PatchManager' -Force; Invoke-PatchWorkflow -PatchDescription '${input:description}' -TestCommands @('Invoke-IntegratedTesting -TestSuite Unit') -CreatePR"],
+            "args": ["-Command", "Import-Module './aither-core/modules/PatchManager' -Force; Invoke-PatchWorkflow -PatchDescription '${input:description}' -TestCommands @('Invoke-IntegratedTesting -TestSuite Unit') -CreatePR"],
             "group": "build"
         }
     ]
@@ -255,13 +255,13 @@ jobs:
       - name: Setup PowerShell Environment
         shell: pwsh
         run: |
-          Import-Module './core-runner/modules/DevEnvironment' -Force
+          Import-Module './aither-core/modules/DevEnvironment' -Force
           Initialize-DevEnvironment -GitHubActions
 
       - name: Run Integrated Tests
         shell: pwsh
         run: |
-          Import-Module './core-runner/modules/TestingFramework' -Force
+          Import-Module './aither-core/modules/TestingFramework' -Force
           Invoke-IntegratedTesting -TestSuite ${{ matrix.test-suite }} -ExecutionMode Parallel -GenerateReport
 
       - name: Upload Test Results
@@ -282,7 +282,7 @@ jobs:
       - name: Create Maintenance Issue
         shell: pwsh
         run: |
-          Import-Module './core-runner/modules/PatchManager' -Force
+          Import-Module './aither-core/modules/PatchManager' -Force
           New-PatchIssue -Description "Automated test failures detected" -Priority "High" -Labels @("ci-failure", "automated")
 ```
 

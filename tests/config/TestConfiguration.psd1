@@ -1,6 +1,6 @@
 # Ensure environment variables are set for admin-friendly module discovery
 if (-not $env:PWSH_MODULES_PATH) {
-    $env:PWSH_MODULES_PATH = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) "core-runner/modules"
+    $env:PWSH_MODULES_PATH = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) "aither-core/modules"
 }
 @{
     # Test Configuration for Aitherium Infrastructure Automation

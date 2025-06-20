@@ -1,7 +1,7 @@
 BeforeAll {
     # Import Logging module first
     $projectRoot = $env:PROJECT_ROOT
-    $loggingPath = Join-Path $projectRoot "core-runner/modules/Logging"
+    $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
     
     try {
         Import-Module $loggingPath -Force -Global -ErrorAction Stop
@@ -14,7 +14,7 @@ BeforeAll {
 
     # Import PatchManager module
     $projectRoot = $env:PROJECT_ROOT
-    $patchManagerPath = Join-Path $projectRoot "core-runner/modules/PatchManager"
+    $patchManagerPath = Join-Path $projectRoot "aither-core/modules/PatchManager"
     
     try {
         Import-Module $patchManagerPath -Force -ErrorAction Stop

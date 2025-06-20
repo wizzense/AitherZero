@@ -107,12 +107,14 @@ foreach ($function in $publicFunctions) {
     }
 }
 
-# Export only the 4 core functions 
+# Export the core functions including git status guidance
 Export-ModuleMember -Function @(
     'Invoke-PatchWorkflow',
     'New-PatchIssue', 
     'New-PatchPR',
-    'Invoke-PatchRollback'
+    'Invoke-PatchRollback',
+    'Show-GitStatusGuidance',
+    'Invoke-PatchWorkflowEnhanced'
 )
 
 Write-Verbose "Module loading complete. Exported all public functions."

@@ -60,7 +60,7 @@ function Invoke-ValidationFailureHandler {
 
         # Import required modules
         try {
-            Import-Module "$env:PROJECT_ROOT/core-runner/modules/Logging" -Force -ErrorAction Stop
+            Import-Module "$env:PROJECT_ROOT/aither-core/modules/Logging" -Force -ErrorAction Stop
         } catch {
             Write-Warning "Could not import Logging module: $($_.Exception.Message)"
         }
@@ -539,7 +539,7 @@ function Get-CategoryValidationCommands {
             return @"
 # Test module imports
 Get-Module -ListAvailable | Where-Object Name -in @('LabRunner', 'PatchManager', 'DevEnvironment')
-Import-Module "$env:PROJECT_ROOT/core-runner/modules/PatchManager" -Force -Verbose
+Import-Module "$env:PROJECT_ROOT/aither-core/modules/PatchManager" -Force -Verbose
 "@
         }
         "SyntaxError" {

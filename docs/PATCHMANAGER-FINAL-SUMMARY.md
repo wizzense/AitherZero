@@ -84,7 +84,7 @@
 ## 📁 **Final File Structure**
 
 ```
-core-runner/modules/PatchManager/
+aither-core/modules/PatchManager/
 ├── PatchManager.psd1              # ✅ Exports only 4 core functions
 ├── PatchManager.psm1              # ✅ Updated export list
 ├── Public/                        # ✅ Only core functions

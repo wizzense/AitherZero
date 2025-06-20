@@ -188,7 +188,7 @@ Invoke-PatchRollback -BranchName "patch/..." -RollbackType "ResetToParent"
 If you see module import errors:
 ```
 ⚠️  Could not import PatchManager module. Please ensure modules are available.
-   Expected path: /path/to/core-runner/modules/PatchManager
+   Expected path: /path/to/aither-core/modules/PatchManager
 ```
 
 **Solution**: Ensure you're running from the project root directory or set `$env:PROJECT_ROOT` correctly.

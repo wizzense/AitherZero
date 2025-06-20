@@ -23,7 +23,7 @@
 - `Start-DevEnvironmentSetup` - Development environment setup
 
 ### **3. PowerShell Modules Ecosystem**
-**Location**: `core-runner/modules/`
+**Location**: `aither-core/modules/`
 
 #### **Required Modules**:
 - **`Logging/`** - Enterprise-grade logging with performance tracing

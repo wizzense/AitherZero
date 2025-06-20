@@ -116,7 +116,7 @@ Invoke-PatchRollback -RollbackType "LastCommit" -CreateBackup
 ## File Structure Changes
 
 ```
-core-runner/modules/PatchManager/
+aither-core/modules/PatchManager/
 ├── PatchManager.psd1           # ✅ Updated - exports only 4 functions
 ├── PatchManager.psm1           # ✅ Unchanged
 ├── Public/

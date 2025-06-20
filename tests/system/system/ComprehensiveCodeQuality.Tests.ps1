@@ -1,7 +1,7 @@
 BeforeAll {
     # Set up environment
     $projectRoot = Split-Path $PSScriptRoot -Parent
-    $env:PWSH_MODULES_PATH = Join-Path $projectRoot "core-runner/modules"
+    $env:PWSH_MODULES_PATH = Join-Path $projectRoot "aither-core/modules"
     
     # Import testing utilities
     Import-Module Pester -Force

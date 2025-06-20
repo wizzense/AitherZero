@@ -30,7 +30,7 @@ The `New-SimplePRForPatch` function now includes intelligent error handling that
 
 ### Code Enhancement Details
 
-**File**: `core-runner/modules/PatchManager/Public/Invoke-SimplifiedPatchWorkflow.ps1`
+**File**: `aither-core/modules/PatchManager/Public/Invoke-SimplifiedPatchWorkflow.ps1`
 
 **Enhancement**: Added intelligent error detection logic:
 ```powershell

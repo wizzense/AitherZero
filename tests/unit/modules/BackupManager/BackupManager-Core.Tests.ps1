@@ -388,7 +388,7 @@ Describe "BackupManager Module - Integration Tests" {
                     param($SourcePath, $BackupPath, $ModulePath)
                     Import-Module $ModulePath -Force
                     Invoke-BackupConsolidation -SourcePath $SourcePath -BackupPath "$BackupPath\Job$_"
-                } -ArgumentList $script:testSourceDir, $concurrentTestDir, (Join-Path $projectRoot "core-runner/modules/BackupManager")
+                } -ArgumentList $script:testSourceDir, $concurrentTestDir, (Join-Path $projectRoot "aither-core/modules/BackupManager")
             }
             
             $results = $jobs | Wait-Job | Receive-Job

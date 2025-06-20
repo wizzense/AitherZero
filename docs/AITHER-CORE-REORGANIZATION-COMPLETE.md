@@ -29,7 +29,7 @@ aither-core/
 - `aither-core/core-runner.ps1` → `aither-core/aither-core.ps1`
 - `aither-core/CoreApp.psd1` → `aither-core/AitherCore.psd1`
 - `aither-core/CoreApp.psm1` → `aither-core/AitherCore.psm1`
-- `core-runner/modules/` → `aither-core/modules/`
+- `aither-core/modules/` → `aither-core/modules/`
 - `aither-core/scripts/` → `aither-core/scripts/`
 
 ### ✅ **VS Code Workspace Updated:**
@@ -55,7 +55,7 @@ Import-Module './aither-core/modules/Logging' -Force
 Import-Module './aither-core/modules/PatchManager' -Force
 
 # OLD: Confusing path (deprecated)
-Import-Module './core-runner/modules/Logging' -Force
+Import-Module './aither-core/modules/Logging' -Force
 ```
 
 ### **Main Application:**

@@ -347,7 +347,7 @@ Describe "Performance Test $_" {
                     param($TestPath, $ModulePath)
                     Import-Module $ModulePath -Force
                     Invoke-SyntaxValidation -Path $TestPath
-                } -ArgumentList $script:testScriptDir, (Join-Path $projectRoot "core-runner/modules/TestingFramework")
+                } -ArgumentList $script:testScriptDir, (Join-Path $projectRoot "aither-core/modules/TestingFramework")
             }
             
             $results = $jobs | Wait-Job | Receive-Job

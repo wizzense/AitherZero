@@ -24,7 +24,7 @@ Write-Host "🚀 Setting up OpenTofu Lab Automation environment..." -ForegroundC
 
 # Set environment variables
 $env:PROJECT_ROOT = (Get-Location).Path
-$env:PWSH_MODULES_PATH = "$env:PROJECT_ROOT/core-runner/modules"
+$env:PWSH_MODULES_PATH = "$env:PROJECT_ROOT/aither-core/modules"
 
 Write-Host "✓ Environment variables configured" -ForegroundColor Green
 Write-Host "  PROJECT_ROOT: $env:PROJECT_ROOT"

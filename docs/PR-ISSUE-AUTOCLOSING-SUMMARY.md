@@ -8,7 +8,7 @@ The original issue was that PRs created by PatchManager were not properly linked
 
 ### 1. Enhanced PatchManager Coordination ✅
 
-**File**: `core-runner/modules/PatchManager/Public/Invoke-EnhancedPatchManager.ps1`
+**File**: `aither-core/modules/PatchManager/Public/Invoke-EnhancedPatchManager.ps1`
 
 - Store issue result when `CreateIssue = $true`
 - Pass issue information to PR creation function
@@ -18,8 +18,8 @@ The original issue was that PRs created by PatchManager were not properly linked
 ### 2. Updated PR Creation Functions ✅
 
 **Files**:
-- `core-runner/modules/PatchManager/Public/Invoke-EnhancedPatchManager.ps1` (New-PatchPullRequest)
-- `core-runner/modules/PatchManager/Public/Invoke-GitControlledPatch.ps1` (Build-ComprehensivePRBody)
+- `aither-core/modules/PatchManager/Public/Invoke-EnhancedPatchManager.ps1` (New-PatchPullRequest)
+- `aither-core/modules/PatchManager/Public/Invoke-GitControlledPatch.ps1` (Build-ComprehensivePRBody)
 
 - Added `IssueNumber` and `IssueUrl` parameters
 - Include "Related Issue" section with `Closes #issue_number` in PR body

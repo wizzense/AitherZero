@@ -39,7 +39,7 @@ if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
         'Logging',
         (Join-Path (Split-Path $PSScriptRoot -Parent) "Logging"),
         (Join-Path $env:PWSH_MODULES_PATH "Logging" -ErrorAction SilentlyContinue),
-        (Join-Path $env:PROJECT_ROOT "core-runner/modules/Logging" -ErrorAction SilentlyContinue)
+        (Join-Path $env:PROJECT_ROOT "aither-core/modules/Logging" -ErrorAction SilentlyContinue)
     )
 
     foreach ($loggingPath in $loggingPaths) {
@@ -228,7 +228,7 @@ function Get-DiscoveredModules {
         [string[]]$SpecificModules = @()
     )
 
-    $modulesPath = Join-Path $script:ProjectRoot "core-runner/modules"
+    $modulesPath = Join-Path $script:ProjectRoot "aither-core/modules"
     $allModules = @()
 
     if (-not (Test-Path $modulesPath)) {

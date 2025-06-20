@@ -12,7 +12,7 @@
 
 # Set environment variables for admin-friendly module discovery
 if (-not $env:PWSH_MODULES_PATH) {
-    $env:PWSH_MODULES_PATH = (Resolve-Path "$PSScriptRoot/../../core-runner/modules").Path
+    $env:PWSH_MODULES_PATH = (Resolve-Path "$PSScriptRoot/../../aither-core/modules").Path
 }
 if (-not $env:PROJECT_ROOT) {
     $env:PROJECT_ROOT = (Resolve-Path "$PSScriptRoot/../..").Path

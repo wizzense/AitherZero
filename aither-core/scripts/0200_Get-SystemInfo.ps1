@@ -20,7 +20,7 @@ param(
 )
 
 Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force
-Import-Module "$env:PROJECT_ROOT/core-runner/modules/Logging" -Force
+Import-Module "$env:PROJECT_ROOT/aither-core/modules/Logging" -Force
 
 # Initialize standardized parameters
 $params = Initialize-StandardParameters -InputParameters $PSBoundParameters -ScriptName $MyInvocation.MyCommand.Name

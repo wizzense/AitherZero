@@ -27,10 +27,10 @@ if (-not $env:PROJECT_ROOT) {
 }
 
 try {
-    Import-Module "$env:PROJECT_ROOT/core-runner/modules/PatchManager" -Force -ErrorAction Stop
+    Import-Module "$env:PROJECT_ROOT/aither-core/modules/PatchManager" -Force -ErrorAction Stop
 } catch {
     Write-Host "⚠️  Could not import PatchManager module. Please ensure modules are available." -ForegroundColor Yellow
-    Write-Host "   Expected path: $env:PROJECT_ROOT/core-runner/modules/PatchManager" -ForegroundColor Gray
+    Write-Host "   Expected path: $env:PROJECT_ROOT/aither-core/modules/PatchManager" -ForegroundColor Gray
     exit 1
 }
 

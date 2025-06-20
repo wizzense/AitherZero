@@ -143,7 +143,7 @@ Describe 'Code Quality and Linting Tests' {
         
         It 'Should be able to execute parallel linting (dry run)' {
             $testLintTasks = @(
-                @{ Type = 'PSScriptAnalyzer'; Path = './src/core-runner/modules/ParallelExecution'; Name = 'Test-PSScriptAnalyzer' }
+                @{ Type = 'PSScriptAnalyzer'; Path = './src/aither-core/modules/ParallelExecution'; Name = 'Test-PSScriptAnalyzer' }
             )
             
             { Invoke-ParallelTaskExecution -Tasks $testLintTasks -TaskType 'Lint' -MaxConcurrency 1 } | Should -Not -Throw
