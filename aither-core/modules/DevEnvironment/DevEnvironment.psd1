@@ -26,10 +26,7 @@
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()
-    
-    RequiredModules = @(
-        'Logging'
-    )
+      RequiredModules = @()
     
     PrivateData = @{
         PSData = @{

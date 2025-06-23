@@ -601,6 +601,355 @@ if (-not (Get-Command Start-DevEnvironmentSetup -ErrorAction SilentlyContinue)) 
     }
 }
 
+# Enhanced Integration Functions for Seamless Module Orchestration
+
+if (-not (Get-Command Get-IntegratedToolset -ErrorAction SilentlyContinue)) {
+    function Get-IntegratedToolset {
+        <#
+        .SYNOPSIS
+            Gets a comprehensive overview of all available toolsets and their integration status
+        .DESCRIPTION
+            Provides a unified view of all modules, their capabilities, and cross-module integrations
+        #>
+        [CmdletBinding()]
+        param(
+            [Parameter()]
+            [switch]$Detailed
+        )
+
+        process {
+            $toolset = @{
+                CoreModules = @{}
+                Capabilities = @{}
+                Integrations = @{}
+                HealthStatus = @{}
+                QuickActions = @{}
+            }
+
+            # Analyze each loaded module
+            foreach ($moduleName in $script:LoadedModules.Keys) {
+                $moduleInfo = $script:LoadedModules[$moduleName]
+                $module = Get-Module -Name $moduleName -ErrorAction SilentlyContinue
+
+                if ($module) {
+                    $commands = Get-Command -Module $moduleName -ErrorAction SilentlyContinue
+                    $toolset.CoreModules[$moduleName] = @{
+                        Description = $moduleInfo.Description
+                        CommandCount = $commands.Count
+                        Commands = ($commands | Select-Object -ExpandProperty Name)
+                        LoadTime = $moduleInfo.ImportTime
+                        Status = 'Loaded'
+                    }
+
+                    # Categorize capabilities
+                    switch ($moduleName) {
+                        'ISOManager' {
+                            $toolset.Capabilities['ISOManagement'] = @{
+                                Module = $moduleName
+                                Functions = @('Get-ISODownload', 'Get-ISOInventory', 'New-ISORepository')
+                                Description = 'Complete ISO lifecycle management'
+                            }
+                        }
+                        'ISOCustomizer' {
+                            $toolset.Capabilities['ISOCustomization'] = @{
+                                Module = $moduleName
+                                Functions = @('New-AutounattendFile', 'New-CustomISO')
+                                Description = 'ISO customization and automation'
+                            }
+                        }
+                        'PatchManager' {
+                            $toolset.Capabilities['PatchManagement'] = @{
+                                Module = $moduleName
+                                Functions = @('Invoke-PatchWorkflow', 'New-PatchIssue', 'New-PatchPR')
+                                Description = 'Git-controlled development workflow'
+                            }
+                        }
+                        'LabRunner' {
+                            $toolset.Capabilities['LabAutomation'] = @{
+                                Module = $moduleName
+                                Functions = @('Start-LabAutomation', 'Invoke-LabScript')
+                                Description = 'Infrastructure lab orchestration'
+                            }
+                        }
+                        'TestingFramework' {
+                            $toolset.Capabilities['Testing'] = @{
+                                Module = $moduleName
+                                Functions = @('Invoke-BulletproofTests', 'Start-TestValidation')
+                                Description = 'Comprehensive testing suite'
+                            }
+                        }
+                        'BackupManager' {
+                            $toolset.Capabilities['BackupManagement'] = @{
+                                Module = $moduleName
+                                Functions = @('Start-BackupOperation', 'Remove-OldBackups')
+                                Description = 'Automated backup and cleanup'
+                            }
+                        }
+                        'SecureCredentials' {
+                            $toolset.Capabilities['CredentialManagement'] = @{
+                                Module = $moduleName
+                                Functions = @('Get-SecureCredential', 'Set-SecureCredential')
+                                Description = 'Enterprise credential security'
+                            }
+                        }
+                        'RemoteConnection' {
+                            $toolset.Capabilities['RemoteAccess'] = @{
+                                Module = $moduleName
+                                Functions = @('Connect-RemoteSystem', 'Test-RemoteConnection')
+                                Description = 'Multi-protocol remote connections'
+                            }
+                        }
+                    }
+                }
+            }
+
+            # Define cross-module integrations
+            $toolset.Integrations = @{
+                'ISOWorkflow' = @{
+                    Description = 'Complete ISO management workflow'
+                    Modules = @('ISOManager', 'ISOCustomizer', 'TestingFramework')
+                    Workflow = 'Download → Customize → Test → Deploy'
+                }
+                'DevelopmentWorkflow' = @{
+                    Description = 'Development and deployment pipeline'
+                    Modules = @('PatchManager', 'TestingFramework', 'BackupManager')
+                    Workflow = 'Patch → Test → Backup → Deploy'
+                }
+                'LabDeployment' = @{
+                    Description = 'End-to-end lab infrastructure deployment'
+                    Modules = @('LabRunner', 'ISOManager', 'ISOCustomizer', 'RemoteConnection')
+                    Workflow = 'Plan → Provision → Configure → Connect'
+                }
+                'MaintenanceOperations' = @{
+                    Description = 'Automated maintenance and housekeeping'
+                    Modules = @('UnifiedMaintenance', 'BackupManager', 'TestingFramework')
+                    Workflow = 'Backup → Clean → Validate → Report'
+                }
+            }
+
+            # Quick actions for common tasks
+            $toolset.QuickActions = @{
+                'CreateISO' = @{
+                    Description = 'Download and customize an ISO'
+                    Command = 'Get-ISODownload | New-CustomISO'
+                    Modules = @('ISOManager', 'ISOCustomizer')
+                }
+                'RunTests' = @{
+                    Description = 'Execute comprehensive test suite'
+                    Command = 'Invoke-BulletproofTests -ValidationLevel Complete'
+                    Modules = @('TestingFramework')
+                }
+                'CreatePatch' = @{
+                    Description = 'Create and manage code patches'
+                    Command = 'Invoke-PatchWorkflow -CreatePR'
+                    Modules = @('PatchManager')
+                }
+                'LabSetup' = @{
+                    Description = 'Initialize complete lab environment'
+                    Command = 'Start-LabAutomation -Auto'
+                    Modules = @('LabRunner', 'ISOManager')
+                }
+            }
+
+            return $toolset
+        }
+    }
+}
+
+if (-not (Get-Command Invoke-IntegratedWorkflow -ErrorAction SilentlyContinue)) {
+    function Invoke-IntegratedWorkflow {
+        <#
+        .SYNOPSIS
+            Executes predefined integrated workflows across multiple modules
+        .DESCRIPTION
+            Orchestrates complex operations that span multiple modules for common scenarios
+        #>
+        [CmdletBinding(SupportsShouldProcess)]
+        param(
+            [Parameter(Mandatory = $true)]
+            [ValidateSet('ISOWorkflow', 'DevelopmentWorkflow', 'LabDeployment', 'MaintenanceOperations')]
+            [string]$WorkflowType,
+
+            [Parameter()]
+            [hashtable]$Parameters = @{},            [Parameter()]
+            [switch]$DryRun
+        )
+
+        process {
+            Write-CustomLog -Message "Starting integrated workflow: $WorkflowType" -Level 'INFO'
+
+            switch ($WorkflowType) {
+                'ISOWorkflow' {
+                    if ($PSCmdlet.ShouldProcess("ISO Workflow", "Execute complete ISO management workflow")) {                        # Step 1: Download ISO
+                        $isoName = $Parameters.ISOName ?? 'Windows11'
+                        Write-CustomLog -Message "Downloading ISO: $isoName" -Level 'INFO'
+                        $downloadResult = Get-ISODownload -ISOName $isoName -WhatIf:$DryRun
+
+                        # Step 2: Customize ISO
+                        if ($downloadResult -and -not $DryRun) {
+                            Write-CustomLog -Message "Customizing ISO with autounattend" -Level 'INFO'
+                            $autounattendPath = New-AutounattendFile -ISOName $isoName
+                            $customISOResult = New-CustomISO -SourceISO $downloadResult.FilePath -AutounattendPath $autounattendPath
+                        }
+
+                        # Step 3: Validate with tests
+                        Write-CustomLog -Message "Running validation tests" -Level 'INFO'
+                        $testResult = Invoke-BulletproofTests -ValidationLevel Quick -DryRun:$DryRun
+
+                        return @{
+                            Workflow = $WorkflowType
+                            Download = $downloadResult
+                            Customization = $customISOResult ?? 'Skipped (DryRun)'
+                            Validation = $testResult
+                            Success = $true
+                        }
+                    }
+                }
+
+                'DevelopmentWorkflow' {
+                    if ($PSCmdlet.ShouldProcess("Development Workflow", "Execute patch and test workflow")) {
+                        # Step 1: Create patch
+                        $patchDescription = $Parameters.PatchDescription ?? 'Automated development workflow'
+                        Write-CustomLog -Message "Creating patch: $patchDescription" -Level 'INFO'
+
+                        $patchOperation = $Parameters.PatchOperation ?? { Write-Host "Sample patch operation" }
+                        $patchResult = Invoke-PatchWorkflow -PatchDescription $patchDescription -PatchOperation $patchOperation -DryRun:$DryRun
+
+                        # Step 2: Run comprehensive tests
+                        Write-CustomLog -Message "Running comprehensive test suite" -Level 'INFO'
+                        $testResult = Invoke-BulletproofTests -ValidationLevel Standard -DryRun:$DryRun
+
+                        # Step 3: Create backup
+                        Write-CustomLog -Message "Creating backup point" -Level 'INFO'
+                        $backupResult = Start-BackupOperation -DryRun:$DryRun
+
+                        return @{
+                            Workflow = $WorkflowType
+                            Patch = $patchResult
+                            Tests = $testResult
+                            Backup = $backupResult
+                            Success = $true
+                        }
+                    }
+                }
+
+                'LabDeployment' {
+                    if ($PSCmdlet.ShouldProcess("Lab Deployment", "Execute complete lab setup workflow")) {                        # Step 1: Setup lab environment
+                        Write-CustomLog -Message "Initializing lab environment" -Level 'INFO'
+                        $labResult = Start-LabAutomation -Auto -DryRun:$DryRun
+
+                        # Step 2: Prepare ISOs
+                        Write-CustomLog -Message "Preparing lab ISOs" -Level 'INFO'
+                        $isoRepo = New-ISORepository -RepositoryPath ($Parameters.ISOPath ?? "$env:TEMP/LabISOs") -WhatIf:$DryRun
+
+                        # Step 3: Test connections
+                        Write-CustomLog -Message "Testing remote connections" -Level 'INFO'
+                        $connectionResult = Test-RemoteConnection -DryRun:$DryRun
+
+                        return @{
+                            Workflow = $WorkflowType
+                            Lab = $labResult
+                            ISORepo = $isoRepo
+                            Connections = $connectionResult
+                            Success = $true
+                        }
+                    }
+                }
+
+                'MaintenanceOperations' {
+                    if ($PSCmdlet.ShouldProcess("Maintenance Operations", "Execute maintenance workflow")) {                        # Step 1: Create backup
+                        Write-CustomLog -Message "Creating maintenance backup" -Level 'INFO'
+                        $backupResult = Start-BackupOperation -DryRun:$DryRun
+
+                        # Step 2: Run unified maintenance
+                        Write-CustomLog -Message "Running unified maintenance" -Level 'INFO'
+                        $maintenanceResult = Start-UnifiedMaintenance -DryRun:$DryRun
+
+                        # Step 3: Validate system health
+                        Write-CustomLog -Message "Validating system health" -Level 'INFO'
+                        $healthResult = Test-CoreApplicationHealth
+
+                        return @{
+                            Workflow = $WorkflowType
+                            Backup = $backupResult
+                            Maintenance = $maintenanceResult
+                            Health = $healthResult
+                            Success = $true
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+if (-not (Get-Command Start-QuickAction -ErrorAction SilentlyContinue)) {
+    function Start-QuickAction {
+        <#
+        .SYNOPSIS
+            Executes predefined quick actions for common tasks
+        .DESCRIPTION
+            Provides one-command access to frequently used integrated operations
+        #>
+        [CmdletBinding(SupportsShouldProcess)]
+        param(
+            [Parameter(Mandatory = $true)]
+            [ValidateSet('CreateISO', 'RunTests', 'CreatePatch', 'LabSetup', 'SystemHealth', 'ModuleStatus')]
+            [string]$Action,
+
+            [Parameter()]
+            [hashtable]$Parameters = @{
+            }
+        )
+
+        process {
+            Write-CustomLog -Message "Executing quick action: $Action" -Level 'INFO'
+
+            switch ($Action) {
+                'CreateISO' {
+                    $isoName = $Parameters.ISOName ?? 'Windows11'
+                    if ($PSCmdlet.ShouldProcess($isoName, "Download and customize ISO")) {
+                        Invoke-IntegratedWorkflow -WorkflowType 'ISOWorkflow' -Parameters @{ ISOName = $isoName }
+                    }
+                }
+                'RunTests' {
+                    $level = $Parameters.ValidationLevel ?? 'Standard'
+                    if ($PSCmdlet.ShouldProcess("Test Suite", "Run $level validation")) {
+                        Invoke-BulletproofTests -ValidationLevel $level
+                    }
+                }
+                'CreatePatch' {
+                    $description = $Parameters.Description ?? 'Quick patch via Start-QuickAction'
+                    if ($PSCmdlet.ShouldProcess("Patch", "Create patch: $description")) {
+                        Invoke-PatchWorkflow -PatchDescription $description -PatchOperation { Write-Host "Quick patch operation executed" }
+                    }
+                }
+                'LabSetup' {
+                    if ($PSCmdlet.ShouldProcess("Lab Environment", "Initialize lab setup")) {
+                        Invoke-IntegratedWorkflow -WorkflowType 'LabDeployment' -Parameters $Parameters
+                    }
+                }
+                'SystemHealth' {
+                    Write-CustomLog -Message "Running comprehensive system health check" -Level 'INFO'
+                    $coreHealth = Test-CoreApplicationHealth
+                    $moduleStatus = Get-CoreModuleStatus
+                    $toolsetOverview = Get-IntegratedToolset
+
+                    return @{
+                        CoreHealth = $coreHealth
+                        ModuleStatus = $moduleStatus
+                        ToolsetOverview = $toolsetOverview
+                        Timestamp = Get-Date
+                    }
+                }
+                'ModuleStatus' {
+                    return Get-IntegratedToolset -Detailed
+                }
+            }
+        }
+    }
+}
+
 # Export all public functions
 Export-ModuleMember -Function @(
     'Invoke-CoreApplication',
@@ -613,5 +962,8 @@ Export-ModuleMember -Function @(
     'Import-CoreModules',
     'Get-CoreModuleStatus',
     'Invoke-UnifiedMaintenance',
-    'Start-DevEnvironmentSetup'
+    'Start-DevEnvironmentSetup',
+    'Get-IntegratedToolset',
+    'Invoke-IntegratedWorkflow',
+    'Start-QuickAction'
 )
