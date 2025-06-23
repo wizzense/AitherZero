@@ -93,7 +93,7 @@ function New-CrossForkPR {
                 $repoInfo = Get-GitRepositoryInfo
                 Write-CrossForkLog "Detected repository: $($repoInfo.FullName) ($($repoInfo.Type))" -Level "INFO"
                 Write-CrossForkLog "Available forks in chain: $($repoInfo.ForkChain.Count)" -Level "INFO"
-                
+
                 foreach ($fork in $repoInfo.ForkChain) {
                     Write-CrossForkLog "  - $($fork.Name): $($fork.GitHubRepo) ($($fork.Type))" -Level "INFO"
                 }
@@ -104,7 +104,7 @@ function New-CrossForkPR {
             # Determine target repository
             $targetRepo = $null
             $targetRepoName = ""
-            
+
             switch ($TargetFork) {
                 'current' {
                     $targetRepo = $repoInfo.ForkChain | Where-Object { $_.Name -eq 'origin' } | Select-Object -First 1
@@ -135,7 +135,7 @@ function New-CrossForkPR {
             # Create enhanced PR title and body for cross-fork PRs
             $prTitle = "Patch: $Description"
             $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
-            
+
             # Gather system and environment information
             $gitInfo = @{
                 CurrentBranch = git branch --show-current 2>&1 | Out-String | ForEach-Object Trim
@@ -143,7 +143,7 @@ function New-CrossForkPR {
                 RepoStatus = git status --porcelain 2>&1 | Out-String | ForEach-Object Trim
                 RemoteUrl = git remote get-url origin 2>&1 | Out-String | ForEach-Object Trim
             }
-            
+
             $systemInfo = @{
                 PowerShellVersion = $PSVersionTable.PSVersion.ToString()
                 OS = if ($IsWindows) { "Windows" } elseif ($IsLinux) { "Linux" } elseif ($IsMacOS) { "macOS" } else { "Unknown" }
@@ -230,7 +230,7 @@ $(if ($IssueNumber) {
 })
 
 ### Fork Chain Context
-**Complete Fork Chain**: 
+**Complete Fork Chain**:
 $($repoInfo.ForkChain | ForEach-Object { "- **$($_.GitHubRepo)** ($($_.Type)): $($_.Description)" } | Out-String)
 
 ### Cross-Fork Automation Details
@@ -306,7 +306,7 @@ $($repoInfo.ForkChain | ForEach-Object { "- **$($_.GitHubRepo)** ($($_.Type)): $
 
             # Create the cross-fork PR
             Write-CrossForkLog "Creating cross-fork pull request: $prTitle" -Level "INFO"
-            
+
             # For cross-fork PRs, we need to specify the head as user:branch format
             $headRef = "$($repoInfo.Owner):$BranchName"
             $result = gh pr create --repo $targetRepo.GitHubRepo --title $prTitle --body $prBody --head $headRef --label "patch,cross-fork" 2>&1
@@ -346,7 +346,7 @@ $($repoInfo.ForkChain | ForEach-Object { "- **$($_.GitHubRepo)** ($($_.Type)): $
                 $errorText = $result -join ' '
                 if ($errorText -match "already exists.*https://github\.com/[^/]+/[^/]+/pull/\d+") {
                     $existingPrUrl = [regex]::Match($errorText, 'https://github\.com/[^/]+/[^/]+/pull/\d+').Value
-                    
+
                     $prNumber = $null
                     if ($existingPrUrl -match '/pull/(\d+)') {
                         $prNumber = $matches[1]

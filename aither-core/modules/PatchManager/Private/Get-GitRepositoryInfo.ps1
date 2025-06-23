@@ -45,7 +45,7 @@ function Get-GitRepositoryInfo {
         # Parse repository information from origin
         $owner = $null
         $repoName = $null
-        
+
         if ($originUrl -match 'github\.com[:/]([^/]+)/([^/\.]+)') {
             $owner = $matches[1]
             $repoName = $matches[2]
@@ -63,13 +63,13 @@ function Get-GitRepositoryInfo {
         # Determine repository type and fork chain
         $repoType = "Unknown"
         $forkChain = @()
-        
+
         if ($owner -eq "wizzense" -and $repoName -eq "AitherZero") {
             $repoType = "Development"
             $forkChain = @(
                 @{ Name = "origin"; Owner = "wizzense"; Repo = "AitherZero"; GitHubRepo = "wizzense/AitherZero"; Type = "Development"; Description = "Your development fork" }
             )
-            
+
             # Add upstream if it exists
             if ($remotes.ContainsKey('upstream')) {
                 $upstreamUrl = $remotes['upstream']
@@ -77,7 +77,7 @@ function Get-GitRepositoryInfo {
                     $upstreamOwner = $matches[1]
                     $upstreamRepo = $matches[2]
                     $forkChain += @{ Name = "upstream"; Owner = $upstreamOwner; Repo = $upstreamRepo; GitHubRepo = "$upstreamOwner/$upstreamRepo"; Type = "Public"; Description = "Public staging repository" }
-                    
+
                     # If upstream is AitherLabs, add Aitherium as the root
                     if ($upstreamOwner -eq "Aitherium" -and $upstreamRepo -eq "AitherLabs") {
                         $forkChain += @{ Name = "root"; Owner = "Aitherium"; Repo = "Aitherium"; GitHubRepo = "Aitherium/Aitherium"; Type = "Premium"; Description = "Premium/enterprise repository" }
@@ -90,7 +90,7 @@ function Get-GitRepositoryInfo {
             $forkChain = @(
                 @{ Name = "origin"; Owner = "Aitherium"; Repo = "AitherLabs"; GitHubRepo = "Aitherium/AitherLabs"; Type = "Public"; Description = "Public staging repository" }
             )
-            
+
             # Add upstream to Aitherium if configured
             if ($remotes.ContainsKey('upstream')) {
                 $upstreamUrl = $remotes['upstream']

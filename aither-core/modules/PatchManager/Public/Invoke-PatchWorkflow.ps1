@@ -141,7 +141,7 @@ function Invoke-PatchWorkflow {
             $testOutput = @()
             $testErrors = @()
             $testContext = @{}
-            
+
             # Step 1: Handle existing changes (auto-commit or stash)
             $gitStatus = git status --porcelain 2>&1
             $hasUncommittedChanges = $gitStatus -and ($gitStatus | Where-Object { $_ -match '\S' })
@@ -203,11 +203,11 @@ function Invoke-PatchWorkflow {
                         try {
                             # Capture both stdout and stderr
                             $output = Invoke-Expression $cmd 2>&1
-                            
+
                             # Separate output and errors
                             $cmdOutput = @()
                             $cmdErrors = @()
-                            
+
                             foreach ($line in $output) {
                                 if ($line -is [System.Management.Automation.ErrorRecord]) {
                                     $cmdErrors += $line.ToString()
@@ -217,14 +217,14 @@ function Invoke-PatchWorkflow {
                                     $testOutput += $line.ToString()
                                 }
                             }
-                            
+
                             # Check exit code
                             if ($LASTEXITCODE -ne 0) {
                                 $errorMsg = "Test command failed with exit code $LASTEXITCODE : $cmd"
                                 Write-PatchLog $errorMsg -Level "WARN"
                                 $testErrors += $errorMsg
                             }
-                            
+
                             # Store test context
                             $testContext[$cmd] = @{
                                 ExitCode = $LASTEXITCODE
@@ -232,13 +232,13 @@ function Invoke-PatchWorkflow {
                                 ErrorLines = $cmdErrors.Count
                                 ExecutionTime = Get-Date
                             }
-                            
+
                         } catch {
                             $errorMsg = "Test command failed: $cmd - $($_.Exception.Message)"
                             Write-PatchLog $errorMsg -Level "WARN"
                             $testErrors += $errorMsg
                             $testErrors += $_.Exception.Message
-                            
+
                             $testContext[$cmd] = @{
                                 ExitCode = -1
                                 OutputLines = 0
@@ -251,7 +251,7 @@ function Invoke-PatchWorkflow {
                         Write-PatchLog "DRY RUN: Would run test command: $cmd" -Level "INFO"
                     }
                 }
-                
+
                 # Log test summary
                 Write-PatchLog "Test execution complete. Output lines: $($testOutput.Count), Error lines: $($testErrors.Count)" -Level "INFO"
             }            # Step 4: Create tracking issue with enhanced context (NOW with test data available)
@@ -260,7 +260,7 @@ function Invoke-PatchWorkflow {
                 # Determine target repository for issue creation based on PR target
                 $repoInfo = Get-GitRepositoryInfo
                 $issueTargetRepo = $repoInfo.GitHubRepo  # Default to current repo
-                
+
                 if ($CreatePR -and $TargetFork -ne "current") {
                     # If creating a cross-fork PR, create the issue in the target repository
                     $targetForkInfo = $repoInfo.ForkChain | Where-Object { $_.Name -eq $TargetFork }
@@ -280,7 +280,7 @@ function Invoke-PatchWorkflow {
                         Priority = $Priority
                         TargetRepository = $issueTargetRepo
                     }
-                    
+
                     # Include test data if available for intelligent analysis
                     if ($testOutput.Count -gt 0 -or $testErrors.Count -gt 0) {
                         $issueParams.TestOutput = $testOutput
