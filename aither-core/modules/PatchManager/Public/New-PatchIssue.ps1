@@ -67,6 +67,9 @@ function New-PatchIssue {
         [hashtable]$TestContext = @{},
 
         [Parameter(Mandatory = $false)]
+        [string]$TargetRepository,
+
+        [Parameter(Mandatory = $false)]
         [switch]$DryRun
     )
 
@@ -93,14 +96,23 @@ function New-PatchIssue {
         try {            # Check GitHub CLI availability
             if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
                 throw 'GitHub CLI (gh) not found. Please install and authenticate with GitHub CLI.'
-            }
-
-            # Get dynamic repository information
+            }            # Get repository information (use TargetRepository if specified)
             try {
-                $repoInfo = Get-GitRepositoryInfo
-                Write-IssueLog "Detected repository: $($repoInfo.FullName) ($($repoInfo.Type))" -Level "INFO"
+                if ($TargetRepository) {
+                    # Use specified target repository
+                    Write-IssueLog "Using specified target repository: $TargetRepository" -Level "INFO"
+                    $repoInfo = @{
+                        GitHubRepo = $TargetRepository
+                        FullName = $TargetRepository
+                        Type = "Specified"
+                    }
+                } else {
+                    # Auto-detect current repository
+                    $repoInfo = Get-GitRepositoryInfo
+                    Write-IssueLog "Detected repository: $($repoInfo.FullName) ($($repoInfo.Type))" -Level "INFO"
+                }
             } catch {
-                throw "Failed to detect repository information: $($_.Exception.Message)"
+                throw "Failed to get repository information: $($_.Exception.Message)"
             }
 
             # Perform intelligent test analysis if test data is provided

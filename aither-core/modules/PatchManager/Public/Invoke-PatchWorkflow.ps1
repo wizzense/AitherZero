@@ -254,17 +254,31 @@ function Invoke-PatchWorkflow {
                 
                 # Log test summary
                 Write-PatchLog "Test execution complete. Output lines: $($testOutput.Count), Error lines: $($testErrors.Count)" -Level "INFO"
-            }
-
-            # Step 4: Create tracking issue with enhanced context (NOW with test data available)
+            }            # Step 4: Create tracking issue with enhanced context (NOW with test data available)
             $issueResult = $null
             if ($CreateIssue) {
+                # Determine target repository for issue creation based on PR target
+                $repoInfo = Get-GitRepositoryInfo
+                $issueTargetRepo = $repoInfo.GitHubRepo  # Default to current repo
+                
+                if ($CreatePR -and $TargetFork -ne "current") {
+                    # If creating a cross-fork PR, create the issue in the target repository
+                    $targetForkInfo = $repoInfo.ForkChain | Where-Object { $_.Name -eq $TargetFork }
+                    if ($targetForkInfo) {
+                        $issueTargetRepo = $targetForkInfo.GitHubRepo
+                        Write-PatchLog "Creating issue in target repository: $issueTargetRepo (for cross-fork PR)" -Level "INFO"
+                    }
+                } else {
+                    Write-PatchLog "Creating issue in current repository: $issueTargetRepo" -Level "INFO"
+                }
+
                 Write-PatchLog "Creating tracking issue with intelligent analysis (with test data from previous step)..." -Level "INFO"
 
                 if (-not $DryRun) {
                     $issueParams = @{
                         Description = $PatchDescription
                         Priority = $Priority
+                        TargetRepository = $issueTargetRepo
                     }
                     
                     # Include test data if available for intelligent analysis
@@ -285,7 +299,7 @@ function Invoke-PatchWorkflow {
                         Write-PatchLog "Issue creation failed: $($issueResult.Message)" -Level "WARN"
                     }
                 } else {
-                    Write-PatchLog "DRY RUN: Would create GitHub issue with test analysis" -Level "INFO"
+                    Write-PatchLog "DRY RUN: Would create GitHub issue with test analysis in $issueTargetRepo" -Level "INFO"
                 }
             } else {
                 Write-PatchLog "Skipping issue creation (disabled by -CreateIssue:`$false)" -Level "INFO"
