@@ -1,167 +1,408 @@
-# GitHub Copilot Configuration for Aitherium Infrastructure Automation
+# Aitherium - Infrastructure Beyond the Cloud™
 
-This directory contains comprehensive GitHub Copilot configuration optimized for PowerShell automation development, OpenTofu infrastructure management, and Pester testing workflows.
+```
+     _    _ _   _               _
+    / \  (_) |_| |__   ___ _ __(_)_   _ _ __ ___
+   / _ \ | | __| '_ \ / _ \ '__| | | | | '_ ` _ \
+  / ___ \| | |_| | | |  __/ |  | | |_| | | | | | |
+ /_/   \_\_|\__|_| |_|\___|_|  |_|\__,_|_| |_| |_|
 
-## Repository Custom Instructions
+ Infrastructure Automation That Transcends Boundaries
+```
 
-### `copilot-instructions.md`
-The main repository instruction file that provides Copilot with context about:
-- Project architecture and standards
-- PowerShell 7.0+ cross-platform requirements
-- Module structure and dependencies
-- Code generation patterns and best practices
-- Infrastructure as Code standards
-- Testing and quality assurance guidelines
-- Security and compliance requirements
+Cross-platform PowerShell automation framework for enterprise infrastructure management with comprehensive testing and modular architecture. Deploy anywhere, manage everything - from bare metal to cloud, Aitherium adapts to your infrastructure needs.
 
-This file is automatically loaded by GitHub Copilot when working in this repository.
+## AitherLabs (Community Edition) vs Aitherium Platform (Enterprise)
 
-## Prompt Templates
+**AitherLabs** is the community edition providing:
+- Core infrastructure automation capabilities
+- Cross-platform deployment tools
+- Basic enterprise features
+- Community support and development
 
-### `prompts/powershell-development.md`
-Specialized prompts for PowerShell development including:
-- Module and function creation templates
-- Configuration management patterns
-- Environment setup procedures
-- Performance optimization strategies
-- Documentation and code review prompts
+**Aitherium Platform** (coming soon) will include:
+- Advanced enterprise management
+- Premium integrations and connectors
+- Professional support and SLA
+- Enhanced security and compliance features
 
-### `prompts/testing-quality.md`
-Comprehensive testing prompts covering:
-- Pester test development (unit, integration, performance)
-- Mock strategy development
-- Test data generation and fixtures
-- Cross-platform testing approaches
-- Security and error handling validation
+## Quick Start - Bootstrap Installation
 
-### `prompts/infrastructure-code.md`
-Infrastructure as Code focused prompts for:
-- OpenTofu/Terraform resource configuration
-- Module development and reusability
-- State management and deployment pipelines
-- Lab infrastructure and development environments
-- Security and compliance frameworks
+### 🚀 One-Line Installation
 
-### `prompts/troubleshooting-debugging.md`
-Diagnostic and troubleshooting prompts for:
-- Error analysis and resolution
-- Performance optimization
-- Network and connectivity issues
-- Infrastructure and security problems
-- Logging and monitoring setup
+**Bootstrap with kicker-git.ps1** (Main Entry Point):
 
-## Personal Instructions
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Aitherium/AitherLabs/main/kicker-git.ps1' -OutFile '.\kicker-git.ps1'; .\kicker-git.ps1"
+```
 
-### `personal-copilot-instructions.md`
-Personal preferences for:
-- Communication style and explanation depth
-- Code generation patterns and preferences
-- Development workflow optimization
-- Problem-solving approaches
-- Focus areas for automation and infrastructure
+**PowerShell 7.x** (Cross-platform):
 
-## Usage Guidelines
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/Aitherium/AitherLabs/main/kicker-git.ps1' -OutFile '.\kicker-git.ps1'; .\kicker-git.ps1"
+```
 
-### Setting Up Repository Instructions
+[kicker-git.ps1](https://github.com/Aitherium/AitherLabs/blob/main/kicker-git.ps1)
 
-1. **Automatic Loading**: The `copilot-instructions.md` file is automatically loaded when GitHub Copilot detects you're working in this repository.
+### 📋 Bootstrap Options
 
-2. **VS Code Integration**: The `.vscode/settings.json` file is configured to use these instruction files with the latest Copilot features.
+The `kicker-git.ps1` script is your **single entry point** for all bootstrap scenarios:
 
-3. **Verification**: Check if instructions are active by looking for the `.github/copilot-instructions.md` reference in Copilot Chat responses.
+#### **kicker-git.ps1** Features
 
-### Using Prompt Templates
+- ✅ Full CoreApp orchestration integration
+- ✅ Cross-platform support (Windows, Linux, macOS)
+- ✅ PowerShell 5.1 and 7.x compatibility
+- ✅ Self-updating capabilities
+- ✅ Comprehensive health checks
+- ✅ Advanced error handling and logging
+- ✅ Non-interactive mode for automation
+- ✅ Enhanced GitHub authentication handling
 
-1. **In Copilot Chat**: Reference specific prompts by mentioning the template name or concept.
+```powershell
+# Download and run with options
+.\kicker-git.ps1 -Verbosity detailed -NonInteractive
+.\kicker-git.ps1 -ConfigFile "my-config.json" -TargetBranch "develop"
+.\kicker-git.ps1 -SkipGitHubAuth -SkipPrerequisites
+.\kicker-git.ps1 -WhatIf  # See what would be done
+```
+.\kicker-git.ps1 -Force -Verbosity detailed
+```
 
-2. **Custom Prompts**: Combine multiple prompt templates for complex scenarios.
+#### 3. **Legacy Bootstrap** (`kicker-bootstrap.ps1`)
 
-3. **Context-Aware**: Prompts are designed to work with the repository structure and existing codebase.
+- ✅ Original bootstrap script
+- ✅ Maintained for compatibility
+- ⚠️ Limited to original feature set
 
-### Personal Instructions Setup
+### 🔧 Manual Installation
 
-1. **GitHub Web Interface**:
-   - Go to https://github.com/copilot
-   - Click the settings icon (⚙️)
-   - Select "Personal instructions"
-   - Copy content from `personal-copilot-instructions.md`
+If you prefer manual control:
 
-2. **Customization**: Modify the personal instructions based on your specific preferences and workflow.
+```powershell
+# 1. Download the modern bootstrap script
+Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/aitherium/aitherlabs/main/kicker-git.ps1' -OutFile '.\kicker-git.ps1'
+
+# 2. Run with your preferred options
+.\kicker-git.ps1
+
+# 3. Available parameters:
+#    -ConfigFile      : Custom configuration file
+#    -Quiet          : Minimal output
+#    -NonInteractive : No prompts (automation-friendly)
+#    -Verbosity      : silent|normal|detailed
+#    -SkipPrerequisites : Skip auto-installation
+#    -TargetBranch   : Git branch to use
+#    -LocalPath      : Custom clone location
+#    -WhatIf         : Show what would be done
+#    -Force          : Force re-clone
+```
+
+### ⚡ Quick Examples
+
+```powershell
+# Silent automation-friendly setup
+.\kicker-git.ps1 -NonInteractive -Verbosity silent
+
+# Development setup with detailed logging
+.\kicker-git.ps1 -TargetBranch "develop" -Verbosity detailed
+
+# Custom configuration with specific location
+.\kicker-git.ps1 -ConfigFile "prod-config.json" -LocalPath "C:\Labs"
+
+# Test what would happen without making changes
+.\kicker-git.ps1 -WhatIf
+```
+
+## Environment Setup
+
+The bootstrap script automatically sets up:
+
+- **Environment Variables:**
+  - `$env:PROJECT_ROOT` - Project root directory
+  - `$env:PWSH_MODULES_PATH` - Module search path
+
+- **Module Import Paths:**
+
+  ```powershell
+  Import-Module "$env:PROJECT_ROOT\core-runner\modules\Logging" -Force
+  Import-Module "$env:PROJECT_ROOT\core-runner\modules\PatchManager" -Force
+  ```
+
+## Project Structure
+
+```
+aitherium/
+├── core-runner/                    # Main automation framework
+│   ├── kicker-bootstrap.ps1       # Legacy bootstrap (being phased out)
+│   ├── kicker-bootstrap-clean.ps1 # Clean bootstrap implementation
+│   ├── setup-test-env.ps1         # Environment setup script
+│   ├── core_app/                  # Core application
+│   │   ├── core-runner.ps1        # Main runner script
+│   │   ├── default-config.json    # Default configuration
+│   │   └── scripts/               # Automation scripts (0000_*.ps1)
+│   └── modules/                   # PowerShell modules
+│       ├── Logging/               # Centralized logging
+│       ├── PatchManager/          # Git operations and patching
+│       ├── LabRunner/             # Infrastructure management
+│       ├── BackupManager/         # Backup operations
+│       ├── DevEnvironment/        # Development setup
+│       ├── ParallelExecution/     # Parallel processing
+│       ├── ScriptManager/         # Script management
+│       ├── TestingFramework/      # Testing utilities
+│       └── UnifiedMaintenance/    # Maintenance operations
+├── configs/                       # Configuration files
+├── docs/                          # Documentation
+├── tests/                         # Comprehensive test suite
+├── tools/                         # Utility tools
+└── opentofu/                      # OpenTofu infrastructure
+```
+
+## What the Bootstrap Does
+
+1. **Git Setup**: Checks if command-line Git is installed and in PATH.
+   - Installs a minimal version if missing.
+   - Updates PATH if installed but not found in PATH.
+
+2. **Configuration**: Downloads and loads default configuration file.
+   - Uses `aither-core/default-config.json` by default
+   - Override with `-ConfigFile` parameter
+
+3. **Repository Clone**: Clones this repository to local workspace.
+   - Default location: `%TEMP%/aitherium`
+   - Configurable via configuration file
+
+4. **Core Runner Execution**: Invokes `core-runner.ps1` from the repository.
+   - Loads modules and sets up environment
+   - Can be run with parameters for automation
+
+## Essential OpenTofu Setup Scripts
+
+To get OpenTofu working, specify these scripts when `core-runner.ps1` is called:
+
+**Required Scripts: 0006, 0007, 0008, 0009, 0010**
+
+- **0006_Install-ValidationTools.ps1** - Downloads cosign for verification
+- **0007_Install-Go.ps1** - Downloads and installs Go
+- **0008_Install-OpenTofu.ps1** - Downloads and installs OpenTofu (verified with cosign)
+- **0009_Initialize-OpenTofu.ps1** - Sets up OpenTofu and infrastructure repo
+- **0010_Prepare-HyperVProvider.ps1** - Configures Hyper-V host
+
+**Example Infrastructure Repository**: [aitherium-base-lab](https://github.com/Aitherium/aitherium-base-lab.git)
+
+**Example Config File**: [bootstrap-config.json](https://raw.githubusercontent.com/Aitherium/aitherium-base-lab/refs/heads/main/configs/bootstrap-config.json)
+
+## Available Runner Scripts
+
+The runner script can execute the following automation scripts:
+
+### Core Infrastructure Scripts
+
+- **0000_Cleanup-Files.ps1** - Removes lab-infra OpenTofu infrastructure repo
+- **0001_Reset-Git.ps1** - Resets lab-infra OpenTofu infrastructure repo (re-pulls files/resets if you modify any files)
+- **0006_Install-ValidationTools.ps1** - Downloads the cosign exe to C:\temp\cosign
+- **0007_Install-Go.ps1** - Downloads and installs Go
+- **0008_Install-OpenTofu.ps1** - Downloads and installs OpenTofu standalone (verified with cosign)
+- **0009_Initialize-OpenTofu.ps1** - Sets up OpenTofu and the lab-infra repo in C:\temp\base-infra
+- **0010_Prepare-HyperVHost.ps1** - Comprehensive Hyper-V host configuration
+
+### 0010_Prepare-HyperVHost.ps1 Details
+
+This script performs extensive Hyper-V host preparation:
+
+**Hyper-V Configuration:**
+
+- Enables Hyper-V if not enabled
+- Enables WinRM if not enabled
+  - Sets WinRS MaxMemoryPerShellMB to 1024
+  - Sets WinRM MaxTimeoutms to 1800000
+  - Sets TrustedHosts to '*'
+  - Sets Negotiate to True
+
+**Certificate Management:**
+
+- Creates a self-signed RootCA Certificate (prompts for password)
+- Creates self-signed host certificate (prompts for password)
+- Configures WinRM HTTPS Listener
+- Allows HTTPS 5986 through firewall
+
+**Go Workspace & Provider Setup:**
+
+- Creates a Go workspace in C:\GoWorkspace
+- Builds the hyperv-provider for OpenTofu from Taliesins git
+- Copies the provider to the lab-infra
+
+> **Note**: Certificate validation for the hyperv provider is currently disabled by default. I am still working out how to get it to use the certificates properly (they may need to be converted to .pem first).
+
+### Optional Administrative Scripts
+
+- **0100_Enable-WinRM.ps1** - Basic WinRM enablement
+- **0101_Enable-RemoteDesktop.ps1** - Remote Desktop configuration
+- **0102_Configure-Firewall.ps1** - Firewall rule management
+- **0103_Change-ComputerName.ps1** - Computer name configuration
+- **0104_Install-CA.ps1** - Certificate Authority installation
+- **0105_Install-HyperV.ps1** - Hyper-V feature installation
+- **0106_Install-WAC.ps1** - Windows Admin Center installation
+- **0111_Disable-TCPIP6.ps1** - IPv6 configuration
+- **0112_Enable-PXE.ps1** - PXE boot configuration
+- **0113_Config-DNS.ps1** - DNS configuration
+- **0114_Config-TrustedHosts.ps1** - Trusted hosts configuration
+
+## Usage Instructions
+
+**Run ALL scripts**: Type `all`
+**Run specific scripts**: Provide comma-separated 4-digit prefixes (e.g., `0001,0003,0006,0007,0008,0009,0010`)
+**Exit**: Type `exit` to quit the script
+
+## Configuration Requirements
+
+### OpenTofu Provider Configuration
+
+Make sure to modify the `main.tf` so it uses your admin credentials and hostname/IP of the host machine if you don't have a customized config.json or choose not to customize:
+
+```hcl
+provider "hyperv" {
+  user            = "ad\\administrator"
+  password        = ""
+  host            = "192.168.1.121"
+  port            = 5986
+  https           = true
+  insecure        = true  # This skips SSL validation
+  use_ntlm        = true  # Use NTLM as it's enabled on the WinRM service
+  tls_server_name = ""
+  cacert_path     = ""    # Leave empty if skipping SSL validation
+  cert_path       = ""    # Leave empty if skipping SSL validation
+  key_path        = ""    # Leave empty if skipping SSL validation
+  script_path     = "C:/Temp/terraform_%RAND%.cmd"
+  timeout         = "30s"
+}
+
+variable "hyperv_host_name" {
+  type    = string
+  default = "192.168.1.121"
+}
+
+variable "hyperv_user" {
+  type    = string
+  default = "ad\\administrator"
+}
+
+variable "hyperv_password" {
+  type    = string
+  default = ""
+}
+```
+
+### VHD Configuration
+
+You will also need to modify the VHD configuration to create multiple VHD objects with distinct paths:
+
+```hcl
+resource "hyperv_vhd" "control_node_vhd" {
+  count = var.number_of_vms
+
+  depends_on = [hyperv_network_switch.Lan]
+
+  # Unique path for each VHD (e.g. ...-0.vhdx, ...-1.vhdx, etc.)
+  path = "B:\\hyper-v\\PrimaryControlNode\\PrimaryControlNode-Server2025-${count.index}.vhdx"
+  size = 60737421312
+}
+```
+
+### DVD Drive Configuration
+
+```hcl
+dvd_drives {
+  controller_number   = "0"
+  controller_location = "1"
+  path                = "B:\\share\\isos\\2_auto_unattend_en-us_windows_server_2025_updated_feb_2025_x64_dvd_3733c10e.iso"
+}
+```
 
 ## Advanced Features
 
-### Repository Context Awareness
-- Copilot understands the project's module structure
-- Automatically suggests using existing modules instead of creating new functionality
-- Provides context-appropriate code generation based on file location
+### Cross-Platform Support
 
-### Cross-Platform Optimization
-- All generated code follows PowerShell 7.0+ standards
-- Path handling uses forward slashes for cross-platform compatibility
-- Error handling and logging patterns are consistent across the project
+- **Windows, Linux, macOS** deployment capability
+- **PowerShell 7.4+** cross-platform compatibility
+- **Advanced PowerShell Modules**: PatchManager, LabRunner, BackupManager
 
-### Testing Integration
-- Test generation follows Pester 5.0+ patterns
-- Mock strategies align with project testing framework
-- Integration tests consider the modular architecture
+### Infrastructure Automation & Maintenance
 
-### Infrastructure Focus
-- OpenTofu/Terraform code follows HashiCorp best practices
-- Resource naming and tagging conventions are enforced
-- Security and compliance considerations are built into suggestions
+- **Real-time validation** and error correction
+- **CI/CD Integration**: GitHub Actions workflows with comprehensive testing
+- **Infrastructure as Code**: OpenTofu/Terraform configurations for infrastructure environments
 
-## Best Practices
+### Module Usage
 
-### Code Generation
-1. **Always Review**: Copilot suggestions should be reviewed for project compliance
-2. **Test Integration**: Verify generated code works with existing modules
-3. **Documentation**: Ensure generated functions include proper help documentation
-4. **Error Handling**: All code should include comprehensive error handling and logging
+```powershell
+# Import core modules
+Import-Module "./aither-core/modules/PatchManager"
+Import-Module "./aither-core/modules/LabRunner"
 
-### Prompt Engineering
-1. **Be Specific**: Use detailed prompts that reference project standards
-2. **Provide Context**: Include information about the target environment and constraints
-3. **Iterate**: Refine prompts based on the quality of generated responses
-4. **Combine Templates**: Use multiple prompt templates for complex scenarios
+# Run infrastructure automation
+Invoke-ParallelLabRunner -ConfigPath "./configs/infrastructure_config.yaml"
 
-### Maintenance
-1. **Regular Updates**: Keep instructions current with project evolution
-2. **Feedback Integration**: Incorporate lessons learned from development experience
-3. **Team Alignment**: Ensure instructions reflect team coding standards
-4. **Version Control**: Track changes to instructions for team consistency
+# Perform maintenance
+./scripts/maintenance/unified-maintenance.ps1 -Mode "All" -AutoFix
+```
 
-## Troubleshooting
+## Project Structure
 
-### Instructions Not Loading
-- Verify file location: `.github/copilot-instructions.md`
-- Check VS Code settings for instruction file paths
-- Restart VS Code if changes aren't recognized
-- Ensure GitHub Copilot extension is up to date
+- **/aither-core/modules/**: PowerShell modules (PatchManager, LabRunner, BackupManager)
+- **/aither-core/scripts/**: Core automation scripts (0000-0114 series)
+- **/scripts/**: Additional automation and maintenance scripts
+- **/opentofu/**: Infrastructure as Code configurations
+- **/tests/**: Pester test files for validation
+- **/.github/workflows/**: CI/CD automation
+- **/configs/**: Configuration files and templates
 
-### Poor Code Quality
-- Review and refine instruction specificity
-- Check if generated code conflicts with existing patterns
-- Consider adding more detailed examples to instructions
-- Verify prompt templates are being used effectively
+## Future Plans
 
-### Performance Issues
-- Optimize instruction file size and complexity
-- Reduce redundant or conflicting instructions
-- Use specific, actionable guidance rather than general principles
-- Consider breaking complex instructions into focused sections
+Developing enterprise-grade features for the Aitherium Platform while maintaining the community-focused AitherLabs edition.
 
-## Contributing
+## License
 
-### Improving Instructions
-1. **Test Changes**: Validate instruction modifications with real development scenarios
-2. **Document Rationale**: Explain why changes improve code generation quality
-3. **Team Review**: Have instructions reviewed by other team members
-4. **Incremental Updates**: Make small, focused changes rather than large rewrites
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-### Adding Prompts
-1. **Follow Format**: Use consistent structure and formatting
-2. **Practical Focus**: Ensure prompts solve real development challenges
-3. **Context Awareness**: Design prompts to work with project architecture
-4. **Documentation**: Include clear descriptions of prompt purpose and usage
+## Contributors
 
-This configuration provides a comprehensive foundation for AI-assisted development that aligns with project standards and accelerates development workflows while maintaining code quality and consistency.
+Built with ❤️ by the Aitherium community. Infrastructure automation that transcends traditional boundaries.
+
+## 🔄 After Initial Bootstrap
+
+After `kicker-git.ps1` completes, you'll be in the project directory with several relaunch options:
+
+### **Quick Relaunch Options** (Choose Your Preference)
+
+```powershell
+# Option 1: Generated relaunch script (recommended)
+.\Relaunch-CoreApp.ps1           # Auto-generated by kicker-git.ps1
+
+# Option 2: Existing launcher
+.\Start-CoreApp.ps1              # Manual CoreApp initialization
+
+# Option 3: Super quick launcher
+.\go.ps1                         # Minimal typing required
+
+# Option 4: Quick development setup
+.\Quick-Setup.ps1                # Environment + modules
+```
+
+### **Manual CoreApp Start**
+
+```powershell
+# If you prefer manual control:
+Import-Module "./aither-core/CoreApp.psm1" -Force
+Initialize-CoreApplication
+```
+
+### **Development Workflow**
+
+```powershell
+# After any relaunch script:
+Get-CoreModuleStatus             # Check module health
+Invoke-UnifiedMaintenance        # Run maintenance
+Start-DevEnvironmentSetup        # Setup dev environment
+Test-CoreApplicationHealth       # Health check
+```
