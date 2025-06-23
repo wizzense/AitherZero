@@ -85,7 +85,7 @@ function New-PatchPR {
             }# Create PR title and body with comprehensive details
             $prTitle = "Patch: $Description"
             $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
-            
+
             # Gather system and environment information
             $gitInfo = @{
                 CurrentBranch = git branch --show-current 2>&1 | Out-String | ForEach-Object Trim
@@ -146,7 +146,7 @@ This pull request follows the **PatchManager v2.0 Consolidated Workflow**:
 
 #### Pre-merge Validation
 - [ ] **Code Review**: All changes reviewed by maintainer
-- [ ] **Testing**: Automated tests pass successfully  
+- [ ] **Testing**: Automated tests pass successfully
 - [ ] **Documentation**: Changes documented appropriately
 - [ ] **Breaking Changes**: No breaking changes or properly documented
 - [ ] **Security**: No security vulnerabilities introduced
