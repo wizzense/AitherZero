@@ -7,7 +7,7 @@
     Copyright = '(c) 2025 AitherZero. All rights reserved.'
     Description = 'Generalized secure credential management module for enterprise-wide use across AitherZero infrastructure automation'
     PowerShellVersion = '7.0'
-    RequiredModules = @('Logging')
+    RequiredModules = @()
     FunctionsToExport = @(
         'New-SecureCredential',
         'Get-SecureCredential',

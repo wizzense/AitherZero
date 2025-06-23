@@ -33,11 +33,12 @@ Describe "SecureCredentials and RemoteConnection Integration" {
         }
     }
 
-    Context "End-to-End Workflow" {
-        BeforeEach {
+    Context "End-to-End Workflow" {        BeforeEach {
             $TestCredentialName = "Integration-Test-Credential-$(Get-Random)"
             $TestConnectionName = "Integration-Test-Connection-$(Get-Random)"
-        }        It "Should create credential and use it in connection" {
+        }
+        
+        It "Should create credential and use it in connection" {
             # Step 1: Create a test credential (WhatIf)
             $testPassword = ConvertTo-SecureString "TestPassword123" -AsPlainText -Force
             $credResult = New-SecureCredential -CredentialName $TestCredentialName -CredentialType UserPassword -Username "testuser" -Password $testPassword -WhatIf
@@ -62,15 +63,24 @@ Describe "SecureCredentials and RemoteConnection Integration" {
     Context "Enterprise Use Cases" {
         It "Should support multiple credential types for different endpoints" {
             $credentialTypes = @('UserPassword', 'ServiceAccount', 'APIKey', 'Certificate')
-            $endpointTypes = @('SSH', 'WinRM', 'RDP', 'Hypervisor')
-            
-            foreach ($credType in $credentialTypes) {
+            $endpointTypes = @('SSH', 'WinRM', 'VMware', 'Hyper-V')
+              foreach ($credType in $credentialTypes) {
                 foreach ($endpointType in $endpointTypes) {
                     $testCredName = "Test-$credType-$(Get-Random)"
                     $testConnName = "Test-$endpointType-$(Get-Random)"
                     
-                    # Test credential creation
-                    { New-SecureCredential -CredentialName $testCredName -CredentialType $credType -WhatIf } | Should -Not -Throw
+                    # Test credential creation with appropriate parameters
+                    if ($credType -eq 'UserPassword') {
+                        $testPassword = ConvertTo-SecureString "TestPass123" -AsPlainText -Force
+                        { New-SecureCredential -CredentialName $testCredName -CredentialType $credType -Username "testuser" -Password $testPassword -WhatIf } | Should -Not -Throw
+                    } elseif ($credType -eq 'ServiceAccount') {
+                        $testPassword = ConvertTo-SecureString "ServicePass123" -AsPlainText -Force
+                        { New-SecureCredential -CredentialName $testCredName -CredentialType $credType -Username "serviceaccount" -Password $testPassword -WhatIf } | Should -Not -Throw
+                    } elseif ($credType -eq 'APIKey') {
+                        { New-SecureCredential -CredentialName $testCredName -CredentialType $credType -APIKey "test-api-key-123" -WhatIf } | Should -Not -Throw
+                    } elseif ($credType -eq 'Certificate') {
+                        { New-SecureCredential -CredentialName $testCredName -CredentialType $credType -CertificatePath "/path/to/cert.pem" -WhatIf } | Should -Not -Throw
+                    }
                     
                     # Test connection creation
                     { New-RemoteConnection -ConnectionName $testConnName -EndpointType $endpointType -HostName "test.com" -CredentialName $testCredName -WhatIf } | Should -Not -Throw
@@ -89,9 +99,9 @@ Describe "SecureCredentials and RemoteConnection Integration" {
                 
                 $credentialNames += $credName
                 $connectionNames += $connName
-                
-                # Test bulk credential creation
-                { New-SecureCredential -CredentialName $credName -CredentialType UserPassword -WhatIf } | Should -Not -Throw
+                  # Test bulk credential creation with required parameters
+                $testPassword = ConvertTo-SecureString "BulkTestPass123" -AsPlainText -Force
+                { New-SecureCredential -CredentialName $credName -CredentialType UserPassword -Username "bulkuser$i" -Password $testPassword -WhatIf } | Should -Not -Throw
                 
                 # Test bulk connection creation
                 { New-RemoteConnection -ConnectionName $connName -EndpointType SSH -HostName "test$i.example.com" -CredentialName $credName -WhatIf } | Should -Not -Throw
@@ -105,13 +115,13 @@ Describe "SecureCredentials and RemoteConnection Integration" {
     Context "Error Handling and Validation" {
         It "Should handle concurrent operations safely" {
             $jobs = @()
-            
-            # Test concurrent credential creation
+              # Test concurrent credential creation
             for ($i = 1; $i -le 3; $i++) {
                 $job = Start-Job -ScriptBlock {
                     param($Index)
                     Import-Module './aither-core/modules/SecureCredentials/SecureCredentials.psm1' -Force
-                    New-SecureCredential -CredentialName "Concurrent-Test-$Index" -CredentialType UserPassword -WhatIf
+                    $testPassword = ConvertTo-SecureString "ConcurrentPass123" -AsPlainText -Force
+                    New-SecureCredential -CredentialName "Concurrent-Test-$Index" -CredentialType UserPassword -Username "concurrentuser$Index" -Password $testPassword -WhatIf
                 } -ArgumentList $i
                 
                 $jobs += $job
