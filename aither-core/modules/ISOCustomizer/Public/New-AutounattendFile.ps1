@@ -24,10 +24,17 @@ function New-AutounattendFile {
 
         [Parameter(Mandatory = $false)]
         [switch]$Force
-    )
-
-    begin {
+    )    begin {
         Write-CustomLog -Level 'INFO' -Message "Generating autounattend file for: $OSType"
+        
+        # Get default template path if not specified
+        if (-not $TemplatePath) {
+            $templateType = if ($HeadlessMode) { 'Headless' } else { 'Generic' }
+            $TemplatePath = Get-AutounattendTemplate -TemplateType $templateType
+            if (-not $TemplatePath) {
+                Write-CustomLog -Level 'WARN' -Message "No template found, will generate from scratch"
+            }
+        }
         
         # Set default configuration values
         $defaultConfig = @{

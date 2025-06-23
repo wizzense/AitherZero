@@ -47,10 +47,17 @@ function New-CustomISO {
 
         [Parameter(Mandatory = $false)]
         [switch]$ValidateOnly
-    )
-
-    begin {
+    )    begin {
         Write-CustomLog -Level 'INFO' -Message "Starting custom ISO creation from: $SourceISOPath"
+        
+        # Set default bootstrap script if not specified
+        if (-not $BootstrapScript) {
+            $defaultBootstrap = Get-BootstrapTemplate
+            if ($defaultBootstrap) {
+                $BootstrapScript = $defaultBootstrap
+                Write-CustomLog -Level 'INFO' -Message "Using default bootstrap template: $BootstrapScript"
+            }
+        }
         
         # Set default paths
         if (-not $ExtractPath) {
