@@ -54,9 +54,12 @@ Describe "SecureCredentials Module" {
         }
 
         It "Should support different credential types" {
-            $validTypes = @('UserPassword', 'ServiceAccount', 'APIKey', 'Certificate')
+            # Test UserPassword type with required parameters
+            { New-SecureCredential -CredentialName "Test-UserPassword" -CredentialType UserPassword -Username "testuser" -Password (ConvertTo-SecureString "testpass" -AsPlainText -Force) -WhatIf } | Should -Not -Throw
             
-            foreach ($type in $validTypes) {
+            # Test other types that don't require Username/Password
+            $otherTypes = @('ServiceAccount', 'APIKey', 'Certificate')
+            foreach ($type in $otherTypes) {
                 { New-SecureCredential -CredentialName "Test-$type" -CredentialType $type -WhatIf } | Should -Not -Throw
             }
         }

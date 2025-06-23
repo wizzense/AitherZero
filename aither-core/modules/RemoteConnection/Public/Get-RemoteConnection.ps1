@@ -95,21 +95,18 @@ function Get-RemoteConnection {
                             $false
                         }
                     )
-                }
+                }                $results += $result
+            }
 
-                $results += $result
-            }            if ($ConnectionName) {
+            if ($ConnectionName) {
                 # Return single object if specific connection requested
                 if ($results.Count -gt 0) {
                     return $results[0]
                 } else {
                     return $null
                 }            } else {
-                # Return array for all connections (ensure it's always an array)
-                if ($results -eq $null -or $results.Count -eq 0) {
-                    return @()
-                }
-                return , $results
+                # Return array for all connections (force array type even when empty)
+                return ,$results
             }
 
         } catch {

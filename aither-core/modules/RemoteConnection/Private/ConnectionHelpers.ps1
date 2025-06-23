@@ -93,14 +93,14 @@ function Connect-SSHEndpoint {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$Config,
-        
+
         [Parameter(Mandatory = $false)]
         [int]$TimeoutSeconds = 30
     )
 
     try {
         Write-CustomLog -Level 'INFO' -Message "Establishing SSH connection to: $($Config.HostName)"
-        
+
         # Get credential if specified
         $credential = $null
         if ($Config.CredentialName) {
@@ -134,14 +134,14 @@ function Connect-WinRMEndpoint {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$Config,
-        
+
         [Parameter(Mandatory = $false)]
         [int]$TimeoutSeconds = 30
     )
 
     try {
         Write-CustomLog -Level 'INFO' -Message "Establishing WinRM connection to: $($Config.HostName)"
-        
+
         # Get credential if specified
         $credential = $null
         if ($Config.CredentialName) {
@@ -221,6 +221,48 @@ function Get-AllConnectionConfigs {
     catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to get all connection configurations: $($_.Exception.Message)"
         return @{ Success = $false; Error = $_.Exception.Message }
+    }
+}
+
+function Test-EndpointConnectivity {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$HostName,
+
+        [Parameter()]
+        [int]$Port = 22,
+
+        [Parameter()]
+        [int]$TimeoutSeconds = 30
+    )
+
+    try {
+        # Simple connectivity test using Test-NetConnection if available, otherwise use a basic approach
+        if (Get-Command Test-NetConnection -ErrorAction SilentlyContinue) {
+            $result = Test-NetConnection -ComputerName $HostName -Port $Port -InformationLevel Quiet -WarningAction SilentlyContinue
+            return $result
+        } else {
+            # Fallback for cross-platform compatibility
+            try {
+                $tcpClient = New-Object System.Net.Sockets.TcpClient
+                $asyncResult = $tcpClient.BeginConnect($HostName, $Port, $null, $null)
+                $wait = $asyncResult.AsyncWaitHandle.WaitOne($TimeoutSeconds * 1000, $false)
+
+                if ($wait) {
+                    $tcpClient.EndConnect($asyncResult)
+                    $tcpClient.Close()
+                    return $true
+                } else {
+                    $tcpClient.Close()
+                    return $false
+                }
+            } catch {
+                return $false
+            }
+        }
+    } catch {
+        return $false
     }
 }
 

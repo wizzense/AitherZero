@@ -141,12 +141,15 @@ Describe "RemoteConnection Module" {
 
 Describe "RemoteConnection Integration" {
     Context "SecureCredentials Integration" {        It "Should integrate with SecureCredentials module" {
-            # Test that RemoteConnection can reference SecureCredentials
-            $secureCredentialsModule = Get-Module | Where-Object { $_.Name -like "*SecureCredentials*" }
-            $remoteConnectionModule = Get-Module | Where-Object { $_.Name -like "*RemoteConnection*" }
+            # Test that RemoteConnection can reference SecureCredentials functions
+            $testSecureCredentialExists = Get-Command -Name "Test-SecureCredential" -ErrorAction SilentlyContinue
+            $newSecureCredentialExists = Get-Command -Name "New-SecureCredential" -ErrorAction SilentlyContinue
             
-            $secureCredentialsModule | Should -Not -BeNullOrEmpty
-            $remoteConnectionModule | Should -Not -BeNullOrEmpty
+            # At least one SecureCredentials function should be available
+            ($testSecureCredentialExists -or $newSecureCredentialExists) | Should -Be $true
+            
+            # Test that Test-SecureCredential function is available (integration dependency)
+            $testSecureCredentialExists | Should -Not -BeNullOrEmpty
         }
 
         It "Should validate credential references" {
