@@ -37,9 +37,10 @@ Describe "RemoteConnection Module" {
 
             foreach ($function in $expectedFunctions) {
                 Get-Command $function -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
-            }
-        }
-    }    Context "New-RemoteConnection Function" {
+            }        }
+    }
+
+    Context "New-RemoteConnection Function" {
         It "Should create SSH connection with WhatIf" {
             $result = New-RemoteConnection -ConnectionName $TestConnectionName -EndpointType SSH -HostName "test.example.com" -CredentialName "Test-Credential" -WhatIf
             
