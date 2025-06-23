@@ -86,6 +86,14 @@ Use these existing modules instead of creating new functionality:
 
 **Error Diagnosis**: Provide troubleshooting steps and common resolutions for errors encountered during development.
 
+**Architecture Awareness**: Follow advanced architecture patterns from `instructions/advanced-architecture.instructions.md` including:
+- Shared utilities integration (Find-ProjectRoot, etc.)
+- Dynamic repository detection and cross-fork operations
+- PatchManager v2.1 single-step workflows
+- Bulletproof testing integration
+- VS Code task creation patterns
+- Comprehensive error handling and logging standards
+
 ## Collaboration and Feedback
 
 **Team Standards**: Ensure generated code aligns with team coding standards and practices.

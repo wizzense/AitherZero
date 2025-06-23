@@ -10,13 +10,13 @@
     - Only runs tests that MUST pass for the system to be considered healthy
     - Fails fast if ANY critical component fails
     - Provides clear pass/fail status for deployment decisions
-    
+
     This is NOT for debugging individual components - use module-specific tests for that.
     This is the final "go/no-go" decision for production readiness.
 
 .PARAMETER ValidationLevel
     Quick: Core functionality only (2-3 minutes)
-    Standard: All critical systems (5-7 minutes) 
+    Standard: All critical systems (5-7 minutes)
     Complete: Every system validated (10-15 minutes)
 
 .PARAMETER FailFast
@@ -27,7 +27,7 @@
 
 .EXAMPLE
     .\Run-BulletproofValidation.ps1 -ValidationLevel Quick
-    
+
 .EXAMPLE
     .\Run-BulletproofValidation.ps1 -ValidationLevel Complete -FailFast
 
@@ -49,9 +49,9 @@ param(
 
     [Parameter()]
     [switch]$CI,
-    
+
     [Parameter()]
-    [string]$OutputPath = ""
+    [string]$OutputPath = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -80,7 +80,7 @@ function Write-BulletproofLog {
         [ValidateSet('INFO', 'WARN', 'ERROR', 'SUCCESS')]
         [string]$Level = 'INFO'
     )
-    
+
     $timestamp = Get-Date -Format 'HH:mm:ss.fff'
     $color = switch ($Level) {
         'INFO' { 'Cyan' }
@@ -88,16 +88,16 @@ function Write-BulletproofLog {
         'ERROR' { 'Red' }
         'SUCCESS' { 'Green' }
     }
-    
+
     $symbol = switch ($Level) {
         'INFO' { 'ℹ️' }
         'WARN' { '⚠️' }
         'ERROR' { '❌' }
         'SUCCESS' { '✅' }
     }
-    
+
     Write-Host "[$timestamp] $symbol $Message" -ForegroundColor $color
-    
+
     # Also use project logging if available
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Level $Level -Message $Message
@@ -106,11 +106,11 @@ function Write-BulletproofLog {
 
 # Define validation test suites
 $validationSuites = @{
-    'Quick' = @{
-        Name = 'Quick Critical Validation'
+    'Quick'    = @{
+        Name        = 'Quick Critical Validation'
         Description = 'Essential systems only - deployment readiness check'
         MaxDuration = 180 # 3 minutes
-        Tests = @(
+        Tests       = @(
             @{ Name = 'CoreRunner-Basic'; Type = 'Core'; Critical = $true }
             @{ Name = 'Logging-System'; Type = 'Module'; Critical = $true }
             @{ Name = 'Module-Loading'; Type = 'System'; Critical = $true }
@@ -119,10 +119,10 @@ $validationSuites = @{
         )
     }
     'Standard' = @{
-        Name = 'Standard Production Validation'
+        Name        = 'Standard Production Validation'
         Description = 'All critical systems validated for production use'
         MaxDuration = 420 # 7 minutes
-        Tests = @(
+        Tests       = @(
             @{ Name = 'CoreRunner-Basic'; Type = 'Core'; Critical = $true }
             @{ Name = 'CoreRunner-NonInteractive'; Type = 'Core'; Critical = $true }
             @{ Name = 'CoreRunner-Auto'; Type = 'Core'; Critical = $true }
@@ -138,10 +138,10 @@ $validationSuites = @{
         )
     }
     'Complete' = @{
-        Name = 'Complete System Validation'
+        Name        = 'Complete System Validation'
         Description = 'Every component validated - comprehensive health check'
         MaxDuration = 900 # 15 minutes
-        Tests = @(
+        Tests       = @(
             @{ Name = 'CoreRunner-Basic'; Type = 'Core'; Critical = $true }
             @{ Name = 'CoreRunner-NonInteractive'; Type = 'Core'; Critical = $true }
             @{ Name = 'CoreRunner-Auto'; Type = 'Core'; Critical = $true }
@@ -176,7 +176,7 @@ Write-BulletproofLog "Max Duration: $($selectedSuite.MaxDuration) seconds" -Leve
 Write-BulletproofLog "Total Tests: $($selectedSuite.Tests.Count)" -Level INFO
 
 # Execute tests in parallel
-Write-BulletproofLog "🔄 Starting parallel test execution..." -Level INFO
+Write-BulletproofLog '🔄 Starting parallel test execution...' -Level INFO
 
 $testJobs = @()
 $allResults = @()
@@ -187,10 +187,10 @@ try {
     foreach ($test in $selectedSuite.Tests) {
         $job = Start-Job -ScriptBlock {
             param($TestDefinition, $ProjectRoot)
-            
+
             # Set up environment in the job
             $env:PROJECT_ROOT = $ProjectRoot
-            
+
             # Import required modules in the job
             try {
                 Import-Module "$ProjectRoot/aither-core/modules/Logging" -Force -ErrorAction SilentlyContinue
@@ -198,7 +198,7 @@ try {
             } catch {
                 # Ignore import errors in jobs
             }
-            
+
             # Define the test function within the job scope
             function Invoke-BulletproofTest {
                 param(
@@ -206,64 +206,65 @@ try {
                     [string]$Type,
                     [bool]$Critical
                 )
-                
+
                 $testResult = @{
-                    Name = $TestName
-                    Type = $Type
-                    Critical = $Critical
-                    Success = $false
-                    Duration = 0
-                    Message = ""
-                    Details = @()
+                    Name      = $TestName
+                    Type      = $Type
+                    Critical  = $Critical
+                    Success   = $false
+                    Duration  = 0
+                    Message   = ''
+                    Details   = @()
                     StartTime = Get-Date
                 }
-                
+
                 try {
                     switch ($TestName) {
                         'CoreRunner-Basic' {
-                            $tempDir = if ($env:TEMP) { $env:TEMP } elseif (Test-Path '/tmp') { '/tmp' } else { $ProjectRoot }
-                            $tempLog = Join-Path $tempDir "bulletproof-basic.log"
-                            $tempErr = Join-Path $tempDir "bulletproof-basic-error.log"
-                            $process = Start-Process -FilePath "pwsh" -ArgumentList @(
-                                "-File", "$ProjectRoot/aither-core/aither-core.ps1",
-                                "-NonInteractive", "-WhatIf", "-Verbosity", "silent"
+                            $tempDir = if ($env:TEMP) { $env:TEMP } elseif (Test-Path '/tmp') { '/tmp' } else { $ProjectRoot }                            $tempLog = Join-Path $tempDir 'bulletproof-basic.log'
+                            $tempErr = Join-Path $tempDir 'bulletproof-basic-error.log'
+                            $coreRunnerPath = Join-Path $ProjectRoot 'aither-core/aither-core.ps1'
+                            $process = Start-Process -FilePath 'pwsh' -ArgumentList @(
+                                '-File', "`"$coreRunnerPath`"",
+                                '-NonInteractive', '-WhatIf', '-Verbosity', 'silent'
                             ) -NoNewWindow -Wait -PassThru -RedirectStandardOutput $tempLog -RedirectStandardError $tempErr
-                            
+
                             $testResult.Success = ($process.ExitCode -eq 0)
-                            $testResult.Message = if ($testResult.Success) { "Core runner executed successfully" } else { "Core runner failed with exit code $($process.ExitCode)" }
+                            $testResult.Message = if ($testResult.Success) { 'Core runner executed successfully' } else { "Core runner failed with exit code $($process.ExitCode)" }
                         }
-                        
                         'CoreRunner-NonInteractive' {
                             $tempDir = if ($env:TEMP) { $env:TEMP } elseif (Test-Path '/tmp') { '/tmp' } else { $ProjectRoot }
-                            $tempLog = Join-Path $tempDir "bulletproof-ni.log"
-                            $tempErr = Join-Path $tempDir "bulletproof-ni-error.log"
-                            $process = Start-Process -FilePath "pwsh" -ArgumentList @(
-                                "-File", "$ProjectRoot/aither-core/aither-core.ps1",
-                                "-NonInteractive", "-Scripts", "0200_Get-SystemInfo", "-WhatIf", "-Verbosity", "silent"
+                            $tempLog = Join-Path $tempDir 'bulletproof-ni.log'
+                            $tempErr = Join-Path $tempDir 'bulletproof-ni-error.log'
+                            $coreRunnerPath = Join-Path $ProjectRoot 'aither-core/aither-core.ps1'
+                            $process = Start-Process -FilePath 'pwsh' -ArgumentList @(
+                                '-File', "`"$coreRunnerPath`"",
+                                '-NonInteractive', '-Scripts', '0200_Get-SystemInfo', '-WhatIf', '-Verbosity', 'silent'
                             ) -NoNewWindow -Wait -PassThru -RedirectStandardOutput $tempLog -RedirectStandardError $tempErr
-                            
+
                             $testResult.Success = ($process.ExitCode -eq 0)
-                            $testResult.Message = if ($testResult.Success) { "Non-interactive mode working" } else { "Non-interactive mode failed with exit code $($process.ExitCode)" }
+                            $testResult.Message = if ($testResult.Success) { 'Non-interactive mode working' } else { "Non-interactive mode failed with exit code $($process.ExitCode)" }
                         }
-                        
+
                         'CoreRunner-Auto' {
                             $tempDir = if ($env:TEMP) { $env:TEMP } elseif (Test-Path '/tmp') { '/tmp' } else { $ProjectRoot }
-                            $tempLog = Join-Path $tempDir "bulletproof-auto.log"
-                            $tempErr = Join-Path $tempDir "bulletproof-auto-error.log"
-                            $process = Start-Process -FilePath "pwsh" -ArgumentList @(
-                                "-File", "$ProjectRoot/aither-core/aither-core.ps1",
-                                "-NonInteractive", "-Auto", "-WhatIf", "-Verbosity", "silent"
+                            $tempLog = Join-Path $tempDir 'bulletproof-auto.log'
+                            $tempErr = Join-Path $tempDir 'bulletproof-auto-error.log'
+                            $coreRunnerPath = Join-Path $ProjectRoot 'aither-core/aither-core.ps1'
+                            $process = Start-Process -FilePath 'pwsh' -ArgumentList @(
+                                '-File', "`"$coreRunnerPath`"",
+                                '-NonInteractive', '-Auto', '-WhatIf', '-Verbosity', 'silent'
                             ) -NoNewWindow -Wait -PassThru -RedirectStandardOutput $tempLog -RedirectStandardError $tempErr
-                            
+
                             $testResult.Success = ($process.ExitCode -eq 0)
-                            $testResult.Message = if ($testResult.Success) { "Auto mode working" } else { "Auto mode failed with exit code $($process.ExitCode)" }
+                            $testResult.Message = if ($testResult.Success) { 'Auto mode working' } else { "Auto mode failed with exit code $($process.ExitCode)" }
                         }
-                        
+
                         'Module-Loading' {
                             $moduleDir = "$ProjectRoot/aither-core/modules"
                             $modules = Get-ChildItem -Path $moduleDir -Directory
                             $failedModules = @()
-                            
+
                             foreach ($module in $modules) {
                                 try {
                                     Import-Module $module.FullName -Force -ErrorAction Stop
@@ -273,16 +274,16 @@ try {
                                     $testResult.Details += "❌ $($module.Name): $($_.Exception.Message)"
                                 }
                             }
-                            
+
                             $testResult.Success = ($failedModules.Count -eq 0)
                             $testResult.Message = if ($testResult.Success) { "All $($modules.Count) modules loaded successfully" } else { "$($failedModules.Count) modules failed to load: $($failedModules -join ', ')" }
                         }
-                        
+
                         'All-Modules-Load' {
                             $moduleDir = "$ProjectRoot/aither-core/modules"
                             $modules = Get-ChildItem -Path $moduleDir -Directory
                             $failedModules = @()
-                            
+
                             foreach ($module in $modules) {
                                 try {
                                     Import-Module $module.FullName -Force -ErrorAction Stop
@@ -292,17 +293,17 @@ try {
                                     $testResult.Details += "❌ $($module.Name): $($_.Exception.Message)"
                                 }
                             }
-                            
+
                             $testResult.Success = ($failedModules.Count -eq 0)
                             $testResult.Message = if ($testResult.Success) { "All $($modules.Count) modules loaded successfully" } else { "$($failedModules.Count) modules failed to load: $($failedModules -join ', ')" }
                         }
-                        
+
                         'All-Modules-Export' {
                             $moduleDir = "$ProjectRoot/aither-core/modules"
                             $modules = Get-ChildItem -Path $moduleDir -Directory
                             $totalFunctions = 0
                             $failedModules = @()
-                            
+
                             foreach ($module in $modules) {
                                 try {
                                     Import-Module $module.FullName -Force -ErrorAction Stop
@@ -314,66 +315,66 @@ try {
                                     $testResult.Details += "❌ $($module.Name): No functions exported"
                                 }
                             }
-                            
+
                             $testResult.Success = ($failedModules.Count -eq 0 -and $totalFunctions -gt 0)
                             $testResult.Message = if ($testResult.Success) { "All modules export functions ($totalFunctions total)" } else { "Some modules don't export functions properly" }
                         }
-                        
+
                         'Logging-System' {
                             try {
                                 Import-Module "$ProjectRoot/aither-core/modules/Logging" -Force -ErrorAction Stop
-                                
+
                                 # Test basic logging
                                 if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-                                    Write-CustomLog -Level "INFO" -Message "Bulletproof test message"
+                                    Write-CustomLog -Level 'INFO' -Message 'Bulletproof test message'
                                 }
-                                
+
                                 # Verify essential log functions exist
                                 $logFunctions = @('Write-CustomLog', 'Initialize-LoggingSystem')
                                 $missingFunctions = @()
-                                
+
                                 foreach ($func in $logFunctions) {
                                     if (-not (Get-Command $func -ErrorAction SilentlyContinue)) {
                                         $missingFunctions += $func
                                     }
                                 }
-                                
+
                                 $testResult.Success = ($missingFunctions.Count -eq 0)
-                                $testResult.Message = if ($testResult.Success) { "Logging system fully functional" } else { "Missing functions: $($missingFunctions -join ', ')" }
+                                $testResult.Message = if ($testResult.Success) { 'Logging system fully functional' } else { "Missing functions: $($missingFunctions -join ', ')" }
                             } catch {
                                 $testResult.Success = $false
                                 $testResult.Message = "Logging system failed: $($_.Exception.Message)"
                             }
                         }
-                        
+
                         'ParallelExecution-Core' {
                             try {
                                 Import-Module "$ProjectRoot/aither-core/modules/ParallelExecution" -Force -ErrorAction Stop
-                                
+
                                 # Test basic parallel execution using pipeline input (correct way)
                                 $inputs = @(1, 2, 3, 4, 5)
                                 $results = $inputs | Invoke-ParallelForEach -ScriptBlock { param($num) return $num * 2 } -ThrottleLimit 3
-                                
+
                                 # More robust validation
                                 $expectedResults = @(2, 4, 6, 8, 10)
                                 $testResult.Details += "Raw results count: $($results.Count)"
                                 $testResult.Details += "Expected: $($expectedResults -join ', ')"
                                 $testResult.Details += "Actual: $($results -join ', ')"
-                                
+
                                 $resultsValid = ($results.Count -eq 5 -and ($results | Sort-Object) -join ',' -eq ($expectedResults | Sort-Object) -join ',')
                                 $testResult.Success = $resultsValid
-                                $testResult.Message = if ($testResult.Success) { "Parallel execution working correctly" } else { "Parallel execution failed - expected 5 results (2,4,6,8,10), got $($results.Count) results ($($results -join ','))" }
+                                $testResult.Message = if ($testResult.Success) { 'Parallel execution working correctly' } else { "Parallel execution failed - expected 5 results (2,4,6,8,10), got $($results.Count) results ($($results -join ','))" }
                             } catch {
                                 $testResult.Success = $false
                                 $testResult.Message = "Parallel execution failed: $($_.Exception.Message)"
                             }
                         }
-                        
+
                         'Configuration-Valid' {
                             $configFiles = @(
                                 "$ProjectRoot/aither-core/default-config.json"
                             )
-                            
+
                             $invalidConfigs = @()
                             foreach ($configFile in $configFiles) {
                                 if (Test-Path $configFile) {
@@ -389,44 +390,44 @@ try {
                                     $testResult.Details += "❌ ${configFile}: File not found"
                                 }
                             }
-                            
+
                             $testResult.Success = ($invalidConfigs.Count -eq 0)
-                            $testResult.Message = if ($testResult.Success) { "All configuration files valid" } else { "Invalid configs: $($invalidConfigs.Count)" }
+                            $testResult.Message = if ($testResult.Success) { 'All configuration files valid' } else { "Invalid configs: $($invalidConfigs.Count)" }
                         }
-                        
+
                         'TestingFramework-Core' {
                             try {
                                 Import-Module "$ProjectRoot/aither-core/modules/TestingFramework" -Force -ErrorAction Stop
-                                
+
                                 # Test basic TestingFramework functionality
                                 $testFunctions = @('Invoke-PesterTests', 'New-TestReport')
                                 $missingFunctions = @()
-                                
+
                                 foreach ($func in $testFunctions) {
                                     if (-not (Get-Command $func -ErrorAction SilentlyContinue)) {
                                         $missingFunctions += $func
                                     }
                                 }
-                                
+
                                 $testResult.Success = ($missingFunctions.Count -eq 0)
-                                $testResult.Message = if ($testResult.Success) { "TestingFramework functional" } else { "Missing functions: $($missingFunctions -join ', ')" }
+                                $testResult.Message = if ($testResult.Success) { 'TestingFramework functional' } else { "Missing functions: $($missingFunctions -join ', ')" }
                             } catch {
                                 $testResult.Success = $false
                                 $testResult.Message = "TestingFramework failed: $($_.Exception.Message)"
                             }
                         }
-                        
+
                         'Configuration-Complete' {
                             $configFiles = @(
                                 "$ProjectRoot/aither-core/default-config.json",
                                 "$ProjectRoot/.vscode/tasks.json"
                             )
-                            
+
                             $invalidConfigs = @()
                             foreach ($configFile in $configFiles) {
                                 if (Test-Path $configFile) {
                                     try {
-                                        if ($configFile -like "*.json") {
+                                        if ($configFile -like '*.json') {
                                             $null = Get-Content $configFile -Raw | ConvertFrom-Json -ErrorAction Stop
                                         }
                                         $testResult.Details += "✅ $configFile"
@@ -439,18 +440,18 @@ try {
                                     $testResult.Details += "❌ ${configFile} - File not found"
                                 }
                             }
-                            
+
                             $testResult.Success = ($invalidConfigs.Count -eq 0)
-                            $testResult.Message = if ($testResult.Success) { "All configuration files valid" } else { "Invalid configs: $($invalidConfigs.Count)" }
+                            $testResult.Message = if ($testResult.Success) { 'All configuration files valid' } else { "Invalid configs: $($invalidConfigs.Count)" }
                         }
-                        
+
                         'FileSystem-Access' {
                             $testPaths = @(
                                 "$ProjectRoot/aither-core",
                                 "$ProjectRoot/tests",
                                 "$ProjectRoot/.vscode"
                             )
-                            
+
                             $accessIssues = @()
                             foreach ($path in $testPaths) {
                                 try {
@@ -466,27 +467,28 @@ try {
                                     $testResult.Details += "❌ ${path} - $($_.Exception.Message)"
                                 }
                             }
-                            
+
                             $testResult.Success = ($accessIssues.Count -eq 0)
-                            $testResult.Message = if ($testResult.Success) { "File system access OK" } else { "Access issues: $($accessIssues.Count)" }
+                            $testResult.Message = if ($testResult.Success) { 'File system access OK' } else { "Access issues: $($accessIssues.Count)" }
                         }
-                        
+
                         'Performance-Basic' {
                             $startPerfTime = Get-Date
-                            
+
                             # Test basic startup performance
-                            $process = Start-Process -FilePath "pwsh" -ArgumentList @(
-                                "-File", "$ProjectRoot/aither-core/aither-core.ps1",
-                                "-NonInteractive", "-WhatIf", "-Verbosity", "silent"
+                            $coreRunnerPath = Join-Path $ProjectRoot 'aither-core/aither-core.ps1'
+                            $process = Start-Process -FilePath 'pwsh' -ArgumentList @(
+                                '-File', "`"$coreRunnerPath`"",
+                                '-NonInteractive', '-WhatIf', '-Verbosity', 'silent'
                             ) -NoNewWindow -Wait -PassThru
-                            
+
                             $perfDuration = ((Get-Date) - $startPerfTime).TotalMilliseconds
-                            
+
                             $testResult.Success = ($process.ExitCode -eq 0 -and $perfDuration -lt 15000) # 15 seconds max
                             $testResult.Message = if ($testResult.Success) { "Performance acceptable: $($perfDuration.ToString('F0'))ms" } else { "Performance too slow: $($perfDuration.ToString('F0'))ms" }
                             $testResult.Details += "Execution time: $($perfDuration.ToString('F0'))ms"
                         }
-                        
+
                         'Script-Syntax-Check' {
                             try {
                                 # Check if PSScriptAnalyzer is available
@@ -494,11 +496,11 @@ try {
                                 try {
                                     Import-Module PSScriptAnalyzer -Force -ErrorAction Stop
                                     $psaAvailable = $true
-                                    $testResult.Details += "✅ PSScriptAnalyzer available"
+                                    $testResult.Details += '✅ PSScriptAnalyzer available'
                                 } catch {
-                                    $testResult.Details += "⚠️ PSScriptAnalyzer not available, using AST parser only"
+                                    $testResult.Details += '⚠️ PSScriptAnalyzer not available, using AST parser only'
                                 }
-                                
+
                                 # Get critical PowerShell files to check
                                 $scriptFiles = @()
                                 $scriptPaths = @(
@@ -506,52 +508,52 @@ try {
                                     "$ProjectRoot/aither-core/modules/*/*.psm1",
                                     "$ProjectRoot/tests/*.ps1"
                                 )
-                                
+
                                 foreach ($path in $scriptPaths) {
                                     $files = Get-ChildItem $path -ErrorAction SilentlyContinue
                                     if ($files) {
                                         $scriptFiles += $files
                                     }
                                 }
-                                
+
                                 $totalFiles = $scriptFiles.Count
                                 $syntaxErrors = @()
                                 $psaIssues = @()
                                 $processedFiles = 0
-                                
+
                                 foreach ($file in $scriptFiles) {
                                     $processedFiles++
-                                    
+
                                     # AST syntax validation (always run)
                                     try {
                                         $errors = $null
                                         $tokens = $null
                                         $ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$tokens, [ref]$errors)
-                                        
+
                                         if ($errors.Count -gt 0) {
                                             $syntaxErrors += @{
-                                                File = $file.Name
+                                                File   = $file.Name
                                                 Errors = $errors
                                             }
                                             $testResult.Details += "❌ $($file.Name): $($errors.Count) syntax errors"
                                         }
                                     } catch {
                                         $syntaxErrors += @{
-                                            File = $file.Name
+                                            File   = $file.Name
                                             Errors = @("Failed to parse: $($_.Exception.Message)")
                                         }
                                         $testResult.Details += "❌ $($file.Name): Parse failed"
                                     }
-                                    
+
                                     # PSScriptAnalyzer validation (if available and no syntax errors)
                                     if ($psaAvailable -and $syntaxErrors.Count -eq 0) {
                                         try {
-                                            $issues = Invoke-ScriptAnalyzer -Path $file.FullName -Severity Error,Warning -ErrorAction Stop
+                                            $issues = Invoke-ScriptAnalyzer -Path $file.FullName -Severity Error, Warning -ErrorAction Stop
                                             if ($issues) {
                                                 $criticalIssues = $issues | Where-Object { $_.Severity -eq 'Error' }
                                                 if ($criticalIssues) {
                                                     $psaIssues += @{
-                                                        File = $file.Name
+                                                        File   = $file.Name
                                                         Issues = $criticalIssues
                                                     }
                                                     $testResult.Details += "⚠️ $($file.Name): $($criticalIssues.Count) critical issues"
@@ -562,10 +564,10 @@ try {
                                         }
                                     }
                                 }
-                                
+
                                 $totalIssues = $syntaxErrors.Count + $psaIssues.Count
                                 $testResult.Success = ($syntaxErrors.Count -eq 0) # Syntax errors are critical, PSA warnings are not
-                                
+
                                 if ($testResult.Success) {
                                     $testResult.Message = "Script syntax validation passed ($processedFiles files checked)"
                                     if ($psaIssues.Count -gt 0) {
@@ -574,17 +576,17 @@ try {
                                 } else {
                                     $testResult.Message = "Script syntax validation failed: $($syntaxErrors.Count) files with syntax errors"
                                 }
-                                
+
                                 $testResult.Details += "Total files checked: $processedFiles"
                                 $testResult.Details += "Syntax errors: $($syntaxErrors.Count)"
                                 $testResult.Details += "Code quality issues: $($psaIssues.Count)"
-                                
+
                             } catch {
                                 $testResult.Success = $false
                                 $testResult.Message = "Script syntax check failed: $($_.Exception.Message)"
                             }
                         }
-                        
+
                         default {
                             $testResult.Success = $false
                             $testResult.Message = "Test '$TestName' not implemented"
@@ -595,24 +597,24 @@ try {
                     $testResult.Message = "Test failed with exception: $($_.Exception.Message)"
                     $testResult.Details += "Exception: $($_.Exception.ToString())"
                 }
-                
+
                 $testResult.Duration = ((Get-Date) - $testResult.StartTime).TotalMilliseconds
                 return $testResult
             }
-            
+
             # Execute the test
             Invoke-BulletproofTest -TestName $TestDefinition.Name -Type $TestDefinition.Type -Critical $TestDefinition.Critical
-            
+
         } -ArgumentList $test, $projectRoot
-        
+
         $testJobs += @{
-            Job = $job
-            Test = $test
+            Job       = $job
+            Test      = $test
             StartTime = Get-Date
         }
-        
+
         Write-BulletproofLog "Started: $($test.Name) ($($test.Type))" -Level INFO
-        
+
         # Respect parallel job limit
         if ($testJobs.Count -ge $MaxParallelJobs) {
             # Wait for some jobs to complete
@@ -622,22 +624,22 @@ try {
             }
         }
     }
-    
-    Write-BulletproofLog "All tests started, waiting for completion..." -Level INFO
-    
+
+    Write-BulletproofLog 'All tests started, waiting for completion...' -Level INFO
+
     # Wait for all jobs to complete with timeout
     $timeout = $selectedSuite.MaxDuration
     $startWaitTime = Get-Date
-    
+
     while ($testJobs | Where-Object { $_.Job.State -eq 'Running' }) {
         $elapsed = ((Get-Date) - $startWaitTime).TotalSeconds
         if ($elapsed -gt $timeout) {
             Write-BulletproofLog "Tests timed out after $timeout seconds!" -Level ERROR
             break
         }
-        
+
         Start-Sleep -Milliseconds 500
-        
+
         # Check for completed jobs and fail fast if needed
         $completedJobs = $testJobs | Where-Object { $_.Job.State -eq 'Completed' }
         foreach ($completedJob in $completedJobs) {
@@ -646,16 +648,16 @@ try {
                     $result = Receive-Job -Job $completedJob.Job -ErrorAction Stop
                     $result | Add-Member -NotePropertyName 'JobId' -NotePropertyValue $completedJob.Job.Id
                     $allResults += $result
-                    
+
                     $status = if ($result.Success) { '✅' } else { '❌' }
                     $duration = [math]::Round($result.Duration)
                     Write-BulletproofLog "$status $($result.Name): $($result.Message) (${duration}ms)" -Level $(if ($result.Success) { 'SUCCESS' } else { 'ERROR' })
-                    
+
                     # Check for critical failures
                     if (-not $result.Success -and $completedJob.Test.Critical) {
                         $criticalFailures += $result
                         if ($FailFast) {
-                            Write-BulletproofLog "🚨 Critical test failed, stopping execution (FailFast enabled)" -Level ERROR
+                            Write-BulletproofLog '🚨 Critical test failed, stopping execution (FailFast enabled)' -Level ERROR
                             break
                         }
                     }
@@ -664,15 +666,15 @@ try {
                 }
             }
         }
-        
+
         if ($FailFast -and $criticalFailures.Count -gt 0) {
             break
         }
     }
-    
+
 } finally {
     # Clean up all jobs
-    $testJobs | ForEach-Object { 
+    $testJobs | ForEach-Object {
         try {
             Remove-Job -Job $_.Job -Force -ErrorAction SilentlyContinue
         } catch {
@@ -697,9 +699,9 @@ $successRate = if ($completedTests -gt 0) { ($passedTests / $completedTests) * 1
 # Determine bulletproof status
 $isBulletproof = ($criticalFailureCount -eq 0 -and $successRate -ge 95)
 
-Write-BulletproofLog "═══════════════════════════════════════════" -Level INFO
-Write-BulletproofLog "🎯 BULLETPROOF VALIDATION RESULTS" -Level SUCCESS
-Write-BulletproofLog "═══════════════════════════════════════════" -Level INFO
+Write-BulletproofLog '═══════════════════════════════════════════' -Level INFO
+Write-BulletproofLog '🎯 BULLETPROOF VALIDATION RESULTS' -Level SUCCESS
+Write-BulletproofLog '═══════════════════════════════════════════' -Level INFO
 Write-BulletproofLog "Validation Level: $ValidationLevel" -Level INFO
 Write-BulletproofLog "Total Duration: $([math]::Round($totalDuration, 1)) seconds" -Level INFO
 Write-BulletproofLog "Tests Completed: $completedTests/$totalTests" -Level INFO
@@ -710,9 +712,9 @@ Write-BulletproofLog "Success Rate: $([math]::Round($successRate, 1))%" -Level $
 
 # Show failed tests
 if ($failedTests -gt 0) {
-    Write-BulletproofLog "═══ FAILED TESTS ═══" -Level ERROR
+    Write-BulletproofLog '═══ FAILED TESTS ═══' -Level ERROR
     $allResults | Where-Object { -not $_.Success } | ForEach-Object {
-        $criticalTag = if ($_.Critical) { "[CRITICAL]" } else { "[NON-CRITICAL]" }
+        $criticalTag = if ($_.Critical) { '[CRITICAL]' } else { '[NON-CRITICAL]' }
         Write-BulletproofLog "$criticalTag $($_.Name): $($_.Message)" -Level $(if ($_.Critical) { 'ERROR' } else { 'ERROR' })
         if ($_.Details.Count -gt 0) {
             $_.Details | ForEach-Object { Write-BulletproofLog "  $_" -Level ERROR }
@@ -721,36 +723,36 @@ if ($failedTests -gt 0) {
 }
 
 # Final status
-Write-BulletproofLog "═══════════════════════════════════════════" -Level INFO
+Write-BulletproofLog '═══════════════════════════════════════════' -Level INFO
 if ($isBulletproof) {
-    Write-BulletproofLog "🎉 BULLETPROOF STATUS: APPROVED ✅" -Level SUCCESS
-    Write-BulletproofLog "System is healthy and ready for production deployment" -Level SUCCESS
+    Write-BulletproofLog '🎉 BULLETPROOF STATUS: APPROVED ✅' -Level SUCCESS
+    Write-BulletproofLog 'System is healthy and ready for production deployment' -Level SUCCESS
 } else {
-    Write-BulletproofLog "🚨 BULLETPROOF STATUS: REJECTED ❌" -Level ERROR
+    Write-BulletproofLog '🚨 BULLETPROOF STATUS: REJECTED ❌' -Level ERROR
     if ($criticalFailureCount -gt 0) {
-        Write-BulletproofLog "Critical systems are failing - deployment not recommended" -Level ERROR
+        Write-BulletproofLog 'Critical systems are failing - deployment not recommended' -Level ERROR
     } else {
-        Write-BulletproofLog "Non-critical issues detected - review required" -Level WARN
+        Write-BulletproofLog 'Non-critical issues detected - review required' -Level WARN
     }
 }
-Write-BulletproofLog "═══════════════════════════════════════════" -Level INFO
+Write-BulletproofLog '═══════════════════════════════════════════' -Level INFO
 
 # Generate output for CI/CD
 $outputData = @{
-    ValidationLevel = $ValidationLevel
-    StartTime = $startTime
-    EndTime = $endTime
-    Duration = $totalDuration
-    TotalTests = $totalTests
-    CompletedTests = $completedTests
-    PassedTests = $passedTests
-    FailedTests = $failedTests
-    CriticalFailureCount = $criticalFailureCount
-    NonCriticalFailures = $nonCriticalFailures
-    SuccessRate = $successRate
-    Bulletproof = $isBulletproof
-    Status = if ($isBulletproof) { "APPROVED" } else { "REJECTED" }
-    Results = $allResults
+    ValidationLevel        = $ValidationLevel
+    StartTime              = $startTime
+    EndTime                = $endTime
+    Duration               = $totalDuration
+    TotalTests             = $totalTests
+    CompletedTests         = $completedTests
+    PassedTests            = $passedTests
+    FailedTests            = $failedTests
+    CriticalFailureCount   = $criticalFailureCount
+    NonCriticalFailures    = $nonCriticalFailures
+    SuccessRate            = $successRate
+    Bulletproof            = $isBulletproof
+    Status                 = if ($isBulletproof) { 'APPROVED' } else { 'REJECTED' }
+    Results                = $allResults
     CriticalFailureDetails = $criticalFailures
 }
 

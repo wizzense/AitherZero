@@ -13,13 +13,13 @@ BeforeAll {
         throw "Could not find project root (looking for aither-core directory)"
     }
 
-    Write-Host "Project root detected: $projectRoot" -ForegroundColor Yellow
+    Write-CustomLog -Level 'WARN' -Message "Project root detected: $projectRoot"
 
     # Import TestingFramework module first for proper test orchestration
     $testingFrameworkPath = Join-Path $projectRoot "aither-core/modules/TestingFramework"
     try {
         Import-Module $testingFrameworkPath -Force -Global -ErrorAction Stop
-        Write-Host "TestingFramework module imported successfully" -ForegroundColor Green
+        Write-CustomLog -Level 'SUCCESS' -Message "TestingFramework module imported successfully"
     }
     catch {
         Write-Warning "TestingFramework module not available, using fallback logging"
@@ -34,7 +34,7 @@ BeforeAll {
         # Mock Write-CustomLog if Logging module is not available
         function global:Write-CustomLog {
             param([string]$Message, [string]$Level = "INFO")
-            Write-Host "[$Level] $Message"
+            Write-CustomLog -Level 'INFO' -Message "[$Level] $Message"
         }
     }
 
@@ -42,7 +42,7 @@ BeforeAll {
     $patchManagerPath = Join-Path $projectRoot "aither-core/modules/PatchManager"
     try {
         Import-Module $patchManagerPath -Force -ErrorAction Stop
-        Write-Host "PatchManager module imported successfully" -ForegroundColor Green
+        Write-CustomLog -Level 'SUCCESS' -Message "PatchManager module imported successfully"
     }
     catch {
         Write-Error "Failed to import PatchManager module: $_"
@@ -51,14 +51,14 @@ BeforeAll {
       # Mock GitHub CLI commands for testing - simplified version
     function global:gh {
         param()
-        Write-Host "Mock gh called with: $($args -join ' ')" -ForegroundColor Yellow
+        Write-CustomLog -Level 'WARN' -Message "Mock gh called with: $($args -join ' ')"
         return "Mock gh command executed"
     }
 
     # Mock git commands - simplified version
     function global:git {
         param()
-        Write-Host "Mock git called with: $($args -join ' ')" -ForegroundColor Yellow
+        Write-CustomLog -Level 'WARN' -Message "Mock git called with: $($args -join ' ')"
 
         switch ($args[0]) {
             'remote' {
@@ -88,7 +88,7 @@ root
 Describe "PatchManager Cross-Fork Integration Tests" -Tags @('Integration', 'CrossFork', 'PatchManager') {
       BeforeEach {
         # Clear any previous state if needed
-        Write-Host "Setting up test scenario..." -ForegroundColor Cyan
+        Write-CustomLog -Level 'INFO' -Message "Setting up test scenario..."
     }
 
     Context "Repository Detection and Fork Chain Analysis" {
@@ -165,7 +165,7 @@ Describe "PatchManager Cross-Fork Integration Tests" -Tags @('Integration', 'Cro
 
         It "Should execute complete workflow with issue and PR creation" {
             $result = Invoke-PatchWorkflow -PatchDescription "Test integrated workflow" -PatchOperation {
-                Write-Host "Mock patch operation"
+                Write-CustomLog -Level 'INFO' -Message "Mock patch operation"
             } -CreatePR -TargetFork "current" -DryRun
 
             $result | Should -Not -BeNullOrEmpty
@@ -174,7 +174,7 @@ Describe "PatchManager Cross-Fork Integration Tests" -Tags @('Integration', 'Cro
 
         It "Should handle workflow without CreatePR but with issue creation" {
             $result = Invoke-PatchWorkflow -PatchDescription "Test issue-only workflow" -PatchOperation {
-                Write-Host "Mock patch operation"
+                Write-CustomLog -Level 'INFO' -Message "Mock patch operation"
             } -TargetFork "current" -DryRun
 
             $result | Should -Not -BeNullOrEmpty
@@ -183,7 +183,7 @@ Describe "PatchManager Cross-Fork Integration Tests" -Tags @('Integration', 'Cro
 
         It "Should handle local-only workflow when CreateIssue is disabled" {
             $result = Invoke-PatchWorkflow -PatchDescription "Test local-only workflow" -PatchOperation {
-                Write-Host "Mock patch operation"
+                Write-CustomLog -Level 'INFO' -Message "Mock patch operation"
             } -CreateIssue:$false -DryRun
 
             $result | Should -Not -BeNullOrEmpty
@@ -238,7 +238,7 @@ Describe "Cross-Fork Repository Perspective Tests" -Tags @('Integration', 'Cross
 
             foreach ($target in $targets) {
                 $result = Invoke-PatchWorkflow -PatchDescription "Consistency test for $target" -PatchOperation {
-                    Write-Host "Test operation"
+                    Write-CustomLog -Level 'INFO' -Message "Test operation"
                 } -CreatePR -TargetFork $target -DryRun
 
                 $result | Should -Not -BeNullOrEmpty
@@ -247,3 +247,5 @@ Describe "Cross-Fork Repository Perspective Tests" -Tags @('Integration', 'Cross
         }
     }
 }
+
+

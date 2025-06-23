@@ -1,18 +1,12 @@
 BeforeAll {
     # Set environment variable to indicate test execution
     $env:PESTER_RUN = 'true'
-      # Find project root by looking for characteristic files
-    $currentPath = $PSScriptRoot
-    $projectRoot = $currentPath
-    while ($projectRoot -and -not (Test-Path (Join-Path $projectRoot "aither-core"))) {
-        $projectRoot = Split-Path $projectRoot -Parent
-    }
 
-    if (-not $projectRoot) {
-        throw "Could not find project root (looking for aither-core directory)"
-    }
+    # Import shared Find-ProjectRoot utility
+    . "$PSScriptRoot/../../../../aither-core/shared/Find-ProjectRoot.ps1"
+    $projectRoot = Find-ProjectRoot
 
-    Write-Host "Project root detected: $projectRoot" -ForegroundColor Yellow
+    Write-Verbose "Project root detected: $projectRoot"
 
     # Import Logging module first
     $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
@@ -24,14 +18,14 @@ BeforeAll {
         # Mock Write-CustomLog if Logging module is not available
         function global:Write-CustomLog {
             param([string]$Message, [string]$Level = "INFO")
-            Write-Host "[$Level] $Message"
+            Write-Verbose "[$Level] $Message"
         }
     }    # Import PatchManager module
     $patchManagerPath = Join-Path $projectRoot "aither-core/modules/PatchManager"
 
     try {
         Import-Module $patchManagerPath -Force -ErrorAction Stop
-        Write-Host "PatchManager module imported successfully" -ForegroundColor Green
+        Write-Verbose "PatchManager module imported successfully"
 
         # Create a wrapper function to access Get-GitRepositoryInfo indirectly
         function global:Get-GitRepositoryInfo {
@@ -101,7 +95,7 @@ BeforeAll {
             }
         }
 
-        Write-Host "Get-GitRepositoryInfo wrapper function created for testing" -ForegroundColor Yellow
+        Write-CustomLog -Level 'WARN' -Message "Get-GitRepositoryInfo wrapper function created for testing"
     }
     catch {
         Write-Error "Failed to import PatchManager module: $_"
@@ -248,7 +242,7 @@ Describe "Cross-Fork PatchManager Functionality" {
 
         It "Should create issue in target repository when creating cross-fork PR to upstream" {
             $result = Invoke-PatchWorkflow -PatchDescription "Test upstream alignment" -PatchOperation {
-                Write-Host "Mock patch operation"
+                Write-CustomLog -Level 'INFO' -Message "Mock patch operation"
             } -CreatePR -TargetFork "upstream" -DryRun
 
             $result | Should -Not -BeNullOrEmpty
@@ -260,7 +254,7 @@ Describe "Cross-Fork PatchManager Functionality" {
 
         It "Should create issue in target repository when creating cross-fork PR to root" {
             $result = Invoke-PatchWorkflow -PatchDescription "Test root alignment" -PatchOperation {
-                Write-Host "Mock patch operation"
+                Write-CustomLog -Level 'INFO' -Message "Mock patch operation"
             } -CreatePR -TargetFork "root" -DryRun
 
             $result | Should -Not -BeNullOrEmpty
@@ -269,7 +263,7 @@ Describe "Cross-Fork PatchManager Functionality" {
 
         It "Should create issue in current repository for normal PR" {
             $result = Invoke-PatchWorkflow -PatchDescription "Test current alignment" -PatchOperation {
-                Write-Host "Mock patch operation"
+                Write-CustomLog -Level 'INFO' -Message "Mock patch operation"
             } -CreatePR -TargetFork "current" -DryRun
 
             $result | Should -Not -BeNullOrEmpty
@@ -293,7 +287,7 @@ Describe "Cross-Fork PatchManager Functionality" {
         It "Should handle auto-commit of existing changes before patch workflow" {
             # This test verifies the auto-commit functionality works with cross-fork operations
             $result = Invoke-PatchWorkflow -PatchDescription "Test auto-commit" -PatchOperation {
-                Write-Host "Mock operation"
+                Write-CustomLog -Level 'INFO' -Message "Mock operation"
             } -CreatePR -TargetFork "upstream" -DryRun
 
             $result | Should -Not -BeNullOrEmpty
@@ -303,7 +297,7 @@ Describe "Cross-Fork PatchManager Functionality" {
         It "Should handle Unicode sanitization in cross-fork workflow" {
             $result = Invoke-PatchWorkflow -PatchDescription "Test Unicode handling" -PatchOperation {
                 # Mock operation that might create Unicode content
-                Write-Host "Test with emoji: 🚀"
+                Write-CustomLog -Level 'INFO' -Message "Test with emoji: 🚀"
             } -CreatePR -TargetFork "upstream" -DryRun
 
             $result | Should -Not -BeNullOrEmpty

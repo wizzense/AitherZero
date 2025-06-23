@@ -37,19 +37,23 @@ Test only the PatchManager module
 Run all tests with comprehensive coverage and JUnit output
 #>
 
-[CmdletBinding()]
 param(
     [ValidateSet('All', 'Unit', 'Integration', 'Smoke', 'Module', 'Script')]
-    [string]$TestType = 'Smoke',
-    
+    [string]$TestType,
+
     [string]$ModuleName,
-    
+
     [ValidateSet('Critical', 'Standard', 'Comprehensive')]
-    [string]$Severity = 'Standard',
-    
+    [string]$Severity,
+
     [ValidateSet('Console', 'JUnit', 'NUnit', 'JSON')]
-    [string]$OutputFormat = 'Console'
+    [string]$OutputFormat
 )
+
+# Set default values
+if (-not $TestType) { $TestType = 'Smoke' }
+if (-not $Severity) { $Severity = 'Standard' }
+if (-not $OutputFormat) { $OutputFormat = 'Console' }
 
 # Set up environment
 $ErrorActionPreference = 'Stop'
@@ -74,9 +78,9 @@ if (-not (Test-Path $testConfig.OutputPath)) {
     if (-not (Test-Path $testConfig.OutputPath)) { New-Item -Path $testConfig.OutputPath -ItemType Directory -Force | Out-Null }
 }
 
-Write-Host "[SYMBOL] OpenTofu Lab Automation - Intelligent Test Runner" -ForegroundColor Cyan
-Write-Host "Project Root: $($testConfig.ProjectRoot)" -ForegroundColor Gray
-Write-Host "Test Type: $TestType | Severity: $Severity | Output: $OutputFormat" -ForegroundColor Gray
+Write-Information " -InformationAction Continue[SYMBOL] OpenTofu Lab Automation - Intelligent Test Runner" -ForegroundColor Cyan
+Write-Information " -InformationAction ContinueProject Root: $($testConfig.ProjectRoot)" -ForegroundColor Gray
+Write-Information " -InformationAction ContinueTest Type: $TestType | Severity: $Severity | Output: $OutputFormat" -ForegroundColor Gray
 
 # Import Pester with proper version
 if (-not (Get-Module -Name Pester -ListAvailable | Where-Object { $_.Version -ge [version]'5.0.0' })) {
@@ -94,11 +98,11 @@ function Get-FunctionalModules {
         Write-Warning "Modules path not found: $modulesPath"
         return @()
     }
-    
+
     $modules = Get-ChildItem $modulesPath -Directory | ForEach-Object {
         $manifestPath = Join-Path $_.FullName "*.psd1"
         $moduleFilePath = Join-Path $_.FullName "*.psm1"
-        
+
         if ((Test-Path $manifestPath) -or (Test-Path $moduleFilePath)) {
             [PSCustomObject]@{
                 Name = $_.Name
@@ -110,35 +114,35 @@ function Get-FunctionalModules {
             }
         }
     } | Where-Object { $_ -ne $null }
-    
+
     # Analyze each module for functions
     foreach ($module in $modules) {
         try {
             Import-Module $module.Path -Force -ErrorAction SilentlyContinue
             $exportedFunctions = Get-Command -Module $module.Name -CommandType Function -ErrorAction SilentlyContinue
             $module.PublicFunctions = $exportedFunctions | ForEach-Object { $_.Name }
-            
+
             # Look for Public/Private folders
             $publicPath = Join-Path $module.Path "Public"
             $privatePath = Join-Path $module.Path "Private"
-            
+
             if (Test-Path $publicPath) {
                 $publicFiles = Get-ChildItem $publicPath -Filter "*.ps1" | ForEach-Object { $_.BaseName }
                 $module.PublicFunctions += $publicFiles
             }
-            
+
             if (Test-Path $privatePath) {
                 $privateFiles = Get-ChildItem $privatePath -Filter "*.ps1" | ForEach-Object { $_.BaseName }
                 $module.PrivateFunctions = $privateFiles
             }
-            
+
             Remove-Module $module.Name -Force -ErrorAction SilentlyContinue
         }
         catch {
             Write-Verbose "Could not analyze module $($module.Name): $($_.Exception.Message)"
         }
     }
-    
+
     return $modules
 }
 
@@ -151,9 +155,9 @@ function Get-PythonModules {
         Write-Warning "Python path not found: $pythonPath"
         return @()
     }
-    
+
     $modules = @()
-    
+
     # Find labctl package
     $labctlPath = Join-Path $pythonPath "labctl"
     if (Test-Path $labctlPath) {
@@ -165,12 +169,12 @@ function Get-PythonModules {
             HasCLI = Test-Path (Join-Path $labctlPath "cli.py")
         }
     }
-    
+
     # Find other Python files
     $otherPyFiles = Get-ChildItem $pythonPath -Filter "*.py" -Recurse | Where-Object {
         $_.FullName -notlike "*\labctl\*" -and $_.Name -ne "__init__.py"
     }
-    
+
     foreach ($file in $otherPyFiles) {
         $modules += [PSCustomObject]@{
             Name = $file.BaseName
@@ -179,22 +183,22 @@ function Get-PythonModules {
             HasCLI = $false
         }
     }
-    
+
     return $modules
 }
 
 # Core testing templates
 function Test-ModuleCore {
     param($Module)
-    
+
     Describe "Module: $($Module.Name)" -Tag @('Unit', 'Module', 'Core') {
-        
+
         Context "Module Structure" {
             It "should have a valid module structure" {
                 Test-Path $Module.Path | Should -Be $true
                 ($Module.HasManifest -or $Module.HasModuleFile) | Should -Be $true
             }
-            
+
             if ($Module.HasManifest) {
                 It "should have a valid manifest" {
                     $manifestPath = Get-ChildItem (Join-Path $Module.Path "*.psd1") | Select-Object -First 1
@@ -202,25 +206,25 @@ function Test-ModuleCore {
                 }
             }
         }
-        
+
         Context "Module Import" {
             It "should import without errors" {
                 { Import-Module $Module.Path -Force -ErrorAction Stop } | Should -Not -Throw
             }
-            
+
             It "should export functions" {
                 Import-Module $Module.Path -Force
                 $commands = Get-Command -Module $Module.Name -CommandType Function -ErrorAction SilentlyContinue
                 $commands.Count | Should -BeGreaterThan 0
             }
         }
-        
+
         Context "Function Quality" {
             BeforeAll {
                 Import-Module $Module.Path -Force
                 $functions = Get-Command -Module $Module.Name -CommandType Function -ErrorAction SilentlyContinue
             }
-            
+
             foreach ($function in $Module.PublicFunctions) {
                 It "function '$function' should have help documentation" {
                     if (Get-Command $function -ErrorAction SilentlyContinue) {
@@ -229,7 +233,7 @@ function Test-ModuleCore {
                         $help.Synopsis | Should -Not -Be $function  # Not just the function name
                     }
                 }
-                
+
                 It "function '$function' should have parameter validation" {
                     if (Get-Command $function -ErrorAction SilentlyContinue) {
                         $cmd = Get-Command $function
@@ -247,7 +251,7 @@ function Test-ModuleCore {
                     }
                 }
             }
-            
+
             AfterAll {
                 Remove-Module $Module.Name -Force -ErrorAction SilentlyContinue
             }
@@ -257,21 +261,21 @@ function Test-ModuleCore {
 
 function Test-ModuleIntegration {
     param($Module)
-    
+
     Describe "Module Integration: $($Module.Name)" -Tag @('Integration', 'Module') {
-        
+
         Context "Cross-Module Dependencies" {
             BeforeAll {
                 # Clean import
                 Remove-Module $Module.Name -Force -ErrorAction SilentlyContinue
                 Import-Module $Module.Path -Force
             }
-            
+
             It "should handle missing dependencies gracefully" {
                 $commands = Get-Command -Module $Module.Name -ErrorAction SilentlyContinue
                 $commands | Should -Not -BeNullOrEmpty
             }
-            
+
             # Module-specific integration tests
             switch ($Module.Name) {
                 'PatchManager' {
@@ -281,14 +285,14 @@ function Test-ModuleIntegration {
                         $isGitRepo | Should -Be $true
                     }
                 }
-                
+
                 'LabRunner' {
                     It "should set up environment variables" {
                         $env:PROJECT_ROOT | Should -Not -BeNullOrEmpty
                         $env:PWSH_MODULES_PATH | Should -Not -BeNullOrEmpty
                     }
                 }
-                
+
                 'Logging' {
                     It "should provide logging capabilities" {
                         # Test basic logging functionality
@@ -296,7 +300,7 @@ function Test-ModuleIntegration {
                         $logFunctions | Should -Not -BeNullOrEmpty
                     }
                 }
-                
+
                 'TestingFramework' {
                     It "should provide testing utilities" {
                         # Test that testing framework has test-related functions
@@ -305,7 +309,7 @@ function Test-ModuleIntegration {
                     }
                 }
             }
-            
+
             AfterAll {
                 Remove-Module $Module.Name -Force -ErrorAction SilentlyContinue
             }
@@ -315,9 +319,9 @@ function Test-ModuleIntegration {
 
 function Test-PythonModules {
     param($Modules)
-    
+
     Describe "Python Modules" -Tag @('Unit', 'Python') {
-        
+
         Context "Python Environment" {
             It "should have Python available" {
                 $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
@@ -327,7 +331,7 @@ function Test-PythonModules {
                 $pythonCmd | Should -Not -BeNullOrEmpty
             }
         }
-        
+
         foreach ($module in $Modules) {
             Context "Module: $($module.Name)" {
                 It "should have valid Python syntax" {
@@ -337,7 +341,7 @@ function Test-PythonModules {
                         } else {
                             $module.Path
                         }
-                        
+
                         if (Test-Path $filePath) {
                             # Basic syntax check using Python
                             $pythonCheck = if (Get-Command python -ErrorAction SilentlyContinue) { "python" } else { "python3" }
@@ -346,7 +350,7 @@ function Test-PythonModules {
                         }
                     }
                 }
-                
+
                 if ($module.HasCLI) {
                     It "should have CLI entry point" {
                         $cliPath = Join-Path $module.Path "cli.py"
@@ -360,7 +364,7 @@ function Test-PythonModules {
 
 function Test-ProjectSmoke {
     Describe "Project Smoke Tests" -Tag @('Smoke', 'Critical') {
-        
+
         Context "Project Structure" {
             It "should have required directories" {
                 Test-Path (Join-Path $testConfig.ProjectRoot "src") | Should -Be $true
@@ -368,47 +372,47 @@ function Test-ProjectSmoke {
                 Test-Path (Join-Path $testConfig.ProjectRoot $env:PWSH_MODULES_PATH) | Should -Be $true
                 Test-Path (Join-Path $testConfig.ProjectRoot "tests") | Should -Be $true
             }
-            
+
             It "should have core files" {
                 Test-Path (Join-Path $testConfig.ProjectRoot "README.md") | Should -Be $true
                 Test-Path (Join-Path $testConfig.ProjectRoot "LICENSE") | Should -Be $true
                 Test-Path (Join-Path $testConfig.ProjectRoot "PROJECT-MANIFEST.json") | Should -Be $true
             }
         }
-        
+
         Context "Core Modules" {
             $coreModules = @('LabRunner', 'PatchManager', 'Logging')
-            
+
             foreach ($moduleName in $coreModules) {
                 It "should have $moduleName module" {
                     $modulePath = Join-Path $testConfig.ModulesPath $moduleName
                     Test-Path $modulePath | Should -Be $true
                 }
-                
+
                 It "$moduleName should be importable" {
                     { Import-Module (Join-Path $testConfig.ModulesPath $moduleName) -Force -ErrorAction Stop } | Should -Not -Throw
                     Remove-Module $moduleName -Force -ErrorAction SilentlyContinue
                 }
             }
         }
-        
+
         Context "Environment Setup" {
             It "should have PROJECT_ROOT set" {
                 $env:PROJECT_ROOT | Should -Not -BeNullOrEmpty
                 Test-Path $env:PROJECT_ROOT | Should -Be $true
             }
-            
+
             It "should have PWSH_MODULES_PATH set" {
                 $env:PWSH_MODULES_PATH | Should -Not -BeNullOrEmpty
                 Test-Path $env:PWSH_MODULES_PATH | Should -Be $true
             }
         }
-        
+
         Context "Git Repository" {
             It "should be a valid Git repository" {
                 Test-Path (Join-Path $testConfig.ProjectRoot ".git") | Should -Be $true
             }
-            
+
             It "should have remote origin configured" {
                 $remotes = git remote 2>&1
                 $remotes | Should -Contain "origin"
@@ -418,7 +422,7 @@ function Test-ProjectSmoke {
 }
 
 # Main execution logic
-Write-Host "`nSEARCHING - Discovering functional modules..." -ForegroundColor Yellow
+Write-Information " -InformationAction Continue`nSEARCHING - Discovering functional modules..." -ForegroundColor Yellow
 
 # Discover modules and components
 $modules = Get-FunctionalModules
@@ -432,7 +436,7 @@ if ($ModuleName) {
     }
 }
 
-Write-Host "Found $($modules.Count) PowerShell modules and $($pythonModules.Count) Python modules" -ForegroundColor Gray
+Write-Information " -InformationAction ContinueFound $($modules.Count) PowerShell modules and $($pythonModules.Count) Python modules" -ForegroundColor Gray
 
 # Configure Pester
 $pesterConfig = New-PesterConfiguration
@@ -453,7 +457,7 @@ $pesterConfig.Output.Verbosity = 'Detailed'
 $testResults = @()
 
 if ($TestType -in @('All', 'Smoke')) {
-    Write-Host "`nEXECUTING - Running Smoke Tests..." -ForegroundColor Yellow
+    Write-Information " -InformationAction Continue`nEXECUTING - Running Smoke Tests..." -ForegroundColor Yellow
     $smokeResult = Invoke-Pester -Configuration $pesterConfig -Container (New-PesterContainer -ScriptBlock {
         Test-ProjectSmoke
     })
@@ -461,16 +465,16 @@ if ($TestType -in @('All', 'Smoke')) {
 }
 
 if ($TestType -in @('All', 'Unit', 'Module') -and $modules.Count -gt 0) {
-    Write-Host "`nPACKAGE - Running Module Tests..." -ForegroundColor Yellow
-    
+    Write-Information " -InformationAction Continue`nPACKAGE - Running Module Tests..." -ForegroundColor Yellow
+
     foreach ($module in $modules) {
-        Write-Host "  Testing module: $($module.Name)" -ForegroundColor Gray
-        
+        Write-Information " -InformationAction Continue  Testing module: $($module.Name)" -ForegroundColor Gray
+
         $moduleResult = Invoke-Pester -Configuration $pesterConfig -Container (New-PesterContainer -ScriptBlock {
             Test-ModuleCore -Module $using:module
         })
         $testResults += $moduleResult
-        
+
         if ($Severity -in @('Standard', 'Comprehensive')) {
             $integrationResult = Invoke-Pester -Configuration $pesterConfig -Container (New-PesterContainer -ScriptBlock {
                 Test-ModuleIntegration -Module $using:module
@@ -481,8 +485,8 @@ if ($TestType -in @('All', 'Unit', 'Module') -and $modules.Count -gt 0) {
 }
 
 if ($TestType -in @('All', 'Unit') -and $pythonModules.Count -gt 0) {
-    Write-Host "`nPYTHON - Running Python Tests..." -ForegroundColor Yellow
-    
+    Write-Information " -InformationAction Continue`nPYTHON - Running Python Tests..." -ForegroundColor Yellow
+
     $pythonResult = Invoke-Pester -Configuration $pesterConfig -Container (New-PesterContainer -ScriptBlock {
         Test-PythonModules -Modules $using:pythonModules
     })
@@ -490,21 +494,19 @@ if ($TestType -in @('All', 'Unit') -and $pythonModules.Count -gt 0) {
 }
 
 # Summary
-Write-Host "`nANALYSIS - Test Results Summary:" -ForegroundColor Cyan
+Write-Information " -InformationAction Continue`nANALYSIS - Test Results Summary:" -ForegroundColor Cyan
 $totalTests = ($testResults | Measure-Object TotalCount -Sum).Sum
 $passedTests = ($testResults | Measure-Object PassedCount -Sum).Sum
 $failedTests = ($testResults | Measure-Object FailedCount -Sum).Sum
 
-Write-Host "  Total Tests: $totalTests" -ForegroundColor White
-Write-Host "  Passed: $passedTests" -ForegroundColor Green
-Write-Host "  Failed: $failedTests" -ForegroundColor $(if ($failedTests -gt 0) { 'Red' } else { 'Green' })
+Write-Information " -InformationAction Continue  Total Tests: $totalTests" -ForegroundColor White
+Write-Information " -InformationAction Continue  Passed: $passedTests" -ForegroundColor Green
+Write-Information " -InformationAction Continue  Failed: $failedTests" -ForegroundColor $(if ($failedTests -gt 0) { 'Red' } else { 'Green' })
 
 if ($testResults | Where-Object { $_.FailedCount -gt 0 }) {
-    Write-Host "`nFAILED - Some tests failed. Check the detailed output above." -ForegroundColor Red
+    Write-Information " -InformationAction Continue`nFAILED - Some tests failed. Check the detailed output above." -ForegroundColor Red
     exit 1
 } else {
-    Write-Host "`nPASS All tests passed!" -ForegroundColor Green
+    Write-Information " -InformationAction Continue`nPASS All tests passed!" -ForegroundColor Green
     exit 0
 }
-
-

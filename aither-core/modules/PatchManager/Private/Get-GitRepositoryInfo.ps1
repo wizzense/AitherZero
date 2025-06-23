@@ -1,5 +1,9 @@
 #Requires -Version 7.0
 
+# Import Find-ProjectRoot from shared utilities
+$sharedPath = Resolve-Path (Join-Path $PSScriptRoot "../../../shared/Find-ProjectRoot.ps1") -ErrorAction Stop
+. $sharedPath
+
 <#
 .SYNOPSIS
     Dynamically detects the current Git repository information for GitHub operations.
@@ -20,7 +24,13 @@
 
 function Get-GitRepositoryInfo {
     [CmdletBinding()]
-    param()    try {
+    param()
+
+    try {
+        # Ensure we're working from the project root for reliable git operations
+        $projectRoot = Find-ProjectRoot
+        Push-Location $projectRoot
+
         # Get all remotes to understand fork chain
         $remotes = @{}
         $remoteOutput = git remote -v 2>&1
@@ -116,12 +126,10 @@ function Get-GitRepositoryInfo {
             GitHubRepo = "$owner/$repoName"  # Format for --repo parameter
             Remotes = $remotes
             ForkChain = $forkChain
-        }
-
-    } catch {
+        }        } catch {
         # Fallback to environment detection or defaults
         Write-Warning "Could not detect repository info: $($_.Exception.Message)"        # Try to determine from current directory name
-        $currentPath = (Get-Location).Path
+        $currentPath = $projectRoot
         if ($currentPath -match 'AitherZero') {
             return @{
                 Owner = "wizzense"
@@ -151,11 +159,10 @@ function Get-GitRepositoryInfo {
                     @{ Name = "origin"; Owner = "Aitherium"; Repo = "AitherLabs"; GitHubRepo = "Aitherium/AitherLabs"; Type = "Public"; Description = "Public staging repository" }
                 )
             }
-        }
-        else {
+        } else {
             throw "Could not determine repository information"
         }
+    } finally {
+        Pop-Location -ErrorAction SilentlyContinue
     }
 }
-
-Export-ModuleMember -Function Get-GitRepositoryInfo

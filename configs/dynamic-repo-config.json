@@ -1,0 +1,47 @@
+{
+  "forkChain": [
+    {
+      "description": "Development fork",
+      "repository": "wizzense/AitherZero",
+      "name": "origin",
+      "type": "Development",
+      "urls": {
+        "raw": "https://raw.githubusercontent.com/wizzense/AitherZero",
+        "base": "https://github.com/wizzense/AitherZero"
+      }
+    },
+    {
+      "description": "Public staging repository",
+      "repository": "Aitherium/AitherLabs",
+      "name": "upstream",
+      "type": "Public",
+      "urls": {
+        "raw": "https://raw.githubusercontent.com/Aitherium/AitherLabs",
+        "base": "https://github.com/Aitherium/AitherLabs"
+      }
+    },
+    {
+      "description": "Premium/enterprise repository",
+      "repository": "Aitherium/Aitherium",
+      "name": "root",
+      "type": "Premium",
+      "urls": {
+        "raw": "https://raw.githubusercontent.com/Aitherium/Aitherium",
+        "base": "https://github.com/Aitherium/Aitherium"
+      }
+    }
+  ],
+  "repository": {
+    "name": "AitherZero",
+    "fullName": "wizzense/AitherZero",
+    "type": "Development",
+    "urls": {
+      "raw": "https://raw.githubusercontent.com/wizzense/AitherZero",
+      "base": "https://github.com/wizzense/AitherZero",
+      "clone": "https://github.com/wizzense/AitherZero.git"
+    },
+    "description": "Development fork",
+    "owner": "wizzense"
+  },
+  "lastUpdated": "2025-06-22T23:10:02Z"
+}

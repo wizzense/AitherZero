@@ -771,6 +771,160 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             }
+        },
+        {
+            "label": "📚 Documentation: Generate/Update All Docs",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Write-Host '📚 Generating comprehensive documentation...' -ForegroundColor Cyan; Import-Module './aither-core/modules/PatchManager/PatchManager.psm1' -Force; Update-RepositoryDocumentation; Write-Host '✅ Documentation updated successfully' -ForegroundColor Green"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🏗️ Architecture: Validate Complete System",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "$ErrorActionPreference = 'Stop'; Write-Host '🏗️ Validating complete system architecture...' -ForegroundColor Cyan; . './aither-core/shared/Find-ProjectRoot.ps1'; $projectRoot = Find-ProjectRoot; Write-Host \"✅ Project root: $projectRoot\" -ForegroundColor Green; Get-ChildItem '$projectRoot/aither-core/modules' -Directory | ForEach-Object { Write-Host \"📦 Validating module: $($_.Name)\" -ForegroundColor Yellow; Import-Module $_.FullName -Force -ErrorAction Stop; Write-Host \"✅ Module $($_.Name) loaded successfully\" -ForegroundColor Green }; Write-Host '🎯 All modules validated successfully!' -ForegroundColor Green"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🔧 Development: Setup Complete Environment",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Write-Host '🔧 Setting up complete development environment...' -ForegroundColor Cyan; . './aither-core/shared/Find-ProjectRoot.ps1'; $projectRoot = Find-ProjectRoot; $env:PROJECT_ROOT = $projectRoot; Write-Host \"✅ PROJECT_ROOT set to: $projectRoot\" -ForegroundColor Green; Write-Host '📦 Loading all modules...' -ForegroundColor Yellow; Get-ChildItem '$projectRoot/aither-core/modules' -Directory | ForEach-Object { Import-Module $_.FullName -Force; Write-Host \"✅ Loaded: $($_.Name)\" -ForegroundColor Green }; Write-Host '🧪 Running quick validation...' -ForegroundColor Yellow; pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel 'Quick'; Write-Host '🎉 Development environment ready!' -ForegroundColor Green"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🌐 Repository: Update All Cross-Fork Configs",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Write-Host '🌐 Updating cross-fork repository configurations...' -ForegroundColor Cyan; Import-Module './aither-core/modules/PatchManager/PatchManager.psm1' -Force; $repoInfo = Get-GitRepositoryInfo; Write-Host \"📍 Current repository: $($repoInfo.GitHubRepo) ($($repoInfo.Type))\" -ForegroundColor Yellow; Write-Host \"🔗 Fork chain: $($repoInfo.ForkChain.Count) repositories\" -ForegroundColor Yellow; Update-RepositoryDocumentation; Write-Host '✅ All repository configurations updated!' -ForegroundColor Green"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🎯 Testing: Intelligent Discovery and Execution",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Write-Host '🎯 Running intelligent test discovery and execution...' -ForegroundColor Cyan; if (Test-Path './tests/Invoke-IntelligentTests.ps1') { pwsh -File './tests/Invoke-IntelligentTests.ps1' -TestType 'All' -Severity 'Standard' } else { Write-Host '⚠️ Intelligent test discovery not found, running standard tests...' -ForegroundColor Yellow; pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel 'Standard' }; Write-Host '✅ Testing completed!' -ForegroundColor Green"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🚀 Release: Pre-Release Validation",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Write-Host '🚀 Running comprehensive pre-release validation...' -ForegroundColor Cyan; Write-Host '1️⃣ Architecture validation...' -ForegroundColor Yellow; . './aither-core/shared/Find-ProjectRoot.ps1'; $projectRoot = Find-ProjectRoot; Get-ChildItem '$projectRoot/aither-core/modules' -Directory | ForEach-Object { Import-Module $_.FullName -Force }; Write-Host '2️⃣ Complete test suite...' -ForegroundColor Yellow; pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel 'Complete'; Write-Host '3️⃣ Documentation update...' -ForegroundColor Yellow; Import-Module './aither-core/modules/PatchManager/PatchManager.psm1' -Force; Update-RepositoryDocumentation; Write-Host '✅ Pre-release validation completed!' -ForegroundColor Green"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🔍 Debug: Comprehensive System Diagnostics",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "$ErrorActionPreference = 'Continue'; Write-Host '🔍 Running comprehensive system diagnostics...' -ForegroundColor Cyan; Write-Host '📊 System Information:' -ForegroundColor Yellow; Write-Host \"PowerShell Version: $($PSVersionTable.PSVersion)\" -ForegroundColor White; Write-Host \"OS: $($PSVersionTable.OS)\" -ForegroundColor White; Write-Host \"Platform: $($PSVersionTable.Platform)\" -ForegroundColor White; Write-Host '📁 Project Structure:' -ForegroundColor Yellow; . './aither-core/shared/Find-ProjectRoot.ps1'; $projectRoot = Find-ProjectRoot; Write-Host \"Project Root: $projectRoot\" -ForegroundColor White; Write-Host '📦 Module Status:' -ForegroundColor Yellow; Get-ChildItem '$projectRoot/aither-core/modules' -Directory | ForEach-Object { try { Import-Module $_.FullName -Force; Write-Host \"✅ $($_.Name): OK\" -ForegroundColor Green } catch { Write-Host \"❌ $($_.Name): $($_.Exception.Message)\" -ForegroundColor Red } }; Write-Host '🌐 Repository Information:' -ForegroundColor Yellow; try { Import-Module './aither-core/modules/PatchManager/PatchManager.psm1' -Force; $repoInfo = Get-GitRepositoryInfo; Write-Host \"Repository: $($repoInfo.GitHubRepo)\" -ForegroundColor White; Write-Host \"Type: $($repoInfo.Type)\" -ForegroundColor White; Write-Host \"Fork Chain: $($repoInfo.ForkChain.Count) repositories\" -ForegroundColor White } catch { Write-Host \"❌ Repository detection failed: $($_.Exception.Message)\" -ForegroundColor Red }; Write-Host '🔧 Diagnostics completed!' -ForegroundColor Green"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
         }
     ],
     "inputs": [
