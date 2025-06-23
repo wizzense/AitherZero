@@ -3,11 +3,11 @@
 <#
 .SYNOPSIS
     Initialize cross-platform environment variables for PatchManager
-    
+
 .DESCRIPTION
     Sets up PROJECT_ROOT and other environment variables needed for cross-platform path resolution.
     This ensures that all scripts can work regardless of Windows, Linux, or macOS environment.
-    
+
 .NOTES
     This function is called automatically by PatchManager to ensure environment consistency.
 #>
@@ -15,22 +15,22 @@
 function Initialize-CrossPlatformEnvironment {
     [CmdletBinding()]
     param()
-    
+
     begin {
         Write-Verbose "Initializing cross-platform environment variables..."
     }
-    
+
     process {
         try {
             # Detect project root using multiple strategies
             $projectRoot = $null
-            
+
             # Strategy 1: Environment variable (if already set)
             if ($env:PROJECT_ROOT -and (Test-Path $env:PROJECT_ROOT)) {
                 $projectRoot = $env:PROJECT_ROOT
                 Write-Verbose "Using existing PROJECT_ROOT: $projectRoot"
             }
-            
+
             # Strategy 2: Look for PROJECT-MANIFEST.json starting from current location
             if (-not $projectRoot) {
                 $current = Get-Location
@@ -46,7 +46,7 @@ function Initialize-CrossPlatformEnvironment {
                     $current = Get-Item $current -ErrorAction SilentlyContinue
                 }
             }
-            
+
             # Strategy 3: Use PSScriptRoot-based detection (for modules)
             if (-not $projectRoot) {
                 $moduleRoot = $PSScriptRoot
@@ -65,7 +65,7 @@ function Initialize-CrossPlatformEnvironment {
                     "$env:USERPROFILE\Documents\0. wizzense\AitherZero",
                     "$HOME/AitherZero"
                 )
-                
+
                 foreach ($path in $knownPaths) {
                     if (Test-Path $path) {
                         $projectRoot = $path
@@ -74,7 +74,7 @@ function Initialize-CrossPlatformEnvironment {
                     }
                 }
             }
-            
+
             # Strategy 5: Use current location if it contains aither-core
             if (-not $projectRoot) {
                 $currentPath = (Get-Location).Path
@@ -83,7 +83,7 @@ function Initialize-CrossPlatformEnvironment {
                     Write-Verbose "Using current directory with aither-core: $projectRoot"
                 }
             }
-            
+
             # Final fallback
             if (-not $projectRoot) {
                 $projectRoot = Get-Location
@@ -93,7 +93,7 @@ function Initialize-CrossPlatformEnvironment {
             $env:PROJECT_ROOT = $projectRoot
             $env:PWSH_MODULES_PATH = Join-Path $projectRoot "aither-core" "modules"
             $env:PROJECT_SCRIPTS_PATH = Join-Path $projectRoot "scripts"
-            
+
             # Platform-specific settings
             if ($IsWindows) {
                 $env:PLATFORM = "Windows"
@@ -108,19 +108,19 @@ function Initialize-CrossPlatformEnvironment {
                 $env:PLATFORM = "Unknown"
                 $env:PATH_SEP = "/"
             }
-            
+
             Write-Host "Cross-platform environment initialized:" -ForegroundColor Green
             Write-Host "  PROJECT_ROOT: $env:PROJECT_ROOT" -ForegroundColor Cyan
             Write-Host "  PLATFORM: $env:PLATFORM" -ForegroundColor Cyan
             Write-Host "  PWSH_MODULES_PATH: $env:PWSH_MODULES_PATH" -ForegroundColor Cyan
-            
+
             return @{
                 Success = $true
                 ProjectRoot = $env:PROJECT_ROOT
                 Platform = $env:PLATFORM
                 ModulesPath = $env:PWSH_MODULES_PATH
             }
-            
+
         } catch {
             Write-Error "Failed to initialize cross-platform environment: $($_.Exception.Message)"
             return @{

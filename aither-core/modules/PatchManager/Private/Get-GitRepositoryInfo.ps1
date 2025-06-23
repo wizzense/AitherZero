@@ -32,13 +32,13 @@ function Get-GitRepositoryInfo {
         # Parse different URL formats
         $owner = $null
         $repoName = $null
-        
+
         if ($remoteUrl -match 'github\.com[:/]([^/]+)/([^/\.]+)') {
             $owner = $matches[1]
             $repoName = $matches[2]
         }
         elseif ($remoteUrl -match 'https://github\.com/([^/]+)/([^/\.]+)') {
-            $owner = $matches[1] 
+            $owner = $matches[1]
             $repoName = $matches[2]
         }
         else {
@@ -54,7 +54,7 @@ function Get-GitRepositoryInfo {
         # Determine repository type based on owner/name
         $repoType = switch ($owner) {
             "wizzense" { "Development" }
-            "Aitherium" { 
+            "Aitherium" {
                 switch ($repoName) {
                     "AitherLabs" { "Public" }
                     "Aitherium" { "Premium" }
@@ -77,7 +77,7 @@ function Get-GitRepositoryInfo {
     } catch {
         # Fallback to environment detection or defaults
         Write-Warning "Could not detect repository info: $($_.Exception.Message)"
-        
+
         # Try to determine from current directory name
         $currentPath = (Get-Location).Path
         if ($currentPath -match 'AitherZero') {
