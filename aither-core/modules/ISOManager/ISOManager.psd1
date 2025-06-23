@@ -17,8 +17,7 @@
         'Remove-ISOFile',
         'Export-ISOInventory',
         'Import-ISOInventory',
-        'Sync-ISORepository',
-        'Get-ISODownloadOptions'
+        'Sync-ISORepository'
     )
     CmdletsToExport   = @()
     VariablesToExport = @()

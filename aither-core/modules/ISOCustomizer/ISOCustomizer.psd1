@@ -11,19 +11,9 @@
     FunctionsToExport = @(
         'New-CustomISO',
         'New-AutounattendFile',
-        'Mount-ISOImage',
-        'Dismount-ISOImage',
-        'Add-ISOFiles',
-        'Remove-ISOFiles',
-        'Update-WIMImage',
-        'New-BootableISO',
-        'Test-AutounattendFile',
         'Get-AutounattendTemplate',
         'Get-BootstrapTemplate',
-        'Get-KickstartTemplate',
-        'Set-ISOBootConfiguration',
-        'Export-ISOConfiguration',
-        'Import-ISOConfiguration'
+        'Get-KickstartTemplate'
     )
     CmdletsToExport   = @()
     VariablesToExport = @()
