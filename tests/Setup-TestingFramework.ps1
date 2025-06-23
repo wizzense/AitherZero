@@ -112,12 +112,12 @@ function Test-FrameworkComponents {
                     $errors = $null
                     $ast = [System.Management.Automation.Language.Parser]::ParseInput($content, [ref]$null, [ref]$errors)
                     if ($errors.Count -gt 0) {
-                        Write-Warning
+                        Write-Warning " Syntax warnings: $($errors.Count)"
                     } else {
                         Write-Information ' Syntax validated' -InformationAction Continue
                     }
                 } catch {
-                    Write-Error
+                    Write-Error " Syntax validation failed: $_"
                     $allValid = $false
                 }
             }
@@ -165,7 +165,7 @@ function Initialize-TestGeneration {
                         $generatedTests++
                         Write-Information " PASS Generated: $testName" -InformationAction Continue
                     } catch {
-                        Write-Error
+                        Write-Error " Failed to generate test for $($script.Name): $_"
                     }
                 } else {
                     Write-Information " [SKIP] Test exists: $testName" -InformationAction Continue
@@ -219,7 +219,7 @@ function Test-FrameworkExecution {
 
         return $true
     } catch {
-        Write-Error
+        Write-Error " Framework execution test failed: $_"
         return $false
     }
 }
@@ -257,7 +257,7 @@ try {
         if ($isValid) {
             Write-Information "`nPASS Framework validation passed!" -InformationAction Continue
         } else {
-            Write-Error
+            Write-Error "`nFramework validation failed!"
             exit 1
         }
         exit 0
@@ -308,17 +308,15 @@ try {
                 Start-Sleep 10
                 $job = Get-Job -Id $watcherJob.Id -ErrorAction SilentlyContinue
                 if (-not $job -or $job.State -eq 'Failed') {
-                    Write-Warning
+                    Write-Warning 'File watcher stopped unexpectedly'
                     break
                 }
             }
         } catch {
             Write-Information "`n� Monitoring stopped" -InformationAction Continue
         }
-    }
-
-} catch {
-    Write-Error
+    } } catch {
+    Write-Error "`nSetup failed: $_"
     Write-Information 'Check the error above and try again' -InformationAction Continue
     exit 1
 }
