@@ -143,7 +143,7 @@ Thumbs.db
                 $gitignoreContent | Set-Content $gitignorePath
 
                 Write-CustomLog -Level 'SUCCESS' -Message "ISO repository created successfully: $RepositoryPath"
-                
+
                 # Return success result with repository configuration
                 return @{
                     Success = $true

@@ -57,7 +57,7 @@ function Import-ISOInventory {
             }
 
             $inventory = if ($importData.Inventory) { $importData.Inventory } else { $importData }
-            
+
             if (-not $inventory -or $inventory.Count -eq 0) {
                 throw "No inventory data found in import file"
             }
@@ -77,7 +77,7 @@ function Import-ISOInventory {
                 foreach ($item in $inventory) {
                     try {
                         $filePath = $item.FilePath
-                        
+
                         # Update file path if target repository is specified
                         if ($TargetRepositoryPath) {
                             $fileName = Split-Path $filePath -Leaf
@@ -99,7 +99,7 @@ function Import-ISOInventory {
                         if ($ValidateFiles) {
                             if (Test-Path $filePath) {
                                 $importResults.ValidatedFiles++
-                                
+
                                 # Additional validation if checksum is available
                                 if ($item.Checksum) {
                                     $actualHash = (Get-FileHash -Path $filePath -Algorithm SHA256).Hash

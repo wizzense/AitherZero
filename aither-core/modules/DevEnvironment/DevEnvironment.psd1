@@ -10,11 +10,11 @@
     CompanyName = 'Aitherium'
     Copyright = '(c) 2025 Aitherium. All rights reserved.'
     Description = 'Development environment setup and management for Aitherium Infrastructure Automation'
-    
+
     PowerShellVersion = '7.0'
       FunctionsToExport = @(
         'Install-PreCommitHook',
-        'Remove-PreCommitHook', 
+        'Remove-PreCommitHook',
         'Test-PreCommitHook',
         'Set-DevelopmentEnvironment',
         'Test-DevelopmentSetup',
@@ -22,12 +22,12 @@
         'Initialize-DevelopmentEnvironment',
         'Resolve-ModuleImportIssues'
     )
-    
+
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()
       RequiredModules = @()
-    
+
     PrivateData = @{
         PSData = @{
             Tags = @('Development', 'Git', 'Hooks', 'Environment')

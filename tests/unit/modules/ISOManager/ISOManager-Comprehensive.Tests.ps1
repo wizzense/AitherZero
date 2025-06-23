@@ -37,7 +37,7 @@ Describe "ISOManager Module - Complete Test Suite" {
             # Test that manifest doesn't export non-existent functions
             $manifest = Import-PowerShellDataFile './aither-core/modules/ISOManager/ISOManager.psd1'
             $actualPublicFiles = Get-ChildItem './aither-core/modules/ISOManager/Public' -Filter '*.ps1' | ForEach-Object { $_.BaseName }
-            
+
             foreach ($exportedFunction in $manifest.FunctionsToExport) {
                 if ($exportedFunction -eq 'Get-ISODownloadOptions') {
                     # This function is listed in manifest but missing - expected for now
@@ -130,7 +130,7 @@ Describe "ISOManager Module - Complete Test Suite" {
             # Create a test file to simulate ISO
             $testFile = Join-Path $env:TEMP "test-metadata.iso"
             "Test ISO content" | Set-Content $testFile
-            
+
             try {
                 $result = Get-ISOMetadata -FilePath $testFile
                 $result | Should -Not -BeNullOrEmpty
@@ -155,7 +155,7 @@ Describe "ISOManager Module - Complete Test Suite" {
 
         It "Should create repository structure" {
             $testRepoPath = Join-Path $env:TEMP "TestCreateRepo"
-            
+
             try {
                 $result = New-ISORepository -RepositoryPath $testRepoPath -Force
                 $result.Success | Should -Be $true
@@ -473,7 +473,7 @@ Describe "ISOCustomizer Module - Complete Test Suite" {
         It "Should load template helpers successfully" {
             # Import the private function file to test template helpers
             Import-Module './aither-core/modules/ISOCustomizer' -Force
-            
+
             # Test that template helper functions are available (they should be imported internally)
             { Get-AutounattendTemplate -TemplateType 'Generic' } | Should -Not -Throw
             { Get-AutounattendTemplate -TemplateType 'Headless' } | Should -Not -Throw
@@ -481,13 +481,13 @@ Describe "ISOCustomizer Module - Complete Test Suite" {
 
         It "Should return valid template paths" {
             Import-Module './aither-core/modules/ISOCustomizer' -Force
-            
+
             $genericTemplate = Get-AutounattendTemplate -TemplateType 'Generic'
             $headlessTemplate = Get-AutounattendTemplate -TemplateType 'Headless'
-            
+
             $genericTemplate | Should -Not -BeNullOrEmpty
             $headlessTemplate | Should -Not -BeNullOrEmpty
-            
+
             if ($genericTemplate) {
                 Test-Path $genericTemplate | Should -Be $true
             }
@@ -498,7 +498,7 @@ Describe "ISOCustomizer Module - Complete Test Suite" {
 
         It "Should provide bootstrap template" {
             Import-Module './aither-core/modules/ISOCustomizer' -Force
-            
+
             $bootstrapTemplate = Get-BootstrapTemplate
             if ($bootstrapTemplate) {
                 Test-Path $bootstrapTemplate | Should -Be $true
@@ -513,29 +513,29 @@ Describe "Cross-Module Integration Tests" {
     Context "End-to-End ISO Workflow" {
         It "Should complete full workflow from download to customization" {
             # This test validates the complete workflow without actually executing it
-            
+
             # Step 1: Download ISO (simulate)
             { Get-ISODownload -ISOName "TestWorkflow" -ISOType "Custom" -CustomURL "https://example.com/test.iso" -WhatIf } | Should -Not -Throw
-            
+
             # Step 2: Generate autounattend
             $workflowConfig = @{
                 ComputerName = "WORKFLOW-TEST"
                 AdminPassword = "WorkflowTest123!"
             }
             $autounattendPath = Join-Path $env:TEMP "workflow-autounattend.xml"
-            
+
             try {
                 $autounattendResult = New-AutounattendFile -Configuration $workflowConfig -OutputPath $autounattendPath -Force
                 $autounattendResult.Success | Should -Be $true
-                
+
                 # Step 3: Create custom ISO (simulate) - Skip due to admin requirements
                 $testSourceISO = Join-Path $env:TEMP "workflow-source.iso"
                 $testOutputISO = Join-Path $env:TEMP "workflow-output.iso"
                 "Test content" | Set-Content $testSourceISO
-                
+
                 # Note: New-CustomISO requires admin privileges, so we just test parameter validation
                 { New-CustomISO -SourceISOPath $testSourceISO -OutputISOPath $testOutputISO -AutounattendFile $autounattendPath -WhatIf } | Should -Throw "*administrative privileges*"
-                
+
             } finally {
                 @($autounattendPath, $testSourceISO, $testOutputISO) | ForEach-Object {
                     if (Test-Path $_) {
@@ -547,24 +547,24 @@ Describe "Cross-Module Integration Tests" {
 
         It "Should handle repository operations in complete workflow" {
             $testRepoPath = Join-Path $env:TEMP "WorkflowRepo"
-            
+
             try {
                 # Create repository
                 $repoResult = New-ISORepository -RepositoryPath $testRepoPath -Force
                 $repoResult.Success | Should -Be $true
-                
+
                 # Get inventory
                 $inventory = Get-ISOInventory -RepositoryPath $testRepoPath
                 $inventory | Should -BeOfType [array]
-                
+
                 # Export inventory
                 $exportPath = Join-Path $env:TEMP "workflow-inventory.json"
                 $exportResult = Export-ISOInventory -RepositoryPath $testRepoPath -ExportPath $exportPath -Force
                 $exportResult.Success | Should -Be $true
-                
+
                 # Import inventory
                 { Import-ISOInventory -ImportPath $exportPath -TargetRepositoryPath $testRepoPath -WhatIf } | Should -Not -Throw
-                
+
             } finally {
                 @($testRepoPath, $exportPath) | ForEach-Object {
                     if (Test-Path $_) {
@@ -625,7 +625,7 @@ Describe "Performance and Stress Tests" {
                 AdminPassword = "PerfTest123!"
                 FirstLogonCommands = @()
             }
-            
+
             # Add 50 first logon commands
             for ($i = 1; $i -le 50; $i++) {
                 $largeConfig.FirstLogonCommands += @{
@@ -633,23 +633,23 @@ Describe "Performance and Stress Tests" {
                     Description = "Performance Test Command $i"
                 }
             }
-            
+
             $perfOutputPath = Join-Path $env:TEMP "performance-test.xml"
-            
+
             try {
                 $executionTime = Measure-Command {
                     $result = New-AutounattendFile -Configuration $largeConfig -OutputPath $perfOutputPath -Force
                     $result.Success | Should -Be $true
                 }
-                
+
                 # Should complete within reasonable time (30 seconds for 50 commands)
                 $executionTime.TotalSeconds | Should -BeLessThan 30
-                
+
                 # Verify file size is reasonable
                 $fileSize = (Get-Item $perfOutputPath).Length
                 $fileSize | Should -BeGreaterThan 5KB
                 $fileSize | Should -BeLessThan 1MB
-                
+
             } finally {
                 Remove-Item $perfOutputPath -Force -ErrorAction SilentlyContinue
             }
@@ -659,28 +659,28 @@ Describe "Performance and Stress Tests" {
     Context "Memory Usage Tests" {
         It "Should not have memory leaks during repeated operations" {
             $initialMemory = [GC]::GetTotalMemory($true)
-            
+
             for ($i = 1; $i -le 10; $i++) {
                 $testConfig = @{
                     ComputerName = "MEMORY-TEST-$i"
                     AdminPassword = "MemoryTest123!"
                 }
                 $testPath = Join-Path $env:TEMP "memory-test-$i.xml"
-                
+
                 try {
                     New-AutounattendFile -Configuration $testConfig -OutputPath $testPath -Force | Out-Null
                 } finally {
                     Remove-Item $testPath -Force -ErrorAction SilentlyContinue
                 }
             }
-            
+
             [GC]::Collect()
             [GC]::WaitForPendingFinalizers()
             [GC]::Collect()
-            
+
             $finalMemory = [GC]::GetTotalMemory($true)
             $memoryIncrease = $finalMemory - $initialMemory
-            
+
             # Memory increase should be minimal (less than 10MB)
             $memoryIncrease | Should -BeLessThan 10MB
         }
@@ -693,7 +693,7 @@ Describe "Performance and Stress Tests" {
                 @{ ComputerName = "TEST_ABC"; AdminPassword = "Test123!" },
                 @{ ComputerName = "TESTNAME"; AdminPassword = "Test123!" }
             )
-            
+
             foreach ($config in $configs) {
                 $safeComputerName = $config.ComputerName -replace '[^a-zA-Z0-9-_]', ''
                 $testOutputPath = Join-Path $env:TEMP "special-char-test-$safeComputerName.xml"
@@ -708,7 +708,7 @@ Describe "Performance and Stress Tests" {
                 Organization = "Test Company"
             }
             $testOutputPath = Join-Path $env:TEMP "unicode-test.xml"
-            
+
             { New-AutounattendFile -Configuration $unicodeConfig -OutputPath $testOutputPath -WhatIf } | Should -Not -Throw
         }
 
@@ -718,7 +718,7 @@ Describe "Performance and Stress Tests" {
                 AdminPassword = "P@ss123!"
             }
             $testOutputPath = Join-Path $env:TEMP "edge-case-test.xml"
-            
+
             { New-AutounattendFile -Configuration $minConfig -OutputPath $testOutputPath -WhatIf } | Should -Not -Throw
         }
     }
@@ -732,15 +732,15 @@ Describe "Security and Validation Tests" {
                 AdminPassword = "SpecialTest123!"
             }
             $testPath = Join-Path $env:TEMP "special-char-test.xml"
-            
+
             try {
                 $result = New-AutounattendFile -Configuration $specialCharConfig -OutputPath $testPath -Force
                 $result.Success | Should -Be $true
-                
+
                 $xmlContent = Get-Content $testPath -Raw
                 # Should contain the computer name safely
                 $xmlContent | Should -Match "TEST-COMPUTER"
-                
+
             } finally {
                 Remove-Item $testPath -Force -ErrorAction SilentlyContinue
             }
@@ -754,9 +754,9 @@ Describe "Security and Validation Tests" {
                 MinPasswordLength = 8
                 RequireComplexPasswords = $true
             }
-            
+
             $testPath = Join-Path $env:TEMP "password-test.xml"
-            
+
             # Should either handle weak password or provide warning
             { New-AutounattendFile -Configuration $weakPasswordConfig -OutputPath $testPath -WhatIf } | Should -Not -Throw
         }
@@ -767,17 +767,17 @@ Describe "Security and Validation Tests" {
                 AdminPassword = "Test123!"
                 CustomXMLPayload = "<?xml version='1.0'?><malicious>payload</malicious>"
             }
-            
+
             $testPath = Join-Path $env:TEMP "injection-test.xml"
-            
+
             try {
                 $result = New-AutounattendFile -Configuration $maliciousConfig -OutputPath $testPath -Force
                 $result.Success | Should -Be $true
-                
+
                 $xmlContent = Get-Content $testPath -Raw
                 # Should not contain the malicious payload as raw XML
                 $xmlContent | Should -Not -Match "<malicious>" -Because "XML injection should be prevented"
-                
+
             } finally {
                 Remove-Item $testPath -Force -ErrorAction SilentlyContinue
             }
@@ -793,7 +793,7 @@ Describe "Error Handling and Recovery Tests" {
                 AdminPassword = "Test123!"
             }
             $testPath = Join-Path $env:TEMP "invalid-test.xml"
-            
+
             try {
                 { New-AutounattendFile -Configuration $invalidConfig -OutputPath $testPath -WhatIf } | Should -Throw
             } catch {
@@ -808,7 +808,7 @@ Describe "Error Handling and Recovery Tests" {
                 ComputerName = "PERMISSION-TEST"
                 AdminPassword = "PermTest123!"
             }
-            
+
             # This should fail with access denied (unless running as admin on C:\Windows\System32)
             { New-AutounattendFile -Configuration $testConfig -OutputPath $restrictedPath -Force } | Should -Throw
         }
@@ -820,19 +820,19 @@ Describe "Regression Tests" {
         It "Should not regress on template loading" {
             # Test that templates are properly loaded from module directory
             Import-Module './aither-core/modules/ISOCustomizer' -Force
-            
+
             $testConfig = @{
                 ComputerName = "REGRESSION-TEST"
                 AdminPassword = "RegressionTest123!"
             }
-            
+
             # Should work both in normal and headless mode
             $normalOutputPath = Join-Path $env:TEMP "regression-normal-test.xml"
             $headlessOutputPath = Join-Path $env:TEMP "regression-headless-test.xml"
-            
+
             { New-AutounattendFile -Configuration $testConfig -OutputPath $normalOutputPath -WhatIf } | Should -Not -Throw
             { New-AutounattendFile -Configuration $testConfig -OutputPath $headlessOutputPath -HeadlessMode -WhatIf } | Should -Not -Throw
-            
+
             @($normalOutputPath, $headlessOutputPath) | ForEach-Object {
                 if (Test-Path $_) {
                     Remove-Item $_ -Force
@@ -853,16 +853,16 @@ Describe "Regression Tests" {
                 @{ ComputerName = "XML-VAL-2"; AdminPassword = "XmlVal123!"; AutoLogon = $true },
                 @{ ComputerName = "XML-VAL-3"; AdminPassword = "XmlVal123!"; DisableFirewall = $true }
             )
-            
+
             foreach ($config in $validationConfigs) {
                 $testOutputPath = Join-Path $env:TEMP "xml-validation-test-$($config.ComputerName).xml"
-                $result = New-AutounattendFile -Configuration $config -OutputPath $testOutputPath -Force                
+                $result = New-AutounattendFile -Configuration $config -OutputPath $testOutputPath -Force
                 $result.Success | Should -Be $true
                 Test-Path $testOutputPath | Should -Be $true
-                
+
                 # Validate XML is well-formed
                 { [xml](Get-Content $testOutputPath -Raw) } | Should -Not -Throw
-                
+
                 Remove-Item $testOutputPath -Force
             }
         }

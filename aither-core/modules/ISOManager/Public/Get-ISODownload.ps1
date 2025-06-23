@@ -33,12 +33,12 @@ function Get-ISODownload {
 
     begin {
         Write-CustomLog -Level 'INFO' -Message "Starting ISO download: $ISOName"
-        
+
         # Set default download path if not specified
         if (-not $DownloadPath) {
             $DownloadPath = Join-Path $env:TEMP "AitherZero-ISOs"
         }
-        
+
         # Ensure download directory exists
         if (-not (Test-Path $DownloadPath)) {
             New-Item -ItemType Directory -Path $DownloadPath -Force | Out-Null
@@ -103,11 +103,11 @@ function Get-ISODownload {
                 Write-CustomLog -Level 'INFO' -Message "Saving to: $fullPath"
 
                 $downloadInfo.Status = 'Downloading'
-                
+
                 # Use BITS transfer if available (Windows), otherwise use Invoke-WebRequest
                 if (Get-Command Start-BitsTransfer -ErrorAction SilentlyContinue) {
                     $bitsJob = Start-BitsTransfer -Source $downloadUrl -Destination $fullPath -Asynchronous -DisplayName "ISO Download: $ISOName"
-                    
+
                     while (($bitsJob.JobState -eq 'Transferring') -or ($bitsJob.JobState -eq 'Connecting')) {
                         $progress = [math]::Round(($bitsJob.BytesTransferred / $bitsJob.BytesTotal) * 100, 2)
                         $downloadInfo.Progress = $progress

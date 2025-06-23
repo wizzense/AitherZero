@@ -23,7 +23,7 @@ function Get-OSImageName {
         [string]$OSType,
         [string]$Edition
     )
-    
+
     $imageNames = @{
         'Server2025' = @{
             'Standard' = 'Windows Server 2025 SERVERSTANDARD'
@@ -49,11 +49,11 @@ function Get-OSImageName {
             'Pro' = 'Windows 10 Pro'
         }
     }
-    
+
     if ($imageNames.ContainsKey($OSType) -and $imageNames[$OSType].ContainsKey($Edition)) {
         return $imageNames[$OSType][$Edition]
     }
-    
+
     # Default fallback
     return "Windows Server 2025 SERVERDATACENTERCORE"
 }
@@ -67,18 +67,18 @@ function Apply-OfflineRegistryChanges {
         [string]$MountPath,
         [hashtable]$Changes
     )
-    
+
     Write-CustomLog -Level 'INFO' -Message "Applying offline registry changes..."
-    
+
     foreach ($change in $Changes.GetEnumerator()) {
         $keyPath = $change.Key
         $values = $change.Value
-        
+
         try {
             # Load the offline registry hives
             $systemHive = Join-Path $MountPath "Windows\System32\config\SYSTEM"
             $softwareHive = Join-Path $MountPath "Windows\System32\config\SOFTWARE"
-            
+
             # Apply changes using reg.exe for offline registry
             foreach ($value in $values.GetEnumerator()) {
                 $regArgs = @(
@@ -89,10 +89,10 @@ function Apply-OfflineRegistryChanges {
                     "/d", $value.Value,
                     "/f"
                 )
-                
+
                 Start-Process -FilePath "reg" -ArgumentList $regArgs -Wait -NoNewWindow
             }
-            
+
             Write-CustomLog -Level 'INFO' -Message "Applied registry changes for: $keyPath"
         } catch {
             Write-CustomLog -Level 'WARN' -Message "Failed to apply registry changes for: $keyPath - $($_.Exception.Message)"
@@ -109,7 +109,7 @@ function Get-PredefinedISOConfig {
         [string]$ISOType,
         [string]$ISOName
     )
-    
+
     # This could be enhanced to read from configuration files
     $predefinedConfigs = @{
         'WindowsServer2025' = @{
@@ -123,11 +123,11 @@ function Get-PredefinedISOConfig {
             HashAlgorithm = 'SHA256'
         }
     }
-    
+
     if ($predefinedConfigs.ContainsKey($ISOType)) {
         return $predefinedConfigs[$ISOType]
     }
-    
+
     return $null
 }
 
@@ -142,15 +142,15 @@ function Update-ISOInventory {
         [string]$ISOType,
         [string]$DownloadURL
     )
-    
+
     try {
         $inventoryPath = Join-Path $env:TEMP "AitherZero-ISO-Inventory.json"
-        
+
         $inventory = @()
         if (Test-Path $inventoryPath) {
             $inventory = Get-Content $inventoryPath -Raw | ConvertFrom-Json
         }
-        
+
         $newEntry = @{
             ISOName = $ISOName
             ISOType = $ISOType
@@ -160,11 +160,11 @@ function Update-ISOInventory {
             Hash = (Get-FileHash $FilePath -Algorithm SHA256).Hash
             DownloadDate = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
         }
-        
+
         $inventory += $newEntry
-        
+
         $inventory | ConvertTo-Json -Depth 10 | Set-Content $inventoryPath
-        
+
         Write-CustomLog -Level 'INFO' -Message "Updated ISO inventory: $inventoryPath"
     } catch {
         Write-CustomLog -Level 'WARN' -Message "Failed to update ISO inventory: $($_.Exception.Message)"
