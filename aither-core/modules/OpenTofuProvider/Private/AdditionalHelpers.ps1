@@ -187,32 +187,53 @@ function ConvertFrom-Yaml {
     
     # This is a placeholder - in production, you would use a proper YAML parser
     # like PowerShell-Yaml module or System.Text.Json with YAML support
-    
-    try {
+      try {
         # Simple YAML-like parsing for basic structures
         # This is not a complete YAML parser!
         $lines = $InputObject -split "`n"
         $result = @{}
         $currentSection = $null
+        $lineNumber = 0
         
         foreach ($line in $lines) {
+            $lineNumber++
             $line = $line.Trim()
             if ([string]::IsNullOrWhiteSpace($line) -or $line.StartsWith('#')) {
                 continue
             }
             
+            # Basic validation for obviously malformed content
+            if ($line -match '[\[\{\}]' -and -not $line.Contains(':')) {
+                throw "Invalid YAML syntax on line $lineNumber`: $line"
+            }
+            
             if ($line.EndsWith(':')) {
                 $currentSection = $line.TrimEnd(':')
                 $result[$currentSection] = @{}
-            } elseif ($currentSection -and $line.Contains(':')) {
-                $parts = $line -split ':', 2
+            } elseif ($currentSection -and $line.Contains(':')) {$parts = $line -split ':', 2
                 $key = $parts[0].Trim()
                 $value = $parts[1].Trim()
                 
-                # Basic type conversion
+                # Remove surrounding quotes if present
+                if (($value.StartsWith('"') -and $value.EndsWith('"')) -or ($value.StartsWith("'") -and $value.EndsWith("'"))) {
+                    $value = $value.Substring(1, $value.Length - 2)
+                }
+                
+                # Basic type conversion with safe integer handling
                 if ($value -eq 'true') { $value = $true }
                 elseif ($value -eq 'false') { $value = $false }
-                elseif ($value -match '^\d+$') { $value = [int]$value }
+                elseif ($value -match '^\d+$') { 
+                    try {
+                        if ([long]$value -le [int]::MaxValue) {
+                            $value = [int]$value
+                        } else {
+                            $value = [long]$value
+                        }
+                    } catch {
+                        # Keep as string if conversion fails
+                        $value = $value
+                    }
+                }
                 
                 $result[$currentSection][$key] = $value
             }
