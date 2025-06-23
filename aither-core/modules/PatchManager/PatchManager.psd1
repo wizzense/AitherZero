@@ -73,6 +73,7 @@ FunctionsToExport = @(
     'Invoke-PatchWorkflow',
     'New-PatchIssue',
     'New-PatchPR',
+    'New-CrossForkPR',
     'Invoke-PatchRollback'
 )
 
