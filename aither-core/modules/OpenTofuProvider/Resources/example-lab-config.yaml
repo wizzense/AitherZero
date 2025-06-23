@@ -41,8 +41,8 @@ vms:
     network_adaptors:
       - name: "Network Adapter"
         switch_name: "Lab-Internal-Switch"
-    
-  # Test VMs  
+
+  # Test VMs
   - name_prefix: "test-vm"
     count: 1
     vhd_size_bytes: 32212254720  # 30GB

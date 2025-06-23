@@ -6,7 +6,7 @@
     CompanyName = 'Aitherium'
     Copyright = '(c) 2025 Aitherium. All rights reserved.'
     Description = 'PowerShell module for secure OpenTofu infrastructure automation with Taliesins Hyper-V provider integration'
-    
+
     PowerShellVersion = '7.0'
     RequiredModules = @(
         @{
@@ -15,7 +15,7 @@
             GUID = 'B5D8F9A1-C2E3-4F6A-8B9C-1D2E3F4A5B6C'
         }
     )
-    
+
     FunctionsToExport = @(
         'Install-OpenTofuSecure',
         'Initialize-OpenTofuProvider',
@@ -27,11 +27,11 @@
         'Export-LabTemplate',
         'Import-LabConfiguration'
     )
-    
+
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()
-    
+
     PrivateData = @{
         PSData = @{
             Tags = @('OpenTofu', 'Terraform', 'Infrastructure', 'Security', 'HyperV', 'Automation')

@@ -7,22 +7,22 @@ function New-TaliesinsProviderConfig {
     param(
         [Parameter(Mandatory)]
         [hashtable]$Configuration,
-        
+
         [Parameter()]
         [string]$ProviderVersion = '1.2.1',
-        
+
         [Parameter()]
         [string]$CertificatePath
     )
-    
+
     try {
         # Extract Hyper-V configuration
         $hypervConfig = $Configuration.hyperv
-        
+
         if (-not $hypervConfig) {
             throw "Hyper-V configuration not found in provided configuration"
         }
-        
+
         # Build main configuration
         $mainConfig = @"
 terraform {
@@ -149,14 +149,14 @@ variable "hyperv_key_path" {
 }
 "@
         }
-        
+
         return @{
             MainConfig = $mainConfig
             VariablesConfig = $variablesConfig
             ProviderVersion = $ProviderVersion
             CertificatesConfigured = ($null -ne $CertificatePath)
         }
-        
+
     } catch {
         throw "Failed to generate Taliesins provider configuration: $($_.Exception.Message)"
     }
@@ -171,17 +171,17 @@ function Invoke-OpenTofuCommand {
     param(
         [Parameter(Mandatory)]
         [string]$Command,
-        
+
         [Parameter()]
         [string]$WorkingDirectory = (Get-Location),
-        
+
         [Parameter()]
         [hashtable]$Environment = @{},
-        
+
         [Parameter()]
         [int]$TimeoutSeconds = 300
     )
-    
+
     try {
         # Validate OpenTofu installation
         $opentofu = Get-Command 'tofu' -ErrorAction SilentlyContinue
@@ -198,7 +198,7 @@ function Invoke-OpenTofuCommand {
         }
           # Execute command
         Write-CustomLog -Level 'INFO' -Message "Executing OpenTofu command: tofu $Command in $WorkingDirectory"
-        
+
         $startInfo = New-Object System.Diagnostics.ProcessStartInfo
         $startInfo.FileName = $opentofu.Source
         $startInfo.Arguments = $Command
@@ -207,30 +207,30 @@ function Invoke-OpenTofuCommand {
         $startInfo.RedirectStandardError = $true
         $startInfo.UseShellExecute = $false
         $startInfo.CreateNoWindow = $true
-        
+
         # Set environment variables
         foreach ($envVar in $envVars.GetEnumerator()) {
             $startInfo.Environment[$envVar.Key] = $envVar.Value
         }
-        
+
         $process = New-Object System.Diagnostics.Process
         $process.StartInfo = $startInfo
-        
+
         $stdout = New-Object System.Text.StringBuilder
         $stderr = New-Object System.Text.StringBuilder
-        
+
         Register-ObjectEvent -InputObject $process -EventName OutputDataReceived -Action {
             if ($Event.SourceEventArgs.Data) {
                 $Event.MessageData.AppendLine($Event.SourceEventArgs.Data)
             }
         } -MessageData $stdout | Out-Null
-        
+
         Register-ObjectEvent -InputObject $process -EventName ErrorDataReceived -Action {
             if ($Event.SourceEventArgs.Data) {
                 $Event.MessageData.AppendLine($Event.SourceEventArgs.Data)
             }
         } -MessageData $stderr | Out-Null
-        
+
         $process.Start() | Out-Null
         $process.BeginOutputReadLine()
         $process.BeginErrorReadLine()
@@ -238,14 +238,14 @@ function Invoke-OpenTofuCommand {
             $process.Kill()
             throw "OpenTofu command timed out after $TimeoutSeconds seconds"
         }
-        
+
         $exitCode = $process.ExitCode
         $standardOutput = $stdout.ToString()
         $standardError = $stderr.ToString()
-        
+
         # Clean up event handlers
         Get-EventSubscriber | Where-Object { $_.SourceObject -eq $process } | Unregister-Event
-        
+
         if ($exitCode -eq 0) {
             Write-CustomLog -Level 'SUCCESS' -Message "OpenTofu command completed successfully"
             return @{
@@ -263,7 +263,7 @@ function Invoke-OpenTofuCommand {
                 Error = $standardError
             }
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to execute OpenTofu command: $($_.Exception.Message)"
         return @{
@@ -285,12 +285,12 @@ function Test-TaliesinsProviderInstallation {
         [Parameter()]
         [string]$ProviderVersion = '1.2.1'
     )
-    
+
     try {
         # Check for provider in .terraform directory
         $terraformDir = Join-Path (Get-Location) ".terraform"
         $providerPath = Join-Path $terraformDir "providers/registry.opentofu.org/taliesins/hyperv/$ProviderVersion"
-        
+
         if (-not (Test-Path $terraformDir)) {
             return @{
                 Success = $false
@@ -298,7 +298,7 @@ function Test-TaliesinsProviderInstallation {
                 ProviderFound = $false
             }
         }
-        
+
         if (-not (Test-Path $providerPath)) {
             return @{
                 Success = $false
@@ -306,11 +306,11 @@ function Test-TaliesinsProviderInstallation {
                 ProviderFound = $false
             }
         }
-        
+
         # Check for provider binary
         $providerBinary = if ($IsWindows) { "terraform-provider-hyperv_v$ProviderVersion.exe" } else { "terraform-provider-hyperv_v$ProviderVersion" }
         $binaryPath = Get-ChildItem -Path $providerPath -Recurse -Name $providerBinary -ErrorAction SilentlyContinue
-        
+
         if (-not $binaryPath) {
             return @{
                 Success = $false
@@ -319,7 +319,7 @@ function Test-TaliesinsProviderInstallation {
                 BinaryFound = $false
             }
         }
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "Taliesins provider $ProviderVersion installation verified"
         return @{
             Success = $true
@@ -329,7 +329,7 @@ function Test-TaliesinsProviderInstallation {
             ProviderFound = $true
             BinaryFound = $true
         }
-        
+
     } catch {
         return @{
             Success = $false
@@ -349,15 +349,15 @@ function ConvertTo-HCL {
         [Parameter(Mandatory)]
         [hashtable]$Configuration
     )
-    
+
     # This is a simplified HCL converter
     # In production, you might want to use a proper HCL library
-    
+
     $hcl = ""
-    
+
     foreach ($key in $Configuration.Keys) {
         $value = $Configuration[$key]
-        
+
         if ($value -is [hashtable]) {
             $hcl += "$key {`n"
             $hcl += ConvertTo-HCLSection -Section $value -Indent "  "
@@ -366,7 +366,7 @@ function ConvertTo-HCL {
             $hcl += "$key = $(ConvertTo-HCLValue -Value $value)`n"
         }
     }
-    
+
     return $hcl
 }
 
@@ -379,16 +379,16 @@ function ConvertTo-HCLSection {
     param(
         [Parameter(Mandatory)]
         [hashtable]$Section,
-        
+
         [Parameter()]
         [string]$Indent = ""
     )
-    
+
     $hcl = ""
-    
+
     foreach ($key in $Section.Keys) {
         $value = $Section[$key]
-        
+
         if ($value -is [hashtable]) {
             $hcl += "$Indent$key {`n"
             $hcl += ConvertTo-HCLSection -Section $value -Indent "$Indent  "
@@ -397,7 +397,7 @@ function ConvertTo-HCLSection {
             $hcl += "$Indent$key = $(ConvertTo-HCLValue -Value $value)`n"
         }
     }
-    
+
     return $hcl
 }
 
@@ -411,7 +411,7 @@ function ConvertTo-HCLValue {
         [Parameter()]
         $Value
     )
-    
+
     if ($null -eq $Value) {
         return "null"
     } elseif ($Value -is [bool]) {

@@ -27,7 +27,7 @@ Write-CustomLog -Level 'INFO' -Message 'OpenTofuProvider module loaded successfu
 # Export public functions
 Export-ModuleMember -Function @(
     'Install-OpenTofuSecure',
-    'Initialize-OpenTofuProvider', 
+    'Initialize-OpenTofuProvider',
     'Test-OpenTofuSecurity',
     'New-LabInfrastructure',
     'Get-TaliesinsProviderConfig',

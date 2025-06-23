@@ -10,10 +10,10 @@ function Test-LabInfrastructurePrerequisites {
         [Parameter(Mandatory)]
         [string]$ConfigPath
     )
-    
+
     $issues = @()
     $valid = $true
-    
+
     try {
         # Check OpenTofu installation
         $tofuCheck = Test-OpenTofuInstallation
@@ -21,13 +21,13 @@ function Test-LabInfrastructurePrerequisites {
             $issues += "OpenTofu not properly installed"
             $valid = $false
         }
-        
+
         # Check configuration file
         if (-not (Test-Path $ConfigPath)) {
             $issues += "Configuration file not found: $ConfigPath"
             $valid = $false
         }
-        
+
         # Check Hyper-V availability (Windows only)
         if ($IsWindows) {
             $hypervFeature = Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V-All -Online -ErrorAction SilentlyContinue
@@ -36,12 +36,12 @@ function Test-LabInfrastructurePrerequisites {
                 $valid = $false
             }
         }
-        
+
         return @{
             Valid = $valid
             Issues = $issues
         }
-        
+
     } catch {
         return @{
             Valid = $false
@@ -57,10 +57,10 @@ function Test-OpenTofuInitialization {
     #>
     [CmdletBinding()]
     param()
-    
+
     $terraformDir = Join-Path (Get-Location) ".terraform"
     $lockFile = Join-Path (Get-Location) ".terraform.lock.hcl"
-    
+
     return @{
         IsInitialized = (Test-Path $terraformDir) -and (Test-Path $lockFile)
         TerraformDir = $terraformDir
@@ -78,7 +78,7 @@ function Test-LabInfrastructureDeployment {
         [Parameter(Mandatory)]
         [string]$ConfigPath
     )
-    
+
     try {
         # Check state file
         $stateFile = Join-Path (Get-Location) "terraform.tfstate"
@@ -88,7 +88,7 @@ function Test-LabInfrastructureDeployment {
                 Issues = @("State file not found")
             }
         }
-        
+
         # Basic verification - in production, this would include actual resource checks
         return @{
             Success = $true
@@ -96,7 +96,7 @@ function Test-LabInfrastructureDeployment {
             ResourceCount = 0  # Would be parsed from state
             VerificationTime = Get-Date
         }
-        
+
     } catch {
         return @{
             Success = $false
@@ -114,13 +114,13 @@ function Merge-Configuration {
     param(
         [Parameter(Mandatory)]
         [hashtable]$BaseConfig,
-        
+
         [Parameter(Mandatory)]
         [hashtable]$OverrideConfig
     )
-    
+
     $mergedConfig = $BaseConfig.Clone()
-    
+
     foreach ($key in $OverrideConfig.Keys) {
         if ($mergedConfig.ContainsKey($key) -and $mergedConfig[$key] -is [hashtable] -and $OverrideConfig[$key] -is [hashtable]) {
             $mergedConfig[$key] = Merge-Configuration -BaseConfig $mergedConfig[$key] -OverrideConfig $OverrideConfig[$key]
@@ -128,7 +128,7 @@ function Merge-Configuration {
             $mergedConfig[$key] = $OverrideConfig[$key]
         }
     }
-    
+
     return $mergedConfig
 }
 
@@ -142,10 +142,10 @@ function Test-LabConfigurationValidity {
         [Parameter(Mandatory)]
         [hashtable]$Configuration
     )
-    
+
     $issues = @()
     $warnings = @()
-    
+
     # Check required sections
     $requiredSections = @('hyperv', 'switch', 'vms')
     foreach ($section in $requiredSections) {
@@ -153,20 +153,20 @@ function Test-LabConfigurationValidity {
             $issues += "Missing required section: $section"
         }
     }
-    
+
     # Check Hyper-V configuration
     if ($Configuration.hyperv) {
         $hypervConfig = $Configuration.hyperv
-        
+
         if (-not $hypervConfig.host) {
             $issues += "Hyper-V host not specified"
         }
-        
+
         if ($hypervConfig.insecure -eq $true) {
             $warnings += "Insecure mode enabled - not recommended for production"
         }
     }
-    
+
     return @{
         Valid = ($issues.Count -eq 0)
         Issues = $issues
@@ -184,7 +184,7 @@ function ConvertFrom-Yaml {
         [Parameter(Mandatory, ValueFromPipeline)]
         [string]$InputObject
     )
-    
+
     # This is a placeholder - in production, you would use a proper YAML parser
     # like PowerShell-Yaml module or System.Text.Json with YAML support
       try {
@@ -194,35 +194,35 @@ function ConvertFrom-Yaml {
         $result = @{}
         $currentSection = $null
         $lineNumber = 0
-        
+
         foreach ($line in $lines) {
             $lineNumber++
             $line = $line.Trim()
             if ([string]::IsNullOrWhiteSpace($line) -or $line.StartsWith('#')) {
                 continue
             }
-            
+
             # Basic validation for obviously malformed content
             if ($line -match '[\[\{\}]' -and -not $line.Contains(':')) {
                 throw "Invalid YAML syntax on line $lineNumber`: $line"
             }
-            
+
             if ($line.EndsWith(':')) {
                 $currentSection = $line.TrimEnd(':')
                 $result[$currentSection] = @{}
             } elseif ($currentSection -and $line.Contains(':')) {$parts = $line -split ':', 2
                 $key = $parts[0].Trim()
                 $value = $parts[1].Trim()
-                
+
                 # Remove surrounding quotes if present
                 if (($value.StartsWith('"') -and $value.EndsWith('"')) -or ($value.StartsWith("'") -and $value.EndsWith("'"))) {
                     $value = $value.Substring(1, $value.Length - 2)
                 }
-                
+
                 # Basic type conversion with safe integer handling
                 if ($value -eq 'true') { $value = $true }
                 elseif ($value -eq 'false') { $value = $false }
-                elseif ($value -match '^\d+$') { 
+                elseif ($value -match '^\d+$') {
                     try {
                         if ([long]$value -le [int]::MaxValue) {
                             $value = [int]$value
@@ -234,13 +234,13 @@ function ConvertFrom-Yaml {
                         $value = $value
                     }
                 }
-                
+
                 $result[$currentSection][$key] = $value
             }
         }
-        
+
         return $result
-        
+
     } catch {
         throw "Failed to parse YAML: $($_.Exception.Message)"
     }
@@ -286,28 +286,28 @@ function Test-RemoteStateSecurity { param($ConfigPath); if ($ConfigPath) { Write
 function Test-StateFilePermissions { param($ConfigPath); if ($ConfigPath) { Write-Verbose "Checking state permissions in $ConfigPath" }; @{ Name = 'State File Permissions'; Passed = $true; Message = 'State file permissions appropriate' } }
 function Test-StateLockingSecurity { param($ConfigPath); if ($ConfigPath) { Write-Verbose "Checking state locking in $ConfigPath" }; @{ Name = 'State Locking Security'; Passed = $true; Message = 'State locking properly configured' } }
 
-function New-SecurityRecommendations { 
-    param($SecurityChecks) 
+function New-SecurityRecommendations {
+    param($SecurityChecks)
     $failedChecks = $SecurityChecks | Where-Object { -not $_.Passed }
     return $failedChecks | ForEach-Object { "Recommendation for $($_.Name): $($_.Message)" }
 }
 
-function Test-OpenTofuBinaryIntegrity { 
-    param($InstallPath) 
+function Test-OpenTofuBinaryIntegrity {
+    param($InstallPath)
     @{ CheckType = 'Binary Integrity'; Passed = $true; Score = 1; MaxScore = 1; Severity = 'High' }
 }
 
 # Template generation helpers
-function Get-InfrastructureConfigAnalysis { 
-    param($Path) 
-    @{ 
+function Get-InfrastructureConfigAnalysis {
+    param($Path)
+    @{
         ConfigFiles = @("main.tf", "variables.tf")
         Variables = @("hyperv_host", "hyperv_user")
         Resources = @("hyperv_network_switch", "hyperv_machine_instance")
     }
 }
 
-function New-TemplateConfiguration { 
+function New-TemplateConfiguration {
     param($SourceAnalysis, $TemplateName)
     @{
         MainConfig = "# Template: $TemplateName"
@@ -321,18 +321,18 @@ function New-TemplateConfiguration {
     }
 }
 
-function New-TemplateDocumentation { 
+function New-TemplateDocumentation {
     param($TemplateConfig, $TemplateName)
     "# $TemplateName Template`n`nGenerated template for lab infrastructure deployment."
 }
 
 # Credential management helpers
-function Set-WindowsCredential { 
+function Set-WindowsCredential {
     param($Target, $Credentials, $Force)
     @{ Success = $true; CredentialId = "cred_$(Get-Random)" }
 }
 
-function Set-CertificateCredentials { 
+function Set-CertificateCredentials {
     param($Target, $CertificatePath, $Force)
     @{ Success = $true; Thumbprint = "ABC123"; ExpiryDate = (Get-Date).AddYears(1) }
 }

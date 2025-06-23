@@ -62,7 +62,7 @@ Skipped: 0
 
 **Remaining Minor Issues (3 tests):**
 1. Object configuration test expects terraform section (structure issue)
-2. Certificate path resolution in test environment 
+2. Certificate path resolution in test environment
 3. Malformed YAML error handling (parser too forgiving)
 
 ### 🔒 Security Features Implemented
