@@ -25,6 +25,12 @@
 .PARAMETER CreatePR
     Create a pull request for this patch (default: false, use -CreatePR to enable)
 
+.PARAMETER TargetFork
+    Target fork for pull request creation:
+    - 'current' (default): Create PR in current repository
+    - 'upstream': Create cross-fork PR to upstream (AitherZero → AitherLabs)
+    - 'root': Create cross-fork PR to root repository (AitherLabs → Aitherium)
+
 .PARAMETER Priority
     Priority level for issue tracking (Low, Medium, High, Critical)
 
@@ -53,6 +59,20 @@
     }
     # No issue created, just branch + commit
 
+.EXAMPLE
+    Invoke-PatchWorkflow -PatchDescription "Promote feature to public staging" -CreatePR -TargetFork "upstream" -PatchOperation {
+        # Feature ready for public release
+        Update-PublicFeature
+    }
+    # Creates cross-fork PR from AitherZero to AitherLabs
+
+.EXAMPLE
+    Invoke-PatchWorkflow -PatchDescription "Add enterprise feature" -CreatePR -TargetFork "root" -Priority "High" -PatchOperation {
+        # Enterprise-specific enhancement
+        Add-EnterpriseFeature
+    }
+    # Creates cross-fork PR from AitherLabs to Aitherium
+
 .NOTES
     This function replaces:
     - Invoke-GitControlledPatch
@@ -75,10 +95,12 @@ function Invoke-PatchWorkflow {
         [string[]]$TestCommands = @(),
 
         [Parameter(Mandatory = $false)]
-        [switch]$CreateIssue = $true,
+        [switch]$CreateIssue = $true,        [Parameter(Mandatory = $false)]
+        [switch]$CreatePR,
 
         [Parameter(Mandatory = $false)]
-        [switch]$CreatePR,
+        [ValidateSet("current", "upstream", "root")]
+        [string]$TargetFork = "current",
 
         [Parameter(Mandatory = $false)]
         [ValidateSet("Low", "Medium", "High", "Critical")]
@@ -310,13 +332,10 @@ function Invoke-PatchWorkflow {
                 }
             } else {
                 Write-PatchLog "DRY RUN: Would sanitize files and commit changes" -Level "INFO"
-            }
-
-            # Step 7: Create PR if requested
+            }            # Step 7: Create PR if requested
             if ($CreatePR) {
-                Write-PatchLog "Creating pull request..." -Level "INFO"
-
                 if (-not $DryRun) {
+                    Write-PatchLog "Creating pull request..." -Level "INFO"
                     $prParams = @{
                         Description = $PatchDescription
                         BranchName = $branchName
@@ -326,15 +345,44 @@ function Invoke-PatchWorkflow {
                         $prParams.IssueNumber = $issueResult.IssueNumber
                     }
 
-                    $prResult = New-PatchPR @prParams
-                    if ($prResult.Success) {
-                        Write-PatchLog "Pull request created: $($prResult.PullRequestUrl)" -Level "SUCCESS"
+                    # Use cross-fork PR if target is not current repository
+                    if ($TargetFork -ne "current") {
+                        $prParams.TargetFork = $TargetFork
+                        $prResult = New-CrossForkPR @prParams
+                        if ($prResult.Success) {
+                            Write-PatchLog "Cross-fork pull request created successfully!" -Level "SUCCESS"
+                            Write-PatchLog "  Source: $($prResult.Source)" -Level "SUCCESS"
+                            Write-PatchLog "  Target: $($prResult.Target)" -Level "SUCCESS"
+                            Write-PatchLog "  URL: $($prResult.PullRequestUrl)" -Level "SUCCESS"
+                        } else {
+                            Write-PatchLog "Cross-fork PR creation failed: $($prResult.Message)" -Level "ERROR"
+                            throw "Failed to create cross-fork pull request: $($prResult.Message)"
+                        }
                     } else {
-                        Write-PatchLog "PR creation failed: $($prResult.Message)" -Level "ERROR"
-                        throw "Failed to create pull request: $($prResult.Message)"
+                        # Standard PR within current repository
+                        $prResult = New-PatchPR @prParams
+                        if ($prResult.Success) {
+                            Write-PatchLog "Pull request created: $($prResult.PullRequestUrl)" -Level "SUCCESS"
+                        } else {
+                            Write-PatchLog "PR creation failed: $($prResult.Message)" -Level "ERROR"
+                            throw "Failed to create pull request: $($prResult.Message)"
+                        }
                     }
                 } else {
-                    Write-PatchLog "DRY RUN: Would create pull request" -Level "INFO"
+                    # DRY RUN: Show what would be created
+                    if ($TargetFork -ne "current") {
+                        Write-PatchLog "DRY RUN: Would create cross-fork pull request to $TargetFork repository" -Level "INFO"
+                        $repoInfo = Get-GitRepositoryInfo
+                        $targetRepo = ($repoInfo.ForkChain | Where-Object { $_.Name -eq $TargetFork }).GitHubRepo
+                        Write-PatchLog "  Source: $($repoInfo.GitHubRepo)" -Level "INFO"
+                        Write-PatchLog "  Target: $targetRepo" -Level "INFO"
+                        Write-PatchLog "  Branch: $branchName" -Level "INFO"
+                    } else {
+                        Write-PatchLog "DRY RUN: Would create pull request within current repository" -Level "INFO"
+                        $repoInfo = Get-GitRepositoryInfo
+                        Write-PatchLog "  Repository: $($repoInfo.GitHubRepo)" -Level "INFO"
+                        Write-PatchLog "  Branch: $branchName" -Level "INFO"
+                    }
                 }
             }
 

@@ -20,29 +20,38 @@
 
 function Get-GitRepositoryInfo {
     [CmdletBinding()]
-    param()
-
-    try {
-        # Get the origin remote URL
-        $remoteUrl = git remote get-url origin 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed to get remote URL: $remoteUrl"
+    param()    try {
+        # Get all remotes to understand fork chain
+        $remotes = @{}
+        $remoteOutput = git remote -v 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            foreach ($line in $remoteOutput) {
+                if ($line -match '(\w+)\s+([^\s]+)\s+\((fetch|push)\)') {
+                    $remoteName = $matches[1]
+                    $remoteUrl = $matches[2]
+                    if (-not $remotes.ContainsKey($remoteName)) {
+                        $remotes[$remoteName] = $remoteUrl
+                    }
+                }
+            }
         }
 
-        # Parse different URL formats
+        # Get the origin remote URL (current repository)
+        $originUrl = $remotes['origin']
+        if (-not $originUrl) {
+            throw "No origin remote found"
+        }
+
+        # Parse repository information from origin
         $owner = $null
         $repoName = $null
-
-        if ($remoteUrl -match 'github\.com[:/]([^/]+)/([^/\.]+)') {
-            $owner = $matches[1]
-            $repoName = $matches[2]
-        }
-        elseif ($remoteUrl -match 'https://github\.com/([^/]+)/([^/\.]+)') {
+        
+        if ($originUrl -match 'github\.com[:/]([^/]+)/([^/\.]+)') {
             $owner = $matches[1]
             $repoName = $matches[2]
         }
         else {
-            throw "Could not parse GitHub repository from URL: $remoteUrl"
+            throw "Could not parse GitHub repository from URL: $originUrl"
         }
 
         # Get current branch
@@ -51,34 +60,67 @@ function Get-GitRepositoryInfo {
             $currentBranch = "main" # fallback
         }
 
-        # Determine repository type based on owner/name
-        $repoType = switch ($owner) {
-            "wizzense" { "Development" }
-            "Aitherium" {
-                switch ($repoName) {
-                    "AitherLabs" { "Public" }
-                    "Aitherium" { "Premium" }
-                    default { "Unknown" }
+        # Determine repository type and fork chain
+        $repoType = "Unknown"
+        $forkChain = @()
+        
+        if ($owner -eq "wizzense" -and $repoName -eq "AitherZero") {
+            $repoType = "Development"
+            $forkChain = @(
+                @{ Name = "origin"; Owner = "wizzense"; Repo = "AitherZero"; GitHubRepo = "wizzense/AitherZero"; Type = "Development"; Description = "Your development fork" }
+            )
+            
+            # Add upstream if it exists
+            if ($remotes.ContainsKey('upstream')) {
+                $upstreamUrl = $remotes['upstream']
+                if ($upstreamUrl -match 'github\.com[:/]([^/]+)/([^/\.]+)') {
+                    $upstreamOwner = $matches[1]
+                    $upstreamRepo = $matches[2]
+                    $forkChain += @{ Name = "upstream"; Owner = $upstreamOwner; Repo = $upstreamRepo; GitHubRepo = "$upstreamOwner/$upstreamRepo"; Type = "Public"; Description = "Public staging repository" }
+                    
+                    # If upstream is AitherLabs, add Aitherium as the root
+                    if ($upstreamOwner -eq "Aitherium" -and $upstreamRepo -eq "AitherLabs") {
+                        $forkChain += @{ Name = "root"; Owner = "Aitherium"; Repo = "Aitherium"; GitHubRepo = "Aitherium/Aitherium"; Type = "Premium"; Description = "Premium/enterprise repository" }
+                    }
                 }
             }
-            default { "Unknown" }
+        }
+        elseif ($owner -eq "Aitherium" -and $repoName -eq "AitherLabs") {
+            $repoType = "Public"
+            $forkChain = @(
+                @{ Name = "origin"; Owner = "Aitherium"; Repo = "AitherLabs"; GitHubRepo = "Aitherium/AitherLabs"; Type = "Public"; Description = "Public staging repository" }
+            )
+            
+            # Add upstream to Aitherium if configured
+            if ($remotes.ContainsKey('upstream')) {
+                $upstreamUrl = $remotes['upstream']
+                if ($upstreamUrl -match 'Aitherium/Aitherium') {
+                    $forkChain += @{ Name = "upstream"; Owner = "Aitherium"; Repo = "Aitherium"; GitHubRepo = "Aitherium/Aitherium"; Type = "Premium"; Description = "Premium/enterprise repository" }
+                }
+            }
+        }
+        elseif ($owner -eq "Aitherium" -and $repoName -eq "Aitherium") {
+            $repoType = "Premium"
+            $forkChain = @(
+                @{ Name = "origin"; Owner = "Aitherium"; Repo = "Aitherium"; GitHubRepo = "Aitherium/Aitherium"; Type = "Premium"; Description = "Premium/enterprise repository" }
+            )
         }
 
         return @{
             Owner = $owner
             Name = $repoName
             FullName = "$owner/$repoName"
-            Url = $remoteUrl.Trim()
+            Url = $originUrl.Trim()
             CurrentBranch = $currentBranch.Trim()
             Type = $repoType
             GitHubRepo = "$owner/$repoName"  # Format for --repo parameter
+            Remotes = $remotes
+            ForkChain = $forkChain
         }
 
     } catch {
         # Fallback to environment detection or defaults
-        Write-Warning "Could not detect repository info: $($_.Exception.Message)"
-
-        # Try to determine from current directory name
+        Write-Warning "Could not detect repository info: $($_.Exception.Message)"        # Try to determine from current directory name
         $currentPath = (Get-Location).Path
         if ($currentPath -match 'AitherZero') {
             return @{
@@ -89,6 +131,10 @@ function Get-GitRepositoryInfo {
                 CurrentBranch = "main"
                 Type = "Development"
                 GitHubRepo = "wizzense/AitherZero"
+                Remotes = @{ origin = "https://github.com/wizzense/AitherZero.git" }
+                ForkChain = @(
+                    @{ Name = "origin"; Owner = "wizzense"; Repo = "AitherZero"; GitHubRepo = "wizzense/AitherZero"; Type = "Development"; Description = "Your development fork" }
+                )
             }
         }
         elseif ($currentPath -match 'AitherLabs') {
@@ -100,6 +146,10 @@ function Get-GitRepositoryInfo {
                 CurrentBranch = "main"
                 Type = "Public"
                 GitHubRepo = "Aitherium/AitherLabs"
+                Remotes = @{ origin = "https://github.com/Aitherium/AitherLabs.git" }
+                ForkChain = @(
+                    @{ Name = "origin"; Owner = "Aitherium"; Repo = "AitherLabs"; GitHubRepo = "Aitherium/AitherLabs"; Type = "Public"; Description = "Public staging repository" }
+                )
             }
         }
         else {
