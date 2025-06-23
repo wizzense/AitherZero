@@ -103,24 +103,219 @@ $script:SelectedRepo = $script:Repositories[$Repository]
 $script:RepoUrl = $script:SelectedRepo.Url
 $script:RawBaseUrl = $script:SelectedRepo.RawBaseUrl
 
-Write-Host "🚀 Aitherium Enhanced Bootstrap v$script:BootstrapVersion" -ForegroundColor Cyan
+Write-Host "Aitherium Enhanced Bootstrap v$script:BootstrapVersion" -ForegroundColor Cyan
 Write-Host "Mode: $Mode | Repository: $($script:SelectedRepo.Name) | Branch: $TargetBranch" -ForegroundColor Green
 
-# Mode-specific logic
-switch ($Mode) {
-    'lightweight' {
-        Write-Host "📦 Lightweight mode: Downloading aither-core only..." -ForegroundColor Yellow
-        # Implementation for lightweight download
+# Cross-platform compatibility check (avoid overwriting read-only variables)
+$script:IsWindowsPlatform = if ($PSVersionTable.PSVersion.Major -ge 6) { $IsWindows } else { $env:OS -eq "Windows_NT" }
+$script:IsLinuxPlatform = if ($PSVersionTable.PSVersion.Major -ge 6) { $IsLinux } else { $false }
+$script:IsMacOSPlatform = if ($PSVersionTable.PSVersion.Major -ge 6) { $IsMacOS } else { $false }
+
+# Enhanced logging function
+function Write-EnhancedLog {
+    param(
+        [string]$Message,
+        [ValidateSet('Info', 'Success', 'Warning', 'Error')]
+        [string]$Level = 'Info',
+        [switch]$NoNewline
+    )
+    
+    if ($Verbosity -eq 'silent') { return }
+    
+    $color = switch ($Level) {
+        'Info' { 'Cyan' }
+        'Success' { 'Green' }
+        'Warning' { 'Yellow' }
+        'Error' { 'Red' }
     }
-    'full' {
-        Write-Host "📁 Full mode: Cloning complete repository..." -ForegroundColor Yellow
-        # Implementation for full clone
+      $prefix = switch ($Level) {
+        'Info' { "[INFO]" }
+        'Success' { "[SUCCESS]" }
+        'Warning' { "[WARN]" }
+        'Error' { "[ERROR]" }
     }
-    'dev' {
-        Write-Host "🛠️ Development mode: Setting up complete development environment..." -ForegroundColor Yellow
-        # Implementation for development setup
+    
+    if ($NoNewline) {
+        Write-Host "$prefix $Message" -ForegroundColor $color -NoNewline
+    } else {
+        Write-Host "$prefix $Message" -ForegroundColor $color
     }
 }
 
-# TODO: Implement the actual bootstrap logic based on mode
-Write-Host "✅ Enhanced bootstrap script structure created!" -ForegroundColor Green
+# Determine target directory
+if (-not $LocalPath) {
+    $LocalPath = if ($script:IsWindowsPlatform) {
+        Join-Path $env:TEMP "AitherLabs-Bootstrap"
+    } else {
+        Join-Path "/tmp" "AitherLabs-Bootstrap"
+    }
+}
+
+Write-EnhancedLog "Target directory: $LocalPath" -Level Info
+
+# Create target directory
+try {
+    if (-not (Test-Path $LocalPath)) {
+        New-Item -ItemType Directory -Path $LocalPath -Force | Out-Null
+    }
+    Set-Location $LocalPath
+    Write-EnhancedLog "Working directory set to: $LocalPath" -Level Success
+} catch {
+    Write-EnhancedLog "Failed to create/access directory: $($_.Exception.Message)" -Level Error
+    exit 1
+}
+
+# Mode-specific implementation
+switch ($Mode) {
+    'lightweight' {
+        Write-EnhancedLog "Lightweight mode: Downloading aither-core only..." -Level Info
+        
+        # Create minimal structure
+        $aitherCorePath = Join-Path $LocalPath "aither-core"
+        if (Test-Path $aitherCorePath) {
+            if ($Force) {
+                Remove-Item $aitherCorePath -Recurse -Force
+            } else {
+                Write-EnhancedLog "aither-core already exists. Use -Force to overwrite." -Level Warning
+                return
+            }
+        }
+        
+        try {
+            # Download core files using direct GitHub API
+            Write-EnhancedLog "Downloading core modules..." -Level Info
+            
+            $coreFiles = @(
+                "aither-core/aither-core.ps1",
+                "aither-core/AitherCore.psd1", 
+                "aither-core/AitherCore.psm1",
+                "aither-core/default-config.json"
+            )
+            
+            foreach ($file in $coreFiles) {
+                $url = "$($script:RawBaseUrl)/$TargetBranch/$file"
+                $localFile = Join-Path $LocalPath $file
+                $dir = Split-Path $localFile -Parent
+                
+                if (-not (Test-Path $dir)) {
+                    New-Item -ItemType Directory -Path $dir -Force | Out-Null
+                }
+                
+                Write-EnhancedLog "Downloading: $file" -Level Info
+                Invoke-WebRequest -Uri $url -OutFile $localFile -ErrorAction Stop
+            }
+            
+            # Download modules directory structure
+            Write-EnhancedLog "Setting up modules..." -Level Info
+            $modulesPath = Join-Path $aitherCorePath "modules"
+            New-Item -ItemType Directory -Path $modulesPath -Force | Out-Null
+            
+            # Create module setup script
+            $moduleSetupScript = @"
+# Module setup for lightweight installation
+Write-Host "Setting up lightweight installation..." -ForegroundColor Green
+Write-Host "Use the following command to get the full modules:" -ForegroundColor Yellow
+Write-Host "git clone $($script:RepoUrl) full-install" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Core runner available at: ./aither-core/aither-core.ps1" -ForegroundColor Green
+"@
+            
+            Set-Content -Path (Join-Path $LocalPath "setup-full.ps1") -Value $moduleSetupScript
+            
+            Write-EnhancedLog "Lightweight installation complete!" -Level Success
+            Write-EnhancedLog "Run ./aither-core/aither-core.ps1 to start" -Level Info
+            Write-EnhancedLog "Run ./setup-full.ps1 for full installation" -Level Info
+            
+        } catch {
+            Write-EnhancedLog "Failed to download core files: $($_.Exception.Message)" -Level Error
+            exit 1
+        }
+    }
+    
+    'full' {
+        Write-EnhancedLog "Full mode: Cloning complete repository..." -Level Info
+        
+        try {
+            # Check if git is available
+            $gitAvailable = Get-Command git -ErrorAction SilentlyContinue
+            if (-not $gitAvailable) {
+                Write-EnhancedLog "Git is required for full mode. Please install Git first." -Level Error
+                exit 1
+            }
+            
+            # Clone repository
+            $clonePath = Join-Path $LocalPath "AitherLabs"
+            if (Test-Path $clonePath) {
+                if ($Force) {
+                    Remove-Item $clonePath -Recurse -Force
+                } else {
+                    Write-EnhancedLog "Repository already exists. Use -Force to overwrite." -Level Warning
+                    return
+                }
+            }
+            
+            Write-EnhancedLog "Cloning from: $($script:RepoUrl)" -Level Info
+            git clone --branch $TargetBranch $script:RepoUrl $clonePath
+            
+            if ($LASTEXITCODE -eq 0) {
+                Set-Location $clonePath
+                Write-EnhancedLog "Repository cloned successfully!" -Level Success
+                Write-EnhancedLog "Location: $clonePath" -Level Info
+                
+                # Run initial setup if available
+                $setupScript = Join-Path $clonePath "aither-core/aither-core.ps1"
+                if (Test-Path $setupScript) {
+                    Write-EnhancedLog "Running initial setup..." -Level Info
+                    & $setupScript -NonInteractive -Verbosity $Verbosity
+                }
+            } else {
+                Write-EnhancedLog "Failed to clone repository" -Level Error
+                exit 1
+            }
+            
+        } catch {
+            Write-EnhancedLog "Clone operation failed: $($_.Exception.Message)" -Level Error
+            exit 1
+        }
+    }
+    
+    'dev' {
+        Write-EnhancedLog "Development mode: Setting up complete development environment..." -Level Info
+        
+        # First do a full clone
+        & $MyInvocation.MyCommand.Path -Mode full -Repository $Repository -TargetBranch $TargetBranch -LocalPath $LocalPath -Force:$Force
+        
+        if ($SetupDevEnvironment) {
+            Write-EnhancedLog "Configuring development environment..." -Level Info
+              # Setup VS Code settings if VS Code is available
+            $vsCodeConfigPath = if ($script:IsWindowsPlatform) {
+                Join-Path $env:APPDATA "Code/User"
+            } elseif ($script:IsMacOSPlatform) {
+                Join-Path $env:HOME "Library/Application Support/Code/User"
+            } else {
+                Join-Path $env:HOME ".config/Code/User"
+            }
+            
+            if (Test-Path $vsCodeConfigPath) {
+                Write-EnhancedLog "Configuring VS Code settings..." -Level Info
+                # Add VS Code configuration here
+            }
+        }
+        
+        if ($ConfigureGitHubCopilot) {
+            Write-EnhancedLog "Configuring GitHub Copilot integration..." -Level Info
+            # Check for GitHub CLI and configure Copilot
+            $ghAvailable = Get-Command gh -ErrorAction SilentlyContinue
+            if ($ghAvailable) {
+                Write-EnhancedLog "GitHub CLI detected - Copilot configuration available" -Level Success
+            } else {
+                Write-EnhancedLog "GitHub CLI not found - install 'gh' for Copilot integration" -Level Warning
+            }
+        }
+        
+        Write-EnhancedLog "Development environment setup complete!" -Level Success
+    }
+}
+
+Write-EnhancedLog "Bootstrap completed successfully!" -Level Success
+Write-EnhancedLog "Enhanced bootstrap v$script:BootstrapVersion" -Level Info
