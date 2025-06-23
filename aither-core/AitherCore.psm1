@@ -11,6 +11,8 @@ $script:CoreModules = @(
     @{ Name = 'Logging'; Path = 'modules/Logging'; Description = 'Centralized logging system'; Required = $true },
     @{ Name = 'SecureCredentials'; Path = 'modules/SecureCredentials'; Description = 'Enterprise-grade credential management'; Required = $false },
     @{ Name = 'RemoteConnection'; Path = 'modules/RemoteConnection'; Description = 'Multi-protocol remote connection management'; Required = $false },
+    @{ Name = 'ISOManager'; Path = 'modules/ISOManager'; Description = 'ISO download, management, and organization'; Required = $false },
+    @{ Name = 'ISOCustomizer'; Path = 'modules/ISOCustomizer'; Description = 'ISO customization and autounattend generation'; Required = $false },
     @{ Name = 'DevEnvironment'; Path = 'modules/DevEnvironment'; Description = 'Development environment management'; Required = $false },
     @{ Name = 'LabRunner'; Path = 'modules/LabRunner'; Description = 'Lab automation and script execution'; Required = $true },
     @{ Name = 'PatchManager'; Path = 'modules/PatchManager'; Description = 'Git-controlled patch management'; Required = $false },
