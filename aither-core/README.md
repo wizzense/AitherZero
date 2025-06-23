@@ -63,6 +63,8 @@ Start-DevEnvironmentSetup -Force
 - **LabRunner**: Lab automation and script execution ✓
 
 ### Optional Modules  
+- **SecureCredentials**: Enterprise-grade credential management ✓
+- **RemoteConnection**: Multi-protocol remote connection management ✓
 - **DevEnvironment**: Development environment management ✓
 - **PatchManager**: Git-controlled patch management ⚠
 - **BackupManager**: Backup and maintenance operations ✓
