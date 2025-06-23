@@ -46,19 +46,22 @@ function Get-RemoteConnection {
     }
 
     process {
-        try {
-            if ($ConnectionName) {
+        try {            if ($ConnectionName) {
                 # Get specific connection
-                $config = Get-ConnectionConfig -ConnectionName $ConnectionName
-                if (-not $config) {
+                $config = Get-ConnectionConfiguration -ConnectionName $ConnectionName
+                if (-not $config.Success) {
                     Write-CustomLog -Level 'WARN' -Message "Connection '$ConnectionName' not found"
                     return $null
                 }
 
-                $connections = @($config)
-            } else {
+                $connections = @($config.Configuration)            } else {
                 # Get all connections
                 $connections = Get-AllConnectionConfigs
+                if (-not $connections.Success -or -not $connections.Configurations) {
+                    Write-CustomLog -Level 'INFO' -Message "No connections found"
+                    return @()
+                }
+                $connections = $connections.Configurations
             }
 
             # Apply endpoint type filter if specified
@@ -95,14 +98,18 @@ function Get-RemoteConnection {
                 }
 
                 $results += $result
-            }
-
-            if ($ConnectionName) {
+            }            if ($ConnectionName) {
                 # Return single object if specific connection requested
-                return $results[0]
-            } else {
-                # Return array for all connections
-                return $results
+                if ($results.Count -gt 0) {
+                    return $results[0]
+                } else {
+                    return $null
+                }            } else {
+                # Return array for all connections (ensure it's always an array)
+                if ($results -eq $null -or $results.Count -eq 0) {
+                    return @()
+                }
+                return , $results
             }
 
         } catch {

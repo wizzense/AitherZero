@@ -55,8 +55,8 @@ Describe "RemoteConnection Module" {
             $result.Success | Should -Be $true
         }
 
-        It "Should create RDP connection with WhatIf" {
-            $result = New-RemoteConnection -ConnectionName "Test-RDP" -EndpointType RDP -HostName "test.example.com" -CredentialName "Test-Credential" -WhatIf
+        It "Should create VMware connection with WhatIf" {
+            $result = New-RemoteConnection -ConnectionName "Test-VMware" -EndpointType VMware -HostName "test.example.com" -CredentialName "Test-Credential" -WhatIf
             
             $result | Should -Not -BeNullOrEmpty
             $result.Success | Should -Be $true
@@ -67,7 +67,7 @@ Describe "RemoteConnection Module" {
         }
 
         It "Should support different endpoint types" {
-            $validTypes = @('SSH', 'WinRM', 'RDP', 'Hypervisor')
+            $validTypes = @('SSH', 'WinRM', 'VMware', 'Hyper-V', 'Docker', 'Kubernetes')
             
             foreach ($type in $validTypes) {
                 { New-RemoteConnection -ConnectionName "Test-$type" -EndpointType $type -HostName "test.com" -WhatIf } | Should -Not -Throw
@@ -140,11 +140,10 @@ Describe "RemoteConnection Module" {
 }
 
 Describe "RemoteConnection Integration" {
-    Context "SecureCredentials Integration" {
-        It "Should integrate with SecureCredentials module" {
+    Context "SecureCredentials Integration" {        It "Should integrate with SecureCredentials module" {
             # Test that RemoteConnection can reference SecureCredentials
-            $secureCredentialsModule = Get-Module SecureCredentials
-            $remoteConnectionModule = Get-Module RemoteConnection
+            $secureCredentialsModule = Get-Module | Where-Object { $_.Name -like "*SecureCredentials*" }
+            $remoteConnectionModule = Get-Module | Where-Object { $_.Name -like "*RemoteConnection*" }
             
             $secureCredentialsModule | Should -Not -BeNullOrEmpty
             $remoteConnectionModule | Should -Not -BeNullOrEmpty

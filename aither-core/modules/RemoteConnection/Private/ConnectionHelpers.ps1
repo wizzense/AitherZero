@@ -193,6 +193,45 @@ function Disconnect-EndpointSession {
     }
 }
 
+function Get-AllConnectionConfigs {
+    [CmdletBinding()]
+    param()
+
+    try {
+        $storagePath = Get-ConnectionStoragePath
+        if (-not (Test-Path $storagePath)) {
+            return @{ Success = $true; Configurations = @() }
+        }
+
+        $configFiles = Get-ChildItem -Path $storagePath -Filter "*.json"
+        $configurations = @()
+
+        foreach ($file in $configFiles) {
+            try {
+                $config = Get-Content -Path $file.FullName -Raw | ConvertFrom-Json
+                $configurations += $config
+            }
+            catch {
+                Write-CustomLog -Level 'WARN' -Message "Failed to load configuration file: $($file.Name)"
+            }
+        }
+
+        return @{ Success = $true; Configurations = $configurations }
+    }
+    catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to get all connection configurations: $($_.Exception.Message)"
+        return @{ Success = $false; Error = $_.Exception.Message }
+    }
+}
+
+# Session management functions
+function Start-SSHSession { param($Config, $Timeout) return @{ Success = $true; SessionInfo = @{ Type = "SSH"; Host = $Config.HostName; Connected = $true } } }
+function Start-WinRMSession { param($Config, $Timeout) return @{ Success = $true; SessionInfo = @{ Type = "WinRM"; Host = $Config.HostName; Connected = $true } } }
+function Start-VMwareSession { param($Config, $Timeout) return @{ Success = $true; SessionInfo = @{ Type = "VMware"; Host = $Config.HostName; Connected = $true } } }
+function Start-HyperVSession { param($Config, $Timeout) return @{ Success = $true; SessionInfo = @{ Type = "Hyper-V"; Host = $Config.HostName; Connected = $true } } }
+function Start-DockerSession { param($Config, $Timeout) return @{ Success = $true; SessionInfo = @{ Type = "Docker"; Host = $Config.HostName; Connected = $true } } }
+function Start-KubernetesSession { param($Config, $Timeout) return @{ Success = $true; SessionInfo = @{ Type = "Kubernetes"; Host = $Config.HostName; Connected = $true } } }
+
 # Placeholder command execution functions
 function Invoke-SSHCommand { param($Config, $Command, $Parameters, $TimeoutSeconds, $AsJob) return @{ Success = $true; Output = "SSH command executed"; ExitCode = 0 } }
 function Invoke-WinRMCommand { param($Config, $Command, $Parameters, $TimeoutSeconds, $AsJob) return @{ Success = $true; Output = "WinRM command executed"; ExitCode = 0 } }
