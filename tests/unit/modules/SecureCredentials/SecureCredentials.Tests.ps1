@@ -41,8 +41,7 @@ Describe "SecureCredentials Module" {
 
     Context "New-SecureCredential Function" {
         It "Should create a UserPassword credential with WhatIf" {
-            $testPassword = ConvertTo-SecureString "TestPassword123" -AsPlainText -Force
-            
+            $testPassword = ConvertTo-SecureString "TestPassword123" -AsPlainText -Force            
             $result = New-SecureCredential -CredentialName $TestCredentialName -CredentialType UserPassword -Username "testuser" -Password $testPassword -WhatIf
             
             $result | Should -Not -BeNullOrEmpty
@@ -57,11 +56,14 @@ Describe "SecureCredentials Module" {
             # Test UserPassword type with required parameters
             { New-SecureCredential -CredentialName "Test-UserPassword" -CredentialType UserPassword -Username "testuser" -Password (ConvertTo-SecureString "testpass" -AsPlainText -Force) -WhatIf } | Should -Not -Throw
             
-            # Test other types that don't require Username/Password
-            $otherTypes = @('ServiceAccount', 'APIKey', 'Certificate')
-            foreach ($type in $otherTypes) {
-                { New-SecureCredential -CredentialName "Test-$type" -CredentialType $type -WhatIf } | Should -Not -Throw
-            }
+            # Test ServiceAccount type with required username
+            { New-SecureCredential -CredentialName "Test-ServiceAccount" -CredentialType ServiceAccount -Username "service@example.com" -WhatIf } | Should -Not -Throw
+            
+            # Test APIKey type with required API key
+            { New-SecureCredential -CredentialName "Test-APIKey" -CredentialType APIKey -APIKey "test-api-key-123" -WhatIf } | Should -Not -Throw
+            
+            # Test Certificate type with required certificate path
+            { New-SecureCredential -CredentialName "Test-Certificate" -CredentialType Certificate -CertificatePath "C:\test\cert.pfx" -WhatIf } | Should -Not -Throw
         }
     }
 

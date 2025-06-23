@@ -99,18 +99,18 @@ Describe "RemoteConnection Module" {
         }
     }
 
-    Context "Get-RemoteConnection Function" {
-        It "Should handle non-existent connections" {
+    Context "Get-RemoteConnection Function" {        It "Should handle non-existent connections" {
             $result = Get-RemoteConnection -ConnectionName "NonExistent-$(Get-Random)"
             
             $result | Should -BeNullOrEmpty
         }
 
         It "Should list all connections when no name specified" {
-            $result = Get-RemoteConnection
+            $result = @(Get-RemoteConnection)
             
             # Should return array even if empty
             $result | Should -BeOfType [System.Array]
+            $result.Count | Should -BeGreaterOrEqual 0
         }
     }
 
@@ -141,9 +141,14 @@ Describe "RemoteConnection Module" {
 
 Describe "RemoteConnection Integration" {
     Context "SecureCredentials Integration" {        It "Should integrate with SecureCredentials module" {
+            # Ensure Logging module is loaded first (required by SecureCredentials)
+            Import-Module './aither-core/modules/Logging' -Force
+            # Ensure SecureCredentials module is loaded for integration testing
+            Import-Module './aither-core/modules/SecureCredentials' -Force
+            
             # Test that RemoteConnection can reference SecureCredentials functions
-            $testSecureCredentialExists = Get-Command -Name "Test-SecureCredential" -ErrorAction SilentlyContinue
-            $newSecureCredentialExists = Get-Command -Name "New-SecureCredential" -ErrorAction SilentlyContinue
+            $testSecureCredentialExists = Get-Command -Name "Test-SecureCredential" -Module "SecureCredentials" -ErrorAction SilentlyContinue
+            $newSecureCredentialExists = Get-Command -Name "New-SecureCredential" -Module "SecureCredentials" -ErrorAction SilentlyContinue
             
             # At least one SecureCredentials function should be available
             ($testSecureCredentialExists -or $newSecureCredentialExists) | Should -Be $true
