@@ -45,8 +45,8 @@ function New-PatchIssue {
         [string]$Description,
 
         [Parameter(Mandatory = $false)]
-        [ValidateSet("Low", "Medium", "High", "Critical")]
-        [string]$Priority = "Medium",
+        [ValidateSet('Low', 'Medium', 'High', 'Critical')]
+        [string]$Priority = 'Medium',
 
         [Parameter(Mandatory = $false)]
         [string[]]$AffectedFiles = @(),
@@ -61,7 +61,7 @@ function New-PatchIssue {
         [string[]]$ErrorDetails = @(),
 
         [Parameter(Mandatory = $false)]
-        [string]$TestType = "Unknown",
+        [string]$TestType = 'Unknown',
 
         [Parameter(Mandatory = $false)]
         [hashtable]$TestContext = @{},
@@ -72,13 +72,13 @@ function New-PatchIssue {
 
     begin {
         # Import the test analysis function
-        $analysisPath = Join-Path $PSScriptRoot "../Private/Get-TestAnalysisContext.ps1"
+        $analysisPath = Join-Path $PSScriptRoot '../Private/Get-TestAnalysisContext.ps1'
         if (Test-Path $analysisPath) {
             . $analysisPath
         }
 
         function Write-IssueLog {
-            param($Message, $Level = "INFO")
+            param($Message, $Level = 'INFO')
             if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
                 Write-CustomLog -Message $Message -Level $Level
             } else {
@@ -86,39 +86,46 @@ function New-PatchIssue {
             }
         }
 
-        Write-IssueLog "Creating enhanced GitHub issue for: $Description" -Level "INFO"
+        Write-IssueLog "Creating enhanced GitHub issue for: $Description" -Level 'INFO'
     }
 
     process {
-        try {
-            # Check GitHub CLI availability
+        try {            # Check GitHub CLI availability
             if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
-                throw "GitHub CLI (gh) not found. Please install and authenticate with GitHub CLI."
+                throw 'GitHub CLI (gh) not found. Please install and authenticate with GitHub CLI.'
+            }
+
+            # Get dynamic repository information
+            try {
+                $repoInfo = Get-GitRepositoryInfo
+                Write-IssueLog "Detected repository: $($repoInfo.FullName) ($($repoInfo.Type))" -Level "INFO"
+            } catch {
+                throw "Failed to detect repository information: $($_.Exception.Message)"
             }
 
             # Perform intelligent test analysis if test data is provided
             $analysisResult = $null
             if ($TestOutput.Count -gt 0 -or $ErrorDetails.Count -gt 0) {
-                Write-IssueLog "Performing intelligent test analysis..." -Level "INFO"
-                
+                Write-IssueLog 'Performing intelligent test analysis...' -Level 'INFO'
+
                 $analysisParams = @{
-                    TestOutput = $TestOutput
-                    ErrorDetails = $ErrorDetails
-                    TestType = $TestType
+                    TestOutput        = $TestOutput
+                    ErrorDetails      = $ErrorDetails
+                    TestType          = $TestType
                     AdditionalContext = $TestContext
                 }
-                
+
                 if (Get-Command Get-TestAnalysisContext -ErrorAction SilentlyContinue) {
                     $analysisResult = Get-TestAnalysisContext @analysisParams
-                    
+
                     # Merge analysis results with manually specified files
                     if ($analysisResult.AffectedFiles.Count -gt 0) {
                         $AffectedFiles = ($AffectedFiles + $analysisResult.AffectedFiles) | Sort-Object -Unique
                     }
-                    
-                    Write-IssueLog "Analysis complete. Confidence: $($analysisResult.Confidence), Found $($analysisResult.AffectedFiles.Count) files, $($analysisResult.AffectedModules.Count) modules" -Level "INFO"
+
+                    Write-IssueLog "Analysis complete. Confidence: $($analysisResult.Confidence), Found $($analysisResult.AffectedFiles.Count) files, $($analysisResult.AffectedModules.Count) modules" -Level 'INFO'
                 } else {
-                    Write-IssueLog "Test analysis function not available, using manual file list" -Level "WARN"
+                    Write-IssueLog 'Test analysis function not available, using manual file list' -Level 'WARN'
                 }
             }
 
@@ -126,19 +133,19 @@ function New-PatchIssue {
             $issueTitle = "Patch: $Description"
             $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'            # Gather comprehensive system information
             $systemInfo = @{
-                Platform = if ($IsWindows) { "Windows" } elseif ($IsLinux) { "Linux" } elseif ($IsMacOS) { "macOS" } else { "Unknown" }
-                OSVersion = if ($IsWindows) { [System.Environment]::OSVersion.Version.ToString() } else { "N/A" }
+                Platform          = if ($IsWindows) { 'Windows' } elseif ($IsLinux) { 'Linux' } elseif ($IsMacOS) { 'macOS' } else { 'Unknown' }
+                OSVersion         = if ($IsWindows) { [System.Environment]::OSVersion.Version.ToString() } else { 'N/A' }
                 PowerShellVersion = $PSVersionTable.PSVersion.ToString()
-                GitBranch = (git rev-parse --abbrev-ref HEAD 2>$null) -replace "`n", ""
-                GitCommit = (git rev-parse --short HEAD 2>$null) -replace "`n", ""
-                GitRemote = (git config --get remote.origin.url 2>$null) -replace "`n", ""
-                WorkingDirectory = Get-Location
-                ProjectRoot = $env:PROJECT_ROOT
-                User = $env:USERNAME
-                Computer = $env:COMPUTERNAME
-                ProcessId = $PID
-                TimeZone = [System.TimeZoneInfo]::Local.DisplayName
-                Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
+                GitBranch         = (git rev-parse --abbrev-ref HEAD 2>$null) -replace "`n", ''
+                GitCommit         = (git rev-parse --short HEAD 2>$null) -replace "`n", ''
+                GitRemote         = (git config --get remote.origin.url 2>$null) -replace "`n", ''
+                WorkingDirectory  = Get-Location
+                ProjectRoot       = $env:PROJECT_ROOT
+                User              = $env:USERNAME
+                Computer          = $env:COMPUTERNAME
+                ProcessId         = $PID
+                TimeZone          = [System.TimeZoneInfo]::Local.DisplayName
+                Timestamp         = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
             }
 
             $issueBody = @"
@@ -165,35 +172,35 @@ $(if ($analysisResult) { @"
 $(if ($analysisResult.AffectedModules.Count -gt 0) {
     ($analysisResult.AffectedModules | ForEach-Object { "- ``$_``" }) -join "`n"
 } else {
-    "*No modules specifically identified*"
+    '*No modules specifically identified*'
 })
 
 #### Affected Capabilities ($($analysisResult.AffectedCapabilities.Count) detected)
 $(if ($analysisResult.AffectedCapabilities.Count -gt 0) {
     ($analysisResult.AffectedCapabilities | ForEach-Object { "- $_" }) -join "`n"
 } else {
-    "*No specific capabilities identified*"
+    '*No specific capabilities identified*'
 })
 
 #### Error Categories ($($analysisResult.ErrorCategories.Count) detected)
 $(if ($analysisResult.ErrorCategories.Count -gt 0) {
     ($analysisResult.ErrorCategories | ForEach-Object { "- $_" }) -join "`n"
 } else {
-    "*No error categories identified*"
+    '*No error categories identified*'
 })
 
 #### Failure Analysis
 $(if ($analysisResult.FailureReasons.Count -gt 0) {
     "**Root Causes**:`n" + (($analysisResult.FailureReasons | ForEach-Object { "- $_" }) -join "`n")
 } else {
-    "*No specific failure reasons identified*"
+    '*No specific failure reasons identified*'
 })
 
 #### Automated Recommendations
 $(if ($analysisResult.Recommendations.Count -gt 0) {
     ($analysisResult.Recommendations | ForEach-Object { "- $_" }) -join "`n"
 } else {
-    "*No specific recommendations available*"
+    '*No specific recommendations available*'
 })
 
 #### Technical Details
@@ -205,11 +212,11 @@ $(if ($analysisResult.TechnicalDetails.RawErrorSample) {
     "- **Error Sample**: ``$($analysisResult.TechnicalDetails.RawErrorSample)``"
 })
 
-"@ } else { "" })
+"@ } else { '' })
 
 ### Review Checklist
 - [ ] Code review completed
-- [ ] All tests passing  
+- [ ] All tests passing
 - [ ] Documentation updated (if applicable)
 - [ ] Security review completed (if applicable)
 - [ ] Performance impact assessed
@@ -250,7 +257,7 @@ $(if ($analysisResult.TechnicalDetails.RawErrorSample) {
 - **Operation Type**: Issue Creation
 - **Priority Level**: $Priority
 - **Auto-generated**: Yes
-- **Analysis Engine**: $(if ($analysisResult) { "Enabled (Confidence: $($analysisResult.Confidence))" } else { "Disabled" })
+- **Analysis Engine**: $(if ($analysisResult) { "Enabled (Confidence: $($analysisResult.Confidence))" } else { 'Disabled' })
 - **Tracking ID**: PATCH-$(Get-Date -Format 'yyyyMMdd-HHmmss')
 - **Last Updated**: $timestamp
 
@@ -259,43 +266,41 @@ $(if ($analysisResult.TechnicalDetails.RawErrorSample) {
 "@
 
             if ($DryRun) {
-                Write-IssueLog "DRY RUN: Would create issue with title: $issueTitle" -Level "INFO"
+                Write-IssueLog "DRY RUN: Would create issue with title: $issueTitle" -Level 'INFO'
                 return @{
                     Success = $true
-                    DryRun = $true
-                    Title = $issueTitle
-                    Body = $issueBody
+                    DryRun  = $true
+                    Title   = $issueTitle
+                    Body    = $issueBody
                 }
             }
 
             # Prepare labels and ensure they exist
-            $allLabels = @("patch") + $Labels
-            if ($Priority -eq "High" -or $Priority -eq "Critical") {
-                $allLabels += "priority"
+            $allLabels = @('patch') + $Labels
+            if ($Priority -eq 'High' -or $Priority -eq 'Critical') {
+                $allLabels += 'priority'
             }
 
             # Ensure required labels exist, create them if needed
             foreach ($label in $allLabels) {
-                $labelCheck = gh label list --search $label 2>&1 | Out-String
+                $labelCheck = gh label list --repo $repoInfo.GitHubRepo --search $label 2>&1 | Out-String
                 if (-not $labelCheck.Contains($label)) {
-                    Write-IssueLog "Creating missing label: $label" -Level "INFO"
+                    Write-IssueLog "Creating missing label: $label" -Level 'INFO'
                     $labelColor = switch ($label) {
-                        "patch" { "0366d6" }
-                        "priority" { "d93f0b" }
-                        default { "7057ff" }
+                        'patch' { '0366d6' }
+                        'priority' { 'd93f0b' }
+                        default { '7057ff' }
                     }
-                    gh label create $label --color $labelColor --description "Auto-created by PatchManager" 2>&1 | Out-Null
+                    gh label create $label --repo $repoInfo.GitHubRepo --color $labelColor --description 'Auto-created by PatchManager' 2>&1 | Out-Null
                 }
-            }
-
-            # Create the issue with robust error handling
-            Write-IssueLog "Creating GitHub issue: $issueTitle" -Level "INFO"
-            $result = gh issue create --title $issueTitle --body $issueBody --label ($allLabels -join ',') 2>&1
+            }            # Create the issue with robust error handling
+            Write-IssueLog "Creating GitHub issue: $issueTitle" -Level 'INFO'
+            $result = gh issue create --repo $repoInfo.GitHubRepo --title $issueTitle --body $issueBody --label ($allLabels -join ',') 2>&1
 
             # Handle any remaining label errors gracefully
-            if ($LASTEXITCODE -ne 0 -and $result -match "not found") {
-                Write-IssueLog "Label issue detected, creating without labels" -Level "WARN"
-                $result = gh issue create --title $issueTitle --body $issueBody 2>&1
+            if ($LASTEXITCODE -ne 0 -and $result -match 'not found') {
+                Write-IssueLog 'Label issue detected, creating without labels' -Level 'WARN'
+                $result = gh issue create --repo $repoInfo.GitHubRepo --title $issueTitle --body $issueBody 2>&1
             }
 
             if ($LASTEXITCODE -eq 0) {
@@ -305,16 +310,16 @@ $(if ($analysisResult.TechnicalDetails.RawErrorSample) {
                     $issueNumber = $matches[1]
                 }
 
-                Write-IssueLog "Issue created successfully: $result" -Level "SUCCESS"
+                Write-IssueLog "Issue created successfully: $result" -Level 'SUCCESS'
                 if ($issueNumber) {
-                    Write-IssueLog "Issue number: #$issueNumber" -Level "INFO"
+                    Write-IssueLog "Issue number: #$issueNumber" -Level 'INFO'
                 }
 
                 return @{
-                    Success = $true
-                    IssueUrl = $result.ToString().Trim()
+                    Success     = $true
+                    IssueUrl    = $result.ToString().Trim()
                     IssueNumber = $issueNumber
-                    Title = $issueTitle
+                    Title       = $issueTitle
                 }
             } else {
                 throw "GitHub CLI failed: $($result -join ' ')"
@@ -322,7 +327,7 @@ $(if ($analysisResult.TechnicalDetails.RawErrorSample) {
 
         } catch {
             $errorMessage = "Failed to create issue: $($_.Exception.Message)"
-            Write-IssueLog $errorMessage -Level "ERROR"
+            Write-IssueLog $errorMessage -Level 'ERROR'
 
             return @{
                 Success = $false

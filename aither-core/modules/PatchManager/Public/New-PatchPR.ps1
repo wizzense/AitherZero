@@ -71,11 +71,18 @@ function New-PatchPR {
     }
 
     process {
-        try {
-            # Check GitHub CLI availability
+        try {            # Check GitHub CLI availability
             if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
                 throw "GitHub CLI (gh) not found. Please install and authenticate with GitHub CLI."
-            }            # Create PR title and body with comprehensive details
+            }
+
+            # Get dynamic repository information
+            try {
+                $repoInfo = Get-GitRepositoryInfo
+                Write-PRLog "Detected repository: $($repoInfo.FullName) ($($repoInfo.Type))" -Level "INFO"
+            } catch {
+                throw "Failed to detect repository information: $($_.Exception.Message)"
+            }# Create PR title and body with comprehensive details
             $prTitle = "Patch: $Description"
             $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
             
@@ -205,23 +212,19 @@ $(if ($IssueNumber) {
 
             if ($LASTEXITCODE -ne 0) {
                 throw "Failed to push branch $BranchName"
-            }
-
-            # Ensure patch label exists
-            $labelCheck = gh label list --search "patch" 2>&1 | Out-String
+            }            # Ensure patch label exists
+            $labelCheck = gh label list --repo $repoInfo.GitHubRepo --search "patch" 2>&1 | Out-String
             if (-not $labelCheck.Contains("patch")) {
                 Write-PRLog "Creating missing patch label" -Level "INFO"
-                gh label create "patch" --color "0366d6" --description "Auto-created by PatchManager" 2>&1 | Out-Null
-            }
-
-            # Create PR with robust error handling
+                gh label create "patch" --repo $repoInfo.GitHubRepo --color "0366d6" --description "Auto-created by PatchManager" 2>&1 | Out-Null
+            }            # Create PR with robust error handling
             Write-PRLog "Creating pull request: $prTitle" -Level "INFO"
-            $result = gh pr create --title $prTitle --body $prBody --head $BranchName --label "patch" 2>&1
+            $result = gh pr create --repo $repoInfo.GitHubRepo --title $prTitle --body $prBody --head $BranchName --label "patch" 2>&1
 
             # Handle any remaining label errors gracefully
             if ($LASTEXITCODE -ne 0 -and $result -match "not found") {
                 Write-PRLog "Label issue detected, creating PR without labels" -Level "WARN"
-                $result = gh pr create --title $prTitle --body $prBody --head $BranchName 2>&1
+                $result = gh pr create --repo $repoInfo.GitHubRepo --title $prTitle --body $prBody --head $BranchName 2>&1
             }
 
             if ($LASTEXITCODE -eq 0) {
