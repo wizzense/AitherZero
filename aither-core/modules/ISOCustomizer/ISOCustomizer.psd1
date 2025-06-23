@@ -19,6 +19,8 @@
         'New-BootableISO',
         'Test-AutounattendFile',
         'Get-AutounattendTemplate',
+        'Get-BootstrapTemplate',
+        'Get-KickstartTemplate',
         'Set-ISOBootConfiguration',
         'Export-ISOConfiguration',
         'Import-ISOConfiguration'

@@ -13,24 +13,21 @@ function Get-ISOInventory {
 
         [Parameter(Mandatory = $false)]
         [switch]$VerifyIntegrity
-    )
-
-    begin {
+    )    begin {
         Write-CustomLog -Level 'INFO' -Message "Starting ISO inventory scan"
         
         # Set default repository path if not specified
         if (-not $RepositoryPath) {
             $RepositoryPath = Join-Path $env:TEMP "AitherZero-ISOs"
         }
-        
-        if (-not (Test-Path $RepositoryPath)) {
-            Write-CustomLog -Level 'WARN' -Message "Repository path does not exist: $RepositoryPath"
-            return @()
-        }
-    }
-
-    process {
+    }process {
         try {
+            # Check if repository path exists first
+            if (-not (Test-Path $RepositoryPath)) {
+                Write-CustomLog -Level 'WARN' -Message "Repository path does not exist: $RepositoryPath"
+                return @()
+            }
+            
             $inventory = @()
             
             # Find all ISO files in the repository

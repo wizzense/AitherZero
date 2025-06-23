@@ -36,7 +36,8 @@ if (Test-Path (Join-Path $PSScriptRoot 'Private')) {
     }
 }
 
-# Export only public functions
-Export-ModuleMember -Function $PublicFunctions
+# Export public functions and specific template helpers
+$TemplateHelpers = @('Get-AutounattendTemplate', 'Get-BootstrapTemplate', 'Get-KickstartTemplate')
+Export-ModuleMember -Function ($PublicFunctions + $TemplateHelpers)
 
 Write-CustomLog -Level 'INFO' -Message "ISOCustomizer module loaded successfully"
