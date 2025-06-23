@@ -18,7 +18,11 @@
 
 # Import required modules
 Import-Module (Join-Path $PSScriptRoot '../Logging/Logging.psm1') -Force
-Import-Module (Join-Path $PSScriptRoot '../SecureCredentials/SecureCredentials.psm1') -Force
+
+# Import SecureCredentials if not already loaded
+if (-not (Get-Module SecureCredentials -ErrorAction SilentlyContinue)) {
+    Import-Module (Join-Path $PSScriptRoot '../SecureCredentials/SecureCredentials.psm1') -Force
+}
 
 # Import all public functions
 $PublicFunctions = @()
