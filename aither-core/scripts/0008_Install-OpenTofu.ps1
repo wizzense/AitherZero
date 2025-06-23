@@ -1,37 +1,58 @@
 #Requires -Version 7.0
-[CmdletBinding(SupportsShouldProcess)]
+
+[CmdletBinding()]
 param(
-    [Parameter(Mandatory, ValueFromPipeline)]
+    [Parameter()]
     [object]$Config
 )
 
-Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force
+Import-Module "$env:PROJECT_ROOT/aither-core/modules/LabRunner" -Force
 Import-Module "$env:PROJECT_ROOT/aither-core/modules/Logging" -Force
 
 Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
 
-function Install-OpenTofu {
-    [CmdletBinding()]
-    param(
-        [object]$Config
-    )
+Invoke-LabStep -Config $Config -Body {
+    Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
 
-    Invoke-LabStep -Config $Config -Body {
-        Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
-
-        if ($Config.InstallOpenTofu -eq $true) {
-            $Cosign = Join-Path $Config.CosignPath 'cosign-windows-amd64.exe'
-            $openTofuVersion = if ($Config.OpenTofuVersion) { $Config.OpenTofuVersion } else { 'latest' }
-            Invoke-OpenTofuInstaller -CosignPath $Cosign -OpenTofuVersion $openTofuVersion        
-        } else {
-            Write-CustomLog 'InstallOpenTofu flag is disabled. Skipping OpenTofu installation.'
+    # Check if OpenTofu is already installed
+    try {
+        $tofuVersion = & tofu version 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            Write-CustomLog "OpenTofu is already installed: $tofuVersion"
+            return
         }
+    } catch {
+        # OpenTofu not found, proceed with installation
     }
+
+    # Install OpenTofu
+    if ($IsWindows) {
+        Write-CustomLog "Installing OpenTofu on Windows..."
+        try {
+            # Download and install OpenTofu for Windows
+            $downloadUrl = "https://github.com/opentofu/opentofu/releases/latest/download/tofu_1.6.0_windows_amd64.zip"
+            $tempFile = Join-Path $env:TEMP "tofu.zip"
+            $installPath = Join-Path $env:ProgramFiles "OpenTofu"
+            
+            Invoke-WebRequest -Uri $downloadUrl -OutFile $tempFile
+            Expand-Archive -Path $tempFile -DestinationPath $installPath -Force
+            
+            # Add to PATH if not already there
+            $currentPath = [Environment]::GetEnvironmentVariable("PATH", "Machine")
+            if ($currentPath -notlike "*$installPath*") {
+                [Environment]::SetEnvironmentVariable("PATH", "$currentPath;$installPath", "Machine")
+            }
+            
+            Remove-Item $tempFile -ErrorAction SilentlyContinue
+            Write-CustomLog "OpenTofu installed successfully"
+        } catch {
+            Write-CustomLog -Level 'ERROR' -Message "Failed to install OpenTofu: $($_.Exception.Message)"
+        }
+    } else {
+        Write-CustomLog "Please install OpenTofu manually from https://opentofu.org/docs/intro/install/"
+    }
+
+    Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
 }
 
-if ($MyInvocation.InvocationName -ne '.') { Install-OpenTofu @PSBoundParameters }
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-
-
-
-

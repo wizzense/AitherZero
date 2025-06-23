@@ -19,7 +19,7 @@ param(
     [switch]$Force
 )
 
-Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force
+Import-Module "$env:PROJECT_ROOT/aither-core/modules/LabRunner" -Force
 Import-Module "$env:PROJECT_ROOT/aither-core/modules/Logging" -Force
 
 # Initialize standardized parameters

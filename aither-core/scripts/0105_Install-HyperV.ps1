@@ -1,12 +1,12 @@
 #Requires -Version 7.0
 
-[CmdletBinding(SupportsShouldProcess)]
+[CmdletBinding()]
 param(
-    [Parameter(Mandatory, ValueFromPipeline)]
+    [Parameter()]
     [object]$Config
 )
 
-Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force
+Import-Module "$env:PROJECT_ROOT/aither-core/modules/LabRunner" -Force
 Import-Module "$env:PROJECT_ROOT/aither-core/modules/Logging" -Force
 
 Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
@@ -14,44 +14,31 @@ Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
 Invoke-LabStep -Config $Config -Body {
     Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
 
-    if ($Config.InstallHyperV -eq $true) {
-        Write-CustomLog "Checking if Hyper-V is already installed..."
-
-        # Get the installation state of Hyper-V
-        $feature = Get-WindowsFeature -Name Hyper-V
-
-        if ($feature -and $feature.Installed) {
-            Write-CustomLog "Hyper-V is already installed. Skipping installation."
-            return
-        }
-
-        Write-CustomLog "Hyper-V is not installed. Proceeding with installation..."
-
-        $enableMgtTools = $true
-        if ($Config.PSObject.Properties.Name -contains 'HyperV' -and
-            $Config.HyperV.PSObject.Properties.Name -contains 'EnableManagementTools') {
-            $enableMgtTools = [bool]$Config.HyperV.EnableManagementTools
-        }
-        $restart = $false  # Change to $true if you want an automatic restart
-
-        try {
-            if ($restart) {
-                Install-WindowsFeature -Name 'Hyper-V' -IncludeManagementTools:$enableMgtTools -Restart -ErrorAction Continue
-            } else {
-                Install-WindowsFeature -Name 'Hyper-V' -IncludeManagementTools:$enableMgtTools -ErrorAction Continue
-            }
-        } catch {
-        
-            Write-CustomLog "Only works on Windows Server. Error details: $($_.Exception.Message)"
-
-        }
-
-        Write-CustomLog 'Hyper-V installation complete. A restart is typically required to finalize installation.'
-    } else {
-
-        Write-CustomLog 'InstallHyperV flag is disabled. Skipping Hyper-V installation.'
-
+    if (-not $IsWindows) {
+        Write-CustomLog "Hyper-V is Windows-specific. Skipping on this platform."
+        return
     }
+
+    try {
+        # Check if Hyper-V is already enabled
+        $hyperv = Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All
+        
+        if ($hyperv.State -eq "Enabled") {
+            Write-CustomLog "Hyper-V is already enabled"
+        } else {
+            Write-CustomLog "Enabling Hyper-V..."
+            
+            # Enable Hyper-V feature
+            Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All -All -NoRestart
+            
+            Write-CustomLog "Hyper-V enabled successfully. Restart required."
+        }
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to enable Hyper-V: $($_.Exception.Message)"
+        throw
+    }
+
+    Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"

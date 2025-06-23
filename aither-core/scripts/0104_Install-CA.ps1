@@ -1,59 +1,47 @@
 #Requires -Version 7.0
-[CmdletBinding(SupportsShouldProcess)]
+
+[CmdletBinding()]
 param(
-    [Parameter(Mandatory, ValueFromPipeline)]
+    [Parameter()]
     [object]$Config
 )
 
-Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force
+Import-Module "$env:PROJECT_ROOT/aither-core/modules/LabRunner" -Force
 Import-Module "$env:PROJECT_ROOT/aither-core/modules/Logging" -Force
 
 Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
-if ($Config.InstallCA -eq $true) {
-Write-CustomLog "Checking for existing Certificate Authority (Standalone Root CA)..."
 
-# Only proceed if you actually want to install a CA.
-if ($null -eq $Config.CertificateAuthority) {
-    Write-CustomLog "No CA config found. Skipping CA installation."
-    return
-}
+Invoke-LabStep -Config $Config -Body {
+    Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
 
-$CAName        = $Config.CertificateAuthority.CommonName
-$ValidityYears = $Config.CertificateAuthority.ValidityYears
-$rol        Write-CustomLog "A Certificate Authority is already configured. Skipping installation."
+    if (-not $IsWindows) {
+        Write-CustomLog "Certificate Authority installation is Windows-specific. Skipping on this platform."
         return
     }
 
-    Write-CustomLog "CA role is installed but no CA is configured. Proceeding with installation."
-} else {
-    Write-CustomLog "Installing Certificate Authority role..."
-    if ($PSCmdlet.ShouldProcess('ADCS role', 'Install CA Windows feature')) {
-        Install-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools -ErrorAction Stop
-    }
-}
-
-# If the script reaches this point, it means no existing CA is detected, and installation should proceed.
-Write-CustomLog "Configuring CA: $CAName with $($ValidityYears) year validity..."
-
-if ($PSCmdlet.ShouldProcess($CAName, 'Configure Standalone Root CA')) {
-    # Resolve the cmdlet after any Pester mocks have been defined
-
-    $installCmd = Get-Command Install-AdcsCertificationAuthority -ErrorAction SilentlyContinue
-    if (-not $installCmd) {
-        if (Get-Module -ListAvailable -Name ADCSDeployment) {
-            $installCmd = Get-Command Install-AdcsCertificationAuthority -ErrorAction SilentlyContinue
+    try {
+        # Check if ADCS is already installed
+        $adcs = Get-WindowsFeature -Name ADCS-Cert-Authority -ErrorAction SilentlyContinue
+        
+        if ($adcs -and $adcs.InstallState -eq "Installed") {
+            Write-CustomLog "Certificate Authority is already installed"
+        } else {
+            Write-CustomLog "Installing Certificate Authority..."
+            
+            # Install ADCS feature
+            Install-WindowsFeature -Name ADCS-Cert-Authority -IncludeManagementTools
+            
+            # Configure CA
+            Install-AdcsCertificationAuthority -CAType EnterpriseRootCA -Force
+            
+            Write-CustomLog "Certificate Authority installed successfully"
         }
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to install Certificate Authority: $($_.Exception.Message)"
+        throw
     }
-    if (-not $installCmd) {
-        Write-CustomLog 'Install-AdcsCertificationAuthority command not found. Ensure AD CS features are available.'
-        return
-    }
-    & $installCmd `
-        -CAType StandaloneRootCA `
-        -CACommonName $CAName `
-        -KeyLength 2048 `
-        -HashAlgorithm SHA256 `
-        -ValidityPeriod Years `
-        -ValidityPeriodUnits $ValidityYears `
-        -Force
+
+    Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
 }
+
+Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"

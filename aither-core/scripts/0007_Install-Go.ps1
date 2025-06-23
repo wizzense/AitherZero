@@ -1,62 +1,48 @@
 #Requires -Version 7.0
-[CmdletBinding(SupportsShouldProcess)]
+
+[CmdletBinding()]
 param(
-    [Parameter(Mandatory, ValueFromPipeline)]
+    [Parameter()]
     [object]$Config
 )
 
-try {
-    Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force
-    Import-Module "$env:PROJECT_ROOT/aither-core/modules/Logging" -Force
+Import-Module "$env:PROJECT_ROOT/aither-core/modules/LabRunner" -Force
+Import-Module "$env:PROJECT_ROOT/aither-core/modules/Logging" -Force
 
-    Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
-    Invoke-LabStep -Config $Config -Body {
-        Write-CustomLog -Level 'INFO' -Message "Running $($MyInvocation.MyCommand.Name)"
-        if ($Config.InstallGo -eq $true) {
-            $GoConfig = $Config.Go
-            if ($null -eq $GoConfig) {
-                Write-CustomLog -Level 'WARN' -Message 'No Go configuration found. Skipping installation.'
-                return
-            }
-            if ($GoConfig.InstallerUrl) {
-                $installerUrl = $GoConfig.InstallerUrl
-                if ($installerUrl -match 'go([\d\.]+)\.windows-([a-z0-9]+)\.msi') {
-                    $goVersion = $matches[1]
-                    $goArch = $matches[2]
-                } else {
-                    Write-CustomLog -Level 'ERROR' -Message 'Unable to extract Go version and architecture from InstallerUrl.'
-                    return
-                }
-            } elseif ($GoConfig.Version) {
-                $goVersion = $GoConfig.Version
-                $goArch = $GoConfig.Architecture
-                if (-not $goArch) { $goArch = 'amd64' }
-            } else {
-                Write-CustomLog -Level 'WARN' -Message 'No Go version or InstallerUrl specified. Skipping installation.'
-                return
-            }
-            # Check if Go is already installed by looking for the 'go' command
-            if (Get-Command go -ErrorAction SilentlyContinue) {
-                Write-CustomLog -Level 'INFO' -Message 'Go is already installed. Skipping installation.'
-                return
-            }
-            Write-CustomLog -Level 'INFO' -Message "Installing Go version $goVersion for architecture $goArch..."
-            $ProgressPreference = 'SilentlyContinue'
-            Invoke-LabDownload -Uri $installerUrl -Prefix 'GoInstaller' -Extension '.msi' -Action {
-                param($installerPath)
+Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
 
-                Write-CustomLog 'Installing Go silently...'
-                Start-Process msiexec.exe -Wait -ArgumentList "/i `"$installerPath`" /qn /L*v `"$(Get-CrossPlatformTempPath)\GoInstall.log`""
-                Write-CustomLog 'Go installation complete.'
-            }
-        } else {
-            Write-CustomLog -Level 'INFO' -Message 'InstallGo flag is disabled. Skipping Go installation.'
+Invoke-LabStep -Config $Config -Body {
+    Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
+
+    # Check if Go is already installed
+    try {
+        $goVersion = & go version 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            Write-CustomLog "Go is already installed: $goVersion"
+            return
         }
-        Write-CustomLog -Level 'INFO' -Message "Completed $($MyInvocation.MyCommand.Name)"
+    } catch {
+        # Go not found, proceed with installation
     }
-    Write-CustomLog -Level 'INFO' -Message "Completed $($MyInvocation.MyCommand.Name)"
-} catch {
-    Write-CustomLog -Level 'ERROR' -Message "Go installation failed: $_"
-    throw
+
+    # Install Go using chocolatey if available, otherwise manual installation
+    if (Get-Command choco -ErrorAction SilentlyContinue) {
+        Write-CustomLog "Installing Go using Chocolatey..."
+        try {
+            & choco install golang -y
+            if ($LASTEXITCODE -eq 0) {
+                Write-CustomLog "Go installed successfully via Chocolatey"
+            } else {
+                Write-CustomLog -Level 'ERROR' -Message "Failed to install Go via Chocolatey"
+            }
+        } catch {
+            Write-CustomLog -Level 'ERROR' -Message "Error installing Go: $($_.Exception.Message)"
+        }
+    } else {
+        Write-CustomLog "Chocolatey not available. Please install Go manually from https://golang.org/dl/"
+    }
+
+    Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
 }
 
+Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
