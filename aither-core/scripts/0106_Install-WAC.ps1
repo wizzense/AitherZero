@@ -1,84 +1,49 @@
 #Requires -Version 7.0
-[CmdletBinding(SupportsShouldProcess)]
+
+[CmdletBinding()]
 param(
-    [Parameter(Mandatory, ValueFromPipeline)]
+    [Parameter()]
     [object]$Config
 )
 
-Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force
+Import-Module "$env:PROJECT_ROOT/aither-core/modules/LabRunner" -Force
 Import-Module "$env:PROJECT_ROOT/aither-core/modules/Logging" -Force
 
 Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
 
-function Get-WacRegistryInstallation {
-    [CmdletBinding()
-    param(
-        [Parameter(Mandatory)]
-        [string]$RegistryPath
-    )
-    
-    $items = Get-ChildItem $RegistryPath -ErrorAction SilentlyContinue
-    foreach ($item in $items) {
-        $itemProps = Get-ItemProperty $item.PSPath -ErrorAction SilentlyContinue
-        if ($itemProps.PSObject.Properties['DisplayName'] -and $itemProps.DisplayName -like "*Windows Admin Center*") {
-            return $itemProps
-        }
-    }
-    return $null
-}
-
 Invoke-LabStep -Config $Config -Body {
     Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
-    
-    if ($Config.InstallWAC -eq $true) {
-        $WacConfig = $Config.WindowsAdminCenter
-        if (-not $WacConfig) {
-            Write-CustomLog 'No Windows Admin Center configuration found. Skipping installation.'
-            return
-        }
-        
-        $installPort = if ($WacConfig.InstallPort) { $WacConfig.InstallPort } else { 443 }
 
-        # Check both standard and Wow6432Node uninstall registry keys for WAC installation
-        $wacInstalled = Get-WacRegistryInstallation -RegistryPath "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall"
-        if (-not $wacInstalled) {
-            $wacInstalled = Get-WacRegistryInstallation -RegistryPath "HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
-        }
-
-        if ($wacInstalled) {
-            Write-CustomLog "Windows Admin Center is already installed. Skipping installation."
-            return
-        }
-
-        # Check if the desired installation port is already in use
-        $portInUse = Get-NetTCPConnection -LocalPort $installPort -ErrorAction SilentlyContinue
-        if ($portInUse) {
-            Write-CustomLog "Port $installPort is already in use. Assuming Windows Admin Center is running. Skipping installation."
-            return
-        }
-
-        Write-CustomLog "Installing Windows Admin Center..."
-        
-        $url = if ($WacConfig.InstallerUrl) { 
-            $WacConfig.InstallerUrl 
-        } else { 
-            'https://aka.ms/WACDownload' 
-        }
-        
-        Invoke-LabDownload -Uri $url -Prefix 'wac-installer' -Extension '.msi' -Action {
-            param($installerPath)
-            
-            Write-CustomLog "Installing WAC silently on port $installPort"
-            if ($PSCmdlet.ShouldProcess($installerPath, 'Install Windows Admin Center')) {
-                $logPath = Join-Path (Get-CrossPlatformTempPath) 'WacInstall.log'
-                Start-Process msiexec.exe -Wait -ArgumentList "/i `"$installerPath`" /qn /L*v `"$logPath`" SME_PORT=$installPort ACCEPT_EULA=1"
-            }
-            Write-CustomLog "WAC installation complete."
-        }
-    } else {
-        Write-CustomLog 'InstallWAC flag is disabled. Skipping installation.'
+    if (-not $IsWindows) {
+        Write-CustomLog "Windows Admin Center is Windows-specific. Skipping on this platform."
+        return
     }
+
+    try {
+        # Check if WAC is already installed
+        $wac = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\ServerManagementGateway" -ErrorAction SilentlyContinue
+        
+        if ($wac) {
+            Write-CustomLog "Windows Admin Center is already installed"
+        } else {
+            Write-CustomLog "Installing Windows Admin Center..."
+            
+            # Download and install WAC
+            $downloadUrl = "https://aka.ms/WACDownload"
+            $tempFile = Join-Path $env:TEMP "WindowsAdminCenter.msi"
+            
+            Invoke-WebRequest -Uri $downloadUrl -OutFile $tempFile
+            Start-Process -FilePath "msiexec.exe" -ArgumentList "/i", $tempFile, "/quiet" -Wait
+            
+            Remove-Item $tempFile -ErrorAction SilentlyContinue
+            Write-CustomLog "Windows Admin Center installed successfully"
+        }
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to install Windows Admin Center: $($_.Exception.Message)"
+        throw
+    }
+
+    Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-
