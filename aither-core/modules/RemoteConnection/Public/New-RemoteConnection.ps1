@@ -76,10 +76,25 @@ function New-RemoteConnection {
 
     begin {
         Write-CustomLog -Level 'INFO' -Message "Creating remote connection: $ConnectionName (Type: $EndpointType, Host: $HostName)"
-        
-        # Validate credential if specified
-        if ($CredentialName -and -not (Test-SecureCredential -CredentialName $CredentialName)) {
-            Write-CustomLog -Level 'WARN' -Message "Specified credential '$CredentialName' not found"
+          # Validate credential if specified
+        if ($CredentialName) {
+            # Load SecureCredentials module if not already loaded
+            if (-not (Get-Module -Name 'SecureCredentials')) {
+                try {
+                    Import-Module './aither-core/modules/SecureCredentials' -Force
+                } catch {
+                    Write-CustomLog -Level 'WARN' -Message "Could not load SecureCredentials module for credential validation"
+                }
+            }
+            
+            # Test credential if SecureCredentials is available
+            if (Get-Command -Name 'Test-SecureCredential' -ErrorAction SilentlyContinue) {
+                if (-not (Test-SecureCredential -CredentialName $CredentialName)) {
+                    Write-CustomLog -Level 'WARN' -Message "Specified credential '$CredentialName' not found"
+                }
+            } else {
+                Write-CustomLog -Level 'WARN' -Message "SecureCredentials module not available for credential validation"
+            }
         }
     }
 

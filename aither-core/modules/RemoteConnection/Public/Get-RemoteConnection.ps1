@@ -39,9 +39,7 @@ function Get-RemoteConnection {
 
         [Parameter()]
         [switch]$IncludeCredentials
-    )
-
-    begin {
+    )    begin {
         Write-CustomLog -Level 'DEBUG' -Message "Retrieving remote connection(s)"
     }
 
@@ -54,14 +52,17 @@ function Get-RemoteConnection {
                     return $null
                 }
 
-                $connections = @($config.Configuration)            } else {
-                # Get all connections
-                $connections = Get-AllConnectionConfigs
-                if (-not $connections.Success -or -not $connections.Configurations) {
+                $connections = @($config.Configuration)            } else {                # Get all connections
+                $allConfigs = Get-AllConnectionConfigs
+                  if (-not $allConfigs.Success) {
+                    Write-CustomLog -Level 'ERROR' -Message "Failed to retrieve connections: $($allConfigs.Error)"
+                    return ,@()
+                }                if (-not $allConfigs.Configurations -or $allConfigs.Configurations.Count -eq 0) {
                     Write-CustomLog -Level 'INFO' -Message "No connections found"
-                    return @()
+                    return ,@()
                 }
-                $connections = $connections.Configurations
+                
+                $connections = $allConfigs.Configurations
             }
 
             # Apply endpoint type filter if specified
@@ -83,19 +84,31 @@ function Get-RemoteConnection {
                     LastUsed = $conn.LastUsed
                     EnableSSL = $conn.EnableSSL
                     ConnectionTimeout = $conn.ConnectionTimeout
-                }
-
-                # Add credential information if requested
+                }                # Add credential information if requested
                 if ($IncludeCredentials) {
                     $result | Add-Member -NotePropertyName 'CredentialName' -NotePropertyValue $conn.CredentialName
                     $result | Add-Member -NotePropertyName 'CredentialExists' -NotePropertyValue $(
                         if ($conn.CredentialName) {
-                            Test-SecureCredential -CredentialName $conn.CredentialName
+                            # Load SecureCredentials module if needed for credential testing
+                            if (-not (Get-Command -Name 'Test-SecureCredential' -ErrorAction SilentlyContinue)) {
+                                try {
+                                    Import-Module './aither-core/modules/SecureCredentials' -Force
+                                } catch {
+                                    Write-CustomLog -Level 'DEBUG' -Message "Could not load SecureCredentials module for credential validation"
+                                }
+                            }
+                            
+                            # Test credential if function is available
+                            if (Get-Command -Name 'Test-SecureCredential' -ErrorAction SilentlyContinue) {
+                                Test-SecureCredential -CredentialName $conn.CredentialName
+                            } else {
+                                $false
+                            }
                         } else {
                             $false
                         }
                     )
-                }                $results += $result
+                }$results += $result
             }
 
             if ($ConnectionName) {
