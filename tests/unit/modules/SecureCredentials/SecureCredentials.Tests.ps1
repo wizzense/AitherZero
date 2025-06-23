@@ -13,7 +13,7 @@ BeforeAll {
     Import-Module './aither-core/modules/Logging/Logging.psm1' -Force
     Import-Module './aither-core/modules/TestingFramework/TestingFramework.psm1' -Force
     Import-Module './aither-core/modules/SecureCredentials/SecureCredentials.psm1' -Force
-    
+
     # Set test environment
     $TestCredentialName = "Test-SecureCredentials-$(Get-Random)"
 }
@@ -41,9 +41,9 @@ Describe "SecureCredentials Module" {
 
     Context "New-SecureCredential Function" {
         It "Should create a UserPassword credential with WhatIf" {
-            $testPassword = ConvertTo-SecureString "TestPassword123" -AsPlainText -Force            
+            $testPassword = ConvertTo-SecureString "TestPassword123" -AsPlainText -Force
             $result = New-SecureCredential -CredentialName $TestCredentialName -CredentialType UserPassword -Username "testuser" -Password $testPassword -WhatIf
-            
+
             $result | Should -Not -BeNullOrEmpty
             $result.Success | Should -Be $true
         }
@@ -55,13 +55,13 @@ Describe "SecureCredentials Module" {
         It "Should support different credential types" {
             # Test UserPassword type with required parameters
             { New-SecureCredential -CredentialName "Test-UserPassword" -CredentialType UserPassword -Username "testuser" -Password (ConvertTo-SecureString "testpass" -AsPlainText -Force) -WhatIf } | Should -Not -Throw
-            
+
             # Test ServiceAccount type with required username
             { New-SecureCredential -CredentialName "Test-ServiceAccount" -CredentialType ServiceAccount -Username "service@example.com" -WhatIf } | Should -Not -Throw
-            
+
             # Test APIKey type with required API key
             { New-SecureCredential -CredentialName "Test-APIKey" -CredentialType APIKey -APIKey "test-api-key-123" -WhatIf } | Should -Not -Throw
-            
+
             # Test Certificate type with required certificate path
             { New-SecureCredential -CredentialName "Test-Certificate" -CredentialType Certificate -CertificatePath "C:\test\cert.pfx" -WhatIf } | Should -Not -Throw
         }
@@ -70,7 +70,7 @@ Describe "SecureCredentials Module" {
     Context "Get-SecureCredential Function" {
         It "Should handle non-existent credentials gracefully" {
             $result = Get-SecureCredential -CredentialName "NonExistent-$(Get-Random)"
-            
+
             $result | Should -BeNullOrEmpty
         }
 
@@ -82,7 +82,7 @@ Describe "SecureCredentials Module" {
     Context "Test-SecureCredential Function" {
         It "Should validate credential existence" {
             $result = Test-SecureCredential -CredentialName "NonExistent-$(Get-Random)"
-            
+
             $result | Should -Be $false
         }
 
@@ -94,7 +94,7 @@ Describe "SecureCredentials Module" {
     Context "Remove-SecureCredential Function" {
         It "Should handle WhatIf parameter" {
             $result = Remove-SecureCredential -CredentialName "Test-Remove" -WhatIf
-            
+
             $result | Should -Not -BeNullOrEmpty
         }
 
@@ -106,9 +106,9 @@ Describe "SecureCredentials Module" {
     Context "Export-SecureCredential Function" {
         It "Should support WhatIf mode" {
             $tempPath = Join-Path $env:TEMP "test-export-$(Get-Random).json"
-            
+
             $result = Export-SecureCredential -CredentialName "Test-Export" -ExportPath $tempPath -WhatIf
-            
+
             $result | Should -Not -BeNullOrEmpty
         }
 
@@ -120,7 +120,7 @@ Describe "SecureCredentials Module" {
     Context "Import-SecureCredential Function" {
         It "Should validate import file existence" {
             $nonExistentFile = Join-Path $env:TEMP "nonexistent-$(Get-Random).json"
-            
+
             { Import-SecureCredential -ImportPath $nonExistentFile } | Should -Throw
         }
 
@@ -149,7 +149,7 @@ Describe "SecureCredentials Integration" {
         It "Should handle logging integration" {
             # Test that functions can call Write-CustomLog without errors
             $result = Test-SecureCredential -CredentialName "Test-Logging" -Verbose
-            
+
             # Should not throw even if credential doesn't exist
             $result | Should -Be $false
         }

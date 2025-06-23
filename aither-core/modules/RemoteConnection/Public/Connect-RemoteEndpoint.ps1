@@ -55,7 +55,7 @@ function Connect-RemoteEndpoint {
 
             if ($PSCmdlet.ShouldProcess($ConnectionName, "Connect to remote endpoint")) {
                 $config = $connectionConfig.Configuration
-                
+
                 # Attempt connection based on endpoint type
                 $result = switch ($config.EndpointType) {
                     'SSH' { Start-SSHSession -Config $config -Timeout $Timeout }
@@ -64,7 +64,7 @@ function Connect-RemoteEndpoint {
                     'Hyper-V' { Start-HyperVSession -Config $config -Timeout $Timeout }
                     'Docker' { Start-DockerSession -Config $config -Timeout $Timeout }
                     'Kubernetes' { Start-KubernetesSession -Config $config -Timeout $Timeout }
-                    default { 
+                    default {
                         @{ Success = $false; Error = "Unsupported endpoint type: $($config.EndpointType)" }
                     }
                 }

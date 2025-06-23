@@ -27,7 +27,7 @@ Describe "SecureCredentials and RemoteConnection Integration" {
             # Test that RemoteConnection functions can reference credential functions
             $credentialFunctions = Get-Command -Module SecureCredentials
             $connectionFunctions = Get-Command -Module RemoteConnection
-            
+
             $credentialFunctions | Should -Not -BeNullOrEmpty
             $connectionFunctions | Should -Not -BeNullOrEmpty
         }
@@ -37,17 +37,17 @@ Describe "SecureCredentials and RemoteConnection Integration" {
             $TestCredentialName = "Integration-Test-Credential-$(Get-Random)"
             $TestConnectionName = "Integration-Test-Connection-$(Get-Random)"
         }
-        
+
         It "Should create credential and use it in connection" {
             # Step 1: Create a test credential (WhatIf)
             $testPassword = ConvertTo-SecureString "TestPassword123" -AsPlainText -Force
             $credResult = New-SecureCredential -CredentialName $TestCredentialName -CredentialType UserPassword -Username "testuser" -Password $testPassword -WhatIf
-            
+
             $credResult.Success | Should -Be $true
-            
+
             # Step 2: Create a connection using the credential (WhatIf)
             $connResult = New-RemoteConnection -ConnectionName $TestConnectionName -EndpointType SSH -HostName "test.example.com" -CredentialName $TestCredentialName -WhatIf
-            
+
             $connResult.Success | Should -Be $true
         }
 
@@ -55,7 +55,7 @@ Describe "SecureCredentials and RemoteConnection Integration" {
             $nonExistentCred = "NonExistent-Credential-$(Get-Random)"
               # This should work in WhatIf mode even with non-existent credential
             $result = New-RemoteConnection -ConnectionName $TestConnectionName -EndpointType SSH -HostName "test.example.com" -CredentialName $nonExistentCred -WhatIf
-            
+
             $result | Should -Not -BeNullOrEmpty
         }
     }
@@ -68,7 +68,7 @@ Describe "SecureCredentials and RemoteConnection Integration" {
                 foreach ($endpointType in $endpointTypes) {
                     $testCredName = "Test-$credType-$(Get-Random)"
                     $testConnName = "Test-$endpointType-$(Get-Random)"
-                    
+
                     # Test credential creation with appropriate parameters
                     if ($credType -eq 'UserPassword') {
                         $testPassword = ConvertTo-SecureString "TestPass123" -AsPlainText -Force
@@ -81,7 +81,7 @@ Describe "SecureCredentials and RemoteConnection Integration" {
                     } elseif ($credType -eq 'Certificate') {
                         { New-SecureCredential -CredentialName $testCredName -CredentialType $credType -CertificatePath "/path/to/cert.pem" -WhatIf } | Should -Not -Throw
                     }
-                    
+
                     # Test connection creation
                     { New-RemoteConnection -ConnectionName $testConnName -EndpointType $endpointType -HostName "test.com" -CredentialName $testCredName -WhatIf } | Should -Not -Throw
                 }
@@ -91,22 +91,22 @@ Describe "SecureCredentials and RemoteConnection Integration" {
         It "Should support bulk operations" {
             $credentialNames = @()
             $connectionNames = @()
-            
+
             # Create multiple credentials and connections
             for ($i = 1; $i -le 3; $i++) {
                 $credName = "Bulk-Test-Credential-$i-$(Get-Random)"
                 $connName = "Bulk-Test-Connection-$i-$(Get-Random)"
-                
+
                 $credentialNames += $credName
                 $connectionNames += $connName
                   # Test bulk credential creation with required parameters
                 $testPassword = ConvertTo-SecureString "BulkTestPass123" -AsPlainText -Force
                 { New-SecureCredential -CredentialName $credName -CredentialType UserPassword -Username "bulkuser$i" -Password $testPassword -WhatIf } | Should -Not -Throw
-                
+
                 # Test bulk connection creation
                 { New-RemoteConnection -ConnectionName $connName -EndpointType SSH -HostName "test$i.example.com" -CredentialName $credName -WhatIf } | Should -Not -Throw
             }
-            
+
             $credentialNames.Count | Should -Be 3
             $connectionNames.Count | Should -Be 3
         }
@@ -123,14 +123,14 @@ Describe "SecureCredentials and RemoteConnection Integration" {
                     $testPassword = ConvertTo-SecureString "ConcurrentPass123" -AsPlainText -Force
                     New-SecureCredential -CredentialName "Concurrent-Test-$Index" -CredentialType UserPassword -Username "concurrentuser$Index" -Password $testPassword -WhatIf
                 } -ArgumentList $i
-                
+
                 $jobs += $job
             }
-            
+
             # Wait for all jobs to complete
             $results = $jobs | Wait-Job | Receive-Job
             $jobs | Remove-Job
-            
+
             # All jobs should complete successfully
             $results.Count | Should -Be 3
             foreach ($result in $results) {
@@ -147,7 +147,7 @@ Describe "SecureCredentials and RemoteConnection Integration" {
             catch {
                 $_.Exception.Message | Should -Not -BeNullOrEmpty
             }
-            
+
             try {
                 New-RemoteConnection -ConnectionName "" -EndpointType SSH -HostName "test.com"
                 $false | Should -Be $true # Should not reach here
