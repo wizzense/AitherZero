@@ -26,7 +26,7 @@ function New-AutounattendFile {
         [switch]$Force
     )    begin {
         Write-CustomLog -Level 'INFO' -Message "Generating autounattend file for: $OSType"
-        
+
         # Get default template path if not specified
         if (-not $TemplatePath) {
             $templateType = if ($HeadlessMode) { 'Headless' } else { 'Generic' }
@@ -35,7 +35,7 @@ function New-AutounattendFile {
                 Write-CustomLog -Level 'WARN' -Message "No template found, will generate from scratch"
             }
         }
-        
+
         # Set default configuration values
         $defaultConfig = @{
             # Windows PE Settings
@@ -43,30 +43,30 @@ function New-AutounattendFile {
             SystemLocale = 'en-US'
             UILanguage = 'en-US'
             UserLocale = 'en-US'
-            
+
             # User Data
             AcceptEula = $true
             ProductKey = 'Insert License Key Here'
             FullName = 'AitherZero Lab'
             Organization = 'AitherZero Infrastructure'
-            
+
             # Disk Configuration
             DiskID = 0
             EFIPartitionSize = 260
             MSRPartitionSize = 16
             PrimaryPartitionSize = 20000
-            
+
             # Administrator Account
             AdminPassword = 'P@ssw0rd123!'
             AdminPasswordPlainText = $false
-            
+
             # Computer Settings
             ComputerName = 'WIN-LAB-01'
             TimeZone = 'UTC'
-            
+
             # Network Settings
             EnableDHCP = $true
-            
+
             # Additional Settings
             EnableRDP = $true
             DisableWindowsDefender = $false
@@ -74,7 +74,7 @@ function New-AutounattendFile {
             DisableUAC = $false
             AutoLogon = $false
             AutoLogonCount = 3
-            
+
             # Commands to run
             FirstLogonCommands = @()
             BootstrapScript = $null
@@ -105,7 +105,7 @@ function New-AutounattendFile {
     process {
         try {
             if ($PSCmdlet.ShouldProcess($OutputPath, "Generate Autounattend File")) {
-                
+
                 Write-CustomLog -Level 'INFO' -Message "Creating autounattend XML content..."
 
                 # Build the XML content
@@ -260,9 +260,9 @@ function New-AutounattendFile {
                     $xmlContent += @"
             <FirstLogonCommands>
 "@
-                    
+
                     $commandOrder = 1
-                    
+
                     # Add bootstrap script if specified
                     if ($Configuration.BootstrapScript) {
                         $xmlContent += @"

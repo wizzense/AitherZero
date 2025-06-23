@@ -20,7 +20,7 @@ function Export-ISOInventory {
 
     begin {
         Write-CustomLog -Level 'INFO' -Message "Exporting ISO inventory to: $ExportPath"
-        
+
         # Set default repository path if not specified
         if (-not $RepositoryPath) {
             $RepositoryPath = Join-Path $env:TEMP "AitherZero-ISOs"
@@ -94,7 +94,7 @@ function Export-ISOInventory {
                 }
 
                 Write-CustomLog -Level 'SUCCESS' -Message "Exported inventory of $($inventory.Count) ISOs to: $ExportPath"
-                
+
                 return @{
                     Success = $true
                     ExportPath = $ExportPath

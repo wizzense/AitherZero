@@ -57,36 +57,36 @@ function Get-WindowsISOUrl {
         # Try to find exact match first
         if ($knownISOs.ContainsKey($ISOName)) {
             $isoVersions = $knownISOs[$ISOName]
-            
+
             # Find version (exact or latest)
-            $targetVersion = if ($isoVersions.ContainsKey($Version)) { 
-                $Version 
-            } elseif ($isoVersions.ContainsKey('latest')) { 
-                'latest' 
-            } else { 
-                $isoVersions.Keys | Select-Object -First 1 
+            $targetVersion = if ($isoVersions.ContainsKey($Version)) {
+                $Version
+            } elseif ($isoVersions.ContainsKey('latest')) {
+                'latest'
+            } else {
+                $isoVersions.Keys | Select-Object -First 1
             }
-            
+
             if ($isoVersions.ContainsKey($targetVersion)) {
                 $archVersions = $isoVersions[$targetVersion]
-                
+
                 # Find architecture
-                $targetArch = if ($archVersions.ContainsKey($Architecture)) { 
-                    $Architecture 
-                } else { 
-                    $archVersions.Keys | Select-Object -First 1 
+                $targetArch = if ($archVersions.ContainsKey($Architecture)) {
+                    $Architecture
+                } else {
+                    $archVersions.Keys | Select-Object -First 1
                 }
-                
+
                 if ($archVersions.ContainsKey($targetArch)) {
                     $langVersions = $archVersions[$targetArch]
-                    
+
                     # Find language
-                    $targetLang = if ($langVersions.ContainsKey($Language)) { 
-                        $Language 
-                    } else { 
-                        $langVersions.Keys | Select-Object -First 1 
+                    $targetLang = if ($langVersions.ContainsKey($Language)) {
+                        $Language
+                    } else {
+                        $langVersions.Keys | Select-Object -First 1
                     }
-                    
+
                     if ($langVersions.ContainsKey($targetLang)) {
                         return $langVersions[$targetLang]
                     }
@@ -95,8 +95,8 @@ function Get-WindowsISOUrl {
         }
 
         # Try partial matching for Windows names
-        $matchedKey = $knownISOs.Keys | Where-Object { 
-            $ISOName -match $_ -or $_ -match $ISOName 
+        $matchedKey = $knownISOs.Keys | Where-Object {
+            $ISOName -match $_ -or $_ -match $ISOName
         } | Select-Object -First 1
 
         if ($matchedKey) {
@@ -104,7 +104,7 @@ function Get-WindowsISOUrl {
             $firstVersion = $isoVersions.Keys | Select-Object -First 1
             $firstArch = $isoVersions[$firstVersion].Keys | Select-Object -First 1
             $firstLang = $isoVersions[$firstVersion][$firstArch].Keys | Select-Object -First 1
-            
+
             Write-CustomLog -Level 'WARN' -Message "Exact match not found for '$ISOName', using closest match: $matchedKey"
             return $isoVersions[$firstVersion][$firstArch][$firstLang]
         }
@@ -112,10 +112,10 @@ function Get-WindowsISOUrl {
         # If no known URL found, provide a helpful error
         Write-CustomLog -Level 'WARN' -Message "No known download URL for Windows ISO: $ISOName"
         Write-CustomLog -Level 'INFO' -Message "Known Windows ISOs: $($knownISOs.Keys -join ', ')"
-        
+
         # Return a placeholder URL for testing purposes
         return "https://download.microsoft.com/placeholder/$ISOName-$Version-$Architecture-$Language.iso"
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Error determining Windows ISO URL: $($_.Exception.Message)"
         throw

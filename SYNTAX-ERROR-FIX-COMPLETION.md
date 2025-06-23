@@ -2,9 +2,9 @@
 
 ## Issue Resolution Summary
 
-**Date:** 2025-06-23  
-**Issue:** PowerShell syntax error in Get-ISODownload.ps1 preventing module loading  
-**Resolution:** Fixed missing closing brace in BITS transfer section  
+**Date:** 2025-06-23
+**Issue:** PowerShell syntax error in Get-ISODownload.ps1 preventing module loading
+**Resolution:** Fixed missing closing brace in BITS transfer section
 
 ## Problem Description
 
@@ -72,8 +72,8 @@ Tests Passed: 36, Failed: 0, Skipped: 0, Inconclusive: 0, NotRun: 0
 
 ## GitHub Integration
 
-**Issue Created:** [#47](https://github.com/wizzense/AitherZero/issues/47)  
-**Pull Request:** [#48](https://github.com/wizzense/AitherZero/pull/48)  
+**Issue Created:** [#47](https://github.com/wizzense/AitherZero/issues/47)
+**Pull Request:** [#48](https://github.com/wizzense/AitherZero/pull/48)
 **Branch:** `patch/20250623-143847-Fix-syntax-error-in-Get-ISODownload-ps1-missing-closing-brace-in-BITS-transfer-section`
 
 ## Impact and Resolution

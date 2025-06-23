@@ -7,7 +7,7 @@ function Get-AutounattendTemplate {
     )
 
     $templateDir = Join-Path $PSScriptRoot '../Templates'
-    
+
     $templateFile = switch ($TemplateType) {
         'Generic' { 'autounattend-generic.xml' }
         'Headless' { 'autounattend-headless.xml' }

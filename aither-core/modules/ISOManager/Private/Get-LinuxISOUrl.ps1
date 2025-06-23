@@ -91,26 +91,26 @@ function Get-LinuxISOUrl {
         # Try to find exact match first
         if ($knownDistros.ContainsKey($ISOName)) {
             $distroVersions = $knownDistros[$ISOName]
-            
+
             # Find version (exact or latest)
-            $targetVersion = if ($distroVersions.ContainsKey($Version)) { 
-                $Version 
-            } elseif ($distroVersions.ContainsKey('latest')) { 
-                'latest' 
-            } else { 
-                $distroVersions.Keys | Select-Object -First 1 
+            $targetVersion = if ($distroVersions.ContainsKey($Version)) {
+                $Version
+            } elseif ($distroVersions.ContainsKey('latest')) {
+                'latest'
+            } else {
+                $distroVersions.Keys | Select-Object -First 1
             }
-            
+
             if ($distroVersions.ContainsKey($targetVersion)) {
                 $archVersions = $distroVersions[$targetVersion]
-                
+
                 # Find architecture
-                $targetArch = if ($archVersions.ContainsKey($normalizedArch)) { 
-                    $normalizedArch 
-                } else { 
-                    $archVersions.Keys | Select-Object -First 1 
+                $targetArch = if ($archVersions.ContainsKey($normalizedArch)) {
+                    $normalizedArch
+                } else {
+                    $archVersions.Keys | Select-Object -First 1
                 }
-                
+
                 if ($archVersions.ContainsKey($targetArch)) {
                     return $archVersions[$targetArch]
                 }
@@ -118,7 +118,7 @@ function Get-LinuxISOUrl {
         }
 
         # Try partial matching for distribution names
-        $matchedKey = $knownDistros.Keys | Where-Object { 
+        $matchedKey = $knownDistros.Keys | Where-Object {
             $ISOName -match $_ -or $_ -match $ISOName -or $ISOName.ToLower() -like "*$($_.ToLower())*"
         } | Select-Object -First 1
 
@@ -126,7 +126,7 @@ function Get-LinuxISOUrl {
             $distroVersions = $knownDistros[$matchedKey]
             $firstVersion = $distroVersions.Keys | Select-Object -First 1
             $firstArch = $distroVersions[$firstVersion].Keys | Select-Object -First 1
-            
+
             Write-CustomLog -Level 'WARN' -Message "Exact match not found for '$ISOName', using closest match: $matchedKey"
             return $distroVersions[$firstVersion][$firstArch]
         }
@@ -134,10 +134,10 @@ function Get-LinuxISOUrl {
         # If no known URL found, provide a helpful error
         Write-CustomLog -Level 'WARN' -Message "No known download URL for Linux distribution: $ISOName"
         Write-CustomLog -Level 'INFO' -Message "Known Linux distributions: $($knownDistros.Keys -join ', ')"
-        
+
         # Return a placeholder URL for testing purposes
         return "https://example.com/linux-distros/$ISOName-$Version-$normalizedArch.iso"
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Error determining Linux ISO URL: $($_.Exception.Message)"
         throw

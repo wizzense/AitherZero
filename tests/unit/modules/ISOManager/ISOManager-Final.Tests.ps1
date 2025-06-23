@@ -16,7 +16,7 @@ Describe "ISO Manager Module - Final Comprehensive Test Suite" {
         It "Should export all expected public functions" {
             $expectedFunctions = @(
                 'Get-ISODownload',
-                'Get-ISOInventory', 
+                'Get-ISOInventory',
                 'Get-ISOMetadata',
                 'Test-ISOIntegrity',
                 'New-ISORepository',
@@ -102,7 +102,7 @@ Describe "ISO Manager Module - Final Comprehensive Test Suite" {
         It "Should handle existing empty repository" {
             # Create empty directory
             New-Item -ItemType Directory -Path $testRepoPath -Force | Out-Null
-            
+
             $result = $null
             { $result = Get-ISOInventory -RepositoryPath $testRepoPath } | Should -Not -Throw
             ($result -eq $null -or $result.Count -eq 0) | Should -Be $true
@@ -137,7 +137,7 @@ Describe "ISO Manager Module - Final Comprehensive Test Suite" {
             # Create a test file to simulate ISO
             $testFile = Join-Path $env:TEMP "test-metadata-$(Get-Random).iso"
             "Test ISO content" | Set-Content $testFile
-            
+
             try {
                 $result = Get-ISOMetadata -FilePath $testFile
                 $result | Should -Not -BeNullOrEmpty
@@ -240,7 +240,7 @@ Describe "ISO Customizer Module - Comprehensive Test Suite" {
             $result = New-AutounattendFile -Configuration $testConfig -OutputPath $testOutputPath -Force
             $result.Success | Should -Be $true
             Test-Path $testOutputPath | Should -Be $true
-            
+
             # Validate XML is well-formed
             { [xml](Get-Content $testOutputPath -Raw) } | Should -Not -Throw
         }
@@ -248,14 +248,14 @@ Describe "ISO Customizer Module - Comprehensive Test Suite" {
         It "Should support different OS types and editions" {
             $osTypes = @('Server2025', 'Server2022', 'Windows11', 'Windows10')
             $editions = @('Datacenter', 'Standard', 'Core')
-            
+
             foreach ($osType in $osTypes) {
                 foreach ($edition in $editions) {
                     $config = @{
                         ComputerName = "TEST-$osType-$edition"
                         AdminPassword = "P@ssw0rd123!"
                     }
-                    
+
                     $testPath = Join-Path $env:TEMP "test-$osType-$edition-$(Get-Random).xml"
                     try {
                         $result = New-AutounattendFile -Configuration $config -OutputPath $testPath -OSType $osType -Edition $edition -Force
@@ -318,7 +318,7 @@ Describe "ISO Customizer Module - Comprehensive Test Suite" {
         It "Should provide autounattend template paths" {
             $genericTemplate = Get-AutounattendTemplate -TemplateType 'Generic'
             $headlessTemplate = Get-AutounattendTemplate -TemplateType 'Headless'
-            
+
             # Templates may or may not exist - both are valid states
             if ($genericTemplate) {
                 Test-Path $genericTemplate | Should -Be $true
@@ -330,7 +330,7 @@ Describe "ISO Customizer Module - Comprehensive Test Suite" {
 
         It "Should provide bootstrap template path" {
             $bootstrapTemplate = Get-BootstrapTemplate
-            
+
             # Template may or may not exist - both are valid states
             if ($bootstrapTemplate) {
                 Test-Path $bootstrapTemplate | Should -Be $true
@@ -339,8 +339,8 @@ Describe "ISO Customizer Module - Comprehensive Test Suite" {
 
         It "Should provide kickstart template path" {
             $kickstartTemplate = Get-KickstartTemplate
-            
-            # Template may or may not exist - both are valid states  
+
+            # Template may or may not exist - both are valid states
             if ($kickstartTemplate) {
                 Test-Path $kickstartTemplate | Should -Be $true
             }
@@ -351,7 +351,7 @@ Describe "ISO Customizer Module - Comprehensive Test Suite" {
         BeforeEach {
             $testSourceISO = Join-Path $env:TEMP "test-source-$(Get-Random).iso"
             $testOutputISO = Join-Path $env:TEMP "test-output-$(Get-Random).iso"
-            
+
             # Create a minimal test ISO file
             "Test ISO content" | Set-Content $testSourceISO
         }
@@ -390,12 +390,12 @@ Describe "Advanced Integration and Performance Tests" {
             # Test that both modules can work together
             $testRepo = Join-Path $env:TEMP "IntegrationRepo-$(Get-Random)"
             $autounattendPath = Join-Path $env:TEMP "integration-autounattend-$(Get-Random).xml"
-            
+
             try {
                 # Create repository
                 $repoResult = New-ISORepository -RepositoryPath $testRepo -Force
                 $repoResult.Success | Should -Be $true
-                
+
                 # Generate autounattend file
                 $config = @{
                     ComputerName = "INTEGRATION-TEST"
@@ -403,11 +403,11 @@ Describe "Advanced Integration and Performance Tests" {
                 }
                 $autounattendResult = New-AutounattendFile -Configuration $config -OutputPath $autounattendPath -Force
                 $autounattendResult.Success | Should -Be $true
-                
+
                 # Both operations should succeed
                 Test-Path $testRepo | Should -Be $true
                 Test-Path $autounattendPath | Should -Be $true
-                
+
             } finally {
                 if (Test-Path $testRepo) { Remove-Item $testRepo -Recurse -Force -ErrorAction SilentlyContinue }
                 if (Test-Path $autounattendPath) { Remove-Item $autounattendPath -Force -ErrorAction SilentlyContinue }
@@ -421,14 +421,14 @@ Describe "Advanced Integration and Performance Tests" {
                 ComputerName = ""  # Invalid empty name
                 AdminPassword = $null  # Invalid null password
             }
-            
+
             $testPath = Join-Path $env:TEMP "invalid-config-$(Get-Random).xml"
-            
+
             try {
                 # Should either handle gracefully or throw a descriptive error
                 $result = $null
                 { $result = New-AutounattendFile -Configuration $invalidConfig -OutputPath $testPath -WhatIf } | Should -Not -Throw
-                
+
             } finally {
                 Remove-Item $testPath -Force -ErrorAction SilentlyContinue
             }
@@ -445,17 +445,17 @@ Describe "Advanced Integration and Performance Tests" {
                     }
                 }
             }
-            
+
             $testPath = Join-Path $env:TEMP "performance-test-$(Get-Random).xml"
-            
+
             try {
                 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
                 $result = New-AutounattendFile -Configuration $complexConfig -OutputPath $testPath -Force
                 $stopwatch.Stop()
-                
+
                 $result.Success | Should -Be $true
                 $stopwatch.ElapsedMilliseconds | Should -BeLessThan 5000  # Should complete in under 5 seconds
-                
+
             } finally {
                 Remove-Item $testPath -Force -ErrorAction SilentlyContinue
             }
@@ -465,20 +465,20 @@ Describe "Advanced Integration and Performance Tests" {
     Context "Resource Management" {
         It "Should clean up temporary resources properly" {
             $tempFilesBefore = Get-ChildItem $env:TEMP -Filter "*iso*" -ErrorAction SilentlyContinue
-            
+
             # Perform operations that might create temp files
             $testPath = Join-Path $env:TEMP "cleanup-test-$(Get-Random).xml"
             $config = @{ ComputerName = "CLEANUP-TEST"; AdminPassword = "P@ssw0rd123!" }
-            
+
             try {
                 $result = New-AutounattendFile -Configuration $config -OutputPath $testPath -Force
                 $result.Success | Should -Be $true
             } finally {
                 Remove-Item $testPath -Force -ErrorAction SilentlyContinue
             }
-            
+
             $tempFilesAfter = Get-ChildItem $env:TEMP -Filter "*iso*" -ErrorAction SilentlyContinue
-            
+
             # Should not significantly increase temp files
             ($tempFilesAfter.Count - $tempFilesBefore.Count) | Should -BeLessOrEqual 2
         }

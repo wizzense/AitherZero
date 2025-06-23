@@ -49,7 +49,7 @@ function New-CustomISO {
         [switch]$ValidateOnly
     )    begin {
         Write-CustomLog -Level 'INFO' -Message "Starting custom ISO creation from: $SourceISOPath"
-        
+
         # Set default bootstrap script if not specified
         if (-not $BootstrapScript) {
             $defaultBootstrap = Get-BootstrapTemplate
@@ -58,12 +58,12 @@ function New-CustomISO {
                 Write-CustomLog -Level 'INFO' -Message "Using default bootstrap template: $BootstrapScript"
             }
         }
-        
+
         # Set default paths
         if (-not $ExtractPath) {
             $ExtractPath = Join-Path $env:TEMP "ISOExtract_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
         }
-        
+
         if (-not $MountPath) {
             $MountPath = Join-Path $env:TEMP "ISOMount_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
         }
@@ -107,12 +107,12 @@ function New-CustomISO {
     process {
         try {
             if ($PSCmdlet.ShouldProcess($OutputISOPath, "Create Custom ISO")) {
-                
+
                 # Step 1: Mount the source ISO
                 Write-CustomLog -Level 'INFO' -Message "Mounting source ISO..."
                 $mountResult = Mount-DiskImage -ImagePath $SourceISOPath -PassThru
                 $driveLetter = (Get-Volume -DiskImage $mountResult).DriveLetter + ":"
-                
+
                 try {
                     # Step 2: Extract ISO contents
                     Write-CustomLog -Level 'INFO' -Message "Extracting ISO contents to: $ExtractPath"
@@ -124,9 +124,9 @@ function New-CustomISO {
                         "/W:1",
                         "/NP"
                     )
-                    
+
                     $robocopyResult = Start-Process -FilePath "robocopy" -ArgumentList $robocopyArgs -Wait -PassThru -NoNewWindow
-                    
+
                     # Robocopy exit codes 0-7 are success, 8+ are errors
                     if ($robocopyResult.ExitCode -gt 7) {
                         throw "Failed to extract ISO contents. Robocopy exit code: $($robocopyResult.ExitCode)"
@@ -152,7 +152,7 @@ function New-CustomISO {
                         "/Index:$WIMIndex",
                         "/MountDir:`"$MountPath`""
                     )
-                    
+
                     $dismResult = Start-Process -FilePath "dism" -ArgumentList $dismArgs -Wait -PassThru -NoNewWindow
                     if ($dismResult.ExitCode -ne 0) {
                         throw "Failed to mount WIM image. DISM exit code: $($dismResult.ExitCode)"
@@ -202,7 +202,7 @@ function New-CustomISO {
                                     "/Driver:`"$driverPath`"",
                                     "/Recurse"
                                 )
-                                
+
                                 $dismDriverResult = Start-Process -FilePath "dism" -ArgumentList $dismDriverArgs -Wait -PassThru -NoNewWindow
                                 if ($dismDriverResult.ExitCode -ne 0) {
                                     Write-CustomLog -Level 'WARN' -Message "Failed to add drivers from: $driverPath"
@@ -224,7 +224,7 @@ function New-CustomISO {
                             "/MountDir:`"$MountPath`"",
                             "/Commit"
                         )
-                        
+
                         $dismUnmountResult = Start-Process -FilePath "dism" -ArgumentList $dismUnmountArgs -Wait -PassThru -NoNewWindow
                         if ($dismUnmountResult.ExitCode -ne 0) {
                             Write-CustomLog -Level 'ERROR' -Message "Failed to unmount WIM image. DISM exit code: $($dismUnmountResult.ExitCode)"
@@ -248,7 +248,7 @@ function New-CustomISO {
                         "`"$ExtractPath`"",
                         "`"$OutputISOPath`""
                     )
-                    
+
                     $oscdimgResult = Start-Process -FilePath $OscdimgPath -ArgumentList $oscdimgArgs -Wait -PassThru -NoNewWindow
                     if ($oscdimgResult.ExitCode -ne 0) {
                         throw "Failed to create bootable ISO. oscdimg exit code: $($oscdimgResult.ExitCode)"
@@ -283,7 +283,7 @@ function New-CustomISO {
             }
         } catch {
             Write-CustomLog -Level 'ERROR' -Message "Failed to create custom ISO: $($_.Exception.Message)"
-            
+
             # Cleanup on error
             try {
                 Dismount-DiskImage -ImagePath $SourceISOPath -ErrorAction SilentlyContinue | Out-Null
@@ -293,7 +293,7 @@ function New-CustomISO {
             } catch {
                 Write-CustomLog -Level 'WARN' -Message "Error during cleanup: $($_.Exception.Message)"
             }
-            
+
             throw
         }
     }
