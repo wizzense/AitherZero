@@ -115,14 +115,14 @@ function Get-ISODownload {
                         Start-Sleep -Seconds 2
                         $bitsJob = Get-BitsTransfer -JobId $bitsJob.JobId
                     }
-                    
-                    if ($bitsJob.JobState -eq 'Transferred') {
+                      if ($bitsJob.JobState -eq 'Transferred') {
                         Complete-BitsTransfer -BitsJob $bitsJob
                         $downloadInfo.Status = 'Completed'
                     } else {
                         Remove-BitsTransfer -BitsJob $bitsJob
                         throw "BITS transfer failed with state: $($bitsJob.JobState)"
-                    }                } else {
+                    }
+                } else {
                     # Fallback to Invoke-WebRequest with progress tracking
                     Invoke-WebRequest -Uri $downloadUrl -OutFile $fullPath
                     $downloadInfo.Status = 'Completed'
