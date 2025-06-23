@@ -112,12 +112,12 @@ function Test-FrameworkComponents {
                     $errors = $null
                     $ast = [System.Management.Automation.Language.Parser]::ParseInput($content, [ref]$null, [ref]$errors)
                     if ($errors.Count -gt 0) {
-                        Write-Information " Syntax warnings: $($errors.Count)" -InformationAction Continue
+                        Write-Warning
                     } else {
                         Write-Information ' Syntax validated' -InformationAction Continue
                     }
                 } catch {
-                    Write-Information " Syntax validation failed: $_" -InformationAction Continue
+                    Write-Error
                     $allValid = $false
                 }
             }
@@ -165,10 +165,10 @@ function Initialize-TestGeneration {
                         $generatedTests++
                         Write-Information " PASS Generated: $testName" -InformationAction Continue
                     } catch {
-                        Write-Information " FAIL Failed to generate test for $($script.Name): $_" -InformationAction Continue
+                        Write-Error
                     }
                 } else {
-                    Write-Information " ⏭ Test exists: $testName" -InformationAction Continue
+                    Write-Information " [SKIP] Test exists: $testName" -InformationAction Continue
                 }
             }
         }
@@ -219,7 +219,7 @@ function Test-FrameworkExecution {
 
         return $true
     } catch {
-        Write-Information " FAIL Framework execution test failed: $_" -InformationAction Continue
+        Write-Error
         return $false
     }
 }
@@ -257,7 +257,7 @@ try {
         if ($isValid) {
             Write-Information "`nPASS Framework validation passed!" -InformationAction Continue
         } else {
-            Write-Information "`nFAIL Framework validation failed!" -InformationAction Continue
+            Write-Error
             exit 1
         }
         exit 0
@@ -298,7 +298,7 @@ try {
     Show-NextSteps
 
     if ($SetupWatcher -and $watcherJob) {
-        Write-Information "`n⏰ File watcher is running in background (Job ID: $($watcherJob.Id))" -InformationAction Continue
+        Write-Information "`n[TIME] File watcher is running in background (Job ID: $($watcherJob.Id))" -InformationAction Continue
         Write-Information ' Press Ctrl+C to stop this script, watcher will continue running' -InformationAction Continue
 
         # Keep script running to monitor watcher
@@ -308,7 +308,7 @@ try {
                 Start-Sleep 10
                 $job = Get-Job -Id $watcherJob.Id -ErrorAction SilentlyContinue
                 if (-not $job -or $job.State -eq 'Failed') {
-                    Write-Information 'WARN File watcher stopped unexpectedly' -InformationAction Continue
+                    Write-Warning
                     break
                 }
             }
@@ -318,7 +318,8 @@ try {
     }
 
 } catch {
-    Write-Information "`nFAIL Setup failed: $_" -InformationAction Continue
+    Write-Error
     Write-Information 'Check the error above and try again' -InformationAction Continue
     exit 1
 }
+
