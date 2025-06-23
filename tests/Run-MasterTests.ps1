@@ -32,18 +32,21 @@ Run all tests and generate HTML report
 Quick smoke test run
 #>
 
-[CmdletBinding()]
 param(
     [ValidateSet('All', 'PowerShell', 'Python', 'Smoke', 'Integration')]
-    [string]$TestSuite = 'Smoke',
-    
+    [string]$TestSuite,
+
     [ValidateSet('Console', 'JUnit', 'JSON', 'HTML')]
-    [string]$OutputFormat = 'Console',
-    
+    [string]$OutputFormat,
+
     [switch]$Parallel,
-    
+
     [switch]$CreateReport
 )
+
+# Set default values
+if (-not $TestSuite) { $TestSuite = 'Smoke' }
+if (-not $OutputFormat) { $OutputFormat = 'Console' }
 
 # Set up environment
 $ErrorActionPreference = 'Stop'
@@ -62,13 +65,13 @@ if (-not (Test-Path $ResultsDir)) {
     if (-not (Test-Path $ResultsDir)) { New-Item -Path $ResultsDir -ItemType Directory -Force | Out-Null }
 }
 
-Write-Host "DEPLOY OpenTofu Lab Automation - Master Test Runner" -ForegroundColor Cyan
-Write-Host "=" * 60 -ForegroundColor Gray
-Write-Host "Project Root: $ProjectRoot" -ForegroundColor Gray
-Write-Host "Test Suite: $TestSuite" -ForegroundColor Gray
-Write-Host "Output Format: $OutputFormat" -ForegroundColor Gray
-Write-Host "Timestamp: $Timestamp" -ForegroundColor Gray
-Write-Host "=" * 60 -ForegroundColor Gray
+Write-Information " -InformationAction ContinueDEPLOY OpenTofu Lab Automation - Master Test Runner" -ForegroundColor Cyan
+Write-Information " -InformationAction Continue=" * 60 -ForegroundColor Gray
+Write-Information " -InformationAction ContinueProject Root: $ProjectRoot" -ForegroundColor Gray
+Write-Information " -InformationAction ContinueTest Suite: $TestSuite" -ForegroundColor Gray
+Write-Information " -InformationAction ContinueOutput Format: $OutputFormat" -ForegroundColor Gray
+Write-Information " -InformationAction ContinueTimestamp: $Timestamp" -ForegroundColor Gray
+Write-Information " -InformationAction Continue=" * 60 -ForegroundColor Gray
 
 # Test execution results
 $testResults = @{
@@ -81,27 +84,27 @@ $testResults = @{
 }
 
 # PowerShell Tests
-if ($TestSuite -in @('All', 'PowerShell', 'Smoke', 'Integration')) {    Write-Host "`nPACKAGE Running PowerShell Tests..." -ForegroundColor Yellow
-    
+if ($TestSuite -in @('All', 'PowerShell', 'Smoke', 'Integration')) {    Write-Information " -InformationAction Continue`nPACKAGE Running PowerShell Tests..." -ForegroundColor Yellow
+
     try {
         $psTestScript = Join-Path $TestsRoot "Invoke-IntelligentTests.ps1"
         if (Test-Path $psTestScript) {
-            $testType = if ($TestSuite -eq 'Smoke') { 'Smoke' } 
+            $testType = if ($TestSuite -eq 'Smoke') { 'Smoke' }
                        elseif ($TestSuite -eq 'Integration') { 'Integration' }
                        elseif ($TestSuite -eq 'PowerShell') { 'All' }
                        else { 'All' }
-            
+
             $psResult = & $psTestScript -TestType $testType -OutputFormat $OutputFormat
             $testResults.PowerShell = @{
                 Status = if ($LASTEXITCODE -eq 0) { 'PASSED' } else { 'FAILED' }
                 ExitCode = $LASTEXITCODE
                 Output = $psResult
             }
-            
+
             if ($LASTEXITCODE -eq 0) {
-                Write-Host "PASS PowerShell tests completed successfully" -ForegroundColor Green
+                Write-Information " -InformationAction ContinuePASS PowerShell tests completed successfully" -ForegroundColor Green
             } else {
-                Write-Host "FAIL PowerShell tests failed" -ForegroundColor Red
+                Write-Information " -InformationAction ContinueFAIL PowerShell tests failed" -ForegroundColor Red
             }
         } else {
             Write-Warning "PowerShell test script not found: $psTestScript"
@@ -122,8 +125,8 @@ if ($TestSuite -in @('All', 'PowerShell', 'Smoke', 'Integration')) {    Write-Ho
 
 # Python Tests
 if ($TestSuite -in @('All', 'Python', 'Smoke')) {
-    Write-Host "`n[SYMBOL] Running Python Tests..." -ForegroundColor Yellow
-    
+    Write-Information " -InformationAction Continue`n[SYMBOL] Running Python Tests..." -ForegroundColor Yellow
+
     try {
         $pythonTestScript = Join-Path $TestsRoot "test_python_modules.py"
         if (Test-Path $pythonTestScript) {
@@ -132,7 +135,7 @@ if ($TestSuite -in @('All', 'Python', 'Smoke')) {
             if (-not $pythonCmd) {
                 $pythonCmd = Get-Command python3 -ErrorAction SilentlyContinue
             }
-            
+
             if ($pythonCmd) {
                 $pyResult = & $pythonCmd.Source $pythonTestScript
                 $testResults.Python = @{
@@ -140,11 +143,11 @@ if ($TestSuite -in @('All', 'Python', 'Smoke')) {
                     ExitCode = $LASTEXITCODE
                     Output = $pyResult
                 }
-                
+
                 if ($LASTEXITCODE -eq 0) {
-                    Write-Host "PASS Python tests completed successfully" -ForegroundColor Green
+                    Write-Information " -InformationAction ContinuePASS Python tests completed successfully" -ForegroundColor Green
                 } else {
-                    Write-Host "FAIL Python tests failed" -ForegroundColor Red
+                    Write-Information " -InformationAction ContinueFAIL Python tests failed" -ForegroundColor Red
                 }
             } else {
                 Write-Warning "Python not found in PATH"
@@ -190,8 +193,8 @@ if ($statuses -contains 'FAILED' -or $statuses -contains 'ERROR') {
 }
 
 # Generate summary report
-Write-Host "`nREPORT Test Results Summary" -ForegroundColor Cyan
-Write-Host "=" * 60 -ForegroundColor Gray
+Write-Information " -InformationAction Continue`nREPORT Test Results Summary" -ForegroundColor Cyan
+Write-Information " -InformationAction Continue=" * 60 -ForegroundColor Gray
 
 if ($testResults.PowerShell) {
     $psStatusColor = switch ($testResults.PowerShell.Status) {
@@ -201,7 +204,7 @@ if ($testResults.PowerShell) {
         'ERROR' { 'Red' }
         default { 'Gray' }
     }
-    Write-Host "PowerShell Tests: $($testResults.PowerShell.Status)" -ForegroundColor $psStatusColor
+    Write-Information " -InformationAction ContinuePowerShell Tests: $($testResults.PowerShell.Status)" -ForegroundColor $psStatusColor
 }
 
 if ($testResults.Python) {
@@ -212,7 +215,7 @@ if ($testResults.Python) {
         'ERROR' { 'Red' }
         default { 'Gray' }
     }
-    Write-Host "Python Tests: $($testResults.Python.Status)" -ForegroundColor $pyStatusColor
+    Write-Information " -InformationAction ContinuePython Tests: $($testResults.Python.Status)" -ForegroundColor $pyStatusColor
 }
 
 $overallColor = switch ($testResults.OverallStatus) {
@@ -222,9 +225,9 @@ $overallColor = switch ($testResults.OverallStatus) {
     default { 'Gray' }
 }
 
-Write-Host "=" * 60 -ForegroundColor Gray
-Write-Host "Overall Status: $($testResults.OverallStatus)" -ForegroundColor $overallColor
-Write-Host "Total Duration: $($testResults.TotalDuration.ToString('mm\:ss'))" -ForegroundColor Gray
+Write-Information " -InformationAction Continue=" * 60 -ForegroundColor Gray
+Write-Information " -InformationAction ContinueOverall Status: $($testResults.OverallStatus)" -ForegroundColor $overallColor
+Write-Information " -InformationAction ContinueTotal Duration: $($testResults.TotalDuration.ToString('mm\:ss'))" -ForegroundColor Gray
 
 # Save results to JSON
 $jsonReport = @{
@@ -246,12 +249,12 @@ $jsonReport = @{
 $jsonReportPath = Join-Path $ResultsDir "master_test_results_$Timestamp.json"
 $jsonReport | Out-File -FilePath $jsonReportPath -Encoding UTF8
 
-Write-Host "`n[SYMBOL] Results saved to: $jsonReportPath" -ForegroundColor Gray
+Write-Information " -InformationAction Continue`n[SYMBOL] Results saved to: $jsonReportPath" -ForegroundColor Gray
 
 # Generate HTML report if requested
 if ($CreateReport) {
-    Write-Host "`nNOTE Generating HTML report..." -ForegroundColor Yellow
-    
+    Write-Information " -InformationAction Continue`nNOTE Generating HTML report..." -ForegroundColor Yellow
+
     $htmlReport = @"
 <!DOCTYPE html>
 <html>
@@ -277,7 +280,7 @@ if ($CreateReport) {
 <body>
     <div class="container">
         <h1>DEPLOY OpenTofu Lab Automation - Test Results</h1>
-        
+
         <div class="summary">
             <h2>Summary</h2>
             <p><strong>Test Suite:</strong> $TestSuite</p>
@@ -285,7 +288,7 @@ if ($CreateReport) {
             <p><strong>Duration:</strong> <span class="duration">$($testResults.TotalDuration.ToString('mm\:ss'))</span></p>
             <p><strong>Overall Status:</strong> <span class="status $($testResults.OverallStatus.ToLower())">$($testResults.OverallStatus)</span></p>
         </div>
-        
+
         <h2>Test Results</h2>
 "@
 
@@ -312,7 +315,7 @@ if ($CreateReport) {
     }
 
     $htmlReport += @"
-        
+
         <h2>Environment</h2>
         <div class="meta">
             <p><strong>OS:</strong> $($PSVersionTable.OS)</p>
@@ -321,10 +324,10 @@ if ($CreateReport) {
             <p><strong>Modules Path:</strong> $env:PWSH_MODULES_PATH</p>
             <p><strong>Python Path:</strong> $env:PYTHON_MODULES_PATH</p>
         </div>
-        
+
         <h2>Raw Results</h2>
         <pre>$($jsonReport)</pre>
-        
+
         <hr style="margin-top: 40px; border: 0; border-top: 1px solid #dee2e6;">
         <p class="meta">Generated on $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') by OpenTofu Lab Automation Master Test Runner</p>
     </div>
@@ -334,29 +337,27 @@ if ($CreateReport) {
 
     $htmlReportPath = Join-Path $ResultsDir "test_report_$Timestamp.html"
     $htmlReport | Out-File -FilePath $htmlReportPath -Encoding UTF8
-    
-    Write-Host "[SYMBOL] HTML report saved to: $htmlReportPath" -ForegroundColor Green
+
+    Write-Information " -InformationAction Continue[SYMBOL] HTML report saved to: $htmlReportPath" -ForegroundColor Green
 }
 
 # Exit with appropriate code
-Write-Host "`n" -NoNewline
+Write-Information " -InformationAction Continue`n" -NoNewline
 switch ($testResults.OverallStatus) {
     'PASSED' {
-        Write-Host "COMPLETED All tests completed successfully!" -ForegroundColor Green
+        Write-Information " -InformationAction ContinueCOMPLETED All tests completed successfully!" -ForegroundColor Green
         exit 0
     }
     'FAILED' {
-        Write-Host "[SYMBOL] Some tests failed. Check the results above." -ForegroundColor Red
+        Write-Information " -InformationAction Continue[SYMBOL] Some tests failed. Check the results above." -ForegroundColor Red
         exit 1
     }
     'SKIPPED' {
-        Write-Host "WARNING  Tests were skipped. Check configuration." -ForegroundColor Yellow
+        Write-Information " -InformationAction ContinueWARNING  Tests were skipped. Check configuration." -ForegroundColor Yellow
         exit 0
     }
     default {
-        Write-Host "[SYMBOL] Test status unknown. Check logs." -ForegroundColor Gray
+        Write-Information " -InformationAction Continue[SYMBOL] Test status unknown. Check logs." -ForegroundColor Gray
         exit 1
     }
 }
-
-

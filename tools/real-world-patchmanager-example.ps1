@@ -29,14 +29,13 @@ if (-not $env:PROJECT_ROOT) {
 try {
     Import-Module "$env:PROJECT_ROOT/aither-core/modules/PatchManager" -Force -ErrorAction Stop
 } catch {
-    Write-Host "⚠️  Could not import PatchManager module. Please ensure modules are available." -ForegroundColor Yellow
-    Write-Host "   Expected path: $env:PROJECT_ROOT/aither-core/modules/PatchManager" -ForegroundColor Gray
+    Write-CustomLog -Level 'WARN' -Message "Could not import PatchManager module. Please ensure modules are available."
+    Write-CustomLog -Level 'INFO' -Message "Expected path: $env:PROJECT_ROOT/aither-core/modules/PatchManager"
     exit 1
 }
 
-Write-Host "🔧 Real-World PatchManager Example" -ForegroundColor Cyan
-Write-Host "Finding and fixing documentation typos across the project" -ForegroundColor Gray
-Write-Host ""
+Write-CustomLog -Level 'INFO' -Message "Real-World PatchManager Example"
+Write-CustomLog -Level 'INFO' -Message "Finding and fixing documentation typos across the project"
 
 # Define common typos to fix
 $typoFixes = @{
@@ -51,12 +50,11 @@ $typoFixes = @{
 }
 
 if ($Interactive) {
-    Write-Host "📋 This example will demonstrate:" -ForegroundColor Yellow
-    Write-Host "  • Scanning project files for common typos" -ForegroundColor White
-    Write-Host "  • Creating a patch with multiple file changes" -ForegroundColor White
-    Write-Host "  • Using validation to ensure changes are correct" -ForegroundColor White
-    Write-Host "  • Demonstrating real-world PatchManager workflow" -ForegroundColor White
-    Write-Host ""
+    Write-CustomLog -Level 'INFO' -Message "This example will demonstrate:"
+    Write-CustomLog -Level 'INFO' -Message "  • Scanning project files for common typos"
+    Write-CustomLog -Level 'INFO' -Message "  • Creating a patch with multiple file changes"
+    Write-CustomLog -Level 'INFO' -Message "  • Using validation to ensure changes are correct"
+    Write-CustomLog -Level 'INFO' -Message "  • Demonstrating real-world PatchManager workflow"
     Read-Host "Press Enter to continue..."
 }
 
@@ -65,7 +63,7 @@ $patchResult = Invoke-GitControlledPatch `
     -PatchDescription "Fix common documentation typos across project files" `
     -PatchOperation {
 
-        Write-Host "🔍 Scanning project files for typos..." -ForegroundColor Blue
+        Write-CustomLog -Level 'INFO' -Message "Scanning project files for typos..."
 
         # Find markdown and text files
         $filesToCheck = Get-ChildItem -Path $env:PROJECT_ROOT -Recurse -Include "*.md", "*.txt", "*.ps1" |
@@ -91,7 +89,7 @@ $patchResult = Invoke-GitControlledPatch `
                         $content = $content -replace [regex]::Escape($typo), $correct
                         $fileChanged = $true
                         $typosFixed++
-                        Write-Host "  Fixed '$typo' → '$correct' in $($file.Name)" -ForegroundColor Green
+                        Write-CustomLog -Level 'SUCCESS' -Message "  Fixed '$typo' → '$correct' in $($file.Name)"
                     }
                 }
 
@@ -103,16 +101,13 @@ $patchResult = Invoke-GitControlledPatch `
             } catch {
                 Write-Warning "Could not process file: $($file.FullName)"
             }
-        }
-
-        Write-Host ""
-        Write-Host "📊 Typo Fixing Results:" -ForegroundColor Yellow
-        Write-Host "  Files checked: $($filesToCheck.Count)" -ForegroundColor White
-        Write-Host "  Files fixed: $filesFixed" -ForegroundColor Green
-        Write-Host "  Typos fixed: $typosFixed" -ForegroundColor Green
+        }        Write-CustomLog -Level 'INFO' -Message "Typo Fixing Results:"
+        Write-CustomLog -Level 'INFO' -Message "  Files checked: $($filesToCheck.Count)"
+        Write-CustomLog -Level 'SUCCESS' -Message "  Files fixed: $filesFixed"
+        Write-CustomLog -Level 'SUCCESS' -Message "  Typos fixed: $typosFixed"
 
         if ($filesFixed -eq 0) {
-            Write-Host "  Creating demo file to show patch functionality..." -ForegroundColor Cyan
+            Write-CustomLog -Level 'INFO' -Message "  Creating demo file to show patch functionality..."
 
             # Create a demo file with intentional typos for demonstration
             $demoContent = @"
@@ -141,7 +136,7 @@ The lenght of this documentation shows comprehensive coverage.
                 $correct = $typoFixes[$typo]
                 if ($content -match [regex]::Escape($typo)) {
                     $content = $content -replace [regex]::Escape($typo), $correct
-                    Write-Host "  Fixed '$typo' → '$correct' in demo-typos.md" -ForegroundColor Green
+                    Write-CustomLog -Level 'SUCCESS' -Message "  Fixed '$typo' → '$correct' in demo-typos.md"
                     $typosFixed++
                 }
             }
@@ -153,40 +148,35 @@ The lenght of this documentation shows comprehensive coverage.
     -DryRun:$DryRun
 
 # Show results
-Write-Host ""
 if ($patchResult.Success) {
-    Write-Host "✅ Patch completed successfully!" -ForegroundColor Green
-    Write-Host "   Branch: $($patchResult.BranchName)" -ForegroundColor Cyan
+    Write-CustomLog -Level 'SUCCESS' -Message "Patch completed successfully!"
+    Write-CustomLog -Level 'INFO' -Message "   Branch: $($patchResult.BranchName)"
 
     if (-not $DryRun) {
-        Write-Host ""
-        Write-Host "🎯 What happened:" -ForegroundColor Yellow
-        Write-Host "  • Created patch branch: $($patchResult.BranchName)" -ForegroundColor White
-        Write-Host "  • Scanned project files for common typos" -ForegroundColor White
-        Write-Host "  • Fixed typos and committed changes" -ForegroundColor White
-        Write-Host "  • Branch ready for review and merge" -ForegroundColor White
+        Write-CustomLog -Level 'INFO' -Message "What happened:"
+        Write-CustomLog -Level 'INFO' -Message "  • Created patch branch: $($patchResult.BranchName)"
+        Write-CustomLog -Level 'INFO' -Message "  • Scanned project files for common typos"
+        Write-CustomLog -Level 'INFO' -Message "  • Fixed typos and committed changes"
+        Write-CustomLog -Level 'INFO' -Message "  • Branch ready for review and merge"
 
-        Write-Host ""
-        Write-Host "📚 Next steps:" -ForegroundColor Yellow
-        Write-Host "  1. Review the changes: git show HEAD" -ForegroundColor White
-        Write-Host "  2. Push the branch: git push origin $($patchResult.BranchName)" -ForegroundColor White
-        Write-Host "  3. Create a pull request for review" -ForegroundColor White
-        Write-Host "  4. Or rollback if needed: Invoke-PatchRollback" -ForegroundColor White
+        Write-CustomLog -Level 'INFO' -Message "Next steps:"
+        Write-CustomLog -Level 'INFO' -Message "  1. Review the changes: git show HEAD"
+        Write-CustomLog -Level 'INFO' -Message "  2. Push the branch: git push origin $($patchResult.BranchName)"
+        Write-CustomLog -Level 'INFO' -Message "  3. Create a pull request for review"
+        Write-CustomLog -Level 'INFO' -Message "  4. Or rollback if needed: Invoke-PatchRollback"
     } else {
-        Write-Host ""
-        Write-Host "🔍 Dry run completed - no actual changes made" -ForegroundColor Yellow
-        Write-Host "   Run without -DryRun to apply the changes" -ForegroundColor Gray
+        Write-CustomLog -Level 'INFO' -Message "Dry run completed - no actual changes made"
+        Write-CustomLog -Level 'INFO' -Message "   Run without -DryRun to apply the changes"
     }
 
 } else {
-    Write-Host " FAILPatch failed!" -ForegroundColor Red
-    Write-Host "   Error: $($patchResult.Error)" -ForegroundColor Red
+    Write-CustomLog -Level 'ERROR' -Message "Patch failed!"
+    Write-CustomLog -Level 'ERROR' -Message "   Error: $($patchResult.Error)"
 }
 
-Write-Host ""
-Write-Host "💡 This example demonstrates:" -ForegroundColor Magenta
-Write-Host "  • Real-world patch scenarios (fixing typos)" -ForegroundColor White
-Write-Host "  • Processing multiple files in a single patch" -ForegroundColor White
-Write-Host "  • Providing meaningful patch descriptions" -ForegroundColor White
-Write-Host "  • Using PatchManager for maintenance tasks" -ForegroundColor White
-Write-Host "  • Safe dry-run testing before applying changes" -ForegroundColor White
+Write-CustomLog -Level 'INFO' -Message "This example demonstrates:"
+Write-CustomLog -Level 'INFO' -Message "  • Real-world patch scenarios (fixing typos)"
+Write-CustomLog -Level 'INFO' -Message "  • Processing multiple files in a single patch"
+Write-CustomLog -Level 'INFO' -Message "  • Providing meaningful patch descriptions"
+Write-CustomLog -Level 'INFO' -Message "  • Using PatchManager for maintenance tasks"
+Write-CustomLog -Level 'INFO' -Message "  • Safe dry-run testing before applying changes"

@@ -1,4 +1,5 @@
 #Requires -Version 7.0
+
 <#
 .SYNOPSIS
     Upgrades scripts to use the standardized parameter handling system
@@ -23,10 +24,15 @@
 param(
     [Parameter(Mandatory)]
     [string]$Path,
-    
+
     [Parameter()]
     [switch]$Force
 )
+
+# Import shared utilities and logging
+. "$PSScriptRoot/../aither-core/shared/Find-ProjectRoot.ps1"
+$projectRoot = Find-ProjectRoot
+Import-Module "$projectRoot/aither-core/modules/Logging" -Force
 
 # Import required modules
 Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force -ErrorAction SilentlyContinue
@@ -45,10 +51,10 @@ param(
     [Parameter()]
     [ValidateSet('silent', 'normal', 'detailed')]
     [string]$Verbosity = 'normal',
-    
+
     [Parameter()]
     [switch]$Auto,
-    
+
     [Parameter()]
     [switch]$Force
 )
@@ -61,21 +67,21 @@ $skippedCount = 0
 # Get all PS1 files in the specified directory
 $scripts = Get-ChildItem -Path $Path -Filter *.ps1 -Recurse
 
-Write-Host "Found $($scripts.Count) scripts to analyze for parameter upgrades" -ForegroundColor Cyan
+Write-CustomLog -Level 'INFO' -Message "Found $($scripts.Count) scripts to analyze for parameter upgrades"
 
 foreach ($script in $scripts) {
     try {
         $content = Get-Content -Path $script.FullName -Raw
         $needsUpdate = $false
         $modified = $false
-        
+
         # Check if script already uses the standardized parameter system
         if ($content -match 'Initialize-StandardParameters') {
-            Write-Host "  [SKIP] $($script.Name) - Already uses standardized parameters" -ForegroundColor Gray
+            Write-CustomLog -Level 'WARN' -Message "  [SKIP] $($script.Name) - Already uses standardized parameters"
             $skippedCount++
             continue
         }
-        
+
         # Check if script has a param block
         if ($content -match '\s*param\s*\(') {
             # Extract param block
@@ -83,30 +89,29 @@ foreach ($script in $scripts) {
             $paramEndIndex = $content.IndexOf(')', $paramStartIndex)
             if ($paramEndIndex -gt $paramStartIndex) {
                 $paramBlock = $content.Substring($paramStartIndex, $paramEndIndex - $paramStartIndex + 1)
-                
+
                 # Check if param block already has standard parameters                $hasVerbosity = $paramBlock -match '\[string\]\s*\$Verbosity'
                 $hasConfig = $paramBlock -match '\[object\]\s*\$Config'
                 $hasAuto = $paramBlock -match '\[switch\]\s*\$Auto'
                 $hasForce = $paramBlock -match '\[switch\]\s*\$Force'
                 $supportsShouldProcess = $paramBlock -match '\[switch\]\s*\$WhatIf' -or $content -match '\[CmdletBinding\([^\)]*SupportsShouldProcess[^\)]*\)\]'
                 $hasStdParams = $hasVerbosity -and $hasConfig -and $hasAuto -and $hasForce -and $supportsShouldProcess
-                
+
                 if (-not $hasStdParams) {
                     $needsUpdate = $true
                 }
             }
-        }
-        else {
+        } else {
             $needsUpdate = $true
         }
-        
+
         # Check if script needs update and proper CmdletBinding
         $hasCmdletBinding = $content -match '\[CmdletBinding\(SupportsShouldProcess\)\]'
         if ($needsUpdate -or -not $hasCmdletBinding) {
-            if ($PSCmdlet.ShouldProcess($script.Name, "Update to standardized parameters")) {
+            if ($PSCmdlet.ShouldProcess($script.Name, 'Update to standardized parameters')) {
                 # Create modified content
                 $newContent = $content
-                
+
                 # Handle CmdletBinding
                 if (-not $hasCmdletBinding) {
                     if ($content -match '\[CmdletBinding\([^\)]*\)\]') {
@@ -114,14 +119,13 @@ foreach ($script in $scripts) {
                         $modified = $true
                     }
                 }
-                
+
                 # Handle param block
                 if ($content -match '\s*param\s*\(') {
                     # Replace param block with standardized one
                     $newContent = $newContent -replace 'param\s*\([^)]*\)', $stdParamsTemplate
                     $modified = $true
-                }
-                else {
+                } else {
                     # Add param block if none exists
                     $importModuleMatch = $newContent -match 'Import-Module'
                     if ($importModuleMatch) {
@@ -130,12 +134,12 @@ foreach ($script in $scripts) {
                         if ($insertPosition -lt 0) {
                             $insertPosition = 0
                         }
-                        
+
                         $newContent = $newContent.Insert($insertPosition, $stdParamsTemplate + "`n`n")
                         $modified = $true
                     }
                 }
-                
+
                 # Add StandardParameters initialization line after module imports
                 if ($newContent -match 'Import-Module') {
                     $lastImportIndex = $newContent.LastIndexOf('Import-Module')
@@ -145,42 +149,42 @@ foreach ($script in $scripts) {
                         $modified = $true
                     }
                 }
-                
+
                 # Only write file if changes were made
                 if ($modified) {
                     Set-Content -Path $script.FullName -Value $newContent -Force
-                    Write-Host "  [UPDATED] $($script.Name)" -ForegroundColor Green
+                    Write-CustomLog -Level 'SUCCESS' -Message "  [UPDATED] $($script.Name)"
                     $upgradeCount++
-                }
-                else {
-                    Write-Host "  [SKIPPED] $($script.Name) - No changes needed" -ForegroundColor Gray
+                } else {
+                    Write-CustomLog -Level 'WARN' -Message "  [SKIPPED] $($script.Name) - No changes needed"
                     $skippedCount++
                 }
+            } else {
+                Write-CustomLog -Level 'WARN' -Message "  [WHATIF] Would update $($script.Name)"
             }
-            else {
-                Write-Host "  [WHATIF] Would update $($script.Name)" -ForegroundColor Yellow
-            }
-        }
-        else {
-            Write-Host "  [OK] $($script.Name) - Already has required parameters" -ForegroundColor DarkGreen
+        } else {
+            Write-CustomLog -Level 'SUCCESS' -Message "  [OK] $($script.Name) - Already has required parameters"
             $skippedCount++
         }
-    }
-    catch {
-        Write-Host "  [ERROR] $($script.Name) - $($_.Exception.Message)" -ForegroundColor Red
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "  [ERROR] $($script.Name) - $($_.Exception.Message)"
         $errorCount++
     }
 }
 
 # Summary
-Write-Host "`nParameter upgrade completed:" -ForegroundColor Cyan
-Write-Host "  Updated: $upgradeCount scripts" -ForegroundColor $(if ($upgradeCount -gt 0) { 'Green' } else { 'Gray' })
-Write-Host "  Skipped: $skippedCount scripts" -ForegroundColor Gray
-Write-Host "  Errors:  $errorCount scripts" -ForegroundColor $(if ($errorCount -gt 0) { 'Red' } else { 'Gray' })
+Write-CustomLog -Level 'INFO' -Message "`nParameter upgrade completed:"
+Write-CustomLog -Level 'INFO' -Message "  Updated: $upgradeCount scripts"
+Write-CustomLog -Level 'INFO' -Message "  Skipped: $skippedCount scripts"
+if ($errorCount -gt 0) {
+    Write-CustomLog -Level 'ERROR' -Message "  Errors:  $errorCount scripts"
+} else {
+    Write-CustomLog -Level 'INFO' -Message "  Errors:  $errorCount scripts"
+}
 
-if ($PSCmdlet.ShouldProcess("Documentation", "Show help")) {
-    Write-Host "`nNext Steps:" -ForegroundColor Cyan
-    Write-Host "  1. Review the updated scripts for any issues" -ForegroundColor White
-    Write-Host "  2. Update ShouldProcess calls in scripts to use `$params.IsWhatIfMode" -ForegroundColor White
-    Write-Host "  3. Read the documentation at docs/StandardizedParameters.md" -ForegroundColor White
+if ($PSCmdlet.ShouldProcess('Documentation', 'Show help')) {
+    Write-CustomLog -Level 'INFO' -Message "`nNext Steps:"
+    Write-CustomLog -Level 'INFO' -Message '  1. Review the updated scripts for any issues'
+    Write-CustomLog -Level 'INFO' -Message "  2. Update ShouldProcess calls in scripts to use `$params.IsWhatIfMode"
+    Write-CustomLog -Level 'INFO' -Message '  3. Read the documentation at docs/StandardizedParameters.md'
 }
