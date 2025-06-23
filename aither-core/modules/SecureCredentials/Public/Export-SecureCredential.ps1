@@ -35,7 +35,7 @@ function Export-SecureCredential {
 
     begin {
         Write-CustomLog -Level 'INFO' -Message "Exporting secure credential: $CredentialName"
-        
+
         if ($IncludeSecrets) {
             Write-CustomLog -Level 'WARN' -Message "Including secrets in export - ensure secure handling of export file"
         }

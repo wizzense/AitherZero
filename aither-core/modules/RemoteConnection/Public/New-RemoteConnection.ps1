@@ -86,7 +86,7 @@ function New-RemoteConnection {
                     Write-CustomLog -Level 'WARN' -Message "Could not load SecureCredentials module for credential validation"
                 }
             }
-            
+
             # Test credential if SecureCredentials is available
             if (Get-Command -Name 'Test-SecureCredential' -ErrorAction SilentlyContinue) {
                 if (-not (Test-SecureCredential -CredentialName $CredentialName)) {

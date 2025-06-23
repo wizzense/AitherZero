@@ -6,7 +6,7 @@ Write-Host "Testing if functions exist in current session:"
 
 $functions = @(
     "New-SecureCredential",
-    "Get-SecureCredential", 
+    "Get-SecureCredential",
     "Test-SecureCredential",
     "New-RemoteConnection",
     "Get-RemoteConnection"
@@ -18,7 +18,7 @@ foreach ($func in $functions) {
         Write-Host "✅ $func - Available (Module: $($command.ModuleName))"
     } catch {
         Write-Host "❌ $func - Not found"
-        
+
         # Try alternative approach
         try {
             if (Test-Path "function:\$func") {

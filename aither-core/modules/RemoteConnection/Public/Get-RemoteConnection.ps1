@@ -61,7 +61,7 @@ function Get-RemoteConnection {
                     Write-CustomLog -Level 'INFO' -Message "No connections found"
                     return ,@()
                 }
-                
+
                 $connections = $allConfigs.Configurations
             }
 
@@ -97,7 +97,7 @@ function Get-RemoteConnection {
                                     Write-CustomLog -Level 'DEBUG' -Message "Could not load SecureCredentials module for credential validation"
                                 }
                             }
-                            
+
                             # Test credential if function is available
                             if (Get-Command -Name 'Test-SecureCredential' -ErrorAction SilentlyContinue) {
                                 Test-SecureCredential -CredentialName $conn.CredentialName
