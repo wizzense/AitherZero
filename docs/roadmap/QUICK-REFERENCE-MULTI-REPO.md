@@ -4,9 +4,9 @@
 
 ### AitherZero (Your Development Fork)
 ```text
-origin      https://github.com/wizzense/AitherZero.git (fetch/push)
-upstream    https://github.com/Aitherium/AitherLabs.git (fetch/push)
-aitherium   https://github.com/Aitherium/Aitherium.git (fetch/push)
+AitherZero  https://github.com/wizzense/AitherZero.git (fetch/push)
+AitherLabs  https://github.com/Aitherium/AitherLabs.git (fetch/push)
+Aitherium   https://github.com/Aitherium/Aitherium.git (fetch/push)
 ```
 
 ### Repository Purposes
@@ -23,12 +23,12 @@ aitherium   https://github.com/Aitherium/Aitherium.git (fetch/push)
 ```powershell
 cd "c:/Users/alexa/OneDrive/Documents/0. wizzense/AitherZero"
 git checkout main
-git pull upstream main
+git pull AitherLabs main
 git checkout -b feature/your-feature-name
 # ... develop ...
 git add .
 git commit -m "Your feature description"
-git push origin feature/your-feature-name
+git push AitherZero feature/your-feature-name
 ```
 
 ### Create PR to Public Staging

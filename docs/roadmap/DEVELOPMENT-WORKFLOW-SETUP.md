@@ -27,14 +27,17 @@ cd "c:/Users/alexa/OneDrive/Documents/0. wizzense/"
 git clone https://github.com/wizzense/AitherZero.git
 cd AitherZero
 
-# Set up remotes with correct naming convention
-git remote add upstream https://github.com/Aitherium/AitherLabs.git
-git remote add aitherium https://github.com/Aitherium/Aitherium.git
+# Set up remotes with names matching repository names
+git remote add AitherLabs https://github.com/Aitherium/AitherLabs.git
+git remote add Aitherium https://github.com/Aitherium/Aitherium.git
+
+# Rename origin to match repository name
+git remote rename origin AitherZero
 
 # Verify remotes - should show:
-# origin      → wizzense/AitherZero.git (your development fork)
-# upstream    → Aitherium/AitherLabs.git (public staging)
-# aitherium   → Aitherium/Aitherium.git (premium/enterprise)
+# AitherZero  → wizzense/AitherZero.git (your development fork)
+# AitherLabs  → Aitherium/AitherLabs.git (public staging)
+# Aitherium   → Aitherium/Aitherium.git (premium/enterprise)
 git remote -v
 ```
 
@@ -43,9 +46,9 @@ git remote -v
 Your **AitherZero** repository now has the correct remotes:
 
 ```text
-origin      https://github.com/wizzense/AitherZero.git (fetch/push)
-upstream    https://github.com/Aitherium/AitherLabs.git (fetch/push)
-aitherium   https://github.com/Aitherium/Aitherium.git (fetch/push)
+AitherZero  https://github.com/wizzense/AitherZero.git (fetch/push)
+AitherLabs  https://github.com/Aitherium/AitherLabs.git (fetch/push)
+Aitherium   https://github.com/Aitherium/Aitherium.git (fetch/push)
 ```
 
 ### Step 2: Sync with Latest Changes
@@ -56,12 +59,12 @@ git fetch --all
 
 # Merge any changes from upstream (AitherLabs) into your main branch
 git checkout main
-git pull upstream main
-git push origin main  # Push updates to your fork
+git pull AitherLabs main
+git push AitherZero main  # Push updates to your fork
 
 # Optional: Sync with premium (Aitherium) features
-git fetch aitherium
-# Note: Usually you won't merge from aitherium directly
+git fetch Aitherium
+# Note: Usually you won't merge from Aitherium directly
 ```
 
 ## Repository Workflow Explained
@@ -78,7 +81,7 @@ git checkout -b feature/awesome-new-feature
 # Develop and commit
 git add .
 git commit -m "Add awesome new feature"
-git push origin feature/awesome-new-feature
+git push AitherZero feature/awesome-new-feature
 
 # Create PR to AitherLabs (public staging)
 gh pr create --repo Aitherium/AitherLabs --base main --head wizzense:feature/awesome-new-feature
@@ -88,9 +91,9 @@ gh pr create --repo Aitherium/AitherLabs --base main --head wizzense:feature/awe
 
 ```powershell
 # After feature is merged to AitherLabs, fetch the latest
-git fetch upstream
+git fetch AitherLabs
 git checkout main
-git pull upstream main
+git pull AitherLabs main
 
 # Create branch for premium promotion
 git checkout -b premium/awesome-new-feature
@@ -99,7 +102,7 @@ git checkout -b premium/awesome-new-feature
 # ... make premium modifications ...
 git add .
 git commit -m "Add enterprise enhancements for awesome feature"
-git push origin premium/awesome-new-feature
+git push AitherZero premium/awesome-new-feature
 
 # Create PR to Aitherium (premium)
 gh pr create --repo Aitherium/Aitherium --base main --head wizzense:premium/awesome-new-feature
@@ -127,7 +130,7 @@ git checkout -b feature/your-new-feature
 # Make changes, commit, and push to your fork
 git add .
 git commit -m "Your changes"
-git push origin feature/your-new-feature
+git push AitherZero feature/your-new-feature
 
 # Create PR to public staging (AitherLabs)
 gh pr create --repo Aitherium/AitherLabs --base main --head wizzense:feature/your-new-feature
