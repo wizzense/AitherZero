@@ -56,15 +56,14 @@ function Initialize-CrossPlatformEnvironment {
                     $projectRoot = $candidate
                     Write-Verbose "Detected project root via module location: $projectRoot"
                 }
-            }
-            
-            # Strategy 4: Hard-coded known paths (last resort)
+            }            # Strategy 4: Hard-coded known paths (last resort)
             if (-not $projectRoot) {
                 $knownPaths = @(
-                    "/workspaces/opentofu-lab-automation",
-                    "C:\workspaces\opentofu-lab-automation",
-                    "$env:USERPROFILE\Documents\opentofu-lab-automation",
-                    "$HOME/opentofu-lab-automation"
+                    "/workspaces/AitherZero",
+                    "C:\workspaces\AitherZero",
+                    "$env:USERPROFILE\OneDrive\Documents\0. wizzense\AitherZero",
+                    "$env:USERPROFILE\Documents\0. wizzense\AitherZero",
+                    "$HOME/AitherZero"
                 )
                 
                 foreach ($path in $knownPaths) {
@@ -76,15 +75,23 @@ function Initialize-CrossPlatformEnvironment {
                 }
             }
             
+            # Strategy 5: Use current location if it contains aither-core
+            if (-not $projectRoot) {
+                $currentPath = (Get-Location).Path
+                if (Test-Path (Join-Path $currentPath "aither-core")) {
+                    $projectRoot = $currentPath
+                    Write-Verbose "Using current directory with aither-core: $projectRoot"
+                }
+            }
+            
             # Final fallback
             if (-not $projectRoot) {
                 $projectRoot = Get-Location
                 Write-Warning "Could not detect project root, using current directory: $projectRoot"
             }
-            
-            # Set environment variables for cross-platform use
+              # Set environment variables for cross-platform use
             $env:PROJECT_ROOT = $projectRoot
-            $env:PWSH_MODULES_PATH = Join-Path $projectRoot "src" "pwsh" "modules"
+            $env:PWSH_MODULES_PATH = Join-Path $projectRoot "aither-core" "modules"
             $env:PROJECT_SCRIPTS_PATH = Join-Path $projectRoot "scripts"
             
             # Platform-specific settings
