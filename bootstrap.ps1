@@ -20,24 +20,24 @@
 
 .EXAMPLE
     .\bootstrap.ps1
-    
+
 .EXAMPLE
     .\bootstrap.ps1 -LocalPath "C:\Labs\AitherZero" -Branch "develop"
 #>
 
 [CmdletBinding()]
-param(    [string]$LocalPath = ".\AitherZero",
-    [string]$Branch = "main",
+param(    [string]$LocalPath = '.\AitherZero',
+    [string]$Branch = 'main',
     [switch]$Launch
 )
 
-Write-Host "🚀 AitherZero Bootstrap v1.0" -ForegroundColor Green
-Write-Host "Cloning repository..." -ForegroundColor Cyan
+Write-Host '🚀 AitherZero Bootstrap v1.0' -ForegroundColor Green
+Write-Host 'Cloning repository...' -ForegroundColor Cyan
 
 try {
     # Clone the repository
     if (Test-Path $LocalPath) {
-        Write-Host "Directory already exists, updating..." -ForegroundColor Yellow
+        Write-Host 'Directory already exists, updating...' -ForegroundColor Yellow
         Set-Location $LocalPath
         git pull origin $Branch
     } else {
@@ -46,20 +46,20 @@ try {
     }
 
     Write-Host "✅ Repository ready at: $(Get-Location)" -ForegroundColor Green    if ($Launch) {
-        Write-Host "🎯 Launching AitherCore..." -ForegroundColor Cyan
-        
+        Write-Host '🎯 Launching AitherCore...' -ForegroundColor Cyan
+
         # Check if PowerShell 7 is available
         $pwshPath = Get-Command pwsh -ErrorAction SilentlyContinue
         if ($pwshPath) {
-            & pwsh -File "./aither-core/aither-core.ps1"
+            & pwsh -File './aither-core/aither-core.ps1'
         } else {
-            Write-Warning "PowerShell 7 not found, using Windows PowerShell..."
-            & powershell.exe -File "./aither-core/aither-core.ps1"
+            Write-Warning 'PowerShell 7 not found, using Windows PowerShell...'
+            & powershell.exe -File './aither-core/aither-core.ps1'
         }
     } else {
-        Write-Host "📋 To launch AitherCore manually:" -ForegroundColor Yellow
-        Write-Host "  pwsh -File ./aither-core/aither-core.ps1" -ForegroundColor White
-        Write-Host "  Use -Launch switch to auto-launch next time" -ForegroundColor Gray
+        Write-Host '📋 To launch AitherCore manually:' -ForegroundColor Yellow
+        Write-Host '  pwsh -File ./aither-core/aither-core.ps1' -ForegroundColor White
+        Write-Host '  Use -Launch switch to auto-launch next time' -ForegroundColor Gray
     }
 
 } catch {
