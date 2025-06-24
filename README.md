@@ -36,7 +36,7 @@ pwsh -Command "git clone https://github.com/wizzense/AitherZero.git; cd AitherZe
 # 1. Clone the repository
 git clone https://github.com/wizzense/AitherZero.git
 
-# 2. Enter directory  
+# 2. Enter directory
 cd AitherZero
 
 # 3. Run AitherCore
@@ -141,7 +141,7 @@ AitherZero/
 ## What AitherCore Does
 
 1. **Environment Setup**: Automatically configures PROJECT_ROOT and module paths
-2. **Module Loading**: Imports all 14+ specialized PowerShell modules  
+2. **Module Loading**: Imports all 14+ specialized PowerShell modules
 3. **Health Checks**: Validates system requirements and dependencies
 4. **Script Execution**: Runs automation scripts with proper error handling
 
@@ -312,7 +312,7 @@ Import-Module "./aither-core/modules/LabRunner" -Force
 # Create patches with the new v2.1 workflow
 Invoke-PatchWorkflow -PatchDescription "My changes" -CreatePR
 
-# Run lab automation  
+# Run lab automation
 Start-LabEnvironment -ConfigPath "./configs/lab_config.json"
 
 # Perform maintenance
@@ -322,7 +322,7 @@ Invoke-UnifiedMaintenance -Mode "All" -AutoFix
 ## Current Architecture
 
 - **/aither-core/modules/**: 14+ PowerShell modules (PatchManager, LabRunner, etc.)
-- **/aither-core/scripts/**: Core automation scripts (0000-0114 series)  
+- **/aither-core/scripts/**: Core automation scripts (0000-0114 series)
 - **/configs/**: Configuration files and templates
 - **/opentofu/**: Infrastructure as Code configurations
 - **/tests/**: Bulletproof testing framework with Pester
