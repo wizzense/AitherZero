@@ -6,19 +6,31 @@ Cross-platform PowerShell automation framework for OpenTofu/Terraform infrastruc
 
 ### 🚀 One-Line Installation
 
-**✅ WORKING METHOD #1** (Recommended):
+**✅ WORKING METHOD #1** (Direct Download - No Git Required):
+
+```powershell
+# Windows PowerShell/PowerShell 7
+Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/wizzense/AitherZero/main/aither-core/aither-core.ps1' -OutFile 'aither-core.ps1'; pwsh -File ./aither-core.ps1
+```
+
+```bash
+# Linux/macOS
+curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/aither-core/aither-core.ps1 -o aither-core.ps1 && pwsh -File ./aither-core.ps1
+```
+
+**✅ WORKING METHOD #2** (Git Clone - Full Repository):
 
 ```powershell
 git clone https://github.com/wizzense/AitherZero.git; cd AitherZero; pwsh -File ./aither-core/aither-core.ps1
 ```
 
-**✅ WORKING METHOD #2** (PowerShell 7.x Cross-platform):
+**✅ WORKING METHOD #3** (Cross-platform One-liner):
 
 ```powershell
 pwsh -Command "git clone https://github.com/wizzense/AitherZero.git; cd AitherZero; pwsh -File ./aither-core/aither-core.ps1"
 ```
 
-**✅ WORKING METHOD #3** (Step-by-step):
+**✅ WORKING METHOD #4** (Step-by-step):
 
 ```powershell
 # 1. Clone the repository
@@ -29,6 +41,18 @@ cd AitherZero
 
 # 3. Run AitherCore
 pwsh -File ./aither-core/aither-core.ps1
+```
+
+**✅ WORKING METHOD #5** (Direct Download and Bootstrap - No Git Required):
+
+```powershell
+# Windows PowerShell/PowerShell 7
+Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1' -OutFile 'bootstrap.ps1'; pwsh -File ./bootstrap.ps1
+```
+
+```bash
+# Linux/macOS
+curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 -o bootstrap.ps1 && pwsh -File ./bootstrap.ps1
 ```
 
 ### 📋 Bootstrap Options
