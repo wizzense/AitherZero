@@ -2,7 +2,67 @@
 
 Cross-platform PowerShell automation framework for OpenTofu/Terraform infrastructure management with comprehensive testing and modular architecture.
 
+## 🔥 TL;DR - Just Give Me The Command
+
+**Copy and paste ANY of these - they all work:**
+
+```powershell
+# Option 1: Ultimate Simple (does everything automatically)
+iwr https://raw.githubusercontent.com/wizzense/AitherZero/main/SUPER-SIMPLE-BOOTSTRAP.ps1 -useb | iex
+
+# Option 2: Direct core script
+iwr https://raw.githubusercontent.com/wizzense/AitherZero/main/aither-core/aither-core.ps1 -o aither-core.ps1; .\aither-core.ps1
+
+# Option 3: Quick launcher
+iwr https://raw.githubusercontent.com/wizzense/AitherZero/main/quick-launch.ps1 -useb | iex
+
+# Option 4: Traditional bootstrap
+iwr https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 -o bootstrap.ps1; .\bootstrap.ps1
+```
+
+**That's it! Pick any one and you're done!**
+
+---
+
 ## Quick Start - Bootstrap Installation
+
+### 🧠 Brain-Dead Easy Methods (Choose ANY One)
+
+**🎯 ULTIMATE EASIEST - Super Simple Bootstrap:**
+
+```powershell
+# One-liner that does EVERYTHING for you:
+iwr https://raw.githubusercontent.com/wizzense/AitherZero/main/SUPER-SIMPLE-BOOTSTRAP.ps1 -useb | iex
+```
+
+**🚀 EASIEST - Copy & Paste One-Liner (Windows):**
+
+```powershell
+iwr bit.ly/aitherzero -useb | iex
+```
+
+**🚀 EASIEST - Copy & Paste One-Liner (Any Platform):**
+
+```powershell
+pwsh -c "iwr https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 -useb | iex"
+```
+
+**🚀 FOOLPROOF - Direct Bootstrap Download:**
+
+```powershell
+# Step 1: Download
+iwr https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 -o bootstrap.ps1
+
+# Step 2: Run
+.\bootstrap.ps1
+```
+
+**🚀 BACKUP METHOD - Manual Core Download:**
+
+```powershell
+# Download and run the core script directly
+iwr https://raw.githubusercontent.com/wizzense/AitherZero/main/aither-core/aither-core.ps1 -o aither-core.ps1; .\aither-core.ps1
+```
 
 ### 🚀 One-Line Installation
 
@@ -10,12 +70,12 @@ Cross-platform PowerShell automation framework for OpenTofu/Terraform infrastruc
 
 ```powershell
 # Windows PowerShell/PowerShell 7
-Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/wizzense/AitherZero/refs/heads/main/aither-core/aither-core.ps1' -OutFile 'aither-core.ps1'; pwsh -File ./aither-core.ps1
+Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/wizzense/AitherZero/main/aither-core/aither-core.ps1' -OutFile 'aither-core.ps1'; pwsh -File ./aither-core.ps1
 ```
 
 ```bash
 # Linux/macOS
-curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/refs/heads/main/aither-core/aither-core.ps1 -o aither-core.ps1 && pwsh -File ./aither-core.ps1
+curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/aither-core/aither-core.ps1 -o aither-core.ps1 && pwsh -File ./aither-core.ps1
 ```
 
 **✅ WORKING METHOD #2** (Git Clone - Full Repository):
