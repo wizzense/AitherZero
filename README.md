@@ -52,52 +52,20 @@ The **AitherCore** framework is your **single entry point** for all automation s
 ./aither-core/aither-core.ps1 -Scripts "LabRunner,BackupManager" -Auto
 ./aither-core/aither-core.ps1 -WhatIf  # See what would be done
 ```
-.\kicker-git.ps1 -Force -Verbosity detailed
-```
-
-#### 3. **Legacy Bootstrap** (`kicker-bootstrap.ps1`)
-
-- ✅ Original bootstrap script
-- ✅ Maintained for compatibility
-- ⚠️ Limited to original feature set
 
 ### 🔧 Manual Installation
 
 If you prefer manual control:
 
 ```powershell
-# 1. Download the modern bootstrap script
-Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/wizzense/opentofu-lab-automation/main/kicker-git.ps1' -OutFile '.\kicker-git.ps1'
+# 1. Clone the repository
+git clone https://github.com/wizzense/AitherZero.git
 
-# 2. Run with your preferred options
-.\kicker-git.ps1
+# 2. Enter the directory
+cd AitherZero
 
-# 3. Available parameters:
-#    -ConfigFile      : Custom configuration file
-#    -Quiet          : Minimal output
-#    -NonInteractive : No prompts (automation-friendly)
-#    -Verbosity      : silent|normal|detailed
-#    -SkipPrerequisites : Skip auto-installation
-#    -TargetBranch   : Git branch to use
-#    -LocalPath      : Custom clone location
-#    -WhatIf         : Show what would be done
-#    -Force          : Force re-clone
-```
-
-### ⚡ Quick Examples
-
-```powershell
-# Silent automation-friendly setup
-.\kicker-git.ps1 -NonInteractive -Verbosity silent
-
-# Development setup with detailed logging
-.\kicker-git.ps1 -TargetBranch "develop" -Verbosity detailed
-
-# Custom configuration with specific location
-.\kicker-git.ps1 -ConfigFile "prod-config.json" -LocalPath "C:\Labs"
-
-# Test what would happen without making changes
-.\kicker-git.ps1 -WhatIf
+# 3. Run AitherCore with your preferred options
+./aither-core/aither-core.ps1 -Verbosity detailed
 ```
 
 ## Environment Setup
@@ -146,29 +114,18 @@ AitherZero/
 └── opentofu/                      # OpenTofu infrastructure
 ```
 
-## What the Bootstrap Does
+## What AitherCore Does
 
-1. **Git Setup**: Checks if command-line Git is installed and in PATH.
-   - Installs a minimal version if missing.
-   - Updates PATH if installed but not found in PATH.
+1. **Environment Setup**: Automatically configures PROJECT_ROOT and module paths
+2. **Module Loading**: Imports all 14+ specialized PowerShell modules  
+3. **Health Checks**: Validates system requirements and dependencies
+4. **Script Execution**: Runs automation scripts with proper error handling
 
-2. **Configuration**: Downloads and loads default configuration file.
-   - Uses `core-runner/core_app/default-config.json` by default
-   - Override with `-ConfigFile` parameter
+## Essential Setup Scripts
 
-3. **Repository Clone**: Clones this repository to local workspace.
-   - Default location: `%TEMP%/opentofu-lab-automation`
-   - Configurable via configuration file
+When AitherCore launches, you can run these essential scripts:
 
-4. **Core Runner Execution**: Invokes `core-runner.ps1` from the repository.
-   - Loads modules and sets up environment
-   - Can be run with parameters for automation
-
-## Essential OpenTofu Setup Scripts
-
-To get OpenTofu working, specify these scripts when `core-runner.ps1` is called:
-
-**Required Scripts: 0006, 0007, 0008, 0009, 0010**
+### Required Scripts: 0006, 0007, 0008, 0009, 0010
 
 - **0006_Install-ValidationTools.ps1** - Downloads cosign for verification
 - **0007_Install-Go.ps1** - Downloads and installs Go
@@ -324,30 +281,28 @@ dvd_drives {
 ### Module Usage
 
 ```powershell
-# Import core modules
-Import-Module "./core-runner/modules/PatchManager"
-Import-Module "./core-runner/modules/LabRunner"
+# Import and use individual modules
+Import-Module "./aither-core/modules/PatchManager" -Force
+Import-Module "./aither-core/modules/LabRunner" -Force
 
-# Run lab automation
-Invoke-ParallelLabRunner -ConfigPath "./configs/lab_config.yaml"
+# Create patches with the new v2.1 workflow
+Invoke-PatchWorkflow -PatchDescription "My changes" -CreatePR
+
+# Run lab automation  
+Start-LabEnvironment -ConfigPath "./configs/lab_config.json"
 
 # Perform maintenance
-./scripts/maintenance/unified-maintenance.ps1 -Mode "All" -AutoFix
+Invoke-UnifiedMaintenance -Mode "All" -AutoFix
 ```
 
-## Project Structure
+## Current Architecture
 
-- **/core-runner/modules/**: PowerShell modules (PatchManager, LabRunner, BackupManager)
-- **/core-runner/core_app/scripts/**: Core automation scripts (0000-0114 series)
-- **/scripts/**: Additional automation and maintenance scripts
-- **/opentofu/**: Infrastructure as Code configurations
-- **/tests/**: Pester test files for validation
-- **/.github/workflows/**: CI/CD automation
+- **/aither-core/modules/**: 14+ PowerShell modules (PatchManager, LabRunner, etc.)
+- **/aither-core/scripts/**: Core automation scripts (0000-0114 series)  
 - **/configs/**: Configuration files and templates
-
-## Future Plans
-
-Will probably change repo name to just 'lab-automation'.
+- **/opentofu/**: Infrastructure as Code configurations
+- **/tests/**: Bulletproof testing framework with Pester
+- **/.github/workflows/**: CI/CD automation
 
 ## License
 
