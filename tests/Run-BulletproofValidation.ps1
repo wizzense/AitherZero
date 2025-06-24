@@ -57,7 +57,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 # Initialize environment
-if (-not $env:PROJECT_ROOT) {
+if (-not $env:PROJECT_ROOT -or -not (Test-Path "$env:PROJECT_ROOT/aither-core")) {
     $env:PROJECT_ROOT = Split-Path $PSScriptRoot -Parent
 }
 

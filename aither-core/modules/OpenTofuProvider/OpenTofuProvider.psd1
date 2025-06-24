@@ -8,13 +8,6 @@
     Description = 'PowerShell module for secure OpenTofu infrastructure automation with Taliesins Hyper-V provider integration'
 
     PowerShellVersion = '7.0'
-    RequiredModules = @(
-        @{
-            ModuleName = 'Logging'
-            ModuleVersion = '2.0.0'
-            GUID = 'B5D8F9A1-C2E3-4F6A-8B9C-1D2E3F4A5B6C'
-        }
-    )
 
     FunctionsToExport = @(
         'Install-OpenTofuSecure',

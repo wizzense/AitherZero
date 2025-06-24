@@ -3,7 +3,8 @@
 
 Describe 'Initialize-OpenTofu Tests' {
     BeforeAll {
-        Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force}
+        Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force
+    }
 
     Context 'Module Loading' {
         It 'should load required modules' {
@@ -22,4 +23,5 @@ Describe 'Initialize-OpenTofu Tests' {
         # Cleanup test resources
     }
 }
+
 

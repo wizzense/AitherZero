@@ -3,7 +3,8 @@
 
 Describe '0209_Install-7Zip Tests' {
     BeforeAll {
-        Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force}
+        Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force
+    }
 
     Context 'Module Loading' {
         It 'should load required modules' {
@@ -22,4 +23,5 @@ Describe '0209_Install-7Zip Tests' {
         # Cleanup test resources
     }
 }
+
 
