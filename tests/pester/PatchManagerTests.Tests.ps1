@@ -1,7 +1,10 @@
 Describe 'PatchManager Function Tests' {
     BeforeAll {
         $PatchManagerPath = './src/aither-core/modules/PatchManager/Public'
-    }    Context 'Function Files Exist' {        It 'Should have Test-PatchingRequirements.ps1' {
+    }
+
+    Context 'Function Files Exist' {
+        It 'Should have Test-PatchingRequirements.ps1' {
             Test-Path "$PatchManagerPath/Test-PatchingRequirements.ps1" | Should -Be $true
         }
 
@@ -53,7 +56,7 @@ Describe 'PatchManager Function Tests' {
     Context 'Syntax Validation' {
         It 'Should have valid PowerShell syntax in all function files' {
             Get-ChildItem "$PatchManagerPath/*.ps1" | ForEach-Object {
-                { 
+                {
                     $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $_.FullName -Raw), [ref]$null)
                 } | Should -Not -Throw
             }

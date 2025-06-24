@@ -17,25 +17,23 @@ function Initialize-CrossPlatformEnvironment {
     param()
 
     begin {
-        Write-Verbose "Initializing cross-platform environment variables..."
+        Write-Verbose 'Initializing cross-platform environment variables...'
     }
 
     process {
         try {
             # Detect project root using multiple strategies
-            $projectRoot = $null
-
-            # Strategy 1: Environment variable (if already set)
-            if ($env:PROJECT_ROOT -and (Test-Path $env:PROJECT_ROOT)) {
+            $projectRoot = $null            # Strategy 1: Environment variable (if already set and valid)
+            if ($env:PROJECT_ROOT -and (Test-Path $env:PROJECT_ROOT) -and (Test-Path (Join-Path $env:PROJECT_ROOT 'aither-core'))) {
                 $projectRoot = $env:PROJECT_ROOT
-                Write-Verbose "Using existing PROJECT_ROOT: $projectRoot"
+                Write-Verbose "Using existing valid PROJECT_ROOT: $projectRoot"
             }
 
             # Strategy 2: Look for PROJECT-MANIFEST.json starting from current location
             if (-not $projectRoot) {
                 $current = Get-Location
-                while ($current -and $current.Path -ne "/" -and $current.Path -notmatch "^[A-Z]:\\$") {
-                    $manifestPath = Join-Path $current.Path "PROJECT-MANIFEST.json"
+                while ($current -and $current.Path -ne '/' -and $current.Path -notmatch '^[A-Z]:\\$') {
+                    $manifestPath = Join-Path $current.Path 'PROJECT-MANIFEST.json'
                     if (Test-Path $manifestPath) {
                         $projectRoot = $current.Path
                         Write-Verbose "Found PROJECT-MANIFEST.json at: $projectRoot"
@@ -52,16 +50,16 @@ function Initialize-CrossPlatformEnvironment {
                 $moduleRoot = $PSScriptRoot
                 # Go up from PatchManager/Private to project root
                 $candidate = Split-Path (Split-Path (Split-Path $moduleRoot -Parent) -Parent) -Parent
-                if (Test-Path (Join-Path $candidate "PROJECT-MANIFEST.json")) {
+                if (Test-Path (Join-Path $candidate 'PROJECT-MANIFEST.json')) {
                     $projectRoot = $candidate
                     Write-Verbose "Detected project root via module location: $projectRoot"
                 }
             }            # Strategy 4: Hard-coded known paths (last resort)
             if (-not $projectRoot) {
                 $knownPaths = @(
-                    "/workspaces/AitherZero",
-                    "C:\workspaces\AitherZero",
-                    "$env:USERPROFILE\OneDrive\Documents\0. wizzense\AitherZero",
+                    "$env:USERPROFILE\OneDrive\Documents\0. wizzense\AitherZero", # Prioritize correct path
+                    '/workspaces/AitherZero',
+                    'C:\workspaces\AitherZero',
                     "$env:USERPROFILE\Documents\0. wizzense\AitherZero",
                     "$HOME/AitherZero"
                 )
@@ -78,7 +76,7 @@ function Initialize-CrossPlatformEnvironment {
             # Strategy 5: Use current location if it contains aither-core
             if (-not $projectRoot) {
                 $currentPath = (Get-Location).Path
-                if (Test-Path (Join-Path $currentPath "aither-core")) {
+                if (Test-Path (Join-Path $currentPath 'aither-core')) {
                     $projectRoot = $currentPath
                     Write-Verbose "Using current directory with aither-core: $projectRoot"
                 }
@@ -89,35 +87,35 @@ function Initialize-CrossPlatformEnvironment {
                 $projectRoot = Get-Location
                 Write-Warning "Could not detect project root, using current directory: $projectRoot"
             }
-              # Set environment variables for cross-platform use
+            # Set environment variables for cross-platform use
             $env:PROJECT_ROOT = $projectRoot
-            $env:PWSH_MODULES_PATH = Join-Path $projectRoot "aither-core" "modules"
-            $env:PROJECT_SCRIPTS_PATH = Join-Path $projectRoot "scripts"
+            $env:PWSH_MODULES_PATH = Join-Path $projectRoot 'aither-core' 'modules'
+            $env:PROJECT_SCRIPTS_PATH = Join-Path $projectRoot 'scripts'
 
             # Platform-specific settings
             if ($IsWindows) {
-                $env:PLATFORM = "Windows"
-                $env:PATH_SEP = "\"
+                $env:PLATFORM = 'Windows'
+                $env:PATH_SEP = '\'
             } elseif ($IsLinux) {
-                $env:PLATFORM = "Linux"
-                $env:PATH_SEP = "/"
+                $env:PLATFORM = 'Linux'
+                $env:PATH_SEP = '/'
             } elseif ($IsMacOS) {
-                $env:PLATFORM = "macOS"
-                $env:PATH_SEP = "/"
+                $env:PLATFORM = 'macOS'
+                $env:PATH_SEP = '/'
             } else {
-                $env:PLATFORM = "Unknown"
-                $env:PATH_SEP = "/"
+                $env:PLATFORM = 'Unknown'
+                $env:PATH_SEP = '/'
             }
 
-            Write-Host "Cross-platform environment initialized:" -ForegroundColor Green
+            Write-Host 'Cross-platform environment initialized:' -ForegroundColor Green
             Write-Host "  PROJECT_ROOT: $env:PROJECT_ROOT" -ForegroundColor Cyan
             Write-Host "  PLATFORM: $env:PLATFORM" -ForegroundColor Cyan
             Write-Host "  PWSH_MODULES_PATH: $env:PWSH_MODULES_PATH" -ForegroundColor Cyan
 
             return @{
-                Success = $true
+                Success     = $true
                 ProjectRoot = $env:PROJECT_ROOT
-                Platform = $env:PLATFORM
+                Platform    = $env:PLATFORM
                 ModulesPath = $env:PWSH_MODULES_PATH
             }
 
@@ -125,7 +123,7 @@ function Initialize-CrossPlatformEnvironment {
             Write-Error "Failed to initialize cross-platform environment: $($_.Exception.Message)"
             return @{
                 Success = $false
-                Error = $_.Exception.Message
+                Error   = $_.Exception.Message
             }
         }
     }
