@@ -6,26 +6,29 @@ Cross-platform PowerShell automation framework for OpenTofu/Terraform infrastruc
 
 ### 🚀 One-Line Installation
 
-**Clone and Run with AitherCore**:
+**✅ WORKING METHOD #1** (Recommended):
 
 ```powershell
 git clone https://github.com/wizzense/AitherZero.git; cd AitherZero; pwsh -File ./aither-core/aither-core.ps1
 ```
 
-**PowerShell 7.x** (Cross-platform):
+**✅ WORKING METHOD #2** (PowerShell 7.x Cross-platform):
 
 ```powershell
 pwsh -Command "git clone https://github.com/wizzense/AitherZero.git; cd AitherZero; pwsh -File ./aither-core/aither-core.ps1"
 ```
 
-**Bootstrap Script Download** (Alternative):
+**✅ WORKING METHOD #3** (Step-by-step):
 
 ```powershell
-# Download and run bootstrap (if available)
-Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1' -OutFile '.\bootstrap.ps1'; pwsh -File .\bootstrap.ps1 -Launch
+# 1. Clone the repository
+git clone https://github.com/wizzense/AitherZero.git
 
-# Or direct clone (always works)
-git clone https://github.com/wizzense/AitherZero.git; cd AitherZero; pwsh -File ./aither-core/aither-core.ps1
+# 2. Enter directory  
+cd AitherZero
+
+# 3. Run AitherCore
+pwsh -File ./aither-core/aither-core.ps1
 ```
 
 ### 📋 Bootstrap Options
