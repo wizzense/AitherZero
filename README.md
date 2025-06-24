@@ -2,25 +2,80 @@
 
 Cross-platform PowerShell automation framework for OpenTofu/Terraform infrastructure management with comprehensive testing and modular architecture.
 
-## 🔥 TL;DR - Just Give Me The Command
+## ⚡ SUPER EASY - Get Started in 30 Seconds
 
-**Copy and paste ANY of these - they all work:**
+**🎯 Ultimate One-Liner (Download & Run):**
 
 ```powershell
-# Option 1: Ultimate Simple (does everything automatically)
-iwr https://raw.githubusercontent.com/wizzense/AitherZero/main/SUPER-SIMPLE-BOOTSTRAP.ps1 -useb | iex
-
-# Option 2: Direct core script
-iwr https://raw.githubusercontent.com/wizzense/AitherZero/main/aither-core/aither-core.ps1 -o aither-core.ps1; .\aither-core.ps1
-
-# Option 3: Quick launcher
-iwr https://raw.githubusercontent.com/wizzense/AitherZero/main/quick-launch.ps1 -useb | iex
-
-# Option 4: Traditional bootstrap
-iwr https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 -o bootstrap.ps1; .\bootstrap.ps1
+# Copy-paste this ONE LINE to download, extract, and run AitherZero:
+iwr https://raw.githubusercontent.com/wizzense/AitherZero/main/quick-download.ps1 -useb | iex
 ```
 
-**That's it! Pick any one and you're done!**
+**🎮 Slightly Less Magic (Download, Extract, Manual Start):**
+
+```powershell
+# Download our helper script and run it:
+iwr https://raw.githubusercontent.com/wizzense/AitherZero/main/download-aitherzero.ps1 -outfile dl.ps1; .\dl.ps1 -OpenAfterDownload
+```
+
+**🐧 Linux/macOS Users:**
+
+```bash
+# Download latest release and get started:
+curl -s https://api.github.com/repos/wizzense/AitherZero/releases/latest | grep "browser_download_url.*Release.zip" | cut -d '"' -f 4 | xargs curl -L -o AitherZero.zip && unzip -q AitherZero.zip && echo "🎉 Downloaded! Next: cd AitherZero-* && pwsh Start-AitherZero.ps1"
+```
+
+## 📦 Alternative Download Methods
+
+**� Simple PowerShell One-Liner:**
+```powershell
+# Download latest release and extract (manual start):
+$url = (irm "https://api.github.com/repos/wizzense/AitherZero/releases/latest").assets | ? {$_.name -like "*Release.zip"} | % browser_download_url; iwr $url -OutFile "AitherZero.zip"; Expand-Archive "AitherZero.zip" -Force; $folder = (gci -Directory | ? {$_.Name -like "AitherZero*"})[0].Name; Write-Host "🎉 Ready! Next steps:" -ForegroundColor Green; Write-Host "  cd $folder" -ForegroundColor Cyan; Write-Host "  .\Start-AitherZero.ps1" -ForegroundColor Cyan
+```
+
+**📋 Manual Download Steps:**
+
+1. Go to **[GitHub Releases](https://github.com/wizzense/AitherZero/releases/latest)**
+2. Download `AitherZero-[version]-Release.zip`
+3. Extract the ZIP file
+4. **Choose your method:**
+   - **Windows**: Double-click `Start-AitherZero.bat`
+   - **PowerShell**: Run `.\Start-AitherZero.ps1`
+   - **System Install**: Run `.\Install-AitherZero.ps1 -CreateDesktopShortcut -AddToPath`
+
+---
+
+## 📋 What You Get After Download
+
+**🎯 Ready-to-Run Package Contents:**
+
+- `Start-AitherZero.bat` - **Windows users: just double-click this!**
+- `Start-AitherZero.ps1` - **PowerShell users: run this**
+- `Install-AitherZero.ps1` - **System installation with shortcuts**
+- `README.txt` - **Quick start guide**
+- Complete AitherZero framework with all modules
+
+**💡 Pro Tip:** The downloaded package is completely self-contained - no additional downloads needed!
+
+---
+
+## 🚀 Backup: Bootstrap Methods (if release unavailable)
+
+```powershell
+# Method 1: Bulletproof Bootstrap (RECOMMENDED)
+iwr https://raw.githubusercontent.com/wizzense/AitherZero/main/BULLETPROOF-BOOTSTRAP.ps1 -useb | iex
+
+# Method 2: Direct Core Script Download
+iwr https://raw.githubusercontent.com/wizzense/AitherZero/main/aither-core/aither-core.ps1 -o aither-core.ps1; pwsh -File aither-core.ps1
+
+# Method 3: One-Liner (if already in project directory)
+if (Test-Path "./aither-core/aither-core.ps1") { pwsh -File "./aither-core/aither-core.ps1" } else { iwr https://raw.githubusercontent.com/wizzense/AitherZero/main/aither-core/aither-core.ps1 -o aither-core.ps1; pwsh -File aither-core.ps1 }
+
+# Method 4: Git Clone + Run
+git clone https://github.com/wizzense/AitherZero.git && cd AitherZero && pwsh -File ./aither-core/aither-core.ps1
+```
+
+**🎉 Professional packages make everything simple!**
 
 ---
 
