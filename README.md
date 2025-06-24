@@ -21,7 +21,13 @@ pwsh -Command "git clone https://github.com/wizzense/AitherZero.git; cd AitherZe
 **Alternative Direct Download**:
 
 ```powershell
-Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1' -OutFile '.\bootstrap.ps1'; pwsh -File .\bootstrap.ps1 -Launch
+# Working installation method (direct clone)
+git clone https://github.com/wizzense/AitherZero.git; cd AitherZero; pwsh -File ./aither-core/aither-core.ps1
+
+# Or manual download and launch
+git clone https://github.com/wizzense/AitherZero.git AitherZero
+cd AitherZero  
+pwsh -File ./bootstrap.ps1 -Launch
 ```
 
 ### 📋 Bootstrap Options
