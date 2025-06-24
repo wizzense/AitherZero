@@ -10,12 +10,12 @@ Cross-platform PowerShell automation framework for OpenTofu/Terraform infrastruc
 
 ```powershell
 # Windows PowerShell/PowerShell 7
-Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/wizzense/AitherZero/main/aither-core/aither-core.ps1' -OutFile 'aither-core.ps1'; pwsh -File ./aither-core.ps1
+Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/wizzense/AitherZero/refs/heads/main/aither-core/aither-core.ps1' -OutFile 'aither-core.ps1'; pwsh -File ./aither-core.ps1
 ```
 
 ```bash
 # Linux/macOS
-curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/aither-core/aither-core.ps1 -o aither-core.ps1 && pwsh -File ./aither-core.ps1
+curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/refs/heads/main/aither-core/aither-core.ps1 -o aither-core.ps1 && pwsh -File ./aither-core.ps1
 ```
 
 **✅ WORKING METHOD #2** (Git Clone - Full Repository):
