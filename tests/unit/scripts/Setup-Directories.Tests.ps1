@@ -3,7 +3,8 @@
 
 Describe 'Setup-Directories Tests' {
     BeforeAll {
-      Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force}
+      Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force
+    }
 
 
     Context 'Module Loading' {
@@ -23,4 +24,5 @@ Describe 'Setup-Directories Tests' {
         # Cleanup test resources
     }
 }
+
 

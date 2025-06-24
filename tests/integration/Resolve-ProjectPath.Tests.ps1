@@ -3,7 +3,8 @@
 
 Describe 'Resolve-ProjectPath Tests' {
     BeforeAll {
-        Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force}
+        Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force
+    }
 
     Context 'Module Loading' {
         It 'should load required modules' {
@@ -22,4 +23,5 @@ Describe 'Resolve-ProjectPath Tests' {
         # Cleanup test resources
     }
 }
+
 
