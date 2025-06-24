@@ -1,4 +1,4 @@
-# OpenTofu Lab Automation
+# AitherZero Infrastructure Automation
 
 Cross-platform PowerShell automation framework for OpenTofu/Terraform infrastructure management with comprehensive testing and modular architecture.
 
@@ -6,41 +6,44 @@ Cross-platform PowerShell automation framework for OpenTofu/Terraform infrastruc
 
 ### 🚀 One-Line Installation
 
-**Bootstrap with kicker-git.ps1** (Main Entry Point):
+**Clone and Run with AitherCore**:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/wizzense/opentofu-lab-automation/main/kicker-git.ps1' -OutFile '.\kicker-git.ps1'; .\kicker-git.ps1"
+git clone https://github.com/wizzense/AitherZero.git; cd AitherZero; pwsh -File ./aither-core/aither-core.ps1
 ```
 
 **PowerShell 7.x** (Cross-platform):
 
 ```powershell
-pwsh -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/wizzense/opentofu-lab-automation/main/kicker-git.ps1' -OutFile '.\kicker-git.ps1'; .\kicker-git.ps1"
+pwsh -Command "git clone https://github.com/wizzense/AitherZero.git; cd AitherZero; pwsh -File ./aither-core/aither-core.ps1"
 ```
 
-[kicker-git.ps1](https://github.com/wizzense/opentofu-lab-automation/blob/main/kicker-git.ps1)
+**Alternative Direct Download**:
+
+```powershell
+Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1' -OutFile '.\bootstrap.ps1'; pwsh -File .\bootstrap.ps1 -Launch
+```
 
 ### 📋 Bootstrap Options
 
-The `kicker-git.ps1` script is your **single entry point** for all bootstrap scenarios:
+The **AitherCore** framework is your **single entry point** for all automation scenarios:
 
-#### **kicker-git.ps1** Features
+#### **aither-core.ps1** Features
 
-- ✅ Full CoreApp orchestration integration
+- ✅ Full modular architecture with 14+ specialized modules
 - ✅ Cross-platform support (Windows, Linux, macOS)
 - ✅ PowerShell 5.1 and 7.x compatibility
-- ✅ Self-updating capabilities
-- ✅ Comprehensive health checks
+- ✅ Self-updating capabilities via PatchManager
+- ✅ Comprehensive health checks and validation
 - ✅ Advanced error handling and logging
 - ✅ Non-interactive mode for automation
-- ✅ Enhanced GitHub authentication handling
+- ✅ Bulletproof testing framework integration
 
 ```powershell
-# Download and run with options
-.\kicker-git.ps1 -Verbosity detailed -NonInteractive
-.\kicker-git.ps1 -ConfigFile "my-config.json" -TargetBranch "develop"
-.\kicker-git.ps1 -SkipGitHubAuth -SkipPrerequisites
-.\kicker-git.ps1 -WhatIf  # See what would be done
+# Run AitherCore with options
+./aither-core/aither-core.ps1 -Verbosity detailed -NonInteractive
+./aither-core/aither-core.ps1 -Scripts "LabRunner,BackupManager" -Auto
+./aither-core/aither-core.ps1 -WhatIf  # See what would be done
 ```
 .\kicker-git.ps1 -Force -Verbosity detailed
 ```
@@ -92,7 +95,7 @@ Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/wizzense/opentofu-lab-
 
 ## Environment Setup
 
-The bootstrap script automatically sets up:
+The AitherCore framework automatically sets up:
 
 - **Environment Variables:**
   - `$env:PROJECT_ROOT` - Project root directory
@@ -101,35 +104,37 @@ The bootstrap script automatically sets up:
 - **Module Import Paths:**
 
   ```powershell
-  Import-Module "$env:PROJECT_ROOT\core-runner\modules\Logging" -Force
-  Import-Module "$env:PROJECT_ROOT\core-runner\modules\PatchManager" -Force
+  Import-Module "$env:PROJECT_ROOT/aither-core/modules/Logging" -Force
+  Import-Module "$env:PROJECT_ROOT/aither-core/modules/PatchManager" -Force
   ```
 
-## Project Structure
+## Architecture Overview
 
 ```
-opentofu-lab-automation/
-├── core-runner/                    # Main automation framework
-│   ├── kicker-bootstrap.ps1       # Legacy bootstrap (being phased out)
-│   ├── kicker-bootstrap-clean.ps1 # Clean bootstrap implementation
-│   ├── setup-test-env.ps1         # Environment setup script
-│   ├── core_app/                  # Core application
-│   │   ├── core-runner.ps1        # Main runner script
-│   │   ├── default-config.json    # Default configuration
-│   │   └── scripts/               # Automation scripts (0000_*.ps1)
+AitherZero/
+├── aither-core/                   # Main automation framework
+│   ├── aither-core.ps1            # Main entry point script
+│   ├── AitherCore.psd1            # Module manifest
+│   ├── AitherCore.psm1            # Core module
+│   ├── default-config.json        # Default configuration
+│   ├── scripts/                   # Automation scripts (0000_*.ps1)
+│   ├── shared/                    # Shared utilities
 │   └── modules/                   # PowerShell modules
-│       ├── Logging/               # Centralized logging
-│       ├── PatchManager/          # Git operations and patching
-│       ├── LabRunner/             # Lab management
-│       ├── BackupManager/         # Backup operations
+│       ├── BackupManager/         # File backup and cleanup
 │       ├── DevEnvironment/        # Development setup
-│       ├── ParallelExecution/     # Parallel processing
-│       ├── ScriptManager/         # Script management
-│       ├── TestingFramework/      # Testing utilities
-│       └── UnifiedMaintenance/    # Maintenance operations
+│       ├── ISOCustomizer/         # ISO customization
+│       ├── ISOManager/            # ISO management
+│       ├── LabRunner/             # Lab automation orchestration
+│       ├── Logging/               # Centralized logging
+│       ├── OpenTofuProvider/      # OpenTofu integration
+│       ├── ParallelExecution/     # Runspace-based parallelism
+│       ├── PatchManager/          # Git-controlled patch workflows
+│       ├── ScriptManager/         # Script repository management
+│       ├── TestingFramework/      # Pester test wrapper
+│       └── UnifiedMaintenance/    # Unified maintenance operations
 ├── configs/                       # Configuration files
-├── docs/                          # Documentation
-├── tests/                         # Comprehensive test suite
+├── docs/                          # Comprehensive documentation
+├── tests/                         # Bulletproof testing framework
 ├── tools/                         # Utility tools
 └── opentofu/                      # OpenTofu infrastructure
 ```
@@ -341,40 +346,39 @@ Will probably change repo name to just 'lab-automation'.
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🔄 After Initial Bootstrap
+## 🔄 After Initial Setup
 
-After `kicker-git.ps1` completes, you'll be in the project directory with several relaunch options:
+After running `aither-core.ps1`, you'll have several options:
 
-### **Quick Relaunch Options** (Choose Your Preference)
+### **Quick Usage Examples**
 
 ```powershell
-# Option 1: Generated relaunch script (recommended)
-.\Relaunch-CoreApp.ps1           # Auto-generated by kicker-git.ps1
+# Import AitherCore module
+Import-Module "./aither-core/AitherCore.psm1" -Force
 
-# Option 2: Existing launcher
-.\Start-CoreApp.ps1              # Manual CoreApp initialization
+# Run automated setup
+./aither-core/aither-core.ps1 -Auto -Verbosity detailed
 
-# Option 3: Super quick launcher
-.\go.ps1                         # Minimal typing required
+# Run specific modules
+./aither-core/aither-core.ps1 -Scripts "LabRunner,BackupManager"
 
-# Option 4: Quick development setup
-.\Quick-Setup.ps1                # Environment + modules
+# Development mode
+./aither-core/aither-core.ps1 -NonInteractive -WhatIf
 ```
 
-### **Manual CoreApp Start**
+### **Module Usage**
 
 ```powershell
-# If you prefer manual control:
-Import-Module "./core-runner/core_app/CoreApp.psm1" -Force
-Initialize-CoreApplication
-```
+# Import and use individual modules
+Import-Module "./aither-core/modules/PatchManager" -Force
+Import-Module "./aither-core/modules/LabRunner" -Force
 
-### **Development Workflow**
+# Create patches with the new v2.1 workflow
+Invoke-PatchWorkflow -PatchDescription "My changes" -CreatePR
 
-```powershell
-# After any relaunch script:
-Get-CoreModuleStatus             # Check module health
-Invoke-UnifiedMaintenance        # Run maintenance
-Start-DevEnvironmentSetup        # Setup dev environment
-Test-CoreApplicationHealth       # Health check
+# Run lab automation
+Start-LabEnvironment -ConfigPath "./configs/lab_config.json"
+
+# Perform maintenance
+Invoke-UnifiedMaintenance -Mode "All" -AutoFix
 ```
