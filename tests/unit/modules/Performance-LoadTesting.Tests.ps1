@@ -1,3 +1,5 @@
+Describe 'Performance Load Testing Tests' {
+
 BeforeAll {
     # Find project root using robust detection
     $projectRoot = if ($env:PROJECT_ROOT) { 
@@ -487,7 +489,11 @@ Describe "Performance and Load Testing" {
             Write-Host "Total successful operations: $totalSuccess" -ForegroundColor Green
             
             $results.Count | Should -Be $jobCount
+            $totalSuccess | Should -BeGreaterThan 100  # At least some operations should succeed            Write-Host "Concurrent stress test: $totalTime ms" -ForegroundColor Cyan
+            Write-Host "Total successful operations: $totalSuccess" -ForegroundColor Green
+            
+            $results.Count | Should -Be $jobCount
             $totalSuccess | Should -BeGreaterThan 100  # At least some operations should succeed
         }
     }
-}
+}  # End of Describe 'Performance Load Testing Tests'

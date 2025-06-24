@@ -1,3 +1,5 @@
+Describe 'Advanced Error Handling Tests' {
+
 BeforeAll {
     # Find project root using robust detection
     $projectRoot = if ($env:PROJECT_ROOT) { 
@@ -494,7 +496,11 @@ Describe "Integration Testing - Complex Scenarios" {
             
             # Should have captured errors from steps 1 and 2, but recovery should work
             $errors.Count | Should -BeGreaterOrEqual 2
+            $recoverySuccess | Should -Be $true            }
+            
+            # Should have captured errors from steps 1 and 2, but recovery should work
+            $errors.Count | Should -BeGreaterOrEqual 2
             $recoverySuccess | Should -Be $true
         }
     }
-}
+}  # End of Describe 'Advanced Error Handling Tests'
