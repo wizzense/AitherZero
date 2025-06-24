@@ -18,16 +18,14 @@ git clone https://github.com/wizzense/AitherZero.git; cd AitherZero; pwsh -File 
 pwsh -Command "git clone https://github.com/wizzense/AitherZero.git; cd AitherZero; pwsh -File ./aither-core/aither-core.ps1"
 ```
 
-**Alternative Direct Download**:
+**Bootstrap Script Download** (Alternative):
 
 ```powershell
-# Working installation method (direct clone)
-git clone https://github.com/wizzense/AitherZero.git; cd AitherZero; pwsh -File ./aither-core/aither-core.ps1
+# Download and run bootstrap (if available)
+Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1' -OutFile '.\bootstrap.ps1'; pwsh -File .\bootstrap.ps1 -Launch
 
-# Or manual download and launch
-git clone https://github.com/wizzense/AitherZero.git AitherZero
-cd AitherZero  
-pwsh -File ./bootstrap.ps1 -Launch
+# Or direct clone (always works)
+git clone https://github.com/wizzense/AitherZero.git; cd AitherZero; pwsh -File ./aither-core/aither-core.ps1
 ```
 
 ### 📋 Bootstrap Options
