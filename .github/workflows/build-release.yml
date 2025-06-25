@@ -45,6 +45,7 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       should-build: ${{ steps.check.outputs.should-build }}
+      should-release: ${{ steps.check.outputs.should-release }}
 
     steps:
       - name: Checkout Repository
@@ -125,15 +126,19 @@ jobs:
         shell: pwsh
         run: |
           $shouldBuild = $false
+          $shouldRelease = $false
 
           if ("${{ github.event_name }}" -eq "push" -and "${{ github.ref_type }}" -eq "tag") {
             $shouldBuild = $true
+            $shouldRelease = $true
             Write-Host "✓ Tag push - proceeding with build and release" -ForegroundColor Green
           } elseif ("${{ github.event_name }}" -eq "push" -and ("${{ github.ref }}" -eq "refs/heads/main" -or "${{ github.ref }}" -eq "refs/heads/master")) {
             $shouldBuild = $true
-            Write-Host "✓ PR merge to main/master - proceeding with build" -ForegroundColor Green
+            $shouldRelease = $false
+            Write-Host "✓ PR merge to main/master - proceeding with build only" -ForegroundColor Green
           } elseif ("${{ github.event_name }}" -eq "workflow_dispatch") {
             $shouldBuild = $true
+            $shouldRelease = $true
             Write-Host "✓ Manual dispatch - proceeding with build and release" -ForegroundColor Green
           } else {
             Write-Host "✗ Event does not trigger build: ${{ github.event_name }} (ref: ${{ github.ref }}, ref_type: ${{ github.ref_type }})" -ForegroundColor Yellow
@@ -141,7 +146,9 @@ jobs:
           }
 
           Write-Host "Should build: $shouldBuild" -ForegroundColor Cyan
+          Write-Host "Should release: $shouldRelease" -ForegroundColor Cyan
           echo "should-build=$shouldBuild" >> $env:GITHUB_OUTPUT
+          echo "should-release=$shouldRelease" >> $env:GITHUB_OUTPUT
 
   validate:
     name: Pre-Build Validation (${{ matrix.os }})
@@ -515,10 +522,7 @@ jobs:
     name: Create GitHub Release
     runs-on: ubuntu-latest
     needs: [version, build]
-    if: |
-      needs.version.outputs.should-build == 'true' &&
-      (github.event_name == 'workflow_dispatch' ||
-       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')))
+    if: needs.version.outputs.should-release == 'true'
 
     steps:
       - name: Checkout Repository
