@@ -2,13 +2,14 @@ name: Comprehensive CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ develop ]  # Only trigger on develop, not main
     paths-ignore:
       - 'docs/**'
       - '*.md'
       - 'LICENSE'
   pull_request:
     branches: [ main, develop ]
+    types: [ opened, synchronize, reopened ]  # Exclude 'closed' to prevent conflicts
     paths-ignore:
       - 'docs/**'
       - '*.md'
@@ -25,9 +26,9 @@ on:
           - Standard
           - Complete
 
-# Prevent duplicate runs
+# Prevent duplicate runs and conflicts with build-release workflow
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ci-cd-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:

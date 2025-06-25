@@ -29,6 +29,12 @@ on:
 
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
+
+# Prevent conflicts with other workflows
+concurrency:
+  group: build-release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false  # Don't cancel release builds
+
 permissions:
   contents: write
   packages: write
@@ -399,7 +405,47 @@ jobs:
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
         with:
-          path: release-artifacts
+          path: ./artifacts
+
+      - name: Organize Release Assets
+        shell: pwsh
+        run: |
+          Write-Host "Organizing release assets..." -ForegroundColor Cyan
+
+          # Create release directory
+          $releaseDir = "release"
+          if (-not (Test-Path $releaseDir)) {
+            New-Item -ItemType Directory -Path $releaseDir -Force | Out-Null
+          }
+
+          # Move all artifacts to release directory with proper names
+          Get-ChildItem -Path "./artifacts" -Recurse -File | ForEach-Object {
+            $destPath = Join-Path $releaseDir $_.Name
+            Copy-Item $_.FullName $destPath -Force
+            Write-Host "✓ Copied: $($_.Name)" -ForegroundColor Green
+          }
+
+          # Verify all expected files are present
+          $version = "${{ needs.version.outputs.version }}"
+          $expectedFiles = @(
+            "AitherZero-$version-windows.zip",
+            "AitherZero-$version-windows.zip.sha256",
+            "AitherZero-$version-linux.tar.gz", 
+            "AitherZero-$version-linux.tar.gz.sha256",
+            "AitherZero-$version-macos.tar.gz",
+            "AitherZero-$version-macos.tar.gz.sha256"
+          )
+
+          foreach ($file in $expectedFiles) {
+            $filePath = Join-Path $releaseDir $file
+            if (Test-Path $filePath) {
+              Write-Host "✓ Found: $file" -ForegroundColor Green
+            } else {
+              Write-Warning "Missing: $file"
+            }
+          }
+
+          Write-Host "Release assets organized successfully!" -ForegroundColor Green
 
       - name: Prepare Release Assets
         shell: pwsh
@@ -482,6 +528,47 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Wait for Release to be Available
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          Write-Host "Waiting for release to be fully available..." -ForegroundColor Cyan
+          
+          $version = "${{ needs.version.outputs.version }}"
+          $maxAttempts = 10
+          $attempt = 1
+          $found = $false
+          
+          while ($attempt -le $maxAttempts -and -not $found) {
+            Write-Host "Attempt $attempt of $maxAttempts..." -ForegroundColor Yellow
+            
+            try {
+              $release = gh release view "v$version" --json tagName,assets,draft 2>$null
+              if ($release) {
+                $releaseData = $release | ConvertFrom-Json
+                if ($releaseData.tagName -eq "v$version" -and $releaseData.assets -and $releaseData.assets.Count -gt 0) {
+                  Write-Host "✓ Release v$version found with $($releaseData.assets.Count) assets" -ForegroundColor Green
+                  $found = $true
+                  break
+                }
+              }
+            } catch {
+              Write-Host "Release not yet available: $($_.Exception.Message)" -ForegroundColor Yellow
+            }
+            
+            if (-not $found) {
+              Write-Host "Release not ready, waiting 30 seconds..." -ForegroundColor Yellow
+              Start-Sleep -Seconds 30
+              $attempt++
+            }
+          }
+          
+          if (-not $found) {
+            Write-Error "Release v$version not available after $maxAttempts attempts"
+            exit 1
+          }
 
       - name: Validate Release Assets
         shell: pwsh
