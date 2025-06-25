@@ -367,4 +367,3 @@ Changes have been committed and are ready for review.
         Write-CopilotLog "Copilot suggestion handler completed for PR #$PullRequestNumber" "INFO"
     }
 }
-

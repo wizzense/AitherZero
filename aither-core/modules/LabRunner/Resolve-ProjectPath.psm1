@@ -32,6 +32,3 @@ function Resolve-ProjectPath {
 }
 
 Export-ModuleMember -Function Resolve-ProjectPath
-
-
-

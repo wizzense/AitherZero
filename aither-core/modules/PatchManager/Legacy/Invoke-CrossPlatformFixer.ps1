@@ -476,5 +476,3 @@ $($script:FixLog.Errors | ForEach-Object{ "- $_" } | Out-String)
 
     return $report
 }
-
-

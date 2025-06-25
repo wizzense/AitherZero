@@ -23,5 +23,3 @@ Describe 'BadRunnerScripts.Simple Tests' {
         # Cleanup test resources
     }
 }
-
-

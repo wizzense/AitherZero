@@ -23,4 +23,3 @@ Describe 'CommonInstallers Tests' {
         # Cleanup test resources
     }
 }
-

@@ -23,5 +23,3 @@ Describe '0210_Install-VSCode Tests' {
         # Cleanup test resources
     }
 }
-
-

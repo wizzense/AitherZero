@@ -23,5 +23,3 @@ Describe '0216_Set-LabProfile Tests' {
         # Cleanup test resources
     }
 }
-
-

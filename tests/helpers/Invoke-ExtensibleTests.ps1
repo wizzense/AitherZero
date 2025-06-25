@@ -348,6 +348,3 @@ try {
     Write-Error "Test execution failed: $_"
     exit 1
 }
-
-
-

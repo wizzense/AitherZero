@@ -23,5 +23,3 @@ Describe 'Kickstart-Bootstrap Tests' {
         # Cleanup test resources
     }
 }
-
-

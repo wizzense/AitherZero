@@ -23,5 +23,3 @@ Describe 'EscapePathArgument Tests' {
         # Cleanup test resources
     }
 }
-
-

@@ -38,8 +38,3 @@ function Format-Config {
         }
     }
 }
-
-
-
-
-

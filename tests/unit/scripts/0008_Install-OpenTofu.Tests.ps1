@@ -23,5 +23,3 @@ Describe '0008_Install-OpenTofu Tests' {
         # Cleanup test resources
     }
 }
-
-

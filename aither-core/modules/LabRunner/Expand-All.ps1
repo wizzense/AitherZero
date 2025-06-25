@@ -67,8 +67,3 @@ function Expand-All {
         Write-CustomLog "All archives expanded."
     }
 }
-
-
-
-
-

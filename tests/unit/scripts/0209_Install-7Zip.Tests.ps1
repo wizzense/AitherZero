@@ -23,5 +23,3 @@ Describe '0209_Install-7Zip Tests' {
         # Cleanup test resources
     }
 }
-
-

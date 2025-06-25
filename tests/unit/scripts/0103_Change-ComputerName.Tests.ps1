@@ -23,5 +23,3 @@ Describe '0103_Change-ComputerName Tests' {
         # Cleanup test resources
     }
 }
-
-

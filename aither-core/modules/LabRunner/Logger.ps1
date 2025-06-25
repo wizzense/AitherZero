@@ -61,7 +61,3 @@ function Read-LoggedInput {
     Write-CustomLog "$($Prompt): $answer"
     return $answer
 }
-
-
-
-

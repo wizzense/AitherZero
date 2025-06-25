@@ -23,5 +23,3 @@ Describe 'Get-HyperVProviderVersion Tests' {
         # Cleanup test resources
     }
 }
-
-

@@ -23,5 +23,3 @@ Describe '9999_Reset-Machine Tests' {
         # Cleanup test resources
     }
 }
-
-

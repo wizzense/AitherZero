@@ -23,5 +23,3 @@ Describe 'Install-Go.Modern Tests' {
         # Cleanup test resources
     }
 }
-
-

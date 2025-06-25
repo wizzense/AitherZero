@@ -31,4 +31,3 @@ Describe 'Config-TrustedHosts Tests' -Tags @('Integration', 'Config') {
         Remove-Module LabRunner -Force -ErrorAction SilentlyContinue
     }
 }
-

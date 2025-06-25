@@ -23,5 +23,3 @@ Describe '0106_Install-WAC Tests' {
         # Cleanup test resources
     }
 }
-
-
