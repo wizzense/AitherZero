@@ -1112,19 +1112,19 @@ try {
                         'Launcher-Functionality' {
                             # Test all launcher scripts for basic functionality
                             $launcherTestPath = Join-Path $ProjectRoot 'tests/Test-LauncherFunctionality.ps1'
-                            
+
                             if (Test-Path $launcherTestPath) {
                                 try {
                                     $tempDir = if ($env:TEMP) { $env:TEMP } elseif (Test-Path '/tmp') { '/tmp' } else { $ProjectRoot }
                                     $tempLog = Join-Path $tempDir 'bulletproof-launcher.log'
                                     $tempErr = Join-Path $tempDir 'bulletproof-launcher-error.log'
-                                    
+
                                     $process = Start-Process -FilePath 'pwsh' -ArgumentList @(
                                         '-File', "`"$launcherTestPath`""
                                     ) -NoNewWindow -Wait -PassThru -RedirectStandardOutput $tempLog -RedirectStandardError $tempErr
-                                    
+
                                     $testResult.Success = ($process.ExitCode -eq 0)
-                                    
+
                                     if (Test-Path $tempLog) {
                                         $output = Get-Content $tempLog -Raw
                                         if ($output -match 'All launcher tests passed') {
@@ -1137,7 +1137,7 @@ try {
                                             $testResult.Message = 'Launcher validation output unexpected'
                                         }
                                     }
-                                    
+
                                     if (-not $testResult.Success -and (Test-Path $tempErr)) {
                                         $errorOutput = Get-Content $tempErr -Raw
                                         $testResult.Message += " - Error: $errorOutput"
@@ -1336,4 +1336,3 @@ exit $exitCode
 # LAUNCHER TESTS - CRITICAL FOR USER EXPERIENCE
 
 # Include launcher functionality validation in all test runs
-

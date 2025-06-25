@@ -523,14 +523,14 @@ jobs:
                 Copy-Item -Path "templates/launchers/Start-AitherZero.ps1" -Destination "$packageDir/Start-AitherZero.ps1" -Force
                 Write-Host "✓ Fixed PowerShell launcher copied" -ForegroundColor Green
               }
-              
+
               if ("${{ matrix.platform }}" -eq "windows" -and (Test-Path "templates/launchers/AitherZero.bat")) {
                 Copy-Item -Path "templates/launchers/AitherZero.bat" -Destination "$packageDir/AitherZero.bat" -Force
                 Write-Host "✓ Fixed Windows batch launcher copied" -ForegroundColor Green
               }
             } else {
               Write-Warning "Launcher templates not found - using fallback generation"
-              
+
               # Platform-specific startup scripts with execution policy bypass (FALLBACK ONLY)
               if ("${{ matrix.platform }}" -eq "windows") {
                 $winScript = "@echo off`necho 🚀 AitherZero v$version - Windows Quick Start`necho.`necho Starting AitherZero with execution policy bypass for downloaded packages...`necho.`npwsh -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" %*`nif %ERRORLEVEL% NEQ 0 (`necho.`necho ❌ AitherZero encountered an error.`necho.`necho 💡 Troubleshooting:`necho   1. Try running: pwsh -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" -Setup`necho   2. Or run: pwsh -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" -Help`necho   3. Check requirements: PowerShell 7+, Git, OpenTofu/Terraform`necho.`npause`n)"
@@ -549,7 +549,7 @@ jobs:
                 Write-Host "✓ Created Unix quick-start script" -ForegroundColor Green
               }
             }
-            
+
             # For non-Windows platforms, always create Unix launcher script
             if ("${{ matrix.platform }}" -ne "windows") {
               $unixScript = "#!/bin/bash`necho `"🚀 AitherZero v$version - $(if ("${{ matrix.platform }}" -eq "macos") { "macOS" } else { "Linux" }) Quick Start`"`necho `"Cross-Platform Infrastructure Automation with OpenTofu/Terraform`"`necho `"`"`npwsh -File `"Start-AitherZero.ps1`" `$@"
