@@ -6,8 +6,8 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
-    types: [closed]
-    # Only when merged to prevent duplicate runs
+    types: [closed]  # Only trigger on closed (merged) PRs
+
   workflow_dispatch:
     inputs:
       release_type:
@@ -29,9 +29,9 @@ on:
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
 
-# Prevent conflicts with other workflows
+# Prevent conflicts with other workflows and duplicate runs
 concurrency:
-  group: build-release-${{ github.workflow }}-${{ github.ref }}
+  group: build-release-${{ github.ref }}
   cancel-in-progress: false  # Don't cancel release builds
 
 permissions:
@@ -279,7 +279,7 @@ jobs:
       - name: Build AitherZero Package
         shell: pwsh
         run: |
-          Write-Host "Building AitherZero package for ${{ matrix.platform }}..." -ForegroundColor Cyan
+          Write-Host "Building lean AitherZero application package for ${{ matrix.platform }}..." -ForegroundColor Cyan
 
           $ErrorActionPreference = 'Stop'
           $version = "${{ needs.version.outputs.version }}"
@@ -292,40 +292,175 @@ jobs:
             $packageDir = "$buildDir/$packageName"
             New-Item -Path $packageDir -ItemType Directory -Force | Out-Null
 
-            Write-Host "Creating package: $packageName" -ForegroundColor Yellow
+            Write-Host "Creating lean application package: $packageName" -ForegroundColor Yellow
+            Write-Host "📦 Application-focused build (not a repository copy)" -ForegroundColor Cyan
 
-            $coreItems = @(
-              'aither-core',
-              'build',
-              'configs',
-              'templates',
-              'README.md',
-              'LICENSE'
+            # Copy ONLY essential application files for running AitherZero
+            Write-Host "Copying core application files..." -ForegroundColor Yellow
+
+            # Core runner and main entry point
+            Copy-Item -Path "aither-core/aither-core.ps1" -Destination "$packageDir/aither-core.ps1" -Force
+            Write-Host "✓ Core runner script" -ForegroundColor Green
+
+            # Essential modules only (not dev/test modules)
+            $essentialModules = @(
+              "Logging", "LabRunner", "DevEnvironment", "BackupManager",
+              "ScriptManager", "UnifiedMaintenance", "ParallelExecution"
             )
 
-            foreach ($item in $coreItems) {
-              if (Test-Path $item) {
-                $destinationPath = Join-Path $packageDir $item
-                Copy-Item -Path $item -Destination $destinationPath -Recurse -Force
-                Write-Host "✓ Copied: $item" -ForegroundColor Green
-              } else {
-                Write-Warning "Item not found: $item"
+            New-Item -Path "$packageDir/modules" -ItemType Directory -Force | Out-Null
+            foreach ($module in $essentialModules) {
+              $modulePath = "aither-core/modules/$module"
+              if (Test-Path $modulePath) {
+                Copy-Item -Path $modulePath -Destination "$packageDir/modules/$module" -Recurse -Force
+                Write-Host "✓ Essential module: $module" -ForegroundColor Green
               }
             }
 
-            if ("${{ matrix.platform }}" -eq "windows") {
-              $startupScript = "@echo off`necho Starting AitherZero v$version...`npwsh -File `"aither-core/aither-core.ps1`" %*`npause"
-              Set-Content -Path "$packageDir/AitherZero.bat" -Value $startupScript -Encoding UTF8
-              Write-Host "✓ Created Windows startup script" -ForegroundColor Green
-            } else {
-              $startupScript = "#!/bin/bash`necho `"Starting AitherZero v$version...`"`npwsh -File `"aither-core/aither-core.ps1`" `$@"
-              Set-Content -Path "$packageDir/aitherzero.sh" -Value $startupScript -Encoding UTF8
+            # Shared utilities
+            if (Test-Path "aither-core/shared") {
+              Copy-Item -Path "aither-core/shared" -Destination "$packageDir/shared" -Recurse -Force
+              Write-Host "✓ Shared utilities" -ForegroundColor Green
+            }
 
+            # Essential scripts directory (runtime scripts only)
+            if (Test-Path "aither-core/scripts") {
+              New-Item -Path "$packageDir/scripts" -ItemType Directory -Force | Out-Null
+              # Copy only runtime scripts, not development/build scripts
+              $runtimeScripts = Get-ChildItem -Path "aither-core/scripts" -Filter "*.ps1" -File |
+                Where-Object { $_.Name -notlike "*test*" -and $_.Name -notlike "*dev*" -and $_.Name -notlike "*build*" }
+              foreach ($script in $runtimeScripts) {
+                Copy-Item -Path $script.FullName -Destination "$packageDir/scripts/" -Force
+                Write-Host "✓ Runtime script: $($script.Name)" -ForegroundColor Green
+              }
+            }
+
+            # Essential configuration templates
+            New-Item -Path "$packageDir/configs" -ItemType Directory -Force | Out-Null
+            $essentialConfigs = @(
+              "default-config.json", "core-runner-config.json", "recommended-config.json"
+            )
+            foreach ($config in $essentialConfigs) {
+              $configPath = "configs/$config"
+              if (Test-Path $configPath) {
+                Copy-Item -Path $configPath -Destination "$packageDir/configs/$config" -Force
+                Write-Host "✓ Config template: $config" -ForegroundColor Green
+              }
+            }
+
+            # OpenTofu templates (infrastructure automation core feature)
+            if (Test-Path "opentofu") {
+              # Copy only essential OpenTofu files, not development/test environments
+              New-Item -Path "$packageDir/opentofu" -ItemType Directory -Force | Out-Null
+              $essentialTF = @("infrastructure", "providers", "modules")
+              foreach ($tfDir in $essentialTF) {
+                $tfPath = "opentofu/$tfDir"
+                if (Test-Path $tfPath) {
+                  Copy-Item -Path $tfPath -Destination "$packageDir/opentofu/$tfDir" -Recurse -Force
+                  Write-Host "✓ OpenTofu: $tfDir" -ForegroundColor Green
+                }
+              }
+            }
+
+            # Essential documentation
+            Copy-Item -Path "README.md" -Destination "$packageDir/README.md" -Force
+            Copy-Item -Path "LICENSE" -Destination "$packageDir/LICENSE" -Force
+            Write-Host "✓ Essential documentation" -ForegroundColor Green
+
+            # Create a simple launcher script
+            Write-Host "Creating application launcher..." -ForegroundColor Yellow
+            $launcherLines = @(
+              '#!/usr/bin/env pwsh',
+              '#Requires -Version 7.0',
+              '',
+              'Write-Host "🚀 AitherZero Infrastructure Automation Framework v' + $version + '" -ForegroundColor Cyan',
+              'Write-Host "   Lean Application Package - Essential Components Only" -ForegroundColor Yellow',
+              'Write-Host ""',
+              '',
+              '# Set up environment',
+              '$env:AITHER_APP_ROOT = $PSScriptRoot',
+              '$env:PROJECT_ROOT = $PSScriptRoot',
+              '',
+              '# Import essential modules',
+              'if (Test-Path "$PSScriptRoot/modules") {',
+              '    Get-ChildItem "$PSScriptRoot/modules" -Directory | ForEach-Object {',
+              '        try {',
+              '            Import-Module $_.FullName -Force',
+              '            Write-Verbose "Loaded module: $($_.Name)"',
+              '        } catch {',
+              '            Write-Warning "Failed to load module $($_.Name): $_"',
+              '        }',
+              '    }',
+              '}',
+              '',
+              '# Start the core application',
+              'Write-Host "Starting AitherZero core application..." -ForegroundColor Green',
+              '& "$PSScriptRoot/aither-core.ps1" $args'
+            )
+
+            $launcherContent = $launcherLines -join "`n"
+            Set-Content -Path "$packageDir/Start-AitherZero.ps1" -Value $launcherContent
+            Write-Host "✓ Application launcher created" -ForegroundColor Green
+
+            # Platform-specific startup scripts
+            if ("${{ matrix.platform }}" -eq "windows") {
+              $winScript = "@echo off`necho 🚀 AitherZero v$version - Windows Quick Start`npwsh -File `"Start-AitherZero.ps1`" %*`nif %ERRORLEVEL% NEQ 0 pause"
+              Set-Content -Path "$packageDir/AitherZero.bat" -Value $winScript -Encoding UTF8
+              Write-Host "✓ Created Windows quick-start script" -ForegroundColor Green
+            } else {
+              $unixScript = "#!/bin/bash`necho `"🚀 AitherZero v$version - $(if ("${{ matrix.platform }}" -eq "macos") { "macOS" } else { "Linux" }) Quick Start`"`npwsh -File `"Start-AitherZero.ps1`" `$@"
+              Set-Content -Path "$packageDir/aitherzero.sh" -Value $unixScript -Encoding UTF8
               if (-not $IsWindows) {
                 chmod +x "$packageDir/aitherzero.sh"
               }
-              Write-Host "✓ Created Unix startup script" -ForegroundColor Green
+              Write-Host "✓ Created Unix quick-start script" -ForegroundColor Green
             }
+
+            # Create package metadata and docs
+            Write-Host "Creating package metadata..." -ForegroundColor Yellow
+            $packageInfo = @{
+              Version = $version
+              PackageType = "Application"
+              BuildDate = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss UTC')
+              GitCommit = $env:GITHUB_SHA
+              GitRef = $env:GITHUB_REF
+              Platform = "${{ matrix.platform }}"
+              Description = "Lean AitherZero application package with essential components only"
+              Components = @(
+                "Core runner", "Essential modules", "Configuration templates",
+                "OpenTofu infrastructure", "Application launcher"
+              )
+              Usage = "Run Start-AitherZero.ps1 to begin or aither-core.ps1 for direct access"
+              Repository = "https://github.com/wizzense/AitherZero"
+            }
+            $packageInfo | ConvertTo-Json -Depth 3 | Set-Content "$packageDir/PACKAGE-INFO.json"
+
+            # Create simple installation guide
+            $installGuide = "# AitherZero Application Package v$version`n`n" +
+                           "## Quick Start`n`n" +
+                           "1. Extract this package to your desired location`n" +
+                           "2. Run: ./Start-AitherZero.ps1`n" +
+                           "3. Or run directly: ./aither-core.ps1`n`n" +
+                           "## Requirements`n`n" +
+                           "- PowerShell 7.0 or later`n" +
+                           "- Git (for repository operations)`n" +
+                           "- OpenTofu/Terraform (for infrastructure automation)`n`n" +
+                           "## Support`n`n" +
+                           "Repository: https://github.com/wizzense/AitherZero"
+
+            Set-Content -Path "$packageDir/INSTALL.md" -Value $installGuide
+            Write-Host "✓ Installation guide created" -ForegroundColor Green
+
+            # Calculate package size
+            $packageSize = (Get-ChildItem -Path $packageDir -Recurse | Measure-Object -Property Length -Sum).Sum
+            $packageSizeMB = [math]::Round($packageSize / 1MB, 2)
+
+            Write-Host ""
+            Write-Host "📦 Lean Application Package Created:" -ForegroundColor Green
+            Write-Host "   Package: $packageName" -ForegroundColor White
+            Write-Host "   Size: $packageSizeMB MB (lean build)" -ForegroundColor White
+            Write-Host "   Type: Application (Essential components only)" -ForegroundColor White
+            Write-Host ""
 
             Write-Host "✓ Package creation completed for ${{ matrix.platform }}" -ForegroundColor Green
 
@@ -449,7 +584,7 @@ jobs:
           $expectedFiles = @(
             "AitherZero-$version-windows.zip",
             "AitherZero-$version-windows.zip.sha256",
-            "AitherZero-$version-linux.tar.gz", 
+            "AitherZero-$version-linux.tar.gz",
             "AitherZero-$version-linux.tar.gz.sha256",
             "AitherZero-$version-macos.tar.gz",
             "AitherZero-$version-macos.tar.gz.sha256"
@@ -464,22 +599,7 @@ jobs:
             }
           }
 
-          Write-Host "Release assets organized successfully!" -ForegroundColor Green
-
-      - name: Prepare Release Assets
-        shell: pwsh
-        run: |
-          Write-Host "Preparing release assets..." -ForegroundColor Cyan
-
-          New-Item -ItemType Directory -Path "release" -Force | Out-Null
-
-          Get-ChildItem -Path "release-artifacts" -Recurse -File | ForEach-Object {
-            $destPath = "release/$($_.Name)"
-            Copy-Item -Path $_.FullName -Destination $destPath -Force
-            Write-Host "✓ Prepared: $($_.Name)" -ForegroundColor Green
-          }
-
-          $version = "${{ needs.version.outputs.version }}"
+          # Create comprehensive checksums file
           $checksumFile = "release/AitherZero-$version-checksums.txt"
           $checksumContent = @()
 
@@ -493,11 +613,7 @@ jobs:
             Write-Host "✓ Created comprehensive checksums file" -ForegroundColor Green
           }
 
-          Write-Host "Release assets prepared:" -ForegroundColor Yellow
-          Get-ChildItem -Path "release" | ForEach-Object {
-            $size = [math]::Round($_.Length / 1MB, 2)
-            Write-Host "  $($_.Name) ($size MB)" -ForegroundColor Cyan
-          }
+          Write-Host "Release assets organized successfully!" -ForegroundColor Green
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -554,15 +670,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           Write-Host "Waiting for release to be fully available..." -ForegroundColor Cyan
-          
+
           $version = "${{ needs.version.outputs.version }}"
           $maxAttempts = 10
           $attempt = 1
           $found = $false
-          
+
           while ($attempt -le $maxAttempts -and -not $found) {
             Write-Host "Attempt $attempt of $maxAttempts..." -ForegroundColor Yellow
-            
+
             try {
               $release = gh release view "v$version" --json tagName,assets,draft 2>$null
               if ($release) {
@@ -576,14 +692,14 @@ jobs:
             } catch {
               Write-Host "Release not yet available: $($_.Exception.Message)" -ForegroundColor Yellow
             }
-            
+
             if (-not $found) {
               Write-Host "Release not ready, waiting 30 seconds..." -ForegroundColor Yellow
               Start-Sleep -Seconds 30
               $attempt++
             }
           }
-          
+
           if (-not $found) {
             Write-Error "Release v$version not available after $maxAttempts attempts"
             exit 1
@@ -703,4 +819,3 @@ jobs:
           }
 
           Write-Host "🎉 Release validation completed successfully!" -ForegroundColor Green
-
