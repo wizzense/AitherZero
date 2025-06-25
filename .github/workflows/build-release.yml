@@ -4,11 +4,6 @@ on:
   # Only create releases on manual trigger or version tags
   push:
     tags: ['v*']  # Only trigger on version tags like v1.0.0
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
-    types: [closed]  # Only trigger on closed (merged) PRs
-
   workflow_dispatch:
     inputs:
       release_type:
@@ -98,45 +93,6 @@ jobs:
 
           # Version determination logic - removed release event handling
 
-          if ([string]::IsNullOrEmpty($version) -and
-              "${{ github.event_name }}" -eq "pull_request" -and
-              "${{ github.event.pull_request.merged }}" -eq "true" -and
-              ("${{ github.event.pull_request.base.ref }}" -eq "main" -or "${{ github.event.pull_request.base.ref }}" -eq "master")) {
-
-            $latestTag = git describe --tags --abbrev=0 2>$null
-            if ($latestTag) {
-              $currentVersion = $latestTag -replace '^v', ''
-              if ($currentVersion -match '^(\d+)\.(\d+)\.(\d+)') {
-                $major = [int]$matches[1]
-                $minor = [int]$matches[2]
-                $patch = [int]$matches[3]
-                $version = "$major.$minor.$($patch + 1)"
-                Write-Host "Auto-incrementing patch version for merged PR: $version" -ForegroundColor Green
-              }
-            } else {
-              $version = "1.0.0"
-            }
-          }
-
-          if ([string]::IsNullOrEmpty($version) -and
-              "${{ github.event_name }}" -eq "push" -and
-              ("${{ github.ref }}" -eq "refs/heads/main" -or "${{ github.ref }}" -eq "refs/heads/master")) {
-
-            $latestTag = git describe --tags --abbrev=0 2>$null
-            if ($latestTag) {
-              $currentVersion = $latestTag -replace '^v', ''
-              if ($currentVersion -match '^(\d+)\.(\d+)\.(\d+)') {
-                $major = [int]$matches[1]
-                $minor = [int]$matches[2]
-                $patch = [int]$matches[3]
-                $version = "$major.$minor.$($patch + 1)"
-                Write-Host "Auto-incrementing patch version for main branch push: $version" -ForegroundColor Green
-              }
-            } else {
-              $version = "1.0.0"
-            }
-          }
-
           if ([string]::IsNullOrEmpty($version)) {
             $timestamp = Get-Date -Format "yyyy.MM.dd.HHmm"
             $version = "0.0.$timestamp"
@@ -158,17 +114,9 @@ jobs:
           } elseif ("${{ github.event_name }}" -eq "workflow_dispatch") {
             $shouldBuild = $true
             Write-Host "✓ Manual dispatch - proceeding with build" -ForegroundColor Green
-          } elseif ("${{ github.event_name }}" -eq "pull_request" -and
-                    "${{ github.event.pull_request.merged }}" -eq "true" -and
-                    ("${{ github.event.pull_request.base.ref }}" -eq "main" -or "${{ github.event.pull_request.base.ref }}" -eq "master")) {
-            $shouldBuild = $true
-            Write-Host "✓ PR merged to main/master - proceeding with build" -ForegroundColor Green
-          } elseif ("${{ github.event_name }}" -eq "push" -and
-                    ("${{ github.ref }}" -eq "refs/heads/main" -or "${{ github.ref }}" -eq "refs/heads/master")) {
-            $shouldBuild = $true
-            Write-Host "✓ Push to main/master - proceeding with build" -ForegroundColor Green
           } else {
-            Write-Host "✗ Event does not trigger build: ${{ github.event_name }}" -ForegroundColor Yellow
+            Write-Host "✗ Event does not trigger build: ${{ github.event_name }} (ref: ${{ github.ref }}, ref_type: ${{ github.ref_type }})" -ForegroundColor Yellow
+            Write-Host "✗ This workflow ONLY runs on version tags (v*) or manual dispatch" -ForegroundColor Red
           }
 
           Write-Host "Should build: $shouldBuild" -ForegroundColor Cyan
@@ -549,9 +497,7 @@ jobs:
     if: |
       needs.version.outputs.should-build == 'true' &&
       (github.event_name == 'workflow_dispatch' ||
-       github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') ||
-       (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
-       (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')))
+       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')))
 
     steps:
       - name: Checkout Repository
@@ -823,3 +769,4 @@ jobs:
           }
 
           Write-Host "🎉 Release validation completed successfully!" -ForegroundColor Green
+
