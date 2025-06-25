@@ -379,7 +379,7 @@ jobs:
             $files = Get-ChildItem -Path . -Filter $pattern -Recurse -ErrorAction SilentlyContinue
             foreach ($file in $files) {
               # Skip test files, bootstrap scripts, and security test files
-              if ($file.FullName -match '(test|Test|Tests|bootstrap|Bootstrap|quick-download)' -or 
+              if ($file.FullName -match '(test|Test|Tests|bootstrap|Bootstrap|quick-download)' -or
                   $file.FullName -match 'tests[/\\]' -or
                   $file.FullName -match 'SecurityValidation') {
                 continue
@@ -390,13 +390,13 @@ jobs:
 
               # Check for potentially dangerous patterns (excluding legitimate uses)
               # Flag Invoke-Expression only in non-installer scripts
-              if ($content -match 'Invoke-Expression|iex\s' -and 
+              if ($content -match 'Invoke-Expression|iex\s' -and
                   $file.FullName -notmatch '(Install|Download|Provider|Installer)') {
                 $securityIssues += "Potential code injection risk in $($file.FullName): Invoke-Expression usage"
               }
 
               # Flag ConvertTo-SecureString only when used unsafely (not in credential modules or tests)
-              if ($content -match 'ConvertTo-SecureString.*-AsPlainText.*-Force' -and 
+              if ($content -match 'ConvertTo-SecureString.*-AsPlainText.*-Force' -and
                   $file.FullName -notmatch '(SecureCredentials|Test|credential)') {
                 $securityIssues += "Insecure credential handling in $($file.FullName): Plain text to SecureString conversion"
               }
