@@ -131,6 +131,7 @@ $validationSuites = @{
             @{ Name = 'Logging-System'; Type = 'Module'; Critical = $true }
             @{ Name = 'ParallelExecution-Core'; Type = 'Module'; Critical = $true }
             @{ Name = 'TestingFramework-Core'; Type = 'Module'; Critical = $false }
+            @{ Name = 'BackupManager-Core'; Type = 'Module'; Critical = $true }
             @{ Name = 'Configuration-Complete'; Type = 'System'; Critical = $true }
             @{ Name = 'FileSystem-Access'; Type = 'System'; Critical = $true }
             @{ Name = 'Performance-Basic'; Type = 'Performance'; Critical = $true }
@@ -810,7 +811,7 @@ try {
                                 $backupTests = @()
 
                                 # Test basic functions exist
-                                $functions = @('Start-BackupOperation', 'Get-BackupStatus', 'Remove-OldBackups')
+                                $functions = @('Invoke-BackupMaintenance', 'Invoke-BackupConsolidation', 'Get-BackupStatistics', 'Invoke-PermanentCleanup', 'New-BackupExclusion')
                                 foreach ($func in $functions) {
                                     if (Get-Command $func -ErrorAction SilentlyContinue) {
                                         $backupTests += "✅ $func available"
