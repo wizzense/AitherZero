@@ -63,7 +63,7 @@ function Initialize-CrossPlatformEnvironment {
                         $step2 = Split-Path $step1 -Parent       # modules
                         $step3 = Split-Path $step2 -Parent       # aither-core
                         $candidate = Split-Path $step3 -Parent   # project root
-                        
+
                         if ($candidate -and (Test-Path (Join-Path $candidate 'aither-core'))) {
                             $projectRoot = $candidate
                             Write-Verbose "Detected project root via module location: $projectRoot"
@@ -109,12 +109,12 @@ function Initialize-CrossPlatformEnvironment {
                 $projectRoot = (Get-Location).Path
                 Write-Warning "Could not detect project root, using current directory: $projectRoot"
             }
-            
+
             # Ensure $projectRoot is a string path
             if ($projectRoot -is [System.Management.Automation.PathInfo]) {
                 $projectRoot = $projectRoot.Path
             }
-            
+
             # Set environment variables for cross-platform use
             $env:PROJECT_ROOT = $projectRoot
             $env:PWSH_MODULES_PATH = Join-Path $projectRoot 'aither-core' 'modules'
