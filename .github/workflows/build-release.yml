@@ -5,6 +5,10 @@ on:
     types: [published]
   push:
     tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
   workflow_dispatch:
     inputs:
       release_type:
@@ -29,96 +33,66 @@ env:
 jobs:
   # Version determination (single job)
   version:
-    name: Determine Version
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      should-build: ${{ steps.version.outputs.should-build }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
 
-      - name: Determine version and build decision
-        id: version
-        shell: pwsh
-        run: |
-          Write-Host "Determining version and build requirements..." -ForegroundColor Cyan
-
-          $shouldBuild = $false
-          $version = ""
-
-          if ("${{ github.event_name }}" -eq "release") {
-            $version = "${{ github.event.release.tag_name }}" -replace '^v', ''
-            $shouldBuild = $true
-            Write-Host "Release event detected: $version" -ForegroundColor Green
-          } elseif ("${{ github.event_name }}" -eq "push" -and "${{ github.ref_type }}" -eq "tag") {
-            $version = "${{ github.ref_name }}" -replace '^v', ''
-            $shouldBuild = $true
-            Write-Host "Tag push detected: $version" -ForegroundColor Green
-          } elseif ("${{ github.event_name }}" -eq "workflow_dispatch") {
-            # Generate version based on latest tag and release type
-            try {
-              $latestTag = git describe --tags --abbrev=0 2>$null
-              if ($latestTag) {
-                $latestVersion = $latestTag -replace '^v', ''
-                $versionParts = $latestVersion -split '\.'
-
-                switch ("${{ github.event.inputs.release_type }}") {
-                  'major' { $versionParts[0] = [int]$versionParts[0] + 1; $versionParts[1] = 0; $versionParts[2] = 0 }
-                  'minor' { $versionParts[1] = [int]$versionParts[1] + 1; $versionParts[2] = 0 }
-                  'patch' { $versionParts[2] = [int]$versionParts[2] + 1 }
-                  'prerelease' { $versionParts[2] = [int]$versionParts[2] + 1; $versionParts += "rc.$(Get-Date -Format 'yyyyMMdd.HHmm')" }
-                }
-
-                $version = $versionParts -join '.'
-              } else {
-                $version = "1.0.0"
-              }
-            } catch {
-              $version = "1.0.0"
-            }
-
-            $shouldBuild = $true
-            Write-Host "Manual dispatch: generating version $version" -ForegroundColor Green
-          }
-
-          if (-not $version) {
-            $version = "0.0.0-dev"
-            Write-Host "No version determined, using dev version" -ForegroundColor Yellow
-          }
-
-          Write-Host "Version: $version" -ForegroundColor Cyan
-          Write-Host "Should build: $shouldBuild" -ForegroundColor Cyan
-
-          echo "version=$version" >> $env:GITHUB_OUTPUT
+env:GITHUB_OUTPUT
           echo "should-build=$shouldBuild" >> $env:GITHUB_OUTPUT
 
   # Pre-build validation (cross-platform matrix)
   validate:
     name: Pre-Build Validation (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    needs: version
-    if: needs.version.outputs.should-build == 'true'
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-      fail-fast: false
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    runs-on:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
 
-      - name: Initialize cross-platform environment
-        shell: pwsh
-        run: |
-          Write-Host "Initializing cross-platform environment on ${{ matrix.os }}..." -ForegroundColor Cyan
-
-          # Set PROJECT_ROOT environment variable
-          $projectRoot = $PWD.Path
-          echo "PROJECT_ROOT=$projectRoot" >> $env:GITHUB_ENV
+env:GITHUB_ENV
 
           # Ensure proper path separators for cross-platform compatibility
           if ($IsWindows) {
@@ -171,285 +145,34 @@ jobs:
   # Cross-platform build matrix
   build:
     name: Build (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    needs: [version, validate]
-    if: needs.version.outputs.should-build == 'true'
-    strategy:
-      matrix:
-        include:
-          - os: windows-latest
-            platform: windows
-            extension: '.zip'
-            startup_script: 'AitherZero.bat'
-            shell: pwsh
-          - os: ubuntu-latest
-            platform: linux
-            extension: '.tar.gz'
-            startup_script: 'aitherzero.sh'
-            shell: pwsh
-          - os: macos-latest
-            platform: macos
-            extension: '.tar.gz'
-            startup_script: 'aitherzero.sh'
-            shell: pwsh
-      fail-fast: false
-
-    defaults:
-      run:
-        shell: ${{ matrix.shell }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup build environment
-        shell: pwsh
-        run: |
-          Write-Host "Setting up build environment for ${{ matrix.platform }}..." -ForegroundColor Cyan
-          Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Green
-          Write-Host "Platform: $($PSVersionTable.Platform)" -ForegroundColor Green
-
-      - name: Build release package
-        shell: pwsh
-        run: |
-          $version = "${{ needs.version.outputs.version }}"
-          $platform = "${{ matrix.platform }}"
-          $extension = "${{ matrix.extension }}"
-
-          Write-Host "Building AitherZero v$version for $platform..." -ForegroundColor Cyan
-
-          # Create build directory
-          $buildDir = "build-output"
-          $packageDir = "$buildDir/AitherZero-$version-$platform"
-
-          if (Test-Path $buildDir) {
-            Remove-Item $buildDir -Recurse -Force
-          }
-          New-Item -ItemType Directory -Path $packageDir -Force | Out-Null
-
-          # Core files to include
-          $coreFiles = @(
-            'aither-core'
-            'configs'
-            'templates'
-            'opentofu'
-            'README.md'
-            'LICENSE'
-          )
-
-          # Copy core files
-          foreach ($item in $coreFiles) {
-            if (Test-Path $item) {
-              if (Test-Path $item -PathType Container) {
-                Copy-Item $item -Destination $packageDir -Recurse -Force
-                Write-Host "✓ Copied directory: $item" -ForegroundColor Green
-              } else {
-                Copy-Item $item -Destination $packageDir -Force
-                Write-Host "✓ Copied file: $item" -ForegroundColor Green
-              }
-            } else {
-              Write-Warning "Item not found: $item"
-            }
-          }
-
-          # Create platform-specific startup script
-          $startupScript = "$packageDir/${{ matrix.startup_script }}"
-
-          if ($platform -eq "windows") {
-            # Windows batch script
-            $lines = @(
-              "@echo off",
-              "REM AitherZero v$version - Windows Startup Script",
-              "echo Starting AitherZero v$version on Windows...",
-              "cd /d ""%~dp0""",
-              "pwsh.exe -File ""aither-core/core-runner.ps1"" %*",
-              "if errorlevel 1 (",
-              "    echo Error: PowerShell 7+ is required. Please install PowerShell 7.",
-              "    echo Download from: https://github.com/PowerShell/PowerShell/releases",
-              "    pause",
-              "    exit /b 1",
-              ")"
-            )
-            $scriptContent = $lines -join "`r`n"
-          } else {
-            # Unix shell script
-            $lines = @(
-              "#!/bin/bash",
-              "# AitherZero v$version - Unix Startup Script",
-              "echo ""Starting AitherZero v$version on $platform...""",
-              "cd ""`$(dirname ""`$0"")""",
-              "",
-              "# Check for PowerShell",
-              "if command -v pwsh >/dev/null 2>&1; then",
-              "    pwsh -File ""aither-core/core-runner.ps1"" ""`$@""",
-              "elif command -v powershell >/dev/null 2>&1; then",
-              "    echo ""Warning: Using Windows PowerShell instead of PowerShell 7+""",
-              "    powershell -File ""aither-core/core-runner.ps1"" ""`$@""",
-              "else",
-              "    echo ""Error: PowerShell is not installed.""",
-              "    echo ""Please install PowerShell 7+ from: https://github.com/PowerShell/PowerShell/releases""",
-              "    exit 1",
-              "fi"
-            )
-            $scriptContent = $lines -join "`n"
-          }
-
-          Set-Content -Path $startupScript -Value $scriptContent -Encoding UTF8
-          Write-Host "✓ Created startup script: ${{ matrix.startup_script }}" -ForegroundColor Green
-
-          # Make script executable on Unix
-          if ($platform -ne "windows") {
-            chmod +x $startupScript
-          }
-
-          # Create version info file
-          $versionInfo = @{
-            Version = $version
-            Platform = $platform
-            BuildDate = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss UTC')
-            PowerShellVersion = $PSVersionTable.PSVersion.ToString()
-            GitCommit = if (Get-Command git -ErrorAction SilentlyContinue) { git rev-parse HEAD } else { "unknown" }
-          }
-
-          $versionInfo | ConvertTo-Json -Depth 2 | Set-Content "$packageDir/version.json" -Encoding UTF8
-          Write-Host "✓ Created version info" -ForegroundColor Green
-
-          # Try to use Build-Release.ps1 if available
-          if (Test-Path './build/Build-Release.ps1') {
-            Write-Host "Using Build-Release.ps1 for platform-specific packaging..." -ForegroundColor Yellow
-            try {
-              pwsh -File './build/Build-Release.ps1' -Version $version -Platform $platform -OutputPath $packageDir
-              Write-Host "✓ Build-Release.ps1 executed successfully" -ForegroundColor Green
-            } catch {
-              Write-Warning "Build-Release.ps1 failed, continuing with basic packaging: $($_.Exception.Message)"
-            }
-          }
-
-          Write-Host "Build completed for $platform" -ForegroundColor Green
-
-      - name: Package release
-        shell: pwsh
-        run: |
-          $version = "${{ needs.version.outputs.version }}"
-          $platform = "${{ matrix.platform }}"
-          $extension = "${{ matrix.extension }}"
-
-          $buildDir = "build-output"
-          $packageDir = "$buildDir/AitherZero-$version-$platform"
-          $archiveName = "AitherZero-$version-$platform$extension"
-
-          Write-Host "Creating package: $archiveName" -ForegroundColor Cyan
-
-          if ($extension -eq '.zip') {
-            # Windows ZIP
-            if (Get-Command Compress-Archive -ErrorAction SilentlyContinue) {
-              Compress-Archive -Path "$packageDir/*" -DestinationPath $archiveName -Force
-            } else {
-              # Fallback for older PowerShell
-              Add-Type -AssemblyName System.IO.Compression.FileSystem
-              [System.IO.Compression.ZipFile]::CreateFromDirectory($packageDir, $archiveName)
-            }
-          } else {
-            # Unix tar.gz
-            tar -czf $archiveName -C $buildDir "AitherZero-$version-$platform"
-          }
-
-          if (Test-Path $archiveName) {
-            $size = (Get-Item $archiveName).Length
-            Write-Host "✓ Package created: $archiveName ($([math]::Round($size/1MB, 2)) MB)" -ForegroundColor Green
-          } else {
-            Write-Error "Failed to create package: $archiveName"
-            exit 1
-          }
-
-      - name: Generate checksums
-        shell: pwsh
-        run: |
-          $version = "${{ needs.version.outputs.version }}"
-          $platform = "${{ matrix.platform }}"
-          $extension = "${{ matrix.extension }}"
-          $archiveName = "AitherZero-$version-$platform$extension"
-
-          if (Test-Path $archiveName) {
-            $hash = Get-FileHash $archiveName -Algorithm SHA256
-            $checksumFile = "$archiveName.sha256"
-            "$($hash.Hash)  $archiveName" | Set-Content $checksumFile -Encoding UTF8
-            Write-Host "✓ Checksum created: $checksumFile" -ForegroundColor Green
-            Write-Host "SHA256: $($hash.Hash)" -ForegroundColor Cyan
-          } else {
-            Write-Error "Archive not found for checksum generation: $archiveName"
-            exit 1
-          }
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: AitherZero-${{ needs.version.outputs.version }}-${{ matrix.platform }}
-          path: |
-            AitherZero-${{ needs.version.outputs.version }}-${{ matrix.platform }}*
-          retention-days: 90
-
-  # Create GitHub Release
+    runs-on:
   release:
-    name: Create Release
-    runs-on: ubuntu-latest
-    needs: [version, validate, build]
-    if: >
-      needs.version.outputs.should-build == 'true' &&
-      (github.event_name == 'release' ||
-       github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') ||
-       (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true'))
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
 
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: ./release-artifacts
-
-      - name: Prepare release assets
-        shell: pwsh
-        run: |
-          $version = "${{ needs.version.outputs.version }}"
-          Write-Host "Preparing release assets for v$version..." -ForegroundColor Cyan
-
-          # List all downloaded artifacts
-          $artifacts = Get-ChildItem './release-artifacts' -Recurse -File
-          Write-Host "Found $($artifacts.Count) artifact files:" -ForegroundColor Yellow
-
-          $releaseAssets = @()
-          $checksums = @()
-
-          foreach ($file in $artifacts) {
-            Write-Host "  - $($file.Name) ($([math]::Round($file.Length/1MB, 2)) MB)" -ForegroundColor Cyan
-
-            # Copy to root for release upload
-            Copy-Item $file.FullName -Destination "./$($file.Name)" -Force
-            $releaseAssets += $file.Name
-
-            # Collect checksums
-            if ($file.Name -like '*.sha256') {
-              $checksums += Get-Content $file.FullName
-            }
-          }
-
-          # Create combined checksum file
-          if ($checksums.Count -gt 0) {
-            $checksums | Set-Content './AitherZero-${{ needs.version.outputs.version }}-checksums.txt' -Encoding UTF8
-            $releaseAssets += "AitherZero-${{ needs.version.outputs.version }}-checksums.txt"
-            Write-Host "✓ Combined checksums file created" -ForegroundColor Green
-          }
-
-          # Save asset list for release step
-          $releaseAssets -join "`n" | Set-Content './release-assets.txt' -Encoding UTF8
-
-          Write-Host "Release preparation completed" -ForegroundColor Green
-
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
+env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${{ needs.version.outputs.version }}
@@ -516,45 +239,34 @@ jobs:
 
             ---
 
-            **Build Information:**
-            - Build Date: ${{ github.run_number }}
-            - Commit: ${{ github.sha }}
-            - Platforms: Windows, Linux, macOS
-            - PowerShell: 7.0+ compatible
-          draft: false
-          prerelease: ${{ contains(needs.version.outputs.version, 'rc') || contains(needs.version.outputs.version, 'pre') || contains(needs.version.outputs.version, 'alpha') || contains(needs.version.outputs.version, 'beta') }}
+            **Build Information:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
 
-      - name: Upload release assets
-        shell: pwsh
-        run: |
-          $version = "${{ needs.version.outputs.version }}"
-          Write-Host "Uploading release assets..." -ForegroundColor Cyan
-
-          # Get release ID from the previous step
-          $releaseId = "${{ steps.create_release.outputs.id }}"
-          if (-not $releaseId) {
-            Write-Error "Release ID not found"
-            exit 1
-          }
-
-          # Upload each asset
-          $assetFiles = Get-Content './release-assets.txt' -ErrorAction SilentlyContinue
-          if (-not $assetFiles) {
-            $assetFiles = Get-ChildItem -Filter "AitherZero-$version-*" | Select-Object -ExpandProperty Name
-          }
-
-          foreach ($asset in $assetFiles) {
-            if (Test-Path $asset) {
-              Write-Host "Uploading: $asset" -ForegroundColor Yellow
-              gh release upload "v$version" "$asset" --clobber
-              Write-Host "✓ Uploaded: $asset" -ForegroundColor Green
-            } else {
-              Write-Warning "Asset not found: $asset"
-            }
-          }
-
-          Write-Host "All assets uploaded successfully" -ForegroundColor Green
-        env:
+env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # Post-release validation
@@ -562,24 +274,40 @@ jobs:
     name: Validate Release
     runs-on: ubuntu-latest
     needs: [version, validate, build, release]
-    if: needs.release.result == 'success'
+    if: needs.release.result == 'success' && needs.version.outputs.version != ''
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Validate release
         shell: pwsh
         run: |
           $version = "${{ needs.version.outputs.version }}"
+          
+          # Validate version is not empty
+          if (-not $version -or $version -eq "") {
+            Write-Error "Version is empty or null. Cannot validate release."
+            exit 1
+          }
+          
           Write-Host "Validating release v$version..." -ForegroundColor Cyan
 
           try {
             # Check if release exists
             $release = gh release view "v$version" --json tagName,assets
+            if (-not $release) {
+              Write-Error "Release v$version not found"
+              exit 1
+            }
+            
             $releaseData = $release | ConvertFrom-Json
 
             Write-Host "✓ Release v$($releaseData.tagName) exists" -ForegroundColor Green
             Write-Host "Assets found: $($releaseData.assets.Count)" -ForegroundColor Cyan
 
             foreach ($asset in $releaseData.assets) {
-              Write-Host "  - $($asset.name) ($([math]::Round($asset.size/1MB, 2)) MB)" -ForegroundColor White
+              $sizeInMB = [math]::Round($asset.size/1MB, 2)
+              Write-Host "  - $($asset.name) ($sizeInMB MB)" -ForegroundColor White
             }
 
             # Validate expected assets exist
@@ -595,7 +323,310 @@ jobs:
 
             $missingAssets = @()
             foreach ($expected in $expectedAssets) {
-              if (-not ($releaseData.assets | Where-Object { $_.name -eq $expected })) {
+              if (-not ($releaseData.assets | Where-Object { name: Build and Release
+
+on:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+
+jobs:
+  # Version determination (single job)
+  version:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+env:GITHUB_OUTPUT
+          echo "should-build=$shouldBuild" >> $env:GITHUB_OUTPUT
+
+  # Pre-build validation (cross-platform matrix)
+  validate:
+    name: Pre-Build Validation (${{ matrix.os }})
+    runs-on:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+env:GITHUB_ENV
+
+          # Ensure proper path separators for cross-platform compatibility
+          if ($IsWindows) {
+            $env:PATH_SEPARATOR = ";"
+          } else {
+            $env:PATH_SEPARATOR = ":"
+          }
+
+          Write-Host "✓ Environment initialized for ${{ matrix.os }}" -ForegroundColor Green
+
+      - name: Run cross-platform pre-build validation
+        shell: pwsh
+        run: |
+          Write-Host "Running pre-build validation on ${{ matrix.os }}..." -ForegroundColor Cyan
+
+          # Set error action preference for better error handling
+          $ErrorActionPreference = 'Stop'
+
+          try {
+            # Quick validation before expensive build process
+            if (Test-Path './tests/Run-BulletproofValidation.ps1') {
+              Write-Host "Running bulletproof validation..." -ForegroundColor Yellow
+              pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel 'Quick' -CI -FailFast
+            } else {
+              Write-Host "No bulletproof validation found, running basic checks" -ForegroundColor Yellow
+
+              # Basic module import test with cross-platform path handling
+              if (Test-Path './aither-core/modules') {
+                $modules = Get-ChildItem -Path './aither-core/modules' -Directory
+                foreach ($module in $modules) {
+                  try {
+                    Write-Host "Testing module: $($module.Name)" -ForegroundColor Cyan
+                    Import-Module $module.FullName -Force -ErrorAction Stop
+                    Write-Host "✓ Module $($module.Name) imports successfully" -ForegroundColor Green
+                  } catch {
+                    Write-Error "Module $($module.Name) failed to import: $($_.Exception.Message)"
+                    exit 1
+                  }
+                }
+              }
+            }
+
+            Write-Host "✓ Pre-build validation completed successfully on ${{ matrix.os }}" -ForegroundColor Green
+
+          } catch {
+            Write-Error "Pre-build validation failed on ${{ matrix.os }}: $($_.Exception.Message)"
+            exit 1
+          }
+
+  # Cross-platform build matrix
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ needs.version.outputs.version }}
+          release_name: AitherZero v${{ needs.version.outputs.version }}
+          body: |
+            # AitherZero v${{ needs.version.outputs.version }}
+
+            ## 🚀 Cross-Platform Infrastructure Automation Framework
+
+            This release includes pre-built packages for Windows, Linux, and macOS.
+
+            ### 📦 Installation
+
+            1. Download the appropriate package for your platform:
+               - **Windows**: `AitherZero-${{ needs.version.outputs.version }}-windows.zip`
+               - **Linux**: `AitherZero-${{ needs.version.outputs.version }}-linux.tar.gz`
+               - **macOS**: `AitherZero-${{ needs.version.outputs.version }}-macos.tar.gz`
+
+            2. Extract the package to your desired directory
+
+            3. Run the startup script:
+               - **Windows**: Double-click `AitherZero.bat` or run from PowerShell
+               - **Linux/macOS**: Run `./aitherzero.sh` from terminal
+
+            ### ✅ Requirements
+
+            - PowerShell 7.0 or later
+            - Git (for lab automation features)
+            - OpenTofu/Terraform (for infrastructure features)
+
+            ### 🔐 Security
+
+            All packages include SHA256 checksums for verification. Download the checksums file and verify your package:
+
+            ```bash
+            # Windows (PowerShell)
+            Get-FileHash AitherZero-${{ needs.version.outputs.version }}-windows.zip -Algorithm SHA256
+
+            # Linux/macOS
+            sha256sum AitherZero-${{ needs.version.outputs.version }}-linux.tar.gz
+            ```
+
+            ### 📋 What's Included
+
+            - Complete PowerShell-based automation framework
+            - Cross-platform lab automation tools
+            - OpenTofu/Terraform infrastructure templates
+            - Comprehensive testing and validation framework
+            - Modular architecture with extensible components
+
+            ### 🛠️ Quick Start
+
+            After installation, run the startup script to access the interactive menu or use non-interactive mode:
+
+            ```bash
+            # Interactive mode
+            ./aitherzero.sh
+
+            # Non-interactive with specific scripts
+            ./aitherzero.sh -NonInteractive -Scripts "script1,script2" -Auto
+            ```
+
+            For detailed documentation, see the [project repository](https://github.com/wizzense/AitherZero).
+
+            ---
+
+            **Build Information:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Post-release validation
+  validate-release:
+    name: Validate Release
+    runs-on:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+.name -eq $expected })) {
                 $missingAssets += $expected
               }
             }
@@ -605,14 +636,623 @@ jobs:
               foreach ($missing in $missingAssets) {
                 Write-Warning "  - $missing"
               }
+              Write-Error "Release validation failed: missing assets"
+              exit 1
             } else {
               Write-Host "✅ All expected assets are present" -ForegroundColor Green
             }
 
-            Write-Host "Release validation completed" -ForegroundColor Green
+            Write-Host "✅ Release validation completed successfully" -ForegroundColor Green
 
           } catch {
-            Write-Error "Release validation failed: $($_.Exception.Message)"
+            Write-Error "Release validation failed: $(name: Build and Release
+
+on:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+
+jobs:
+  # Version determination (single job)
+  version:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+env:GITHUB_OUTPUT
+          echo "should-build=$shouldBuild" >> $env:GITHUB_OUTPUT
+
+  # Pre-build validation (cross-platform matrix)
+  validate:
+    name: Pre-Build Validation (${{ matrix.os }})
+    runs-on:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+env:GITHUB_ENV
+
+          # Ensure proper path separators for cross-platform compatibility
+          if ($IsWindows) {
+            $env:PATH_SEPARATOR = ";"
+          } else {
+            $env:PATH_SEPARATOR = ":"
+          }
+
+          Write-Host "✓ Environment initialized for ${{ matrix.os }}" -ForegroundColor Green
+
+      - name: Run cross-platform pre-build validation
+        shell: pwsh
+        run: |
+          Write-Host "Running pre-build validation on ${{ matrix.os }}..." -ForegroundColor Cyan
+
+          # Set error action preference for better error handling
+          $ErrorActionPreference = 'Stop'
+
+          try {
+            # Quick validation before expensive build process
+            if (Test-Path './tests/Run-BulletproofValidation.ps1') {
+              Write-Host "Running bulletproof validation..." -ForegroundColor Yellow
+              pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel 'Quick' -CI -FailFast
+            } else {
+              Write-Host "No bulletproof validation found, running basic checks" -ForegroundColor Yellow
+
+              # Basic module import test with cross-platform path handling
+              if (Test-Path './aither-core/modules') {
+                $modules = Get-ChildItem -Path './aither-core/modules' -Directory
+                foreach ($module in $modules) {
+                  try {
+                    Write-Host "Testing module: $($module.Name)" -ForegroundColor Cyan
+                    Import-Module $module.FullName -Force -ErrorAction Stop
+                    Write-Host "✓ Module $($module.Name) imports successfully" -ForegroundColor Green
+                  } catch {
+                    Write-Error "Module $($module.Name) failed to import: $($_.Exception.Message)"
+                    exit 1
+                  }
+                }
+              }
+            }
+
+            Write-Host "✓ Pre-build validation completed successfully on ${{ matrix.os }}" -ForegroundColor Green
+
+          } catch {
+            Write-Error "Pre-build validation failed on ${{ matrix.os }}: $($_.Exception.Message)"
+            exit 1
+          }
+
+  # Cross-platform build matrix
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ needs.version.outputs.version }}
+          release_name: AitherZero v${{ needs.version.outputs.version }}
+          body: |
+            # AitherZero v${{ needs.version.outputs.version }}
+
+            ## 🚀 Cross-Platform Infrastructure Automation Framework
+
+            This release includes pre-built packages for Windows, Linux, and macOS.
+
+            ### 📦 Installation
+
+            1. Download the appropriate package for your platform:
+               - **Windows**: `AitherZero-${{ needs.version.outputs.version }}-windows.zip`
+               - **Linux**: `AitherZero-${{ needs.version.outputs.version }}-linux.tar.gz`
+               - **macOS**: `AitherZero-${{ needs.version.outputs.version }}-macos.tar.gz`
+
+            2. Extract the package to your desired directory
+
+            3. Run the startup script:
+               - **Windows**: Double-click `AitherZero.bat` or run from PowerShell
+               - **Linux/macOS**: Run `./aitherzero.sh` from terminal
+
+            ### ✅ Requirements
+
+            - PowerShell 7.0 or later
+            - Git (for lab automation features)
+            - OpenTofu/Terraform (for infrastructure features)
+
+            ### 🔐 Security
+
+            All packages include SHA256 checksums for verification. Download the checksums file and verify your package:
+
+            ```bash
+            # Windows (PowerShell)
+            Get-FileHash AitherZero-${{ needs.version.outputs.version }}-windows.zip -Algorithm SHA256
+
+            # Linux/macOS
+            sha256sum AitherZero-${{ needs.version.outputs.version }}-linux.tar.gz
+            ```
+
+            ### 📋 What's Included
+
+            - Complete PowerShell-based automation framework
+            - Cross-platform lab automation tools
+            - OpenTofu/Terraform infrastructure templates
+            - Comprehensive testing and validation framework
+            - Modular architecture with extensible components
+
+            ### 🛠️ Quick Start
+
+            After installation, run the startup script to access the interactive menu or use non-interactive mode:
+
+            ```bash
+            # Interactive mode
+            ./aitherzero.sh
+
+            # Non-interactive with specific scripts
+            ./aitherzero.sh -NonInteractive -Scripts "script1,script2" -Auto
+            ```
+
+            For detailed documentation, see the [project repository](https://github.com/wizzense/AitherZero).
+
+            ---
+
+            **Build Information:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Post-release validation
+  validate-release:
+    name: Validate Release
+    runs-on:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+.Exception.Message)"
+            Write-Host "Error details: $(name: Build and Release
+
+on:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+
+jobs:
+  # Version determination (single job)
+  version:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+env:GITHUB_OUTPUT
+          echo "should-build=$shouldBuild" >> $env:GITHUB_OUTPUT
+
+  # Pre-build validation (cross-platform matrix)
+  validate:
+    name: Pre-Build Validation (${{ matrix.os }})
+    runs-on:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+env:GITHUB_ENV
+
+          # Ensure proper path separators for cross-platform compatibility
+          if ($IsWindows) {
+            $env:PATH_SEPARATOR = ";"
+          } else {
+            $env:PATH_SEPARATOR = ":"
+          }
+
+          Write-Host "✓ Environment initialized for ${{ matrix.os }}" -ForegroundColor Green
+
+      - name: Run cross-platform pre-build validation
+        shell: pwsh
+        run: |
+          Write-Host "Running pre-build validation on ${{ matrix.os }}..." -ForegroundColor Cyan
+
+          # Set error action preference for better error handling
+          $ErrorActionPreference = 'Stop'
+
+          try {
+            # Quick validation before expensive build process
+            if (Test-Path './tests/Run-BulletproofValidation.ps1') {
+              Write-Host "Running bulletproof validation..." -ForegroundColor Yellow
+              pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel 'Quick' -CI -FailFast
+            } else {
+              Write-Host "No bulletproof validation found, running basic checks" -ForegroundColor Yellow
+
+              # Basic module import test with cross-platform path handling
+              if (Test-Path './aither-core/modules') {
+                $modules = Get-ChildItem -Path './aither-core/modules' -Directory
+                foreach ($module in $modules) {
+                  try {
+                    Write-Host "Testing module: $($module.Name)" -ForegroundColor Cyan
+                    Import-Module $module.FullName -Force -ErrorAction Stop
+                    Write-Host "✓ Module $($module.Name) imports successfully" -ForegroundColor Green
+                  } catch {
+                    Write-Error "Module $($module.Name) failed to import: $($_.Exception.Message)"
+                    exit 1
+                  }
+                }
+              }
+            }
+
+            Write-Host "✓ Pre-build validation completed successfully on ${{ matrix.os }}" -ForegroundColor Green
+
+          } catch {
+            Write-Error "Pre-build validation failed on ${{ matrix.os }}: $($_.Exception.Message)"
+            exit 1
+          }
+
+  # Cross-platform build matrix
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ needs.version.outputs.version }}
+          release_name: AitherZero v${{ needs.version.outputs.version }}
+          body: |
+            # AitherZero v${{ needs.version.outputs.version }}
+
+            ## 🚀 Cross-Platform Infrastructure Automation Framework
+
+            This release includes pre-built packages for Windows, Linux, and macOS.
+
+            ### 📦 Installation
+
+            1. Download the appropriate package for your platform:
+               - **Windows**: `AitherZero-${{ needs.version.outputs.version }}-windows.zip`
+               - **Linux**: `AitherZero-${{ needs.version.outputs.version }}-linux.tar.gz`
+               - **macOS**: `AitherZero-${{ needs.version.outputs.version }}-macos.tar.gz`
+
+            2. Extract the package to your desired directory
+
+            3. Run the startup script:
+               - **Windows**: Double-click `AitherZero.bat` or run from PowerShell
+               - **Linux/macOS**: Run `./aitherzero.sh` from terminal
+
+            ### ✅ Requirements
+
+            - PowerShell 7.0 or later
+            - Git (for lab automation features)
+            - OpenTofu/Terraform (for infrastructure features)
+
+            ### 🔐 Security
+
+            All packages include SHA256 checksums for verification. Download the checksums file and verify your package:
+
+            ```bash
+            # Windows (PowerShell)
+            Get-FileHash AitherZero-${{ needs.version.outputs.version }}-windows.zip -Algorithm SHA256
+
+            # Linux/macOS
+            sha256sum AitherZero-${{ needs.version.outputs.version }}-linux.tar.gz
+            ```
+
+            ### 📋 What's Included
+
+            - Complete PowerShell-based automation framework
+            - Cross-platform lab automation tools
+            - OpenTofu/Terraform infrastructure templates
+            - Comprehensive testing and validation framework
+            - Modular architecture with extensible components
+
+            ### 🛠️ Quick Start
+
+            After installation, run the startup script to access the interactive menu or use non-interactive mode:
+
+            ```bash
+            # Interactive mode
+            ./aitherzero.sh
+
+            # Non-interactive with specific scripts
+            ./aitherzero.sh -NonInteractive -Scripts "script1,script2" -Auto
+            ```
+
+            For detailed documentation, see the [project repository](https://github.com/wizzense/AitherZero).
+
+            ---
+
+            **Build Information:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Post-release validation
+  validate-release:
+    name: Validate Release
+    runs-on:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+    branches: [main, master]  # Add branch triggers for automated release on merge
+  pull_request:
+    branches: [main, master]
+    types: [closed]  # Trigger on PR merge
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+.Exception)" -ForegroundColor Red
             exit 1
           }
         env:
