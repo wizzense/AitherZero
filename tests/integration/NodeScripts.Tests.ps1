@@ -23,5 +23,3 @@ Describe 'NodeScripts Tests' {
         # Cleanup test resources
     }
 }
-
-

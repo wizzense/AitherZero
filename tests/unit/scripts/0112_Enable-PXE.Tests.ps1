@@ -23,5 +23,3 @@ Describe '0112_Enable-PXE Tests' {
         # Cleanup test resources
     }
 }
-
-

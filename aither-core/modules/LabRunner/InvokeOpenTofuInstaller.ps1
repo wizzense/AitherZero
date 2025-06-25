@@ -9,6 +9,3 @@ function Invoke-OpenTofuInstaller {
     & $installer -installMethod standalone -cosignPath $CosignPath -opentofuVersion $OpenTofuVersion
     Write-CustomLog 'OpenTofu installer completed'
 }
-
-
-

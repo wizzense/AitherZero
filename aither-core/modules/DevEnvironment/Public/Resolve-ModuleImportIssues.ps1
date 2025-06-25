@@ -548,5 +548,3 @@ function Fix-PowerShellSyntaxErrors {
         Write-CustomLog "No additional syntax errors found to fix" -Level SUCCESS
     }
 }
-
-

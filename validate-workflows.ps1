@@ -194,4 +194,3 @@ if ($allIssues.Count -eq 0) {
     Write-Host "❌ Workflows need fixes before deployment" -ForegroundColor Red
     exit 1
 }
-

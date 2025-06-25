@@ -112,7 +112,3 @@ function Invoke-BackupConsolidation {
         return $script:ConsolidationResults
     }
 }
-
-
-
-

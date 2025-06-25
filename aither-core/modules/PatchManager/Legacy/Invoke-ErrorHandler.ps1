@@ -404,5 +404,3 @@ Syntax errors prevent script execution and can cause build failures.
     
     return $analysis
 }
-
-

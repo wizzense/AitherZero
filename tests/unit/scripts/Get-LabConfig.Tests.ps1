@@ -23,5 +23,3 @@ Describe 'Get-LabConfig Tests' {
         # Cleanup test resources
     }
 }
-
-

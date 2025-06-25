@@ -23,5 +23,3 @@ Describe 'Invoke-LabDownload Tests' {
         # Cleanup test resources
     }
 }
-
-

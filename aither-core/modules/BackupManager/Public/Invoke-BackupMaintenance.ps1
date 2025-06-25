@@ -418,6 +418,3 @@ function Write-BackupMaintenanceResults {
         }
     }
 }
-
-
-

@@ -23,5 +23,3 @@ Describe '0006_Install-ValidationTools Tests' {
         # Cleanup test resources
     }
 }
-
-

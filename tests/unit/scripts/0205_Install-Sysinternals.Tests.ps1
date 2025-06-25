@@ -23,5 +23,3 @@ Describe '0205_Install-Sysinternals Tests' {
         # Cleanup test resources
     }
 }
-
-

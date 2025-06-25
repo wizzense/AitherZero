@@ -47,6 +47,7 @@ function Read-LoggedInput {
     if ($IsNonInteractive) {
         Write-CustomLog "Non-interactive mode detected. Using default value for: $Prompt" 'INFO'
         if ($AsSecureString -and -not [string]::IsNullOrEmpty($DefaultValue)) {
+            # This is a legitimate use case for test environments - PSScriptAnalyzer suppressed: PSAvoidUsingConvertToSecureStringWithPlainText
             return ConvertTo-SecureString -String $DefaultValue -AsPlainText -Force
         }
         return $DefaultValue
@@ -61,7 +62,3 @@ function Read-LoggedInput {
     Write-CustomLog "$($Prompt): $answer"
     return $answer
 }
-
-
-
-

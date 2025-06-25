@@ -23,5 +23,3 @@ Describe '0010_Prepare-HyperVProvider Tests' {
         # Cleanup test resources
     }
 }
-
-

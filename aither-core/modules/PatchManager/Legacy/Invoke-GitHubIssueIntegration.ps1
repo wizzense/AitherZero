@@ -260,6 +260,3 @@ $($AffectedFiles | ForEach-Object { "- ``$_``" } | Out-String)
         }
     }
 }
-
-
-

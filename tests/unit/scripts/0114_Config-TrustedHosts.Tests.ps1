@@ -23,5 +23,3 @@ Describe '0114_Config-TrustedHosts Tests' {
         # Cleanup test resources
     }
 }
-
-

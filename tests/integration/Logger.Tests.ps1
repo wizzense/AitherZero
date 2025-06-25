@@ -23,5 +23,3 @@ Describe 'Logger Tests' {
         # Cleanup test resources
     }
 }
-
-

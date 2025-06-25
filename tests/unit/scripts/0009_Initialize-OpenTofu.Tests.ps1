@@ -23,5 +23,3 @@ Describe '0009_Initialize-OpenTofu Tests' {
         # Cleanup test resources
     }
 }
-
-

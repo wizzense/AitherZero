@@ -35,8 +35,3 @@ function Get-MenuSelection {
     }
     return @()
 }
-
-
-
-
-

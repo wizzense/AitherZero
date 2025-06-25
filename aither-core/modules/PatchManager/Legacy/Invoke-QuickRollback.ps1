@@ -294,6 +294,3 @@ function Invoke-PostRollbackValidation {
 }
 
 # Export the function
-
-
-

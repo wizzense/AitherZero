@@ -31,4 +31,3 @@ Describe 'CustomLint Tests' -Tags @('Integration', 'Lint') {
         Remove-Module LabRunner -Force -ErrorAction SilentlyContinue
     }
 }
-

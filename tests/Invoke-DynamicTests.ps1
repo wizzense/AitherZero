@@ -295,5 +295,3 @@ if ($TestType -in @('All', 'Unit')) {
 }
 
 Write-Host "`nSUCCESS - Dynamic test execution complete!" -ForegroundColor Green
-
-

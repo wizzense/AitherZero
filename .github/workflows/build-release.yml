@@ -235,6 +235,9 @@ jobs:
                 $modules = Get-ChildItem -Path './aither-core/modules' -Directory
                 foreach ($module in $modules) {
                   try {
+                    if (-not $module.FullName) {
+                      throw "Module $($module.Name) does not have a valid path (FullName is null)"
+                    }
                     Write-Host "Testing module: $($module.Name)" -ForegroundColor Cyan
                     Import-Module $module.FullName -Force -ErrorAction Stop
                     Write-Host "✓ Module $($module.Name) imports successfully" -ForegroundColor Green
@@ -665,3 +668,4 @@ pwsh -File "aither-core/aither-core.ps1" `$@
           }
 
           Write-Host "🎉 Release validation completed successfully!" -ForegroundColor Green
+
