@@ -329,14 +329,14 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "Validating build scripts..." -ForegroundColor Cyan
-          
+
           # Debug: Show current directory and what exists
           Write-Host "Current directory: $(Get-Location)" -ForegroundColor Yellow
           Write-Host "Directory contents:" -ForegroundColor Yellow
           Get-ChildItem | ForEach-Object { Write-Host "  $($_.Name)" -ForegroundColor Cyan }
 
           $buildScripts = @()
-          
+
           # Check for build directory scripts
           if (Test-Path './build') {
             $buildDirScripts = Get-ChildItem -Path './build' -Filter '*.ps1' -ErrorAction SilentlyContinue
@@ -347,7 +347,7 @@ jobs:
           } else {
             Write-Host "Build directory ./build not found" -ForegroundColor Red
           }
-          
+
           # Check for main aither-core script (correct path)
           if (Test-Path './aither-core/aither-core.ps1') {
             $buildScripts += Get-Item './aither-core/aither-core.ps1'
