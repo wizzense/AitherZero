@@ -1,0 +1,614 @@
+?? Comprehensive PSScriptAnalyzer Analysis
+==========================================
+?? Analysis Configuration:
+  Severity Levels: Error, Warning, Information
+  Fail on Errors: False
+  Fail on Warnings: False
+
+?? Scanning for PowerShell files...
+  ?? Analyzing: bootstrap.ps1
+    ??  Warnings: 1
+    ??  Info: 1
+  ?? Analyzing: BULLETPROOF-BOOTSTRAP.ps1
+    ??  Warnings: 1
+  ?? Analyzing: cleanup-obsolete-files.ps1
+    ??  Warnings: 7
+  ?? Analyzing: comprehensive-lint-analysis.ps1
+    ??  Warnings: 1
+    ??  Info: 9
+  ?? Analyzing: download-aitherzero.ps1
+    ??  Warnings: 1
+  ?? Analyzing: ONE-LINER.ps1
+    ? Clean
+  ?? Analyzing: quick-download.ps1
+    ??  Warnings: 1
+  ?? Analyzing: quick-launch.ps1
+    ??  Empty file, skipping analysis
+  ?? Analyzing: SUPER-SIMPLE-BOOTSTRAP.ps1
+    ??  Empty file, skipping analysis
+  ?? Analyzing: validate-workflows-detailed.ps1
+    ??  Warnings: 2
+  ?? Analyzing: validate-workflows.ps1
+    ??  Warnings: 1
+  ?? Analyzing: WORKING-BOOTSTRAP.ps1
+    ??  Empty file, skipping analysis
+  ?? Analyzing: aither-core.ps1
+    ??  Warnings: 4
+    ??  Info: 6
+  ?? Analyzing: Get-BackupStatistics.ps1
+    ??  Warnings: 3
+    ??  Info: 17
+  ?? Analyzing: Get-BackupStatus.ps1
+    ??  Warnings: 1
+    ??  Info: 1
+  ?? Analyzing: Invoke-BackupConsolidation.ps1
+    ??  Warnings: 9
+    ??  Info: 30
+  ?? Analyzing: Invoke-BackupMaintenance.ps1
+    ??  Warnings: 25
+    ??  Info: 35
+  ?? Analyzing: Invoke-PermanentCleanup.ps1
+    ??  Warnings: 13
+    ??  Info: 40
+  ?? Analyzing: New-BackupExclusion.ps1
+    ??  Info: 19
+  ?? Analyzing: Remove-OldBackups.ps1
+    ??  Warnings: 2
+    ??  Info: 3
+  ?? Analyzing: Start-BackupOperation.ps1
+    ??  Warnings: 1
+    ??  Info: 1
+  ?? Analyzing: Get-DevEnvironmentStatus.ps1
+    ??  Warnings: 1
+    ??  Info: 1
+  ?? Analyzing: Initialize-DevelopmentEnvironment.ps1
+    ??  Warnings: 9
+    ??  Info: 36
+  ?? Analyzing: Initialize-DevEnvironment.ps1
+    ??  Warnings: 2
+    ??  Info: 1
+  ?? Analyzing: Install-PreCommitHook.ps1
+    ??  Warnings: 5
+    ??  Info: 40
+  ?? Analyzing: Resolve-ModuleImportIssues.ps1
+    ??  Warnings: 21
+    ??  Info: 90
+  ?? Analyzing: ISOHelpers.ps1
+    ??  Warnings: 6
+  ?? Analyzing: New-AutounattendFile.ps1
+    ??  Warnings: 1
+    ??  Info: 1
+  ?? Analyzing: New-CustomISO.ps1
+    ??  Warnings: 1
+    ??  Info: 1
+  ?? Analyzing: Get-LinuxISOUrl.ps1
+    ??  Info: 1
+  ?? Analyzing: Get-WindowsISOUrl.ps1
+    ??  Info: 1
+  ?? Analyzing: Export-ISOInventory.ps1
+    ??  Info: 3
+  ?? Analyzing: Get-ISODownload.ps1
+    ??  Warnings: 1
+    ??  Info: 2
+  ?? Analyzing: Get-ISOInventory.ps1
+    ??  Info: 1
+  ?? Analyzing: Get-ISOMetadata.ps1
+    ??  Warnings: 3
+    ??  Info: 1
+  ?? Analyzing: Import-ISOInventory.ps1
+    ??  Warnings: 2
+    ??  Info: 2
+  ?? Analyzing: New-ISORepository.ps1
+    ??  Info: 1
+  ?? Analyzing: Remove-ISOFile.ps1
+    ??  Warnings: 3
+    ??  Info: 2
+  ?? Analyzing: Sync-ISORepository.ps1
+    ??  Warnings: 1
+    ??  Info: 2
+  ?? Analyzing: Download-Archive.ps1
+    ??  Warnings: 4
+    ??  Info: 3
+  ?? Analyzing: Expand-All.ps1
+    ??  Warnings: 5
+    ??  Info: 5
+  ?? Analyzing: Format-Config.ps1
+    ??  Warnings: 3
+  ?? Analyzing: Get-LabConfig.ps1
+    ??  Warnings: 13
+  ?? Analyzing: Get-Platform.ps1
+    ??  Warnings: 3
+  ?? Analyzing: InvokeOpenTofuInstaller.ps1
+    ??  Info: 1
+  ?? Analyzing: Logger.ps1
+    ??  Warnings: 8
+    ??  Info: 6
+  ?? Analyzing: Menu.ps1
+    ??  Warnings: 8
+  ?? Analyzing: Network.ps1
+    ??  Warnings: 2
+  ?? Analyzing: OpenTofuInstaller.ps1
+    ??  Warnings: 413
+  ?? Analyzing: Initialize-StandardParameters.ps1
+    ??  Warnings: 9
+    ??  Info: 21
+  ?? Analyzing: Invoke-ParallelLabRunner.ps1
+    ??  Warnings: 8
+    ??  Info: 31
+  ?? Analyzing: Import-ProjectModule.ps1
+    ??  Warnings: 7
+    ??  Info: 16
+  ?? Analyzing: AdditionalHelpers.ps1
+    ??  Warnings: 22
+    ??  Info: 8
+  ?? Analyzing: OpenTofuInstallationHelpers.ps1
+    ??  Warnings: 4
+    ??  Info: 12
+  ?? Analyzing: SecurityValidationHelpers.ps1
+    ??  Warnings: 1
+    ??  Info: 10
+  ?? Analyzing: TaliesinsProviderHelpers.ps1
+    ??  Warnings: 3
+    ??  Info: 13
+  ?? Analyzing: Get-TaliesinsProviderConfig.ps1
+    ??  Info: 1
+  ?? Analyzing: Import-LabConfiguration.ps1
+    ??  Info: 1
+  ?? Analyzing: Initialize-OpenTofuProvider.ps1
+    ??  Info: 1
+  ?? Analyzing: Install-OpenTofuSecure.ps1
+    ??  Info: 1
+  ?? Analyzing: New-LabInfrastructure.ps1
+    ??  Info: 3
+  ?? Analyzing: Set-SecureCredentials.ps1
+    ??  Warnings: 2
+    ??  Info: 1
+  ?? Analyzing: BranchStrategy.ps1
+    ??  Warnings: 1
+    ??  Info: 26
+  ?? Analyzing: CheckoutAndCommit.ps1
+    ??  Info: 11
+  ?? Analyzing: ConvertTo-PipelineSyntax.ps1
+    ??  Info: 7
+  ?? Analyzing: CopilotIntegration.ps1
+    ??  Warnings: 9
+    ??  Info: 40
+  ?? Analyzing: ErrorHandling.ps1
+    ??  Warnings: 7
+  ?? Analyzing: GitOperations.ps1
+    ??  Info: 12
+  ?? Analyzing: Invoke-AutomatedErrorTracking.ps1
+    ??  Warnings: 4
+    ??  Info: 99
+  ?? Analyzing: Invoke-BackupConsolidation.ps1
+    ??  Warnings: 7
+    ??  Info: 17
+  ?? Analyzing: Invoke-BranchRollback.ps1
+    ??  Info: 17
+  ?? Analyzing: Invoke-ComprehensiveIssueTracking.ps1
+    ??  Warnings: 13
+    ??  Info: 4
+  ?? Analyzing: Invoke-ComprehensiveValidation.ps1
+    ??  Warnings: 6
+    ??  Info: 3
+  ?? Analyzing: Invoke-CopilotSuggestionHandler.ps1
+    ??  Warnings: 5
+    ??  Info: 62
+  ?? Analyzing: Invoke-CrossPlatformFixer.ps1
+    ??  Warnings: 8
+    ??  Info: 70
+  ?? Analyzing: Invoke-EnhancedGitOperations.ps1
+    ??  Warnings: 9
+    ??  Info: 6
+  ?? Analyzing: Invoke-EnhancedPatchManager.ps1
+    ??  Warnings: 138
+    ??  Info: 21
+  ?? Analyzing: Invoke-ErrorHandler.ps1
+    ??  Warnings: 3
+    ??  Info: 55
+  ?? Analyzing: Invoke-GitControlledPatch.ps1
+    ??  Warnings: 64
+    ??  Info: 25
+  ?? Analyzing: Invoke-GitHubIssueIntegration.ps1
+    ??  Warnings: 7
+    ??  Info: 48
+  ?? Analyzing: Invoke-GitHubIssueResolution.ps1
+    ??  Warnings: 6
+    ??  Info: 42
+  ?? Analyzing: Invoke-IntelligentBranchStrategy.ps1
+    ??  Info: 9
+  ?? Analyzing: Invoke-MassFileFix.ps1
+    ??  Info: 5
+  ?? Analyzing: Invoke-MonitoredExecution.ps1
+    ??  Warnings: 16
+  ?? Analyzing: Invoke-PatchValidation.ps1
+    ? Clean
+  ?? Analyzing: Invoke-QuickRollback.ps1
+    ??  Warnings: 1
+    ??  Info: 54
+  ?? Analyzing: Invoke-SimplifiedPatchWorkflow.ps1
+    ??  Warnings: 3
+    ??  Info: 13
+  ?? Analyzing: Invoke-UnifiedMaintenance.ps1
+    ??  Info: 4
+  ?? Analyzing: Invoke-ValidationFailureHandler.ps1
+    ??  Warnings: 27
+    ??  Info: 36
+  ?? Analyzing: Update-Changelog.ps1
+    ??  Warnings: 5
+    ??  Info: 29
+  ?? Analyzing: Update-ProjectManifest.ps1
+    ??  Warnings: 7
+    ??  Info: 33
+  ?? Analyzing: Find-ProjectRoot.ps1
+    ? Clean
+  ?? Analyzing: Get-GitRepositoryInfo.ps1
+    ??  Warnings: 6
+    ??  Info: 3
+  ?? Analyzing: Get-TestAnalysisContext.ps1
+    ??  Warnings: 3
+    ??  Info: 25
+  ?? Analyzing: Initialize-CrossPlatformEnvironment.ps1
+    ??  Warnings: 3
+    ??  Info: 3
+  ?? Analyzing: Invoke-UnicodeSanitizer.ps1
+    ??  Warnings: 3
+    ??  Info: 26
+  ?? Analyzing: Invoke-PatchRollback.ps1
+    ??  Warnings: 2
+    ??  Info: 18
+  ?? Analyzing: Invoke-PatchWorkflow.ps1
+    ??  Warnings: 6
+    ??  Info: 2
+  ?? Analyzing: New-CrossForkPR.ps1
+    ??  Warnings: 1
+    ??  Info: 4
+  ?? Analyzing: New-PatchIssue.ps1
+    ??  Warnings: 23
+    ??  Info: 3
+  ?? Analyzing: New-PatchPR.ps1
+    ??  Warnings: 3
+    ??  Info: 4
+  ?? Analyzing: Show-GitStatusGuidance.ps1
+    ??  Warnings: 4
+    ??  Info: 28
+  ?? Analyzing: Update-RepositoryDocumentation.ps1
+    ??  Warnings: 10
+  ?? Analyzing: ConnectionHelpers.ps1
+    ??  Warnings: 57
+    ??  Info: 21
+  ?? Analyzing: Connect-RemoteEndpoint.ps1
+    ??  Warnings: 1
+    ??  Info: 4
+  ?? Analyzing: Disconnect-RemoteEndpoint.ps1
+    ??  Warnings: 1
+    ??  Info: 2
+  ?? Analyzing: Get-RemoteConnection.ps1
+    ??  Warnings: 12
+    ??  Info: 3
+  ?? Analyzing: Invoke-RemoteCommand.ps1
+    ??  Warnings: 1
+    ??  Info: 2
+  ?? Analyzing: New-RemoteConnection.ps1
+    ??  Warnings: 2
+    ??  Info: 2
+  ?? Analyzing: Remove-RemoteConnection.ps1
+    ??  Info: 5
+  ?? Analyzing: Get-ScriptRepository.ps1
+    ??  Warnings: 1
+    ??  Info: 2
+  ?? Analyzing: Start-ScriptExecution.ps1
+    ??  Warnings: 2
+    ??  Info: 2
+  ?? Analyzing: CredentialHelpers.ps1
+    ??  Warnings: 6
+    ??  Info: 9
+  ?? Analyzing: Export-SecureCredential.ps1
+    ??  Warnings: 1
+    ??  Info: 2
+  ?? Analyzing: Get-SecureCredential.ps1
+    ??  Warnings: 2
+  ?? Analyzing: Import-SecureCredential.ps1
+    ??  Warnings: 1
+    ??  Info: 2
+  ?? Analyzing: New-SecureCredential.ps1
+    ??  Warnings: 3
+    ??  Info: 2
+  ?? Analyzing: Remove-SecureCredential.ps1
+    ??  Warnings: 1
+    ??  Info: 5
+  ?? Analyzing: 0000_Cleanup-Files.ps1
+    ??  Info: 4
+  ?? Analyzing: 0001_Reset-Git.ps1
+    ? Clean
+  ?? Analyzing: 0002_Setup-Directories.ps1
+    ? Clean
+  ?? Analyzing: 0006_Install-ValidationTools.ps1
+    ? Clean
+  ?? Analyzing: 0007_Install-Go.ps1
+    ??  Warnings: 1
+  ?? Analyzing: 0008_Install-OpenTofu.ps1
+    ??  Warnings: 1
+    ??  Info: 3
+  ?? Analyzing: 0009_Initialize-OpenTofu.ps1
+    ??  Info: 1
+  ?? Analyzing: 0010_Prepare-HyperVProvider.ps1
+    ? Clean
+  ?? Analyzing: 0100_Enable-WinRM.ps1
+    ??  Warnings: 8
+    ??  Info: 2
+  ?? Analyzing: 0101_Enable-RemoteDesktop.ps1
+    ??  Warnings: 1
+    ??  Info: 3
+  ?? Analyzing: 0102_Configure-Firewall.ps1
+    ??  Warnings: 5
+  ?? Analyzing: 0103_Change-ComputerName.ps1
+    ??  Info: 2
+  ?? Analyzing: 0104_Install-CA.ps1
+    ??  Info: 4
+  ?? Analyzing: 0105_Install-HyperV.ps1
+    ??  Info: 3
+  ?? Analyzing: 0106_Install-WAC.ps1
+    ??  Info: 4
+  ?? Analyzing: 0111_Disable-TCPIP6.ps1
+    ??  Warnings: 1
+    ??  Info: 3
+  ?? Analyzing: 0112_Enable-PXE.ps1
+    ??  Warnings: 1
+    ??  Info: 4
+  ?? Analyzing: 0113_Config-DNS.ps1
+    ??  Warnings: 1
+    ??  Info: 2
+  ?? Analyzing: 0114_Config-TrustedHosts.ps1
+    ??  Warnings: 2
+    ??  Info: 1
+  ?? Analyzing: 0200_Get-SystemInfo.ps1
+    ??  Warnings: 63
+  ?? Analyzing: 0201_Install-NodeCore.ps1
+    ??  Warnings: 1
+    ??  Info: 11
+  ?? Analyzing: 0202_Install-NodeGlobalPackages.ps1
+    ??  Warnings: 2
+  ?? Analyzing: 0203_Install-npm.ps1
+    ??  Warnings: 3
+    ??  Info: 1
+  ?? Analyzing: 0204_Install-Poetry.ps1
+    ??  Warnings: 4
+  ?? Analyzing: 0205_Install-Sysinternals.ps1
+    ??  Warnings: 1
+    ??  Info: 9
+  ?? Analyzing: 0206_Install-Python.ps1
+    ??  Warnings: 1
+    ??  Info: 3
+  ?? Analyzing: 0207_Install-Git.ps1
+    ??  Warnings: 1
+    ??  Info: 2
+  ?? Analyzing: 0208_Install-DockerDesktop.ps1
+    ??  Warnings: 1
+    ??  Info: 2
+  ?? Analyzing: 0209_Install-7Zip.ps1
+    ??  Warnings: 1
+    ??  Info: 2
+  ?? Analyzing: 0210_Install-VSCode.ps1
+    ??  Warnings: 1
+    ??  Info: 2
+  ?? Analyzing: 0211_Install-VSBuildTools.ps1
+    ??  Warnings: 1
+    ??  Info: 2
+  ?? Analyzing: 0212_Install-AzureCLI.ps1
+    ??  Warnings: 1
+    ??  Info: 2
+  ?? Analyzing: 0213_Install-AWSCLI.ps1
+    ??  Warnings: 1
+    ??  Info: 2
+  ?? Analyzing: 0214_Install-Packer.ps1
+    ??  Warnings: 1
+    ??  Info: 1
+  ?? Analyzing: 0215_Install-Chocolatey.ps1
+    ??  Warnings: 1
+    ??  Info: 1
+  ?? Analyzing: 0216_Set-LabProfile.ps1
+    ??  Warnings: 2
+  ?? Analyzing: 9999_Reset-Machine.ps1
+    ??  Warnings: 1
+    ??  Info: 1
+  ?? Analyzing: Invoke-CoreApplication.ps1
+    ??  Warnings: 1
+    ??  Info: 1
+  ?? Analyzing: Find-ProjectRoot.ps1
+    ??  Warnings: 1
+  ?? Analyzing: ModuleImporter.ps1
+    ??  Warnings: 3
+    ??  Info: 2
+  ?? Analyzing: Build-Release.ps1
+    ??  Warnings: 11
+  ?? Analyzing: Quick-Build.ps1
+    ??  Warnings: 1
+  ?? Analyzing: Invoke-DynamicTests.ps1
+    ??  Warnings: 8
+    ??  Info: 37
+  ?? Analyzing: Invoke-IntelligentTests.ps1
+    ??  Warnings: 15
+    ??  Info: 1
+  ?? Analyzing: Run-AllModuleTests.ps1
+    ??  Warnings: 4
+    ??  Info: 3
+  ?? Analyzing: Run-BulletproofTests.ps1
+    ??  Warnings: 4
+  ?? Analyzing: Run-BulletproofValidation.ps1
+    ??  Warnings: 57
+    ??  Info: 1
+  ?? Analyzing: Run-MasterTests.ps1
+    ??  Warnings: 7
+    ??  Info: 5
+  ?? Analyzing: Setup-TestingFramework.ps1
+    ??  Warnings: 22
+    ??  Info: 5
+  ?? Analyzing: Migration-Example.ps1
+    ??  Warnings: 1
+    ??  Info: 20
+  ?? Analyzing: TestHelpers.ps1
+    ??  Warnings: 2
+    ??  Info: 18
+  ?? Analyzing: Get-ScriptAst.ps1
+    ? Clean
+  ?? Analyzing: Invoke-ExtensibleTests.ps1
+    ??  Warnings: 107
+    ??  Info: 56
+  ?? Analyzing: New-AutoTestGenerator.ps1
+    ??  Warnings: 32
+    ??  Info: 76
+  ?? Analyzing: New-RunnerTestEnv.ps1
+    ??  Warnings: 3
+    ??  Info: 18
+  ?? Analyzing: New-TestFile.ps1
+    ??  Warnings: 58
+    ??  Info: 32
+  ?? Analyzing: TestDriveCleanup.ps1
+    ? Clean
+  ?? Analyzing: TestFramework.ps1
+    ? Errors: 2
+    ??  Warnings: 133
+    ??  Info: 55
+  ?? Analyzing: TestHelpers.ps1
+    ??  Warnings: 3
+    ??  Info: 23
+  ?? Analyzing: TestHelpers.ps1
+    ??  Warnings: 1
+    ??  Info: 10
+  ?? Analyzing: TestHelpers.ps1
+    ??  Warnings: 3
+    ??  Info: 23
+  ?? Analyzing: cross-fork-comprehensive-test.ps1
+    ??  Warnings: 3
+  ?? Analyzing: TestHelpers.ps1
+    ??  Warnings: 3
+    ??  Info: 23
+  ?? Analyzing: Profile-AutoSetup.ps1
+    ??  Warnings: 1
+  ?? Analyzing: Quick-Setup.ps1
+    ? Clean
+  ?? Analyzing: real-world-patchmanager-example.ps1
+    ??  Warnings: 56
+  ?? Analyzing: run-demo-examples.ps1
+    ??  Warnings: 2
+  ?? Analyzing: Update-ScriptParameters.ps1
+    ??  Warnings: 1
+  ?? Analyzing: AitherCore.psm1
+    ??  Warnings: 17
+    ??  Info: 29
+  ?? Analyzing: BackupManager.psm1
+    ??  Info: 1
+  ?? Analyzing: DevEnvironment.psm1
+    ??  Warnings: 1
+  ?? Analyzing: ISOCustomizer.psm1
+    ? Clean
+  ?? Analyzing: ISOManager.psm1
+    ? Clean
+  ?? Analyzing: LabRunner.psm1
+    ??  Warnings: 6
+    ??  Info: 10
+  ?? Analyzing: Resolve-ProjectPath.psm1
+    ??  Warnings: 2
+    ??  Info: 1
+  ?? Analyzing: Logging.psm1
+    ??  Warnings: 10
+    ??  Info: 9
+  ?? Analyzing: OpenTofuProvider.psm1
+    ? Clean
+  ?? Analyzing: ParallelExecution.psm1
+    ??  Warnings: 9
+    ??  Info: 1
+  ?? Analyzing: PatchManager.psm1
+    ??  Info: 2
+  ?? Analyzing: RemoteConnection.psm1
+    ? Clean
+  ?? Analyzing: ScriptManager.psm1
+    ??  Warnings: 5
+    ??  Info: 4
+  ?? Analyzing: SecureCredentials.psm1
+    ? Clean
+  ?? Analyzing: TestingFramework.psm1
+    ??  Warnings: 26
+    ??  Info: 21
+  ?? Analyzing: UnifiedMaintenance.psm1
+    ??  Warnings: 103
+    ??  Info: 6
+  ?? Analyzing: TestHelpers.psm1
+    ??  Warnings: 5
+    ??  Info: 54
+  ?? Analyzing: AitherCore.psd1
+    ??  Warnings: 18
+  ?? Analyzing: BackupManager.psd1
+    ? Clean
+  ?? Analyzing: DevEnvironment.psd1
+    ??  Warnings: 2
+  ?? Analyzing: ISOCustomizer.psd1
+    ??  Warnings: 13
+  ?? Analyzing: ISOManager.psd1
+    ??  Warnings: 13
+  ?? Analyzing: LabRunner.psd1
+    ? Clean
+  ?? Analyzing: Logging.psd1
+    ??  Info: 14
+  ?? Analyzing: OpenTofuProvider.psd1
+    ? Clean
+  ?? Analyzing: ParallelExecution.psd1
+    ??  Warnings: 47
+  ?? Analyzing: PatchManager.psd1
+    ??  Warnings: 88
+  ?? Analyzing: RemoteConnection.psd1
+    ??  Warnings: 13
+  ?? Analyzing: ScriptManager.psd1
+    ? Clean
+  ?? Analyzing: SecureCredentials.psd1
+    ? Clean
+  ?? Analyzing: TestingFramework.psd1
+    ? Clean
+  ?? Analyzing: UnifiedMaintenance.psd1
+    ??  Info: 16
+  ?? Analyzing: iso-management-config.psd1
+    ??  Warnings: 280
+  ?? Analyzing: .pssa-test-rules.psd1
+    ? Clean
+  ?? Analyzing: BulletproofConfiguration.psd1
+    ? Clean
+  ?? Analyzing: PesterConfiguration.psd1
+    ? Clean
+  ?? Analyzing: PSScriptAnalyzerSettings.psd1
+    ? Clean
+  ?? Analyzing: TestConfiguration.psd1
+    ??  Warnings: 1
+    ??  Info: 18
+
+?? Analysis Summary
+===================
+?? File Statistics:
+  Total files found: 360
+  Files analyzed: 224
+  Files skipped: 136
+
+?? Issue Statistics:
+  ? Errors: 2
+  ??  Warnings: 2455
+  ??  Information: 2081
+  ?? Total issues: 4539
+
+?? Top Issues by Rule:
+  ?? PSAvoidTrailingWhitespace: 1559 occurrences
+  ?? PSUseConsistentIndentation: 1419 occurrences
+  ?? PSUseOutputTypeCorrectly: 453 occurrences
+  ?? PSUseConsistentWhitespace: 450 occurrences
+  ?? PSPlaceCloseBrace: 132 occurrences
+
+?? Files with Most Issues:
+  ?? OpenTofuInstaller.ps1: 414 issues
+  ?? iso-management-config.psd1: 280 issues
+  ?? TestFramework.ps1: 190 issues
+  ?? Invoke-ExtensibleTests.ps1: 163 issues
+  ?? Invoke-EnhancedPatchManager.ps1: 159 issues
+
+?? Final Status:
+  ? Found 2 errors and 2455 warnings.
+
+Exit Code: 0
