@@ -632,11 +632,11 @@ try {
                             # Test that modules export expected functions
                             $moduleTestResults = @()
                             $expectedFunctions = @{
-                                'Logging' = @('Write-CustomLog', 'Initialize-LoggingSystem')
+                                'Logging'           = @('Write-CustomLog', 'Initialize-LoggingSystem')
                                 'ParallelExecution' = @('Invoke-ParallelForEach', 'Start-ParallelJob')
-                                'TestingFramework' = @('Invoke-BulletproofTest', 'Start-TestSuite')
-                                'PatchManager' = @('Invoke-PatchWorkflow', 'New-PatchIssue', 'New-PatchPR')
-                                'LabRunner' = @('Start-LabAutomation', 'Get-LabStatus')
+                                'TestingFramework'  = @('Invoke-BulletproofTest', 'Start-TestSuite')
+                                'PatchManager'      = @('Invoke-PatchWorkflow', 'New-PatchIssue', 'New-PatchPR')
+                                'LabRunner'         = @('Start-LabAutomation', 'Get-LabStatus')
                             }
 
                             foreach ($moduleName in $expectedFunctions.Keys) {
@@ -652,24 +652,24 @@ try {
                                                 $missingFunctions += $func
                                             }
                                         }
-                                                          if ($missingFunctions.Count -eq 0) {
-                            $moduleTestResults += "✅ ${moduleName}: All expected functions available"
-                        } else {
-                            $moduleTestResults += "❌ ${moduleName}: Missing functions: $($missingFunctions -join ', ')"
-                        }
-                    } else {
-                        $moduleTestResults += "❌ ${moduleName}: Module not found"
-                    }
-                } catch {
-                    $moduleTestResults += "❌ ${moduleName}: Failed to load - $($_.Exception.Message)"
-                }
+                                        if ($missingFunctions.Count -eq 0) {
+                                            $moduleTestResults += "✅ ${moduleName}: All expected functions available"
+                                        } else {
+                                            $moduleTestResults += "❌ ${moduleName}: Missing functions: $($missingFunctions -join ', ')"
+                                        }
+                                    } else {
+                                        $moduleTestResults += "❌ ${moduleName}: Module not found"
+                                    }
+                                } catch {
+                                    $moduleTestResults += "❌ ${moduleName}: Failed to load - $($_.Exception.Message)"
+                                }
                             }
 
                             $testResult.Details += $moduleTestResults
-                            $failedModules = $moduleTestResults | Where-Object { $_ -like "❌*" }
+                            $failedModules = $moduleTestResults | Where-Object { $_ -like '❌*' }
                             $testResult.Success = ($failedModules.Count -eq 0)
                             $testResult.Message = if ($testResult.Success) {
-                                "All modules export expected functions"
+                                'All modules export expected functions'
                             } else {
                                 "Function validation failed for $($failedModules.Count) modules"
                             }
@@ -696,23 +696,23 @@ try {
                                 # Test log file creation
                                 $logDir = Join-Path $ProjectRoot 'logs'
                                 if (Test-Path $logDir) {
-                                    $logFiles = Get-ChildItem $logDir -Filter "*.log" -ErrorAction SilentlyContinue
+                                    $logFiles = Get-ChildItem $logDir -Filter '*.log' -ErrorAction SilentlyContinue
                                     if ($logFiles) {
                                         $logTests += "✅ Log files created ($($logFiles.Count) files)"
                                     } else {
-                                        $logTests += "⚠️ No log files found"
+                                        $logTests += '⚠️ No log files found'
                                     }
                                 } else {
-                                    $logTests += "⚠️ Log directory not found"
+                                    $logTests += '⚠️ Log directory not found'
                                 }
 
                                 $testResult.Details += $logTests
-                                $failedTests = $logTests | Where-Object { $_ -like "❌*" }
+                                $failedTests = $logTests | Where-Object { $_ -like '❌*' }
                                 $testResult.Success = ($failedTests.Count -eq 0)
                                 $testResult.Message = if ($testResult.Success) {
-                                    "Complete logging system functional"
+                                    'Complete logging system functional'
                                 } else {
-                                    "Logging system has issues"
+                                    'Logging system has issues'
                                 }
                             } catch {
                                 $testResult.Success = $false
@@ -735,9 +735,9 @@ try {
                                 } -ThrottleLimit 3
 
                                 if ($results.Count -eq $testData.Count) {
-                                    $parallelTests += "✅ Basic parallel execution works"
+                                    $parallelTests += '✅ Basic parallel execution works'
                                 } else {
-                                    $parallelTests += "❌ Basic parallel execution failed"
+                                    $parallelTests += '❌ Basic parallel execution failed'
                                 }
 
                                 # Test error handling in parallel execution
@@ -745,23 +745,23 @@ try {
                                     $errorResults = Invoke-ParallelForEach -InputObject @(1, 'invalid', 3) -ScriptBlock {
                                         param($item)
                                         if ($item -is [string]) {
-                                            throw "Invalid input"
+                                            throw 'Invalid input'
                                         }
                                         return $item * 2
                                     } -ThrottleLimit 2 -ErrorAction SilentlyContinue
 
-                                    $parallelTests += "✅ Error handling in parallel execution works"
+                                    $parallelTests += '✅ Error handling in parallel execution works'
                                 } catch {
-                                    $parallelTests += "❌ Error handling in parallel execution failed"
+                                    $parallelTests += '❌ Error handling in parallel execution failed'
                                 }
 
                                 $testResult.Details += $parallelTests
-                                $failedTests = $parallelTests | Where-Object { $_ -like "❌*" }
+                                $failedTests = $parallelTests | Where-Object { $_ -like '❌*' }
                                 $testResult.Success = ($failedTests.Count -eq 0)
                                 $testResult.Message = if ($testResult.Success) {
-                                    "Complete parallel execution functional"
+                                    'Complete parallel execution functional'
                                 } else {
-                                    "Parallel execution has issues"
+                                    'Parallel execution has issues'
                                 }
                             } catch {
                                 $testResult.Success = $false
@@ -788,15 +788,15 @@ try {
 
                                 # Test Pester integration
                                 if (Get-Module Pester -ListAvailable) {
-                                    $frameworkTests += "✅ Pester integration available"
+                                    $frameworkTests += '✅ Pester integration available'
                                 } else {
-                                    $frameworkTests += "⚠️ Pester not available"
+                                    $frameworkTests += '⚠️ Pester not available'
                                 }
 
                                 $testResult.Details += $frameworkTests
-                                $failedTests = $frameworkTests | Where-Object { $_ -like "❌*" }
+                                $failedTests = $frameworkTests | Where-Object { $_ -like '❌*' }
                                 $testResult.Success = ($failedTests.Count -eq 0)
-                                $testResult.Message = "TestingFramework functional"
+                                $testResult.Message = 'TestingFramework functional'
                             } catch {
                                 $testResult.Success = $false
                                 $testResult.Message = "Failed to test framework: $($_.Exception.Message)"
@@ -821,12 +821,12 @@ try {
                                 }
 
                                 $testResult.Details += $backupTests
-                                $failedTests = $backupTests | Where-Object { $_ -like "❌*" }
+                                $failedTests = $backupTests | Where-Object { $_ -like '❌*' }
                                 $testResult.Success = ($failedTests.Count -eq 0)
                                 $testResult.Message = if ($testResult.Success) {
-                                    "BackupManager core functions available"
+                                    'BackupManager core functions available'
                                 } else {
-                                    "BackupManager missing functions"
+                                    'BackupManager missing functions'
                                 }
                             } catch {
                                 $testResult.Success = $false
@@ -852,12 +852,12 @@ try {
                                 }
 
                                 $testResult.Details += $scriptTests
-                                $failedTests = $scriptTests | Where-Object { $_ -like "❌*" }
+                                $failedTests = $scriptTests | Where-Object { $_ -like '❌*' }
                                 $testResult.Success = ($failedTests.Count -eq 0)
                                 $testResult.Message = if ($testResult.Success) {
-                                    "ScriptManager core functions available"
+                                    'ScriptManager core functions available'
                                 } else {
-                                    "ScriptManager missing functions"
+                                    'ScriptManager missing functions'
                                 }
                             } catch {
                                 $testResult.Success = $false
@@ -886,21 +886,21 @@ try {
                                 try {
                                     $envStatus = Test-DevEnvironment
                                     if ($envStatus) {
-                                        $devTests += "✅ Environment validation working"
+                                        $devTests += '✅ Environment validation working'
                                     } else {
-                                        $devTests += "⚠️ Environment validation issues"
+                                        $devTests += '⚠️ Environment validation issues'
                                     }
                                 } catch {
-                                    $devTests += "❌ Environment validation failed"
+                                    $devTests += '❌ Environment validation failed'
                                 }
 
                                 $testResult.Details += $devTests
-                                $failedTests = $devTests | Where-Object { $_ -like "❌*" }
+                                $failedTests = $devTests | Where-Object { $_ -like '❌*' }
                                 $testResult.Success = ($failedTests.Count -eq 0)
                                 $testResult.Message = if ($testResult.Success) {
-                                    "DevEnvironment functional"
+                                    'DevEnvironment functional'
                                 } else {
-                                    "DevEnvironment has issues"
+                                    'DevEnvironment has issues'
                                 }
                             } catch {
                                 $testResult.Success = $false
@@ -928,7 +928,7 @@ try {
                                         $fsTests += "✅ $path - Read access OK"
 
                                         # Test write access (where appropriate)
-                                        if ($path -like "*logs*" -or $path -like "*tests*") {
+                                        if ($path -like '*logs*' -or $path -like '*tests*') {
                                             try {
                                                 $testFile = Join-Path $path 'test-write-access.tmp'
                                                 'test' | Out-File $testFile -ErrorAction Stop
@@ -947,12 +947,12 @@ try {
                             }
 
                             $testResult.Details += $fsTests
-                            $failedTests = $fsTests | Where-Object { $_ -like "❌*" }
+                            $failedTests = $fsTests | Where-Object { $_ -like '❌*' }
                             $testResult.Success = ($failedTests.Count -eq 0)
                             $testResult.Message = if ($testResult.Success) {
-                                "Complete file system access validated"
+                                'Complete file system access validated'
                             } else {
-                                "File system access issues detected"
+                                'File system access issues detected'
                             }
                         }
 
@@ -967,9 +967,9 @@ try {
                             # Test path handling
                             $testPath = Join-Path $ProjectRoot 'aither-core' 'modules'
                             if (Test-Path $testPath) {
-                                $platformTests += "✅ Cross-platform path handling works"
+                                $platformTests += '✅ Cross-platform path handling works'
                             } else {
-                                $platformTests += "❌ Cross-platform path handling failed"
+                                $platformTests += '❌ Cross-platform path handling failed'
                             }
 
                             # Test PowerShell version compatibility
@@ -982,18 +982,18 @@ try {
 
                             # Test environment variables
                             if ($env:PROJECT_ROOT) {
-                                $platformTests += "✅ Environment variables set"
+                                $platformTests += '✅ Environment variables set'
                             } else {
-                                $platformTests += "⚠️ PROJECT_ROOT not set"
+                                $platformTests += '⚠️ PROJECT_ROOT not set'
                             }
 
                             $testResult.Details += $platformTests
-                            $failedTests = $platformTests | Where-Object { $_ -like "❌*" }
+                            $failedTests = $platformTests | Where-Object { $_ -like '❌*' }
                             $testResult.Success = ($failedTests.Count -eq 0)
                             $testResult.Message = if ($testResult.Success) {
-                                "Cross-platform compatibility validated"
+                                'Cross-platform compatibility validated'
                             } else {
-                                "Cross-platform compatibility issues"
+                                'Cross-platform compatibility issues'
                             }
                         }
 
@@ -1008,13 +1008,14 @@ try {
                                 Import-Module "$ProjectRoot/aither-core/modules/Logging" -Force
                                 $moduleLoadTime = ((Get-Date) - $moduleLoadStart).TotalMilliseconds
 
-                                if ($moduleLoadTime -lt 5000) { # 5 seconds max
+                                if ($moduleLoadTime -lt 5000) {
+                                    # 5 seconds max
                                     $perfTests += "✅ Module loading performance: $($moduleLoadTime.ToString('F0'))ms"
                                 } else {
                                     $perfTests += "❌ Module loading too slow: $($moduleLoadTime.ToString('F0'))ms"
                                 }
                             } catch {
-                                $perfTests += "❌ Module loading failed"
+                                $perfTests += '❌ Module loading failed'
                             }
 
                             # Test core runner performance
@@ -1028,13 +1029,14 @@ try {
 
                                 $coreRunnerTime = ((Get-Date) - $coreRunnerStart).TotalMilliseconds
 
-                                if ($process.ExitCode -eq 0 -and $coreRunnerTime -lt 30000) { # 30 seconds max
+                                if ($process.ExitCode -eq 0 -and $coreRunnerTime -lt 30000) {
+                                    # 30 seconds max
                                     $perfTests += "✅ Core runner performance: $($coreRunnerTime.ToString('F0'))ms"
                                 } else {
                                     $perfTests += "❌ Core runner performance issues: $($coreRunnerTime.ToString('F0'))ms"
                                 }
                             } catch {
-                                $perfTests += "❌ Core runner performance test failed"
+                                $perfTests += '❌ Core runner performance test failed'
                             }
 
                             # Test memory usage (basic check)
@@ -1043,19 +1045,20 @@ try {
                             $memoryAfter = [GC]::GetTotalMemory($true)
                             $memoryIncrease = ($memoryAfter - $memoryBefore) / 1MB
 
-                            if ($memoryIncrease -lt 50) { # 50MB max increase
+                            if ($memoryIncrease -lt 50) {
+                                # 50MB max increase
                                 $perfTests += "✅ Memory usage acceptable: $($memoryIncrease.ToString('F1'))MB"
                             } else {
                                 $perfTests += "⚠️ High memory usage: $($memoryIncrease.ToString('F1'))MB"
                             }
 
                             $testResult.Details += $perfTests
-                            $failedTests = $perfTests | Where-Object { $_ -like "❌*" }
+                            $failedTests = $perfTests | Where-Object { $_ -like '❌*' }
                             $testResult.Success = ($failedTests.Count -eq 0)
                             $testResult.Message = if ($testResult.Success) {
-                                "Complete performance validation passed"
+                                'Complete performance validation passed'
                             } else {
-                                "Performance issues detected"
+                                'Performance issues detected'
                             }
                         }
 
@@ -1076,26 +1079,26 @@ try {
                                 } -ThrottleLimit 2
 
                                 if ($results.Count -eq $testData.Count) {
-                                    $integrationTests += "✅ Logging + ParallelExecution integration works"
+                                    $integrationTests += '✅ Logging + ParallelExecution integration works'
                                 } else {
-                                    $integrationTests += "❌ Logging + ParallelExecution integration failed"
+                                    $integrationTests += '❌ Logging + ParallelExecution integration failed'
                                 }
 
                                 # Test TestingFramework integration
                                 if (Get-Module TestingFramework -ListAvailable) {
                                     Import-Module "$ProjectRoot/aither-core/modules/TestingFramework" -Force
-                                    $integrationTests += "✅ TestingFramework integration available"
+                                    $integrationTests += '✅ TestingFramework integration available'
                                 } else {
-                                    $integrationTests += "⚠️ TestingFramework integration limited"
+                                    $integrationTests += '⚠️ TestingFramework integration limited'
                                 }
 
                                 $testResult.Details += $integrationTests
-                                $failedTests = $integrationTests | Where-Object { $_ -like "❌*" }
+                                $failedTests = $integrationTests | Where-Object { $_ -like '❌*' }
                                 $testResult.Success = ($failedTests.Count -eq 0)
                                 $testResult.Message = if ($testResult.Success) {
-                                    "Core integration working"
+                                    'Core integration working'
                                 } else {
-                                    "Integration issues detected"
+                                    'Integration issues detected'
                                 }
                             } catch {
                                 $testResult.Success = $false
