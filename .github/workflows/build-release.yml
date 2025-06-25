@@ -1,14 +1,13 @@
 name: Build and Release
 
 on:
-  release:
-    types: [published]
   push:
     tags: ['v*']
     branches: [main, master]
   pull_request:
     branches: [main, master]
     types: [closed]
+    # Only when merged to prevent duplicate runs
   workflow_dispatch:
     inputs:
       release_type:
@@ -90,13 +89,7 @@ jobs:
             Write-Host "Calculated new version: $version" -ForegroundColor Green
           }
 
-          if ([string]::IsNullOrEmpty($version) -and "${{ github.event.release.tag_name }}" -ne "") {
-            $releaseTag = "${{ github.event.release.tag_name }}"
-            if ($releaseTag -match '^v?(.+)$') {
-              $version = $matches[1]
-              Write-Host "Using release version: $version" -ForegroundColor Green
-            }
-          }
+          # Version determination logic - removed release event handling
 
           if ([string]::IsNullOrEmpty($version) -and
               "${{ github.event_name }}" -eq "pull_request" -and
@@ -152,10 +145,7 @@ jobs:
         run: |
           $shouldBuild = $false
 
-          if ("${{ github.event_name }}" -eq "release") {
-            $shouldBuild = $true
-            Write-Host "✓ Release event - proceeding with build" -ForegroundColor Green
-          } elseif ("${{ github.event_name }}" -eq "push" -and "${{ github.ref_type }}" -eq "tag") {
+          if ("${{ github.event_name }}" -eq "push" -and "${{ github.ref_type }}" -eq "tag") {
             $shouldBuild = $true
             Write-Host "✓ Tag push - proceeding with build" -ForegroundColor Green
           } elseif ("${{ github.event_name }}" -eq "workflow_dispatch") {
@@ -352,9 +342,8 @@ jobs:
             if ("${{ matrix.artifact_extension }}" -eq "zip") {
               Compress-Archive -Path "$buildDir/$packageName/*" -DestinationPath $archiveName -Force
             } else {
-              Set-Location $buildDir
-              tar -czf "../$archiveName" $packageName
-              Set-Location ".."
+              # Create tar archive from the parent directory to avoid path issues
+              tar -czf $archiveName -C $buildDir $packageName
             }
 
             $hash = Get-FileHash $archiveName -Algorithm SHA256
@@ -365,11 +354,41 @@ jobs:
             if (Test-Path $archiveName) {
               $size = (Get-Item $archiveName).Length
               Write-Host "Archive size: $([math]::Round($size / 1MB, 2)) MB" -ForegroundColor Cyan
+              Write-Host "Archive location: $(Resolve-Path $archiveName)" -ForegroundColor Yellow
             }
           } else {
             Write-Error "Package directory not found: $buildDir/$packageName"
             exit 1
           }
+
+      - name: Verify Artifacts Before Upload
+        shell: pwsh
+        run: |
+          Write-Host "Verifying artifacts before upload..." -ForegroundColor Cyan
+          $version = "${{ needs.version.outputs.version }}"
+          $archiveName = "AitherZero-$version-${{ matrix.platform }}.${{ matrix.artifact_extension }}"
+          $hashName = "$archiveName.sha256"
+          
+          Write-Host "Expected files:" -ForegroundColor Yellow
+          Write-Host "  - $archiveName" -ForegroundColor White
+          Write-Host "  - $hashName" -ForegroundColor White
+          
+          Write-Host "Current directory files:" -ForegroundColor Yellow
+          Get-ChildItem -File | ForEach-Object {
+            Write-Host "  $($_.Name) ($([math]::Round($_.Length / 1MB, 2)) MB)" -ForegroundColor White
+          }
+          
+          if (-not (Test-Path $archiveName)) {
+            Write-Error "Archive file not found: $archiveName"
+            exit 1
+          }
+          
+          if (-not (Test-Path $hashName)) {
+            Write-Error "Hash file not found: $hashName"
+            exit 1
+          }
+          
+          Write-Host "✓ All required artifacts verified!" -ForegroundColor Green
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
@@ -379,6 +398,7 @@ jobs:
             AitherZero-${{ needs.version.outputs.version }}-${{ matrix.platform }}.${{ matrix.artifact_extension }}
             AitherZero-${{ needs.version.outputs.version }}-${{ matrix.platform }}.${{ matrix.artifact_extension }}.sha256
           retention-days: 30
+          if-no-files-found: error
 
   release:
     name: Create GitHub Release
@@ -388,7 +408,6 @@ jobs:
       needs.version.outputs.should-build == 'true' &&
       (github.event_name == 'workflow_dispatch' ||
        github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') ||
-       github.event_name == 'release' ||
        (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
        (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')))
 
