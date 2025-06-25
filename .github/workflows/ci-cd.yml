@@ -97,66 +97,108 @@ jobs:
       - name: Run PowerShell Script Analysis
         shell: pwsh
         run: |
-          $results = @()
-          $patterns = @('*.ps1', '*.psm1', '*.psd1')
+          Write-Host "🔍 Running comprehensive PowerShell analysis..." -ForegroundColor Cyan
+          
+          # Run comprehensive analysis with detailed reporting
+          if (Test-Path './comprehensive-lint-analysis.ps1') {
+            pwsh -File './comprehensive-lint-analysis.ps1' -Severity 'All' -FailOnErrors -Detailed
+          } else {
+            # Fallback to basic analysis
+            Write-Warning "Comprehensive analysis script not found, using basic analysis"
+            $results = @()
+            $patterns = @('*.ps1', '*.psm1', '*.psd1')
 
-          foreach ($pattern in $patterns) {
-            $files = Get-ChildItem -Path . -Filter $pattern -Recurse -ErrorAction SilentlyContinue
-            foreach ($file in $files) {
-              # Skip test files and temporary files
-              if ($file.FullName -match '(test|temp|\.temp)' -or $file.FullName -match 'tests[/\\]') {
+            foreach ($pattern in $patterns) {
+              $files = Get-ChildItem -Path . -Filter $pattern -Recurse -ErrorAction SilentlyContinue            foreach ($file in $files) {
+              # Skip test files and temporary files, but NOT configuration files
+              if (($file.FullName -match 'tests[/\\].*\.Tests\.ps1$') -or 
+                  ($file.FullName -match '(temp|\.temp)') -or
+                  ($file.FullName -match 'test-.*\.ps1$')) {
                 continue
               }
 
-              Write-Host "Analyzing: $($file.FullName)" -ForegroundColor Cyan
-              try {
-                $analysis = Invoke-ScriptAnalyzer -Path $file.FullName -Settings './tests/config/PSScriptAnalyzerSettings.psd1' -Severity Warning,Error
-                if ($analysis) {
-                  $results += $analysis
-                  $analysis | ForEach-Object {
-                    Write-Warning "$($_.ScriptName):$($_.Line) - $($_.Message)"
+                Write-Host "Analyzing: $($file.FullName)" -ForegroundColor Cyan
+                try {
+                  # Check if file has content before analyzing
+                  $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
+                  if (-not $content -or $content.Trim() -eq '') {
+                    Write-Warning "Skipping empty file: $($file.Name)"
+                    continue
                   }
+
+                  $analysis = Invoke-ScriptAnalyzer -Path $file.FullName -Settings './tests/config/PSScriptAnalyzerSettings.psd1' -Severity Warning,Error
+                  if ($analysis) {
+                    $results += $analysis
+                    $analysis | ForEach-Object {
+                      Write-Warning "$($_.ScriptName):$($_.Line) - $($_.Message)"
+                    }
+                  }
+                } catch {
+                  Write-Warning "Could not analyze $($file.FullName): $($_.Exception.Message)"
                 }
-              } catch {
-                Write-Warning "Could not analyze $($file.FullName): $($_.Exception.Message)"
               }
             }
-          }
 
-          $errorCount = ($results | Where-Object Severity -eq 'Error').Count
-          $warningCount = ($results | Where-Object Severity -eq 'Warning').Count
+            $errorCount = ($results | Where-Object Severity -eq 'Error').Count
+            $warningCount = ($results | Where-Object Severity -eq 'Warning').Count
 
-          Write-Host "Analysis complete: $errorCount errors, $warningCount warnings" -ForegroundColor Yellow
+            Write-Host "Analysis complete: $errorCount errors, $warningCount warnings" -ForegroundColor Yellow
 
-          if ($errorCount -gt 0) {
-            Write-Error "Script analysis found $errorCount errors"
-            exit 1
+            if ($errorCount -gt 0) {
+              Write-Error "Script analysis found $errorCount errors"
+              exit 1
+            }
           }
 
       - name: PowerShell Syntax Check
         shell: pwsh
         run: |
+          Write-Host "🔧 Running PowerShell syntax validation..." -ForegroundColor Cyan
+          
           $errors = @()
           $patterns = @('*.ps1', '*.psm1')
+          $totalFiles = 0
+          $validFiles = 0
+          $emptyFiles = 0
 
           foreach ($pattern in $patterns) {
             $files = Get-ChildItem -Path . -Filter $pattern -Recurse -ErrorAction SilentlyContinue
             foreach ($file in $files) {
-              # Skip test files and temporary files
-              if ($file.FullName -match '(test|temp|\.temp)' -or $file.FullName -match 'tests[/\\]') {
+              # Skip test files and temporary files, but NOT configuration files
+              if (($file.FullName -match 'tests[/\\].*\.Tests\.ps1$') -or 
+                  ($file.FullName -match '(temp|\.temp)') -or
+                  ($file.FullName -match 'test-.*\.ps1$')) {
                 continue
               }
 
+              $totalFiles++
               Write-Host "Syntax checking: $($file.FullName)" -ForegroundColor Cyan
+              
               try {
-                $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $file.FullName -Raw), [ref]$null)
+                # Check if file has content
+                $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
+                if (-not $content -or $content.Trim() -eq '') {
+                  $emptyFiles++
+                  Write-Host "⚠️  Empty file: $($file.Name)" -ForegroundColor Yellow
+                  continue
+                }
+
+                $null = [System.Management.Automation.PSParser]::Tokenize($content, [ref]$null)
+                $validFiles++
                 Write-Host "✓ Syntax OK: $($file.Name)" -ForegroundColor Green
               } catch {
                 $errors += "Syntax error in $($file.FullName): $($_.Exception.Message)"
-                Write-Error "Syntax error in $($file.FullName): $($_.Exception.Message)"
+                Write-Error "❌ Syntax error in $($file.FullName): $($_.Exception.Message)"
               }
             }
           }
+
+          Write-Host ""
+          Write-Host "📊 Syntax Check Summary:" -ForegroundColor Yellow
+          Write-Host "  Total files: $totalFiles" -ForegroundColor White
+          Write-Host "  Valid files: $validFiles" -ForegroundColor Green
+          Write-Host "  Empty files: $emptyFiles" -ForegroundColor Yellow
+          Write-Host "  Error files: $($errors.Count)" -ForegroundColor $(if ($errors.Count -gt 0) { 'Red' } else { 'Green' })
 
           if ($errors.Count -gt 0) {
             Write-Error "Found $($errors.Count) syntax errors"
