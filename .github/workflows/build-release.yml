@@ -334,7 +334,7 @@ jobs:
               $startupScript = @"
 @echo off
 echo Starting AitherZero v$version...
-pwsh -File "aither-core/core-runner.ps1" %*
+pwsh -File "aither-core/aither-core.ps1" %*
 pause
 "@
               Set-Content -Path "$packageDir/AitherZero.bat" -Value $startupScript -Encoding UTF8
@@ -343,7 +343,7 @@ pause
               $startupScript = @"
 #!/bin/bash
 echo "Starting AitherZero v$version..."
-pwsh -File "aither-core/core-runner.ps1" `$@
+pwsh -File "aither-core/aither-core.ps1" `$@
 "@
               Set-Content -Path "$packageDir/aitherzero.sh" -Value $startupScript -Encoding UTF8
 

@@ -329,25 +329,44 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "Validating build scripts..." -ForegroundColor Cyan
+          
+          # Debug: Show current directory and what exists
+          Write-Host "Current directory: $(Get-Location)" -ForegroundColor Yellow
+          Write-Host "Directory contents:" -ForegroundColor Yellow
+          Get-ChildItem | ForEach-Object { Write-Host "  $($_.Name)" -ForegroundColor Cyan }
 
           $buildScripts = @()
+          
+          # Check for build directory scripts
           if (Test-Path './build') {
-            $buildScripts += Get-ChildItem -Path './build' -Filter '*.ps1' -ErrorAction SilentlyContinue
+            $buildDirScripts = Get-ChildItem -Path './build' -Filter '*.ps1' -ErrorAction SilentlyContinue
+            if ($buildDirScripts) {
+              $buildScripts += $buildDirScripts
+              Write-Host "Found $($buildDirScripts.Count) scripts in ./build directory" -ForegroundColor Green
+            }
+          } else {
+            Write-Host "Build directory ./build not found" -ForegroundColor Red
           }
-          if (Test-Path './aither-core/core-runner.ps1') {
-            $buildScripts += Get-Item './aither-core/core-runner.ps1'
+          
+          # Check for main aither-core script (correct path)
+          if (Test-Path './aither-core/aither-core.ps1') {
+            $buildScripts += Get-Item './aither-core/aither-core.ps1'
+            Write-Host "Found aither-core.ps1" -ForegroundColor Green
+          } else {
+            Write-Host "Main script ./aither-core/aither-core.ps1 not found" -ForegroundColor Red
           }
 
           if ($buildScripts.Count -eq 0) {
-            Write-Host "No build scripts found" -ForegroundColor Yellow
-            exit 0
+            Write-Error "No build scripts found - this should not happen!"
+            exit 1
           }
 
+          Write-Host "Validating $($buildScripts.Count) build scripts..." -ForegroundColor Cyan
           foreach ($script in $buildScripts) {
             Write-Host "Validating: $($script.Name)" -ForegroundColor Yellow
             try {
               # Test with -WhatIf to avoid actual execution
-              if ($script.Name -eq 'core-runner.ps1') {
+              if ($script.Name -eq 'aither-core.ps1') {
                 pwsh -File $script.FullName -NonInteractive -WhatIf -ErrorAction Stop
               } else {
                 # For other scripts, just test syntax
