@@ -97,8 +97,8 @@ function Get-TestAnalysisContext {
             )
 
             foreach ($pattern in $filePatterns) {
-                $matches = [regex]::Matches($allText, $pattern)
-                foreach ($match in $matches) {
+                $fileMatches = [regex]::Matches($allText, $pattern)
+                foreach ($match in $fileMatches) {
                     $filePath = $match.Groups[1].Value
                     
                     # Clean up the path
@@ -136,8 +136,8 @@ function Get-TestAnalysisContext {
             )
 
             foreach ($pattern in $modulePatterns) {
-                $matches = [regex]::Matches($allText, $pattern, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-                foreach ($match in $matches) {
+                $moduleMatches = [regex]::Matches($allText, $pattern, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+                foreach ($match in $moduleMatches) {
                     $moduleName = $match.Groups[1].Value
                     
                     # Clean up module name
@@ -245,9 +245,9 @@ function Get-TestAnalysisContext {
             if ($analysisResult.AffectedCapabilities.Count -gt 0) { $confidenceScore += 20 }
 
             $analysisResult.Confidence = switch ($true) {
-                ($confidenceScore -ge 80) { "High" }
-                ($confidenceScore -ge 60) { "Medium" }
-                ($confidenceScore -ge 40) { "Low" }
+                ($confidenceScore -ge 80) { "High"; break }
+                ($confidenceScore -ge 60) { "Medium"; break }
+                ($confidenceScore -ge 40) { "Low"; break }
                 default { "Unknown" }
             }
 

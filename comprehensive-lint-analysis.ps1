@@ -148,15 +148,20 @@ if ($allResults.Count -gt 0) {
     Write-Host "🏆 Top Issues by Rule:" -ForegroundColor Yellow
     $topRules = $allResults | Group-Object RuleName | Sort-Object Count -Descending | Select-Object -First 5
     $topRules | ForEach-Object {
-        $ruleExample = $allResults | Where-Object { $_.RuleName -eq $_.Name } | Select-Object -First 1
-        $severityValue = if ($ruleExample) { $ruleExample.Severity.ToString() } else { 'Unknown' }
-        $icon = switch ($severityValue) {
+        $ruleName = $_.Name
+        $ruleExample = $allResults | Where-Object { $_.RuleName -eq $ruleName } | Select-Object -First 1
+        $severityText = if ($ruleExample -and $ruleExample.Severity) { 
+            $ruleExample.Severity.ToString() 
+        } else { 
+            'Warning' 
+        }
+        $icon = switch ($severityText) {
             'Error' { '❌' }
             'Warning' { '⚠️ ' }
             'Information' { 'ℹ️ ' }
             default { '📝' }
         }
-        Write-Host "  $icon $($_.Name): $($_.Count) occurrences" -ForegroundColor White
+        Write-Host "  $icon $($ruleName): $($_.Count) occurrences" -ForegroundColor White
     }
     Write-Host ""
 }
