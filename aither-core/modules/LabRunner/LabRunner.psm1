@@ -1,5 +1,20 @@
 #Requires -Version 7.0
 
+# Robust project root detection using shared utility
+$findProjectRootPath = Join-Path $PSScriptRoot "../../shared/Find-ProjectRoot.ps1"
+if (Test-Path $findProjectRootPath) {
+    . $findProjectRootPath
+    $script:ProjectRoot = Find-ProjectRoot
+} else {
+    # Fallback: basic upward traversal
+    $script:ProjectRoot = $PSScriptRoot
+    while ($script:ProjectRoot -and -not (Test-Path (Join-Path $script:ProjectRoot "aither-core"))) {
+        $parent = Split-Path $script:ProjectRoot -Parent
+        if ($parent -eq $script:ProjectRoot) { break }
+        $script:ProjectRoot = $parent
+    }
+}
+
 # Import the centralized Logging module
 $loggingImported = $false
 
@@ -8,12 +23,20 @@ if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
     $loggingImported = $true
     Write-Verbose "Logging module already available"
 } else {
+    # Robust path resolution using project root
     $loggingPaths = @(
         'Logging',  # Try module name first (if in PSModulePath)
         (Join-Path (Split-Path $PSScriptRoot -Parent) "Logging"),  # Relative to modules directory
-        (Join-Path $env:PWSH_MODULES_PATH "Logging"),  # Environment path
-        (Join-Path $env:PROJECT_ROOT "aither-core/modules/Logging")  # Full project path
+        (Join-Path $script:ProjectRoot "aither-core/modules/Logging")  # Project root based path
     )
+    
+    # Add environment-based paths if available
+    if ($env:PWSH_MODULES_PATH) {
+        $loggingPaths += (Join-Path $env:PWSH_MODULES_PATH "Logging")
+    }
+    if ($env:PROJECT_ROOT) {
+        $loggingPaths += (Join-Path $env:PROJECT_ROOT "aither-core/modules/Logging")
+    }
 
     foreach ($loggingPath in $loggingPaths) {
         if ($loggingImported) { break }
