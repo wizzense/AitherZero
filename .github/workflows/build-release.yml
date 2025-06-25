@@ -381,7 +381,7 @@ jobs:
           $expectedFiles = @(
             "AitherZero-$version-windows.zip",
             "AitherZero-$version-windows.zip.sha256",
-            "AitherZero-$version-linux.tar.gz", 
+            "AitherZero-$version-linux.tar.gz",
             "AitherZero-$version-linux.tar.gz.sha256",
             "AitherZero-$version-macos.tar.gz",
             "AitherZero-$version-macos.tar.gz.sha256",
@@ -467,21 +467,21 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           Write-Host "Waiting for release to be fully available..." -ForegroundColor Cyan
-          
+
           $version = "${{ needs.version.outputs.version }}"
           $maxAttempts = 15  # Increased from 10
           $attempt = 1
           $found = $false
-          
+
           while ($attempt -le $maxAttempts -and -not $found) {
             Write-Host "Attempt $attempt of $maxAttempts..." -ForegroundColor Yellow
-            
+
             try {
               $release = gh release view "v$version" --json tagName,assets,draft,url 2>$null
               if ($release) {
                 $releaseData = $release | ConvertFrom-Json
                 Write-Host "Release data found: $($releaseData.tagName), Assets: $($releaseData.assets.Count)" -ForegroundColor Cyan
-                
+
                 # Check for the tag and at least some assets
                 if ($releaseData.tagName -eq "v$version" -and $releaseData.assets -and $releaseData.assets.Count -ge 6) {
                   Write-Host "✓ Release v$version found with $($releaseData.assets.Count) assets" -ForegroundColor Green
@@ -495,14 +495,14 @@ jobs:
             } catch {
               Write-Host "Release API call failed: $($_.Exception.Message)" -ForegroundColor Yellow
             }
-            
+
             if (-not $found) {
               Write-Host "Release not ready, waiting 20 seconds..." -ForegroundColor Yellow
               Start-Sleep -Seconds 20  # Reduced from 30 seconds
               $attempt++
             }
           }
-          
+
           if (-not $found) {
             Write-Warning "Release v$version not fully available after $maxAttempts attempts"
             Write-Host "This may be normal for some trigger types - continuing with validation anyway" -ForegroundColor Yellow
@@ -623,5 +623,3 @@ jobs:
           }
 
           Write-Host "🎉 Release validation completed successfully!" -ForegroundColor Green
-
-
