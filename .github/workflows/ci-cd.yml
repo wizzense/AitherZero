@@ -111,15 +111,15 @@ jobs:
               $files = Get-ChildItem -Path . -Filter $pattern -Recurse -ErrorAction SilentlyContinue
               foreach ($file in $files) {
                 # Skip test files and temporary files, but NOT configuration files
-              if (($file.FullName -match 'tests[/\\].*\.Tests\.ps1$') -or
-                  ($file.FullName -match '(temp|\.temp)') -or
-                  ($file.FullName -match 'test-.*\.ps1$')) {
-                continue
-              }
+                if (($file.FullName -match 'tests[/\\].*\.Tests\.ps1$') -or
+                    ($file.FullName -match '(temp|\.temp)') -or
+                    ($file.FullName -match 'test-.*\.ps1$')) {
+                  continue
+                }
 
-              Write-Host "Analyzing: $($file.FullName)" -ForegroundColor Cyan
-              try {
-                # Check if file has content before analyzing
+                Write-Host "Analyzing: $($file.FullName)" -ForegroundColor Cyan
+                try {
+                  # Check if file has content before analyzing
                 $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
                 if (-not $content -or $content.Trim() -eq '') {
                   Write-Warning "Skipping empty file: $($file.Name)"
@@ -133,9 +133,9 @@ jobs:
                     Write-Warning "$($_.ScriptName):$($_.Line) - $($_.Message)"
                   }
                 }
-              } catch {
-                Write-Warning "Could not analyze $($file.FullName): $($_.Exception.Message)"
-              }
+                } catch {
+                  Write-Warning "Could not analyze $($file.FullName): $($_.Exception.Message)"
+                }
               }
             }
 
