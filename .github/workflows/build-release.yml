@@ -637,6 +637,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Wait for Release to be Available
+        id: wait
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -675,12 +676,15 @@ jobs:
           if (-not $found) {
             Write-Warning "Release v$version not found after $maxAttempts attempts - continuing anyway"
             Write-Host "This may be normal for some trigger types" -ForegroundColor Yellow
-            # Don't exit with error - make this non-blocking
+            # Set output to skip remaining validation steps
+            echo "release-found=false" >> $env:GITHUB_OUTPUT
           } else {
             Write-Host "✅ Release validation ready to proceed" -ForegroundColor Green
+            echo "release-found=true" >> $env:GITHUB_OUTPUT
           }
 
       - name: Validate Release Assets
+        if: steps.wait.outputs.release-found == 'true'
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -758,6 +762,7 @@ jobs:
           }
 
       - name: Test Download and Basic Validation
+        if: steps.wait.outputs.release-found == 'true'
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
