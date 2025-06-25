@@ -1286,3 +1286,8 @@ $exitCode = if ($isBulletproof) { 0 } else { 1 }
 Write-BulletproofLog "Exit Code: $exitCode" -Level INFO
 
 exit $exitCode
+
+# LAUNCHER TESTS - CRITICAL FOR USER EXPERIENCE
+
+# Include launcher functionality validation in all test runs
+
