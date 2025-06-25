@@ -44,7 +44,7 @@ if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
         (Join-Path (Split-Path $PSScriptRoot -Parent) "Logging"),  # Relative to modules directory
         (Join-Path $script:ProjectRoot "aither-core/modules/Logging")  # Project root based path
     )
-    
+
     # Add environment-based paths if available
     if ($env:PWSH_MODULES_PATH) {
         $loggingPaths += (Join-Path $env:PWSH_MODULES_PATH "Logging")
