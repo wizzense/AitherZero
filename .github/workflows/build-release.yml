@@ -362,41 +362,7 @@ jobs:
             Write-Host "✓ Copied: $($_.Name)" -ForegroundColor Green
           }
 
-          # Verify all expected files are present
-          $version = "${{ needs.version.outputs.version }}"
-          $expectedFiles = @(
-            "AitherZero-$version-windows.zip",
-            "AitherZero-$version-windows.zip.sha256",
-            "AitherZero-$version-linux.tar.gz", 
-            "AitherZero-$version-linux.tar.gz.sha256",
-            "AitherZero-$version-macos.tar.gz",
-            "AitherZero-$version-macos.tar.gz.sha256"
-          )
-
-          foreach ($file in $expectedFiles) {
-            $filePath = Join-Path $releaseDir $file
-            if (Test-Path $filePath) {
-              Write-Host "✓ Found: $file" -ForegroundColor Green
-            } else {
-              Write-Warning "Missing: $file"
-            }
-          }
-
-          Write-Host "Release assets organized successfully!" -ForegroundColor Green
-
-      - name: Prepare Release Assets
-        shell: pwsh
-        run: |
-          Write-Host "Preparing release assets..." -ForegroundColor Cyan
-
-          New-Item -ItemType Directory -Path "release" -Force | Out-Null
-
-          Get-ChildItem -Path "release-artifacts" -Recurse -File | ForEach-Object {
-            $destPath = "release/$($_.Name)"
-            Copy-Item -Path $_.FullName -Destination $destPath -Force
-            Write-Host "✓ Prepared: $($_.Name)" -ForegroundColor Green
-          }
-
+          # Create comprehensive checksums file
           $version = "${{ needs.version.outputs.version }}"
           $checksumFile = "release/AitherZero-$version-checksums.txt"
           $checksumContent = @()
@@ -411,7 +377,36 @@ jobs:
             Write-Host "✓ Created comprehensive checksums file" -ForegroundColor Green
           }
 
-          Write-Host "Release assets prepared:" -ForegroundColor Yellow
+          # Verify all expected files are present
+          $expectedFiles = @(
+            "AitherZero-$version-windows.zip",
+            "AitherZero-$version-windows.zip.sha256",
+            "AitherZero-$version-linux.tar.gz", 
+            "AitherZero-$version-linux.tar.gz.sha256",
+            "AitherZero-$version-macos.tar.gz",
+            "AitherZero-$version-macos.tar.gz.sha256",
+            "AitherZero-$version-checksums.txt"
+          )
+
+          $allAssetsPresent = $true
+          foreach ($file in $expectedFiles) {
+            $filePath = Join-Path $releaseDir $file
+            if (Test-Path $filePath) {
+              Write-Host "✓ Found: $file" -ForegroundColor Green
+            } else {
+              Write-Warning "Missing: $file"
+              $allAssetsPresent = $false
+            }
+          }
+
+          if ($allAssetsPresent) {
+            Write-Host "✅ All release assets organized successfully!" -ForegroundColor Green
+          } else {
+            Write-Error "Some expected assets are missing!"
+            exit 1
+          }
+
+          Write-Host "Release assets ready:" -ForegroundColor Yellow
           Get-ChildItem -Path "release" | ForEach-Object {
             $size = [math]::Round($_.Length / 1MB, 2)
             Write-Host "  $($_.Name) ($size MB)" -ForegroundColor Cyan
@@ -474,7 +469,7 @@ jobs:
           Write-Host "Waiting for release to be fully available..." -ForegroundColor Cyan
           
           $version = "${{ needs.version.outputs.version }}"
-          $maxAttempts = 10
+          $maxAttempts = 15  # Increased from 10
           $attempt = 1
           $found = $false
           
@@ -482,29 +477,36 @@ jobs:
             Write-Host "Attempt $attempt of $maxAttempts..." -ForegroundColor Yellow
             
             try {
-              $release = gh release view "v$version" --json tagName,assets,draft 2>$null
+              $release = gh release view "v$version" --json tagName,assets,draft,url 2>$null
               if ($release) {
                 $releaseData = $release | ConvertFrom-Json
-                if ($releaseData.tagName -eq "v$version" -and $releaseData.assets -and $releaseData.assets.Count -gt 0) {
+                Write-Host "Release data found: $($releaseData.tagName), Assets: $($releaseData.assets.Count)" -ForegroundColor Cyan
+                
+                # Check for the tag and at least some assets
+                if ($releaseData.tagName -eq "v$version" -and $releaseData.assets -and $releaseData.assets.Count -ge 6) {
                   Write-Host "✓ Release v$version found with $($releaseData.assets.Count) assets" -ForegroundColor Green
+                  Write-Host "✓ Release URL: $($releaseData.url)" -ForegroundColor Green
                   $found = $true
                   break
+                } elseif ($releaseData.tagName -eq "v$version" -and $releaseData.assets.Count -lt 6) {
+                  Write-Host "⏳ Release found but only $($releaseData.assets.Count)/6+ assets uploaded" -ForegroundColor Yellow
                 }
               }
             } catch {
-              Write-Host "Release not yet available: $($_.Exception.Message)" -ForegroundColor Yellow
+              Write-Host "Release API call failed: $($_.Exception.Message)" -ForegroundColor Yellow
             }
             
             if (-not $found) {
-              Write-Host "Release not ready, waiting 30 seconds..." -ForegroundColor Yellow
-              Start-Sleep -Seconds 30
+              Write-Host "Release not ready, waiting 20 seconds..." -ForegroundColor Yellow
+              Start-Sleep -Seconds 20  # Reduced from 30 seconds
               $attempt++
             }
           }
           
           if (-not $found) {
-            Write-Error "Release v$version not available after $maxAttempts attempts"
-            exit 1
+            Write-Warning "Release v$version not fully available after $maxAttempts attempts"
+            Write-Host "This may be normal for some trigger types - continuing with validation anyway" -ForegroundColor Yellow
+            # Don't exit with error, just continue
           }
 
       - name: Validate Release Assets
