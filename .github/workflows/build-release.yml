@@ -98,6 +98,47 @@ jobs:
             }
           }
           
+          # Handle merged PRs to main/master - auto-increment patch version
+          if ([string]::IsNullOrEmpty($version) -and 
+              "${{ github.event_name }}" -eq "pull_request" -and 
+              "${{ github.event.pull_request.merged }}" -eq "true" -and
+              ("${{ github.event.pull_request.base.ref }}" -eq "main" -or "${{ github.event.pull_request.base.ref }}" -eq "master")) {
+            
+            $latestTag = git describe --tags --abbrev=0 2>$null
+            if ($latestTag) {
+              $currentVersion = $latestTag -replace '^v', ''
+              if ($currentVersion -match '^(\d+)\.(\d+)\.(\d+)') {
+                $major = [int]$matches[1]
+                $minor = [int]$matches[2]
+                $patch = [int]$matches[3]
+                $version = "$major.$minor.$($patch + 1)"
+                Write-Host "Auto-incrementing patch version for merged PR: $version" -ForegroundColor Green
+              }
+            } else {
+              $version = "1.0.0"
+            }
+          }
+          
+          # Handle pushes to main/master - auto-increment patch version
+          if ([string]::IsNullOrEmpty($version) -and 
+              "${{ github.event_name }}" -eq "push" -and
+              ("${{ github.ref }}" -eq "refs/heads/main" -or "${{ github.ref }}" -eq "refs/heads/master")) {
+            
+            $latestTag = git describe --tags --abbrev=0 2>$null
+            if ($latestTag) {
+              $currentVersion = $latestTag -replace '^v', ''
+              if ($currentVersion -match '^(\d+)\.(\d+)\.(\d+)') {
+                $major = [int]$matches[1]
+                $minor = [int]$matches[2]
+                $patch = [int]$matches[3]
+                $version = "$major.$minor.$($patch + 1)"
+                Write-Host "Auto-incrementing patch version for main branch push: $version" -ForegroundColor Green
+              }
+            } else {
+              $version = "1.0.0"
+            }
+          }
+          
           # Fallback to timestamp-based version if all else fails
           if ([string]::IsNullOrEmpty($version)) {
             $timestamp = Get-Date -Format "yyyy.MM.dd.HHmm"
@@ -112,19 +153,29 @@ jobs:
         id: check
         shell: pwsh
         run: |
-          $shouldBuild = $true
+          $shouldBuild = $false
           
-          # Only build if this is a tag, release, or workflow dispatch
-          if ("${{ github.event_name }}" -eq "pull_request") {
-            # For PR, only build if it's merged to main/master
-            if ("${{ github.event.pull_request.merged }}" -eq "true" -and 
-                ("${{ github.event.pull_request.base.ref }}" -eq "main" -or "${{ github.event.pull_request.base.ref }}" -eq "master")) {
-              $shouldBuild = $true
-              Write-Host "✓ PR merged to main/master - proceeding with build" -ForegroundColor Green
-            } else {
-              $shouldBuild = $false
-              Write-Host "✗ PR not merged or not targeting main/master - skipping build" -ForegroundColor Yellow
-            }
+          # Determine if we should build based on event type
+          if ("${{ github.event_name }}" -eq "release") {
+            $shouldBuild = $true
+            Write-Host "✓ Release event - proceeding with build" -ForegroundColor Green
+          } elseif ("${{ github.event_name }}" -eq "push" -and "${{ github.ref_type }}" -eq "tag") {
+            $shouldBuild = $true
+            Write-Host "✓ Tag push - proceeding with build" -ForegroundColor Green
+          } elseif ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $shouldBuild = $true
+            Write-Host "✓ Manual dispatch - proceeding with build" -ForegroundColor Green
+          } elseif ("${{ github.event_name }}" -eq "pull_request" -and 
+                    "${{ github.event.pull_request.merged }}" -eq "true" -and 
+                    ("${{ github.event.pull_request.base.ref }}" -eq "main" -or "${{ github.event.pull_request.base.ref }}" -eq "master")) {
+            $shouldBuild = $true
+            Write-Host "✓ PR merged to main/master - proceeding with build" -ForegroundColor Green
+          } elseif ("${{ github.event_name }}" -eq "push" -and
+                    ("${{ github.ref }}" -eq "refs/heads/main" -or "${{ github.ref }}" -eq "refs/heads/master")) {
+            $shouldBuild = $true
+            Write-Host "✓ Push to main/master - proceeding with build" -ForegroundColor Green
+          } else {
+            Write-Host "✗ Event does not trigger build: ${{ github.event_name }}" -ForegroundColor Yellow
           }
           
           Write-Host "Should build: $shouldBuild" -ForegroundColor Cyan
@@ -146,13 +197,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup PowerShell
+      - name: Setup PowerShell Environment
         shell: pwsh
         run: |
           Write-Host "Setting up PowerShell environment on ${{ matrix.os }}..." -ForegroundColor Cyan
           
           # Set cross-platform environment variables
           echo "POWERSHELL_TELEMETRY_OPTOUT=1" >> $env:GITHUB_ENV
+          echo "PROJECT_ROOT=$PWD" >> $env:GITHUB_ENV
 
           # Ensure proper path separators for cross-platform compatibility
           if ($IsWindows) {
@@ -163,12 +215,11 @@ jobs:
 
           Write-Host "✓ Environment initialized for ${{ matrix.os }}" -ForegroundColor Green
 
-      - name: Run cross-platform pre-build validation
+      - name: Run Cross-Platform Validation
         shell: pwsh
         run: |
           Write-Host "Running pre-build validation on ${{ matrix.os }}..." -ForegroundColor Cyan
 
-          # Set error action preference for better error handling
           $ErrorActionPreference = 'Stop'
 
           try {
@@ -179,7 +230,7 @@ jobs:
             } else {
               Write-Host "No bulletproof validation found, running basic checks" -ForegroundColor Yellow
 
-              # Basic module import test with cross-platform path handling
+              # Basic module import test
               if (Test-Path './aither-core/modules') {
                 $modules = Get-ChildItem -Path './aither-core/modules' -Directory
                 foreach ($module in $modules) {
@@ -211,7 +262,6 @@ jobs:
     
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
         include:
           - os: ubuntu-latest
             platform: linux
@@ -227,16 +277,15 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup PowerShell and Environment
+      - name: Setup Build Environment
         shell: pwsh
         run: |
           Write-Host "Setting up build environment for ${{ matrix.platform }}..." -ForegroundColor Cyan
           
-          # Cross-platform environment setup
-          echo "POWERSHELL_TELEMETRY_OPTOUT=1" >> $env:GITHUB_ENV
-          echo "PLATFORM=${{ matrix.platform }}" >> $env:GITHUB_ENV
-          echo "VERSION=${{ needs.version.outputs.version }}" >> $env:GITHUB_ENV
-
+          $version = "${{ needs.version.outputs.version }}"
+          echo "BUILD_VERSION=$version" >> $env:GITHUB_ENV
+          echo "PROJECT_ROOT=$PWD" >> $env:GITHUB_ENV
+          
           Write-Host "✓ Environment configured for ${{ matrix.platform }}" -ForegroundColor Green
 
       - name: Build AitherZero Package
@@ -245,63 +294,67 @@ jobs:
           Write-Host "Building AitherZero package for ${{ matrix.platform }}..." -ForegroundColor Cyan
           
           $ErrorActionPreference = 'Stop'
+          $version = "${{ needs.version.outputs.version }}"
           
           try {
-            # Create build directory
+            # Create build directory structure
             $buildDir = "build-output/${{ matrix.platform }}"
-            New-Item -ItemType Directory -Path $buildDir -Force | Out-Null
+            New-Item -Path $buildDir -ItemType Directory -Force | Out-Null
             
-            # Run platform-specific build script
-            if (Test-Path "./build/Quick-Build.ps1") {
-              Write-Host "Running Quick-Build.ps1..." -ForegroundColor Yellow
-              pwsh -File "./build/Quick-Build.ps1" -Platform "${{ matrix.platform }}" -Version "${{ needs.version.outputs.version }}"
-            } elseif (Test-Path "./build/Build-Release.ps1") {
-              Write-Host "Running Build-Release.ps1..." -ForegroundColor Yellow
-              pwsh -File "./build/Build-Release.ps1" -Platform "${{ matrix.platform }}" -Version "${{ needs.version.outputs.version }}"
-            } else {
-              Write-Host "No build script found, creating manual package..." -ForegroundColor Yellow
-              
-              # Manual packaging
-              $packageName = "AitherZero-${{ needs.version.outputs.version }}-${{ matrix.platform }}"
-              $packageDir = "$buildDir/$packageName"
-              
-              # Create package structure
-              New-Item -ItemType Directory -Path $packageDir -Force | Out-Null
-              
-              # Copy core files
-              Copy-Item -Path "./aither-core" -Destination "$packageDir/" -Recurse -Force
-              Copy-Item -Path "./configs" -Destination "$packageDir/" -Recurse -Force
-              Copy-Item -Path "./docs" -Destination "$packageDir/" -Recurse -Force
-              Copy-Item -Path "./README.md" -Destination "$packageDir/" -Force
-              Copy-Item -Path "./LICENSE" -Destination "$packageDir/" -Force
-              
-              # Create startup scripts
-              if ("${{ matrix.platform }}" -eq "windows") {
-                $startupScript = @"
+            # Package name and directory
+            $packageName = "AitherZero-$version-${{ matrix.platform }}"
+            $packageDir = "$buildDir/$packageName"
+            New-Item -Path $packageDir -ItemType Directory -Force | Out-Null
+            
+            Write-Host "Creating package: $packageName" -ForegroundColor Yellow
+            
+            # Core files and directories to include
+            $coreItems = @(
+              'aither-core',
+              'build',
+              'configs', 
+              'templates',
+              'README.md',
+              'LICENSE'
+            )
+            
+            # Copy core components
+            foreach ($item in $coreItems) {
+              if (Test-Path $item) {
+                $destinationPath = Join-Path $packageDir $item
+                Copy-Item -Path $item -Destination $destinationPath -Recurse -Force
+                Write-Host "✓ Copied: $item" -ForegroundColor Green
+              } else {
+                Write-Warning "Item not found: $item"
+              }
+            }
+            
+            # Create platform-specific startup scripts
+            if ("${{ matrix.platform }}" -eq "windows") {
+              $startupScript = @"
 @echo off
-echo Starting AitherZero v${{ needs.version.outputs.version }}...
+echo Starting AitherZero v$version...
 pwsh -File "aither-core/core-runner.ps1" %*
 pause
 "@
-                Set-Content -Path "$packageDir/AitherZero.bat" -Value $startupScript -Encoding UTF8
-              } else {
-                $startupScript = @"
+              Set-Content -Path "$packageDir/AitherZero.bat" -Value $startupScript -Encoding UTF8
+              Write-Host "✓ Created Windows startup script" -ForegroundColor Green
+            } else {
+              $startupScript = @"
 #!/bin/bash
-echo "Starting AitherZero v${{ needs.version.outputs.version }}..."
+echo "Starting AitherZero v$version..."
 pwsh -File "aither-core/core-runner.ps1" `$@
 "@
-                Set-Content -Path "$packageDir/aitherzero.sh" -Value $startupScript -Encoding UTF8
-                
-                # Make executable on Unix-like systems
-                if (-not $IsWindows) {
-                  chmod +x "$packageDir/aitherzero.sh"
-                }
-              }
+              Set-Content -Path "$packageDir/aitherzero.sh" -Value $startupScript -Encoding UTF8
               
-              Write-Host "✓ Package created: $packageName" -ForegroundColor Green
+              # Make executable on Unix-like systems
+              if (-not $IsWindows) {
+                chmod +x "$packageDir/aitherzero.sh"
+              }
+              Write-Host "✓ Created Unix startup script" -ForegroundColor Green
             }
             
-            Write-Host "✓ Build completed successfully for ${{ matrix.platform }}" -ForegroundColor Green
+            Write-Host "✓ Package creation completed for ${{ matrix.platform }}" -ForegroundColor Green
             
           } catch {
             Write-Error "Build failed for ${{ matrix.platform }}: $($_.Exception.Message)"
@@ -313,27 +366,35 @@ pwsh -File "aither-core/core-runner.ps1" `$@
         run: |
           Write-Host "Creating archive for ${{ matrix.platform }}..." -ForegroundColor Cyan
           
+          $version = "${{ needs.version.outputs.version }}"
           $buildDir = "build-output/${{ matrix.platform }}"
-          $archiveName = "AitherZero-${{ needs.version.outputs.version }}-${{ matrix.platform }}.${{ matrix.artifact_extension }}"
+          $packageName = "AitherZero-$version-${{ matrix.platform }}"
+          $archiveName = "$packageName.${{ matrix.artifact_extension }}"
           
-          if (Test-Path $buildDir) {
+          if (Test-Path "$buildDir/$packageName") {
             if ("${{ matrix.artifact_extension }}" -eq "zip") {
               # Windows ZIP
-              Compress-Archive -Path "$buildDir/*" -DestinationPath $archiveName -Force
+              Compress-Archive -Path "$buildDir/$packageName/*" -DestinationPath $archiveName -Force
             } else {
               # Linux/macOS tar.gz
-              tar -czf $archiveName -C $buildDir .
+              Set-Location $buildDir
+              tar -czf "../$archiveName" $packageName
+              Set-Location ".."
             }
+            
+            # Generate SHA256 checksum
+            $hash = Get-FileHash $archiveName -Algorithm SHA256
+            Set-Content -Path "$archiveName.sha256" -Value "$($hash.Hash.ToLower())  $archiveName"
             
             Write-Host "✓ Archive created: $archiveName" -ForegroundColor Green
             
-            # Verify archive exists and show size
+            # Verify archive and show size
             if (Test-Path $archiveName) {
               $size = (Get-Item $archiveName).Length
               Write-Host "Archive size: $([math]::Round($size / 1MB, 2)) MB" -ForegroundColor Cyan
             }
           } else {
-            Write-Error "Build directory not found: $buildDir"
+            Write-Error "Package directory not found: $buildDir/$packageName"
             exit 1
           }
 
@@ -341,10 +402,12 @@ pwsh -File "aither-core/core-runner.ps1" `$@
         uses: actions/upload-artifact@v4
         with:
           name: AitherZero-${{ needs.version.outputs.version }}-${{ matrix.platform }}
-          path: AitherZero-${{ needs.version.outputs.version }}-${{ matrix.platform }}.${{ matrix.artifact_extension }}
+          path: |
+            AitherZero-${{ needs.version.outputs.version }}-${{ matrix.platform }}.${{ matrix.artifact_extension }}
+            AitherZero-${{ needs.version.outputs.version }}-${{ matrix.platform }}.${{ matrix.artifact_extension }}.sha256
           retention-days: 30
 
-  # Create GitHub Release (only on tags or workflow dispatch)
+  # Create GitHub Release
   release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
@@ -353,7 +416,9 @@ pwsh -File "aither-core/core-runner.ps1" `$@
       needs.version.outputs.should-build == 'true' && 
       (github.event_name == 'workflow_dispatch' || 
        github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') ||
-       github.event_name == 'release')
+       github.event_name == 'release' ||
+       (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
+       (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')))
 
     steps:
       - name: Checkout Repository
@@ -369,17 +434,33 @@ pwsh -File "aither-core/core-runner.ps1" `$@
         run: |
           Write-Host "Preparing release assets..." -ForegroundColor Cyan
           
-          # Move artifacts to release directory
+          # Create release directory
           New-Item -ItemType Directory -Path "release" -Force | Out-Null
           
+          # Move artifacts to release directory
           Get-ChildItem -Path "release-artifacts" -Recurse -File | ForEach-Object {
             $destPath = "release/$($_.Name)"
             Copy-Item -Path $_.FullName -Destination $destPath -Force
             Write-Host "✓ Prepared: $($_.Name)" -ForegroundColor Green
           }
           
+          # Create comprehensive checksums file
+          $version = "${{ needs.version.outputs.version }}"
+          $checksumFile = "release/AitherZero-$version-checksums.txt"
+          $checksumContent = @()
+          
+          Get-ChildItem -Path "release" -Filter "*.sha256" | ForEach-Object {
+            $content = Get-Content $_.FullName -Raw
+            $checksumContent += $content.Trim()
+          }
+          
+          if ($checksumContent.Count -gt 0) {
+            Set-Content -Path $checksumFile -Value $checksumContent
+            Write-Host "✓ Created comprehensive checksums file" -ForegroundColor Green
+          }
+          
           # List all release assets
-          Write-Host "Release assets:" -ForegroundColor Yellow
+          Write-Host "Release assets prepared:" -ForegroundColor Yellow
           Get-ChildItem -Path "release" | ForEach-Object {
             $size = [math]::Round($_.Length / 1MB, 2)
             Write-Host "  $($_.Name) ($size MB)" -ForegroundColor Cyan
@@ -442,7 +523,7 @@ pwsh -File "aither-core/core-runner.ps1" `$@
             ---
 
             **Release Information:**
-            - Build Date: ${{ github.run_id }}
+            - Build Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
             - Platform Support: Windows, Linux, macOS
             - PowerShell Version: 7.0+
             - Validation: ✅ All platforms tested
@@ -456,7 +537,7 @@ pwsh -File "aither-core/core-runner.ps1" `$@
     name: Validate Release
     runs-on: ubuntu-latest
     needs: [version, release]
-    if: always() && needs.release.result == 'success'
+    if: always() && needs.release.result == 'success' && needs.version.outputs.version != ''
 
     steps:
       - name: Checkout Repository
@@ -483,21 +564,34 @@ pwsh -File "aither-core/core-runner.ps1" `$@
               $releaseData = $release | ConvertFrom-Json
               Write-Host "✓ Release found: $($releaseData.tagName)" -ForegroundColor Green
               
+              Write-Host "Assets found: $($releaseData.assets.Count)" -ForegroundColor Cyan
+              foreach ($asset in $releaseData.assets) {
+                $sizeInMB = [math]::Round($asset.size / 1MB, 2)
+                Write-Host "  - $($asset.name) ($sizeInMB MB)" -ForegroundColor White
+              }
+              
               # Expected assets
               $expectedAssets = @(
                 "AitherZero-$version-windows.zip",
+                "AitherZero-$version-windows.zip.sha256",
                 "AitherZero-$version-linux.tar.gz", 
-                "AitherZero-$version-macos.tar.gz"
+                "AitherZero-$version-linux.tar.gz.sha256",
+                "AitherZero-$version-macos.tar.gz",
+                "AitherZero-$version-macos.tar.gz.sha256",
+                "AitherZero-$version-checksums.txt"
               )
               
               # Check each expected asset
               $allAssetsPresent = $true
+              $missingAssets = @()
+              
               foreach ($expectedAsset in $expectedAssets) {
                 $found = $releaseData.assets | Where-Object { $_.name -eq $expectedAsset }
                 if ($found) {
                   Write-Host "✓ Asset found: $expectedAsset" -ForegroundColor Green
                 } else {
                   Write-Host "✗ Asset missing: $expectedAsset" -ForegroundColor Red
+                  $missingAssets += $expectedAsset
                   $allAssetsPresent = $false
                 }
               }
@@ -505,7 +599,11 @@ pwsh -File "aither-core/core-runner.ps1" `$@
               if ($allAssetsPresent) {
                 Write-Host "✅ All expected assets are present!" -ForegroundColor Green
               } else {
-                Write-Error "Some assets are missing from the release"
+                Write-Warning "Missing assets:"
+                foreach ($missing in $missingAssets) {
+                  Write-Warning "  - $missing"
+                }
+                Write-Error "Release validation failed: missing assets"
                 exit 1
               }
               
@@ -528,6 +626,8 @@ pwsh -File "aither-core/core-runner.ps1" `$@
 
       - name: Test Download and Basic Validation
         shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           Write-Host "Testing release download and basic validation..." -ForegroundColor Cyan
           
@@ -544,8 +644,9 @@ pwsh -File "aither-core/core-runner.ps1" `$@
               Write-Host "✓ Asset downloaded successfully" -ForegroundColor Green
               
               # Basic validation - extract and check structure
+              Write-Host "Archive contents (first 10 entries):" -ForegroundColor Cyan
               tar -tzf $assetName | Select-Object -First 10 | ForEach-Object {
-                Write-Host "  $($_)" -ForegroundColor Cyan
+                Write-Host "  $($_)" -ForegroundColor White
               }
               
               # Clean up
