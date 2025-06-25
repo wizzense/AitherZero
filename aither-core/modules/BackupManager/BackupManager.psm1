@@ -59,8 +59,19 @@ $script:BackupExclusions = @(
 )
 
 # Import all public functions
-$PublicFunctions = @(Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -ErrorAction SilentlyContinue)
-$PrivateFunctions = @(Get-ChildItem -Path "$PSScriptRoot\Private\*.ps1" -ErrorAction SilentlyContinue)
+$PublicPath = Join-Path $PSScriptRoot "Public"
+$PrivatePath = Join-Path $PSScriptRoot "Private"
+
+$PublicFunctions = @()
+$PrivateFunctions = @()
+
+if (Test-Path $PublicPath) {
+    $PublicFunctions = @(Get-ChildItem -Path "$PublicPath\*.ps1" -ErrorAction SilentlyContinue)
+}
+
+if (Test-Path $PrivatePath) {
+    $PrivateFunctions = @(Get-ChildItem -Path "$PrivatePath\*.ps1" -ErrorAction SilentlyContinue)
+}
 
 Write-Verbose "Found $($PublicFunctions.Count) public functions to import"
 
