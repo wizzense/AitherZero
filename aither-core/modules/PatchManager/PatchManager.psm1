@@ -21,16 +21,16 @@
 # Initialize cross-platform environment
 try {
     # Import shared utilities
-    $sharedUtilsPath = Join-Path $PSScriptRoot "../../shared"
+    $sharedUtilsPath = Join-Path $PSScriptRoot '../../shared'
     if (Test-Path $sharedUtilsPath) {
-        $findProjectRootPath = Join-Path $sharedUtilsPath "Find-ProjectRoot.ps1"
+        $findProjectRootPath = Join-Path $sharedUtilsPath 'Find-ProjectRoot.ps1'
         if (Test-Path $findProjectRootPath) {
             . $findProjectRootPath
         }
     }
-    
+
     # Import Logging module dependency
-    $loggingModulePath = Join-Path $PSScriptRoot "../Logging"
+    $loggingModulePath = Join-Path $PSScriptRoot '../Logging'
     if (Test-Path $loggingModulePath) {
         Import-Module $loggingModulePath -Force -ErrorAction SilentlyContinue
     }
@@ -49,7 +49,7 @@ foreach ($function in $privateFunctions) {
     }
 }
 
-# Load Public Functions 
+# Load Public Functions
 $publicFunctions = Get-ChildItem -Path (Join-Path $PSScriptRoot 'Public') -Filter '*.ps1' -ErrorAction SilentlyContinue
 foreach ($function in $publicFunctions) {
     try {
@@ -67,17 +67,17 @@ function Test-ShouldCreatePR {
         [string]$PatchDescription,
         [bool]$Force = $false
     )
-    
+
     if ($Force) {
         return $true
     }
-    
+
     # Check if this is a minor change that doesn't need PR review
     $minorChangePatterns = @(
         'typo', 'formatting', 'whitespace', 'comment', 'documentation update',
         'log message', 'minor fix', 'cleanup', 'lint fix', 'style fix'
     )
-    
+
     foreach ($pattern in $minorChangePatterns) {
         if ($PatchDescription -like "*$pattern*") {
             if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
@@ -88,7 +88,7 @@ function Test-ShouldCreatePR {
             return $false
         }
     }
-    
+
     return $true
 }
 
@@ -96,22 +96,22 @@ function Test-SimilarPRExists {
     [CmdletBinding()]
     param(
         [string]$PatchDescription,
-        [string]$Repository = ""
+        [string]$Repository = ''
     )
-    
+
     try {
         # Get recent PRs and check for similar titles
         $recentPRs = gh pr list --limit 10 --json title 2>$null | ConvertFrom-Json -ErrorAction SilentlyContinue
-        
+
         if ($recentPRs) {
             foreach ($pr in $recentPRs) {
                 # Simple similarity check - same keywords
                 $descWords = $PatchDescription.Split(' ', [StringSplitOptions]::RemoveEmptyEntries)
                 $prWords = $pr.title.Split(' ', [StringSplitOptions]::RemoveEmptyEntries)
-                
+
                 $commonWords = $descWords | Where-Object { $prWords -contains $_ }
                 $similarity = ($commonWords.Count / [Math]::Max($descWords.Count, 1)) * 100
-                
+
                 if ($similarity -gt 60) {
                     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
                         Write-CustomLog -Level 'WARN' -Message "Similar PR exists: '$($pr.title)' (${similarity}% similarity)"
@@ -126,7 +126,7 @@ function Test-SimilarPRExists {
         # If GitHub CLI fails, continue without similarity check
         Write-Verbose "Could not check for similar PRs: $($_.Exception.Message)"
     }
-    
+
     return $false
 }
 
@@ -142,7 +142,7 @@ try {
 # Export only the core functions
 Export-ModuleMember -Function @(
     'Invoke-PatchWorkflow',
-    'New-PatchIssue', 
+    'New-PatchIssue',
     'New-PatchPR',
     'Invoke-PatchRollback',
     'Update-RepositoryDocumentation',
@@ -152,7 +152,7 @@ Export-ModuleMember -Function @(
 
 # Module initialization message
 if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-    Write-CustomLog -Level 'INFO' -Message "PatchManager v2.1 loaded - 4 core functions available"
+    Write-CustomLog -Level 'INFO' -Message 'PatchManager v2.1 loaded - 4 core functions available'
 } else {
-    Write-Verbose "PatchManager v2.1 loaded - 4 core functions available"
+    Write-Verbose 'PatchManager v2.1 loaded - 4 core functions available'
 }
