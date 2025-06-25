@@ -9,13 +9,13 @@ $loggingImported = $false
 # Check if Logging module is already available
 if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
     $loggingImported = $true
-    Write-Verbose "Logging module already available"
+    Write-Verbose 'Logging module already available'
 } else {
     $loggingPaths = @(
-        'Logging',  # Try module name first (if in PSModulePath)
-        (Join-Path (Split-Path $PSScriptRoot -Parent) "Logging"),  # Relative to modules directory
-        (Join-Path $env:PWSH_MODULES_PATH "Logging"),  # Environment path
-        (Join-Path $env:PROJECT_ROOT "aither-core/modules/Logging")  # Full project path
+        'Logging', # Try module name first (if in PSModulePath)
+        (Join-Path (Split-Path $PSScriptRoot -Parent) 'Logging'), # Relative to modules directory
+        (Join-Path $env:PWSH_MODULES_PATH 'Logging'), # Environment path
+        (Join-Path $env:PROJECT_ROOT 'aither-core/modules/Logging')  # Full project path
     )
 
     foreach ($loggingPath in $loggingPaths) {
@@ -38,7 +38,7 @@ if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
 }
 
 if (-not $loggingImported) {
-    Write-Warning "Could not import Logging module from any of the attempted paths"
+    Write-Warning 'Could not import Logging module from any of the attempted paths'
 }
 
 # Import LabRunner for additional utilities
@@ -48,19 +48,30 @@ if (Test-Path $LabRunnerPath) {
 }
 
 # Module-level variables
-$script:BackupRootPath = "backups/consolidated-backups"
-$script:ArchivePath = "archive"
+$script:BackupRootPath = 'backups/consolidated-backups'
+$script:ArchivePath = 'archive'
 $script:MaxBackupAge = 30 # days
 $script:BackupExclusions = @(
-    "*.tmp", "*.log", "*.cache", "*.lock",
-    ".git/*", "node_modules/*", ".vscode/*",
-    "backups/consolidated-backups/*",
-    "coverage/*", "TestResults*"
+    '*.tmp', '*.log', '*.cache', '*.lock',
+    '.git/*', 'node_modules/*', '.vscode/*',
+    'backups/consolidated-backups/*',
+    'coverage/*', 'TestResults*'
 )
 
 # Import all public functions
-$PublicFunctions = @(Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -ErrorAction SilentlyContinue)
-$PrivateFunctions = @(Get-ChildItem -Path "$PSScriptRoot\Private\*.ps1" -ErrorAction SilentlyContinue)
+$PublicPath = Join-Path $PSScriptRoot 'Public'
+$PrivatePath = Join-Path $PSScriptRoot 'Private'
+
+$PublicFunctions = @()
+$PrivateFunctions = @()
+
+if (Test-Path $PublicPath) {
+    $PublicFunctions = @(Get-ChildItem -Path "$PublicPath\*.ps1" -ErrorAction SilentlyContinue)
+}
+
+if (Test-Path $PrivatePath) {
+    $PrivateFunctions = @(Get-ChildItem -Path "$PrivatePath\*.ps1" -ErrorAction SilentlyContinue)
+}
 
 Write-Verbose "Found $($PublicFunctions.Count) public functions to import"
 
@@ -80,7 +91,7 @@ if ($PublicFunctions.Count -gt 0) {
     Write-Verbose "Exporting functions: $($FunctionNames -join ', ')"
     Export-ModuleMember -Function $FunctionNames
 } else {
-    Write-Warning "No public functions found to export"
+    Write-Warning 'No public functions found to export'
 }
 
 # Module cleanup
