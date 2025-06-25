@@ -1,0 +1,63 @@
+name: Sync to AitherLab
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '.github/**'
+      - '**/*.secret*'
+      - 'LICENSE'
+  workflow_dispatch:
+    inputs:
+      files:
+        description: 'Specific files to sync (comma-separated)'
+        required: false
+      message:
+        description: 'Sync commit message'
+        required: false
+        default: 'Auto-sync from AitherZero'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    if: github.repository_owner != 'github-actions[bot]'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.AITHERLAB_SYNC_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "AitherZero Sync Bot"
+          git config user.email "sync@aitherzero.bot"
+
+      - name: Add AitherLab Remote
+        run: |
+          git remote add aitherlab https://${{ secrets.AITHERLAB_SYNC_TOKEN }}@github.com/${{ github.repository_owner }}/aitherlab.git
+
+      - name: Sync Changes
+        shell: pwsh
+        run: |
+          try {
+            Import-Module ./aither-core/modules/RepoSync -Force
+            
+            $message = if ('${{ github.event.inputs.message }}') { 
+              '${{ github.event.inputs.message }}' 
+            } else { 
+              "${{ github.event.head_commit.message }}" 
+            }
+            
+            $files = @()
+            if ('${{ github.event.inputs.files }}') {
+              $files = '${{ github.event.inputs.files }}' -split ','
+            }
+            
+            Write-Host "Syncing to aitherlab with message: $message" -ForegroundColor Cyan
+            Sync-ToAitherLab -CommitMessage $message -FilesToSync $files -CreatePR -Force
+            
+          } catch {
+            Write-Host "Sync failed: $($_.Exception.Message)" -ForegroundColor Red
+            exit 1
+          }
