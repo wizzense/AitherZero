@@ -1,14 +1,9 @@
 name: Build and Release
 
 on:
-  release:
-    types: [published]
+  # Only create releases on manual trigger or version tags
   push:
-    tags: ['v*']
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
-    types: [closed]
+    tags: ['v*']  # Only trigger on version tags like v1.0.0
   workflow_dispatch:
     inputs:
       release_type:
