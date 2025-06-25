@@ -106,9 +106,10 @@ jobs:
             # Fallback to basic analysis
             Write-Warning "Comprehensive analysis script not found, using basic analysis"
             $results = @()
-            $patterns = @('*.ps1', '*.psm1', '*.psd1')          foreach ($pattern in $patterns) {
-            $files = Get-ChildItem -Path . -Filter $pattern -Recurse -ErrorAction SilentlyContinue
-            foreach ($file in $files) {
+            $patterns = @('*.ps1', '*.psm1', '*.psd1')
+            foreach ($pattern in $patterns) {
+              $files = Get-ChildItem -Path . -Filter $pattern -Recurse -ErrorAction SilentlyContinue
+              foreach ($file in $files) {
               # Skip test files and temporary files, but NOT configuration files
               if (($file.FullName -match 'tests[/\\].*\.Tests\.ps1$') -or
                   ($file.FullName -match '(temp|\.temp)') -or
@@ -116,25 +117,25 @@ jobs:
                 continue
               }
 
-                Write-Host "Analyzing: $($file.FullName)" -ForegroundColor Cyan
-                try {
-                  # Check if file has content before analyzing
-                  $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
-                  if (-not $content -or $content.Trim() -eq '') {
-                    Write-Warning "Skipping empty file: $($file.Name)"
-                    continue
-                  }
-
-                  $analysis = Invoke-ScriptAnalyzer -Path $file.FullName -Settings './tests/config/PSScriptAnalyzerSettings.psd1' -Severity Warning,Error
-                  if ($analysis) {
-                    $results += $analysis
-                    $analysis | ForEach-Object {
-                      Write-Warning "$($_.ScriptName):$($_.Line) - $($_.Message)"
-                    }
-                  }
-                } catch {
-                  Write-Warning "Could not analyze $($file.FullName): $($_.Exception.Message)"
+              Write-Host "Analyzing: $($file.FullName)" -ForegroundColor Cyan
+              try {
+                # Check if file has content before analyzing
+                $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
+                if (-not $content -or $content.Trim() -eq '') {
+                  Write-Warning "Skipping empty file: $($file.Name)"
+                  continue
                 }
+
+                $analysis = Invoke-ScriptAnalyzer -Path $file.FullName -Settings './tests/config/PSScriptAnalyzerSettings.psd1' -Severity Warning,Error
+                if ($analysis) {
+                  $results += $analysis
+                  $analysis | ForEach-Object {
+                    Write-Warning "$($_.ScriptName):$($_.Line) - $($_.Message)"
+                  }
+                }
+              } catch {
+                Write-Warning "Could not analyze $($file.FullName): $($_.Exception.Message)"
+              }
               }
             }
 
