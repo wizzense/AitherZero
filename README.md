@@ -8,89 +8,69 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Contributors Welcome](https://img.shields.io/badge/Contributors-Welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-## ⚡ Quick Start - Download & Run (30 seconds)
+## ⚡ Quick Start - One-Click Setup (30 seconds)
 
-### 🎯 Windows Users
+### 🔥 Super Simple - Just 3 Steps:
 
+#### 🖱️ **Windows (One-Click)**
+1. **Download**: Go to **[Releases](https://github.com/wizzense/AitherZero/releases/latest)** → Download `AitherZero-*-windows.zip`
+2. **Extract**: Right-click → Extract All
+3. **Run**: Double-click `AitherZero.bat` ✨
+
+#### �️ **Linux/macOS (One-Command)**
+```bash
+# One command downloads and runs AitherZero:
+curl -s https://api.github.com/repos/wizzense/AitherZero/releases/latest | grep "browser_download_url.*$(uname -s | tr '[:upper:]' '[:lower:]').tar.gz" | head -1 | cut -d '"' -f 4 | xargs curl -L | tar -xz && cd AitherZero-* && ./aitherzero.sh
+```
+
+### 🚀 Alternative Downloads
+
+#### Windows PowerShell One-Liner
 ```powershell
-# Download latest Windows release and run:
+# Download and run in one command:
 $url = (irm "https://api.github.com/repos/wizzense/AitherZero/releases/latest").assets | ? name -like "*windows.zip" | % browser_download_url; iwr $url -OutFile "AitherZero.zip"; Expand-Archive "AitherZero.zip" -Force; $folder = (gci -Directory | ? Name -like "AitherZero*")[0].Name; cd $folder; .\AitherZero.bat
 ```
 
-**Or step-by-step:**
-
-```powershell
-# Step 1: Download
-gh release download --repo wizzense/AitherZero --pattern "*windows.zip"
-
-# Step 2: Extract and run
-Expand-Archive "AitherZero-*-windows.zip" -Force; cd AitherZero-*-windows; .\AitherZero.bat
-```
-
-### 🐧 Linux Users
-
-```bash
-# Download latest Linux release and run:
-gh release download --repo wizzense/AitherZero --pattern "*linux.tar.gz"
-tar -xzf AitherZero-*-linux.tar.gz
-cd AitherZero-*-linux
-./aitherzero.sh
-```
-
-**Or with curl:**
-
-```bash
-# Get latest release URL and download
-curl -s https://api.github.com/repos/wizzense/AitherZero/releases/latest | grep "browser_download_url.*linux.tar.gz" | cut -d '"' -f 4 | xargs curl -L -o AitherZero-linux.tar.gz
-tar -xzf AitherZero-linux.tar.gz
-cd AitherZero-*-linux
-pwsh Start-AitherZero.ps1
-```
-
-### 🍎 macOS Users
-
-```bash
-# Download latest macOS release and run:
-gh release download --repo wizzense/AitherZero --pattern "*macos.tar.gz"
-tar -xzf AitherZero-*-macos.tar.gz
-cd AitherZero-*-macos
-./aitherzero.sh
-```
-
-**Or with curl:**
-
-```bash
-# Get latest release URL and download
-curl -s https://api.github.com/repos/wizzense/AitherZero/releases/latest | grep "browser_download_url.*macos.tar.gz" | cut -d '"' -f 4 | xargs curl -L -o AitherZero-macos.tar.gz
-tar -xzf AitherZero-macos.tar.gz
-cd AitherZero-*-macos
-pwsh Start-AitherZero.ps1
-```
-
-### 📋 Manual Download
-
-1. Go to **[GitHub Releases](https://github.com/wizzense/AitherZero/releases/latest)**
-2. Download your platform package:
+#### Manual Download (If you prefer)
+1. **Go to [GitHub Releases](https://github.com/wizzense/AitherZero/releases/latest)**
+2. **Download your platform**:
    - **Windows**: `AitherZero-[version]-windows.zip`
    - **Linux**: `AitherZero-[version]-linux.tar.gz`
    - **macOS**: `AitherZero-[version]-macos.tar.gz`
-3. Extract and run:
-   - **Windows**: Double-click `AitherZero.bat` or run `Start-AitherZero.ps1`
-   - **Linux/macOS**: Run `./aitherzero.sh` or `pwsh Start-AitherZero.ps1`
+3. **Extract and run**:
+   - **Windows**: `AitherZero.bat` or `Start-AitherZero-Windows.ps1`
+   - **Linux/macOS**: `./aitherzero.sh` or `pwsh Start-AitherZero.ps1`
 
-## 📦 What You Get
+### � First-Time Setup Wizard
+```bash
+# Run setup wizard to check your environment:
+./Start-AitherZero.ps1 -Setup
+```
 
-**🎯 Lean Application Package Contents:**
+### 💡 Usage Examples
+```bash
+# Interactive menu (default)
+./Start-AitherZero.ps1
 
-- `Start-AitherZero.ps1` - **Main PowerShell launcher**
-- `AitherZero.bat` / `aitherzero.sh` - **Platform-specific quick launchers**
-- `aither-core.ps1` - **Core application script**
-- `modules/` - **Essential PowerShell modules**
-- `configs/` - **Configuration templates**
-- `opentofu/` - **Infrastructure automation templates**
-- `INSTALL.md` - **Installation and usage guide**
+# Run all automation scripts
+./Start-AitherZero.ps1 -Auto
 
-**💡 What's NOT included:** Development tools, tests, build scripts, or full repository content. This is a focused application package for running AitherZero, not developing it.
+# Run specific modules
+./Start-AitherZero.ps1 -Scripts "LabRunner,BackupManager"
+
+# Get help and see all options
+./Start-AitherZero.ps1 -Help
+```
+
+## 🎯 What You Get
+
+**Ready-to-Run Application Package:**
+- ✅ **One-click execution** on all platforms
+- ✅ **Built-in setup wizard** (`-Setup`)
+- ✅ **Interactive menu system** for guided usage
+- ✅ **Automated execution mode** (`-Auto`)
+- ✅ **No compilation or installation** required
+- ✅ **Cross-platform launchers** included
 
 ---
 

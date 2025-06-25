@@ -96,8 +96,8 @@ jobs:
           # Version determination logic
 
           # For PR merges to main/master, create a build version
-          if ([string]::IsNullOrEmpty($version) -and 
-              "${{ github.event_name }}" -eq "push" -and 
+          if ([string]::IsNullOrEmpty($version) -and
+              "${{ github.event_name }}" -eq "push" -and
               ("${{ github.ref }}" -eq "refs/heads/main" -or "${{ github.ref }}" -eq "refs/heads/master")) {
             $latestTag = git describe --tags --abbrev=0 2>$null
             if ($latestTag) {
@@ -344,48 +344,162 @@ jobs:
             Copy-Item -Path "LICENSE" -Destination "$packageDir/LICENSE" -Force
             Write-Host "✓ Essential documentation" -ForegroundColor Green
 
-            # Create a simple launcher script
-            Write-Host "Creating application launcher..." -ForegroundColor Yellow
+            # Create a comprehensive launcher script with better user experience
+            Write-Host "Creating comprehensive application launcher..." -ForegroundColor Yellow
             $launcherLines = @(
               '#!/usr/bin/env pwsh',
               '#Requires -Version 7.0',
               '',
+              'param(',
+              '    [string]$Command,',
+              '    [switch]$Help,',
+              '    [switch]$Setup,',
+              '    [switch]$Interactive,',
+              '    [string]$ConfigFile,',
+              '    [string]$Verbosity = "normal",',
+              '    [switch]$Auto,',
+              '    [string]$Scripts',
+              ')',
+              '',
+              'Clear-Host',
               'Write-Host "🚀 AitherZero Infrastructure Automation Framework v' + $version + '" -ForegroundColor Cyan',
-              'Write-Host "   Lean Application Package - Essential Components Only" -ForegroundColor Yellow',
+              'Write-Host "   Cross-Platform Infrastructure Automation with OpenTofu/Terraform" -ForegroundColor Yellow',
               'Write-Host ""',
+              '',
+              'if ($Help) {',
+              '    Write-Host "AitherZero Usage:" -ForegroundColor Green',
+              '    Write-Host ""',
+              '    Write-Host "Quick Start:" -ForegroundColor Cyan',
+              '    Write-Host "  ./Start-AitherZero.ps1                    # Interactive menu"',
+              '    Write-Host "  ./Start-AitherZero.ps1 -Auto             # Run all automation scripts"',
+              '    Write-Host "  ./Start-AitherZero.ps1 -Interactive      # Force interactive mode"',
+              '    Write-Host ""',
+              '    Write-Host "Advanced Usage:" -ForegroundColor Cyan',
+              '    Write-Host "  ./Start-AitherZero.ps1 -Scripts ''LabRunner,BackupManager''"',
+              '    Write-Host "  ./Start-AitherZero.ps1 -Verbosity detailed"',
+              '    Write-Host "  ./Start-AitherZero.ps1 -ConfigFile ''my-config.json''"',
+              '    Write-Host ""',
+              '    Write-Host "Configuration:" -ForegroundColor Cyan',
+              '    Write-Host "  ./Start-AitherZero.ps1 -Setup            # First-time setup wizard"',
+              '    Write-Host ""',
+              '    Write-Host "Available Scripts: LabRunner, BackupManager, DevEnvironment, ScriptManager, UnifiedMaintenance, ParallelExecution"',
+              '    Write-Host ""',
+              '    return',
+              '}',
               '',
               '# Set up environment',
               '$env:AITHER_APP_ROOT = $PSScriptRoot',
               '$env:PROJECT_ROOT = $PSScriptRoot',
               '',
-              '# Import essential modules',
+              'if ($Setup) {',
+              '    Write-Host "🔧 AitherZero First-Time Setup" -ForegroundColor Green',
+              '    Write-Host ""',
+              '    Write-Host "This will guide you through setting up AitherZero for your environment."',
+              '    Write-Host ""',
+              '    ',
+              '    # Check PowerShell version',
+              '    if ($PSVersionTable.PSVersion.Major -lt 7) {',
+              '        Write-Host "❌ PowerShell 7.0+ required. Current version: $($PSVersionTable.PSVersion)" -ForegroundColor Red',
+              '        Write-Host "Please install PowerShell 7: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell" -ForegroundColor Yellow',
+              '        return',
+              '    } else {',
+              '        Write-Host "✅ PowerShell $($PSVersionTable.PSVersion) detected" -ForegroundColor Green',
+              '    }',
+              '    ',
+              '    # Check Git',
+              '    $gitVersion = try { git --version 2>$null } catch { $null }',
+              '    if ($gitVersion) {',
+              '        Write-Host "✅ Git detected: $gitVersion" -ForegroundColor Green',
+              '    } else {',
+              '        Write-Host "⚠️  Git not found - required for PatchManager and repository operations" -ForegroundColor Yellow',
+              '        Write-Host "Install Git: https://git-scm.com/downloads" -ForegroundColor Yellow',
+              '    }',
+              '    ',
+              '    # Check OpenTofu/Terraform',
+              '    $tofuVersion = try { tofu version 2>$null } catch { $null }',
+              '    $terraformVersion = try { terraform version 2>$null } catch { $null }',
+              '    if ($tofuVersion) {',
+              '        Write-Host "✅ OpenTofu detected: $($tofuVersion.Split([System.Environment]::NewLine)[0])" -ForegroundColor Green',
+              '    } elseif ($terraformVersion) {',
+              '        Write-Host "✅ Terraform detected: $($terraformVersion.Split([System.Environment]::NewLine)[0])" -ForegroundColor Green',
+              '    } else {',
+              '        Write-Host "⚠️  OpenTofu/Terraform not found - required for infrastructure automation" -ForegroundColor Yellow',
+              '        Write-Host "Install OpenTofu: https://opentofu.org/docs/intro/install/" -ForegroundColor Yellow',
+              '        Write-Host "Or Terraform: https://developer.hashicorp.com/terraform/downloads" -ForegroundColor Yellow',
+              '    }',
+              '    ',
+              '    Write-Host ""',
+              '    Write-Host "🎯 Setup Complete!" -ForegroundColor Green',
+              '    Write-Host ""',
+              '    Write-Host "Next Steps:" -ForegroundColor Cyan',
+              '    Write-Host "  1. Run: ./Start-AitherZero.ps1 -Interactive  # For guided experience"',
+              '    Write-Host "  2. Run: ./Start-AitherZero.ps1 -Auto         # For automated execution"',
+              '    Write-Host "  3. Run: ./Start-AitherZero.ps1 -Help         # For more options"',
+              '    Write-Host ""',
+              '    return',
+              '}',
+              '',
+              '# Import essential modules with error handling',
+              'Write-Host "Loading AitherZero modules..." -ForegroundColor Cyan',
               'if (Test-Path "$PSScriptRoot/modules") {',
+              '    $loadedModules = 0',
+              '    $totalModules = (Get-ChildItem "$PSScriptRoot/modules" -Directory).Count',
               '    Get-ChildItem "$PSScriptRoot/modules" -Directory | ForEach-Object {',
               '        try {',
-              '            Import-Module $_.FullName -Force',
-              '            Write-Verbose "Loaded module: $($_.Name)"',
+              '            Import-Module $_.FullName -Force -ErrorAction Stop',
+              '            $loadedModules++',
+              '            Write-Host "  ✅ $($_.Name)" -ForegroundColor Green',
               '        } catch {',
-              '            Write-Warning "Failed to load module $($_.Name): $_"',
+              '            Write-Host "  ❌ $($_.Name): $($_.Exception.Message)" -ForegroundColor Red',
               '        }',
               '    }',
+              '    Write-Host "Loaded $loadedModules/$totalModules modules successfully" -ForegroundColor Cyan',
+              '} else {',
+              '    Write-Host "⚠️  Modules directory not found at $PSScriptRoot/modules" -ForegroundColor Yellow',
+              '}',
+              '',
+              '# Build arguments for core script',
+              '$coreArgs = @()',
+              'if ($ConfigFile) { $coreArgs += @("-ConfigFile", $ConfigFile) }',
+              'if ($Verbosity) { $coreArgs += @("-Verbosity", $Verbosity) }',
+              'if ($Auto) { $coreArgs += "-Auto" }',
+              'if ($Scripts) { $coreArgs += @("-Scripts", $Scripts) }',
+              'if ($Interactive) { $coreArgs += @() }  # Interactive is default, just ensure non-interactive mode is not set',
+              'if (-not $Interactive -and -not $Auto -and -not $Scripts) {',
+              '    # Default to interactive mode if no specific mode is chosen',
+              '    Write-Host ""',
+              '    Write-Host "💡 Starting in interactive mode. Use -Auto for automated execution or -Help for more options." -ForegroundColor Cyan',
+              '    Write-Host ""',
               '}',
               '',
               '# Start the core application',
               'Write-Host "Starting AitherZero core application..." -ForegroundColor Green',
-              '& "$PSScriptRoot/aither-core.ps1" $args'
+              'Write-Host ""',
+              'try {',
+              '    & "$PSScriptRoot/aither-core.ps1" @coreArgs',
+              '} catch {',
+              '    Write-Host "❌ Error running AitherZero: $($_.Exception.Message)" -ForegroundColor Red',
+              '    Write-Host ""',
+              '    Write-Host "💡 Try running with -Setup first, or -Help for usage information." -ForegroundColor Yellow',
+              '    exit 1',
+              '}'
             )
 
             $launcherContent = $launcherLines -join "`n"
             Set-Content -Path "$packageDir/Start-AitherZero.ps1" -Value $launcherContent
             Write-Host "✓ Application launcher created" -ForegroundColor Green
 
-            # Platform-specific startup scripts
+            # Platform-specific startup scripts with execution policy bypass
             if ("${{ matrix.platform }}" -eq "windows") {
-              $winScript = "@echo off`necho 🚀 AitherZero v$version - Windows Quick Start`npwsh -File `"Start-AitherZero.ps1`" %*`nif %ERRORLEVEL% NEQ 0 pause"
+              $winScript = "@echo off`necho 🚀 AitherZero v$version - Windows Quick Start`necho.`necho Starting AitherZero with execution policy bypass for downloaded packages...`necho.`npwsh -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" %*`nif %ERRORLEVEL% NEQ 0 (`necho.`necho ❌ AitherZero encountered an error.`necho.`necho 💡 Troubleshooting:`necho   1. Try running: pwsh -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" -Setup`necho   2. Or run: pwsh -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" -Help`necho   3. Check requirements: PowerShell 7+, Git, OpenTofu/Terraform`necho.`npause`n)"
               Set-Content -Path "$packageDir/AitherZero.bat" -Value $winScript -Encoding UTF8
-              Write-Host "✓ Created Windows quick-start script" -ForegroundColor Green
+
+              # Also create a PowerShell-native launcher for Windows
+              $winPsScript = "# AitherZero Windows PowerShell Launcher`n# This bypasses execution policy issues for downloaded packages`nWrite-Host `"🚀 AitherZero v$version - Windows PowerShell Launcher`" -ForegroundColor Cyan`nWrite-Host `"`"`nSet-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force`n& `".\Start-AitherZero.ps1`" @args"
+              Set-Content -Path "$packageDir/Start-AitherZero-Windows.ps1" -Value $winPsScript
+              Write-Host "✓ Created Windows quick-start scripts (AitherZero.bat + Start-AitherZero-Windows.ps1)" -ForegroundColor Green
             } else {
-              $unixScript = "#!/bin/bash`necho `"🚀 AitherZero v$version - $(if ("${{ matrix.platform }}" -eq "macos") { "macOS" } else { "Linux" }) Quick Start`"`npwsh -File `"Start-AitherZero.ps1`" `$@"
+              $unixScript = "#!/bin/bash`necho `"🚀 AitherZero v$version - $(if ("${{ matrix.platform }}" -eq "macos") { "macOS" } else { "Linux" }) Quick Start`"`necho `"Cross-Platform Infrastructure Automation with OpenTofu/Terraform`"`necho `"`"`npwsh -File `"Start-AitherZero.ps1`" `$@"
               Set-Content -Path "$packageDir/aitherzero.sh" -Value $unixScript -Encoding UTF8
               if (-not $IsWindows) {
                 chmod +x "$packageDir/aitherzero.sh"
@@ -412,18 +526,55 @@ jobs:
             }
             $packageInfo | ConvertTo-Json -Depth 3 | Set-Content "$packageDir/PACKAGE-INFO.json"
 
-            # Create simple installation guide
+            # Create comprehensive installation guide
             $installGuide = "# AitherZero Application Package v$version`n`n" +
-                           "## Quick Start`n`n" +
-                           "1. Extract this package to your desired location`n" +
-                           "2. Run: ./Start-AitherZero.ps1`n" +
-                           "3. Or run directly: ./aither-core.ps1`n`n" +
-                           "## Requirements`n`n" +
-                           "- PowerShell 7.0 or later`n" +
-                           "- Git (for repository operations)`n" +
-                           "- OpenTofu/Terraform (for infrastructure automation)`n`n" +
-                           "## Support`n`n" +
-                           "Repository: https://github.com/wizzense/AitherZero"
+                           "## 🚀 Quick Start (30 Seconds)`n`n" +
+                           "### Windows Users:`n" +
+                           "1. **Double-click `AitherZero.bat`** - that's it!`n" +
+                           "2. Or run: `Start-AitherZero-Windows.ps1` in PowerShell`n" +
+                           "3. Or run: `pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1`n`n" +
+                           "### Linux/macOS Users:`n" +
+                           "1. **Run: `./aitherzero.sh`** - that's it!`n" +
+                           "2. Or run: `pwsh Start-AitherZero.ps1`n`n" +
+                           "## 🔧 First Time Setup`n`n" +
+                           "Run setup wizard to check your environment:`n" +
+                           "```bash`n" +
+                           "# Windows`n" +
+                           "pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1 -Setup`n`n" +
+                           "# Linux/macOS`n" +
+                           "./aitherzero.sh -Setup`n" +
+                           "```n`n" +
+                           "## 📖 Usage Examples`n`n" +
+                           "```bash`n" +
+                           "# Interactive menu (default)`n" +
+                           "./Start-AitherZero.ps1`n`n" +
+                           "# Run all automation scripts`n" +
+                           "./Start-AitherZero.ps1 -Auto`n`n" +
+                           "# Run specific scripts`n" +
+                           "./Start-AitherZero.ps1 -Scripts 'LabRunner,BackupManager'`n`n" +
+                           "# Detailed output mode`n" +
+                           "./Start-AitherZero.ps1 -Verbosity detailed`n`n" +
+                           "# Get help`n" +
+                           "./Start-AitherZero.ps1 -Help`n" +
+                           "```n`n" +
+                           "## ⚡ Requirements`n`n" +
+                           "- **PowerShell 7.0+** (required)`n" +
+                           "- **Git** (recommended for PatchManager and repository operations)`n" +
+                           "- **OpenTofu/Terraform** (recommended for infrastructure automation)`n`n" +
+                           "## 🔍 Troubleshooting`n`n" +
+                           "**Windows Execution Policy Issues:**`n" +
+                           "- Use `AitherZero.bat` (recommended)`n" +
+                           "- Or: `pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1`n`n" +
+                           "**Module Loading Issues:**`n" +
+                           "- Run the setup: `./Start-AitherZero.ps1 -Setup`n" +
+                           "- Check PowerShell version: `pwsh --version`n`n" +
+                           "**Permission Issues (Linux/macOS):**`n" +
+                           "- Make executable: `chmod +x aitherzero.sh`n" +
+                           "- Or run directly: `pwsh Start-AitherZero.ps1`n`n" +
+                           "## 🌐 Support`n`n" +
+                           "- **Repository**: https://github.com/wizzense/AitherZero`n" +
+                           "- **Issues**: https://github.com/wizzense/AitherZero/issues`n" +
+                           "- **Documentation**: See repository docs/ folder for advanced usage"
 
             Set-Content -Path "$packageDir/INSTALL.md" -Value $installGuide
             Write-Host "✓ Installation guide created" -ForegroundColor Green
@@ -637,6 +788,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Wait for Release to be Available
+        id: wait
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -675,12 +827,15 @@ jobs:
           if (-not $found) {
             Write-Warning "Release v$version not found after $maxAttempts attempts - continuing anyway"
             Write-Host "This may be normal for some trigger types" -ForegroundColor Yellow
-            # Don't exit with error - make this non-blocking
+            # Set output to skip remaining validation steps
+            echo "release-found=false" >> $env:GITHUB_OUTPUT
           } else {
             Write-Host "✅ Release validation ready to proceed" -ForegroundColor Green
+            echo "release-found=true" >> $env:GITHUB_OUTPUT
           }
 
       - name: Validate Release Assets
+        if: steps.wait.outputs.release-found == 'true'
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -758,6 +913,7 @@ jobs:
           }
 
       - name: Test Download and Basic Validation
+        if: steps.wait.outputs.release-found == 'true'
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -794,4 +950,3 @@ jobs:
           }
 
           Write-Host "🎉 Release validation completed successfully!" -ForegroundColor Green
-
