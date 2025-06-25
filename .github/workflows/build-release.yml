@@ -509,26 +509,26 @@ jobs:
           $version = "${{ needs.version.outputs.version }}"
           $archiveName = "AitherZero-$version-${{ matrix.platform }}.${{ matrix.artifact_extension }}"
           $hashName = "$archiveName.sha256"
-          
+
           Write-Host "Expected files:" -ForegroundColor Yellow
           Write-Host "  - $archiveName" -ForegroundColor White
           Write-Host "  - $hashName" -ForegroundColor White
-          
+
           Write-Host "Current directory files:" -ForegroundColor Yellow
           Get-ChildItem -File | ForEach-Object {
             Write-Host "  $($_.Name) ($([math]::Round($_.Length / 1MB, 2)) MB)" -ForegroundColor White
           }
-          
+
           if (-not (Test-Path $archiveName)) {
             Write-Error "Archive file not found: $archiveName"
             exit 1
           }
-          
+
           if (-not (Test-Path $hashName)) {
             Write-Error "Hash file not found: $hashName"
             exit 1
           }
-          
+
           Write-Host "✓ All required artifacts verified!" -ForegroundColor Green
 
       - name: Upload Build Artifacts
