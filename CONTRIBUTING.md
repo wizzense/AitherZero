@@ -53,7 +53,7 @@ Invoke-PatchWorkflow -PatchDescription "Add new feature X" -PatchOperation {
 
 ### PowerShell Guidelines
 - **PowerShell 7.0+ syntax** - cross-platform compatible
-- **Forward slashes** for all file paths (`/`) 
+- **Forward slashes** for all file paths (`/`)
 - **One True Brace Style (OTBS)** for formatting
 - **Comprehensive error handling** with try-catch blocks
 - **Logging integration** using the Logging module
@@ -77,11 +77,11 @@ function Get-ExampleFunction {
         [ValidateNotNullOrEmpty()]
         [string]$InputParameter
     )
-    
+
     begin {
         Write-CustomLog -Level 'INFO' -Message "Starting $($MyInvocation.MyCommand.Name)"
     }
-    
+
     process {
         try {
             # Your logic here
@@ -92,7 +92,7 @@ function Get-ExampleFunction {
             throw
         }
     }
-    
+
     end {
         Write-CustomLog -Level 'INFO' -Message "Completed $($MyInvocation.MyCommand.Name)"
     }
@@ -172,8 +172,8 @@ Use built-in VS Code tasks for common operations:
 ### Module Development
 ```powershell
 # Import all modules for development
-Get-ChildItem 'aither-core/modules' -Directory | ForEach-Object { 
-    Import-Module $_.FullName -Force 
+Get-ChildItem 'aither-core/modules' -Directory | ForEach-Object {
+    Import-Module $_.FullName -Force
 }
 
 # Test module loading
