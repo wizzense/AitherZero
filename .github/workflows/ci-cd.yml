@@ -98,7 +98,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🔍 Running comprehensive PowerShell analysis..." -ForegroundColor Cyan
-          
+
           # Run comprehensive analysis with detailed reporting
           if (Test-Path './comprehensive-lint-analysis.ps1') {
             pwsh -File './comprehensive-lint-analysis.ps1' -Severity 'All' -FailOnErrors -Detailed
@@ -111,7 +111,7 @@ jobs:
             foreach ($pattern in $patterns) {
               $files = Get-ChildItem -Path . -Filter $pattern -Recurse -ErrorAction SilentlyContinue            foreach ($file in $files) {
               # Skip test files and temporary files, but NOT configuration files
-              if (($file.FullName -match 'tests[/\\].*\.Tests\.ps1$') -or 
+              if (($file.FullName -match 'tests[/\\].*\.Tests\.ps1$') -or
                   ($file.FullName -match '(temp|\.temp)') -or
                   ($file.FullName -match 'test-.*\.ps1$')) {
                 continue
@@ -154,7 +154,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🔧 Running PowerShell syntax validation..." -ForegroundColor Cyan
-          
+
           $errors = @()
           $patterns = @('*.ps1', '*.psm1')
           $totalFiles = 0
@@ -165,7 +165,7 @@ jobs:
             $files = Get-ChildItem -Path . -Filter $pattern -Recurse -ErrorAction SilentlyContinue
             foreach ($file in $files) {
               # Skip test files and temporary files, but NOT configuration files
-              if (($file.FullName -match 'tests[/\\].*\.Tests\.ps1$') -or 
+              if (($file.FullName -match 'tests[/\\].*\.Tests\.ps1$') -or
                   ($file.FullName -match '(temp|\.temp)') -or
                   ($file.FullName -match 'test-.*\.ps1$')) {
                 continue
@@ -173,7 +173,7 @@ jobs:
 
               $totalFiles++
               Write-Host "Syntax checking: $($file.FullName)" -ForegroundColor Cyan
-              
+
               try {
                 # Check if file has content
                 $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue

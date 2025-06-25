@@ -12,13 +12,13 @@
 param(
     [ValidateSet('Error', 'Warning', 'Information', 'All')]
     [string]$Severity = 'All',
-    
+
     [switch]$FailOnErrors,
-    
+
     [switch]$FailOnWarnings,
-    
+
     [string]$OutputPath,
-    
+
     [switch]$Detailed
 )
 
@@ -57,10 +57,10 @@ Write-Host "🔎 Scanning for PowerShell files..." -ForegroundColor Yellow
 foreach ($pattern in $patterns) {
     $files = Get-ChildItem -Path . -Filter $pattern -Recurse -ErrorAction SilentlyContinue
     $totalFiles += $files.Count
-    
+
     foreach ($file in $files) {
         # Skip test files and temporary files, but NOT configuration files
-        if (($file.FullName -match 'tests[/\\].*\.Tests\.ps1$') -or 
+        if (($file.FullName -match 'tests[/\\].*\.Tests\.ps1$') -or
             ($file.FullName -match '(temp|\.temp)') -or
             ($file.FullName -match 'test-.*\.ps1$')) {
             $skippedFiles++
@@ -84,12 +84,12 @@ foreach ($pattern in $patterns) {
             $analysis = Invoke-ScriptAnalyzer -Path $file.FullName -Settings './tests/config/PSScriptAnalyzerSettings.psd1' -Severity $severityLevels
             if ($analysis) {
                 $allResults += $analysis
-                
+
                 # Group by severity for this file
                 $fileErrors = $analysis | Where-Object { $_.Severity -eq 'Error' }
                 $fileWarnings = $analysis | Where-Object { $_.Severity -eq 'Warning' }
                 $fileInfo = $analysis | Where-Object { $_.Severity -eq 'Information' }
-                
+
                 if ($fileErrors.Count -gt 0) {
                     Write-Host "    ❌ Errors: $($fileErrors.Count)" -ForegroundColor Red
                 }
@@ -99,7 +99,7 @@ foreach ($pattern in $patterns) {
                 if ($fileInfo.Count -gt 0) {
                     Write-Host "    ℹ️  Info: $($fileInfo.Count)" -ForegroundColor Blue
                 }
-                
+
                 if ($Detailed) {
                     $analysis | ForEach-Object {
                         $icon = switch ($_.Severity) {
@@ -150,10 +150,10 @@ if ($allResults.Count -gt 0) {
     $topRules | ForEach-Object {
         $ruleName = $_.Name
         $ruleExample = $allResults | Where-Object { $_.RuleName -eq $ruleName } | Select-Object -First 1
-        $severityText = if ($ruleExample -and $ruleExample.Severity) { 
-            $ruleExample.Severity.ToString() 
-        } else { 
-            'Warning' 
+        $severityText = if ($ruleExample -and $ruleExample.Severity) {
+            $ruleExample.Severity.ToString()
+        } else {
+            'Warning'
         }
         $icon = switch ($severityText) {
             'Error' { '❌' }
