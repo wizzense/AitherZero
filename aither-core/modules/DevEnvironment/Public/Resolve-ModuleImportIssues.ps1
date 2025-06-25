@@ -485,10 +485,10 @@ function Fix-PowerShellSyntaxErrors {
     foreach ($file in $filesToFix) {
         try {
             # First test if file has syntax errors
-            $tokens = $errors = $null
-            [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$tokens, [ref]$errors) | Out-Null
+            $tokens = $errorResults = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$tokens, [ref]$errorResults) | Out-Null
             
-            if ($errors.Count -eq 0) {
+            if ($errorResults.Count -eq 0) {
                 continue  # No syntax errors, skip
             }
             
@@ -515,10 +515,10 @@ function Fix-PowerShellSyntaxErrors {
                 Set-Content -Path $tempFile -Value $content -Encoding UTF8
                 
                 try {
-                    $tokens = $errors = $null
-                    [System.Management.Automation.Language.Parser]::ParseFile($tempFile, [ref]$tokens, [ref]$errors) | Out-Null
+                    $tokens = $errorResults = $null
+                    [System.Management.Automation.Language.Parser]::ParseFile($tempFile, [ref]$tokens, [ref]$errorResults) | Out-Null
                     
-                    if ($errors.Count -eq 0) {
+                    if ($errorResults.Count -eq 0) {
                         if (-not $WhatIf) {
                             Set-Content -Path $file.FullName -Value $content -Encoding UTF8
                             Write-CustomLog "✓ Fixed syntax errors in: $($file.Name)" -Level SUCCESS
@@ -528,8 +528,8 @@ function Fix-PowerShellSyntaxErrors {
                         }
                     } else {
                         Write-CustomLog "⚠ Still has syntax errors after automated fixes: $($file.Name)" -Level WARN
-                        foreach ($error in $errors) {
-                            Write-CustomLog "  Error: $($error.Message)" -Level WARN
+                        foreach ($errorResult in $errorResults) {
+                            Write-CustomLog "  Error: $($errorResult.Message)" -Level WARN
                         }
                     }
                 } finally {
@@ -548,4 +548,5 @@ function Fix-PowerShellSyntaxErrors {
         Write-CustomLog "No additional syntax errors found to fix" -Level SUCCESS
     }
 }
+
 

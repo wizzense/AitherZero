@@ -80,8 +80,8 @@ function Test-WorkflowFile {
         if ($yamlErrors.Count -eq 0) {
             Write-Host "  ✅ Basic YAML formatting" -ForegroundColor Green
         } else {
-            foreach ($error in $yamlErrors) {
-                $issues += "⚠️ YAML: $error"
+            foreach ($errorResult in $yamlErrors) {
+                $issues += "⚠️ YAML: $errorResult"
             }
         }
 
@@ -194,3 +194,4 @@ if ($allIssues.Count -eq 0) {
     Write-Host "❌ Workflows need fixes before deployment" -ForegroundColor Red
     exit 1
 }
+

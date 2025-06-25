@@ -61,7 +61,7 @@ function Invoke-BackupMaintenance {
         [string]$OutputFormat = "Standard"
     )
     
-    $ErrorActionPreference = "Stop"    # Import required modules
+    $errorResultActionPreference = "Stop"    # Import required modules
     try {
         $labRunnerPath = "$env:PROJECT_ROOT\pwsh\modules\LabRunner"
         Import-Module $labRunnerPath -Force -ErrorAction Stop
@@ -409,8 +409,8 @@ function Write-BackupMaintenanceResults {
             
             if ($Results.Errors.Count -gt 0) {
                 Write-Host "`nErrors:" -ForegroundColor Red
-                foreach ($error in $Results.Errors) {
-                    Write-Host "  • $error" -ForegroundColor Red
+                foreach ($errorResult in $Results.Errors) {
+                    Write-Host "  • $errorResult" -ForegroundColor Red
                 }
             }
             
@@ -418,5 +418,6 @@ function Write-BackupMaintenanceResults {
         }
     }
 }
+
 
 
