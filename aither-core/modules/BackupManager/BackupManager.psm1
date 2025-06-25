@@ -15,7 +15,7 @@ if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
         'Logging' # Try module name first (if in PSModulePath)
         (Join-Path (Split-Path $PSScriptRoot -Parent) 'Logging') # Relative to modules directory
     )
-    
+
     # Add environment paths only if they exist
     if ($env:PWSH_MODULES_PATH) {
         $loggingPaths += (Join-Path $env:PWSH_MODULES_PATH 'Logging')
