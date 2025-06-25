@@ -110,7 +110,7 @@ jobs:
 
               Write-Host "Analyzing: $($file.FullName)" -ForegroundColor Cyan
               try {
-                $analysis = Invoke-ScriptAnalyzer -Path $file.FullName -Severity Warning,Error
+                $analysis = Invoke-ScriptAnalyzer -Path $file.FullName -Settings './tests/config/PSScriptAnalyzerSettings.psd1' -Severity Warning,Error
                 if ($analysis) {
                   $results += $analysis
                   $analysis | ForEach-Object {
@@ -173,7 +173,7 @@ jobs:
       fail-fast: false
     defaults:
       run:
-        shell: pwsh
+        shell: ${{ matrix.shell }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -244,7 +244,7 @@ jobs:
       fail-fast: false
     defaults:
       run:
-        shell: pwsh
+        shell: ${{ matrix.shell }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -327,16 +327,41 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Check if code scanning is enabled
+        id: check-code-scanning
+        shell: pwsh
+        run: |
+          Write-Host "Checking if code scanning is enabled..." -ForegroundColor Cyan
+          $codeScanningEnabled = $false
+          try {
+            $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/code-scanning/alerts" -Headers @{ Authorization = "token ${{ secrets.GITHUB_TOKEN }}" }
+            if ($response.Count -gt 0) {
+              $codeScanningEnabled = $true
+            }
+            Write-Host "Code scanning enabled: $codeScanningEnabled" -ForegroundColor Green
+          } catch {
+            Write-Warning "Code scanning API not accessible: $($_.Exception.Message)"
+            Write-Host "Code scanning enabled: false" -ForegroundColor Yellow
+          }
+
+          echo "enabled=$codeScanningEnabled" >> $env:GITHUB_OUTPUT
+
+          if (-not $codeScanningEnabled) {
+            Write-Warning "Code scanning is not enabled for this repository. Security scan will be skipped."
+          }
+
       - name: Run Trivy vulnerability scanner
+        if: steps.check-code-scanning.outputs.enabled == 'true'
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'sarif'
           output: 'trivy-results.sarif'
+        continue-on-error: true
 
       - name: Upload Trivy scan results
-        if: always()
+        if: steps.check-code-scanning.outputs.enabled == 'true' && always()
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
@@ -439,7 +464,7 @@ jobs:
           Testing completed on multiple platforms for cross-platform compatibility.
 
           ## Next Steps
-          "$@
+          "@
 
           if ("${{ needs.test.result }}" -eq "success" -and "${{ needs.build.result }}" -eq "success") {
             $summary += "`n✅ **Ready for merge** - All checks passed"
