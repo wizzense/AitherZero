@@ -17,27 +17,27 @@ if %ERRORLEVEL% EQU 0 (
     pwsh -ExecutionPolicy Bypass -File "Start-AitherZero.ps1" %*
     set LAUNCH_EXIT_CODE=%ERRORLEVEL%
     goto :HandleExitCode
-) else (
-    echo ⚠️ PowerShell 7 not found, trying Windows PowerShell...
-    
-    REM Try Windows PowerShell
-    where powershell >nul 2>nul
-    if %ERRORLEVEL% EQU 0 (
-        echo ⚠️ Using Windows PowerShell 5.1 (limited compatibility)
-        powershell -ExecutionPolicy Bypass -File "Start-AitherZero.ps1" %*
-        set LAUNCH_EXIT_CODE=%ERRORLEVEL%
-        goto :HandleExitCode
-    ) else (
-        echo ❌ No PowerShell found!
-        echo.
-        echo 💡 Please install PowerShell:
-        echo    PowerShell 7: https://aka.ms/powershell-release-windows
-        echo    Windows PowerShell is usually pre-installed
-        echo.
-        pause
-        exit /b 1
-    )
 )
+
+echo ⚠️ PowerShell 7 not found, trying Windows PowerShell...
+
+REM Try Windows PowerShell
+where powershell >nul 2>nul
+if %ERRORLEVEL% EQU 0 (
+    echo ⚠️ Using Windows PowerShell 5.1 (limited compatibility)
+    powershell -ExecutionPolicy Bypass -File "Start-AitherZero.ps1" %*
+    set LAUNCH_EXIT_CODE=%ERRORLEVEL%
+    goto :HandleExitCode
+)
+
+echo ❌ No PowerShell found!
+echo.
+echo 💡 Please install PowerShell:
+echo    PowerShell 7: https://aka.ms/powershell-release-windows
+echo    Windows PowerShell is usually pre-installed
+echo.
+pause
+exit /b 1
 
 :HandleExitCode
 REM Handle exit codes and provide troubleshooting
