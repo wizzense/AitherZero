@@ -1,3 +1,7 @@
+# DISABLED - This workflow has been disabled to prevent conflicts with build-release.yml
+# Use the main build-release.yml workflow instead
+# Original content moved to build-release-simple.yml.disabled
+
 name: Build and Release
 
 on:
@@ -235,3 +239,4 @@ jobs:
             Write-Host "✗ Failed to create release: $($_.Exception.Message)" -ForegroundColor Red
             exit 1
           }
+
