@@ -327,27 +327,32 @@ jobs:
               } else {
                 Write-Warning "Item not found: $item"
               }
-er             }
-
+            }
+            
             # Create platform-specific startup scripts
             if ("${{ matrix.platform }}" -eq "windows") {
-              $startupScript = "@echo off`n"
-              $startupScript += "echo Starting AitherZero v$version...`n"
-              $startupScript += "pwsh -File `"aither-core/core-runner.ps1`" %*`n"
-              $startupScript += "pause`n"
+              $startupScript = @"
+@echo off
+echo Starting AitherZero v$version...
+pwsh -File "aither-core/core-runner.ps1" %*
+pause
+"@
               Set-Content -Path "$packageDir/AitherZero.bat" -Value $startupScript -Encoding UTF8
               Write-Host "✓ Created Windows startup script" -ForegroundColor Green
             } else {
-              $startupScript = "#!/bin/bash`n"
-              $startupScript += "echo `"Starting AitherZero v$version...`"`n"
-              $startupScript += "pwsh -File `"aither-core/core-runner.ps1`" `$@`n"
+              $startupScript = @"
+#!/bin/bash
+echo "Starting AitherZero v$version..."
+pwsh -File "aither-core/core-runner.ps1" `$@
+"@
               Set-Content -Path "$packageDir/aitherzero.sh" -Value $startupScript -Encoding UTF8
-
+              
               # Make executable on Unix-like systems
               if (-not $IsWindows) {
                 chmod +x "$packageDir/aitherzero.sh"
               }
               Write-Host "✓ Created Unix startup script" -ForegroundColor Green
+            }
             }
 
             Write-Host "✓ Package creation completed for ${{ matrix.platform }}" -ForegroundColor Green
@@ -660,3 +665,4 @@ er             }
           }
 
           Write-Host "🎉 Release validation completed successfully!" -ForegroundColor Green
+
