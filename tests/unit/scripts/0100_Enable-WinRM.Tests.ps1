@@ -23,5 +23,3 @@ Describe '0100_Enable-WinRM Tests' {
         # Cleanup test resources
     }
 }
-
-

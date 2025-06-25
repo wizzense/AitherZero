@@ -23,5 +23,3 @@ Describe '0101_Enable-RemoteDesktop Tests' {
         # Cleanup test resources
     }
 }
-
-

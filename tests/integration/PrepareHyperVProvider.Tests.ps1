@@ -23,5 +23,3 @@ Describe 'PrepareHyperVProvider Tests' {
         # Cleanup test resources
     }
 }
-
-

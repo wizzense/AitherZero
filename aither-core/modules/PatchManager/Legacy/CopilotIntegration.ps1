@@ -177,6 +177,3 @@ function Invoke-CopilotSuggestionImplementation {
 }
 
 # Export public functions
-
-
-

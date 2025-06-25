@@ -527,7 +527,3 @@ function Add-ErrorTrackingEntry {
         Write-CustomLog "Failed to add error tracking entry: $($_.Exception.Message)" -Level WARN
     }
 }
-
-
-
-

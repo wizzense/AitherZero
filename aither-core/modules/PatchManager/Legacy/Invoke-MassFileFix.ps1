@@ -74,6 +74,3 @@ function Invoke-MassFileFix {
         }
     }
 }
-
-
-

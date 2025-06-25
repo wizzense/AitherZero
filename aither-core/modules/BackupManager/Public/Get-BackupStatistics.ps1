@@ -130,7 +130,3 @@ function Get-BackupStatistics {
         throw $_
     }
 }
-
-
-
-

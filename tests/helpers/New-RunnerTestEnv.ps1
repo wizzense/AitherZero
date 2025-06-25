@@ -69,5 +69,3 @@ function global:Remove-RunnerTestEnv {
     }
     $script:RunnerTestEnvDirs = @()
 }
-
-

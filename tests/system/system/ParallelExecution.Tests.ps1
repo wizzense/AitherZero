@@ -295,5 +295,3 @@ AfterAll {
     # Clean up any remaining jobs
     Get-Job | Where-Object { $_.Name -like "TestJob*" -or $_.Name -like "*Parallel*" } | Remove-Job -Force -ErrorAction SilentlyContinue
 }
-
-

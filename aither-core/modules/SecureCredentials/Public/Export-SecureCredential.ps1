@@ -20,6 +20,7 @@ function Export-SecureCredential {
         Export-SecureCredential -CredentialName "HyperV-Lab-01" -ExportPath "./backup/lab-creds.json"
     #>
     [CmdletBinding(SupportsShouldProcess)]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'CredentialName', Justification = 'CredentialName is not a password, it is an identifier')]
     param(
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -37,18 +38,18 @@ function Export-SecureCredential {
         Write-CustomLog -Level 'INFO' -Message "Exporting secure credential: $CredentialName"
 
         if ($IncludeSecrets) {
-            Write-CustomLog -Level 'WARN' -Message "Including secrets in export - ensure secure handling of export file"
+            Write-CustomLog -Level 'WARN' -Message 'Including secrets in export - ensure secure handling of export file'
         }
     }
 
     process {
         try {
-            if (-not $PSCmdlet.ShouldProcess($ExportPath, "Export credential metadata")) {
+            if (-not $PSCmdlet.ShouldProcess($ExportPath, 'Export credential metadata')) {
                 return @{
-                    Success = $true
+                    Success        = $true
                     CredentialName = $CredentialName
-                    ExportPath = $ExportPath
-                    WhatIf = $true
+                    ExportPath     = $ExportPath
+                    WhatIf         = $true
                 }
             }
 
@@ -64,19 +65,19 @@ function Export-SecureCredential {
 
             # Create export data structure
             $exportData = @{
-                ExportInfo = @{
-                    ExportedBy = $env:USERNAME
-                    ExportedDate = Get-Date
-                    AitherZeroVersion = "1.0.0"
-                    IncludesSecrets = $IncludeSecrets.IsPresent
+                ExportInfo  = @{
+                    ExportedBy        = $env:USERNAME
+                    ExportedDate      = Get-Date
+                    AitherZeroVersion = '1.0.0'
+                    IncludesSecrets   = $IncludeSecrets.IsPresent
                 }
                 Credentials = @()
             }
 
             $credentialExport = @{
-                Name = $metadata.Name
-                Type = $metadata.Type
-                CreatedDate = $metadata.CreatedDate
+                Name         = $metadata.Name
+                Type         = $metadata.Type
+                CreatedDate  = $metadata.CreatedDate
                 LastModified = $metadata.LastModified
             }
 
@@ -135,12 +136,12 @@ function Export-SecureCredential {
             Write-CustomLog -Level 'SUCCESS' -Message "Credential exported successfully to: $ExportPath"
 
             return @{
-                Success = $true
-                CredentialName = $CredentialName
-                ExportPath = $ExportPath
-                ExportSize = (Get-Item $ExportPath).Length
+                Success         = $true
+                CredentialName  = $CredentialName
+                ExportPath      = $ExportPath
+                ExportSize      = (Get-Item $ExportPath).Length
                 IncludedSecrets = $IncludeSecrets.IsPresent
-                ExportDate = Get-Date
+                ExportDate      = Get-Date
             }
 
         } catch {

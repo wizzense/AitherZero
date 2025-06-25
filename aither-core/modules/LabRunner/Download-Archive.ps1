@@ -47,8 +47,3 @@ function Invoke-ArchiveDownload {
         }
     }
 }
-
-
-
-
-

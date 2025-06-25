@@ -23,5 +23,3 @@ Describe 'Menu Tests' {
         # Cleanup test resources
     }
 }
-
-

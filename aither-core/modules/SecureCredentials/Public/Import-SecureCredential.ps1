@@ -23,6 +23,8 @@ function Import-SecureCredential {
         Import-SecureCredential -ImportPath "./transfer/creds.json" -Force -SkipSecrets
     #>
     [CmdletBinding(SupportsShouldProcess)]
+    [OutputType([hashtable])]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '', Justification = 'Converting from secure credential export file is a legitimate use case')]
     param(
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -45,11 +47,11 @@ function Import-SecureCredential {
 
     process {
         try {
-            if (-not $PSCmdlet.ShouldProcess($ImportPath, "Import secure credentials")) {
+            if (-not $PSCmdlet.ShouldProcess($ImportPath, 'Import secure credentials')) {
                 return @{
-                    Success = $true
+                    Success    = $true
                     ImportPath = $ImportPath
-                    WhatIf = $true
+                    WhatIf     = $true
                 }
             }
 
@@ -57,15 +59,15 @@ function Import-SecureCredential {
             $importData = Get-Content $ImportPath | ConvertFrom-Json
 
             if (-not $importData.Credentials) {
-                throw "Invalid import file format - no credentials section found"
+                throw 'Invalid import file format - no credentials section found'
             }
 
             $importResults = @{
-                Success = $true
-                ImportPath = $ImportPath
+                Success             = $true
+                ImportPath          = $ImportPath
                 ImportedCredentials = @()
-                SkippedCredentials = @()
-                Errors = @()
+                SkippedCredentials  = @()
+                Errors              = @()
             }
 
             Write-CustomLog -Level 'INFO' -Message "Found $($importData.Credentials.Count) credentials to import"
@@ -86,10 +88,12 @@ function Import-SecureCredential {
                     switch ($credentialData.Type) {
                         'UserPassword' {
                             if ($credentialData.Password -and -not $SkipSecrets) {
+                                # This is a legitimate use case for importing from secure credential export
+                                # PSScriptAnalyzer suppressed: PSAvoidUsingConvertToSecureStringWithPlainText
                                 $securePassword = ConvertTo-SecureString $credentialData.Password -AsPlainText -Force
-                                $result = New-SecureCredential -CredentialName $credentialName -CredentialType 'UserPassword' -Username $credentialData.Username -Password $securePassword -Force:$Force
+                                $null = New-SecureCredential -CredentialName $credentialName -CredentialType 'UserPassword' -Username $credentialData.Username -Password $securePassword -Force:$Force
                             } else {
-                                Write-CustomLog -Level 'INFO' -Message "Creating credential metadata only (no secrets imported)"
+                                Write-CustomLog -Level 'INFO' -Message 'Creating credential metadata only (no secrets imported)'
                                 # Create metadata-only credential
                                 $metadataPath = Get-CredentialMetadataPath
                                 if (-not (Test-Path $metadataPath)) {
@@ -101,10 +105,12 @@ function Import-SecureCredential {
                         }
                         'ServiceAccount' {
                             if ($credentialData.Password -and -not $SkipSecrets) {
+                                # This is a legitimate use case for importing from secure credential export
+                                # PSScriptAnalyzer suppressed: PSAvoidUsingConvertToSecureStringWithPlainText
                                 $securePassword = ConvertTo-SecureString $credentialData.Password -AsPlainText -Force
-                                $result = New-SecureCredential -CredentialName $credentialName -CredentialType 'ServiceAccount' -Username $credentialData.Username -Password $securePassword -Force:$Force
+                                $null = New-SecureCredential -CredentialName $credentialName -CredentialType 'ServiceAccount' -Username $credentialData.Username -Password $securePassword -Force:$Force
                             } else {
-                                Write-CustomLog -Level 'INFO' -Message "Creating credential metadata only (no secrets imported)"
+                                Write-CustomLog -Level 'INFO' -Message 'Creating credential metadata only (no secrets imported)'
                                 $metadataPath = Get-CredentialMetadataPath
                                 if (-not (Test-Path $metadataPath)) {
                                     New-Item -Path $metadataPath -ItemType Directory -Force | Out-Null
@@ -115,9 +121,9 @@ function Import-SecureCredential {
                         }
                         'APIKey' {
                             if ($credentialData.APIKey -and -not $SkipSecrets) {
-                                $result = New-SecureCredential -CredentialName $credentialName -CredentialType 'APIKey' -APIKey $credentialData.APIKey -Force:$Force
+                                $null = New-SecureCredential -CredentialName $credentialName -CredentialType 'APIKey' -APIKey $credentialData.APIKey -Force:$Force
                             } else {
-                                Write-CustomLog -Level 'INFO' -Message "Creating credential metadata only (no secrets imported)"
+                                Write-CustomLog -Level 'INFO' -Message 'Creating credential metadata only (no secrets imported)'
                                 $metadataPath = Get-CredentialMetadataPath
                                 if (-not (Test-Path $metadataPath)) {
                                     New-Item -Path $metadataPath -ItemType Directory -Force | Out-Null
@@ -128,7 +134,7 @@ function Import-SecureCredential {
                         }
                         'Certificate' {
                             if (Test-Path $credentialData.CertificatePath) {
-                                $result = New-SecureCredential -CredentialName $credentialName -CredentialType 'Certificate' -CertificatePath $credentialData.CertificatePath -Force:$Force
+                                $null = New-SecureCredential -CredentialName $credentialName -CredentialType 'Certificate' -CertificatePath $credentialData.CertificatePath -Force:$Force
                             } else {
                                 Write-CustomLog -Level 'WARN' -Message "Certificate file not found: $($credentialData.CertificatePath), creating metadata only"
                                 $metadataPath = Get-CredentialMetadataPath

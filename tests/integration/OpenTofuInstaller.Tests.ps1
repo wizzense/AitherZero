@@ -23,5 +23,3 @@ Describe 'OpenTofuInstaller Tests' {
         # Cleanup test resources
     }
 }
-
-

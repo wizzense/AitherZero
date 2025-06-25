@@ -115,10 +115,10 @@ BeforeAll {
                 if ($gitArgs[1] -eq '-v') {
                     # Mock the fork chain remotes
                     return @(
-                        "origin	https://github.com/wizzense/AitherZero.git (fetch)",
-                        "origin	https://github.com/wizzense/AitherZero.git (push)",
-                        "upstream	https://github.com/Aitherium/AitherLabs.git (fetch)",
-                        "upstream	https://github.com/Aitherium/AitherLabs.git (push)"
+                        "origin    https://github.com/wizzense/AitherZero.git (fetch)",
+                        "origin    https://github.com/wizzense/AitherZero.git (push)",
+                        "upstream    https://github.com/Aitherium/AitherLabs.git (fetch)",
+                        "upstream    https://github.com/Aitherium/AitherLabs.git (push)"
                     )
                 }
             }
@@ -161,7 +161,7 @@ BeforeAll {
                 }
             }
             'label' {
-                return "patch	Auto-created by PatchManager"
+                return "patch    Auto-created by PatchManager"
             }
         }
         return "Mock gh output"
@@ -312,8 +312,8 @@ Describe "Cross-Fork PatchManager Functionality" {
             Mock git {
                 if ($args[0] -eq 'remote' -and $args[1] -eq '-v') {
                     return @(
-                        "origin	https://github.com/wizzense/AitherZero.git (fetch)",
-                        "origin	https://github.com/wizzense/AitherZero.git (push)"
+                        "origin    https://github.com/wizzense/AitherZero.git (fetch)",
+                        "origin    https://github.com/wizzense/AitherZero.git (push)"
                     )
                 }
                 return "Mock output"
@@ -341,10 +341,10 @@ Describe "Cross-Repository Compatibility" {
             Mock git {
                 if ($args[0] -eq 'remote' -and $args[1] -eq '-v') {
                     return @(
-                        "origin	https://github.com/Aitherium/AitherLabs.git (fetch)",
-                        "origin	https://github.com/Aitherium/AitherLabs.git (push)",
-                        "upstream	https://github.com/Aitherium/Aitherium.git (fetch)",
-                        "upstream	https://github.com/Aitherium/Aitherium.git (push)"
+                        "origin    https://github.com/Aitherium/AitherLabs.git (fetch)",
+                        "origin    https://github.com/Aitherium/AitherLabs.git (push)",
+                        "upstream    https://github.com/Aitherium/Aitherium.git (fetch)",
+                        "upstream    https://github.com/Aitherium/Aitherium.git (push)"
                     )
                 }
                 return "Mock output"
@@ -366,8 +366,8 @@ Describe "Cross-Repository Compatibility" {
             Mock git {
                 if ($args[0] -eq 'remote' -and $args[1] -eq '-v') {
                     return @(
-                        "origin	https://github.com/Aitherium/Aitherium.git (fetch)",
-                        "origin	https://github.com/Aitherium/Aitherium.git (push)"
+                        "origin    https://github.com/Aitherium/Aitherium.git (fetch)",
+                        "origin    https://github.com/Aitherium/Aitherium.git (push)"
                     )
                 }
                 return "Mock output"

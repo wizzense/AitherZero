@@ -320,4 +320,3 @@ try {
     Write-Information 'Check the error above and try again' -InformationAction Continue
     exit 1
 }
-

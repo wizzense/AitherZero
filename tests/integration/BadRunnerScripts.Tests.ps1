@@ -23,5 +23,3 @@ Describe 'BadRunnerScripts Tests' {
         # Cleanup test resources
     }
 }
-
-

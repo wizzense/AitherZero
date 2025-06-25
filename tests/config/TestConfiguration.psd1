@@ -179,4 +179,3 @@ if (-not $env:PWSH_MODULES_PATH) {
         }
     }
 }
-

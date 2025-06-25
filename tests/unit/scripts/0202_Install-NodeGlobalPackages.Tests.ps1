@@ -23,5 +23,3 @@ Describe '0202_Install-NodeGlobalPackages Tests' {
         # Cleanup test resources
     }
 }
-
-

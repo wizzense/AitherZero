@@ -23,5 +23,3 @@ Describe 'Resolve-ProjectPath Tests' {
         # Cleanup test resources
     }
 }
-
-

@@ -23,5 +23,3 @@ Describe 'Get-Platform Tests' {
         # Cleanup test resources
     }
 }
-
-

@@ -23,5 +23,3 @@ Describe 'Get-WindowsJobArtifacts Tests' {
         # Cleanup test resources
     }
 }
-
-

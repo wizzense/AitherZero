@@ -23,5 +23,3 @@ Describe 'Format-Config Tests' {
         # Cleanup test resources
     }
 }
-
-

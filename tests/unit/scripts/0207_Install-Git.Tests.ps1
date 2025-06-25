@@ -23,5 +23,3 @@ Describe '0207_Install-Git Tests' {
         # Cleanup test resources
     }
 }
-
-

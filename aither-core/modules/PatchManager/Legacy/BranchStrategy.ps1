@@ -142,5 +142,3 @@ function Get-SanitizedBranchName {
         return "$Prefix/$sanitized"
     }
 }
-
-
