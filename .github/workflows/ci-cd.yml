@@ -51,9 +51,9 @@ jobs:
           else
             LEVEL="Quick"
           fi
-          
+
           echo "level=$LEVEL" >> $GITHUB_OUTPUT
-          
+
           case $LEVEL in
             "Quick")
               echo 'matrix={"os":["ubuntu-latest","windows-latest"],"include":[{"os":"ubuntu-latest","shell":"pwsh"},{"os":"windows-latest","shell":"pwsh"}]}' >> $GITHUB_OUTPUT
@@ -99,7 +99,7 @@ jobs:
         run: |
           $results = @()
           $patterns = @('*.ps1', '*.psm1', '*.psd1')
-          
+
           foreach ($pattern in $patterns) {
             $files = Get-ChildItem -Path . -Filter $pattern -Recurse -ErrorAction SilentlyContinue
             foreach ($file in $files) {
@@ -107,7 +107,7 @@ jobs:
               if ($file.FullName -match '(test|temp|\.temp)' -or $file.FullName -match 'tests[/\\]') {
                 continue
               }
-              
+
               Write-Host "Analyzing: $($file.FullName)" -ForegroundColor Cyan
               try {
                 $analysis = Invoke-ScriptAnalyzer -Path $file.FullName -Severity Warning,Error
@@ -122,12 +122,12 @@ jobs:
               }
             }
           }
-          
+
           $errorCount = ($results | Where-Object Severity -eq 'Error').Count
           $warningCount = ($results | Where-Object Severity -eq 'Warning').Count
-          
+
           Write-Host "Analysis complete: $errorCount errors, $warningCount warnings" -ForegroundColor Yellow
-          
+
           if ($errorCount -gt 0) {
             Write-Error "Script analysis found $errorCount errors"
             exit 1
@@ -138,7 +138,7 @@ jobs:
         run: |
           $errors = @()
           $patterns = @('*.ps1', '*.psm1')
-          
+
           foreach ($pattern in $patterns) {
             $files = Get-ChildItem -Path . -Filter $pattern -Recurse -ErrorAction SilentlyContinue
             foreach ($file in $files) {
@@ -146,7 +146,7 @@ jobs:
               if ($file.FullName -match '(test|temp|\.temp)' -or $file.FullName -match 'tests[/\\]') {
                 continue
               }
-              
+
               Write-Host "Syntax checking: $($file.FullName)" -ForegroundColor Cyan
               try {
                 $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $file.FullName -Raw), [ref]$null)
@@ -157,7 +157,7 @@ jobs:
               }
             }
           }
-          
+
           if ($errors.Count -gt 0) {
             Write-Error "Found $($errors.Count) syntax errors"
             exit 1
@@ -201,7 +201,7 @@ jobs:
         run: |
           $testLevel = "${{ needs.setup.outputs.test-level }}"
           Write-Host "Running $testLevel level tests..." -ForegroundColor Cyan
-          
+
           # Map CI test levels to bulletproof validation levels
           $validationLevel = switch ($testLevel) {
             "Quick" { "Quick" }
@@ -209,7 +209,7 @@ jobs:
             "Complete" { "Complete" }
             default { "Standard" }
           }
-          
+
           if (Test-Path './tests/Run-BulletproofValidation.ps1') {
             pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel $validationLevel -CI -FailFast
           } else {
@@ -259,11 +259,11 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "Testing module imports..." -ForegroundColor Cyan
-          
+
           if (Test-Path './aither-core/modules') {
             $modules = Get-ChildItem -Path './aither-core/modules' -Directory
             $importErrors = @()
-            
+
             foreach ($module in $modules) {
               try {
                 Write-Host "Testing import: $($module.Name)" -ForegroundColor Yellow
@@ -274,7 +274,7 @@ jobs:
                 Write-Error "Failed to import $($module.Name): $($_.Exception.Message)"
               }
             }
-            
+
             if ($importErrors.Count -gt 0) {
               Write-Error "Found $($importErrors.Count) module import errors"
               exit 1
@@ -287,7 +287,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "Validating build scripts..." -ForegroundColor Cyan
-          
+
           $buildScripts = @()
           if (Test-Path './build') {
             $buildScripts += Get-ChildItem -Path './build' -Filter '*.ps1' -ErrorAction SilentlyContinue
@@ -295,12 +295,12 @@ jobs:
           if (Test-Path './aither-core/core-runner.ps1') {
             $buildScripts += Get-Item './aither-core/core-runner.ps1'
           }
-          
+
           if ($buildScripts.Count -eq 0) {
             Write-Host "No build scripts found" -ForegroundColor Yellow
             exit 0
           }
-          
+
           foreach ($script in $buildScripts) {
             Write-Host "Validating: $($script.Name)" -ForegroundColor Yellow
             try {
@@ -345,17 +345,17 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "Running PowerShell security checks..." -ForegroundColor Cyan
-          
+
           # Check for common security issues
           $securityIssues = @()
           $patterns = @('*.ps1', '*.psm1')
-          
+
           foreach ($pattern in $patterns) {
             $files = Get-ChildItem -Path . -Filter $pattern -Recurse -ErrorAction SilentlyContinue
             foreach ($file in $files) {
               $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
               if (-not $content) { continue }
-              
+
               # Check for potential security issues
               if ($content -match 'Invoke-Expression|iex\s') {
                 $securityIssues += "Potential code injection risk in $($file.FullName): Invoke-Expression usage"
@@ -368,7 +368,7 @@ jobs:
               }
             }
           }
-          
+
           if ($securityIssues.Count -gt 0) {
             foreach ($issue in $securityIssues) {
               Write-Warning $issue
@@ -393,7 +393,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "Running performance tests..." -ForegroundColor Cyan
-          
+
           if (Test-Path './tests/performance') {
             $perfTests = Get-ChildItem -Path './tests/performance' -Filter '*.Tests.ps1' -ErrorAction SilentlyContinue
             if ($perfTests) {
@@ -423,32 +423,32 @@ jobs:
         run: |
           $summary = @"
           # 🚀 CI/CD Pipeline Summary
-          
+
           **Test Level**: ${{ needs.setup.outputs.test-level }}
           **Trigger**: ${{ github.event_name }}
           **Branch**: ${{ github.ref_name }}
           **Commit**: ${{ github.sha }}
-          
+
           ## Job Results
           - **Lint**: ${{ needs.lint.result }}
           - **Test**: ${{ needs.test.result }}
           - **Build**: ${{ needs.build.result }}
           - **Security**: ${{ needs.security.result }}
-          
+
           ## Platform Coverage
           Testing completed on multiple platforms for cross-platform compatibility.
-          
+
           ## Next Steps
           "$@
-          
+
           if ("${{ needs.test.result }}" -eq "success" -and "${{ needs.build.result }}" -eq "success") {
             $summary += "`n✅ **Ready for merge** - All checks passed"
           } else {
             $summary += "`n❌ **Not ready** - Some checks failed"
           }
-          
+
           Write-Host $summary
-          
+
           # Write to GitHub step summary
           $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
 
@@ -458,24 +458,24 @@ jobs:
         with:
           script: |
             const summary = `## 🤖 CI/CD Automation Results
-            
+
             **Test Level**: ${{ needs.setup.outputs.test-level }}
             **Overall Status**: ${{ job.status }}
-            
+
             ### Job Results
             - Lint & Syntax: ${{ needs.lint.result }}
             - Test Suite: ${{ needs.test.result }}
             - Build Validation: ${{ needs.build.result }}
             - Security Scan: ${{ needs.security.result }}
-            
+
             ### Platform Coverage
             ✅ Multi-platform testing completed
-            
-            ${{ needs.test.result == 'success' && needs.build.result == 'success' ? '🎉 **All checks passed!** Ready for review and merge.' : '⚠️ **Some checks failed.** Please review the logs and fix any issues.' }}
-            
+
+            ${{ (needs.test.result == 'success' && needs.build.result == 'success') && '🎉 **All checks passed!** Ready for review and merge.' || '⚠️ **Some checks failed.** Please review the logs and fix any issues.' }}
+
             ---
             *This comment was automatically generated by the CI/CD pipeline.*`;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
