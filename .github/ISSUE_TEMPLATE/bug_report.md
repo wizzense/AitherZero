@@ -1,12 +1,12 @@
 ---
 name: Bug Report
-about: Create a report to help us improve AitherZero
-title: '[Bug] '
-labels: ['bug']
-assignees: []
+about: Report a bug or issue with AitherZero
+title: '[BUG] '
+labels: ['bug', 'needs-triage']
+assignees: ''
 ---
 
-## 🐛 Bug Description
+## �� Bug Description
 A clear and concise description of what the bug is.
 
 ## 🔄 Steps to Reproduce
@@ -21,23 +21,27 @@ A clear and concise description of what you expected to happen.
 ## ❌ Actual Behavior
 A clear and concise description of what actually happened.
 
-## 📸 Screenshots
+## 🖼️ Screenshots
 If applicable, add screenshots to help explain your problem.
 
-## 🖥️ Environment
-- **OS**: [e.g. Windows 11, Ubuntu 22.04, macOS 13]
+## 💻 Environment Information
+- **OS**: [e.g. Windows 11, Ubuntu 22.04, macOS 14]
 - **PowerShell Version**: [e.g. 7.4.1]
 - **AitherZero Version**: [e.g. 1.0.0]
-- **OpenTofu/Terraform Version**: [e.g. 1.6.0]
+- **Module**: [e.g. PatchManager, LabRunner]
 
-## 📝 Additional Context
+## 📁 Affected Files
+List any files that seem related to the issue:
+- [ ] File 1
+- [ ] File 2
+
+## 🔍 Additional Context
 Add any other context about the problem here.
 
-## 🔍 Logs
-If applicable, include relevant log outputs:
-```
-Paste logs here
-```
+## 🧪 Testing Information
+- [ ] I have run the bulletproof validation tests
+- [ ] The issue is reproducible
+- [ ] I have checked existing issues
 
-## 🤝 PatchManager Compatibility
-This issue template is compatible with AitherZero's PatchManager for automated issue creation.
+---
+*This issue was created using the AitherZero issue template. PatchManager integration available.*

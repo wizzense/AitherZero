@@ -1,64 +1,87 @@
-## Summary
-Brief description of the changes in this PR.
+## 📋 Pull Request Description
 
-## Type of Change
+### 🎯 What does this PR do?
+Brief description of the changes in this pull request.
+
+### �� Related Issues
+- Closes #[issue number]
+- Related to #[issue number]
+
+### 🔄 Type of Change
 - [ ] 🐛 Bug fix (non-breaking change which fixes an issue)
 - [ ] ✨ New feature (non-breaking change which adds functionality)
 - [ ] 💥 Breaking change (fix or feature that would cause existing functionality to not work as expected)
 - [ ] 📚 Documentation update
-- [ ] 🔧 Maintenance (refactoring, dependencies, etc.)
-- [ ] 🧪 Tests (adding or updating tests)
+- [ ] 🔧 Refactoring (no functional changes)
+- [ ] 🧪 Tests (adding missing tests or correcting existing tests)
 
-## Changes Made
-Detailed description of what was changed:
+### 📦 Affected Modules
+- [ ] BackupManager
+- [ ] DevEnvironment
+- [ ] LabRunner
+- [ ] Logging
+- [ ] PatchManager
+- [ ] TestingFramework
+- [ ] OpenTofuProvider
+- [ ] Other: ____________
 
-- Change 1
-- Change 2
-- Change 3
+## 🧪 Testing Checklist
 
-## Testing
-- [ ] Unit tests pass locally
-- [ ] Integration tests pass locally
-- [ ] Cross-platform testing completed (Windows/Linux/macOS)
-- [ ] Manual testing performed
-- [ ] New tests added (if applicable)
+### 🔍 Code Quality
+- [ ] Code follows the project style guidelines
+- [ ] Self-review of code has been performed
+- [ ] Code is properly commented, particularly in hard-to-understand areas
+- [ ] PSScriptAnalyzer passes without errors
 
-### Test Commands Run
-```powershell
-# Commands used to test this change
-pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel 'Standard'
-```
+### 🧪 Testing
+- [ ] Tests pass locally with my changes
+- [ ] New tests added for new functionality
+- [ ] Existing tests still pass
+- [ ] Bulletproof validation successful:
+  ```powershell
+  ./tests/Run-BulletproofValidation.ps1 -ValidationLevel 'Standard'
+  ```
 
-## Documentation
-- [ ] README updated (if applicable)
-- [ ] Function documentation complete
-- [ ] CONTRIBUTING.md updated (if applicable)
-- [ ] Examples provided (if applicable)
+### 📚 Documentation
+- [ ] Documentation has been updated (if applicable)
+- [ ] Help documentation added for new functions
+- [ ] README.md updated (if applicable)
+- [ ] CHANGELOG.md updated (if applicable)
 
-## Breaking Changes
-List any breaking changes and migration path:
+## 🔧 Implementation Details
 
-- None
-- OR: Describe breaking changes and how to migrate
+### 📝 Changes Made
+1. Change 1
+2. Change 2
+3. Change 3
 
-## Screenshots
-If applicable, add screenshots to demonstrate the changes.
+### 🎯 PatchManager Integration
+- [ ] Created using `Invoke-PatchWorkflow`
+- [ ] Issue automatically created and linked
+- [ ] Branch follows naming convention
+- [ ] Commit messages are descriptive
 
-## Related Issues
-- Closes #123
-- Related to #456
+### 🔍 Review Areas
+Please pay special attention to:
+- Area 1
+- Area 2
 
-## Checklist
-- [ ] My code follows the project's style guidelines
-- [ ] I have performed a self-review of my own code
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have made corresponding changes to the documentation
-- [ ] My changes generate no new warnings
-- [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] New and existing unit tests pass locally with my changes
+## 🖼️ Screenshots (if applicable)
+Add screenshots to help explain your changes.
 
-## Additional Notes
-Any additional information that reviewers should know.
+## 🚨 Breaking Changes
+If this PR contains breaking changes, please describe:
+- What breaks
+- How to migrate
+- Alternative approaches
+
+## 📋 Post-Merge Checklist
+- [ ] Verify CI/CD pipeline passes
+- [ ] Monitor for any issues
+- [ ] Update related documentation
+- [ ] Notify team of changes (if needed)
 
 ---
-**PatchManager Compatible**: This PR was created using AitherZero's PatchManager system for automated workflow management.
+
+**Created with AitherZero PatchManager v2.1** 🚀
+*This PR template ensures comprehensive review and integration with our automated workflows.*
