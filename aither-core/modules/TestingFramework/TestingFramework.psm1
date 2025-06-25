@@ -1256,6 +1256,104 @@ function Invoke-ParallelTests {
 }
 
 # ============================================================================
+# BULLETPROOF TESTING COMPATIBILITY FUNCTIONS
+# ============================================================================
+
+function Invoke-BulletproofTest {
+    <#
+    .SYNOPSIS
+        Executes a bulletproof test with comprehensive validation
+
+    .DESCRIPTION
+        Compatibility function for bulletproof testing framework integration
+
+    .PARAMETER TestName
+        Name of the test to execute
+
+    .PARAMETER Type
+        Type of test (Core, Module, System, Performance, Integration)
+
+    .PARAMETER Critical
+        Whether this is a critical test that must pass
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$TestName,
+
+        [Parameter(Mandatory)]
+        [ValidateSet('Core', 'Module', 'System', 'Performance', 'Integration')]
+        [string]$Type,
+
+        [switch]$Critical
+    )
+
+    Write-TestLog "🎯 Executing bulletproof test: $TestName ($Type)" -Level "INFO"
+
+    try {
+        # Delegate to unified test execution with appropriate parameters
+        $testConfig = @{
+            TestSuite = $Type
+            TestName = $TestName
+            Critical = $Critical.IsPresent
+        }
+
+        return Invoke-UnifiedTestExecution @testConfig
+    } catch {
+        Write-TestLog "❌ Bulletproof test failed: $($_.Exception.Message)" -Level "ERROR"
+        throw
+    }
+}
+
+function Start-TestSuite {
+    <#
+    .SYNOPSIS
+        Starts a test suite execution
+
+    .DESCRIPTION
+        Compatibility function for starting test suite execution
+
+    .PARAMETER SuiteName
+        Name of the test suite to start
+
+    .PARAMETER Configuration
+        Test configuration parameters
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$SuiteName,
+
+        [hashtable]$Configuration = @{
+            Verbosity = "Normal"
+            TimeoutMinutes = 30
+            RetryCount = 2
+            MockLevel = "Standard"
+            Platform = "All"
+            ParallelJobs = [Math]::Min(4, ([Environment]::ProcessorCount))
+        }
+    )
+
+    Write-TestLog "🚀 Starting test suite: $SuiteName" -Level "INFO"
+
+    try {
+        # Delegate to unified test execution
+        $params = @{
+            TestSuite = $SuiteName
+        }
+
+        if ($Configuration.Count -gt 0) {
+            $params['Configuration'] = $Configuration
+        }
+
+        return Invoke-UnifiedTestExecution @params
+    } catch {
+        Write-TestLog "❌ Test suite start failed: $($_.Exception.Message)" -Level "ERROR"
+        throw
+    }
+}
+
+# ============================================================================
 # MODULE EXPORTS
 # ============================================================================
 
@@ -1277,5 +1375,8 @@ Export-ModuleMember -Function @(
     'Invoke-PesterTests',
     'Invoke-PytestTests',
     'Invoke-SyntaxValidation',
-    'Invoke-ParallelTests'
+    'Invoke-ParallelTests',
+    'Invoke-BulletproofTest',
+    'Start-TestSuite',
+    'Write-TestLog'
 )

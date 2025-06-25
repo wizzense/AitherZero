@@ -7,28 +7,31 @@
     CompanyName = 'Aitherium'
     Copyright = '(c) 2025 Aitherium. All rights reserved.'
     Description = 'Comprehensive backup management module for Aitherium Infrastructure Automation project'
-    
+
     # Minimum version of the PowerShell engine required
     PowerShellVersion = '5.1'
-    
+
     # Functions to export from this module
     FunctionsToExport = @(
         'Invoke-BackupConsolidation',
         'Invoke-PermanentCleanup',
         'New-BackupExclusion',
         'Get-BackupStatistics',
-        'Invoke-BackupMaintenance'
+        'Invoke-BackupMaintenance',
+        'Start-BackupOperation',
+        'Get-BackupStatus',
+        'Remove-OldBackups'
     )
-    
+
     # Cmdlets to export from this module
     CmdletsToExport = @()
-    
+
     # Variables to export from this module
     VariablesToExport = @()
-    
+
     # Aliases to export from this module
     AliasesToExport = @()
-    
+
     # Private data to pass to the module specified in RootModule/ModuleToProcess
     PrivateData = @{
         PSData = @{
@@ -39,10 +42,10 @@
             ReleaseNotes = 'Initial release of BackupManager module'
         }
     }
-    
+
     # HelpInfo URI of this module
     HelpInfoURI = ''
-    
+
     # Default prefix for commands exported from this module
     DefaultCommandPrefix = ''
 }

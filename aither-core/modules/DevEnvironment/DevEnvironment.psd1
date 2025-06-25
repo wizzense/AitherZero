@@ -20,7 +20,10 @@
         'Test-DevelopmentSetup',
         'Remove-ProjectEmojis',
         'Initialize-DevelopmentEnvironment',
-        'Resolve-ModuleImportIssues'
+        'Resolve-ModuleImportIssues',
+        'Initialize-DevEnvironment',
+        'Test-DevEnvironment',
+        'Get-DevEnvironmentStatus'
     )
 
     CmdletsToExport = @()

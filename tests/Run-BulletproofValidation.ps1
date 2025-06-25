@@ -587,6 +587,521 @@ try {
                             }
                         }
 
+                        'CoreRunner-Scripts' {
+                            # Test core runner with specific scripts
+                            $coreRunnerPath = Join-Path $ProjectRoot 'aither-core/core-runner.ps1'
+                            $testScripts = @('0200_Get-SystemInfo', '0207_Install-Git') # Use scripts that actually exist
+
+                            $scriptsAvailable = 0
+                            $scriptsExecuted = 0
+
+                            foreach ($script in $testScripts) {
+                                $scriptPath = Join-Path $ProjectRoot "aither-core/scripts/$script.ps1"
+                                if (Test-Path $scriptPath) {
+                                    $scriptsAvailable++
+                                    try {
+                                        $process = Start-Process -FilePath 'pwsh' -ArgumentList @(
+                                            '-File', "`"$coreRunnerPath`"",
+                                            '-NonInteractive', '-Scripts', $script, '-WhatIf', '-Verbosity', 'silent'
+                                        ) -NoNewWindow -Wait -PassThru
+
+                                        if ($process.ExitCode -eq 0) {
+                                            $scriptsExecuted++
+                                            $testResult.Details += "✅ $script executed successfully"
+                                        } else {
+                                            $testResult.Details += "❌ $script failed with exit code $($process.ExitCode)"
+                                        }
+                                    } catch {
+                                        $testResult.Details += "❌ $script execution failed: $($_.Exception.Message)"
+                                    }
+                                } else {
+                                    $testResult.Details += "⚠️ $script not found"
+                                }
+                            }
+
+                            $testResult.Success = ($scriptsExecuted -eq $scriptsAvailable -and $scriptsAvailable -gt 0)
+                            $testResult.Message = if ($testResult.Success) {
+                                "Script execution working ($scriptsExecuted/$scriptsAvailable scripts)"
+                            } else {
+                                "Script execution issues ($scriptsExecuted/$scriptsAvailable scripts)"
+                            }
+                        }
+
+                        'All-Modules-Functions' {
+                            # Test that modules export expected functions
+                            $moduleTestResults = @()
+                            $expectedFunctions = @{
+                                'Logging' = @('Write-CustomLog', 'Initialize-LoggingSystem')
+                                'ParallelExecution' = @('Invoke-ParallelForEach', 'Start-ParallelJob')
+                                'TestingFramework' = @('Invoke-BulletproofTest', 'Start-TestSuite')
+                                'PatchManager' = @('Invoke-PatchWorkflow', 'New-PatchIssue', 'New-PatchPR')
+                                'LabRunner' = @('Start-LabAutomation', 'Get-LabStatus')
+                            }
+
+                            foreach ($moduleName in $expectedFunctions.Keys) {
+                                try {
+                                    $modulePath = Join-Path $ProjectRoot "aither-core/modules/$moduleName"
+                                    if (Test-Path $modulePath) {
+                                        Import-Module $modulePath -Force -ErrorAction Stop
+                                        $exportedFunctions = (Get-Module $moduleName).ExportedFunctions.Keys
+
+                                        $missingFunctions = @()
+                                        foreach ($func in $expectedFunctions[$moduleName]) {
+                                            if ($func -notin $exportedFunctions) {
+                                                $missingFunctions += $func
+                                            }
+                                        }
+                                                          if ($missingFunctions.Count -eq 0) {
+                            $moduleTestResults += "✅ ${moduleName}: All expected functions available"
+                        } else {
+                            $moduleTestResults += "❌ ${moduleName}: Missing functions: $($missingFunctions -join ', ')"
+                        }
+                    } else {
+                        $moduleTestResults += "❌ ${moduleName}: Module not found"
+                    }
+                } catch {
+                    $moduleTestResults += "❌ ${moduleName}: Failed to load - $($_.Exception.Message)"
+                }
+                            }
+
+                            $testResult.Details += $moduleTestResults
+                            $failedModules = $moduleTestResults | Where-Object { $_ -like "❌*" }
+                            $testResult.Success = ($failedModules.Count -eq 0)
+                            $testResult.Message = if ($testResult.Success) {
+                                "All modules export expected functions"
+                            } else {
+                                "Function validation failed for $($failedModules.Count) modules"
+                            }
+                        }
+
+                        'Logging-Complete' {
+                            # Comprehensive logging system test
+                            try {
+                                Import-Module "$ProjectRoot/aither-core/modules/Logging" -Force -ErrorAction Stop
+
+                                # Test all log levels
+                                $logLevels = @('INFO', 'WARN', 'ERROR', 'SUCCESS')
+                                $logTests = @()
+
+                                foreach ($level in $logLevels) {
+                                    try {
+                                        Write-CustomLog -Level $level -Message "Test message for level $level"
+                                        $logTests += "✅ $level logging works"
+                                    } catch {
+                                        $logTests += "❌ $level logging failed: $($_.Exception.Message)"
+                                    }
+                                }
+
+                                # Test log file creation
+                                $logDir = Join-Path $ProjectRoot 'logs'
+                                if (Test-Path $logDir) {
+                                    $logFiles = Get-ChildItem $logDir -Filter "*.log" -ErrorAction SilentlyContinue
+                                    if ($logFiles) {
+                                        $logTests += "✅ Log files created ($($logFiles.Count) files)"
+                                    } else {
+                                        $logTests += "⚠️ No log files found"
+                                    }
+                                } else {
+                                    $logTests += "⚠️ Log directory not found"
+                                }
+
+                                $testResult.Details += $logTests
+                                $failedTests = $logTests | Where-Object { $_ -like "❌*" }
+                                $testResult.Success = ($failedTests.Count -eq 0)
+                                $testResult.Message = if ($testResult.Success) {
+                                    "Complete logging system functional"
+                                } else {
+                                    "Logging system has issues"
+                                }
+                            } catch {
+                                $testResult.Success = $false
+                                $testResult.Message = "Failed to test logging system: $($_.Exception.Message)"
+                            }
+                        }
+
+                        'ParallelExecution-Complete' {
+                            # Complete parallel execution testing
+                            try {
+                                Import-Module "$ProjectRoot/aither-core/modules/ParallelExecution" -Force -ErrorAction Stop
+
+                                $parallelTests = @()
+
+                                # Test basic parallel execution
+                                $testData = @(1, 2, 3, 4, 5)
+                                $results = Invoke-ParallelForEach -InputObject $testData -ScriptBlock {
+                                    param($number)
+                                    return $number * 2
+                                } -ThrottleLimit 3
+
+                                if ($results.Count -eq $testData.Count) {
+                                    $parallelTests += "✅ Basic parallel execution works"
+                                } else {
+                                    $parallelTests += "❌ Basic parallel execution failed"
+                                }
+
+                                # Test error handling in parallel execution
+                                try {
+                                    $errorResults = Invoke-ParallelForEach -InputObject @(1, 'invalid', 3) -ScriptBlock {
+                                        param($item)
+                                        if ($item -is [string]) {
+                                            throw "Invalid input"
+                                        }
+                                        return $item * 2
+                                    } -ThrottleLimit 2 -ErrorAction SilentlyContinue
+
+                                    $parallelTests += "✅ Error handling in parallel execution works"
+                                } catch {
+                                    $parallelTests += "❌ Error handling in parallel execution failed"
+                                }
+
+                                $testResult.Details += $parallelTests
+                                $failedTests = $parallelTests | Where-Object { $_ -like "❌*" }
+                                $testResult.Success = ($failedTests.Count -eq 0)
+                                $testResult.Message = if ($testResult.Success) {
+                                    "Complete parallel execution functional"
+                                } else {
+                                    "Parallel execution has issues"
+                                }
+                            } catch {
+                                $testResult.Success = $false
+                                $testResult.Message = "Failed to test parallel execution: $($_.Exception.Message)"
+                            }
+                        }
+
+                        'TestingFramework-Complete' {
+                            # Complete testing framework validation
+                            try {
+                                Import-Module "$ProjectRoot/aither-core/modules/TestingFramework" -Force -ErrorAction Stop
+
+                                $frameworkTests = @()
+
+                                # Test basic framework functions
+                                $functions = @('Invoke-BulletproofTest', 'Start-TestSuite', 'Write-TestLog')
+                                foreach ($func in $functions) {
+                                    if (Get-Command $func -ErrorAction SilentlyContinue) {
+                                        $frameworkTests += "✅ $func available"
+                                    } else {
+                                        $frameworkTests += "❌ $func not available"
+                                    }
+                                }
+
+                                # Test Pester integration
+                                if (Get-Module Pester -ListAvailable) {
+                                    $frameworkTests += "✅ Pester integration available"
+                                } else {
+                                    $frameworkTests += "⚠️ Pester not available"
+                                }
+
+                                $testResult.Details += $frameworkTests
+                                $failedTests = $frameworkTests | Where-Object { $_ -like "❌*" }
+                                $testResult.Success = ($failedTests.Count -eq 0)
+                                $testResult.Message = "TestingFramework functional"
+                            } catch {
+                                $testResult.Success = $false
+                                $testResult.Message = "Failed to test framework: $($_.Exception.Message)"
+                            }
+                        }
+
+                        'BackupManager-Core' {
+                            # Test BackupManager module
+                            try {
+                                Import-Module "$ProjectRoot/aither-core/modules/BackupManager" -Force -ErrorAction Stop
+
+                                $backupTests = @()
+
+                                # Test basic functions exist
+                                $functions = @('Start-BackupOperation', 'Get-BackupStatus', 'Remove-OldBackups')
+                                foreach ($func in $functions) {
+                                    if (Get-Command $func -ErrorAction SilentlyContinue) {
+                                        $backupTests += "✅ $func available"
+                                    } else {
+                                        $backupTests += "❌ $func not available"
+                                    }
+                                }
+
+                                $testResult.Details += $backupTests
+                                $failedTests = $backupTests | Where-Object { $_ -like "❌*" }
+                                $testResult.Success = ($failedTests.Count -eq 0)
+                                $testResult.Message = if ($testResult.Success) {
+                                    "BackupManager core functions available"
+                                } else {
+                                    "BackupManager missing functions"
+                                }
+                            } catch {
+                                $testResult.Success = $false
+                                $testResult.Message = "BackupManager test failed: $($_.Exception.Message)"
+                            }
+                        }
+
+                        'ScriptManager-Core' {
+                            # Test ScriptManager module
+                            try {
+                                Import-Module "$ProjectRoot/aither-core/modules/ScriptManager" -Force -ErrorAction Stop
+
+                                $scriptTests = @()
+
+                                # Test basic functions exist
+                                $functions = @('Get-ScriptRepository', 'Start-ScriptExecution', 'Get-ScriptTemplate')
+                                foreach ($func in $functions) {
+                                    if (Get-Command $func -ErrorAction SilentlyContinue) {
+                                        $scriptTests += "✅ $func available"
+                                    } else {
+                                        $scriptTests += "❌ $func not available"
+                                    }
+                                }
+
+                                $testResult.Details += $scriptTests
+                                $failedTests = $scriptTests | Where-Object { $_ -like "❌*" }
+                                $testResult.Success = ($failedTests.Count -eq 0)
+                                $testResult.Message = if ($testResult.Success) {
+                                    "ScriptManager core functions available"
+                                } else {
+                                    "ScriptManager missing functions"
+                                }
+                            } catch {
+                                $testResult.Success = $false
+                                $testResult.Message = "ScriptManager test failed: $($_.Exception.Message)"
+                            }
+                        }
+
+                        'DevEnvironment-Core' {
+                            # Test DevEnvironment module
+                            try {
+                                Import-Module "$ProjectRoot/aither-core/modules/DevEnvironment" -Force -ErrorAction Stop
+
+                                $devTests = @()
+
+                                # Test basic functions exist
+                                $functions = @('Initialize-DevEnvironment', 'Test-DevEnvironment', 'Get-DevEnvironmentStatus')
+                                foreach ($func in $functions) {
+                                    if (Get-Command $func -ErrorAction SilentlyContinue) {
+                                        $devTests += "✅ $func available"
+                                    } else {
+                                        $devTests += "❌ $func not available"
+                                    }
+                                }
+
+                                # Test environment validation
+                                try {
+                                    $envStatus = Test-DevEnvironment
+                                    if ($envStatus) {
+                                        $devTests += "✅ Environment validation working"
+                                    } else {
+                                        $devTests += "⚠️ Environment validation issues"
+                                    }
+                                } catch {
+                                    $devTests += "❌ Environment validation failed"
+                                }
+
+                                $testResult.Details += $devTests
+                                $failedTests = $devTests | Where-Object { $_ -like "❌*" }
+                                $testResult.Success = ($failedTests.Count -eq 0)
+                                $testResult.Message = if ($testResult.Success) {
+                                    "DevEnvironment functional"
+                                } else {
+                                    "DevEnvironment has issues"
+                                }
+                            } catch {
+                                $testResult.Success = $false
+                                $testResult.Message = "DevEnvironment test failed: $($_.Exception.Message)"
+                            }
+                        }
+
+                        'FileSystem-Complete' {
+                            # Complete file system testing
+                            $fsTests = @()
+                            $criticalPaths = @(
+                                "$ProjectRoot/aither-core",
+                                "$ProjectRoot/aither-core/modules",
+                                "$ProjectRoot/tests",
+                                "$ProjectRoot/configs",
+                                "$ProjectRoot/docs",
+                                "$ProjectRoot/logs"
+                            )
+
+                            foreach ($path in $criticalPaths) {
+                                if (Test-Path $path) {
+                                    # Test read access
+                                    try {
+                                        $items = Get-ChildItem $path -ErrorAction Stop | Select-Object -First 1
+                                        $fsTests += "✅ $path - Read access OK"
+
+                                        # Test write access (where appropriate)
+                                        if ($path -like "*logs*" -or $path -like "*tests*") {
+                                            try {
+                                                $testFile = Join-Path $path 'test-write-access.tmp'
+                                                'test' | Out-File $testFile -ErrorAction Stop
+                                                Remove-Item $testFile -ErrorAction SilentlyContinue
+                                                $fsTests += "✅ $path - Write access OK"
+                                            } catch {
+                                                $fsTests += "⚠️ $path - Limited write access"
+                                            }
+                                        }
+                                    } catch {
+                                        $fsTests += "❌ $path - Access denied: $($_.Exception.Message)"
+                                    }
+                                } else {
+                                    $fsTests += "❌ $path - Path not found"
+                                }
+                            }
+
+                            $testResult.Details += $fsTests
+                            $failedTests = $fsTests | Where-Object { $_ -like "❌*" }
+                            $testResult.Success = ($failedTests.Count -eq 0)
+                            $testResult.Message = if ($testResult.Success) {
+                                "Complete file system access validated"
+                            } else {
+                                "File system access issues detected"
+                            }
+                        }
+
+                        'CrossPlatform-Basic' {
+                            # Basic cross-platform compatibility testing
+                            $platformTests = @()
+
+                            # Test platform detection
+                            $platform = $PSVersionTable.Platform
+                            $platformTests += "✅ Platform detected: $platform"
+
+                            # Test path handling
+                            $testPath = Join-Path $ProjectRoot 'aither-core' 'modules'
+                            if (Test-Path $testPath) {
+                                $platformTests += "✅ Cross-platform path handling works"
+                            } else {
+                                $platformTests += "❌ Cross-platform path handling failed"
+                            }
+
+                            # Test PowerShell version compatibility
+                            $psVersion = $PSVersionTable.PSVersion
+                            if ($psVersion.Major -ge 7) {
+                                $platformTests += "✅ PowerShell version compatible: $psVersion"
+                            } else {
+                                $platformTests += "❌ PowerShell version incompatible: $psVersion"
+                            }
+
+                            # Test environment variables
+                            if ($env:PROJECT_ROOT) {
+                                $platformTests += "✅ Environment variables set"
+                            } else {
+                                $platformTests += "⚠️ PROJECT_ROOT not set"
+                            }
+
+                            $testResult.Details += $platformTests
+                            $failedTests = $platformTests | Where-Object { $_ -like "❌*" }
+                            $testResult.Success = ($failedTests.Count -eq 0)
+                            $testResult.Message = if ($testResult.Success) {
+                                "Cross-platform compatibility validated"
+                            } else {
+                                "Cross-platform compatibility issues"
+                            }
+                        }
+
+                        'Performance-Complete' {
+                            # Complete performance testing
+                            $perfTests = @()
+                            $startPerfTime = Get-Date
+
+                            # Test module loading performance
+                            $moduleLoadStart = Get-Date
+                            try {
+                                Import-Module "$ProjectRoot/aither-core/modules/Logging" -Force
+                                $moduleLoadTime = ((Get-Date) - $moduleLoadStart).TotalMilliseconds
+
+                                if ($moduleLoadTime -lt 5000) { # 5 seconds max
+                                    $perfTests += "✅ Module loading performance: $($moduleLoadTime.ToString('F0'))ms"
+                                } else {
+                                    $perfTests += "❌ Module loading too slow: $($moduleLoadTime.ToString('F0'))ms"
+                                }
+                            } catch {
+                                $perfTests += "❌ Module loading failed"
+                            }
+
+                            # Test core runner performance
+                            $coreRunnerPath = Join-Path $ProjectRoot 'aither-core/aither-core.ps1'
+                            $coreRunnerStart = Get-Date
+                            try {
+                                $process = Start-Process -FilePath 'pwsh' -ArgumentList @(
+                                    '-File', "`"$coreRunnerPath`"",
+                                    '-NonInteractive', '-WhatIf', '-Verbosity', 'silent'
+                                ) -NoNewWindow -Wait -PassThru
+
+                                $coreRunnerTime = ((Get-Date) - $coreRunnerStart).TotalMilliseconds
+
+                                if ($process.ExitCode -eq 0 -and $coreRunnerTime -lt 30000) { # 30 seconds max
+                                    $perfTests += "✅ Core runner performance: $($coreRunnerTime.ToString('F0'))ms"
+                                } else {
+                                    $perfTests += "❌ Core runner performance issues: $($coreRunnerTime.ToString('F0'))ms"
+                                }
+                            } catch {
+                                $perfTests += "❌ Core runner performance test failed"
+                            }
+
+                            # Test memory usage (basic check)
+                            $memoryBefore = [GC]::GetTotalMemory($false)
+                            Start-Sleep -Milliseconds 100
+                            $memoryAfter = [GC]::GetTotalMemory($true)
+                            $memoryIncrease = ($memoryAfter - $memoryBefore) / 1MB
+
+                            if ($memoryIncrease -lt 50) { # 50MB max increase
+                                $perfTests += "✅ Memory usage acceptable: $($memoryIncrease.ToString('F1'))MB"
+                            } else {
+                                $perfTests += "⚠️ High memory usage: $($memoryIncrease.ToString('F1'))MB"
+                            }
+
+                            $testResult.Details += $perfTests
+                            $failedTests = $perfTests | Where-Object { $_ -like "❌*" }
+                            $testResult.Success = ($failedTests.Count -eq 0)
+                            $testResult.Message = if ($testResult.Success) {
+                                "Complete performance validation passed"
+                            } else {
+                                "Performance issues detected"
+                            }
+                        }
+
+                        'Integration-Core' {
+                            # Core integration testing between modules
+                            $integrationTests = @()
+
+                            try {
+                                # Test Logging + ParallelExecution integration
+                                Import-Module "$ProjectRoot/aither-core/modules/Logging" -Force
+                                Import-Module "$ProjectRoot/aither-core/modules/ParallelExecution" -Force
+
+                                $testData = @(1, 2, 3)
+                                $results = Invoke-ParallelForEach -InputObject $testData -ScriptBlock {
+                                    param($number)
+                                    Write-CustomLog -Level 'INFO' -Message "Processing number: $number"
+                                    return $number * 2
+                                } -ThrottleLimit 2
+
+                                if ($results.Count -eq $testData.Count) {
+                                    $integrationTests += "✅ Logging + ParallelExecution integration works"
+                                } else {
+                                    $integrationTests += "❌ Logging + ParallelExecution integration failed"
+                                }
+
+                                # Test TestingFramework integration
+                                if (Get-Module TestingFramework -ListAvailable) {
+                                    Import-Module "$ProjectRoot/aither-core/modules/TestingFramework" -Force
+                                    $integrationTests += "✅ TestingFramework integration available"
+                                } else {
+                                    $integrationTests += "⚠️ TestingFramework integration limited"
+                                }
+
+                                $testResult.Details += $integrationTests
+                                $failedTests = $integrationTests | Where-Object { $_ -like "❌*" }
+                                $testResult.Success = ($failedTests.Count -eq 0)
+                                $testResult.Message = if ($testResult.Success) {
+                                    "Core integration working"
+                                } else {
+                                    "Integration issues detected"
+                                }
+                            } catch {
+                                $testResult.Success = $false
+                                $testResult.Message = "Integration test failed: $($_.Exception.Message)"
+                            }
+                        }
+
                         default {
                             $testResult.Success = $false
                             $testResult.Message = "Test '$TestName' not implemented"

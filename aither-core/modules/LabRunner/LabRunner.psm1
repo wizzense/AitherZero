@@ -312,6 +312,94 @@ function Get-LabConfig {
     }
 }
 
+# ============================================================================
+# LAB AUTOMATION COMPATIBILITY FUNCTIONS
+# ============================================================================
+
+function Start-LabAutomation {
+    <#
+    .SYNOPSIS
+        Starts lab automation workflow
+
+    .DESCRIPTION
+        Compatibility function for starting lab automation processes
+
+    .PARAMETER Configuration
+        Lab configuration parameters
+
+    .PARAMETER Steps
+        Specific lab steps to execute
+    #>
+    [CmdletBinding()]
+    param(
+        [hashtable]$Configuration = @{},
+        [string[]]$Steps = @()
+    )
+
+    Write-CustomLog -Message "🚀 Starting lab automation workflow" -Level "INFO"
+
+    try {
+        if ($Steps.Count -gt 0) {
+            foreach ($step in $Steps) {
+                Write-CustomLog -Message "📋 Executing lab step: $step" -Level "INFO"
+                Invoke-LabStep -StepName $step -Config $Configuration
+            }
+        } else {
+            Write-CustomLog -Message "📋 Executing default lab configuration" -Level "INFO"
+            $config = Get-LabConfig
+            Invoke-ParallelLabRunner -Config $config
+        }
+
+        return @{
+            Status = "Success"
+            Message = "Lab automation completed successfully"
+            ExecutedSteps = $Steps
+        }
+    } catch {
+        Write-CustomLog -Message "❌ Lab automation failed: $($_.Exception.Message)" -Level "ERROR"
+        throw
+    }
+}
+
+function Get-LabStatus {
+    <#
+    .SYNOPSIS
+        Gets the current status of lab automation
+
+    .DESCRIPTION
+        Compatibility function for retrieving lab automation status
+
+    .PARAMETER Detailed
+        Whether to return detailed status information
+    #>
+    [CmdletBinding()]
+    param(
+        [switch]$Detailed
+    )
+
+    Write-CustomLog -Message "📊 Retrieving lab automation status" -Level "INFO"
+
+    try {
+        $status = @{
+            Timestamp = Get-Date
+            Platform = Get-Platform
+            ConfigurationLoaded = $null -ne (Get-LabConfig -ErrorAction SilentlyContinue)
+            ParallelSupport = Test-ParallelRunnerSupport
+        }
+
+        if ($Detailed) {
+            $config = Get-LabConfig -ErrorAction SilentlyContinue
+            $status.Configuration = $config
+            $status.AvailableSteps = if ($config) { $config.Keys } else { @() }
+        }
+
+        return $status
+    } catch {
+        Write-CustomLog -Message "❌ Failed to get lab status: $($_.Exception.Message)" -Level "ERROR"
+        throw
+    }
+}
+
 # Import nested module for additional functions if available
 try {
     Import-Module (Join-Path $PSScriptRoot 'Resolve-ProjectPath.psm1') -Force -ErrorAction Stop
@@ -350,5 +438,7 @@ Export-ModuleMember -Function @(
     'Invoke-ArchiveDownload',
     'Get-Platform',
     'Invoke-OpenTofuInstaller',
-    'Invoke-ParallelLabRunner'
+    'Invoke-ParallelLabRunner',
+    'Start-LabAutomation',
+    'Get-LabStatus'
 )
