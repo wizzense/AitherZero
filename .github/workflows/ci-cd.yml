@@ -1,0 +1,484 @@
+name: Comprehensive CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - 'LICENSE'
+  pull_request:
+    branches: [ main, develop ]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - 'LICENSE'
+  workflow_dispatch:
+    inputs:
+      test_level:
+        description: 'Test Level (Quick/Standard/Complete)'
+        required: false
+        default: 'Standard'
+        type: choice
+        options:
+          - Quick
+          - Standard
+          - Complete
+
+# Prevent duplicate runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+
+jobs:
+  # Dynamic test matrix based on event type
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      test-level: ${{ steps.determine-level.outputs.level }}
+      matrix: ${{ steps.determine-level.outputs.matrix }}
+    steps:
+      - name: Determine test level and matrix
+        id: determine-level
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            LEVEL="${{ github.event.inputs.test_level }}"
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            LEVEL="Standard"
+          else
+            LEVEL="Quick"
+          fi
+          
+          echo "level=$LEVEL" >> $GITHUB_OUTPUT
+          
+          case $LEVEL in
+            "Quick")
+              echo 'matrix={"os":["ubuntu-latest","windows-latest"],"include":[{"os":"ubuntu-latest","shell":"pwsh"},{"os":"windows-latest","shell":"pwsh"}]}' >> $GITHUB_OUTPUT
+              ;;
+            "Standard")
+              echo 'matrix={"os":["ubuntu-latest","windows-latest","macos-latest"],"include":[{"os":"ubuntu-latest","shell":"pwsh"},{"os":"windows-latest","shell":"pwsh"},{"os":"macos-latest","shell":"pwsh"}]}' >> $GITHUB_OUTPUT
+              ;;
+            "Complete")
+              echo 'matrix={"os":["ubuntu-latest","windows-latest","macos-latest","ubuntu-20.04","windows-2019"],"include":[{"os":"ubuntu-latest","shell":"pwsh"},{"os":"windows-latest","shell":"pwsh"},{"os":"macos-latest","shell":"pwsh"},{"os":"ubuntu-20.04","shell":"pwsh"},{"os":"windows-2019","shell":"pwsh"}]}' >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+  # PowerShell linting and syntax validation
+  lint:
+    name: Lint & Syntax Check (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: setup
+    strategy:
+      matrix: ${{ fromJson(needs.setup.outputs.matrix) }}
+      fail-fast: false
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PowerShell
+        shell: pwsh
+        run: |
+          Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Green
+          Write-Host "Platform: $($PSVersionTable.Platform)" -ForegroundColor Green
+
+      - name: Install PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable PSScriptAnalyzer)) {
+            Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+          }
+
+      - name: Run PowerShell Script Analysis
+        shell: pwsh
+        run: |
+          $results = @()
+          $patterns = @('*.ps1', '*.psm1', '*.psd1')
+          
+          foreach ($pattern in $patterns) {
+            $files = Get-ChildItem -Path . -Filter $pattern -Recurse -ErrorAction SilentlyContinue
+            foreach ($file in $files) {
+              # Skip test files and temporary files
+              if ($file.FullName -match '(test|temp|\.temp)' -or $file.FullName -match 'tests[/\\]') {
+                continue
+              }
+              
+              Write-Host "Analyzing: $($file.FullName)" -ForegroundColor Cyan
+              try {
+                $analysis = Invoke-ScriptAnalyzer -Path $file.FullName -Severity Warning,Error
+                if ($analysis) {
+                  $results += $analysis
+                  $analysis | ForEach-Object {
+                    Write-Warning "$($_.ScriptName):$($_.Line) - $($_.Message)"
+                  }
+                }
+              } catch {
+                Write-Warning "Could not analyze $($file.FullName): $($_.Exception.Message)"
+              }
+            }
+          }
+          
+          $errorCount = ($results | Where-Object Severity -eq 'Error').Count
+          $warningCount = ($results | Where-Object Severity -eq 'Warning').Count
+          
+          Write-Host "Analysis complete: $errorCount errors, $warningCount warnings" -ForegroundColor Yellow
+          
+          if ($errorCount -gt 0) {
+            Write-Error "Script analysis found $errorCount errors"
+            exit 1
+          }
+
+      - name: PowerShell Syntax Check
+        shell: pwsh
+        run: |
+          $errors = @()
+          $patterns = @('*.ps1', '*.psm1')
+          
+          foreach ($pattern in $patterns) {
+            $files = Get-ChildItem -Path . -Filter $pattern -Recurse -ErrorAction SilentlyContinue
+            foreach ($file in $files) {
+              # Skip test files and temporary files
+              if ($file.FullName -match '(test|temp|\.temp)' -or $file.FullName -match 'tests[/\\]') {
+                continue
+              }
+              
+              Write-Host "Syntax checking: $($file.FullName)" -ForegroundColor Cyan
+              try {
+                $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $file.FullName -Raw), [ref]$null)
+                Write-Host "✓ Syntax OK: $($file.Name)" -ForegroundColor Green
+              } catch {
+                $errors += "Syntax error in $($file.FullName): $($_.Exception.Message)"
+                Write-Error "Syntax error in $($file.FullName): $($_.Exception.Message)"
+              }
+            }
+          }
+          
+          if ($errors.Count -gt 0) {
+            Write-Error "Found $($errors.Count) syntax errors"
+            exit 1
+          }
+
+  # Comprehensive test suite
+  test:
+    name: Test Suite (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: [setup, lint]
+    strategy:
+      matrix: ${{ fromJson(needs.setup.outputs.matrix) }}
+      fail-fast: false
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PowerShell environment
+        shell: pwsh
+        run: |
+          Write-Host "Setting up PowerShell environment..." -ForegroundColor Cyan
+          Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Green
+          Write-Host "Platform: $($PSVersionTable.Platform)" -ForegroundColor Green
+
+      - name: Install test dependencies
+        shell: pwsh
+        run: |
+          $modules = @('Pester')
+          foreach ($module in $modules) {
+            if (-not (Get-Module -ListAvailable $module)) {
+              Write-Host "Installing $module..." -ForegroundColor Yellow
+              Install-Module -Name $module -Force -Scope CurrentUser
+            }
+          }
+
+      - name: Run bulletproof validation
+        shell: pwsh
+        run: |
+          $testLevel = "${{ needs.setup.outputs.test-level }}"
+          Write-Host "Running $testLevel level tests..." -ForegroundColor Cyan
+          
+          # Map CI test levels to bulletproof validation levels
+          $validationLevel = switch ($testLevel) {
+            "Quick" { "Quick" }
+            "Standard" { "Standard" }
+            "Complete" { "Complete" }
+            default { "Standard" }
+          }
+          
+          if (Test-Path './tests/Run-BulletproofValidation.ps1') {
+            pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel $validationLevel -CI -FailFast
+          } else {
+            Write-Warning "Bulletproof validation script not found, running basic tests"
+            if (Test-Path './tests') {
+              $testFiles = Get-ChildItem -Path './tests' -Filter '*.Tests.ps1' -Recurse
+              if ($testFiles) {
+                Invoke-Pester -Path $testFiles.FullName -Output Detailed
+              } else {
+                Write-Host "No test files found" -ForegroundColor Yellow
+              }
+            }
+          }
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}
+          path: |
+            tests/results/
+            logs/
+          retention-days: 30
+
+  # Build validation
+  build:
+    name: Build Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: [setup, lint]
+    strategy:
+      matrix: ${{ fromJson(needs.setup.outputs.matrix) }}
+      fail-fast: false
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PowerShell environment
+        shell: pwsh
+        run: |
+          Write-Host "Setting up build environment..." -ForegroundColor Cyan
+          Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Green
+
+      - name: Test module imports
+        shell: pwsh
+        run: |
+          Write-Host "Testing module imports..." -ForegroundColor Cyan
+          
+          if (Test-Path './aither-core/modules') {
+            $modules = Get-ChildItem -Path './aither-core/modules' -Directory
+            $importErrors = @()
+            
+            foreach ($module in $modules) {
+              try {
+                Write-Host "Testing import: $($module.Name)" -ForegroundColor Yellow
+                Import-Module $module.FullName -Force -ErrorAction Stop
+                Write-Host "✓ Successfully imported: $($module.Name)" -ForegroundColor Green
+              } catch {
+                $importErrors += "Failed to import $($module.Name): $($_.Exception.Message)"
+                Write-Error "Failed to import $($module.Name): $($_.Exception.Message)"
+              }
+            }
+            
+            if ($importErrors.Count -gt 0) {
+              Write-Error "Found $($importErrors.Count) module import errors"
+              exit 1
+            }
+          } else {
+            Write-Host "No modules directory found, skipping module import tests" -ForegroundColor Yellow
+          }
+
+      - name: Validate build scripts
+        shell: pwsh
+        run: |
+          Write-Host "Validating build scripts..." -ForegroundColor Cyan
+          
+          $buildScripts = @()
+          if (Test-Path './build') {
+            $buildScripts += Get-ChildItem -Path './build' -Filter '*.ps1' -ErrorAction SilentlyContinue
+          }
+          if (Test-Path './aither-core/core-runner.ps1') {
+            $buildScripts += Get-Item './aither-core/core-runner.ps1'
+          }
+          
+          if ($buildScripts.Count -eq 0) {
+            Write-Host "No build scripts found" -ForegroundColor Yellow
+            exit 0
+          }
+          
+          foreach ($script in $buildScripts) {
+            Write-Host "Validating: $($script.Name)" -ForegroundColor Yellow
+            try {
+              # Test with -WhatIf to avoid actual execution
+              if ($script.Name -eq 'core-runner.ps1') {
+                pwsh -File $script.FullName -NonInteractive -WhatIf -ErrorAction Stop
+              } else {
+                # For other scripts, just test syntax
+                $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $script.FullName -Raw), [ref]$null)
+              }
+              Write-Host "✓ Validated: $($script.Name)" -ForegroundColor Green
+            } catch {
+              Write-Error "Build script validation failed for $($script.Name): $($_.Exception.Message)"
+              exit 1
+            }
+          }
+
+  # Security scanning
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: PowerShell security check
+        shell: pwsh
+        run: |
+          Write-Host "Running PowerShell security checks..." -ForegroundColor Cyan
+          
+          # Check for common security issues
+          $securityIssues = @()
+          $patterns = @('*.ps1', '*.psm1')
+          
+          foreach ($pattern in $patterns) {
+            $files = Get-ChildItem -Path . -Filter $pattern -Recurse -ErrorAction SilentlyContinue
+            foreach ($file in $files) {
+              $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
+              if (-not $content) { continue }
+              
+              # Check for potential security issues
+              if ($content -match 'Invoke-Expression|iex\s') {
+                $securityIssues += "Potential code injection risk in $($file.FullName): Invoke-Expression usage"
+              }
+              if ($content -match 'ConvertTo-SecureString.*-AsPlainText.*-Force') {
+                $securityIssues += "Insecure credential handling in $($file.FullName): Plain text to SecureString conversion"
+              }
+              if ($content -match 'System\.Net\.WebClient|Invoke-WebRequest.*-UseBasicParsing') {
+                Write-Host "Info: Web request found in $($file.FullName) - review for security" -ForegroundColor Yellow
+              }
+            }
+          }
+          
+          if ($securityIssues.Count -gt 0) {
+            foreach ($issue in $securityIssues) {
+              Write-Warning $issue
+            }
+            Write-Error "Found $($securityIssues.Count) potential security issues"
+            exit 1
+          } else {
+            Write-Host "No security issues detected" -ForegroundColor Green
+          }
+
+  # Performance testing (on Standard/Complete levels)
+  performance:
+    name: Performance Test
+    runs-on: ubuntu-latest
+    needs: [setup, test]
+    if: contains(fromJson('["Standard", "Complete"]'), needs.setup.outputs.test-level)
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run performance tests
+        shell: pwsh
+        run: |
+          Write-Host "Running performance tests..." -ForegroundColor Cyan
+          
+          if (Test-Path './tests/performance') {
+            $perfTests = Get-ChildItem -Path './tests/performance' -Filter '*.Tests.ps1' -ErrorAction SilentlyContinue
+            if ($perfTests) {
+              foreach ($test in $perfTests) {
+                Write-Host "Running: $($test.Name)" -ForegroundColor Yellow
+                pwsh -File $test.FullName
+              }
+            } else {
+              Write-Host "No performance tests found" -ForegroundColor Yellow
+            }
+          } else {
+            Write-Host "No performance test directory found" -ForegroundColor Yellow
+          }
+
+  # CI summary and PR automation
+  summary:
+    name: CI/CD Summary
+    runs-on: ubuntu-latest
+    needs: [setup, lint, test, build, security]
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate CI summary
+        shell: pwsh
+        run: |
+          $summary = @"
+          # 🚀 CI/CD Pipeline Summary
+          
+          **Test Level**: ${{ needs.setup.outputs.test-level }}
+          **Trigger**: ${{ github.event_name }}
+          **Branch**: ${{ github.ref_name }}
+          **Commit**: ${{ github.sha }}
+          
+          ## Job Results
+          - **Lint**: ${{ needs.lint.result }}
+          - **Test**: ${{ needs.test.result }}
+          - **Build**: ${{ needs.build.result }}
+          - **Security**: ${{ needs.security.result }}
+          
+          ## Platform Coverage
+          Testing completed on multiple platforms for cross-platform compatibility.
+          
+          ## Next Steps
+          "$@
+          
+          if ("${{ needs.test.result }}" -eq "success" -and "${{ needs.build.result }}" -eq "success") {
+            $summary += "`n✅ **Ready for merge** - All checks passed"
+          } else {
+            $summary += "`n❌ **Not ready** - Some checks failed"
+          }
+          
+          Write-Host $summary
+          
+          # Write to GitHub step summary
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
+
+      - name: Comment on PR (if applicable)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const summary = `## 🤖 CI/CD Automation Results
+            
+            **Test Level**: ${{ needs.setup.outputs.test-level }}
+            **Overall Status**: ${{ job.status }}
+            
+            ### Job Results
+            - Lint & Syntax: ${{ needs.lint.result }}
+            - Test Suite: ${{ needs.test.result }}
+            - Build Validation: ${{ needs.build.result }}
+            - Security Scan: ${{ needs.security.result }}
+            
+            ### Platform Coverage
+            ✅ Multi-platform testing completed
+            
+            ${{ needs.test.result == 'success' && needs.build.result == 'success' ? '🎉 **All checks passed!** Ready for review and merge.' : '⚠️ **Some checks failed.** Please review the logs and fix any issues.' }}
+            
+            ---
+            *This comment was automatically generated by the CI/CD pipeline.*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
