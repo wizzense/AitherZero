@@ -158,7 +158,7 @@ function Invoke-ScriptTest {
         
         # Execute the script
         $result = $null
-        $error = $null
+        $testError = $null
         
         if ($Scenario.ShouldThrow) {
             if ($Scenario.ExpectedError) {
@@ -170,7 +170,7 @@ function Invoke-ScriptTest {
             try {
                 $result = & $ScriptPath -Config $Scenario.Config
             } catch {
-                $error = $_
+                $testError = $_
                 if (-not $Scenario.ShouldThrow) {
                     throw "Script failed unexpectedly: $_"
                 }
@@ -195,7 +195,7 @@ function Invoke-ScriptTest {
         
         # Run custom validation if provided
         if ($Scenario.CustomValidation) {
-            & $Scenario.CustomValidation $result $error
+            & $Scenario.CustomValidation $result $testError
         }
         
     } catch {
