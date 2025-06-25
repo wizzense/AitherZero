@@ -12,11 +12,17 @@ if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
     Write-Verbose 'Logging module already available'
 } else {
     $loggingPaths = @(
-        'Logging', # Try module name first (if in PSModulePath)
-        (Join-Path (Split-Path $PSScriptRoot -Parent) 'Logging'), # Relative to modules directory
-        (Join-Path $env:PWSH_MODULES_PATH 'Logging'), # Environment path
-        (Join-Path $env:PROJECT_ROOT 'aither-core/modules/Logging')  # Full project path
+        'Logging' # Try module name first (if in PSModulePath)
+        (Join-Path (Split-Path $PSScriptRoot -Parent) 'Logging') # Relative to modules directory
     )
+
+    # Add environment paths only if they exist
+    if ($env:PWSH_MODULES_PATH) {
+        $loggingPaths += (Join-Path $env:PWSH_MODULES_PATH 'Logging')
+    }
+    if ($env:PROJECT_ROOT) {
+        $loggingPaths += (Join-Path $env:PROJECT_ROOT 'aither-core/modules/Logging')
+    }
 
     foreach ($loggingPath in $loggingPaths) {
         if ($loggingImported) { break }
@@ -27,12 +33,13 @@ if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
             } elseif (Test-Path $loggingPath) {
                 Import-Module $loggingPath -Global -ErrorAction Stop
             } else {
+                Write-Verbose "Path does not exist: $loggingPath"
                 continue
             }
             Write-Verbose "Successfully imported Logging module from: $loggingPath"
             $loggingImported = $true
         } catch {
-            Write-Verbose "Failed to import Logging from $loggingPath : $_"
+            Write-Verbose "Failed to import Logging from $loggingPath : $($_.Exception.Message)"
         }
     }
 }
