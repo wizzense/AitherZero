@@ -515,16 +515,43 @@ jobs:
             Set-Content -Path "$packageDir/Start-AitherZero.ps1" -Value $launcherContent
             Write-Host "✓ Application launcher created" -ForegroundColor Green
 
-            # Platform-specific startup scripts with execution policy bypass
-            if ("${{ matrix.platform }}" -eq "windows") {
-              $winScript = "@echo off`necho 🚀 AitherZero v$version - Windows Quick Start`necho.`necho Starting AitherZero with execution policy bypass for downloaded packages...`necho.`npwsh -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" %*`nif %ERRORLEVEL% NEQ 0 (`necho.`necho ❌ AitherZero encountered an error.`necho.`necho 💡 Troubleshooting:`necho   1. Try running: pwsh -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" -Setup`necho   2. Or run: pwsh -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" -Help`necho   3. Check requirements: PowerShell 7+, Git, OpenTofu/Terraform`necho.`npause`n)"
-              Set-Content -Path "$packageDir/AitherZero.bat" -Value $winScript -Encoding UTF8
+            # Use FIXED launcher templates instead of inline generation
+            Write-Host "Copying fixed launcher templates..." -ForegroundColor Yellow
+            if (Test-Path "templates/launchers") {
+              # Copy the FIXED launchers from templates
+              if (Test-Path "templates/launchers/Start-AitherZero.ps1") {
+                Copy-Item -Path "templates/launchers/Start-AitherZero.ps1" -Destination "$packageDir/Start-AitherZero.ps1" -Force
+                Write-Host "✓ Fixed PowerShell launcher copied" -ForegroundColor Green
+              }
 
-              # Also create a PowerShell-native launcher for Windows
-              $winPsScript = "# AitherZero Windows PowerShell Launcher`n# This bypasses execution policy issues for downloaded packages`nWrite-Host `"🚀 AitherZero v$version - Windows PowerShell Launcher`" -ForegroundColor Cyan`nWrite-Host `"`"`nSet-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force`n& `".\Start-AitherZero.ps1`" @args"
-              Set-Content -Path "$packageDir/Start-AitherZero-Windows.ps1" -Value $winPsScript
-              Write-Host "✓ Created Windows quick-start scripts (AitherZero.bat + Start-AitherZero-Windows.ps1)" -ForegroundColor Green
+              if ("${{ matrix.platform }}" -eq "windows" -and (Test-Path "templates/launchers/AitherZero.bat")) {
+                Copy-Item -Path "templates/launchers/AitherZero.bat" -Destination "$packageDir/AitherZero.bat" -Force
+                Write-Host "✓ Fixed Windows batch launcher copied" -ForegroundColor Green
+              }
             } else {
+              Write-Warning "Launcher templates not found - using fallback generation"
+
+              # Platform-specific startup scripts with execution policy bypass (FALLBACK ONLY)
+              if ("${{ matrix.platform }}" -eq "windows") {
+                $winScript = "@echo off`necho 🚀 AitherZero v$version - Windows Quick Start`necho.`necho Starting AitherZero with execution policy bypass for downloaded packages...`necho.`npwsh -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" %*`nif %ERRORLEVEL% NEQ 0 (`necho.`necho ❌ AitherZero encountered an error.`necho.`necho 💡 Troubleshooting:`necho   1. Try running: pwsh -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" -Setup`necho   2. Or run: pwsh -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" -Help`necho   3. Check requirements: PowerShell 7+, Git, OpenTofu/Terraform`necho.`npause`n)"
+                Set-Content -Path "$packageDir/AitherZero.bat" -Value $winScript -Encoding UTF8
+
+                # Also create a PowerShell-native launcher for Windows
+                $winPsScript = "# AitherZero Windows PowerShell Launcher`n# This bypasses execution policy issues for downloaded packages`nWrite-Host `"🚀 AitherZero v$version - Windows PowerShell Launcher`" -ForegroundColor Cyan`nWrite-Host `"`"`nSet-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force`n& `".\Start-AitherZero.ps1`" @args"
+                Set-Content -Path "$packageDir/Start-AitherZero-Windows.ps1" -Value $winPsScript
+                Write-Host "✓ Created Windows quick-start scripts (AitherZero.bat + Start-AitherZero-Windows.ps1)" -ForegroundColor Green
+              } else {
+                $unixScript = "#!/bin/bash`necho `"🚀 AitherZero v$version - $(if ("${{ matrix.platform }}" -eq "macos") { "macOS" } else { "Linux" }) Quick Start`"`necho `"Cross-Platform Infrastructure Automation with OpenTofu/Terraform`"`necho `"`"`npwsh -File `"Start-AitherZero.ps1`" `$@"
+                Set-Content -Path "$packageDir/aitherzero.sh" -Value $unixScript -Encoding UTF8
+                if (-not $IsWindows) {
+                  chmod +x "$packageDir/aitherzero.sh"
+                }
+                Write-Host "✓ Created Unix quick-start script" -ForegroundColor Green
+              }
+            }
+
+            # For non-Windows platforms, always create Unix launcher script
+            if ("${{ matrix.platform }}" -ne "windows") {
               $unixScript = "#!/bin/bash`necho `"🚀 AitherZero v$version - $(if ("${{ matrix.platform }}" -eq "macos") { "macOS" } else { "Linux" }) Quick Start`"`necho `"Cross-Platform Infrastructure Automation with OpenTofu/Terraform`"`necho `"`"`npwsh -File `"Start-AitherZero.ps1`" `$@"
               Set-Content -Path "$packageDir/aitherzero.sh" -Value $unixScript -Encoding UTF8
               if (-not $IsWindows) {

@@ -7,26 +7,26 @@
 param(
     [Parameter(HelpMessage="First-time setup and environment validation")]
     [switch]$Setup,
-    
+
     [Parameter(HelpMessage="Show detailed usage information")]
     [switch]$Help,
-    
+
     [Parameter(HelpMessage="Enable interactive mode (default)")]
     [switch]$Interactive,
-    
+
     [Parameter(HelpMessage="Run in automated mode without prompts")]
     [switch]$Auto,
-    
+
     [Parameter(HelpMessage="Specify which scripts/modules to run")]
     [string[]]$Scripts,
-    
+
     [Parameter(HelpMessage="Logging verbosity level")]
     [ValidateSet("silent", "normal", "detailed")]
     [string]$Verbosity = "normal",
-    
+
     [Parameter(HelpMessage="Custom configuration file path")]
     [string]$ConfigFile,
-    
+
     [Parameter(HelpMessage="Show what would be done without executing")]
     [switch]$WhatIf
 )
@@ -74,7 +74,7 @@ if ($Setup) {
     Write-Host ""
     Write-Host "This will guide you through setting up AitherZero for your environment."
     Write-Host ""
-    
+
     # Check PowerShell version with improved messaging
     if ($psVersion -lt 7) {
         Write-Host "⚠️  PowerShell $($PSVersionTable.PSVersion) detected" -ForegroundColor Yellow
@@ -86,7 +86,7 @@ if ($Setup) {
     } else {
         Write-Host "✅ PowerShell $($PSVersionTable.PSVersion) detected - Full compatibility!" -ForegroundColor Green
     }
-    
+
     # Check Git
     $gitVersion = try { git --version 2>$null } catch { $null }
     if ($gitVersion) {
@@ -95,7 +95,7 @@ if ($Setup) {
         Write-Host "⚠️  Git not found - required for PatchManager and repository operations" -ForegroundColor Yellow
         Write-Host "Install Git: https://git-scm.com/downloads" -ForegroundColor Yellow
     }
-    
+
     # Check OpenTofu/Terraform
     $tofuVersion = try { tofu version 2>$null } catch { $null }
     $terraformVersion = try { terraform version 2>$null } catch { $null }
@@ -108,7 +108,7 @@ if ($Setup) {
         Write-Host "Install OpenTofu: https://opentofu.org/docs/intro/install/" -ForegroundColor Yellow
         Write-Host "Or Terraform: https://developer.hashicorp.com/terraform/downloads" -ForegroundColor Yellow
     }
-    
+
     Write-Host ""
     Write-Host "🎯 Setup Complete!" -ForegroundColor Green
     Write-Host ""
@@ -122,10 +122,20 @@ if ($Setup) {
 
 # Import essential modules with error handling (if available)
 Write-Host "Loading AitherZero modules..." -ForegroundColor Cyan
-if (Test-Path "$PSScriptRoot/modules") {
+
+# Determine modules directory based on launcher location
+$modulesPath = Join-Path $PSScriptRoot "modules"
+if (-not (Test-Path $modulesPath)) {
+    $modulesPath = Join-Path $PSScriptRoot "aither-core/modules"
+}
+if (-not (Test-Path $modulesPath)) {
+    $modulesPath = Join-Path $PSScriptRoot "../../aither-core/modules"
+}
+
+if (Test-Path $modulesPath) {
     $loadedModules = 0
-    $totalModules = (Get-ChildItem "$PSScriptRoot/modules" -Directory).Count
-    Get-ChildItem "$PSScriptRoot/modules" -Directory | ForEach-Object {
+    $totalModules = (Get-ChildItem $modulesPath -Directory).Count
+    Get-ChildItem $modulesPath -Directory | ForEach-Object {
         try {
             Import-Module $_.FullName -Force -ErrorAction Stop
             $loadedModules++
@@ -136,7 +146,8 @@ if (Test-Path "$PSScriptRoot/modules") {
     }
     Write-Host "Loaded $loadedModules/$totalModules modules successfully" -ForegroundColor Cyan
 } else {
-    Write-Host "⚠️  Modules directory not found at $PSScriptRoot/modules" -ForegroundColor Yellow
+    Write-Host "⚠️  Modules directory not found at expected locations" -ForegroundColor Yellow
+    Write-Host "   Checked: $PSScriptRoot/modules, $PSScriptRoot/aither-core/modules, $PSScriptRoot/../../aither-core/modules" -ForegroundColor Yellow
     Write-Host "   Some advanced features may not be available." -ForegroundColor White
 }
 
@@ -161,29 +172,41 @@ Write-Host "Starting AitherZero core application..." -ForegroundColor Green
 Write-Host ""
 
 try {
-    $coreScriptPath = "$PSScriptRoot/aither-core.ps1"
-    
+    # Resolve path to core application script
+    # This launcher will be in the root of the application package
+    $coreScriptPath = Join-Path $PSScriptRoot "aither-core.ps1"
+
+    # Alternative paths for different deployment scenarios
     if (-not (Test-Path $coreScriptPath)) {
-        throw "Core application file not found: $coreScriptPath"
+        $coreScriptPath = Join-Path $PSScriptRoot "aither-core/aither-core.ps1"
     }
-    
+
+    # If we're in the templates/launchers directory (development scenario)
+    if (-not (Test-Path $coreScriptPath)) {
+        $coreScriptPath = Join-Path $PSScriptRoot "../../aither-core/aither-core.ps1"
+    }
+
+    if (-not (Test-Path $coreScriptPath)) {
+        throw "Core application file not found. Tried: `n  - $(Join-Path $PSScriptRoot 'aither-core.ps1')`n  - $(Join-Path $PSScriptRoot 'aither-core/aither-core.ps1')`n  - $(Join-Path $PSScriptRoot '../../aither-core/aither-core.ps1')"
+    }
+
     # Enhanced execution for PowerShell version compatibility
     if ($psVersion -lt 7) {
         # Check if PowerShell 7 is available for optimal execution
         $pwsh7Available = try { Get-Command pwsh -ErrorAction Stop; $true } catch { $false }
-        
+
         if ($pwsh7Available) {
             Write-Host "⚠️  PowerShell $psVersion detected, but PowerShell 7 is available" -ForegroundColor Yellow
             Write-Host "   Attempting to use PowerShell 7 for optimal compatibility..." -ForegroundColor White
             Write-Host ""
-            
+
             # Build the command line for PowerShell 7
             $pwshArgs = @('-ExecutionPolicy', 'Bypass', '-File', $coreScriptPath) + $coreArgs
-            
+
             # Execute in PowerShell 7
             & pwsh @pwshArgs
             $exitCode = $LASTEXITCODE
-            
+
             if ($exitCode -ne 0) {
                 throw "Core application exited with code: $exitCode"
             }
@@ -191,11 +214,11 @@ try {
             Write-Host "⚠️  PowerShell 7 not available, attempting to run with PowerShell $psVersion..." -ForegroundColor Yellow
             Write-Host "   Some features may be limited." -ForegroundColor White
             Write-Host ""
-            
+
             # Try to run with current PowerShell version
             & $coreScriptPath @coreArgs
             $exitCode = $LASTEXITCODE
-            
+
             if ($exitCode -ne 0) {
                 throw "Core application exited with code: $exitCode"
             }
@@ -204,15 +227,15 @@ try {
         # Running on PowerShell 7+ - execute normally
         & $coreScriptPath @coreArgs
         $exitCode = $LASTEXITCODE
-        
+
         if ($exitCode -ne 0) {
             throw "Core application exited with code: $exitCode"
         }
     }
-    
+
     Write-Host ""
     Write-Host "✅ AitherZero completed successfully!" -ForegroundColor Green
-    
+
 } catch {
     Write-Host ""
     Write-Host "❌ Error running AitherZero: $($_.Exception.Message)" -ForegroundColor Red
@@ -223,7 +246,7 @@ try {
     Write-Host "  3. Check PowerShell version: `$PSVersionTable.PSVersion" -ForegroundColor White
     Write-Host "  4. Ensure all files extracted properly" -ForegroundColor White
     Write-Host ""
-    
+
     if ($psVersion -lt 7) {
         Write-Host "💡 Consider upgrading to PowerShell 7+ for full compatibility:" -ForegroundColor Cyan
         Write-Host "   https://aka.ms/powershell-release-windows" -ForegroundColor White
@@ -232,7 +255,7 @@ try {
         Write-Host "   - Windows: Use AitherZero.bat launcher" -ForegroundColor White
         Write-Host "   - PowerShell: pwsh -ExecutionPolicy Bypass -File aither-core.ps1 -Help" -ForegroundColor White
     }
-    
+
     Write-Host ""
     exit 1
 }

@@ -6,20 +6,20 @@
 param(
     [Parameter(HelpMessage="Show setup information")]
     [switch]$Setup,
-    
+
     [Parameter(HelpMessage="Show help")]
     [switch]$Help,
-    
+
     [Parameter(HelpMessage="Logging verbosity")]
     [ValidateSet("silent", "normal", "detailed")]
     [string]$Verbosity = "normal",
-    
+
     [Parameter(HelpMessage="Scripts to run")]
     [string[]]$Scripts,
-    
+
     [Parameter(HelpMessage="Automated mode")]
     [switch]$Auto,
-    
+
     [Parameter(HelpMessage="Configuration file")]
     [string]$ConfigFile
 )
@@ -45,20 +45,20 @@ if ($Setup) {
     Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor White
     Write-Host "Platform: $($PSVersionTable.Platform)" -ForegroundColor White
     Write-Host ""
-    
+
     if (Test-Path "aither-core.ps1") {
         Write-Host "✅ Core script found" -ForegroundColor Green
     } else {
         Write-Host "❌ Core script missing" -ForegroundColor Red
     }
-    
+
     if (Test-Path "modules") {
         $moduleCount = (Get-ChildItem "modules" -Directory).Count
         Write-Host "✅ Found $moduleCount modules" -ForegroundColor Green
     } else {
         Write-Host "❌ Modules directory missing" -ForegroundColor Red
     }
-    
+
     Write-Host ""
     Write-Host "🎯 Ready to use AitherZero!" -ForegroundColor Green
     Write-Host "Run: pwsh HOTFIX-Launcher.ps1" -ForegroundColor Cyan

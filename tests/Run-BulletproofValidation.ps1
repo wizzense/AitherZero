@@ -112,6 +112,7 @@ $validationSuites = @{
         MaxDuration = 180 # 3 minutes
         Tests       = @(
             @{ Name = 'CoreRunner-Basic'; Type = 'Core'; Critical = $true }
+            @{ Name = 'Launcher-Functionality'; Type = 'Core'; Critical = $true }
             @{ Name = 'Logging-System'; Type = 'Module'; Critical = $true }
             @{ Name = 'Module-Loading'; Type = 'System'; Critical = $true }
             @{ Name = 'Configuration-Valid'; Type = 'System'; Critical = $true }
@@ -126,6 +127,7 @@ $validationSuites = @{
             @{ Name = 'CoreRunner-Basic'; Type = 'Core'; Critical = $true }
             @{ Name = 'CoreRunner-NonInteractive'; Type = 'Core'; Critical = $true }
             @{ Name = 'CoreRunner-Auto'; Type = 'Core'; Critical = $true }
+            @{ Name = 'Launcher-Functionality'; Type = 'Core'; Critical = $true }
             @{ Name = 'All-Modules-Load'; Type = 'Module'; Critical = $true }
             @{ Name = 'All-Modules-Export'; Type = 'Module'; Critical = $true }
             @{ Name = 'Logging-System'; Type = 'Module'; Critical = $true }
@@ -147,6 +149,7 @@ $validationSuites = @{
             @{ Name = 'CoreRunner-NonInteractive'; Type = 'Core'; Critical = $true }
             @{ Name = 'CoreRunner-Auto'; Type = 'Core'; Critical = $true }
             @{ Name = 'CoreRunner-Scripts'; Type = 'Core'; Critical = $true }
+            @{ Name = 'Launcher-Functionality'; Type = 'Core'; Critical = $true }
             @{ Name = 'All-Modules-Load'; Type = 'Module'; Critical = $true }
             @{ Name = 'All-Modules-Export'; Type = 'Module'; Critical = $true }
             @{ Name = 'All-Modules-Functions'; Type = 'Module'; Critical = $true }
@@ -1106,6 +1109,49 @@ try {
                             }
                         }
 
+                        'Launcher-Functionality' {
+                            # Test all launcher scripts for basic functionality
+                            $launcherTestPath = Join-Path $ProjectRoot 'tests/Test-LauncherFunctionality.ps1'
+
+                            if (Test-Path $launcherTestPath) {
+                                try {
+                                    $tempDir = if ($env:TEMP) { $env:TEMP } elseif (Test-Path '/tmp') { '/tmp' } else { $ProjectRoot }
+                                    $tempLog = Join-Path $tempDir 'bulletproof-launcher.log'
+                                    $tempErr = Join-Path $tempDir 'bulletproof-launcher-error.log'
+
+                                    $process = Start-Process -FilePath 'pwsh' -ArgumentList @(
+                                        '-File', "`"$launcherTestPath`""
+                                    ) -NoNewWindow -Wait -PassThru -RedirectStandardOutput $tempLog -RedirectStandardError $tempErr
+
+                                    $testResult.Success = ($process.ExitCode -eq 0)
+
+                                    if (Test-Path $tempLog) {
+                                        $output = Get-Content $tempLog -Raw
+                                        if ($output -match 'All launcher tests passed') {
+                                            $testResult.Message = 'All launcher scripts validated successfully'
+                                            $testResult.Details += 'Batch and PowerShell launchers syntax verified'
+                                            $testResult.Details += 'Path resolution logic validated'
+                                            $testResult.Details += 'Help parameters functional'
+                                        } else {
+                                            $testResult.Success = $false
+                                            $testResult.Message = 'Launcher validation output unexpected'
+                                        }
+                                    }
+
+                                    if (-not $testResult.Success -and (Test-Path $tempErr)) {
+                                        $errorOutput = Get-Content $tempErr -Raw
+                                        $testResult.Message += " - Error: $errorOutput"
+                                    }
+                                } catch {
+                                    $testResult.Success = $false
+                                    $testResult.Message = "Launcher test execution failed: $($_.Exception.Message)"
+                                }
+                            } else {
+                                $testResult.Success = $false
+                                $testResult.Message = "Launcher test script not found: $launcherTestPath"
+                            }
+                        }
+
                         default {
                             $testResult.Success = $false
                             $testResult.Message = "Test '$TestName' not implemented"
@@ -1286,3 +1332,7 @@ $exitCode = if ($isBulletproof) { 0 } else { 1 }
 Write-BulletproofLog "Exit Code: $exitCode" -Level INFO
 
 exit $exitCode
+
+# LAUNCHER TESTS - CRITICAL FOR USER EXPERIENCE
+
+# Include launcher functionality validation in all test runs
