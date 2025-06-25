@@ -1,54 +1,45 @@
 ---
 name: Feature Request
-about: Suggest an idea for AitherZero
-title: '[Feature] '
-labels: ['enhancement']
-assignees: []
+about: Suggest a new feature for AitherZero
+title: '[FEATURE] '
+labels: ['enhancement', 'needs-review']
+assignees: ''
 ---
 
 ## 🚀 Feature Description
-A clear and concise description of the feature you'd like to see implemented.
+A clear and concise description of the feature you'd like to see.
 
-## 💡 Motivation
-Why is this feature needed? What problem does it solve?
+## 💡 Problem Statement
+What problem does this feature solve? Is your feature request related to a problem?
 
-## 📋 Detailed Description
-Provide a detailed description of the proposed feature:
+## 🎯 Proposed Solution
+Describe the solution you'd like to see implemented.
 
-- What should it do?
-- How should it work?
-- What are the expected inputs/outputs?
+## 🔄 Alternative Solutions
+Describe any alternative solutions or features you've considered.
 
-## 🎯 Acceptance Criteria
-What needs to be implemented for this feature to be considered complete?
+## 📦 Affected Modules
+Which modules would this feature impact?
+- [ ] BackupManager
+- [ ] DevEnvironment
+- [ ] LabRunner
+- [ ] Logging
+- [ ] PatchManager
+- [ ] TestingFramework
+- [ ] Other: ____________
 
-- [ ] Requirement 1
-- [ ] Requirement 2
-- [ ] Requirement 3
+## 🧪 Implementation Considerations
+- **Complexity**: [Low/Medium/High]
+- **Breaking Changes**: [Yes/No]
+- **Testing Requirements**: [Unit/Integration/Manual]
 
-## 💻 Implementation Ideas
-If you have ideas about how this could be implemented, please share them:
+## 📋 Acceptance Criteria
+- [ ] Criterion 1
+- [ ] Criterion 2
+- [ ] Criterion 3
 
-```powershell
-# Example code or pseudo-code
-```
+## 🔍 Additional Context
+Add any other context, mockups, or examples about the feature request here.
 
-## 🔗 Related Issues
-List any related issues or pull requests:
-
-- Closes #123
-- Related to #456
-
-## 📚 Additional Context
-Add any other context, screenshots, or examples about the feature request.
-
-## 🎯 Priority
-How important is this feature to you?
-
-- [ ] Low - Nice to have
-- [ ] Medium - Would improve workflow
-- [ ] High - Essential for productivity
-- [ ] Critical - Blocking current work
-
-## 🤝 PatchManager Compatibility
-This issue template is compatible with AitherZero's PatchManager for automated development workflows.
+---
+*This feature request was created using the AitherZero template. Use PatchManager for implementation.*
