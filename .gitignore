@@ -7,6 +7,8 @@ temp-*
 Fix-*
 Demo-*
 Test-*
+# Exception: Critical CI test files
+!tests/Test-LauncherFunctionality.ps1
 *test.ps1
 *debug.ps1
 cleanup-*
