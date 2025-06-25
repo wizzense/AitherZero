@@ -151,24 +151,11 @@ jobs:
                 foreach ($module in $modules) {
                   try {
                     Write-Host "Testing module: $($module.Name)" -ForegroundColor Cyan
-                    
-                    # Skip problematic modules on non-Windows platforms for now
-                    if (-not $IsWindows -and $module.Name -in @('LabRunner', 'ParallelExecution')) {
-                      Write-Host "⚠ Skipping $($module.Name) on ${{ matrix.os }} (known path issues)" -ForegroundColor Yellow
-                      continue
-                    }
-                    
                     Import-Module $module.FullName -Force -ErrorAction Stop
                     Write-Host "✓ Module $($module.Name) imports successfully" -ForegroundColor Green
                   } catch {
-                    Write-Host "❌ Module $($module.Name) failed to import: $($_.Exception.Message)" -ForegroundColor Red
-                    
-                    # Don't fail the build for known module issues, just warn
-                    if ($module.Name -in @('LabRunner', 'ParallelExecution')) {
-                      Write-Host "⚠ Known module issue, continuing..." -ForegroundColor Yellow
-                    } else {
-                      throw
-                    }
+                    Write-Error "Module $($module.Name) failed to import: $($_.Exception.Message)"
+                    exit 1
                   }
                 }
               }
