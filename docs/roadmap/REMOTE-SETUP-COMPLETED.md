@@ -1,8 +1,14 @@
-# Multi-Repository Remote Setup - COMPLETED ✅
+# ARCHIVED: Multi-Repository Remote Setup
 
-## Remote Names Match Repository Names
+> **⚠️ NOTICE**: This document is archived. AitherZero is now a **standalone public repository**.
+> 
+> **New Repository**: https://github.com/wizzense/AitherZero
+> 
+> All development now happens directly in the standalone repository. The multi-repository remote setup is no longer in use.
 
-All repositories use **remote names that exactly match repository names** for maximum clarity.
+## Previous Remote Configuration (Archived)
+
+Remote names that matched repository names for the previous multi-repo setup.
 
 ### ✅ AitherZero (Your Development Fork)
 
