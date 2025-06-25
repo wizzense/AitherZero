@@ -489,92 +489,210 @@ jobs:
             Set-Content -Path "$packageDir/Start-AitherZero.ps1" -Value $launcherContent
             Write-Host "✓ Application launcher created" -ForegroundColor Green
 
-            # Platform-specific startup scripts with execution policy bypass
-            if ("${{ matrix.platform }}" -eq "windows") {
-              $winScript = "@echo off`necho 🚀 AitherZero v$version - Windows Quick Start`necho.`necho Starting AitherZero with execution policy bypass for downloaded packages...`necho.`npwsh -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" %*`nif %ERRORLEVEL% NEQ 0 (`necho.`necho ❌ AitherZero encountered an error.`necho.`necho 💡 Troubleshooting:`necho   1. Try running: pwsh -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" -Setup`necho   2. Or run: pwsh -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" -Help`necho   3. Check requirements: PowerShell 7+, Git, OpenTofu/Terraform`necho.`npause`n)"
-              Set-Content -Path "$packageDir/AitherZero.bat" -Value $winScript -Encoding UTF8
+            # Create Windows-specific launchers with enhanced security handling
+            $winScript = "@echo off
+            echo.
+            echo 🚀 AitherZero v$version - Windows Quick Start (Recommended)
+            echo ================================================
+            echo.
+            echo ✅ Starting AitherZero with secure execution policy bypass...
+            echo    This is the safest way to run downloaded PowerShell packages.
+            echo.
+            
+            REM Check if files are blocked and auto-unblock them
+            echo 🔍 Checking for blocked files...
+            powershell -NoProfile -ExecutionPolicy Bypass -Command `"Get-ChildItem -Path '%~dp0' -Recurse -File | Where-Object { try { Get-Item `$_.FullName -Stream Zone.Identifier -ErrorAction Stop; `$true } catch { `$false } } | ForEach-Object { Write-Host `'Unblocking `$(`$_.Name)`'; Unblock-File `$_.FullName -ErrorAction SilentlyContinue }`" 2>nul
+            
+            echo.
+            echo 🚀 Launching AitherZero...
+            echo.
+            
+            REM Try PowerShell 7 first (recommended), then fallback to Windows PowerShell
+            where pwsh >nul 2>nul
+            if %ERRORLEVEL% EQU 0 (
+                echo ✅ Using PowerShell 7 (recommended)...
+                pwsh -NoProfile -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" %*
+            ) else (
+                echo ⚠️  PowerShell 7 not found, using Windows PowerShell...
+                powershell -NoProfile -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" %*
+            )
+            
+            REM Enhanced error handling and troubleshooting
+            if %ERRORLEVEL% NEQ 0 (
+                echo.
+                echo ❌ AitherZero encountered an error (Exit code: %ERRORLEVEL%)
+                echo.
+                echo 💡 Windows Security Troubleshooting Guide:
+                echo.
+                echo   🔓 File Security Issues:
+                echo      • Right-click this folder ^> Properties ^> Unblock ^> Apply ^> OK
+                echo      • Or run: powershell -Command `"Get-ChildItem -Recurse ^| Unblock-File`"
+                echo      • Then try running this batch file again
+                echo.
+                echo   🛠️  Alternative Methods (if above doesn't work):
+                echo      1. pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1 -Setup
+                echo      2. pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1 -Help
+                echo      3. Use Start-AitherZero-Windows.ps1 launcher
+                echo.
+                echo   📦 Missing Dependencies:
+                echo      • Download PowerShell 7: https://aka.ms/powershell-release-windows
+                echo      • Download Git: https://git-scm.com/download/win
+                echo.
+                echo   🌐 For more help and documentation:
+                echo      • Repository: https://github.com/wizzense/AitherZero
+                echo      • Issues: https://github.com/wizzense/AitherZero/issues
+                echo      • Wiki: https://github.com/wizzense/AitherZero/wiki
+                echo.
+                echo Press any key to close this window...
+                pause >nul
+            )"
+            Set-Content -Path "$packageDir/AitherZero.bat" -Value $winScript -Encoding UTF8
 
-              # Also create a PowerShell-native launcher for Windows
-              $winPsScript = "# AitherZero Windows PowerShell Launcher`n# This bypasses execution policy issues for downloaded packages`nWrite-Host `"🚀 AitherZero v$version - Windows PowerShell Launcher`" -ForegroundColor Cyan`nWrite-Host `"`"`nSet-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force`n& `".\Start-AitherZero.ps1`" @args"
-              Set-Content -Path "$packageDir/Start-AitherZero-Windows.ps1" -Value $winPsScript
-              Write-Host "✓ Created Windows quick-start scripts (AitherZero.bat + Start-AitherZero-Windows.ps1)" -ForegroundColor Green
-            } else {
-              $unixScript = "#!/bin/bash`necho `"🚀 AitherZero v$version - $(if ("${{ matrix.platform }}" -eq "macos") { "macOS" } else { "Linux" }) Quick Start`"`necho `"Cross-Platform Infrastructure Automation with OpenTofu/Terraform`"`necho `"`"`npwsh -File `"Start-AitherZero.ps1`" `$@"
-              Set-Content -Path "$packageDir/aitherzero.sh" -Value $unixScript -Encoding UTF8
-              if (-not $IsWindows) {
-                chmod +x "$packageDir/aitherzero.sh"
+            # Also create a PowerShell-native launcher for Windows
+            $winPsScript = "# AitherZero Windows PowerShell Launcher (Security-Enhanced)
+              # This script safely handles Windows security warnings without requiring Admin privileges
+              
+              Write-Host `"🚀 AitherZero v$version - Windows PowerShell Launcher`" -ForegroundColor Cyan
+              Write-Host `"================================================`" -ForegroundColor Cyan
+              Write-Host `"`"
+              
+              # Check if files are blocked and offer to unblock them
+              `$blockedFiles = Get-ChildItem -Path `$PSScriptRoot -Recurse -File | Where-Object { 
+                  try { 
+                      Get-Item `$_.FullName -Stream Zone.Identifier -ErrorAction Stop
+                      return `$true
+                  } catch { 
+                      return `$false 
+                  }
               }
-              Write-Host "✓ Created Unix quick-start script" -ForegroundColor Green
+              
+              if (`$blockedFiles) {
+                  Write-Host `"⚠️  Windows has blocked some downloaded files for security.`" -ForegroundColor Yellow
+                  Write-Host `"   This is normal for downloaded packages.`" -ForegroundColor Yellow
+                  Write-Host `"`"
+                  Write-Host `"🔓 Attempting to unblock files...`" -ForegroundColor Green
+                  try {
+                      Get-ChildItem -Path `$PSScriptRoot -Recurse -File | Unblock-File -ErrorAction Stop
+                      Write-Host `"✅ Files unblocked successfully`" -ForegroundColor Green
+                  } catch {
+                      Write-Host `"⚠️  Could not auto-unblock files. Please manually unblock:`" -ForegroundColor Yellow
+                      Write-Host `"   1. Right-click this folder > Properties > Unblock > Apply`" -ForegroundColor Yellow
+                      Write-Host `"   2. Or run: Get-ChildItem -Recurse | Unblock-File`" -ForegroundColor Yellow
+                  }
+                  Write-Host `"`"
+              }
+              
+              # Safe execution policy handling - use bypass directly in pwsh command
+              Write-Host `"🔧 Launching with secure execution policy bypass...`" -ForegroundColor Yellow
+              Write-Host `"🚀 Starting AitherZero...`" -ForegroundColor Green
+              Write-Host `"`"
+              
+              try {
+                  # Launch with execution policy bypass - no Set-ExecutionPolicy needed
+                  `$pwshArgs = @('-ExecutionPolicy', 'Bypass', '-File', '.\Start-AitherZero.ps1') + `$args
+                  
+                  # Try PowerShell 7 first, then fallback to Windows PowerShell
+                  if (Get-Command pwsh -ErrorAction SilentlyContinue) {
+                      & pwsh @pwshArgs
+                  } elseif (Get-Command powershell -ErrorAction SilentlyContinue) {
+                      Write-Host `"⚠️  PowerShell 7 not found, using Windows PowerShell...`" -ForegroundColor Yellow
+                      & powershell @pwshArgs
+                  } else {
+                      throw `"PowerShell not found in PATH`"
+                  }
+              } catch {
+                  Write-Host `"`"
+                  Write-Host `"❌ Error launching AitherZero: `$(`$_.Exception.Message)`" -ForegroundColor Red
+                  Write-Host `"`"
+                  Write-Host `"💡 Troubleshooting Windows Security Issues:`" -ForegroundColor Yellow
+                  Write-Host `"   1. Manual launch: pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1`" -ForegroundColor White
+                  Write-Host `"   2. Setup mode: pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1 -Setup`" -ForegroundColor White
+                  Write-Host `"   3. Get help: pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1 -Help`" -ForegroundColor White
+                  Write-Host `"   4. Unblock files: Get-ChildItem -Recurse | Unblock-File`" -ForegroundColor White
+                  Write-Host `"   5. Use AitherZero.bat launcher instead (recommended)`" -ForegroundColor White
+                  Write-Host `"`"
+                  Write-Host `"🌐 For more help: https://github.com/wizzense/AitherZero/wiki`" -ForegroundColor White
+                  exit 1
+              }"
+            Set-Content -Path "$packageDir/Start-AitherZero-Windows.ps1" -Value $winPsScript
+            Write-Host "✓ Created Windows quick-start scripts (AitherZero.bat + Start-AitherZero-Windows.ps1)" -ForegroundColor Green
+          } else {
+            $unixScript = "#!/bin/bash`necho `"🚀 AitherZero v$version - $(if ("${{ matrix.platform }}" -eq "macos") { "macOS" } else { "Linux" }) Quick Start`"`necho `"Cross-Platform Infrastructure Automation with OpenTofu/Terraform`"`necho `"`"`npwsh -File `"Start-AitherZero.ps1`" `$@"
+            Set-Content -Path "$packageDir/aitherzero.sh" -Value $unixScript -Encoding UTF8
+            if (-not $IsWindows) {
+              chmod +x "$packageDir/aitherzero.sh"
             }
+            Write-Host "✓ Created Unix quick-start script" -ForegroundColor Green
+          }
 
-            # Create package metadata and docs
-            Write-Host "Creating package metadata..." -ForegroundColor Yellow
-            $packageInfo = @{
-              Version = $version
-              PackageType = "Application"
-              BuildDate = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss UTC')
-              GitCommit = $env:GITHUB_SHA
-              GitRef = $env:GITHUB_REF
-              Platform = "${{ matrix.platform }}"
-              Description = "Lean AitherZero application package with essential components only"
-              Components = @(
-                "Core runner", "Essential modules", "Configuration templates",
-                "OpenTofu infrastructure", "Application launcher"
-              )
-              Usage = "Run Start-AitherZero.ps1 to begin or aither-core.ps1 for direct access"
-              Repository = "https://github.com/wizzense/AitherZero"
-            }
-            $packageInfo | ConvertTo-Json -Depth 3 | Set-Content "$packageDir/PACKAGE-INFO.json"
+          # Create package metadata and docs
+          Write-Host "Creating package metadata..." -ForegroundColor Yellow
+          $packageInfo = @{
+            Version = $version
+            PackageType = "Application"
+            BuildDate = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss UTC')
+            GitCommit = $env:GITHUB_SHA
+            GitRef = $env:GITHUB_REF
+            Platform = "${{ matrix.platform }}"
+            Description = "Lean AitherZero application package with essential components only"
+            Components = @(
+              "Core runner", "Essential modules", "Configuration templates",
+              "OpenTofu infrastructure", "Application launcher"
+            )
+            Usage = "Run Start-AitherZero.ps1 to begin or aither-core.ps1 for direct access"
+            Repository = "https://github.com/wizzense/AitherZero"
+          }
+          $packageInfo | ConvertTo-Json -Depth 3 | Set-Content "$packageDir/PACKAGE-INFO.json"
 
-            # Create comprehensive installation guide
-            $installGuide = "# AitherZero Application Package v$version`n`n" +
-                           "## 🚀 Quick Start (30 Seconds)`n`n" +
-                           "### Windows Users:`n" +
-                           "1. **Double-click `AitherZero.bat`** - that's it!`n" +
-                           "2. Or run: `Start-AitherZero-Windows.ps1` in PowerShell`n" +
-                           "3. Or run: `pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1`n`n" +
-                           "### Linux/macOS Users:`n" +
-                           "1. **Run: `./aitherzero.sh`** - that's it!`n" +
-                           "2. Or run: `pwsh Start-AitherZero.ps1`n`n" +
-                           "## 🔧 First Time Setup`n`n" +
-                           "Run setup wizard to check your environment:`n" +
-                           "```bash`n" +
-                           "# Windows`n" +
-                           "pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1 -Setup`n`n" +
-                           "# Linux/macOS`n" +
-                           "./aitherzero.sh -Setup`n" +
-                           "```n`n" +
-                           "## 📖 Usage Examples`n`n" +
-                           "```bash`n" +
-                           "# Interactive menu (default)`n" +
-                           "./Start-AitherZero.ps1`n`n" +
-                           "# Run all automation scripts`n" +
-                           "./Start-AitherZero.ps1 -Auto`n`n" +
-                           "# Run specific scripts`n" +
-                           "./Start-AitherZero.ps1 -Scripts 'LabRunner,BackupManager'`n`n" +
-                           "# Detailed output mode`n" +
-                           "./Start-AitherZero.ps1 -Verbosity detailed`n`n" +
-                           "# Get help`n" +
-                           "./Start-AitherZero.ps1 -Help`n" +
-                           "```n`n" +
-                           "## ⚡ Requirements`n`n" +
-                           "- **PowerShell 7.0+** (required)`n" +
-                           "- **Git** (recommended for PatchManager and repository operations)`n" +
-                           "- **OpenTofu/Terraform** (recommended for infrastructure automation)`n`n" +
-                           "## 🔍 Troubleshooting`n`n" +
-                           "**Windows Execution Policy Issues:**`n" +
-                           "- Use `AitherZero.bat` (recommended)`n" +
-                           "- Or: `pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1`n`n" +
-                           "**Module Loading Issues:**`n" +
-                           "- Run the setup: `./Start-AitherZero.ps1 -Setup`n" +
-                           "- Check PowerShell version: `pwsh --version`n`n" +
-                           "**Permission Issues (Linux/macOS):**`n" +
-                           "- Make executable: `chmod +x aitherzero.sh`n" +
-                           "- Or run directly: `pwsh Start-AitherZero.ps1`n`n" +
-                           "## 🌐 Support`n`n" +
-                           "- **Repository**: https://github.com/wizzense/AitherZero`n" +
-                           "- **Issues**: https://github.com/wizzense/AitherZero/issues`n" +
-                           "- **Documentation**: See repository docs/ folder for advanced usage"
+          # Create comprehensive installation guide
+          $installGuide = "# AitherZero Application Package v$version`n`n" +
+                         "## 🚀 Quick Start (30 Seconds)`n`n" +
+                         "### Windows Users:`n" +
+                         "1. **Double-click `AitherZero.bat`** - that's it!`n" +
+                         "2. Or run: `Start-AitherZero-Windows.ps1` in PowerShell`n" +
+                         "3. Or run: `pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1`n`n" +
+                         "### Linux/macOS Users:`n" +
+                         "1. **Run: `./aitherzero.sh`** - that's it!`n" +
+                         "2. Or run: `pwsh Start-AitherZero.ps1`n`n" +
+                         "## 🔧 First Time Setup`n`n" +
+                         "Run setup wizard to check your environment:`n" +
+                         "```bash`n" +
+                         "# Windows`n" +
+                         "pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1 -Setup`n`n" +
+                         "# Linux/macOS`n" +
+                         "./aitherzero.sh -Setup`n" +
+                         "```n`n" +
+                         "## 📖 Usage Examples`n`n" +
+                         "```bash`n" +
+                         "# Interactive menu (default)`n" +
+                         "./Start-AitherZero.ps1`n`n" +
+                         "# Run all automation scripts`n" +
+                         "./Start-AitherZero.ps1 -Auto`n`n" +
+                         "# Run specific scripts`n" +
+                         "./Start-AitherZero.ps1 -Scripts 'LabRunner,BackupManager'`n`n" +
+                         "# Detailed output mode`n" +
+                         "./Start-AitherZero.ps1 -Verbosity detailed`n`n" +
+                         "# Get help`n" +
+                         "./Start-AitherZero.ps1 -Help`n" +
+                         "```n`n" +
+                         "## ⚡ Requirements`n`n" +
+                         "- **PowerShell 7.0+** (required)`n" +
+                         "- **Git** (recommended for PatchManager and repository operations)`n" +
+                         "- **OpenTofu/Terraform** (recommended for infrastructure automation)`n`n" +
+                         "## 🔍 Troubleshooting`n`n" +
+                         "**Windows Execution Policy Issues:**`n" +
+                         "- Use `AitherZero.bat` (recommended)`n" +
+                         "- Or: `pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1`n`n" +
+                         "**Module Loading Issues:**`n" +
+                         "- Run the setup: `./Start-AitherZero.ps1 -Setup`n" +
+                         "- Check PowerShell version: `pwsh --version`n`n" +
+                         "**Permission Issues (Linux/macOS):**`n" +
+                         "- Make executable: `chmod +x aitherzero.sh`n" +
+                         "- Or run directly: `pwsh Start-AitherZero.ps1`n`n" +
+                         "## 🌐 Support`n`n" +
+                         "- **Repository**: https://github.com/wizzense/AitherZero`n" +
+                         "- **Issues**: https://github.com/wizzense/AitherZero/issues`n" +
+                         "- **Documentation**: See repository docs/ folder for advanced usage"
 
             Set-Content -Path "$packageDir/INSTALL.md" -Value $installGuide
             Write-Host "✓ Installation guide created" -ForegroundColor Green

@@ -181,7 +181,76 @@ AitherZero Application Package/
 - **[API Documentation](docs/)** - Module and function reference
 - **[Examples](docs/examples/)** - Common usage patterns and scripts
 
-## 🔄 Support & Community
+## 🛠️ Troubleshooting
+
+### 🔒 Windows Security Warnings (Common)
+
+**If you see "File is blocked" or "execution policy" errors:**
+
+1. **✅ Recommended**: Use `AitherZero.bat` (handles security automatically)
+2. **🔧 Manual unblock**: Right-click folder → Properties → General → Unblock → Apply → OK
+3. **💻 PowerShell method**:
+   ```powershell
+   # Unblock all files in the folder
+   Get-ChildItem -Recurse | Unblock-File
+   
+   # Then launch with bypass (safe for trusted software)
+   pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1
+   ```
+
+### ⚡ Quick Launcher Guide
+
+**Windows (Choose one):**
+- **🏆 Best**: `AitherZero.bat` - Auto-handles security, no admin needed
+- **🔧 Advanced**: `Start-AitherZero-Windows.ps1` - PowerShell-native launcher  
+- **🚀 Direct**: `pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1`
+
+**Linux/macOS:**
+- **🐧 Script**: `./aitherzero.sh`
+- **🚀 Direct**: `pwsh Start-AitherZero.ps1`
+
+### 🔍 Common Issues
+
+**"PowerShell 7 not found":**
+```bash
+# Windows
+winget install Microsoft.PowerShell
+
+# Linux
+wget https://aka.ms/install-powershell.sh; sudo bash install-powershell.sh
+
+# macOS  
+brew install powershell
+```
+
+**"Command not found" errors:**
+```bash
+# Run setup wizard first
+./Start-AitherZero.ps1 -Setup
+
+# Check installation
+pwsh --version
+git --version
+```
+
+**Permission denied (Linux/macOS):**
+```bash
+# Make scripts executable
+chmod +x aitherzero.sh
+chmod +x Start-AitherZero.ps1
+
+# Or run directly
+pwsh Start-AitherZero.ps1
+```
+
+### 🆘 Need More Help?
+
+- **🔧 Built-in help**: `./Start-AitherZero.ps1 -Help`
+- **📖 Detailed setup**: [INSTALL.md](INSTALL.md)
+- **🐛 Report issues**: [GitHub Issues](https://github.com/wizzense/AitherZero/issues)
+- **💬 Get support**: [GitHub Discussions](https://github.com/wizzense/AitherZero/discussions)
+
+## �🔄 Support & Community
 
 - **Issues**: [GitHub Issues](https://github.com/wizzense/AitherZero/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/wizzense/AitherZero/discussions)
@@ -196,4 +265,4 @@ AitherZero Application Package/
 
 ---
 
-**Made with ❤️ for infrastructure automation**
+Made with ❤️ for infrastructure automation
