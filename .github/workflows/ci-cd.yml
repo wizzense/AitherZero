@@ -34,6 +34,12 @@ concurrency:
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  checks: write
+
 jobs:
   # Dynamic test matrix based on event type
   setup:
@@ -515,6 +521,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [setup, lint, test, build, security]
     if: always()
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

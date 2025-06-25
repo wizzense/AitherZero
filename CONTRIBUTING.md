@@ -1,289 +1,241 @@
 # Contributing to AitherZero
 
-Welcome to AitherZero! We're excited that you're interested in contributing to our PowerShell infrastructure automation framework.
+Welcome to AitherZero! We're excited to have you contribute to our PowerShell-based infrastructure automation framework.
 
 ## 🚀 Quick Start for Contributors
 
 ### Prerequisites
-- **PowerShell 7.0+** (cross-platform)
+- **PowerShell 7.0+** (cross-platform compatible)
 - **Git** for version control
-- **GitHub CLI** (optional, for easier PR management)
-- **OpenTofu/Terraform** (for infrastructure components)
+- **GitHub CLI** (optional but recommended)
 
 ### Getting Started
-```powershell
-# 1. Fork the repository on GitHub
-# 2. Clone your fork
-git clone https://github.com/YOUR-USERNAME/AitherZero.git
-cd AitherZero
+1. **Fork the repository** on GitHub
+2. **Clone your fork**:
+   ```powershell
+   git clone https://github.com/yourusername/AitherZero.git
+   cd AitherZero
+   ```
+3. **Follow the [Developer Onboarding Guide](docs/DEVELOPER-ONBOARDING.md)**
+4. **Run initial setup**:
+   ```powershell
+   ./aither-core/aither-core.ps1 -Verbosity detailed
+   ```
 
-# 3. Set up the development environment
-Import-Module './aither-core/modules/DevEnvironment' -Force
-Initialize-DevEnvironment
+## 🔄 Development Workflow (Using PatchManager)
 
-# 4. Run tests to verify setup
-pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel 'Quick'
-```
-
-## 🛠️ Development Workflow
-
-### Using PatchManager (Recommended)
-AitherZero includes a sophisticated patch management system that automates much of the development workflow:
-
-```powershell
-# Start a new feature using PatchManager
-Import-Module './aither-core/modules/PatchManager' -Force
-
-# Create a feature with automatic issue tracking
-Invoke-PatchWorkflow -PatchDescription "Add new module validation feature" -PatchOperation {
-    # Your code changes here
-    Write-Host "Implementing new feature..."
-    # ... make your changes ...
-} -CreatePR -TestCommands @("pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel 'Quick'")
-```
-
-**PatchManager automatically handles:**
-- ✅ Branch creation with descriptive names
-- ✅ Issue creation and linking
-- ✅ Commit management
+AitherZero uses **PatchManager v2.1** for all development workflows. This provides automated:
+- ✅ Issue creation and tracking
+- ✅ Branch management
 - ✅ Pull request creation
-- ✅ Test validation
-- ✅ Clean working tree management
+- ✅ GitHub integration
 
-### Manual Git Workflow (Alternative)
-If you prefer traditional Git workflows:
+### Creating Changes with PatchManager
 
 ```powershell
-# 1. Create a feature branch
-git checkout -b feature/your-feature-name
+# Import PatchManager
+Import-Module './aither-core/modules/PatchManager/PatchManager.psm1' -Force
 
-# 2. Make your changes
-# ... edit files ...
-
-# 3. Test your changes
-pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel 'Standard'
-
-# 4. Commit and push
-git add .
-git commit -m "feat: add your feature description"
-git push origin feature/your-feature-name
-
-# 5. Create PR on GitHub
-gh pr create --title "Add your feature" --body "Description of changes"
+# Make your changes using the automated workflow
+Invoke-PatchWorkflow -PatchDescription "Add new feature X" -PatchOperation {
+    # Your code changes here
+    Write-Host "Making changes..."
+} -CreatePR -Priority "Medium"
 ```
 
-## 📋 Types of Contributions
+### Key PatchManager Features
+- **Automatic dirty tree handling** - no need to commit changes first
+- **Issue creation by default** - automatic tracking
+- **Single-step workflow** - from changes to PR in one command
+- **Testing integration** - validates changes before commit
 
-### 🐛 Bug Fixes
-- Use branch prefix: `fix/` or `hotfix/`
-- Include issue reference in commit message
-- Add or update tests to prevent regression
-
-### ✨ New Features
-- Use branch prefix: `feature/`
-- Update documentation and tests
-- Consider impact on existing modules
-
-### 📚 Documentation
-- Use branch prefix: `docs/`
-- Update relevant README files
-- Include examples where helpful
-
-### 🧪 Tests
-- Use branch prefix: `test/`
-- Follow existing test patterns
-- Ensure tests are cross-platform compatible
-
-### 🔧 Infrastructure
-- Use branch prefix: `ci/` or `infra/`
-- Test changes across multiple platforms
-- Update relevant workflow documentation
-
-## 📝 Coding Standards
+## 📋 Code Standards
 
 ### PowerShell Guidelines
-- **PowerShell 7.0+ syntax** - Use modern, cross-platform features
-- **Forward slashes** for paths (`/` not `\`) for cross-platform compatibility
-- **One True Brace Style (OTBS)** for consistent formatting
+- **PowerShell 7.0+ syntax** - cross-platform compatible
+- **Forward slashes** for all file paths (`/`)
+- **One True Brace Style (OTBS)** for formatting
 - **Comprehensive error handling** with try-catch blocks
-- **Descriptive function names** using approved PowerShell verbs
+- **Logging integration** using the Logging module
 
 ### Module Architecture
+- Import modules from `aither-core/modules` using `Import-Module -Force`
+- Use existing modules instead of creating new functionality:
+  - **BackupManager** - File operations
+  - **DevEnvironment** - Environment setup
+  - **LabRunner** - Lab automation
+  - **Logging** - Use `Write-CustomLog -Level 'INFO|WARN|ERROR|SUCCESS' -Message 'text'`
+  - **PatchManager** - Git workflows
+  - **TestingFramework** - Pester testing
+
+### Function Structure
 ```powershell
-# Import project modules using standard pattern
-Import-Module './aither-core/modules/ModuleName' -Force
-
-# Use project logging consistently
-Write-CustomLog -Level 'INFO' -Message "Operation completed successfully"
-
-# Follow error handling patterns
-try {
-    # Operations here
-    Write-CustomLog -Level 'INFO' -Message "Operation started"
-} catch {
-    Write-CustomLog -Level 'ERROR' -Message "Error: $($_.Exception.Message)"
-    throw
-}
-```
-
-### File Organization
-- **Modules**: Place in `aither-core/modules/ModuleName/`
-- **Tests**: Corresponding tests in `tests/unit/modules/ModuleName/`
-- **Documentation**: Update relevant files in `docs/`
-- **Scripts**: Utility scripts in `aither-core/scripts/`
-
-## 🧪 Testing Requirements
-
-### Required Test Coverage
-All contributions must include appropriate tests:
-
-```powershell
-# Run quick validation during development
-pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel 'Quick'
-
-# Run comprehensive tests before PR
-pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel 'Complete'
-
-# Test specific modules
-Invoke-Pester -Path "./tests/unit/modules/YourModule" -Output Detailed
-```
-
-### Test Categories
-- **Unit Tests**: Test individual functions in isolation
-- **Integration Tests**: Test module interactions
-- **Cross-Platform Tests**: Verify Windows/Linux/macOS compatibility
-- **Performance Tests**: Ensure scalability (for core components)
-
-## 📖 Documentation Standards
-
-### Function Documentation
-```powershell
-<#
-.SYNOPSIS
-Brief description of the function
-
-.DESCRIPTION
-Detailed description of what the function does
-
-.PARAMETER ParameterName
-Description of the parameter
-
-.EXAMPLE
-Example-Function -Parameter "value"
-Description of what this example does
-
-.NOTES
-Any additional notes or requirements
-#>
-function Example-Function {
+function Get-ExampleFunction {
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$Parameter
+        [string]$InputParameter
     )
-    # Function implementation
+
+    begin {
+        Write-CustomLog -Level 'INFO' -Message "Starting $($MyInvocation.MyCommand.Name)"
+    }
+
+    process {
+        try {
+            # Your logic here
+            Write-CustomLog -Level 'INFO' -Message "Processing $InputParameter"
+        }
+        catch {
+            Write-CustomLog -Level 'ERROR' -Message "Error: $($_.Exception.Message)"
+            throw
+        }
+    }
+
+    end {
+        Write-CustomLog -Level 'INFO' -Message "Completed $($MyInvocation.MyCommand.Name)"
+    }
 }
 ```
 
-### README Updates
-When adding new modules or features:
-1. Update the main README.md
-2. Create/update module-specific README files
-3. Include usage examples
-4. Document any new dependencies
+## 🧪 Testing Requirements
 
-## 🎯 Pull Request Guidelines
+### Running Tests
+```powershell
+# Quick validation
+./tests/Run-BulletproofValidation.ps1 -ValidationLevel 'Quick'
 
-### PR Checklist
-- [ ] **Descriptive title** following conventional commits format
-- [ ] **Clear description** of changes and motivation
-- [ ] **Tests included** and passing
-- [ ] **Documentation updated** for new features
-- [ ] **Cross-platform compatibility** verified
-- [ ] **No breaking changes** (or clearly documented)
-- [ ] **Clean commit history** (squash if needed)
+# Standard test suite
+./tests/Run-BulletproofValidation.ps1 -ValidationLevel 'Standard'
 
-### PR Description Template
-```markdown
-## Summary
-Brief description of changes
-
-## Type of Change
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Documentation update
-- [ ] Performance improvement
-- [ ] Code refactoring
-
-## Testing
-- [ ] Unit tests pass
-- [ ] Integration tests pass
-- [ ] Cross-platform testing completed
-- [ ] Manual testing performed
-
-## Documentation
-- [ ] README updated
-- [ ] Function documentation complete
-- [ ] Examples provided
-
-## Breaking Changes
-List any breaking changes and migration path
+# Complete testing
+./tests/Run-BulletproofValidation.ps1 -ValidationLevel 'Complete'
 ```
 
-## 🏷️ Issue Labels and Projects
+### Test Guidelines
+- **Pester 5.0+** framework
+- **Comprehensive test coverage** for new features
+- **Mock external dependencies** properly
+- **Integration tests** for critical workflows
 
-We use GitHub labels to categorize issues:
+## 📝 Pull Request Process
 
-- `good first issue` - Perfect for new contributors
-- `bug` - Something isn't working
-- `enhancement` - New feature or request
-- `documentation` - Improvements or additions to docs
-- `help wanted` - Extra attention is needed
-- `question` - Further information is requested
-- `priority: high` - Urgent issues
-- `priority: medium` - Important but not urgent
-- `priority: low` - Nice to have
+### Using PatchManager (Recommended)
+```powershell
+# Complete workflow with PR creation
+Invoke-PatchWorkflow -PatchDescription "Your feature description" -PatchOperation {
+    # Your changes
+} -CreatePR -TestCommands @("./tests/Run-BulletproofValidation.ps1 -ValidationLevel 'Standard'")
+```
+
+### Manual Process (Alternative)
+1. Create feature branch from main
+2. Make your changes
+3. Run tests: `./tests/Run-BulletproofValidation.ps1`
+4. Commit with descriptive messages
+5. Push to your fork
+6. Create pull request
+
+### PR Requirements
+- ✅ **Descriptive title and description**
+- ✅ **All tests passing**
+- ✅ **PSScriptAnalyzer compliance**
+- ✅ **Documentation updates** (if applicable)
+- ✅ **Issue linking** (automatic with PatchManager)
+
+## 🏷️ Issue Management
+
+### Using PatchManager for Issues
+```powershell
+# Create issue only
+New-PatchIssue -Description "Bug description" -Priority "High" -AffectedFiles @("Module.psm1")
+
+# Issues are created automatically with Invoke-PatchWorkflow
+```
+
+### Issue Labels (Auto-Applied)
+- `patch` - Changes made via PatchManager
+- `high-priority` - Critical issues
+- `automated` - Automated processes
+- `bug` - Bug reports
+- `enhancement` - Feature requests
+
+## 🔧 Development Environment
+
+### VS Code Tasks
+Use built-in VS Code tasks for common operations:
+- **Ctrl+Shift+P → Tasks: Run Task → "PatchManager: Create Feature Patch"**
+- **Ctrl+Shift+P → Tasks: Run Task → "PatchManager: Test Current Changes"**
+- **Ctrl+Shift+P → Tasks: Run Task → "Tests: Run Bulletproof Validation"**
+
+### Module Development
+```powershell
+# Import all modules for development
+Get-ChildItem 'aither-core/modules' -Directory | ForEach-Object {
+    Import-Module $_.FullName -Force
+}
+
+# Test module loading
+Test-ModuleManifest 'aither-core/modules/YourModule/YourModule.psd1'
+```
+
+## 🚨 Common Issues and Solutions
+
+### PatchManager Workflow Fails
+```powershell
+# Check repository status
+git status
+
+# Use rollback if needed
+Invoke-PatchRollback -RollbackType "LastCommit" -CreateBackup
+```
+
+### Module Import Issues
+```powershell
+# Force reimport
+Import-Module './aither-core/modules/ModuleName' -Force -Verbose
+
+# Check for errors
+Get-Error
+```
+
+### Test Failures
+```powershell
+# Run specific module tests
+./tests/Run-BulletproofValidation.ps1 -ValidationLevel 'Quick' -FailFast
+
+# Check test logs
+Get-ChildItem 'tests/results' -Filter '*.xml'
+```
+
+## 🌟 Best Practices
+
+1. **Use PatchManager** for all changes - it handles Git, issues, and PRs automatically
+2. **Test thoroughly** - use the bulletproof testing framework
+3. **Follow logging standards** - use Write-CustomLog consistently
+4. **Document changes** - update relevant documentation
+5. **Cross-platform compatibility** - test on Windows, Linux, macOS when possible
+
+## 📚 Additional Resources
+
+- **[Developer Onboarding Guide](docs/DEVELOPER-ONBOARDING.md)** - Complete setup instructions
+- **[PatchManager Guide](docs/PATCHMANAGER-COMPLETE-GUIDE.md)** - Detailed workflow documentation
+- **[Testing Framework](docs/BULLETPROOF-TESTING-GUIDE.md)** - Testing best practices
+- **[Architecture Overview](docs/COMPLETE-ARCHITECTURE.md)** - System design
 
 ## 🤝 Community Guidelines
 
-### Code of Conduct
-- Be respectful and inclusive
-- Provide constructive feedback
-- Help newcomers get started
-- Follow GitHub's community guidelines
+- **Be respectful** and inclusive
+- **Help others** learn and contribute
+- **Share knowledge** through documentation
+- **Ask questions** - we're here to help!
 
-### Getting Help
-- **Issues**: Create a GitHub issue for bugs or feature requests
-- **Discussions**: Use GitHub Discussions for questions
-- **Documentation**: Check existing docs and examples first
+## 📧 Getting Help
 
-### Recognition
-Contributors will be:
-- Listed in project documentation
-- Mentioned in release notes
-- Invited to become maintainers (for significant contributions)
+- **Create an issue** for bugs or feature requests
+- **Use GitHub Discussions** for questions
+- **Check existing documentation** in the `docs/` folder
+- **Review closed issues** for similar problems
 
-## 🚀 Advanced Contributing
-
-### Becoming a Maintainer
-Regular contributors may be invited to become maintainers with:
-- Commit access to the repository
-- Ability to review and merge PRs
-- Input on project direction and roadmap
-
-### Project Architecture
-Understanding the project structure helps with larger contributions:
-- **aither-core/**: Main framework modules
-- **tests/**: Comprehensive testing framework
-- **docs/**: Documentation and guides
-- **opentofu/**: Infrastructure as Code components
-- **.github/**: GitHub workflows and templates
-
-Thank you for contributing to AitherZero! 🎉
-
-## 📞 Contact
-
-- **GitHub Issues**: For bugs and feature requests
-- **GitHub Discussions**: For questions and community chat
-- **Project Maintainer**: [@wizzense](https://github.com/wizzense)
+Thank you for contributing to AitherZero! 🚀

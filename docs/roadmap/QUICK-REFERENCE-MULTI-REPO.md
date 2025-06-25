@@ -1,9 +1,9 @@
 # ARCHIVED: Multi-Repository Workflow
 
 > **⚠️ NOTICE**: This document is archived. AitherZero is now a **standalone public repository**.
-> 
+>
 > **New Repository**: https://github.com/wizzense/AitherZero
-> 
+>
 > This multi-repository setup is no longer in use. All development now happens in the standalone AitherZero repository.
 
 ## ✅ Previous Git Remote Setup (Archived)
