@@ -1,88 +1,41 @@
 #Requires -Version 7.0
 
-# Import the centralized Logging module using multiple fallback paths
-$loggingImported = $false
+<#
+.SYNOPSIS
+    PatchManager Module - Simplified and Reliable Patch Management
 
-# Check if Logging module is already available
-if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
-    $loggingImported = $true
-    Write-Verbose 'Logging module already available'
-} else {
-    # Set up environment variables if not already set
-    if (-not $env:PROJECT_ROOT) {
-        $env:PROJECT_ROOT = (Get-Item $PSScriptRoot).Parent.Parent.Parent.FullName
-    }
-    if (-not $env:PWSH_MODULES_PATH) {
-        $env:PWSH_MODULES_PATH = (Get-Item $PSScriptRoot).Parent.FullName
-    }
+.DESCRIPTION
+    This module provides 4 core functions for patch management:
+    1. Invoke-PatchWorkflow - Main entry point for all patch operations
+    2. New-PatchIssue - Create GitHub issues for patches
+    3. New-PatchPR - Create GitHub pull requests
+    4. Invoke-PatchRollback - Rollback patch operations
 
-    $loggingPaths = @(
-        'Logging', # Try module name first (if in PSModulePath)
-        (Join-Path (Split-Path $PSScriptRoot -Parent) 'Logging'), # Relative to modules directory
-        (Join-Path $env:PWSH_MODULES_PATH 'Logging'), # Environment path
-        (Join-Path $env:PROJECT_ROOT 'aither-core/modules/Logging')  # Full project path (updated for aither-core)
-    )
+    All legacy functions have been moved to the Legacy folder.
 
-    foreach ($loggingPath in $loggingPaths) {
-        if ($loggingImported) { break }
-
-        try {
-            if ($loggingPath -eq 'Logging') {
-                Import-Module 'Logging' -Global -ErrorAction Stop
-            } elseif ($loggingPath -and (Test-Path $loggingPath)) {
-                Import-Module $loggingPath -Global -ErrorAction Stop
-            } else {
-                continue
-            }
-            Write-Verbose "Successfully imported Logging module from: $loggingPath"
-            $loggingImported = $true
-        } catch {
-            Write-Verbose "Failed to import Logging from $loggingPath : $_"
-        }
-    }
-}
-
-if (-not $loggingImported) {
-    Write-Warning 'Could not import Logging module from any of the attempted paths. Using fallback Write-Host.'
-    # Create a fallback Write-CustomLog function
-    function Write-CustomLog {
-        param([string]$Message, [string]$Level = 'INFO')
-        Write-Host "[$Level] $Message"
-    }
-}
-
-# Import all public functions
-$Public = @(Get-ChildItem -Path $PSScriptRoot\Public\*.ps1 -ErrorAction SilentlyContinue)
-
-# Import all private functions
-$Private = @(Get-ChildItem -Path $PSScriptRoot\Private\*.ps1 -ErrorAction SilentlyContinue)
-
-Write-Verbose "Found $($Public.Count) public functions and $($Private.Count) private functions"
-
-# Dot source the files
-foreach ($import in @($Public + $Private)) {
-    try {
-        . $import.FullName
-        Write-Verbose "Successfully imported: $($import.Name)"
-    } catch {
-        Write-Error -Message "Failed to import function $($import.FullName): $_"
-        throw
-    }
-}
+.NOTES
+    Version: 2.1 (Enhanced Intelligence)
+    Author: Aitherium Contributors
+#>
 
 # Initialize cross-platform environment
 try {
-    # Initialize cross-platform environment when module is loaded
-    $envResult = Initialize-CrossPlatformEnvironment
-    if ($envResult.Success) {
-        Write-Verbose "Cross-platform environment initialized successfully: $($envResult.Platform)"
-        Write-Verbose "PROJECT_ROOT: $env:PROJECT_ROOT"
-        Write-Verbose "PWSH_MODULES_PATH: $env:PWSH_MODULES_PATH"
-    } else {
-        Write-Warning "Failed to initialize cross-platform environment: $($envResult.Error)"
+    # Import shared utilities
+    $sharedUtilsPath = Join-Path $PSScriptRoot "../../shared"
+    if (Test-Path $sharedUtilsPath) {
+        $findProjectRootPath = Join-Path $sharedUtilsPath "Find-ProjectRoot.ps1"
+        if (Test-Path $findProjectRootPath) {
+            . $findProjectRootPath
+        }
+    }
+    
+    # Import Logging module dependency
+    $loggingModulePath = Join-Path $PSScriptRoot "../Logging"
+    if (Test-Path $loggingModulePath) {
+        Import-Module $loggingModulePath -Force -ErrorAction SilentlyContinue
     }
 } catch {
-    Write-Warning "Error initializing cross-platform environment: $_"
+    Write-Warning "Failed to import dependencies: $($_.Exception.Message)"
 }
 
 # Load Private Functions
@@ -96,7 +49,7 @@ foreach ($function in $privateFunctions) {
     }
 }
 
-# Load Public Functions
+# Load Public Functions 
 $publicFunctions = Get-ChildItem -Path (Join-Path $PSScriptRoot 'Public') -Filter '*.ps1' -ErrorAction SilentlyContinue
 foreach ($function in $publicFunctions) {
     try {
@@ -107,140 +60,99 @@ foreach ($function in $publicFunctions) {
     }
 }
 
-# Intelligence Functions - Add near the top of the file after imports
+# Intelligence Functions - Enhanced PR creation logic
 function Test-ShouldCreatePR {
     [CmdletBinding()]
     param(
         [string]$PatchDescription,
         [bool]$Force = $false
     )
-
+    
     if ($Force) {
         return $true
     }
-
+    
     # Check if this is a minor change that doesn't need PR review
     $minorChangePatterns = @(
         'typo', 'formatting', 'whitespace', 'comment', 'documentation update',
         'log message', 'minor fix', 'cleanup', 'lint fix', 'style fix'
     )
-
+    
     foreach ($pattern in $minorChangePatterns) {
         if ($PatchDescription -like "*$pattern*") {
-            Write-CustomLog -Level 'INFO' -Message "Minor change detected, skipping PR creation: $pattern"
+            if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                Write-CustomLog -Level 'INFO' -Message "Minor change detected, skipping PR creation: $pattern"
+            } else {
+                Write-Verbose "Minor change detected, skipping PR creation: $pattern"
+            }
             return $false
         }
     }
+    
+    return $true
+}
 
-    # Check if there are recent similar PRs
+function Test-SimilarPRExists {
+    [CmdletBinding()]
+    param(
+        [string]$PatchDescription,
+        [string]$Repository = ""
+    )
+    
     try {
-        $recentPRs = gh pr list --state open --limit 10 --json title, headRefName 2>$null | ConvertFrom-Json
-        $similarPRs = $recentPRs | Where-Object {
-            $_.title -like "*$($PatchDescription.Split(' ')[0..2] -join ' ')*" -or
-            $_.headRefName -like "*$($BranchName.Split('-')[-1])*"
-        }
-
-        if ($similarPRs) {
-            Write-CustomLog -Level 'WARN' -Message "Similar PR already exists, skipping: $($similarPRs[0].title)"
-            return $false
+        # Get recent PRs and check for similar titles
+        $recentPRs = gh pr list --limit 10 --json title 2>$null | ConvertFrom-Json -ErrorAction SilentlyContinue
+        
+        if ($recentPRs) {
+            foreach ($pr in $recentPRs) {
+                # Simple similarity check - same keywords
+                $descWords = $PatchDescription.Split(' ', [StringSplitOptions]::RemoveEmptyEntries)
+                $prWords = $pr.title.Split(' ', [StringSplitOptions]::RemoveEmptyEntries)
+                
+                $commonWords = $descWords | Where-Object { $prWords -contains $_ }
+                $similarity = ($commonWords.Count / [Math]::Max($descWords.Count, 1)) * 100
+                
+                if ($similarity -gt 60) {
+                    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                        Write-CustomLog -Level 'WARN' -Message "Similar PR exists: '$($pr.title)' (${similarity}% similarity)"
+                    } else {
+                        Write-Warning "Similar PR exists: '$($pr.title)' (${similarity}% similarity)"
+                    }
+                    return $true
+                }
+            }
         }
     } catch {
-        Write-CustomLog -Level 'WARN' -Message "Could not check for similar PRs: $($_.Exception.Message)"
+        # If GitHub CLI fails, continue without similarity check
+        Write-Verbose "Could not check for similar PRs: $($_.Exception.Message)"
     }
-
-    return $true
+    
+    return $false
 }
 
-function Test-ShouldCreateIssue {
-    [CmdletBinding()]
-    param(
-        [string]$PatchDescription,
-        [bool]$Force = $false
-    )
-
-    if ($Force) {
-        return $true
+# Initialize cross-platform environment on module load
+try {
+    if (Get-Command Initialize-CrossPlatformEnvironment -ErrorAction SilentlyContinue) {
+        Initialize-CrossPlatformEnvironment
     }
-
-    # Skip issues for very minor changes
-    $skipIssuePatterns = @(
-        '*typo*', '*formatting*', '*whitespace*', '*indent*',
-        '*quick fix*', '*minor*', '*trivial*'
-    )
-
-    $lowerDescription = $PatchDescription.ToLower()
-
-    foreach ($pattern in $skipIssuePatterns) {
-        if ($lowerDescription -like $pattern) {
-            Write-CustomLog -Level 'INFO' -Message "🧠 Skipping issue for pattern: $pattern"
-            return $false
-        }
-    }
-
-    return $true
+} catch {
+    Write-Verbose "Cross-platform environment initialization skipped: $($_.Exception.Message)"
 }
 
-function Invoke-PatchWorkflow {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)]
-        [string]$PatchDescription,
+# Export only the core functions
+Export-ModuleMember -Function @(
+    'Invoke-PatchWorkflow',
+    'New-PatchIssue', 
+    'New-PatchPR',
+    'Invoke-PatchRollback',
+    'Update-RepositoryDocumentation',
+    'New-CrossForkPR',
+    'Show-GitStatusGuidance'
+)
 
-        [Parameter(Mandatory)]
-        [scriptblock]$PatchOperation,
-
-        [string[]]$TestCommands = @(),
-
-        [switch]$CreatePR,
-
-        [bool]$CreateIssue = $true, # Default to true but make smarter
-
-        [ValidateSet('Low', 'Medium', 'High', 'Critical')]
-        [string]$Priority = 'Medium',
-
-        [switch]$DryRun,
-
-        [switch]$Force
-    )
-
-    begin {
-        Write-CustomLog -Level 'INFO' -Message '🚀 Starting PatchWorkflow v2.1 (Enhanced Intelligence)'
-
-        # Enhanced intelligence: Check if we should create PR/Issue based on content
-        if (-not $Force) {
-            $shouldCreatePR = Test-ShouldCreatePR -PatchDescription $PatchDescription -Force:$CreatePR
-            if ($CreatePR -and -not $shouldCreatePR) {
-                Write-CustomLog -Level 'INFO' -Message '🧠 Intelligent PR detection: Skipping PR for minor change'
-                $CreatePR = $false
-            }
-
-            # Also check if we should create an issue
-            $shouldCreateIssue = Test-ShouldCreateIssue -PatchDescription $PatchDescription -Force:$CreateIssue
-            if ($CreateIssue -and -not $shouldCreateIssue) {
-                Write-CustomLog -Level 'INFO' -Message '🧠 Intelligent issue detection: Skipping issue for trivial change'
-                $CreateIssue = $false
-            }
-        }
-
-        # Log what will be created
-        $actions = @()
-        if ($CreateIssue) { $actions += 'Issue' }
-        if ($CreatePR) { $actions += 'PR' }
-        if ($actions.Count -eq 0) { $actions += 'Local commit only' }
-
-        Write-CustomLog -Level 'INFO' -Message "📋 Will create: $($actions -join ', ')"
-    }
-
-    process {
-        try {
-            # Use the core Invoke-GitControlledPatch function with intelligent decisions
-            $result = Invoke-GitControlledPatch -PatchDescription $PatchDescription -PatchOperation $PatchOperation -TestCommands $TestCommands -CreatePR:$CreatePR -CreateIssue:$CreateIssue -Priority $Priority -DryRun:$DryRun
-
-            return $result
-
-        } catch {
-            Write-CustomLog -Level 'ERROR' -Message "Enhanced PatchWorkflow failed: $($_.Exception.Message)"
-            throw
-        }
-    }
+# Module initialization message
+if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+    Write-CustomLog -Level 'INFO' -Message "PatchManager v2.1 loaded - 4 core functions available"
+} else {
+    Write-Verbose "PatchManager v2.1 loaded - 4 core functions available"
 }
