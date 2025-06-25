@@ -1,8 +1,9 @@
 name: Build and Release
 
 on:
-  # Only create releases on manual trigger or version tags
+  # Trigger on successful PR merges to main/master, version tags, or manual dispatch
   push:
+    branches: [main, master]  # Trigger on successful PR merges
     tags: ['v*']  # Only trigger on version tags like v1.0.0
   workflow_dispatch:
     inputs:
@@ -91,7 +92,24 @@ jobs:
             Write-Host "Calculated new version: $version" -ForegroundColor Green
           }
 
-          # Version determination logic - removed release event handling
+          # Version determination logic
+
+          # For PR merges to main/master, create a build version
+          if ([string]::IsNullOrEmpty($version) -and 
+              "${{ github.event_name }}" -eq "push" -and 
+              ("${{ github.ref }}" -eq "refs/heads/main" -or "${{ github.ref }}" -eq "refs/heads/master")) {
+            $latestTag = git describe --tags --abbrev=0 2>$null
+            if ($latestTag) {
+              $baseVersion = $latestTag -replace '^v', ''
+              $shortSha = "${{ github.sha }}".Substring(0, 7)
+              $version = "$baseVersion-build.$shortSha"
+              Write-Host "Using PR merge build version: $version" -ForegroundColor Green
+            } else {
+              $shortSha = "${{ github.sha }}".Substring(0, 7)
+              $version = "0.1.0-build.$shortSha"
+              Write-Host "Using initial PR merge build version: $version" -ForegroundColor Green
+            }
+          }
 
           if ([string]::IsNullOrEmpty($version)) {
             $timestamp = Get-Date -Format "yyyy.MM.dd.HHmm"
@@ -110,13 +128,16 @@ jobs:
 
           if ("${{ github.event_name }}" -eq "push" -and "${{ github.ref_type }}" -eq "tag") {
             $shouldBuild = $true
-            Write-Host "✓ Tag push - proceeding with build" -ForegroundColor Green
+            Write-Host "✓ Tag push - proceeding with build and release" -ForegroundColor Green
+          } elseif ("${{ github.event_name }}" -eq "push" -and ("${{ github.ref }}" -eq "refs/heads/main" -or "${{ github.ref }}" -eq "refs/heads/master")) {
+            $shouldBuild = $true
+            Write-Host "✓ PR merge to main/master - proceeding with build" -ForegroundColor Green
           } elseif ("${{ github.event_name }}" -eq "workflow_dispatch") {
             $shouldBuild = $true
-            Write-Host "✓ Manual dispatch - proceeding with build" -ForegroundColor Green
+            Write-Host "✓ Manual dispatch - proceeding with build and release" -ForegroundColor Green
           } else {
             Write-Host "✗ Event does not trigger build: ${{ github.event_name }} (ref: ${{ github.ref }}, ref_type: ${{ github.ref_type }})" -ForegroundColor Yellow
-            Write-Host "✗ This workflow ONLY runs on version tags (v*) or manual dispatch" -ForegroundColor Red
+            Write-Host "✗ This workflow runs on: version tags (v*), PR merges to main/master, or manual dispatch" -ForegroundColor Red
           }
 
           Write-Host "Should build: $shouldBuild" -ForegroundColor Cyan
