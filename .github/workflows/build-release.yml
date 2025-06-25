@@ -27,9 +27,9 @@ env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
 
 jobs:
-  # Pre-build validation
-  validate:
-    name: Pre-Build Validation
+  # Version determination (single job)
+  version:
+    name: Determine Version
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -95,39 +95,85 @@ jobs:
           echo "version=$version" >> $env:GITHUB_OUTPUT
           echo "should-build=$shouldBuild" >> $env:GITHUB_OUTPUT
 
-      - name: Run pre-build tests
-        if: steps.version.outputs.should-build == 'true'
+  # Pre-build validation (cross-platform matrix)
+  validate:
+    name: Pre-Build Validation (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: version
+    if: needs.version.outputs.should-build == 'true'
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+      fail-fast: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Initialize cross-platform environment
         shell: pwsh
         run: |
-          Write-Host "Running pre-build validation..." -ForegroundColor Cyan
+          Write-Host "Initializing cross-platform environment on ${{ matrix.os }}..." -ForegroundColor Cyan
           
-          # Quick validation before expensive build process
-          if (Test-Path './tests/Run-BulletproofValidation.ps1') {
-            pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel 'Quick' -CI -FailFast
+          # Set PROJECT_ROOT environment variable
+          $projectRoot = $PWD.Path
+          echo "PROJECT_ROOT=$projectRoot" >> $env:GITHUB_ENV
+          
+          # Ensure proper path separators for cross-platform compatibility
+          if ($IsWindows) {
+            $env:PATH_SEPARATOR = ";"
           } else {
-            Write-Host "No bulletproof validation found, running basic checks" -ForegroundColor Yellow
-            
-            # Basic module import test
-            if (Test-Path './aither-core/modules') {
-              $modules = Get-ChildItem -Path './aither-core/modules' -Directory
-              foreach ($module in $modules) {
-                try {
-                  Import-Module $module.FullName -Force -ErrorAction Stop
-                  Write-Host "✓ Module $($module.Name) imports successfully" -ForegroundColor Green
-                } catch {
-                  Write-Error "Module $($module.Name) failed to import: $($_.Exception.Message)"
-                  exit 1
+            $env:PATH_SEPARATOR = ":"
+          }
+          
+          Write-Host "✓ Environment initialized for ${{ matrix.os }}" -ForegroundColor Green
+
+      - name: Run cross-platform pre-build validation
+        shell: pwsh
+        run: |
+          Write-Host "Running pre-build validation on ${{ matrix.os }}..." -ForegroundColor Cyan
+          
+          # Set error action preference for better error handling
+          $ErrorActionPreference = 'Stop'
+          
+          try {
+            # Quick validation before expensive build process
+            if (Test-Path './tests/Run-BulletproofValidation.ps1') {
+              Write-Host "Running bulletproof validation..." -ForegroundColor Yellow
+              pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel 'Quick' -CI -FailFast
+            } else {
+              Write-Host "No bulletproof validation found, running basic checks" -ForegroundColor Yellow
+              
+              # Basic module import test with cross-platform path handling
+              if (Test-Path './aither-core/modules') {
+                $modules = Get-ChildItem -Path './aither-core/modules' -Directory
+                foreach ($module in $modules) {
+                  try {
+                    Write-Host "Testing module: $($module.Name)" -ForegroundColor Cyan
+                    Import-Module $module.FullName -Force -ErrorAction Stop
+                    Write-Host "✓ Module $($module.Name) imports successfully" -ForegroundColor Green
+                  } catch {
+                    Write-Error "Module $($module.Name) failed to import: $($_.Exception.Message)"
+                    exit 1
+                  }
                 }
               }
             }
+            
+            Write-Host "✓ Pre-build validation completed successfully on ${{ matrix.os }}" -ForegroundColor Green
+            
+          } catch {
+            Write-Error "Pre-build validation failed on ${{ matrix.os }}: $($_.Exception.Message)"
+            exit 1
           }
 
   # Cross-platform build matrix
   build:
     name: Build (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    needs: validate
-    if: needs.validate.outputs.should-build == 'true'
+    needs: [version, validate]
+    if: needs.version.outputs.should-build == 'true'
     strategy:
       matrix:
         include:
@@ -166,7 +212,7 @@ jobs:
       - name: Build release package
         shell: pwsh
         run: |
-          $version = "${{ needs.validate.outputs.version }}"
+          $version = "${{ needs.version.outputs.version }}"
           $platform = "${{ matrix.platform }}"
           $extension = "${{ matrix.extension }}"
           
@@ -284,7 +330,7 @@ jobs:
       - name: Package release
         shell: pwsh
         run: |
-          $version = "${{ needs.validate.outputs.version }}"
+          $version = "${{ needs.version.outputs.version }}"
           $platform = "${{ matrix.platform }}"
           $extension = "${{ matrix.extension }}"
           
@@ -319,7 +365,7 @@ jobs:
       - name: Generate checksums
         shell: pwsh
         run: |
-          $version = "${{ needs.validate.outputs.version }}"
+          $version = "${{ needs.version.outputs.version }}"
           $platform = "${{ matrix.platform }}"
           $extension = "${{ matrix.extension }}"
           $archiveName = "AitherZero-$version-$platform$extension"
@@ -338,18 +384,18 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: AitherZero-${{ needs.validate.outputs.version }}-${{ matrix.platform }}
+          name: AitherZero-${{ needs.version.outputs.version }}-${{ matrix.platform }}
           path: |
-            AitherZero-${{ needs.validate.outputs.version }}-${{ matrix.platform }}*
+            AitherZero-${{ needs.version.outputs.version }}-${{ matrix.platform }}*
           retention-days: 90
 
   # Create GitHub Release
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: [validate, build]
+    needs: [version, validate, build]
     if: >
-      needs.validate.outputs.should-build == 'true' && 
+      needs.version.outputs.should-build == 'true' && 
       (github.event_name == 'release' || 
        github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') ||
        (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true'))
@@ -365,7 +411,7 @@ jobs:
       - name: Prepare release assets
         shell: pwsh
         run: |
-          $version = "${{ needs.validate.outputs.version }}"
+          $version = "${{ needs.version.outputs.version }}"
           Write-Host "Preparing release assets for v$version..." -ForegroundColor Cyan
           
           # List all downloaded artifacts
@@ -390,8 +436,8 @@ jobs:
           
           # Create combined checksum file
           if ($checksums.Count -gt 0) {
-            $checksums | Set-Content './AitherZero-${{ needs.validate.outputs.version }}-checksums.txt' -Encoding UTF8
-            $releaseAssets += "AitherZero-${{ needs.validate.outputs.version }}-checksums.txt"
+            $checksums | Set-Content './AitherZero-${{ needs.version.outputs.version }}-checksums.txt' -Encoding UTF8
+            $releaseAssets += "AitherZero-${{ needs.version.outputs.version }}-checksums.txt"
             Write-Host "✓ Combined checksums file created" -ForegroundColor Green
           }
           
@@ -406,10 +452,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ needs.validate.outputs.version }}
-          release_name: AitherZero v${{ needs.validate.outputs.version }}
+          tag_name: v${{ needs.version.outputs.version }}
+          release_name: AitherZero v${{ needs.version.outputs.version }}
           body: |
-            # AitherZero v${{ needs.validate.outputs.version }}
+            # AitherZero v${{ needs.version.outputs.version }}
             
             ## 🚀 Cross-Platform Infrastructure Automation Framework
             
@@ -418,9 +464,9 @@ jobs:
             ### 📦 Installation
             
             1. Download the appropriate package for your platform:
-               - **Windows**: `AitherZero-${{ needs.validate.outputs.version }}-windows.zip`
-               - **Linux**: `AitherZero-${{ needs.validate.outputs.version }}-linux.tar.gz`
-               - **macOS**: `AitherZero-${{ needs.validate.outputs.version }}-macos.tar.gz`
+               - **Windows**: `AitherZero-${{ needs.version.outputs.version }}-windows.zip`
+               - **Linux**: `AitherZero-${{ needs.version.outputs.version }}-linux.tar.gz`
+               - **macOS**: `AitherZero-${{ needs.version.outputs.version }}-macos.tar.gz`
             
             2. Extract the package to your desired directory
             
@@ -440,10 +486,10 @@ jobs:
             
             ```bash
             # Windows (PowerShell)
-            Get-FileHash AitherZero-${{ needs.validate.outputs.version }}-windows.zip -Algorithm SHA256
+            Get-FileHash AitherZero-${{ needs.version.outputs.version }}-windows.zip -Algorithm SHA256
             
             # Linux/macOS
-            sha256sum AitherZero-${{ needs.validate.outputs.version }}-linux.tar.gz
+            sha256sum AitherZero-${{ needs.version.outputs.version }}-linux.tar.gz
             ```
             
             ### 📋 What's Included
@@ -476,12 +522,12 @@ jobs:
             - Platforms: Windows, Linux, macOS
             - PowerShell: 7.0+ compatible
           draft: false
-          prerelease: ${{ contains(needs.validate.outputs.version, 'rc') || contains(needs.validate.outputs.version, 'pre') || contains(needs.validate.outputs.version, 'alpha') || contains(needs.validate.outputs.version, 'beta') }}
+          prerelease: ${{ contains(needs.version.outputs.version, 'rc') || contains(needs.version.outputs.version, 'pre') || contains(needs.version.outputs.version, 'alpha') || contains(needs.version.outputs.version, 'beta') }}
 
       - name: Upload release assets
         shell: pwsh
         run: |
-          $version = "${{ needs.validate.outputs.version }}"
+          $version = "${{ needs.version.outputs.version }}"
           Write-Host "Uploading release assets..." -ForegroundColor Cyan
           
           # Get release ID from the previous step
@@ -521,7 +567,7 @@ jobs:
       - name: Validate release
         shell: pwsh
         run: |
-          $version = "${{ needs.validate.outputs.version }}"
+          $version = "${{ needs.version.outputs.version }}"
           Write-Host "Validating release v$version..." -ForegroundColor Cyan
           
           try {
@@ -571,3 +617,5 @@ jobs:
           }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+

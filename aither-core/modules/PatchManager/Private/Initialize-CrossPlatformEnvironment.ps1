@@ -33,15 +33,22 @@ function Initialize-CrossPlatformEnvironment {
             if (-not $projectRoot) {
                 $current = Get-Location
                 while ($current -and $current.Path -ne '/' -and $current.Path -notmatch '^[A-Z]:\\$') {
-                    $manifestPath = Join-Path $current.Path 'PROJECT-MANIFEST.json'
-                    if (Test-Path $manifestPath) {
-                        $projectRoot = $current.Path
-                        Write-Verbose "Found PROJECT-MANIFEST.json at: $projectRoot"
+                    try {
+                        $currentPath = if ($current -is [System.Management.Automation.PathInfo]) { $current.Path } else { $current.ToString() }
+                        $manifestPath = Join-Path $currentPath 'PROJECT-MANIFEST.json'
+                        if (Test-Path $manifestPath) {
+                            $projectRoot = $currentPath
+                            Write-Verbose "Found PROJECT-MANIFEST.json at: $projectRoot"
+                            break
+                        }
+                        $parentPath = Split-Path $currentPath -Parent
+                        if (-not $parentPath -or $parentPath -eq $currentPath) { break }
+                        $current = Get-Item $parentPath -ErrorAction SilentlyContinue
+                        if (-not $current) { break }
+                    } catch {
+                        Write-Verbose "Error in path detection: $_"
                         break
                     }
-                    $current = Split-Path $current.Path -Parent
-                    if (-not $current) { break }
-                    $current = Get-Item $current -ErrorAction SilentlyContinue
                 }
             }
 
@@ -49,10 +56,21 @@ function Initialize-CrossPlatformEnvironment {
             if (-not $projectRoot) {
                 $moduleRoot = $PSScriptRoot
                 # Go up from PatchManager/Private to project root
-                $candidate = Split-Path (Split-Path (Split-Path $moduleRoot -Parent) -Parent) -Parent
-                if (Test-Path (Join-Path $candidate 'PROJECT-MANIFEST.json')) {
-                    $projectRoot = $candidate
-                    Write-Verbose "Detected project root via module location: $projectRoot"
+                if ($moduleRoot) {
+                    try {
+                        # Go up three levels: Private -> PatchManager -> modules -> aither-core -> project root
+                        $step1 = Split-Path $moduleRoot -Parent  # PatchManager
+                        $step2 = Split-Path $step1 -Parent       # modules
+                        $step3 = Split-Path $step2 -Parent       # aither-core
+                        $candidate = Split-Path $step3 -Parent   # project root
+                        
+                        if ($candidate -and (Test-Path (Join-Path $candidate 'aither-core'))) {
+                            $projectRoot = $candidate
+                            Write-Verbose "Detected project root via module location: $projectRoot"
+                        }
+                    } catch {
+                        Write-Verbose "Failed to detect project root via module location: $_"
+                    }
                 }
             }            # Strategy 4: Hard-coded known paths (last resort)
             if (-not $projectRoot) {
@@ -75,18 +93,28 @@ function Initialize-CrossPlatformEnvironment {
 
             # Strategy 5: Use current location if it contains aither-core
             if (-not $projectRoot) {
-                $currentPath = (Get-Location).Path
-                if (Test-Path (Join-Path $currentPath 'aither-core')) {
-                    $projectRoot = $currentPath
-                    Write-Verbose "Using current directory with aither-core: $projectRoot"
+                try {
+                    $currentPath = (Get-Location).Path
+                    if ($currentPath -and (Test-Path (Join-Path $currentPath 'aither-core'))) {
+                        $projectRoot = $currentPath
+                        Write-Verbose "Using current directory with aither-core: $projectRoot"
+                    }
+                } catch {
+                    Write-Verbose "Error checking current directory: $_"
                 }
             }
 
             # Final fallback
             if (-not $projectRoot) {
-                $projectRoot = Get-Location
+                $projectRoot = (Get-Location).Path
                 Write-Warning "Could not detect project root, using current directory: $projectRoot"
             }
+            
+            # Ensure $projectRoot is a string path
+            if ($projectRoot -is [System.Management.Automation.PathInfo]) {
+                $projectRoot = $projectRoot.Path
+            }
+            
             # Set environment variables for cross-platform use
             $env:PROJECT_ROOT = $projectRoot
             $env:PWSH_MODULES_PATH = Join-Path $projectRoot 'aither-core' 'modules'
