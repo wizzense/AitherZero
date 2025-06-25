@@ -60,6 +60,13 @@ function Get-TestAnalysisContext {
         }
 
         Write-AnalysisLog "Starting intelligent test context analysis..." -Level "INFO"
+        Write-AnalysisLog "DEBUG: TestOutput.Count = $($TestOutput.Count), ErrorDetails.Count = $($ErrorDetails.Count)" -Level "INFO"
+        if ($TestOutput.Count -gt 0) {
+            Write-AnalysisLog "DEBUG: TestOutput sample: $($TestOutput[0])" -Level "INFO"
+        }
+        if ($ErrorDetails.Count -gt 0) {
+            Write-AnalysisLog "DEBUG: ErrorDetails sample: $($ErrorDetails[0])" -Level "INFO"
+        }
     }
 
     process {
@@ -243,6 +250,8 @@ function Get-TestAnalysisContext {
             if ($analysisResult.AffectedModules.Count -gt 0) { $confidenceScore += 25 }
             if ($analysisResult.ErrorCategories.Count -gt 0) { $confidenceScore += 25 }
             if ($analysisResult.AffectedCapabilities.Count -gt 0) { $confidenceScore += 20 }
+
+            Write-AnalysisLog "DEBUG: Confidence calculation - Score: $confidenceScore, Files: $($analysisResult.AffectedFiles.Count), Modules: $($analysisResult.AffectedModules.Count), Errors: $($analysisResult.ErrorCategories.Count), Capabilities: $($analysisResult.AffectedCapabilities.Count)" -Level "INFO"
 
             $analysisResult.Confidence = switch ($true) {
                 ($confidenceScore -ge 80) { "High"; break }
