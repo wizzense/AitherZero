@@ -28,7 +28,10 @@
         'Invoke-PesterTests',
         'Invoke-PytestTests',
         'Invoke-SyntaxValidation',
-        'Invoke-ParallelTests'
+        'Invoke-ParallelTests',
+        'Invoke-BulletproofTest',
+        'Start-TestSuite',
+        'Write-TestLog'
     )
 
     CmdletsToExport = @()

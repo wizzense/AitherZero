@@ -6,19 +6,20 @@
     CompanyName = 'Aitherium'
     Copyright = '(c) 2025 Aitherium. All rights reserved.'
     Description = 'Module for ScriptManager functionality in Aitherium Infrastructure Automation'
-    
+
     PowerShellVersion = '7.0'
-    
+
     FunctionsToExport = @(
         'Invoke-OneOffScript',
-        'Register-OneOffScript',
-        'Test-OneOffScript'
+        'Get-ScriptRepository',
+        'Start-ScriptExecution',
+        'Get-ScriptTemplate'
     )
-    
+
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()
-    
+
     PrivateData = @{
         PSData = @{
             Tags = @('OpenTofu', 'Automation', 'ScriptManager')

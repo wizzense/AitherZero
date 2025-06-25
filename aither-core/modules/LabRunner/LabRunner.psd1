@@ -4,10 +4,10 @@
     GUID = 'c0000000-0000-4000-8000-000000000001'
     Author = 'Aitherium Contributors'
     Description = 'LabRunner module for Aitherium Infrastructure Automation'
-    
+
     FunctionsToExport = @(
         'Invoke-LabStep',
-        'Invoke-LabDownload', 
+        'Invoke-LabDownload',
         'Read-LoggedInput',
         'Invoke-LabWebRequest',
         'Write-CustomLog',
@@ -21,9 +21,11 @@
         'Get-LabConfig',
         'Invoke-ParallelLabRunner',
         'Test-ParallelRunnerSupport',
-        'Initialize-StandardParameters'
+        'Initialize-StandardParameters',
+        'Start-LabAutomation',
+        'Get-LabStatus'
     )
-    
+
     NestedModules = @('Resolve-ProjectPath.psm1')
     CmdletsToExport = @()
     VariablesToExport = @()
