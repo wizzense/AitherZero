@@ -128,7 +128,7 @@ if ($script:IsPowerShell7Plus) {
 # Auto-detect non-interactive mode
 if (-not $NonInteractive -and (-not $script:IsInteractive -or $env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true')) {
     $NonInteractive = $true
-    Write-Verbose "Auto-detected non-interactive environment"
+    Write-Verbose 'Auto-detected non-interactive environment'
 }
 
 # Set verbosity
@@ -198,7 +198,7 @@ Write-BootstrapLog "PowerShell Edition: $($PSVersionTable.PSEdition)" 'INFO'
 if ($PSVersionTable.OS) {
     Write-BootstrapLog "Platform: $($PSVersionTable.OS)" 'INFO'
 } else {
-    Write-BootstrapLog "Platform: Windows (PowerShell 5.1)" 'INFO'
+    Write-BootstrapLog 'Platform: Windows (PowerShell 5.1)' 'INFO'
 }
 
 # Enhanced web request function
@@ -206,10 +206,10 @@ function Invoke-CompatibleWebRequest {
     param(
         [Parameter(Mandatory)]
         [string]$Uri,
-        
+
         [Parameter(Mandatory)]
         [string]$OutFile,
-        
+
         [switch]$UseBasicParsing
     )
 
@@ -237,23 +237,23 @@ function Invoke-CompatibleWebRequest {
 function Install-GitForWindows {
     if (-not $script:PlatformWindows) { return $false }
 
-    Write-BootstrapLog "Installing Git for Windows..." 'INFO'
+    Write-BootstrapLog 'Installing Git for Windows...' 'INFO'
 
     try {
-        $gitUrl = "https://github.com/git-for-windows/git/releases/latest/download/Git-2.47.1-64-bit.exe"
-        $gitInstaller = Join-Path (Get-PlatformTempPath) "Git-Installer.exe"
+        $gitUrl = 'https://github.com/git-for-windows/git/releases/latest/download/Git-2.47.1-64-bit.exe'
+        $gitInstaller = Join-Path (Get-PlatformTempPath) 'Git-Installer.exe'
 
         if (-not (Invoke-CompatibleWebRequest -Uri $gitUrl -OutFile $gitInstaller)) {
-            throw "Failed to download Git installer"
+            throw 'Failed to download Git installer'
         }
 
-        $process = Start-Process -FilePath $gitInstaller -ArgumentList "/SILENT", "/NORESTART" -Wait -NoNewWindow -PassThru
+        $process = Start-Process -FilePath $gitInstaller -ArgumentList '/SILENT', '/NORESTART' -Wait -NoNewWindow -PassThru
         Remove-Item $gitInstaller -ErrorAction SilentlyContinue
 
         if ($process.ExitCode -eq 0) {
             # Update PATH for current session
             $env:PATH = "$env:PATH;C:\Program Files\Git\bin;C:\Program Files\Git\cmd"
-            Write-BootstrapLog "Git installed successfully" 'SUCCESS'
+            Write-BootstrapLog 'Git installed successfully' 'SUCCESS'
             return $true
         } else {
             throw "Git installation failed with exit code: $($process.ExitCode)"
@@ -268,21 +268,21 @@ function Install-GitForWindows {
 function Install-PowerShell7 {
     if (-not $script:PlatformWindows) { return $false }
 
-    Write-BootstrapLog "Installing PowerShell 7..." 'INFO'
+    Write-BootstrapLog 'Installing PowerShell 7...' 'INFO'
 
     try {
-        $pwshUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/PowerShell-7.4.6-win-x64.msi"
-        $pwshInstaller = Join-Path (Get-PlatformTempPath) "PowerShell-7-Installer.msi"
+        $pwshUrl = 'https://github.com/PowerShell/PowerShell/releases/latest/download/PowerShell-7.4.6-win-x64.msi'
+        $pwshInstaller = Join-Path (Get-PlatformTempPath) 'PowerShell-7-Installer.msi'
 
         if (-not (Invoke-CompatibleWebRequest -Uri $pwshUrl -OutFile $pwshInstaller)) {
-            throw "Failed to download PowerShell 7 installer"
+            throw 'Failed to download PowerShell 7 installer'
         }
 
-        $process = Start-Process -FilePath "msiexec.exe" -ArgumentList "/i", $pwshInstaller, "/quiet", "/norestart" -Wait -NoNewWindow -PassThru
+        $process = Start-Process -FilePath 'msiexec.exe' -ArgumentList '/i', $pwshInstaller, '/quiet', '/norestart' -Wait -NoNewWindow -PassThru
         Remove-Item $pwshInstaller -ErrorAction SilentlyContinue
 
         if ($process.ExitCode -eq 0) {
-            Write-BootstrapLog "PowerShell 7 installed successfully" 'SUCCESS'
+            Write-BootstrapLog 'PowerShell 7 installed successfully' 'SUCCESS'
             return $true
         } else {
             throw "PowerShell 7 installation failed with exit code: $($process.ExitCode)"
@@ -331,24 +331,24 @@ function Test-Prerequisite {
 
 # Main prerequisite validation
 function Test-Prerequisites {
-    Write-BootstrapLog "=== Validating Prerequisites ===" 'INFO'
+    Write-BootstrapLog '=== Validating Prerequisites ===' 'INFO'
 
     $allGood = $true
 
     # PowerShell 7 (recommended but not required)
-    if (-not (Test-Prerequisite -Name "PowerShell 7" -Commands @("pwsh") -InstallInstructions "Install from https://github.com/PowerShell/PowerShell/releases")) {
+    if (-not (Test-Prerequisite -Name 'PowerShell 7' -Commands @('pwsh') -InstallInstructions 'Install from https://github.com/PowerShell/PowerShell/releases')) {
         if ($script:PlatformWindows -and -not $SkipPrerequisites) {
             if (Install-PowerShell7) {
-                Write-BootstrapLog "PowerShell 7 auto-installed" 'SUCCESS'
+                Write-BootstrapLog 'PowerShell 7 auto-installed' 'SUCCESS'
             }
         }
     }
 
     # Git (required)
-    if (-not (Test-Prerequisite -Name "Git" -Commands @("git") -InstallInstructions "Install Git from https://git-scm.com/downloads")) {
+    if (-not (Test-Prerequisite -Name 'Git' -Commands @('git') -InstallInstructions 'Install Git from https://git-scm.com/downloads')) {
         if ($script:PlatformWindows -and -not $SkipPrerequisites) {
             if (Install-GitForWindows) {
-                Write-BootstrapLog "Git auto-installed" 'SUCCESS'
+                Write-BootstrapLog 'Git auto-installed' 'SUCCESS'
             } else {
                 $allGood = $false
             }
@@ -358,19 +358,19 @@ function Test-Prerequisites {
     }
 
     # GitHub CLI (optional)
-    Test-Prerequisite -Name "GitHub CLI" -Commands @("gh") -InstallInstructions "Install from https://cli.github.com/" | Out-Null
+    Test-Prerequisite -Name 'GitHub CLI' -Commands @('gh') -InstallInstructions 'Install from https://cli.github.com/' | Out-Null
 
     if (-not $allGood) {
-        throw "Required prerequisites are missing. Please install them and re-run this script."
+        throw 'Required prerequisites are missing. Please install them and re-run this script.'
     }
 
-    Write-BootstrapLog "OK All required prerequisites are available" 'SUCCESS'
+    Write-BootstrapLog 'OK All required prerequisites are available' 'SUCCESS'
 }
 
 # Get latest release info
 function Get-LatestReleaseInfo {
-    Write-BootstrapLog "Getting latest release information..." 'INFO'
-    
+    Write-BootstrapLog 'Getting latest release information...' 'INFO'
+
     try {
         if ($script:IsPowerShell7Plus) {
             $response = Invoke-RestMethod -Uri $script:ReleasesApiUrl
@@ -380,7 +380,7 @@ function Get-LatestReleaseInfo {
             $webClient.Dispose()
             $response = $responseText | ConvertFrom-Json
         }
-        
+
         Write-BootstrapLog "Latest release: $($response.tag_name)" 'SUCCESS'
         return $response
     } catch {
@@ -392,43 +392,43 @@ function Get-LatestReleaseInfo {
 # Download and extract release
 function Get-AitherZeroRelease {
     param([string]$InstallPath)
-    
-    Write-BootstrapLog "=== Downloading AitherZero Release ===" 'INFO'
-    
+
+    Write-BootstrapLog '=== Downloading AitherZero Release ===' 'INFO'
+
     $releaseInfo = Get-LatestReleaseInfo
     if (-not $releaseInfo) {
-        throw "Could not get release information"
+        throw 'Could not get release information'
     }
-    
+
     # Determine platform asset name
-    $platformName = if ($script:PlatformWindows) { "windows" }
-                   elseif ($script:PlatformLinux) { "linux" }
-                   elseif ($script:PlatformMacOS) { "macos" }
-                   else { "windows" }
-    
+    $platformName = if ($script:PlatformWindows) { 'windows' }
+    elseif ($script:PlatformLinux) { 'linux' }
+    elseif ($script:PlatformMacOS) { 'macos' }
+    else { 'windows' }
+
     $assetPattern = "*$platformName*"
     $asset = $releaseInfo.assets | Where-Object { $_.name -like $assetPattern } | Select-Object -First 1
-    
+
     if (-not $asset) {
         throw "Could not find release asset for platform: $platformName"
     }
-    
+
     Write-BootstrapLog "Downloading: $($asset.name)" 'INFO'
-    
+
     $downloadPath = Join-Path (Get-PlatformTempPath) $asset.name
-    
+
     if (-not (Invoke-CompatibleWebRequest -Uri $asset.browser_download_url -OutFile $downloadPath)) {
-        throw "Failed to download release asset"
+        throw 'Failed to download release asset'
     }
-    
+
     Write-BootstrapLog "Extracting to: $InstallPath" 'INFO'
-    
+
     if (-not (Test-Path $InstallPath)) {
         New-Item -ItemType Directory -Path $InstallPath -Force | Out-Null
     }
-    
+
     try {
-        if ($asset.name -like "*.zip") {
+        if ($asset.name -like '*.zip') {
             if ($script:IsPowerShell7Plus) {
                 Expand-Archive -Path $downloadPath -DestinationPath $InstallPath -Force
             } else {
@@ -439,18 +439,18 @@ function Get-AitherZeroRelease {
             # tar.gz file
             & tar -xzf $downloadPath -C $InstallPath
         }
-        
+
         Remove-Item $downloadPath -ErrorAction SilentlyContinue
-        Write-BootstrapLog "Release extracted successfully" 'SUCCESS'
-        
+        Write-BootstrapLog 'Release extracted successfully' 'SUCCESS'
+
         # Find the extracted directory
-        $extractedDir = Get-ChildItem -Path $InstallPath -Directory | Where-Object { $_.Name -like "AitherZero*" } | Select-Object -First 1
+        $extractedDir = Get-ChildItem -Path $InstallPath -Directory | Where-Object { $_.Name -like 'AitherZero*' } | Select-Object -First 1
         if ($extractedDir) {
             return $extractedDir.FullName
         } else {
             return $InstallPath
         }
-        
+
     } catch {
         Write-BootstrapLog "Extraction failed: $($_.Exception.Message)" 'ERROR'
         throw
@@ -460,32 +460,32 @@ function Get-AitherZeroRelease {
 # Clone repository
 function Get-AitherZeroRepository {
     param([string]$InstallPath)
-    
-    Write-BootstrapLog "=== Cloning AitherZero Repository ===" 'INFO'
-    
-    $repoPath = Join-Path $InstallPath "AitherZero"
-    
+
+    Write-BootstrapLog '=== Cloning AitherZero Repository ===' 'INFO'
+
+    $repoPath = Join-Path $InstallPath 'AitherZero'
+
     if (Test-Path $repoPath) {
         if ($Force) {
-            Write-BootstrapLog "Removing existing repository..." 'INFO'
+            Write-BootstrapLog 'Removing existing repository...' 'INFO'
             Remove-Item $repoPath -Recurse -Force
         } else {
-            Write-BootstrapLog "Repository already exists, updating..." 'INFO'
+            Write-BootstrapLog 'Repository already exists, updating...' 'INFO'
             & git -C $repoPath pull
             return $repoPath
         }
     }
-    
+
     try {
         & git clone --depth 1 $script:RepoUrl $repoPath
-        
+
         if ($LASTEXITCODE -ne 0) {
             throw "Git clone failed with exit code: $LASTEXITCODE"
         }
-        
-        Write-BootstrapLog "Repository cloned successfully" 'SUCCESS'
+
+        Write-BootstrapLog 'Repository cloned successfully' 'SUCCESS'
         return $repoPath
-        
+
     } catch {
         Write-BootstrapLog "Repository clone failed: $($_.Exception.Message)" 'ERROR'
         throw
@@ -500,15 +500,15 @@ function Start-AitherZero {
         [string]$Scripts,
         [string]$ConfigFile
     )
-    
-    Write-BootstrapLog "=== Launching AitherZero ===" 'INFO'
-    
+
+    Write-BootstrapLog '=== Launching AitherZero ===' 'INFO'
+
     # Find the main launcher
     $launcherScripts = @(
-        "Start-AitherZero.ps1",
-        "aither-core.ps1"
+        'Start-AitherZero.ps1',
+        'aither-core.ps1'
     )
-    
+
     $launcher = $null
     foreach ($script in $launcherScripts) {
         $scriptPath = Join-Path $InstallPath $script
@@ -517,55 +517,55 @@ function Start-AitherZero {
             break
         }
     }
-    
+
     if (-not $launcher) {
         throw "Could not find AitherZero launcher script in: $InstallPath"
     }
-    
+
     Write-BootstrapLog "Using launcher: $launcher" 'INFO'
-    
+
     # Build launch arguments
     $launchArgs = @()
-    
+
     switch ($LaunchMode) {
         'Auto' { $launchArgs += '-Auto' }
-        'Scripts' { 
+        'Scripts' {
             $launchArgs += '-Scripts'
             if ($Scripts) { $launchArgs += $Scripts }
         }
         'Setup' { $launchArgs += '-Setup' }
-        'Interactive' { 
+        'Interactive' {
             # Default mode, no special args needed
         }
     }
-    
+
     if ($ConfigFile) {
         $launchArgs += '-ConfigFile', $ConfigFile
     }
-    
+
     if ($Verbosity -ne 'normal') {
         $launchArgs += '-Verbosity', $Verbosity
     }
-    
+
     if ($NonInteractive) {
         $launchArgs += '-NonInteractive'
     }
-    
+
     Write-BootstrapLog "Launching with mode: $LaunchMode" 'SUCCESS'
     Write-BootstrapLog "Arguments: $($launchArgs -join ' ')" 'INFO'
-    
+
     try {
         Push-Location $InstallPath
-        
+
         # Handle execution policy on Windows
         if ($script:PlatformWindows) {
             & pwsh -ExecutionPolicy Bypass -File $launcher @launchArgs
         } else {
             & pwsh -File $launcher @launchArgs
         }
-        
+
         Pop-Location
-        
+
     } catch {
         Pop-Location
         Write-BootstrapLog "Launch failed: $($_.Exception.Message)" 'ERROR'
@@ -575,54 +575,54 @@ function Start-AitherZero {
 
 # Main bootstrap workflow
 function Start-Bootstrap {
-    Write-BootstrapLog "=== AitherZero Bootstrap Started ===" 'SUCCESS'
-    
+    Write-BootstrapLog '=== AitherZero Bootstrap Started ===' 'SUCCESS'
+
     try {
         # Step 1: Validate prerequisites
         Test-Prerequisites
-        
+
         # Step 2: Determine installation path
         if ($LocalPath) {
             $installPath = $LocalPath
         } else {
-            $installPath = Join-Path (Get-PlatformTempPath) "AitherZero-Bootstrap"
+            $installPath = Join-Path (Get-PlatformTempPath) 'AitherZero-Bootstrap'
         }
-        
+
         Write-BootstrapLog "Installation path: $installPath" 'INFO'
-        
+
         # Step 3: Get AitherZero (release or repository)
         if ($UseRepository) {
             $aitherZeroPath = Get-AitherZeroRepository -InstallPath $installPath
         } else {
             $aitherZeroPath = Get-AitherZeroRelease -InstallPath $installPath
         }
-        
+
         Write-BootstrapLog "AitherZero location: $aitherZeroPath" 'INFO'
-        
+
         # Step 4: Launch AitherZero
         Start-AitherZero -InstallPath $aitherZeroPath -LaunchMode $LaunchMode -Scripts $Scripts -ConfigFile $ConfigFile
-        
+
         # Step 5: Success message
-        Write-BootstrapLog "=== Bootstrap Completed Successfully ===" 'SUCCESS'
+        Write-BootstrapLog '=== Bootstrap Completed Successfully ===' 'SUCCESS'
         Write-BootstrapLog "AitherZero is running from: $aitherZeroPath" 'INFO'
         Write-BootstrapLog "Log file: $script:LogFile" 'INFO'
-        
+
         if ($script:VerbosityLevel -ge 1) {
-            Write-BootstrapLog "" 'INFO' -NoTimestamp
-            Write-BootstrapLog "🎉 AitherZero Bootstrap Complete! 🎉" 'SUCCESS' -NoTimestamp
-            Write-BootstrapLog "Your infrastructure automation framework is ready to use." 'SUCCESS' -NoTimestamp
+            Write-BootstrapLog '' 'INFO' -NoTimestamp
+            Write-BootstrapLog '🎉 AitherZero Bootstrap Complete! 🎉' 'SUCCESS' -NoTimestamp
+            Write-BootstrapLog 'Your infrastructure automation framework is ready to use.' 'SUCCESS' -NoTimestamp
         }
-        
+
     } catch {
         Write-BootstrapLog "Bootstrap failed: $($_.Exception.Message)" 'ERROR'
         Write-BootstrapLog "Log file: $script:LogFile" 'ERROR'
-        
+
         if ($script:VerbosityLevel -ge 1) {
-            Write-BootstrapLog "" 'ERROR' -NoTimestamp
-            Write-BootstrapLog "❌ Bootstrap Failed ❌" 'ERROR' -NoTimestamp
+            Write-BootstrapLog '' 'ERROR' -NoTimestamp
+            Write-BootstrapLog '❌ Bootstrap Failed ❌' 'ERROR' -NoTimestamp
             Write-BootstrapLog "Check the log file for details: $script:LogFile" 'ERROR' -NoTimestamp
         }
-        
+
         exit 1
     }
 }

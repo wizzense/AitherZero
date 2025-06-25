@@ -96,8 +96,8 @@ jobs:
           # Version determination logic
 
           # For PR merges to main/master, create a build version
-          if ([string]::IsNullOrEmpty($version) -and 
-              "${{ github.event_name }}" -eq "push" -and 
+          if ([string]::IsNullOrEmpty($version) -and
+              "${{ github.event_name }}" -eq "push" -and
               ("${{ github.ref }}" -eq "refs/heads/main" -or "${{ github.ref }}" -eq "refs/heads/master")) {
             $latestTag = git describe --tags --abbrev=0 2>$null
             if ($latestTag) {
@@ -493,7 +493,7 @@ jobs:
             if ("${{ matrix.platform }}" -eq "windows") {
               $winScript = "@echo off`necho 🚀 AitherZero v$version - Windows Quick Start`necho.`necho Starting AitherZero with execution policy bypass for downloaded packages...`necho.`npwsh -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" %*`nif %ERRORLEVEL% NEQ 0 (`necho.`necho ❌ AitherZero encountered an error.`necho.`necho 💡 Troubleshooting:`necho   1. Try running: pwsh -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" -Setup`necho   2. Or run: pwsh -ExecutionPolicy Bypass -File `"Start-AitherZero.ps1`" -Help`necho   3. Check requirements: PowerShell 7+, Git, OpenTofu/Terraform`necho.`npause`n)"
               Set-Content -Path "$packageDir/AitherZero.bat" -Value $winScript -Encoding UTF8
-              
+
               # Also create a PowerShell-native launcher for Windows
               $winPsScript = "# AitherZero Windows PowerShell Launcher`n# This bypasses execution policy issues for downloaded packages`nWrite-Host `"🚀 AitherZero v$version - Windows PowerShell Launcher`" -ForegroundColor Cyan`nWrite-Host `"`"`nSet-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force`n& `".\Start-AitherZero.ps1`" @args"
               Set-Content -Path "$packageDir/Start-AitherZero-Windows.ps1" -Value $winPsScript
@@ -950,4 +950,3 @@ jobs:
           }
 
           Write-Host "🎉 Release validation completed successfully!" -ForegroundColor Green
-

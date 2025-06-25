@@ -34,7 +34,7 @@ $url = (irm "https://api.github.com/repos/wizzense/AitherZero/releases/latest").
 #### Manual Download (If you prefer)
 1. **Go to [GitHub Releases](https://github.com/wizzense/AitherZero/releases/latest)**
 2. **Download your platform**:
-   - **Windows**: `AitherZero-[version]-windows.zip` 
+   - **Windows**: `AitherZero-[version]-windows.zip`
    - **Linux**: `AitherZero-[version]-linux.tar.gz`
    - **macOS**: `AitherZero-[version]-macos.tar.gz`
 3. **Extract and run**:
