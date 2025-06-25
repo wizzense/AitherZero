@@ -328,7 +328,7 @@ jobs:
                 Write-Warning "Item not found: $item"
               }
             }
-            
+
             # Create platform-specific startup scripts
             if ("${{ matrix.platform }}" -eq "windows") {
               $startupScript = @"
@@ -346,7 +346,7 @@ echo "Starting AitherZero v$version..."
 pwsh -File "aither-core/core-runner.ps1" `$@
 "@
               Set-Content -Path "$packageDir/aitherzero.sh" -Value $startupScript -Encoding UTF8
-              
+
               # Make executable on Unix-like systems
               if (-not $IsWindows) {
                 chmod +x "$packageDir/aitherzero.sh"
@@ -665,4 +665,3 @@ pwsh -File "aither-core/core-runner.ps1" `$@
           }
 
           Write-Host "🎉 Release validation completed successfully!" -ForegroundColor Green
-
