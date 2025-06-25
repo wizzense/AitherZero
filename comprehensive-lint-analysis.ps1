@@ -150,8 +150,12 @@ if ($allResults.Count -gt 0) {
     $topRules | ForEach-Object {
         $ruleName = $_.Name
         $ruleExample = $allResults | Where-Object { $_.RuleName -eq $ruleName } | Select-Object -First 1
-        $severityValue = if ($ruleExample) { $ruleExample.Severity.ToString() } else { 'Warning' }
-        $icon = switch ($severityValue) {
+        $severityText = if ($ruleExample -and $ruleExample.Severity) { 
+            $ruleExample.Severity.ToString() 
+        } else { 
+            'Warning' 
+        }
+        $icon = switch ($severityText) {
             'Error' { '❌' }
             'Warning' { '⚠️ ' }
             'Information' { 'ℹ️ ' }
