@@ -122,10 +122,20 @@ if ($Setup) {
 
 # Import essential modules with error handling (if available)
 Write-Host "Loading AitherZero modules..." -ForegroundColor Cyan
-if (Test-Path "$PSScriptRoot/modules") {
+
+# Determine modules directory based on launcher location
+$modulesPath = Join-Path $PSScriptRoot "modules"
+if (-not (Test-Path $modulesPath)) {
+    $modulesPath = Join-Path $PSScriptRoot "aither-core/modules"
+}
+if (-not (Test-Path $modulesPath)) {
+    $modulesPath = Join-Path $PSScriptRoot "../../aither-core/modules"
+}
+
+if (Test-Path $modulesPath) {
     $loadedModules = 0
-    $totalModules = (Get-ChildItem "$PSScriptRoot/modules" -Directory).Count
-    Get-ChildItem "$PSScriptRoot/modules" -Directory | ForEach-Object {
+    $totalModules = (Get-ChildItem $modulesPath -Directory).Count
+    Get-ChildItem $modulesPath -Directory | ForEach-Object {
         try {
             Import-Module $_.FullName -Force -ErrorAction Stop
             $loadedModules++
@@ -136,7 +146,8 @@ if (Test-Path "$PSScriptRoot/modules") {
     }
     Write-Host "Loaded $loadedModules/$totalModules modules successfully" -ForegroundColor Cyan
 } else {
-    Write-Host "⚠️  Modules directory not found at $PSScriptRoot/modules" -ForegroundColor Yellow
+    Write-Host "⚠️  Modules directory not found at expected locations" -ForegroundColor Yellow
+    Write-Host "   Checked: $PSScriptRoot/modules, $PSScriptRoot/aither-core/modules, $PSScriptRoot/../../aither-core/modules" -ForegroundColor Yellow
     Write-Host "   Some advanced features may not be available." -ForegroundColor White
 }
 
@@ -161,10 +172,22 @@ Write-Host "Starting AitherZero core application..." -ForegroundColor Green
 Write-Host ""
 
 try {
-    $coreScriptPath = "$PSScriptRoot/aither-core.ps1"
+    # Resolve path to core application script
+    # This launcher will be in the root of the application package
+    $coreScriptPath = Join-Path $PSScriptRoot "aither-core.ps1"
+    
+    # Alternative paths for different deployment scenarios
+    if (-not (Test-Path $coreScriptPath)) {
+        $coreScriptPath = Join-Path $PSScriptRoot "aither-core/aither-core.ps1"
+    }
+    
+    # If we're in the templates/launchers directory (development scenario)
+    if (-not (Test-Path $coreScriptPath)) {
+        $coreScriptPath = Join-Path $PSScriptRoot "../../aither-core/aither-core.ps1"
+    }
     
     if (-not (Test-Path $coreScriptPath)) {
-        throw "Core application file not found: $coreScriptPath"
+        throw "Core application file not found. Tried: `n  - $(Join-Path $PSScriptRoot 'aither-core.ps1')`n  - $(Join-Path $PSScriptRoot 'aither-core/aither-core.ps1')`n  - $(Join-Path $PSScriptRoot '../../aither-core/aither-core.ps1')"
     }
     
     # Enhanced execution for PowerShell version compatibility

@@ -16,6 +16,7 @@ if %ERRORLEVEL% EQU 0 (
     echo ✅ PowerShell 7 detected - using optimal launcher
     pwsh -ExecutionPolicy Bypass -File "Start-AitherZero.ps1" %*
     set LAUNCH_EXIT_CODE=%ERRORLEVEL%
+    goto :HandleExitCode
 ) else (
     echo ⚠️ PowerShell 7 not found, trying Windows PowerShell...
     
@@ -25,6 +26,7 @@ if %ERRORLEVEL% EQU 0 (
         echo ⚠️ Using Windows PowerShell 5.1 (limited compatibility)
         powershell -ExecutionPolicy Bypass -File "Start-AitherZero.ps1" %*
         set LAUNCH_EXIT_CODE=%ERRORLEVEL%
+        goto :HandleExitCode
     ) else (
         echo ❌ No PowerShell found!
         echo.
@@ -37,6 +39,7 @@ if %ERRORLEVEL% EQU 0 (
     )
 )
 
+:HandleExitCode
 REM Handle exit codes and provide troubleshooting
 if %LAUNCH_EXIT_CODE% EQU 0 (
     echo.
