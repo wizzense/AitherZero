@@ -25,6 +25,12 @@
 .PARAMETER CreatePR
     Create a pull request for this patch (default: false, use -CreatePR to enable)
 
+.PARAMETER CreateRelease
+    Automatically create a release after PR is merged (for critical fixes and version updates)
+
+.PARAMETER ReleaseType
+    Type of release to create: patch (default), minor, or major
+
 .PARAMETER TargetFork
     Target fork for pull request creation:
     - 'current' (default): Create PR in current repository
@@ -81,6 +87,14 @@
     # Creates cross-fork PR from AitherZero to AitherLabs
 
 .EXAMPLE
+    Invoke-PatchWorkflow -PatchDescription "CRITICAL SECURITY FIX: Patch authentication vulnerability" -CreatePR -CreateRelease -Priority "Critical" -ReleaseType "patch"
+    # Creates issue, PR, and immediately triggers a patch release due to Critical priority
+
+.EXAMPLE
+    Invoke-PatchWorkflow -PatchDescription "VERSION UPDATE: Bump to v2.0.0 for new features" -CreatePR -CreateRelease -ReleaseType "major"
+    # Detects version keywords and creates major release
+
+.EXAMPLE
     Invoke-PatchWorkflow -PatchDescription "Add enterprise feature" -CreatePR -TargetFork "root" -Priority "High" -PatchOperation {
         # Enterprise-specific enhancement
         Add-EnterpriseFeature
@@ -111,7 +125,7 @@
 #>
 
 function Invoke-PatchWorkflow {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess = $true)]
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
@@ -125,9 +139,16 @@ function Invoke-PatchWorkflow {
 
         [Parameter(Mandatory = $false)]
         [bool]$CreateIssue = $true,
-
+        
         [Parameter(Mandatory = $false)]
         [switch]$CreatePR,
+        
+        [Parameter(Mandatory = $false)]
+        [switch]$CreateRelease,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet("patch", "minor", "major")]
+        [string]$ReleaseType = "patch",
 
         [Parameter(Mandatory = $false)]
         [ValidateSet("current", "upstream", "root")]
@@ -481,6 +502,149 @@ function Invoke-PatchWorkflow {
                 }
             } elseif ($AutoConsolidate -and $DryRun) {
                 Write-PatchLog "DRY RUN: Would attempt PR consolidation with strategy: $ConsolidationStrategy" -Level "INFO"
+                
+            # Step 9: Create release if requested (intelligent release automation)
+            if ($CreateRelease) {
+                Write-PatchLog "Creating intelligent release..." -Level "INFO"
+                
+                if (-not $DryRun) {
+                    # Determine if this should trigger an immediate release or wait for PR merge
+                    $shouldCreateImmediateRelease = $false
+                    $releaseReason = ""
+                    
+                    # Check for critical fixes that need immediate release
+                    if ($Priority -eq "Critical") {
+                        $shouldCreateImmediateRelease = $true
+                        $releaseReason = "Critical priority fix requires immediate release"
+                    }
+                    
+                    # Check for version-related changes that indicate a release
+                    $versionFiles = @("*.psd1", "package.json", "version.txt", "**/version.json")
+                    $changedFiles = git diff --name-only HEAD~1 HEAD 2>&1 | Where-Object { $_ -and $_.Trim() }
+                    
+                    foreach ($file in $changedFiles) {
+                        foreach ($pattern in $versionFiles) {
+                            if ($file -like $pattern) {
+                                $shouldCreateImmediateRelease = $true
+                                $releaseReason = "Version file changes detected: $file"
+                                break
+                            }
+                        }
+                        if ($shouldCreateImmediateRelease) { break }
+                    }
+                    
+                    # Check for release-triggering keywords in description
+                    $releaseKeywords = @("RELEASE", "VERSION", "HOTFIX", "CRITICAL", "SECURITY", "BREAKING")
+                    foreach ($keyword in $releaseKeywords) {
+                        if ($PatchDescription.ToUpper() -match $keyword) {
+                            $shouldCreateImmediateRelease = $true
+                            $releaseReason = "Release keyword detected: $keyword"
+                            break
+                        }
+                    }
+                    
+                    if ($shouldCreateImmediateRelease) {
+                        Write-PatchLog "Triggering immediate release: $releaseReason" -Level "INFO"
+                        
+                        try {
+                            # Switch to main and pull latest (in case PR was already merged)
+                            git checkout main 2>&1 | Out-Null
+                            git pull origin main 2>&1 | Out-Null
+                            
+                            # Use Quick-Release script for automated release creation
+                            $releaseScript = Join-Path $PSScriptRoot "Quick-Release.ps1"
+                            if (Test-Path $releaseScript) {
+                                Write-PatchLog "Using Quick-Release script for $ReleaseType release..." -Level "INFO"
+                                
+                                # Execute release with appropriate type
+                                $releaseArgs = @("-Type", $ReleaseType)
+                                if ($DryRun) {
+                                    $releaseArgs += "-NoPush"  # Don't actually push in dry run
+                                }
+                                
+                                $releaseResult = & $releaseScript @releaseArgs
+                                
+                                if ($LASTEXITCODE -eq 0) {
+                                    Write-PatchLog "Release created successfully!" -Level "SUCCESS"
+                                    
+                                    # Get the created release info
+                                    $latestTag = git describe --tags --abbrev=0 2>&1
+                                    if ($latestTag) {
+                                        Write-PatchLog "New release: $latestTag" -Level "SUCCESS"
+                                        
+                                        # Trigger GitHub Actions for build and deployment
+                                        Write-PatchLog "Triggering GitHub Actions for release build..." -Level "INFO"
+                                        
+                                        try {
+                                            # Trigger the release workflow
+                                            $workflowTrigger = gh workflow run "build-release.yml" --ref $latestTag 2>&1
+                                            if ($LASTEXITCODE -eq 0) {
+                                                Write-PatchLog "GitHub Actions release workflow triggered successfully" -Level "SUCCESS"
+                                            } else {
+                                                Write-PatchLog "Warning: Failed to trigger GitHub Actions workflow: $workflowTrigger" -Level "WARN"
+                                            }
+                                        } catch {
+                                            Write-PatchLog "Warning: Could not trigger GitHub Actions: $($_.Exception.Message)" -Level "WARN"
+                                        }
+                                    }
+                                } else {
+                                    Write-PatchLog "Release creation failed with exit code: $LASTEXITCODE" -Level "WARN"
+                                    Write-PatchLog "Release output: $releaseResult" -Level "WARN"
+                                }
+                            } else {
+                                # Fallback: Use git tag and gh release create
+                                Write-PatchLog "Quick-Release script not found, using fallback release method..." -Level "WARN"
+                                
+                                # Get current version and increment
+                                $currentTag = git describe --tags --abbrev=0 2>&1
+                                if ($currentTag -and $currentTag -match '^v?(\d+)\.(\d+)\.(\d+)') {
+                                    $major = [int]$matches[1]
+                                    $minor = [int]$matches[2]
+                                    $patch = [int]$matches[3]
+                                    
+                                    switch ($ReleaseType) {
+                                        "major" { $major++; $minor = 0; $patch = 0 }
+                                        "minor" { $minor++; $patch = 0 }
+                                        default { $patch++ }
+                                    }
+                                    
+                                    $newVersion = "v$major.$minor.$patch"
+                                    
+                                    # Create tag and release
+                                    git tag $newVersion 2>&1 | Out-Null
+                                    git push origin $newVersion 2>&1 | Out-Null
+                                    
+                                    # Create GitHub release
+                                    $releaseBody = "Automated release created by PatchManager`n`n$PatchDescription"
+                                    gh release create $newVersion --title $newVersion --notes $releaseBody 2>&1 | Out-Null
+                                    
+                                    if ($LASTEXITCODE -eq 0) {
+                                        Write-PatchLog "Fallback release created: $newVersion" -Level "SUCCESS"
+                                    } else {
+                                        Write-PatchLog "Fallback release creation failed" -Level "WARN"
+                                    }
+                                } else {
+                                    Write-PatchLog "Could not determine current version for release" -Level "WARN"
+                                }
+                            }
+                        } catch {
+                            Write-PatchLog "Release creation failed: $($_.Exception.Message)" -Level "ERROR"
+                            # Don't fail the entire workflow for release issues
+                        }
+                        
+                        # Switch back to the patch branch if it still exists
+                        git show-ref --verify --quiet "refs/heads/$branchName" 2>&1 | Out-Null
+                        if ($LASTEXITCODE -eq 0) {
+                            git checkout $branchName 2>&1 | Out-Null
+                        }
+                    } else {
+                        Write-PatchLog "Release creation scheduled for after PR merge (no immediate triggers found)" -Level "INFO"
+                        Write-PatchLog "To force immediate release, use -Priority Critical or include release keywords" -Level "INFO"
+                    }
+                } else {
+                    Write-PatchLog "DRY RUN: Would analyze patch for release triggers and potentially create $ReleaseType release" -Level "INFO"
+                    Write-PatchLog "DRY RUN: Would check for: Critical priority, version file changes, release keywords" -Level "INFO"
+                }
             }
 
             # Success
