@@ -46,6 +46,20 @@
 .PARAMETER Force
     Force operation even if working tree is not clean
 
+.PARAMETER AutoConsolidate
+    Automatically consolidate open PRs after creating this PR (default: false)
+
+.PARAMETER ConsolidationStrategy
+    Strategy for PR consolidation when AutoConsolidate is enabled:
+    - 'Compatible' (default): Only combine PRs with no conflicts
+    - 'RelatedFiles': Combine PRs that modify related file areas
+    - 'SameAuthor': Combine PRs from the same author
+    - 'ByPriority': Combine based on priority levels
+    - 'All': Attempt to combine all possible PRs
+
+.PARAMETER MaxPRsToConsolidate
+    Maximum number of PRs to include in consolidation (default: 5)
+
 .EXAMPLE
     Invoke-PatchWorkflow -PatchDescription "Fix module loading issue" -PatchOperation {
         # Your changes here
@@ -87,6 +101,21 @@
     }
     # Creates cross-fork PR from AitherLabs to Aitherium
 
+.EXAMPLE
+    Invoke-PatchWorkflow -PatchDescription "Multiple bug fixes" -CreatePR -AutoConsolidate -ConsolidationStrategy "Compatible" -PatchOperation {
+        # Apply multiple related fixes
+        Fix-ModuleLoadingBug
+        Fix-ConfigurationIssue
+    }
+    # Creates PR and automatically consolidates with other compatible open PRs
+
+.EXAMPLE
+    Invoke-PatchWorkflow -PatchDescription "Author's fixes" -CreatePR -AutoConsolidate -ConsolidationStrategy "SameAuthor" -MaxPRsToConsolidate 3 -PatchOperation {
+        # Another fix from same author
+        Fix-AdditionalIssue
+    }
+    # Creates PR and consolidates up to 3 PRs from the same author
+
 .NOTES
     This function replaces:
     - Invoke-GitControlledPatch
@@ -109,9 +138,11 @@ function Invoke-PatchWorkflow {
         [string[]]$TestCommands = @(),
 
         [Parameter(Mandatory = $false)]
-        [bool]$CreateIssue = $true,        [Parameter(Mandatory = $false)]
+        [bool]$CreateIssue = $true,
+        
+        [Parameter(Mandatory = $false)]
         [switch]$CreatePR,
-
+        
         [Parameter(Mandatory = $false)]
         [switch]$CreateRelease,
 
@@ -131,7 +162,17 @@ function Invoke-PatchWorkflow {
         [switch]$DryRun,
 
         [Parameter(Mandatory = $false)]
-        [switch]$Force
+        [switch]$Force,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$AutoConsolidate,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet("Compatible", "RelatedFiles", "SameAuthor", "ByPriority", "All")]
+        [string]$ConsolidationStrategy = "Compatible",
+
+        [Parameter(Mandatory = $false)]
+        [int]$MaxPRsToConsolidate = 5
     )
 
     begin {
@@ -443,6 +484,25 @@ function Invoke-PatchWorkflow {
                 }
             }
 
+            # Step 8: Auto-consolidate PRs if requested
+            if ($AutoConsolidate -and $CreatePR -and -not $DryRun) {
+                Write-PatchLog "Auto-consolidation requested, analyzing open PRs..." -Level "INFO"
+                try {
+                    $consolidationResult = Invoke-PRConsolidation -ConsolidationStrategy $ConsolidationStrategy -MaxPRsToConsolidate $MaxPRsToConsolidate
+                    if ($consolidationResult.Success) {
+                        Write-PatchLog "PR consolidation completed successfully" -Level "SUCCESS"
+                        Write-PatchLog "  PRs consolidated: $($consolidationResult.PRsConsolidated)" -Level "INFO"
+                        Write-PatchLog "  Final PR: $($consolidationResult.ConsolidatedPR)" -Level "INFO"
+                    } else {
+                        Write-PatchLog "PR consolidation skipped: $($consolidationResult.Message)" -Level "WARN"
+                    }
+                } catch {
+                    Write-PatchLog "PR consolidation failed: $($_.Exception.Message)" -Level "WARN"
+                    Write-PatchLog "Continuing with individual PR..." -Level "INFO"
+                }
+            } elseif ($AutoConsolidate -and $DryRun) {
+                Write-PatchLog "DRY RUN: Would attempt PR consolidation with strategy: $ConsolidationStrategy" -Level "INFO"
+                
             # Step 9: Create release if requested (intelligent release automation)
             if ($CreateRelease) {
                 Write-PatchLog "Creating intelligent release..." -Level "INFO"
