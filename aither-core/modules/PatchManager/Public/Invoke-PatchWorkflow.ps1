@@ -492,7 +492,7 @@ function Invoke-PatchWorkflow {
                     if ($consolidationResult.Success) {
                         Write-PatchLog "PR consolidation completed successfully" -Level "SUCCESS"
                         Write-PatchLog "  PRs consolidated: $($consolidationResult.PRsConsolidated)" -Level "INFO"
-                        Write-PatchLog "  Final PR: $($consolidationResult.ConsolidatedPRUrl)" -Level "INFO"
+                        Write-PatchLog "  Final PR: $($consolidationResult.ConsolidatedPR)" -Level "INFO"
                     } else {
                         Write-PatchLog "PR consolidation skipped: $($consolidationResult.Message)" -Level "WARN"
                     }
