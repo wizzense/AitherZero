@@ -492,7 +492,7 @@ function Invoke-PatchWorkflow {
                             git pull origin main 2>&1 | Out-Null
                             
                             # Use Quick-Release script for automated release creation
-                            $releaseScript = Join-Path (Get-Location) "Quick-Release.ps1"
+                            $releaseScript = Join-Path $PSScriptRoot "Quick-Release.ps1"
                             if (Test-Path $releaseScript) {
                                 Write-PatchLog "Using Quick-Release script for $ReleaseType release..." -Level "INFO"
                                 
