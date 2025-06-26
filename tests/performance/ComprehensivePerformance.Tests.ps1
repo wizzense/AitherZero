@@ -84,7 +84,7 @@ BeforeAll {
     $script:ModuleImports = @{}
 
     foreach ($moduleName in $requiredModules) {
-        $modulePath = Join-Path -Path $script:ProjectRoot -ChildPath "aither-core/modules/$moduleName"
+        $modulePath = Join-Path -Path $script:ProjectRoot -ChildPath "$env:PWSH_MODULES_PATH/$moduleName"
 
         try {
             # Standard project import pattern with -Force
@@ -163,7 +163,7 @@ Describe "Module Loading Performance" -Tags @('Performance', 'ModuleLoading') {
 
             try {
                 Remove-Module Logging -Force -ErrorAction SilentlyContinue
-                Import-Module "$script:ProjectRoot/aither-core/modules/Logging" -Force -ErrorAction Stop
+                Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force -ErrorAction Stop
                 $stopwatch.Stop()
                 $stopwatch.ElapsedMilliseconds | Should -BeLessThan $script:PerformanceThresholds.ModuleLoadTime
             }
@@ -179,7 +179,7 @@ Describe "Module Loading Performance" -Tags @('Performance', 'ModuleLoading') {
 
             try {
                 Remove-Module ParallelExecution -Force -ErrorAction SilentlyContinue
-                Import-Module "$script:ProjectRoot/aither-core/modules/ParallelExecution" -Force -ErrorAction Stop
+                Import-Module "$env:PWSH_MODULES_PATH/ParallelExecution" -Force -ErrorAction Stop
                 $stopwatch.Stop()
                 $stopwatch.ElapsedMilliseconds | Should -BeLessThan $script:PerformanceThresholds.ModuleLoadTime
             }

@@ -27,10 +27,10 @@ if (-not $env:PROJECT_ROOT) {
 }
 
 try {
-    Import-Module "$env:PROJECT_ROOT/aither-core/modules/PatchManager" -Force -ErrorAction Stop
+    Import-Module "$env:PWSH_MODULES_PATH/PatchManager" -Force -ErrorAction Stop
 } catch {
     Write-CustomLog -Level 'WARN' -Message "Could not import PatchManager module. Please ensure modules are available."
-    Write-CustomLog -Level 'INFO' -Message "Expected path: $env:PROJECT_ROOT/aither-core/modules/PatchManager"
+    Write-CustomLog -Level 'INFO' -Message "Expected path: $env:PWSH_MODULES_PATH/PatchManager"
     exit 1
 }
 

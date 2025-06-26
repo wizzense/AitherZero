@@ -25,8 +25,8 @@ BeforeAll {
     }
 
     # Import required modules if they exist
-    $isoCustomizerPath = Join-Path $script:ProjectRoot "aither-core/modules/ISOCustomizer"
-    $loggingPath = Join-Path $script:ProjectRoot "aither-core/modules/Logging"
+    $isoCustomizerPath = Join-Path $script:ProjectRoot "$env:PWSH_MODULES_PATH/ISOCustomizer"
+    $loggingPath = Join-Path $script:ProjectRoot "$env:PWSH_MODULES_PATH/Logging"
 
     if (Test-Path $isoCustomizerPath) {
         Import-Module $isoCustomizerPath -Force
@@ -197,7 +197,7 @@ Describe "ISOCustomizer Integration" -Tags @('Integration', 'ISOCustomizer') {
             $jobs = @()
             1..3 | ForEach-Object {
                 $jobs += Start-Job -ScriptBlock {
-                    Import-Module "$using:ProjectRoot/aither-core/modules/ISOCustomizer" -Force
+                    Import-Module "$env:PWSH_MODULES_PATH/ISOCustomizer" -Force
                     Test-ISOCustomizationEnvironment
                 }
             }

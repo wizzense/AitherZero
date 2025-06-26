@@ -11,7 +11,7 @@ BeforeAll {
     } else { 
         '/workspaces/AitherLabs'
     }
-    $scriptManagerPath = Join-Path $projectRoot "aither-core/modules/ScriptManager"
+    $scriptManagerPath = Join-Path $projectRoot "$env:PWSH_MODULES_PATH/ScriptManager"
     
     try {
         Import-Module $scriptManagerPath -Force -ErrorAction Stop
@@ -356,7 +356,7 @@ Describe "ScriptManager Module - Performance and Reliability" {
                     param($Path, $ModulePath)
                     Import-Module $ModulePath -Force
                     Test-OneOffScript -ScriptPath $Path
-                } -ArgumentList $scriptPath, (Join-Path $projectRoot "aither-core/modules/ScriptManager")
+                } -ArgumentList $scriptPath, (Join-Path $projectRoot "$env:PWSH_MODULES_PATH/ScriptManager")
             }
             
             $results = $jobs | Wait-Job | Receive-Job

@@ -212,8 +212,8 @@ Describe "Workflow Integration Tests" -Tags @('Integration', 'Workflow', 'EndToE
                     param($ProjectRoot, $TestNumber)
                     
                     # Import modules in the job
-                    Import-Module "$ProjectRoot/aither-core/modules/Logging" -Force
-                    Import-Module "$ProjectRoot/aither-core/modules/PatchManager" -Force
+                    Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force
+                    Import-Module "$env:PWSH_MODULES_PATH/PatchManager" -Force
                     
                     # Mock logging function
                     function Write-CustomLog {

@@ -11,7 +11,7 @@ BeforeAll {
     } else { 
         '/workspaces/AitherLabs'
     }
-    $testingFrameworkPath = Join-Path $projectRoot "aither-core/modules/TestingFramework"
+    $testingFrameworkPath = Join-Path $projectRoot "$env:PWSH_MODULES_PATH/TestingFramework"
     
     try {
         Import-Module $testingFrameworkPath -Force -ErrorAction Stop
@@ -347,7 +347,7 @@ Describe "Performance Test $_" {
                     param($TestPath, $ModulePath)
                     Import-Module $ModulePath -Force
                     Invoke-SyntaxValidation -Path $TestPath
-                } -ArgumentList $script:testScriptDir, (Join-Path $projectRoot "aither-core/modules/TestingFramework")
+                } -ArgumentList $script:testScriptDir, (Join-Path $projectRoot "$env:PWSH_MODULES_PATH/TestingFramework")
             }
             
             $results = $jobs | Wait-Job | Receive-Job

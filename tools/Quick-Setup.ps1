@@ -24,7 +24,7 @@ param(
 try {
     . "$PSScriptRoot/../aither-core/shared/Find-ProjectRoot.ps1"
     $projectRoot = Find-ProjectRoot
-    Import-Module "$projectRoot/aither-core/modules/Logging" -Force -ErrorAction SilentlyContinue
+    Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force -ErrorAction SilentlyContinue
 } catch {
     # Mock Write-CustomLog if Logging module is not available
     function Write-CustomLog {

@@ -140,11 +140,7 @@ Describe "RemoteConnection Module" {
 }
 
 Describe "RemoteConnection Integration" {
-    Context "SecureCredentials Integration" {        It "Should integrate with SecureCredentials module" {
-            # Ensure Logging module is loaded first (required by SecureCredentials)
-            Import-Module './aither-core/modules/Logging' -Force
-            # Ensure SecureCredentials module is loaded for integration testing
-            Import-Module './aither-core/modules/SecureCredentials' -Force
+    Context "SecureCredentials Integration" {        It "Should integrate with SecureCredentials module"$env:PWSH_MODULES_PATH/SecureCredentials' -Force
 
             # Test that RemoteConnection can reference SecureCredentials functions
             $testSecureCredentialExists = Get-Command -Name "Test-SecureCredential" -Module "SecureCredentials" -ErrorAction SilentlyContinue

@@ -15,7 +15,7 @@ BeforeAll {
 
     $script:ImportedModules = @{}
     foreach ($moduleName in $modulesToTest) {
-        $modulePath = Join-Path $projectRoot "aither-core/modules/$moduleName"
+        $modulePath = Join-Path $projectRoot "$env:PWSH_MODULES_PATH/$moduleName"
         try {
             Import-Module $modulePath -Force -ErrorAction Stop
             $script:ImportedModules[$moduleName] = $true
@@ -240,7 +240,7 @@ Export-ModuleMember -Function Test-ModuleB
                     param($projectRoot, $testId)
 
                     # Import logging module in the job
-                    $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
+                    $loggingPath = Join-Path $projectRoot "$env:PWSH_MODULES_PATH/Logging"
                     Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
 
                     # Use logging functions

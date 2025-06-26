@@ -15,7 +15,7 @@ BeforeAll {
     }
     
     # Import the UnifiedMaintenance module
-    $unifiedMaintenancePath = Join-Path $projectRoot "aither-core/modules/UnifiedMaintenance"
+    $unifiedMaintenancePath = Join-Path $projectRoot "$env:PWSH_MODULES_PATH/UnifiedMaintenance"
     
     try {
         Import-Module $unifiedMaintenancePath -Force -ErrorAction Stop
@@ -30,7 +30,7 @@ BeforeAll {
 Describe "UnifiedMaintenance Module Tests" {
     Context "Module Import" {
         It "Should import without errors" {
-            { Import-Module (Join-Path $projectRoot "aither-core/modules/UnifiedMaintenance") -Force } | Should -Not -Throw
+            { Import-Module (Join-Path $projectRoot "$env:PWSH_MODULES_PATH/UnifiedMaintenance") -Force } | Should -Not -Throw
         }
     }
     

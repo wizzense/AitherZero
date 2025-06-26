@@ -19,19 +19,7 @@ param(
     [ValidateSet('ToAitherLab', 'FromAitherLab', 'Status')]
     [string]$Action,
     
-    [string]$Message = "Manual sync",
-    
-    [string[]]$Files = @(),
-    
-    [switch]$DryRun,
-    
-    [switch]$Force
-)
-
-begin {
-    # Import required modules
-    Import-Module './aither-core/modules/RepoSync' -Force
-    Import-Module './aither-core/modules/Logging' -Force
+    [string]$Message = "Manual sync"$env:PWSH_MODULES_PATH/Logging' -Force
     
     Write-CustomLog -Level 'INFO' -Message "Repository sync operation: $Action"
 }
@@ -74,3 +62,4 @@ process {
 end {
     Write-CustomLog -Level 'INFO' -Message "Sync operation finished"
 }
+

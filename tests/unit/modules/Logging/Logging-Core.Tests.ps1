@@ -6,7 +6,7 @@ BeforeAll {
         # Default to workspace root if environment variable not set
         '/workspaces/AitherLabs'
     }
-    $loggingModulePath = Join-Path $projectRoot "aither-core/modules/Logging"
+    $loggingModulePath = Join-Path $projectRoot "$env:PWSH_MODULES_PATH/Logging"
     
     try {
         Import-Module $loggingModulePath -Force -ErrorAction Stop

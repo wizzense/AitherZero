@@ -37,7 +37,7 @@ BeforeAll {
     } else { 
         '/workspaces/AitherLabs'
     }
-    $patchManagerPath = Join-Path $projectRoot "aither-core/modules/PatchManager"
+    $patchManagerPath = Join-Path $projectRoot "$env:PWSH_MODULES_PATH/PatchManager"
     
     try {
         Import-Module $patchManagerPath -Force -ErrorAction Stop

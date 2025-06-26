@@ -66,8 +66,8 @@ $startTime = Get-Date
 
 # Import required modules
 try {
-    Import-Module "$projectRoot/aither-core/modules/Logging" -Force -ErrorAction SilentlyContinue
-    Import-Module "$projectRoot/aither-core/modules/ParallelExecution" -Force -ErrorAction Stop
+    Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force -ErrorAction SilentlyContinue
+    Import-Module "$env:PWSH_MODULES_PATH/ParallelExecution" -Force -ErrorAction Stop
 } catch {
     Write-Error "Failed to import required modules: $_"
     exit 1
@@ -197,8 +197,8 @@ try {
 
             # Import required modules in the job
             try {
-                Import-Module "$ProjectRoot/aither-core/modules/Logging" -Force -ErrorAction SilentlyContinue
-                Import-Module "$ProjectRoot/aither-core/modules/ParallelExecution" -Force -ErrorAction SilentlyContinue
+                Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force -ErrorAction SilentlyContinue
+                Import-Module "$env:PWSH_MODULES_PATH/ParallelExecution" -Force -ErrorAction SilentlyContinue
             } catch {
                 # Ignore import errors in jobs
             }
@@ -326,7 +326,7 @@ try {
 
                         'Logging-System' {
                             try {
-                                Import-Module "$ProjectRoot/aither-core/modules/Logging" -Force -ErrorAction Stop
+                                Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force -ErrorAction Stop
 
                                 # Test basic logging
                                 if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
@@ -353,7 +353,7 @@ try {
 
                         'ParallelExecution-Core' {
                             try {
-                                Import-Module "$ProjectRoot/aither-core/modules/ParallelExecution" -Force -ErrorAction Stop
+                                Import-Module "$env:PWSH_MODULES_PATH/ParallelExecution" -Force -ErrorAction Stop
 
                                 # Test basic parallel execution using pipeline input (correct way)
                                 $inputs = @(1, 2, 3, 4, 5)
@@ -401,7 +401,7 @@ try {
 
                         'TestingFramework-Core' {
                             try {
-                                Import-Module "$ProjectRoot/aither-core/modules/TestingFramework" -Force -ErrorAction Stop
+                                Import-Module "$env:PWSH_MODULES_PATH/TestingFramework" -Force -ErrorAction Stop
 
                                 # Test basic TestingFramework functionality
                                 $testFunctions = @('Invoke-PesterTests', 'New-TestReport')
@@ -509,7 +509,7 @@ try {
                                 $scriptFiles = @()
                                 $scriptPaths = @(
                                     "$ProjectRoot/aither-core/*.ps1",
-                                    "$ProjectRoot/aither-core/modules/*/*.psm1",
+                                    "$env:PWSH_MODULES_PATH/*/*.psm1",
                                     "$ProjectRoot/tests/*.ps1"
                                 )
 
@@ -644,7 +644,7 @@ try {
 
                             foreach ($moduleName in $expectedFunctions.Keys) {
                                 try {
-                                    $modulePath = Join-Path $ProjectRoot "aither-core/modules/$moduleName"
+                                    $modulePath = Join-Path $ProjectRoot "$env:PWSH_MODULES_PATH/$moduleName"
                                     if (Test-Path $modulePath) {
                                         Import-Module $modulePath -Force -ErrorAction Stop
                                         $exportedFunctions = (Get-Module $moduleName).ExportedFunctions.Keys
@@ -681,7 +681,7 @@ try {
                         'Logging-Complete' {
                             # Comprehensive logging system test
                             try {
-                                Import-Module "$ProjectRoot/aither-core/modules/Logging" -Force -ErrorAction Stop
+                                Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force -ErrorAction Stop
 
                                 # Test all log levels
                                 $logLevels = @('INFO', 'WARN', 'ERROR', 'SUCCESS')
@@ -726,7 +726,7 @@ try {
                         'ParallelExecution-Complete' {
                             # Complete parallel execution testing
                             try {
-                                Import-Module "$ProjectRoot/aither-core/modules/ParallelExecution" -Force -ErrorAction Stop
+                                Import-Module "$env:PWSH_MODULES_PATH/ParallelExecution" -Force -ErrorAction Stop
 
                                 $parallelTests = @()
 
@@ -775,7 +775,7 @@ try {
                         'TestingFramework-Complete' {
                             # Complete testing framework validation
                             try {
-                                Import-Module "$ProjectRoot/aither-core/modules/TestingFramework" -Force -ErrorAction Stop
+                                Import-Module "$env:PWSH_MODULES_PATH/TestingFramework" -Force -ErrorAction Stop
 
                                 $frameworkTests = @()
 
@@ -809,7 +809,7 @@ try {
                         'BackupManager-Core' {
                             # Test BackupManager module
                             try {
-                                Import-Module "$ProjectRoot/aither-core/modules/BackupManager" -Force -ErrorAction Stop
+                                Import-Module "$env:PWSH_MODULES_PATH/BackupManager" -Force -ErrorAction Stop
 
                                 $backupTests = @()
 
@@ -840,7 +840,7 @@ try {
                         'ScriptManager-Core' {
                             # Test ScriptManager module
                             try {
-                                Import-Module "$ProjectRoot/aither-core/modules/ScriptManager" -Force -ErrorAction Stop
+                                Import-Module "$env:PWSH_MODULES_PATH/ScriptManager" -Force -ErrorAction Stop
 
                                 $scriptTests = @()
 
@@ -871,7 +871,7 @@ try {
                         'DevEnvironment-Core' {
                             # Test DevEnvironment module
                             try {
-                                Import-Module "$ProjectRoot/aither-core/modules/DevEnvironment" -Force -ErrorAction Stop
+                                Import-Module "$env:PWSH_MODULES_PATH/DevEnvironment" -Force -ErrorAction Stop
 
                                 $devTests = @()
 
@@ -1008,7 +1008,7 @@ try {
                             # Test module loading performance
                             $moduleLoadStart = Get-Date
                             try {
-                                Import-Module "$ProjectRoot/aither-core/modules/Logging" -Force
+                                Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force
                                 $moduleLoadTime = ((Get-Date) - $moduleLoadStart).TotalMilliseconds
 
                                 if ($moduleLoadTime -lt 5000) {
@@ -1071,8 +1071,8 @@ try {
 
                             try {
                                 # Test Logging + ParallelExecution integration
-                                Import-Module "$ProjectRoot/aither-core/modules/Logging" -Force
-                                Import-Module "$ProjectRoot/aither-core/modules/ParallelExecution" -Force
+                                Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force
+                                Import-Module "$env:PWSH_MODULES_PATH/ParallelExecution" -Force
 
                                 $testData = @(1, 2, 3)
                                 $results = Invoke-ParallelForEach -InputObject $testData -ScriptBlock {
@@ -1089,7 +1089,7 @@ try {
 
                                 # Test TestingFramework integration
                                 if (Get-Module TestingFramework -ListAvailable) {
-                                    Import-Module "$ProjectRoot/aither-core/modules/TestingFramework" -Force
+                                    Import-Module "$env:PWSH_MODULES_PATH/TestingFramework" -Force
                                     $integrationTests += '✅ TestingFramework integration available'
                                 } else {
                                     $integrationTests += '⚠️ TestingFramework integration limited'
@@ -1336,3 +1336,4 @@ exit $exitCode
 # LAUNCHER TESTS - CRITICAL FOR USER EXPERIENCE
 
 # Include launcher functionality validation in all test runs
+

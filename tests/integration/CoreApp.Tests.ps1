@@ -210,7 +210,7 @@ Describe "Core Application Integration Tests" -Tag @('Important', 'CoreApp', 'In
         
         It "should be compatible with PatchManager workflow" {
             # Test that CoreApp can be used within PatchManager
-            { Import-Module "$env:PROJECT_ROOT/aither-core/modules/PatchManager/" -Force } | Should -Not -Throw
+            { Import-Module "$env:PWSH_MODULES_PATH/PatchManager/" -Force } | Should -Not -Throw
             { Import-Module "$script:CoreAppPath/" -Force } | Should -Not -Throw
         }
         

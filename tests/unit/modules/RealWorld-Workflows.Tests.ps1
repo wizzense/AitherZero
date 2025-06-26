@@ -13,7 +13,7 @@ BeforeAll {
     $moduleNames = @('Logging', 'BackupManager', 'PatchManager', 'LabRunner', 'ParallelExecution', 'ScriptManager', 'DevEnvironment', 'TestingFramework', 'UnifiedMaintenance')
     
     foreach ($moduleName in $moduleNames) {
-        $modulePath = Join-Path $projectRoot "aither-core/modules/$moduleName"
+        $modulePath = Join-Path $projectRoot "$env:PWSH_MODULES_PATH/$moduleName"
         try {
             Import-Module $modulePath -Force -ErrorAction Stop
             $script:WorkflowModules[$moduleName] = $true

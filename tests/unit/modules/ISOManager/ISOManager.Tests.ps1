@@ -9,8 +9,7 @@ BeforeAll {
 
 Describe "ISOManager Module" {
     Context "Module Loading and Function Export" {
-        It "Should load the ISOManager module successfully" {
-            { Import-Module './aither-core/modules/ISOManager' -Force } | Should -Not -Throw
+        It "Should load the ISOManager module successfully"$env:PWSH_MODULES_PATH/ISOManager' -Force } | Should -Not -Throw
         }
 
         It "Should export all expected functions" {
@@ -85,8 +84,7 @@ Describe "ISOManager Module" {
 
 Describe "ISOCustomizer Module" {
     Context "Module Loading and Function Export" {
-        It "Should load the ISOCustomizer module successfully" {
-            { Import-Module './aither-core/modules/ISOCustomizer' -Force } | Should -Not -Throw
+        It "Should load the ISOCustomizer module successfully"$env:PWSH_MODULES_PATH/ISOCustomizer' -Force } | Should -Not -Throw
         }
 
         It "Should export all expected functions" {
@@ -838,8 +836,7 @@ Describe "ISOCustomizer Module - Extended Tests" {
     }
 
     Context "Template Integration Tests" {
-        It "Should use internal templates when available" {
-            Import-Module './aither-core/modules/ISOCustomizer' -Force
+        It "Should use internal templates when available"$env:PWSH_MODULES_PATH/ISOCustomizer' -Force
 
             # Verify template directory exists
             $moduleRoot = Get-Module ISOCustomizer | Select-Object -ExpandProperty ModuleBase
@@ -892,10 +889,7 @@ Describe "ISOCustomizer Module - Extended Tests" {
 
 Describe "Integration Tests" {
     Context "Module Interaction" {
-        It "Should load both modules without conflicts" {
-            {
-                Import-Module './aither-core/modules/ISOManager' -Force
-                Import-Module './aither-core/modules/ISOCustomizer' -Force
+        It "Should load both modules without conflicts"$env:PWSH_MODULES_PATH/ISOCustomizer' -Force
             } | Should -Not -Throw
 
             # Verify both modules are loaded
@@ -903,9 +897,7 @@ Describe "Integration Tests" {
             Get-Module ISOCustomizer | Should -Not -BeNullOrEmpty
         }
 
-        It "Should have no function name conflicts" {
-            Import-Module './aither-core/modules/ISOManager' -Force
-            Import-Module './aither-core/modules/ISOCustomizer' -Force
+        It "Should have no function name conflicts"$env:PWSH_MODULES_PATH/ISOCustomizer' -Force
 
             $isoManagerFunctions = Get-Command -Module ISOManager | Select-Object -ExpandProperty Name
             $isoCustomizerFunctions = Get-Command -Module ISOCustomizer | Select-Object -ExpandProperty Name
@@ -1057,13 +1049,7 @@ Describe "Performance and Stress Tests" {
     }
 
     Context "Memory Usage Tests" {
-        It "Should handle multiple concurrent operations" {
-            $jobs = @()
-            for ($i = 1; $i -le 5; $i++) {
-                $jobs += Start-Job -ScriptBlock {
-                    param($i)
-                    Import-Module './aither-core/modules/ISOManager' -Force
-                    Import-Module './aither-core/modules/ISOCustomizer' -Force
+        It "Should handle multiple concurrent operations"$env:PWSH_MODULES_PATH/ISOCustomizer' -Force
 
                     $config = @{
                         ComputerName = "CONCURRENT-TEST-$i"
@@ -1297,9 +1283,7 @@ Describe "Compatibility Tests" {
 
 Describe "Regression Tests" {
     Context "Previously Fixed Issues" {
-        It "Should not regress on template loading" {
-            # Test that templates are properly loaded from module directory
-            Import-Module './aither-core/modules/ISOCustomizer' -Force
+        It "Should not regress on template loading"$env:PWSH_MODULES_PATH/ISOCustomizer' -Force
 
             $testConfig = @{
                 ComputerName = "REGRESSION-TEST"
@@ -1350,10 +1334,7 @@ Describe "Regression Tests" {
 
 Describe "ISOManager Module - Missing Functions Tests" {
     Context "Missing Function Validation" {
-        It "Should not export functions that don't exist" {
-            # Test that manifest doesn't export non-existent functions
-            $manifest = Import-PowerShellDataFile './aither-core/modules/ISOManager/ISOManager.psd1'
-            $actualPublicFiles = Get-ChildItem './aither-core/modules/ISOManager/Public' -Filter '*.ps1' | ForEach-Object { $_.BaseName }
+        It "Should not export functions that don't exist"$env:PWSH_MODULES_PATH/ISOManager/Public' -Filter '*.ps1' | ForEach-Object { $_.BaseName }
 
             foreach ($exportedFunction in $manifest.FunctionsToExport) {
                 if ($exportedFunction -eq 'Get-ISODownloadOptions') {
@@ -1450,17 +1431,14 @@ Describe "ISOManager Module - Missing Function Implementation Tests" {
 
 Describe "ISOCustomizer Module - Advanced Template Tests" {
     Context "Template Helper Functions" {
-        It "Should load template helpers successfully" {
-            # Import the private function file to test template helpers
-            Import-Module './aither-core/modules/ISOCustomizer' -Force
+        It "Should load template helpers successfully"$env:PWSH_MODULES_PATH/ISOCustomizer' -Force
 
             # Test that template helper functions are available (they should be imported internally)
             { Get-AutounattendTemplate -TemplateType 'Generic' } | Should -Not -Throw
             { Get-AutounattendTemplate -TemplateType 'Headless' } | Should -Not -Throw
         }
 
-        It "Should return valid template paths" {
-            Import-Module './aither-core/modules/ISOCustomizer' -Force
+        It "Should return valid template paths"$env:PWSH_MODULES_PATH/ISOCustomizer' -Force
 
             $genericTemplate = Get-AutounattendTemplate -TemplateType 'Generic'
             $headlessTemplate = Get-AutounattendTemplate -TemplateType 'Headless'
@@ -1476,8 +1454,7 @@ Describe "ISOCustomizer Module - Advanced Template Tests" {
             }
         }
 
-        It "Should handle invalid template types gracefully" {
-            Import-Module './aither-core/modules/ISOCustomizer' -Force
+        It "Should handle invalid template types gracefully"$env:PWSH_MODULES_PATH/ISOCustomizer' -Force
 
             $invalidTemplate = Get-AutounattendTemplate -TemplateType 'NonExistent'
             # Should return generic template as fallback or null
@@ -1488,8 +1465,7 @@ Describe "ISOCustomizer Module - Advanced Template Tests" {
     }
 
     Context "Bootstrap Template Tests" {
-        It "Should provide bootstrap template" {
-            Import-Module './aither-core/modules/ISOCustomizer' -Force
+        It "Should provide bootstrap template"$env:PWSH_MODULES_PATH/ISOCustomizer' -Force
 
             $bootstrapTemplate = Get-BootstrapTemplate
             if ($bootstrapTemplate) {
@@ -1501,8 +1477,7 @@ Describe "ISOCustomizer Module - Advanced Template Tests" {
     }
 
     Context "Kickstart Template Tests" {
-        It "Should provide kickstart template" {
-            Import-Module './aither-core/modules/ISOCustomizer' -Force
+        It "Should provide kickstart template"$env:PWSH_MODULES_PATH/ISOCustomizer' -Force
 
             $kickstartTemplate = Get-KickstartTemplate
             if ($kickstartTemplate) {

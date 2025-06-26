@@ -12,7 +12,7 @@ BeforeAll {
         # Default to workspace root if environment variable not set
         '/workspaces/AitherLabs'
     }
-    $backupManagerPath = Join-Path $projectRoot "aither-core/modules/BackupManager"
+    $backupManagerPath = Join-Path $projectRoot "$env:PWSH_MODULES_PATH/BackupManager"
     
     try {
         Import-Module $backupManagerPath -Force -ErrorAction Stop
@@ -388,7 +388,7 @@ Describe "BackupManager Module - Integration Tests" {
                     param($SourcePath, $BackupPath, $ModulePath)
                     Import-Module $ModulePath -Force
                     Invoke-BackupConsolidation -SourcePath $SourcePath -BackupPath "$BackupPath\Job$_"
-                } -ArgumentList $script:testSourceDir, $concurrentTestDir, (Join-Path $projectRoot "aither-core/modules/BackupManager")
+                } -ArgumentList $script:testSourceDir, $concurrentTestDir, (Join-Path $projectRoot "$env:PWSH_MODULES_PATH/BackupManager")
             }
             
             $results = $jobs | Wait-Job | Receive-Job

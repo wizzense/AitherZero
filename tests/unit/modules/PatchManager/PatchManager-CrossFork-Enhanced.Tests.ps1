@@ -16,7 +16,7 @@ BeforeAll {
     Write-CustomLog -Level 'WARN' -Message "Project root detected: $projectRoot"
 
     # Import TestingFramework module first for proper test orchestration
-    $testingFrameworkPath = Join-Path $projectRoot "aither-core/modules/TestingFramework"
+    $testingFrameworkPath = Join-Path $projectRoot "$env:PWSH_MODULES_PATH/TestingFramework"
     try {
         Import-Module $testingFrameworkPath -Force -Global -ErrorAction Stop
         Write-CustomLog -Level 'SUCCESS' -Message "TestingFramework module imported successfully"
@@ -26,7 +26,7 @@ BeforeAll {
     }
 
     # Import Logging module
-    $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
+    $loggingPath = Join-Path $projectRoot "$env:PWSH_MODULES_PATH/Logging"
     try {
         Import-Module $loggingPath -Force -Global -ErrorAction SilentlyContinue
     }
@@ -39,7 +39,7 @@ BeforeAll {
     }
 
     # Import PatchManager module
-    $patchManagerPath = Join-Path $projectRoot "aither-core/modules/PatchManager"
+    $patchManagerPath = Join-Path $projectRoot "$env:PWSH_MODULES_PATH/PatchManager"
     try {
         Import-Module $patchManagerPath -Force -ErrorAction Stop
         Write-CustomLog -Level 'SUCCESS' -Message "PatchManager module imported successfully"

@@ -36,7 +36,7 @@ BeforeAll {
     }
 
     # Copy Logging module for basic functionality
-    $loggingModulePath = Join-Path $ProjectRoot "aither-core/modules/Logging"
+    $loggingModulePath = Join-Path $ProjectRoot "$env:PWSH_MODULES_PATH/Logging"
     if (Test-Path $loggingModulePath) {
         Copy-Item -Path $loggingModulePath -Destination $testModulesDir -Recurse -Force
     }
@@ -255,3 +255,4 @@ Describe "Launcher Error Handling" {
         }
     }
 }
+

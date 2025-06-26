@@ -9,8 +9,7 @@ BeforeAll {
 
 Describe "ISOManager Module - Complete Test Suite" {
     Context "Module Loading and Function Export" {
-        It "Should load the ISOManager module successfully" {
-            { Import-Module './aither-core/modules/ISOManager' -Force } | Should -Not -Throw
+        It "Should load the ISOManager module successfully"$env:PWSH_MODULES_PATH/ISOManager' -Force } | Should -Not -Throw
         }
 
         It "Should export all expected functions" {
@@ -33,10 +32,7 @@ Describe "ISOManager Module - Complete Test Suite" {
             }
         }
 
-        It "Should not export functions that don't exist" {
-            # Test that manifest doesn't export non-existent functions
-            $manifest = Import-PowerShellDataFile './aither-core/modules/ISOManager/ISOManager.psd1'
-            $actualPublicFiles = Get-ChildItem './aither-core/modules/ISOManager/Public' -Filter '*.ps1' | ForEach-Object { $_.BaseName }
+        It "Should not export functions that don't exist"$env:PWSH_MODULES_PATH/ISOManager/Public' -Filter '*.ps1' | ForEach-Object { $_.BaseName }
 
             foreach ($exportedFunction in $manifest.FunctionsToExport) {
                 if ($exportedFunction -eq 'Get-ISODownloadOptions') {
@@ -245,8 +241,7 @@ Describe "ISOManager Module - Complete Test Suite" {
 
 Describe "ISOCustomizer Module - Complete Test Suite" {
     Context "Module Loading and Function Export" {
-        It "Should load the ISOCustomizer module successfully" {
-            { Import-Module './aither-core/modules/ISOCustomizer' -Force } | Should -Not -Throw
+        It "Should load the ISOCustomizer module successfully"$env:PWSH_MODULES_PATH/ISOCustomizer' -Force } | Should -Not -Throw
         }
 
         It "Should export all expected functions" {
@@ -448,8 +443,7 @@ Describe "ISOCustomizer Module - Complete Test Suite" {
     }
 
     Context "Template Integration Tests" {
-        It "Should use internal templates when available" {
-            Import-Module './aither-core/modules/ISOCustomizer' -Force
+        It "Should use internal templates when available"$env:PWSH_MODULES_PATH/ISOCustomizer' -Force
 
             # Verify template directory exists
             $moduleRoot = Get-Module ISOCustomizer | Select-Object -ExpandProperty ModuleBase
@@ -470,17 +464,14 @@ Describe "ISOCustomizer Module - Complete Test Suite" {
             }
         }
 
-        It "Should load template helpers successfully" {
-            # Import the private function file to test template helpers
-            Import-Module './aither-core/modules/ISOCustomizer' -Force
+        It "Should load template helpers successfully"$env:PWSH_MODULES_PATH/ISOCustomizer' -Force
 
             # Test that template helper functions are available (they should be imported internally)
             { Get-AutounattendTemplate -TemplateType 'Generic' } | Should -Not -Throw
             { Get-AutounattendTemplate -TemplateType 'Headless' } | Should -Not -Throw
         }
 
-        It "Should return valid template paths" {
-            Import-Module './aither-core/modules/ISOCustomizer' -Force
+        It "Should return valid template paths"$env:PWSH_MODULES_PATH/ISOCustomizer' -Force
 
             $genericTemplate = Get-AutounattendTemplate -TemplateType 'Generic'
             $headlessTemplate = Get-AutounattendTemplate -TemplateType 'Headless'
@@ -496,8 +487,7 @@ Describe "ISOCustomizer Module - Complete Test Suite" {
             }
         }
 
-        It "Should provide bootstrap template" {
-            Import-Module './aither-core/modules/ISOCustomizer' -Force
+        It "Should provide bootstrap template"$env:PWSH_MODULES_PATH/ISOCustomizer' -Force
 
             $bootstrapTemplate = Get-BootstrapTemplate
             if ($bootstrapTemplate) {
@@ -817,9 +807,7 @@ Describe "Error Handling and Recovery Tests" {
 
 Describe "Regression Tests" {
     Context "Previously Fixed Issues" {
-        It "Should not regress on template loading" {
-            # Test that templates are properly loaded from module directory
-            Import-Module './aither-core/modules/ISOCustomizer' -Force
+        It "Should not regress on template loading"$env:PWSH_MODULES_PATH/ISOCustomizer' -Force
 
             $testConfig = @{
                 ComputerName = "REGRESSION-TEST"

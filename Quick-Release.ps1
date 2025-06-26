@@ -25,26 +25,7 @@
     .\Quick-Release.ps1 -Version "1.0.0"
     # Create specific version (v1.0.0 GA release)
 .EXAMPLE
-    .\Quick-Release.ps1 -Version "2.0.0-beta.1"
-    # Create pre-release version
-#>
-
-param(
-    [string]$Version,
-    [ValidateSet('Major', 'Minor', 'Patch')]
-    [string]$Type = 'Patch',
-    [switch]$NoPush
-)
-
-$ErrorActionPreference = 'Stop'
-
-Write-Host '🚀 AitherZero Automated Release Creator' -ForegroundColor Cyan
-Write-Host '=====================================' -ForegroundColor Cyan
-
-try {
-    # Import PatchManager for tracking
-    if (Test-Path './aither-core/modules/PatchManager/PatchManager.psm1') {
-        Import-Module './aither-core/modules/PatchManager/PatchManager.psm1' -Force
+    .\Quick-Release.ps1 -Version "2.0.0-beta.1"$env:PWSH_MODULES_PATH/PatchManager/PatchManager.psm1' -Force
         Write-Host '✓ PatchManager loaded' -ForegroundColor Green
     }
 
@@ -146,3 +127,4 @@ try {
     Write-Error "Failed to create release: $($_.Exception.Message)"
     exit 1
 }
+

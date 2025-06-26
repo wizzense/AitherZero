@@ -83,7 +83,7 @@ $bulletproofDir = Join-Path $resultsDir "bulletproof"
 # Import required modules
 try {
     Import-Module Pester -Force -MinimumVersion 5.0 -ErrorAction Stop
-    Import-Module "$projectRoot/aither-core/modules/Logging" -Force -ErrorAction SilentlyContinue
+    Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force -ErrorAction SilentlyContinue
 } catch {
     Write-Error "Failed to import required modules: $_"
     exit 1
@@ -226,15 +226,7 @@ $pesterConfig = @{
         Enabled = $true
         OutputFormat = 'NUnitXml'
         OutputPath = Join-Path $bulletproofDir "BulletproofResults-$TestSuite-$(Get-Date -Format 'yyyyMMddHHmmss').xml"
-        TestSuiteName = "OpenTofu Lab Automation - Bulletproof $TestSuite Tests"
-    }
-    CodeCoverage = @{
-        Enabled = ($TestSuite -in @('Core', 'All') -and -not $CI)
-        Path = @(
-            'aither-core/aither-core.ps1',
-            'aither-core/AitherCore.psm1',
-            'aither-core/modules/*/Public/*.ps1',
-            'aither-core/modules/*/*.psm1'
+        TestSuiteName = "OpenTofu Lab Automation - Bulletproof $TestSuite Tests"$env:PWSH_MODULES_PATH/*/*.psm1'
         ) | ForEach-Object { Join-Path $projectRoot $_ }
         OutputFormat = 'JaCoCo'
         OutputPath = Join-Path $bulletproofDir "BulletproofCoverage-$TestSuite-$(Get-Date -Format 'yyyyMMddHHmmss').xml"

@@ -24,12 +24,12 @@ BeforeAll {
 
     # Import security-related modules
     try {
-        Import-Module "$script:ProjectRoot/aither-core/modules/SecureCredentials" -Force -ErrorAction Stop
+        Import-Module "$env:PWSH_MODULES_PATH/SecureCredentials" -Force -ErrorAction Stop
     } catch {
         Write-Warning "SecureCredentials module not available for security testing"
     }
 
-    Import-Module "$script:ProjectRoot/aither-core/modules/Logging" -Force
+    Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force
 
     # Define security test patterns
     $script:SecurityTests = @{

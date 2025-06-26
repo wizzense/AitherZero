@@ -9,8 +9,7 @@ BeforeAll {
 
 Describe "ISO Manager Module - Final Comprehensive Test Suite" {
     Context "Module Loading and Core Functionality" {
-        It "Should load the ISOManager module successfully" {
-            { Import-Module './aither-core/modules/ISOManager' -Force } | Should -Not -Throw
+        It "Should load the ISOManager module successfully"$env:PWSH_MODULES_PATH/ISOManager' -Force } | Should -Not -Throw
         }
 
         It "Should export all expected public functions" {
@@ -33,8 +32,7 @@ Describe "ISO Manager Module - Final Comprehensive Test Suite" {
             }
         }
 
-        It "Should load the ISOCustomizer module successfully" {
-            { Import-Module './aither-core/modules/ISOCustomizer' -Force } | Should -Not -Throw
+        It "Should load the ISOCustomizer module successfully"$env:PWSH_MODULES_PATH/ISOCustomizer' -Force } | Should -Not -Throw
         }
 
         It "Should export template helper functions from ISOCustomizer" {

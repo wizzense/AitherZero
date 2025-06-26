@@ -14,7 +14,7 @@ BeforeAll {
         return ""
     }# Directly source the function file
     $projectRoot = $env:PROJECT_ROOT
-    $functionPath = Join-Path $projectRoot "aither-core/modules/PatchManager/Public/ErrorHandling.ps1"
+    $functionPath = Join-Path $projectRoot "$env:PWSH_MODULES_PATH/PatchManager/Public/ErrorHandling.ps1"
     if (Test-Path $functionPath) {
         . $functionPath
     } else {

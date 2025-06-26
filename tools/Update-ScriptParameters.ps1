@@ -32,7 +32,7 @@ param(
 # Import shared utilities and logging
 . "$PSScriptRoot/../aither-core/shared/Find-ProjectRoot.ps1"
 $projectRoot = Find-ProjectRoot
-Import-Module "$projectRoot/aither-core/modules/Logging" -Force
+Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force
 
 # Import required modules
 Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force -ErrorAction SilentlyContinue

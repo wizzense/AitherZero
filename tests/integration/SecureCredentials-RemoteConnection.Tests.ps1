@@ -113,13 +113,7 @@ Describe "SecureCredentials and RemoteConnection Integration" {
     }
 
     Context "Error Handling and Validation" {
-        It "Should handle concurrent operations safely" {
-            $jobs = @()
-              # Test concurrent credential creation
-            for ($i = 1; $i -le 3; $i++) {
-                $job = Start-Job -ScriptBlock {
-                    param($Index)
-                    Import-Module './aither-core/modules/SecureCredentials/SecureCredentials.psm1' -Force
+        It "Should handle concurrent operations safely"$env:PWSH_MODULES_PATH/SecureCredentials/SecureCredentials.psm1' -Force
                     $testPassword = ConvertTo-SecureString "ConcurrentPass123" -AsPlainText -Force
                     New-SecureCredential -CredentialName "Concurrent-Test-$Index" -CredentialType UserPassword -Username "concurrentuser$Index" -Password $testPassword -WhatIf
                 } -ArgumentList $i

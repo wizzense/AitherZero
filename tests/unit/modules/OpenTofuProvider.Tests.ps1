@@ -92,7 +92,7 @@ Describe "OpenTofuProvider Module Tests" {
         }
 
         It "Should have proper module manifest" {
-            $ManifestPath = "$PSScriptRoot/../../../aither-core/modules/OpenTofuProvider/OpenTofuProvider.psd1"
+            $ManifestPath = "$env:PWSH_MODULES_PATH/OpenTofuProvider/OpenTofuProvider.psd1"
             Test-Path $ManifestPath | Should -Be $true
 
             $Manifest = Test-ModuleManifest -Path $ManifestPath
@@ -303,7 +303,7 @@ Describe "OpenTofuProvider Integration Tests" {
             $LoggingModule = Get-Module Logging
             if (-not $LoggingModule) {
                 try {
-                    Import-Module "$PSScriptRoot/../../../aither-core/modules/Logging/Logging.psm1" -Force -ErrorAction SilentlyContinue
+                    Import-Module "$env:PWSH_MODULES_PATH/Logging/Logging.psm1" -Force -ErrorAction SilentlyContinue
                     $LoggingModule = Get-Module Logging
                 } catch {
                     # Skip test if Logging module not available
