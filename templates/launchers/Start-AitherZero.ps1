@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# AitherZero Cross-Platform Application Launcher v0.10.1+
+# AitherZero Cross-Platform Application Launcher v0.11.0+
 # Compatible with PowerShell 5.1+ and 7.x
 # Automatic PowerShell version detection and parameter mapping
 
@@ -44,7 +44,7 @@ param(
 $psVersion = $PSVersionTable.PSVersion.Major
 
 # Show banner
-Write-Host '🚀 AitherZero Infrastructure Automation Framework v0.10.1+' -ForegroundColor Green
+Write-Host '🚀 AitherZero Infrastructure Automation Framework v0.11.0+' -ForegroundColor Green
 Write-Host ''
 Write-Host '   Cross-Platform Infrastructure Automation with OpenTofu/Terraform' -ForegroundColor Cyan
 Write-Host ''
@@ -289,3 +289,4 @@ try {
     Write-Host ''
     exit 1
 }
+

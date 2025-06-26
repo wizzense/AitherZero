@@ -43,7 +43,7 @@ Invoke-LabStep -Config $Config -Body {
             
             if (-not $url) {
                 # Use default Node.js LTS installer URL
-                $url = 'https://nodejs.org/dist/v20.11.0/node-v20.11.0-x64.msi'
+                $url = 'https://nodejs.org/dist/latest-v20.x/node-v20-x64.msi'
                 Write-CustomLog "Using default Node.js installer URL: $url"
             }
             
