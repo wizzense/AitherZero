@@ -1,6 +1,6 @@
 @echo off
 echo.
-echo 🚀 AitherZero v0.10.1 - Windows Quick Start
+echo 🚀 AitherZero v0.11.0 - Windows Quick Start
 echo ================================================
 echo.
 echo Starting AitherZero with enhanced compatibility...
@@ -63,3 +63,4 @@ if %LAUNCH_EXIT_CODE% EQU 0 (
     pause
     exit /b %LAUNCH_EXIT_CODE%
 )
+

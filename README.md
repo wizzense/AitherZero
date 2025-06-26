@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Contributors Welcome](https://img.shields.io/badge/Contributors-Welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-> **🚨 HOTFIX AVAILABLE (v0.10.1)**: If you're experiencing PowerShell compatibility errors with v0.10.0, use the **fixed launchers**:
+> **🚨 HOTFIX AVAILABLE (See Latest Release)**: If you're experiencing PowerShell compatibility errors with v0.10.0, use the **fixed launchers**:
 > - **Windows**: Use AitherZero-Fixed.bat or Start-AitherZero-Fixed.ps1
 > - **PowerShell 5.1 users**: These hotfix launchers work with your version!
 > - **Quick Fix**: .\Start-AitherZero-Fixed.ps1 -Setup for first-time setup
@@ -204,4 +204,5 @@ AitherZero Application Package/
 ---
 
 **Made with ❤️ for infrastructure automation**
+
 

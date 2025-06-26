@@ -111,11 +111,11 @@ jobs:
                 $version = "$major.$minor.$($patch + 1)"
                 Write-Host "Auto-incrementing to patch version: $version" -ForegroundColor Green
               } else {
-                Write-Host "Could not parse version, using 0.11.1" -ForegroundColor Yellow
-                $version = "0.11.1"
+                Write-Host "Could not parse version, using 1.0.0" -ForegroundColor Yellow
+                $version = "1.0.0"
               }
             } else {
-              $version = "0.11.1"
+              $version = "1.0.0"
               Write-Host "No tags found, using initial version: $version" -ForegroundColor Green
             }
           }
@@ -662,3 +662,4 @@ jobs:
           }
 
           Write-Host "🎉 Release validation completed successfully!" -ForegroundColor Green
+
