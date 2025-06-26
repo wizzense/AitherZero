@@ -167,7 +167,7 @@ Invoke-PatchWorkflow -PatchDescription "Add new feature" -PatchOperation {
 $repoInfo = Get-GitRepositoryInfo
 $targetRepo = "$($repoInfo.Owner)/$($repoInfo.Name)"
 
-# Cross-fork operations  
+# Cross-fork operations
 Invoke-PatchWorkflow -Description "Feature" -TargetFork "upstream" -CreatePR
 ```
 
@@ -176,7 +176,7 @@ Invoke-PatchWorkflow -Description "Feature" -TargetFork "upstream" -CreatePR
 # Module Structure (REQUIRED):
 ModuleName/
 ├── ModuleName.psd1          # Manifest with proper exports
-├── ModuleName.psm1          # Main module loader  
+├── ModuleName.psm1          # Main module loader
 ├── Public/                  # Exported functions
 ├── Private/                 # Internal functions
 └── README.md               # Module documentation
@@ -189,13 +189,13 @@ function Public-Function {
         [ValidateNotNullOrEmpty()]
         [string]$RequiredParam
     )
-    
+
     begin {
         . "$PSScriptRoot/../../shared/Find-ProjectRoot.ps1"
         $projectRoot = Find-ProjectRoot
         Write-Verbose "Starting $($MyInvocation.MyCommand.Name)"
     }
-    
+
     process {
         try {
             if ($PSCmdlet.ShouldProcess($RequiredParam, "Operation")) {
@@ -219,7 +219,7 @@ $configPath = Join-Path $projectRoot "configs/app-config.json"
 if ($IsWindows) {
     # Windows-specific logic
 } elseif ($IsLinux) {
-    # Linux-specific logic  
+    # Linux-specific logic
 }
 ```
 
@@ -334,7 +334,7 @@ Invoke-PatchRollback -RollbackType "LastCommit" -CreateBackup          # Execute
 
 **When to use VS Code tasks**:
 - Interactive development workflows
-- Quick access to common operations  
+- Quick access to common operations
 - Visual feedback and progress tracking
 - Testing specific modules or components
 - Setting up development environments
