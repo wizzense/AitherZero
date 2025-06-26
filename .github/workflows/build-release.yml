@@ -111,8 +111,8 @@ jobs:
                 $version = "$major.$minor.$($patch + 1)"
                 Write-Host "Auto-incrementing to patch version: $version" -ForegroundColor Green
               } else {
-                Write-Host "Could not parse version, using 1.0.0" -ForegroundColor Yellow
-                $version = "1.0.0"
+                Write-Host "Could not parse version, using default version: $env:DEFAULT_VERSION" -ForegroundColor Yellow
+                $version = $env:DEFAULT_VERSION
               }
             } else {
               $version = "1.0.0"
