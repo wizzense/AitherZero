@@ -151,8 +151,8 @@ function Invoke-PatchWorkflow {
                 Write-PatchLog "Checking for merge conflict markers before auto-commit..." -Level "INFO"
                 $conflictMarkers = git grep -l "^<<<<<<< HEAD" 2>$null
                 if ($conflictMarkers) {
-                    $errorMsg = "MERGE CONFLICTS DETECTED! Cannot auto-commit files with unresolved conflict markers:`n" + 
-                               ($conflictMarkers -join "`n") + 
+                    $errorMsg = "MERGE CONFLICTS DETECTED! Cannot auto-commit files with unresolved conflict markers:`n" +
+                               ($conflictMarkers -join "`n") +
                                "`n`nPlease resolve conflicts manually first, then run the patch workflow again."
                     Write-PatchLog $errorMsg -Level "ERROR"
                     throw $errorMsg
@@ -335,8 +335,8 @@ function Invoke-PatchWorkflow {
                     Write-PatchLog "Checking for merge conflict markers before patch commit..." -Level "INFO"
                     $conflictMarkers = git grep -l "^<<<<<<< HEAD" 2>$null
                     if ($conflictMarkers) {
-                        $errorMsg = "MERGE CONFLICTS DETECTED! Cannot commit patch changes with unresolved conflict markers:`n" + 
-                                   ($conflictMarkers -join "`n") + 
+                        $errorMsg = "MERGE CONFLICTS DETECTED! Cannot commit patch changes with unresolved conflict markers:`n" +
+                                   ($conflictMarkers -join "`n") +
                                    "`n`nPlease resolve conflicts manually first, then run the patch workflow again."
                         Write-PatchLog $errorMsg -Level "ERROR"
                         throw $errorMsg
