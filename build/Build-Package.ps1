@@ -17,10 +17,10 @@
 param(
     [Parameter(Mandatory)]
     [string]$Platform,
-    
+
     [Parameter(Mandatory)]
     [string]$Version,
-    
+
     [Parameter(Mandatory)]
     [string]$ArtifactExtension
 )
@@ -38,19 +38,19 @@ try {
     New-Item -Path $packageDir -ItemType Directory -Force | Out-Null
 
     Write-Host "Creating lean application package: $packageName" -ForegroundColor Yellow
-    Write-Host "📦 Application-focused build (not a repository copy)" -ForegroundColor Cyan
+    Write-Host '📦 Application-focused build (not a repository copy)' -ForegroundColor Cyan
 
     # Copy ONLY essential application files for running AitherZero
-    Write-Host "Copying core application files..." -ForegroundColor Yellow
+    Write-Host 'Copying core application files...' -ForegroundColor Yellow
 
     # Core runner and main entry point
-    Copy-Item -Path "aither-core/aither-core.ps1" -Destination "$packageDir/aither-core.ps1" -Force
-    Write-Host "✓ Core runner script" -ForegroundColor Green
+    Copy-Item -Path 'aither-core/aither-core.ps1' -Destination "$packageDir/aither-core.ps1" -Force
+    Write-Host '✓ Core runner script' -ForegroundColor Green
 
     # Essential modules only (not dev/test modules)
     $essentialModules = @(
-        "Logging", "LabRunner", "DevEnvironment", "BackupManager",
-        "ScriptManager", "UnifiedMaintenance", "ParallelExecution"
+        'Logging', 'LabRunner', 'DevEnvironment', 'BackupManager',
+        'ScriptManager', 'UnifiedMaintenance', 'ParallelExecution'
     )
 
     New-Item -Path "$packageDir/modules" -ItemType Directory -Force | Out-Null
@@ -63,17 +63,17 @@ try {
     }
 
     # Shared utilities
-    if (Test-Path "aither-core/shared") {
-        Copy-Item -Path "aither-core/shared" -Destination "$packageDir/shared" -Recurse -Force
-        Write-Host "✓ Shared utilities" -ForegroundColor Green
+    if (Test-Path 'aither-core/shared') {
+        Copy-Item -Path 'aither-core/shared' -Destination "$packageDir/shared" -Recurse -Force
+        Write-Host '✓ Shared utilities' -ForegroundColor Green
     }
 
     # Essential scripts directory (runtime scripts only)
-    if (Test-Path "aither-core/scripts") {
+    if (Test-Path 'aither-core/scripts') {
         New-Item -Path "$packageDir/scripts" -ItemType Directory -Force | Out-Null
         # Copy only runtime scripts, not development/build scripts
-        $runtimeScripts = Get-ChildItem -Path "aither-core/scripts" -Filter "*.ps1" -File |
-            Where-Object { $_.Name -notlike "*test*" -and $_.Name -notlike "*dev*" -and $_.Name -notlike "*build*" }
+        $runtimeScripts = Get-ChildItem -Path 'aither-core/scripts' -Filter '*.ps1' -File |
+        Where-Object { $_.Name -notlike '*test*' -and $_.Name -notlike '*dev*' -and $_.Name -notlike '*build*' }
         foreach ($script in $runtimeScripts) {
             Copy-Item -Path $script.FullName -Destination "$packageDir/scripts/" -Force
             Write-Host "✓ Runtime script: $($script.Name)" -ForegroundColor Green
@@ -83,7 +83,7 @@ try {
     # Essential configuration templates
     New-Item -Path "$packageDir/configs" -ItemType Directory -Force | Out-Null
     $essentialConfigs = @(
-        "default-config.json", "core-runner-config.json", "recommended-config.json"
+        'default-config.json', 'core-runner-config.json', 'recommended-config.json'
     )
     foreach ($config in $essentialConfigs) {
         $configPath = "configs/$config"
@@ -94,10 +94,10 @@ try {
     }
 
     # OpenTofu templates (infrastructure automation core feature)
-    if (Test-Path "opentofu") {
+    if (Test-Path 'opentofu') {
         # Copy only essential OpenTofu files, not development/test environments
         New-Item -Path "$packageDir/opentofu" -ItemType Directory -Force | Out-Null
-        $essentialTF = @("infrastructure", "providers", "modules")
+        $essentialTF = @('infrastructure', 'providers', 'modules')
         foreach ($tfDir in $essentialTF) {
             $tfPath = "opentofu/$tfDir"
             if (Test-Path $tfPath) {
@@ -108,52 +108,52 @@ try {
     }
 
     # Essential documentation
-    Copy-Item -Path "README.md" -Destination "$packageDir/README.md" -Force
-    Copy-Item -Path "LICENSE" -Destination "$packageDir/LICENSE" -Force
-    Write-Host "✓ Essential documentation" -ForegroundColor Green
+    Copy-Item -Path 'README.md' -Destination "$packageDir/README.md" -Force
+    Copy-Item -Path 'LICENSE' -Destination "$packageDir/LICENSE" -Force
+    Write-Host '✓ Essential documentation' -ForegroundColor Green
 
     # Copy FIXED launcher templates instead of generating inline
-    Write-Host "Copying fixed launcher templates..." -ForegroundColor Yellow
-    if (Test-Path "templates/launchers/Start-AitherZero.ps1") {
-        Copy-Item -Path "templates/launchers/Start-AitherZero.ps1" -Destination "$packageDir/Start-AitherZero.ps1" -Force
-        Write-Host "✓ PowerShell launcher (from template)" -ForegroundColor Green
+    Write-Host 'Copying fixed launcher templates...' -ForegroundColor Yellow
+    if (Test-Path 'templates/launchers/Start-AitherZero.ps1') {
+        Copy-Item -Path 'templates/launchers/Start-AitherZero.ps1' -Destination "$packageDir/Start-AitherZero.ps1" -Force
+        Write-Host '✓ PowerShell launcher (from template)' -ForegroundColor Green
     } else {
-        Write-Warning "PowerShell launcher template not found"
+        Write-Warning 'PowerShell launcher template not found'
     }
 
-    if (Test-Path "templates/launchers/AitherZero.bat") {
-        Copy-Item -Path "templates/launchers/AitherZero.bat" -Destination "$packageDir/AitherZero.bat" -Force
-        Write-Host "✓ Windows batch launcher (from template)" -ForegroundColor Green
+    if (Test-Path 'templates/launchers/AitherZero.bat') {
+        Copy-Item -Path 'templates/launchers/AitherZero.bat' -Destination "$packageDir/AitherZero.bat" -Force
+        Write-Host '✓ Windows batch launcher (from template)' -ForegroundColor Green
     } else {
-        Write-Warning "Batch launcher template not found"
+        Write-Warning 'Batch launcher template not found'
     }
 
     # For non-Windows platforms, create Unix launcher script
-    if ($Platform -ne "windows") {
-        $unixScript = "#!/bin/bash`necho `"🚀 AitherZero v$Version - $(if ($Platform -eq "macos") { "macOS" } else { "Linux" }) Quick Start`"`necho `"Cross-Platform Infrastructure Automation with OpenTofu/Terraform`"`necho `"`"`npwsh -File `"Start-AitherZero.ps1`" `$@"
+    if ($Platform -ne 'windows') {
+        $unixScript = "#!/bin/bash`necho `"🚀 AitherZero v$Version - $(if ($Platform -eq 'macos') { 'macOS' } else { 'Linux' }) Quick Start`"`necho `"Cross-Platform Infrastructure Automation with OpenTofu/Terraform`"`necho `"`"`npwsh -File `"Start-AitherZero.ps1`" `$@"
         Set-Content -Path "$packageDir/aitherzero.sh" -Value $unixScript -Encoding UTF8
         if (-not $IsWindows) {
             chmod +x "$packageDir/aitherzero.sh"
         }
-        Write-Host "✓ Created Unix quick-start script" -ForegroundColor Green
+        Write-Host '✓ Created Unix quick-start script' -ForegroundColor Green
     }
 
     # Create package metadata and docs
-    Write-Host "Creating package metadata..." -ForegroundColor Yellow
+    Write-Host 'Creating package metadata...' -ForegroundColor Yellow
     $packageInfo = @{
-        Version = $Version
-        PackageType = "Application"
-        BuildDate = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss UTC')
-        GitCommit = $env:GITHUB_SHA
-        GitRef = $env:GITHUB_REF
-        Platform = $Platform
-        Description = "Lean AitherZero application package with essential components only"
-        Components = @(
-            "Core runner", "Essential modules", "Configuration templates",
-            "OpenTofu infrastructure", "Application launcher"
+        Version     = $Version
+        PackageType = 'Application'
+        BuildDate   = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss UTC')
+        GitCommit   = $env:GITHUB_SHA
+        GitRef      = $env:GITHUB_REF
+        Platform    = $Platform
+        Description = 'Lean AitherZero application package with essential components only'
+        Components  = @(
+            'Core runner', 'Essential modules', 'Configuration templates',
+            'OpenTofu infrastructure', 'Application launcher'
         )
-        Usage = "Run Start-AitherZero.ps1 to begin or aither-core.ps1 for direct access"
-        Repository = "https://github.com/wizzense/AitherZero"
+        Usage       = 'Run Start-AitherZero.ps1 to begin or aither-core.ps1 for direct access'
+        Repository  = 'https://github.com/wizzense/AitherZero'
     }
     $packageInfo | ConvertTo-Json -Depth 3 | Set-Content "$packageDir/PACKAGE-INFO.json"
 
@@ -230,18 +230,18 @@ pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1 -Setup
 "@
 
     Set-Content -Path "$packageDir/INSTALL.md" -Value $installGuide
-    Write-Host "✓ Installation guide created" -ForegroundColor Green
+    Write-Host '✓ Installation guide created' -ForegroundColor Green
 
     # Calculate package size
     $packageSize = (Get-ChildItem -Path $packageDir -Recurse | Measure-Object -Property Length -Sum).Sum
     $packageSizeMB = [math]::Round($packageSize / 1MB, 2)
 
-    Write-Host ""
-    Write-Host "📦 Lean Application Package Created:" -ForegroundColor Green
+    Write-Host ''
+    Write-Host '📦 Lean Application Package Created:' -ForegroundColor Green
     Write-Host "   Package: $packageName" -ForegroundColor White
     Write-Host "   Size: $packageSizeMB MB (lean build)" -ForegroundColor White
-    Write-Host "   Type: Application (Essential components only)" -ForegroundColor White
-    Write-Host ""
+    Write-Host '   Type: Application (Essential components only)' -ForegroundColor White
+    Write-Host ''
 
     Write-Host "✓ Package creation completed for $Platform" -ForegroundColor Green
 
