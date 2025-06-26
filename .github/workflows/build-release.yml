@@ -336,6 +336,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [version, build]
     if: needs.version.outputs.should-release == 'true'
+    outputs:
+      release-tag: v${{ needs.version.outputs.version }}
+      release-version: ${{ needs.version.outputs.version }}
 
     steps:
       - name: Checkout Repository
@@ -401,6 +404,7 @@ jobs:
           Write-Host "Release assets organized successfully!" -ForegroundColor Green
 
       - name: Create GitHub Release
+        id: create-release
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -439,11 +443,20 @@ jobs:
           draft: false
           prerelease: ${{ contains(needs.version.outputs.version, 'pre') || contains(needs.version.outputs.version, 'alpha') || contains(needs.version.outputs.version, 'beta') }}
 
+      - name: Output Release Information
+        shell: pwsh
+        run: |
+          $version = "${{ needs.version.outputs.version }}"
+          $tagName = "v$version"
+          Write-Host "✅ Release created successfully!" -ForegroundColor Green
+          Write-Host "Tag: $tagName" -ForegroundColor Cyan
+          Write-Host "Version: $version" -ForegroundColor Cyan
+
   validate-release:
     name: Validate Release
     runs-on: ubuntu-latest
     needs: [version, release]
-    if: always() && needs.release.result == 'success' && needs.version.outputs.version != ''
+    if: always() && needs.release.result == 'success' && needs.release.outputs.release-version != ''
 
     steps:
       - name: Checkout Repository
@@ -457,10 +470,12 @@ jobs:
         run: |
           Write-Host "Waiting for release to be fully available..." -ForegroundColor Cyan
 
-          $version = "${{ needs.version.outputs.version }}"
+          $version = "${{ needs.release.outputs.release-version }}"
           $maxAttempts = 6
           $attempt = 1
           $found = $false
+
+          Write-Host "Looking for release with version: $version" -ForegroundColor Yellow
 
           while ($attempt -le $maxAttempts -and -not $found) {
             Write-Host "Attempt $attempt of $maxAttempts..." -ForegroundColor Yellow
@@ -502,9 +517,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          Write-Host "Validating release v${{ needs.version.outputs.version }}..." -ForegroundColor Cyan
+          Write-Host "Validating release v${{ needs.release.outputs.release-version }}..." -ForegroundColor Cyan
 
-          $version = "${{ needs.version.outputs.version }}"
+          $version = "${{ needs.release.outputs.release-version }}"
           if ([string]::IsNullOrEmpty($version)) {
             Write-Error "Version is empty or null. Cannot validate release."
             exit 1
@@ -582,7 +597,7 @@ jobs:
         run: |
           Write-Host "Testing release download and basic validation..." -ForegroundColor Cyan
 
-          $version = "${{ needs.version.outputs.version }}"
+          $version = "${{ needs.release.outputs.release-version }}"
 
           try {
             $assetName = "AitherZero-$version-linux.tar.gz"
