@@ -53,7 +53,7 @@ pwsh -File "./tests/Run-AllModuleTests.ps1" -Parallel -OutputFormat "NUnitXml"
 ### Quick Access (Ctrl+Shift+P → Tasks: Run Task)
 
 - **🚀 Bulletproof Validation - Quick**: Fast 30-second validation
-- **🔥 Bulletproof Validation - Standard**: Comprehensive 2-5 minute validation  
+- **🔥 Bulletproof Validation - Standard**: Comprehensive 2-5 minute validation
 - **🎯 Bulletproof Validation - Complete**: Full 10-15 minute validation
 - **Tests: Run Non-Interactive Validation**: Core runner testing
 - **Tests: Intelligent Test Discovery**: Smart test selection
@@ -73,10 +73,10 @@ BeforeAll {
     # Import shared utilities
     . "$PSScriptRoot/../../../aither-core/shared/Find-ProjectRoot.ps1"
     $projectRoot = Find-ProjectRoot
-    
+
     # Import module under test
     Import-Module "$projectRoot/aither-core/modules/ModuleName" -Force
-    
+
     # Mock external dependencies
     Mock Invoke-ExternalCommand { return @{ Success = $true } }
 }
@@ -100,12 +100,12 @@ Describe "Cross-Module Integration" -Tags @('Integration', 'Slow') {
         # Setup integration test environment
         $tempDir = New-TemporaryDirectory
     }
-    
+
     AfterEach {
         # Cleanup
         Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
     }
-    
+
     It "Should integrate with dependent modules" {
         # Integration test
     }
@@ -165,7 +165,7 @@ pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Complete" -Ge
 ### Log Locations
 
 - **Test Results**: `tests/results/TestResults.xml`
-- **Coverage Reports**: `tests/results/coverage.xml`  
+- **Coverage Reports**: `tests/results/coverage.xml`
 - **Bulletproof Logs**: `tests/results/bulletproof-validation/`
 - **Module Test Results**: `tests/results/module-tests/`
 

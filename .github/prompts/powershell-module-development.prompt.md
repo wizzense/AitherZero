@@ -93,57 +93,57 @@ function Verb-Noun {
     <#
     .SYNOPSIS
         Brief description of what the function does
-    
+
     .DESCRIPTION
         Detailed description of the function's purpose and behavior
-    
+
     .PARAMETER ParameterName
         Description of the parameter
-    
+
     .EXAMPLE
         Verb-Noun -ParameterName "value"
         Example of how to use the function
-    
+
     .NOTES
         Additional notes about the function
     #>
-    
+
     [CmdletBinding(SupportsShouldProcess)]
     [OutputType([System.Object])]
     param(
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$RequiredParameter,
-        
+
         [Parameter()]
         [ValidateSet('Option1', 'Option2', 'Option3')]
         [string]$OptionalParameter = 'Option1',
-        
+
         [Parameter()]
         [switch]$SwitchParameter
     )
-    
+
     begin {
         Write-CustomLog -Level 'DEBUG' -Message "Starting $($MyInvocation.MyCommand.Name)"
-        
+
         # Validate prerequisites
         if (-not $env:PWSH_MODULES_PATH) {
             throw "PWSH_MODULES_PATH environment variable not set"
         }
     }
-    
+
     process {
         try {
             if ($PSCmdlet.ShouldProcess($RequiredParameter, "Verb-Noun")) {
                 Write-CustomLog -Level 'INFO' -Message "Processing: $RequiredParameter"
-                
+
                 # Main function logic here
                 $result = @{
                     Success = $true
                     Data = $RequiredParameter
                     Timestamp = Get-Date
                 }
-                
+
                 Write-CustomLog -Level 'SUCCESS' -Message "Completed processing: $RequiredParameter"
                 return $result
             }
@@ -153,7 +153,7 @@ function Verb-Noun {
             throw
         }
     }
-    
+
     end {
         Write-CustomLog -Level 'DEBUG' -Message "Completed $($MyInvocation.MyCommand.Name)"
     }
@@ -184,10 +184,10 @@ $projectRoot = Find-ProjectRoot
 function Invoke-ModuleWithLabRunner {
     [CmdletBinding()]
     param([string]$LabScript)
-    
+
     # Import LabRunner
     Import-Module "$env:PWSH_MODULES_PATH/LabRunner" -Force
-    
+
     # Use LabRunner functionality
     $result = Invoke-LabScript -ScriptName $LabScript
     return $result
@@ -203,10 +203,10 @@ BeforeAll {
     # Import shared utilities
     . "$PSScriptRoot/../../../aither-core/shared/Find-ProjectRoot.ps1"
     $projectRoot = Find-ProjectRoot
-    
+
     # Import module under test
     Import-Module "$projectRoot/aither-core/modules/ModuleName" -Force
-    
+
     # Mock dependencies
     Mock Write-CustomLog { }
     Mock Invoke-ExternalCommand { return @{ Success = $true } }
@@ -217,13 +217,13 @@ Describe "ModuleName Module" -Tags @('Unit', 'ModuleName', 'Fast') {
         It "Should import without errors" {
             { Import-Module "$env:PWSH_MODULES_PATH/ModuleName" -Force } | Should -Not -Throw
         }
-        
+
         It "Should export expected functions" {
             $module = Get-Module ModuleName
             $module.ExportedFunctions.Keys | Should -Contain 'Public-Function1'
         }
     }
-    
+
     Context "Core functionality" {
         It "Should execute main function successfully" {
             $result = Invoke-MainFunction -Parameter "test"
