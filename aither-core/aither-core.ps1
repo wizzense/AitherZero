@@ -56,26 +56,26 @@ $ErrorActionPreference = 'Stop'
 
 # Handle help request
 if ($Help) {
-    Write-Host "AitherZero Core Application" -ForegroundColor Green
-    Write-Host ""
-    Write-Host "Usage:" -ForegroundColor Cyan
-    Write-Host "  aither-core.ps1 [options]"
-    Write-Host ""
-    Write-Host "Options:" -ForegroundColor Cyan
-    Write-Host "  -Quiet          Run in quiet mode with minimal output"
-    Write-Host "  -Verbosity      Set verbosity level: silent, normal, detailed"
-    Write-Host "  -ConfigFile     Path to configuration file"
-    Write-Host "  -Auto           Run in automatic mode without prompts"
-    Write-Host "  -Scripts        Specific scripts to run"
-    Write-Host "  -Force          Force operations even if validations fail"
-    Write-Host "  -NonInteractive Run in non-interactive mode"
-    Write-Host "  -Help           Show this help information"
-    Write-Host ""
-    Write-Host "Examples:" -ForegroundColor Cyan
-    Write-Host "  .\aither-core.ps1"
-    Write-Host "  .\aither-core.ps1 -Verbosity detailed -Auto"
-    Write-Host "  .\aither-core.ps1 -ConfigFile custom.json -Scripts LabRunner"
-    Write-Host ""
+    Write-Host 'AitherZero Core Application' -ForegroundColor Green
+    Write-Host ''
+    Write-Host 'Usage:' -ForegroundColor Cyan
+    Write-Host '  aither-core.ps1 [options]'
+    Write-Host ''
+    Write-Host 'Options:' -ForegroundColor Cyan
+    Write-Host '  -Quiet          Run in quiet mode with minimal output'
+    Write-Host '  -Verbosity      Set verbosity level: silent, normal, detailed'
+    Write-Host '  -ConfigFile     Path to configuration file'
+    Write-Host '  -Auto           Run in automatic mode without prompts'
+    Write-Host '  -Scripts        Specific scripts to run'
+    Write-Host '  -Force          Force operations even if validations fail'
+    Write-Host '  -NonInteractive Run in non-interactive mode'
+    Write-Host '  -Help           Show this help information'
+    Write-Host ''
+    Write-Host 'Examples:' -ForegroundColor Cyan
+    Write-Host '  .\aither-core.ps1'
+    Write-Host '  .\aither-core.ps1 -Verbosity detailed -Auto'
+    Write-Host '  .\aither-core.ps1 -ConfigFile custom.json -Scripts LabRunner'
+    Write-Host ''
     return
 }
 
@@ -140,10 +140,10 @@ function Invoke-ScriptWithOutputHandling {
             $warningMessage = "⚠️  Script '$ScriptName' completed successfully but produced no visible output in '$Verbosity' mode."
             $suggestionMessage = "💡 Consider running with '-Verbosity detailed' to see more information, or the script may need output improvements."
 
-            Write-Host ""
+            Write-Host ''
             Write-Host $warningMessage -ForegroundColor Yellow
             Write-Host $suggestionMessage -ForegroundColor Cyan
-            Write-Host ""
+            Write-Host ''
 
             Write-CustomLog "No visible output detected for script: $ScriptName in verbosity mode: $Verbosity" -Level WARN
 
@@ -152,8 +152,8 @@ function Invoke-ScriptWithOutputHandling {
             $script:NoOutputScripts += [PSCustomObject]@{
                 ScriptName = $ScriptName
                 ScriptPath = $ScriptPath
-                Verbosity = $Verbosity
-                Timestamp = Get-Date
+                Verbosity  = $Verbosity
+                Timestamp  = Get-Date
             }
         }
 
@@ -204,8 +204,8 @@ if ($Quiet) {
 
 # Map verbosity settings to logging levels
 $script:VerbosityToLogLevel = @{
-    silent = 'SILENT'   # Suppress all console output in silent mode
-    normal = 'WARN'     # Show only WARN and ERROR in normal mode (cleaner user experience)
+    silent   = 'SILENT'   # Suppress all console output in silent mode
+    normal   = 'WARN'     # Show only WARN and ERROR in normal mode (cleaner user experience)
     detailed = 'DEBUG'  # Show everything including DEBUG in detailed mode
 }
 
@@ -268,6 +268,19 @@ try {
     Write-Error "Failed to import required modules: $($_.Exception.Message)"
     Write-Error "Ensure modules exist at: $env:PWSH_MODULES_PATH"
     exit 1
+}
+
+# Load shared utilities
+$sharedUtilsPath = Join-Path $repoRoot 'aither-core/shared/CrossPlatformUtils.ps1'
+if (Test-Path $sharedUtilsPath) {
+    if ($Verbosity -eq 'silent') {
+        . $sharedUtilsPath *>$null
+    } else {
+        Write-Verbose 'Loading shared cross-platform utilities...'
+        . $sharedUtilsPath
+    }
+} else {
+    Write-CustomLog "Shared utilities not found at: $sharedUtilsPath" -Level WARN
 }
 
 # Set console verbosity level for LabRunner (maintain compatibility)
@@ -337,7 +350,8 @@ try {
                         if ($PSCmdlet.ShouldProcess($script.BaseName, 'Execute script')) {
                             Invoke-ScriptWithOutputHandling -ScriptName $script.BaseName -ScriptPath $script.FullName -Config $config -Force:$Force -Verbosity $Verbosity
                         }
-                    }                } else {
+                    }                
+                } else {
                     Write-CustomLog 'No scripts specified for non-interactive execution' -Level WARN
                     Write-CustomLog 'Consider using -Auto to run all scripts, or -Scripts to specify particular scripts' -Level INFO
                 }
@@ -345,15 +359,15 @@ try {
             } else {
                 # Interactive mode - show menu in a loop
                 do {
-                    Write-Host "`n" + "=" * 60 -ForegroundColor Cyan
-                    Write-Host "     _    _ _   _               _                 " -ForegroundColor Cyan
-                    Write-Host "    / \  (_) |_| |__   ___ _ __(_)_   _ _ __ ___  " -ForegroundColor Cyan
+                    Write-Host "`n" + '=' * 60 -ForegroundColor Cyan
+                    Write-Host '     _    _ _   _               _                 ' -ForegroundColor Cyan
+                    Write-Host '    / \  (_) |_| |__   ___ _ __(_)_   _ _ __ ___  ' -ForegroundColor Cyan
                     Write-Host "   / _ \ | | __| '_ \ / _ \ '__| | | | | '_ \` _ \ " -ForegroundColor Cyan
-                    Write-Host "  / ___ \| | |_| | | |  __/ |  | | |_| | | | | | |" -ForegroundColor Cyan
-                    Write-Host " /_/   \_\_|\__|_| |_|\___|_|  |_|\__,_|_| |_| |_|" -ForegroundColor Cyan
-                    Write-Host "                                                   " -ForegroundColor Cyan
-                    Write-Host " Infrastructure Automation That Transcends Boundaries" -ForegroundColor Cyan
-                    Write-Host "=" * 60 -ForegroundColor Cyan
+                    Write-Host '  / ___ \| | |_| | | |  __/ |  | | |_| | | | | | |' -ForegroundColor Cyan
+                    Write-Host ' /_/   \_\_|\__|_| |_|\___|_|  |_|\__,_|_| |_| |_|' -ForegroundColor Cyan
+                    Write-Host '                                                   ' -ForegroundColor Cyan
+                    Write-Host ' Infrastructure Automation That Transcends Boundaries' -ForegroundColor Cyan
+                    Write-Host '=' * 60 -ForegroundColor Cyan
                     Write-Host "`nAvailable Scripts:" -ForegroundColor Cyan
                     for ($i = 0; $i -lt $availableScripts.Count; $i++) {
                         $script = $availableScripts[$i]
@@ -361,10 +375,10 @@ try {
                     }
 
                     Write-Host "`nOptions:" -ForegroundColor Yellow
-                    Write-Host "  • Enter script numbers (comma-separated)" -ForegroundColor Gray
+                    Write-Host '  • Enter script numbers (comma-separated)' -ForegroundColor Gray
                     Write-Host "  • Type 'all' to run all scripts" -ForegroundColor Gray
                     Write-Host "  • Type 'exit' or 'quit' to quit" -ForegroundColor Gray
-                    Write-Host ""
+                    Write-Host ''
 
                     $selection = Read-Host 'Selection'
 
@@ -415,25 +429,25 @@ try {
 
     # Generate summary of scripts with no output issues
     if ($script:NoOutputScripts -and $script:NoOutputScripts.Count -gt 0) {
-        Write-Host ""
-        Write-Host "=" * 80 -ForegroundColor Yellow
-        Write-Host "📊 NO OUTPUT DETECTION SUMMARY" -ForegroundColor Yellow
-        Write-Host "=" * 80 -ForegroundColor Yellow
-        Write-Host ""
-        Write-Host "The following scripts completed successfully but produced no visible output:" -ForegroundColor Yellow
-        Write-Host ""
+        Write-Host ''
+        Write-Host '=' * 80 -ForegroundColor Yellow
+        Write-Host '📊 NO OUTPUT DETECTION SUMMARY' -ForegroundColor Yellow
+        Write-Host '=' * 80 -ForegroundColor Yellow
+        Write-Host ''
+        Write-Host 'The following scripts completed successfully but produced no visible output:' -ForegroundColor Yellow
+        Write-Host ''
 
         foreach ($scriptInfo in $script:NoOutputScripts) {
             Write-Host "• $($scriptInfo.ScriptName) (verbosity: $($scriptInfo.Verbosity))" -ForegroundColor Cyan
         }
 
-        Write-Host ""
-        Write-Host "💡 Suggestions:" -ForegroundColor Cyan
+        Write-Host ''
+        Write-Host '💡 Suggestions:' -ForegroundColor Cyan
         Write-Host "  1. Run with '-Verbosity detailed' to see more information" -ForegroundColor White
-        Write-Host "  2. Consider enhancing these scripts to provide user-friendly output" -ForegroundColor White
-        Write-Host "  3. Use PatchManager to track and improve script output" -ForegroundColor White
-        Write-Host ""
-        Write-Host "=" * 80 -ForegroundColor Yellow
+        Write-Host '  2. Consider enhancing these scripts to provide user-friendly output' -ForegroundColor White
+        Write-Host '  3. Use PatchManager to track and improve script output' -ForegroundColor White
+        Write-Host ''
+        Write-Host '=' * 80 -ForegroundColor Yellow
 
         # Save summary to logs for potential automation
         $summaryPath = "$repoRoot/logs/no-output-scripts-$(Get-Date -Format 'yyyy-MM-dd-HHmm').json"
@@ -447,8 +461,8 @@ try {
                 if (Get-Command New-PatchIssue -ErrorAction SilentlyContinue) {
                     $issueDescription = "Scripts with no visible output detected: $($script:NoOutputScripts.ScriptName -join ', ')"
                     $affectedFiles = $script:NoOutputScripts.ScriptPath
-                    Write-Host "🔧 Creating PatchManager issue to track output improvements..." -ForegroundColor Green
-                    New-PatchIssue -Description $issueDescription -Priority "Low" -AffectedFiles $affectedFiles -Labels @("enhancement", "user-experience", "output-improvement")
+                    Write-Host '🔧 Creating PatchManager issue to track output improvements...' -ForegroundColor Green
+                    New-PatchIssue -Description $issueDescription -Priority 'Low' -AffectedFiles $affectedFiles -Labels @('enhancement', 'user-experience', 'output-improvement')
                 }
             } catch {
                 Write-CustomLog "Could not create PatchManager issue: $($_.Exception.Message)" -Level WARN
