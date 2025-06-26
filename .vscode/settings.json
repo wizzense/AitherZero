@@ -34,13 +34,19 @@
             "file": ".github/instructions/patchmanager-workflows.instructions.md"
         },
         {
-            "text": "Always use PowerShell 7.0+ cross-platform syntax with forward slashes for paths."
+            "file": ".github/instructions/advanced-architecture.instructions.md"
+        },
+        {
+            "text": "Always use PowerShell 7.0+ cross-platform syntax with Join-Path for paths."
         }
     ],
 
     "github.copilot.chat.testGeneration.instructions": [
         {
             "file": ".github/instructions/testing-workflows.instructions.md"
+        },
+        {
+            "file": ".github/prompts/run-bulletproof-tests-updated.prompt.md"
         },
         {
             "text": "Use Pester 5.0+ with proper Describe-Context-It structure and comprehensive mocking."
