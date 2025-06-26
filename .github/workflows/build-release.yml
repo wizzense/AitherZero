@@ -481,7 +481,7 @@ jobs:
             Write-Host "Attempt $attempt of $maxAttempts..." -ForegroundColor Yellow
 
             try {
-              $release = gh release view "v$version" --json tagName,assets,draft 2>$null
+              $release = gh release view "v$version" --json tagName,assets,isDraft 2>$null
               if ($release) {
                 $releaseData = $release | ConvertFrom-Json
                 if ($releaseData.tagName -eq "v$version" -and $releaseData.assets -and $releaseData.assets.Count -gt 0) {
@@ -526,7 +526,7 @@ jobs:
           }
 
           try {
-            $release = gh release view "v$version" --json tagName,assets,draft 2>$null
+            $release = gh release view "v$version" --json tagName,assets,isDraft 2>$null
 
             if ($release) {
               $releaseData = $release | ConvertFrom-Json
@@ -573,7 +573,7 @@ jobs:
                 exit 1
               }
 
-              if ($releaseData.draft) {
+              if ($releaseData.isDraft) {
                 Write-Host "ℹ️ Release is marked as draft" -ForegroundColor Yellow
               } else {
                 Write-Host "✓ Release is published" -ForegroundColor Green
