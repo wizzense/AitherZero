@@ -88,7 +88,8 @@
   "NpmPath": "C:\\Projects\\vde-mvp\\frontend",
   "CreateNpmPath": false,
   "Node": {
-    "InstallerUrl": "https://nodejs.org/dist/v20.11.1/node-v20.11.1-x64.msi"
+    "InstallerUrl": "https://nodejs.org/dist/latest-v20.x/node-v20-x64.msi"
   }
 }
 }
+
