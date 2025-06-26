@@ -57,7 +57,7 @@ try {
     foreach ($module in $essentialModules) {
         $modulePath = Join-Path "aither-core" "modules" $module
         if (Test-Path $modulePath) {
-            Copy-Item -Path $modulePath -Destination "$packageDir/modules/$module" -Recurse -Force
+            Copy-Item -Path $modulePath -Destination (Join-Path $packageDir 'modules' $module) -Recurse -Force
             Write-Host "✓ Essential module: $module" -ForegroundColor Green
         }
     }
