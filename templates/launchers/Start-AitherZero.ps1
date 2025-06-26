@@ -168,7 +168,7 @@ if ($PSBoundParameters.ContainsKey('Verbosity')) { $coreArgs['Verbosity'] = $Ver
 if ($PSBoundParameters.ContainsKey('ConfigFile')) { $coreArgs['ConfigFile'] = $ConfigFile }
 if ($PSBoundParameters.ContainsKey('Scripts')) { $coreArgs['Scripts'] = ($Scripts -join ',') }
 
-# Switch parameters (pass only the switch when present)
+# Switch parameters (pass only when explicitly set by user)
 if ($PSBoundParameters.ContainsKey('Auto')) { $coreArgs['Auto'] = $true }
 if ($PSBoundParameters.ContainsKey('Force')) { $coreArgs['Force'] = $true }
 if ($PSBoundParameters.ContainsKey('NonInteractive')) { $coreArgs['NonInteractive'] = $true }

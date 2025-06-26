@@ -36,12 +36,10 @@
     .\core-runner.ps1 -ConfigFile "custom-config.json" -Verbosity detailed
 #>
 
-[CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Default')]
+[CmdletBinding(SupportsShouldProcess)]
 param(
-    [Parameter(ParameterSetName = 'Quiet')]
     [switch]$Quiet,
 
-    [Parameter(ParameterSetName = 'Default')]
     [ValidateSet('silent', 'normal', 'detailed')]
     [string]$Verbosity = 'normal',
 
