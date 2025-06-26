@@ -183,10 +183,34 @@ if (-not $NonInteractive) {
 
 Write-Verbose "Final NonInteractive value: $NonInteractive"
 
-# Determine repository root - aither-core is now at the root level
+# Determine repository root and modules path intelligently
 $repoRoot = Split-Path $PSScriptRoot -Parent
 $env:PROJECT_ROOT = $repoRoot
-$env:PWSH_MODULES_PATH = "$repoRoot/aither-core/modules"
+
+# Intelligently detect modules path for different deployment scenarios
+$modulesPath = $null
+
+# Check for release package structure (modules in root)
+if (Test-Path "$repoRoot/modules") {
+    $modulesPath = "$repoRoot/modules"
+    Write-Verbose "Detected release package structure: modules in root"
+}
+# Check for development structure (modules in aither-core)
+elseif (Test-Path "$repoRoot/aither-core/modules") {
+    $modulesPath = "$repoRoot/aither-core/modules"
+    Write-Verbose "Detected development structure: modules in aither-core"
+}
+# Check if we're running from aither-core directory directly
+elseif (Test-Path "$PSScriptRoot/modules") {
+    $modulesPath = "$PSScriptRoot/modules"
+    Write-Verbose "Detected direct aither-core execution: modules in script directory"
+}
+else {
+    Write-Error "Could not locate modules directory. Checked: $repoRoot/modules, $repoRoot/aither-core/modules, $PSScriptRoot/modules"
+    exit 1
+}
+
+$env:PWSH_MODULES_PATH = $modulesPath
 
 Write-Verbose "Repository root: $repoRoot"
 Write-Verbose "Modules path: $env:PWSH_MODULES_PATH"

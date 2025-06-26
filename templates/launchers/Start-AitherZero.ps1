@@ -132,16 +132,23 @@ if ($Setup) {
 # Import essential modules with error handling (if available)
 Write-Host 'Loading AitherZero modules...' -ForegroundColor Cyan
 
-# Determine modules directory based on launcher location
-$modulesPath = Join-Path $PSScriptRoot 'modules'
-if (-not (Test-Path $modulesPath)) {
+# Intelligently determine modules directory based on launcher location and deployment type
+$modulesPath = $null
+
+# Check for release package structure (modules in root)
+if (Test-Path (Join-Path $PSScriptRoot 'modules')) {
+    $modulesPath = Join-Path $PSScriptRoot 'modules'
+}
+# Check for development structure (modules in aither-core)
+elseif (Test-Path (Join-Path $PSScriptRoot 'aither-core/modules')) {
     $modulesPath = Join-Path $PSScriptRoot 'aither-core/modules'
 }
-if (-not (Test-Path $modulesPath)) {
+# Check for template launcher scenario (development)
+elseif (Test-Path (Join-Path $PSScriptRoot '../../aither-core/modules')) {
     $modulesPath = Join-Path $PSScriptRoot '../../aither-core/modules'
 }
 
-if (Test-Path $modulesPath) {
+if ($modulesPath -and (Test-Path $modulesPath)) {
     $loadedModules = 0
     $totalModules = (Get-ChildItem $modulesPath -Directory).Count
     Get-ChildItem $modulesPath -Directory | ForEach-Object {
