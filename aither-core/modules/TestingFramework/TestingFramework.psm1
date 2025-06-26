@@ -39,7 +39,7 @@ if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
         'Logging',
         (Join-Path (Split-Path $PSScriptRoot -Parent) "Logging"),
         (Join-Path $env:PWSH_MODULES_PATH "Logging" -ErrorAction SilentlyContinue),
-        (Join-Path $env:PROJECT_ROOT "$env:PWSH_MODULES_PATH/Logging" -ErrorAction SilentlyContinue)
+        (Join-Path $env:PWSH_MODULES_PATH "Logging" -ErrorAction SilentlyContinue)
     )
 
     foreach ($loggingPath in $loggingPaths) {
