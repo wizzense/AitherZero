@@ -109,11 +109,11 @@ function Verb-Noun {
         [ValidateNotNullOrEmpty()]
         [string]$RequiredParam
     )
-    
+
     begin {
         Write-CustomLog -Level 'DEBUG' -Message "Starting $($MyInvocation.MyCommand.Name)"
     }
-    
+
     process {
         try {
             if ($PSCmdlet.ShouldProcess($RequiredParam, "Verb-Noun")) {
@@ -124,7 +124,7 @@ function Verb-Noun {
             throw
         }
     }
-    
+
     end {
         Write-CustomLog -Level 'DEBUG' -Message "Completed $($MyInvocation.MyCommand.Name)"
     }

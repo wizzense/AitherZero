@@ -83,23 +83,48 @@ $url = (irm "https://api.github.com/repos/wizzense/AitherZero/releases/latest").
 
 ## 🔧 Development & Contributing
 
-Want to contribute or modify AitherZero? You'll need the full repository:
+**📋 You have the DEVELOPMENT repository** (not an application package). Use these commands:
 
-```bash
-# Clone the full development repository:
-git clone https://github.com/wizzense/AitherZero.git
-cd AitherZero
+### 🚀 Running from Development Repository
 
-# Run the core application:
+```powershell
+# Windows - Run the core application directly:
+pwsh -File .\aither-core\aither-core.ps1
+
+# Linux/macOS - Run the core application:
 pwsh -File ./aither-core/aither-core.ps1
+
+# With options:
+pwsh -File .\aither-core\aither-core.ps1 -Verbosity detailed
+pwsh -File .\aither-core\aither-core.ps1 -Auto
+pwsh -File .\aither-core\aither-core.ps1 -Help
+```
+
+### 🧪 Development Testing
+
+```powershell
+# Run tests:
+pwsh -File .\tests\Run-BulletproofValidation.ps1 -ValidationLevel Quick
+
+# Test all modules:
+Get-ChildItem .\aither-core\modules -Directory | ForEach-Object { Import-Module $_.FullName -Force }
+```
+
+### 📦 Create Application Package
+
+```powershell
+# Build local packages (like the releases):
+pwsh -File .\build\Build-Package.ps1
 ```
 
 **Development vs. Application:**
 
-- **Application releases** (above): Lean packages for running AitherZero
-- **Repository clone**: Full development environment with tests, build tools, and documentation
+- **🏗️ Development repository** (what you have): Full source code, tests, build tools
+- **📦 Application releases**: Lean packages for end users (no development tools)
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
+The README instructions above are for **application packages only**. Since you have the development repository, use the commands in this section.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development setup and guidelines.
 
 ---
 
@@ -204,5 +229,3 @@ AitherZero Application Package/
 ---
 
 **Made with ❤️ for infrastructure automation**
-
-

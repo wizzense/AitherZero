@@ -53,11 +53,11 @@ try {
         'ScriptManager', 'UnifiedMaintenance', 'ParallelExecution'
     )
 
-    New-Item -Path "$packageDir/modules" -ItemType Directory -Force | Out-Null
+    New-Item -Path (Join-Path $packageDir "modules") -ItemType Directory -Force | Out-Null
     foreach ($module in $essentialModules) {
-        $modulePath = "aither-core/modules/$module"
+        $modulePath = Join-Path "aither-core" "modules" $module
         if (Test-Path $modulePath) {
-            Copy-Item -Path $modulePath -Destination "$packageDir/modules/$module" -Recurse -Force
+            Copy-Item -Path $modulePath -Destination (Join-Path $packageDir 'modules' $module) -Recurse -Force
             Write-Host "✓ Essential module: $module" -ForegroundColor Green
         }
     }
@@ -249,3 +249,4 @@ pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1 -Setup
     Write-Error "Build failed for $Platform : $($_.Exception.Message)"
     exit 1
 }
+
