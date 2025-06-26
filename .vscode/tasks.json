@@ -1079,6 +1079,178 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             }
+        },
+        {
+            "label": "🚀 Quick Release: Patch Version",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "./Quick-Release.ps1",
+                "-Type",
+                "Patch",
+                "-NoPush"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🔧 Quick Release: Minor Version",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "./Quick-Release.ps1",
+                "-Type",
+                "Minor",
+                "-NoPush"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🎉 Quick Release: Major Version (v1.0.0 GA Ready!)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "./Quick-Release.ps1",
+                "-Type",
+                "Major",
+                "-NoPush"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🎯 Quick Release: Specific Version",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "./Quick-Release.ps1",
+                "-Version",
+                "${input:releaseVersion}",
+                "-NoPush"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🚀 Quick Release: Push Patch (LIVE RELEASE)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "./Quick-Release.ps1",
+                "-Type",
+                "Patch"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🔧 Quick Release: Push Minor (LIVE RELEASE)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "./Quick-Release.ps1",
+                "-Type",
+                "Minor"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🎉 Quick Release: Push Major v1.0.0 GA (LIVE RELEASE)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "./Quick-Release.ps1",
+                "-Type",
+                "Major"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
         }
     ],
     "inputs": [
@@ -1158,6 +1330,12 @@
             "id": "testCommand",
             "description": "Enter test command to validate changes",
             "default": "Get-Module",
+            "type": "promptString"
+        },
+        {
+            "id": "releaseVersion",
+            "description": "Enter specific version to release (e.g., 1.0.0, 2.0.0-beta.1)",
+            "default": "1.0.0",
             "type": "promptString"
         }
     ]

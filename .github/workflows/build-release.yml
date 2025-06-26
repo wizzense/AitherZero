@@ -129,6 +129,33 @@ jobs:
           Write-Host "Final version determined: $version" -ForegroundColor Green
           echo "version=$version" >> $env:GITHUB_OUTPUT
 
+      - name: Auto-Create Version Tag for Main Branch
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          Write-Host "Auto-creating version tag for main branch push..." -ForegroundColor Cyan
+
+          $version = "${{ steps.version.outputs.version }}"
+          $tagName = "v$version"
+
+          # Check if tag already exists
+          $existingTag = git tag -l $tagName
+          if ($existingTag) {
+            Write-Host "Tag $tagName already exists, skipping creation" -ForegroundColor Yellow
+          } else {
+            Write-Host "Creating and pushing tag: $tagName" -ForegroundColor Green
+
+            # Create the tag
+            git tag $tagName -m "Automated release $tagName with batch launcher fixes and automated release workflow"
+
+            # Push the tag
+            git push origin $tagName
+
+            Write-Host "✅ Tag $tagName created and pushed successfully!" -ForegroundColor Green
+          }
+
       - name: Check if build should proceed
         id: check
         shell: pwsh
