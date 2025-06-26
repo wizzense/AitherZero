@@ -147,6 +147,17 @@ function Invoke-PatchWorkflow {
             $hasUncommittedChanges = $gitStatus -and ($gitStatus | Where-Object { $_ -match '\S' })
 
             if ($hasUncommittedChanges) {
+                # CRITICAL FIX: Check for merge conflict markers before auto-committing
+                Write-PatchLog "Checking for merge conflict markers before auto-commit..." -Level "INFO"
+                $conflictMarkers = git grep -l "^<<<<<<< HEAD" 2>$null
+                if ($conflictMarkers) {
+                    $errorMsg = "MERGE CONFLICTS DETECTED! Cannot auto-commit files with unresolved conflict markers:`n" +
+                               ($conflictMarkers -join "`n") +
+                               "`n`nPlease resolve conflicts manually first, then run the patch workflow again."
+                    Write-PatchLog $errorMsg -Level "ERROR"
+                    throw $errorMsg
+                }
+
                 Write-PatchLog "Working tree has uncommitted changes. Auto-committing them first..." -Level "INFO"
 
                 if (-not $DryRun) {
@@ -320,6 +331,17 @@ function Invoke-PatchWorkflow {
             if (-not $DryRun) {
                 $gitStatus = git status --porcelain 2>&1
                 if ($gitStatus -and ($gitStatus | Where-Object { $_ -match '\S' })) {
+                    # CRITICAL FIX: Check for merge conflict markers before committing patch changes
+                    Write-PatchLog "Checking for merge conflict markers before patch commit..." -Level "INFO"
+                    $conflictMarkers = git grep -l "^<<<<<<< HEAD" 2>$null
+                    if ($conflictMarkers) {
+                        $errorMsg = "MERGE CONFLICTS DETECTED! Cannot commit patch changes with unresolved conflict markers:`n" +
+                                   ($conflictMarkers -join "`n") +
+                                   "`n`nPlease resolve conflicts manually first, then run the patch workflow again."
+                        Write-PatchLog $errorMsg -Level "ERROR"
+                        throw $errorMsg
+                    }
+
                     # First, sanitize all changed files of Unicode/emoji
                     Write-PatchLog "Sanitizing files before commit..." -Level "INFO"
                     try {
