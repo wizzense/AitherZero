@@ -96,7 +96,7 @@
 #>
 
 function Invoke-PatchWorkflow {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess = $true)]
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
