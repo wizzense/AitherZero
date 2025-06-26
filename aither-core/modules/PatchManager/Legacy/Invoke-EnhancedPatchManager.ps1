@@ -68,17 +68,7 @@ function Invoke-EnhancedPatchManager {
             throw "PatchDescription parameter is required. Please provide a meaningful description of the patch being applied."
         }
 
-        Write-Host "=== Enhanced PatchManager with Automated Validation ===" -ForegroundColor Cyan
-
-        # Import required modules
-        $projectRoot = $env:PROJECT_ROOT
-        if (-not $projectRoot) {
-            $projectRoot = (Get-Location).Path
-            $env:PROJECT_ROOT = $projectRoot
-        }        # Import PatchManager module with forward slashes for cross-platform compatibility
-        # (Skip re-importing if already loaded to prevent duplicate initialization)
-        if (-not (Get-Module PatchManager)) {
-            Import-Module './aither-core/modules/PatchManager' -Force
+        Write-Host "=== Enhanced PatchManager with Automated Validation ==="$env:PWSH_MODULES_PATH/PatchManager' -Force
         }# Import Invoke-ComprehensiveValidation function directly as a workaround
         if (-not (Get-Command Invoke-ComprehensiveValidation -ErrorAction SilentlyContinue)) {
             try {

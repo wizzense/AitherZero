@@ -55,7 +55,7 @@ function Invoke-ComprehensiveValidation {
 
         foreach ($module in $modules) {
             try {
-                $modulePath = "$Path/aither-core/modules/$module"
+                $modulePath = "$env:PWSH_MODULES_PATH/$module"
                 if (Test-Path $modulePath) {
                     Import-Module $modulePath -Force -ErrorAction Stop
                     Write-PatchLog "✅ Module $module imported successfully" -Level "INFO"

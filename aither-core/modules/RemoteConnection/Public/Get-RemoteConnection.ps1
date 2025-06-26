@@ -58,41 +58,7 @@ function Get-RemoteConnection {
                     Write-CustomLog -Level 'ERROR' -Message "Failed to retrieve connections: $($allConfigs.Error)"
                     return ,@()
                 }                if (-not $allConfigs.Configurations -or $allConfigs.Configurations.Count -eq 0) {
-                    Write-CustomLog -Level 'INFO' -Message "No connections found"
-                    return ,@()
-                }
-
-                $connections = $allConfigs.Configurations
-            }
-
-            # Apply endpoint type filter if specified
-            if ($EndpointType) {
-                $connections = $connections | Where-Object { $_.EndpointType -eq $EndpointType }
-            }
-
-            # Format output objects
-            $results = @()
-            foreach ($conn in $connections) {
-                $result = [PSCustomObject]@{
-                    ConnectionName = $conn.Name
-                    EndpointType = $conn.EndpointType
-                    HostName = $conn.HostName
-                    Port = $conn.Port
-                    Status = $conn.Status
-                    CreatedDate = $conn.CreatedDate
-                    LastModified = $conn.LastModified
-                    LastUsed = $conn.LastUsed
-                    EnableSSL = $conn.EnableSSL
-                    ConnectionTimeout = $conn.ConnectionTimeout
-                }                # Add credential information if requested
-                if ($IncludeCredentials) {
-                    $result | Add-Member -NotePropertyName 'CredentialName' -NotePropertyValue $conn.CredentialName
-                    $result | Add-Member -NotePropertyName 'CredentialExists' -NotePropertyValue $(
-                        if ($conn.CredentialName) {
-                            # Load SecureCredentials module if needed for credential testing
-                            if (-not (Get-Command -Name 'Test-SecureCredential' -ErrorAction SilentlyContinue)) {
-                                try {
-                                    Import-Module './aither-core/modules/SecureCredentials' -Force
+                    Write-CustomLog -Level 'INFO' -Message "No connections found"$env:PWSH_MODULES_PATH/SecureCredentials' -Force
                                 } catch {
                                     Write-CustomLog -Level 'DEBUG' -Message "Could not load SecureCredentials module for credential validation"
                                 }

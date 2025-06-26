@@ -75,13 +75,7 @@ function New-RemoteConnection {
     )
 
     begin {
-        Write-CustomLog -Level 'INFO' -Message "Creating remote connection: $ConnectionName (Type: $EndpointType, Host: $HostName)"
-          # Validate credential if specified
-        if ($CredentialName) {
-            # Load SecureCredentials module if not already loaded
-            if (-not (Get-Module -Name 'SecureCredentials')) {
-                try {
-                    Import-Module './aither-core/modules/SecureCredentials' -Force
+        Write-CustomLog -Level 'INFO' -Message "Creating remote connection: $ConnectionName (Type: $EndpointType, Host: $HostName)"$env:PWSH_MODULES_PATH/SecureCredentials' -Force
                 } catch {
                     Write-CustomLog -Level 'WARN' -Message "Could not load SecureCredentials module for credential validation"
                 }

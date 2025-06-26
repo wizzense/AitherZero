@@ -165,13 +165,7 @@ function Invoke-PatchWorkflowEnhanced {
         if (-not $gitStatus -and -not $AutoStage) {
             Write-Host "`n❌ Git working tree needs attention before proceeding." -ForegroundColor Red
             Write-Host "   Use the guidance above or run with -AutoStage to handle automatically." -ForegroundColor Yellow
-            return @{ Success = $false; Message = "Git working tree requires attention" }
-        }
-    }
-
-    # Call the original PatchManager workflow
-    try {
-        Import-Module '/workspaces/AitherLabs/aither-core/modules/PatchManager/PatchManager.psm1' -Force
+            return @{ Success = $false; Message = "Git working tree requires attention"$env:PWSH_MODULES_PATH/PatchManager/PatchManager.psm1' -Force
         
         $result = Invoke-PatchWorkflow -PatchDescription $PatchDescription -PatchOperation $PatchOperation -CreatePR:$CreatePR -CreateIssue:$CreateIssue -Priority $Priority
         

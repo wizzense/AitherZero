@@ -191,22 +191,27 @@ $env:PROJECT_ROOT = $repoRoot
 $modulesPath = $null
 
 # Check for release package structure (modules in root)
-if (Test-Path "$repoRoot/modules") {
-    $modulesPath = "$repoRoot/modules"
+if (Test-Path (Join-Path $repoRoot "modules")) {
+    $modulesPath = Join-Path $repoRoot "modules"
     Write-Verbose "Detected release package structure: modules in root"
 }
 # Check for development structure (modules in aither-core)
-elseif (Test-Path "$repoRoot/aither-core/modules") {
-    $modulesPath = "$repoRoot/aither-core/modules"
+elseif (Test-Path (Join-Path $repoRoot "aither-core/modules")) {
+    $modulesPath = Join-Path $repoRoot "aither-core/modules"
     Write-Verbose "Detected development structure: modules in aither-core"
 }
 # Check if we're running from aither-core directory directly
-elseif (Test-Path "$PSScriptRoot/modules") {
-    $modulesPath = "$PSScriptRoot/modules"
+elseif (Test-Path (Join-Path $PSScriptRoot "modules")) {
+    $modulesPath = Join-Path $PSScriptRoot "modules"
     Write-Verbose "Detected direct aither-core execution: modules in script directory"
 }
 else {
-    Write-Error "Could not locate modules directory. Checked: $repoRoot/modules, $repoRoot/aither-core/modules, $PSScriptRoot/modules"
+    $checkedPaths = @(
+        (Join-Path $repoRoot "modules"),
+        (Join-Path $repoRoot "aither-core/modules"), 
+        (Join-Path $PSScriptRoot "modules")
+    )
+    Write-Error "Could not locate modules directory. Checked: $($checkedPaths -join ', ')"
     exit 1
 }
 
@@ -277,14 +282,14 @@ try {
 
     # In silent mode, suppress all output during module import and initialization
     if ($Verbosity -eq 'silent') {
-        Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force -ErrorAction Stop *>$null
-        Import-Module "$env:PWSH_MODULES_PATH/LabRunner" -Force -ErrorAction Stop *>$null
+        Import-Module (Join-Path $env:PWSH_MODULES_PATH "Logging") -Force -ErrorAction Stop *>$null
+        Import-Module (Join-Path $env:PWSH_MODULES_PATH "LabRunner") -Force -ErrorAction Stop *>$null
         # Initialize logging system with proper verbosity mapping (Force required to override auto-init)
         Initialize-LoggingSystem -ConsoleLevel $script:LogLevel -LogLevel 'DEBUG' -Force *>$null
     } else {
-        Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force -ErrorAction Stop
+        Import-Module (Join-Path $env:PWSH_MODULES_PATH "Logging") -Force -ErrorAction Stop
         Write-Verbose 'Importing LabRunner module...'
-        Import-Module "$env:PWSH_MODULES_PATH/LabRunner" -Force -ErrorAction Stop
+        Import-Module (Join-Path $env:PWSH_MODULES_PATH "LabRunner") -Force -ErrorAction Stop
         # Initialize logging system with proper verbosity mapping (Force required to override auto-init)
         Initialize-LoggingSystem -ConsoleLevel $script:LogLevel -LogLevel 'DEBUG' -Force
     }
@@ -469,7 +474,7 @@ try {
         # Optionally auto-create PatchManager issue for tracking (only in detailed mode to avoid spam)
         if ($Verbosity -eq 'detailed' -and -not $NonInteractive) {
             try {
-                Import-Module "$repoRoot/aither-core/modules/PatchManager" -Force -ErrorAction SilentlyContinue
+                Import-Module (Join-Path $env:PWSH_MODULES_PATH "PatchManager") -Force -ErrorAction SilentlyContinue
                 if (Get-Command New-PatchIssue -ErrorAction SilentlyContinue) {
                     $issueDescription = "Scripts with no visible output detected: $($script:NoOutputScripts.ScriptName -join ', ')"
                     $affectedFiles = $script:NoOutputScripts.ScriptPath

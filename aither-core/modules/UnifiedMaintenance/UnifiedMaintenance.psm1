@@ -53,8 +53,8 @@ function Get-ProjectRoot {
 
 function Test-Prerequisites {
     param([string]$ProjectRoot)    $prerequisites = @{
-        'PatchManager Module' = "$ProjectRoot/aither-core/modules/PatchManager/PatchManager.psd1"
-        'LabRunner Module'    = "$ProjectRoot/aither-core/modules/LabRunner/LabRunner.psm1"
+        'PatchManager Module' = "$env:PWSH_MODULES_PATH/PatchManager/PatchManager.psd1"
+        'LabRunner Module'    = "$env:PWSH_MODULES_PATH/LabRunner/LabRunner.psm1"
         'Tests Directory'     = "$ProjectRoot/tests"
         'Python labctl'       = "$ProjectRoot/py/labctl"
     }
@@ -215,8 +215,8 @@ function Invoke-AutomatedTestWorkflow {
             $perf = @{}
 
             $imp = Measure-Command {
-                Import-Module "$ProjectRoot/aither-core/modules/LabRunner" -Force
-                Import-Module "$ProjectRoot/aither-core/modules/PatchManager" -Force
+                Import-Module "$env:PWSH_MODULES_PATH/LabRunner" -Force
+                Import-Module "$env:PWSH_MODULES_PATH/PatchManager" -Force
             }
             $perf.ModuleImportTime = $imp.TotalSeconds
 
@@ -300,7 +300,7 @@ function Invoke-InfrastructureHealth {
         $mods = @('LabRunner','PatchManager')
         $mh   = @{}
         foreach ($m in $mods) {
-            $path = "$ProjectRoot/aither-core/modules/$m"
+            $path = "$env:PWSH_MODULES_PATH/$m"
             $mh[$m] = @{
                 Exists         = Test-Path $path
                 LoadsCorrectly = $false
@@ -474,7 +474,7 @@ function Invoke-UnifiedMaintenance {
                 Invoke-MaintenanceOperations -Mode $Mode -AutoFix:$AutoFix -UpdateChangelog:$UpdateChangelog
             } `
             -AutoCommitUncommitted:$AutoFix `
-            -TestCommands @("pwsh -NoProfile -Command 'Import-Module $root/aither-core/modules/LabRunner -Force; Write-Host OK'")
+            -TestCommands @("$env:PWSH_MODULES_PATH/LabRunner -Force; Write-Host OK'")
     }
     else {
         Write-MaintenanceLog 'Running without PatchManager' 'WARNING'

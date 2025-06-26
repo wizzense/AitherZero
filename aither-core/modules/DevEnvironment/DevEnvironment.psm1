@@ -24,7 +24,7 @@ if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
         'Logging',  # Try module name first (if in PSModulePath)
         (Join-Path (Split-Path $PSScriptRoot -Parent) "Logging"),  # Relative to modules directory
         (Join-Path $env:PWSH_MODULES_PATH "Logging"),  # Environment path
-        (Join-Path $env:PROJECT_ROOT "aither-core/modules/Logging")  # Full project path
+        (Join-Path $env:PROJECT_ROOT "$env:PWSH_MODULES_PATH/Logging")  # Full project path
     )
 
     foreach ($loggingPath in $loggingPaths) {

@@ -5,8 +5,8 @@ param(
     [object]$Config
 )
 
-Import-Module "$env:PROJECT_ROOT/aither-core/modules/LabRunner" -Force
-Import-Module "$env:PROJECT_ROOT/aither-core/modules/Logging" -Force
+Import-Module "$env:PWSH_MODULES_PATH/LabRunner" -Force
+Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force
 
 Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
 
@@ -67,3 +67,4 @@ Invoke-LabStep -Config $Config -Body {
     }
 }
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
+
