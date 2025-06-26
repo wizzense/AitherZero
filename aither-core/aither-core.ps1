@@ -350,7 +350,7 @@ try {
                         if ($PSCmdlet.ShouldProcess($script.BaseName, 'Execute script')) {
                             Invoke-ScriptWithOutputHandling -ScriptName $script.BaseName -ScriptPath $script.FullName -Config $config -Force:$Force -Verbosity $Verbosity
                         }
-                    }                
+                    }
                 } else {
                     Write-CustomLog 'No scripts specified for non-interactive execution' -Level WARN
                     Write-CustomLog 'Consider using -Auto to run all scripts, or -Scripts to specify particular scripts' -Level INFO
