@@ -128,7 +128,11 @@ $validationSuites = @{
             @{ Name = 'CoreRunner-NonInteractive'; Type = 'Core'; Critical = $true }
             @{ Name = 'CoreRunner-Auto'; Type = 'Core'; Critical = $true }
             @{ Name = 'Launcher-Functionality'; Type = 'Core'; Critical = $true }
+<<<<<<< HEAD
             @{ Name = 'Module-Loading'; Type = 'Module'; Critical = $true }
+=======
+            @{ Name = 'All-Modules-Load'; Type = 'Module'; Critical = $true }
+>>>>>>> origin/main
             @{ Name = 'All-Modules-Export'; Type = 'Module'; Critical = $true }
             @{ Name = 'Logging-System'; Type = 'Module'; Critical = $true }
             @{ Name = 'ParallelExecution-Core'; Type = 'Module'; Critical = $true }

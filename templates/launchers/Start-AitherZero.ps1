@@ -219,6 +219,7 @@ try {
             Write-Host ""
 
             # Build the command line for PowerShell 7
+<<<<<<< HEAD
             $pwshArgs = @('-ExecutionPolicy', 'Bypass', '-File', $coreScriptPath)
 
             # Add core arguments to pwsh command
@@ -232,6 +233,9 @@ try {
                     $pwshArgs += $coreArgs[$key]
                 }
             }
+=======
+            $pwshArgs = @('-ExecutionPolicy', 'Bypass', '-File', $coreScriptPath) + $coreArgs
+>>>>>>> origin/main
 
             # Execute in PowerShell 7
             & pwsh $pwshArgs
@@ -245,7 +249,11 @@ try {
             Write-Host "   Some features may be limited." -ForegroundColor White
             Write-Host ""
 
+<<<<<<< HEAD
             # Try to run with current PowerShell version using hashtable splatting
+=======
+            # Try to run with current PowerShell version
+>>>>>>> origin/main
             & $coreScriptPath @coreArgs
             $exitCode = $LASTEXITCODE
 
