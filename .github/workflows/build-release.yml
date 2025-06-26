@@ -344,21 +344,23 @@ jobs:
             Copy-Item -Path "LICENSE" -Destination "$packageDir/LICENSE" -Force
             Write-Host "✓ Essential documentation" -ForegroundColor Green
 
-            # Create a comprehensive launcher script with better user experience
-            Write-Host "Creating comprehensive application launcher..." -ForegroundColor Yellow
-            $launcherLines = @(
-              '#!/usr/bin/env pwsh',
-              '# REMOVED: #Requires -Version 7.0 for PowerShell 5.1 compatibility',
-              '',
-              'param(',
-              '    [string]$Command,',
-              '    [switch]$Help,',
-              '    [switch]$Setup,',
-              '    [switch]$Interactive,',
-              '    [string]$ConfigFile,',
-              '    [string]$Verbosity = "normal",',
-              '    [switch]$Auto,',
-              '    [string]$Scripts',
+            # Copy FIXED launcher templates instead of generating inline
+            Write-Host "Copying fixed launcher templates..." -ForegroundColor Yellow
+            if (Test-Path "templates/launchers/Start-AitherZero.ps1") {
+              Copy-Item -Path "templates/launchers/Start-AitherZero.ps1" -Destination "$packageDir/Start-AitherZero.ps1" -Force
+              Write-Host "✓ PowerShell launcher (from template)" -ForegroundColor Green
+            } else {
+              Write-Warning "PowerShell launcher template not found"
+            }
+
+            if (Test-Path "templates/launchers/AitherZero.bat") {
+              Copy-Item -Path "templates/launchers/AitherZero.bat" -Destination "$packageDir/AitherZero.bat" -Force
+              Write-Host "✓ Windows batch launcher (from template)" -ForegroundColor Green
+            } else {
+              Write-Warning "Batch launcher template not found"
+            }
+
+            # For non-Windows platforms, create Unix launcher script,
               ')',
               '',
               'Clear-Host',
@@ -557,6 +559,8 @@ jobs:
               if (-not $IsWindows) {
                 chmod +x "$packageDir/aitherzero.sh"
               }
+              Write-Host "✓ Created Unix quick-start script" -ForegroundColor Green
+            }
               Write-Host "✓ Created Unix quick-start script" -ForegroundColor Green
             }
 

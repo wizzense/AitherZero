@@ -49,11 +49,37 @@ param(
     [switch]$Auto,
     [string]$Scripts,
     [switch]$Force,
-    [switch]$NonInteractive
+    [switch]$NonInteractive,
+    [switch]$Help
 )
 
 # Set up environment
 $ErrorActionPreference = 'Stop'
+
+# Handle help request
+if ($Help) {
+    Write-Host "AitherZero Core Application" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Usage:" -ForegroundColor Cyan
+    Write-Host "  aither-core.ps1 [options]"
+    Write-Host ""
+    Write-Host "Options:" -ForegroundColor Cyan
+    Write-Host "  -Quiet          Run in quiet mode with minimal output"
+    Write-Host "  -Verbosity      Set verbosity level: silent, normal, detailed"
+    Write-Host "  -ConfigFile     Path to configuration file"
+    Write-Host "  -Auto           Run in automatic mode without prompts"
+    Write-Host "  -Scripts        Specific scripts to run"
+    Write-Host "  -Force          Force operations even if validations fail"
+    Write-Host "  -NonInteractive Run in non-interactive mode"
+    Write-Host "  -Help           Show this help information"
+    Write-Host ""
+    Write-Host "Examples:" -ForegroundColor Cyan
+    Write-Host "  .\aither-core.ps1"
+    Write-Host "  .\aither-core.ps1 -Verbosity detailed -Auto"
+    Write-Host "  .\aither-core.ps1 -ConfigFile custom.json -Scripts LabRunner"
+    Write-Host ""
+    return
+}
 
 function Invoke-ScriptWithOutputHandling {
     [CmdletBinding()]
@@ -361,7 +387,7 @@ try {
                             # Check if input is a menu number (1-2 digits, within menu range)
                             if ($item -match '^\d{1,2}$' -and [int]$item -le $availableScripts.Count -and [int]$item -gt 0) {
                                 $script = $availableScripts[[int]$item - 1]
-                            } 
+                            }
                             # Check if input is a 4-digit script name (like 0002, 0006)
                             elseif ($item -match '^\d{4}$') {
                                 $script = $availableScripts | Where-Object { $_.BaseName -like "*$item*" } | Select-Object -First 1

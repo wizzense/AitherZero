@@ -28,7 +28,16 @@ param(
     [string]$ConfigFile,
 
     [Parameter(HelpMessage="Show what would be done without executing")]
-    [switch]$WhatIf
+    [switch]$WhatIf,
+
+    [Parameter(HelpMessage="Force operations even if validations fail")]
+    [switch]$Force,
+
+    [Parameter(HelpMessage="Run in non-interactive mode, suppress prompts")]
+    [switch]$NonInteractive,
+
+    [Parameter(HelpMessage="Run in quiet mode with minimal output")]
+    [switch]$Quiet
 )
 
 # Detect PowerShell version for compatibility messaging
@@ -152,12 +161,21 @@ if (Test-Path $modulesPath) {
 }
 
 # Set up core script arguments with proper parameter mapping
-$coreArgs = @()
-if ($PSBoundParameters.ContainsKey('Verbosity')) { $coreArgs += @('-Verbosity', $Verbosity) }
-if ($PSBoundParameters.ContainsKey('Scripts')) { $coreArgs += @('-Scripts', ($Scripts -join ',')) }
-if ($PSBoundParameters.ContainsKey('Auto')) { $coreArgs += @('-Auto', $Auto) }
-if ($PSBoundParameters.ContainsKey('ConfigFile')) { $coreArgs += @('-ConfigFile', $ConfigFile) }
-if ($PSBoundParameters.ContainsKey('WhatIf')) { $coreArgs += @('-WhatIf', $WhatIf) }
+$coreArgs = @{}
+
+# String parameters (pass with value)
+if ($PSBoundParameters.ContainsKey('Verbosity')) { $coreArgs['Verbosity'] = $Verbosity }
+if ($PSBoundParameters.ContainsKey('ConfigFile')) { $coreArgs['ConfigFile'] = $ConfigFile }
+if ($PSBoundParameters.ContainsKey('Scripts')) { $coreArgs['Scripts'] = ($Scripts -join ',') }
+
+# Switch parameters (pass only the switch when present)
+if ($PSBoundParameters.ContainsKey('Auto')) { $coreArgs['Auto'] = $true }
+if ($PSBoundParameters.ContainsKey('Force')) { $coreArgs['Force'] = $true }
+if ($PSBoundParameters.ContainsKey('NonInteractive')) { $coreArgs['NonInteractive'] = $true }
+if ($PSBoundParameters.ContainsKey('Quiet')) { $coreArgs['Quiet'] = $true }
+if ($PSBoundParameters.ContainsKey('WhatIf')) { $coreArgs['WhatIf'] = $true }
+
+# Note: Setup, Help, Interactive are launcher-specific and not passed to core script
 
 # Handle default mode selection
 if (-not $Interactive -and -not $Auto -and -not $Scripts) {
@@ -201,10 +219,22 @@ try {
             Write-Host ""
 
             # Build the command line for PowerShell 7
-            $pwshArgs = @('-ExecutionPolicy', 'Bypass', '-File', $coreScriptPath) + $coreArgs
+            $pwshArgs = @('-ExecutionPolicy', 'Bypass', '-File', $coreScriptPath)
+
+            # Add core arguments to pwsh command
+            foreach ($key in $coreArgs.Keys) {
+                if ($coreArgs[$key] -eq $true) {
+                    # Switch parameter
+                    $pwshArgs += "-$key"
+                } else {
+                    # Value parameter
+                    $pwshArgs += "-$key"
+                    $pwshArgs += $coreArgs[$key]
+                }
+            }
 
             # Execute in PowerShell 7
-            & pwsh @pwshArgs
+            & pwsh $pwshArgs
             $exitCode = $LASTEXITCODE
 
             if ($exitCode -ne 0) {
@@ -215,7 +245,7 @@ try {
             Write-Host "   Some features may be limited." -ForegroundColor White
             Write-Host ""
 
-            # Try to run with current PowerShell version
+            # Try to run with current PowerShell version using hashtable splatting
             & $coreScriptPath @coreArgs
             $exitCode = $LASTEXITCODE
 
@@ -224,7 +254,7 @@ try {
             }
         }
     } else {
-        # Running on PowerShell 7+ - execute normally
+        # Running on PowerShell 7+ - execute normally with proper argument handling
         & $coreScriptPath @coreArgs
         $exitCode = $LASTEXITCODE
 
