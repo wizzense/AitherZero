@@ -43,8 +43,14 @@ Write-Host '=====================================' -ForegroundColor Cyan
 
 try {
     # Import PatchManager for tracking
+<<<<<<< patch/20250625-205639-Remove-all-hardcoded-versions-and-implement-dynamic-version-detection
     if (Test-Path './aither-core/modules/PatchManager/PatchManager.psm1') {
         Import-Module './aither-core/modules/PatchManager/PatchManager.psm1' -Force
+=======
+    $patchManagerPath = Join-Path $PSScriptRoot 'aither-core/modules/PatchManager/PatchManager.psm1'
+    if (Test-Path $patchManagerPath) {
+        Import-Module $patchManagerPath -Force
+>>>>>>> main
         Write-Host '✓ PatchManager loaded' -ForegroundColor Green
     }
 
