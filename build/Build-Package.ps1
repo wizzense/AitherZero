@@ -53,7 +53,7 @@ try {
         'ScriptManager', 'UnifiedMaintenance', 'ParallelExecution'
     )
 
-    New-Item -Path "$packageDir/modules" -ItemType Directory -Force | Out-Null
+    New-Item -Path (Join-Path $packageDir "modules") -ItemType Directory -Force | Out-Null
     foreach ($module in $essentialModules) {
         $modulePath = Join-Path "aither-core" "modules" $module
         if (Test-Path $modulePath) {
