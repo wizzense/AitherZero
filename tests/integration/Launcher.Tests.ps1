@@ -75,12 +75,8 @@ Describe "Launcher Integration Tests" {
 
             # Should handle multiple path scenarios
             $content | Should -Match "aither-core/aither-core\.ps1"
-<<<<<<< HEAD
             # Validate updated path resolution logic
             $content | Should -Match "Join-Path.*aither-core"
-=======
-            $content | Should -Match "fallback"
->>>>>>> origin/main
         }
 
         It "Should handle Help parameter without crashing" {

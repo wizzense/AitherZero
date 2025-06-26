@@ -344,7 +344,6 @@ jobs:
             Copy-Item -Path "LICENSE" -Destination "$packageDir/LICENSE" -Force
             Write-Host "✓ Essential documentation" -ForegroundColor Green
 
-<<<<<<< HEAD
             # Copy FIXED launcher templates instead of generating inline
             Write-Host "Copying fixed launcher templates..." -ForegroundColor Yellow
             if (Test-Path "templates/launchers/Start-AitherZero.ps1") {
@@ -361,23 +360,7 @@ jobs:
               Write-Warning "Batch launcher template not found"
             }
 
-            # For non-Windows platforms, create Unix launcher script
-=======
-            # Create a comprehensive launcher script with better user experience
-            Write-Host "Creating comprehensive application launcher..." -ForegroundColor Yellow
-            $launcherLines = @(
-              '#!/usr/bin/env pwsh',
-              '# REMOVED: #Requires -Version 7.0 for PowerShell 5.1 compatibility',
-              '',
-              'param(',
-              '    [string]$Command,',
-              '    [switch]$Help,',
-              '    [switch]$Setup,',
-              '    [switch]$Interactive,',
-              '    [string]$ConfigFile,',
-              '    [string]$Verbosity = "normal",',
-              '    [switch]$Auto,',
-              '    [string]$Scripts',
+            # For non-Windows platforms, create Unix launcher script,
               ')',
               '',
               'Clear-Host',
@@ -570,7 +553,6 @@ jobs:
             }
 
             # For non-Windows platforms, always create Unix launcher script
->>>>>>> origin/main
             if ("${{ matrix.platform }}" -ne "windows") {
               $unixScript = "#!/bin/bash`necho `"🚀 AitherZero v$version - $(if ("${{ matrix.platform }}" -eq "macos") { "macOS" } else { "Linux" }) Quick Start`"`necho `"Cross-Platform Infrastructure Automation with OpenTofu/Terraform`"`necho `"`"`npwsh -File `"Start-AitherZero.ps1`" `$@"
               Set-Content -Path "$packageDir/aitherzero.sh" -Value $unixScript -Encoding UTF8
@@ -579,7 +561,6 @@ jobs:
               }
               Write-Host "✓ Created Unix quick-start script" -ForegroundColor Green
             }
-              }
               Write-Host "✓ Created Unix quick-start script" -ForegroundColor Green
             }
 
