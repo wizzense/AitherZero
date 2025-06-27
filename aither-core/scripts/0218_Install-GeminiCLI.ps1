@@ -27,7 +27,7 @@
 
 .EXAMPLE
     ./0218_Install-GeminiCLI.ps1 -WSLUsername "developer"
-    
+
 .EXAMPLE
     ./0218_Install-GeminiCLI.ps1 -SkipWSL -SkipNodeInstall
 
@@ -39,13 +39,14 @@
 param(
     [Parameter()]
     [string]$WSLUsername,
-    
+
     [Parameter()]
     [switch]$SkipWSL,
-    
+
     [Parameter()]
     [switch]$SkipNodeInstall,
-    
+
+
     [Parameter()]
     [switch]$Force
 )
@@ -54,11 +55,11 @@ begin {
     # Use shared utility for project root detection
     . "$PSScriptRoot/../shared/Find-ProjectRoot.ps1"
     $projectRoot = Find-ProjectRoot
-    
+
     # Import DevEnvironment module
     $devEnvModulePath = Join-Path $projectRoot "aither-core/modules/DevEnvironment"
     Import-Module $devEnvModulePath -Force
-    
+
     Write-Host "🧠 Gemini CLI Dependencies Installation" -ForegroundColor Cyan
     Write-Host "Using DevEnvironment module for installation..." -ForegroundColor Yellow
 }
@@ -69,30 +70,30 @@ process {
         $installParams = @{
             NodeVersion = 'lts'
         }
-        
+
         if ($WSLUsername) {
             $installParams['WSLUsername'] = $WSLUsername
         }
-        
+
         if ($SkipWSL) {
             $installParams['SkipWSL'] = $true
         }
-        
+
         if ($SkipNodeInstall) {
             $installParams['SkipNodeInstall'] = $true
         }
-        
+
         if ($Force) {
             $installParams['Force'] = $true
         }
-        
+
         if ($WhatIf) {
             $installParams['WhatIf'] = $true
         }
-        
+
         # Call the DevEnvironment module function
         Install-GeminiCLIDependencies @installParams
-        
+
         if (-not $WhatIf) {
             Write-Host "" -ForegroundColor Green
             Write-Host "✅ Gemini CLI dependencies installation completed!" -ForegroundColor Green
