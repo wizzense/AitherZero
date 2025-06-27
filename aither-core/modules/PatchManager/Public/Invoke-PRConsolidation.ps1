@@ -143,7 +143,6 @@ function Invoke-PRConsolidation {
                     foreach ($pr in $group.PRs) {
                         Write-ConsolidationLog "  - PR #$($pr.number): $($pr.title)" -Level "INFO"
                     }
-
                     $consolidationResults += @{
                         Success = $true
                         DryRun = $true
@@ -215,6 +214,7 @@ function Get-CompatiblePRGroups {
 function Get-SameAuthorPRGroups {
     param($PRs, $MaxPRs)
 
+
     $groups = @()
 
     # Group PRs by author
@@ -224,7 +224,6 @@ function Get-SameAuthorPRGroups {
         if ($authorGroup.Group.Count -ge 2) {
             # Take up to MaxPRs from each author
             $prsToConsolidate = $authorGroup.Group | Select-Object -First $MaxPRs
-
             $groups += @{
                 PRs = $prsToConsolidate
                 Strategy = "SameAuthor"
@@ -309,7 +308,6 @@ function Find-NonConflictingPRSets {
             $prFileMap[$pr.number] = @("unknown-conflict-$($pr.number)")
         }
     }
-
     # Find sets of PRs that don't modify the same files
     for ($i = 0; $i -lt $PRs.Count; $i++) {
         $currentSet = @($PRs[$i])
@@ -371,7 +369,6 @@ function Invoke-PRGroupConsolidation {
 
             # Attempt to merge
             $mergeOutput = git merge "origin/$($pr.headRefName)" --no-ff -m "Consolidate: PR #$($pr.number) - $($pr.title)" 2>&1
-
             if ($LASTEXITCODE -eq 0) {
                 $mergedPRs += $pr
                 Write-ConsolidationLog "Successfully merged PR #$($pr.number)" -Level "SUCCESS"

@@ -149,6 +149,7 @@ Invoke-PatchWorkflow -PatchDescription "Release preparation" -CreatePR -AutoCons
 - **Faster reviews** - One PR instead of many small ones
 
 ### 👥 For Teams
+
 - **Reduced merge conflicts** - Intelligent conflict avoidance
 - **Coordinated releases** - Related features ship together
 - **Simplified planning** - Fewer moving pieces to track

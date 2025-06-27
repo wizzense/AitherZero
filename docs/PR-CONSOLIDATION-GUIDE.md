@@ -62,6 +62,7 @@ Invoke-PRConsolidation -ConsolidationStrategy "Compatible"
 ```
 
 ### 📁 RelatedFiles
+
 **Best for**: Feature work spanning multiple related files
 - Combines PRs that modify **related file areas**
 - Considers file dependencies and module relationships
@@ -151,7 +152,6 @@ $consolidationPreview = Invoke-PRConsolidation -ConsolidationStrategy "Compatibl
 
 if ($consolidationPreview.Success) {
     Write-Host "Found $($consolidationPreview.GroupsFound) consolidation opportunities"
-
     # Proceed with actual consolidation
     Invoke-PRConsolidation -ConsolidationStrategy "Compatible"
 } else {
