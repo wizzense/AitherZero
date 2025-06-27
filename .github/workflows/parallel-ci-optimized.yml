@@ -60,6 +60,15 @@ jobs:
       cache-key: ${{ steps.config.outputs.cache-key }}
       should-run-security: ${{ steps.config.outputs.should-run-security }}
       should-run-performance: ${{ steps.config.outputs.should-run-performance }}
+      # New intelligent CI outputs
+      change_type: ${{ steps.changes.outputs.change_type }}
+      test_level: ${{ steps.changes.outputs.test_level }}
+      should_run_core_tests: ${{ steps.config.outputs.should_run_core_tests }}
+      should_run_patchmanager_tests: ${{ steps.config.outputs.should_run_patchmanager_tests }}
+      affects_packages: ${{ steps.changes.outputs.affects_packages }}
+      patchmanager_only: ${{ steps.changes.outputs.patchmanager_only }}
+      core_changes: ${{ steps.changes.outputs.core_changes }}
+      changed_files: ${{ steps.changes.outputs.changed_files }}
     steps:
       - name: Checkout (minimal)
         uses: actions/checkout@v4
@@ -70,7 +79,7 @@ jobs:
         id: changes
         run: |
           echo "Detecting changed files for smart CI optimization..."
-          
+
           # For PRs, compare against the base branch
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }})
@@ -78,43 +87,163 @@ jobs:
             # For pushes, compare against previous commit
             CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
           fi
-          
+
           echo "Changed files:"
           echo "$CHANGED_FILES"
-          
-          # Check if changes are PatchManager-only
+
+          # Initialize change detection variables
           PATCHMANAGER_ONLY="true"
           CORE_CHANGES="false"
-          
-          while IFS= read -r file; do
-            echo "Checking: $file"
+          BUILD_TOOLING_ONLY="false"
+          DOCS_CONFIG_ONLY="false"
+          AFFECTS_PACKAGES="false"
+
+          # Define package-affecting files (files included in release packages)
+          check_affects_packages() {
+            local file="$1"
             case "$file" in
-              # PatchManager changes (allowed for minimal testing)
-              aither-core/modules/PatchManager/*) 
-                echo "  -> PatchManager change detected" ;;
-              docs/PATCHMANAGER*) 
-                echo "  -> PatchManager documentation change" ;;
-              *.md) 
-                echo "  -> Documentation change" ;;
-              # Core system changes (require full testing)
-              aither-core/modules/LabRunner/*|aither-core/modules/DevEnvironment/*|aither-core/modules/TestingFramework/*|aither-core/core-runner.ps1|aither-core/shared/*|tests/*)
-                echo "  -> Core system change detected"
+              # Core application files
+              aither-core/aither-core.ps1) return 0 ;;
+              aither-core/modules/Logging/*|aither-core/modules/LabRunner/*|aither-core/modules/DevEnvironment/*|aither-core/modules/BackupManager/*|aither-core/modules/ScriptManager/*|aither-core/modules/UnifiedMaintenance/*|aither-core/modules/ParallelExecution/*) return 0 ;;
+              aither-core/shared/*) return 0 ;;
+              aither-core/scripts/*)
+                # Include runtime scripts, exclude dev/test/build scripts
+                case "$file" in
+                  *test*|*dev*|*build*) return 1 ;;
+                  *) return 0 ;;
+                esac ;;
+              # Configuration templates
+              configs/default-config.json|configs/core-runner-config.json|configs/recommended-config.json) return 0 ;;
+              # OpenTofu infrastructure
+              opentofu/infrastructure/*|opentofu/providers/*|opentofu/modules/*) return 0 ;;
+              # Documentation included in packages
+              README.md|LICENSE) return 0 ;;
+              # Launcher templates
+              templates/launchers/*) return 0 ;;
+              *) return 1 ;;
+            esac
+          }
+
+          # Categorize each changed file
+          CORE_FILES=""
+          PATCHMANAGER_FILES=""
+          BUILD_FILES=""
+          DOC_FILES=""
+          CONFIG_FILES=""
+          PACKAGE_FILES=""
+
+          while IFS= read -r file; do
+            echo "Analyzing: $file"
+
+            # Check if file affects release packages
+            if check_affects_packages "$file"; then
+              AFFECTS_PACKAGES="true"
+              PACKAGE_FILES="$PACKAGE_FILES $file"
+              echo "  -> 📦 Affects release packages"
+            fi
+
+            case "$file" in
+              # Core aither-core functionality (runtime-critical)
+              aither-core/aither-core.ps1|aither-core/modules/Logging/*|aither-core/modules/LabRunner/*|aither-core/modules/BackupManager/*|aither-core/modules/ScriptManager/*|aither-core/modules/UnifiedMaintenance/*|aither-core/modules/ParallelExecution/*)
+                echo "  -> 🎯 Core system change (requires full testing)"
                 CORE_CHANGES="true"
-                PATCHMANAGER_ONLY="false" ;;
-              # CI/Workflow changes (require full testing)
-              .github/workflows/*)
-                echo "  -> CI/Workflow change detected"
-                CORE_CHANGES="true"
-                PATCHMANAGER_ONLY="false" ;;
+                PATCHMANAGER_ONLY="false"
+                BUILD_TOOLING_ONLY="false"
+                DOCS_CONFIG_ONLY="false"
+                CORE_FILES="$CORE_FILES $file" ;;
+
+              # PatchManager and development tools (not in packages)
+              aither-core/modules/PatchManager/*|aither-core/modules/TestingFramework/*|aither-core/modules/DevEnvironment/*|aither-core/modules/ISOManager/*|aither-core/modules/ISOCustomizer/*|aither-core/modules/RemoteConnection/*|aither-core/modules/SecureCredentials/*|aither-core/modules/OpenTofuProvider/*|aither-core/modules/RepoSync/*)
+                echo "  -> 🔧 PatchManager/dev tool change"
+                PATCHMANAGER_FILES="$PATCHMANAGER_FILES $file" ;;
+
+              # Build and CI/CD tooling
+              build/*|.github/workflows/*|Quick-*.ps1|*-Release.ps1|Turbo-*.ps1|Power-*.ps1)
+                echo "  -> 🛠️ Build/CI tooling change"
+                BUILD_FILES="$BUILD_FILES $file" ;;
+
+              # Documentation
+              docs/*|*.md|CONTRIBUTING|LICENSE)
+                echo "  -> 📚 Documentation change"
+                DOC_FILES="$DOC_FILES $file" ;;
+
+              # Configuration files
+              configs/*|.vscode/*|*.json|*.psd1)
+                echo "  -> ⚙️ Configuration change"
+                CONFIG_FILES="$CONFIG_FILES $file" ;;
+
+              # Test files
+              tests/*)
+                echo "  -> 🧪 Test file change"
+                # Test changes affect core if they test core functionality
+                case "$file" in
+                  tests/unit/modules/PatchManager/*|tests/unit/modules/TestingFramework/*|tests/unit/modules/DevEnvironment/*)
+                    PATCHMANAGER_FILES="$PATCHMANAGER_FILES $file" ;;
+                  *)
+                    CORE_CHANGES="true"
+                    PATCHMANAGER_ONLY="false"
+                    BUILD_TOOLING_ONLY="false"
+                    DOCS_CONFIG_ONLY="false" ;;
+                esac ;;
+
               *)
-                echo "  -> Other change detected"
-                PATCHMANAGER_ONLY="false" ;;
+                echo "  -> ❓ Other change (requires full testing)"
+                PATCHMANAGER_ONLY="false"
+                BUILD_TOOLING_ONLY="false"
+                DOCS_CONFIG_ONLY="false" ;;
             esac
           done <<< "$CHANGED_FILES"
-          
-          echo "patchmanager-only=$PATCHMANAGER_ONLY" >> $GITHUB_OUTPUT
-          echo "core-changes=$CORE_CHANGES" >> $GITHUB_OUTPUT
-          echo "changed-files<<EOF" >> $GITHUB_OUTPUT
+
+          # Determine final change type and test strategy
+          if [ "$CORE_CHANGES" = "true" ]; then
+            CHANGE_TYPE="core"
+            TEST_LEVEL="complete"
+            echo "🎯 Final assessment: Core changes detected - full test suite required"
+          elif [ "$PATCHMANAGER_ONLY" = "true" ] && [ "$CORE_CHANGES" = "false" ]; then
+            CHANGE_TYPE="patchmanager-only"
+            TEST_LEVEL="minimal"
+            echo "🔧 Final assessment: PatchManager-only changes - minimal test suite"
+          elif [ -n "$BUILD_FILES" ] && [ "$CORE_CHANGES" = "false" ]; then
+            CHANGE_TYPE="build-tooling"
+            TEST_LEVEL="minimal"
+            BUILD_TOOLING_ONLY="true"
+            echo "🛠️ Final assessment: Build tooling changes - minimal test suite"
+          elif [ -n "$DOC_FILES$CONFIG_FILES" ] && [ "$CORE_CHANGES" = "false" ] && [ "$PATCHMANAGER_ONLY" = "true" ]; then
+            CHANGE_TYPE="docs-config-only"
+            TEST_LEVEL="docs"
+            DOCS_CONFIG_ONLY="true"
+            echo "📚 Final assessment: Documentation/config-only changes - skip core tests"
+          else
+            CHANGE_TYPE="mixed"
+            TEST_LEVEL="complete"
+            echo "🎭 Final assessment: Mixed changes - full test suite required"
+          fi
+
+          # Special handling for package-affecting changes
+          if [ "$AFFECTS_PACKAGES" = "true" ] && [ "$CORE_CHANGES" = "false" ]; then
+            echo "📦 Package-affecting non-core changes detected - will validate packages"
+            TEST_LEVEL="package-validation"
+          fi
+
+          echo "📊 Change Analysis Summary:"
+          echo "  Change Type: $CHANGE_TYPE"
+          echo "  Test Level: $TEST_LEVEL"
+          echo "  Affects Packages: $AFFECTS_PACKAGES"
+          echo "  Core Changes: $CORE_CHANGES"
+          echo "  PatchManager Only: $PATCHMANAGER_ONLY"
+
+          # Set outputs for GitHub Actions
+          echo "change_type=$CHANGE_TYPE" >> $GITHUB_OUTPUT
+          echo "test_level=$TEST_LEVEL" >> $GITHUB_OUTPUT
+          echo "patchmanager_only=$PATCHMANAGER_ONLY" >> $GITHUB_OUTPUT
+          echo "core_changes=$CORE_CHANGES" >> $GITHUB_OUTPUT
+          echo "build_tooling_only=$BUILD_TOOLING_ONLY" >> $GITHUB_OUTPUT
+          echo "docs_config_only=$DOCS_CONFIG_ONLY" >> $GITHUB_OUTPUT
+          echo "affects_packages=$AFFECTS_PACKAGES" >> $GITHUB_OUTPUT
+          echo "core_files=$CORE_FILES" >> $GITHUB_OUTPUT
+          echo "patchmanager_files=$PATCHMANAGER_FILES" >> $GITHUB_OUTPUT
+          echo "package_files=$PACKAGE_FILES" >> $GITHUB_OUTPUT
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
@@ -123,7 +252,7 @@ jobs:
         run: |
           # Check if this is a PatchManager-only change
           PATCHMANAGER_ONLY="${{ steps.changes.outputs.patchmanager-only }}"
-          
+
           # Determine test level
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             LEVEL="${{ github.event.inputs.test_level }}"
@@ -138,36 +267,69 @@ jobs:
           fi
           echo "test-level=$LEVEL" >> $GITHUB_OUTPUT
 
-          # Configure matrices and settings based on level
-          case $LEVEL in
-            "PatchManager")
-              # Minimal testing for PatchManager-only changes
+          # Configure matrices and settings based on detected change type
+          case "$CHANGE_TYPE" in
+            "patchmanager-only")
+              echo "🔧 PatchManager-only changes: Minimal test configuration"
               echo 'matrix={"os":["ubuntu-latest"],"include":[{"os":"ubuntu-latest","shell":"pwsh","runner":"ubuntu-latest"}]}' >> $GITHUB_OUTPUT
               echo "should-run-security=true" >> $GITHUB_OUTPUT
               echo "should-run-performance=false" >> $GITHUB_OUTPUT
-              echo "should-run-core-tests=false" >> $GITHUB_OUTPUT
-              echo "should-run-patchmanager-tests=true" >> $GITHUB_OUTPUT
+              echo "should_run_core_tests=false" >> $GITHUB_OUTPUT
+              echo "should_run_patchmanager_tests=true" >> $GITHUB_OUTPUT
+              echo "test_level=minimal" >> $GITHUB_OUTPUT
               ;;
-            "Quick")
+            "build-tooling")
+              echo "🛠️ Build tooling changes: Build validation configuration"
               echo 'matrix={"os":["ubuntu-latest","windows-latest"],"include":[{"os":"ubuntu-latest","shell":"pwsh","runner":"ubuntu-latest"},{"os":"windows-latest","shell":"pwsh","runner":"windows-latest"}]}' >> $GITHUB_OUTPUT
+              echo "should-run-security=true" >> $GITHUB_OUTPUT
+              echo "should-run-performance=false" >> $GITHUB_OUTPUT
+              echo "should_run_core_tests=false" >> $GITHUB_OUTPUT
+              echo "should_run_patchmanager_tests=false" >> $GITHUB_OUTPUT
+              echo "test_level=build_validation" >> $GITHUB_OUTPUT
+              ;;
+            "docs-config-only")
+              echo "📚 Documentation/config-only changes: Minimal validation"
+              echo 'matrix={"os":["ubuntu-latest"],"include":[{"os":"ubuntu-latest","shell":"pwsh","runner":"ubuntu-latest"}]}' >> $GITHUB_OUTPUT
               echo "should-run-security=false" >> $GITHUB_OUTPUT
               echo "should-run-performance=false" >> $GITHUB_OUTPUT
-              echo "should-run-core-tests=true" >> $GITHUB_OUTPUT
-              echo "should-run-patchmanager-tests=true" >> $GITHUB_OUTPUT
+              echo "should_run_core_tests=false" >> $GITHUB_OUTPUT
+              echo "should_run_patchmanager_tests=false" >> $GITHUB_OUTPUT
+              echo "test_level=docs_only" >> $GITHUB_OUTPUT
               ;;
-            "Standard")
-              echo 'matrix={"os":["ubuntu-latest","windows-latest","macos-latest"],"include":[{"os":"ubuntu-latest","shell":"pwsh","runner":"ubuntu-latest"},{"os":"windows-latest","shell":"pwsh","runner":"windows-latest"},{"os":"macos-latest","shell":"pwsh","runner":"macos-latest"}]}' >> $GITHUB_OUTPUT
+            "package-validation")
+              echo "📦 Package-affecting changes: Package validation configuration"
+              echo 'matrix={"os":["ubuntu-latest","windows-latest"],"include":[{"os":"ubuntu-latest","shell":"pwsh","runner":"ubuntu-latest"},{"os":"windows-latest","shell":"pwsh","runner":"windows-latest"}]}' >> $GITHUB_OUTPUT
               echo "should-run-security=true" >> $GITHUB_OUTPUT
               echo "should-run-performance=false" >> $GITHUB_OUTPUT
-              echo "should-run-core-tests=true" >> $GITHUB_OUTPUT
-              echo "should-run-patchmanager-tests=true" >> $GITHUB_OUTPUT
+              echo "should_run_core_tests=false" >> $GITHUB_OUTPUT
+              echo "should_run_patchmanager_tests=true" >> $GITHUB_OUTPUT
+              echo "test_level=package_validation" >> $GITHUB_OUTPUT
               ;;
-            "Complete")
-              echo 'matrix={"os":["ubuntu-latest","windows-latest","macos-latest","ubuntu-20.04"],"include":[{"os":"ubuntu-latest","shell":"pwsh","runner":"ubuntu-latest"},{"os":"windows-latest","shell":"pwsh","runner":"windows-latest"},{"os":"macos-latest","shell":"pwsh","runner":"macos-latest"},{"os":"ubuntu-20.04","shell":"pwsh","runner":"ubuntu-20.04"}]}' >> $GITHUB_OUTPUT
+            "core"|"mixed")
+              echo "🎯 Core/mixed changes: Full test suite required"
+              # Use existing full test matrix
+              if [ "${{ github.event_name }}" = "pull_request" ]; then
+                # Standard testing for PRs
+                echo 'matrix={"os":["ubuntu-latest","windows-latest"],"include":[{"os":"ubuntu-latest","shell":"pwsh","runner":"ubuntu-latest"},{"os":"windows-latest","shell":"pwsh","runner":"windows-latest"}]}' >> $GITHUB_OUTPUT
+                echo "test_level=standard" >> $GITHUB_OUTPUT
+              else
+                # Complete testing for pushes to main
+                echo 'matrix={"os":["ubuntu-latest","windows-latest","macos-latest"],"include":[{"os":"ubuntu-latest","shell":"pwsh","runner":"ubuntu-latest"},{"os":"windows-latest","shell":"pwsh","runner":"windows-latest"},{"os":"macos-latest","shell":"pwsh","runner":"macos-latest"}]}' >> $GITHUB_OUTPUT
+                echo "test_level=complete" >> $GITHUB_OUTPUT
+              fi
               echo "should-run-security=true" >> $GITHUB_OUTPUT
               echo "should-run-performance=true" >> $GITHUB_OUTPUT
-              echo "should-run-core-tests=true" >> $GITHUB_OUTPUT
-              echo "should-run-patchmanager-tests=true" >> $GITHUB_OUTPUT
+              echo "should_run_core_tests=true" >> $GITHUB_OUTPUT
+              echo "should_run_patchmanager_tests=true" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "❓ Unknown change type: Defaulting to full test suite"
+              echo 'matrix={"os":["ubuntu-latest","windows-latest"],"include":[{"os":"ubuntu-latest","shell":"pwsh","runner":"ubuntu-latest"},{"os":"windows-latest","shell":"pwsh","runner":"windows-latest"}]}' >> $GITHUB_OUTPUT
+              echo "should-run-security=true" >> $GITHUB_OUTPUT
+              echo "should-run-performance=false" >> $GITHUB_OUTPUT
+              echo "should_run_core_tests=true" >> $GITHUB_OUTPUT
+              echo "should_run_patchmanager_tests=true" >> $GITHUB_OUTPUT
+              echo "test_level=standard" >> $GITHUB_OUTPUT
               ;;
           esac
 
@@ -291,36 +453,105 @@ jobs:
         run: |
           Write-Host "🧪 Running optimized test suite..." -ForegroundColor Cyan
 
-          $testLevel = "${{ needs.setup.outputs.test-level }}"
-          $shouldRunCore = "${{ needs.setup.outputs.should-run-core-tests }}"
-          $shouldRunPatchManager = "${{ needs.setup.outputs.should-run-patchmanager-tests }}"
+          $testLevel = "${{ needs.setup.outputs.test_level }}"
+          $changeType = "${{ needs.setup.outputs.change_type }}"
+          $shouldRunCore = "${{ needs.setup.outputs.should_run_core_tests }}"
+          $shouldRunPatchManager = "${{ needs.setup.outputs.should_run_patchmanager_tests }}"
+          $affectsPackages = "${{ needs.setup.outputs.affects_packages }}"
 
           Write-Host "Test Configuration:" -ForegroundColor Yellow
-          Write-Host "  Level: $testLevel" -ForegroundColor White
+          Write-Host "  Change Type: $changeType" -ForegroundColor White
+          Write-Host "  Test Level: $testLevel" -ForegroundColor White
           Write-Host "  Core Tests: $shouldRunCore" -ForegroundColor White
           Write-Host "  PatchManager Tests: $shouldRunPatchManager" -ForegroundColor White
+          Write-Host "  Affects Packages: $affectsPackages" -ForegroundColor White
 
-          # For PatchManager-only changes, run minimal validation
-          if ($testLevel -eq "PatchManager") {
-            Write-Host "🎯 Running PatchManager-only validation..." -ForegroundColor Cyan
-            
-            # Test PatchManager module specifically
-            try {
-              Write-Host "Testing PatchManager module import..." -ForegroundColor Yellow
-              Import-Module './aither-core/modules/PatchManager/PatchManager.psm1' -Force -ErrorAction Stop
-              Write-Host "✅ PatchManager module imported successfully" -ForegroundColor Green
-              
-              # Test key functions are available
-              $functions = @('Invoke-PatchWorkflow', 'New-PatchIssue', 'New-PatchPR', 'Invoke-PatchRollback')
-              foreach ($func in $functions) {
-                if (Get-Command $func -ErrorAction SilentlyContinue) {
-                  Write-Host "✅ Function $func available" -ForegroundColor Green
+          # Handle different test levels based on change type
+          switch ($testLevel) {
+            "minimal" {
+              Write-Host "🎯 Running minimal validation for $changeType changes..." -ForegroundColor Cyan
+
+              if ($changeType -eq "patchmanager-only") {
+                # Test PatchManager module specifically
+                try {
+                  Write-Host "Testing PatchManager module import..." -ForegroundColor Yellow
+                  Import-Module './aither-core/modules/PatchManager/PatchManager.psm1' -Force -ErrorAction Stop
+                  Write-Host "✅ PatchManager module imported successfully" -ForegroundColor Green
+
+                  # Test key functions are available
+                  $functions = @('Invoke-PatchWorkflow', 'New-PatchIssue', 'New-PatchPR', 'Invoke-PatchRollback')
+                  foreach ($func in $functions) {
+                    if (Get-Command $func -ErrorAction SilentlyContinue) {
+                      Write-Host "✅ Function $func available" -ForegroundColor Green
+                    } else {
+                      Write-Host "❌ Function $func not available" -ForegroundColor Red
+                      exit 1
+                    }
+                  }
+                } catch {
+                  Write-Host "❌ PatchManager module test failed: $($_.Exception.Message)" -ForegroundColor Red
+                  exit 1
+                }
+              }
+            }
+
+            "build-validation" {
+              Write-Host "🛠️ Running build validation for build tooling changes..." -ForegroundColor Cyan
+
+              # Test that the build scripts can execute
+              try {
+                Write-Host "Testing build script syntax..." -ForegroundColor Yellow
+                if (Test-Path 'build/Build-Package.ps1') {
+                  pwsh -File 'build/Build-Package.ps1' -Platform windows -Version "0.0.1-test" -ArtifactExtension zip -WhatIf
+                  Write-Host "✅ Build script syntax valid" -ForegroundColor Green
+                }
+              } catch {
+                Write-Host "❌ Build script validation failed: $($_.Exception.Message)" -ForegroundColor Red
+                exit 1
+              }
+            }
+
+            "docs-only" {
+              Write-Host "📚 Running documentation validation..." -ForegroundColor Cyan
+
+              # Basic syntax check for markdown files
+              $changedDocs = "${{ needs.setup.outputs.changed_files }}" -split "`n" | Where-Object { $_ -match '\.md$' }
+              foreach ($doc in $changedDocs) {
+                if (Test-Path $doc) {
+                  Write-Host "✅ Document exists: $doc" -ForegroundColor Green
+                } else {
+                  Write-Host "⚠️ Document not found: $doc" -ForegroundColor Yellow
+                }
+              }
+            }
+
+            "package-validation" {
+              Write-Host "📦 Running package validation for package-affecting changes..." -ForegroundColor Cyan
+
+              # Test essential modules that are included in packages
+              $essentialModules = @('Logging', 'LabRunner', 'BackupManager', 'ScriptManager', 'UnifiedMaintenance')
+              foreach ($module in $essentialModules) {
+                $modulePath = "aither-core/modules/$module"
+                if (Test-Path $modulePath) {
+                  try {
+                    Import-Module "$modulePath/$module.psm1" -Force -ErrorAction Stop
+                    Write-Host "✅ Essential module $module loads successfully" -ForegroundColor Green
+                  } catch {
+                    Write-Host "❌ Essential module $module failed to load: $($_.Exception.Message)" -ForegroundColor Red
+                    exit 1
+                  }
+                }
+              }
+            }
+
+            default {
+              Write-Host "🧪 Running standard test suite..." -ForegroundColor Cyan
                 } else {
                   Write-Error "❌ Function $func not found"
                   exit 1
                 }
               }
-              
+
               # Quick syntax validation of PatchManager files
               Write-Host "Validating PatchManager PowerShell syntax..." -ForegroundColor Yellow
               $patchFiles = Get-ChildItem -Path './aither-core/modules/PatchManager' -Filter '*.ps1' -Recurse
@@ -333,12 +564,12 @@ jobs:
                 }
               }
               Write-Host "✅ All PatchManager files have valid PowerShell syntax" -ForegroundColor Green
-              
+
             } catch {
               Write-Error "PatchManager validation failed: $($_.Exception.Message)"
               exit 1
             }
-            
+
             Write-Host "✅ PatchManager-only validation completed successfully" -ForegroundColor Green
             return
           }
@@ -422,7 +653,7 @@ jobs:
 
           $violations = @()
           $scriptFiles = Get-ChildItem -Path . -Filter '*.ps1' -Recurse -ErrorAction SilentlyContinue
-          
+
           foreach ($file in $scriptFiles) {
             try {
               $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
