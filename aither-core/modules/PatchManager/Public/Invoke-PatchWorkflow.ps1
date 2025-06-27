@@ -51,6 +51,16 @@
     By default, PatchManager fetches latest changes and merges/pulls from origin/main to prevent conflicts.
     Use this flag to skip sync if you want to work with current local state.
 
+.PARAMETER AutoCleanup
+    Automatically monitor the PR for merge completion and clean up the patch branch when merged.
+    This creates a background job that checks the PR status periodically and runs post-merge cleanup.
+
+.PARAMETER CleanupCheckIntervalSeconds
+    How often to check for PR merge completion when AutoCleanup is enabled (default: 30 seconds)
+
+.PARAMETER CleanupTimeoutMinutes
+    Maximum time to monitor for PR merge before giving up (default: 60 minutes)
+
 .PARAMETER AutoConsolidate
     Automatically consolidate open PRs after creating this PR (default: false)
 
@@ -98,6 +108,14 @@
 .EXAMPLE
     Invoke-PatchWorkflow -PatchDescription "VERSION UPDATE: Bump to v2.0.0 for new features" -CreatePR -CreateRelease -ReleaseType "major"
     # Detects version keywords and creates major release
+
+.EXAMPLE
+    Invoke-PatchWorkflow -PatchDescription "Feature enhancement with auto-cleanup" -CreatePR -AutoCleanup
+    # Creates PR and automatically monitors for merge, cleaning up the branch when merged
+
+.EXAMPLE
+    Invoke-PatchWorkflow -PatchDescription "Quick fix with faster cleanup monitoring" -CreatePR -AutoCleanup -CleanupCheckIntervalSeconds 15 -CleanupTimeoutMinutes 30
+    # Creates PR with custom auto-cleanup settings (check every 15 seconds, timeout after 30 minutes)
 
 .EXAMPLE
     Invoke-PatchWorkflow -PatchDescription "Add enterprise feature" -CreatePR -TargetFork "root" -Priority "High" -PatchOperation {
@@ -200,7 +218,16 @@ function Invoke-PatchWorkflow {
         [string[]]$RequiredChecks = @('ci-cd'),
 
         [Parameter(Mandatory = $false)]
-        [switch]$SkipSync
+        [switch]$SkipSync,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$AutoCleanup,
+
+        [Parameter(Mandatory = $false)]
+        [int]$CleanupCheckIntervalSeconds = 30,
+
+        [Parameter(Mandatory = $false)]
+        [int]$CleanupTimeoutMinutes = 60
     )
 
     begin {
@@ -611,6 +638,88 @@ function Invoke-PatchWorkflow {
                 }
             }
 
+            # Step 7b: Switch back to main branch after PR creation (improved developer experience)
+            if ($CreatePR -and -not $DryRun) {
+                Write-PatchLog 'Switching back to main branch for better workflow...' -Level 'INFO'
+                try {
+                    # Switch to main branch
+                    $currentBranch = git branch --show-current 2>&1
+                    if ($currentBranch -ne 'main' -and $currentBranch -ne 'master') {
+                        git checkout main 2>&1 | Out-Null
+                        if ($LASTEXITCODE -eq 0) {
+                            Write-PatchLog '✓ Switched to main branch' -Level 'SUCCESS'
+                            
+                            # Pull latest changes to stay current
+                            git fetch origin 2>&1 | Out-Null
+                            git pull origin main 2>&1 | Out-Null
+                            
+                            if ($LASTEXITCODE -eq 0) {
+                                Write-PatchLog '✓ Updated main branch with latest changes' -Level 'SUCCESS'
+                            } else {
+                                Write-PatchLog 'Warning: Could not update main branch' -Level 'WARN'
+                            }
+                            
+                            Write-PatchLog "Patch branch '$branchName' remains available for future changes if needed" -Level 'INFO'
+                            Write-PatchLog "When PR is merged, run: Invoke-PostMergeCleanup -BranchName '$branchName' -PullRequestNumber [PR_NUMBER]" -Level 'INFO'
+                        } else {
+                            Write-PatchLog 'Warning: Could not switch to main branch' -Level 'WARN'
+                        }
+                    } else {
+                        Write-PatchLog 'Already on main branch' -Level 'INFO'
+                    }
+                } catch {
+                    Write-PatchLog "Warning: Branch switch failed: $($_.Exception.Message)" -Level 'WARN'
+                    # Don't fail the entire workflow for branch switching issues
+                }
+            } elseif ($CreatePR -and $DryRun) {
+                Write-PatchLog 'DRY RUN: Would switch back to main branch after PR creation' -Level 'INFO'
+            }
+
+            # Step 7c: Start auto-cleanup monitoring if requested
+            if ($AutoCleanup -and $CreatePR -and $prResult.Success -and $prResult.PullRequestNumber) {
+                Write-PatchLog 'Starting automatic post-merge cleanup monitoring...' -Level 'INFO'
+                
+                if (-not $DryRun) {
+                    try {
+                        $monitorParams = @{
+                            PullRequestNumber = $prResult.PullRequestNumber
+                            BranchName = $branchName
+                            CheckIntervalSeconds = $CleanupCheckIntervalSeconds
+                            TimeoutMinutes = $CleanupTimeoutMinutes
+                            NotificationCallback = {
+                                if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                                    Write-CustomLog -Level 'SUCCESS' -Message "🎉 PR #$($prResult.PullRequestNumber) merged and cleaned up automatically!"
+                                } else {
+                                    Write-Host "🎉 PR #$($prResult.PullRequestNumber) merged and cleaned up automatically!" -ForegroundColor Green
+                                }
+                            }
+                        }
+                        
+                        $monitorResult = Start-PostMergeMonitor @monitorParams
+                        
+                        if ($monitorResult.Success) {
+                            Write-PatchLog 'Auto-cleanup monitoring started successfully!' -Level 'SUCCESS'
+                            Write-PatchLog "  Monitoring PR #$($prResult.PullRequestNumber)" -Level 'INFO'
+                            Write-PatchLog "  Check interval: $CleanupCheckIntervalSeconds seconds" -Level 'INFO'
+                            Write-PatchLog "  Timeout: $CleanupTimeoutMinutes minutes" -Level 'INFO'
+                            Write-PatchLog "  Background job ID: $($monitorResult.JobId)" -Level 'INFO'
+                            Write-PatchLog "When PR is merged, the branch '$branchName' will be automatically cleaned up" -Level 'INFO'
+                        } else {
+                            Write-PatchLog "Auto-cleanup monitoring failed: $($monitorResult.Message)" -Level 'WARN'
+                            Write-PatchLog "You can manually run cleanup later: Invoke-PostMergeCleanup -BranchName '$branchName' -PullRequestNumber $($prResult.PullRequestNumber)" -Level 'INFO'
+                        }
+                    } catch {
+                        Write-PatchLog "Auto-cleanup setup failed: $($_.Exception.Message)" -Level 'WARN'
+                        Write-PatchLog "You can manually run cleanup later: Invoke-PostMergeCleanup -BranchName '$branchName' -PullRequestNumber $($prResult.PullRequestNumber)" -Level 'INFO'
+                    }
+                } else {
+                    Write-PatchLog "DRY RUN: Would start monitoring PR #$($prResult.PullRequestNumber) for merge completion" -Level 'INFO'
+                    Write-PatchLog "DRY RUN: Would automatically clean up branch '$branchName' when merged" -Level 'INFO'
+                }
+            } elseif ($AutoCleanup -and $CreatePR -and $DryRun) {
+                Write-PatchLog 'DRY RUN: Would set up automatic post-merge cleanup monitoring' -Level 'INFO'
+            }
+
             # Step 8: Auto-consolidate PRs if requested
             if ($AutoConsolidate -and $CreatePR -and -not $DryRun) {
                 Write-PatchLog 'Auto-consolidation requested, analyzing open PRs...' -Level 'INFO'
@@ -787,6 +896,9 @@ function Invoke-PatchWorkflow {
                 IssueNumber    = if ($issueResult) { $issueResult.IssueNumber } else { $null }
                 IssueUrl       = if ($issueResult) { $issueResult.IssueUrl } else { $null }
                 PullRequestUrl = if ($prResult) { $prResult.PullRequestUrl } else { $null }
+                PullRequestNumber = if ($prResult) { $prResult.PullRequestNumber } else { $null }
+                AutoCleanupEnabled = $AutoCleanup.IsPresent -and $CreatePR.IsPresent
+                MonitoringJobId = if ($monitorResult -and $monitorResult.Success) { $monitorResult.JobId } else { $null }
             }
 
         } catch {

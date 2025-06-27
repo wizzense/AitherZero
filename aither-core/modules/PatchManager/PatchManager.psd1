@@ -75,6 +75,7 @@ FunctionsToExport = @(
     'New-PatchPR',
     'New-CrossForkPR',
     'Invoke-PatchRollback',
+    'Invoke-PostMergeCleanup',
     'Update-RepositoryDocumentation',
     'Invoke-PRConsolidation'
 )
