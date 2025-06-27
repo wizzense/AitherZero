@@ -46,6 +46,11 @@
 .PARAMETER Force
     Force operation even if working tree is not clean
 
+.PARAMETER SkipSync
+    Skip automatic synchronization with main branch before creating patch branch. 
+    By default, PatchManager fetches latest changes and merges/pulls from origin/main to prevent conflicts.
+    Use this flag to skip sync if you want to work with current local state.
+
 .PARAMETER AutoConsolidate
     Automatically consolidate open PRs after creating this PR (default: false)
 
@@ -116,6 +121,13 @@
     }
     # Creates PR and consolidates up to 3 PRs from the same author
 
+.EXAMPLE
+    Invoke-PatchWorkflow -PatchDescription "Local experimental changes" -SkipSync -PatchOperation {
+        # Make experimental changes without syncing with main
+        Test-ExperimentalFeature
+    }
+    # Skips main branch sync, works with current local state only
+
 .NOTES
     This function replaces:
     - Invoke-GitControlledPatch
@@ -185,7 +197,10 @@ function Invoke-PatchWorkflow {
         [int]$AutoMergeDelayMinutes = 5,
 
         [Parameter(Mandatory = $false)]
-        [string[]]$RequiredChecks = @("ci-cd")
+        [string[]]$RequiredChecks = @("ci-cd"),
+
+        [Parameter(Mandatory = $false)]
+        [switch]$SkipSync
     )
 
     begin {
@@ -263,6 +278,77 @@ function Invoke-PatchWorkflow {
             } else {
                 Write-PatchLog "Working tree is clean - proceeding with patch workflow" -Level "INFO"
             }
+
+            # Step 1.5: Sync with main branch to prevent merge conflicts
+            if (-not $SkipSync) {
+                Write-PatchLog "Syncing with main branch to prevent merge conflicts..." -Level "INFO"
+            
+            if (-not $DryRun) {
+                try {
+                    # Get current branch name
+                    $currentBranch = git branch --show-current 2>&1
+                    
+                    # Fetch latest changes from origin
+                    Write-PatchLog "Fetching latest changes from origin..." -Level "INFO"
+                    git fetch origin 2>&1 | Out-Null
+                    
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-PatchLog "Warning: Failed to fetch from origin. Continuing with local state..." -Level "WARN"
+                    } else {
+                        # If we're on main branch, pull latest changes
+                        if ($currentBranch -eq "main" -or $currentBranch -eq "master") {
+                            Write-PatchLog "On main branch - pulling latest changes..." -Level "INFO"
+                            git pull origin $currentBranch 2>&1 | Out-Null
+                            
+                            if ($LASTEXITCODE -eq 0) {
+                                Write-PatchLog "Successfully synced with origin/$currentBranch" -Level "SUCCESS"
+                            } else {
+                                Write-PatchLog "Warning: Failed to pull from origin/$currentBranch" -Level "WARN"
+                            }
+                        } else {
+                            # If we're on a feature branch, merge/rebase main into current branch
+                            Write-PatchLog "On feature branch '$currentBranch' - merging latest main..." -Level "INFO"
+                            
+                            # Check if origin/main exists
+                            $mainExists = git show-ref --verify --quiet refs/remotes/origin/main 2>&1
+                            $masterExists = git show-ref --verify --quiet refs/remotes/origin/master 2>&1
+                            
+                            $mainBranch = if ($LASTEXITCODE -eq 0 -and $mainExists) { "main" } 
+                                         elseif ($masterExists) { "master" } 
+                                         else { $null }
+                            
+                            if ($mainBranch) {
+                                # Try merge first (safer), fall back to informational message if conflicts
+                                $mergeOutput = git merge origin/$mainBranch 2>&1
+                                
+                                if ($LASTEXITCODE -eq 0) {
+                                    Write-PatchLog "Successfully merged origin/$mainBranch into $currentBranch" -Level "SUCCESS"
+                                } else {
+                                    # Check if it's a merge conflict
+                                    if ($mergeOutput -match "CONFLICT" -or $mergeOutput -match "Automatic merge failed") {
+                                        Write-PatchLog "Merge conflicts detected when syncing with main. Aborting merge..." -Level "WARN"
+                                        git merge --abort 2>&1 | Out-Null
+                                        Write-PatchLog "Recommendation: Manually resolve conflicts with main branch before creating this patch" -Level "WARN"
+                                        Write-PatchLog "You can continue creating the patch, but may need to resolve conflicts later" -Level "INFO"
+                                    } else {
+                                        Write-PatchLog "Warning: Merge with origin/$mainBranch had issues: $mergeOutput" -Level "WARN"
+                                    }
+                                }
+                            } else {
+                                Write-PatchLog "No main/master branch found in origin. Skipping sync..." -Level "WARN"
+                            }
+                        }
+                    }
+                } catch {
+                    Write-PatchLog "Warning: Sync with main branch failed: $($_.Exception.Message)" -Level "WARN"
+                    Write-PatchLog "Continuing with patch creation - you may need to resolve conflicts later" -Level "INFO"
+                }
+            } else {
+                Write-PatchLog "DRY RUN: Would sync with main branch (fetch origin, merge/pull latest changes)" -Level "INFO"
+            }
+        } else {
+            Write-PatchLog "Skipping main branch sync (-SkipSync specified)" -Level "INFO"
+        }
 
             # Step 2: Create patch branch
             $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
