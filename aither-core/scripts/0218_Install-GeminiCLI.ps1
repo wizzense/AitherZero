@@ -7,7 +7,7 @@
 .DESCRIPTION
     This script provides a simple entry point to install all Gemini CLI dependencies
     using the DevEnvironment module's Install-GeminiCLIDependencies function.
-
+    
     Supports both Windows (with WSL) and Linux installations.
 
 .PARAMETER WSLUsername
@@ -45,6 +45,7 @@ param(
 
     [Parameter()]
     [switch]$SkipNodeInstall,
+
 
     [Parameter()]
     [switch]$Force
@@ -104,7 +105,7 @@ process {
             Write-Host "4. Optional: Set GEMINI_API_KEY environment variable for API access" -ForegroundColor White
             Write-Host "5. Visit https://aistudio.google.com to generate an API key if needed" -ForegroundColor White
         }
-
+        
     } catch {
         Write-Error "Failed to install Gemini CLI dependencies: $($_.Exception.Message)"
         throw
