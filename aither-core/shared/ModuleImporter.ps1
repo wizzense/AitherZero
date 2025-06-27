@@ -93,7 +93,7 @@ function Import-AitherCoreModules {
 
         foreach ($moduleName in $allModules) {
             try {
-                $modulePath = Join-Path $ProjectRoot "aither-core/modules/$moduleName/$moduleName.psm1"
+                $modulePath = Join-Path $ProjectRoot (Join-Path "aither-core" (Join-Path "modules" (Join-Path $moduleName "$moduleName.psm1")))
                 if (Test-Path $modulePath) {
                     Import-Module $modulePath -Force -Global -ErrorAction Stop
                     $importedModules[$moduleName] = $true
