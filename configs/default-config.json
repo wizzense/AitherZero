@@ -44,6 +44,13 @@
   "InstallPacker": false,
   "InstallChocolatey": false,
   "SetupLabProfile": false,
+  "InstallClaudeCode": false,
+  "ClaudeCodeWSLUsername": "",
+  "ClaudeCodeSkipWSL": false,
+  "InstallGeminiCLI": false,
+  "GeminiCLIWSLUsername": "",
+  "GeminiCLISkipWSL": false,
+  "GeminiCLISkipNode": false,
   "CertificateAuthority": {
     "CommonName": "default-lab-RootCA",
     "ValidityYears": 5
@@ -88,16 +95,31 @@
     "InstallVite": true,
     "InstallNodemon": true,
     "InstallNpm": true,
+    "InstallClaudeCode": false,
     "GlobalPackages": [
       "yarn",
       "vite",
-      "nodemon"
+      "nodemon",
+      "@anthropic-ai/claude-code"
     ],
     "NpmPath": "C:/Projects/vde-mvp/frontend",
     "CreateNpmPath": false,
     "Node": {
       "InstallerUrl": "https://nodejs.org/dist/latest-v20.x/node-v20-x64.msi"
+    },
+    "ClaudeCode": {
+      "InstallMethod": "npm",
+      "RequireWSL": true,
+      "NodeVersion": "lts",
+      "NvmInstallScript": "https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh"
+    },
+    "GeminiCLI": {
+      "InstallMethod": "npm",
+      "RequireWSL": true,
+      "NodeVersion": "lts",
+      "Package": "@google/gemini-cli",
+      "AuthMethod": "oauth",
+      "ApiKeyUrl": "https://aistudio.google.com"
     }
   }
 }
-

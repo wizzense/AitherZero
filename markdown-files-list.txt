@@ -1,0 +1,159 @@
+# AitherZero Markdown Files Directory
+
+## Root Directory (/)
+- CI-CD-ENHANCEMENT-FINAL-REPORT.md
+- CLAUDE.md
+- CONTRIBUTING.md
+- HOTFIX-README.md
+- IMMEDIATE-SPEED-UPGRADES.md
+- LAUNCHER-CRISIS-RESOLUTION-COMPLETE.md
+- PR-CONSOLIDATION-IMPLEMENTATION-COMPLETE.md
+- QUICK-START-GUIDE.md
+- README.md
+- RELEASE_NOTES_v0.11.0.md
+- REPOSITORY-SYNC-SETUP.md
+- SYSTEM-UPGRADES-ROADMAP.md
+- TURBO-TASKS-INTEGRATION-COMPLETE.md
+- TURBO-VSCODE-TASKS-FIXED.md
+- TURBO-VSCODE-TASKS.md
+- TURBO-WORKFLOW-INTEGRATION-COMPLETE.md
+- ULTRA-FAST-AUTOMATION-IMPLEMENTATION.md
+
+## .github/
+- COPILOT-UPDATE-SUMMARY.md
+- copilot-instructions.md
+- personal-copilot-instructions.md
+- pull_request_template.md
+
+### .github/ISSUE_TEMPLATE/
+- bug_report.md
+- documentation.md
+- feature_request.md
+
+### .github/copilot/
+- patchmanager-workflows.md
+- testing-workflows.md
+
+### .github/instructions/
+- advanced-architecture.instructions.md
+- modules.instructions.md
+- patchmanager-workflows.instructions.md
+- testing-workflows.instructions.md
+
+### .github/prompts/
+- aitherzero-development-workflow.prompt.md
+- create-powershell-function.prompt.md
+- infrastructure-code.md
+- init-dev-env.prompt.md
+- powershell-development.md
+- powershell-module-development.prompt.md
+- run-bulletproof-tests-updated.prompt.md
+- run-bulletproof-tests.prompt.md
+- testing-quality.md
+- troubleshooting-debugging.md
+
+## .vscode/
+- README.md
+
+## aither-core/
+- README.md
+
+### aither-core/modules/
+- BackupManager/README.md
+- OpenTofuProvider/README.md
+
+### aither-core/shared/
+- README.md
+
+## docs/
+- AITHER-CORE-REORGANIZATION-COMPLETE.md
+- AITHERIUM-CONVERSION-COMPLETE.md
+- BOOTSTRAP-CONSOLIDATION-COMPLETE.md
+- BOOTSTRAP-CONSOLIDATION-PLAN.md
+- BULLETPROOF-TESTING-GUIDE.md
+- CLAUDE-CODE-MCP-INTEGRATION.md
+- CLAUDE-CODE-SETUP-GUIDE.md
+- COMPLETE-ARCHITECTURE.md
+- DEVELOPER-ONBOARDING.md
+- DEVELOPMENT-ENVIRONMENT-IMPROVEMENTS-SUMMARY.md
+- DYNAMIC-REPOSITORY-DETECTION-IMPLEMENTATION.md
+- DYNAMIC-ROOT-CLEANUP-COMPLETION-SUMMARY.md
+- ENHANCED-TESTING-FRAMEWORK-IMPLEMENTATION.md
+- ENHANCED-VALIDATION-TRACKING-SUMMARY.md
+- ENHANCED-VSCODE-TASKS-INTEGRATION.md
+- ENTERPRISE-ISO-MODULES-COMPLETION-SUMMARY.md
+- FINAL-ARCHITECTURE-COMPLETION.md
+- GITHUB-ACTIONS-OPTIMIZATION-GUIDE.md
+- INTELLIGENT-CI-STRATEGY.md
+- ISO-MODULES-COMPLETION-SUMMARY.md
+- KICKER-CONSOLIDATION-PLAN.md
+- LOGGING-INITIALIZATION-FIX-SUMMARY.md
+- MENU-SELECTION-FIX.md
+- OPENTOFU-PROVIDER-IMPLEMENTATION-COMPLETE.md
+- PACKAGE-AWARE-CI-IMPLEMENTATION-SUMMARY.md
+- PACKAGE-AWARE-CI-STRATEGY.md
+- PATCHMANAGER-AUTO-CLEANUP-GUIDE.md
+- PATCHMANAGER-BRANCH-PUBLISHING-ENHANCEMENT.md
+- PATCHMANAGER-COMPLETE-GUIDE.md
+- PATCHMANAGER-CONSOLIDATION-COMPLETE.md
+- PATCHMANAGER-FINAL-SUMMARY.md
+- PATCHMANAGER-SIMPLIFICATION-SUMMARY.md
+- PATCHMANAGER-STATUS-ENHANCEMENT.md
+- PATCHMANAGER-TEST-SUCCESS.md
+- PR-CONSOLIDATION-GUIDE.md
+- PR-ISSUE-AUTOCLOSING-SUMMARY.md
+- PR-ISSUE-LINKING-GUIDE.md
+- README-PATCHMANAGER-DEMO.md
+- REBRANDING-COMPLETION-SUMMARY.md
+- RELAUNCH-SOLUTION-SUMMARY.md
+- SCRIPT-OUTPUT-VISIBILITY-IMPROVEMENTS-SUMMARY.md
+- StandardizedParameters-README.md
+- StandardizedParameters.md
+- TESTING-COMPLETE-GUIDE.md
+- TESTING-FRAMEWORK-INTEGRATION-IMPLEMENTATION.md
+- TESTING-FRAMEWORK-INTEGRATION-SUMMARY.md
+- TESTING-INTEGRATION-ARCHITECTURE.md
+- TESTING-SESSION-SUMMARY.md
+- UNICODE-SANITIZATION-COMPLETE.md
+- overview.md
+
+### docs/roadmap/
+- DEVELOPMENT-PIPELINE-PLAN.md
+- DEVELOPMENT-WORKFLOW-SETUP.md
+- IMPLEMENTATION-ROADMAP.md
+- MULTI-REPO-WORKFLOW-GUIDE.md
+- QUICK-REFERENCE-MULTI-REPO.md
+- REMOTE-SETUP-COMPLETED.md
+- TANIUM-INTEGRATION-PLAN.md
+
+## mcp-server/
+- AI-AGENT-TOOLSET-GUIDE.md
+- CLAUDE-CODE-MCP-SETUP.md
+- HOW-TO-CONNECT-AI-AGENTS.md
+- README-claude-code.md
+- README.md
+- TRANSFORMATION-COMPLETE.md
+
+## opentofu/
+### opentofu/examples/hyperv/
+- README.md
+- modules/README.md
+
+### opentofu/modules/
+- network_switch/README.md
+- vm/README.md
+
+## tests/
+- MODULE-TESTS-SUMMARY.md
+- README.md
+- TestResults/TestWorkflowReport.md
+
+## Summary Statistics
+- Total markdown files: 109
+- Root level docs: 17
+- .github docs: 23
+- aither-core docs: 3
+- docs/ folder: 52
+- mcp-server docs: 6
+- opentofu docs: 4
+- tests docs: 3

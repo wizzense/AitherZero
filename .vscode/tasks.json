@@ -1416,6 +1416,226 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             }
+        },
+        {
+            "label": "🤖 DevEnvironment: Install Claude Code Dependencies",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-ClaudeCodeDependencies"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🪟 DevEnvironment: Install Claude Code (Windows + WSL)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-ClaudeCodeDependencies -WSLUsername '${input:wslUsername}'"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🐧 DevEnvironment: Install Claude Code (Linux)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-ClaudeCodeDependencies"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🔍 DevEnvironment: Preview Claude Code Installation (WhatIf)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-ClaudeCodeDependencies -WhatIf"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🧪 DevEnvironment: Test Claude Code Dependencies Function",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "tests/unit/modules/DevEnvironment/Install-ClaudeCodeDependencies.Tests.ps1"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🧠 DevEnvironment: Install Gemini CLI Dependencies",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-GeminiCLIDependencies"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🪟 DevEnvironment: Install Gemini CLI (Windows + WSL)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-GeminiCLIDependencies -WSLUsername '${input:wslUsername}'"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🐧 DevEnvironment: Install Gemini CLI (Linux)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-GeminiCLIDependencies"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🔍 DevEnvironment: Preview Gemini CLI Installation (WhatIf)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-GeminiCLIDependencies -WhatIf"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🧪 DevEnvironment: Test Gemini CLI Dependencies Function",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "tests/unit/modules/DevEnvironment/Install-GeminiCLIDependencies.Tests.ps1"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
         }
     ],
     "inputs": [
@@ -1501,6 +1721,12 @@
             "id": "releaseVersion",
             "description": "Enter specific version to release (e.g., 1.0.0, 2.0.0-beta.1)",
             "default": "1.0.0",
+            "type": "promptString"
+        },
+        {
+            "id": "wslUsername",
+            "description": "Enter WSL username for Ubuntu setup",
+            "default": "developer",
             "type": "promptString"
         }
     ]
