@@ -1,0 +1,279 @@
+[
+  {
+    "metadata": {
+      "version": "1.0.0",
+      "lastUpdate": "2025-06-25T23:50:00Z",
+      "description": "AitherZero One-Off Scripts Registry"
+    },
+    "scripts": []
+  },
+  {
+    "Purpose": "test",
+    "ScriptPath": "test.ps1",
+    "Author": "test",
+    "RegisteredDate": "2025-06-26 14:19:11",
+    "ExecutionResult": null,
+    "ExecutionDate": null,
+    "Executed": false
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\TestScript.ps1",
+    "ExecutionResult": null,
+    "Purpose": "",
+    "Executed": false,
+    "Author": "",
+    "RegisteredDate": "2025-06-26 15:18:18",
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\NonExistent.ps1",
+    "ExecutionResult": null,
+    "Purpose": "",
+    "Executed": false,
+    "Author": "",
+    "RegisteredDate": "2025-06-26 15:18:18",
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\SimpleScript.ps1",
+    "ExecutionResult": "Success",
+    "Purpose": "Auto-registered for testing",
+    "Executed": true,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:18:18",
+    "ExecutionDate": "2025-06-26 15:18:18"
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\ParameterScript.ps1",
+    "ExecutionResult": "Success",
+    "Purpose": "Auto-registered for testing",
+    "Executed": true,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:18:18",
+    "ExecutionDate": "2025-06-26 15:18:18"
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\ErrorScript.ps1",
+    "ExecutionResult": "Failed: This is a test error",
+    "Purpose": "Auto-registered for testing",
+    "Executed": false,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:18:18",
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\ScopeTest.ps1",
+    "ExecutionResult": "Success",
+    "Purpose": "Auto-registered for testing",
+    "Executed": true,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:18:18",
+    "ExecutionDate": "2025-06-26 15:18:18"
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\DoesNotExist.ps1",
+    "ExecutionResult": "Failed: The term 'C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\DoesNotExist.ps1' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+    "Purpose": "Auto-registered for testing",
+    "Executed": false,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:18:18",
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\LongRunningScript.ps1",
+    "ExecutionResult": "Success",
+    "Purpose": "Auto-registered for testing",
+    "Executed": true,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:18:18",
+    "ExecutionDate": "2025-06-26 15:18:20"
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\WorkflowTest.ps1",
+    "ExecutionResult": "Success",
+    "Purpose": "",
+    "Executed": true,
+    "Author": "",
+    "RegisteredDate": "2025-06-26 15:18:20",
+    "ExecutionDate": "2025-06-26 15:18:20"
+  },
+  {
+    "ScriptPath": "C:\\NonExistent\\Invalid\\Path\\Script.ps1",
+    "ExecutionResult": null,
+    "Purpose": "",
+    "Executed": false,
+    "Author": "",
+    "RegisteredDate": "2025-06-26 15:18:20",
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\RapidTest1.ps1",
+    "ExecutionResult": null,
+    "Purpose": "",
+    "Executed": false,
+    "Author": "",
+    "RegisteredDate": "2025-06-26 15:18:20",
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\RapidTest2.ps1",
+    "ExecutionResult": null,
+    "Purpose": "",
+    "Executed": false,
+    "Author": "",
+    "RegisteredDate": "2025-06-26 15:18:20",
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\RapidTest3.ps1",
+    "ExecutionResult": null,
+    "Purpose": "",
+    "Executed": false,
+    "Author": "",
+    "RegisteredDate": "2025-06-26 15:18:21",
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\RapidTest4.ps1",
+    "ExecutionResult": null,
+    "Purpose": "",
+    "Executed": false,
+    "Author": "",
+    "RegisteredDate": "2025-06-26 15:18:21",
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\RapidTest5.ps1",
+    "ExecutionResult": null,
+    "Purpose": "",
+    "Executed": false,
+    "Author": "",
+    "RegisteredDate": "2025-06-26 15:18:21",
+    "ExecutionDate": null
+  },
+  {
+    "Executed": true,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:19:51",
+    "Purpose": "Auto-registered for testing",
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a5a77b5-9418-4e76-8f72-0d112a5f7a06\\Scripts\\SimpleScript.ps1",
+    "ExecutionResult": "Success",
+    "ExecutionDate": "2025-06-26 15:19:51"
+  },
+  {
+    "Executed": true,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:19:51",
+    "Purpose": "Auto-registered for testing",
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a5a77b5-9418-4e76-8f72-0d112a5f7a06\\Scripts\\ParameterScript.ps1",
+    "ExecutionResult": "Success",
+    "ExecutionDate": "2025-06-26 15:19:51"
+  },
+  {
+    "Executed": false,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:19:51",
+    "Purpose": "Auto-registered for testing",
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a5a77b5-9418-4e76-8f72-0d112a5f7a06\\Scripts\\ErrorScript.ps1",
+    "ExecutionResult": "Failed: This is a test error",
+    "ExecutionDate": null
+  },
+  {
+    "Executed": true,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:19:51",
+    "Purpose": "Auto-registered for testing",
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a5a77b5-9418-4e76-8f72-0d112a5f7a06\\Scripts\\ScopeTest.ps1",
+    "ExecutionResult": "Success",
+    "ExecutionDate": "2025-06-26 15:19:51"
+  },
+  {
+    "Executed": true,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:19:51",
+    "Purpose": "Auto-registered for testing",
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a5a77b5-9418-4e76-8f72-0d112a5f7a06\\Scripts\\WorkflowTest.ps1",
+    "ExecutionResult": "Success",
+    "ExecutionDate": "2025-06-26 15:19:51"
+  },
+  {
+    "RegisteredDate": "2025-06-26 15:20:21",
+    "Parameters": {},
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\d668ba42-011a-4e68-b3e7-aed412b843a2\\Scripts\\TestScript.ps1",
+    "ExecutionDate": null,
+    "Executed": false,
+    "ExecutionResult": null,
+    "Description": "",
+    "Name": "TestScript"
+  },
+  {
+    "RegisteredDate": "2025-06-26 15:20:21",
+    "Parameters": {},
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\d668ba42-011a-4e68-b3e7-aed412b843a2\\Scripts\\NonExistent.ps1",
+    "ExecutionDate": null,
+    "Executed": false,
+    "ExecutionResult": null,
+    "Description": "",
+    "Name": "NonExistentScript"
+  },
+  {
+    "RegisteredDate": "2025-06-26 15:20:21",
+    "Parameters": {},
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\d668ba42-011a-4e68-b3e7-aed412b843a2\\Scripts\\WorkflowTest.ps1",
+    "ExecutionDate": "2025-06-26 15:20:21",
+    "Executed": true,
+    "ExecutionResult": "Success",
+    "Description": "Test workflow script",
+    "Name": "WorkflowScript"
+  },
+  {
+    "RegisteredDate": "2025-06-26 15:20:21",
+    "Parameters": {},
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\d668ba42-011a-4e68-b3e7-aed412b843a2\\Scripts\\RapidTest1.ps1",
+    "ExecutionDate": null,
+    "Executed": false,
+    "ExecutionResult": null,
+    "Description": "",
+    "Name": "RapidScript1"
+  },
+  {
+    "RegisteredDate": "2025-06-26 15:20:21",
+    "Parameters": {},
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\d668ba42-011a-4e68-b3e7-aed412b843a2\\Scripts\\RapidTest2.ps1",
+    "ExecutionDate": null,
+    "Executed": false,
+    "ExecutionResult": null,
+    "Description": "",
+    "Name": "RapidScript2"
+  },
+  {
+    "RegisteredDate": "2025-06-26 15:20:21",
+    "Parameters": {},
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\d668ba42-011a-4e68-b3e7-aed412b843a2\\Scripts\\RapidTest3.ps1",
+    "ExecutionDate": null,
+    "Executed": false,
+    "ExecutionResult": null,
+    "Description": "",
+    "Name": "RapidScript3"
+  },
+  {
+    "RegisteredDate": "2025-06-26 15:20:21",
+    "Parameters": {},
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\d668ba42-011a-4e68-b3e7-aed412b843a2\\Scripts\\RapidTest4.ps1",
+    "ExecutionDate": null,
+    "Executed": false,
+    "ExecutionResult": null,
+    "Description": "",
+    "Name": "RapidScript4"
+  },
+  {
+    "RegisteredDate": "2025-06-26 15:20:21",
+    "Parameters": {},
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\d668ba42-011a-4e68-b3e7-aed412b843a2\\Scripts\\RapidTest5.ps1",
+    "ExecutionDate": null,
+    "Executed": false,
+    "ExecutionResult": null,
+    "Description": "",
+    "Name": "RapidScript5"
+  }
+]

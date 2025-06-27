@@ -4,19 +4,14 @@ BeforeAll {
         param([string]$Message, [string]$Level = "INFO")
         Write-Host "[$Level] $Message"
     }
-    
-    # Find project root using robust detection
-    $projectRoot = if ($env:PROJECT_ROOT) { 
-        $env:PROJECT_ROOT 
-    } elseif (Test-Path '/workspaces/AitherLabs') { 
-        '/workspaces/AitherLabs' 
-    } else { 
-        Split-Path -Parent (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))) 
-    }
-    
+
+    # Import shared utilities for proper path detection
+    . "$PSScriptRoot/../../../../aither-core/shared/Find-ProjectRoot.ps1"
+    $projectRoot = Find-ProjectRoot
+
     # Import the UnifiedMaintenance module
     $unifiedMaintenancePath = Join-Path $projectRoot "aither-core/modules/UnifiedMaintenance"
-    
+
     try {
         Import-Module $unifiedMaintenancePath -Force -ErrorAction Stop
         Write-Host "UnifiedMaintenance module imported successfully" -ForegroundColor Green
@@ -33,7 +28,7 @@ Describe "UnifiedMaintenance Module Tests" {
             { Import-Module (Join-Path $projectRoot "aither-core/modules/UnifiedMaintenance") -Force } | Should -Not -Throw
         }
     }
-    
+
     Context "Core Functions" {
         It "Should have exported functions available" {
             $module = Get-Module UnifiedMaintenance

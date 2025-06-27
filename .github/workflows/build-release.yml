@@ -5,6 +5,19 @@ on:
   push:
     branches: [main, master]  # Trigger on successful PR merges
     tags: ['v*']  # Only trigger on version tags like v1.0.0
+    # Skip builds for these non-core changes that don't affect the application package
+    paths-ignore:
+      - 'docs/**'
+      - 'tests/**'
+      - 'tools/**'
+      - 'backups/**'
+      - 'coverage/**'
+      - 'logs/**'
+      - 'mcp-server/**'
+      - '*.md'
+      - '!README.md'  # Include README.md since it's packaged
+      - '.github/**'
+      - '!.github/workflows/build-release.yml'  # Include this workflow file
   workflow_dispatch:
     inputs:
       release_type:
@@ -662,4 +675,3 @@ jobs:
           }
 
           Write-Host "🎉 Release validation completed successfully!" -ForegroundColor Green
-

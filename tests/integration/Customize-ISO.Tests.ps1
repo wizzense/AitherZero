@@ -1,21 +1,21 @@
-# Required test file header
-$script:TestRootPath = Split-Path -Parent $PSScriptRoot
-$script:HelpersPath = Join-Path $script:TestRootPath 'helpers' 'TestHelpers.ps1'
-if (Test-Path $script:HelpersPath) {
-    . $script:HelpersPath
-}
+# Required test file header using shared utilities
+. "$PSScriptRoot/../../aither-core/shared/Find-ProjectRoot.ps1"
+$script:ProjectRoot = Find-ProjectRoot
 
 Describe 'Customize-ISO Tests' -Tags @('Integration', 'ISO') {
     BeforeAll {
-        $script:ModulePath = Join-Path $script:TestRootPath '../aither-core/modules/LabRunner'
+        # Import the ISOCustomizer module (Customize-ISO was replaced)
+        $script:ModulePath = Join-Path $script:ProjectRoot 'aither-core/modules/ISOCustomizer'
         if (Test-Path $script:ModulePath) {
             Import-Module $script:ModulePath -Force
+        } else {
+            Write-Warning "ISOCustomizer module not found at: $script:ModulePath"
         }
     }
 
     Context 'Module Loading' {
-        It 'should load required modules' {
-            Get-Module LabRunner | Should -Not -BeNullOrEmpty
+        It 'should load ISOCustomizer module' {
+            Get-Module ISOCustomizer | Should -Not -BeNullOrEmpty
         }
     }
 

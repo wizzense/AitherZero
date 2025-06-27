@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "aitherzero-automation": {
+      "command": "node",
+      "args": ["C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\mcp-server\\enhanced-index.js"],
+      "env": {
+        "PROJECT_ROOT": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero"
+      }
+    }
+  }
+}

@@ -52,24 +52,24 @@ function Invoke-BackupMaintenance {
         [Parameter(Mandatory=$false)]
         [ValidateSet("Quick", "Full", "Cleanup", "Statistics", "All")]
         [string]$Mode = "Quick",
-        
+
         [Parameter(Mandatory=$false)]
         [switch]$AutoFix,
-        
+
         [Parameter(Mandatory=$false)]
         [ValidateSet("Standard", "CI", "JSON")]
         [string]$OutputFormat = "Standard"
     )
-    
+
     $errorResultActionPreference = "Stop"    # Import required modules
     try {
-        $labRunnerPath = "$env:PROJECT_ROOT\pwsh\modules\LabRunner"
+        $labRunnerPath = "$env:PROJECT_ROOT\aither-core\modules\LabRunner"
         Import-Module $labRunnerPath -Force -ErrorAction Stop
     } catch {
         Write-Error "Failed to import LabRunner module: $($_.Exception.Message)"
         return
     }
-    
+
     # Initialize results tracking
     $results = @{
         Mode = $Mode
@@ -84,7 +84,7 @@ function Invoke-BackupMaintenance {
         Errors = @()
         Success = $true
     }
-    
+
     try {
         Write-CustomLog "Starting backup maintenance in $Mode mode..." "INFO"
           # Execute maintenance operations based on mode
@@ -105,23 +105,23 @@ function Invoke-BackupMaintenance {
                 $results = Invoke-AllBackupMaintenance -Results $results -AutoFix:$AutoFix
             }
         }
-        
+
         # Generate final statistics
         $results.EndTime = Get-Date
         $results.Duration = $results.EndTime - $results.StartTime
         $results.TotalOperations = $results.Operations.Count
-        
+
         # Output results based on format
         Write-BackupMaintenanceResults -Results $results -OutputFormat $OutputFormat
-        
+
         if ($results.Errors.Count -eq 0) {
             Write-CustomLog "Backup maintenance completed successfully" "INFO"
         } else {
             Write-CustomLog "Backup maintenance completed with $($results.Errors.Count) errors" "WARN"
         }
-        
+
         return $results
-        
+
     } catch {
         $results.Success = $false
         $results.Errors += $_.Exception.Message
@@ -133,7 +133,7 @@ function Invoke-BackupMaintenance {
 # Internal helper functions
 function Invoke-QuickBackupMaintenance {
     param($Results, [switch]$AutoFix)
-    
+
     Write-CustomLog "Executing quick backup maintenance..." "INFO"
       # 1. Quick backup consolidation
     try {
@@ -145,7 +145,7 @@ function Invoke-QuickBackupMaintenance {
                 DirectoriesProcessed = 0
             }
         } else {
-            $consolidationResult = Invoke-BackupConsolidation -ProjectRoot "." -Force
+            $consolidationResult = Invoke-BackupConsolidation -SourcePath "." -BackupPath "./backups" -Force
         }
         $Results.Operations += @{
             Operation = "BackupConsolidation"
@@ -161,7 +161,7 @@ function Invoke-QuickBackupMaintenance {
             Error = $_.Exception.Message
         }
     }
-    
+
     # 2. Basic cleanup of problematic files
     if ($AutoFix) {        try {
             Write-CustomLog "Running basic cleanup..." "INFO"            if ($WhatIfPreference) {
@@ -186,18 +186,18 @@ function Invoke-QuickBackupMaintenance {
             }
         }
     }
-    
+
     return $Results
 }
 
 function Invoke-FullBackupMaintenance {
     param($Results, [switch]$AutoFix)
-    
+
     Write-CustomLog "Executing full backup maintenance..." "INFO"
-    
+
     # Run quick maintenance first
     $Results = Invoke-QuickBackupMaintenance -Results $Results -AutoFix:$AutoFix
-    
+
     # 3. Complete permanent cleanup
     if ($AutoFix) {        try {
             Write-CustomLog "Running comprehensive cleanup..." "INFO"            if ($WhatIfPreference) {
@@ -243,15 +243,15 @@ function Invoke-FullBackupMaintenance {
             Error = $_.Exception.Message
         }
     }
-    
+
     return $Results
 }
 
 function Invoke-CleanupBackupMaintenance {
     param($Results, [switch]$AutoFix)
-    
+
     Write-CustomLog "Executing cleanup-focused backup maintenance..." "INFO"
-    
+
     if ($AutoFix) {
         try {
             Write-CustomLog "Running comprehensive permanent cleanup..." "INFO"        if ($WhatIfPreference) {
@@ -277,13 +277,13 @@ function Invoke-CleanupBackupMaintenance {
     } else {
         Write-CustomLog "AutoFix not enabled - skipping cleanup operations" "WARN"
     }
-    
+
     return $Results
 }
 
 function Invoke-StatisticsBackupMaintenance {
     param($Results)
-    
+
     Write-CustomLog "Executing statistics-focused backup maintenance..." "INFO"
       try {
         Write-CustomLog "Generating comprehensive backup statistics..." "INFO"
@@ -305,18 +305,18 @@ function Invoke-StatisticsBackupMaintenance {
             Error = $_.Exception.Message
         }
     }
-    
+
     return $Results
 }
 
 function Invoke-AllBackupMaintenance {
     param($Results, [switch]$AutoFix)
-    
+
     Write-CustomLog "Executing complete backup maintenance..." "INFO"
-    
+
     # Run full maintenance
     $Results = Invoke-FullBackupMaintenance -Results $Results -AutoFix:$AutoFix
-    
+
     # 5. Update backup exclusions
     try {
         Write-CustomLog "Updating backup exclusions..." "INFO"
@@ -334,16 +334,16 @@ function Invoke-AllBackupMaintenance {
             Error = $_.Exception.Message
         }
     }
-    
+
     # 6. Generate comprehensive report
     try {
         Write-CustomLog "Generating backup maintenance report..." "INFO"
         $reportPath = "./reports/backup-maintenance-$(Get-Date -Format 'yyyyMMdd-HHmmss').json"
-        
+
         if (-not $WhatIfPreference) {
             Results | ConvertTo-Json-Depth 10  Set-Content -Path $reportPath
         }
-        
+
         $Results.Operations += @{
             Operation = "ReportGeneration"
             Status = "Success"
@@ -357,16 +357,16 @@ function Invoke-AllBackupMaintenance {
             Error = $_.Exception.Message
         }
     }
-    
+
     return $Results
 }
 
 function Write-BackupMaintenanceResults {
     param($Results, $OutputFormat)
-    
+
     switch ($OutputFormat) {
         "JSON" {
-            Results | ConvertTo-Json-Depth 10
+            $Results | ConvertTo-Json -Depth 10
         }
         "CI" {
             Write-Host "::group::Backup Maintenance Results"
@@ -374,7 +374,7 @@ function Write-BackupMaintenanceResults {
             Write-Host "Duration: $($Results.Duration.TotalSeconds) seconds"
             Write-Host "Operations: $($Results.TotalOperations)"
             Write-Host "Errors: $($Results.Errors.Count)"
-            
+
             foreach ($operation in $Results.Operations) {
                 if ($operation.Status -eq "Success") {
                     Write-Host " $($operation.Operation)" -ForegroundColor Green
@@ -389,7 +389,7 @@ function Write-BackupMaintenanceResults {
             Write-Host "Mode: $($Results.Mode)" -ForegroundColor White
             Write-Host "Duration: $($Results.Duration.TotalSeconds) seconds" -ForegroundColor White
             Write-Host "Total Operations: $($Results.TotalOperations)" -ForegroundColor White
-            
+
             if ($Results.Operations.Count -gt 0) {
                 Write-Host "`nOperations:" -ForegroundColor Yellow
                 foreach ($operation in $Results.Operations) {
@@ -400,20 +400,20 @@ function Write-BackupMaintenanceResults {
                     }
                 }
             }
-            
+
             if ($Results.Statistics.Count -gt 0) {
                 Write-Host "`nStatistics:" -ForegroundColor Yellow
                 Write-Host "  Backup Directories: $($Results.Statistics.BackupDirectories.Count)" -ForegroundColor White
                 Write-Host "  Total Backup Size: $($Results.Statistics.TotalBackupSize)" -ForegroundColor White
             }
-            
+
             if ($Results.Errors.Count -gt 0) {
                 Write-Host "`nErrors:" -ForegroundColor Red
                 foreach ($errorResult in $Results.Errors) {
                     Write-Host "  • $errorResult" -ForegroundColor Red
                 }
             }
-            
+
             Write-Host "=================================" -ForegroundColor Cyan
         }
     }

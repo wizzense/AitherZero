@@ -1,14 +1,9 @@
 Describe 'Performance Load Testing Tests' {
 
 BeforeAll {
-    # Find project root using robust detection
-    $projectRoot = if ($env:PROJECT_ROOT) {
-        $env:PROJECT_ROOT
-    } elseif (Test-Path '/workspaces/AitherLabs') {
-        '/workspaces/AitherLabs'
-    } else {
-        Split-Path -Parent (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
-    }
+    # Find project root using shared utilities
+    . "$PSScriptRoot/../../../aither-core/shared/Find-ProjectRoot.ps1"
+    $projectRoot = Find-ProjectRoot
 
     # Import core modules for performance testing
     $script:PerformanceModules = @{}
@@ -19,7 +14,7 @@ BeforeAll {
         try {
             Import-Module $modulePath -Force -ErrorAction Stop
             $script:PerformanceModules[$moduleName] = $true
-            Write-Host "Imported $moduleName for performance testing" -ForegroundColor Green
+            Write-Verbose "Imported $moduleName for performance testing"
         }
         catch {
             Write-Warning "Could not import $moduleName for performance testing: $_"
@@ -488,8 +483,7 @@ Describe "Performance and Load Testing" {
             Write-Host "Concurrent stress test: $totalTime ms" -ForegroundColor Cyan
             Write-Host "Total successful operations: $totalSuccess" -ForegroundColor Green
 
-            $results.Count | Should -Be $jobCount
-            $totalSuccess | Should -BeGreaterThan 100  # At least some operations should succeed            Write-Host "Concurrent stress test: $totalTime ms" -ForegroundColor Cyan
+            Write-Host "Concurrent stress test: $totalTime ms" -ForegroundColor Cyan
             Write-Host "Total successful operations: $totalSuccess" -ForegroundColor Green
 
             $results.Count | Should -Be $jobCount
@@ -497,3 +491,5 @@ Describe "Performance and Load Testing" {
         }
     }
 }  # End of Describe 'Performance Load Testing Tests'
+
+}
