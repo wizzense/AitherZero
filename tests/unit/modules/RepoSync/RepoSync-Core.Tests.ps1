@@ -29,7 +29,69 @@ BeforeAll {
     function global:git {
         param()
         $global:LASTEXITCODE = 0
-        return "git command mocked"
+        
+        # Handle different git commands
+        if ($args -contains 'status' -and $args -contains '--porcelain') {
+            # Return empty string to indicate clean working directory
+            return ""
+        }
+        elseif ($args -contains 'remote' -and $args -contains '-v') {
+            # Return mocked remote info
+            return @(
+                "origin  https://github.com/user/AitherZero.git (fetch)",
+                "origin  https://github.com/user/AitherZero.git (push)",
+                "aitherlab  https://github.com/user/aitherlab.git (fetch)",
+                "aitherlab  https://github.com/user/aitherlab.git (push)"
+            )
+        }
+        elseif ($args -contains 'rev-list' -and $args -contains '--count') {
+            # Return a number for commit counts
+            return "0"
+        }
+        elseif ($args -contains 'diff' -and $args -contains '--name-only') {
+            # Return empty for no differences
+            return ""
+        }
+        elseif ($args -contains 'fetch') {
+            # Mock fetch operation
+            return ""
+        }
+        elseif ($args -contains 'checkout' -and $args -contains '-b') {
+            # Mock branch creation
+            return "Switched to a new branch 'mock-branch'"
+        }
+        elseif ($args -contains 'checkout' -and $args -contains '-') {
+            # Mock return to previous branch
+            return "Switched to branch 'main'"
+        }
+        elseif ($args -contains 'checkout' -and $args -contains 'HEAD') {
+            # Mock file checkout
+            return ""
+        }
+        elseif ($args -contains 'push') {
+            # Mock push operation
+            return "Everything up-to-date"
+        }
+        elseif ($args -contains 'merge') {
+            # Mock merge operation
+            return "Already up to date."
+        }
+        elseif ($args -contains 'commit') {
+            # Mock commit operation
+            return "[mock-branch 1234567] Mock commit"
+        }
+        elseif ($args -contains 'rm') {
+            # Mock rm operation
+            return ""
+        }
+        elseif ($args -contains 'branch' -and $args -contains '-D') {
+            # Mock branch deletion
+            return "Deleted branch mock-branch"
+        }
+        else {
+            # Default return
+            return "git command mocked"
+        }
     }
 
     # Mock external commands

@@ -1746,6 +1746,164 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             }
+        },
+        {
+            "label": "🔬 Run Code Coverage - Full",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "tests/Run-CodeCoverage.ps1",
+                "-Scope",
+                "Full",
+                "-ShowDetails",
+                "-OutputFormat",
+                "Console,JaCoCo,Cobertura"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🔬 Run Code Coverage - Module",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "tests/Run-CodeCoverage.ps1",
+                "-Scope",
+                "Module",
+                "-Module",
+                "${input:moduleName}",
+                "-ShowDetails",
+                "-OutputFormat",
+                "Console,CoverageGutters"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🔬 Quick Coverage Check",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "tests/Check-Coverage.ps1",
+                "-Quick",
+                "-ShowUncovered"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🔬 Coverage with Enforcement",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "tests/Run-CodeCoverage.ps1",
+                "-Scope",
+                "Full",
+                "-EnforceThresholds",
+                "-OutputFormat",
+                "JaCoCo"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "📊 All Module Tests with Coverage",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "tests/Run-AllModuleTests.ps1",
+                "-CodeCoverage",
+                "-CoverageFormat",
+                "JaCoCo"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🛡️ Bulletproof Validation with Coverage",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "tests/Run-BulletproofValidation.ps1",
+                "-ValidationLevel",
+                "${input:validationLevel}",
+                "-CodeCoverage",
+                "-EnforceCoverageThresholds"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
         }
     ],
     "inputs": [

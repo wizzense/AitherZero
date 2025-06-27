@@ -1,5 +1,7 @@
 {
   "repository": {
+    "type": "Development",
+    "fullName": "wizzense/AitherZero",
     "description": "Development fork",
     "urls": {
       "base": "https://github.com/wizzense/AitherZero",
@@ -7,21 +9,19 @@
       "raw": "https://raw.githubusercontent.com/wizzense/AitherZero"
     },
     "owner": "wizzense",
-    "name": "AitherZero",
-    "type": "Development",
-    "fullName": "wizzense/AitherZero"
+    "name": "AitherZero"
   },
   "forkChain": [
     {
-      "repository": "wizzense/AitherZero",
-      "urls": {
-        "base": "https://github.com/wizzense/AitherZero",
-        "raw": "https://raw.githubusercontent.com/wizzense/AitherZero"
-      },
       "type": "Development",
       "name": "origin",
-      "description": "Development fork"
+      "description": "Development fork",
+      "repository": "wizzense/AitherZero",
+      "urls": {
+        "raw": "https://raw.githubusercontent.com/wizzense/AitherZero",
+        "base": "https://github.com/wizzense/AitherZero"
+      }
     }
   ],
-  "lastUpdated": "2025-06-27T18:40:10Z"
+  "lastUpdated": "2025-06-27T19:29:45Z"
 }

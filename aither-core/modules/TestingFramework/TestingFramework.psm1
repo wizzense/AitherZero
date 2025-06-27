@@ -38,8 +38,8 @@ if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
     $loggingPaths = @(
         'Logging',
         (Join-Path (Split-Path $PSScriptRoot -Parent) "Logging"),
-        (Join-Path $env:PWSH_MODULES_PATH "Logging" -ErrorAction SilentlyContinue),
-        (Join-Path $env:PROJECT_ROOT "aither-core/modules/Logging" -ErrorAction SilentlyContinue)
+        $(if ($env:PWSH_MODULES_PATH) { Join-Path $env:PWSH_MODULES_PATH "Logging" } else { $null }),
+        $(if ($env:PROJECT_ROOT) { Join-Path $env:PROJECT_ROOT "aither-core/modules/Logging" } else { $null })
     )
 
     foreach ($loggingPath in $loggingPaths) {
@@ -204,7 +204,7 @@ function Invoke-UnifiedTestExecution {
                 Duration = (Get-Date) - $testPlan.StartTime
             }
 
-            return $results
+            return ,$results
 
         } catch {
             Write-TestLog "❌ Test execution failed: $($_.Exception.Message)" -Level "ERROR"
@@ -276,6 +276,7 @@ function New-TestExecutionPlan {
         [string]$TestSuite,
 
         [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
         [array]$Modules,
 
         [Parameter(Mandatory)]
@@ -452,7 +453,7 @@ function Invoke-ParallelTestExecution {
         Write-TestLog "✅ Phase $phase completed: $phaseSuccess/$phaseTotal successful" -Level "INFO"
     }
 
-    return $allResults
+    return ,$allResults
 }
 
 function Invoke-SequentialTestExecution {
@@ -512,7 +513,7 @@ function Invoke-SequentialTestExecution {
         }
     }
 
-    return $allResults
+    return ,$allResults
 }
 
 function Invoke-ModuleTestPhase {
@@ -810,6 +811,7 @@ function New-TestReport {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
         [array]$Results,
 
         [Parameter(Mandatory)]

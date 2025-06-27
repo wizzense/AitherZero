@@ -47,10 +47,16 @@ param(
     [switch]$CI,
 
     [Parameter()]
-    [int]$MaxParallelJobs = 4
+    [int]$MaxParallelJobs = 4,
+
+    [Parameter()]
+    [switch]$CodeCoverage,
+
+    [Parameter()]
+    [switch]$EnforceCoverageThresholds
 )
 
-Write-Host '� Bulletproof Validation - Enhanced with Parallel Execution' -ForegroundColor Cyan
+Write-Host '🛡️ Bulletproof Validation - Enhanced with Parallel Execution' -ForegroundColor Cyan
 Write-Host "Validation Level: $ValidationLevel | Max Parallel Jobs: $MaxParallelJobs" -ForegroundColor Yellow
 
 # Initialize environment
@@ -135,6 +141,49 @@ $config = @{
     }
 }
 
+# Configure code coverage if enabled
+if ($CodeCoverage) {
+    Write-Host '📊 Enabling code coverage analysis...' -ForegroundColor Cyan
+    
+    # Set coverage paths based on validation level
+    $coveragePaths = switch ($ValidationLevel) {
+        'Quick' {
+            @(
+                Join-Path $projectRoot 'aither-core/modules/Logging/*.ps1',
+                Join-Path $projectRoot 'aither-core/modules/LabRunner/*.ps1',
+                Join-Path $projectRoot 'aither-core/modules/BackupManager/*.ps1'
+            )
+        }
+        'Standard' {
+            @(
+                Join-Path $projectRoot 'aither-core/modules/*/*.ps1',
+                Join-Path $projectRoot 'aither-core/modules/*/*.psm1'
+            )
+        }
+        'Complete' {
+            @(
+                Join-Path $projectRoot 'aither-core/*.ps1',
+                Join-Path $projectRoot 'aither-core/*.psm1',
+                Join-Path $projectRoot 'aither-core/modules/*/*.ps1',
+                Join-Path $projectRoot 'aither-core/modules/*/*.psm1',
+                Join-Path $projectRoot 'aither-core/shared/*.ps1'
+            )
+        }
+    }
+    
+    $config.CodeCoverage = @{
+        Enabled = $true
+        Path = $coveragePaths
+        OutputFormat = if ($CI) { 'JaCoCo' } else { 'CoverageGutters' }
+        OutputPath = Join-Path $projectRoot "tests/results/bulletproof-coverage.$($config.CodeCoverage.OutputFormat.ToLower())"
+        OutputEncoding = 'UTF8'
+        ExcludeTests = $true
+        UseBreakpoints = $false
+        SingleHitBreakpoints = $true
+        CoveragePercentTarget = 80
+    }
+}
+
 # Configure parallel execution for Pester if we have multiple test paths
 if ($testPaths.Count -gt 1 -and $MaxParallelJobs -gt 1) {
     Write-Host '🔄 Configuring parallel test execution...' -ForegroundColor Cyan
@@ -178,8 +227,28 @@ try {
 
         Write-Host '✅ Parallel execution completed' -ForegroundColor Green
     } else {
-        Write-Host '� Executing tests sequentially...' -ForegroundColor Cyan
-        $result = Invoke-Pester -Configuration $config
+        Write-Host '🚀 Executing tests sequentially...' -ForegroundColor Cyan
+        
+        # Create proper Pester configuration
+        $pesterConfig = New-PesterConfiguration
+        $pesterConfig.Run.Path = $config.Run.Path
+        $pesterConfig.Run.PassThru = $config.Run.PassThru
+        $pesterConfig.Output.Verbosity = $config.Output.Verbosity
+        $pesterConfig.Should.ErrorAction = $config.Should.ErrorAction
+        
+        # Add code coverage if configured
+        if ($config.CodeCoverage) {
+            $pesterConfig.CodeCoverage.Enabled = $config.CodeCoverage.Enabled
+            $pesterConfig.CodeCoverage.Path = $config.CodeCoverage.Path
+            $pesterConfig.CodeCoverage.OutputFormat = $config.CodeCoverage.OutputFormat
+            $pesterConfig.CodeCoverage.OutputPath = $config.CodeCoverage.OutputPath
+            $pesterConfig.CodeCoverage.OutputEncoding = $config.CodeCoverage.OutputEncoding
+            $pesterConfig.CodeCoverage.ExcludeTests = $config.CodeCoverage.ExcludeTests
+            $pesterConfig.CodeCoverage.UseBreakpoints = $config.CodeCoverage.UseBreakpoints
+            $pesterConfig.CodeCoverage.SingleHitBreakpoints = $config.CodeCoverage.SingleHitBreakpoints
+        }
+        
+        $result = Invoke-Pester -Configuration $pesterConfig
     }
 
     $endTime = Get-Date
@@ -191,6 +260,29 @@ try {
     Write-Host "  Failed: $($result.FailedCount)" -ForegroundColor Red
     Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
     Write-Host "  Total: $($result.TotalCount)" -ForegroundColor White
+    
+    # Display code coverage results if enabled
+    if ($CodeCoverage -and $result.CodeCoverage) {
+        $coverage = $result.CodeCoverage
+        $coveragePercent = if ($coverage.NumberOfCommandsAnalyzed -gt 0) {
+            [Math]::Round(($coverage.NumberOfCommandsExecuted / $coverage.NumberOfCommandsAnalyzed) * 100, 2)
+        } else { 0 }
+        
+        Write-Host ''
+        Write-Host '📊 Code Coverage Results:' -ForegroundColor Cyan
+        Write-Host "  Coverage: $coveragePercent%" -ForegroundColor $(if ($coveragePercent -ge 80) { 'Green' } elseif ($coveragePercent -ge 60) { 'Yellow' } else { 'Red' })
+        Write-Host "  Commands Analyzed: $($coverage.NumberOfCommandsAnalyzed)" -ForegroundColor White
+        Write-Host "  Commands Executed: $($coverage.NumberOfCommandsExecuted)" -ForegroundColor White
+        Write-Host "  Commands Missed: $($coverage.NumberOfCommandsAnalyzed - $coverage.NumberOfCommandsExecuted)" -ForegroundColor White
+        Write-Host "  Report: $($config.CodeCoverage.OutputPath)" -ForegroundColor Gray
+        
+        # Enforce coverage thresholds if requested
+        if ($EnforceCoverageThresholds -and $coveragePercent -lt 80) {
+            Write-Host ''
+            Write-Host "❌ COVERAGE THRESHOLD NOT MET - Required: 80%, Actual: $coveragePercent%" -ForegroundColor Red
+            exit 1
+        }
+    }
 
     if ($result.FailedCount -gt 0) {
         Write-Host ''

@@ -35,13 +35,16 @@
     CodeCoverage = @{
         Enabled = $true  # Re-enabled with bulletproof optimizations
         Path = @(
-            'aither-core/core-runner.ps1',
-            'aither-core/CoreApp.psm1',
-            'aither-core/modules/Logging/*.ps1',
-            'aither-core/modules/LabRunner/*.ps1',
-            'aither-core/modules/TestingFramework/*.ps1'
+            'aither-core/*.ps1',
+            'aither-core/*.psm1',
+            'aither-core/modules/*/*.ps1',
+            'aither-core/modules/*/*.psm1',
+            'aither-core/shared/*.ps1'
         )
-        OutputFormat = 'JaCoCo'
+        ExcludeTests = $true
+        RecursePaths = $true
+        CoveragePercentTarget = 80  # Target 80% minimum coverage
+        OutputFormat = 'JaCoCo'  # Primary format for CI/CD
         OutputPath = 'tests/results/coverage.xml'
         OutputEncoding = 'UTF8'
         UseBreakpoints = $false
@@ -67,5 +70,13 @@
         ExitCodeTesting = $true
         LogFileValidation = $true
         PerformanceBenchmarks = $true
+        # Code coverage thresholds
+        CoverageThresholds = @{
+            Functions = 80  # 80% function coverage required
+            Lines = 75      # 75% line coverage required
+            Commands = 70   # 70% command coverage required
+        }
+        # Additional coverage formats for reporting
+        AdditionalCoverageFormats = @('CoverageGutters', 'Cobertura')
     }
 }

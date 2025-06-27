@@ -3,11 +3,11 @@
 
 <#
 .SYNOPSIS
-    Unit tests for core-runner scripts
+    Unit tests for aither-core scripts
     
 .DESCRIPTION
-    Comprehensive unit tests for all core-runner scripts including:
-    - core-runner.ps1
+    Comprehensive unit tests for all aither-core scripts including:
+    - aither-core.ps1
     - Validation of script structure and functionality
     - Parameter validation
     - Cross-platform compatibility
@@ -24,7 +24,7 @@ BeforeAll {
     
     # Set up test environment
     $script:CoreRunnerPath = "$env:PROJECT_ROOT/aither-core"
-    $script:CoreRunnerScript = "$script:CoreRunnerPath/core-runner.ps1"
+    $script:CoreRunnerScript = "$script:CoreRunnerPath/aither-core.ps1"
 
     
     # Mock Write-CustomLog to avoid dependencies
@@ -42,23 +42,23 @@ Describe 'Core Runner Script Validation Tests' -Tag @('Unit', 'CoreRunner', 'Val
     
     Context 'Script file existence and basic validation' {
         
-        It 'should have core-runner.ps1 script' {
+        It 'should have aither-core.ps1 script' {
             $script:CoreRunnerScript | Should -Exist
         }
         
-        It 'should have valid PowerShell syntax in core-runner.ps1' {
+        It 'should have valid PowerShell syntax in aither-core.ps1' {
             $errors = $null
             [System.Management.Automation.Language.Parser]::ParseFile($script:CoreRunnerScript, [ref]$null, [ref]$errors) | Out-Null
             
             $errorCount = if ($errors) { $errors.Count } else { 0 }
-            $errorCount | Should -Be 0 -Because 'core-runner.ps1 should have valid PowerShell syntax'
+            $errorCount | Should -Be 0 -Because 'aither-core.ps1 should have valid PowerShell syntax'
         }
     }
 }
 
 Describe 'Core Runner Script Structure Tests' -Tag @('Unit', 'CoreRunner', 'Structure') {
     
-    Context 'core-runner.ps1 structure validation' {
+    Context 'aither-core.ps1 structure validation' {
         
         BeforeAll {
             $script:CoreRunnerContent = Get-Content $script:CoreRunnerScript -Raw
@@ -105,7 +105,7 @@ Describe 'Core Runner Script Structure Tests' -Tag @('Unit', 'CoreRunner', 'Stru
 }
 Describe 'Core Runner Parameter Validation Tests' -Tag @('Unit', 'CoreRunner', 'Parameters') {
     
-    Context 'core-runner.ps1 parameter validation' {        It 'should accept Quiet parameter as switch' {
+    Context 'aither-core.ps1 parameter validation' {        It 'should accept Quiet parameter as switch' {
             { & $script:CoreRunnerScript -Quiet -Scripts "0200_Get-SystemInfo" -WhatIf } | Should -Not -Throw
         }
         
@@ -162,7 +162,7 @@ Describe 'Core Runner Cross-Platform Compatibility Tests' -Tag @('Unit', 'CoreRu
     
     Context 'Path handling and platform-specific code' {
         
-        It 'should not use Windows-specific path formats in core-runner.ps1' {
+        It 'should not use Windows-specific path formats in aither-core.ps1' {
             $content = Get-Content $script:CoreRunnerScript -Raw
             $content | Should -Not -Match '[A-Z]:\\|\\\\' -Because 'Script should not use Windows-specific path formats'
         }
