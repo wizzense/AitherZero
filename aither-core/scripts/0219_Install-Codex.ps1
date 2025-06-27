@@ -81,16 +81,16 @@ begin {
     Write-CustomLog -Level 'INFO' -Message "Project Root: $projectRoot"
 
     # Platform detection
-    $isWindows = $PSVersionTable.PSVersion.Major -ge 6 -and $IsWindows
-    $isLinux = $PSVersionTable.PSVersion.Major -ge 6 -and $IsLinux
-    $isMacOS = $PSVersionTable.PSVersion.Major -ge 6 -and $IsMacOS
+    $platformIsWindows = $PSVersionTable.PSVersion.Major -ge 6 -and $IsWindows
+    $platformIsLinux = $PSVersionTable.PSVersion.Major -ge 6 -and $IsLinux
+    $platformIsMacOS = $PSVersionTable.PSVersion.Major -ge 6 -and $IsMacOS
 
-    if (-not ($isWindows -or $isLinux -or $isMacOS)) {
+    if (-not ($platformIsWindows -or $platformIsLinux -or $platformIsMacOS)) {
         # PowerShell 5.1 or other - assume Windows
-        $isWindows = $true
+        $platformIsWindows = $true
     }
 
-    Write-CustomLog -Level 'INFO' -Message "Detected Platform: Windows=$isWindows, Linux=$isLinux, macOS=$isMacOS"
+    Write-CustomLog -Level 'INFO' -Message "Detected Platform: Windows=$platformIsWindows, Linux=$platformIsLinux, macOS=$platformIsMacOS"
 }
 
 process {
@@ -104,7 +104,7 @@ process {
         }
 
         # Add Windows-specific parameters
-        if ($isWindows) {
+        if ($platformIsWindows) {
             if ($SkipWSL) {
                 $installParams.SkipWSL = $true
                 Write-CustomLog -Level 'INFO' -Message "WSL installation will be skipped"
@@ -163,7 +163,7 @@ process {
         Write-CustomLog -Level 'INFO' -Message "1. Check the error message above for specific issues"
         Write-CustomLog -Level 'INFO' -Message "2. Ensure you have internet connectivity"
 
-        if ($isWindows) {
+        if ($platformIsWindows) {
             Write-CustomLog -Level 'INFO' -Message "3. On Windows, ensure you're running as Administrator (unless using -SkipWSL)"
             Write-CustomLog -Level 'INFO' -Message "4. Check Windows version: Windows 10 2004+ or Windows 11 required for WSL2"
         }

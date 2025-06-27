@@ -104,22 +104,22 @@ function Install-CodexCLIDependencies {
         $script:ErrorsEncountered = @()
         
         # Platform detection
-        $isWindows = $PSVersionTable.PSVersion.Major -ge 6 -and $IsWindows
-        $isLinux = $PSVersionTable.PSVersion.Major -ge 6 -and $IsLinux
-        $isMacOS = $PSVersionTable.PSVersion.Major -ge 6 -and $IsMacOS
+        $platformIsWindows = $PSVersionTable.PSVersion.Major -ge 6 -and $IsWindows
+        $platformIsLinux = $PSVersionTable.PSVersion.Major -ge 6 -and $IsLinux
+        $platformIsMacOS = $PSVersionTable.PSVersion.Major -ge 6 -and $IsMacOS
         
-        if (-not ($isWindows -or $isLinux -or $isMacOS)) {
+        if (-not ($platformIsWindows -or $platformIsLinux -or $platformIsMacOS)) {
             # PowerShell 5.1 or other - assume Windows
-            $isWindows = $true
+            $platformIsWindows = $true
         }
         
-        Write-CustomLog -Level 'DEBUG' -Message "Platform detected: Windows=$isWindows, Linux=$isLinux, macOS=$isMacOS"
+        Write-CustomLog -Level 'DEBUG' -Message "Platform detected: Windows=$platformIsWindows, Linux=$platformIsLinux, macOS=$platformIsMacOS"
     }
 
     process {
         try {
             # Define installation plan based on platform
-            if ($isWindows) {
+            if ($platformIsWindows) {
                 if (-not $SkipWSL) {
                     $script:InstallationSteps += @(
                         "Check Windows version compatibility",
@@ -137,14 +137,14 @@ function Install-CodexCLIDependencies {
                         "Install Codex CLI in WSL"
                     )
                 }
-            } elseif ($isLinux) {
+            } elseif ($platformIsLinux) {
                 $script:InstallationSteps += @(
                     "Check Linux distribution",
                     "Install prerequisites (curl, bash)",
                     "Install Node.js via nvm",
                     "Install Codex CLI"
                 )
-            } elseif ($isMacOS) {
+            } elseif ($platformIsMacOS) {
                 $script:InstallationSteps += @(
                     "Check macOS version",
                     "Install prerequisites (curl, bash)",
@@ -164,11 +164,11 @@ function Install-CodexCLIDependencies {
             }
 
             # Execute installation steps based on platform
-            if ($isWindows) {
+            if ($platformIsWindows) {
                 Install-CodexCLI-Windows
-            } elseif ($isLinux) {
+            } elseif ($platformIsLinux) {
                 Install-CodexCLI-Linux  
-            } elseif ($isMacOS) {
+            } elseif ($platformIsMacOS) {
                 Install-CodexCLI-macOS
             }
 
@@ -521,7 +521,7 @@ function Test-CodexCLIInstallation {
     Write-CustomLog -Level 'INFO' -Message "Verifying Codex CLI installation..."
     
     try {
-        if ($isWindows -and -not $SkipWSL) {
+        if ($platformIsWindows -and -not $SkipWSL) {
             # Test in WSL
             $testResult = wsl bash -c "source ~/.nvm/nvm.sh && codex --version" 2>&1
         } else {

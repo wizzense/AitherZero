@@ -595,6 +595,10 @@ jobs:
                 exit 1
               }
             }
+          }
+
+          # Close the switch statement
+          }
 
           # For full test runs, use bulletproof validation
           if (Test-Path './tests/Run-BulletproofValidation.ps1') {
@@ -665,12 +669,12 @@ jobs:
         run: |
           Write-Host "🛡️ Running security analysis..." -ForegroundColor Cyan
 
-          # Check for sensitive patterns - simplified patterns to avoid regex parsing issues
+          # Check for sensitive patterns - properly escaped for PowerShell
           $sensitivePatterns = @(
-            'password\s*[:=]\s*["\''']?\w{8,}',
-            'secret\s*[:=]\s*["\''']?\w{8,}',
-            'api.?key\s*[:=]\s*["\''']?\w{20,}',
-            'token\s*[:=]\s*["\''']?\w{20,}'
+            'password\s*[:=]\s*["''''`"]?\w{8,}',
+            'secret\s*[:=]\s*["''''`"]?\w{8,}',
+            'api.?key\s*[:=]\s*["''''`"]?\w{20,}',
+            'token\s*[:=]\s*["''''`"]?\w{20,}'
           )
 
           $violations = @()

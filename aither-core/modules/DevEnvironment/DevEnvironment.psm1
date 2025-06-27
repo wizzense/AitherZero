@@ -21,11 +21,19 @@ if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
     Write-Verbose "Logging module already available"
 } else {
     $loggingPaths = @(
-        'Logging',  # Try module name first (if in PSModulePath)
-        (Join-Path (Split-Path $PSScriptRoot -Parent) "Logging"),  # Relative to modules directory
-        (Join-Path $env:PWSH_MODULES_PATH "Logging"),  # Environment path
-        (Join-Path $env:PROJECT_ROOT "aither-core/modules/Logging")  # Full project path
+        'Logging'  # Try module name first (if in PSModulePath)
     )
+    
+    # Add paths only if they have valid base paths
+    if ($PSScriptRoot) {
+        $loggingPaths += Join-Path (Split-Path $PSScriptRoot -Parent) "Logging"
+    }
+    if ($env:PWSH_MODULES_PATH) {
+        $loggingPaths += Join-Path $env:PWSH_MODULES_PATH "Logging"
+    }
+    if ($env:PROJECT_ROOT) {
+        $loggingPaths += Join-Path $env:PROJECT_ROOT "aither-core/modules/Logging"
+    }
 
     foreach ($loggingPath in $loggingPaths) {
         if ($loggingImported) { break }
