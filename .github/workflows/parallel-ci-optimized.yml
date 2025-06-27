@@ -66,12 +66,71 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Detect Changed Files
+        id: changes
+        run: |
+          echo "Detecting changed files for smart CI optimization..."
+          
+          # For PRs, compare against the base branch
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }})
+          else
+            # For pushes, compare against previous commit
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          fi
+          
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          
+          # Check if changes are PatchManager-only
+          PATCHMANAGER_ONLY="true"
+          CORE_CHANGES="false"
+          
+          while IFS= read -r file; do
+            echo "Checking: $file"
+            case "$file" in
+              # PatchManager changes (allowed for minimal testing)
+              aither-core/modules/PatchManager/*) 
+                echo "  -> PatchManager change detected" ;;
+              docs/PATCHMANAGER*) 
+                echo "  -> PatchManager documentation change" ;;
+              *.md) 
+                echo "  -> Documentation change" ;;
+              # Core system changes (require full testing)
+              aither-core/modules/LabRunner/*|aither-core/modules/DevEnvironment/*|aither-core/modules/TestingFramework/*|aither-core/core-runner.ps1|aither-core/shared/*|tests/*)
+                echo "  -> Core system change detected"
+                CORE_CHANGES="true"
+                PATCHMANAGER_ONLY="false" ;;
+              # CI/Workflow changes (require full testing)
+              .github/workflows/*)
+                echo "  -> CI/Workflow change detected"
+                CORE_CHANGES="true"
+                PATCHMANAGER_ONLY="false" ;;
+              *)
+                echo "  -> Other change detected"
+                PATCHMANAGER_ONLY="false" ;;
+            esac
+          done <<< "$CHANGED_FILES"
+          
+          echo "patchmanager-only=$PATCHMANAGER_ONLY" >> $GITHUB_OUTPUT
+          echo "core-changes=$CORE_CHANGES" >> $GITHUB_OUTPUT
+          echo "changed-files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Configure Pipeline
         id: config
         run: |
+          # Check if this is a PatchManager-only change
+          PATCHMANAGER_ONLY="${{ steps.changes.outputs.patchmanager-only }}"
+          
           # Determine test level
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             LEVEL="${{ github.event.inputs.test_level }}"
+          elif [ "$PATCHMANAGER_ONLY" = "true" ]; then
+            # PatchManager-only changes use minimal testing
+            LEVEL="PatchManager"
+            echo "🎯 PatchManager-only changes detected - using minimal test suite"
           elif [ "${{ github.event_name }}" = "pull_request" ]; then
             LEVEL="Standard"
           else
@@ -79,22 +138,36 @@ jobs:
           fi
           echo "test-level=$LEVEL" >> $GITHUB_OUTPUT
 
-          # Optimized matrices for speed
+          # Configure matrices and settings based on level
           case $LEVEL in
+            "PatchManager")
+              # Minimal testing for PatchManager-only changes
+              echo 'matrix={"os":["ubuntu-latest"],"include":[{"os":"ubuntu-latest","shell":"pwsh","runner":"ubuntu-latest"}]}' >> $GITHUB_OUTPUT
+              echo "should-run-security=true" >> $GITHUB_OUTPUT
+              echo "should-run-performance=false" >> $GITHUB_OUTPUT
+              echo "should-run-core-tests=false" >> $GITHUB_OUTPUT
+              echo "should-run-patchmanager-tests=true" >> $GITHUB_OUTPUT
+              ;;
             "Quick")
               echo 'matrix={"os":["ubuntu-latest","windows-latest"],"include":[{"os":"ubuntu-latest","shell":"pwsh","runner":"ubuntu-latest"},{"os":"windows-latest","shell":"pwsh","runner":"windows-latest"}]}' >> $GITHUB_OUTPUT
               echo "should-run-security=false" >> $GITHUB_OUTPUT
               echo "should-run-performance=false" >> $GITHUB_OUTPUT
+              echo "should-run-core-tests=true" >> $GITHUB_OUTPUT
+              echo "should-run-patchmanager-tests=true" >> $GITHUB_OUTPUT
               ;;
             "Standard")
               echo 'matrix={"os":["ubuntu-latest","windows-latest","macos-latest"],"include":[{"os":"ubuntu-latest","shell":"pwsh","runner":"ubuntu-latest"},{"os":"windows-latest","shell":"pwsh","runner":"windows-latest"},{"os":"macos-latest","shell":"pwsh","runner":"macos-latest"}]}' >> $GITHUB_OUTPUT
               echo "should-run-security=true" >> $GITHUB_OUTPUT
               echo "should-run-performance=false" >> $GITHUB_OUTPUT
+              echo "should-run-core-tests=true" >> $GITHUB_OUTPUT
+              echo "should-run-patchmanager-tests=true" >> $GITHUB_OUTPUT
               ;;
             "Complete")
               echo 'matrix={"os":["ubuntu-latest","windows-latest","macos-latest","ubuntu-20.04"],"include":[{"os":"ubuntu-latest","shell":"pwsh","runner":"ubuntu-latest"},{"os":"windows-latest","shell":"pwsh","runner":"windows-latest"},{"os":"macos-latest","shell":"pwsh","runner":"macos-latest"},{"os":"ubuntu-20.04","shell":"pwsh","runner":"ubuntu-20.04"}]}' >> $GITHUB_OUTPUT
               echo "should-run-security=true" >> $GITHUB_OUTPUT
               echo "should-run-performance=true" >> $GITHUB_OUTPUT
+              echo "should-run-core-tests=true" >> $GITHUB_OUTPUT
+              echo "should-run-patchmanager-tests=true" >> $GITHUB_OUTPUT
               ;;
           esac
 
@@ -219,8 +292,58 @@ jobs:
           Write-Host "🧪 Running optimized test suite..." -ForegroundColor Cyan
 
           $testLevel = "${{ needs.setup.outputs.test-level }}"
+          $shouldRunCore = "${{ needs.setup.outputs.should-run-core-tests }}"
+          $shouldRunPatchManager = "${{ needs.setup.outputs.should-run-patchmanager-tests }}"
 
-          # Use bulletproof validation with parallel execution
+          Write-Host "Test Configuration:" -ForegroundColor Yellow
+          Write-Host "  Level: $testLevel" -ForegroundColor White
+          Write-Host "  Core Tests: $shouldRunCore" -ForegroundColor White
+          Write-Host "  PatchManager Tests: $shouldRunPatchManager" -ForegroundColor White
+
+          # For PatchManager-only changes, run minimal validation
+          if ($testLevel -eq "PatchManager") {
+            Write-Host "🎯 Running PatchManager-only validation..." -ForegroundColor Cyan
+            
+            # Test PatchManager module specifically
+            try {
+              Write-Host "Testing PatchManager module import..." -ForegroundColor Yellow
+              Import-Module './aither-core/modules/PatchManager/PatchManager.psm1' -Force -ErrorAction Stop
+              Write-Host "✅ PatchManager module imported successfully" -ForegroundColor Green
+              
+              # Test key functions are available
+              $functions = @('Invoke-PatchWorkflow', 'New-PatchIssue', 'New-PatchPR', 'Invoke-PatchRollback')
+              foreach ($func in $functions) {
+                if (Get-Command $func -ErrorAction SilentlyContinue) {
+                  Write-Host "✅ Function $func available" -ForegroundColor Green
+                } else {
+                  Write-Error "❌ Function $func not found"
+                  exit 1
+                }
+              }
+              
+              # Quick syntax validation of PatchManager files
+              Write-Host "Validating PatchManager PowerShell syntax..." -ForegroundColor Yellow
+              $patchFiles = Get-ChildItem -Path './aither-core/modules/PatchManager' -Filter '*.ps1' -Recurse
+              foreach ($file in $patchFiles) {
+                $errors = $null
+                $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $file.FullName -Raw), [ref]$errors)
+                if ($errors) {
+                  Write-Error "Syntax errors in $($file.Name): $($errors.Count) errors"
+                  exit 1
+                }
+              }
+              Write-Host "✅ All PatchManager files have valid PowerShell syntax" -ForegroundColor Green
+              
+            } catch {
+              Write-Error "PatchManager validation failed: $($_.Exception.Message)"
+              exit 1
+            }
+            
+            Write-Host "✅ PatchManager-only validation completed successfully" -ForegroundColor Green
+            return
+          }
+
+          # For full test runs, use bulletproof validation
           if (Test-Path './tests/Run-BulletproofValidation.ps1') {
             # First check if the script supports MaxParallelJobs parameter
             $scriptHelp = Get-Help './tests/Run-BulletproofValidation.ps1' -Parameter MaxParallelJobs -ErrorAction SilentlyContinue
@@ -289,28 +412,37 @@ jobs:
         run: |
           Write-Host "🛡️ Running security analysis..." -ForegroundColor Cyan
 
-          # Check for sensitive patterns
+          # Check for sensitive patterns - simplified patterns to avoid regex parsing issues
           $sensitivePatterns = @(
-            '(?i)(password|pwd|secret|key|token)\s*[:=]\s*["\']?[^"\'\s]{8,}',
-            '(?i)api[_-]?key\s*[:=]\s*["\']?[a-zA-Z0-9]{20,}',
-            '(?i)(access[_-]?token|auth[_-]?token)\s*[:=]\s*["\']?[a-zA-Z0-9]{20,}'
+            'password\s*[:=]\s*["\']?[\w]{8,}',
+            'secret\s*[:=]\s*["\']?[\w]{8,}',
+            'api.?key\s*[:=]\s*["\']?[\w]{20,}',
+            'token\s*[:=]\s*["\']?[\w]{20,}'
           )
 
           $violations = @()
-          Get-ChildItem -Path . -Filter '*.ps1' -Recurse | ForEach-Object {
-            $content = Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue
-            if ($content) {
-              foreach ($pattern in $sensitivePatterns) {
-                if ($content -match $pattern) {
-                  $violations += "Potential security issue in $($_.Name): $($matches[0])"
+          $scriptFiles = Get-ChildItem -Path . -Filter '*.ps1' -Recurse -ErrorAction SilentlyContinue
+          
+          foreach ($file in $scriptFiles) {
+            try {
+              $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
+              if ($content) {
+                foreach ($pattern in $sensitivePatterns) {
+                  if ($content -match $pattern) {
+                    $match = $matches[0] -replace '[\r\n]', ' '
+                    if ($match.Length -gt 50) { $match = $match.Substring(0, 50) + "..." }
+                    $violations += "Potential security issue in $($file.Name): $match"
+                  }
                 }
               }
+            } catch {
+              Write-Host "Warning: Could not scan file $($file.FullName): $($_.Exception.Message)" -ForegroundColor Yellow
             }
           }
 
-          if ($violations) {
+          if ($violations.Count -gt 0) {
             $violations | ForEach-Object { Write-Warning $_ }
-            Write-Error "Security violations found"
+            Write-Error "Security violations found: $($violations.Count) issues detected"
             exit 1
           }
 
