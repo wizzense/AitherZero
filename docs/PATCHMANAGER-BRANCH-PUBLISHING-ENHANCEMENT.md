@@ -14,7 +14,7 @@
 
 ```powershell
 # This would create a branch locally but NOT push it
-Invoke-PatchWorkflow -PatchDescription "Fix bug" -PatchOperation { 
+Invoke-PatchWorkflow -PatchDescription "Fix bug" -PatchOperation {
     # Your changes
 }
 # Result: VS Code shows "publish branch" prompt
@@ -24,7 +24,7 @@ Invoke-PatchWorkflow -PatchDescription "Fix bug" -PatchOperation {
 
 ```powershell
 # This now creates AND pushes the branch automatically
-Invoke-PatchWorkflow -PatchDescription "Fix bug" -PatchOperation { 
+Invoke-PatchWorkflow -PatchDescription "Fix bug" -PatchOperation {
     # Your changes
 }
 # Result: Branch exists both locally and remotely, no "publish branch" prompt
