@@ -102,7 +102,7 @@ class EnhancedAitherZeroMCPServer {
           content: [
             {
               type: 'text',
-              text: `❌ Error executing ${request.params.name}: ${error.message}\\n\\nSee logs for detailed error information.`,
+              text: `❌ Error executing ${request.params.name}: ${error.message}\n\nSee logs for detailed error information.`,
             },
           ],
           isError: true,
