@@ -500,12 +500,12 @@ class EnhancedAitherZeroMCPServer {
     return links[toolName] || [`${baseUrl}README.md`];
   }
 
-  generateVSCodeToolsets() {
+  async generateVSCodeToolsets() {
     try {
       const toolsets = this.toolDefs.getToolsetDefinition();
       const outputPath = path.join(process.cwd(), 'enhanced-vscode-toolsets.json');
 
-      fs.writeFileSync(outputPath, JSON.stringify(toolsets, null, 2));
+      await fs.promises.writeFile(outputPath, JSON.stringify(toolsets, null, 2));
       this.logger.info(`Generated VS Code toolsets configuration: ${outputPath}`);
     } catch (error) {
       this.logger.error('Failed to generate VS Code toolsets', error);
