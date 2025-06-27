@@ -1,323 +1,371 @@
-# AitherZero Model Context Protocol (MCP) Server
+# AitherZero MCP Server
 
-Transform your robust AitherZero infrastructure automation framework into a comprehensive toolkit for AI agents using the Model Context Protocol (MCP).
+Model Context Protocol (MCP) server that exposes AitherZero's infrastructure automation framework to AI agents, with first-class support for Claude Code.
 
 ## Overview
 
-The AitherZero MCP Server exposes 14 specialized infrastructure automation tools that AI agents can use to:
+The AitherZero MCP Server provides AI agents with access to 14 specialized PowerShell modules for comprehensive infrastructure automation:
 
-- 🔧 **Manage Git workflows** with automated patch creation and PR management
-- 🏗️ **Deploy infrastructure** using OpenTofu/Terraform with security validation
-- 🧪 **Execute comprehensive testing** with bulletproof validation framework
-- 📦 **Manage ISO files** for system deployment and customization
-- 🌐 **Handle remote connections** across multiple protocols (SSH, WinRM, etc.)
-- 🔐 **Secure credential management** for enterprise environments
-- ⚡ **Run parallel operations** for performance optimization
-- 🔄 **Synchronize repositories** across fork chains
-- 🧹 **Perform maintenance** operations across all modules
+- 🔧 **Git Workflow Automation** - PatchManager with automated PR/issue creation
+- 🏗️ **Infrastructure Deployment** - OpenTofu/Terraform with security validation
+- 🧪 **Testing Framework** - Bulletproof validation at multiple levels
+- 📦 **ISO Management** - System deployment and customization
+- 🌐 **Remote Connections** - Multi-protocol support (SSH, WinRM, RDP)
+- 🔐 **Credential Management** - Enterprise-grade security
+- ⚡ **Parallel Execution** - High-performance task automation
+- 🔄 **Repository Sync** - Cross-fork synchronization
+- 🧹 **Maintenance Operations** - Automated system maintenance
 
 ## Quick Start
 
-### 1. Install Dependencies
+### Prerequisites
+
+- **Node.js**: Version 18.0.0 or higher
+- **PowerShell 7**: Automatically installed if not present
+- **Claude Code**: For AI-powered automation (optional)
+
+### Installation
 
 ```bash
-cd mcp-server
+# Clone repository
+git clone https://github.com/wizzense/AitherZero.git
+cd AitherZero/mcp-server
+
+# Install dependencies
 npm install
 ```
 
-### 2. Start the MCP Server
+### Claude Code Integration
+
+#### Option 1: Quick Setup
+```bash
+# Add MCP server to Claude Code
+claude mcp add aitherzero -- node claude-code-mcp-server.js
+
+# Verify setup
+node test-mcp-working.js
+```
+
+#### Option 2: Setup Script
+```bash
+# Make script executable
+chmod +x setup-claude-code-mcp.sh
+
+# Run setup
+./setup-claude-code-mcp.sh
+```
+
+### Manual MCP Server Start
 
 ```bash
+# Standard server
 npm start
+
+# Claude Code optimized server
+node claude-code-mcp-server.js
+
+# Development mode with debugging
+npm run dev
 ```
 
-### 3. Configure in VS Code
+## Available Tools
 
-Add to your VS Code settings:
+### Infrastructure Management
 
-```json
-{
-  "mcp.servers": {
-    "aitherzero": {
-      "command": "node",
-      "args": ["path/to/AitherZero/mcp-server/index.js"],
-      "workingDirectory": "path/to/AitherZero"
-    }
-  }
-}
-```
+| Tool | Description | Common Operations |
+|------|-------------|-------------------|
+| `aither_infrastructure_deployment` | OpenTofu/Terraform automation | `plan`, `apply`, `destroy`, `validate` |
+| `aither_lab_automation` | Lab environment orchestration | `create`, `start`, `stop`, `destroy` |
+| `aither_remote_connection` | Multi-protocol connections | `connect`, `execute`, `transfer` |
 
-## Tool Categories
+### Development Workflow
 
-### 🏗️ Infrastructure Management
-- **`aither_infrastructure_deployment`**: Deploy infrastructure using OpenTofu with security validation
-- **`aither_lab_automation`**: Orchestrate lab automation workflows
-- **`aither_remote_connection`**: Manage multi-protocol remote connections
+| Tool | Description | Common Operations |
+|------|-------------|-------------------|
+| `aither_patch_workflow` | Git workflow automation | `create-patch`, `create-pr`, `rollback` |
+| `aither_dev_environment` | Development setup | `setup`, `install-dependencies`, `configure` |
+| `aither_testing_framework` | Comprehensive testing | `bulletproof`, `module-test`, `integration-test` |
+| `aither_script_management` | Script repository | `list`, `run`, `create` |
 
-### 💻 Development Workflow
-- **`aither_patch_workflow`**: Execute Git-controlled patch workflows with automated PR/issue creation
-- **`aither_dev_environment`**: Setup and validate development environments
-- **`aither_testing_framework`**: Run comprehensive testing including bulletproof validation
-- **`aither_script_management`**: Manage script repositories and templates
+### System Operations
 
-### ⚙️ System Operations
-- **`aither_backup_management`**: Handle backups, cleanup, and file consolidation
-- **`aither_maintenance_operations`**: Execute unified maintenance across all modules
-- **`aither_logging_system`**: Manage centralized logging
-- **`aither_parallel_execution`**: Execute tasks in parallel using PowerShell runspaces
+| Tool | Description | Common Operations |
+|------|-------------|-------------------|
+| `aither_backup_management` | Backup operations | `create`, `restore`, `list`, `cleanup` |
+| `aither_maintenance_operations` | System maintenance | `cleanup`, `optimize`, `health-check` |
+| `aither_logging_system` | Centralized logging | `log`, `query`, `export` |
+| `aither_parallel_execution` | Parallel task execution | `run`, `batch`, `monitor` |
 
-### 📦 Content Management
-- **`aither_iso_management`**: Download, customize, and manage ISO files
-- **`aither_credential_management`**: Securely manage credentials
-- **`aither_repo_sync`**: Synchronize repositories across fork chains
+### Content Management
+
+| Tool | Description | Common Operations |
+|------|-------------|-------------------|
+| `aither_iso_management` | ISO file operations | `create`, `customize`, `mount`, `extract` |
+| `aither_credential_management` | Secure credentials | `store`, `retrieve`, `rotate` |
+| `aither_repo_sync` | Repository synchronization | `sync`, `fork-update`, `branch-sync` |
 
 ## Usage Examples
 
-### Execute a Patch Workflow
+### Claude Code Usage
+
+When using Claude Code, you can naturally describe what you want:
+
+```
+"Run quick validation tests for the project"
+"Create a patch for fixing the authentication bug"
+"Deploy the test environment using OpenTofu"
+"Backup all configuration files"
+```
+
+### Direct Tool Invocation
 
 ```javascript
-// AI agent calls this tool
-{
-  "tool": "aither_patch_workflow",
-  "arguments": {
-    "description": "Fix module import issues in DevEnvironment",
-    "operation": "Resolve-ModuleImportIssues -Force",
-    "createPR": true,
-    "testCommands": ["pwsh -File tests/unit/modules/DevEnvironment/DevEnvironment.Tests.ps1"]
-  }
+// Create a patch with PR
+await mcp.call('aither_patch_workflow', {
+  operation: 'create-patch',
+  description: 'Fix authentication bug',
+  createPR: true
+});
+
+// Run bulletproof validation
+await mcp.call('aither_testing_framework', {
+  operation: 'bulletproof',
+  level: 'Quick'
+});
+
+// Deploy infrastructure
+await mcp.call('aither_infrastructure_deployment', {
+  operation: 'plan',
+  environment: 'dev'
+});
+```
+
+### Advanced Workflows
+
+```javascript
+// Multi-step automation
+const workflow = [
+  { tool: 'aither_dev_environment', args: { operation: 'setup' } },
+  { tool: 'aither_testing_framework', args: { operation: 'bulletproof', level: 'Quick' } },
+  { tool: 'aither_patch_workflow', args: { operation: 'create-patch', description: 'Post-test fixes' } },
+  { tool: 'aither_infrastructure_deployment', args: { operation: 'deploy' } }
+];
+
+// Execute workflow
+for (const step of workflow) {
+  await mcp.call(step.tool, step.args);
 }
 ```
 
-### Deploy Lab Infrastructure
+## Configuration
 
-```javascript
-{
-  "tool": "aither_infrastructure_deployment",
-  "arguments": {
-    "operation": "deploy",
-    "configPath": "configs/lab-environment.json"
-  }
-}
+### Claude Code Configuration
+
+The MCP server can be configured at different scopes:
+
+```bash
+# Local scope (default) - personal to current project
+claude mcp add aitherzero -- node claude-code-mcp-server.js
+
+# Project scope - shared via .mcp.json
+claude mcp add aitherzero --project -- node claude-code-mcp-server.js
+
+# User scope - available across all projects
+claude mcp add aitherzero --user -- node claude-code-mcp-server.js
 ```
 
-### Run Bulletproof Testing
+### Environment Variables
 
-```javascript
-{
-  "tool": "aither_testing_framework",
-  "arguments": {
-    "operation": "bulletproof",
-    "level": "Standard"
-  }
-}
+```bash
+# Set log level
+export LOG_LEVEL=DEBUG
+
+# Set project root (auto-detected by default)
+export PROJECT_ROOT=/path/to/AitherZero
+
+# Set PowerShell path (auto-detected by default)
+export POWERSHELL_PATH=/usr/local/bin/pwsh
 ```
 
-### Manage Remote Connections
+### Custom Configuration
 
-```javascript
-{
-  "tool": "aither_remote_connection",
-  "arguments": {
-    "operation": "new",
-    "name": "lab-server-01",
-    "hostname": "192.168.1.100",
-    "endpointType": "SSH",
-    "credentialName": "lab-admin"
-  }
-}
-```
-
-## VS Code Toolsets
-
-The MCP server includes pre-configured toolsets for VS Code:
+Create `mcp-config.json`:
 
 ```json
 {
-  "aither-infrastructure": {
-    "tools": ["aither_infrastructure_deployment", "aither_lab_automation", "aither_remote_connection"],
-    "description": "Infrastructure deployment and management tools",
-    "icon": "server"
+  "server": {
+    "port": 3000,
+    "host": "localhost"
   },
-  "aither-development": {
-    "tools": ["aither_patch_workflow", "aither_dev_environment", "aither_testing_framework", "aither_script_management"],
-    "description": "Development workflow and testing tools",
-    "icon": "code"
+  "powershell": {
+    "executable": "pwsh",
+    "timeout": 300000
   },
-  "aither-complete": {
-    "tools": ["all 14 tools"],
-    "description": "Complete AitherZero automation framework",
-    "icon": "rocket"
+  "logging": {
+    "level": "info",
+    "file": "./logs/mcp-server.log"
   }
 }
 ```
 
 ## Architecture
 
-### Components
+### Core Components
 
-- **`index.js`**: Main MCP server implementation
-- **`src/tool-definitions.js`**: Comprehensive tool definitions with input schemas
-- **`src/powershell-executor.js`**: PowerShell execution handler with cross-platform support
-- **`src/validation-schema.js`**: Joi-based argument validation for all tools
-- **`src/logger.js`**: Structured logging system
+```
+claude-code-mcp-server.js    # Claude Code optimized server
+├── MCPTools Class           # Tool registry and execution
+├── PowerShell Installer     # Auto-installs PowerShell 7
+├── Tool Definitions         # 14 tool implementations
+└── Error Handling          # Comprehensive error management
+
+index.js                     # Standard MCP server
+├── Tool Registry           # Tool management
+├── PowerShell Executor     # Cross-platform execution
+├── Validation Schemas      # Input validation
+└── Logger                  # Structured logging
+```
 
 ### PowerShell Integration
 
-The MCP server executes PowerShell scripts that:
-
-1. **Import shared utilities** using `Find-ProjectRoot.ps1`
-2. **Load AitherZero modules** dynamically based on tool requirements
-3. **Execute operations** with comprehensive error handling
-4. **Return structured JSON** results for AI agent consumption
+1. **Auto-Installation**: Detects and installs PowerShell 7 if missing
+2. **Module Loading**: Dynamic loading of AitherZero modules
+3. **Error Handling**: Graceful error recovery and reporting
+4. **Output Formatting**: JSON serialization for AI consumption
 
 ### Security Features
 
-- ✅ **Input validation** using Joi schemas
-- ✅ **PowerShell execution sandboxing** with timeouts
-- ✅ **Credential isolation** through SecureCredentials module
-- ✅ **Cross-platform compatibility** (Windows, Linux, macOS)
-- ✅ **Comprehensive logging** for audit trails
+- ✅ Input validation with Joi schemas
+- ✅ PowerShell execution sandboxing
+- ✅ Timeout protection
+- ✅ Credential isolation
+- ✅ Audit logging
+- ✅ Cross-platform security
 
 ## Testing
 
-Run the comprehensive test suite:
-
+### Quick Test
 ```bash
-# Test all tools and validations
+# Test MCP server functionality
+node test-mcp-working.js
+
+# Test Claude Code integration
+node test-claude-code.js
+```
+
+### Comprehensive Testing
+```bash
+# Run all tests
 npm test
 
-# Test individual components
+# Test specific components
 npm run test:tools
 npm run test:integration
 
-# Test PowerShell integration
-node test/test-tools.js
+# Test with coverage
+npm run test:coverage
 ```
 
 ## Development
 
+### Project Structure
+```
+mcp-server/
+├── claude-code-mcp-server.js  # Claude Code server
+├── claude-code-adapter.js     # Claude Code adapter
+├── index.js                   # Standard MCP server
+├── package.json              # Dependencies
+├── src/                      # Source files
+│   ├── tool-definitions.js   # Tool implementations
+│   ├── powershell-executor.js # PS execution
+│   ├── validation-schema.js  # Input validation
+│   └── logger.js            # Logging
+├── test/                    # Test files
+└── docs/                    # Documentation
+```
+
 ### Adding New Tools
 
-1. **Define the tool** in `src/tool-definitions.js`:
+1. **Define tool** in `src/tool-definitions.js`
+2. **Add validation** in `src/validation-schema.js`
+3. **Implement execution** in PowerShell module
+4. **Add tests** in `test/`
+5. **Update documentation**
 
-```javascript
-this.tools.set('new_tool_name', {
-  name: 'new_tool_name',
-  description: 'Tool description',
-  inputSchema: {
-    // Joi schema definition
-  }
-});
+### Contributing
+
+1. Fork the repository
+2. Create feature branch
+3. Add tests for new features
+4. Ensure cross-platform compatibility
+5. Submit pull request
+
+## Troubleshooting
+
+### Common Issues
+
+**PowerShell Not Found**
+```bash
+# MCP server auto-installs PowerShell 7
+# Check installation:
+pwsh --version
 ```
 
-2. **Add validation** in `src/validation-schema.js`:
+**Module Import Errors**
+```bash
+# Verify project structure
+ls ../aither-core/modules/
 
-```javascript
-this.schemas.set('new_tool_name', Joi.object({
-  // Validation rules
-}));
+# Test module import
+pwsh -c "Import-Module ../aither-core/modules/PatchManager"
 ```
 
-3. **Implement PowerShell generation** in `index.js`:
+**Connection Issues**
+```bash
+# Check MCP server status
+claude mcp list
 
-```javascript
-case 'new_tool_name':
-  return baseScript + this.generateNewToolScript(args);
+# Restart server
+claude mcp remove aitherzero
+claude mcp add aitherzero -- node claude-code-mcp-server.js
 ```
 
-### Extending Capabilities
+### Debug Mode
 
-The MCP server can be extended to support:
+```bash
+# Enable debug logging
+export DEBUG=true
+export LOG_LEVEL=debug
 
-- **Additional infrastructure providers** (AWS, Azure, GCP)
-- **More testing frameworks** (Jest, Pytest, etc.)
-- **Advanced automation workflows**
-- **Custom PowerShell modules**
-- **Integration with external tools**
-
-## Integration Patterns
-
-### With GitHub Copilot
-
-```javascript
-// Natural language to tool execution
-"Create a patch to fix the backup cleanup issue and run tests"
-→ aither_patch_workflow + aither_testing_framework
-```
-
-### With Other AI Agents
-
-```javascript
-// Multi-step automation workflows
-1. aither_dev_environment → Setup development environment
-2. aither_patch_workflow → Create and test changes
-3. aither_infrastructure_deployment → Deploy to lab
-4. aither_testing_framework → Validate deployment
-```
-
-### With CI/CD Pipelines
-
-```javascript
-// Automated infrastructure management
-GitHub Action → MCP Server → AitherZero → Infrastructure
+# Run with verbose output
+node claude-code-mcp-server.js --verbose
 ```
 
 ## Advanced Features
 
-### Cross-Fork Repository Operations
+### Cross-Fork Operations
+Support for AitherZero → AitherLabs → Aitherium fork chain
 
-```javascript
-{
-  "tool": "aither_patch_workflow",
-  "arguments": {
-    "description": "Security improvement for upstream",
-    "targetFork": "upstream", // AitherZero → AitherLabs → Aitherium
-    "createPR": true
-  }
-}
-```
+### Parallel Execution
+Leverage PowerShell runspaces for concurrent operations
 
-### Parallel Task Execution
+### Enterprise Integration
+- Active Directory support
+- Proxy configuration
+- Custom certificate stores
+- Compliance reporting
 
-```javascript
-{
-  "tool": "aither_parallel_execution",
-  "arguments": {
-    "operation": "execute",
-    "scriptBlocks": [
-      "Test-Module ModuleA",
-      "Test-Module ModuleB",
-      "Test-Module ModuleC"
-    ],
-    "maxJobs": 4
-  }
-}
-```
+## Resources
 
-### Comprehensive Infrastructure Validation
-
-```javascript
-{
-  "tool": "aither_infrastructure_deployment",
-  "arguments": {
-    "operation": "security",
-    "configPath": "infrastructure/main.tf"
-  }
-}
-```
-
-## Contributing
-
-1. **Follow the coding standards** established in the project
-2. **Add comprehensive tests** for new tools
-3. **Update documentation** for new capabilities
-4. **Test cross-platform compatibility**
-5. **Validate PowerShell integration**
+- [Claude Code Documentation](https://docs.anthropic.com/claude-code)
+- [MCP Specification](https://github.com/anthropics/mcp)
+- [AitherZero Documentation](../README.md)
+- [PowerShell 7 Documentation](https://docs.microsoft.com/powershell)
 
 ## License
 
-MIT License - See the main AitherZero project for details.
+MIT License - See [LICENSE](../LICENSE) for details.
 
 ---
 
-**Ready to supercharge your AI agents with enterprise-grade infrastructure automation!** 🚀
+**Ready to automate your infrastructure with AI!** 🚀
