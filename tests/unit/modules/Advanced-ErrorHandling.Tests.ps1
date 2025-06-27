@@ -1,14 +1,12 @@
 Describe 'Advanced Error Handling Tests' {
 
 BeforeAll {
-    # Find project root using robust detection
-    $projectRoot = if ($env:PROJECT_ROOT) {
-        $env:PROJECT_ROOT
-    } elseif (Test-Path '/workspaces/AitherLabs') {
-        '/workspaces/AitherLabs'
-    } else {
-        Split-Path -Parent (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
-    }
+    # Find project root using shared utilities
+    . "$PSScriptRoot/../../../aither-core/shared/Find-ProjectRoot.ps1"
+    $projectRoot = Find-ProjectRoot
+
+    # Import Logging module first for Write-CustomLog function
+    Import-Module "$projectRoot/aither-core/modules/Logging" -Force -ErrorAction SilentlyContinue
 
     # Import all available modules for comprehensive error handling testing
     $modulesToTest = @('Logging', 'BackupManager', 'PatchManager', 'LabRunner', 'ParallelExecution', 'ScriptManager', 'DevEnvironment', 'TestingFramework', 'UnifiedMaintenance')
@@ -19,7 +17,7 @@ BeforeAll {
         try {
             Import-Module $modulePath -Force -ErrorAction Stop
             $script:ImportedModules[$moduleName] = $true
-            Write-Host "Successfully imported $moduleName module" -ForegroundColor Green
+            Write-Verbose "Successfully imported $moduleName module"
         }
         catch {
             Write-Warning "Failed to import $moduleName module: $_"
@@ -166,8 +164,8 @@ Export-ModuleMember -Function Test-ModuleB
             { Remove-Item $testFile -Force } | Should -Not -Throw
         }
 
-        It "Should handle runspace cleanup properly" -Skip:(-not ($script:ImportedModules.ContainsKey('ParallelExecution') -and $script:ImportedModules['ParallelExecution'])) {
-            if ($script:ImportedModules['ParallelExecution']) {
+        It "Should handle runspace cleanup properly" -Skip:(-not ($script:ImportedModules -and $script:ImportedModules.ContainsKey('ParallelExecution') -and $script:ImportedModules['ParallelExecution'] -eq $true)) {
+            if ($script:ImportedModules -and $script:ImportedModules.ContainsKey('ParallelExecution') -and $script:ImportedModules['ParallelExecution'] -eq $true) {
                 # Test that runspaces are properly cleaned up
                 $initialRunspaces = (Get-Runspace).Count
 

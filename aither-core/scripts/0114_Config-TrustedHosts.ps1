@@ -5,8 +5,12 @@ param(
     [object]$Config
 )
 
-Import-Module "$env:PROJECT_ROOT/aither-core/modules/LabRunner" -Force
-Import-Module "$env:PROJECT_ROOT/aither-core/modules/Logging" -Force
+# Use shared utilities for project root detection
+. "$PSScriptRoot/../shared/Find-ProjectRoot.ps1"
+$projectRoot = Find-ProjectRoot
+
+Import-Module "$projectRoot/aither-core/modules/LabRunner" -Force
+Import-Module "$projectRoot/aither-core/modules/Logging" -Force
 
 Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
 
@@ -17,7 +21,7 @@ Invoke-LabStep -Config $Config -Body {
         $trustedHosts = if ($Config.TrustedHosts) { $Config.TrustedHosts } else { '*' }
         $args = "/d /c winrm set winrm/config/client @{TrustedHosts=`"$trustedHosts`"}"
         Write-CustomLog "Configuring TrustedHosts with: $args"
-        
+
         if ($PSCmdlet.ShouldProcess($trustedHosts, 'Configure WinRM TrustedHosts')) {
             Start-Process -FilePath cmd.exe -ArgumentList $args -Wait
         }

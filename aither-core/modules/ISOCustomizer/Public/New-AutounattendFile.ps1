@@ -108,6 +108,19 @@ function New-AutounattendFile {
 
                 Write-CustomLog -Level 'INFO' -Message "Creating autounattend XML content..."
 
+                # Helper function to escape XML content
+                function Escape-XmlContent {
+                    param([string]$Text)
+                    if ([string]::IsNullOrEmpty($Text)) { return $Text }
+                    return $Text -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;' -replace '"', '&quot;' -replace "'", '&apos;'
+                }
+
+                # Escape configuration values
+                $safeComputerName = Escape-XmlContent $Configuration.ComputerName
+                $safeFullName = Escape-XmlContent $Configuration.FullName
+                $safeOrganization = Escape-XmlContent $Configuration.Organization
+                $safeAdminPassword = Escape-XmlContent $Configuration.AdminPassword
+
                 # Build the XML content
                 $xmlContent = @"
 <?xml version="1.0" encoding="utf-8"?>
@@ -126,8 +139,8 @@ function New-AutounattendFile {
                     <WillShowUI>Never</WillShowUI>
                     <Key>$($Configuration.ProductKey)</Key>
                 </ProductKey>
-                <FullName>$($Configuration.FullName)</FullName>
-                <Organization>$($Configuration.Organization)</Organization>
+                <FullName>$safeFullName</FullName>
+                <Organization>$safeOrganization</Organization>
             </UserData>
             <ImageInstall>
                 <OSImage>
@@ -190,7 +203,7 @@ function New-AutounattendFile {
     </settings>
     <settings pass="specialize">
         <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-            <ComputerName>$($Configuration.ComputerName)</ComputerName>
+            <ComputerName>$safeComputerName</ComputerName>
             <TimeZone>$($Configuration.TimeZone)</TimeZone>
         </component>
 "@
@@ -224,7 +237,7 @@ function New-AutounattendFile {
         <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
             <UserAccounts>
                 <AdministratorPassword>
-                    <Value>$($Configuration.AdminPassword)</Value>
+                    <Value>$safeAdminPassword</Value>
                     <PlainText>$($Configuration.AdminPasswordPlainText.ToString().ToLower())</PlainText>
                 </AdministratorPassword>
             </UserAccounts>
@@ -245,7 +258,7 @@ function New-AutounattendFile {
                     $xmlContent += @"
             <AutoLogon>
                 <Password>
-                    <Value>$($Configuration.AdminPassword)</Value>
+                    <Value>$safeAdminPassword</Value>
                     <PlainText>$($Configuration.AdminPasswordPlainText.ToString().ToLower())</PlainText>
                 </Password>
                 <Username>Administrator</Username>

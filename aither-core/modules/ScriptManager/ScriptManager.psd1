@@ -10,10 +10,12 @@
     PowerShellVersion = '7.0'
 
     FunctionsToExport = @(
+        'Register-OneOffScript',
         'Invoke-OneOffScript',
         'Get-ScriptRepository',
         'Start-ScriptExecution',
-        'Get-ScriptTemplate'
+        'Get-ScriptTemplate',
+        'Test-OneOffScript'
     )
 
     CmdletsToExport = @()

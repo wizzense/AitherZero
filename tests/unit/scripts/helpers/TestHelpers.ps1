@@ -9,13 +9,16 @@
     used across all unit test files in the project.
 #>
 
-# Ensure environment variables are set for admin-friendly module discovery
+# Ensure environment variables are set using shared utilities
+. "$PSScriptRoot/../../../../aither-core/shared/Find-ProjectRoot.ps1"
+$script:ProjectRoot = Find-ProjectRoot
+
 if (-not $env:PWSH_MODULES_PATH) {
-    $env:PWSH_MODULES_PATH = Join-Path (Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent) "aither-core/modules"
+    $env:PWSH_MODULES_PATH = Join-Path $script:ProjectRoot "aither-core/modules"
 }
 
 if (-not $env:PROJECT_ROOT) {
-    $env:PROJECT_ROOT = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
+    $env:PROJECT_ROOT = $script:ProjectRoot
 }
 
 function Import-TestModule {
@@ -27,10 +30,10 @@ function Import-TestModule {
     param(
         [Parameter(Mandatory)]
         [string]$ModuleName,
-        
+
         [switch]$Force
     )
-    
+
     try {
         $modulePath = Join-Path $env:PWSH_MODULES_PATH $ModuleName
         if (Test-Path $modulePath) {
@@ -55,10 +58,10 @@ function Test-ModuleStructure {
     param(
         [Parameter(Mandatory)]
         [string]$ModulePath,
-        
+
         [switch]$IncludePrivate
     )
-    
+
     $result = [PSCustomObject]@{
         ModulePath = $ModulePath
         HasManifest = $false
@@ -73,17 +76,17 @@ function Test-ModuleStructure {
             Private = @()
         }
     }
-    
+
     if (-not (Test-Path $ModulePath)) {
         $result.Issues += "Module path does not exist: $ModulePath"
         return $result
     }
-    
+
     # Check for manifest
     $manifestFiles = Get-ChildItem $ModulePath -Filter "*.psd1"
     if ($manifestFiles.Count -gt 0) {
         $result.HasManifest = $true
-        
+
         # Test manifest validity
         try {
             Test-ModuleManifest $manifestFiles[0].FullName -ErrorAction Stop | Out-Null
@@ -92,34 +95,34 @@ function Test-ModuleStructure {
             $result.Issues += "Invalid module manifest: $($_.Exception.Message)"
         }
     }
-    
+
     # Check for module file
     $moduleFiles = Get-ChildItem $ModulePath -Filter "*.psm1"
     if ($moduleFiles.Count -gt 0) {
         $result.HasModuleFile = $true
     }
-    
+
     # Check for Public/Private folders
     $result.HasPublicFolder = Test-Path (Join-Path $ModulePath "Public")
     $result.HasPrivateFolder = Test-Path (Join-Path $ModulePath "Private")
-    
+
     # Test module import and get functions
     $moduleName = Split-Path $ModulePath -Leaf
     try {
         Import-Module $ModulePath -Force -ErrorAction Stop
         $module = Get-Module $moduleName -ErrorAction SilentlyContinue
-        
+
         if ($module) {
             $exportedCommands = Get-Command -Module $module.Name -CommandType Function -ErrorAction SilentlyContinue
             $result.Functions.Exported = $exportedCommands | ForEach-Object { $_.Name }
-            
+
             # Get public functions from files
             $publicPath = Join-Path $ModulePath "Public"
             if (Test-Path $publicPath) {
                 $publicFiles = Get-ChildItem $publicPath -Filter "*.ps1"
                 $result.Functions.Public = $publicFiles | ForEach-Object { $_.BaseName }
             }
-            
+
             # Get private functions from files
             if ($IncludePrivate) {
                 $privatePath = Join-Path $ModulePath "Private"
@@ -128,7 +131,7 @@ function Test-ModuleStructure {
                     $result.Functions.Private = $privateFiles | ForEach-Object { $_.BaseName }
                 }
             }
-            
+
             # Clean up
             Remove-Module $module.Name -Force -ErrorAction SilentlyContinue
         }
@@ -136,10 +139,10 @@ function Test-ModuleStructure {
     catch {
         $result.Issues += "Module failed to import: $($_.Exception.Message)"
     }
-    
+
     # Determine if module is valid
     $result.IsValid = $result.HasManifest -and $result.HasModuleFile -and $result.Issues.Count -eq 0
-    
+
     return $result
 }
 
@@ -153,7 +156,7 @@ function Test-PowerShellSyntax {
         [Parameter(Mandatory)]
         [string]$FilePath
     )
-    
+
     try {
         $errors = $null
         $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $FilePath -Raw), [ref]$errors)

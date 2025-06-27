@@ -151,7 +151,20 @@ function Invoke-PatchWorkflow {
         [string]$ConsolidationStrategy = "Compatible",
 
         [Parameter(Mandatory = $false)]
-        [int]$MaxPRsToConsolidate = 5
+        [int]$MaxPRsToConsolidate = 5,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$AutoMerge,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet("Squash", "Merge", "Rebase")]
+        [string]$MergeMethod = "Squash",
+
+        [Parameter(Mandatory = $false)]
+        [int]$AutoMergeDelayMinutes = 5,
+
+        [Parameter(Mandatory = $false)]
+        [string[]]$RequiredChecks = @("ci-cd")
     )
 
     begin {
@@ -443,6 +456,24 @@ function Invoke-PatchWorkflow {
                         } else {
                             Write-PatchLog "PR creation failed: $($prResult.Message)" -Level "ERROR"
                             throw "Failed to create pull request: $($prResult.Message)"
+                        }
+                    }
+
+                    # Step 7a: Enable Auto-Merge if requested
+                    if ($AutoMerge -and $prResult.Success -and $prResult.PullRequestNumber) {
+                        Write-PatchLog "Enabling auto-merge for PR #$($prResult.PullRequestNumber)..." -Level "INFO"
+                        try {
+                            $autoMergeResult = Enable-AutoMerge -PRNumber $prResult.PullRequestNumber -MergeMethod $MergeMethod -DelayMinutes $AutoMergeDelayMinutes -RequiredChecks $RequiredChecks
+                            if ($autoMergeResult.Success) {
+                                Write-PatchLog "Auto-merge enabled successfully!" -Level "SUCCESS"
+                                Write-PatchLog "  Method: $MergeMethod" -Level "INFO"
+                                Write-PatchLog "  Delay: $AutoMergeDelayMinutes minutes" -Level "INFO"
+                                Write-PatchLog "  Required checks: $($RequiredChecks -join ', ')" -Level "INFO"
+                            } else {
+                                Write-PatchLog "Auto-merge setup failed: $($autoMergeResult.Message)" -Level "WARN"
+                            }
+                        } catch {
+                            Write-PatchLog "Auto-merge configuration failed: $($_.Exception.Message)" -Level "WARN"
                         }
                     }
                 } else {

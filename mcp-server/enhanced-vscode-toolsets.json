@@ -1,0 +1,114 @@
+{
+  "aither-infrastructure": {
+    "tools": [
+      "aither_infrastructure_deployment",
+      "aither_lab_automation",
+      "aither_remote_connection",
+      "aither_opentofu_provider"
+    ],
+    "description": "Deploy, manage, and orchestrate infrastructure",
+    "icon": "server"
+  },
+  "aither-development": {
+    "tools": [
+      "aither_patch_workflow",
+      "aither_dev_environment",
+      "aither_testing_framework",
+      "aither_script_management",
+      "aither_repo_sync"
+    ],
+    "description": "Complete development lifecycle automation",
+    "icon": "code"
+  },
+  "aither-operations": {
+    "tools": [
+      "aither_backup_management",
+      "aither_maintenance_operations",
+      "aither_logging_system",
+      "aither_parallel_execution",
+      "aither_unified_maintenance"
+    ],
+    "description": "Automated operations and maintenance",
+    "icon": "gear"
+  },
+  "aither-security": {
+    "tools": [
+      "aither_credential_management",
+      "aither_secure_storage",
+      "aither_encryption_tools",
+      "aither_audit_logging"
+    ],
+    "description": "Enterprise security and credential management",
+    "icon": "shield"
+  },
+  "aither-iso": {
+    "tools": [
+      "aither_iso_download",
+      "aither_iso_customization",
+      "aither_iso_validation",
+      "aither_autounattend_generation"
+    ],
+    "description": "Complete ISO lifecycle management",
+    "icon": "package"
+  },
+  "aither-advanced": {
+    "tools": [
+      "aither_cross_platform_executor",
+      "aither_performance_monitoring",
+      "aither_health_diagnostics",
+      "aither_workflow_orchestration",
+      "aither_ai_integration"
+    ],
+    "description": "AI-powered advanced automation capabilities",
+    "icon": "rocket"
+  },
+  "aither-quick": {
+    "tools": [
+      "aither_quick_patch",
+      "aither_emergency_rollback",
+      "aither_instant_backup",
+      "aither_fast_validation",
+      "aither_system_status"
+    ],
+    "description": "One-click actions for common tasks",
+    "icon": "zap"
+  },
+  "aither-complete": {
+    "tools": [
+      "aither_patch_workflow",
+      "aither_dev_environment",
+      "aither_testing_framework",
+      "aither_script_management",
+      "aither_repo_sync",
+      "aither_infrastructure_deployment",
+      "aither_lab_automation",
+      "aither_remote_connection",
+      "aither_opentofu_provider",
+      "aither_backup_management",
+      "aither_maintenance_operations",
+      "aither_logging_system",
+      "aither_parallel_execution",
+      "aither_unified_maintenance",
+      "aither_credential_management",
+      "aither_secure_storage",
+      "aither_encryption_tools",
+      "aither_audit_logging",
+      "aither_iso_download",
+      "aither_iso_customization",
+      "aither_iso_validation",
+      "aither_autounattend_generation",
+      "aither_cross_platform_executor",
+      "aither_performance_monitoring",
+      "aither_health_diagnostics",
+      "aither_workflow_orchestration",
+      "aither_ai_integration",
+      "aither_quick_patch",
+      "aither_emergency_rollback",
+      "aither_instant_backup",
+      "aither_fast_validation",
+      "aither_system_status"
+    ],
+    "description": "Complete AitherZero infrastructure automation framework",
+    "icon": "briefcase"
+  }
+}
