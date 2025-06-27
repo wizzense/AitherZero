@@ -190,22 +190,61 @@ Write-Host 'Starting AitherZero core application...' -ForegroundColor Green
 Write-Host ''
 
 try {
-    # Resolve path to core application script
-    # This launcher will be in the root of the application package
-    $coreScriptPath = Join-Path $PSScriptRoot 'aither-core.ps1'
+    # Resolve path to core application script with robust detection
+    # This launcher supports multiple deployment scenarios
 
-    # Alternative paths for different deployment scenarios
-    if (-not (Test-Path $coreScriptPath)) {
-        $coreScriptPath = Join-Path $PSScriptRoot 'aither-core/aither-core.ps1'
+    $possiblePaths = @(
+        # Scenario 1: Launcher in root of application package
+        (Join-Path $PSScriptRoot 'aither-core.ps1'),
+        # Scenario 2: Launcher in root, core in aither-core directory
+        (Join-Path $PSScriptRoot 'aither-core/aither-core.ps1'),
+        # Scenario 3: Launcher in templates/launchers (development)
+        (Join-Path $PSScriptRoot '../../aither-core/aither-core.ps1'),
+        # Scenario 4: Try to find using shared utility (if available)
+        $null  # Placeholder for Find-ProjectRoot result
+    )
+
+    # Try Find-ProjectRoot utility if available
+    $findProjectRootPath = Join-Path $PSScriptRoot '../../aither-core/shared/Find-ProjectRoot.ps1'
+    if (Test-Path $findProjectRootPath) {
+        try {
+            . $findProjectRootPath
+            $projectRoot = Find-ProjectRoot -StartPath $PSScriptRoot
+            if ($projectRoot) {
+                $possiblePaths[3] = Join-Path $projectRoot 'aither-core/aither-core.ps1'
+            }
+        } catch {
+            Write-Verbose "Find-ProjectRoot utility failed: $($_.Exception.Message)"
+        }
     }
 
-    # If we're in the templates/launchers directory (development scenario)
-    if (-not (Test-Path $coreScriptPath)) {
-        $coreScriptPath = Join-Path $PSScriptRoot '../../aither-core/aither-core.ps1'
+    # Try each path until we find the core script
+    $coreScriptPath = $null
+    foreach ($path in $possiblePaths) {
+        if ($path -and (Test-Path $path)) {
+            $coreScriptPath = $path
+            Write-Verbose "Found core script at: $coreScriptPath"
+            break
+        }
     }
 
-    if (-not (Test-Path $coreScriptPath)) {
-        throw "Core application file not found. Tried: `n  - $(Join-Path $PSScriptRoot 'aither-core.ps1')`n  - $(Join-Path $PSScriptRoot 'aither-core/aither-core.ps1')`n  - $(Join-Path $PSScriptRoot '../../aither-core/aither-core.ps1')"
+    if (-not $coreScriptPath) {
+        Write-Host "❌ Core application file not found." -ForegroundColor Red
+        Write-Host ""
+        Write-Host "Tried the following paths:" -ForegroundColor Yellow
+        foreach ($path in $possiblePaths) {
+            if ($path) {
+                $exists = if (Test-Path $path) { "✓" } else { "✗" }
+                Write-Host "  $exists $path" -ForegroundColor $(if (Test-Path $path) { 'Green' } else { 'Red' })
+            }
+        }
+        Write-Host ""
+        Write-Host "💡 Troubleshooting:" -ForegroundColor Cyan
+        Write-Host "  1. Ensure all files were extracted properly" -ForegroundColor White
+        Write-Host "  2. Run from the project root directory" -ForegroundColor White
+        Write-Host "  3. Check that aither-core/aither-core.ps1 exists" -ForegroundColor White
+        Write-Host "  4. Current launcher location: $PSScriptRoot" -ForegroundColor White
+        throw "Core application file not found in any expected location"
     }
 
     # Enhanced execution for PowerShell version compatibility
