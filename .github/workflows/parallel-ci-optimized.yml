@@ -222,17 +222,33 @@ jobs:
 
           # Use bulletproof validation with parallel execution
           if (Test-Path './tests/Run-BulletproofValidation.ps1') {
-            $params = @{
-              ValidationLevel = $testLevel
-              MaxParallelJobs = 4
-              CI = $true
-            }
+            # First check if the script supports MaxParallelJobs parameter
+            $scriptHelp = Get-Help './tests/Run-BulletproofValidation.ps1' -Parameter MaxParallelJobs -ErrorAction SilentlyContinue
+            
+            if ($scriptHelp) {
+              # Script supports MaxParallelJobs - use full parameter set
+              $params = @{
+                ValidationLevel = $testLevel
+                MaxParallelJobs = 4
+                CI = $true
+              }
 
-            if ($testLevel -eq "Quick") {
-              $params.FailFast = $true
-            }
+              if ($testLevel -eq "Quick") {
+                $params.FailFast = $true
+              }
 
-            pwsh -File './tests/Run-BulletproofValidation.ps1' @params
+              Write-Host "Using enhanced validation with parallel jobs..." -ForegroundColor Yellow
+              pwsh -File './tests/Run-BulletproofValidation.ps1' @params
+            } else {
+              # Script doesn't support MaxParallelJobs - use basic parameters
+              Write-Host "Using basic validation (MaxParallelJobs not supported)..." -ForegroundColor Yellow
+              $basicParams = "-ValidationLevel $testLevel -CI"
+              if ($testLevel -eq "Quick") {
+                $basicParams += " -FailFast"
+              }
+              
+              Invoke-Expression "pwsh -File './tests/Run-BulletproofValidation.ps1' $basicParams"
+            }
           } else {
             # Fallback parallel testing
             Write-Host "Running parallel module validation..." -ForegroundColor Yellow
