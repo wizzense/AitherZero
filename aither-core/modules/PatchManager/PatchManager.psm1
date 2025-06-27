@@ -145,6 +145,8 @@ Export-ModuleMember -Function @(
     'New-PatchIssue',
     'New-PatchPR',
     'Invoke-PatchRollback',
+    'Invoke-PostMergeCleanup',
+    'Start-PostMergeMonitor',
     'Update-RepositoryDocumentation',
     'New-CrossForkPR',
     'Show-GitStatusGuidance'

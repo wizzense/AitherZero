@@ -101,6 +101,24 @@ Invoke-PatchWorkflow -PatchDescription "Experimental feature testing" -CreateIss
 # ✅ Result: Just branch + commit, no GitHub integration
 ```
 
+### 5. Auto-Cleanup After Merge (NEW in v2.1)
+```powershell
+# Automatic branch cleanup when PR is merged
+Invoke-PatchWorkflow -PatchDescription "Feature with automatic cleanup" -PatchOperation {
+    # Your feature implementation
+    Update-FeatureModule -NewCapability
+} -CreatePR -AutoCleanup
+# ✅ Result: Creates PR, switches to main, monitors for merge, auto-cleans up branch when merged
+
+# Custom cleanup timing
+Invoke-PatchWorkflow -PatchDescription "Quick fix with faster monitoring" -PatchOperation {
+    # Quick fix
+} -CreatePR -AutoCleanup -CleanupCheckIntervalSeconds 15 -CleanupTimeoutMinutes 30
+# ✅ Result: Checks every 15 seconds for merge, times out after 30 minutes
+```
+# ✅ Result: Just branch + commit, no GitHub integration
+```
+
 ### Individual Component Functions (Advanced Use)
 
 Use these for specific operations when you need fine-grained control:
