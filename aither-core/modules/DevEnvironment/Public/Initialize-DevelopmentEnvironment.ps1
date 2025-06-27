@@ -105,6 +105,7 @@ function Initialize-DevelopmentEnvironment {
             Write-Step "Setting up Git aliases for PatchManager"
             try {
                 # TODO: Implement Set-PatchManagerAliases -Install to configure Git aliases for PatchManager integration.
+
                 Write-CustomLog "✓ Git aliases configuration skipped (not implemented)" -Level SUCCESS
             } catch {
                 Write-CustomLog "⚠ Git aliases setup failed: $($_.Exception.Message)" -Level WARN
