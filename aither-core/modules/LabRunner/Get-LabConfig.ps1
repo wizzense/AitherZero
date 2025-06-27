@@ -47,6 +47,5 @@ function Get-LabConfig {
     catch {
         throw "Failed to parse config file $Path. $_"
 
-
     }
 }

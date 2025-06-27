@@ -1,10 +1,10 @@
 BeforeAll {
     # Import the testing framework
-    Import-Module './aither-core/modules/TestingFramework' -Force
+    Import-Module '/workspaces/AitherZero/aither-core/modules/TestingFramework' -Force
 
     # Import the modules to test
-    Import-Module './aither-core/modules/ISOManager' -Force
-    Import-Module './aither-core/modules/ISOCustomizer' -Force
+    Import-Module '/workspaces/AitherZero/aither-core/modules/ISOManager' -Force
+    Import-Module '/workspaces/AitherZero/aither-core/modules/ISOCustomizer' -Force
 }
 
 Describe "ISOManager Module - Complete Test Suite" {
@@ -173,7 +173,9 @@ Describe "ISOManager Module - Complete Test Suite" {
                 $exportPath = Join-Path $env:TEMP "test-export.$($format.ToLower())"
                 { Export-ISOInventory -ExportPath $exportPath -Format $format -WhatIf } | Should -Not -Throw
             }
-        }        It "Should handle empty repository gracefully" {
+        }
+        
+        It "Should handle empty repository gracefully" {
             $exportPath = Join-Path $env:TEMP "test-export.json"
             $result = Export-ISOInventory -ExportPath $exportPath
             $result.Success | Should -Be $false
@@ -360,7 +362,9 @@ Describe "ISOCustomizer Module - Complete Test Suite" {
             }
 
             { New-AutounattendFile -Configuration $testConfig -OutputPath $testOutputPath -HeadlessMode -WhatIf } | Should -Not -Throw
-        }        It "Should support complex domain configuration" -Skip {
+        }
+
+        It "Should support complex domain configuration" -Skip {
             # This test is skipped as domain configuration is an advanced feature
             # that would require additional XML components not yet implemented
             $domainConfig = @{
@@ -437,7 +441,9 @@ Describe "ISOCustomizer Module - Complete Test Suite" {
                 $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
             } catch {
                 $false
-            }            if (-not $isAdmin) {
+            }
+
+            if (-not $isAdmin) {
                 # Should fail with privilege error when not admin
                 { New-CustomISO -SourceISOPath $testSourceISO -OutputISOPath $testOutputISO -WhatIf } | Should -Throw "*administrative privileges*"
             } else {

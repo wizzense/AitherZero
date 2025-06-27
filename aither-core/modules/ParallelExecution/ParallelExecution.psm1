@@ -146,7 +146,23 @@ function Invoke-ParallelForEach {
 
         try {
             $startTime = Get-Date
-            $results = $items | ForEach-Object -Parallel $ScriptBlock -ThrottleLimit $ThrottleLimit -TimeoutSeconds $TimeoutSeconds
+            
+            # Convert the scriptblock to handle both parameter-based and $_ based invocations
+            $scriptText = $ScriptBlock.ToString()
+            
+            # Check if the scriptblock expects a parameter
+            if ($scriptText -match 'param\s*\(') {
+                # Wrap to pass $_ as the first parameter
+                $parallelScript = [scriptblock]::Create(@"
+                    `$___item = `$_
+                    & { $scriptText } `$___item
+"@)
+            } else {
+                # Use the original scriptblock as-is (it will use $_)
+                $parallelScript = $ScriptBlock
+            }
+            
+            $results = $items | ForEach-Object -Parallel $parallelScript -ThrottleLimit $ThrottleLimit -TimeoutSeconds $TimeoutSeconds
 
             $duration = (Get-Date) - $startTime
             Write-CustomLog "Parallel execution completed in $($duration.TotalSeconds) seconds" -Level "SUCCESS"

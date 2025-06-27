@@ -11,24 +11,45 @@ test execution, and result aggregation.
 #>
 
 BeforeAll {
-    # Import the ParallelExecution module directly
-    $moduleRoot = Split-Path $PSScriptRoot -Parent
-    $modulePath = Join-Path $moduleRoot "pwsh\modules\ParallelExecution\ParallelExecution.psm1"
+    # Find project root by looking for the marker file
+    $currentPath = $PSScriptRoot
+    $projectRoot = $null
+    
+    while ($currentPath) {
+        if (Test-Path (Join-Path $currentPath "aither-core" "aither-core.ps1")) {
+            $projectRoot = $currentPath
+            break
+        }
+        $parent = Split-Path $currentPath -Parent
+        if ($parent -eq $currentPath) { break }
+        $currentPath = $parent
+    }
+    
+    if (-not $projectRoot) {
+        throw "Could not find project root (aither-core.ps1 not found)"
+    }
+    
+    # Mock Write-CustomLog before importing module
+    if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
+        function global:Write-CustomLog {
+            param(
+                [string]$Message, 
+                [string]$Level = "INFO",
+                [switch]$NoNewline
+            )
+            # Minimal mock for testing
+        }
+    }
+    
+    # Import the ParallelExecution module
+    $modulePath = Join-Path $projectRoot "aither-core" "modules" "ParallelExecution" "ParallelExecution.psm1"
     
     if (-not (Test-Path $modulePath)) {
         throw "ParallelExecution module not found at: $modulePath"
     }
     
-    # Source the module file directly
-    . $modulePath
-    
-    # Mock Write-CustomLog if not available
-    if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-        function global:Write-CustomLog {
-            param([string]$Message, [string]$Level = "INFO")
-            Write-Host "[$Level] $Message"
-        }
-    }
+    # Import the module
+    Import-Module $modulePath -Force -DisableNameChecking
 }
 
 Describe "ParallelExecution Module" {

@@ -128,7 +128,8 @@ function Set-SecureCredentials {
             }
 
             # Store credential metadata
-            $metadataPath = Join-Path $env:LOCALAPPDATA "OpenTofuProvider/credentials"
+            $localAppData = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { Join-Path $HOME ".local/share" }
+            $metadataPath = Join-Path $localAppData "OpenTofuProvider/credentials"
             if (-not (Test-Path $metadataPath)) {
                 New-Item -Path $metadataPath -ItemType Directory -Force | Out-Null
             }

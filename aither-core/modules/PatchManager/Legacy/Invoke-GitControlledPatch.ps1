@@ -472,7 +472,6 @@ function New-GitControlledPatchPullRequest {
         try {
             $prBody | Out-File -FilePath $tempPRFile -Encoding utf8
 
-
             $prResult = gh pr create --title $prTitle --body-file $tempPRFile --base main --head $BranchName 2>&1
 
             if ($LASTEXITCODE -eq 0) {

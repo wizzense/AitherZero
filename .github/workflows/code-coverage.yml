@@ -1,0 +1,62 @@
+name: Code Coverage
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  coverage:
+    name: Code Coverage Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PowerShell
+      uses: powershell/setup-powershell@v1
+      with:
+        pwsh-version: '7.4.0'
+        
+    - name: Install Pester
+      shell: pwsh
+      run: |
+        Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -SkipPublisherCheck
+        Import-Module Pester
+        
+    - name: Run tests with coverage
+      shell: pwsh
+      run: |
+        # Ensure we're in the project root
+        Write-Host "Working directory: $(Get-Location)"
+        Write-Host "Project structure:"
+        Get-ChildItem -Name | Select-Object -First 10
+        
+        # Run coverage analysis
+        ./tests/Run-CodeCoverage.ps1 -Scope Full -CI -EnforceThresholds -OutputFormat JaCoCo,Cobertura
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./tests/results/coverage.xml
+        fail_ci_if_error: true
+        verbose: true
+        
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-reports
+        path: tests/results/coverage.*
+        
+    - name: Comment PR with coverage
+      if: github.event_name == 'pull_request'
+      uses: 5monkeys/cobertura-action@master
+      with:
+        path: tests/results/coverage.cobertura
+        minimum_coverage: 75
+        fail_below_threshold: true
+        show_line: true
+        show_branch: true
+        show_missing: true

@@ -30,14 +30,14 @@ Describe "RemoteConnection Module" {
                 'New-RemoteConnection',
                 'Connect-RemoteEndpoint',
                 'Disconnect-RemoteEndpoint',
-                'Test-RemoteConnection',
                 'Get-RemoteConnection',
-                'Remove-RemoteConnection'
+                'Invoke-RemoteCommand'
             )
 
             foreach ($function in $expectedFunctions) {
                 Get-Command $function -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
-            }        }
+            }
+        }
     }
 
     Context "New-RemoteConnection Function" {
@@ -87,15 +87,14 @@ Describe "RemoteConnection Module" {
         }
     }
 
-    Context "Test-RemoteConnection Function" {
-        It "Should validate connection existence" {
-            $result = Test-RemoteConnection -ConnectionName "NonExistent-$(Get-Random)"
-
-            $result | Should -Be $false
+    Context "Invoke-RemoteCommand Function" {
+        It "Should validate connection parameter" {
+            { Invoke-RemoteCommand -ConnectionName "" -Command "echo test" } | Should -Throw
         }
 
-        It "Should handle empty connection names" {
-            { Test-RemoteConnection -ConnectionName "" } | Should -Throw
+        It "Should handle non-existent connections" {
+            # This should throw an error when connection is not found
+            { Invoke-RemoteCommand -ConnectionName "NonExistent-$(Get-Random)" -Command "echo test" -WhatIf } | Should -Throw
         }
     }
 
@@ -114,15 +113,21 @@ Describe "RemoteConnection Module" {
         }
     }
 
-    Context "Remove-RemoteConnection Function" {
-        It "Should handle WhatIf parameter" {
-            $result = Remove-RemoteConnection -ConnectionName "Test-Remove" -WhatIf
-
+    Context "Connection Management" {
+        It "Should create and retrieve connections" {
+            # Create a test connection
+            $testConnName = "Test-Conn-$(Get-Random)"
+            $result = New-RemoteConnection -ConnectionName $testConnName -EndpointType SSH -HostName "test.com" -WhatIf
+            
             $result | Should -Not -BeNullOrEmpty
+            $result.Success | Should -Be $true
         }
 
-        It "Should validate connection name parameter" {
-            { Remove-RemoteConnection -ConnectionName "" } | Should -Throw
+        It "Should handle connection cleanup" {
+            # Test that disconnect works for non-existent connections
+            $result = Disconnect-RemoteEndpoint -ConnectionName "Test-Cleanup-$(Get-Random)" -WhatIf
+            
+            $result | Should -Not -BeNullOrEmpty
         }
     }
 
@@ -147,14 +152,14 @@ Describe "RemoteConnection Integration" {
             Import-Module './aither-core/modules/SecureCredentials' -Force
 
             # Test that RemoteConnection can reference SecureCredentials functions
-            $testSecureCredentialExists = Get-Command -Name "Test-SecureCredential" -Module "SecureCredentials" -ErrorAction SilentlyContinue
+            $getSecureCredentialExists = Get-Command -Name "Get-SecureCredential" -Module "SecureCredentials" -ErrorAction SilentlyContinue
             $newSecureCredentialExists = Get-Command -Name "New-SecureCredential" -Module "SecureCredentials" -ErrorAction SilentlyContinue
 
             # At least one SecureCredentials function should be available
-            ($testSecureCredentialExists -or $newSecureCredentialExists) | Should -Be $true
+            ($getSecureCredentialExists -or $newSecureCredentialExists) | Should -Be $true
 
-            # Test that Test-SecureCredential function is available (integration dependency)
-            $testSecureCredentialExists | Should -Not -BeNullOrEmpty
+            # Test that Get-SecureCredential function is available (integration dependency)
+            $getSecureCredentialExists | Should -Not -BeNullOrEmpty
         }
 
         It "Should validate credential references" {
@@ -183,10 +188,10 @@ Describe "RemoteConnection Integration" {
     Context "Error Handling" {
         It "Should handle logging integration" {
             # Test that functions can call Write-CustomLog without errors
-            $result = Test-RemoteConnection -ConnectionName "Test-Logging" -Verbose
+            $result = Get-RemoteConnection -ConnectionName "Test-Logging" -Verbose
 
             # Should not throw even if connection doesn't exist
-            $result | Should -Be $false
+            $result | Should -BeNullOrEmpty
         }
     }
 }

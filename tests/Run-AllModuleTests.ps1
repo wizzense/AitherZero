@@ -61,7 +61,17 @@ param(
     [switch]$Parallel,
 
     [Parameter()]
-    [switch]$PassThru
+    [switch]$PassThru,
+
+    [Parameter()]
+    [switch]$CodeCoverage,
+
+    [Parameter()]
+    [ValidateSet("JaCoCo", "Cobertura", "CoverageGutters")]
+    [string]$CoverageFormat = "JaCoCo",
+
+    [Parameter()]
+    [string]$CoverageOutputPath
 )
 
 # Set up paths
@@ -100,6 +110,36 @@ $pesterConfig = @{
     }
     Should = @{
         ErrorAction = 'Continue'
+    }
+}
+
+# Add code coverage configuration if requested
+if ($CodeCoverage) {
+    Write-Host "  📊 Code coverage enabled - Format: $CoverageFormat" -ForegroundColor Cyan
+    
+    # Determine coverage paths based on modules being tested
+    $coveragePaths = @()
+    foreach ($module in $modulesToTest) {
+        $modulePath = Join-Path $projectRoot "aither-core\modules\$module"
+        if (Test-Path $modulePath) {
+            $coveragePaths += Join-Path $modulePath "*.ps1"
+            $coveragePaths += Join-Path $modulePath "*.psm1"
+        }
+    }
+    
+    $pesterConfig.CodeCoverage = @{
+        Enabled = $true
+        Path = $coveragePaths
+        OutputFormat = $CoverageFormat
+        OutputPath = if ($CoverageOutputPath) { 
+            $CoverageOutputPath 
+        } else { 
+            Join-Path $projectRoot "tests\results\coverage.$($CoverageFormat.ToLower())"
+        }
+        OutputEncoding = 'UTF8'
+        ExcludeTests = $true
+        UseBreakpoints = $false
+        SingleHitBreakpoints = $true
     }
 }
 
@@ -191,6 +231,18 @@ if ($Parallel.IsPresent) {
         $config.TestResult.OutputFormat = $OutputFormat
     }
 
+    # Add code coverage if enabled
+    if ($CodeCoverage) {
+        $config.CodeCoverage.Enabled = $true
+        $config.CodeCoverage.Path = $pesterConfig.CodeCoverage.Path
+        $config.CodeCoverage.OutputFormat = $pesterConfig.CodeCoverage.OutputFormat
+        $config.CodeCoverage.OutputPath = $pesterConfig.CodeCoverage.OutputPath
+        $config.CodeCoverage.OutputEncoding = $pesterConfig.CodeCoverage.OutputEncoding
+        $config.CodeCoverage.ExcludeTests = $true
+        $config.CodeCoverage.UseBreakpoints = $false
+        $config.CodeCoverage.SingleHitBreakpoints = $true
+    }
+
     $aggregateResult = Invoke-Pester -Configuration $config
 }
 
@@ -215,6 +267,19 @@ Write-Host "Duration:       $($duration.ToString('mm\:ss\.fff'))" -ForegroundCol
 
 if ($OutputFile) {
     Write-Host "Results saved:  $OutputFile" -ForegroundColor Cyan
+}
+
+# Display code coverage results if enabled
+if ($CodeCoverage -and $aggregateResult.CodeCoverage) {
+    $coverage = $aggregateResult.CodeCoverage
+    $coveragePercent = if ($coverage.NumberOfCommandsAnalyzed -gt 0) {
+        [Math]::Round(($coverage.NumberOfCommandsExecuted / $coverage.NumberOfCommandsAnalyzed) * 100, 2)
+    } else { 0 }
+    
+    Write-Host "`n📊 CODE COVERAGE" -ForegroundColor Cyan
+    Write-Host "Coverage:       $coveragePercent%" -ForegroundColor $(if ($coveragePercent -ge 80) { "Green" } elseif ($coveragePercent -ge 60) { "Yellow" } else { "Red" })
+    Write-Host "Commands:       $($coverage.NumberOfCommandsExecuted)/$($coverage.NumberOfCommandsAnalyzed)" -ForegroundColor White
+    Write-Host "Report saved:   $($pesterConfig.CodeCoverage.OutputPath)" -ForegroundColor Cyan
 }
 
 # Show failed tests details

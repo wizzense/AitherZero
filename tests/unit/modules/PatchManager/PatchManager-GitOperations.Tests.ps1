@@ -1,6 +1,6 @@
 BeforeAll {
     # Import Logging module first
-    $projectRoot = $env:PROJECT_ROOT
+    $projectRoot = "/workspaces/AitherZero"
     $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
     
     try {
@@ -13,7 +13,7 @@ BeforeAll {
     }
 
     # Import PatchManager module
-    $projectRoot = $env:PROJECT_ROOT
+    $projectRoot = "/workspaces/AitherZero"
     $patchManagerPath = Join-Path $projectRoot "aither-core/modules/PatchManager"
     
     try {

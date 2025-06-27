@@ -51,6 +51,9 @@
   "GeminiCLIWSLUsername": "",
   "GeminiCLISkipWSL": false,
   "GeminiCLISkipNode": false,
+  "InstallCodexCLI": false,
+  "CodexCLIWSLUsername": "",
+  "CodexCLISkipWSL": false,
   "CertificateAuthority": {
     "CommonName": "default-lab-RootCA",
     "ValidityYears": 5
@@ -120,6 +123,14 @@
       "Package": "@google/gemini-cli",
       "AuthMethod": "oauth",
       "ApiKeyUrl": "https://aistudio.google.com"
+    },
+    "CodexCLI": {
+      "InstallMethod": "npm",
+      "RequireWSL": true,
+      "NodeVersion": "lts",
+      "Package": "@openai/codex-cli",
+      "AuthMethod": "apikey",
+      "ApiKeyUrl": "https://platform.openai.com/api-keys"
     }
   }
 }

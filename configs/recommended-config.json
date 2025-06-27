@@ -10,5 +10,7 @@
   "InstallClaudeCode": true,
   "ClaudeCodeWSLUsername": "developer",
   "InstallGeminiCLI": true,
-  "GeminiCLIWSLUsername": "developer"
+  "GeminiCLIWSLUsername": "developer",
+  "InstallCodexCLI": true,
+  "CodexCLIWSLUsername": "developer"
 }

@@ -35,7 +35,7 @@ BeforeAll {
     $projectRoot = if ($env:PROJECT_ROOT) { 
         $env:PROJECT_ROOT 
     } else { 
-        '/workspaces/AitherLabs'
+        '/workspaces/AitherZero'
     }
     $patchManagerPath = Join-Path $projectRoot "aither-core/modules/PatchManager"
     

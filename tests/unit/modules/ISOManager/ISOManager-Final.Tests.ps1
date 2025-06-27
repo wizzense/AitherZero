@@ -1,10 +1,10 @@
 BeforeAll {
     # Import the testing framework
-    Import-Module './aither-core/modules/TestingFramework' -Force
+    Import-Module '/workspaces/AitherZero/aither-core/modules/TestingFramework' -Force
 
     # Import the modules to test
-    Import-Module './aither-core/modules/ISOManager' -Force
-    Import-Module './aither-core/modules/ISOCustomizer' -Force
+    Import-Module '/workspaces/AitherZero/aither-core/modules/ISOManager' -Force
+    Import-Module '/workspaces/AitherZero/aither-core/modules/ISOCustomizer' -Force
 }
 
 Describe "ISO Manager Module - Final Comprehensive Test Suite" {

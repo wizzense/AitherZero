@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="22" errors="0" failures="0" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-06-27" time="20:17:18">
+  <environment os-version="6.8.0-1027-azure" user-domain="" user="codespace" machine-name="codespaces-79fd5d" clr-version="9.0.4" nunit-version="2.5.8.0" platform="Linux" cwd="/workspaces/AitherZero" />
+  <culture-info current-culture="" current-uiculture="" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Success" success="True" time="2.1537" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/tests/unit/modules/RemoteConnection/RemoteConnection.Tests.ps1" executed="True" result="Success" success="True" time="2.1537" asserts="0" description="/workspaces/AitherZero/tests/unit/modules/RemoteConnection/RemoteConnection.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="RemoteConnection Module" executed="True" result="Success" success="True" time="1.0996" asserts="0" description="RemoteConnection Module">
+            <results>
+              <test-suite type="TestFixture" name="RemoteConnection Module.Module Loading" executed="True" result="Success" success="True" time="0.1465" asserts="0" description="RemoteConnection Module.Module Loading">
+                <results>
+                  <test-case description="Should load the RemoteConnection module successfully" name="RemoteConnection Module.Module Loading.Should load the RemoteConnection module successfully" time="0.1078" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export required functions" name="RemoteConnection Module.Module Loading.Should export required functions" time="0.0122" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="RemoteConnection Module.New-RemoteConnection Function" executed="True" result="Success" success="True" time="0.5855" asserts="0" description="RemoteConnection Module.New-RemoteConnection Function">
+                <results>
+                  <test-case description="Should create SSH connection with WhatIf" name="RemoteConnection Module.New-RemoteConnection Function.Should create SSH connection with WhatIf" time="0.1322" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create WinRM connection with WhatIf" name="RemoteConnection Module.New-RemoteConnection Function.Should create WinRM connection with WhatIf" time="0.0887" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create VMware connection with WhatIf" name="RemoteConnection Module.New-RemoteConnection Function.Should create VMware connection with WhatIf" time="0.1119" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate required parameters" name="RemoteConnection Module.New-RemoteConnection Function.Should validate required parameters" time="0.0601" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support different endpoint types" name="RemoteConnection Module.New-RemoteConnection Function.Should support different endpoint types" time="0.037" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="RemoteConnection Module.Connect-RemoteEndpoint Function" executed="True" result="Success" success="True" time="0.6908" asserts="0" description="RemoteConnection Module.Connect-RemoteEndpoint Function">
+                <results>
+                  <test-case description="Should handle non-existent connections gracefully" name="RemoteConnection Module.Connect-RemoteEndpoint Function.Should handle non-existent connections gracefully" time="0.0674" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate connection name parameter" name="RemoteConnection Module.Connect-RemoteEndpoint Function.Should validate connection name parameter" time="0.0213" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="RemoteConnection Module.Invoke-RemoteCommand Function" executed="True" result="Success" success="True" time="0.7519" asserts="0" description="RemoteConnection Module.Invoke-RemoteCommand Function">
+                <results>
+                  <test-case description="Should validate connection parameter" name="RemoteConnection Module.Invoke-RemoteCommand Function.Should validate connection parameter" time="0.0246" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle non-existent connections" name="RemoteConnection Module.Invoke-RemoteCommand Function.Should handle non-existent connections" time="0.0243" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="RemoteConnection Module.Get-RemoteConnection Function" executed="True" result="Success" success="True" time="0.8731" asserts="0" description="RemoteConnection Module.Get-RemoteConnection Function">
+                <results>
+                  <test-case description="Should handle non-existent connections" name="RemoteConnection Module.Get-RemoteConnection Function.Should handle non-existent connections" time="0.0261" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should list all connections when no name specified" name="RemoteConnection Module.Get-RemoteConnection Function.Should list all connections when no name specified" time="0.0819" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="RemoteConnection Module.Connection Management" executed="True" result="Success" success="True" time="0.9663" asserts="0" description="RemoteConnection Module.Connection Management">
+                <results>
+                  <test-case description="Should create and retrieve connections" name="RemoteConnection Module.Connection Management.Should create and retrieve connections" time="0.0325" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle connection cleanup" name="RemoteConnection Module.Connection Management.Should handle connection cleanup" time="0.0468" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="RemoteConnection Module.Disconnect-RemoteEndpoint Function" executed="True" result="Success" success="True" time="1.0762" asserts="0" description="RemoteConnection Module.Disconnect-RemoteEndpoint Function">
+                <results>
+                  <test-case description="Should handle WhatIf parameter" name="RemoteConnection Module.Disconnect-RemoteEndpoint Function.Should handle WhatIf parameter" time="0.0547" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate connection name parameter" name="RemoteConnection Module.Disconnect-RemoteEndpoint Function.Should validate connection name parameter" time="0.0271" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="RemoteConnection Integration" executed="True" result="Success" success="True" time="1.426" asserts="0" description="RemoteConnection Integration">
+            <results>
+              <test-suite type="TestFixture" name="RemoteConnection Integration.SecureCredentials Integration" executed="True" result="Success" success="True" time="0.2633" asserts="0" description="RemoteConnection Integration.SecureCredentials Integration">
+                <results>
+                  <test-case description="Should integrate with SecureCredentials module" name="RemoteConnection Integration.SecureCredentials Integration.Should integrate with SecureCredentials module" time="0.149" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate credential references" name="RemoteConnection Integration.SecureCredentials Integration.Should validate credential references" time="0.1046" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="RemoteConnection Integration.Cross-Platform Compatibility" executed="True" result="Success" success="True" time="0.2901" asserts="0" description="RemoteConnection Integration.Cross-Platform Compatibility">
+                <results>
+                  <test-case description="Should work on Windows PowerShell" name="RemoteConnection Integration.Cross-Platform Compatibility.Should work on Windows PowerShell" time="0.0109" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should work on PowerShell Core" name="RemoteConnection Integration.Cross-Platform Compatibility.Should work on PowerShell Core" time="0.0072" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="RemoteConnection Integration.Error Handling" executed="True" result="Success" success="True" time="0.3126" asserts="0" description="RemoteConnection Integration.Error Handling">
+                <results>
+                  <test-case description="Should handle logging integration" name="RemoteConnection Integration.Error Handling.Should handle logging integration" time="0.0135" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>

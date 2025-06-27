@@ -136,7 +136,7 @@ Describe "Performance and Load Testing" {
         }
     }
 
-    Context "Logging Performance" -Skip:(-not ($script:PerformanceModules.ContainsKey('Logging') -and $script:PerformanceModules['Logging'])) {
+    Context "Logging Performance" -Skip:(-not ($script:PerformanceModules -and $script:PerformanceModules['Logging'])) {
 
         BeforeEach {
             if ($script:PerformanceModules['Logging']) {
@@ -210,7 +210,7 @@ Describe "Performance and Load Testing" {
         }
     }
 
-    Context "File Operations Performance" -Skip:(-not ($script:PerformanceModules.ContainsKey('BackupManager') -and $script:PerformanceModules['BackupManager'])) {
+    Context "File Operations Performance" -Skip:(-not ($script:PerformanceModules -and $script:PerformanceModules['BackupManager'])) {
 
         It "Should handle large file operations efficiently" {
             if ($script:PerformanceModules['BackupManager']) {
@@ -264,7 +264,7 @@ Describe "Performance and Load Testing" {
         }
     }
 
-    Context "Parallel Execution Performance" -Skip:(-not ($script:PerformanceModules.ContainsKey('ParallelExecution') -and $script:PerformanceModules['ParallelExecution'])) {
+    Context "Parallel Execution Performance" -Skip:(-not ($script:PerformanceModules -and $script:PerformanceModules['ParallelExecution'])) {
 
         It "Should demonstrate performance improvement with parallel execution" {
             if ($script:PerformanceModules['ParallelExecution']) {

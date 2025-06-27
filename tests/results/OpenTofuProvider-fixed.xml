@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="38" errors="0" failures="2" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-06-27" time="19:38:09">
+  <environment clr-version="9.0.4" user-domain="" user="codespace" cwd="/workspaces/AitherZero" platform="Linux" nunit-version="2.5.8.0" machine-name="codespaces-79fd5d" os-version="6.8.0-1027-azure" />
+  <culture-info current-culture="" current-uiculture="" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="2.9213" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/tests/unit/modules/OpenTofuProvider.Tests.ps1" executed="True" result="Failure" success="False" time="2.9213" asserts="0" description="/workspaces/AitherZero/tests/unit/modules/OpenTofuProvider.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="OpenTofuProvider Module Tests" executed="True" result="Failure" success="False" time="1.7255" asserts="0" description="OpenTofuProvider Module Tests">
+            <results>
+              <test-suite type="TestFixture" name="OpenTofuProvider Module Tests.Module Loading and Structure" executed="True" result="Success" success="True" time="0.1994" asserts="0" description="OpenTofuProvider Module Tests.Module Loading and Structure">
+                <results>
+                  <test-case description="Should load the OpenTofuProvider module successfully" name="OpenTofuProvider Module Tests.Module Loading and Structure.Should load the OpenTofuProvider module successfully" time="0.107" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export all required functions" name="OpenTofuProvider Module Tests.Module Loading and Structure.Should export all required functions" time="0.0244" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should have proper module manifest" name="OpenTofuProvider Module Tests.Module Loading and Structure.Should have proper module manifest" time="0.038" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="OpenTofuProvider Module Tests.Get-TaliesinsProviderConfig Function Tests" executed="True" result="Success" success="True" time="0.4301" asserts="0" description="OpenTofuProvider Module Tests.Get-TaliesinsProviderConfig Function Tests">
+                <results>
+                  <test-case description="Should generate HCL configuration successfully" name="OpenTofuProvider Module Tests.Get-TaliesinsProviderConfig Function Tests.Should generate HCL configuration successfully" time="0.0778" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should generate JSON configuration successfully" name="OpenTofuProvider Module Tests.Get-TaliesinsProviderConfig Function Tests.Should generate JSON configuration successfully" time="0.0385" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should generate Object configuration successfully" name="OpenTofuProvider Module Tests.Get-TaliesinsProviderConfig Function Tests.Should generate Object configuration successfully" time="0.0403" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include certificate configuration when provided" name="OpenTofuProvider Module Tests.Get-TaliesinsProviderConfig Function Tests.Should include certificate configuration when provided" time="0.0226" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should throw error for invalid certificate path" name="OpenTofuProvider Module Tests.Get-TaliesinsProviderConfig Function Tests.Should throw error for invalid certificate path" time="0.0389" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="OpenTofuProvider Module Tests.Import-LabConfiguration Function Tests" executed="True" result="Success" success="True" time="0.8732" asserts="0" description="OpenTofuProvider Module Tests.Import-LabConfiguration Function Tests">
+                <results>
+                  <test-case description="Should import YAML configuration successfully" name="OpenTofuProvider Module Tests.Import-LabConfiguration Function Tests.Should import YAML configuration successfully" time="0.0917" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should auto-detect YAML format" name="OpenTofuProvider Module Tests.Import-LabConfiguration Function Tests.Should auto-detect YAML format" time="0.051" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate configuration when requested" name="OpenTofuProvider Module Tests.Import-LabConfiguration Function Tests.Should validate configuration when requested" time="0.1328" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include metadata about loaded configuration" name="OpenTofuProvider Module Tests.Import-LabConfiguration Function Tests.Should include metadata about loaded configuration" time="0.0558" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should provide configuration summary" name="OpenTofuProvider Module Tests.Import-LabConfiguration Function Tests.Should provide configuration summary" time="0.0978" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="OpenTofuProvider Module Tests.Test-OpenTofuSecurity Function Tests" executed="True" result="Failure" success="False" time="1.1601" asserts="0" description="OpenTofuProvider Module Tests.Test-OpenTofuSecurity Function Tests">
+                <results>
+                  <test-case description="Should run security audit successfully" name="OpenTofuProvider Module Tests.Test-OpenTofuSecurity Function Tests.Should run security audit successfully" time="0.1103" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include multiple security checks" name="OpenTofuProvider Module Tests.Test-OpenTofuSecurity Function Tests.Should include multiple security checks" time="0.0545" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should calculate proper security score" name="OpenTofuProvider Module Tests.Test-OpenTofuSecurity Function Tests.Should calculate proper security score" time="0.0818" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>PSInvalidCastException: Cannot convert the "System.Object[]" value of type "System.Object[]" to type "System.Type".
+RuntimeException: Cannot convert the "System.Object[]" value of type "System.Object[]" to type "System.Type".</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                  <test-case description="Should identify critical issues if any exist" name="OpenTofuProvider Module Tests.Test-OpenTofuSecurity Function Tests.Should identify critical issues if any exist" time="0.0277" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="OpenTofuProvider Module Tests.Test-InfrastructureCompliance Function Tests" executed="True" result="Failure" success="False" time="1.4455" asserts="0" description="OpenTofuProvider Module Tests.Test-InfrastructureCompliance Function Tests">
+                <results>
+                  <test-case description="Should run compliance tests successfully" name="OpenTofuProvider Module Tests.Test-InfrastructureCompliance Function Tests.Should run compliance tests successfully" time="0.1305" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should test different compliance standards" name="OpenTofuProvider Module Tests.Test-InfrastructureCompliance Function Tests.Should test different compliance standards" time="0.0725" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should calculate compliance score" name="OpenTofuProvider Module Tests.Test-InfrastructureCompliance Function Tests.Should calculate compliance score" time="0.0338" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>PSInvalidCastException: Cannot convert the "System.Object[]" value of type "System.Object[]" to type "System.Type".
+RuntimeException: Cannot convert the "System.Object[]" value of type "System.Object[]" to type "System.Type".</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                  <test-case description="Should provide compliance status" name="OpenTofuProvider Module Tests.Test-InfrastructureCompliance Function Tests.Should provide compliance status" time="0.0319" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="OpenTofuProvider Module Tests.Set-SecureCredentials Function Tests" executed="True" result="Success" success="True" time="1.5233" asserts="0" description="OpenTofuProvider Module Tests.Set-SecureCredentials Function Tests">
+                <results>
+                  <test-case description="Should handle UserPassword credential type" name="OpenTofuProvider Module Tests.Set-SecureCredentials Function Tests.Should handle UserPassword credential type" time="0.034" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate required parameters for different credential types" name="OpenTofuProvider Module Tests.Set-SecureCredentials Function Tests.Should validate required parameters for different credential types" time="0.0165" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return proper result structure" name="OpenTofuProvider Module Tests.Set-SecureCredentials Function Tests.Should return proper result structure" time="0.0212" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="OpenTofuProvider Module Tests.Export-LabTemplate Function Tests" executed="True" result="Success" success="True" time="1.7121" asserts="0" description="OpenTofuProvider Module Tests.Export-LabTemplate Function Tests">
+                <results>
+                  <test-case description="Should export template successfully" name="OpenTofuProvider Module Tests.Export-LabTemplate Function Tests.Should export template successfully" time="0.0445" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create template files" name="OpenTofuProvider Module Tests.Export-LabTemplate Function Tests.Should create template files" time="0.0418" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include documentation when requested" name="OpenTofuProvider Module Tests.Export-LabTemplate Function Tests.Should include documentation when requested" time="0.0447" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include metadata in result" name="OpenTofuProvider Module Tests.Export-LabTemplate Function Tests.Should include metadata in result" time="0.0502" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="OpenTofuProvider Integration Tests" executed="True" result="Success" success="True" time="2.0993" asserts="0" description="OpenTofuProvider Integration Tests">
+            <results>
+              <test-suite type="TestFixture" name="OpenTofuProvider Integration Tests.Module Dependencies" executed="True" result="Success" success="True" time="0.0238" asserts="0" description="OpenTofuProvider Integration Tests.Module Dependencies">
+                <results>
+                  <test-case description="Should integrate with Logging module" name="OpenTofuProvider Integration Tests.Module Dependencies.Should integrate with Logging module" time="0.015" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle missing dependencies gracefully" name="OpenTofuProvider Integration Tests.Module Dependencies.Should handle missing dependencies gracefully" time="0.0041" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="OpenTofuProvider Integration Tests.Cross-Platform Compatibility" executed="True" result="Success" success="True" time="0.0659" asserts="0" description="OpenTofuProvider Integration Tests.Cross-Platform Compatibility">
+                <results>
+                  <test-case description="Should work on current platform" name="OpenTofuProvider Integration Tests.Cross-Platform Compatibility.Should work on current platform" time="0.0196" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle platform-specific paths correctly" name="OpenTofuProvider Integration Tests.Cross-Platform Compatibility.Should handle platform-specific paths correctly" time="0.0173" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="OpenTofuProvider Integration Tests.Error Handling and Resilience" executed="True" result="Success" success="True" time="0.1892" asserts="0" description="OpenTofuProvider Integration Tests.Error Handling and Resilience">
+                <results>
+                  <test-case description="Should handle invalid configuration paths gracefully" name="OpenTofuProvider Integration Tests.Error Handling and Resilience.Should handle invalid configuration paths gracefully" time="0.0199" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle malformed configurations gracefully" name="OpenTofuProvider Integration Tests.Error Handling and Resilience.Should handle malformed configurations gracefully" time="0.0612" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate input parameters" name="OpenTofuProvider Integration Tests.Error Handling and Resilience.Should validate input parameters" time="0.0256" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="OpenTofuProvider Integration Tests.Security Validation" executed="True" result="Success" success="True" time="0.367" asserts="0" description="OpenTofuProvider Integration Tests.Security Validation">
+                <results>
+                  <test-case description="Should enforce secure defaults" name="OpenTofuProvider Integration Tests.Security Validation.Should enforce secure defaults" time="0.0483" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should detect security issues" name="OpenTofuProvider Integration Tests.Security Validation.Should detect security issues" time="0.0704" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate compliance standards" name="OpenTofuProvider Integration Tests.Security Validation.Should validate compliance standards" time="0.0477" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>

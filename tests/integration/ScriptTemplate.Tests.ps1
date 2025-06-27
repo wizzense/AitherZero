@@ -23,5 +23,3 @@ Describe 'ScriptTemplate Tests' {
         # Cleanup test resources
     }
 }
-
-

@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="29" errors="0" failures="0" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-06-27" time="20:22:03">
+  <environment machine-name="codespaces-79fd5d" os-version="6.8.0-1027-azure" user-domain="" platform="Linux" nunit-version="2.5.8.0" clr-version="9.0.4" user="codespace" cwd="/workspaces/AitherZero" />
+  <culture-info current-culture="" current-uiculture="" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Success" success="True" time="2.3164" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1" executed="True" result="Success" success="True" time="2.3164" asserts="0" description="/workspaces/AitherZero/tests/unit/modules/CoreApp/CoreRunner.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Core Runner Script Validation Tests" executed="True" result="Success" success="True" time="0.2492" asserts="0" description="Core Runner Script Validation Tests">
+            <results>
+              <test-suite type="TestFixture" name="Core Runner Script Validation Tests.Script file existence and basic validation" executed="True" result="Success" success="True" time="0.2126" asserts="0" description="Core Runner Script Validation Tests.Script file existence and basic validation">
+                <results>
+                  <test-case description="should have aither-core.ps1 script" name="Core Runner Script Validation Tests.Script file existence and basic validation.should have aither-core.ps1 script" time="0.0868" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should have valid PowerShell syntax in aither-core.ps1" name="Core Runner Script Validation Tests.Script file existence and basic validation.should have valid PowerShell syntax in aither-core.ps1" time="0.0372" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Core Runner Script Structure Tests" executed="True" result="Success" success="True" time="0.331" asserts="0" description="Core Runner Script Structure Tests">
+            <results>
+              <test-suite type="TestFixture" name="Core Runner Script Structure Tests.aither-core.ps1 structure validation" executed="True" result="Success" success="True" time="0.0743" asserts="0" description="Core Runner Script Structure Tests.aither-core.ps1 structure validation">
+                <results>
+                  <test-case description="should require PowerShell 7.0 or later" name="Core Runner Script Structure Tests.aither-core.ps1 structure validation.should require PowerShell 7.0 or later" time="0.0083" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should have proper CmdletBinding with SupportsShouldProcess" name="Core Runner Script Structure Tests.aither-core.ps1 structure validation.should have proper CmdletBinding with SupportsShouldProcess" time="0.0054" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should have comprehensive parameter definitions" name="Core Runner Script Structure Tests.aither-core.ps1 structure validation.should have comprehensive parameter definitions" time="0.0058" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should have expected parameters" name="Core Runner Script Structure Tests.aither-core.ps1 structure validation.should have expected parameters" time="0.0258" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should have parameter validation attributes" name="Core Runner Script Structure Tests.aither-core.ps1 structure validation.should have parameter validation attributes" time="0.0046" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should have comprehensive help documentation" name="Core Runner Script Structure Tests.aither-core.ps1 structure validation.should have comprehensive help documentation" time="0.01" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Core Runner Parameter Validation Tests" executed="True" result="Success" success="True" time="1.2384" asserts="0" description="Core Runner Parameter Validation Tests">
+            <results>
+              <test-suite type="TestFixture" name="Core Runner Parameter Validation Tests.aither-core.ps1 parameter validation" executed="True" result="Success" success="True" time="0.8996" asserts="0" description="Core Runner Parameter Validation Tests.aither-core.ps1 parameter validation">
+                <results>
+                  <test-case description="should accept Quiet parameter as switch" name="Core Runner Parameter Validation Tests.aither-core.ps1 parameter validation.should accept Quiet parameter as switch" time="0.3173" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should accept valid Verbosity values" name="Core Runner Parameter Validation Tests.aither-core.ps1 parameter validation.should accept valid Verbosity values" time="0.1306" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should reject invalid Verbosity values" name="Core Runner Parameter Validation Tests.aither-core.ps1 parameter validation.should reject invalid Verbosity values" time="0.0316" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should accept ConfigFile parameter" name="Core Runner Parameter Validation Tests.aither-core.ps1 parameter validation.should accept ConfigFile parameter" time="0.0949" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should accept Auto parameter as switch" name="Core Runner Parameter Validation Tests.aither-core.ps1 parameter validation.should accept Auto parameter as switch" time="0.0575" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should accept Scripts parameter" name="Core Runner Parameter Validation Tests.aither-core.ps1 parameter validation.should accept Scripts parameter" time="0.0425" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should accept Force parameter as switch" name="Core Runner Parameter Validation Tests.aither-core.ps1 parameter validation.should accept Force parameter as switch" time="0.037" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should accept NonInteractive parameter as switch" name="Core Runner Parameter Validation Tests.aither-core.ps1 parameter validation.should accept NonInteractive parameter as switch" time="0.048" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should support parameter sets correctly" name="Core Runner Parameter Validation Tests.aither-core.ps1 parameter validation.should support parameter sets correctly" time="0.1299" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Core Runner Cross-Platform Compatibility Tests" executed="True" result="Success" success="True" time="1.3482" asserts="0" description="Core Runner Cross-Platform Compatibility Tests">
+            <results>
+              <test-suite type="TestFixture" name="Core Runner Cross-Platform Compatibility Tests.Path handling and platform-specific code" executed="True" result="Success" success="True" time="0.0779" asserts="0" description="Core Runner Cross-Platform Compatibility Tests.Path handling and platform-specific code">
+                <results>
+                  <test-case description="should not use Windows-specific path formats in aither-core.ps1" name="Core Runner Cross-Platform Compatibility Tests.Path handling and platform-specific code.should not use Windows-specific path formats in aither-core.ps1" time="0.0166" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should use environment variables for paths" name="Core Runner Cross-Platform Compatibility Tests.Path handling and platform-specific code.should use environment variables for paths" time="0.0137" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should not use Windows-specific cmdlets" name="Core Runner Cross-Platform Compatibility Tests.Path handling and platform-specific code.should not use Windows-specific cmdlets" time="0.0388" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Core Runner Cross-Platform Compatibility Tests.PowerShell version compatibility" executed="True" result="Success" success="True" time="0.1027" asserts="0" description="Core Runner Cross-Platform Compatibility Tests.PowerShell version compatibility">
+                <results>
+                  <test-case description="should use PowerShell 7.0+ compatible syntax" name="Core Runner Cross-Platform Compatibility Tests.PowerShell version compatibility.should use PowerShell 7.0+ compatible syntax" time="0.0167" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Core Runner Error Handling Tests" executed="True" result="Success" success="True" time="1.4544" asserts="0" description="Core Runner Error Handling Tests">
+            <results>
+              <test-suite type="TestFixture" name="Core Runner Error Handling Tests.Error handling patterns" executed="True" result="Success" success="True" time="0.0996" asserts="0" description="Core Runner Error Handling Tests.Error handling patterns">
+                <results>
+                  <test-case description="should handle missing configuration files gracefully" name="Core Runner Error Handling Tests.Error handling patterns.should handle missing configuration files gracefully" time="0.0389" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should validate input parameters" name="Core Runner Error Handling Tests.Error handling patterns.should validate input parameters" time="0.0448" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should set appropriate error action preference" name="Core Runner Error Handling Tests.Error handling patterns.should set appropriate error action preference" time="0.0081" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Core Runner Integration Tests" executed="True" result="Success" success="True" time="1.6057" asserts="0" description="Core Runner Integration Tests">
+            <results>
+              <test-suite type="TestFixture" name="Core Runner Integration Tests.Basic functionality testing" executed="True" result="Success" success="True" time="0.1456" asserts="0" description="Core Runner Integration Tests.Basic functionality testing">
+                <results>
+                  <test-case description="should execute with WhatIf parameter successfully" name="Core Runner Integration Tests.Basic functionality testing.should execute with WhatIf parameter successfully" time="0.0402" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should accept and process multiple parameters" name="Core Runner Integration Tests.Basic functionality testing.should accept and process multiple parameters" time="0.0626" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should handle default configuration when no ConfigFile specified" name="Core Runner Integration Tests.Basic functionality testing.should handle default configuration when no ConfigFile specified" time="0.0363" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Core Runner Performance Tests" executed="True" result="Success" success="True" time="1.765" asserts="0" description="Core Runner Performance Tests">
+            <results>
+              <test-suite type="TestFixture" name="Core Runner Performance Tests.Execution performance" executed="True" result="Success" success="True" time="0.1539" asserts="0" description="Core Runner Performance Tests.Execution performance">
+                <results>
+                  <test-case description="should load and validate parameters quickly" name="Core Runner Performance Tests.Execution performance.should load and validate parameters quickly" time="0.0949" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="should handle multiple parameter validations efficiently" name="Core Runner Performance Tests.Execution performance.should handle multiple parameter validations efficiently" time="0.0514" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>

@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="27" errors="0" failures="0" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-06-27" time="20:44:43">
+  <environment machine-name="codespaces-79fd5d" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" user="codespace" nunit-version="2.5.8.0" clr-version="9.0.4" platform="Linux" user-domain="" />
+  <culture-info current-culture="" current-uiculture="" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Success" success="True" time="1.684" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/tests/unit/modules/Logging/Logging-Core.Tests.ps1" executed="True" result="Success" success="True" time="1.684" asserts="0" description="/workspaces/AitherZero/tests/unit/modules/Logging/Logging-Core.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Logging Module - Core Functions" executed="True" result="Success" success="True" time="1.0552" asserts="0" description="Logging Module - Core Functions">
+            <results>
+              <test-suite type="TestFixture" name="Logging Module - Core Functions.Initialize-LoggingSystem" executed="True" result="Success" success="True" time="0.2729" asserts="0" description="Logging Module - Core Functions.Initialize-LoggingSystem">
+                <results>
+                  <test-case description="Should initialize logging system with default settings" name="Logging Module - Core Functions.Initialize-LoggingSystem.Should initialize logging system with default settings" time="0.1116" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should initialize logging system with custom log path" name="Logging Module - Core Functions.Initialize-LoggingSystem.Should initialize logging system with custom log path" time="0.0148" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should initialize logging system with custom log levels" name="Logging Module - Core Functions.Initialize-LoggingSystem.Should initialize logging system with custom log levels" time="0.012" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should initialize logging system with trace and performance enabled" name="Logging Module - Core Functions.Initialize-LoggingSystem.Should initialize logging system with trace and performance enabled" time="0.0225" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should initialize with custom log path without error" name="Logging Module - Core Functions.Initialize-LoggingSystem.Should initialize with custom log path without error" time="0.0534" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Logging Module - Core Functions.Write-CustomLog" executed="True" result="Success" success="True" time="0.5906" asserts="0" description="Logging Module - Core Functions.Write-CustomLog">
+                <results>
+                  <test-case description="Should write INFO level log message" name="Logging Module - Core Functions.Write-CustomLog.Should write INFO level log message" time="0.0162" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should write ERROR level log message" name="Logging Module - Core Functions.Write-CustomLog.Should write ERROR level log message" time="0.0196" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should write WARN level log message" name="Logging Module - Core Functions.Write-CustomLog.Should write WARN level log message" time="0.0443" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should write DEBUG level log message" name="Logging Module - Core Functions.Write-CustomLog.Should write DEBUG level log message" time="0.0277" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should write SUCCESS level log message" name="Logging Module - Core Functions.Write-CustomLog.Should write SUCCESS level log message" time="0.0466" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should write TRACE level log message" name="Logging Module - Core Functions.Write-CustomLog.Should write TRACE level log message" time="0.0303" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should write message with context" name="Logging Module - Core Functions.Write-CustomLog.Should write message with context" time="0.0686" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should write message with additional data" name="Logging Module - Core Functions.Write-CustomLog.Should write message with additional data" time="0.023" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create log file when writing first message" name="Logging Module - Core Functions.Write-CustomLog.Should create log file when writing first message" time="0.0233" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Logging Module - Core Functions.Performance Tracing" executed="True" result="Success" success="True" time="0.9051" asserts="0" description="Logging Module - Core Functions.Performance Tracing">
+                <results>
+                  <test-case description="Should start performance trace" name="Logging Module - Core Functions.Performance Tracing.Should start performance trace" time="0.0132" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should stop performance trace" name="Logging Module - Core Functions.Performance Tracing.Should stop performance trace" time="0.1146" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should measure execution time" name="Logging Module - Core Functions.Performance Tracing.Should measure execution time" time="0.1125" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle multiple concurrent traces" name="Logging Module - Core Functions.Performance Tracing.Should handle multiple concurrent traces" time="0.0643" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Logging Module - Core Functions.Trace Logging" executed="True" result="Success" success="True" time="0.9349" asserts="0" description="Logging Module - Core Functions.Trace Logging">
+                <results>
+                  <test-case description="Should write trace log with call stack" name="Logging Module - Core Functions.Trace Logging.Should write trace log with call stack" time="0.0125" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should write trace log with custom context" name="Logging Module - Core Functions.Trace Logging.Should write trace log with custom context" time="0.0088" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Logging Module - Core Functions.Debug Context" executed="True" result="Success" success="True" time="0.9748" asserts="0" description="Logging Module - Core Functions.Debug Context">
+                <results>
+                  <test-case description="Should write debug context information" name="Logging Module - Core Functions.Debug Context.Should write debug context information" time="0.0226" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should write debug context with custom message" name="Logging Module - Core Functions.Debug Context.Should write debug context with custom message" time="0.0083" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Logging Module - Core Functions.Configuration Management" executed="True" result="Success" success="True" time="1.0345" asserts="0" description="Logging Module - Core Functions.Configuration Management">
+                <results>
+                  <test-case description="Should get current logging configuration" name="Logging Module - Core Functions.Configuration Management.Should get current logging configuration" time="0.0233" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should set logging configuration" name="Logging Module - Core Functions.Configuration Management.Should set logging configuration" time="0.0265" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Logging Module - Error Handling" executed="True" result="Success" success="True" time="1.1538" asserts="0" description="Logging Module - Error Handling">
+            <results>
+              <test-suite type="TestFixture" name="Logging Module - Error Handling.Invalid Parameters" executed="True" result="Success" success="True" time="0.0643" asserts="0" description="Logging Module - Error Handling.Invalid Parameters">
+                <results>
+                  <test-case description="Should handle invalid log level gracefully" name="Logging Module - Error Handling.Invalid Parameters.Should handle invalid log level gracefully" time="0.0309" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle null or empty messages" name="Logging Module - Error Handling.Invalid Parameters.Should handle null or empty messages" time="0.0222" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Logging Module - Error Handling.File System Issues" executed="True" result="Success" success="True" time="0.0898" asserts="0" description="Logging Module - Error Handling.File System Issues">
+                <results>
+                  <test-case description="Should handle inaccessible log directory" name="Logging Module - Error Handling.File System Issues.Should handle inaccessible log directory" time="0.0137" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>

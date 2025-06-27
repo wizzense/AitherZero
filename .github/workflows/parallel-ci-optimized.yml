@@ -267,8 +267,9 @@ jobs:
       - name: Configure Pipeline
         id: config
         run: |
-          # Check if this is a PatchManager-only change
-          PATCHMANAGER_ONLY="${{ steps.changes.outputs.patchmanager-only }}"
+          # Get change type from previous step
+          CHANGE_TYPE="${{ steps.changes.outputs.change_type }}"
+          PATCHMANAGER_ONLY="${{ steps.changes.outputs.patchmanager_only }}"
 
           # Determine test level
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
