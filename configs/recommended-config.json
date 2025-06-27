@@ -6,5 +6,9 @@
   "InstallHyperV": true,
   "InstallCA": true,
   "InstallCosign": true,
-  "InstallGPG": true
+  "InstallGPG": true,
+  "InstallClaudeCode": true,
+  "ClaudeCodeWSLUsername": "developer",
+  "InstallGeminiCLI": true,
+  "GeminiCLIWSLUsername": "developer"
 }

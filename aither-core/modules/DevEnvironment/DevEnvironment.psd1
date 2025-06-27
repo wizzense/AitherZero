@@ -23,7 +23,9 @@
         'Resolve-ModuleImportIssues',
         'Initialize-DevEnvironment',
         'Test-DevEnvironment',
-        'Get-DevEnvironmentStatus'
+        'Get-DevEnvironmentStatus',
+        'Install-ClaudeCodeDependencies',
+        'Install-GeminiCLIDependencies'
     )
 
     CmdletsToExport = @()

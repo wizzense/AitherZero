@@ -26,11 +26,11 @@
   "author": "AitherZero Development Team",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.13.2",
+    "joi": "^17.11.0",
     "node-powershell": "^4.0.0",
-    "ws": "^8.14.0",
     "uuid": "^9.0.1",
-    "joi": "^17.11.0"
+    "ws": "^8.14.0"
   },
   "devDependencies": {
     "eslint": "^8.55.0",
