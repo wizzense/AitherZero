@@ -156,7 +156,10 @@ if (Test-Path $modulesPath) {
     Write-Host "Loaded $loadedModules/$totalModules modules successfully" -ForegroundColor Cyan
 } else {
     Write-Host '⚠️  Modules directory not found at expected locations' -ForegroundColor Yellow
-    Write-Host "   Checked: $PSScriptRoot/modules, $PSScriptRoot/aither-core/modules, $PSScriptRoot/../../aither-core/modules" -ForegroundColor Yellow
+    $path1 = Join-Path $PSScriptRoot 'modules'
+    $path2 = Join-Path $PSScriptRoot (Join-Path 'aither-core' 'modules')
+    $path3 = Join-Path $PSScriptRoot (Join-Path '..' (Join-Path '..' (Join-Path 'aither-core' 'modules')))
+    Write-Host "   Checked: $path1, $path2, $path3" -ForegroundColor Yellow
     Write-Host '   Some advanced features may not be available.' -ForegroundColor White
 }
 
@@ -197,21 +200,21 @@ try {
         # Scenario 1: Launcher in root of application package
         (Join-Path $PSScriptRoot 'aither-core.ps1'),
         # Scenario 2: Launcher in root, core in aither-core directory
-        (Join-Path $PSScriptRoot 'aither-core/aither-core.ps1'),
+        (Join-Path $PSScriptRoot (Join-Path 'aither-core' 'aither-core.ps1')),
         # Scenario 3: Launcher in templates/launchers (development)
-        (Join-Path $PSScriptRoot '../../aither-core/aither-core.ps1'),
+        (Join-Path $PSScriptRoot (Join-Path '..' (Join-Path '..' (Join-Path 'aither-core' 'aither-core.ps1')))),
         # Scenario 4: Try to find using shared utility (if available)
         $null  # Placeholder for Find-ProjectRoot result
     )
 
     # Try Find-ProjectRoot utility if available
-    $findProjectRootPath = Join-Path $PSScriptRoot '../../aither-core/shared/Find-ProjectRoot.ps1'
+    $findProjectRootPath = Join-Path $PSScriptRoot (Join-Path '..' (Join-Path '..' (Join-Path 'aither-core' (Join-Path 'shared' 'Find-ProjectRoot.ps1'))))
     if (Test-Path $findProjectRootPath) {
         try {
             . $findProjectRootPath
             $projectRoot = Find-ProjectRoot -StartPath $PSScriptRoot
             if ($projectRoot) {
-                $possiblePaths[3] = Join-Path $projectRoot 'aither-core/aither-core.ps1'
+                $possiblePaths[3] = Join-Path $projectRoot (Join-Path 'aither-core' 'aither-core.ps1')
             }
         } catch {
             Write-Verbose "Find-ProjectRoot utility failed: $($_.Exception.Message)"
@@ -242,7 +245,7 @@ try {
         Write-Host "💡 Troubleshooting:" -ForegroundColor Cyan
         Write-Host "  1. Ensure all files were extracted properly" -ForegroundColor White
         Write-Host "  2. Run from the project root directory" -ForegroundColor White
-        Write-Host "  3. Check that aither-core/aither-core.ps1 exists" -ForegroundColor White
+        Write-Host "  3. Check that $(Join-Path 'aither-core' 'aither-core.ps1') exists" -ForegroundColor White
         Write-Host "  4. Current launcher location: $PSScriptRoot" -ForegroundColor White
         throw "Core application file not found in any expected location"
     }
