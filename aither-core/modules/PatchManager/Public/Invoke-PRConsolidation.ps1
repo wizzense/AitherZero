@@ -77,10 +77,10 @@ function Invoke-PRConsolidation {
         try {
             # Step 1: Get all open pull requests
             Write-ConsolidationLog "Fetching open pull requests..." -Level "INFO"
-
+            
             $openPRs = @()
             $prListOutput = gh pr list --json number,title,author,headRefName,mergeable,labels,createdAt,url 2>&1
-
+            
             if ($LASTEXITCODE -eq 0) {
                 $openPRs = $prListOutput | ConvertFrom-Json
                 Write-ConsolidationLog "Found $($openPRs.Count) open pull requests" -Level "INFO"
@@ -99,9 +99,9 @@ function Invoke-PRConsolidation {
 
             # Step 2: Analyze PRs for consolidation compatibility
             Write-ConsolidationLog "Analyzing PRs for consolidation compatibility..." -Level "INFO"
-
+            
             $consolidationGroups = @()
-
+            
             switch ($ConsolidationStrategy) {
                 "Compatible" {
                     $consolidationGroups = Get-CompatiblePRGroups -PRs $openPRs -MaxPRs $MaxPRsToConsolidate
@@ -137,13 +137,13 @@ function Invoke-PRConsolidation {
 
             foreach ($group in $consolidationGroups) {
                 Write-ConsolidationLog "Processing consolidation group with $($group.PRs.Count) PRs..." -Level "INFO"
-
+                
                 if ($DryRun) {
                     Write-ConsolidationLog "DRY RUN: Would consolidate PRs:" -Level "INFO"
                     foreach ($pr in $group.PRs) {
                         Write-ConsolidationLog "  - PR #$($pr.number): $($pr.title)" -Level "INFO"
                     }
-
+                    
                     $consolidationResults += @{
                         Success = $true
                         DryRun = $true
@@ -161,7 +161,7 @@ function Invoke-PRConsolidation {
 
             # Step 4: Return consolidation summary
             $successfulConsolidations = $consolidationResults | Where-Object { $_.Success }
-
+            
             Write-ConsolidationLog "Consolidation complete. Successful: $($successfulConsolidations.Count)/$($consolidationResults.Count)" -Level "SUCCESS"
 
             return @{
@@ -177,7 +177,7 @@ function Invoke-PRConsolidation {
         } catch {
             $errorMessage = "PR consolidation failed: $($_.Exception.Message)"
             Write-ConsolidationLog $errorMessage -Level "ERROR"
-
+            
             return @{
                 Success = $false
                 Message = $errorMessage
@@ -189,16 +189,16 @@ function Invoke-PRConsolidation {
 
 function Get-CompatiblePRGroups {
     param($PRs, $MaxPRs)
-
+    
     $groups = @()
-
+    
     # Group PRs by mergeable status and check for conflicts
     $mergeablePRs = $PRs | Where-Object { $_.mergeable -eq "MERGEABLE" }
-
+    
     if ($mergeablePRs.Count -ge 2) {
         # Check for file conflicts between PRs
         $compatibleSets = Find-NonConflictingPRSets -PRs $mergeablePRs -MaxSize $MaxPRs
-
+        
         foreach ($set in $compatibleSets) {
             $groups += @{
                 PRs = $set
@@ -208,23 +208,23 @@ function Get-CompatiblePRGroups {
             }
         }
     }
-
+    
     return $groups
 }
 
 function Get-SameAuthorPRGroups {
     param($PRs, $MaxPRs)
-
+    
     $groups = @()
-
+    
     # Group PRs by author
     $authorGroups = $PRs | Group-Object -Property { $_.author.login }
-
+    
     foreach ($authorGroup in $authorGroups) {
         if ($authorGroup.Group.Count -ge 2) {
             # Take up to MaxPRs from each author
             $prsToConsolidate = $authorGroup.Group | Select-Object -First $MaxPRs
-
+            
             $groups += @{
                 PRs = $prsToConsolidate
                 Strategy = "SameAuthor"
@@ -233,21 +233,21 @@ function Get-SameAuthorPRGroups {
             }
         }
     }
-
+    
     return $groups
 }
 
 function Get-PriorityBasedPRGroups {
     param($PRs, $MaxPRs)
-
+    
     $groups = @()
-
+    
     # Analyze labels for priority indicators
     $priorityPRs = @()
-
+    
     foreach ($pr in $PRs) {
         $priority = "Medium"  # Default
-
+        
         if ($pr.labels) {
             foreach ($label in $pr.labels) {
                 switch -Regex ($label.name.ToLower()) {
@@ -257,10 +257,10 @@ function Get-PriorityBasedPRGroups {
                 }
             }
         }
-
+        
         $priorityPRs += $pr | Add-Member -NotePropertyName "Priority" -NotePropertyValue $priority -PassThru
     }
-
+    
     # Group by priority and take highest priority groups first
     $priorityGroups = $priorityPRs | Group-Object -Property Priority
     $sortedGroups = $priorityGroups | Sort-Object @{Expression={
@@ -271,11 +271,11 @@ function Get-PriorityBasedPRGroups {
             "Low" { 4 }
         }
     }}
-
+    
     foreach ($priorityGroup in $sortedGroups) {
         if ($priorityGroup.Group.Count -ge 2) {
             $prsToConsolidate = $priorityGroup.Group | Select-Object -First $MaxPRs
-
+            
             $groups += @{
                 PRs = $prsToConsolidate
                 Strategy = "ByPriority"
@@ -284,18 +284,18 @@ function Get-PriorityBasedPRGroups {
             }
         }
     }
-
+    
     return $groups
 }
 
 function Find-NonConflictingPRSets {
     param($PRs, $MaxSize)
-
+    
     $nonConflictingSets = @()
-
+    
     # For each PR, get the files it modifies
     $prFileMap = @{}
-
+    
     foreach ($pr in $PRs) {
         try {
             $filesOutput = gh pr diff $pr.number --name-only 2>&1
@@ -309,15 +309,15 @@ function Find-NonConflictingPRSets {
             $prFileMap[$pr.number] = @("unknown-conflict-$($pr.number)")
         }
     }
-
+    
     # Find sets of PRs that don't modify the same files
     for ($i = 0; $i -lt $PRs.Count; $i++) {
         $currentSet = @($PRs[$i])
         $currentFiles = $prFileMap[$PRs[$i].number]
-
+        
         for ($j = $i + 1; $j -lt $PRs.Count -and $currentSet.Count -lt $MaxSize; $j++) {
             $candidateFiles = $prFileMap[$PRs[$j].number]
-
+            
             # Check for file overlap
             $hasConflict = $false
             foreach ($file in $candidateFiles) {
@@ -326,59 +326,59 @@ function Find-NonConflictingPRSets {
                     break
                 }
             }
-
+            
             if (-not $hasConflict) {
                 $currentSet += $PRs[$j]
                 $currentFiles += $candidateFiles
             }
         }
-
+        
         if ($currentSet.Count -ge 2) {
             $nonConflictingSets += $currentSet
         }
     }
-
+    
     return $nonConflictingSets
 }
 
 function Invoke-PRGroupConsolidation {
     param($PRGroup, [switch]$Force)
-
+    
     try {
         Write-ConsolidationLog "Executing consolidation for $($PRGroup.PRs.Count) PRs..." -Level "INFO"
-
+        
         # Step 1: Create consolidation branch
         $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
         $consolidationBranch = "consolidation/$timestamp-$($PRGroup.Strategy.ToLower())"
-
+        
         # Fetch latest and create consolidation branch from main
         git fetch origin 2>&1 | Out-Null
         git checkout main 2>&1 | Out-Null
         git pull origin main 2>&1 | Out-Null
         git checkout -b $consolidationBranch 2>&1 | Out-Null
-
+        
         Write-ConsolidationLog "Created consolidation branch: $consolidationBranch" -Level "INFO"
-
+        
         # Step 2: Merge each PR branch
         $mergedPRs = @()
         $conflictedPRs = @()
-
+        
         foreach ($pr in $PRGroup.PRs) {
             Write-ConsolidationLog "Merging PR #$($pr.number): $($pr.title)" -Level "INFO"
-
+            
             # Fetch the PR branch
             git fetch origin $pr.headRefName 2>&1 | Out-Null
-
+            
             # Attempt to merge
             $mergeOutput = git merge "origin/$($pr.headRefName)" --no-ff -m "Consolidate: PR #$($pr.number) - $($pr.title)" 2>&1
-
+            
             if ($LASTEXITCODE -eq 0) {
                 $mergedPRs += $pr
                 Write-ConsolidationLog "Successfully merged PR #$($pr.number)" -Level "SUCCESS"
             } else {
                 $conflictedPRs += $pr
                 Write-ConsolidationLog "Conflict merging PR #$($pr.number): $mergeOutput" -Level "WARN"
-
+                
                 if (-not $Force) {
                     # Abort merge and skip this PR
                     git merge --abort 2>&1 | Out-Null
@@ -394,11 +394,11 @@ function Invoke-PRGroupConsolidation {
                 }
             }
         }
-
+        
         if ($mergedPRs.Count -eq 0) {
             throw "No PRs could be merged successfully"
         }
-
+        
         # Step 3: Create consolidated PR
         $consolidatedTitle = "CONSOLIDATED: $($mergedPRs.Count) PRs - $($PRGroup.Strategy) strategy"
         $consolidatedBody = @"
@@ -427,16 +427,16 @@ Please review the combined changes to ensure they work together as expected.
 ---
 *Created by PatchManager PR Consolidation - Strategy: $($PRGroup.Strategy)*
 "@
-
+        
         # Push the consolidation branch
         git push origin $consolidationBranch 2>&1 | Out-Null
-
+        
         # Create the consolidated PR
         $consolidatedPR = gh pr create --title $consolidatedTitle --body $consolidatedBody --base main --head $consolidationBranch 2>&1
-
+        
         if ($LASTEXITCODE -eq 0) {
             Write-ConsolidationLog "Created consolidated PR: $consolidatedPR" -Level "SUCCESS"
-
+            
             # Close the original PRs with a reference to the consolidation
             foreach ($pr in $mergedPRs) {
                 $closeComment = "🔄 This PR has been consolidated into $consolidatedPR for easier review and conflict resolution."
@@ -444,7 +444,7 @@ Please review the combined changes to ensure they work together as expected.
                 gh pr close $pr.number 2>&1 | Out-Null
                 Write-ConsolidationLog "Closed original PR #$($pr.number)" -Level "INFO"
             }
-
+            
             return @{
                 Success = $true
                 ConsolidatedPR = $consolidatedPR
@@ -456,10 +456,10 @@ Please review the combined changes to ensure they work together as expected.
         } else {
             throw "Failed to create consolidated PR: $consolidatedPR"
         }
-
+        
     } catch {
         Write-ConsolidationLog "Consolidation failed: $($_.Exception.Message)" -Level "ERROR"
-
+        
         # Cleanup on failure
         try {
             git checkout main 2>&1 | Out-Null
@@ -467,7 +467,7 @@ Please review the combined changes to ensure they work together as expected.
         } catch {
             # Ignore cleanup errors
         }
-
+        
         return @{
             Success = $false
             Message = $_.Exception.Message

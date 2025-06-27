@@ -151,7 +151,7 @@ $consolidationPreview = Invoke-PRConsolidation -ConsolidationStrategy "Compatibl
 
 if ($consolidationPreview.Success) {
     Write-Host "Found $($consolidationPreview.GroupsFound) consolidation opportunities"
-
+    
     # Proceed with actual consolidation
     Invoke-PRConsolidation -ConsolidationStrategy "Compatible"
 } else {
