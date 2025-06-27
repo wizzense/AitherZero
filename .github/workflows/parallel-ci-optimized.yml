@@ -563,33 +563,37 @@ jobs:
 
             default {
               Write-Host "🧪 Running standard test suite..." -ForegroundColor Cyan
-                } else {
-                  Write-Error "❌ Function $func not found"
-                  exit 1
+              
+              try {
+                Write-Host "Running PatchManager validation..." -ForegroundColor Yellow
+                $pmFunctions = @('Invoke-PatchWorkflow', 'New-PatchIssue', 'New-PatchPR', 'Invoke-PatchRollback')
+                foreach ($func in $pmFunctions) {
+                  if (Get-Command $func -ErrorAction SilentlyContinue) {
+                    Write-Host "✅ Function $func available" -ForegroundColor Green
+                  } else {
+                    Write-Error "❌ Function $func not found"
+                    exit 1
+                  }
                 }
-              }
 
-              # Quick syntax validation of PatchManager files
-              Write-Host "Validating PatchManager PowerShell syntax..." -ForegroundColor Yellow
-              $patchFiles = Get-ChildItem -Path './aither-core/modules/PatchManager' -Filter '*.ps1' -Recurse
-              foreach ($file in $patchFiles) {
-                $errors = $null
-                $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $file.FullName -Raw), [ref]$errors)
-                if ($errors) {
-                  Write-Error "Syntax errors in $($file.Name): $($errors.Count) errors"
-                  exit 1
+                # Quick syntax validation of PatchManager files
+                Write-Host "Validating PatchManager PowerShell syntax..." -ForegroundColor Yellow
+                $patchFiles = Get-ChildItem -Path './aither-core/modules/PatchManager' -Filter '*.ps1' -Recurse
+                foreach ($file in $patchFiles) {
+                  $errors = $null
+                  $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $file.FullName -Raw), [ref]$errors)
+                  if ($errors) {
+                    Write-Error "Syntax errors in $($file.Name): $($errors.Count) errors"
+                    exit 1
+                  }
                 }
-              }
-              Write-Host "✅ All PatchManager files have valid PowerShell syntax" -ForegroundColor Green
+                Write-Host "✅ All PatchManager files have valid PowerShell syntax" -ForegroundColor Green
 
-            } catch {
-              Write-Error "PatchManager validation failed: $($_.Exception.Message)"
-              exit 1
+              } catch {
+                Write-Error "PatchManager validation failed: $($_.Exception.Message)"
+                exit 1
+              }
             }
-
-            Write-Host "✅ PatchManager-only validation completed successfully" -ForegroundColor Green
-            return
-          }
 
           # For full test runs, use bulletproof validation
           if (Test-Path './tests/Run-BulletproofValidation.ps1') {
@@ -662,10 +666,10 @@ jobs:
 
           # Check for sensitive patterns - simplified patterns to avoid regex parsing issues
           $sensitivePatterns = @(
-            'password\s*[:=]\s*["\']?[\w]{8,}',
-            'secret\s*[:=]\s*["\']?[\w]{8,}',
-            'api.?key\s*[:=]\s*["\']?[\w]{20,}',
-            'token\s*[:=]\s*["\']?[\w]{20,}'
+            'password\s*[:=]\s*["\''']?\w{8,}',
+            'secret\s*[:=]\s*["\''']?\w{8,}',
+            'api.?key\s*[:=]\s*["\''']?\w{20,}',
+            'token\s*[:=]\s*["\''']?\w{20,}'
           )
 
           $violations = @()
