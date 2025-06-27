@@ -20,6 +20,7 @@ jobs:
       run: |
         # PowerShell 7+ is already available on ubuntu-latest
         pwsh -Version
+
         
     - name: Install Pester
       shell: pwsh
@@ -49,6 +50,7 @@ jobs:
         
     - name: Upload coverage reports
       uses: actions/upload-artifact@v4
+
       with:
         name: coverage-reports
         path: tests/results/coverage.*
