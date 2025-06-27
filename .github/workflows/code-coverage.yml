@@ -40,7 +40,7 @@ jobs:
         ./tests/Run-CodeCoverage.ps1 -Scope Full -CI -EnforceThresholds -OutputFormat JaCoCo,Cobertura
         
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:

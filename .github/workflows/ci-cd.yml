@@ -430,7 +430,7 @@ jobs:
 
       - name: Upload Trivy scan results
         if: steps.check-code-scanning.outputs.enabled == 'true' && always()
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
 
