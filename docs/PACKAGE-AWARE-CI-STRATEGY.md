@@ -16,7 +16,7 @@ The CI system now recognizes files that are included in release packages and aff
 
 ### Configuration Templates
 - `configs/default-config.json`
-- `configs/core-runner-config.json` 
+- `configs/core-runner-config.json`
 - `configs/recommended-config.json`
 
 ### Infrastructure as Code
@@ -115,7 +115,7 @@ templates/launchers/Start-AitherZero.ps1
   ```
 
 ### **Build Validation** (`build-validation`)
-- **Duration:** ~1-2 minutes  
+- **Duration:** ~1-2 minutes
 - **Scope:** Build script syntax and basic validation
 - **OS Coverage:** Ubuntu + Windows
 - **Tests Run:**
@@ -251,7 +251,7 @@ affects_packages=false
 ```
 
 ### Documentation Updates
-```bash  
+```bash
 # Changed files: docs/GUIDE.md, README.md (included in packages)
 # Detection result:
 change_type=package-validation  # README.md affects packages
@@ -270,7 +270,7 @@ affects_packages=true
 # CI time: Full test suite (appropriate for critical changes)
 ```
 
-### Build System Updates  
+### Build System Updates
 ```bash
 # Changed files: build/Build-Package.ps1, .github/workflows/ci.yml
 # Detection result:
@@ -282,7 +282,7 @@ affects_packages=false
 
 ### Mixed Development Work
 ```bash
-# Changed files: 
+# Changed files:
 #   - aither-core/modules/PatchManager/Public/New-PatchIssue.ps1
 #   - configs/default-config.json (affects packages)
 # Detection result:

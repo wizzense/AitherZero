@@ -77,7 +77,7 @@ The CI now automatically detects files that affect release packages:
 
 ### Configuration Templates
 - `configs/default-config.json`
-- `configs/core-runner-config.json` 
+- `configs/core-runner-config.json`
 - `configs/recommended-config.json`
 
 ### Infrastructure Components
