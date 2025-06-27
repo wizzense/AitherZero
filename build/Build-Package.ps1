@@ -249,4 +249,3 @@ pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1 -Setup
     Write-Error "Build failed for $Platform : $($_.Exception.Message)"
     exit 1
 }
-

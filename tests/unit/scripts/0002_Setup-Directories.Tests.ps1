@@ -6,7 +6,6 @@ Describe '0002_Setup-Directories Tests' {
         Import-Module "$env:PWSH_MODULES_PATH/LabRunner/" -Force
     }
 
-
     Context 'Module Loading' {
         It 'should load required modules' {
             Get-Module LabRunner | Should -Not -BeNullOrEmpty

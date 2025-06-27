@@ -26,7 +26,6 @@ BeforeAll {
     $script:CoreRunnerPath = "$env:PROJECT_ROOT/aither-core"
     $script:CoreRunnerScript = "$script:CoreRunnerPath/aither-core.ps1"
 
-    
     # Mock Write-CustomLog to avoid dependencies
     function Write-CustomLog {
         param(

@@ -129,8 +129,7 @@ function New-TestTemplate {
     elseif ($Analysis.Platform -eq 'macOS') {
         $skipConditions += '$SkipNonMacOS'
     }
-    
-        
+
     $template = @"
 # filepath: tests/$testName
 . (Join-Path `$PSScriptRoot 'TestDriveCleanup.ps1')
@@ -162,7 +161,6 @@ Describe '$($ScriptName -replace '\.ps1$', '') Tests' -Tag '$($Analysis.Category
     if ($Analysis.Functions.Count -gt 0) {
         $template += @"
 
-        
         It 'should define expected functions'$skipClause {
 "@
         foreach ($func in $Analysis.Functions) {
@@ -212,7 +210,6 @@ Describe '$($ScriptName -replace '\.ps1$', '') Tests' -Tag '$($Analysis.Category
         'Installer' {
             $template += @"
 
-    
     Context 'Installation Tests' {
         BeforeEach {
             # Mock external dependencies for testing
@@ -249,7 +246,6 @@ Describe '$($ScriptName -replace '\.ps1$', '') Tests' -Tag '$($Analysis.Category
         'Configuration' {
             $template += @"
 
-    
     Context 'Configuration Tests' {
         It 'should backup existing configuration'$skipClause {
             # Test configuration backup logic
@@ -272,7 +268,6 @@ Describe '$($ScriptName -replace '\.ps1$', '') Tests' -Tag '$($Analysis.Category
         'Service' {
             $template += @"
 
-    
     Context 'Service Management Tests' {
         It 'should check service status before changes'$skipClause {
             # Test service status checking
@@ -297,7 +292,6 @@ Describe '$($ScriptName -replace '\.ps1$', '') Tests' -Tag '$($Analysis.Category
     foreach ($func in $Analysis.Functions) {
         $template += @"
 
-    
     Context '$($func.Name) Function Tests' {
         It 'should be defined and accessible'$skipClause {
             Get-Command '$($func.Name)'  Should -Not -BeNullOrEmpty

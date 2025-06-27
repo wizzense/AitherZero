@@ -134,13 +134,11 @@ function Test-FrameworkComponents {
 function Initialize-TestGeneration {
     Write-Information "`nGenerating tests for existing scripts..." -InformationAction Continue
 
-
     $scriptDirs = @(
         (Join-Path $PSScriptRoot '..' 'core-runner' 'core_app' 'scripts'),
         (Join-Path $PSScriptRoot '..' 'core-runner' 'lab_utils'),
         (Join-Path $PSScriptRoot '..' 'core-runner')
     )
-
 
     $totalScripts = 0
     $generatedTests = 0
