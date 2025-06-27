@@ -1,11 +1,31 @@
-# 🤖 Intelligent CI/CD Strategy - Build vs Core Changes
+# 🤖 Intelligent CI/CD Strategy (DEPRECATED)
 
-## Problem Statement
+> **⚠️ DEPRECATED DOCUMENT**
+>
+> This document has been superseded by **[PACKAGE-AWARE-CI-STRATEGY.md](./PACKAGE-AWARE-CI-STRATEGY.md)** which provides:
+>
+> - More comprehensive change detection logic
+> - Package-affecting file categorization
+> - Enhanced test level mapping
+> - Real-world implementation examples
+> - Complete developer guidelines
+>
+> **Please refer to the new document for current CI/CD strategy.**
 
-The AitherZero project has **two distinct types of changes** that require different testing approaches:
+---
+
+## Legacy Problem Statement
+
+The AitherZero project originally identified **two distinct types of changes** but has evolved to support **six change categories** for more precise testing:
 
 1. **Core aither-core functionality** - Requires full testing suite
 2. **Build/Release/Tooling changes** - Affects packages and deployments but not core functionality
+3. **Package-affecting changes** - Non-core files that are included in release packages
+4. **PatchManager-only changes** - Development tools with minimal testing requirements
+5. **Documentation/configuration changes** - Skip most tests
+6. **Mixed changes** - Require comprehensive testing
+
+For the complete and current strategy, see **[PACKAGE-AWARE-CI-STRATEGY.md](./PACKAGE-AWARE-CI-STRATEGY.md)**.
 
 ## Change Categories
 
