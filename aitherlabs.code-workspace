@@ -10,19 +10,15 @@
         },
         {
             "name": "Core Application",
-            "path": "./core-runner/core_app"
+            "path": "./AitherZero/aither-core"
         },
         {
             "name": "Runner Scripts",
-            "path": "./core-runner/core_app/scripts"
+            "path": "./AitherZero/aither-core/scripts"
         },
         {
             "name": "OpenTofu Configurations",
             "path": "./opentofu"
-        },
-        {
-            "name": "Python CLI",
-            "path": "./py"
         },
         {
             "name": "Tests",
