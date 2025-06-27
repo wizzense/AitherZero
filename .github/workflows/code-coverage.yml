@@ -29,6 +29,12 @@ jobs:
     - name: Run tests with coverage
       shell: pwsh
       run: |
+        # Ensure we're in the project root
+        Write-Host "Working directory: $(Get-Location)"
+        Write-Host "Project structure:"
+        Get-ChildItem -Name | Select-Object -First 10
+        
+        # Run coverage analysis
         ./tests/Run-CodeCoverage.ps1 -Scope Full -CI -EnforceThresholds -OutputFormat JaCoCo,Cobertura
         
     - name: Upload coverage to Codecov
