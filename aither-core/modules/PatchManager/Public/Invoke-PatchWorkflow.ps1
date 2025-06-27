@@ -498,16 +498,30 @@ function Invoke-PatchWorkflow {
 
         } catch {
             $errorMessage = "Patch workflow failed: $($_.Exception.Message)"
-            Write-PatchLog $errorMessage -Level "ERROR"
+            
+            # Use Write-CustomLog if available, otherwise Write-Host
+            if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                Write-CustomLog -Message $errorMessage -Level 'ERROR'
+            } else {
+                Write-Host "[ERROR] $errorMessage" -ForegroundColor Red
+            }
 
             # Cleanup on failure
             if (-not $DryRun -and $branchName) {
                 try {
-                    Write-PatchLog "Cleaning up failed patch branch..." -Level "INFO"
+                    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                        Write-CustomLog -Message "Cleaning up failed patch branch..." -Level 'INFO'
+                    } else {
+                        Write-Host "[INFO] Cleaning up failed patch branch..." -ForegroundColor Yellow
+                    }
                     git checkout main 2>&1 | Out-Null
                     git branch -D $branchName 2>&1 | Out-Null
                 } catch {
-                    Write-PatchLog "Cleanup failed: $($_.Exception.Message)" -Level "WARN"
+                    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                        Write-CustomLog -Message "Cleanup failed: $($_.Exception.Message)" -Level 'WARN'
+                    } else {
+                        Write-Host "[WARN] Cleanup failed: $($_.Exception.Message)" -ForegroundColor Yellow
+                    }
                 }
             }
 
