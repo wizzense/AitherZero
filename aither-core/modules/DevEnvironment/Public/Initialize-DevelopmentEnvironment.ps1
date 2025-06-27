@@ -104,6 +104,7 @@ function Initialize-DevelopmentEnvironment {
             # Step 3: Set up Git aliases for PatchManager integration
             Write-Step "Setting up Git aliases for PatchManager"
             try {
+
                 # TODO: Implement Set-PatchManagerAliases -Install to configure Git aliases for PatchManager integration.
 
                 Write-CustomLog "✓ Git aliases configuration skipped (not implemented)" -Level SUCCESS

@@ -600,6 +600,7 @@ jobs:
           # Close the switch statement
           }
 
+
           # For full test runs, use bulletproof validation
           if (Test-Path './tests/Run-BulletproofValidation.ps1') {
             # First check if the script supports MaxParallelJobs parameter
