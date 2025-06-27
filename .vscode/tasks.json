@@ -1251,6 +1251,171 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             }
+        },
+        {
+            "label": "⚡ TURBO: Lightning Module Check (3s)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "Quick-ModuleCheck.ps1",
+                "-MaxParallelJobs",
+                "8"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🚀 TURBO: Ultra-Fast Test Suite (10-30s)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "Turbo-Test.ps1",
+                "-TestLevel",
+                "Fast",
+                "-MaxParallelJobs",
+                "6"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🔥 TURBO: Complete Test Suite (30-60s)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "Turbo-Test.ps1",
+                "-TestLevel",
+                "Complete",
+                "-MaxParallelJobs",
+                "4"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "💨 TURBO: Auto-Merge Preview (Dry Run)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "Power-AutoMerge.ps1",
+                "-DryRun"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🎯 TURBO: Auto-Merge Execute (LIVE)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "Power-AutoMerge.ps1"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "⚡ TURBO: Parallel Module Validation + Tests",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Write-Host '⚡ Running parallel module validation + tests...' -ForegroundColor Cyan; $start = Get-Date; & './Quick-ModuleCheck.ps1' -MaxParallelJobs 8; Write-Host '✅ Module check completed' -ForegroundColor Green; & './Turbo-Test.ps1' -TestLevel Fast -MaxParallelJobs 6; $end = Get-Date; $duration = ($end - $start).TotalSeconds; Write-Host \"🎯 Total time: $([math]::Round($duration, 2)) seconds\" -ForegroundColor Yellow"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "🚀 TURBO: Full CI Simulation (Local)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Write-Host '🚀 Simulating full CI pipeline locally...' -ForegroundColor Cyan; $start = Get-Date; Write-Host '1️⃣ Module validation...' -ForegroundColor Yellow; & './Quick-ModuleCheck.ps1' -MaxParallelJobs 8; Write-Host '2️⃣ Fast test suite...' -ForegroundColor Yellow; & './Turbo-Test.ps1' -TestLevel Fast -MaxParallelJobs 6; Write-Host '3️⃣ Build validation...' -ForegroundColor Yellow; pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel Quick -CI -FailFast; $end = Get-Date; $duration = ($end - $start).TotalSeconds; Write-Host \"✅ Full CI simulation completed in $([math]::Round($duration, 2)) seconds\" -ForegroundColor Green"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
         }
     ],
     "inputs": [

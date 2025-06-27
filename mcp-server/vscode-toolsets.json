@@ -1,0 +1,60 @@
+{
+  "aither-infrastructure": {
+    "tools": [
+      "aither_infrastructure_deployment",
+      "aither_lab_automation",
+      "aither_remote_connection"
+    ],
+    "description": "Infrastructure deployment and management tools",
+    "icon": "server"
+  },
+  "aither-development": {
+    "tools": [
+      "aither_patch_workflow",
+      "aither_dev_environment",
+      "aither_testing_framework",
+      "aither_script_management"
+    ],
+    "description": "Development workflow and testing tools",
+    "icon": "code"
+  },
+  "aither-operations": {
+    "tools": [
+      "aither_backup_management",
+      "aither_maintenance_operations",
+      "aither_logging_system",
+      "aither_parallel_execution"
+    ],
+    "description": "System operations and maintenance tools",
+    "icon": "gear"
+  },
+  "aither-content": {
+    "tools": [
+      "aither_iso_management",
+      "aither_credential_management",
+      "aither_repo_sync"
+    ],
+    "description": "Content and credential management tools",
+    "icon": "package"
+  },
+  "aither-complete": {
+    "tools": [
+      "aither_patch_workflow",
+      "aither_lab_automation",
+      "aither_backup_management",
+      "aither_dev_environment",
+      "aither_iso_management",
+      "aither_testing_framework",
+      "aither_infrastructure_deployment",
+      "aither_remote_connection",
+      "aither_credential_management",
+      "aither_logging_system",
+      "aither_parallel_execution",
+      "aither_script_management",
+      "aither_maintenance_operations",
+      "aither_repo_sync"
+    ],
+    "description": "Complete AitherZero automation framework",
+    "icon": "rocket"
+  }
+}

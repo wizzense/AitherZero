@@ -23,12 +23,12 @@ function Get-BackupStatistics {
     param(
         [Parameter(Mandatory = $true)]
         [string]$ProjectRoot,
-        
+
         [switch]$IncludeDetails
     )
-    
+
     $ErrorActionPreference = "Stop"
-    
+
     try {
         # Import LabRunner for logging
         if (Get-Module LabRunner -ErrorAction SilentlyContinue) {
@@ -36,19 +36,19 @@ function Get-BackupStatistics {
         } else {
             Write-Host "INFO Analyzing backup file statistics" -ForegroundColor Green
         }
-        
+
         # Resolve project root
         $ProjectRoot = Resolve-Path $ProjectRoot -ErrorAction Stop
-        
+
         # Define backup patterns
         $BackupPatterns = @("*.bak", "*backup*", "*.old", "*.orig", "*~", "*.backup.*")
         $BackupFiles = @()
-        
+
         foreach ($Pattern in $BackupPatterns) {
             $Files = Get-ChildItem -Path $ProjectRoot -Recurse -File -Filter $Pattern -ErrorAction SilentlyContinue
             $BackupFiles += $Files
         }
-        
+
         if ($BackupFiles.Count -eq 0) {
             $result = @{
                 TotalFiles = 0
@@ -63,13 +63,13 @@ function Get-BackupStatistics {
             # Calculate statistics
             $TotalSize = ($BackupFiles | Measure-Object -Property Length -Sum).Sum
             $AverageSize = [Math]::Round($TotalSize / $BackupFiles.Count, 2)
-            
+
             # Find oldest and newest files
-            $OldestFile = $BackupFiles | Sort-ObjectLastWriteTime | Select-Object -First 1
-            $NewestFile = $BackupFiles | Sort-ObjectLastWriteTime -Descending | Select-Object -First 1
-            
+            $OldestFile = $BackupFiles | Sort-Object -Property LastWriteTime | Select-Object -First 1
+            $NewestFile = $BackupFiles | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1
+
             # Group by file extension
-            $FileTypes = $BackupFiles | Group-ObjectExtension | ForEach-Object{
+            $FileTypes = $BackupFiles | Group-Object -Property Extension | ForEach-Object{
                 $percentage = [Math]::Round(($_.Count / $BackupFiles.Count) * 100, 1)
                 @{
                     Extension = if ($_.Name) { $_.Name } else { "(no extension)" }
@@ -77,18 +77,18 @@ function Get-BackupStatistics {
                     Percentage = $percentage
                 }
             }
-            
+
             $result = @{
                 TotalFiles = $BackupFiles.Count
                 TotalSize = [Math]::Round($TotalSize / 1MB, 2)
                 AverageSize = [Math]::Round($AverageSize / 1KB, 2)
-                OldestFile = if ($OldestFile) { 
+                OldestFile = if ($OldestFile) {
                     @{
                         Name = $OldestFile.Name
                         Age = [Math]::Round(((Get-Date) - $OldestFile.LastWriteTime).TotalDays, 1)
                     }
                 } else { $null }
-                NewestFile = if ($NewestFile) { 
+                NewestFile = if ($NewestFile) {
                     @{
                         Name = $NewestFile.Name
                         Age = [Math]::Round(((Get-Date) - $NewestFile.LastWriteTime).TotalDays, 1)
@@ -96,7 +96,7 @@ function Get-BackupStatistics {
                 } else { $null }
                 FileTypes = $FileTypes
             }
-            
+
             if ($IncludeDetails) {
                 $result.Details = BackupFiles | ForEach-Object{
                     @{
@@ -109,7 +109,7 @@ function Get-BackupStatistics {
                 }
             }
         }
-        
+
         # Log summary
         $summaryMessage = "Backup statistics analysis completed: $($result.TotalFiles) files, $($result.TotalSize) MB"
         if (Get-Module LabRunner -ErrorAction SilentlyContinue) {
@@ -117,9 +117,9 @@ function Get-BackupStatistics {
         } else {
             Write-Host "INFO $summaryMessage" -ForegroundColor Green
         }
-        
+
         return $result
-        
+
     } catch {
         $ErrorMessage = "Failed to get backup statistics: $($_.Exception.Message)"
         if (Get-Module LabRunner -ErrorAction SilentlyContinue) {

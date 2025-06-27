@@ -8,20 +8,59 @@ It ensures scripts are integrated into the project framework without breaking de
 
 #>
 
+# Load all public functions
+$PublicFunctions = Get-ChildItem -Path "$PSScriptRoot/Public/*.ps1" -ErrorAction SilentlyContinue
+foreach ($Function in $PublicFunctions) {
+    try {
+        . $Function.FullName
+    } catch {
+        Write-Error "Failed to load function $($Function.Name): $($_.Exception.Message)"
+    }
+}
+
+# Load all private functions
+$PrivateFunctions = Get-ChildItem -Path "$PSScriptRoot/Private/*.ps1" -ErrorAction SilentlyContinue
+foreach ($Function in $PrivateFunctions) {
+    try {
+        . $Function.FullName
+    } catch {
+        Write-Error "Failed to load function $($Function.Name): $($_.Exception.Message)"
+    }
+}
+
 function Register-OneOffScript {
     param(
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string]$ScriptPath,
-        [string]$Purpose,
-        [string]$Author,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Name,
+
+        [string]$Description = "",
+
+        [hashtable]$Parameters = @{},
+
         [switch]$Force
     )
 
-    $MetadataFile = (Join-Path (Get-Location) "scripts/one-off-scripts.json")
+    # Validate inputs
+    if ([string]::IsNullOrWhiteSpace($ScriptPath)) {
+        throw "ScriptPath cannot be null or empty"
+    }
+
+    if ([string]::IsNullOrWhiteSpace($Name)) {
+        throw "Name cannot be null or empty"
+    }
+
+    $MetadataFile = (Join-Path $PSScriptRoot "one-off-scripts.json")
 
     $scriptMetadata = @{
         ScriptPath = $ScriptPath
-        Purpose = $Purpose
-        Author = $Author
+        Name = $Name
+        Description = $Description
+        Parameters = $Parameters
         RegisteredDate = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         Executed = $false
         ExecutionDate = $null
@@ -29,9 +68,10 @@ function Register-OneOffScript {
     }
 
     if (-not (Test-Path $MetadataFile)) {
-        $allScripts = @()
+        $allScripts = [System.Collections.ArrayList]@()
     } else {
-        $allScripts = Get-Content $MetadataFile  ConvertFrom-Json
+        $content = Get-Content $MetadataFile | ConvertFrom-Json
+        $allScripts = [System.Collections.ArrayList]@($content)
     }
 
     $existingScript = $allScripts | Where-Object { $_.ScriptPath -eq $ScriptPath }
@@ -42,11 +82,17 @@ function Register-OneOffScript {
     }
 
     if ($existingScript -and $Force) {
-        $allScripts = $allScripts | Where-Object { $_.ScriptPath -ne $ScriptPath }
+        # Remove existing script
+        for ($i = $allScripts.Count - 1; $i -ge 0; $i--) {
+            if ($allScripts[$i].ScriptPath -eq $ScriptPath) {
+                $allScripts.RemoveAt($i)
+                break
+            }
+        }
         Write-Host "Re-registering script: $ScriptPath" -ForegroundColor Cyan
     }
 
-    $allScripts += $scriptMetadata
+    $allScripts.Add($scriptMetadata) | Out-Null
     $allScripts | ConvertTo-Json -Depth 10 | Set-Content $MetadataFile
 
     Write-Host "Script registered successfully: $ScriptPath" -ForegroundColor Green
@@ -54,10 +100,17 @@ function Register-OneOffScript {
 
 function Test-OneOffScript {
     param(
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string]$ScriptPath
     )
 
-    $MetadataFile = (Join-Path $PSScriptRoot "one-off-scripts.json") # Corrected path and ensure usage
+    # Validate inputs
+    if ([string]::IsNullOrWhiteSpace($ScriptPath)) {
+        throw "ScriptPath cannot be null or empty"
+    }
+
+    $MetadataFile = (Join-Path $PSScriptRoot "one-off-scripts.json")
 
     if (-not (Test-Path $MetadataFile)) {
         Write-Warning "Metadata file not found: $MetadataFile"
@@ -65,7 +118,7 @@ function Test-OneOffScript {
     }
 
     $allScripts = Get-Content $MetadataFile | ConvertFrom-Json
-    $scriptMetadata = $allScripts | Where-Object { $_.Path -eq $ScriptPath }
+    $scriptMetadata = $allScripts | Where-Object { $_.ScriptPath -eq $ScriptPath }
 
     if (-not $scriptMetadata) {
         Write-Warning "Script '$ScriptPath' not found in metadata."
@@ -94,17 +147,45 @@ function Test-OneOffScript {
 
 function Invoke-OneOffScript {
     param(
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string]$ScriptPath,
+
+        [hashtable]$Parameters = @{},
         [switch]$Force
     )
 
-    $MetadataFile = (Join-Path $PSScriptRoot "one-off-scripts.json") # Corrected path
+    # Validate inputs
+    if ([string]::IsNullOrWhiteSpace($ScriptPath)) {
+        throw "ScriptPath cannot be null or empty"
+    }
+
+    # Validate script file exists
+    if (-not (Test-Path $ScriptPath)) {
+        throw "Script file not found: $ScriptPath"
+    }
+
+    $MetadataFile = (Join-Path $PSScriptRoot "one-off-scripts.json")
+
+    # Check if metadata file exists
+    if (-not (Test-Path $MetadataFile)) {
+        Write-Warning "Metadata file not found, creating empty metadata"
+        @() | ConvertTo-Json | Set-Content $MetadataFile
+    }
 
     $allScripts = Get-Content $MetadataFile | ConvertFrom-Json
-    $script = $allScripts | Where-Object { $_.Path -eq $ScriptPath } # Corrected property name
+    $script = $allScripts | Where-Object { $_.ScriptPath -eq $ScriptPath } # Use ScriptPath property
 
     if (-not $script) {
-        Write-Error "Script '$ScriptPath' not found in metadata."
+        # Auto-register script for one-off execution
+        Write-Verbose "Script '$ScriptPath' not found in metadata, auto-registering for execution"
+        Register-OneOffScript -ScriptPath $ScriptPath -Name "Auto-registered" -Description "Auto-registered for testing" -Force
+        $allScripts = Get-Content $MetadataFile | ConvertFrom-Json
+        $script = $allScripts | Where-Object { $_.ScriptPath -eq $ScriptPath }
+    }
+
+    if (-not $script) {
+        Write-Error "Script '$ScriptPath' could not be registered or found."
         return
     }
 
@@ -115,11 +196,20 @@ function Invoke-OneOffScript {
 
     try {
         Write-Host "Executing script: $ScriptPath" -ForegroundColor Cyan
-        & $ScriptPath
+
+        # Execute script with parameters if provided
+        if ($Parameters.Count -gt 0) {
+            $result = & $ScriptPath @Parameters
+        } else {
+            $result = & $ScriptPath
+        }
+
         $script.Executed = $true
         $script.ExecutionDate = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         $script.ExecutionResult = "Success"
         Write-Host "Script executed successfully: $ScriptPath" -ForegroundColor Green
+
+        return $result
     } catch {
         $script.ExecutionResult = "Failed: $($_.Exception.Message)"
         Write-Host "Script execution failed: $($_.Exception.Message)" -ForegroundColor Red
@@ -336,7 +426,8 @@ Write-CustomLog -Message "Lab script completed" -Level "SUCCESS"
 
 # Export all functions for verification
 Export-ModuleMember -Function @(
-    'Test-ModernScript',
+    'Register-OneOffScript',
+    'Test-OneOffScript',
     'Invoke-OneOffScript',
     'Get-ScriptRepository',
     'Start-ScriptExecution',

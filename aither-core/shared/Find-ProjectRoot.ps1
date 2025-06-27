@@ -105,6 +105,13 @@ function Find-ProjectRoot {
                 while ($current -and $current.FullName -ne "/" -and $current.FullName -notmatch "^[A-Z]:\\?$") {
                     $currentPath = $current.FullName
 
+                    # Priority check: If we're clearly in AitherZero context, don't search elsewhere
+                    if ($currentPath -like "*AitherZero*" -and (Test-Path (Join-Path $currentPath "aither-core"))) {
+                        $projectRoot = $currentPath
+                        Write-Verbose "Found AitherZero project root directly: $projectRoot"
+                        break
+                    }
+
                     # Check for characteristic project files/directories
                     $characteristicPaths = @(
                         "aither-core",
@@ -260,6 +267,22 @@ function Find-ProjectRoot {
                             break
                         }
                     }
+                }
+            }
+
+            # Final validation: ensure we have the right project when context suggests AitherZero
+            if ($projectRoot -and $StartPath -like "*AitherZero*" -and $projectRoot -notlike "*AitherZero*") {
+                Write-Verbose "Context suggests AitherZero but found different project, searching for AitherZero specifically..."
+
+                # Look for AitherZero in parent directories
+                $searchPath = $StartPath
+                while ($searchPath -and $searchPath -ne "/" -and $searchPath -notmatch "^[A-Z]:\\?$") {
+                    if ($searchPath -like "*AitherZero*" -and (Test-Path (Join-Path $searchPath "aither-core"))) {
+                        $projectRoot = $searchPath
+                        Write-Verbose "Found correct AitherZero project root: $projectRoot"
+                        break
+                    }
+                    $searchPath = Split-Path $searchPath -Parent
                 }
             }
 

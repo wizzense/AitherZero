@@ -1,16 +1,12 @@
-# Required test file header
-$script:TestRootPath = Split-Path -Parent $PSScriptRoot
-$script:HelpersPath = Join-Path $script:TestRootPath 'helpers' 'TestHelpers.ps1'
-if (Test-Path $script:HelpersPath) {
-    . $script:HelpersPath
-}
+# Required test file header using shared utilities
+. "$PSScriptRoot/../../aither-core/shared/Find-ProjectRoot.ps1"
+$script:ProjectRoot = Find-ProjectRoot
 
 Describe 'CustomLint Tests' -Tags @('Integration', 'Lint') {
     BeforeAll {
-        $script:ModulePath = Join-Path $script:TestRootPath '../aither-core/modules/LabRunner'
-        if (Test-Path $script:ModulePath) {
-            Import-Module $script:ModulePath -Force
-        }
+        # Import required modules
+        Import-Module "$script:ProjectRoot/aither-core/modules/LabRunner" -Force -ErrorAction SilentlyContinue
+        Import-Module "$script:ProjectRoot/aither-core/modules/Logging" -Force -ErrorAction SilentlyContinue
     }
 
     Context 'Module Loading' {

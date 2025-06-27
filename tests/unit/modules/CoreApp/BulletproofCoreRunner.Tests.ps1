@@ -21,11 +21,13 @@
 #>
 
 BeforeAll {
-    # Set up test environment
-    $script:ProjectRoot = $env:PROJECT_ROOT
-    if (-not $script:ProjectRoot) {
-        $script:ProjectRoot = Split-Path $PSScriptRoot -Parent | Split-Path -Parent | Split-Path -Parent | Split-Path -Parent
-    }
+    # Set up test environment with shared utilities
+    . "$PSScriptRoot/../../../../aither-core/shared/Find-ProjectRoot.ps1"
+    $script:ProjectRoot = Find-ProjectRoot
+
+    # Import AitherCore module (not CoreApp)
+    Import-Module "$script:ProjectRoot/aither-core/AitherCore.psd1" -Force -ErrorAction SilentlyContinue
+    Import-Module "$script:ProjectRoot/aither-core/modules/Logging" -Force -ErrorAction SilentlyContinue
 
     $script:CoreRunnerScript = Join-Path $script:ProjectRoot "aither-core/aither-core.ps1"
     $script:ConfigFile = Join-Path $script:ProjectRoot "aither-core/default-config.json"
