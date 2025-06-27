@@ -16,9 +16,10 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Setup PowerShell
-      uses: powershell/setup-powershell@v1
-      with:
-        pwsh-version: '7.4.0'
+      shell: bash
+      run: |
+        # PowerShell 7+ is already available on ubuntu-latest
+        pwsh -Version
         
     - name: Install Pester
       shell: pwsh
@@ -38,14 +39,16 @@ jobs:
         ./tests/Run-CodeCoverage.ps1 -Scope Full -CI -EnforceThresholds -OutputFormat JaCoCo,Cobertura
         
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
-        files: ./tests/results/coverage.xml
-        fail_ci_if_error: true
+        files: ./tests/results/coverage.jacoco
+        fail_ci_if_error: false
         verbose: true
         
     - name: Upload coverage reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: coverage-reports
         path: tests/results/coverage.*
