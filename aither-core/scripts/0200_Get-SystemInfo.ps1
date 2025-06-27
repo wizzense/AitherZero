@@ -19,8 +19,8 @@ param(
     [switch]$Force
 )
 
-Import-Module "$env:PROJECT_ROOT/aither-core/modules/LabRunner" -Force
-Import-Module "$env:PROJECT_ROOT/aither-core/modules/Logging" -Force
+Import-Module (Join-Path $env:PROJECT_ROOT (Join-Path "aither-core" (Join-Path "modules" "LabRunner"))) -Force
+Import-Module (Join-Path $env:PROJECT_ROOT (Join-Path "aither-core" (Join-Path "modules" "Logging"))) -Force
 
 # Initialize standardized parameters
 $params = Initialize-StandardParameters -InputParameters $PSBoundParameters -ScriptName $MyInvocation.MyCommand.Name
