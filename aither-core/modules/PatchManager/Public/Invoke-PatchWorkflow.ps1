@@ -47,7 +47,7 @@
     Force operation even if working tree is not clean
 
 .PARAMETER SkipSync
-    Skip automatic synchronization with main branch before creating patch branch. 
+    Skip automatic synchronization with main branch before creating patch branch.
     By default, PatchManager fetches latest changes and merges/pulls from origin/main to prevent conflicts.
     Use this flag to skip sync if you want to work with current local state.
 
@@ -151,10 +151,10 @@ function Invoke-PatchWorkflow {
 
         [Parameter(Mandatory = $false)]
         [bool]$CreateIssue = $true,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$CreatePR,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$CreateRelease,
 
@@ -282,16 +282,16 @@ function Invoke-PatchWorkflow {
             # Step 1.5: Sync with main branch to prevent merge conflicts
             if (-not $SkipSync) {
                 Write-PatchLog "Syncing with main branch to prevent merge conflicts..." -Level "INFO"
-            
+
             if (-not $DryRun) {
                 try {
                     # Get current branch name
                     $currentBranch = git branch --show-current 2>&1
-                    
+
                     # Fetch latest changes from origin
                     Write-PatchLog "Fetching latest changes from origin..." -Level "INFO"
                     git fetch origin 2>&1 | Out-Null
-                    
+
                     if ($LASTEXITCODE -ne 0) {
                         Write-PatchLog "Warning: Failed to fetch from origin. Continuing with local state..." -Level "WARN"
                     } else {
@@ -299,7 +299,7 @@ function Invoke-PatchWorkflow {
                         if ($currentBranch -eq "main" -or $currentBranch -eq "master") {
                             Write-PatchLog "On main branch - pulling latest changes..." -Level "INFO"
                             git pull origin $currentBranch 2>&1 | Out-Null
-                            
+
                             if ($LASTEXITCODE -eq 0) {
                                 Write-PatchLog "Successfully synced with origin/$currentBranch" -Level "SUCCESS"
                             } else {
@@ -308,19 +308,19 @@ function Invoke-PatchWorkflow {
                         } else {
                             # If we're on a feature branch, merge/rebase main into current branch
                             Write-PatchLog "On feature branch '$currentBranch' - merging latest main..." -Level "INFO"
-                            
+
                             # Check if origin/main exists
                             $mainExists = git show-ref --verify --quiet refs/remotes/origin/main 2>&1
                             $masterExists = git show-ref --verify --quiet refs/remotes/origin/master 2>&1
-                            
-                            $mainBranch = if ($LASTEXITCODE -eq 0 -and $mainExists) { "main" } 
-                                         elseif ($masterExists) { "master" } 
+
+                            $mainBranch = if ($LASTEXITCODE -eq 0 -and $mainExists) { "main" }
+                                         elseif ($masterExists) { "master" }
                                          else { $null }
-                            
+
                             if ($mainBranch) {
                                 # Try merge first (safer), fall back to informational message if conflicts
                                 $mergeOutput = git merge origin/$mainBranch 2>&1
-                                
+
                                 if ($LASTEXITCODE -eq 0) {
                                     Write-PatchLog "Successfully merged origin/$mainBranch into $currentBranch" -Level "SUCCESS"
                                 } else {
@@ -620,26 +620,26 @@ function Invoke-PatchWorkflow {
             } elseif ($AutoConsolidate -and $DryRun) {
                 Write-PatchLog "DRY RUN: Would attempt PR consolidation with strategy: $ConsolidationStrategy" -Level "INFO"
             }
-                
+
             # Step 9: Create release if requested (intelligent release automation)
             if ($CreateRelease) {
                 Write-PatchLog "Creating intelligent release..." -Level "INFO"
-                
+
                 if (-not $DryRun) {
                     # Determine if this should trigger an immediate release or wait for PR merge
                     $shouldCreateImmediateRelease = $false
                     $releaseReason = ""
-                    
+
                     # Check for critical fixes that need immediate release
                     if ($Priority -eq "Critical") {
                         $shouldCreateImmediateRelease = $true
                         $releaseReason = "Critical priority fix requires immediate release"
                     }
-                    
+
                     # Check for version-related changes that indicate a release
                     $versionFiles = @("*.psd1", "package.json", "version.txt", "**/version.json")
                     $changedFiles = git diff --name-only HEAD~1 HEAD 2>&1 | Where-Object { $_ -and $_.Trim() }
-                    
+
                     foreach ($file in $changedFiles) {
                         foreach ($pattern in $versionFiles) {
                             if ($file -like $pattern) {
@@ -650,7 +650,7 @@ function Invoke-PatchWorkflow {
                         }
                         if ($shouldCreateImmediateRelease) { break }
                     }
-                    
+
                     # Check for release-triggering keywords in description
                     $releaseKeywords = @("RELEASE", "VERSION", "HOTFIX", "CRITICAL", "SECURITY", "BREAKING")
                     foreach ($keyword in $releaseKeywords) {
@@ -660,39 +660,39 @@ function Invoke-PatchWorkflow {
                             break
                         }
                     }
-                    
+
                     if ($shouldCreateImmediateRelease) {
                         Write-PatchLog "Triggering immediate release: $releaseReason" -Level "INFO"
-                        
+
                         try {
                             # Switch to main and pull latest (in case PR was already merged)
                             git checkout main 2>&1 | Out-Null
                             git pull origin main 2>&1 | Out-Null
-                            
+
                             # Use Quick-Release script for automated release creation
                             $releaseScript = Join-Path $PSScriptRoot "Quick-Release.ps1"
                             if (Test-Path $releaseScript) {
                                 Write-PatchLog "Using Quick-Release script for $ReleaseType release..." -Level "INFO"
-                                
+
                                 # Execute release with appropriate type
                                 $releaseArgs = @("-Type", $ReleaseType)
                                 if ($DryRun) {
                                     $releaseArgs += "-NoPush"  # Don't actually push in dry run
                                 }
-                                
+
                                 $releaseResult = & $releaseScript @releaseArgs
-                                
+
                                 if ($LASTEXITCODE -eq 0) {
                                     Write-PatchLog "Release created successfully!" -Level "SUCCESS"
-                                    
+
                                     # Get the created release info
                                     $latestTag = git describe --tags --abbrev=0 2>&1
                                     if ($latestTag) {
                                         Write-PatchLog "New release: $latestTag" -Level "SUCCESS"
-                                        
+
                                         # Trigger GitHub Actions for build and deployment
                                         Write-PatchLog "Triggering GitHub Actions for release build..." -Level "INFO"
-                                        
+
                                         try {
                                             # Trigger the release workflow
                                             $workflowTrigger = gh workflow run "build-release.yml" --ref $latestTag 2>&1
@@ -712,30 +712,30 @@ function Invoke-PatchWorkflow {
                             } else {
                                 # Fallback: Use git tag and gh release create
                                 Write-PatchLog "Quick-Release script not found, using fallback release method..." -Level "WARN"
-                                
+
                                 # Get current version and increment
                                 $currentTag = git describe --tags --abbrev=0 2>&1
                                 if ($currentTag -and $currentTag -match '^v?(\d+)\.(\d+)\.(\d+)') {
                                     $major = [int]$matches[1]
                                     $minor = [int]$matches[2]
                                     $patch = [int]$matches[3]
-                                    
+
                                     switch ($ReleaseType) {
                                         "major" { $major++; $minor = 0; $patch = 0 }
                                         "minor" { $minor++; $patch = 0 }
                                         default { $patch++ }
                                     }
-                                    
+
                                     $newVersion = "v$major.$minor.$patch"
-                                    
+
                                     # Create tag and release
                                     git tag $newVersion 2>&1 | Out-Null
                                     git push origin $newVersion 2>&1 | Out-Null
-                                    
+
                                     # Create GitHub release
                                     $releaseBody = "Automated release created by PatchManager`n`n$PatchDescription"
                                     gh release create $newVersion --title $newVersion --notes $releaseBody 2>&1 | Out-Null
-                                    
+
                                     if ($LASTEXITCODE -eq 0) {
                                         Write-PatchLog "Fallback release created: $newVersion" -Level "SUCCESS"
                                     } else {
@@ -749,7 +749,7 @@ function Invoke-PatchWorkflow {
                             Write-PatchLog "Release creation failed: $($_.Exception.Message)" -Level "ERROR"
                             # Don't fail the entire workflow for release issues
                         }
-                        
+
                         # Switch back to the patch branch if it still exists
                         git show-ref --verify --quiet "refs/heads/$branchName" 2>&1 | Out-Null
                         if ($LASTEXITCODE -eq 0) {

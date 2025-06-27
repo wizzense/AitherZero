@@ -224,7 +224,7 @@ jobs:
           if (Test-Path './tests/Run-BulletproofValidation.ps1') {
             # First check if the script supports MaxParallelJobs parameter
             $scriptHelp = Get-Help './tests/Run-BulletproofValidation.ps1' -Parameter MaxParallelJobs -ErrorAction SilentlyContinue
-            
+
             if ($scriptHelp) {
               # Script supports MaxParallelJobs - use full parameter set
               $params = @{
@@ -246,7 +246,7 @@ jobs:
               if ($testLevel -eq "Quick") {
                 $basicParams += " -FailFast"
               }
-              
+
               Invoke-Expression "pwsh -File './tests/Run-BulletproofValidation.ps1' $basicParams"
             }
           } else {

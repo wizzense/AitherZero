@@ -50,7 +50,7 @@ param(
     [int]$MaxParallelJobs = 4
 )
 
-Write-Host "� Bulletproof Validation - Enhanced with Parallel Execution" -ForegroundColor Cyan
+Write-Host '� Bulletproof Validation - Enhanced with Parallel Execution' -ForegroundColor Cyan
 Write-Host "Validation Level: $ValidationLevel | Max Parallel Jobs: $MaxParallelJobs" -ForegroundColor Yellow
 
 # Initialize environment
@@ -61,10 +61,10 @@ $startTime = Get-Date
 if (Test-Path "$PSScriptRoot/../aither-core/shared/Find-ProjectRoot.ps1") {
     . "$PSScriptRoot/../aither-core/shared/Find-ProjectRoot.ps1"
     $projectRoot = Find-ProjectRoot
-    
+
     # Validate that we found the correct project root for AitherZero
-    if (-not (Test-Path (Join-Path $projectRoot "aither-core/modules"))) {
-        Write-Host "⚠️ Find-ProjectRoot found wrong directory, using fallback detection..." -ForegroundColor Yellow
+    if (-not (Test-Path (Join-Path $projectRoot 'aither-core/modules'))) {
+        Write-Host '⚠️ Find-ProjectRoot found wrong directory, using fallback detection...' -ForegroundColor Yellow
         $projectRoot = $null
     }
 } else {
@@ -75,16 +75,16 @@ if (Test-Path "$PSScriptRoot/../aither-core/shared/Find-ProjectRoot.ps1") {
 if (-not $projectRoot) {
     # Start from script location and work upward
     $projectRoot = $PSScriptRoot
-    while ($projectRoot -and -not (Test-Path (Join-Path $projectRoot "aither-core"))) {
+    while ($projectRoot -and -not (Test-Path (Join-Path $projectRoot 'aither-core'))) {
         $projectRoot = Split-Path $projectRoot -Parent
         # Prevent infinite loop at filesystem root
         if ($projectRoot -eq (Split-Path $projectRoot -Parent)) {
             break
         }
     }
-    
+
     # If still not found, use script parent as last resort
-    if (-not $projectRoot -or -not (Test-Path (Join-Path $projectRoot "aither-core"))) {
+    if (-not $projectRoot -or -not (Test-Path (Join-Path $projectRoot 'aither-core'))) {
         $projectRoot = Split-Path $PSScriptRoot -Parent
     }
 }
@@ -95,36 +95,36 @@ Write-Host "Using project root: $projectRoot" -ForegroundColor Cyan
 try {
     Import-Module "$projectRoot/aither-core/modules/Logging" -Force -ErrorAction Stop
     Import-Module "$projectRoot/aither-core/modules/ParallelExecution" -Force -ErrorAction Stop
-    Write-Host "✅ Required modules loaded successfully" -ForegroundColor Green
+    Write-Host '✅ Required modules loaded successfully' -ForegroundColor Green
 } catch {
     Write-Host "⚠️ Could not load modules, proceeding with basic functionality: $($_.Exception.Message)" -ForegroundColor Yellow
 }
 
 $testPaths = switch ($ValidationLevel) {
-    'Quick' { 
+    'Quick' {
         @(
-            "tests/unit/modules/Logging",
-            "tests/unit/modules/LabRunner",
-            "tests/unit/modules/BackupManager"
+            'tests/unit/modules/Logging',
+            'tests/unit/modules/LabRunner',
+            'tests/unit/modules/BackupManager'
         )
     }
-    'Standard' { 
+    'Standard' {
         @(
-            "tests/unit/modules",
-            "tests/unit/scripts"
+            'tests/unit/modules',
+            'tests/unit/scripts'
         )
     }
-    'Complete' { 
+    'Complete' {
         @(
-            "tests/unit",
-            "tests/integration"
+            'tests/unit',
+            'tests/integration'
         )
     }
 }
 
 $config = @{
-    Run = @{
-        Path = $testPaths
+    Run    = @{
+        Path     = $testPaths
         PassThru = $true
     }
     Output = @{
@@ -137,71 +137,71 @@ $config = @{
 
 # Configure parallel execution for Pester if we have multiple test paths
 if ($testPaths.Count -gt 1 -and $MaxParallelJobs -gt 1) {
-    Write-Host "🔄 Configuring parallel test execution..." -ForegroundColor Cyan
-    
+    Write-Host '🔄 Configuring parallel test execution...' -ForegroundColor Cyan
+
     # Split test paths into parallel jobs
     $testJobs = @()
     for ($i = 0; $i -lt $testPaths.Count; $i += [Math]::Max(1, [Math]::Floor($testPaths.Count / $MaxParallelJobs))) {
         $jobPaths = $testPaths[$i..($i + [Math]::Max(1, [Math]::Floor($testPaths.Count / $MaxParallelJobs)) - 1)]
-        $testJobs += ,@($jobPaths | Where-Object { $_ })
+        $testJobs += , @($jobPaths | Where-Object { $_ })
     }
-    
+
     Write-Host "📊 Split $($testPaths.Count) test paths into $($testJobs.Count) parallel jobs" -ForegroundColor Yellow
 }
 
 try {
-    if ($testPaths.Count -gt 1 -and $MaxParallelJobs -gt 1 -and (Get-Command "Invoke-ParallelOperation" -ErrorAction SilentlyContinue)) {
-        Write-Host "🚀 Executing tests in parallel..." -ForegroundColor Cyan
-        
+    if ($testPaths.Count -gt 1 -and $MaxParallelJobs -gt 1 -and (Get-Command 'Invoke-ParallelOperation' -ErrorAction SilentlyContinue)) {
+        Write-Host '🚀 Executing tests in parallel...' -ForegroundColor Cyan
+
         # Create parallel test operations
         $operations = foreach ($jobPaths in $testJobs) {
             {
                 param($TestPaths)
                 $config = @{
-                    Run = @{ Path = $TestPaths; PassThru = $true }
+                    Run    = @{ Path = $TestPaths; PassThru = $true }
                     Output = @{ Verbosity = 'Normal' }
                 }
                 Invoke-Pester -Configuration $config
             }
         }
-        
+
         # Execute parallel operations
         $parallelResults = Invoke-ParallelOperation -Operations $operations -MaxParallelJobs $MaxParallelJobs
-        
+
         # Aggregate results
         $result = @{
-            PassedCount = ($parallelResults | ForEach-Object { $_.PassedCount } | Measure-Object -Sum).Sum
-            FailedCount = ($parallelResults | ForEach-Object { $_.FailedCount } | Measure-Object -Sum).Sum
+            PassedCount  = ($parallelResults | ForEach-Object { $_.PassedCount } | Measure-Object -Sum).Sum
+            FailedCount  = ($parallelResults | ForEach-Object { $_.FailedCount } | Measure-Object -Sum).Sum
             SkippedCount = ($parallelResults | ForEach-Object { $_.SkippedCount } | Measure-Object -Sum).Sum
-            TotalCount = ($parallelResults | ForEach-Object { $_.TotalCount } | Measure-Object -Sum).Sum
+            TotalCount   = ($parallelResults | ForEach-Object { $_.TotalCount } | Measure-Object -Sum).Sum
         }
-        
-        Write-Host "✅ Parallel execution completed" -ForegroundColor Green
+
+        Write-Host '✅ Parallel execution completed' -ForegroundColor Green
     } else {
-        Write-Host "� Executing tests sequentially..." -ForegroundColor Cyan
+        Write-Host '� Executing tests sequentially...' -ForegroundColor Cyan
         $result = Invoke-Pester -Configuration $config
     }
-    
+
     $endTime = Get-Date
     $duration = ($endTime - $startTime).TotalSeconds
-    
-    Write-Host ""
+
+    Write-Host ''
     Write-Host "📊 Test Results (completed in $([math]::Round($duration, 2))s):" -ForegroundColor White
     Write-Host "  Passed: $($result.PassedCount)" -ForegroundColor Green
     Write-Host "  Failed: $($result.FailedCount)" -ForegroundColor Red
     Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
     Write-Host "  Total: $($result.TotalCount)" -ForegroundColor White
-    
+
     if ($result.FailedCount -gt 0) {
-        Write-Host ""
+        Write-Host ''
         Write-Host "❌ VALIDATION FAILED - $($result.FailedCount) test failures found" -ForegroundColor Red
         if ($CI) {
-            Write-Host "Fix these failures before merging." -ForegroundColor Yellow
+            Write-Host 'Fix these failures before merging.' -ForegroundColor Yellow
         }
         exit 1
     } else {
-        Write-Host ""
-        Write-Host "✅ All tests passed! System is healthy." -ForegroundColor Green
+        Write-Host ''
+        Write-Host '✅ All tests passed! System is healthy.' -ForegroundColor Green
         exit 0
     }
 } catch {

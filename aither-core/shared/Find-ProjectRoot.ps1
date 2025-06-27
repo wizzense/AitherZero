@@ -115,7 +115,7 @@ function Find-ProjectRoot {
                     # Check for characteristic project files/directories
                     $characteristicPaths = @(
                         "aither-core",
-                        ".git", 
+                        ".git",
                         "README.md",
                         "go.ps1",
                         "kicker-git.ps1"
@@ -273,7 +273,7 @@ function Find-ProjectRoot {
             # Final validation: ensure we have the right project when context suggests AitherZero
             if ($projectRoot -and $StartPath -like "*AitherZero*" -and $projectRoot -notlike "*AitherZero*") {
                 Write-Verbose "Context suggests AitherZero but found different project, searching for AitherZero specifically..."
-                
+
                 # Look for AitherZero in parent directories
                 $searchPath = $StartPath
                 while ($searchPath -and $searchPath -ne "/" -and $searchPath -notmatch "^[A-Z]:\\?$") {
