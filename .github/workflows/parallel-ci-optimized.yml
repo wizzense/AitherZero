@@ -564,7 +564,7 @@ jobs:
 
             default {
               Write-Host "🧪 Running standard test suite..." -ForegroundColor Cyan
-              
+
               try {
                 Write-Host "Running PatchManager validation..." -ForegroundColor Yellow
                 $pmFunctions = @('Invoke-PatchWorkflow', 'New-PatchIssue', 'New-PatchPR', 'Invoke-PatchRollback')

@@ -183,13 +183,38 @@ if (-not $NonInteractive) {
 
 Write-Verbose "Final NonInteractive value: $NonInteractive"
 
-# Determine repository root - aither-core is now at the root level
-$repoRoot = Split-Path $PSScriptRoot -Parent
+# Use robust project root detection from shared utility
+$findProjectRootPath = Join-Path $PSScriptRoot "shared" "Find-ProjectRoot.ps1"
+if (Test-Path $findProjectRootPath) {
+    . $findProjectRootPath
+    $repoRoot = Find-ProjectRoot -StartPath $PSScriptRoot
+    Write-Verbose "Used shared utility to find project root: $repoRoot"
+} else {
+    # Fallback: assume aither-core is at project root level (legacy behavior)
+    $repoRoot = Split-Path $PSScriptRoot -Parent
+    Write-Warning "Shared utility not found, using fallback detection. Some path issues may occur."
+}
+
+# Ensure we have a valid project root
+if (-not $repoRoot -or -not (Test-Path $repoRoot)) {
+    Write-Error "Could not determine valid project root. Please run from the project directory or set PROJECT_ROOT environment variable."
+    exit 1
+}
+
+# Set environment variables with proper cross-platform paths
 $env:PROJECT_ROOT = $repoRoot
 $env:PWSH_MODULES_PATH = Join-Path $repoRoot "aither-core" "modules"
 
 Write-Verbose "Repository root: $repoRoot"
 Write-Verbose "Modules path: $env:PWSH_MODULES_PATH"
+
+# Validate that the modules directory exists
+if (-not (Test-Path $env:PWSH_MODULES_PATH)) {
+    Write-Error "Modules directory not found at: $env:PWSH_MODULES_PATH"
+    Write-Error "This suggests the project structure is incomplete or the script is not running from the correct location."
+    Write-Error "Please ensure all files were extracted properly and run from the project root directory."
+    exit 1
+}
 
 # Apply default ConfigFile if not provided
 if (-not $PSBoundParameters.ContainsKey('ConfigFile')) {
@@ -251,24 +276,47 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
 try {
     Write-Verbose 'Importing Logging module...'
 
+    # Validate module paths before attempting import
+    $loggingModulePath = Join-Path $env:PWSH_MODULES_PATH "Logging"
+    $labRunnerModulePath = Join-Path $env:PWSH_MODULES_PATH "LabRunner"
+
+    if (-not (Test-Path $loggingModulePath)) {
+        throw "Logging module not found at: $loggingModulePath"
+    }
+    if (-not (Test-Path $labRunnerModulePath)) {
+        throw "LabRunner module not found at: $labRunnerModulePath"
+    }
+
     # In silent mode, suppress all output during module import and initialization
     if ($Verbosity -eq 'silent') {
-        Import-Module (Join-Path $env:PWSH_MODULES_PATH "Logging") -Force -ErrorAction Stop *>$null
-        Import-Module (Join-Path $env:PWSH_MODULES_PATH "LabRunner") -Force -ErrorAction Stop *>$null
+        Import-Module $loggingModulePath -Force -ErrorAction Stop *>$null
+        Import-Module $labRunnerModulePath -Force -ErrorAction Stop *>$null
         # Initialize logging system with proper verbosity mapping (Force required to override auto-init)
         Initialize-LoggingSystem -ConsoleLevel $script:LogLevel -LogLevel 'DEBUG' -Force *>$null
     } else {
-        Import-Module (Join-Path $env:PWSH_MODULES_PATH "Logging") -Force -ErrorAction Stop
+        Import-Module $loggingModulePath -Force -ErrorAction Stop
         Write-Verbose 'Importing LabRunner module...'
-        Import-Module (Join-Path $env:PWSH_MODULES_PATH "LabRunner") -Force -ErrorAction Stop
+        Import-Module $labRunnerModulePath -Force -ErrorAction Stop
         # Initialize logging system with proper verbosity mapping (Force required to override auto-init)
         Initialize-LoggingSystem -ConsoleLevel $script:LogLevel -LogLevel 'DEBUG' -Force
     }
 
     Write-CustomLog 'Core runner started' -Level DEBUG
 } catch {
-    Write-Error "Failed to import required modules: $($_.Exception.Message)"
-    Write-Error "Ensure modules exist at: $env:PWSH_MODULES_PATH"
+    Write-Host "❌ Error importing required modules: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "" -ForegroundColor White
+    Write-Host "💡 Troubleshooting Steps:" -ForegroundColor Yellow
+    Write-Host "  1. Verify project structure is complete" -ForegroundColor White
+    Write-Host "  2. Check that modules exist at: $env:PWSH_MODULES_PATH" -ForegroundColor White
+    Write-Host "  3. Ensure all files were extracted properly" -ForegroundColor White
+    Write-Host "  4. Try running from the project root directory" -ForegroundColor White
+    Write-Host "  5. Check PowerShell version: `$PSVersionTable.PSVersion" -ForegroundColor White
+    Write-Host "" -ForegroundColor White
+    Write-Host "🔍 Current paths:" -ForegroundColor Cyan
+    Write-Host "  Project Root: $env:PROJECT_ROOT" -ForegroundColor White
+    Write-Host "  Modules Path: $env:PWSH_MODULES_PATH" -ForegroundColor White
+    Write-Host "  Script Location: $PSScriptRoot" -ForegroundColor White
+    Write-Host "" -ForegroundColor White
     exit 1
 }
 
