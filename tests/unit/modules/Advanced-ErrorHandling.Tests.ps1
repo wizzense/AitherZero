@@ -424,11 +424,11 @@ Export-ModuleMember -Function Test-ModuleB
             { "New content" | Set-Content $testFile } | Should -Not -Throw
         }
     }
-}
+    }  # End of Context "Security and Permission Handling"
+    
+    Context "Integration Testing - Complex Scenarios" {
 
-Describe "Integration Testing - Complex Scenarios" {
-
-    Context "Multi-Module Workflows" -Skip:(-not (($script:ImportedModules.ContainsKey('Logging') -and $script:ImportedModules['Logging']) -and ($script:ImportedModules.ContainsKey('BackupManager') -and $script:ImportedModules['BackupManager']))) {
+    Context "Multi-Module Workflows" -Skip:(-not ($script:ImportedModules -and $script:ImportedModules['Logging'] -and $script:ImportedModules['BackupManager'])) {
 
         It "Should integrate logging with backup operations" {
             if ($script:ImportedModules['Logging'] -and $script:ImportedModules['BackupManager']) {
@@ -474,7 +474,7 @@ Describe "Integration Testing - Complex Scenarios" {
 
             try {
                 # Step 2: Try to use result from step 1 (should also fail)
-                $items = Get-ChildItem $nonExistentDir -ErrorAction SilentlyContinue
+                $items = Get-ChildItem $nonExistentDir -ErrorAction Stop
                 if (-not $items) { throw "No items found" }
             }
             catch {
@@ -494,11 +494,8 @@ Describe "Integration Testing - Complex Scenarios" {
 
             # Should have captured errors from steps 1 and 2, but recovery should work
             $errors.Count | Should -BeGreaterOrEqual 2
-            $recoverySuccess | Should -Be $true            }
-
-            # Should have captured errors from steps 1 and 2, but recovery should work
-            $errors.Count | Should -BeGreaterOrEqual 2
             $recoverySuccess | Should -Be $true
         }
     }
+    }  # End of Context "Integration Testing - Complex Scenarios"
 }  # End of Describe 'Advanced Error Handling Tests'

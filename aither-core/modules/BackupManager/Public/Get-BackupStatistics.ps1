@@ -98,7 +98,7 @@ function Get-BackupStatistics {
             }
 
             if ($IncludeDetails) {
-                $result.Details = BackupFiles | ForEach-Object{
+                $result.Details = $BackupFiles | ForEach-Object{
                     @{
                         Name = $_.Name
                         Path = $_.FullName.Replace($ProjectRoot, "").TrimStart('\', '/')

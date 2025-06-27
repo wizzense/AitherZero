@@ -6,8 +6,9 @@ param(
     [object]$Config
 )
 
-Import-Module "$env:PROJECT_ROOT/aither-core/modules/LabRunner" -Force
-Import-Module "$env:PROJECT_ROOT/aither-core/modules/Logging" -Force
+$projectRoot = if ($env:PROJECT_ROOT) { $env:PROJECT_ROOT } else { "/workspaces/AitherZero" }
+Import-Module "$projectRoot/aither-core/modules/LabRunner" -Force
+Import-Module "$projectRoot/aither-core/modules/Logging" -Force
 
 Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
 
@@ -33,14 +34,24 @@ Invoke-LabStep -Config $Config -Body {
         }
         
         $localBase = [System.Environment]::ExpandEnvironmentVariables($localBase)
-        $repoName = ($Config.RepoUrl -split '/')[-1] -replace '\.git$', ''
-        $repoPath = Join-Path $localBase $repoName
         
-        if (Test-Path $repoPath) {
-            Write-CustomLog "Removing repo path '$repoPath'..."
-            Remove-Item -Recurse -Force -Path $repoPath -ErrorAction Stop
+        # Only proceed with repo cleanup if RepoUrl is provided
+        if ($Config.RepoUrl) {
+            $repoName = ($Config.RepoUrl -split '/')[-1] -replace '\.git$', ''
+            if ($repoName) {
+                $repoPath = Join-Path $localBase $repoName
+                
+                if (Test-Path $repoPath) {
+                    Write-CustomLog "Removing repo path '$repoPath'..."
+                    Remove-Item -Recurse -Force -Path $repoPath -ErrorAction Stop
+                } else {
+                    Write-CustomLog "Repo path '$repoPath' not found; skipping."
+                }
+            } else {
+                Write-CustomLog "Could not determine repo name from RepoUrl; skipping repo cleanup."
+            }
         } else {
-            Write-CustomLog "Repo path '$repoPath' not found; skipping."
+            Write-CustomLog "No RepoUrl provided; skipping repo cleanup."
         }
         
         $infraPath = if ($Config.InfraRepoPath) { $Config.InfraRepoPath } else { 'C:/Temp/base-infra' }

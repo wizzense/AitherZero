@@ -18,12 +18,6 @@ BeforeAll {
         throw
     }
 
-    # Mock Write-CustomLog function
-    function global:Write-CustomLog {
-        param([string]$Message, [string]$Level = "INFO")
-        Write-Host "[$Level] $Message"
-    }
-
     # Import PatchManager module
     $patchManagerPath = Join-Path $projectRoot "aither-core/modules/PatchManager"
 
@@ -36,7 +30,7 @@ BeforeAll {
         throw
     }
 
-    # Mock git commands
+    # Mock git commands for testing
     function global:git {
         param()
         $gitArgs = $args
@@ -49,182 +43,243 @@ BeforeAll {
                 }
                 return "On branch main`nnothing to commit, working tree clean"
             }
-            "rev-parse" {
-                if ($gitArgs[1] -eq "--abbrev-ref" -and $gitArgs[2] -eq "HEAD") {
-                    return "main"
-                }
-            }
-            "branch" {
-                if ($gitArgs[1] -eq "-r") {
-                    return @(
-                        "  origin/main",
-                        "  origin/feature/test-branch"
-                    )
-                }
+            "config" {
+                return "test-value"
             }
             "remote" {
-                if ($gitArgs[1] -eq "-v") {
-                    return "origin  https://github.com/test/repo.git (fetch)"
+                return "origin"
+            }
+            "branch" {
+                return "* main"
+            }
+            "ls-files" {
+                # Mock no conflict markers
+                return ""
+            }
+            "grep" {
+                # Mock no merge conflict markers found
+                $global:LASTEXITCODE = 1  # grep returns 1 when no matches found
+                return ""
+            }
+            "rev-parse" {
+                if ($gitArgs -contains "--git-dir") {
+                    return ".git"
                 }
+                return "abcd1234"
+            }
+            "stash" {
+                $global:LASTEXITCODE = 0
+                return "Stashed changes"
+            }
+            "checkout" {
+                $global:LASTEXITCODE = 0
+                return "Switched to branch"
             }
             default {
-                $global:LASTEXITCODE = 0
-                return ""
+                return "git command mocked"
             }
         }
     }
 
-    # Mock gh command (GitHub CLI)
+    # Mock gh command for GitHub CLI
     function global:gh {
         param()
-        $ghArgs = $args
+        return "gh command mocked"
+    }
 
-        if ($ghArgs[0] -eq "auth" -and $ghArgs[1] -eq "status") {
-            return "Logged in to github.com as testuser"
-        }
-
-        $global:LASTEXITCODE = 0
-        return ""    }
+    # Create test directory
+    $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "PatchManagerTest"
+    if (Test-Path $script:testDir) {
+        Remove-Item $script:testDir -Recurse -Force
+    }
+    New-Item -Path $script:testDir -ItemType Directory -Force | Out-Null
 }
 
 AfterAll {
-    # Clean up environment variable
-    Remove-Item env:PESTER_RUN -ErrorAction SilentlyContinue
+    # Clean up test directory
+    if (Test-Path $script:testDir) {
+        Remove-Item $script:testDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    
+    # Remove environment variable
+    Remove-Item -Path "env:PESTER_RUN" -ErrorAction SilentlyContinue
 }
 
-Describe "PatchManager Core Functions" {
-    BeforeEach {
-        $script:gitCalls = @()    }
-
-    Context "Test-PatchingRequirements" {
-        It "Should validate basic patching requirements" {
-            $result = Test-PatchingRequirements -ProjectRoot $PWD
-
-            $result | Should -Not -BeNullOrEmpty
-            $result.Success | Should -BeOfType [bool]
-        }
-
-        It "Should return proper structure with required properties" {
-            $result = Test-PatchingRequirements -ProjectRoot $PWD
-
-            $result.AllRequirementsMet | Should -BeOfType [bool]
-
-            # Test that properties exist and are collection types with Count property
-            $result.ModulesAvailable | Should -Not -BeNullOrEmpty
-            $result.ModulesAvailable.Count | Should -BeGreaterThan -1
-            ($result.ModulesAvailable -is [array]) | Should -BeTrue
-
-            # For potentially empty arrays, just check they have Count property and are enumerable
-            { $result.ModulesMissing.Count } | Should -Not -Throw
-            $result.ModulesMissing.Count | Should -BeGreaterOrEqual 0
-            ($result.ModulesMissing -is [array]) | Should -BeTrue
-
-            $result.CommandsAvailable | Should -Not -BeNullOrEmpty
-            $result.CommandsAvailable.Count | Should -BeGreaterOrEqual 1
-            ($result.CommandsAvailable -is [array]) | Should -BeTrue
-
-            { $result.CommandsMissing.Count } | Should -Not -Throw
-            $result.CommandsMissing.Count | Should -BeGreaterOrEqual 0
-            ($result.CommandsMissing -is [array]) | Should -BeTrue
-        }
-    }
-      Context "Invoke-GitControlledPatch" {
-        It "Should require PatchDescription parameter" {
-            # Test that mandatory parameter validation works by providing invalid empty string
-            { Invoke-GitControlledPatch -PatchDescription "" -DryRun } | Should -Throw
-        }
-
-        It "Should accept DryRun parameter" {
-            $scriptBlock = { Write-Host "Test patch" }
-
-            { Invoke-GitControlledPatch -PatchDescription "Test patch" -PatchOperation $scriptBlock -DryRun } | Should -Not -Throw
-        }
-
-        It "Should validate working tree when not forced" {
-            $scriptBlock = { Write-Host "Test patch" }
-
-            # This should not throw since our mock git returns clean status
-            { Invoke-GitControlledPatch -PatchDescription "Test patch" -PatchOperation $scriptBlock -DryRun } | Should -Not -Throw
-        }
-    }
-
-    Context "Invoke-EnhancedPatchManager" {
-        It "Should require PatchDescription parameter" {
-            { Invoke-EnhancedPatchManager } | Should -Throw
-        }
-
-        It "Should accept AutoValidate parameter" {
-            { Invoke-EnhancedPatchManager -PatchDescription "Test patch" -AutoValidate -DryRun } | Should -Not -Throw
-        }
-
-        It "Should accept CreatePullRequest parameter" {
-            { Invoke-EnhancedPatchManager -PatchDescription "Test patch" -CreatePullRequest -DryRun } | Should -Not -Throw
-        }    }
-
-    Context "Invoke-QuickRollback" {
-        It "Should accept RollbackType parameter" {
-            { Invoke-QuickRollback -RollbackType "LastCommit" -DryRun } | Should -Not -Throw
-        }
-          It "Should accept CreateBackup parameter" {
-            { Invoke-QuickRollback -RollbackType "LastCommit" -CreateBackup -DryRun } | Should -Not -Throw
-        }
-    }
-}
-
-Describe "PatchManager Integration Tests" {
+Describe "PatchManager v2.1 Core Functions" {
     BeforeEach {
         $script:gitCalls = @()
     }
 
-    Context "Module Loading" {
-        It "Should have imported PatchManager functions" {
-            Get-Command -Module "PatchManager" | Should -Not -BeNullOrEmpty
+    Context "Module Loading and Structure" {
+        It "Should have imported PatchManager module" {
+            Get-Module "PatchManager" | Should -Not -BeNullOrEmpty
         }
-          It "Should have core functions available" {
+
+        It "Should have v2.1 core functions available" {
             $expectedFunctions = @(
-                'Invoke-GitControlledPatch',
-                'Invoke-EnhancedPatchManager',
-                'Test-PatchingRequirements',
-                'Invoke-QuickRollback'
+                'Invoke-PatchWorkflow',
+                'Invoke-PatchRollback', 
+                'Invoke-PostMergeCleanup',
+                'Invoke-PRConsolidation'
             )
 
             foreach ($func in $expectedFunctions) {
+                Get-Command $func -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty -Because "$func should be available in v2.1"
+            }
+        }
+
+        It "Should have additional helper functions available" {
+            $helperFunctions = @(
+                'New-PatchIssue',
+                'New-PatchPR',
+                'New-CrossForkPR',
+                'Update-RepositoryDocumentation'
+            )
+
+            foreach ($func in $helperFunctions) {
                 Get-Command $func -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty -Because "$func should be available"
             }
         }
     }
 
-    Context "Cross-Platform Environment" {
-        It "Should handle cross-platform paths correctly" {
-            # Test that the module works with forward slash paths
-            $testPath = "/test/path/file.ps1"
+    Context "Invoke-PatchWorkflow" {
+        It "Should require PatchDescription parameter" {
+            { Invoke-PatchWorkflow } | Should -Throw
+        }
 
-            # This should not throw an error
-            { Test-Path $testPath -ErrorAction SilentlyContinue } | Should -Not -Throw
+        It "Should accept basic parameters" {
+            $scriptBlock = { Write-Host "Test patch operation" }
+            
+            { Invoke-PatchWorkflow -PatchDescription "Test patch" -PatchOperation $scriptBlock -CreateIssue:$false } | Should -Not -Throw
+        }
+
+        It "Should accept CreatePR parameter" {
+            $scriptBlock = { Write-Host "Test patch operation" }
+            
+            { Invoke-PatchWorkflow -PatchDescription "Test patch" -PatchOperation $scriptBlock -CreatePR -CreateIssue:$false } | Should -Not -Throw
+        }
+
+        It "Should handle DryRun parameter" {
+            $scriptBlock = { Write-Host "Test patch operation" }
+            
+            { Invoke-PatchWorkflow -PatchDescription "Test patch" -PatchOperation $scriptBlock -DryRun -CreateIssue:$false } | Should -Not -Throw
+        }
+    }
+
+    Context "Invoke-PatchRollback" {
+        It "Should accept valid parameters" {
+            { Invoke-PatchRollback -RollbackType "LastCommit" -CreateBackup } | Should -Not -Throw
+        }
+
+        It "Should accept valid Rollback types" {
+            $validTypes = @("LastCommit", "PreviousBranch")
+            
+            foreach ($type in $validTypes) {
+                { Invoke-PatchRollback -RollbackType $type -CreateBackup } | Should -Not -Throw -Because "$type should be a valid rollback type"
+            }
+        }
+
+        It "Should accept CreateBackup parameter" {
+            { Invoke-PatchRollback -RollbackType "LastCommit" -CreateBackup } | Should -Not -Throw
+        }
+    }
+
+    Context "Invoke-PostMergeCleanup" {
+        It "Should execute with required BranchName parameter" {
+            { Invoke-PostMergeCleanup -BranchName "test-branch" } | Should -Not -Throw
+        }
+
+        It "Should accept Force parameter" {
+            { Invoke-PostMergeCleanup -BranchName "test-branch" -Force } | Should -Not -Throw
+        }
+    }
+
+    Context "Invoke-PRConsolidation" {
+        It "Should execute without required parameters" {
+            { Invoke-PRConsolidation } | Should -Not -Throw
+        }
+
+        It "Should accept MaxPRs parameter" {
+            { Invoke-PRConsolidation -MaxPRs 5 } | Should -Not -Throw
+        }
+    }
+}
+
+Describe "PatchManager Helper Functions" {
+    Context "New-PatchIssue" {
+        It "Should require Description parameter" {
+            { New-PatchIssue } | Should -Throw
+        }
+
+        It "Should accept basic issue creation parameters" {
+            { New-PatchIssue -Description "Test Issue" -Priority "Medium" } | Should -Not -Throw
+        }
+    }
+
+    Context "New-PatchPR" {
+        It "Should require Description parameter" {
+            { New-PatchPR } | Should -Throw
+        }
+
+        It "Should accept basic PR creation parameters" {
+            { New-PatchPR -Description "Test PR" -Priority "Medium" } | Should -Not -Throw
+        }
+    }
+
+    Context "Update-RepositoryDocumentation" {
+        It "Should execute without required parameters" {
+            { Update-RepositoryDocumentation } | Should -Not -Throw
+        }
+
+        It "Should accept Force parameter" {
+            { Update-RepositoryDocumentation -Force } | Should -Not -Throw
         }
     }
 }
 
 Describe "PatchManager Error Handling" {
     Context "Invalid Parameters" {
-        It "Should handle invalid patch description gracefully" {
-            { Invoke-GitControlledPatch -PatchDescription "" -DryRun } | Should -Throw
+        It "Should handle empty patch description gracefully" {
+            $scriptBlock = { Write-Host "Test" }
+            { Invoke-PatchWorkflow -PatchDescription "" -PatchOperation $scriptBlock -CreateIssue:$false } | Should -Throw
         }
-          It "Should handle invalid rollback type gracefully" {
-            { Invoke-QuickRollback -RollbackType "InvalidType" -DryRun } | Should -Throw
+
+        It "Should handle invalid rollback type gracefully" {
+            { Invoke-PatchRollback -RollbackType "InvalidType" } | Should -Throw
         }
     }
 
-    Context "Environment Validation" {
-        It "Should detect missing git command" {
-            # Mock Get-Command to return null for git (simulating not found)
-            Mock Get-Command -MockWith {
-                return $null
-            } -ParameterFilter { $Name -eq "git" } -ModuleName PatchManager
-
-            $result = Test-PatchingRequirements -ProjectRoot $PWD
-            $result.CommandsMissing | Should -Contain "git"
+    Context "Environment Requirements" {
+        It "Should handle missing git gracefully" {
+            # This test verifies the module loads even if git isn't available
+            $originalPath = $env:PATH
+            try {
+                $env:PATH = ""
+                { Get-Command -Module PatchManager } | Should -Not -Throw
+            }
+            finally {
+                $env:PATH = $originalPath
+            }
         }
     }
 }
 
+Describe "PatchManager Integration" {
+    Context "Cross-Platform Compatibility" {
+        It "Should handle different path separators" {
+            $testPaths = @(
+                "/unix/style/path",
+                "C:\\Windows\\Style\\Path", 
+                "relative/path"
+            )
+
+            foreach ($path in $testPaths) {
+                { Test-Path $path -ErrorAction SilentlyContinue } | Should -Not -Throw
+            }
+        }
+
+        It "Should work with current directory" {
+            { Invoke-PatchWorkflow -PatchDescription "Test in current dir" -PatchOperation { Get-Location } -CreateIssue:$false } | Should -Not -Throw
+        }
+    }
+}

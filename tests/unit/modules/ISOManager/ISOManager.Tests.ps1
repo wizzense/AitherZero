@@ -1324,7 +1324,9 @@ Describe "Regression Tests" {
             # Test that both helper functions exist and work
             { Get-ISODownload -ISOName "Windows11" -ISOType "Windows" -WhatIf } | Should -Not -Throw
             { Get-ISODownload -ISOName "Ubuntu" -ISOType "Linux" -WhatIf } | Should -Not -Throw
-        }        It "Should not regress on XML validation" {
+        }
+        
+        It "Should not regress on XML validation" {
             # Test that generated XML is always valid
             $validationConfigs = @(
                 @{ ComputerName = "XML-VAL-1"; AdminPassword = "XmlVal123!"; EnableRDP = $true },
