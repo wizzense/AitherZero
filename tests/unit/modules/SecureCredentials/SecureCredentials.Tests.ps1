@@ -63,7 +63,7 @@ Describe "SecureCredentials Module" {
             { New-SecureCredential -CredentialName "Test-ServiceAccount" -CredentialType ServiceAccount -Username "service@example.com" -WhatIf } | Should -Not -Throw
 
             # Test APIKey type with required API key
-            { New-SecureCredential -CredentialName "Test-APIKey" -CredentialType APIKey -APIKey "test-api-key-123" -WhatIf } | Should -Not -Throw
+            { New-SecureCredential -CredentialName "Test-APIKey" -CredentialType APIKey -APIKey "$(Get-TestCredential -CredentialType "ApiKey")" -WhatIf } | Should -Not -Throw
 
             # Test Certificate type with required certificate path
             { New-SecureCredential -CredentialName "Test-Certificate" -CredentialType Certificate -CertificatePath "C:\test\cert.pfx" -WhatIf } | Should -Not -Throw

@@ -1,4 +1,5 @@
 BeforeAll {
+    . "$PSScriptRoot/../../../helpers/Test-Credentials.ps1"
     # Import the testing framework
     Import-Module './aither-core/modules/TestingFramework' -Force
 
@@ -107,7 +108,7 @@ Describe "ISOCustomizer Module" {
         BeforeEach {
             $testConfig = @{
                 ComputerName = "TEST-COMPUTER"
-                AdminPassword = "TestPassword123"
+                AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
                 TimeZone = "UTC"
                 EnableRDP = $true
                 ProductKey = "TEST-KEY-123"
@@ -163,7 +164,7 @@ Describe "ISOCustomizer Module" {
             # Check that the content contains expected elements
             $xmlContent = Get-Content $testOutputPath -Raw
             $xmlContent | Should -Match "TEST-COMPUTER"
-            $xmlContent | Should -Match "TestPassword123"
+            $xmlContent | Should -Match "$(Get-TestCredential -CredentialType "AdminPassword")"
             $xmlContent | Should -Match "Server 2025"
         }
 
@@ -288,7 +289,7 @@ Describe "Configuration-Driven Workflow" {
         It "Should support hashtable configuration input" {
             $testConfig = @{
                 ComputerName = "CONFIG-TEST"
-                AdminPassword = "ConfigTest123"
+                AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
                 ProductKey = "CONFIG-KEY"
                 EnableRDP = $true
                 FirstLogonCommands = @()
@@ -300,7 +301,7 @@ Describe "Configuration-Driven Workflow" {
         It "Should handle complex configuration structures" {
             $complexConfig = @{
                 ComputerName = "COMPLEX-TEST"
-                AdminPassword = "Complex123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "ComplexPassword")"
                 ProductKey = "COMPLEX-KEY"
                 EnableRDP = $true
                 AutoLogon = $true
@@ -592,7 +593,7 @@ Describe "ISOCustomizer Module - Extended Tests" {
         It "Should handle minimal configuration" {
             $minimalConfig = @{
                 ComputerName = "MIN-TEST"
-                AdminPassword = "MinTest123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
             }
 
             { New-AutounattendFile -Configuration $minimalConfig -OutputPath $testOutputPath -WhatIf } | Should -Not -Throw
@@ -601,11 +602,11 @@ Describe "ISOCustomizer Module - Extended Tests" {
         It "Should handle domain join configuration" {
             $domainConfig = @{
                 ComputerName = "DOMAIN-TEST"
-                AdminPassword = "DomainTest123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "DomainPassword")"
                 JoinDomain = $true
                 DomainName = "test.local"
                 DomainAdmin = "test\administrator"
-                DomainPassword = "DomainPass123!"
+                DomainPassword = "$(Get-TestCredential -CredentialType "DomainPassword")"
             }
 
             { New-AutounattendFile -Configuration $domainConfig -OutputPath $testOutputPath -WhatIf } | Should -Not -Throw
@@ -614,7 +615,7 @@ Describe "ISOCustomizer Module - Extended Tests" {
         It "Should handle network configuration" {
             $networkConfig = @{
                 ComputerName = "NET-TEST"
-                AdminPassword = "NetTest123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "ServicePassword")"
                 EnableDHCP = $false
                 StaticIP = "192.168.1.100"
                 SubnetMask = "255.255.255.0"
@@ -654,7 +655,7 @@ Describe "ISOCustomizer Module - Extended Tests" {
         It "Should handle security configuration" {
             $securityConfig = @{
                 ComputerName = "SEC-TEST"
-                AdminPassword = "SecTest123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
                 DisableFirewall = $true
                 DisableUAC = $true
                 DisableWindowsDefender = $true
@@ -678,7 +679,7 @@ Describe "ISOCustomizer Module - Extended Tests" {
         It "Should support headless mode" {
             $testConfig = @{
                 ComputerName = "HEADLESS-TEST"
-                AdminPassword = "HeadlessTest123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
             }
 
             { New-AutounattendFile -Configuration $testConfig -OutputPath $testOutputPath -HeadlessMode -WhatIf } | Should -Not -Throw
@@ -702,7 +703,7 @@ Describe "ISOCustomizer Module - Extended Tests" {
         It "Should validate generated XML structure" {
             $testConfig = @{
                 ComputerName = "XML-TEST"
-                AdminPassword = "XmlTest123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
                 EnableRDP = $true
                 AutoLogon = $true
             }
@@ -808,7 +809,7 @@ Describe "ISOCustomizer Module - Extended Tests" {
         It "Should support autounattend configuration via hashtable" {
             $autounattendConfig = @{
                 ComputerName = "ISO-TEST"
-                AdminPassword = "IsoTest123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
                 EnableRDP = $true
             }
             { New-CustomISO -SourceISOPath $testSourceISO -OutputISOPath $testOutputISO -AutounattendConfig $autounattendConfig -WhatIf } | Should -Not -Throw
@@ -863,7 +864,7 @@ Describe "ISOCustomizer Module - Extended Tests" {
         It "Should use generic template by default" {
             $testConfig = @{
                 ComputerName = "TEMPLATE-TEST"
-                AdminPassword = "TemplateTest123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
             }
 
             $testOutputPath = Join-Path $env:TEMP "template-test.xml"
@@ -926,7 +927,7 @@ Describe "Integration Tests" {
                 $testRepo = Join-Path $env:TEMP "WorkflowTestRepo"
                 $testConfig = @{
                     ComputerName = "WORKFLOW-TEST"
-                    AdminPassword = "WorkflowTest123!"
+                    AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
                 }
 
                 # Test in WhatIf mode
@@ -1101,9 +1102,9 @@ Describe "Performance and Stress Tests" {
 
         It "Should handle special characters in computer names" {
             $specialConfigs = @(
-                @{ ComputerName = "TEST-123"; AdminPassword = "Test123!" },
-                @{ ComputerName = "TEST_ABC"; AdminPassword = "Test123!" },
-                @{ ComputerName = "TESTÑAME"; AdminPassword = "Test123!" }  # Unicode
+                @{ ComputerName = "TEST-123"; AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")" },
+                @{ ComputerName = "TEST_ABC"; AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")" },
+                @{ ComputerName = "TESTÑAME"; AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")" }  # Unicode
             )
 
             foreach ($config in $specialConfigs) {
@@ -1133,7 +1134,7 @@ Describe "Performance and Stress Tests" {
         It "Should handle empty and whitespace-only values" {
             $edgeConfig = @{
                 ComputerName = "EDGE-TEST"
-                AdminPassword = "EdgeTest123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
                 FullName = "   "  # Whitespace only
                 Organization = ""  # Empty string
                 ProductKey = $null  # Null value
@@ -1215,7 +1216,7 @@ Describe "Security and Validation Tests" {
             $protectedPath = "C:\Windows\System32\test-autounattend.xml"
             $testConfig = @{
                 ComputerName = "PERM-TEST"
-                AdminPassword = "PermTest123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
             }
 
             try {
@@ -1276,7 +1277,7 @@ Describe "Compatibility Tests" {
             # Test using modern PowerShell features
             $modernConfig = @{
                 ComputerName = "MODERN-TEST"
-                AdminPassword = "ModernTest123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
                 FirstLogonCommands = @(
                     @{
                         CommandLine = "pwsh -Command 'Get-Process | Where-Object { `$_.ProcessName -eq `"explorer`" }'"
@@ -1303,7 +1304,7 @@ Describe "Regression Tests" {
 
             $testConfig = @{
                 ComputerName = "REGRESSION-TEST"
-                AdminPassword = "RegressionTest123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
             }
 
             # Should work both in normal and headless mode
@@ -1329,9 +1330,9 @@ Describe "Regression Tests" {
         It "Should not regress on XML validation" {
             # Test that generated XML is always valid
             $validationConfigs = @(
-                @{ ComputerName = "XML-VAL-1"; AdminPassword = "XmlVal123!"; EnableRDP = $true },
-                @{ ComputerName = "XML-VAL-2"; AdminPassword = "XmlVal123!"; AutoLogon = $true },
-                @{ ComputerName = "XML-VAL-3"; AdminPassword = "XmlVal123!"; DisableFirewall = $true }
+                @{ ComputerName = "XML-VAL-1"; AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"; EnableRDP = $true },
+                @{ ComputerName = "XML-VAL-2"; AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"; AutoLogon = $true },
+                @{ ComputerName = "XML-VAL-3"; AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"; DisableFirewall = $true }
             )
 
             foreach ($config in $validationConfigs) {
@@ -1534,11 +1535,11 @@ Describe "ISOCustomizer Module - Advanced Autounattend Tests" {
         It "Should handle complete domain join configuration" {
             $domainConfig = @{
                 ComputerName = "DOMAIN-FULL-TEST"
-                AdminPassword = "DomainTest123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "DomainPassword")"
                 JoinDomain = $true
                 DomainName = "contoso.local"
                 DomainAdmin = "contoso\administrator"
-                DomainPassword = "DomainPass123!"
+                DomainPassword = "$(Get-TestCredential -CredentialType "DomainPassword")"
                 OrganizationalUnit = "OU=Servers,DC=contoso,DC=local"
                 CreateDomainAccount = $true
                 DomainAccountPassword = "DomainAcct123!"
@@ -1753,7 +1754,7 @@ Describe "Cross-Module Integration - Complete Workflow Tests" {
             # Step 2: Generate autounattend
             $workflowConfig = @{
                 ComputerName = "WORKFLOW-TEST"
-                AdminPassword = "WorkflowTest123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
             }
             $autounattendPath = Join-Path $env:TEMP "workflow-autounattend.xml"
 
@@ -1813,7 +1814,7 @@ Describe "ISO Module Performance and Stress Tests" {
         It "Should handle large autounattend configurations efficiently" {
             $largeConfig = @{
                 ComputerName = "PERF-TEST"
-                AdminPassword = "PerfTest123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
                 FirstLogonCommands = @()
             }
 
@@ -1854,7 +1855,7 @@ Describe "ISO Module Performance and Stress Tests" {
             for ($i = 1; $i -le 10; $i++) {
                 $testConfig = @{
                     ComputerName = "MEMORY-TEST-$i"
-                    AdminPassword = "MemoryTest123!"
+                    AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
                 }
                 $testPath = Join-Path $env:TEMP "memory-test-$i.xml"
 
@@ -1883,7 +1884,7 @@ Describe "Error Handling and Recovery Tests" {
         It "Should provide meaningful error messages for invalid configurations" {
             $invalidConfig = @{
                 ComputerName = ""  # Invalid: empty computer name
-                AdminPassword = "Test123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
             }
             $testPath = Join-Path $env:TEMP "invalid-test.xml"
 
@@ -1916,7 +1917,7 @@ Describe "Error Handling and Recovery Tests" {
             $restrictedPath = "C:\Windows\System32\test-permission.xml"
             $testConfig = @{
                 ComputerName = "PERMISSION-TEST"
-                AdminPassword = "PermTest123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
             }
 
             # This should fail with access denied (unless running as admin on C:\Windows\System32)
@@ -1930,7 +1931,7 @@ Describe "Security and Validation Tests" {
         It "Should sanitize special characters in computer names" {
             $specialCharConfig = @{
                 ComputerName = "Test<>Computer|Name*"
-                AdminPassword = "SpecialTest123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
             }
             $testPath = Join-Path $env:TEMP "special-char-test.xml"
 
@@ -1965,7 +1966,7 @@ Describe "Security and Validation Tests" {
         It "Should prevent XML injection attacks" {
             $maliciousConfig = @{
                 ComputerName = "TEST"
-                AdminPassword = "Test123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
                 CustomXMLPayload = "<?xml version='1.0'?><malicious>payload</malicious>"
             }
 

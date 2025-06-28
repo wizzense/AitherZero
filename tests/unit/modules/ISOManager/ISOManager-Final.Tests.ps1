@@ -1,4 +1,5 @@
 BeforeAll {
+    . "$PSScriptRoot/../../../helpers/Test-Credentials.ps1"
     # Import the testing framework
     Import-Module '/workspaces/AitherZero/aither-core/modules/TestingFramework' -Force
 
@@ -234,7 +235,7 @@ Describe "ISO Customizer Module - Comprehensive Test Suite" {
         It "Should generate basic autounattend file with minimal configuration" {
             $testConfig = @{
                 ComputerName = "TEST-BASIC"
-                AdminPassword = "P@ssw0rd123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "ComplexPassword")"
             }
 
             $result = New-AutounattendFile -Configuration $testConfig -OutputPath $testOutputPath -Force
@@ -253,7 +254,7 @@ Describe "ISO Customizer Module - Comprehensive Test Suite" {
                 foreach ($edition in $editions) {
                     $config = @{
                         ComputerName = "TEST-$osType-$edition"
-                        AdminPassword = "P@ssw0rd123!"
+                        AdminPassword = "$(Get-TestCredential -CredentialType "ComplexPassword")"
                     }
 
                     $testPath = Join-Path $env:TEMP "test-$osType-$edition-$(Get-Random).xml"
@@ -271,7 +272,7 @@ Describe "ISO Customizer Module - Comprehensive Test Suite" {
         It "Should support RDP configuration" {
             $configWithRDP = @{
                 ComputerName = "RDP-TEST"
-                AdminPassword = "P@ssw0rd123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "ComplexPassword")"
                 EnableRDP = $true
             }
 
@@ -286,7 +287,7 @@ Describe "ISO Customizer Module - Comprehensive Test Suite" {
         It "Should support first logon commands" {
             $configWithCommands = @{
                 ComputerName = "COMMANDS-TEST"
-                AdminPassword = "P@ssw0rd123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "ComplexPassword")"
                 FirstLogonCommands = @(
                     @{ CommandLine = "powershell.exe -Command Write-Host 'First command'"; Description = "Test command 1" }
                     @{ CommandLine = "powershell.exe -Command Write-Host 'Second command'"; Description = "Test command 2" }
@@ -305,7 +306,7 @@ Describe "ISO Customizer Module - Comprehensive Test Suite" {
         It "Should handle HeadlessMode parameter" {
             $config = @{
                 ComputerName = "HEADLESS-TEST"
-                AdminPassword = "P@ssw0rd123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "ComplexPassword")"
             }
 
             $result = New-AutounattendFile -Configuration $config -OutputPath $testOutputPath -HeadlessMode -Force
@@ -399,7 +400,7 @@ Describe "Advanced Integration and Performance Tests" {
                 # Generate autounattend file
                 $config = @{
                     ComputerName = "INTEGRATION-TEST"
-                    AdminPassword = "P@ssw0rd123!"
+                    AdminPassword = "$(Get-TestCredential -CredentialType "ComplexPassword")"
                 }
                 $autounattendResult = New-AutounattendFile -Configuration $config -OutputPath $autounattendPath -Force
                 $autounattendResult.Success | Should -Be $true
@@ -437,7 +438,7 @@ Describe "Advanced Integration and Performance Tests" {
         It "Should handle long-running operations efficiently" {
             $complexConfig = @{
                 ComputerName = "PERFORMANCE-TEST"
-                AdminPassword = "P@ssw0rd123!"
+                AdminPassword = "$(Get-TestCredential -CredentialType "ComplexPassword")"
                 FirstLogonCommands = 1..10 | ForEach-Object {
                     @{
                         CommandLine = "echo 'Performance Command $_'"
@@ -468,7 +469,7 @@ Describe "Advanced Integration and Performance Tests" {
 
             # Perform operations that might create temp files
             $testPath = Join-Path $env:TEMP "cleanup-test-$(Get-Random).xml"
-            $config = @{ ComputerName = "CLEANUP-TEST"; AdminPassword = "P@ssw0rd123!" }
+            $config = @{ ComputerName = "CLEANUP-TEST"; AdminPassword = "$(Get-TestCredential -CredentialType "ComplexPassword")" }
 
             try {
                 $result = New-AutounattendFile -Configuration $config -OutputPath $testPath -Force
