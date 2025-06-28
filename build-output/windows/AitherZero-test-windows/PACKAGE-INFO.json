@@ -1,0 +1,18 @@
+{
+  "Description": "Lean AitherZero application package with essential components only",
+  "Version": "test",
+  "BuildDate": "2025-06-28 01:57:07 UTC",
+  "Platform": "windows",
+  "Repository": "https://github.com/wizzense/AitherZero",
+  "Components": [
+    "Core runner",
+    "Essential modules",
+    "Configuration templates",
+    "OpenTofu infrastructure",
+    "Application launcher"
+  ],
+  "GitCommit": null,
+  "Usage": "Run Start-AitherZero.ps1 to begin or aither-core.ps1 for direct access",
+  "PackageType": "Application",
+  "GitRef": null
+}

@@ -230,20 +230,11 @@ if (-not $repoRoot -or -not (Test-Path $repoRoot)) {
 $env:PROJECT_ROOT = $repoRoot
 
 # Determine modules path based on structure
-# In release packages, aither-core.ps1 is at the root alongside modules/
-# In development, aither-core.ps1 is in aither-core/ subdirectory
-$scriptInRoot = (Split-Path $PSScriptRoot -Leaf) -eq (Split-Path $repoRoot -Leaf)
-$releaseModulesPath = Join-Path $PSScriptRoot "modules"
+$releaseModulesPath = Join-Path $repoRoot "modules"
 $devModulesPath = Join-Path $repoRoot (Join-Path "aither-core" "modules")
 
-Write-Verbose "Script location: $PSScriptRoot"
-Write-Verbose "Repo root: $repoRoot"
-Write-Verbose "Script in root: $scriptInRoot"
-Write-Verbose "Checking release modules at: $releaseModulesPath"
-Write-Verbose "Checking dev modules at: $devModulesPath"
-
 if (Test-Path $releaseModulesPath) {
-    # Release package structure: modules are in same directory as script
+    # Release package structure: modules are directly in the root
     $env:PWSH_MODULES_PATH = $releaseModulesPath
     Write-Verbose "Using release package modules path: $env:PWSH_MODULES_PATH"
 } elseif (Test-Path $devModulesPath) {
@@ -417,8 +408,6 @@ try {
     Write-CustomLog "Verbosity level: $Verbosity" -Level DEBUG
 
     # Get available scripts - try multiple locations
-    # In release packages, scripts/ is alongside aither-core.ps1
-    # In development, scripts/ is in aither-core/scripts
     $scriptsPaths = @(
         (Join-Path $PSScriptRoot 'scripts'),                    # Release: same as script
         (Join-Path $repoRoot "aither-core" "scripts"),         # Dev: aither-core/scripts
