@@ -657,14 +657,14 @@ jobs:
           } else {
             # Fallback parallel testing
             Write-Host "Running parallel module validation..." -ForegroundColor Yellow
-            
+
             # Ensure environment variables are set for module loading
             if (-not $env:PROJECT_ROOT) {
               $env:PROJECT_ROOT = $PWD.Path
               $env:PWSH_MODULES_PATH = Join-Path $env:PROJECT_ROOT 'aither-core/modules'
               Write-Host "Environment setup for parallel testing: PROJECT_ROOT=$env:PROJECT_ROOT" -ForegroundColor Yellow
             }
-            
+
             $modules = Get-ChildItem -Path './aither-core/modules' -Directory -ErrorAction SilentlyContinue
 
             $results = $modules | ForEach-Object -Parallel {
@@ -672,7 +672,7 @@ jobs:
               # Set environment variables in each parallel job
               $env:PROJECT_ROOT = $using:env:PROJECT_ROOT
               $env:PWSH_MODULES_PATH = $using:env:PWSH_MODULES_PATH
-              
+
               try {
                 Import-Module $module.FullName -Force -ErrorAction Stop
                 return @{ Module = $module.Name; Success = $true }
@@ -715,7 +715,9 @@ jobs:
           )
 
           $violations = @()
-          $scriptFiles = Get-ChildItem -Path . -Filter '*.ps1' -Recurse -ErrorAction SilentlyContinue          foreach ($file in $scriptFiles) {
+          $scriptFiles = Get-ChildItem -Path . -Filter '*.ps1' -Recurse -ErrorAction SilentlyContinue
+
+          foreach ($file in $scriptFiles) {
             # Skip test files, credential helpers, and known false positives
             if ($file.FullName -match '(\.tests?\.|CredentialHelpers|test-|tests/|mock|example|SecureCredentials/)' -or
                 $file.Name -match '\.Tests\.ps1$') {
@@ -734,7 +736,7 @@ jobs:
                       Write-Host "Skipping known safe credential operation: $($match.Substring(0, [Math]::Min(30, $match.Length)))..." -ForegroundColor Yellow
                       continue
                     }
-                    
+
                     if ($match.Length -gt 50) { $match = $match.Substring(0, 50) + "..." }
                     $violations += "Potential security issue in $($file.Name): $match"
                   }
