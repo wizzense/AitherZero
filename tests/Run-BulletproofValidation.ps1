@@ -99,9 +99,23 @@ Write-Host "Using project root: $projectRoot" -ForegroundColor Cyan
 
 # Import required modules
 try {
-    Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force -ErrorAction Stop
-    Import-Module "$env:PWSH_MODULES_PATH/ParallelExecution" -Force -ErrorAction Stop
-    Write-Host '✅ Required modules loaded successfully' -ForegroundColor Green
+    # Ensure environment variables are set
+    if (-not $env:PROJECT_ROOT) {
+        $env:PROJECT_ROOT = $projectRoot
+    }
+    if (-not $env:PWSH_MODULES_PATH) {
+        $env:PWSH_MODULES_PATH = Join-Path $projectRoot 'aither-core/modules'
+    }
+    
+    Write-Host "Module path: $env:PWSH_MODULES_PATH" -ForegroundColor Yellow
+    
+    if (Test-Path $env:PWSH_MODULES_PATH) {
+        Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force -ErrorAction Stop
+        Import-Module "$env:PWSH_MODULES_PATH/ParallelExecution" -Force -ErrorAction Stop
+        Write-Host '✅ Required modules loaded successfully' -ForegroundColor Green
+    } else {
+        throw "Module path does not exist: $env:PWSH_MODULES_PATH"
+    }
 } catch {
     Write-Host "⚠️ Could not load modules, proceeding with basic functionality: $($_.Exception.Message)" -ForegroundColor Yellow
 }

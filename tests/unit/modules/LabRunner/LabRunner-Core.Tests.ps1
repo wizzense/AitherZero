@@ -9,6 +9,14 @@ BeforeAll {
     . "$PSScriptRoot/../../../../aither-core/shared/Find-ProjectRoot.ps1"
     $projectRoot = Find-ProjectRoot
 
+    # Ensure environment variables are set for testing
+    if (-not $env:PROJECT_ROOT) {
+        $env:PROJECT_ROOT = $projectRoot
+    }
+    if (-not $env:PWSH_MODULES_PATH) {
+        $env:PWSH_MODULES_PATH = Join-Path $projectRoot 'aither-core/modules'
+    }
+
     # Import the LabRunner module
     $labRunnerPath = Join-Path $env:PWSH_MODULES_PATH "LabRunner"
 
