@@ -95,7 +95,7 @@ function Install-CodexCLIDependencies {
         $projectRoot = Find-ProjectRoot
         
         # Import logging module
-        Import-Module (Join-Path $projectRoot (Join-Path "aither-core" (Join-Path "modules" "Logging"))) -Force
+        Import-Module (Join-Path $env:PWSH_MODULES_PATH "Logging") -Force
         
         Write-CustomLog -Level 'INFO' -Message "Starting Codex CLI dependencies installation"
         
@@ -542,3 +542,4 @@ function Test-CodexCLIInstallation {
 
 # Export the function
 Export-ModuleMember -Function Install-CodexCLIDependencies
+

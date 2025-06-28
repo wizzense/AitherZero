@@ -11,10 +11,10 @@
 BeforeAll {
     . "$PSScriptRoot/../../../helpers/Test-Credentials.ps1"
     # Import required modules
-    Import-Module './aither-core/modules/Logging/Logging.psm1' -Force
-    Import-Module './aither-core/modules/TestingFramework/TestingFramework.psm1' -Force
-    Import-Module './aither-core/modules/SecureCredentials/SecureCredentials.psm1' -Force
-    Import-Module './aither-core/modules/RemoteConnection/RemoteConnection.psm1' -Force
+    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "Logging/Logging.psm1'") -Force
+    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "TestingFramework/TestingFramework.psm1'") -Force
+    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "SecureCredentials/SecureCredentials.psm1'") -Force
+    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "RemoteConnection/RemoteConnection.psm1'") -Force
 }
 
 Describe "SecureCredentials and RemoteConnection Integration" {
@@ -120,7 +120,7 @@ Describe "SecureCredentials and RemoteConnection Integration" {
             for ($i = 1; $i -le 3; $i++) {
                 $job = Start-Job -ScriptBlock {
                     param($Index)
-                    Import-Module './aither-core/modules/SecureCredentials/SecureCredentials.psm1' -Force
+                    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "SecureCredentials/SecureCredentials.psm1'") -Force
                     $testPassword = ConvertTo-SecureString "ConcurrentPass123" -AsPlainText -Force
                     New-SecureCredential -CredentialName "Concurrent-Test-$Index" -CredentialType UserPassword -Username "concurrentuser$Index" -Password $testPassword -WhatIf
                 } -ArgumentList $i
@@ -159,3 +159,4 @@ Describe "SecureCredentials and RemoteConnection Integration" {
         }
     }
 }
+

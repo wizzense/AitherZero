@@ -78,7 +78,7 @@ function Invoke-EnhancedPatchManager {
         }        # Import PatchManager module with forward slashes for cross-platform compatibility
         # (Skip re-importing if already loaded to prevent duplicate initialization)
         if (-not (Get-Module PatchManager)) {
-            Import-Module './aither-core/modules/PatchManager' -Force
+            Import-Module '(Join-Path $env:PWSH_MODULES_PATH "PatchManager'") -Force
         }# Import Invoke-ComprehensiveValidation function directly as a workaround
         if (-not (Get-Command Invoke-ComprehensiveValidation -ErrorAction SilentlyContinue)) {
             try {
@@ -649,3 +649,4 @@ Closes #$IssueNumber
         }
     }
 }
+

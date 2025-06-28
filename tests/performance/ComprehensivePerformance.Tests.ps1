@@ -163,7 +163,7 @@ Describe "Module Loading Performance" -Tags @('Performance', 'ModuleLoading') {
 
             try {
                 Remove-Module Logging -Force -ErrorAction SilentlyContinue
-                Import-Module "$script:ProjectRoot/aither-core/modules/Logging" -Force -ErrorAction Stop
+                Import-Module "$script:ProjectRoo(Join-Path $env:PWSH_MODULES_PATH "Logging")" -Force -ErrorAction Stop
                 $stopwatch.Stop()
                 $stopwatch.ElapsedMilliseconds | Should -BeLessThan $script:PerformanceThresholds.ModuleLoadTime
             }
@@ -179,7 +179,7 @@ Describe "Module Loading Performance" -Tags @('Performance', 'ModuleLoading') {
 
             try {
                 Remove-Module ParallelExecution -Force -ErrorAction SilentlyContinue
-                Import-Module "$script:ProjectRoot/aither-core/modules/ParallelExecution" -Force -ErrorAction Stop
+                Import-Module "$script:ProjectRoo(Join-Path $env:PWSH_MODULES_PATH "ParallelExecution")" -Force -ErrorAction Stop
                 $stopwatch.Stop()
                 $stopwatch.ElapsedMilliseconds | Should -BeLessThan $script:PerformanceThresholds.ModuleLoadTime
             }
@@ -782,3 +782,4 @@ AfterAll {
         Write-Host "Error details written to: $errorLogPath" -ForegroundColor Yellow
     }
 }
+

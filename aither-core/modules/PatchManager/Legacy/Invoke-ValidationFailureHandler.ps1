@@ -60,7 +60,7 @@ function Invoke-ValidationFailureHandler {
 
         # Import required modules
         try {
-            Import-Module "$env:PROJECT_ROOT/aither-core/modules/Logging" -Force -ErrorAction Stop
+            Import-Module "$env:PROJECT_ROO(Join-Path $env:PWSH_MODULES_PATH "Logging")" -Force -ErrorAction Stop
         } catch {
             Write-Warning "Could not import Logging module: $($_.Exception.Message)"
         }
@@ -539,7 +539,7 @@ function Get-CategoryValidationCommands {
             return @"
 # Test module imports
 Get-Module -ListAvailable | Where-Object Name -in @('LabRunner', 'PatchManager', 'DevEnvironment')
-Import-Module "$env:PROJECT_ROOT/aither-core/modules/PatchManager" -Force -Verbose
+Import-Module "$env:PROJECT_ROO(Join-Path $env:PWSH_MODULES_PATH "PatchManager")" -Force -Verbose
 "@
         }
         "SyntaxError" {
@@ -1136,3 +1136,4 @@ This is the master tracking issue. Individual sub-issues will be created for eac
         }
     }
 }
+

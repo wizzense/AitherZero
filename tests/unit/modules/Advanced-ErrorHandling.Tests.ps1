@@ -6,14 +6,14 @@ BeforeAll {
     $projectRoot = Find-ProjectRoot
 
     # Import Logging module first for Write-CustomLog function
-    Import-Module "$projectRoot/aither-core/modules/Logging" -Force -ErrorAction SilentlyContinue
+    Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force -ErrorAction SilentlyContinue
 
     # Import all available modules for comprehensive error handling testing
     $modulesToTest = @('Logging', 'BackupManager', 'PatchManager', 'LabRunner', 'ParallelExecution', 'ScriptManager', 'DevEnvironment', 'TestingFramework', 'UnifiedMaintenance')
 
     $script:ImportedModules = @{}
     foreach ($moduleName in $modulesToTest) {
-        $modulePath = Join-Path $projectRoot "aither-core/modules/$moduleName"
+        $modulePath = Join-Path $env:PWSH_MODULES_PATH "$moduleName"
         try {
             Import-Module $modulePath -Force -ErrorAction Stop
             $script:ImportedModules[$moduleName] = $true
@@ -238,7 +238,7 @@ Export-ModuleMember -Function Test-ModuleB
                     param($projectRoot, $testId)
 
                     # Import logging module in the job
-                    $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
+                    $loggingPath = Join-Path $env:PWSH_MODULES_PATH "Logging"
                     Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
 
                     # Use logging functions
@@ -499,3 +499,4 @@ Export-ModuleMember -Function Test-ModuleB
     }
     }  # End of Context "Integration Testing - Complex Scenarios"
 }  # End of Describe 'Advanced Error Handling Tests'
+

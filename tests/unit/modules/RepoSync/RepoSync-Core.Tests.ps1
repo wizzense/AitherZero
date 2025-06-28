@@ -4,7 +4,7 @@ BeforeAll {
     $projectRoot = Find-ProjectRoot
 
     # Import Logging module first
-    $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
+    $loggingPath = Join-Path $env:PWSH_MODULES_PATH "Logging"
     try {
         Import-Module $loggingPath -Force -Global -ErrorAction Stop
         Write-Host "Logging module imported successfully" -ForegroundColor Green
@@ -15,7 +15,7 @@ BeforeAll {
     }
 
     # Import RepoSync module
-    $repoSyncPath = Join-Path $projectRoot "aither-core/modules/RepoSync"
+    $repoSyncPath = Join-Path $env:PWSH_MODULES_PATH "RepoSync"
     try {
         Import-Module $repoSyncPath -Force -ErrorAction Stop
         Write-Host "RepoSync module imported successfully" -ForegroundColor Green
@@ -177,3 +177,4 @@ Describe "RepoSync Error Handling" {
         }
     }
 }
+

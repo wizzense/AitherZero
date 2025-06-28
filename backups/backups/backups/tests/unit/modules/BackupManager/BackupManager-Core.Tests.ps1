@@ -8,7 +8,7 @@ BeforeAll {
     # Import shared utilities for proper path detection
     . "$PSScriptRoot/../../../../aither-core/shared/Find-ProjectRoot.ps1"
     $projectRoot = Find-ProjectRoot
-    $backupManagerPath = Join-Path $projectRoot "aither-core/modules/BackupManager"
+    $backupManagerPath = Join-Path $env:PWSH_MODULES_PATH "BackupManager"
 
     try {
         Import-Module $backupManagerPath -Force -ErrorAction Stop
@@ -384,7 +384,7 @@ Describe "BackupManager Module - Integration Tests" {
                     param($SourcePath, $BackupPath, $ModulePath)
                     Import-Module $ModulePath -Force
                     Invoke-BackupConsolidation -SourcePath $SourcePath -BackupPath "$BackupPath\Job$_"
-                } -ArgumentList $script:testSourceDir, $concurrentTestDir, (Join-Path $projectRoot "aither-core/modules/BackupManager")
+                } -ArgumentList $script:testSourceDir, $concurrentTestDir, (Join-Path $env:PWSH_MODULES_PATH "BackupManager")
             }
 
             $results = $jobs | Wait-Job | Receive-Job
@@ -452,3 +452,4 @@ Describe "BackupManager Module - Performance and Reliability" {
         }
     }
 }
+

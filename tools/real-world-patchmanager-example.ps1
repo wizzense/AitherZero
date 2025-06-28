@@ -27,10 +27,10 @@ if (-not $env:PROJECT_ROOT) {
 }
 
 try {
-    Import-Module "$env:PROJECT_ROOT/aither-core/modules/PatchManager" -Force -ErrorAction Stop
+    Import-Module "$env:PROJECT_ROO(Join-Path $env:PWSH_MODULES_PATH "PatchManager")" -Force -ErrorAction Stop
 } catch {
     Write-CustomLog -Level 'WARN' -Message "Could not import PatchManager module. Please ensure modules are available."
-    Write-CustomLog -Level 'INFO' -Message "Expected path: $env:PROJECT_ROOT/aither-core/modules/PatchManager"
+    Write-CustomLog -Level 'INFO' -Message "Expected path: $env:PROJECT_ROO(Join-Path $env:PWSH_MODULES_PATH "PatchManager")"
     exit 1
 }
 
@@ -180,3 +180,4 @@ Write-CustomLog -Level 'INFO' -Message "  • Processing multiple files in a sin
 Write-CustomLog -Level 'INFO' -Message "  • Providing meaningful patch descriptions"
 Write-CustomLog -Level 'INFO' -Message "  • Using PatchManager for maintenance tasks"
 Write-CustomLog -Level 'INFO' -Message "  • Safe dry-run testing before applying changes"
+

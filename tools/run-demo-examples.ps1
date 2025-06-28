@@ -4,7 +4,7 @@
 try {
     . "$PSScriptRoot/../aither-core/shared/Find-ProjectRoot.ps1"
     $projectRoot = Find-ProjectRoot
-    Import-Module "$projectRoot/aither-core/modules/Logging" -Force -ErrorAction SilentlyContinue
+    Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force -ErrorAction SilentlyContinue
 } catch {
     # Mock Write-CustomLog if Logging module is not available
     function Write-CustomLog {
@@ -30,3 +30,4 @@ Write-CustomLog -Level 'INFO' -Message "Running Complete Demo Suite..."
 .\demo-patchmanager.ps1 -DemoMode All -DryRun
 
 Write-CustomLog -Level 'SUCCESS' -Message "Demo examples completed!"
+

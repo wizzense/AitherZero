@@ -15,7 +15,7 @@ BeforeAll {
     }
 
     # Import the ParallelExecution module
-    $parallelExecutionPath = Join-Path $projectRoot "aither-core/modules/ParallelExecution"
+    $parallelExecutionPath = Join-Path $env:PWSH_MODULES_PATH "ParallelExecution"
 
     try {
         Import-Module $parallelExecutionPath -Force -ErrorAction Stop
@@ -323,3 +323,4 @@ Describe "ParallelExecution Module - Error Handling" {
         }
     }
 }
+

@@ -92,7 +92,7 @@ function Get-RemoteConnection {
                             # Load SecureCredentials module if needed for credential testing
                             if (-not (Get-Command -Name 'Test-SecureCredential' -ErrorAction SilentlyContinue)) {
                                 try {
-                                    Import-Module './aither-core/modules/SecureCredentials' -Force
+                                    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "SecureCredentials'") -Force
                                 } catch {
                                     Write-CustomLog -Level 'DEBUG' -Message "Could not load SecureCredentials module for credential validation"
                                 }
@@ -128,3 +128,4 @@ function Get-RemoteConnection {
         }
     }
 }
+

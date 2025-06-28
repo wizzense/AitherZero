@@ -83,7 +83,7 @@ $bulletproofDir = Join-Path $resultsDir "bulletproof"
 # Import required modules
 try {
     Import-Module Pester -Force -MinimumVersion 5.0 -ErrorAction Stop
-    Import-Module "$projectRoot/aither-core/modules/Logging" -Force -ErrorAction SilentlyContinue
+    Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force -ErrorAction SilentlyContinue
 } catch {
     Write-Error "Failed to import required modules: $_"
     exit 1
@@ -483,3 +483,4 @@ if ($CI -or $OutputPath) {
 }
 
 exit $exitCode
+

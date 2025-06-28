@@ -113,7 +113,7 @@ if ($IncludeCoverage -and $successCount -gt 0) {
         
         # Configure code coverage
         $config.CodeCoverage.Enabled = $true
-        $config.CodeCoverage.Path = @("$projectRoot/aither-core/modules/*/*.ps1")
+        $config.CodeCoverage.Path = @("$env:PWSH_MODULES_PATH/*/*.ps1")
         $config.CodeCoverage.ExcludeTests = $true
         $config.CodeCoverage.UseBreakpoints = $false
         
@@ -156,3 +156,4 @@ if ($coveragePercent) {
 }
 
 return $summary
+

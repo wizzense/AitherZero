@@ -7,8 +7,8 @@ param(
 )
 
 $projectRoot = if ($env:PROJECT_ROOT) { $env:PROJECT_ROOT } else { "/workspaces/AitherZero" }
-Import-Module (Join-Path $projectRoot (Join-Path "aither-core" (Join-Path "modules" "LabRunner"))) -Force
-Import-Module (Join-Path $projectRoot (Join-Path "aither-core" (Join-Path "modules" "Logging"))) -Force
+Import-Module (Join-Path $env:PWSH_MODULES_PATH "LabRunner") -Force
+Import-Module (Join-Path $env:PWSH_MODULES_PATH "Logging") -Force
 
 Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
 
@@ -78,3 +78,4 @@ Invoke-LabStep -Config $Config -Body {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
+

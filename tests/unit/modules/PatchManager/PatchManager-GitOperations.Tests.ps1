@@ -1,7 +1,7 @@
 BeforeAll {
     # Import Logging module first
     $projectRoot = "/workspaces/AitherZero"
-    $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
+    $loggingPath = Join-Path $env:PWSH_MODULES_PATH "Logging"
     
     try {
         Import-Module $loggingPath -Force -Global -ErrorAction Stop
@@ -14,7 +14,7 @@ BeforeAll {
 
     # Import PatchManager module
     $projectRoot = "/workspaces/AitherZero"
-    $patchManagerPath = Join-Path $projectRoot "aither-core/modules/PatchManager"
+    $patchManagerPath = Join-Path $env:PWSH_MODULES_PATH "PatchManager"
     
     try {
         Import-Module $patchManagerPath -Force -ErrorAction Stop
@@ -415,3 +415,4 @@ Describe "PatchManager Error Handling in Git Operations" {
         }
     }
 }
+

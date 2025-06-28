@@ -99,8 +99,8 @@ Write-Host "Using project root: $projectRoot" -ForegroundColor Cyan
 
 # Import required modules
 try {
-    Import-Module "$projectRoot/aither-core/modules/Logging" -Force -ErrorAction Stop
-    Import-Module "$projectRoot/aither-core/modules/ParallelExecution" -Force -ErrorAction Stop
+    Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force -ErrorAction Stop
+    Import-Module "$env:PWSH_MODULES_PATH/ParallelExecution" -Force -ErrorAction Stop
     Write-Host '✅ Required modules loaded successfully' -ForegroundColor Green
 } catch {
     Write-Host "⚠️ Could not load modules, proceeding with basic functionality: $($_.Exception.Message)" -ForegroundColor Yellow
@@ -301,3 +301,4 @@ try {
     Write-Host "Stack trace: $($_.ScriptStackTrace)" -ForegroundColor DarkRed
     exit 1
 }
+

@@ -38,7 +38,7 @@ $projectRoot = Find-ProjectRoot
 
 # Import PatchManager
 try {
-    Import-Module "$projectRoot/aither-core/modules/PatchManager" -Force
+    Import-Module "$env:PWSH_MODULES_PATH/PatchManager" -Force
     Write-Host "✅ PatchManager loaded" -ForegroundColor Green
 } catch {
     Write-Host "❌ Failed to load PatchManager: $($_.Exception.Message)" -ForegroundColor Red
@@ -193,3 +193,4 @@ return @{
     DryRun = (-not $Force)
     AutoMergeAvailable = ($null -ne (Get-Command Invoke-PatchWorkflow -ErrorAction SilentlyContinue))
 }
+

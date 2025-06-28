@@ -32,7 +32,7 @@ param(
 # Import shared utilities and logging
 . "$PSScriptRoot/../aither-core/shared/Find-ProjectRoot.ps1"
 $projectRoot = Find-ProjectRoot
-Import-Module "$projectRoot/aither-core/modules/Logging" -Force
+Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force
 
 # Import required modules
 Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force -ErrorAction SilentlyContinue
@@ -188,3 +188,4 @@ if ($PSCmdlet.ShouldProcess('Documentation', 'Show help')) {
     Write-CustomLog -Level 'INFO' -Message "  2. Update ShouldProcess calls in scripts to use `$params.IsWhatIfMode"
     Write-CustomLog -Level 'INFO' -Message '  3. Read the documentation at docs/StandardizedParameters.md'
 }
+

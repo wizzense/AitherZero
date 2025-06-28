@@ -37,7 +37,7 @@ BeforeAll {
     } else { 
         '/workspaces/AitherZero'
     }
-    $patchManagerPath = Join-Path $projectRoot "aither-core/modules/PatchManager"
+    $patchManagerPath = Join-Path $env:PWSH_MODULES_PATH "PatchManager"
     
     try {
         Import-Module $patchManagerPath -Force -ErrorAction Stop
@@ -330,3 +330,4 @@ Describe "PatchManager v2.1 - Performance and Reliability" -Tags @('Performance'
         }
     }
 }
+

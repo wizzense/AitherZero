@@ -37,7 +37,7 @@ BeforeAll {
     }
     
     # Load Logging module first (required dependency)
-    $loggingModulePath = Join-Path $projectRoot "aither-core/modules/Logging"
+    $loggingModulePath = Join-Path $env:PWSH_MODULES_PATH "Logging"
     try {
         Import-Module $loggingModulePath -Force -ErrorAction Stop
         Write-Host "✅ Logging module imported successfully" -ForegroundColor Green
@@ -47,7 +47,7 @@ BeforeAll {
     }
     
     # Import the DevEnvironment module
-    $devEnvModulePath = Join-Path $projectRoot "aither-core/modules/DevEnvironment"
+    $devEnvModulePath = Join-Path $env:PWSH_MODULES_PATH "DevEnvironment"
     
     try {
         Import-Module $devEnvModulePath -Force -ErrorAction Stop
@@ -430,3 +430,4 @@ AfterAll {
     Write-Host "✅ Install-CodexCLIDependencies tests completed" -ForegroundColor Green
     Write-Host "📝 Note: Codex CLI is an experimental OpenAI tool - test coverage includes experimental status validation" -ForegroundColor Yellow
 }
+

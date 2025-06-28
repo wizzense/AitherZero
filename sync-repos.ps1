@@ -30,8 +30,8 @@ param(
 
 begin {
     # Import required modules
-    Import-Module './aither-core/modules/RepoSync' -Force
-    Import-Module './aither-core/modules/Logging' -Force
+    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "RepoSync'") -Force
+    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "Logging'") -Force
     
     Write-CustomLog -Level 'INFO' -Message "Repository sync operation: $Action"
 }
@@ -74,3 +74,4 @@ process {
 end {
     Write-CustomLog -Level 'INFO' -Message "Sync operation finished"
 }
+

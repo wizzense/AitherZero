@@ -5,8 +5,8 @@ $script:ProjectRoot = Find-ProjectRoot
 Describe 'CustomLint Tests' -Tags @('Integration', 'Lint') {
     BeforeAll {
         # Import required modules
-        Import-Module "$script:ProjectRoot/aither-core/modules/LabRunner" -Force -ErrorAction SilentlyContinue
-        Import-Module "$script:ProjectRoot/aither-core/modules/Logging" -Force -ErrorAction SilentlyContinue
+        Import-Module "$script:ProjectRoo(Join-Path $env:PWSH_MODULES_PATH "LabRunner")" -Force -ErrorAction SilentlyContinue
+        Import-Module "$script:ProjectRoo(Join-Path $env:PWSH_MODULES_PATH "Logging")" -Force -ErrorAction SilentlyContinue
     }
 
     Context 'Module Loading' {
@@ -27,3 +27,4 @@ Describe 'CustomLint Tests' -Tags @('Integration', 'Lint') {
         Remove-Module LabRunner -Force -ErrorAction SilentlyContinue
     }
 }
+

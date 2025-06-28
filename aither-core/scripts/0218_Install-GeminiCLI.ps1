@@ -55,7 +55,7 @@ begin {
     $projectRoot = Find-ProjectRoot
 
     # Import DevEnvironment module
-    $devEnvModulePath = Join-Path $projectRoot "aither-core/modules/DevEnvironment"
+    $devEnvModulePath = Join-Path $env:PWSH_MODULES_PATH "DevEnvironment"
     Import-Module $devEnvModulePath -Force
 
     Write-Host "🧠 Gemini CLI Dependencies Installation" -ForegroundColor Cyan
@@ -109,3 +109,4 @@ process {
         throw
     }
 }
+

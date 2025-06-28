@@ -2,7 +2,7 @@ BeforeAll {
     # Import shared utilities for proper path detection
     . "$PSScriptRoot/../../../../aither-core/shared/Find-ProjectRoot.ps1"
     $projectRoot = Find-ProjectRoot
-    $loggingModulePath = Join-Path $projectRoot "aither-core/modules/Logging"
+    $loggingModulePath = Join-Path $env:PWSH_MODULES_PATH "Logging"
 
     try {
         Import-Module $loggingModulePath -Force -ErrorAction Stop
@@ -270,3 +270,4 @@ Describe "Logging Module - Error Handling" {
         }
     }
 }
+

@@ -27,7 +27,7 @@ BeforeAll {
 
     # Import AitherCore module (not CoreApp)
     Import-Module "$script:ProjectRoot/aither-core/AitherCore.psd1" -Force -ErrorAction SilentlyContinue
-    Import-Module "$script:ProjectRoot/aither-core/modules/Logging" -Force -ErrorAction SilentlyContinue
+    Import-Module "$script:ProjectRoo(Join-Path $env:PWSH_MODULES_PATH "Logging")" -Force -ErrorAction SilentlyContinue
 
     $script:CoreRunnerScript = Join-Path $script:ProjectRoot "aither-core/aither-core.ps1"
     $script:ConfigFile = Join-Path $script:ProjectRoot "aither-core/default-config.json"
@@ -456,3 +456,4 @@ AfterAll {
     Write-Host "  • Coverage Areas: Exit Codes, Error Scenarios, Performance Limits, Platform Compatibility" -ForegroundColor Gray
     Write-Host "  • Validation Depth: Comprehensive with bulletproof standards" -ForegroundColor Gray
 }
+

@@ -3,7 +3,7 @@
 BeforeAll {
     # Directly source the function file to test individual functions
     $projectRoot = $env:PROJECT_ROOT
-    $functionPath = Join-Path $projectRoot "aither-core/modules/PatchManager/Public/BranchStrategy.ps1"
+    $functionPath = Join-Path $env:PWSH_MODULES_PATH "PatchManager/Public/BranchStrategy.ps1"
     . $functionPath
 }
 
@@ -11,7 +11,7 @@ Describe "BranchStrategy Module" {
     Context "Syntax Validation" {
         It "Should have valid PowerShell syntax" {
             $projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-            $functionPath = Join-Path $projectRoot "aither-core/modules/PatchManager/Public/BranchStrategy.ps1"
+            $functionPath = Join-Path $env:PWSH_MODULES_PATH "PatchManager/Public/BranchStrategy.ps1"
             
             $errors = $null
             $null = [System.Management.Automation.Language.Parser]::ParseFile($functionPath, [ref]$null, [ref]$errors)
@@ -75,3 +75,4 @@ Describe "BranchStrategy Module" {
         }
     }
 }
+

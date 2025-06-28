@@ -7,7 +7,7 @@ BeforeAll {
     
     # Import the DevEnvironment module
     $projectRoot = $env:PROJECT_ROOT
-    $devEnvironmentPath = Join-Path $projectRoot "aither-core/modules/DevEnvironment"
+    $devEnvironmentPath = Join-Path $env:PWSH_MODULES_PATH "DevEnvironment"
     
     try {
         Import-Module $devEnvironmentPath -Force -ErrorAction Stop
@@ -22,7 +22,7 @@ BeforeAll {
 Describe "DevEnvironment Module Tests" {
     Context "Module Import" {
         It "Should import without errors" {
-            { Import-Module (Join-Path $projectRoot "aither-core/modules/DevEnvironment") -Force } | Should -Not -Throw
+            { Import-Module (Join-Path $env:PWSH_MODULES_PATH "DevEnvironment") -Force } | Should -Not -Throw
         }
     }
     
@@ -33,3 +33,4 @@ Describe "DevEnvironment Module Tests" {
         }
     }
 }
+

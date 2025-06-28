@@ -1,17 +1,17 @@
 BeforeAll {
     . "$PSScriptRoot/../../../helpers/Test-Credentials.ps1"
     # Import the testing framework
-    Import-Module '/workspaces/AitherZero/aither-core/modules/TestingFramework' -Force
+    Import-Module '/workspaces/AitherZer(Join-Path $env:PWSH_MODULES_PATH "TestingFramework'") -Force
 
     # Import the modules to test
-    Import-Module '/workspaces/AitherZero/aither-core/modules/ISOManager' -Force
-    Import-Module '/workspaces/AitherZero/aither-core/modules/ISOCustomizer' -Force
+    Import-Module '/workspaces/AitherZer(Join-Path $env:PWSH_MODULES_PATH "ISOManager'") -Force
+    Import-Module '/workspaces/AitherZer(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer'") -Force
 }
 
 Describe "ISO Manager Module - Final Comprehensive Test Suite" {
     Context "Module Loading and Core Functionality" {
         It "Should load the ISOManager module successfully" {
-            { Import-Module './aither-core/modules/ISOManager' -Force } | Should -Not -Throw
+            { Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOManager'") -Force } | Should -Not -Throw
         }
 
         It "Should export all expected public functions" {
@@ -35,7 +35,7 @@ Describe "ISO Manager Module - Final Comprehensive Test Suite" {
         }
 
         It "Should load the ISOCustomizer module successfully" {
-            { Import-Module './aither-core/modules/ISOCustomizer' -Force } | Should -Not -Throw
+            { Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer'") -Force } | Should -Not -Throw
         }
 
         It "Should export template helper functions from ISOCustomizer" {
@@ -485,3 +485,4 @@ Describe "Advanced Integration and Performance Tests" {
         }
     }
 }
+

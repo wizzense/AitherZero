@@ -40,7 +40,7 @@ BeforeAll {
 
     foreach ($module in $script:Modules) {
         try {
-            Import-Module "$script:ProjectRoot/aither-core/modules/$module" -Force -ErrorAction Stop
+            Import-Module "$script:ProjectRoo(Join-Path $env:PWSH_MODULES_PATH "$module")" -Force -ErrorAction Stop
         } catch {
             Write-Warning "Failed to import $module module: $($_.Exception.Message)"
         }
@@ -343,3 +343,4 @@ AfterAll {
         Remove-Module $module -Force -ErrorAction SilentlyContinue
     }
 }
+

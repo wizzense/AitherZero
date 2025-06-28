@@ -197,7 +197,7 @@ Describe "ISOCustomizer Integration" -Tags @('Integration', 'ISOCustomizer') {
             $jobs = @()
             1..3 | ForEach-Object {
                 $jobs += Start-Job -ScriptBlock {
-                    Import-Module "$using:ProjectRoot/aither-core/modules/ISOCustomizer" -Force
+                    Import-Module "$using:ProjectRoo(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer")" -Force
                     Test-ISOCustomizationEnvironment
                 }
             }
@@ -270,3 +270,4 @@ AfterAll {
     # Cleanup
     Remove-Module ISOCustomizer -Force -ErrorAction SilentlyContinue
 }
+

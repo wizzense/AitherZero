@@ -1,6 +1,6 @@
 Describe 'PatchManager Function Tests' {
     BeforeAll {
-        $PatchManagerPath = './src/aither-core/modules/PatchManager/Public'
+        $PatchManagerPath = './sr(Join-Path $env:PWSH_MODULES_PATH "PatchManager/Public'")
     }
 
     Context 'Function Files Exist' {
@@ -63,3 +63,4 @@ Describe 'PatchManager Function Tests' {
         }
     }
 }
+

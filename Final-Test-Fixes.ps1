@@ -19,7 +19,7 @@ $projectRoot = Find-ProjectRoot
 
 # Import Logging module and ensure Write-CustomLog is available
 try {
-    Import-Module "$projectRoot/aither-core/modules/Logging" -Force -ErrorAction Stop
+    Import-Module "$env:PWSH_MODULES_PATH/Logging" -Force -ErrorAction Stop
     Write-CustomLog -Level 'INFO' -Message '🔧 Starting final test fixes'
 } catch {
     # Fallback logging function if module fails to load
@@ -164,7 +164,7 @@ try {
     }
 
     'RemoteConnection missing Test-SecureCredential' = {
-        $testFile = "$projectRoot/aither-core/modules/SecureCredentials/Public/Test-SecureCredential.ps1"
+        $testFile = "$env:PWSH_MODULES_PATH/SecureCredentials/Public/Test-SecureCredential.ps1"
         if (-not (Test-Path $testFile)) {
             $content = @'
 function Test-SecureCredential {
@@ -195,7 +195,7 @@ function Test-SecureCredential {
     }
 
     'RemoteConnection missing Test-RemoteConnection' = {
-        $testFile = "$projectRoot/aither-core/modules/RemoteConnection/Public/Test-RemoteConnection.ps1"
+        $testFile = "$env:PWSH_MODULES_PATH/RemoteConnection/Public/Test-RemoteConnection.ps1"
         if (-not (Test-Path $testFile)) {
             $content = @'
 function Test-RemoteConnection {
@@ -226,7 +226,7 @@ function Test-RemoteConnection {
     }
 
     'TestingFramework parameter fixes'               = {
-        $module = "$projectRoot/aither-core/modules/TestingFramework/Public/Invoke-PesterTests.ps1"
+        $module = "$env:PWSH_MODULES_PATH/TestingFramework/Public/Invoke-PesterTests.ps1"
         if (Test-Path $module) {
             $content = Get-Content $module -Raw
             $content = $content -replace 'TestPath', 'Path'
@@ -236,7 +236,7 @@ function Test-RemoteConnection {
     }
 
     'ScriptManager array addition fix'               = {
-        $module = "$projectRoot/aither-core/modules/ScriptManager/ScriptManager.psm1"
+        $module = "$env:PWSH_MODULES_PATH/ScriptManager/ScriptManager.psm1"
         if (Test-Path $module) {
             $content = Get-Content $module -Raw
             $content = $content -replace '\$allScripts \+= \$scriptMetadata', '[System.Collections.ArrayList]$allScripts.Add($scriptMetadata)'
@@ -246,7 +246,7 @@ function Test-RemoteConnection {
     }
 
     'UnifiedMaintenance exports fix'                 = {
-        $manifest = "$projectRoot/aither-core/modules/UnifiedMaintenance/UnifiedMaintenance.psd1"
+        $manifest = "$env:PWSH_MODULES_PATH/UnifiedMaintenance/UnifiedMaintenance.psd1"
         if (Test-Path $manifest) {
             $content = Get-Content $manifest -Raw
             if ($content -match 'FunctionsToExport = @\(\)') {
@@ -316,3 +316,4 @@ foreach ($moduleDir in $moduleDirectories) {
 
 Write-CustomLog -Level 'SUCCESS' -Message '🎉 Final test fixes completed!'
 Write-CustomLog -Level 'INFO' -Message 'Run tests again to verify improvements'
+

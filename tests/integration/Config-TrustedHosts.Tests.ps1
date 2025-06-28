@@ -7,7 +7,7 @@ if (Test-Path $script:HelpersPath) {
 
 Describe 'Config-TrustedHosts Tests' -Tags @('Integration', 'Config') {
     BeforeAll {
-        $script:ModulePath = Join-Path $script:TestRootPath '../aither-core/modules/LabRunner'
+        $script:ModulePath = Join-Path $script:TestRootPath '.(Join-Path $env:PWSH_MODULES_PATH "LabRunner'")
         if (Test-Path $script:ModulePath) {
             Import-Module $script:ModulePath -Force
         }
@@ -31,3 +31,4 @@ Describe 'Config-TrustedHosts Tests' -Tags @('Integration', 'Config') {
         Remove-Module LabRunner -Force -ErrorAction SilentlyContinue
     }
 }
+

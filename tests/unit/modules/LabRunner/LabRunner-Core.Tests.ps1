@@ -10,7 +10,7 @@ BeforeAll {
     $projectRoot = Find-ProjectRoot
 
     # Import the LabRunner module
-    $labRunnerPath = Join-Path $projectRoot "aither-core/modules/LabRunner"
+    $labRunnerPath = Join-Path $env:PWSH_MODULES_PATH "LabRunner"
 
     try {
         Import-Module $labRunnerPath -Force -ErrorAction Stop
@@ -25,7 +25,7 @@ BeforeAll {
 Describe "LabRunner Module Tests" {
     Context "Module Import" {
         It "Should import without errors" {
-            { Import-Module (Join-Path $projectRoot "aither-core/modules/LabRunner") -Force } | Should -Not -Throw
+            { Import-Module (Join-Path $env:PWSH_MODULES_PATH "LabRunner") -Force } | Should -Not -Throw
         }
     }
 
@@ -43,3 +43,4 @@ Describe "LabRunner Module Tests" {
         }
     }
 }
+

@@ -73,7 +73,7 @@ begin {
     $projectRoot = Find-ProjectRoot
 
     # Import required modules
-    Import-Module (Join-Path $projectRoot (Join-Path "aither-core" (Join-Path "modules" "Logging"))) -Force
+    Import-Module (Join-Path $env:PWSH_MODULES_PATH "Logging") -Force
     Import-Module (Join-Path $projectRoot (Join-Path "aither-core" (Join-Path "modules" "DevEnvironment"))) -Force
 
     Write-CustomLog -Level 'INFO' -Message "=== Codex CLI Installation Script ==="
@@ -178,3 +178,4 @@ process {
 end {
     Write-CustomLog -Level 'INFO' -Message "Codex CLI installation script completed"
 }
+

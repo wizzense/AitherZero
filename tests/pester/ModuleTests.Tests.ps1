@@ -1,7 +1,7 @@
 Describe 'Core Module Tests' {
     Context 'LabRunner Module' {
         It 'Should have module file' {
-            Test-Path './aither-core/modules/LabRunner/LabRunner.psm1' | Should -Be $true
+            Test-Path '(Join-Path $env:PWSH_MODULES_PATH "LabRunner/LabRunner.psm1'") | Should -Be $true
         }
     }
 } }
@@ -35,7 +35,7 @@ Describe 'Core Module Tests' {
 
 Describe 'TestingFramework Module Tests' {
     BeforeAll {
-        $ModulePath = './aither-core/modules/TestingFramework/TestingFramework.psm1'
+        $ModulePath = '(Join-Path $env:PWSH_MODULES_PATH "TestingFramework/TestingFramework.psm1'")
     }
 
     Context 'Module Structure' {
@@ -68,7 +68,7 @@ Describe 'TestingFramework Module Tests' {
 
 Describe 'PatchManager Module Tests' {
     BeforeAll {
-        $ModulePath = './aither-core/modules/PatchManager/PatchManager.psm1'
+        $ModulePath = '(Join-Path $env:PWSH_MODULES_PATH "PatchManager/PatchManager.psm1'")
     }
 
     Context 'Module Structure' {
@@ -81,3 +81,4 @@ Describe 'PatchManager Module Tests' {
         }
     }
 }
+

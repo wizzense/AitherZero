@@ -10,10 +10,10 @@
 
 BeforeAll {
     # Import required modules
-    Import-Module './aither-core/modules/Logging/Logging.psm1' -Force
-    Import-Module './aither-core/modules/TestingFramework/TestingFramework.psm1' -Force
-    Import-Module './aither-core/modules/SecureCredentials/SecureCredentials.psm1' -Force
-    Import-Module './aither-core/modules/RemoteConnection/RemoteConnection.psm1' -Force
+    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "Logging/Logging.psm1'") -Force
+    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "TestingFramework/TestingFramework.psm1'") -Force
+    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "SecureCredentials/SecureCredentials.psm1'") -Force
+    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "RemoteConnection/RemoteConnection.psm1'") -Force
 
     # Set test environment
     $TestConnectionName = "Test-RemoteConnection-$(Get-Random)"
@@ -147,9 +147,9 @@ Describe "RemoteConnection Module" {
 Describe "RemoteConnection Integration" {
     Context "SecureCredentials Integration" {        It "Should integrate with SecureCredentials module" {
             # Ensure Logging module is loaded first (required by SecureCredentials)
-            Import-Module './aither-core/modules/Logging' -Force
+            Import-Module '(Join-Path $env:PWSH_MODULES_PATH "Logging'") -Force
             # Ensure SecureCredentials module is loaded for integration testing
-            Import-Module './aither-core/modules/SecureCredentials' -Force
+            Import-Module '(Join-Path $env:PWSH_MODULES_PATH "SecureCredentials'") -Force
 
             # Test that RemoteConnection can reference SecureCredentials functions
             $getSecureCredentialExists = Get-Command -Name "Get-SecureCredential" -Module "SecureCredentials" -ErrorAction SilentlyContinue
@@ -195,3 +195,4 @@ Describe "RemoteConnection Integration" {
         }
     }
 }
+

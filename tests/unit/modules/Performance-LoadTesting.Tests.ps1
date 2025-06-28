@@ -10,7 +10,7 @@ BeforeAll {
     $moduleNames = @('Logging', 'ParallelExecution', 'BackupManager', 'PatchManager')
 
     foreach ($moduleName in $moduleNames) {
-        $modulePath = Join-Path $projectRoot "aither-core/modules/$moduleName"
+        $modulePath = Join-Path $env:PWSH_MODULES_PATH "$moduleName"
         try {
             Import-Module $modulePath -Force -ErrorAction Stop
             $script:PerformanceModules[$moduleName] = $true
@@ -109,7 +109,7 @@ Describe "Performance and Load Testing" {
             $moduleNames = @('Logging', 'BackupManager', 'ScriptManager', 'DevEnvironment')
 
             foreach ($moduleName in $moduleNames) {
-                $modulePath = Join-Path $projectRoot "aither-core/modules/$moduleName"
+                $modulePath = Join-Path $env:PWSH_MODULES_PATH "$moduleName"
 
                 if (Test-Path $modulePath) {
                     $result = Measure-OperationPerformance -Operation {
@@ -123,7 +123,7 @@ Describe "Performance and Load Testing" {
         }
 
         It "Should handle repeated module imports efficiently" {
-            $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
+            $loggingPath = Join-Path $env:PWSH_MODULES_PATH "Logging"
 
             if (Test-Path $loggingPath) {
                 $result = Measure-OperationPerformance -Operation {
@@ -168,7 +168,7 @@ Describe "Performance and Load Testing" {
                     $jobs += Start-Job -ScriptBlock {
                         param($projectRoot, $jobId)
 
-                        $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
+                        $loggingPath = Join-Path $env:PWSH_MODULES_PATH "Logging"
                         Import-Module $loggingPath -Force
 
                         $logFile = Join-Path ([System.IO.Path]::GetTempPath()) "concurrent-test-$jobId.log"
@@ -446,7 +446,7 @@ Describe "Performance and Load Testing" {
 
                     try {
                         # Import modules concurrently
-                        $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
+                        $loggingPath = Join-Path $env:PWSH_MODULES_PATH "Logging"
                         Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
 
                         # Use the module
@@ -493,3 +493,4 @@ Describe "Performance and Load Testing" {
 }  # End of Describe 'Performance Load Testing Tests'
 
 }
+

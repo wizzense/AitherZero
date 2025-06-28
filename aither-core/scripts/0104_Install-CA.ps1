@@ -9,8 +9,8 @@ param(
 # Source Find-ProjectRoot from relative path
 . (Join-Path $PSScriptRoot (Join-Path ".." (Join-Path "shared" "Find-ProjectRoot.ps1")))
 $projectRoot = Find-ProjectRoot -StartPath $PSScriptRoot
-Import-Module (Join-Path $projectRoot (Join-Path "aither-core" (Join-Path "modules" "LabRunner"))) -Force
-Import-Module (Join-Path $projectRoot (Join-Path "aither-core" (Join-Path "modules" "Logging"))) -Force
+Import-Module (Join-Path $env:PWSH_MODULES_PATH "LabRunner") -Force
+Import-Module (Join-Path $env:PWSH_MODULES_PATH "Logging") -Force
 
 Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
 
@@ -48,3 +48,4 @@ Invoke-LabStep -Config $Config -Body {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
+

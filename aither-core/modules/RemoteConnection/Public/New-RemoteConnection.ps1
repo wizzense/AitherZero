@@ -81,7 +81,7 @@ function New-RemoteConnection {
             # Load SecureCredentials module if not already loaded
             if (-not (Get-Module -Name 'SecureCredentials')) {
                 try {
-                    Import-Module './aither-core/modules/SecureCredentials' -Force
+                    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "SecureCredentials'") -Force
                 } catch {
                     Write-CustomLog -Level 'WARN' -Message "Could not load SecureCredentials module for credential validation"
                 }
@@ -216,3 +216,4 @@ function New-RemoteConnection {
         }
     }
 }
+

@@ -44,7 +44,7 @@ function Import-ProjectModule {
         }
         
         # Set standard module path with forward slashes
-        $modulePath = "$env:PROJECT_ROOT/aither-core/modules/$ModuleName"
+        $modulePath = "$env:PROJECT_ROO(Join-Path $env:PWSH_MODULES_PATH "$ModuleName")"
         
         # Create hashtable for splatting import parameters
         $importParams = @{
@@ -82,3 +82,4 @@ function Import-ProjectModule {
 }
 
 Export-ModuleMember -Function Import-ProjectModule
+

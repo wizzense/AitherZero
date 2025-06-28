@@ -9,7 +9,7 @@ BeforeAll {
     Write-Verbose "Project root detected: $projectRoot"
 
     # Import Logging module first
-    $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
+    $loggingPath = Join-Path $env:PWSH_MODULES_PATH "Logging"
 
     try {
         Import-Module $loggingPath -Force -Global -ErrorAction SilentlyContinue
@@ -21,7 +21,7 @@ BeforeAll {
             Write-Verbose "[$Level] $Message"
         }
     }    # Import PatchManager module
-    $patchManagerPath = Join-Path $projectRoot "aither-core/modules/PatchManager"
+    $patchManagerPath = Join-Path $env:PWSH_MODULES_PATH "PatchManager"
 
     try {
         Import-Module $patchManagerPath -Force -ErrorAction Stop
@@ -382,3 +382,4 @@ Describe "Cross-Repository Compatibility" {
         }
     }
 }
+
