@@ -150,6 +150,10 @@ jobs:
         run: |
           Write-Host "Auto-creating version tag for main branch push..." -ForegroundColor Cyan
 
+          # Configure git identity for tagging
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
           $version = "${{ steps.version.outputs.version }}"
           $tagName = "v$version"
 
@@ -161,7 +165,7 @@ jobs:
             Write-Host "Creating and pushing tag: $tagName" -ForegroundColor Green
 
             # Create the tag
-            git tag $tagName -m "Automated release $tagName with batch launcher fixes and automated release workflow"
+            git tag $tagName -m "Automated release $tagName - CI/CD workflow fixes and enhanced build system"
 
             # Push the tag
             git push origin $tagName
