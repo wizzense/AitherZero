@@ -45,5 +45,6 @@ Thumbs.db
 # Build artifacts
 dist/
 build/
+build-output/
 *.egg-info/
 kicker-git-backup.ps1

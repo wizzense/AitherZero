@@ -184,15 +184,40 @@ if (-not $NonInteractive) {
 Write-Verbose "Final NonInteractive value: $NonInteractive"
 
 # Use robust project root detection from shared utility
-$findProjectRootPath = Join-Path $PSScriptRoot "shared" "Find-ProjectRoot.ps1"
-if (Test-Path $findProjectRootPath) {
-    . $findProjectRootPath
-    $repoRoot = Find-ProjectRoot -StartPath $PSScriptRoot
-    Write-Verbose "Used shared utility to find project root: $repoRoot"
-} else {
-    # Fallback: assume aither-core is at project root level (legacy behavior)
-    $repoRoot = Split-Path $PSScriptRoot -Parent
-    Write-Warning "Shared utility not found, using fallback detection. Some path issues may occur."
+# Try multiple locations for the shared utility based on structure
+$findProjectRootPaths = @(
+    (Join-Path $PSScriptRoot "shared" "Find-ProjectRoot.ps1"),           # Release structure: same level as script
+    (Join-Path $PSScriptRoot ".." "shared" "Find-ProjectRoot.ps1"),      # Dev structure: up one level
+    (Join-Path $PSScriptRoot ".." "aither-core" "shared" "Find-ProjectRoot.ps1")  # Alternative dev structure
+)
+
+$repoRoot = $null
+foreach ($path in $findProjectRootPaths) {
+    if (Test-Path $path) {
+        try {
+            . $path
+            $repoRoot = Find-ProjectRoot -StartPath $PSScriptRoot
+            Write-Verbose "Used shared utility to find project root: $repoRoot (from $path)"
+            break
+        } catch {
+            Write-Verbose "Failed to use shared utility at $path : $($_.Exception.Message)"
+        }
+    }
+}
+
+# If shared utility detection failed, use structure-based detection
+if (-not $repoRoot) {
+    # Check if we're in a release package structure (modules directly in same directory as script)
+    $releaseModulesPath = Join-Path $PSScriptRoot "modules"
+    if (Test-Path $releaseModulesPath) {
+        # Release package structure: script and modules are in the same directory
+        $repoRoot = $PSScriptRoot
+        Write-Verbose "Detected release package structure, using script directory as root: $repoRoot"
+    } else {
+        # Fallback: assume aither-core is at project root level (development structure)
+        $repoRoot = Split-Path $PSScriptRoot -Parent
+        Write-Verbose "Using development structure fallback detection: $repoRoot"
+    }
 }
 
 # Ensure we have a valid project root
@@ -203,7 +228,35 @@ if (-not $repoRoot -or -not (Test-Path $repoRoot)) {
 
 # Set environment variables with proper cross-platform paths
 $env:PROJECT_ROOT = $repoRoot
-$env:PWSH_MODULES_PATH = Join-Path $repoRoot "aither-core" "modules"
+
+# Determine modules path based on structure
+# In release packages, aither-core.ps1 is at the root alongside modules/
+# In development, aither-core.ps1 is in aither-core/ subdirectory
+$scriptInRoot = (Split-Path $PSScriptRoot -Leaf) -eq (Split-Path $repoRoot -Leaf)
+$releaseModulesPath = Join-Path $PSScriptRoot "modules"
+$devModulesPath = Join-Path $repoRoot (Join-Path "aither-core" "modules")
+
+Write-Verbose "Script location: $PSScriptRoot"
+Write-Verbose "Repo root: $repoRoot"
+Write-Verbose "Script in root: $scriptInRoot"
+Write-Verbose "Checking release modules at: $releaseModulesPath"
+Write-Verbose "Checking dev modules at: $devModulesPath"
+
+if (Test-Path $releaseModulesPath) {
+    # Release package structure: modules are in same directory as script
+    $env:PWSH_MODULES_PATH = $releaseModulesPath
+    Write-Verbose "Using release package modules path: $env:PWSH_MODULES_PATH"
+} elseif (Test-Path $devModulesPath) {
+    # Development structure: modules are in aither-core/modules
+    $env:PWSH_MODULES_PATH = $devModulesPath  
+    Write-Verbose "Using development modules path: $env:PWSH_MODULES_PATH"
+} else {
+    # Neither found - this is an error
+    Write-Error "Could not locate modules directory. Checked:"
+    Write-Error "  Release structure: $releaseModulesPath"
+    Write-Error "  Development structure: $devModulesPath"
+    exit 1
+}
 
 Write-Verbose "Repository root: $repoRoot"
 Write-Verbose "Modules path: $env:PWSH_MODULES_PATH"
@@ -216,11 +269,29 @@ if (-not (Test-Path $env:PWSH_MODULES_PATH)) {
     exit 1
 }
 
-# Apply default ConfigFile if not provided
+# Apply default ConfigFile if not provided - try multiple locations
 if (-not $PSBoundParameters.ContainsKey('ConfigFile')) {
-    $ConfigFile = Join-Path $PSScriptRoot 'default-config.json'
-    if (-not (Test-Path $ConfigFile)) {
+    # Try multiple configuration file locations based on structure
+    $configPaths = @(
+        (Join-Path $PSScriptRoot 'default-config.json'),                    # Release: same as script
+        (Join-Path $repoRoot "configs" "default-config.json"),             # Standard location
+        (Join-Path $PSScriptRoot "configs" "default-config.json"),         # Alternative: relative to script
+        (Join-Path $repoRoot "aither-core" "default-config.json")          # Dev fallback
+    )
+    
+    $ConfigFile = $null
+    foreach ($configPath in $configPaths) {
+        if (Test-Path $configPath) {
+            $ConfigFile = $configPath
+            Write-Verbose "Found configuration file at: $ConfigFile"
+            break
+        }
+    }
+    
+    # If no config found, use the standard location (will be created or handled later)
+    if (-not $ConfigFile) {
         $ConfigFile = Join-Path $repoRoot "configs" "default-config.json"
+        Write-Verbose "No existing config found, will use: $ConfigFile"
     }
 }
 
@@ -345,11 +416,28 @@ try {
     Write-CustomLog "Configuration file: $ConfigFile" -Level DEBUG
     Write-CustomLog "Verbosity level: $Verbosity" -Level DEBUG
 
-    # Get available scripts
-    $scriptsPath = Join-Path $PSScriptRoot 'scripts'
-    if (Test-Path $scriptsPath) {
-        $availableScripts = Get-ChildItem -Path $scriptsPath -Filter '*.ps1' | Sort-Object Name
-        Write-CustomLog "Found $($availableScripts.Count) scripts" -Level DEBUG
+    # Get available scripts - try multiple locations
+    # In release packages, scripts/ is alongside aither-core.ps1
+    # In development, scripts/ is in aither-core/scripts
+    $scriptsPaths = @(
+        (Join-Path $PSScriptRoot 'scripts'),                    # Release: same as script
+        (Join-Path $repoRoot "aither-core" "scripts"),         # Dev: aither-core/scripts
+        (Join-Path $repoRoot "scripts")                        # Alternative: root/scripts
+    )
+    
+    $scriptsPath = $null
+    $availableScripts = @()
+    
+    foreach ($path in $scriptsPaths) {
+        if (Test-Path $path) {
+            $scriptsPath = $path
+            $availableScripts = Get-ChildItem -Path $scriptsPath -Filter '*.ps1' | Sort-Object Name
+            Write-CustomLog "Found $($availableScripts.Count) scripts in: $scriptsPath" -Level DEBUG
+            break
+        }
+    }
+    
+    if ($scriptsPath -and $availableScripts.Count -gt 0) {
 
         if ($Scripts) {
             # Run specific scripts
