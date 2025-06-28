@@ -171,7 +171,7 @@ function Invoke-PatchWorkflowEnhanced {
 
     # Call the original PatchManager workflow
     try {
-        Import-Module '/workspaces/AitherLab(Join-Path $env:PWSH_MODULES_PATH "PatchManager/PatchManager.psm1'") -Force
+        Import-Module (Join-Path $env:PWSH_MODULES_PATH "PatchManager/PatchManager.psm1") -Force
         
         $result = Invoke-PatchWorkflow -PatchDescription $PatchDescription -PatchOperation $PatchOperation -CreatePR:$CreatePR -CreateIssue:$CreateIssue -Priority $Priority
         

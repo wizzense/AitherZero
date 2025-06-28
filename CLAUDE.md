@@ -37,7 +37,7 @@ AitherZero is a **standalone PowerShell automation framework** for OpenTofu/Terr
 ### Testing Commands
 
 ```powershell
-# Quick validation (3 seconds) - Use for rapid feedback during development
+# Quick validation (30 seconds) - Use for rapid feedback during development
 ./tests/Run-BulletproofValidation.ps1 -ValidationLevel Quick
 
 # Standard validation (2-5 minutes) - Use before creating PRs
@@ -54,6 +54,15 @@ AitherZero is a **standalone PowerShell automation framework** for OpenTofu/Terr
 
 # Run all module tests
 ./tests/Run-AllModuleTests.ps1
+
+# Run specific module tests
+./tests/Invoke-DynamicTests.ps1 -ModuleName "PatchManager"
+
+# Test change detection
+./tests/Test-ChangeDetection.ps1
+
+# Code coverage analysis
+./tests/Run-CodeCoverage.ps1
 ```
 
 ### Linting Commands
@@ -201,3 +210,23 @@ Access tasks via: `Ctrl+Shift+P → Tasks: Run Task`
 - Always use absolute paths with platform-agnostic construction
 - PatchManager v2.1 is consolidated to 4 core functions
 - Bulletproof validation has three levels: Quick (30s), Standard (2-5m), Complete (10-15m)
+
+## MCP Server Integration
+
+The project includes a Model Context Protocol (MCP) server for AI agent integration:
+
+```bash
+# Navigate to MCP server directory
+cd mcp-server
+
+# Install dependencies
+npm install
+
+# Run tests
+npm test
+
+# Setup with Claude Code
+./setup-claude-code-mcp.sh
+```
+
+The MCP server exposes all 14 AitherZero modules as AI-accessible tools, enabling intelligent infrastructure automation through Claude Code or other AI agents.

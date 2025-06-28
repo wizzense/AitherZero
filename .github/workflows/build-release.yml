@@ -241,7 +241,7 @@ jobs:
           # Set required environment variables for module loading
           $env:PROJECT_ROOT = $PWD
           $env:PWSH_MODULES_PATH = Join-Path $PWD 'aither-core/modules'
-          
+
           Write-Host "Environment setup:" -ForegroundColor Yellow
           Write-Host "  PROJECT_ROOT: $env:PROJECT_ROOT" -ForegroundColor White
           Write-Host "  PWSH_MODULES_PATH: $env:PWSH_MODULES_PATH" -ForegroundColor White

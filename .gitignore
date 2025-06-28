@@ -48,3 +48,9 @@ build/
 build-output/
 *.egg-info/
 kicker-git-backup.ps1
+
+# Claude Requirements System
+.claude/
+claude-requirements/requirements/*
+!claude-requirements/requirements/index.md
+!claude-requirements/requirements/.current-requirement
