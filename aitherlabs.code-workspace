@@ -13,8 +13,13 @@
             "path": "./core-runner/core_app"
         },
         {
+<<<<<<< Updated upstream
             "name": "Runner Scripts",
             "path": "./core-runner/core_app/scripts"
+=======
+            "name": "Aither-Core Scripts",
+            "path": "./AitherZero/aither-core/scripts"
+>>>>>>> Stashed changes
         },
         {
             "name": "OpenTofu Configurations",
