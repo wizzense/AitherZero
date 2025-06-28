@@ -50,7 +50,9 @@ try {
     # Essential modules only (not dev/test modules)
     $essentialModules = @(
         'Logging', 'LabRunner', 'DevEnvironment', 'BackupManager',
-        'ScriptManager', 'UnifiedMaintenance', 'ParallelExecution'
+        'ScriptManager', 'UnifiedMaintenance', 'ParallelExecution',
+        'PatchManager', 'OpenTofuProvider', 'SecureCredentials',
+        'ISOManager', 'ISOCustomizer', 'RemoteConnection', 'TestingFramework'
     )
 
     New-Item -Path (Join-Path $packageDir "modules") -ItemType Directory -Force | Out-Null
