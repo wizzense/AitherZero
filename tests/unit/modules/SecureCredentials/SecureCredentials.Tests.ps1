@@ -14,6 +14,9 @@ BeforeAll {
     Import-Module './aither-core/modules/TestingFramework/TestingFramework.psm1' -Force
     Import-Module './aither-core/modules/SecureCredentials/SecureCredentials.psm1' -Force
 
+    # Import test credential helper
+    . "$PSScriptRoot/../../../helpers/Test-Credentials.ps1"
+
     # Set test environment
     $TestCredentialName = "Test-SecureCredentials-$(Get-Random)"
 }
@@ -41,7 +44,7 @@ Describe "SecureCredentials Module" {
 
     Context "New-SecureCredential Function" {
         It "Should create a UserPassword credential with WhatIf" {
-            $testPassword = ConvertTo-SecureString "TestPassword123" -AsPlainText -Force
+            $testPassword = Get-TestSecurePassword -Purpose 'UserPassword'
             $result = New-SecureCredential -CredentialName $TestCredentialName -CredentialType UserPassword -Username "testuser" -Password $testPassword -WhatIf
 
             $result | Should -Not -BeNullOrEmpty
@@ -54,7 +57,7 @@ Describe "SecureCredentials Module" {
 
         It "Should support different credential types" {
             # Test UserPassword type with required parameters
-            { New-SecureCredential -CredentialName "Test-UserPassword" -CredentialType UserPassword -Username "testuser" -Password (ConvertTo-SecureString "testpass" -AsPlainText -Force) -WhatIf } | Should -Not -Throw
+            { New-SecureCredential -CredentialName "Test-UserPassword" -CredentialType UserPassword -Username "testuser" -Password (Get-TestSecurePassword -Purpose 'UserPassword') -WhatIf } | Should -Not -Throw
 
             # Test ServiceAccount type with required username
             { New-SecureCredential -CredentialName "Test-ServiceAccount" -CredentialType ServiceAccount -Username "service@example.com" -WhatIf } | Should -Not -Throw

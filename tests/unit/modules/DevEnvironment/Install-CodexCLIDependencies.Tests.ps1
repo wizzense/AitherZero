@@ -197,7 +197,9 @@ Describe "Install-CodexCLIDependencies Function Tests" -Tags @('Unit', 'DevEnvir
     
     Context "Security Considerations" {
         It "Should handle passwords securely" {
-            $securePassword = ConvertTo-SecureString "testpassword" -AsPlainText -Force
+            # Import test credential helper
+            . "$PSScriptRoot/../../../helpers/Test-Credentials.ps1"
+            $securePassword = Get-TestSecurePassword -Purpose 'WSL'
             { Install-CodexCLIDependencies -WSLUsername "testuser" -WSLPassword $securePassword -WhatIf } | Should -Not -Throw
         }
         
