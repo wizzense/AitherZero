@@ -9,6 +9,7 @@
 #>
 
 BeforeAll {
+    . "$PSScriptRoot/../../../helpers/Test-Credentials.ps1"
     # Import required modules
     Import-Module './aither-core/modules/Logging/Logging.psm1' -Force
     Import-Module './aither-core/modules/TestingFramework/TestingFramework.psm1' -Force
@@ -40,7 +41,7 @@ Describe "SecureCredentials and RemoteConnection Integration" {
 
         It "Should create credential and use it in connection" {
             # Step 1: Create a test credential (WhatIf)
-            $testPassword = ConvertTo-SecureString "TestPassword123" -AsPlainText -Force
+            $testPassword = ConvertTo-SecureString "$(Get-TestCredential -CredentialType "AdminPassword")" -AsPlainText -Force
             $credResult = New-SecureCredential -CredentialName $TestCredentialName -CredentialType UserPassword -Username "testuser" -Password $testPassword -WhatIf
 
             $credResult.Success | Should -Be $true
@@ -77,7 +78,7 @@ Describe "SecureCredentials and RemoteConnection Integration" {
                         $testPassword = ConvertTo-SecureString "ServicePass123" -AsPlainText -Force
                         { New-SecureCredential -CredentialName $testCredName -CredentialType $credType -Username "serviceaccount" -Password $testPassword -WhatIf } | Should -Not -Throw
                     } elseif ($credType -eq 'APIKey') {
-                        { New-SecureCredential -CredentialName $testCredName -CredentialType $credType -APIKey "test-api-key-123" -WhatIf } | Should -Not -Throw
+                        { New-SecureCredential -CredentialName $testCredName -CredentialType $credType -APIKey "$(Get-TestCredential -CredentialType "ApiKey")" -WhatIf } | Should -Not -Throw
                     } elseif ($credType -eq 'Certificate') {
                         { New-SecureCredential -CredentialName $testCredName -CredentialType $credType -CertificatePath "/path/to/cert.pem" -WhatIf } | Should -Not -Throw
                     }

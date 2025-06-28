@@ -167,7 +167,8 @@ jobs:
                 PATCHMANAGER_ONLY="false"
                 BUILD_TOOLING_ONLY="false"
                 DOCS_CONFIG_ONLY="false"
-                CORE_FILES="$CORE_FILES $file" ;;
+                CORE_FILES="$CORE_FILES $file"
+                ;;
 
               # PatchManager and development tools (not in packages)
               aither-core/modules/PatchManager/*|aither-core/modules/TestingFramework/*|aither-core/modules/DevEnvironment/*|aither-core/modules/ISOManager/*|aither-core/modules/ISOCustomizer/*|aither-core/modules/RemoteConnection/*|aither-core/modules/SecureCredentials/*|aither-core/modules/OpenTofuProvider/*|aither-core/modules/RepoSync/*)

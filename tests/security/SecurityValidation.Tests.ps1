@@ -116,12 +116,13 @@ Describe "Credential Security" -Tags @('Security', 'Credentials') {
         It "Should use SecureString for sensitive data" {
             if (Get-Command 'New-SecureCredential' -ErrorAction SilentlyContinue) {
                 try {
-                    $secureString = ConvertTo-SecureString "TestPassword" -AsPlainText -Force
-                    $credential = New-Object System.Management.Automation.PSCredential("TestUser", $secureString)
+                    # Import test credential helper
+                    . "$PSScriptRoot/../helpers/Test-Credentials.ps1"
+                    $credential = Get-TestCredential -Username "TestUser" -Purpose 'Security'
 
                     # Verify credential is properly secured
                     $credential.Password | Should -BeOfType [System.Security.SecureString]
-                    $credential.GetNetworkCredential().Password | Should -Be "TestPassword"
+                    $credential.GetNetworkCredential().Password | Should -Not -BeNullOrEmpty
                 } catch {
                     Write-Warning "SecureString testing failed: $($_.Exception.Message)"
                 }
@@ -131,7 +132,9 @@ Describe "Credential Security" -Tags @('Security', 'Credentials') {
         }
 
         It "Should not expose credentials in logs" {
-            $testPassword = "SecretPassword123"
+            # Import test credential helper
+            . "$PSScriptRoot/../helpers/Test-Credentials.ps1"
+            $testPassword = Get-TestPassword -Purpose 'Security'
 
             # Simulate logging that might accidentally include credentials
             try {
@@ -149,7 +152,9 @@ Describe "Credential Security" -Tags @('Security', 'Credentials') {
         It "Should handle credential storage securely" {
             if (Get-Command 'Set-SecureCredential' -ErrorAction SilentlyContinue) {
                 try {
-                    $secureString = ConvertTo-SecureString "TestPassword" -AsPlainText -Force
+                    # Import test credential helper
+                    . "$PSScriptRoot/../helpers/Test-Credentials.ps1"
+                    $secureString = Get-TestSecurePassword -Purpose 'Storage'
 
                     # Test secure credential storage
                     Set-SecureCredential -Name "TestCredential" -Credential $secureString

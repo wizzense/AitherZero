@@ -95,7 +95,7 @@ function Install-CodexCLIDependencies {
         $projectRoot = Find-ProjectRoot
         
         # Import logging module
-        Import-Module (Join-Path $projectRoot "aither-core/modules/Logging") -Force
+        Import-Module (Join-Path $projectRoot (Join-Path "aither-core" (Join-Path "modules" "Logging"))) -Force
         
         Write-CustomLog -Level 'INFO' -Message "Starting Codex CLI dependencies installation"
         

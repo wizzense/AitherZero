@@ -9,8 +9,8 @@ param(
 . "$PSScriptRoot/../shared/Find-ProjectRoot.ps1"
 $projectRoot = Find-ProjectRoot
 
-Import-Module "$projectRoot/aither-core/modules/LabRunner" -Force
-Import-Module "$projectRoot/aither-core/modules/Logging" -Force
+Import-Module (Join-Path $projectRoot (Join-Path "aither-core" (Join-Path "modules" "LabRunner"))) -Force
+Import-Module (Join-Path $projectRoot (Join-Path "aither-core" (Join-Path "modules" "Logging"))) -Force
 
 Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
 

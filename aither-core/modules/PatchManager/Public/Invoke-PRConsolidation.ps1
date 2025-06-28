@@ -58,7 +58,7 @@ function Invoke-PRConsolidation {
     begin {
         # Import required modules
         if (-not (Get-Module -Name Logging -ListAvailable)) {
-            Import-Module (Join-Path $PSScriptRoot "../../../Logging") -Force -ErrorAction SilentlyContinue
+            Import-Module (Join-Path $PSScriptRoot (Join-Path ".." (Join-Path ".." (Join-Path ".." "Logging")))) -Force -ErrorAction SilentlyContinue
         }
 
         function Write-ConsolidationLog {

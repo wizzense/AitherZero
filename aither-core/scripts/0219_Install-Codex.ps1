@@ -73,8 +73,8 @@ begin {
     $projectRoot = Find-ProjectRoot
 
     # Import required modules
-    Import-Module (Join-Path $projectRoot "aither-core/modules/Logging") -Force
-    Import-Module (Join-Path $projectRoot "aither-core/modules/DevEnvironment") -Force
+    Import-Module (Join-Path $projectRoot (Join-Path "aither-core" (Join-Path "modules" "Logging"))) -Force
+    Import-Module (Join-Path $projectRoot (Join-Path "aither-core" (Join-Path "modules" "DevEnvironment"))) -Force
 
     Write-CustomLog -Level 'INFO' -Message "=== Codex CLI Installation Script ==="
     Write-CustomLog -Level 'INFO' -Message "Script: $($MyInvocation.MyCommand.Name)"
