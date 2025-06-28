@@ -6,4 +6,4 @@ Write-Host '   Local Build - Essential Components Only' -ForegroundColor Yellow
 
 $env:PROJECT_ROOT = $PSScriptRoot
 
-& "$PSScriptRoot/aither-core.ps1" $args
+& (Join-Path $PSScriptRoot 'aither-core.ps1') @args
