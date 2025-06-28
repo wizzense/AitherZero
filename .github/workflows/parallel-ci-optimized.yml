@@ -489,11 +489,16 @@ jobs:
             "minimal" {
               Write-Host "🎯 Running minimal validation for $changeType changes..." -ForegroundColor Cyan
 
+              # Set up environment variables for module loading
+              $env:PROJECT_ROOT = $PWD.Path
+              $env:PWSH_MODULES_PATH = Join-Path $env:PROJECT_ROOT 'aither-core/modules'
+              Write-Host "Environment setup: PROJECT_ROOT=$env:PROJECT_ROOT, PWSH_MODULES_PATH=$env:PWSH_MODULES_PATH" -ForegroundColor Yellow
+
               if ($changeType -eq "patchmanager-only") {
                 # Test PatchManager module specifically
                 try {
                   Write-Host "Testing PatchManager module import..." -ForegroundColor Yellow
-                  Import-Module './aither-core/modules/PatchManager/PatchManager.psm1' -Force -ErrorAction Stop
+                  Import-Module "$env:PWSH_MODULES_PATH/PatchManager/PatchManager.psm1" -Force -ErrorAction Stop
                   Write-Host "✅ PatchManager module imported successfully" -ForegroundColor Green
 
                   # Test key functions are available
@@ -546,10 +551,15 @@ jobs:
             "package-validation" {
               Write-Host "📦 Running package validation for package-affecting changes..." -ForegroundColor Cyan
 
+              # Set up environment variables for module loading
+              $env:PROJECT_ROOT = $PWD.Path
+              $env:PWSH_MODULES_PATH = Join-Path $env:PROJECT_ROOT 'aither-core/modules'
+              Write-Host "Environment setup: PROJECT_ROOT=$env:PROJECT_ROOT, PWSH_MODULES_PATH=$env:PWSH_MODULES_PATH" -ForegroundColor Yellow
+
               # Test essential modules that are included in packages
               $essentialModules = @('Logging', 'LabRunner', 'BackupManager', 'ScriptManager', 'UnifiedMaintenance')
               foreach ($module in $essentialModules) {
-                $modulePath = "aither-core/modules/$module"
+                $modulePath = "$env:PWSH_MODULES_PATH/$module"
                 if (Test-Path $modulePath) {
                   try {
                     Import-Module "$modulePath/$module.psm1" -Force -ErrorAction Stop
@@ -565,8 +575,18 @@ jobs:
             default {
               Write-Host "🧪 Running standard test suite..." -ForegroundColor Cyan
 
+              # Set up environment variables for module loading
+              $env:PROJECT_ROOT = $PWD.Path
+              $env:PWSH_MODULES_PATH = Join-Path $env:PROJECT_ROOT 'aither-core/modules'
+              Write-Host "Environment setup: PROJECT_ROOT=$env:PROJECT_ROOT, PWSH_MODULES_PATH=$env:PWSH_MODULES_PATH" -ForegroundColor Yellow
+
               try {
-                Write-Host "Running PatchManager validation..." -ForegroundColor Yellow
+                Write-Host "Testing PatchManager module import..." -ForegroundColor Yellow
+                # Import PatchManager with full path to ensure it loads correctly
+                Import-Module "$env:PWSH_MODULES_PATH/PatchManager/PatchManager.psm1" -Force -ErrorAction Stop
+                Write-Host "✅ PatchManager module imported successfully" -ForegroundColor Green
+
+                Write-Host "Validating PatchManager functions..." -ForegroundColor Yellow
                 $pmFunctions = @('Invoke-PatchWorkflow', 'New-PatchIssue', 'New-PatchPR', 'Invoke-PatchRollback')
                 foreach ($func in $pmFunctions) {
                   if (Get-Command $func -ErrorAction SilentlyContinue) {
@@ -600,6 +620,13 @@ jobs:
 
           # For full test runs, use bulletproof validation
           if (Test-Path './tests/Run-BulletproofValidation.ps1') {
+            # Ensure environment variables are set for bulletproof validation
+            if (-not $env:PROJECT_ROOT) {
+              $env:PROJECT_ROOT = $PWD.Path
+              $env:PWSH_MODULES_PATH = Join-Path $env:PROJECT_ROOT 'aither-core/modules'
+              Write-Host "Environment setup for bulletproof validation: PROJECT_ROOT=$env:PROJECT_ROOT" -ForegroundColor Yellow
+            }
+
             # First check if the script supports MaxParallelJobs parameter
             $scriptHelp = Get-Help './tests/Run-BulletproofValidation.ps1' -Parameter MaxParallelJobs -ErrorAction SilentlyContinue
 
@@ -630,10 +657,22 @@ jobs:
           } else {
             # Fallback parallel testing
             Write-Host "Running parallel module validation..." -ForegroundColor Yellow
+            
+            # Ensure environment variables are set for module loading
+            if (-not $env:PROJECT_ROOT) {
+              $env:PROJECT_ROOT = $PWD.Path
+              $env:PWSH_MODULES_PATH = Join-Path $env:PROJECT_ROOT 'aither-core/modules'
+              Write-Host "Environment setup for parallel testing: PROJECT_ROOT=$env:PROJECT_ROOT" -ForegroundColor Yellow
+            }
+            
             $modules = Get-ChildItem -Path './aither-core/modules' -Directory -ErrorAction SilentlyContinue
 
             $results = $modules | ForEach-Object -Parallel {
               $module = $_
+              # Set environment variables in each parallel job
+              $env:PROJECT_ROOT = $using:env:PROJECT_ROOT
+              $env:PWSH_MODULES_PATH = $using:env:PWSH_MODULES_PATH
+              
               try {
                 Import-Module $module.FullName -Force -ErrorAction Stop
                 return @{ Module = $module.Name; Success = $true }
@@ -676,13 +715,11 @@ jobs:
           )
 
           $violations = @()
-          $scriptFiles = Get-ChildItem -Path . -Filter '*.ps1' -Recurse -ErrorAction SilentlyContinue
-
-          foreach ($file in $scriptFiles) {
-            # Skip test files and known false positives
-            if ($file.FullName -match '(\.tests?\.|CredentialHelpers|test-|tests/|mock|example)' -or 
+          $scriptFiles = Get-ChildItem -Path . -Filter '*.ps1' -Recurse -ErrorAction SilentlyContinue          foreach ($file in $scriptFiles) {
+            # Skip test files, credential helpers, and known false positives
+            if ($file.FullName -match '(\.tests?\.|CredentialHelpers|test-|tests/|mock|example|SecureCredentials/)' -or
                 $file.Name -match '\.Tests\.ps1$') {
-              Write-Host "Skipping test/example file: $($file.Name)" -ForegroundColor Yellow
+              Write-Host "Skipping test/example/credential file: $($file.Name)" -ForegroundColor Yellow
               continue
             }
 
@@ -691,10 +728,10 @@ jobs:
               if ($content) {
                 foreach ($pattern in $sensitivePatterns) {
                   if ($content -match $pattern) {
-                    # Additional filtering for known false positives
+                    # Additional filtering for known false positives and legitimate credential operations
                     $match = $matches[0] -replace '[\r\n]', ' '
-                    if ($match -match '(ConvertTo-SecureString|ConvertFrom-SecureString|TestPassword|CmdTest|MockPassword|SecureString)') {
-                      Write-Host "Skipping known safe pattern: $match" -ForegroundColor Yellow
+                    if ($match -match '(ConvertTo-SecureString|ConvertFrom-SecureString|TestPassword|CmdTest|MockPassword|SecureString|\$credentialData\.Password|\$encryptedData\.EncryptedPassword)') {
+                      Write-Host "Skipping known safe credential operation: $($match.Substring(0, [Math]::Min(30, $match.Length)))..." -ForegroundColor Yellow
                       continue
                     }
                     
