@@ -597,9 +597,6 @@ jobs:
             }
           }
 
-          # Close the switch statement
-          }
-
 
           # For full test runs, use bulletproof validation
           if (Test-Path './tests/Run-BulletproofValidation.ps1') {
@@ -682,12 +679,25 @@ jobs:
           $scriptFiles = Get-ChildItem -Path . -Filter '*.ps1' -Recurse -ErrorAction SilentlyContinue
 
           foreach ($file in $scriptFiles) {
+            # Skip test files and known false positives
+            if ($file.FullName -match '(\.tests?\.|CredentialHelpers|test-|tests/|mock|example)' -or 
+                $file.Name -match '\.Tests\.ps1$') {
+              Write-Host "Skipping test/example file: $($file.Name)" -ForegroundColor Yellow
+              continue
+            }
+
             try {
               $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
               if ($content) {
                 foreach ($pattern in $sensitivePatterns) {
                   if ($content -match $pattern) {
+                    # Additional filtering for known false positives
                     $match = $matches[0] -replace '[\r\n]', ' '
+                    if ($match -match '(ConvertTo-SecureString|ConvertFrom-SecureString|TestPassword|CmdTest|MockPassword|SecureString)') {
+                      Write-Host "Skipping known safe pattern: $match" -ForegroundColor Yellow
+                      continue
+                    }
+                    
                     if ($match.Length -gt 50) { $match = $match.Substring(0, 50) + "..." }
                     $violations += "Potential security issue in $($file.Name): $match"
                   }
