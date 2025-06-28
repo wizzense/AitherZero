@@ -6,7 +6,7 @@
 ## Modules Overview
 
 | Module | Version | Functions | Description |
-|--------|---------|-----------|-------------|| [BackupManager](./BackupManager.md) | 1.0.0 | 9 | Comprehensive backup management and maintenance capabilities for the AitherZero project |
+|--------|---------|-----------|-------------| [BackupManager](./BackupManager.md) | 1.0.0 | 9 | Comprehensive backup management and maintenance capabilities for the AitherZero project |
 | [DevEnvironment](./DevEnvironment.md) | 1.0.0 | 42 | Development environment setup and management for Aitherium Infrastructure Automation |
 | [ISOCustomizer](./ISOCustomizer.md) | 1.0.0 | 3 | Enterprise-grade ISO customization and autounattend file generation module for automated lab deployments |
 | [ISOManager](./ISOManager.md) | 1.0.0 | 9 | Enterprise-grade ISO download, management, and organization module for automated lab infrastructure deployment |
