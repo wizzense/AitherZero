@@ -108,7 +108,8 @@ function Get-RemoteConnection {
                             $false
                         }
                     )
-                }$results += $result
+                }
+                $results += $result
             }
 
             if ($ConnectionName) {
@@ -117,7 +118,8 @@ function Get-RemoteConnection {
                     return $results[0]
                 } else {
                     return $null
-                }            } else {
+                }
+            } else {
                 # Return array for all connections (force array type even when empty)
                 return ,$results
             }
