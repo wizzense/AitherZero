@@ -92,7 +92,7 @@ Describe "OpenTofuProvider Module Tests" {
         }
 
         It "Should have proper module manifest" {
-            $ManifestPath = "$PSScriptRoot/../../.(Join-Path $env:PWSH_MODULES_PATH "OpenTofuProvider/OpenTofuProvider.psd1")"
+            $ManifestPath = (Join-Path $env:PWSH_MODULES_PATH "OpenTofuProvider/OpenTofuProvider.psd1")
             Test-Path $ManifestPath | Should -Be $true
 
             $Manifest = Test-ModuleManifest -Path $ManifestPath

@@ -1,17 +1,17 @@
 BeforeAll {
     . "$PSScriptRoot/../../../helpers/Test-Credentials.ps1"
     # Import the testing framework
-    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "TestingFramework'") -Force
+    Import-Module (Join-Path $env:PWSH_MODULES_PATH "TestingFramework") -Force
 
     # Import the modules to test
-    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOManager'") -Force
-    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer'") -Force
+    Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOManager") -Force
+    Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer") -Force
 }
 
 Describe "ISOManager Module" {
     Context "Module Loading and Function Export" {
         It "Should load the ISOManager module successfully" {
-            { Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOManager'") -Force } | Should -Not -Throw
+            { Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOManager") -Force } | Should -Not -Throw
         }
 
         It "Should export all expected functions" {
@@ -87,7 +87,7 @@ Describe "ISOManager Module" {
 Describe "ISOCustomizer Module" {
     Context "Module Loading and Function Export" {
         It "Should load the ISOCustomizer module successfully" {
-            { Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer'") -Force } | Should -Not -Throw
+            { Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer") -Force } | Should -Not -Throw
         }
 
         It "Should export all expected functions" {
@@ -840,7 +840,7 @@ Describe "ISOCustomizer Module - Extended Tests" {
 
     Context "Template Integration Tests" {
         It "Should use internal templates when available" {
-            Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer'") -Force
+            Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer") -Force
 
             # Verify template directory exists
             $moduleRoot = Get-Module ISOCustomizer | Select-Object -ExpandProperty ModuleBase
@@ -895,8 +895,8 @@ Describe "Integration Tests" {
     Context "Module Interaction" {
         It "Should load both modules without conflicts" {
             {
-                Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOManager'") -Force
-                Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer'") -Force
+                Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOManager") -Force
+                Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer") -Force
             } | Should -Not -Throw
 
             # Verify both modules are loaded
@@ -905,8 +905,8 @@ Describe "Integration Tests" {
         }
 
         It "Should have no function name conflicts" {
-            Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOManager'") -Force
-            Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer'") -Force
+            Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOManager") -Force
+            Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer") -Force
 
             $isoManagerFunctions = Get-Command -Module ISOManager | Select-Object -ExpandProperty Name
             $isoCustomizerFunctions = Get-Command -Module ISOCustomizer | Select-Object -ExpandProperty Name
@@ -1063,8 +1063,8 @@ Describe "Performance and Stress Tests" {
             for ($i = 1; $i -le 5; $i++) {
                 $jobs += Start-Job -ScriptBlock {
                     param($i)
-                    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOManager'") -Force
-                    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer'") -Force
+                    Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOManager") -Force
+                    Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer") -Force
 
                     $config = @{
                         ComputerName = "CONCURRENT-TEST-$i"
@@ -1300,7 +1300,7 @@ Describe "Regression Tests" {
     Context "Previously Fixed Issues" {
         It "Should not regress on template loading" {
             # Test that templates are properly loaded from module directory
-            Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer'") -Force
+            Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer") -Force
 
             $testConfig = @{
                 ComputerName = "REGRESSION-TEST"
@@ -1355,8 +1355,8 @@ Describe "ISOManager Module - Missing Functions Tests" {
     Context "Missing Function Validation" {
         It "Should not export functions that don't exist" {
             # Test that manifest doesn't export non-existent functions
-            $manifest = Import-PowerShellDataFile '(Join-Path $env:PWSH_MODULES_PATH "ISOManager/ISOManager.psd1'")
-            $actualPublicFiles = Get-ChildItem '(Join-Path $env:PWSH_MODULES_PATH "ISOManager/Public'") -Filter '*.ps1' | ForEach-Object { $_.BaseName }
+            $manifest = Import-PowerShellDataFile (Join-Path $env:PWSH_MODULES_PATH "ISOManager/ISOManager.psd1")
+            $actualPublicFiles = Get-ChildItem (Join-Path $env:PWSH_MODULES_PATH "ISOManager/Public") -Filter '*.ps1' | ForEach-Object { $_.BaseName }
 
             foreach ($exportedFunction in $manifest.FunctionsToExport) {
                 if ($exportedFunction -eq 'Get-ISODownloadOptions') {
@@ -1455,7 +1455,7 @@ Describe "ISOCustomizer Module - Advanced Template Tests" {
     Context "Template Helper Functions" {
         It "Should load template helpers successfully" {
             # Import the private function file to test template helpers
-            Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer'") -Force
+            Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer") -Force
 
             # Test that template helper functions are available (they should be imported internally)
             { Get-AutounattendTemplate -TemplateType 'Generic' } | Should -Not -Throw
@@ -1463,7 +1463,7 @@ Describe "ISOCustomizer Module - Advanced Template Tests" {
         }
 
         It "Should return valid template paths" {
-            Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer'") -Force
+            Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer") -Force
 
             $genericTemplate = Get-AutounattendTemplate -TemplateType 'Generic'
             $headlessTemplate = Get-AutounattendTemplate -TemplateType 'Headless'
@@ -1480,7 +1480,7 @@ Describe "ISOCustomizer Module - Advanced Template Tests" {
         }
 
         It "Should handle invalid template types gracefully" {
-            Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer'") -Force
+            Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer") -Force
 
             $invalidTemplate = Get-AutounattendTemplate -TemplateType 'NonExistent'
             # Should return generic template as fallback or null
@@ -1492,7 +1492,7 @@ Describe "ISOCustomizer Module - Advanced Template Tests" {
 
     Context "Bootstrap Template Tests" {
         It "Should provide bootstrap template" {
-            Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer'") -Force
+            Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer") -Force
 
             $bootstrapTemplate = Get-BootstrapTemplate
             if ($bootstrapTemplate) {
@@ -1505,7 +1505,7 @@ Describe "ISOCustomizer Module - Advanced Template Tests" {
 
     Context "Kickstart Template Tests" {
         It "Should provide kickstart template" {
-            Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer'") -Force
+            Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer") -Force
 
             $kickstartTemplate = Get-KickstartTemplate
             if ($kickstartTemplate) {
@@ -1967,7 +1967,7 @@ Describe "Security and Validation Tests" {
             $maliciousConfig = @{
                 ComputerName = "TEST"
                 AdminPassword = "$(Get-TestCredential -CredentialType "AdminPassword")"
-                CustomXMLPayload = "<?xml version='1.0'?><malicious>payload</malicious>"
+                CustomXMLPayload = "<?xml version=`"1.0`"?><malicious>payload</malicious>"
             }
 
             $testPath = Join-Path $env:TEMP "injection-test.xml"
