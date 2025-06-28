@@ -26,7 +26,9 @@
         'Get-DevEnvironmentStatus',
         'Install-ClaudeCodeDependencies',
         'Install-GeminiCLIDependencies',
-        'Install-CodexCLIDependencies'
+        'Install-CodexCLIDependencies',
+        'Install-ClaudeRequirementsSystem',
+        'Test-ClaudeRequirementsSystem'
     )
 
     CmdletsToExport = @()

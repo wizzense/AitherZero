@@ -219,6 +219,7 @@ jobs:
           Write-Host "Setting up PowerShell environment on ${{ matrix.os }}..." -ForegroundColor Cyan
           echo "POWERSHELL_TELEMETRY_OPTOUT=1" >> $env:GITHUB_ENV
           echo "PROJECT_ROOT=$PWD" >> $env:GITHUB_ENV
+          echo "PWSH_MODULES_PATH=$PWD/aither-core/modules" >> $env:GITHUB_ENV
 
           if ($IsWindows) {
             $env:PATH_SEPARATOR = ";"
@@ -227,6 +228,8 @@ jobs:
           }
 
           Write-Host "✓ Environment initialized for ${{ matrix.os }}" -ForegroundColor Green
+          Write-Host "PROJECT_ROOT: $PWD" -ForegroundColor Yellow
+          Write-Host "PWSH_MODULES_PATH: $PWD/aither-core/modules" -ForegroundColor Yellow
 
       - name: Run Cross-Platform Validation
         shell: pwsh
@@ -234,6 +237,14 @@ jobs:
           Write-Host "Running pre-build validation on ${{ matrix.os }}..." -ForegroundColor Cyan
 
           $ErrorActionPreference = 'Stop'
+
+          # Set required environment variables for module loading
+          $env:PROJECT_ROOT = $PWD
+          $env:PWSH_MODULES_PATH = Join-Path $PWD 'aither-core/modules'
+
+          Write-Host "Environment setup:" -ForegroundColor Yellow
+          Write-Host "  PROJECT_ROOT: $env:PROJECT_ROOT" -ForegroundColor White
+          Write-Host "  PWSH_MODULES_PATH: $env:PWSH_MODULES_PATH" -ForegroundColor White
 
           try {
             if (Test-Path './tests/Run-BulletproofValidation.ps1') {

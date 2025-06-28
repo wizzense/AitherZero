@@ -9,12 +9,13 @@ Write-Host "Testing LabRunner module import..." -ForegroundColor Cyan
 try {
     Import-Module (Join-Path $env:PWSH_MODULES_PATH 'LabRunner') -Force
     Write-Host "✅ LabRunner module loaded successfully!" -ForegroundColor Green
-    
+
     $commands = Get-Command -Module LabRunner
     Write-Host "Available commands ($($commands.Count)):" -ForegroundColor Cyan
-    $commands | Select-Object -First 5 | ForEach-Object { 
-        Write-Host "  - $($_.Name)" -ForegroundColor White 
+    $commands | Select-Object -First 5 | ForEach-Object {
+        Write-Host "  - $($_.Name)" -ForegroundColor White
     }
-} catch {
+}
+catch {
     Write-Host "❌ Failed to load LabRunner: $($_.Exception.Message)" -ForegroundColor Red
 }
