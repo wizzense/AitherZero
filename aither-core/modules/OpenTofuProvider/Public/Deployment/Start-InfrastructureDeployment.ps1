@@ -78,6 +78,26 @@ function Start-InfrastructureDeployment {
         $script:deploymentId = [Guid]::NewGuid().ToString()
         $script:deploymentStartTime = Get-Date
         
+        # Initialize progress tracking if ProgressTracking module is available
+        $script:progressOperationId = $null
+        $script:useProgressTracking = (Get-Module -Name 'ProgressTracking' -ListAvailable -ErrorAction SilentlyContinue) -ne $null
+        
+        if ($script:useProgressTracking) {
+            try {
+                # Import ProgressTracking module if not already loaded
+                if (-not (Get-Module -Name 'ProgressTracking')) {
+                    Import-Module 'ProgressTracking' -Force -ErrorAction Stop
+                }
+                
+                $totalSteps = if ($Stage) { 1 } else { 5 }  # Prepare, Validate, Plan, Apply, Verify
+                $script:progressOperationId = Start-ProgressOperation -OperationName "Infrastructure Deployment" -TotalSteps $totalSteps -ShowTime -ShowETA -Style 'Detailed'
+                Write-ProgressLog -Message "Infrastructure deployment started with progress tracking" -Level 'Info'
+            } catch {
+                Write-CustomLog -Level 'WARN' -Message "Could not initialize progress tracking: $($_.Exception.Message)"
+                $script:useProgressTracking = $false
+            }
+        }
+        
         # Create deployment directory
         $script:deploymentDir = Join-Path $env:PROJECT_ROOT "deployments" $script:deploymentId
         New-Item -Path $script:deploymentDir -ItemType Directory -Force | Out-Null
@@ -123,9 +143,17 @@ function Start-InfrastructureDeployment {
             
             try {
                 # Step 1: Load and validate configuration
+                if ($script:useProgressTracking -and $script:progressOperationId) {
+                    Update-ProgressOperation -OperationId $script:progressOperationId -CurrentStep 1 -StepName "Loading deployment configuration"
+                }
+                
                 Write-CustomLog -Level 'INFO' -Message "Loading deployment configuration"
                 $config = Read-DeploymentConfiguration -Path $ConfigurationPath -ExpandVariables
                 $deploymentResult.Configuration = $config
+                
+                if ($script:useProgressTracking -and $script:progressOperationId) {
+                    Write-ProgressLog -Message "Configuration loaded successfully" -Level 'Success'
+                }
                 
                 # Override repository if specified
                 if ($Repository) {
@@ -134,8 +162,16 @@ function Start-InfrastructureDeployment {
                 }
                 
                 # Step 2: Create deployment plan
+                if ($script:useProgressTracking -and $script:progressOperationId) {
+                    Update-ProgressOperation -OperationId $script:progressOperationId -CurrentStep 2 -StepName "Creating deployment plan"
+                }
+                
                 Write-CustomLog -Level 'INFO' -Message "Creating deployment plan"
                 $plan = New-DeploymentPlan -Configuration $config -DryRun:$DryRun -SkipPreChecks:$SkipPreChecks
+                
+                if ($script:useProgressTracking -and $script:progressOperationId) {
+                    Write-ProgressLog -Message "Deployment plan created" -Level 'Success'
+                }
                 
                 if (-not $plan.IsValid) {
                     throw "Deployment plan validation failed: $($plan.ValidationErrors -join '; ')"
@@ -169,9 +205,17 @@ function Start-InfrastructureDeployment {
                 }
                 
                 # Step 4: Execute deployment stages
+                $currentStageIndex = 0
                 foreach ($stageName in $stagesToRun) {
                     if (-not $PSCmdlet.ShouldProcess("Stage: $stageName", "Execute deployment stage")) {
                         continue
+                    }
+                    
+                    $currentStageIndex++
+                    
+                    if ($script:useProgressTracking -and $script:progressOperationId) {
+                        $stageStep = if ($Stage) { 1 } else { $currentStageIndex + 2 }  # Offset by config loading and planning steps
+                        Update-ProgressOperation -OperationId $script:progressOperationId -CurrentStep $stageStep -StepName "Executing stage: $stageName"
                     }
                     
                     Write-CustomLog -Level 'INFO' -Message "Executing stage: $stageName"
@@ -187,6 +231,10 @@ function Start-InfrastructureDeployment {
                         Write-CustomLog -Level 'SUCCESS' -Message "Stage '$stageName' completed successfully"
                         $script:deploymentState.CompletedStages += $stageName
                         
+                        if ($script:useProgressTracking -and $script:progressOperationId) {
+                            Write-ProgressLog -Message "Stage '$stageName' completed successfully ($([Math]::Round($stageResult.Duration.TotalSeconds, 1))s)" -Level 'Success'
+                        }
+                        
                         # Create checkpoint after successful stage
                         if ($plan.Stages[$stageName].CreateCheckpoint) {
                             Save-DeploymentCheckpoint -DeploymentId $script:deploymentId -CheckpointName "after-$stageName" -State $script:deploymentState -StageOrder $plan.Stages[$stageName].Order
@@ -195,11 +243,20 @@ function Start-InfrastructureDeployment {
                         Write-CustomLog -Level 'ERROR' -Message "Stage '$stageName' failed: $($stageResult.Error)"
                         $deploymentResult.Errors += "Stage '$stageName' failed: $($stageResult.Error)"
                         
+                        if ($script:useProgressTracking -and $script:progressOperationId) {
+                            Add-ProgressError -OperationId $script:progressOperationId -Error "Stage '$stageName' failed: $($stageResult.Error)"
+                            Write-ProgressLog -Message "Stage '$stageName' failed: $($stageResult.Error)" -Level 'Error'
+                        }
+                        
                         if (-not $Force) {
                             throw "Deployment failed at stage: $stageName"
                         } else {
                             Write-CustomLog -Level 'WARN' -Message "Continuing despite failure due to -Force flag"
                             $deploymentResult.Warnings += "Stage '$stageName' failed but continuing due to -Force"
+                            
+                            if ($script:useProgressTracking -and $script:progressOperationId) {
+                                Add-ProgressWarning -OperationId $script:progressOperationId -Warning "Stage '$stageName' failed but continuing due to -Force"
+                            }
                         }
                     }
                     
@@ -213,6 +270,11 @@ function Start-InfrastructureDeployment {
                 
                 # Step 5: Final verification
                 if ($stagesToRun -contains 'Verify' -or (-not $Stage -and -not $DryRun)) {
+                    if ($script:useProgressTracking -and $script:progressOperationId) {
+                        $finalStep = if ($Stage) { 1 } else { 5 }
+                        Update-ProgressOperation -OperationId $script:progressOperationId -CurrentStep $finalStep -StepName "Performing final deployment verification"
+                    }
+                    
                     Write-CustomLog -Level 'INFO' -Message "Performing final deployment verification"
                     $verifyResult = Test-DeploymentSuccess -Plan $plan -DeploymentResult $deploymentResult
                     
@@ -220,15 +282,29 @@ function Start-InfrastructureDeployment {
                         Write-CustomLog -Level 'SUCCESS' -Message "Deployment verification passed"
                         $deploymentResult.Success = $true
                         $script:deploymentState.Status = 'Completed'
+                        
+                        if ($script:useProgressTracking -and $script:progressOperationId) {
+                            Write-ProgressLog -Message "Deployment verification passed" -Level 'Success'
+                        }
                     } else {
                         Write-CustomLog -Level 'WARN' -Message "Deployment verification failed: $($verifyResult.Reason)"
                         $deploymentResult.Warnings += "Verification failed: $($verifyResult.Reason)"
                         $script:deploymentState.Status = 'CompletedWithWarnings'
+                        
+                        if ($script:useProgressTracking -and $script:progressOperationId) {
+                            Add-ProgressWarning -OperationId $script:progressOperationId -Warning "Deployment verification failed: $($verifyResult.Reason)"
+                            Write-ProgressLog -Message "Deployment verification failed: $($verifyResult.Reason)" -Level 'Warning'
+                        }
                     }
                 } else {
                     # Partial deployment
                     $deploymentResult.Success = $deploymentResult.Errors.Count -eq 0
                     $script:deploymentState.Status = if ($DryRun) { 'DryRunCompleted' } else { 'PartiallyCompleted' }
+                    
+                    if ($script:useProgressTracking -and $script:progressOperationId) {
+                        $status = if ($DryRun) { "Dry run completed" } else { "Partial deployment completed" }
+                        Write-ProgressLog -Message $status -Level 'Info'
+                    }
                 }
                 
             } catch {
@@ -236,6 +312,11 @@ function Start-InfrastructureDeployment {
                 $deploymentResult.Errors += $_.Exception.Message
                 $script:deploymentState.Status = 'Failed'
                 $script:deploymentState.Errors += $_.Exception.Message
+                
+                if ($script:useProgressTracking -and $script:progressOperationId) {
+                    Add-ProgressError -OperationId $script:progressOperationId -Error $_.Exception.Message
+                    Write-ProgressLog -Message "Deployment failed: $($_.Exception.Message)" -Level 'Error'
+                }
                 
                 if (-not $Force) {
                     throw
@@ -246,6 +327,11 @@ function Start-InfrastructureDeployment {
                 $deploymentResult.Duration = $deploymentResult.EndTime - $deploymentResult.StartTime
                 $script:deploymentState.EndTime = $deploymentResult.EndTime
                 Save-DeploymentState -State $script:deploymentState
+                
+                # Complete progress tracking
+                if ($script:useProgressTracking -and $script:progressOperationId) {
+                    Complete-ProgressOperation -OperationId $script:progressOperationId -ShowSummary
+                }
                 
                 # Stop logging
                 Stop-Transcript

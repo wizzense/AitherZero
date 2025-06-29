@@ -1,0 +1,121 @@
+{
+  "Tests": [
+    {
+      "Duration": 0.0750058,
+      "Errors": [],
+      "StartTime": "2025-06-29T05:08:40.4875376+00:00",
+      "Details": [
+        "✓ Found: Start-AitherZero.ps1",
+        "✓ Found: aither-core/aither-core.ps1",
+        "✓ Found: aither-core/modules/Logging/Logging.psm1",
+        "✓ Directory aither-core/modules exists (299 items)",
+        "✓ Directory configs exists (7 items)",
+        "✓ Directory tests exists (325 items)"
+      ],
+      "Status": "Passed",
+      "Name": "Package Extraction"
+    },
+    {
+      "Duration": 0.0317411,
+      "Errors": [],
+      "StartTime": "2025-06-29T05:08:40.6559595+00:00",
+      "Details": [
+        "✓ Launcher found at expected location",
+        "✓ PowerShell 7.5.1 - Full compatibility"
+      ],
+      "Status": "Passed",
+      "Name": "First Launch"
+    },
+    {
+      "Duration": 0.0426567,
+      "Errors": [],
+      "StartTime": "2025-06-29T05:08:40.692401+00:00",
+      "Details": [
+        "✓ SetupWizard module loaded",
+        "✓ Platform detected: Linux 24.04.2 LTS (Noble Numbat)",
+        "✓ Quick start guide can be generated"
+      ],
+      "Status": "Passed",
+      "Name": "Setup Wizard"
+    },
+    {
+      "Duration": 0.5098593,
+      "Errors": [],
+      "StartTime": "2025-06-29T05:08:40.7370837+00:00",
+      "Details": [
+        "✓ Logging loaded in 22ms",
+        "✓ PatchManager loaded in 190ms",
+        "✓ LabRunner loaded in 51ms",
+        "✓ BackupManager loaded in 34ms",
+        "✓ OpenTofuProvider loaded in 188ms",
+        "",
+        "📊 Average module load time: 97ms"
+      ],
+      "Status": "Passed",
+      "Name": "Module Loading"
+    },
+    {
+      "Duration": 0.0081208,
+      "Errors": [],
+      "StartTime": "2025-06-29T05:08:41.248249+00:00",
+      "Details": [
+        "✓ Core application found",
+        "✓ 5/5 menu modules available"
+      ],
+      "Status": "Passed",
+      "Name": "Interactive Menu"
+    },
+    {
+      "Duration": 0.0540937,
+      "Errors": [
+        "Cannot convert 'System.Object[]' to the type 'System.String' required by parameter 'AdditionalChildPath'. Specified method is not supported."
+      ],
+      "StartTime": "2025-06-29T05:08:41.257558+00:00",
+      "Details": [],
+      "Status": "Failed",
+      "Name": "Basic Operation"
+    },
+    {
+      "Duration": 0.0095555,
+      "Errors": [],
+      "StartTime": "2025-06-29T05:08:41.3128375+00:00",
+      "Details": [
+        "✓ Path construction works: test/path",
+        "✓ Path construction works: test/path/nested",
+        "✓ Path construction works: /workspaces/AitherZero/test",
+        "✓ Environment variables: 1/4 found",
+        "✓ Linux platform detected",
+        "ℹ️ Distribution: Ubuntu"
+      ],
+      "Status": "Passed",
+      "Name": "Platform Compatibility"
+    },
+    {
+      "Duration": 0.187558,
+      "Errors": [
+        "Cannot bind argument to parameter 'Path' because it is null."
+      ],
+      "StartTime": "2025-06-29T05:08:41.3242033+00:00",
+      "Details": [],
+      "Status": "Failed",
+      "Name": "Performance Benchmarks"
+    }
+  ],
+  "Recommendations": [],
+  "StartTime": "2025-06-29T05:08:40.0462958+00:00",
+  "Issues": [],
+  "Benchmarks": [
+    {
+      "Data": {
+        "OpenTofuProvider": 188.1191,
+        "PatchManager": 190.181,
+        "LabRunner": 51.0961,
+        "BackupManager": 33.6015,
+        "Logging": 21.9991
+      },
+      "Average": 96.99936,
+      "Name": "Module Load Times"
+    }
+  ],
+  "Platform": "All"
+}

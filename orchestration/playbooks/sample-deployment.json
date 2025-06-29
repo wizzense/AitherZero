@@ -1,0 +1,94 @@
+{
+  "name": "sample-deployment",
+  "description": "Sample deployment playbook demonstrating conditional logic and parallel execution",
+  "version": "1.0",
+  "created": "2025-06-29 05:08:00",
+  "parameters": {
+    "environment": "dev",
+    "deployTarget": "lab-01",
+    "skipTests": false
+  },
+  "requiredModules": ["LabRunner", "OpenTofuProvider"],
+  "steps": [
+    {
+      "name": "Environment Validation",
+      "type": "script",
+      "command": "Write-Host 'Validating environment: {{environment}}'",
+      "condition": "$params.environment -in @('dev', 'staging', 'prod')"
+    },
+    {
+      "name": "Conditional Testing",
+      "type": "condition",
+      "condition": "$params.skipTests -eq $false",
+      "then": [
+        {
+          "name": "Run Unit Tests",
+          "type": "script",
+          "command": "Write-Host 'Running unit tests...'"
+        },
+        {
+          "name": "Run Integration Tests", 
+          "type": "script",
+          "command": "Write-Host 'Running integration tests...'"
+        }
+      ],
+      "else": [
+        {
+          "name": "Skip Tests Notice",
+          "type": "script",
+          "command": "Write-Host 'Tests skipped by parameter'"
+        }
+      ]
+    },
+    {
+      "name": "Parallel Infrastructure Setup",
+      "type": "parallel",
+      "parallel": [
+        {
+          "name": "Setup Network",
+          "type": "script",
+          "command": "Write-Host 'Setting up network infrastructure...'; Start-Sleep 2"
+        },
+        {
+          "name": "Setup Storage",
+          "type": "script", 
+          "command": "Write-Host 'Setting up storage infrastructure...'; Start-Sleep 2"
+        },
+        {
+          "name": "Setup Compute",
+          "type": "script",
+          "command": "Write-Host 'Setting up compute infrastructure...'; Start-Sleep 2"
+        }
+      ]
+    },
+    {
+      "name": "Deploy Application",
+      "type": "script",
+      "command": "Write-Host 'Deploying application to {{deployTarget}}...'"
+    },
+    {
+      "name": "Environment-Specific Configuration",
+      "type": "condition",
+      "condition": "$env.context -eq 'prod'",
+      "then": [
+        {
+          "name": "Production Security Hardening",
+          "type": "script",
+          "command": "Write-Host 'Applying production security configurations...'"
+        }
+      ],
+      "else": [
+        {
+          "name": "Development Debug Setup",
+          "type": "script",
+          "command": "Write-Host 'Enabling debug mode for development...'"
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "type": "script",
+      "command": "Write-Host 'Performing health checks...'"
+    }
+  ]
+}

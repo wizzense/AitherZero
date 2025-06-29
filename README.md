@@ -39,6 +39,12 @@ curl -s https://api.github.com/repos/wizzense/AitherZero/releases/latest | grep 
 $url = (irm "https://api.github.com/repos/wizzense/AitherZero/releases/latest").assets | ? name -like "*windows.zip" | % browser_download_url; iwr $url -OutFile "AitherZero.zip"; Expand-Archive "AitherZero.zip" -Force; $folder = (gci -Directory | ? Name -like "AitherZero*")[0].Name; cd $folder; .\AitherZero.bat
 ```
 
+#### Quick Environment Validation
+```powershell
+# Run quickstart validation to check your environment:
+./tests/Run-BulletproofValidation.ps1 -ValidationLevel Quickstart -QuickstartSimulation
+```
+
 #### Manual Download (If you prefer)
 1. **Go to [GitHub Releases](https://github.com/wizzense/AitherZero/releases/latest)**
 2. **Download your platform**:
@@ -49,10 +55,21 @@ $url = (irm "https://api.github.com/repos/wizzense/AitherZero/releases/latest").
    - **Windows**: `AitherZero.bat` or `Start-AitherZero-Windows.ps1`
    - **Linux/macOS**: `./aitherzero.sh` or `pwsh Start-AitherZero.ps1`
 
-### � First-Time Setup Wizard
+### 🛠 Enhanced First-Time Setup Wizard
 ```bash
-# Run setup wizard to check your environment:
+# Interactive setup with profile selection:
 ./Start-AitherZero.ps1 -Setup
+
+# Installation profiles for different needs:
+./Start-AitherZero.ps1 -Setup -InstallationProfile minimal     # Core features only
+./Start-AitherZero.ps1 -Setup -InstallationProfile developer   # + AI tools & MCP
+./Start-AitherZero.ps1 -Setup -InstallationProfile full        # + Cloud CLIs & enterprise
+
+# Legacy options still supported:
+./Start-AitherZero.ps1 -Setup -SkipOptional
+
+# Validate environment without setup:
+./tests/Run-BulletproofValidation.ps1 -ValidationLevel Quickstart
 ```
 
 ### 💡 Usage Examples
@@ -74,9 +91,12 @@ $url = (irm "https://api.github.com/repos/wizzense/AitherZero/releases/latest").
 
 **Ready-to-Run Application Package:**
 - ✅ **One-click execution** on all platforms
-- ✅ **Built-in setup wizard** (`-Setup`)
+- ✅ **Intelligent setup wizard** with progress tracking (`-Setup`)
 - ✅ **Interactive menu system** for guided usage
 - ✅ **Automated execution mode** (`-Auto`)
+- ✅ **Quickstart validation** for new user environments
+- ✅ **Visual progress indicators** for long-running operations
+- ✅ **Platform-specific guidance** and recommendations
 - ✅ **No compilation or installation** required
 - ✅ **Cross-platform launchers** included
 - ✅ **Claude Code MCP integration** for AI-powered automation
@@ -130,6 +150,57 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development setup and guidel
 
 ---
 
+## 🎯 Enhanced User Experience (New!)
+
+AitherZero now provides an enhanced user experience with intelligent setup and validation:
+
+### 🧠 Intelligent Setup Wizard
+- **Installation Profiles**: Choose from Minimal, Developer, Full, or Interactive profiles
+- **Platform Detection**: Automatically detects your OS, PowerShell version, and architecture
+- **AI Tools Integration**: Automatic Claude Code and MCP server setup (Developer/Full profiles)
+- **Dependency Checking**: Validates Git, OpenTofu/Terraform, Node.js, and cloud tools
+- **Configuration Generation**: Creates platform-specific configuration files
+- **Progress Tracking**: Visual progress bars with time estimates and completion status
+- **Smart Recommendations**: Provides actionable suggestions for missing dependencies
+
+### 📊 Quickstart Validation System
+- **New User Validation**: Special validation level for first-time users
+- **Environment Assessment**: Comprehensive check of platform requirements
+- **Guided Setup Process**: Step-by-step guidance for optimal configuration
+- **Cross-Platform Testing**: Validates functionality across Windows, Linux, and macOS
+- **Performance Benchmarking**: Optional performance testing during setup
+
+### 🎮 Interactive Progress Tracking
+- **Visual Progress Bars**: Real-time progress indicators for long operations
+- **Multiple Display Styles**: Bar, spinner, percentage, and detailed views
+- **Time Tracking**: Elapsed time and estimated completion time
+- **Multi-Operation Support**: Track multiple parallel operations simultaneously
+- **Error and Warning Tracking**: Comprehensive logging with visual feedback
+
+### 💡 Usage Examples
+```powershell
+# Interactive setup with profile selection
+./Start-AitherZero.ps1 -Setup
+
+# Minimal setup for production environments
+./Start-AitherZero.ps1 -Setup -InstallationProfile minimal
+
+# Developer setup with AI tools integration
+./Start-AitherZero.ps1 -Setup -InstallationProfile developer
+
+# Full setup with all features
+./Start-AitherZero.ps1 -Setup -InstallationProfile full
+
+# Quick validation for existing users
+./tests/Run-BulletproofValidation.ps1 -ValidationLevel Quickstart
+
+# Custom setup with progress tracking
+Import-Module ./aither-core/modules/SetupWizard
+$result = Start-IntelligentSetup -InstallationProfile developer
+```
+
+---
+
 ## 🚀 Features
 
 AitherZero provides a comprehensive infrastructure automation framework:
@@ -154,13 +225,15 @@ AitherZero provides a comprehensive infrastructure automation framework:
 - **OpenTofuProvider**: Infrastructure deployment and management
 - **ParallelExecution**: Runspace-based parallel task execution
 - **Logging**: Centralized logging across all operations
+- **SetupWizard**: Intelligent first-time setup with platform detection
+- **ProgressTracking**: Visual progress indicators and operation tracking
 - **ISOManager/ISOCustomizer**: ISO management and customization
 - **RemoteConnection**: Multi-protocol remote connections
 - **SecureCredentials**: Enterprise credential management
 - **TestingFramework**: Pester-based testing integration
-- **ScriptManager**: Script repository management
-- **MaintenanceOperations**: System maintenance automation
-- **RepoSync**: Repository synchronization and fork management
+- **SecurityAutomation**: Automated security hardening and compliance
+- **SystemMonitoring**: System performance monitoring and alerting
+- **RestAPIServer**: REST API server for external integrations
 
 ## 🔧 Requirements
 
@@ -235,7 +308,10 @@ AitherZero Application Package/
 ## 📚 Documentation
 
 - **[Installation Guide](docs/INSTALLATION.md)** - Detailed setup instructions
-- **[Quick Start Guide](QUICK-START-GUIDE.md)** - Get started in minutes
+- **[Quick Start Guide](QUICK-START-GUIDE.md)** - Get started in minutes with intelligent setup
+- **[Setup Wizard Guide](docs/SETUP-WIZARD-GUIDE.md)** - Comprehensive setup wizard documentation
+- **[Progress Tracking Guide](docs/PROGRESS-TRACKING-GUIDE.md)** - Visual progress indicators guide
+- **[Quickstart Validation Guide](docs/QUICKSTART-VALIDATION-GUIDE.md)** - New user validation system
 - **[Claude Code MCP Integration](docs/CLAUDE-CODE-MCP-INTEGRATION.md)** - AI-powered automation setup
 - **[Contributing Guide](CONTRIBUTING.md)** - Development setup and guidelines
 - **[Module Reference](docs/MODULE-REFERENCE.md)** - Complete module documentation
