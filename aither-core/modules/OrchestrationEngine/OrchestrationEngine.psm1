@@ -624,35 +624,35 @@ function Validate-PlaybookStep {
     $errors = @()
     
     if (-not $Step.name) {
-        $errors += "Step $StepNumber: name is required"
+        $errors += "Step ${StepNumber}: name is required"
     }
     
     if (-not $Step.type) {
-        $errors += "Step $StepNumber: type is required"
+        $errors += "Step ${StepNumber}: type is required"
     } elseif ($Step.type -notin @('script', 'condition', 'parallel', 'module')) {
-        $errors += "Step $StepNumber: invalid type '$($Step.type)'"
+        $errors += "Step ${StepNumber}: invalid type '$($Step.type)'"
     }
     
     # Type-specific validation
     switch ($Step.type) {
         'script' {
             if (-not $Step.command) {
-                $errors += "Step $StepNumber: script steps require 'command' property"
+                $errors += "Step ${StepNumber}: script steps require 'command' property"
             }
         }
         'condition' {
             if (-not $Step.condition) {
-                $errors += "Step $StepNumber: conditional steps require 'condition' property"
+                $errors += "Step ${StepNumber}: conditional steps require 'condition' property"
             }
         }
         'parallel' {
             if (-not $Step.parallel -or $Step.parallel.Count -eq 0) {
-                $errors += "Step $StepNumber: parallel steps require 'parallel' array with sub-steps"
+                $errors += "Step ${StepNumber}: parallel steps require 'parallel' array with sub-steps"
             }
         }
         'module' {
             if (-not $Step.module) {
-                $errors += "Step $StepNumber: module steps require 'module' property"
+                $errors += "Step ${StepNumber}: module steps require 'module' property"
             }
         }
     }

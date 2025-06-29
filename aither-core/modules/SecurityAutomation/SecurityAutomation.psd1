@@ -8,7 +8,7 @@
     Description = 'PowerShell security automation module for enterprise security management'
     PowerShellVersion = '7.0'
     RequiredModules = @(
-        @{ ModuleName = 'ActiveDirectory'; RequiredVersion = '1.0.0.0'; ModuleVersion = '1.0.0.0' }
+        @{ ModuleName = 'ActiveDirectory'; RequiredVersion = '1.0.0.0' }
     )
     FunctionsToExport = @(
         # Active Directory

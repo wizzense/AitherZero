@@ -1,29 +1,37 @@
 {
     "folders": [
         {
-            "name": "Aitherium",
+            "name": "AitherZero",
             "path": "."
         },
         {
             "name": "Aither-Core Modules",
             "path": "./aither-core/modules"
         },
-{
-    "name": "Aither-Core Scripts",
-    "path": "./aither-core/scripts"
-},
-{
-    "name": "OpenTofu Configurations",
-    "path": "./opentofu"
-},
-{
-    "name": "Tests",
-    "path": "./tests"
-},
-{
-    "name": "Documentation",
-    "path": "./docs"
-}
+        {
+            "name": "Core Application",
+            "path": "./aither-core"
+        },
+        {
+            "name": "Aither-Core Scripts",
+            "path": "./aither-core/scripts"
+        },
+        {
+            "name": "OpenTofu Configurations",
+            "path": "./opentofu"
+        },
+        {
+            "name": "MCP Server",
+            "path": "./mcp-server"
+        },
+        {
+            "name": "Tests",
+            "path": "./tests"
+        },
+        {
+            "name": "Documentation",
+            "path": "./docs"
+        }
     ],
     "settings": {
         "files.exclude": {
