@@ -97,7 +97,7 @@ jobs:
           # Set build parameters
           $buildParams = @{
             Profile = '${{ matrix.profile }}'
-            Platform = '${{ runner.os }}'
+            Platform = '${{ matrix.os }}'
             OutputPath = 'dist'
             IncludeTests = $false
             Compress = $true
@@ -112,7 +112,7 @@ jobs:
               Write-Host "Using default build process..." -ForegroundColor Yellow
               
               # Create output directory
-              $outputDir = "dist/aitherzero-${{ matrix.profile }}-${{ runner.os }}"
+              $outputDir = "dist/aitherzero-${{ matrix.profile }}-${{ matrix.os }}"
               New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
               
               # Copy core files based on profile
@@ -165,7 +165,7 @@ jobs:
               $versionInfo = @{
                 Version = if ($env:GITHUB_REF -match 'refs/tags/v(.+)') { $matches[1] } else { "dev-$($env:GITHUB_SHA.Substring(0,7))" }
                 Profile = '${{ matrix.profile }}'
-                Platform = '${{ runner.os }}'
+                Platform = '${{ matrix.os }}'
                 BuildDate = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss UTC')
                 Commit = $env:GITHUB_SHA
               } | ConvertTo-Json -Depth 2
@@ -176,7 +176,7 @@ jobs:
             }
             
             # Validate package integrity
-            $packagePath = "dist/aitherzero-${{ matrix.profile }}-${{ runner.os }}"
+            $packagePath = "dist/aitherzero-${{ matrix.profile }}-${{ matrix.os }}"
             if (-not (Test-Path "$packagePath/Start-AitherZero.ps1")) {
               throw "Package validation failed: Main script not found"
             }
@@ -193,23 +193,41 @@ jobs:
         run: |
           Write-Host "📦 Creating package archive..." -ForegroundColor Yellow
           
-          $packageDir = "dist/aitherzero-${{ matrix.profile }}-${{ runner.os }}"
-          $archiveName = "aitherzero-${{ matrix.profile }}-${{ runner.os }}"
+          # Use consistent platform naming
+          $platformName = "${{ matrix.os }}"
+          $packageDir = "dist/aitherzero-${{ matrix.profile }}-$platformName"
+          $archiveName = "aitherzero-${{ matrix.profile }}-$platformName"
+          
+          # Check if package directory exists
+          if (-not (Test-Path $packageDir)) {
+            throw "Package directory not found: $packageDir"
+          }
+          
+          Write-Host "Package directory contents:" -ForegroundColor Cyan
+          Get-ChildItem $packageDir -Recurse | Select-Object FullName, Length | Format-Table -AutoSize
           
           if ($IsWindows) {
             $archivePath = "$archiveName.zip"
-            Compress-Archive -Path $packageDir -DestinationPath $archivePath -Force
+            Write-Host "Creating Windows ZIP archive: $archivePath" -ForegroundColor Cyan
+            Compress-Archive -Path "$packageDir/*" -DestinationPath $archivePath -Force
           } else {
             $archivePath = "$archiveName.tar.gz"
-            tar -czf $archivePath -C dist "aitherzero-${{ matrix.profile }}-${{ runner.os }}"
+            Write-Host "Creating Unix TAR.GZ archive: $archivePath" -ForegroundColor Cyan
+            tar -czf $archivePath -C dist "aitherzero-${{ matrix.profile }}-$platformName"
           }
           
-          # Verify archive was created
+          # Verify archive was created and show details
           if (Test-Path $archivePath) {
             $size = (Get-Item $archivePath).Length
             Write-Host "✅ Archive created: $archivePath ($([math]::Round($size/1MB, 2)) MB)" -ForegroundColor Green
+            
+            # List created files for upload step
+            Write-Host "📋 Files created for upload:" -ForegroundColor Yellow
+            Get-ChildItem -Path . -Filter "$archiveName.*" | ForEach-Object {
+              Write-Host "  - $($_.Name)" -ForegroundColor Green
+            }
           } else {
-            throw "Failed to create package archive"
+            throw "Failed to create package archive: $archivePath"
           }
       
       - name: Upload Package Artifact
@@ -225,7 +243,7 @@ jobs:
     name: 🚀 Create Release
     needs: build-matrix
     runs-on: ubuntu-latest
-    if: github.event.inputs.create_release != 'false'
+    if: (startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
     
     steps:
       - name: Checkout Repository
