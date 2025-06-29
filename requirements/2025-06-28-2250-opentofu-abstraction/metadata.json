@@ -1,0 +1,12 @@
+{
+  "id": "opentofu-abstraction-2025-06-28-2250",
+  "title": "OpenTofu Infrastructure Abstraction Layer",
+  "created": "2025-06-28T22:50:00Z",
+  "status": "discovery",
+  "priority": "high",
+  "phase": 1,
+  "description": "Plan and implement OpenTofu abstraction focusing on Windows Server and Hyper-V deployments with Tailscale provider integration",
+  "categories": ["infrastructure", "automation", "deployment", "opentofu"],
+  "modules_involved": ["OpenTofuProvider", "ISOManager", "ISOCustomizer"],
+  "estimated_complexity": "high"
+}

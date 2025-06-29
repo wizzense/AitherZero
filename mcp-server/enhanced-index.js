@@ -17,6 +17,8 @@ import { EnhancedToolDefinitions } from './src/enhanced-tool-definitions.js';
 import { AitherCommandGenerator } from './src/aither-command-generator.js';
 import { ValidationSchema } from './src/validation-schema.js';
 import { Logger } from './src/logger.js';
+import { AdvancedAnalytics } from './src/advanced-analytics.js';
+import { IntelligentCaching } from './src/intelligent-caching.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -40,6 +42,10 @@ class EnhancedAitherZeroMCPServer {
     this.toolDefs = new EnhancedToolDefinitions();
     this.commandGen = new AitherCommandGenerator();
     this.validator = new ValidationSchema();
+    
+    // Enhanced capabilities
+    this.analytics = new AdvancedAnalytics(this.logger);
+    this.cache = new IntelligentCaching(this.logger, this.analytics);
 
     this.setupHandlers();
     this.generateVSCodeToolsets();
@@ -79,12 +85,16 @@ class EnhancedAitherZeroMCPServer {
           throw new Error(`Invalid arguments: ${validation.errors.join(', ')}`);
         }
 
-        // Execute the tool
-        const result = await this.executeTool(name, args || {});
+        // Execute the tool with caching
+        const result = await this.executeToolWithCaching(name, args || {});
+
+        // Track analytics
+        this.analytics.trackToolUsage(name, args || {}, result);
 
         this.logger.info(`Tool execution completed: ${name}`, {
-          success: true,
-          category: tool.category
+          success: result.success,
+          category: tool.category,
+          executionTime: result.executionTime
         });
 
         return {
@@ -111,7 +121,18 @@ class EnhancedAitherZeroMCPServer {
     });
   }
 
+  async executeToolWithCaching(toolName, args) {
+    const cacheKey = { tool: toolName, args };
+    const cacheTTL = this.getCacheTTL(toolName);
+    
+    return await this.cache.get('toolResults', cacheKey, async () => {
+      return await this.executeTool(toolName, args);
+    }, { ttl: cacheTTL });
+  }
+
   async executeTool(toolName, args) {
+    const startTime = Date.now();
+    
     try {
       // Generate PowerShell command using enhanced command generator
       const psScript = this.commandGen.generateCommand(toolName, args);
@@ -124,11 +145,25 @@ class EnhancedAitherZeroMCPServer {
       const result = await this.psExecutor.execute(psScript);
 
       // Process and enhance the result
-      return this.processToolResult(toolName, result, args);
+      const processedResult = this.processToolResult(toolName, result, args);
+      
+      // Add execution timing
+      processedResult.executionTime = Date.now() - startTime;
+      
+      return processedResult;
 
     } catch (error) {
       this.logger.error(`Tool execution error for ${toolName}`, error);
-      throw new Error(`Failed to execute ${toolName}: ${error.message}`);
+      
+      const errorResult = {
+        success: false,
+        error: error.message,
+        executionTime: Date.now() - startTime,
+        tool: toolName,
+        timestamp: new Date().toISOString()
+      };
+      
+      throw errorResult;
     }
   }
 
@@ -532,12 +567,91 @@ class EnhancedAitherZeroMCPServer {
     return sanitized;
   }
 
+  getCacheTTL(toolName) {
+    // Tool-specific cache TTL configuration
+    const ttlMap = {
+      'aither_system_status': 30 * 1000,        // 30 seconds
+      'aither_health_diagnostics': 60 * 1000,    // 1 minute  
+      'aither_performance_monitoring': 45 * 1000, // 45 seconds
+      'aither_fast_validation': 120 * 1000,      // 2 minutes
+      'aither_module_management': 300 * 1000,    // 5 minutes
+      'aither_credential_management': 0,          // No caching for security
+      'aither_backup_management': 180 * 1000,    // 3 minutes
+      'aither_patch_workflow': 0,                 // No caching for state-changing ops
+      'aither_infrastructure_deployment': 0      // No caching for deployments
+    };
+    
+    return ttlMap[toolName] || 60 * 1000; // Default 1 minute
+  }
+
+  // Analytics and reporting endpoints
+  async getAnalyticsReport() {
+    return this.analytics.generateAdvancedReport();
+  }
+
+  async getCacheReport() {
+    return this.cache.generateCacheReport();
+  }
+
+  async getSystemInsights() {
+    const analyticsReport = await this.getAnalyticsReport();
+    const cacheReport = await this.getCacheReport();
+    
+    return {
+      timestamp: new Date().toISOString(),
+      server: {
+        version: '2.0.0-enhanced',
+        uptime: Date.now() - this.analytics.startTime,
+        totalTools: this.toolDefs.getAllTools().length
+      },
+      analytics: analyticsReport,
+      cache: cacheReport,
+      recommendations: this.generateSystemRecommendations(analyticsReport, cacheReport)
+    };
+  }
+
+  generateSystemRecommendations(analytics, cache) {
+    const recommendations = [];
+    
+    // Combine recommendations from analytics and cache
+    recommendations.push(...(analytics.recommendations || []));
+    recommendations.push(...(cache.recommendations || []));
+    
+    // Add server-specific recommendations
+    if (analytics.overview.totalToolCalls > 1000) {
+      recommendations.push({
+        type: 'performance',
+        priority: 'medium',
+        message: 'High tool usage detected - consider implementing more aggressive caching',
+        action: 'optimize_caching'
+      });
+    }
+    
+    return recommendations;
+  }
+
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    this.logger.info('Enhanced AitherZero MCP Server started successfully');
+    
+    this.logger.info('Enhanced AitherZero MCP Server v2.0.0 started successfully');
     this.logger.info(`Available tools: ${this.toolDefs.getAllTools().length}`);
     this.logger.info(`Available categories: ${this.toolDefs.getCategories().length}`);
+    this.logger.info('Advanced features: Analytics, Intelligent Caching, Performance Monitoring');
+    
+    // Schedule periodic analytics and cache reports
+    setInterval(async () => {
+      try {
+        const insights = await this.getSystemInsights();
+        this.logger.info('System insights generated', {
+          totalToolCalls: insights.analytics.overview.totalToolCalls,
+          cacheHitRate: insights.cache.stats.performance.hitRate,
+          recommendations: insights.recommendations.length
+        });
+      } catch (error) {
+        this.logger.error('Failed to generate system insights', error);
+      }
+    }, 15 * 60 * 1000); // Every 15 minutes
   }
 }
 

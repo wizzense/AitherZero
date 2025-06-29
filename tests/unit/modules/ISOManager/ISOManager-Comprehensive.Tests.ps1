@@ -456,7 +456,7 @@ Describe "ISOCustomizer Module - Complete Test Suite" {
 
     Context "Template Integration Tests" {
         It "Should use internal templates when available" {
-            Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer'") -Force
+            Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer") -Force
 
             # Verify template directory exists
             $moduleRoot = Get-Module ISOCustomizer | Select-Object -ExpandProperty ModuleBase
@@ -479,7 +479,7 @@ Describe "ISOCustomizer Module - Complete Test Suite" {
 
         It "Should load template helpers successfully" {
             # Import the private function file to test template helpers
-            Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer'") -Force
+            Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer") -Force
 
             # Test that template helper functions are available (they should be imported internally)
             { Get-AutounattendTemplate -TemplateType 'Generic' } | Should -Not -Throw
@@ -487,7 +487,7 @@ Describe "ISOCustomizer Module - Complete Test Suite" {
         }
 
         It "Should return valid template paths" {
-            Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer'") -Force
+            Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer") -Force
 
             $genericTemplate = Get-AutounattendTemplate -TemplateType 'Generic'
             $headlessTemplate = Get-AutounattendTemplate -TemplateType 'Headless'
@@ -504,7 +504,7 @@ Describe "ISOCustomizer Module - Complete Test Suite" {
         }
 
         It "Should provide bootstrap template" {
-            Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer'") -Force
+            Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer") -Force
 
             $bootstrapTemplate = Get-BootstrapTemplate
             if ($bootstrapTemplate) {
@@ -826,7 +826,7 @@ Describe "Regression Tests" {
     Context "Previously Fixed Issues" {
         It "Should not regress on template loading" {
             # Test that templates are properly loaded from module directory
-            Import-Module '(Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer'") -Force
+            Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOCustomizer") -Force
 
             $testConfig = @{
                 ComputerName = "REGRESSION-TEST"

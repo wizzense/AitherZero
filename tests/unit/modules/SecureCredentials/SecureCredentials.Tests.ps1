@@ -10,9 +10,9 @@
 
 BeforeAll {
     # Import required modules
-    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "Logging/Logging.psm1'") -Force
-    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "TestingFramework/TestingFramework.psm1'") -Force
-    Import-Module '(Join-Path $env:PWSH_MODULES_PATH "SecureCredentials/SecureCredentials.psm1'") -Force
+    Import-Module (Join-Path $env:PWSH_MODULES_PATH "Logging/Logging.psm1") -Force
+    Import-Module (Join-Path $env:PWSH_MODULES_PATH "TestingFramework/TestingFramework.psm1") -Force
+    Import-Module (Join-Path $env:PWSH_MODULES_PATH "SecureCredentials/SecureCredentials.psm1") -Force
 
     # Import test credential helper
     . "$PSScriptRoot/../../../helpers/Test-Credentials.ps1"
