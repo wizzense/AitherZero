@@ -1,0 +1,100 @@
+{
+  "Issues": [],
+  "StartTime": "2025-06-29T05:54:21.5442664+00:00",
+  "Platform": "All",
+  "Benchmarks": [],
+  "Tests": [
+    {
+      "Details": [
+        "✓ Found: Start-AitherZero.ps1",
+        "✓ Found: aither-core/aither-core.ps1",
+        "✓ Found: aither-core/modules/Logging/Logging.psm1",
+        "✓ Directory aither-core/modules exists (312 items)",
+        "✓ Directory configs exists (11 items)",
+        "✓ Directory tests exists (333 items)"
+      ],
+      "StartTime": "2025-06-29T05:54:21.9127697+00:00",
+      "Errors": [],
+      "Duration": 0.061364,
+      "Name": "Package Extraction",
+      "Status": "Passed"
+    },
+    {
+      "Details": [
+        "✓ Launcher found at expected location",
+        "✓ PowerShell 7.5.1 - Full compatibility"
+      ],
+      "StartTime": "2025-06-29T05:54:22.0209891+00:00",
+      "Errors": [],
+      "Duration": 0.0520615,
+      "Name": "First Launch",
+      "Status": "Passed"
+    },
+    {
+      "Details": [
+        "✓ SetupWizard module loaded",
+        "✓ Platform detected: Linux 24.04.2 LTS (Noble Numbat)",
+        "✓ Quick start guide can be generated"
+      ],
+      "StartTime": "2025-06-29T05:54:22.0764683+00:00",
+      "Errors": [],
+      "Duration": 0.0393906,
+      "Name": "Setup Wizard",
+      "Status": "Passed"
+    },
+    {
+      "Details": [
+        "✓ Logging loaded in 15ms",
+        "✓ PatchManager loaded in 438ms",
+        "✓ LabRunner loaded in 154ms",
+        "✓ BackupManager loaded in 36ms",
+        "✓ OpenTofuProvider loaded in 533ms",
+        "",
+        "📊 Average module load time: 235ms"
+      ],
+      "StartTime": "2025-06-29T05:54:22.1183518+00:00",
+      "Errors": [],
+      "Duration": 1.2216755,
+      "Name": "Module Loading",
+      "Status": "Passed"
+    },
+    {
+      "Details": [
+        "✓ Core application found",
+        "✓ 5/5 menu modules available"
+      ],
+      "StartTime": "2025-06-29T05:54:23.3437857+00:00",
+      "Errors": [],
+      "Duration": 0.0285322,
+      "Name": "Interactive Menu",
+      "Status": "Passed"
+    },
+    {
+      "Details": [
+        "⚠️ Logging issue: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+        "✓ Configuration directory found: /workspaces/AitherZero/configs"
+      ],
+      "StartTime": "2025-06-29T05:54:23.3797419+00:00",
+      "Errors": [],
+      "Duration": 0.0702045,
+      "Name": "Basic Operation",
+      "Status": "Passed"
+    },
+    {
+      "Details": [
+        "✓ Path construction works: test/path",
+        "✓ Path construction works: test/path/nested",
+        "✓ Path construction works: /workspaces/AitherZero/test",
+        "✓ Environment variables: 1/4 found",
+        "✓ Linux platform detected",
+        "ℹ️ Distribution: Ubuntu"
+      ],
+      "StartTime": "2025-06-29T05:54:23.4535504+00:00",
+      "Errors": [],
+      "Duration": 0.0445908,
+      "Name": "Platform Compatibility",
+      "Status": "Passed"
+    }
+  ],
+  "Recommendations": []
+}

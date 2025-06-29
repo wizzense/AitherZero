@@ -446,6 +446,236 @@ export class ToolDefinitions {
         required: ['operation']
       }
     });
+
+    // 15. Configuration Management - Multi-environment configuration handling
+    this.tools.set('aither_configuration_management', {
+      name: 'aither_configuration_management',
+      description: 'Manage configuration sets across multiple environments with carousel switching',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          operation: {
+            type: 'string',
+            enum: ['switch', 'list', 'create', 'clone', 'delete', 'validate'],
+            description: 'Configuration management operation'
+          },
+          configurationName: {
+            type: 'string',
+            description: 'Name of the configuration set'
+          },
+          environment: {
+            type: 'string',
+            enum: ['dev', 'staging', 'prod'],
+            description: 'Target environment for configuration'
+          },
+          sourceRepository: {
+            type: 'string',
+            description: 'Source repository URL for cloning configurations'
+          },
+          migrationOptions: {
+            type: 'object',
+            properties: {
+              preserveLocal: {
+                type: 'boolean',
+                description: 'Preserve local configuration changes during migration'
+              },
+              backupCurrent: {
+                type: 'boolean', 
+                description: 'Create backup of current configuration'
+              }
+            }
+          }
+        },
+        required: ['operation']
+      }
+    });
+
+    // 16. Configuration Repository Manager - Git-based configuration repositories
+    this.tools.set('aither_configuration_repository', {
+      name: 'aither_configuration_repository',
+      description: 'Create and manage Git repositories for custom configurations',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          operation: {
+            type: 'string',
+            enum: ['create', 'fork', 'sync', 'validate', 'migrate'],
+            description: 'Repository management operation'
+          },
+          repositoryName: {
+            type: 'string',
+            description: 'Name for the new configuration repository'
+          },
+          templateSource: {
+            type: 'string',
+            enum: ['default', 'minimal', 'enterprise'],
+            description: 'Configuration template to use'
+          },
+          gitProvider: {
+            type: 'string',
+            enum: ['github', 'gitlab', 'local'],
+            description: 'Git provider for repository hosting'
+          },
+          privateRepository: {
+            type: 'boolean',
+            description: 'Create as private repository',
+            default: true
+          }
+        },
+        required: ['operation']
+      }
+    });
+
+    // 17. Orchestration Playbooks - Advanced workflow orchestration
+    this.tools.set('aither_orchestration_playbooks', {
+      name: 'aither_orchestration_playbooks',
+      description: 'Execute complex orchestration playbooks with conditional logic and parallel execution',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          operation: {
+            type: 'string',
+            enum: ['run', 'validate', 'list', 'create', 'cancel', 'status'],
+            description: 'Playbook operation'
+          },
+          playbookName: {
+            type: 'string',
+            description: 'Name of the playbook to execute'
+          },
+          playbookDefinition: {
+            type: 'object',
+            description: 'Inline playbook definition (YAML/JSON)',
+            properties: {
+              steps: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string' },
+                    type: { type: 'string', enum: ['script', 'condition', 'parallel'] },
+                    command: { type: 'string' },
+                    condition: { type: 'string' },
+                    parallel: { type: 'array' }
+                  }
+                }
+              }
+            }
+          },
+          parameters: {
+            type: 'object',
+            description: 'Runtime parameters for playbook execution'
+          },
+          executionMode: {
+            type: 'string',
+            enum: ['sequential', 'parallel', 'conditional'],
+            description: 'Execution mode for playbook steps'
+          },
+          environmentContext: {
+            type: 'string',
+            enum: ['dev', 'staging', 'prod'],
+            description: 'Environment context for security decisions'
+          }
+        },
+        required: ['operation']
+      }
+    });
+
+    // 18. AI Tools Integration - Manage AI development tools
+    this.tools.set('aither_ai_tools_integration', {
+      name: 'aither_ai_tools_integration',
+      description: 'Install, configure, and manage AI development tools like Claude Code, Gemini CLI',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          operation: {
+            type: 'string',
+            enum: ['install', 'configure', 'status', 'update', 'remove'],
+            description: 'AI tools operation'
+          },
+          tool: {
+            type: 'string',
+            enum: ['claude-code', 'gemini-cli', 'codex-cli', 'all'],
+            description: 'Specific AI tool to manage'
+          },
+          installationProfile: {
+            type: 'string',
+            enum: ['minimal', 'developer', 'full'],
+            description: 'Installation profile for AI tools setup'
+          },
+          force: {
+            type: 'boolean',
+            description: 'Force installation even if already installed'
+          }
+        },
+        required: ['operation']
+      }
+    });
+
+    // 19. Environment Context Manager - Smart security and confirmation handling
+    this.tools.set('aither_environment_context', {
+      name: 'aither_environment_context',
+      description: 'Manage environment context for smart security decisions and confirmations',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          operation: {
+            type: 'string',
+            enum: ['detect', 'set', 'validate', 'policy'],
+            description: 'Environment context operation'
+          },
+          environment: {
+            type: 'string',
+            enum: ['dev', 'staging', 'prod'],
+            description: 'Target environment'
+          },
+          securityPolicy: {
+            type: 'object',
+            properties: {
+              destructiveOperations: {
+                type: 'string',
+                enum: ['allow', 'confirm', 'block'],
+                description: 'Policy for destructive operations'
+              },
+              autoConfirm: {
+                type: 'boolean',
+                description: 'Auto-confirm operations in this environment'
+              }
+            }
+          }
+        },
+        required: ['operation']
+      }
+    });
+
+    // 20. Setup Wizard Enhancement - Installation profiles and setup management
+    this.tools.set('aither_setup_wizard', {
+      name: 'aither_setup_wizard',
+      description: 'Enhanced setup wizard with installation profiles and comprehensive environment setup',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          operation: {
+            type: 'string',
+            enum: ['run', 'profile', 'validate', 'reset'],
+            description: 'Setup wizard operation'
+          },
+          installationProfile: {
+            type: 'string',
+            enum: ['minimal', 'developer', 'full', 'interactive'],
+            description: 'Installation profile for setup'
+          },
+          skipOptional: {
+            type: 'boolean',
+            description: 'Skip optional setup steps'
+          },
+          configurationPath: {
+            type: 'string',
+            description: 'Custom configuration file path'
+          }
+        },
+        required: ['operation']
+      }
+    });
   }
 
   getAllTools() {
@@ -479,6 +709,18 @@ export class ToolDefinitions {
         'aither_iso_management',
         'aither_credential_management',
         'aither_repo_sync'
+      ],
+      'Configuration Management': [
+        'aither_configuration_management',
+        'aither_configuration_repository',
+        'aither_environment_context'
+      ],
+      'AI Tools & Integration': [
+        'aither_ai_tools_integration',
+        'aither_setup_wizard'
+      ],
+      'Orchestration & Automation': [
+        'aither_orchestration_playbooks'
       ]
     };
   }

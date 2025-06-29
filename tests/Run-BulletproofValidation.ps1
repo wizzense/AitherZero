@@ -154,9 +154,14 @@ $validationLevels = @{
         Duration = '60-90 seconds'
         Description = 'New user experience simulation with performance benchmarking'
         TestPaths = @(
-            'tests/quickstart'
+            'tests/quickstart',
+            'tests/package'
         )
         RequiredFlags = @('QuickstartSimulation')
+        EnhancedPaths = @(
+            'tests/validation/Test-PackageIntegrity.ps1',
+            'tests/validation/Test-PackageDownload.ps1'
+        )
     }
     'Quick' = @{
         Duration = '45 seconds'  # Enhanced from 30s
@@ -168,7 +173,8 @@ $validationLevels = @{
         )
         EnhancedPaths = @(
             'tests/unit/core/Test-RepositoryDetection.ps1',
-            'tests/unit/core/Test-LauncherCompatibility.ps1'
+            'tests/unit/core/Test-LauncherCompatibility.ps1',
+            'tests/validation/Test-ForkChainDetection.ps1'
         )
     }
     'Standard' = @{
@@ -176,11 +182,13 @@ $validationLevels = @{
         Description = 'Comprehensive module testing with platform validation'
         TestPaths = @(
             'tests/unit/modules',
-            'tests/unit/scripts'
+            'tests/unit/scripts',
+            'tests/package'
         )
         EnhancedPaths = @(
             'tests/platform/Test-CrossPlatformCompatibility.ps1',
-            'tests/package/Test-PackageIntegrity.ps1',
+            'tests/validation/Test-PackageIntegrity.ps1',
+            'tests/validation/Test-PackageDownload.ps1',
             'tests/security/Test-SecurityValidation.ps1'
         )
     }
@@ -193,7 +201,8 @@ $validationLevels = @{
         )
         EnhancedPaths = @(
             'tests/infrastructure/Test-InfrastructureAutomation.ps1',
-            'tests/repository/Test-ForkChainCompatibility.ps1',
+            'tests/repository/Test-ForkChainCompatibility.Tests.ps1',
+            'tests/validation/Test-ForkChainDetection.ps1',
             'tests/performance/Test-PerformanceBenchmarks.ps1'
         )
     }
@@ -238,6 +247,8 @@ if ($SecurityValidation -and (Test-Path (Join-Path $projectRoot 'tests/security'
 
 if ($InfrastructureTesting -and (Test-Path (Join-Path $projectRoot 'tests/infrastructure'))) {
     [void]$testPaths.Add('tests/infrastructure')
+    # Also add specific infrastructure test files
+    [void]$testPaths.Add('tests/infrastructure/Test-InfrastructureAutomation.Tests.ps1')
 }
 
 # Display validation level information

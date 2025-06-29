@@ -53,6 +53,12 @@ function Invoke-PatchRollback {
     begin {
         Import-Module (Join-Path $PSScriptRoot '..' '..' 'Logging') -Force
         
+        # Import progress tracking functions if available
+        $progressFunctionsPath = Join-Path $PSScriptRoot '../Private/Initialize-ProgressTracking.ps1'
+        if (Test-Path $progressFunctionsPath) {
+            . $progressFunctionsPath
+        }
+        
         Write-CustomLog -Level 'INFO' -Message "Starting patch rollback: $RollbackType"
         
         if ($RollbackType -eq "SpecificCommit" -and -not $CommitHash) {
@@ -63,7 +69,21 @@ function Invoke-PatchRollback {
     
     process {
         try {
+            # Calculate total steps for progress tracking
+            $totalSteps = 3  # Validation, rollback operation, completion
+            if ($CreateBackup) { $totalSteps++ }
+            
+            # Start progress tracking if available
+            $progressId = $null
+            if (Get-Command Start-PatchProgress -ErrorAction SilentlyContinue) {
+                $progressId = Start-PatchProgress -OperationName "Rollback: $RollbackType" -TotalSteps $totalSteps -ShowETA
+            }
+            
             # Validation checks
+            if ($progressId -and (Get-Command Update-PatchProgress -ErrorAction SilentlyContinue)) {
+                Update-PatchProgress -OperationId $progressId -StepName "Validating environment" -IncrementStep
+            }
+            
             if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
                 throw "Git is not available. Rollback operations require Git."
             }
@@ -75,6 +95,10 @@ function Invoke-PatchRollback {
             
             # Create backup if requested
             if ($CreateBackup) {
+                if ($progressId -and (Get-Command Update-PatchProgress -ErrorAction SilentlyContinue)) {
+                    Update-PatchProgress -OperationId $progressId -StepName "Creating backup" -IncrementStep
+                }
+                
                 Write-CustomLog -Level 'INFO' -Message "Creating backup before rollback"
                 $backupBranch = "backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
                 git branch $backupBranch
@@ -82,10 +106,17 @@ function Invoke-PatchRollback {
                     Write-CustomLog -Level 'SUCCESS' -Message "Backup branch created: $backupBranch"
                 } else {
                     Write-CustomLog -Level 'WARN' -Message "Failed to create backup branch"
+                    if ($progressId -and (Get-Command Add-ProgressWarning -ErrorAction SilentlyContinue)) {
+                        Add-ProgressWarning -OperationId $progressId -Warning "Failed to create backup branch"
+                    }
                 }
             }
             
             # Perform rollback based on type
+            if ($progressId -and (Get-Command Update-PatchProgress -ErrorAction SilentlyContinue)) {
+                Update-PatchProgress -OperationId $progressId -StepName "Performing $RollbackType rollback" -IncrementStep
+            }
+            
             switch ($RollbackType) {
                 "LastCommit" {
                     Write-CustomLog -Level 'INFO' -Message "Rolling back to previous commit"
@@ -136,6 +167,15 @@ function Invoke-PatchRollback {
                 }
             }
             
+            # Complete progress tracking
+            if ($progressId -and (Get-Command Update-PatchProgress -ErrorAction SilentlyContinue)) {
+                Update-PatchProgress -OperationId $progressId -StepName "Finalizing rollback" -IncrementStep
+            }
+            
+            if ($progressId -and (Get-Command Complete-PatchProgress -ErrorAction SilentlyContinue)) {
+                Complete-PatchProgress -OperationId $progressId -ShowSummary
+            }
+            
             # Return success result
             return @{
                 Success = $true
@@ -148,6 +188,17 @@ function Invoke-PatchRollback {
             
         } catch {
             Write-CustomLog -Level 'ERROR' -Message "Rollback failed: $($_.Exception.Message)"
+            
+            # Add error to progress tracking and complete
+            if ($progressId) {
+                if (Get-Command Add-ProgressError -ErrorAction SilentlyContinue) {
+                    Add-ProgressError -OperationId $progressId -Error $_.Exception.Message
+                }
+                if (Get-Command Complete-PatchProgress -ErrorAction SilentlyContinue) {
+                    Complete-PatchProgress -OperationId $progressId -ShowSummary
+                }
+            }
+            
             return @{
                 Success = $false
                 Error = $_.Exception.Message

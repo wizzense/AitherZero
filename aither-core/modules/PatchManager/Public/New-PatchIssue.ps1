@@ -93,7 +93,18 @@ function New-PatchIssue {
     }
 
     process {
-        try {            # Check GitHub CLI availability
+        try {
+            # Calculate steps for progress if called from parent operation
+            $hasProgressContext = $false
+            $parentProgressId = $null
+            
+            # Check if we're being called within a larger operation that has progress
+            if (Get-Variable -Name 'progressId' -Scope 1 -ErrorAction SilentlyContinue) {
+                $parentProgressId = (Get-Variable -Name 'progressId' -Scope 1).Value
+                $hasProgressContext = $true
+            }
+            
+            # Check GitHub CLI availability
             if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
                 throw 'GitHub CLI (gh) not found. Please install and authenticate with GitHub CLI.'
             }            # Get repository information (use TargetRepository if specified)
@@ -119,6 +130,11 @@ function New-PatchIssue {
             $analysisResult = $null
             if ($TestOutput.Count -gt 0 -or $ErrorDetails.Count -gt 0) {
                 Write-IssueLog 'Performing intelligent test analysis...' -Level 'INFO'
+                
+                # Update parent progress if in context
+                if ($hasProgressContext -and $parentProgressId -and (Get-Command Write-PatchProgressLog -ErrorAction SilentlyContinue)) {
+                    Write-PatchProgressLog -Message 'Analyzing test results for issue creation' -Level 'Info'
+                }
 
                 $analysisParams = @{
                     TestOutput        = $TestOutput
@@ -298,6 +314,12 @@ $(if ($analysisResult.TechnicalDetails.RawErrorSample) {
                 $labelCheck = gh label list --repo $repoInfo.GitHubRepo --search $label 2>&1 | Out-String
                 if (-not $labelCheck.Contains($label)) {
                     Write-IssueLog "Creating missing label: $label" -Level 'INFO'
+                    
+                    # Update parent progress if in context
+                    if ($hasProgressContext -and $parentProgressId -and (Get-Command Write-PatchProgressLog -ErrorAction SilentlyContinue)) {
+                        Write-PatchProgressLog -Message "Creating GitHub label: $label" -Level 'Info'
+                    }
+                    
                     $labelColor = switch ($label) {
                         'patch' { '0366d6' }
                         'priority' { 'd93f0b' }
@@ -307,6 +329,12 @@ $(if ($analysisResult.TechnicalDetails.RawErrorSample) {
                 }
             }            # Create the issue with robust error handling
             Write-IssueLog "Creating GitHub issue: $issueTitle" -Level 'INFO'
+            
+            # Update parent progress if in context
+            if ($hasProgressContext -and $parentProgressId -and (Get-Command Write-PatchProgressLog -ErrorAction SilentlyContinue)) {
+                Write-PatchProgressLog -Message "Submitting issue to GitHub" -Level 'Info'
+            }
+            
             $result = gh issue create --repo $repoInfo.GitHubRepo --title $issueTitle --body $issueBody --label ($allLabels -join ',') 2>&1
 
             # Handle any remaining label errors gracefully

@@ -131,13 +131,21 @@ function Invoke-DeploymentStage {
                             Start-Sleep -Seconds ($stage.RetryPolicy.DelaySeconds * $retryCount)
                         }
                         
-                        # Execute based on action type
+                        # Execute based on action type with progress tracking integration
                         switch ($action.Type) {
                             'PowerShell' {
+                                # Check if ProgressTracking is available for granular updates
+                                if ((Get-Module -Name 'ProgressTracking' -ErrorAction SilentlyContinue)) {
+                                    Write-ProgressLog -Message "Executing PowerShell action: $($action.Name)" -Level 'Info'
+                                }
                                 $actionOutput = Invoke-PowerShellAction -Action $action -DryRun:$DryRun -Timeout $timeout
                             }
                             
                             'OpenTofu' {
+                                # Enhanced OpenTofu execution with progress tracking
+                                if ((Get-Module -Name 'ProgressTracking' -ErrorAction SilentlyContinue)) {
+                                    Write-ProgressLog -Message "Executing OpenTofu action: $($action.Name)" -Level 'Info'
+                                }
                                 $actionOutput = Invoke-OpenTofuAction -Action $action -Plan $Plan -Stage $stage -DryRun:$DryRun -Timeout $timeout
                             }
                             
@@ -305,6 +313,9 @@ function Invoke-OpenTofuAction {
         [TimeSpan]$Timeout
     )
     
+    # Check if ProgressTracking is available for detailed OpenTofu progress
+    $useProgressTracking = (Get-Module -Name 'ProgressTracking' -ErrorAction SilentlyContinue) -ne $null
+    
     try {
         # Prepare working directory
         $workingDir = Join-Path $script:deploymentDir "opentofu"
@@ -334,27 +345,51 @@ function Invoke-OpenTofuAction {
                 'GeneratePlan' {
                     if ($DryRun) {
                         Write-CustomLog -Level 'INFO' -Message "[DRY-RUN] Would run: tofu plan"
+                        if ($useProgressTracking) {
+                            Write-ProgressLog -Message "[DRY-RUN] Plan generation would be executed" -Level 'Info'
+                        }
                         return @{ DryRun = $true; Message = "Plan would be generated" }
                     }
                     
                     # Initialize if needed
                     if (-not (Test-Path ".terraform")) {
+                        if ($useProgressTracking) {
+                            Write-ProgressLog -Message "Initializing OpenTofu workspace" -Level 'Info'
+                        }
                         Write-CustomLog -Level 'INFO' -Message "Initializing OpenTofu"
                         $initResult = & tofu init -no-color 2>&1
                         if ($LASTEXITCODE -ne 0) {
+                            if ($useProgressTracking) {
+                                Write-ProgressLog -Message "OpenTofu initialization failed" -Level 'Error'
+                            }
                             throw "tofu init failed: $initResult"
+                        }
+                        if ($useProgressTracking) {
+                            Write-ProgressLog -Message "OpenTofu workspace initialized successfully" -Level 'Success'
                         }
                     }
                     
                     # Run plan
+                    if ($useProgressTracking) {
+                        Write-ProgressLog -Message "Generating deployment plan..." -Level 'Info'
+                    }
                     Write-CustomLog -Level 'INFO' -Message "Running tofu plan"
                     $planResult = & tofu plan -out=tfplan -no-color 2>&1
                     if ($LASTEXITCODE -ne 0) {
+                        if ($useProgressTracking) {
+                            Write-ProgressLog -Message "Plan generation failed" -Level 'Error'
+                        }
                         throw "tofu plan failed: $planResult"
                     }
                     
                     # Parse plan output
                     $planSummary = Parse-TofuPlanOutput -Output $planResult
+                    
+                    if ($useProgressTracking) {
+                        $summaryMsg = "Plan generated: $($planSummary.ToAdd) to add, $($planSummary.ToChange) to change, $($planSummary.ToDestroy) to destroy"
+                        Write-ProgressLog -Message $summaryMsg -Level 'Success'
+                    }
+                    
                     return @{
                         Success = $true
                         Summary = $planSummary
@@ -365,32 +400,69 @@ function Invoke-OpenTofuAction {
                 'ApplyInfrastructure' {
                     if ($DryRun) {
                         Write-CustomLog -Level 'INFO' -Message "[DRY-RUN] Would run: tofu apply"
+                        if ($useProgressTracking) {
+                            Write-ProgressLog -Message "[DRY-RUN] Infrastructure deployment would be executed" -Level 'Info'
+                        }
                         return @{ DryRun = $true; Message = "Infrastructure would be applied" }
                     }
                     
                     # Check for plan file
                     if (-not (Test-Path "tfplan")) {
+                        if ($useProgressTracking) {
+                            Write-ProgressLog -Message "No plan file found. Plan stage must be executed first." -Level 'Error'
+                        }
                         throw "No plan file found. Run Plan stage first."
                     }
                     
                     # Run apply
+                    if ($useProgressTracking) {
+                        Write-ProgressLog -Message "Applying infrastructure changes..." -Level 'Info'
+                    }
                     Write-CustomLog -Level 'INFO' -Message "Running tofu apply"
+                    
+                    # Start apply with real-time progress monitoring
+                    $startTime = Get-Date
                     $applyResult = & tofu apply -auto-approve tfplan -no-color 2>&1
+                    $endTime = Get-Date
+                    $duration = $endTime - $startTime
+                    
                     if ($LASTEXITCODE -ne 0) {
+                        if ($useProgressTracking) {
+                            Write-ProgressLog -Message "Infrastructure deployment failed after $([Math]::Round($duration.TotalSeconds, 1))s" -Level 'Error'
+                        }
                         throw "tofu apply failed: $applyResult"
                     }
                     
+                    if ($useProgressTracking) {
+                        Write-ProgressLog -Message "Infrastructure deployment completed in $([Math]::Round($duration.TotalSeconds, 1))s" -Level 'Success'
+                    }
+                    
                     # Get outputs
+                    if ($useProgressTracking) {
+                        Write-ProgressLog -Message "Retrieving deployment outputs..." -Level 'Info'
+                    }
+                    
                     $outputs = & tofu output -json 2>&1
                     if ($LASTEXITCODE -eq 0) {
                         $outputData = $outputs | ConvertFrom-Json
+                        $convertedOutputs = Convert-TofuOutputs -RawOutputs $outputData
+                        
+                        if ($useProgressTracking) {
+                            $outputCount = $convertedOutputs.Keys.Count
+                            Write-ProgressLog -Message "Retrieved $outputCount deployment outputs" -Level 'Success'
+                        }
+                        
                         return @{
                             Success = $true
-                            Outputs = Convert-TofuOutputs -RawOutputs $outputData
+                            Outputs = $convertedOutputs
+                            Duration = $duration
                         }
                     }
                     
-                    return @{ Success = $true }
+                    return @{ 
+                        Success = $true
+                        Duration = $duration
+                    }
                 }
                 
                 default {

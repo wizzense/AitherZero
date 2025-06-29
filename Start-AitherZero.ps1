@@ -37,7 +37,11 @@ param(
     [switch]$NonInteractive,
 
     [Parameter(HelpMessage = 'Run in quiet mode with minimal output')]
-    [switch]$Quiet
+    [switch]$Quiet,
+
+    [Parameter(HelpMessage = 'Installation profile for setup')]
+    [ValidateSet('minimal', 'developer', 'full', 'interactive')]
+    [string]$InstallationProfile = 'interactive'
 )
 
 # Detect PowerShell version for compatibility messaging
@@ -59,14 +63,16 @@ if ($Help) {
     Write-Host '  -Auto          Automated execution without prompts'
     Write-Host ''
     Write-Host 'Options:' -ForegroundColor Cyan
-    Write-Host "  -Scripts       Specify modules to run (e.g., 'LabRunner,BackupManager')"
-    Write-Host '  -Verbosity     Logging level: silent, normal, detailed'
-    Write-Host '  -ConfigFile    Custom configuration file path'
-    Write-Host '  -WhatIf        Preview mode - show what would be done'
-    Write-Host '  -Help          This help information'
+    Write-Host "  -Scripts             Specify modules to run (e.g., 'LabRunner,BackupManager')"
+    Write-Host '  -Verbosity           Logging level: silent, normal, detailed'
+    Write-Host '  -ConfigFile          Custom configuration file path'
+    Write-Host '  -InstallationProfile Installation profile: minimal, developer, full, interactive'
+    Write-Host '  -WhatIf              Preview mode - show what would be done'
+    Write-Host '  -Help                This help information'
     Write-Host ''
     Write-Host 'Examples:' -ForegroundColor Cyan
-    Write-Host '  .\Start-AitherZero.ps1 -Setup'
+    Write-Host '  .\Start-AitherZero.ps1 -Setup -InstallationProfile minimal'
+    Write-Host '  .\Start-AitherZero.ps1 -Setup -InstallationProfile developer'
     Write-Host '  .\Start-AitherZero.ps1 -Interactive'
     Write-Host '  .\Start-AitherZero.ps1 -Auto -Verbosity detailed'
     Write-Host "  .\Start-AitherZero.ps1 -Scripts 'LabRunner' -WhatIf"
@@ -77,8 +83,37 @@ if ($Help) {
     return
 }
 
-# Handle setup mode with comprehensive environment checking
+# Handle setup mode with intelligent setup wizard
 if ($Setup) {
+    # Try to use the intelligent SetupWizard module if available
+    $setupWizardPath = Join-Path $modulesPath 'SetupWizard'
+    if (Test-Path $setupWizardPath) {
+        try {
+            Import-Module $setupWizardPath -Force -ErrorAction Stop
+            Write-Host '🚀 Starting Intelligent Setup Wizard...' -ForegroundColor Green
+            Write-Host ''
+            
+            # Run the intelligent setup with profile
+            $setupParams = @{}
+            if ($InstallationProfile -ne 'interactive') {
+                $setupParams.InstallationProfile = $InstallationProfile
+            }
+            $setupResult = Start-IntelligentSetup @setupParams
+            
+            # Exit with appropriate code based on setup result
+            if ($setupResult.Errors.Count -gt 3) {
+                exit 1
+            } else {
+                exit 0
+            }
+        } catch {
+            Write-Host "⚠️  Could not load SetupWizard module: $_" -ForegroundColor Yellow
+            Write-Host 'Falling back to basic setup...' -ForegroundColor Yellow
+            Write-Host ''
+        }
+    }
+    
+    # Fallback to basic setup if SetupWizard is not available
     Write-Host '🔧 AitherZero First-Time Setup' -ForegroundColor Green
     Write-Host ''
     Write-Host 'This will guide you through setting up AitherZero for your environment.'

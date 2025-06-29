@@ -26,7 +26,7 @@ function Resolve-ProjectPath {
     }
 
     # Fallback: recursive search
-    $match = Get-ChildItem -Path $Root -Recurse -File -Filter $Name -ErrorAction SilentlyContinue  Select-Object -First 1
+    $match = Get-ChildItem -Path $Root -Recurse -File -Filter $Name -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($null -ne $match) { return $match.FullName }
     return $null
 }
