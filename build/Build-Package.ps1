@@ -118,61 +118,47 @@ try {
     }
 
     # Package Profile Definitions
+    # Define base module lists
+    $coreModules = @(
+        'Logging', 'LabRunner', 'OpenTofuProvider',
+        'ModuleCommunication', 'ConfigurationCore'
+    )
+    $platformServices = @(
+        'ConfigurationCarousel', 'ConfigurationRepository', 'OrchestrationEngine',
+        'ParallelExecution', 'ProgressTracking'
+    )
+    $featureModules = @(
+        'ISOManager', 'ISOCustomizer', 'SecureCredentials',
+        'RemoteConnection', 'SystemMonitoring', 'RestAPIServer'
+    )
+    $essentialOperations = @(
+        'BackupManager', 'UnifiedMaintenance', 'ScriptManager',
+        'SecurityAutomation', 'SetupWizard'
+    )
+    $developmentTools = @(
+        'DevEnvironment', 'PatchManager', 'TestingFramework', 'AIToolsIntegration'
+    )
+    $maintenanceOperations = @(
+        'RepoSync'
+    )
+    
+    # Define package profiles
     $packageProfiles = @{
         'minimal' = @{
             Description = 'Core infrastructure only (~10MB)'
-            Modules = @(
-                # Core Infrastructure (Required)
-                'Logging', 'LabRunner', 'OpenTofuProvider',
-                'ModuleCommunication', 'ConfigurationCore'
-            )
+            Modules = $coreModules
             EstimatedSize = '~10MB'
             UseCase = 'CI/CD environments, minimal deployments'
         }
         'standard' = @{
             Description = 'Production-ready platform (~50MB)'
-            Modules = @(
-                # Core Infrastructure
-                'Logging', 'LabRunner', 'OpenTofuProvider',
-                'ModuleCommunication', 'ConfigurationCore',
-                
-                # Platform Services
-                'ConfigurationCarousel', 'ConfigurationRepository', 'OrchestrationEngine',
-                'ParallelExecution', 'ProgressTracking',
-                
-                # Feature Modules
-                'ISOManager', 'ISOCustomizer', 'SecureCredentials',
-                'RemoteConnection', 'SystemMonitoring', 'RestAPIServer',
-                
-                # Essential Operations
-                'BackupManager', 'UnifiedMaintenance', 'ScriptManager',
-                'SecurityAutomation', 'SetupWizard'
-            )
+            Modules = $coreModules + $platformServices + $featureModules + $essentialOperations
             EstimatedSize = '~50MB'
             UseCase = 'Production deployments, enterprise environments'
         }
         'full' = @{
             Description = 'Complete development platform (~100MB)'
-            Modules = @(
-                # Core Infrastructure
-                'Logging', 'LabRunner', 'OpenTofuProvider',
-                'ModuleCommunication', 'ConfigurationCore',
-                
-                # Platform Services
-                'ConfigurationCarousel', 'ConfigurationRepository', 'OrchestrationEngine',
-                'ParallelExecution', 'ProgressTracking',
-                
-                # Feature Modules
-                'ISOManager', 'ISOCustomizer', 'SecureCredentials',
-                'RemoteConnection', 'SystemMonitoring', 'RestAPIServer',
-                
-                # Development Tools
-                'DevEnvironment', 'PatchManager', 'TestingFramework', 'AIToolsIntegration',
-                
-                # Maintenance & Operations
-                'BackupManager', 'UnifiedMaintenance', 'ScriptManager',
-                'RepoSync', 'SecurityAutomation', 'SetupWizard'
-            )
+            Modules = $coreModules + $platformServices + $featureModules + $developmentTools + $essentialOperations + $maintenanceOperations
             EstimatedSize = '~100MB'
             UseCase = 'Development environments, complete feature set'
         }
