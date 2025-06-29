@@ -5,38 +5,25 @@
             "path": "."
         },
         {
-            "name": "PowerShell Modules",
+            "name": "Aither-Core Modules",
             "path": "./aither-core/modules"
         },
-        {
-            "name": "Core Application",
-            "path": "./core-runner/core_app"
-        },
-        {
-<<<<<<< Updated upstream
-            "name": "Runner Scripts",
-            "path": "./core-runner/core_app/scripts"
-=======
-            "name": "Aither-Core Scripts",
-            "path": "./AitherZero/aither-core/scripts"
->>>>>>> Stashed changes
-        },
-        {
-            "name": "OpenTofu Configurations",
-            "path": "./opentofu"
-        },
-        {
-            "name": "Python CLI",
-            "path": "./py"
-        },
-        {
-            "name": "Tests",
-            "path": "./tests"
-        },
-        {
-            "name": "Documentation",
-            "path": "./docs"
-        }
+{
+    "name": "Aither-Core Scripts",
+    "path": "./aither-core/scripts"
+},
+{
+    "name": "OpenTofu Configurations",
+    "path": "./opentofu"
+},
+{
+    "name": "Tests",
+    "path": "./tests"
+},
+{
+    "name": "Documentation",
+    "path": "./docs"
+}
     ],
     "settings": {
         "files.exclude": {
