@@ -5,12 +5,12 @@
             "path": "."
         },
         {
-            "name": "PowerShell Modules",
+            "name": "Aither-Core Modules",
             "path": "./aither-core/modules"
         },
         {
-            "name": "Core Application",
-            "path": "./core-runner/core_app"
+            "name": "Aither-Core Scripts",
+            "path": "./aither-core/scripts"
         },
         {
 <<<<<<< Updated upstream
