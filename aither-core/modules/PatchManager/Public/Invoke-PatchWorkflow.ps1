@@ -162,17 +162,7 @@ function Invoke-PatchWorkflow {
 
         function Write-PatchLog {
             param($Message, $Level = "INFO")
-            # Use progress-aware logging if available
-            if (Get-Command Write-PatchProgressLog -ErrorAction SilentlyContinue) {
-                $progressLevel = switch ($Level) {
-                    'INFO' { 'Info' }
-                    'WARN' { 'Warning' }
-                    'ERROR' { 'Error' }
-                    'SUCCESS' { 'Success' }
-                    default { 'Info' }
-                }
-                Write-PatchProgressLog -Message $Message -Level $progressLevel
-            } elseif (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+            if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
                 Write-CustomLog -Message $Message -Level $Level
             } else {
                 Write-Host "[$Level] $Message"
@@ -193,25 +183,8 @@ function Invoke-PatchWorkflow {
             $testErrors = @()
             $testContext = @{}
 
-            # Calculate total steps for progress tracking
-            $totalSteps = 7  # Base steps: conflict check, stash, branch, patch, commit, cleanup, complete
-            if ($TestCommands.Count -gt 0) { $totalSteps++ }
-            if ($CreateIssue) { $totalSteps++ }
-            if ($CreatePR) { $totalSteps++ }
-            if ($AutoConsolidate) { $totalSteps++ }
-
-            # Start progress tracking if available
-            $progressId = $null
-            if (Get-Command Start-PatchProgress -ErrorAction SilentlyContinue) {
-                $progressId = Start-PatchProgress -OperationName "Patch: $PatchDescription" -TotalSteps $totalSteps -ShowETA
-            }
-
             # Step 1: Check for merge conflicts in working tree
             Write-PatchLog "Checking for merge conflict markers..." -Level "INFO"
-            if ($progressId -and (Get-Command Update-PatchProgress -ErrorAction SilentlyContinue)) {
-                Update-PatchProgress -OperationId $progressId -StepName "Checking for conflicts" -IncrementStep
-            }
-            
             $conflictMarkers = git grep -l "^<<<<<<< HEAD" 2>$null
             if ($conflictMarkers) {
                 $errorMsg = "MERGE CONFLICTS DETECTED! Cannot proceed with patch workflow when there are unresolved conflict markers:`n" +
@@ -222,10 +195,6 @@ function Invoke-PatchWorkflow {
             }
 
             # Step 2: Stash any uncommitted changes (DON'T commit to main!)
-            if ($progressId -and (Get-Command Update-PatchProgress -ErrorAction SilentlyContinue)) {
-                Update-PatchProgress -OperationId $progressId -StepName "Managing uncommitted changes" -IncrementStep
-            }
-            
             $gitStatus = git status --porcelain 2>&1
             $hasUncommittedChanges = $gitStatus -and ($gitStatus | Where-Object { $_ -match '\S' })
             $stashCreated = $false
@@ -249,11 +218,51 @@ function Invoke-PatchWorkflow {
                 Write-PatchLog "Working tree is clean - proceeding with patch workflow" -Level "INFO"
             }
 
-            # Step 3: Create patch branch from clean main
-            if ($progressId -and (Get-Command Update-PatchProgress -ErrorAction SilentlyContinue)) {
-                Update-PatchProgress -OperationId $progressId -StepName "Creating patch branch" -IncrementStep
-            }
+            # Step 3: Ensure we're on main and sync with remote (CRITICAL for preventing merge conflicts)
+            Write-PatchLog "Ensuring we're on main branch and syncing with remote..." -Level "INFO"
             
+            if (-not $DryRun) {
+                # Switch to main if not already there
+                $currentBranch = git branch --show-current 2>&1 | Out-String | ForEach-Object Trim
+                if ($currentBranch -ne "main") {
+                    Write-PatchLog "Switching from '$currentBranch' to main branch..." -Level "INFO"
+                    git checkout main 2>&1 | Out-Null
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Failed to checkout main branch"
+                    }
+                }
+
+                # Always sync with remote main to prevent merge conflicts
+                Write-PatchLog "Syncing with remote main to ensure we have latest changes..." -Level "INFO"
+                git fetch origin main 2>&1 | Out-Null
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Failed to fetch from remote main"
+                }
+
+                # Check if local main is behind remote
+                $behindCommits = git rev-list --count main..origin/main 2>&1
+                if ($behindCommits -and $behindCommits -gt 0) {
+                    Write-PatchLog "Local main is $behindCommits commits behind remote. Syncing..." -Level "INFO"
+                    git merge origin/main --ff-only 2>&1 | Out-Null
+                    if ($LASTEXITCODE -ne 0) {
+                        # If fast-forward fails, we have diverged - need to reset
+                        Write-PatchLog "Fast-forward merge failed. Local main has diverged from remote. Performing hard reset..." -Level "WARN"
+                        git reset --hard origin/main 2>&1 | Out-Null
+                        if ($LASTEXITCODE -ne 0) {
+                            throw "Failed to reset local main to match remote"
+                        }
+                        Write-PatchLog "Successfully reset local main to match remote main" -Level "SUCCESS"
+                    } else {
+                        Write-PatchLog "Successfully synced with remote main" -Level "SUCCESS"
+                    }
+                } else {
+                    Write-PatchLog "Local main is up to date with remote" -Level "INFO"
+                }
+            } else {
+                Write-PatchLog "DRY RUN: Would sync with remote main before creating branch" -Level "INFO"
+            }
+
+            # Step 4: Create patch branch from synchronized main
             $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
             $safeName = $PatchDescription -replace '[^a-zA-Z0-9\-_]', '-' -replace '-+', '-'
             $branchName = "patch/$timestamp-$safeName"
@@ -278,12 +287,8 @@ function Invoke-PatchWorkflow {
                 }
             }
 
-            # Step 4: Run test commands with enhanced output capture FIRST (before issue creation)
+            # Step 5: Run test commands with enhanced output capture FIRST (before issue creation)
             if ($TestCommands.Count -gt 0) {
-                if ($progressId -and (Get-Command Update-PatchProgress -ErrorAction SilentlyContinue)) {
-                    Update-PatchProgress -OperationId $progressId -StepName "Running tests" -IncrementStep
-                }
-                
                 Write-PatchLog "Running $($TestCommands.Count) test command(s) with output capture..." -Level "INFO"
 
                 foreach ($cmd in $TestCommands) {
@@ -344,12 +349,9 @@ function Invoke-PatchWorkflow {
 
                 # Log test summary
                 Write-PatchLog "Test execution complete. Output lines: $($testOutput.Count), Error lines: $($testErrors.Count)" -Level "INFO"
-            }            # Step 4: Create tracking issue with enhanced context (NOW with test data available)
+            }            # Step 6: Create tracking issue with enhanced context (NOW with test data available)
             $issueResult = $null
             if ($CreateIssue) {
-                if ($progressId -and (Get-Command Update-PatchProgress -ErrorAction SilentlyContinue)) {
-                    Update-PatchProgress -OperationId $progressId -StepName "Creating GitHub issue" -IncrementStep
-                }
                 # Determine target repository for issue creation based on PR target
                 $repoInfo = Get-GitRepositoryInfo
                 $issueTargetRepo = $repoInfo.GitHubRepo  # Default to current repo
@@ -398,12 +400,8 @@ function Invoke-PatchWorkflow {
                 Write-PatchLog "Skipping issue creation (disabled by -CreateIssue:`$false)" -Level "INFO"
             }
 
-            # Step 5: Apply patch operation
+            # Step 7: Apply patch operation
             if ($PatchOperation) {
-                if ($progressId -and (Get-Command Update-PatchProgress -ErrorAction SilentlyContinue)) {
-                    Update-PatchProgress -OperationId $progressId -StepName "Applying patch changes" -IncrementStep
-                }
-                
                 Write-PatchLog "Applying patch operation..." -Level "INFO"
 
                 if (-not $DryRun) {
@@ -413,11 +411,7 @@ function Invoke-PatchWorkflow {
                 }
             }
 
-            # Step 6: Sanitize files and commit patch changes
-            if ($progressId -and (Get-Command Update-PatchProgress -ErrorAction SilentlyContinue)) {
-                Update-PatchProgress -OperationId $progressId -StepName "Committing changes" -IncrementStep
-            }
-            
+            # Step 8: Sanitize files and commit patch changes
             if (-not $DryRun) {
                 $gitStatus = git status --porcelain 2>&1
                 if ($gitStatus -and ($gitStatus | Where-Object { $_ -match '\S' })) {
@@ -458,12 +452,8 @@ function Invoke-PatchWorkflow {
                 }
             } else {
                 Write-PatchLog "DRY RUN: Would sanitize files and commit changes" -Level "INFO"
-            }            # Step 7: Create PR if requested
+            }            # Step 9: Create PR if requested
             if ($CreatePR) {
-                if ($progressId -and (Get-Command Update-PatchProgress -ErrorAction SilentlyContinue)) {
-                    Update-PatchProgress -OperationId $progressId -StepName "Creating pull request" -IncrementStep
-                }
-                
                 if (-not $DryRun) {
                     Write-PatchLog "Creating pull request..." -Level "INFO"
                     $prParams = @{
@@ -516,12 +506,8 @@ function Invoke-PatchWorkflow {
                 }
             }
 
-            # Step 8: Auto-consolidate PRs if requested
+            # Step 10: Auto-consolidate PRs if requested
             if ($AutoConsolidate -and $CreatePR -and -not $DryRun) {
-                if ($progressId -and (Get-Command Update-PatchProgress -ErrorAction SilentlyContinue)) {
-                    Update-PatchProgress -OperationId $progressId -StepName "Consolidating PRs" -IncrementStep
-                }
-                
                 Write-PatchLog "Auto-consolidation requested, analyzing open PRs..." -Level "INFO"
                 try {
                     $consolidationResult = Invoke-PRConsolidation -ConsolidationStrategy $ConsolidationStrategy -MaxPRsToConsolidate $MaxPRsToConsolidate
@@ -540,17 +526,26 @@ function Invoke-PatchWorkflow {
                 Write-PatchLog "DRY RUN: Would attempt PR consolidation with strategy: $ConsolidationStrategy" -Level "INFO"
             }
 
+            # Step 11: Branch cleanup after PR creation (switch back to main)
+            if ($CreatePR -and -not $DryRun) {
+                Write-PatchLog "Switching back to main branch for clean working state..." -Level "INFO"
+                try {
+                    git checkout main 2>&1 | Out-Null
+                    if ($LASTEXITCODE -eq 0) {
+                        Write-PatchLog "Successfully switched back to main branch" -Level "SUCCESS"
+                        Write-PatchLog "Patch branch '$branchName' is ready for review and merge" -Level "INFO"
+                    } else {
+                        Write-PatchLog "Warning: Failed to switch back to main branch" -Level "WARN"
+                    }
+                } catch {
+                    Write-PatchLog "Warning: Error switching to main: $($_.Exception.Message)" -Level "WARN"
+                }
+            } elseif ($DryRun) {
+                Write-PatchLog "DRY RUN: Would switch back to main branch after PR creation" -Level "INFO"
+            }
+
             # Success
-            if ($progressId -and (Get-Command Update-PatchProgress -ErrorAction SilentlyContinue)) {
-                Update-PatchProgress -OperationId $progressId -StepName "Completing workflow" -IncrementStep
-            }
-            
             Write-PatchLog "Patch workflow completed successfully" -Level "SUCCESS"
-            
-            # Complete progress tracking
-            if ($progressId -and (Get-Command Complete-PatchProgress -ErrorAction SilentlyContinue)) {
-                Complete-PatchProgress -OperationId $progressId -ShowSummary
-            }
 
             return @{
                 Success = $true
@@ -565,11 +560,6 @@ function Invoke-PatchWorkflow {
         } catch {
             $errorMessage = "Patch workflow failed: $($_.Exception.Message)"
             Write-PatchLog $errorMessage -Level "ERROR"
-            
-            # Add error to progress tracking if available
-            if ($progressId -and (Get-Command Add-ProgressError -ErrorAction SilentlyContinue)) {
-                Add-ProgressError -OperationId $progressId -Error $errorMessage
-            }
 
             # Cleanup on failure
             if (-not $DryRun -and $branchName) {
@@ -580,11 +570,6 @@ function Invoke-PatchWorkflow {
                 } catch {
                     Write-PatchLog "Cleanup failed: $($_.Exception.Message)" -Level "WARN"
                 }
-            }
-            
-            # Complete progress tracking with error state
-            if ($progressId -and (Get-Command Complete-PatchProgress -ErrorAction SilentlyContinue)) {
-                Complete-PatchProgress -OperationId $progressId -ShowSummary
             }
 
             return @{
