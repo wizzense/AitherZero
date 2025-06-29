@@ -372,7 +372,7 @@ Describe "Invoke-DeploymentStage Tests" {
             Mock Test-Path { $true } -ModuleName OpenTofuProvider
             Mock Copy-Item {} -ModuleName OpenTofuProvider
             Mock Set-Content {} -ModuleName OpenTofuProvider
-            Mock & { return "Plan: 2 to add, 0 to change, 0 to destroy" } -ModuleName OpenTofuProvider
+            Mock Invoke-Expression { return "Plan: 2 to add, 0 to change, 0 to destroy" } -ModuleName OpenTofuProvider
             
             $script:testPlan.Stages.Test.Actions[0] = @{
                 Name = "GeneratePlan"

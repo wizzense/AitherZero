@@ -1,0 +1,36 @@
+{
+  "BuildTimes": {
+    "macos": 10.3244,
+    "windows": 11.0899,
+    "linux": 12.1828
+  },
+  "ValidationResults": {
+    "SyntaxValid": true,
+    "ComponentsExist": true,
+    "ScriptExists": true
+  },
+  "PackageSizes": {},
+  "TotalDuration": {
+    "Ticks": 2210469,
+    "Days": 0,
+    "Hours": 0,
+    "Milliseconds": 221,
+    "Microseconds": 46,
+    "Nanoseconds": 900,
+    "Minutes": 0,
+    "Seconds": 0,
+    "TotalDays": 2.5584131944444443E-06,
+    "TotalHours": 6.140191666666666E-05,
+    "TotalMilliseconds": 221.0469,
+    "TotalMicroseconds": 221046.9,
+    "TotalNanoseconds": 221046900.0,
+    "TotalMinutes": 0.003684115,
+    "TotalSeconds": 0.2210469
+  },
+  "Platforms": [
+    "windows",
+    "linux",
+    "macos"
+  ],
+  "TestRunTime": "2025-06-29T15:50:17.2015332+00:00"
+}
