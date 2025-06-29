@@ -158,14 +158,14 @@ jobs:
                       
                       # Create module overview
                       $moduleOverview = @"
-# $moduleName Module
+# `$moduleName Module
 
-**Module Path**: aither-core/modules/$moduleName
-**Exported Functions**: $($exportedFunctions.Count)
+**Module Path**: aither-core/modules/`$moduleName
+**Exported Functions**: `$(`$exportedFunctions.Count)
 
 ## Functions
 
-$($exportedFunctions | ForEach-Object { "- [$($_.Name)](./$($_.Name).md)" } | Out-String)
+`$(`$exportedFunctions | ForEach-Object { "- [`$(`$_.Name)](./" + `$_.Name + ".md)" } | Out-String)
 
 ## Module Description
 

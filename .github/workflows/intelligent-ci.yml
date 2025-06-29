@@ -64,7 +64,7 @@ jobs:
   setup-environment:
     name: 🛠️ Setup Environment
     needs: change-detection
-    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.config-changed == 'true' || needs.change-detection.outputs.force-full == 'true'
+    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.config-changed == 'true' || needs.change-detection.outputs.force-full == 'true' || github.event_name == 'pull_request'
     
     strategy:
       matrix:
@@ -133,7 +133,7 @@ jobs:
   security-analysis:
     name: 🔒 Security Analysis
     needs: [change-detection, setup-environment]
-    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.security-changed == 'true' || needs.change-detection.outputs.force-full == 'true'
+    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.security-changed == 'true' || needs.change-detection.outputs.force-full == 'true' || github.event_name == 'pull_request'
     
     runs-on: ubuntu-latest
     
@@ -210,7 +210,7 @@ jobs:
   cross-platform-tests:
     name: 🧪 Cross-Platform Tests
     needs: [change-detection, setup-environment]
-    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.tests-changed == 'true' || needs.change-detection.outputs.force-full == 'true'
+    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.tests-changed == 'true' || needs.change-detection.outputs.force-full == 'true' || github.event_name == 'pull_request'
     
     strategy:
       matrix:
@@ -290,7 +290,7 @@ jobs:
   code-coverage-analysis:
     name: 📊 Code Coverage Analysis  
     needs: [change-detection, cross-platform-tests]
-    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.force-full == 'true'
+    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.force-full == 'true' || github.event_name == 'pull_request'
     
     runs-on: ubuntu-latest
     
@@ -352,7 +352,7 @@ jobs:
   build-validation:
     name: 🔨 Build Validation
     needs: [change-detection, security-analysis]
-    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.force-full == 'true'
+    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.force-full == 'true' || github.event_name == 'pull_request'
     
     runs-on: ubuntu-latest
     
@@ -432,13 +432,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         
-      - name: Collect Failure Information
-        if: contains(needs.*.result, 'failure')
+      - name: Collect Job Status Information
         run: |
-          echo "WORKFLOW_FAILED=true" >> $GITHUB_ENV
-          
-          # Collect detailed failure information
-          cat << EOF >> failure_details.txt
+          # Collect all job statuses
+          cat << EOF >> job_status.txt
           Workflow Run: ${{ github.run_number }}
           Commit: ${{ github.sha }}
           Branch: ${{ github.ref_name }}
@@ -458,7 +455,19 @@ jobs:
           - Test Changes: ${{ needs.change-detection.outputs.tests-changed }}
           - Config Changes: ${{ needs.change-detection.outputs.config-changed }}
           - Security Changes: ${{ needs.change-detection.outputs.security-changed }}
+          - Force Full: ${{ needs.change-detection.outputs.force-full }}
           EOF
+          
+          # Check for actual failures (not skipped jobs)
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "WORKFLOW_FAILED=true" >> $GITHUB_ENV
+            echo "FAILURE_REASON=job_failure" >> $GITHUB_ENV
+          elif [[ "${{ needs.setup-environment.result }}" == "skipped" && "${{ needs.security-analysis.result }}" == "skipped" && "${{ needs.cross-platform-tests.result }}" == "skipped" ]]; then
+            echo "WORKFLOW_SKIPPED=true" >> $GITHUB_ENV
+            echo "SKIP_REASON=no_relevant_changes" >> $GITHUB_ENV
+          else
+            echo "WORKFLOW_SUCCESS=true" >> $GITHUB_ENV
+          fi
         
       - name: Create Failure Summary Issue
         if: env.WORKFLOW_FAILED == 'true'
@@ -539,15 +548,29 @@ jobs:
               console.log('✅ Updated existing failure issue with new failure details');
             }
         
-      - name: Success Summary
-        if: env.WORKFLOW_FAILED != 'true'
+      - name: Pipeline Summary
         run: |
-          echo "✅ All CI/CD pipeline jobs completed successfully!"
-          echo "📊 Pipeline Statistics:"
-          echo "  - Workflow: ${{ github.workflow }}"
-          echo "  - Run: #${{ github.run_number }}"
-          echo "  - Duration: ${{ job.status }}"
-          echo "  - Platform Coverage: Windows, Linux, macOS"
-          echo "  - Security: ✅ Passed"
-          echo "  - Tests: ✅ Passed"
-          echo "  - Build: ✅ Validated"
+          echo "📊 CI/CD Pipeline Summary"
+          echo "========================="
+          
+          if [[ "$WORKFLOW_FAILED" == "true" ]]; then
+            echo "❌ Pipeline completed with failures"
+            echo "📋 Check the failure summary issue for details"
+          elif [[ "$WORKFLOW_SKIPPED" == "true" ]]; then
+            echo "⏭️ Pipeline jobs skipped due to no relevant changes detected"
+            echo "📊 Smart change detection working correctly"
+            echo "📋 Change Detection Results:"
+            echo "  - Code Changes: ${{ needs.change-detection.outputs.code-changed }}"
+            echo "  - Test Changes: ${{ needs.change-detection.outputs.tests-changed }}"
+            echo "  - Config Changes: ${{ needs.change-detection.outputs.config-changed }}"
+            echo "  - Security Changes: ${{ needs.change-detection.outputs.security-changed }}"
+          elif [[ "$WORKFLOW_SUCCESS" == "true" ]]; then
+            echo "✅ All CI/CD pipeline jobs completed successfully!"
+            echo "📊 Pipeline Statistics:"
+            echo "  - Workflow: ${{ github.workflow }}"
+            echo "  - Run: #${{ github.run_number }}"
+            echo "  - Platform Coverage: Windows, Linux, macOS"
+            echo "  - Security: ✅ Passed"
+            echo "  - Tests: ✅ Passed"
+            echo "  - Build: ✅ Validated"
+          fi
