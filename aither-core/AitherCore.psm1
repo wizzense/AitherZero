@@ -974,6 +974,7 @@ if (-not (Get-Command Start-QuickAction -ErrorAction SilentlyContinue)) {
 
 # Export all public functions
 Export-ModuleMember -Function @(
+    # Core platform functions
     'Invoke-CoreApplication',
     'Start-LabRunner',
     'Get-CoreConfiguration',
@@ -987,5 +988,19 @@ Export-ModuleMember -Function @(
     'Start-DevEnvironmentSetup',
     'Get-IntegratedToolset',
     'Invoke-IntegratedWorkflow',
-    'Start-QuickAction'
+    'Start-QuickAction',
+    
+    # Unified Platform API Gateway (Phase 4)
+    'Initialize-AitherPlatform',
+    'New-AitherPlatformAPI',
+    'Get-PlatformStatus',
+    'Get-PlatformHealth',
+    'Get-PlatformLifecycle',
+    'Start-PlatformServices',
+    
+    # Performance & Error Handling (Phase 5)
+    'Optimize-PlatformPerformance',
+    'Initialize-PlatformErrorHandling',
+    'Write-PlatformError',
+    'Write-PlatformLog'
 )
