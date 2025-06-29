@@ -218,7 +218,51 @@ function Invoke-PatchWorkflow {
                 Write-PatchLog "Working tree is clean - proceeding with patch workflow" -Level "INFO"
             }
 
-            # Step 3: Create patch branch from clean main
+            # Step 3: Ensure we're on main and sync with remote (CRITICAL for preventing merge conflicts)
+            Write-PatchLog "Ensuring we're on main branch and syncing with remote..." -Level "INFO"
+            
+            if (-not $DryRun) {
+                # Switch to main if not already there
+                $currentBranch = git branch --show-current 2>&1 | Out-String | ForEach-Object Trim
+                if ($currentBranch -ne "main") {
+                    Write-PatchLog "Switching from '$currentBranch' to main branch..." -Level "INFO"
+                    git checkout main 2>&1 | Out-Null
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Failed to checkout main branch"
+                    }
+                }
+
+                # Always sync with remote main to prevent merge conflicts
+                Write-PatchLog "Syncing with remote main to ensure we have latest changes..." -Level "INFO"
+                git fetch origin main 2>&1 | Out-Null
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Failed to fetch from remote main"
+                }
+
+                # Check if local main is behind remote
+                $behindCommits = git rev-list --count main..origin/main 2>&1
+                if ($behindCommits -and $behindCommits -gt 0) {
+                    Write-PatchLog "Local main is $behindCommits commits behind remote. Syncing..." -Level "INFO"
+                    git merge origin/main --ff-only 2>&1 | Out-Null
+                    if ($LASTEXITCODE -ne 0) {
+                        # If fast-forward fails, we have diverged - need to reset
+                        Write-PatchLog "Fast-forward merge failed. Local main has diverged from remote. Performing hard reset..." -Level "WARN"
+                        git reset --hard origin/main 2>&1 | Out-Null
+                        if ($LASTEXITCODE -ne 0) {
+                            throw "Failed to reset local main to match remote"
+                        }
+                        Write-PatchLog "Successfully reset local main to match remote main" -Level "SUCCESS"
+                    } else {
+                        Write-PatchLog "Successfully synced with remote main" -Level "SUCCESS"
+                    }
+                } else {
+                    Write-PatchLog "Local main is up to date with remote" -Level "INFO"
+                }
+            } else {
+                Write-PatchLog "DRY RUN: Would sync with remote main before creating branch" -Level "INFO"
+            }
+
+            # Step 4: Create patch branch from synchronized main
             $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
             $safeName = $PatchDescription -replace '[^a-zA-Z0-9\-_]', '-' -replace '-+', '-'
             $branchName = "patch/$timestamp-$safeName"
@@ -243,7 +287,7 @@ function Invoke-PatchWorkflow {
                 }
             }
 
-            # Step 4: Run test commands with enhanced output capture FIRST (before issue creation)
+            # Step 5: Run test commands with enhanced output capture FIRST (before issue creation)
             if ($TestCommands.Count -gt 0) {
                 Write-PatchLog "Running $($TestCommands.Count) test command(s) with output capture..." -Level "INFO"
 
@@ -305,7 +349,7 @@ function Invoke-PatchWorkflow {
 
                 # Log test summary
                 Write-PatchLog "Test execution complete. Output lines: $($testOutput.Count), Error lines: $($testErrors.Count)" -Level "INFO"
-            }            # Step 4: Create tracking issue with enhanced context (NOW with test data available)
+            }            # Step 6: Create tracking issue with enhanced context (NOW with test data available)
             $issueResult = $null
             if ($CreateIssue) {
                 # Determine target repository for issue creation based on PR target
@@ -356,7 +400,7 @@ function Invoke-PatchWorkflow {
                 Write-PatchLog "Skipping issue creation (disabled by -CreateIssue:`$false)" -Level "INFO"
             }
 
-            # Step 5: Apply patch operation
+            # Step 7: Apply patch operation
             if ($PatchOperation) {
                 Write-PatchLog "Applying patch operation..." -Level "INFO"
 
@@ -367,7 +411,7 @@ function Invoke-PatchWorkflow {
                 }
             }
 
-            # Step 6: Sanitize files and commit patch changes
+            # Step 8: Sanitize files and commit patch changes
             if (-not $DryRun) {
                 $gitStatus = git status --porcelain 2>&1
                 if ($gitStatus -and ($gitStatus | Where-Object { $_ -match '\S' })) {
@@ -408,7 +452,7 @@ function Invoke-PatchWorkflow {
                 }
             } else {
                 Write-PatchLog "DRY RUN: Would sanitize files and commit changes" -Level "INFO"
-            }            # Step 7: Create PR if requested
+            }            # Step 9: Create PR if requested
             if ($CreatePR) {
                 if (-not $DryRun) {
                     Write-PatchLog "Creating pull request..." -Level "INFO"
@@ -462,7 +506,7 @@ function Invoke-PatchWorkflow {
                 }
             }
 
-            # Step 8: Auto-consolidate PRs if requested
+            # Step 10: Auto-consolidate PRs if requested
             if ($AutoConsolidate -and $CreatePR -and -not $DryRun) {
                 Write-PatchLog "Auto-consolidation requested, analyzing open PRs..." -Level "INFO"
                 try {
@@ -480,6 +524,24 @@ function Invoke-PatchWorkflow {
                 }
             } elseif ($AutoConsolidate -and $DryRun) {
                 Write-PatchLog "DRY RUN: Would attempt PR consolidation with strategy: $ConsolidationStrategy" -Level "INFO"
+            }
+
+            # Step 11: Branch cleanup after PR creation (switch back to main)
+            if ($CreatePR -and -not $DryRun) {
+                Write-PatchLog "Switching back to main branch for clean working state..." -Level "INFO"
+                try {
+                    git checkout main 2>&1 | Out-Null
+                    if ($LASTEXITCODE -eq 0) {
+                        Write-PatchLog "Successfully switched back to main branch" -Level "SUCCESS"
+                        Write-PatchLog "Patch branch '$branchName' is ready for review and merge" -Level "INFO"
+                    } else {
+                        Write-PatchLog "Warning: Failed to switch back to main branch" -Level "WARN"
+                    }
+                } catch {
+                    Write-PatchLog "Warning: Error switching to main: $($_.Exception.Message)" -Level "WARN"
+                }
+            } elseif ($DryRun) {
+                Write-PatchLog "DRY RUN: Would switch back to main branch after PR creation" -Level "INFO"
             }
 
             # Success
