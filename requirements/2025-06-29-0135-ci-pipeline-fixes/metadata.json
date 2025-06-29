@@ -1,0 +1,55 @@
+{
+  "id": "2025-06-29-0135-ci-pipeline-fixes",
+  "title": "CI/CD Pipeline Failures - Pester Tests and PowerShell Linting",
+  "description": "Fix failing Pester tests and PowerShell linting issues in GitHub Actions CI/CD pipeline",
+  "created": "2025-06-29T01:35:00Z",
+  "status": "completed",
+  "priority": "high", 
+  "type": "bugfix",
+  "estimated_complexity": "medium",
+  "phase": 4,
+  "implementation": {
+    "total_phases": 3,
+    "estimated_duration": "10 days",
+    "current_phase": 3,
+    "approach": "critical_fixes_first",
+    "completion_date": "2025-06-29T01:45:00Z",
+    "actual_duration": "Already implemented"
+  },
+  "discovery_questions": {
+    "total": 5,
+    "answered": 5,
+    "questions": [
+      {
+        "id": 1,
+        "question": "PowerShell Version Compatibility Focus",
+        "answer": "YES",
+        "rationale": "Fix ForEach-Object -Parallel compatibility issues causing Windows linting failures"
+      },
+      {
+        "id": 2,
+        "question": "Pester Test Infrastructure Modernization",
+        "answer": "YES",
+        "rationale": "Update Pester infrastructure for compatibility with quickstart validation and modern CI/CD"
+      },
+      {
+        "id": 3,
+        "question": "GitHub Actions Workflow Optimization",
+        "answer": "YES",
+        "rationale": "Optimize workflows for reliable execution across different runner environments"
+      },
+      {
+        "id": 4,
+        "question": "Test Execution Strategy Enhancement",
+        "answer": "YES",
+        "rationale": "Implement tiered testing for better CI performance and reliability"
+      },
+      {
+        "id": 5,
+        "question": "Comprehensive Error Reporting and Debugging",
+        "answer": "YES",
+        "rationale": "Enhance debugging and error reporting for faster issue resolution"
+      }
+    ]
+  }
+}

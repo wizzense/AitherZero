@@ -138,13 +138,17 @@ function Initialize-LintingEnvironment {
     Write-LintLog "Platform: $platform" -Level Info
     Write-LintLog "Edition: $($PSVersionTable.PSEdition)" -Level Info
     
-    # Determine processing mode
-    if ($psVersion.Major -ge 7) {
+    # Determine processing mode - Force sequential for reliability in CI/CD
+    if ($psVersion.Major -ge 7 -and -not $env:CI) {
         $script:ProcessingMode = 'Parallel'
         Write-LintLog "Parallel processing available (PowerShell 7.0+)" -Level Success
     } else {
         $script:ProcessingMode = 'Sequential'
-        Write-LintLog "Using sequential processing (PowerShell $psVersion)" -Level Warning
+        if ($env:CI) {
+            Write-LintLog "Using sequential processing for CI/CD reliability" -Level Info
+        } else {
+            Write-LintLog "Using sequential processing (PowerShell $psVersion)" -Level Warning
+        }
     }
     
     # Validate PSScriptAnalyzer availability

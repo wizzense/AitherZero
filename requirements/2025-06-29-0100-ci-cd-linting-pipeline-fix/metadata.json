@@ -1,0 +1,60 @@
+{
+  "id": "2025-06-29-0100-ci-cd-linting-pipeline-fix",
+  "title": "CI/CD Linting Pipeline Fix",
+  "description": "Fix failing CI/CD linting jobs across all platforms, specifically the Windows PowerShell parallel processing error in linting workflow",
+  "created": "2025-06-29T01:00:00Z",
+  "status": "completed",
+  "phase": "implementation",
+  "progress": {
+    "current_step": 4,
+    "total_steps": 4,
+    "phase_name": "Implementation",
+    "completed_phases": ["discovery_questions", "context_analysis", "requirements_specification"],
+    "next_phase": "complete"
+  },
+  "implementation_results": {
+    "files_created": [
+      "comprehensive-lint-analysis.ps1"
+    ],
+    "files_modified": [
+      ".github/workflows/ci-cd.yml"
+    ],
+    "requirements_completed": {
+      "functional": 4,
+      "non_functional": 3,
+      "technical": 3,
+      "total": 10
+    },
+    "success_criteria_met": {
+      "pipeline_restoration": true,
+      "error_elimination": true,
+      "performance_maintenance": true,
+      "platform_consistency": true
+    }
+  },
+  "discovery_answers": {
+    "q1_consistent_failure": "YES",
+    "q2_maintain_parallel_processing": "YES", 
+    "q3_specify_powershell_version": "YES",
+    "q4_enhanced_error_handling": "YES",
+    "q5_pipeline_testing": "YES"
+  },
+  "category": "infrastructure",
+  "priority": "high",
+  "estimated_effort": "medium",
+  "tags": ["ci-cd", "linting", "powershell", "windows", "parallel-processing", "pipeline-fix"],
+  "context": {
+    "error_details": {
+      "job": "Lint (windows-latest)",
+      "duration": "16s",
+      "error_type": "InvalidOperation",
+      "error_location": "D:\\a\\_temp\\b05a95d0-6dc3-4a65-9604-74f1c69780be.ps1:15",
+      "error_message": "The pipeline has been stopped",
+      "failing_code": "$jobs = $scriptFiles | ForEach-Object -Parallel {",
+      "exit_code": 1
+    },
+    "affected_platforms": ["windows-latest"],
+    "impact": "All CI/CD linting jobs failing, blocking development workflow"
+  },
+  "last_updated": "2025-06-29T01:00:00Z"
+}

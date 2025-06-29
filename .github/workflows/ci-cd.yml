@@ -33,6 +33,7 @@ concurrency:
 
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
+  CI: true
 
 permissions:
   contents: read

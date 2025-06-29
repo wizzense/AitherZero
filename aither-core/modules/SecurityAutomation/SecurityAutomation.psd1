@@ -35,6 +35,10 @@
         'Disable-WeakProtocols',
         'Set-SMBSecurity',
         'Set-DNSSinkhole',
+        'Set-AdvancedFirewallPolicy',
+        'Set-NetworkSegmentation',
+        'Set-IPSecConfiguration',
+        'Start-NetworkTrafficMonitoring',
         
         # Remote Administration
         'Enable-PowerShellRemotingSSL',
@@ -58,7 +62,17 @@
         'New-JEASessionConfiguration',
         'Set-PrivilegedAccountPolicy',
         'Get-PrivilegedAccountActivity',
-        'Enable-JustInTimeAccess'
+        'Enable-JustInTimeAccess',
+        
+        # Forensics and Analysis
+        'New-SystemSnapshot',
+        'Test-FileIntegrity',
+        'Search-SecurityLogs',
+        
+        # Cryptography and Data Protection
+        'Protect-SensitiveData',
+        'Manage-PKICertificates',
+        'New-SecureKey'
     )
     CmdletsToExport = @()
     VariablesToExport = @()
