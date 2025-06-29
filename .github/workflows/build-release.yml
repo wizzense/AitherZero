@@ -298,7 +298,7 @@ jobs:
           }
 
   build:
-    name: Build (${{ matrix.os }})
+    name: Build (${{ matrix.platform }}-${{ matrix.package_profile }})
     runs-on: ${{ matrix.os }}
     needs: [version, validate]
     if: needs.version.outputs.should-build == 'true'
@@ -306,15 +306,45 @@ jobs:
     strategy:
       matrix:
         include:
+          # Linux builds - all profiles
           - os: ubuntu-latest
             platform: linux
             artifact_extension: tar.gz
+            package_profile: minimal
+          - os: ubuntu-latest
+            platform: linux
+            artifact_extension: tar.gz
+            package_profile: standard
+          - os: ubuntu-latest
+            platform: linux
+            artifact_extension: tar.gz
+            package_profile: full
+          # Windows builds - all profiles
           - os: windows-latest
             platform: windows
             artifact_extension: zip
+            package_profile: minimal
+          - os: windows-latest
+            platform: windows
+            artifact_extension: zip
+            package_profile: standard
+          - os: windows-latest
+            platform: windows
+            artifact_extension: zip
+            package_profile: full
+          # macOS builds - all profiles
           - os: macos-latest
             platform: macos
             artifact_extension: tar.gz
+            package_profile: minimal
+          - os: macos-latest
+            platform: macos
+            artifact_extension: tar.gz
+            package_profile: standard
+          - os: macos-latest
+            platform: macos
+            artifact_extension: tar.gz
+            package_profile: full
 
     steps:
       - name: Checkout Repository
@@ -323,28 +353,28 @@ jobs:
       - name: Setup Build Environment
         shell: pwsh
         run: |
-          Write-Host "Setting up build environment for ${{ matrix.platform }}..." -ForegroundColor Cyan
+          Write-Host "Setting up build environment for ${{ matrix.platform }}-${{ matrix.package_profile }}..." -ForegroundColor Cyan
 
           $version = "${{ needs.version.outputs.version }}"
           echo "BUILD_VERSION=$version" >> $env:GITHUB_ENV
           echo "PROJECT_ROOT=$PWD" >> $env:GITHUB_ENV
 
-          Write-Host "✓ Environment configured for ${{ matrix.platform }}" -ForegroundColor Green
+          Write-Host "✓ Environment configured for ${{ matrix.platform }}-${{ matrix.package_profile }}" -ForegroundColor Green
 
       - name: Build AitherZero Package
         shell: pwsh
         run: |
           $version = "${{ needs.version.outputs.version }}"
-          & "./build/Build-Package.ps1" -Platform "${{ matrix.platform }}" -Version $version -ArtifactExtension "${{ matrix.artifact_extension }}"
+          & "./build/Build-Package.ps1" -Platform "${{ matrix.platform }}" -Version $version -ArtifactExtension "${{ matrix.artifact_extension }}" -PackageProfile "${{ matrix.package_profile }}"
 
       - name: Create Platform Archive
         shell: pwsh
         run: |
-          Write-Host "Creating archive for ${{ matrix.platform }}..." -ForegroundColor Cyan
+          Write-Host "Creating archive for ${{ matrix.platform }}-${{ matrix.package_profile }}..." -ForegroundColor Cyan
 
           $version = "${{ needs.version.outputs.version }}"
           $buildDir = "build-output/${{ matrix.platform }}"
-          $packageName = "AitherZero-$version-${{ matrix.platform }}"
+          $packageName = "AitherZero-$version-${{ matrix.platform }}-${{ matrix.package_profile }}"
           $archiveName = "$packageName.${{ matrix.artifact_extension }}"
 
           if (Test-Path "$buildDir/$packageName") {
@@ -375,7 +405,7 @@ jobs:
         run: |
           Write-Host "Verifying artifacts before upload..." -ForegroundColor Cyan
           $version = "${{ needs.version.outputs.version }}"
-          $archiveName = "AitherZero-$version-${{ matrix.platform }}.${{ matrix.artifact_extension }}"
+          $archiveName = "AitherZero-$version-${{ matrix.platform }}-${{ matrix.package_profile }}.${{ matrix.artifact_extension }}"
           $hashName = "$archiveName.sha256"
 
           Write-Host "Expected files:" -ForegroundColor Yellow
@@ -402,10 +432,10 @@ jobs:
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: AitherZero-${{ needs.version.outputs.version }}-${{ matrix.platform }}
+          name: AitherZero-${{ needs.version.outputs.version }}-${{ matrix.platform }}-${{ matrix.package_profile }}
           path: |
-            AitherZero-${{ needs.version.outputs.version }}-${{ matrix.platform }}.${{ matrix.artifact_extension }}
-            AitherZero-${{ needs.version.outputs.version }}-${{ matrix.platform }}.${{ matrix.artifact_extension }}.sha256
+            AitherZero-${{ needs.version.outputs.version }}-${{ matrix.platform }}-${{ matrix.package_profile }}.${{ matrix.artifact_extension }}
+            AitherZero-${{ needs.version.outputs.version }}-${{ matrix.platform }}-${{ matrix.package_profile }}.${{ matrix.artifact_extension }}.sha256
           retention-days: 30
           if-no-files-found: error
 
