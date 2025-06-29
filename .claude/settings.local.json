@@ -17,7 +17,8 @@
       "Bash(\"/mnt/c/Program Files/Git/cmd/git.exe\" --version)",
       "Bash(\"/mnt/c/Program Files/Git/cmd/git.exe\" status)",
       "Bash(\"/mnt/c/Program Files/GitHub CLI/gh.exe\" run list --limit 5)",
-      "Bash(\"/mnt/c/Program Files/GitHub CLI/gh.exe\" run view 15958261104)"
+      "Bash(\"/mnt/c/Program Files/GitHub CLI/gh.exe\" run view 15958261104)",
+      "Bash(\"/mnt/c/Program Files/GitHub CLI/gh.exe\" run list --limit 3)"
     ],
     "deny": []
   }
