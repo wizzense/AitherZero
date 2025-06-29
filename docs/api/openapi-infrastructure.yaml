@@ -1,0 +1,498 @@
+openapi: 3.0.3
+info:
+  title: AitherZero Infrastructure Management API
+  description: |
+    Infrastructure deployment and management tools for AitherZero.
+    Provides OpenTofu/Terraform automation, lab orchestration, and remote connections.
+  version: 1.0.0
+  contact:
+    name: AitherZero Development Team
+    url: https://github.com/aitherzero/aitherzero
+
+servers:
+  - url: stdio://mcp/tools/call
+    description: MCP tool execution endpoint
+
+tags:
+  - name: Infrastructure
+    description: Core infrastructure operations
+  - name: Lab
+    description: Lab environment automation
+  - name: Remote
+    description: Remote connection management
+  - name: OpenTofu
+    description: OpenTofu provider management
+
+paths:
+  /infrastructure/deploy:
+    post:
+      tags: [Infrastructure]
+      summary: Deploy infrastructure
+      description: Execute OpenTofu/Terraform operations for infrastructure deployment
+      operationId: aither_infrastructure_deployment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [operation]
+              properties:
+                operation:
+                  type: string
+                  enum: [plan, apply, destroy, validate, init, refresh, import, output]
+                  description: OpenTofu operation to perform
+                environment:
+                  type: string
+                  enum: [dev, staging, prod, lab, test]
+                  default: dev
+                  description: Target environment
+                configPath:
+                  type: string
+                  description: Path to OpenTofu configuration files
+                  example: "./configs/staging.tf"
+                autoApprove:
+                  type: boolean
+                  default: false
+                  description: Auto-approve changes without confirmation
+                variables:
+                  type: object
+                  additionalProperties:
+                    type: string
+                  description: OpenTofu variables to pass
+                  example:
+                    region: "us-west-2"
+                    instance_type: "t3.medium"
+                parallelism:
+                  type: integer
+                  minimum: 1
+                  maximum: 50
+                  default: 10
+                  description: Number of concurrent operations
+                refresh:
+                  type: boolean
+                  default: true
+                  description: Refresh state before operation
+                targets:
+                  type: array
+                  items:
+                    type: string
+                  description: Specific resources to target
+                  example: ["aws_instance.web", "aws_security_group.web"]
+            examples:
+              plan_staging:
+                summary: Plan staging deployment
+                value:
+                  operation: plan
+                  environment: staging
+                  configPath: "./configs/staging"
+                  variables:
+                    region: "us-west-2"
+                    instance_count: "3"
+              apply_production:
+                summary: Apply production infrastructure
+                value:
+                  operation: apply
+                  environment: prod
+                  configPath: "./configs/production"
+                  autoApprove: false
+                  parallelism: 5
+      responses:
+        '200':
+          description: Infrastructure operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfrastructureResult'
+        '400':
+          description: Invalid operation parameters
+        '500':
+          description: Infrastructure operation failed
+
+  /lab/automation:
+    post:
+      tags: [Lab]
+      summary: Lab environment automation
+      description: Orchestrate lab environment creation, configuration, and management
+      operationId: aither_lab_automation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [create, configure, start, stop, destroy, backup, restore, clone]
+                  description: Lab automation action
+                environment:
+                  type: string
+                  description: Lab environment name
+                  example: "web-tier-test"
+                template:
+                  type: string
+                  enum: [minimal, standard-web, microservices, big-data, security]
+                  default: minimal
+                  description: Lab environment template
+                config:
+                  type: object
+                  properties:
+                    instances:
+                      type: integer
+                      minimum: 1
+                      maximum: 10
+                      default: 1
+                    size:
+                      type: string
+                      enum: [small, medium, large, xlarge]
+                      default: medium
+                    network:
+                      type: string
+                      enum: [public, private, isolated]
+                      default: private
+                    storage:
+                      type: integer
+                      minimum: 10
+                      maximum: 1000
+                      default: 50
+                      description: Storage size in GB
+                timeout:
+                  type: integer
+                  minimum: 300
+                  maximum: 3600
+                  default: 1800
+                  description: Operation timeout in seconds
+                parallel:
+                  type: boolean
+                  default: true
+                  description: Execute operations in parallel
+            examples:
+              create_web_lab:
+                summary: Create web application lab
+                value:
+                  action: create
+                  environment: "web-app-test"
+                  template: standard-web
+                  config:
+                    instances: 3
+                    size: medium
+                    network: private
+                    storage: 100
+      responses:
+        '200':
+          description: Lab automation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabResult'
+
+  /remote/connection:
+    post:
+      tags: [Remote]
+      summary: Remote connection management
+      description: Manage remote connections using multiple protocols (SSH, WinRM, etc.)
+      operationId: aither_remote_connection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action, host]
+              properties:
+                action:
+                  type: string
+                  enum: [connect, disconnect, execute, test, list]
+                  description: Connection action
+                host:
+                  type: string
+                  description: Target host address
+                  example: "192.168.1.100"
+                protocol:
+                  type: string
+                  enum: [ssh, winrm, rdp, vnc]
+                  default: ssh
+                  description: Connection protocol
+                port:
+                  type: integer
+                  minimum: 1
+                  maximum: 65535
+                  description: Connection port
+                credentials:
+                  type: object
+                  properties:
+                    username:
+                      type: string
+                    password:
+                      type: string
+                      format: password
+                    keyPath:
+                      type: string
+                      description: Path to SSH private key
+                    certificate:
+                      type: string
+                      description: Certificate for authentication
+                command:
+                  type: string
+                  description: Command to execute remotely
+                  example: "systemctl status nginx"
+                timeout:
+                  type: integer
+                  minimum: 30
+                  maximum: 300
+                  default: 60
+                  description: Connection timeout in seconds
+            examples:
+              ssh_connect:
+                summary: SSH connection and command execution
+                value:
+                  action: execute
+                  host: "web-server-01"
+                  protocol: ssh
+                  port: 22
+                  credentials:
+                    username: "admin"
+                    keyPath: "/keys/ssh-key.pem"
+                  command: "docker ps"
+      responses:
+        '200':
+          description: Remote connection operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoteResult'
+
+  /opentofu/provider:
+    post:
+      tags: [OpenTofu]
+      summary: OpenTofu provider management
+      description: Manage OpenTofu providers, configurations, and state
+      operationId: aither_opentofu_provider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [init, validate, plan, apply, destroy, import, refresh, state, output]
+                  description: Provider action
+                provider:
+                  type: string
+                  enum: [aws, azure, gcp, hyper-v, vmware, docker]
+                  description: Target provider
+                workspace:
+                  type: string
+                  description: OpenTofu workspace
+                  example: "production"
+                backend:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [local, s3, azurerm, gcs, consul]
+                    config:
+                      type: object
+                      additionalProperties: true
+                variables:
+                  type: object
+                  additionalProperties: true
+                  description: Provider-specific variables
+                security:
+                  type: object
+                  properties:
+                    encryptState:
+                      type: boolean
+                      default: true
+                    backupState:
+                      type: boolean
+                      default: true
+                    validateSecurity:
+                      type: boolean
+                      default: true
+            examples:
+              aws_init:
+                summary: Initialize AWS provider
+                value:
+                  action: init
+                  provider: aws
+                  workspace: production
+                  backend:
+                    type: s3
+                    config:
+                      bucket: "terraform-state-prod"
+                      region: "us-west-2"
+                  variables:
+                    region: "us-west-2"
+                    availability_zones: ["us-west-2a", "us-west-2b"]
+      responses:
+        '200':
+          description: Provider operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderResult'
+
+components:
+  schemas:
+    InfrastructureResult:
+      type: object
+      required: [success, operation, timestamp]
+      properties:
+        success:
+          type: boolean
+        operation:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        environment:
+          type: string
+        resources:
+          type: object
+          properties:
+            created:
+              type: integer
+            updated:
+              type: integer
+            destroyed:
+              type: integer
+            unchanged:
+              type: integer
+        plan:
+          type: object
+          properties:
+            toAdd:
+              type: integer
+            toChange:
+              type: integer
+            toDestroy:
+              type: integer
+        output:
+          type: object
+          additionalProperties: true
+        executionTime:
+          type: number
+          format: float
+          description: Execution time in seconds
+        logs:
+          type: array
+          items:
+            type: string
+
+    LabResult:
+      type: object
+      required: [success, action, environment]
+      properties:
+        success:
+          type: boolean
+        action:
+          type: string
+        environment:
+          type: string
+        status:
+          type: string
+          enum: [created, running, stopped, destroyed]
+        resources:
+          type: object
+          properties:
+            instances:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  status:
+                    type: string
+                  ip:
+                    type: string
+            networks:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  cidr:
+                    type: string
+        configuration:
+          type: object
+          additionalProperties: true
+        executionTime:
+          type: number
+          format: float
+
+    RemoteResult:
+      type: object
+      required: [success, action, host]
+      properties:
+        success:
+          type: boolean
+        action:
+          type: string
+        host:
+          type: string
+        protocol:
+          type: string
+        connectionStatus:
+          type: string
+          enum: [connected, disconnected, timeout, error]
+        output:
+          type: string
+          description: Command output
+        exitCode:
+          type: integer
+        executionTime:
+          type: number
+          format: float
+        error:
+          type: string
+
+    ProviderResult:
+      type: object
+      required: [success, action, provider]
+      properties:
+        success:
+          type: boolean
+        action:
+          type: string
+        provider:
+          type: string
+        workspace:
+          type: string
+        state:
+          type: object
+          properties:
+            version:
+              type: integer
+            resources:
+              type: integer
+            outputs:
+              type: object
+              additionalProperties: true
+        validation:
+          type: object
+          properties:
+            valid:
+              type: boolean
+            warnings:
+              type: array
+              items:
+                type: string
+            errors:
+              type: array
+              items:
+                type: string
+        executionTime:
+          type: number
+          format: float

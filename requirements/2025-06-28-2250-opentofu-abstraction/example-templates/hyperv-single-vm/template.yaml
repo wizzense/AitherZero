@@ -1,0 +1,128 @@
+# Template: Single Hyper-V VM Deployment
+version: 1.0
+metadata:
+  name: "hyperv-single-vm"
+  description: "Deploy a single Windows Server VM on Hyper-V with automated ISO handling"
+  author: "AitherZero Team"
+  tags: ["vm", "basic", "windows-server"]
+  
+requirements:
+  aitherzero_version: ">=1.2.0"
+  providers:
+    - name: "taliesins/hyperv"
+      version: ">=1.2.1"
+  
+  iso_requirements:
+    - id: "primary_os"
+      description: "Operating System ISO"
+      supported:
+        - "WindowsServer2025"
+        - "WindowsServer2022"
+        - "WindowsServer2019"
+      customization_profile: "standard-server"
+      
+parameters:
+  # Required parameters
+  vm_name:
+    type: string
+    description: "Name of the virtual machine"
+    validation: "^[a-zA-Z0-9-]{1,15}$"
+    
+  hyperv_host:
+    type: string
+    description: "Hyper-V host to deploy to"
+    default: "localhost"
+    
+  # Optional parameters with defaults
+  cpu_count:
+    type: number
+    description: "Number of virtual CPUs"
+    default: 4
+    validation:
+      min: 1
+      max: 32
+    
+  memory_gb:
+    type: number
+    description: "Memory in GB"
+    default: 8
+    validation:
+      min: 2
+      max: 128
+    
+  disk_size_gb:
+    type: number
+    description: "OS disk size in GB"
+    default: 127
+    validation:
+      min: 32
+      max: 2048
+    
+  network_switch:
+    type: string
+    description: "Virtual switch name"
+    default: "Default Switch"
+    
+  os_iso:
+    type: string
+    description: "Operating system ISO selection"
+    default: "WindowsServer2025"
+    allowed_values:
+      - "WindowsServer2025"
+      - "WindowsServer2022"
+      - "WindowsServer2019"
+    
+  enable_secure_boot:
+    type: boolean
+    description: "Enable secure boot"
+    default: true
+    
+  enable_tpm:
+    type: boolean
+    description: "Enable virtual TPM"
+    default: true
+    
+  timezone:
+    type: string
+    description: "System timezone"
+    default: "Pacific Standard Time"
+    
+  admin_password:
+    type: string
+    description: "Local administrator password"
+    sensitive: true
+    validation:
+      min_length: 12
+      require_complexity: true
+
+deployment:
+  stages:
+    - name: "validate"
+      description: "Validate parameters and environment"
+      
+    - name: "prepare"
+      description: "Prepare ISO and customization"
+      iso_automation:
+        enabled: true
+        iso_ref: "primary_os"
+        customization:
+          autounattend: true
+          drivers: ["network", "storage"]
+          updates: "latest"
+          
+    - name: "deploy"
+      description: "Create and configure VM"
+      
+    - name: "verify"
+      description: "Verify deployment success"
+      
+outputs:
+  vm_id:
+    description: "Virtual machine ID"
+    
+  ip_address:
+    description: "Assigned IP address"
+    
+  connection_info:
+    description: "Connection details for the VM"
+    sensitive: true

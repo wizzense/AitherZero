@@ -1,0 +1,476 @@
+openapi: 3.0.3
+info:
+  title: AitherZero MCP Server API
+  description: |
+    Model Context Protocol server for AitherZero infrastructure automation framework.
+    Exposes 30+ specialized tools across 7 categories for comprehensive infrastructure
+    automation, development workflows, and system operations.
+  version: 2.0.0
+  contact:
+    name: AitherZero Development Team
+    url: https://github.com/aitherzero/aitherzero
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: stdio://
+    description: Standard I/O transport (MCP standard)
+  - url: ws://localhost:3000
+    description: WebSocket transport (optional)
+
+tags:
+  - name: Infrastructure
+    description: Infrastructure deployment and management
+  - name: Development
+    description: Development workflow automation
+  - name: Security
+    description: Security and credential management
+  - name: Operations
+    description: System operations and maintenance
+  - name: ISO Management
+    description: ISO file management and customization
+  - name: Automation
+    description: Advanced automation and orchestration
+  - name: Quick Actions
+    description: Quick action tools for common operations
+
+paths:
+  /tools/list:
+    post:
+      tags: [Tools]
+      summary: List available MCP tools
+      description: Returns all available MCP tools with their schemas and descriptions
+      operationId: listTools
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListToolsRequest'
+      responses:
+        '200':
+          description: List of available tools
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListToolsResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tools/call:
+    post:
+      tags: [Tools]
+      summary: Execute MCP tool
+      description: Execute a specific MCP tool with provided arguments
+      operationId: callTool
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CallToolRequest'
+            examples:
+              infrastructure_deployment:
+                summary: Infrastructure deployment example
+                value:
+                  name: aither_infrastructure_deployment
+                  arguments:
+                    operation: apply
+                    environment: staging
+                    configPath: ./configs/staging.tf
+                    autoApprove: false
+              patch_workflow:
+                summary: Patch workflow example
+                value:
+                  name: aither_patch_workflow
+                  arguments:
+                    description: Fix module loading issue
+                    createPR: true
+                    priority: High
+                    operation: "Get-Content module.ps1 | ForEach-Object { $_ -replace 'old', 'new' } | Set-Content module.ps1"
+      responses:
+        '200':
+          description: Tool execution result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CallToolResponse'
+        '400':
+          description: Invalid tool arguments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Tool not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Tool execution error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      tags: [Monitoring]
+      summary: Server health check
+      description: Check the health status of the MCP server
+      operationId: getHealth
+      responses:
+        '200':
+          description: Server health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /metrics:
+    get:
+      tags: [Monitoring]
+      summary: Performance metrics
+      description: Get server performance metrics and statistics
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Server metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+
+  /validation/schemas:
+    get:
+      tags: [Validation]
+      summary: Get validation schemas
+      description: Retrieve validation schemas for all available tools
+      operationId: getValidationSchemas
+      responses:
+        '200':
+          description: Tool validation schemas
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/ValidationSchema'
+
+components:
+  schemas:
+    ListToolsRequest:
+      type: object
+      required: [jsonrpc, id, method]
+      properties:
+        jsonrpc:
+          type: string
+          enum: ["2.0"]
+        id:
+          oneOf:
+            - type: string
+            - type: number
+        method:
+          type: string
+          enum: ["tools/list"]
+        params:
+          type: object
+
+    ListToolsResponse:
+      type: object
+      required: [jsonrpc, id, result]
+      properties:
+        jsonrpc:
+          type: string
+          enum: ["2.0"]
+        id:
+          oneOf:
+            - type: string
+            - type: number
+        result:
+          type: object
+          required: [tools]
+          properties:
+            tools:
+              type: array
+              items:
+                $ref: '#/components/schemas/Tool'
+
+    CallToolRequest:
+      type: object
+      required: [jsonrpc, id, method, params]
+      properties:
+        jsonrpc:
+          type: string
+          enum: ["2.0"]
+        id:
+          oneOf:
+            - type: string
+            - type: number
+        method:
+          type: string
+          enum: ["tools/call"]
+        params:
+          type: object
+          required: [name, arguments]
+          properties:
+            name:
+              type: string
+              description: Name of the tool to execute
+              enum:
+                # Infrastructure Management
+                - aither_infrastructure_deployment
+                - aither_lab_automation
+                - aither_remote_connection
+                - aither_opentofu_provider
+                # Development Workflow
+                - aither_patch_workflow
+                - aither_dev_environment
+                - aither_testing_framework
+                - aither_script_management
+                - aither_repo_sync
+                # System Operations
+                - aither_backup_management
+                - aither_maintenance_operations
+                - aither_logging_system
+                - aither_parallel_execution
+                - aither_unified_maintenance
+                # Security & Credentials
+                - aither_credential_management
+                - aither_secure_storage
+                - aither_encryption_tools
+                - aither_audit_logging
+                # ISO Management
+                - aither_iso_download
+                - aither_iso_customization
+                - aither_iso_validation
+                - aither_autounattend_generation
+                # Advanced Automation
+                - aither_cross_platform_executor
+                - aither_performance_monitoring
+                - aither_health_diagnostics
+                - aither_workflow_orchestration
+                - aither_ai_integration
+                # Quick Actions
+                - aither_quick_patch
+                - aither_emergency_rollback
+                - aither_instant_backup
+                - aither_fast_validation
+                - aither_system_status
+            arguments:
+              type: object
+              description: Tool-specific arguments
+              additionalProperties: true
+
+    CallToolResponse:
+      type: object
+      required: [jsonrpc, id, result]
+      properties:
+        jsonrpc:
+          type: string
+          enum: ["2.0"]
+        id:
+          oneOf:
+            - type: string
+            - type: number
+        result:
+          type: object
+          required: [content]
+          properties:
+            content:
+              type: array
+              items:
+                $ref: '#/components/schemas/ToolResult'
+            isError:
+              type: boolean
+              default: false
+
+    Tool:
+      type: object
+      required: [name, description, inputSchema]
+      properties:
+        name:
+          type: string
+          description: Unique tool identifier
+        description:
+          type: string
+          description: Human-readable tool description
+        inputSchema:
+          $ref: '#/components/schemas/ValidationSchema'
+
+    ValidationSchema:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [object]
+        properties:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              type:
+                type: string
+              description:
+                type: string
+              enum:
+                type: array
+                items:
+                  type: string
+              required:
+                type: boolean
+              minLength:
+                type: integer
+              maxLength:
+                type: integer
+              minimum:
+                type: integer
+              maximum:
+                type: integer
+        required:
+          type: array
+          items:
+            type: string
+        additionalProperties:
+          type: boolean
+
+    ToolResult:
+      type: object
+      required: [type, text]
+      properties:
+        type:
+          type: string
+          enum: [text]
+        text:
+          type: string
+          description: Tool execution output
+
+    ErrorResponse:
+      type: object
+      required: [jsonrpc, id, error]
+      properties:
+        jsonrpc:
+          type: string
+          enum: ["2.0"]
+        id:
+          oneOf:
+            - type: string
+            - type: number
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: integer
+              description: Error code
+            message:
+              type: string
+              description: Error message
+            data:
+              type: object
+              description: Additional error details
+
+    HealthResponse:
+      type: object
+      required: [status, timestamp]
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy, degraded]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        uptime:
+          type: integer
+          description: Server uptime in seconds
+        powershell:
+          type: object
+          properties:
+            available:
+              type: boolean
+            version:
+              type: string
+            platform:
+              type: string
+        modules:
+          type: object
+          properties:
+            loaded:
+              type: integer
+            available:
+              type: integer
+            status:
+              type: string
+
+    MetricsResponse:
+      type: object
+      properties:
+        requests:
+          type: object
+          properties:
+            total:
+              type: integer
+            successful:
+              type: integer
+            failed:
+              type: integer
+            avgResponseTime:
+              type: number
+              format: float
+        tools:
+          type: object
+          properties:
+            totalExecutions:
+              type: integer
+            mostUsed:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  count:
+                    type: integer
+        powershell:
+          type: object
+          properties:
+            scriptsExecuted:
+              type: integer
+            avgExecutionTime:
+              type: number
+              format: float
+            errors:
+              type: integer
+        memory:
+          type: object
+          properties:
+            usage:
+              type: number
+              format: float
+              description: Memory usage percentage
+            available:
+              type: integer
+              description: Available memory in bytes
+
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for MCP server authentication (if enabled)
+
+security:
+  - ApiKey: []
+
+externalDocs:
+  description: AitherZero Documentation
+  url: https://github.com/aitherzero/aitherzero/blob/main/README.md
