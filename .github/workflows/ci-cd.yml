@@ -88,11 +88,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup PowerShell
+      - name: Setup PowerShell 7+
+        uses: microsoft/setup-powershell@v1
+        with:
+          powershell-version: '7.x'
+
+      - name: Verify PowerShell Setup
         shell: pwsh
         run: |
           Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Green
           Write-Host "Platform: $($PSVersionTable.Platform)" -ForegroundColor Green
+          Write-Host "Edition: $($PSVersionTable.PSEdition)" -ForegroundColor Green
+          
+          # Verify parallel processing capability
+          if ($PSVersionTable.PSVersion.Major -ge 7) {
+            Write-Host "✅ Parallel processing available" -ForegroundColor Green
+          } else {
+            Write-Host "⚠️ Sequential processing mode" -ForegroundColor Yellow
+          }
 
       - name: Install PSScriptAnalyzer
         shell: pwsh
@@ -101,17 +114,37 @@ jobs:
             Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
           }
 
-      - name: Run PowerShell Script Analysis
+      - name: Validate Linting Script
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Validating linting script availability..." -ForegroundColor Cyan
+          
+          if (-not (Test-Path './comprehensive-lint-analysis.ps1')) {
+            Write-Error "❌ Linting script './comprehensive-lint-analysis.ps1' not found!"
+            Write-Host "Available files in root:" -ForegroundColor Yellow
+            Get-ChildItem -Path . -Filter "*.ps1" | ForEach-Object { Write-Host "  • $($_.Name)" -ForegroundColor Cyan }
+            exit 1
+          }
+          
+          Write-Host "✅ Linting script found" -ForegroundColor Green
+
+      - name: Run Comprehensive PowerShell Analysis
         shell: pwsh
         run: |
           Write-Host "🔍 Running comprehensive PowerShell analysis..." -ForegroundColor Cyan
 
-          # Run comprehensive analysis with detailed reporting
-          if (Test-Path './comprehensive-lint-analysis.ps1') {
-            pwsh -File './comprehensive-lint-analysis.ps1' -Severity 'All' -FailOnErrors -Detailed
-          } else {
-            # Fallback to basic analysis
-            Write-Warning "Comprehensive analysis script not found, using basic analysis"
+          try {
+            # Execute comprehensive linting with enhanced error handling
+            pwsh -File './comprehensive-lint-analysis.ps1' -Severity 'All' -FailOnErrors -Detailed -VerboseOutput
+            Write-Host "✅ Comprehensive analysis completed successfully" -ForegroundColor Green
+          } catch {
+            Write-Error "❌ Comprehensive analysis failed: $($_.Exception.Message)"
+            
+            # Fallback to basic analysis for debugging
+            Write-Host "🔄 Attempting fallback analysis..." -ForegroundColor Yellow
+            
+            # Basic fallback analysis (retained for emergency use)
+            Write-Warning "Falling back to basic analysis for debugging"
             $results = @()
             $patterns = @('*.ps1', '*.psm1', '*.psd1')
             foreach ($pattern in $patterns) {
@@ -155,6 +188,10 @@ jobs:
               Write-Error "Script analysis found $errorCount errors"
               exit 1
             }
+            
+            # If fallback succeeds, still exit with error to indicate primary script failure
+            Write-Warning "Fallback analysis completed, but primary script failed"
+            exit 1
           }
 
       - name: PowerShell Syntax Check
