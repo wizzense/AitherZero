@@ -50,7 +50,6 @@ build-output/
 kicker-git-backup.ps1
 
 # Claude Requirements System
-.claude/
-claude-requirements/requirements/*
-!claude-requirements/requirements/index.md
-!claude-requirements/requirements/.current-requirement
+
+# PowerShell Security Scripts (Private - Never Commit)
+powershellsec/

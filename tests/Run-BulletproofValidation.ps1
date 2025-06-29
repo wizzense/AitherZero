@@ -37,7 +37,7 @@
 [CmdletBinding()]
 param(
     [Parameter()]
-    [ValidateSet('Quick', 'Standard', 'Complete')]
+    [ValidateSet('Quick', 'Standard', 'Complete', 'Quickstart')]
     [string]$ValidationLevel = 'Standard',
 
     [Parameter()]
@@ -53,11 +53,39 @@ param(
     [switch]$CodeCoverage,
 
     [Parameter()]
-    [switch]$EnforceCoverageThresholds
+    [switch]$EnforceCoverageThresholds,
+
+    [Parameter()]
+    [switch]$IncludePerformanceBenchmarks,
+
+    [Parameter()]
+    [switch]$CrossPlatformTesting,
+
+    [Parameter()]
+    [switch]$QuickstartSimulation,
+
+    [Parameter()]
+    [switch]$SecurityValidation,
+
+    [Parameter()]
+    [switch]$InfrastructureTesting
 )
 
-Write-Host '🛡️ Bulletproof Validation - Enhanced with Parallel Execution' -ForegroundColor Cyan
+Write-Host '🛡️ Bulletproof Validation - Enhanced with Quickstart Support' -ForegroundColor Cyan
 Write-Host "Validation Level: $ValidationLevel | Max Parallel Jobs: $MaxParallelJobs" -ForegroundColor Yellow
+
+# Display active enhancement flags
+$activeFlags = @()
+if ($IncludePerformanceBenchmarks) { $activeFlags += 'Performance' }
+if ($CrossPlatformTesting) { $activeFlags += 'CrossPlatform' }  
+if ($QuickstartSimulation) { $activeFlags += 'Quickstart' }
+if ($SecurityValidation) { $activeFlags += 'Security' }
+if ($InfrastructureTesting) { $activeFlags += 'Infrastructure' }
+if ($CodeCoverage) { $activeFlags += 'Coverage' }
+
+if ($activeFlags.Count -gt 0) {
+    Write-Host "Enhancement Flags: $($activeFlags -join ', ')" -ForegroundColor Magenta
+}
 
 # Initialize environment
 $ErrorActionPreference = 'Stop'
@@ -120,27 +148,107 @@ try {
     Write-Host "⚠️ Could not load modules, proceeding with basic functionality: $($_.Exception.Message)" -ForegroundColor Yellow
 }
 
-$testPaths = switch ($ValidationLevel) {
-    'Quick' {
-        @(
+# Enhanced validation level definitions with new Quickstart level
+$validationLevels = @{
+    'Quickstart' = @{
+        Duration = '60-90 seconds'
+        Description = 'New user experience simulation with performance benchmarking'
+        TestPaths = @(
+            'tests/quickstart'
+        )
+        RequiredFlags = @('QuickstartSimulation')
+    }
+    'Quick' = @{
+        Duration = '45 seconds'  # Enhanced from 30s
+        Description = 'Core functionality smoke test with quickstart checks'
+        TestPaths = @(
             'tests/unit/modules/Logging',
-            'tests/unit/modules/LabRunner',
+            'tests/unit/modules/LabRunner', 
             'tests/unit/modules/BackupManager'
         )
+        EnhancedPaths = @(
+            'tests/unit/core/Test-RepositoryDetection.ps1',
+            'tests/unit/core/Test-LauncherCompatibility.ps1'
+        )
     }
-    'Standard' {
-        @(
+    'Standard' = @{
+        Duration = '3-6 minutes'  # Enhanced from 2-5m
+        Description = 'Comprehensive module testing with platform validation'
+        TestPaths = @(
             'tests/unit/modules',
             'tests/unit/scripts'
         )
+        EnhancedPaths = @(
+            'tests/platform/Test-CrossPlatformCompatibility.ps1',
+            'tests/package/Test-PackageIntegrity.ps1',
+            'tests/security/Test-SecurityValidation.ps1'
+        )
     }
-    'Complete' {
-        @(
+    'Complete' = @{
+        Duration = '12-18 minutes'  # Enhanced from 10-15m
+        Description = 'Complete system validation with infrastructure testing'
+        TestPaths = @(
             'tests/unit',
             'tests/integration'
         )
+        EnhancedPaths = @(
+            'tests/infrastructure/Test-InfrastructureAutomation.ps1',
+            'tests/repository/Test-ForkChainCompatibility.ps1',
+            'tests/performance/Test-PerformanceBenchmarks.ps1'
+        )
     }
 }
+
+$currentLevel = $validationLevels[$ValidationLevel]
+$testPaths = [System.Collections.ArrayList]::new()
+
+# Add base test paths
+foreach ($path in $currentLevel.TestPaths) {
+    [void]$testPaths.Add($path)
+}
+
+# Add enhanced paths based on switches or validation level
+if ($ValidationLevel -eq 'Quickstart' -or $QuickstartSimulation) {
+    if (Test-Path (Join-Path $projectRoot 'tests/quickstart')) {
+        [void]$testPaths.Add('tests/quickstart')
+    }
+}
+
+if ($ValidationLevel -in @('Quick', 'Standard', 'Complete') -and $currentLevel.EnhancedPaths) {
+    foreach ($enhancedPath in $currentLevel.EnhancedPaths) {
+        $fullPath = Join-Path $projectRoot $enhancedPath
+        if (Test-Path $fullPath) {
+            [void]$testPaths.Add($enhancedPath)
+        }
+    }
+}
+
+# Add conditional test paths based on switches
+if ($CrossPlatformTesting -and (Test-Path (Join-Path $projectRoot 'tests/platform'))) {
+    [void]$testPaths.Add('tests/platform')
+}
+
+if ($IncludePerformanceBenchmarks -and (Test-Path (Join-Path $projectRoot 'tests/performance'))) {
+    [void]$testPaths.Add('tests/performance')
+}
+
+if ($SecurityValidation -and (Test-Path (Join-Path $projectRoot 'tests/security'))) {
+    [void]$testPaths.Add('tests/security')
+}
+
+if ($InfrastructureTesting -and (Test-Path (Join-Path $projectRoot 'tests/infrastructure'))) {
+    [void]$testPaths.Add('tests/infrastructure')
+}
+
+# Display validation level information
+Write-Host ''
+Write-Host "📋 Validation Level: $ValidationLevel" -ForegroundColor Cyan
+Write-Host "   Duration: $($currentLevel.Duration)" -ForegroundColor Yellow
+Write-Host "   Description: $($currentLevel.Description)" -ForegroundColor Gray
+Write-Host "   Test Paths: $($testPaths.Count) path(s)" -ForegroundColor White
+
+# Convert ArrayList back to array for compatibility
+$testPaths = $testPaths.ToArray()
 
 $config = @{
     Run    = @{
@@ -297,6 +405,61 @@ try {
             exit 1
         }
     }
+
+    # Enhanced performance reporting
+    Write-Host ''
+    Write-Host '📊 Enhanced Performance Analysis:' -ForegroundColor Cyan
+    Write-Host "   Validation Level: $ValidationLevel" -ForegroundColor White
+    Write-Host "   Execution Time: $([math]::Round($duration, 2))s" -ForegroundColor White
+    Write-Host "   Test Throughput: $([math]::Round($result.TotalCount / $duration, 2)) tests/second" -ForegroundColor White
+    Write-Host "   Parallel Jobs: $MaxParallelJobs" -ForegroundColor White
+    
+    # Performance benchmarks per validation level
+    $performanceTargets = @{
+        'Quickstart' = 90  # 60-90 seconds
+        'Quick' = 45       # 45 seconds
+        'Standard' = 360   # 3-6 minutes
+        'Complete' = 1080  # 12-18 minutes
+    }
+    
+    $targetTime = $performanceTargets[$ValidationLevel]
+    $performanceStatus = if ($duration -le $targetTime) { 
+        "✅ Within target ($targetTime`s)" 
+    } else { 
+        "⚠️ Exceeded target ($targetTime`s)" 
+    }
+    Write-Host "   Performance: $performanceStatus" -ForegroundColor $(if ($duration -le $targetTime) { 'Green' } else { 'Yellow' })
+    
+    # Save enhanced performance metrics
+    $enhancedMetrics = @{
+        TestRunTime = Get-Date
+        ValidationLevel = $ValidationLevel
+        Duration = $duration
+        TestCounts = @{
+            Total = $result.TotalCount
+            Passed = $result.PassedCount
+            Failed = $result.FailedCount
+            Skipped = $result.SkippedCount
+        }
+        Performance = @{
+            TestsPerSecond = [math]::Round($result.TotalCount / $duration, 2)
+            TargetTime = $targetTime
+            WithinTarget = ($duration -le $targetTime)
+            ParallelJobs = $MaxParallelJobs
+        }
+        EnhancementFlags = $activeFlags
+        TestPaths = $testPaths.Count
+    }
+    
+    # Save to results directory
+    $resultsDir = Join-Path $projectRoot "tests/results"
+    if (-not (Test-Path $resultsDir)) {
+        New-Item -Path $resultsDir -ItemType Directory -Force | Out-Null
+    }
+    
+    $metricsFile = Join-Path $resultsDir "bulletproof-validation-$(Get-Date -Format 'yyyyMMdd-HHmmss').json"
+    $enhancedMetrics | ConvertTo-Json -Depth 10 | Set-Content -Path $metricsFile
+    Write-Host "   📈 Performance metrics saved: $metricsFile" -ForegroundColor Gray
 
     if ($result.FailedCount -gt 0) {
         Write-Host ''

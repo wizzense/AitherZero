@@ -1,0 +1,46 @@
+{
+  "TotalDuration": {
+    "Ticks": 9353457,
+    "Days": 0,
+    "Hours": 0,
+    "Milliseconds": 935,
+    "Microseconds": 345,
+    "Nanoseconds": 700,
+    "Minutes": 0,
+    "Seconds": 0,
+    "TotalDays": 1.0825760416666667E-05,
+    "TotalHours": 0.00025981825,
+    "TotalMilliseconds": 935.3457,
+    "TotalMicroseconds": 935345.7,
+    "TotalNanoseconds": 935345700.0,
+    "TotalMinutes": 0.015589095,
+    "TotalSeconds": 0.9353457
+  },
+  "TestRunTime": "2025-06-29T01:19:47.8437211+00:00",
+  "Metrics": {
+    "ConfigurationParsing": 11.2342,
+    "PackageValidation": 100.0326,
+    "DynamicConfiguration": 76.4892,
+    "ErrorMessages": 3.7702,
+    "ErrorHandling": 7.8966,
+    "ContentIntegrity": 56.5013,
+    "LauncherValidation": 23.086,
+    "SharedUtilities": 14.7873,
+    "ModuleDiscovery": 8.9132,
+    "StartupSimulation": 27.1929,
+    "MemoryUsage": 89.8164,
+    "CrossPlatformPaths": 11.0288,
+    "RepositoryDetection": 1.7613,
+    "ModuleImport": 15.4465
+  },
+  "Results": {
+    "CoreFunctionality": true,
+    "CrossPlatformCompatibility": true,
+    "PerformanceBenchmarks": true,
+    "ErrorRecovery": true,
+    "RepositoryDetection": true,
+    "PackageSimulation": true,
+    "ModuleLoading": true,
+    "LauncherExecution": true
+  }
+}

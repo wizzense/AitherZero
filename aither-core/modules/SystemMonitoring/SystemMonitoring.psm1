@@ -70,3 +70,13 @@ Export-ModuleMember -Function @(
     'Export-MonitoringData',
     'Import-MonitoringData'
 )
+
+# Initialize module-level variables for performance tracking
+$script:ApplicationStartTime = Get-Date
+$script:ApplicationReadyTime = $null
+$script:ModulePerformanceData = @{}
+$script:OperationMetrics = @{}
+$script:PerformanceBaselines = @{}
+$script:MonitoringJob = $null
+$script:MonitoringConfig = $null
+$script:MonitoringStartTime = $null
