@@ -8,19 +8,41 @@ $ErrorActionPreference = 'Stop'
 
 # Module-level variables for orchestration
 $script:CoreModules = @(
+    # Core Infrastructure (Required)
     @{ Name = 'Logging'; Path = 'modules/Logging'; Description = 'Centralized logging system'; Required = $true },
-    @{ Name = 'SecureCredentials'; Path = 'modules/SecureCredentials'; Description = 'Enterprise-grade credential management'; Required = $false },
-    @{ Name = 'RemoteConnection'; Path = 'modules/RemoteConnection'; Description = 'Multi-protocol remote connection management'; Required = $false },
+    @{ Name = 'LabRunner'; Path = 'modules/LabRunner'; Description = 'Lab automation and script execution'; Required = $true },
+    @{ Name = 'OpenTofuProvider'; Path = 'modules/OpenTofuProvider'; Description = 'OpenTofu/Terraform infrastructure deployment'; Required = $true },
+    
+    # Platform Services
+    @{ Name = 'ModuleCommunication'; Path = 'modules/ModuleCommunication'; Description = 'Scalable inter-module communication bus'; Required = $true },
+    @{ Name = 'ConfigurationCore'; Path = 'modules/ConfigurationCore'; Description = 'Unified configuration management system'; Required = $true },
+    @{ Name = 'ConfigurationCarousel'; Path = 'modules/ConfigurationCarousel'; Description = 'Multi-environment configuration management'; Required = $false },
+    @{ Name = 'ConfigurationRepository'; Path = 'modules/ConfigurationRepository'; Description = 'Git-based configuration repository management'; Required = $false },
+    @{ Name = 'OrchestrationEngine'; Path = 'modules/OrchestrationEngine'; Description = 'Advanced workflow and playbook execution'; Required = $false },
+    @{ Name = 'ParallelExecution'; Path = 'modules/ParallelExecution'; Description = 'Parallel task execution'; Required = $false },
+    @{ Name = 'ProgressTracking'; Path = 'modules/ProgressTracking'; Description = 'Visual progress tracking for operations'; Required = $false },
+    
+    # Feature Modules
     @{ Name = 'ISOManager'; Path = 'modules/ISOManager'; Description = 'ISO download, management, and organization'; Required = $false },
     @{ Name = 'ISOCustomizer'; Path = 'modules/ISOCustomizer'; Description = 'ISO customization and autounattend generation'; Required = $false },
+    @{ Name = 'SecureCredentials'; Path = 'modules/SecureCredentials'; Description = 'Enterprise-grade credential management'; Required = $false },
+    @{ Name = 'RemoteConnection'; Path = 'modules/RemoteConnection'; Description = 'Multi-protocol remote connection management'; Required = $false },
+    @{ Name = 'SystemMonitoring'; Path = 'modules/SystemMonitoring'; Description = 'System performance monitoring'; Required = $false },
+    @{ Name = 'RestAPIServer'; Path = 'modules/RestAPIServer'; Description = 'REST API server and webhook support'; Required = $false },
+    
+    # Development Tools
     @{ Name = 'DevEnvironment'; Path = 'modules/DevEnvironment'; Description = 'Development environment management'; Required = $false },
-    @{ Name = 'LabRunner'; Path = 'modules/LabRunner'; Description = 'Lab automation and script execution'; Required = $true },
     @{ Name = 'PatchManager'; Path = 'modules/PatchManager'; Description = 'Git-controlled patch management'; Required = $false },
-    @{ Name = 'BackupManager'; Path = 'modules/BackupManager'; Description = 'Backup and maintenance operations'; Required = $false },
-    @{ Name = 'ParallelExecution'; Path = 'modules/ParallelExecution'; Description = 'Parallel task execution'; Required = $false },
-    @{ Name = 'ScriptManager'; Path = 'modules/ScriptManager'; Description = 'Script management and templates'; Required = $false },
     @{ Name = 'TestingFramework'; Path = 'modules/TestingFramework'; Description = 'Unified testing framework'; Required = $false },
-    @{ Name = 'UnifiedMaintenance'; Path = 'modules/UnifiedMaintenance'; Description = 'Unified maintenance operations'; Required = $false }
+    @{ Name = 'AIToolsIntegration'; Path = 'modules/AIToolsIntegration'; Description = 'AI development tools management'; Required = $false },
+    
+    # Maintenance & Operations
+    @{ Name = 'BackupManager'; Path = 'modules/BackupManager'; Description = 'Backup and maintenance operations'; Required = $false },
+    @{ Name = 'UnifiedMaintenance'; Path = 'modules/UnifiedMaintenance'; Description = 'Unified maintenance operations'; Required = $false },
+    @{ Name = 'ScriptManager'; Path = 'modules/ScriptManager'; Description = 'Script management and templates'; Required = $false },
+    @{ Name = 'RepoSync'; Path = 'modules/RepoSync'; Description = 'Repository synchronization and management'; Required = $false },
+    @{ Name = 'SecurityAutomation'; Path = 'modules/SecurityAutomation'; Description = 'Security automation and compliance'; Required = $false },
+    @{ Name = 'SetupWizard'; Path = 'modules/SetupWizard'; Description = 'Intelligent setup and onboarding wizard'; Required = $false }
 )
 
 $script:LoadedModules = @{

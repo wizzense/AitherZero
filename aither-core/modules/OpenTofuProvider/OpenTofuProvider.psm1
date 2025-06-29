@@ -21,7 +21,7 @@ foreach ($folder in $functionFolders) {
 }
 
 # Dot source new subdirectory functions
-$subdirectories = @('Repository', 'Templates', 'Configuration', 'Deployment', 'ISO')
+$subdirectories = @('Repository', 'Templates', 'Configuration', 'Deployment', 'ISO', 'RepositoryManagement', 'TemplateManagement', 'ConfigurationManagement', 'AdvancedFeatures')
 foreach ($subdir in $subdirectories) {
     $subdirPath = Join-Path $PSScriptRoot "Public" $subdir
     if (Test-Path $subdirPath) {

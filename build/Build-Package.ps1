@@ -3,17 +3,26 @@
 
 <#
 .SYNOPSIS
-    Build AitherZero application packages for release
+    Build AitherZero application packages for release with package profiles
 .DESCRIPTION
-    Creates lean application packages for different platforms with optional progress tracking
+    Creates application packages for different platforms with three profile options:
+    - minimal: Core infrastructure only (~10MB) - CI/CD environments
+    - standard: Production-ready platform (~50MB) - Enterprise deployments  
+    - full: Complete development platform (~100MB) - Development environments
 .PARAMETER Platform
     Target platform (windows, linux, macos)
 .PARAMETER Version
     Package version
 .PARAMETER ArtifactExtension
     Archive format extension (zip, tar.gz)
+.PARAMETER PackageProfile
+    Package profile: minimal, standard, or full (default: standard)
 .PARAMETER NoProgress
     Disable visual progress tracking (useful for CI/CD environments)
+.EXAMPLE
+    ./Build-Package.ps1 -Platform "windows" -Version "1.0.0" -ArtifactExtension "zip" -PackageProfile "minimal"
+.EXAMPLE
+    ./Build-Package.ps1 -Platform "linux" -Version "1.0.0" -ArtifactExtension "tar.gz" -PackageProfile "full"
 #>
 
 param(
@@ -26,12 +35,16 @@ param(
     [Parameter(Mandatory)]
     [string]$ArtifactExtension,
     
+    [Parameter()]
+    [ValidateSet('minimal', 'standard', 'full')]
+    [string]$PackageProfile = 'standard',
+    
     [switch]$NoProgress
 )
 
 $ErrorActionPreference = 'Stop'
 
-Write-Host "Building lean AitherZero application package for $Platform..." -ForegroundColor Cyan
+Write-Host "Building AitherZero $PackageProfile package for $Platform..." -ForegroundColor Cyan
 
 # Try to import ProgressTracking module (optional enhancement)
 $progressAvailable = $false
@@ -78,7 +91,7 @@ try {
         Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Creating build directory"
     }
 
-    $packageName = "AitherZero-$Version-$Platform"
+    $packageName = "AitherZero-$Version-$Platform-$PackageProfile"
     $packageDir = "$buildDir/$packageName"
     New-Item -Path $packageDir -ItemType Directory -Force | Out-Null
     
@@ -86,7 +99,7 @@ try {
         Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Setting up package structure"
     }
 
-    Write-Host "Creating lean application package: $packageName" -ForegroundColor Yellow
+    Write-Host "Creating $PackageProfile application package: $packageName" -ForegroundColor Yellow
     Write-Host '📦 Application-focused build (not a repository copy)' -ForegroundColor Cyan
     
     if ($progressAvailable) {
@@ -104,16 +117,79 @@ try {
         Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Copied core runner"
     }
 
-    # Essential modules only (not dev/test modules)
-    $essentialModules = @(
-        'Logging', 'LabRunner', 'DevEnvironment', 'BackupManager',
-        'ScriptManager', 'UnifiedMaintenance', 'ParallelExecution',
-        'PatchManager', 'OpenTofuProvider', 'SecureCredentials',
-        'ISOManager', 'ISOCustomizer', 'RemoteConnection', 'TestingFramework'
-    )
+    # Package Profile Definitions
+    $packageProfiles = @{
+        'minimal' = @{
+            Description = 'Core infrastructure only (~10MB)'
+            Modules = @(
+                # Core Infrastructure (Required)
+                'Logging', 'LabRunner', 'OpenTofuProvider',
+                'ModuleCommunication', 'ConfigurationCore'
+            )
+            EstimatedSize = '~10MB'
+            UseCase = 'CI/CD environments, minimal deployments'
+        }
+        'standard' = @{
+            Description = 'Production-ready platform (~50MB)'
+            Modules = @(
+                # Core Infrastructure
+                'Logging', 'LabRunner', 'OpenTofuProvider',
+                'ModuleCommunication', 'ConfigurationCore',
+                
+                # Platform Services
+                'ConfigurationCarousel', 'ConfigurationRepository', 'OrchestrationEngine',
+                'ParallelExecution', 'ProgressTracking',
+                
+                # Feature Modules
+                'ISOManager', 'ISOCustomizer', 'SecureCredentials',
+                'RemoteConnection', 'SystemMonitoring', 'RestAPIServer',
+                
+                # Essential Operations
+                'BackupManager', 'UnifiedMaintenance', 'ScriptManager',
+                'SecurityAutomation', 'SetupWizard'
+            )
+            EstimatedSize = '~50MB'
+            UseCase = 'Production deployments, enterprise environments'
+        }
+        'full' = @{
+            Description = 'Complete development platform (~100MB)'
+            Modules = @(
+                # Core Infrastructure
+                'Logging', 'LabRunner', 'OpenTofuProvider',
+                'ModuleCommunication', 'ConfigurationCore',
+                
+                # Platform Services
+                'ConfigurationCarousel', 'ConfigurationRepository', 'OrchestrationEngine',
+                'ParallelExecution', 'ProgressTracking',
+                
+                # Feature Modules
+                'ISOManager', 'ISOCustomizer', 'SecureCredentials',
+                'RemoteConnection', 'SystemMonitoring', 'RestAPIServer',
+                
+                # Development Tools
+                'DevEnvironment', 'PatchManager', 'TestingFramework', 'AIToolsIntegration',
+                
+                # Maintenance & Operations
+                'BackupManager', 'UnifiedMaintenance', 'ScriptManager',
+                'RepoSync', 'SecurityAutomation', 'SetupWizard'
+            )
+            EstimatedSize = '~100MB'
+            UseCase = 'Development environments, complete feature set'
+        }
+    }
+    
+    # Get modules for selected profile
+    $profileInfo = $packageProfiles[$PackageProfile]
+    $selectedModules = $profileInfo.Modules
+    
+    Write-Host "Package Profile: $PackageProfile" -ForegroundColor Yellow
+    Write-Host "Description: $($profileInfo.Description)" -ForegroundColor Gray
+    Write-Host "Use Case: $($profileInfo.UseCase)" -ForegroundColor Gray
+    Write-Host "Estimated Size: $($profileInfo.EstimatedSize)" -ForegroundColor Gray
+    Write-Host "Modules to include: $($selectedModules.Count)" -ForegroundColor Gray
 
     New-Item -Path (Join-Path $packageDir "modules") -ItemType Directory -Force | Out-Null
-    foreach ($module in $essentialModules) {
+    foreach ($module in $selectedModules) {
         $modulePath = Join-Path "aither-core" "modules" $module
         if (Test-Path $modulePath) {
             if ($progressAvailable) {
@@ -258,19 +334,24 @@ try {
     }
     
     $packageInfo = @{
-        Version     = $Version
-        PackageType = 'Application'
-        BuildDate   = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss UTC')
-        GitCommit   = $env:GITHUB_SHA
-        GitRef      = $env:GITHUB_REF
-        Platform    = $Platform
-        Description = 'Lean AitherZero application package with essential components only'
-        Components  = @(
-            'Core runner', 'Essential modules', 'Configuration templates',
+        Version        = $Version
+        PackageType    = 'Application'
+        PackageProfile = $PackageProfile
+        BuildDate      = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss UTC')
+        GitCommit      = $env:GITHUB_SHA
+        GitRef         = $env:GITHUB_REF
+        Platform       = $Platform
+        Description    = $profileInfo.Description
+        EstimatedSize  = $profileInfo.EstimatedSize
+        UseCase        = $profileInfo.UseCase
+        ModuleCount    = $selectedModules.Count
+        Modules        = $selectedModules
+        Components     = @(
+            'Core runner', 'Platform modules', 'Configuration templates',
             'OpenTofu infrastructure', 'Application launcher'
         )
-        Usage       = 'Run Start-AitherZero.ps1 to begin or aither-core.ps1 for direct access'
-        Repository  = 'https://github.com/wizzense/AitherZero'
+        Usage          = 'Run Start-AitherZero.ps1 to begin or aither-core.ps1 for direct access'
+        Repository     = 'https://github.com/wizzense/AitherZero'
     }
     $packageInfo | ConvertTo-Json -Depth 3 | Set-Content "$packageDir/PACKAGE-INFO.json"
 
