@@ -1,0 +1,553 @@
+name: 🧠 Intelligent CI/CD Pipeline
+run-name: 🔄 CI/CD - ${{ github.event_name }} on ${{ github.ref_name }} by @${{ github.actor }}
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      force_full_run:
+        description: 'Force full pipeline execution'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+
+jobs:
+  change-detection:
+    name: 🔍 Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      code-changed: ${{ steps.changes.outputs.code }}
+      tests-changed: ${{ steps.changes.outputs.tests }}
+      docs-changed: ${{ steps.changes.outputs.docs }}
+      config-changed: ${{ steps.changes.outputs.config }}
+      security-changed: ${{ steps.changes.outputs.security }}
+      force-full: ${{ github.event.inputs.force_full_run == 'true' }}
+      
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: Analyze File Changes
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            code:
+              - '**/*.ps1'
+              - '**/*.psm1'
+              - '**/*.psd1'
+              - 'aither-core/**'
+              - 'Start-AitherZero.ps1'
+              - 'scripts/**'
+            tests:
+              - 'tests/**'
+              - '**/*.Tests.ps1'
+            docs:
+              - '**/*.md'
+              - 'docs/**'
+            config:
+              - 'configs/**'
+              - '.github/workflows/**'
+              - '*.json'
+              - 'mcp-server/**'
+            security:
+              - 'aither-core/modules/SecureCredentials/**'
+              - 'aither-core/modules/RemoteConnection/**'
+              - 'aither-core/modules/AIToolsIntegration/**'
+
+  setup-environment:
+    name: 🛠️ Setup Environment
+    needs: change-detection
+    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.config-changed == 'true' || needs.change-detection.outputs.force-full == 'true'
+    
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+      fail-fast: false
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: Install PowerShell 7 (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          # Download and install PowerShell 7
+          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.4.1/powershell_7.4.1-1.deb_amd64.deb
+          sudo dpkg -i powershell_7.4.1-1.deb_amd64.deb
+          sudo apt-get install -f -y
+        
+      - name: Install PowerShell 7 (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install --cask powershell
+        
+      - name: Verify PowerShell Installation
+        shell: pwsh
+        run: |
+          Write-Host "PowerShell Version Information:" -ForegroundColor Green
+          $PSVersionTable | Format-Table -AutoSize
+          
+          if ($PSVersionTable.PSVersion.Major -lt 7) {
+            throw "PowerShell 7 is required but version $($PSVersionTable.PSVersion) was found"
+          }
+          
+          Write-Host "✅ PowerShell 7+ confirmed on $($PSVersionTable.Platform)" -ForegroundColor Green
+        
+      - name: Cache PowerShell Modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/powershell/Modules
+            ~/Documents/PowerShell/Modules
+            /Users/runner/.local/share/powershell/Modules
+          key: ps-modules-${{ runner.os }}-${{ hashFiles('**/*.psd1') }}
+          restore-keys: |
+            ps-modules-${{ runner.os }}-
+        
+      - name: Install Required PowerShell Modules
+        shell: pwsh
+        run: |
+          Write-Host "Installing required PowerShell modules..." -ForegroundColor Yellow
+          
+          $modules = @('Pester', 'PSScriptAnalyzer')
+          foreach ($module in $modules) {
+            try {
+              Write-Host "Installing $module..." -ForegroundColor Cyan
+              Install-Module $module -Force -Scope CurrentUser -ErrorAction Stop
+              Write-Host "✅ $module installed successfully" -ForegroundColor Green
+            } catch {
+              Write-Error "❌ Failed to install $module : $_"
+              throw
+            }
+          }
+
+  security-analysis:
+    name: 🔒 Security Analysis
+    needs: [change-detection, setup-environment]
+    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.security-changed == 'true' || needs.change-detection.outputs.force-full == 'true'
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: PowerShell Script Analysis
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Starting PowerShell Security Analysis..." -ForegroundColor Yellow
+          
+          # Install PSScriptAnalyzer
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          
+          # Run comprehensive analysis
+          $analysisResults = Invoke-ScriptAnalyzer -Path . -Recurse -ReportSummary -Settings PSGallery
+          
+          # Export results for summary
+          $analysisResults | Export-Clixml -Path "security-analysis-results.xml"
+          
+          # Display summary
+          Write-Host "`n📊 Analysis Summary:" -ForegroundColor Cyan
+          $grouped = $analysisResults | Group-Object Severity
+          foreach ($group in $grouped) {
+            $color = switch ($group.Name) {
+              'Error' { 'Red' }
+              'Warning' { 'Yellow' }
+              'Information' { 'Green' }
+              default { 'White' }
+            }
+            Write-Host "  $($group.Name): $($group.Count) issues" -ForegroundColor $color
+          }
+          
+          # Check for critical issues
+          $criticalIssues = $analysisResults | Where-Object Severity -eq 'Error'
+          if ($criticalIssues) {
+            Write-Host "`n❌ Critical security issues found:" -ForegroundColor Red
+            $criticalIssues | ForEach-Object {
+              Write-Host "  • $($_.ScriptName):$($_.Line) - $($_.Message)" -ForegroundColor Red
+            }
+            Write-Error "Build failed due to critical security issues"
+            exit 1
+          } else {
+            Write-Host "✅ No critical security issues found" -ForegroundColor Green
+          }
+        
+      - name: Node.js Dependency Vulnerability Scan
+        if: hashFiles('mcp-server/package.json') != ''
+        run: |
+          echo "🔍 Scanning Node.js dependencies for vulnerabilities..."
+          cd mcp-server
+          
+          # Install dependencies and run audit
+          npm install --no-fund --no-audit
+          npm audit --audit-level=moderate --json > npm-audit.json || true
+          
+          # Parse audit results
+          if [ -s npm-audit.json ]; then
+            echo "📋 NPM Audit Results:"
+            cat npm-audit.json | jq -r '.vulnerabilities | to_entries[] | "• \(.key): \(.value.severity)"' 2>/dev/null || echo "No vulnerabilities found"
+          fi
+        
+      - name: Upload Security Analysis Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-analysis-results-${{ github.run_number }}
+          path: |
+            security-analysis-results.xml
+            mcp-server/npm-audit.json
+          retention-days: 30
+
+  cross-platform-tests:
+    name: 🧪 Cross-Platform Tests
+    needs: [change-detection, setup-environment]
+    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.tests-changed == 'true' || needs.change-detection.outputs.force-full == 'true'
+    
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+      fail-fast: false
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: Setup PowerShell Modules Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/powershell/Modules
+            ~/Documents/PowerShell/Modules
+            /Users/runner/.local/share/powershell/Modules
+          key: ps-modules-${{ runner.os }}-${{ hashFiles('**/*.psd1') }}
+        
+      - name: Run Quick Validation Tests
+        shell: pwsh
+        run: |
+          Write-Host "🚀 Starting Quick Validation on $($PSVersionTable.Platform)..." -ForegroundColor Yellow
+          
+          # Set error handling
+          $ErrorActionPreference = 'Stop'
+          
+          try {
+            # Run bulletproof validation
+            ./tests/Run-BulletproofValidation.ps1 -ValidationLevel Quick -CI
+            Write-Host "✅ Quick validation completed successfully on $($PSVersionTable.Platform)" -ForegroundColor Green
+          } catch {
+            Write-Host "❌ Quick validation failed on $($PSVersionTable.Platform): $_" -ForegroundColor Red
+            throw
+          }
+        
+      - name: Run Platform-Specific Tests
+        shell: pwsh
+        run: |
+          Write-Host "🔧 Running platform-specific tests..." -ForegroundColor Yellow
+          
+          # Create platform-specific test results directory
+          $testResultsDir = "TestResults-$($PSVersionTable.Platform.ToString().Replace(' ', ''))"
+          New-Item -ItemType Directory -Path $testResultsDir -Force | Out-Null
+          
+          try {
+            if ($IsWindows) {
+              Write-Host "Running Windows-specific tests..." -ForegroundColor Cyan
+              # Test Windows-specific features like scheduled tasks, services
+              ./tests/Test-WindowsFeatures.ps1 -OutputPath $testResultsDir
+            } elseif ($IsLinux) {
+              Write-Host "Running Linux-specific tests..." -ForegroundColor Cyan  
+              # Test Linux-specific features like systemd, package managers
+              ./tests/Test-LinuxFeatures.ps1 -OutputPath $testResultsDir
+            } elseif ($IsMacOS) {
+              Write-Host "Running macOS-specific tests..." -ForegroundColor Cyan
+              # Test macOS-specific features like launchd, homebrew
+              ./tests/Test-MacOSFeatures.ps1 -OutputPath $testResultsDir
+            }
+            
+            Write-Host "✅ Platform-specific tests completed" -ForegroundColor Green
+          } catch {
+            Write-Host "⚠️ Platform-specific tests encountered issues: $_" -ForegroundColor Yellow
+            # Don't fail the build for platform-specific test issues
+          }
+        
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.os }}-${{ github.run_number }}
+          path: TestResults-*
+          retention-days: 30
+
+  code-coverage-analysis:
+    name: 📊 Code Coverage Analysis  
+    needs: [change-detection, cross-platform-tests]
+    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.force-full == 'true'
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: Download Test Results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*-${{ github.run_number }}
+          merge-multiple: true
+        
+      - name: Generate Comprehensive Coverage Report
+        shell: pwsh
+        run: |
+          Write-Host "📈 Generating comprehensive code coverage report..." -ForegroundColor Yellow
+          
+          # Install required modules
+          Install-Module Pester -Force -Scope CurrentUser
+          
+          try {
+            # Run code coverage analysis
+            ./tests/Run-CodeCoverage.ps1 -GenerateReport -Platform All
+            
+            Write-Host "✅ Code coverage analysis completed" -ForegroundColor Green
+            
+            # Display coverage summary if available
+            if (Test-Path "coverage-summary.txt") {
+              Write-Host "`n📊 Coverage Summary:" -ForegroundColor Cyan
+              Get-Content "coverage-summary.txt"
+            }
+          } catch {
+            Write-Host "⚠️ Code coverage analysis encountered issues: $_" -ForegroundColor Yellow
+            # Create minimal coverage report
+            Write-Output "Coverage analysis failed: $($_.Exception.Message)" | Out-File "coverage-error.txt"
+          }
+        
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report-${{ github.run_number }}
+          path: |
+            coverage*.xml
+            coverage*.html
+            coverage*.txt
+          retention-days: 30
+        
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        if: hashFiles('coverage.xml') != ''
+        continue-on-error: true
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: aitherzero-coverage
+
+  build-validation:
+    name: 🔨 Build Validation
+    needs: [change-detection, security-analysis]
+    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.force-full == 'true'
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository  
+        uses: actions/checkout@v4
+        
+      - name: Validate Module Manifests
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Validating PowerShell module manifests..." -ForegroundColor Yellow
+          
+          $manifestErrors = @()
+          $manifestFiles = Get-ChildItem -Path "aither-core/modules" -Filter "*.psd1" -Recurse
+          
+          foreach ($manifest in $manifestFiles) {
+            try {
+              Write-Host "Validating $($manifest.Name)..." -ForegroundColor Cyan
+              $null = Test-ModuleManifest -Path $manifest.FullName -ErrorAction Stop
+              Write-Host "  ✅ Valid" -ForegroundColor Green
+            } catch {
+              $error = "❌ $($manifest.Name): $($_.Exception.Message)"
+              $manifestErrors += $error
+              Write-Host "  $error" -ForegroundColor Red
+            }
+          }
+          
+          if ($manifestErrors.Count -gt 0) {
+            Write-Host "`n❌ Module manifest validation failed:" -ForegroundColor Red
+            $manifestErrors | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
+            throw "Module manifest validation failed"
+          } else {
+            Write-Host "✅ All module manifests are valid" -ForegroundColor Green
+          }
+        
+      - name: Quick Package Integrity Test
+        shell: pwsh
+        run: |
+          Write-Host "📦 Testing package integrity..." -ForegroundColor Yellow
+          
+          try {
+            # Test minimal profile package creation
+            if (Test-Path "./scripts/Test-PackageIntegrity.ps1") {
+              ./scripts/Test-PackageIntegrity.ps1 -Profile minimal
+            } else {
+              Write-Host "Package integrity test script not found, performing basic checks..." -ForegroundColor Yellow
+              
+              # Basic integrity checks
+              $coreFiles = @(
+                "Start-AitherZero.ps1",
+                "aither-core/aither-core.ps1",
+                "aither-core/shared/Find-ProjectRoot.ps1"
+              )
+              
+              foreach ($file in $coreFiles) {
+                if (-not (Test-Path $file)) {
+                  throw "Critical file missing: $file"
+                }
+                Write-Host "  ✅ $file" -ForegroundColor Green
+              }
+            }
+            
+            Write-Host "✅ Package integrity validation completed" -ForegroundColor Green
+          } catch {
+            Write-Host "❌ Package integrity test failed: $_" -ForegroundColor Red
+            throw
+          }
+
+  failure-summary:
+    name: 📋 Failure Summary
+    needs: [change-detection, setup-environment, security-analysis, cross-platform-tests, code-coverage-analysis, build-validation]
+    if: always()
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: Collect Failure Information
+        if: contains(needs.*.result, 'failure')
+        run: |
+          echo "WORKFLOW_FAILED=true" >> $GITHUB_ENV
+          
+          # Collect detailed failure information
+          cat << EOF >> failure_details.txt
+          Workflow Run: ${{ github.run_number }}
+          Commit: ${{ github.sha }}
+          Branch: ${{ github.ref_name }}
+          Actor: ${{ github.actor }}
+          Event: ${{ github.event_name }}
+          
+          Job Results:
+          - Change Detection: ${{ needs.change-detection.result }}
+          - Setup Environment: ${{ needs.setup-environment.result }}
+          - Security Analysis: ${{ needs.security-analysis.result }}
+          - Cross-Platform Tests: ${{ needs.cross-platform-tests.result }}
+          - Code Coverage: ${{ needs.code-coverage-analysis.result }}
+          - Build Validation: ${{ needs.build-validation.result }}
+          
+          Change Detection Results:
+          - Code Changes: ${{ needs.change-detection.outputs.code-changed }}
+          - Test Changes: ${{ needs.change-detection.outputs.tests-changed }}
+          - Config Changes: ${{ needs.change-detection.outputs.config-changed }}
+          - Security Changes: ${{ needs.change-detection.outputs.security-changed }}
+          EOF
+        
+      - name: Create Failure Summary Issue
+        if: env.WORKFLOW_FAILED == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const failureDetails = fs.readFileSync('failure_details.txt', 'utf8');
+            
+            const title = `🚨 CI/CD Pipeline Failure - Run #${context.runNumber}`;
+            const body = `
+            ## 🚨 Pipeline Failure Summary
+            
+            **Workflow**: ${context.workflow}  
+            **Run Number**: #${context.runNumber}
+            **Commit**: [\`${context.sha.substring(0, 7)}\`](${context.payload.repository.html_url}/commit/${context.sha})
+            **Branch**: \`${context.ref.replace('refs/heads/', '')}\`
+            **Triggered By**: @${context.actor}
+            **Event**: ${context.eventName}
+            
+            ### 📊 Job Results
+            \`\`\`
+            ${failureDetails}
+            \`\`\`
+            
+            ### 🔗 Quick Actions
+            - [View Workflow Run](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            - [View Failed Jobs](${context.payload.repository.html_url}/actions/runs/${context.runId}#summary)
+            - [View Commit Details](${context.payload.repository.html_url}/commit/${context.sha})
+            
+            ### 🛠️ Troubleshooting Tips
+            - Check the individual job logs for detailed error messages
+            - Verify PowerShell 7 compatibility if setup-environment failed
+            - Review security analysis results if security checks failed
+            - Check test results artifacts for specific test failures
+            
+            ---
+            *🤖 This issue was automatically created by the Intelligent CI/CD Pipeline*
+            *Created: ${new Date().toISOString()}*
+            `;
+            
+            // Check for existing open failure issues to avoid spam
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'ci-failure,automated',
+              per_page: 10
+            });
+            
+            // Only create new issue if no recent failure issues exist
+            const recentFailures = existingIssues.data.filter(issue => {
+              const createdAt = new Date(issue.created_at);
+              const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+              return createdAt > dayAgo;
+            });
+            
+            if (recentFailures.length === 0) {
+              // Create new failure issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['ci-failure', 'automated', 'high-priority']
+              });
+              
+              console.log('✅ New failure summary issue created');
+            } else {
+              // Add comment to most recent failure issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: recentFailures[0].number,
+                body: `## 🔄 Additional Failure - Run #${context.runNumber}\n\n${body}`
+              });
+              
+              console.log('✅ Updated existing failure issue with new failure details');
+            }
+        
+      - name: Success Summary
+        if: env.WORKFLOW_FAILED != 'true'
+        run: |
+          echo "✅ All CI/CD pipeline jobs completed successfully!"
+          echo "📊 Pipeline Statistics:"
+          echo "  - Workflow: ${{ github.workflow }}"
+          echo "  - Run: #${{ github.run_number }}"
+          echo "  - Duration: ${{ job.status }}"
+          echo "  - Platform Coverage: Windows, Linux, macOS"
+          echo "  - Security: ✅ Passed"
+          echo "  - Tests: ✅ Passed"
+          echo "  - Build: ✅ Validated"

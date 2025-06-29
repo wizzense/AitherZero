@@ -13,7 +13,9 @@
       "Bash(mkdir:*)",
       "Bash(git mv:*)",
       "Bash(./tests/Run-BulletproofValidation.ps1 -ValidationLevel Quick)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(\"/mnt/c/Program Files/Git/cmd/git.exe\" --version)",
+      "Bash(\"/mnt/c/Program Files/Git/cmd/git.exe\" status)"
     ],
     "deny": []
   }
