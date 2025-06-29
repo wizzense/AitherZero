@@ -86,6 +86,40 @@ Invoke-ScriptAnalyzer -Path . -Recurse
 cd mcp-server && npm run lint
 ```
 
+### GitHub Actions Workflows
+
+The project uses a unified CI/CD pipeline with 3 streamlined workflows:
+
+```bash
+# Intelligent CI/CD Pipeline - Main testing and validation
+# Triggers: Push to main/develop, PRs, manual dispatch
+# Features: Smart change detection, cross-platform testing, security analysis
+
+# Build & Release Pipeline - Package building and releases  
+# Triggers: Version tags (v*), manual dispatch
+# Features: Multi-profile builds (minimal/standard/full), cross-platform packages
+
+# Documentation & Sync Pipeline - Documentation and repository sync
+# Triggers: Documentation changes, daily schedule, manual dispatch
+# Features: API documentation generation, repository synchronization
+```
+
+#### Workflow Commands
+
+```bash
+# Trigger workflows manually
+gh workflow run "Intelligent CI/CD Pipeline"
+gh workflow run "Build & Release Pipeline" 
+gh workflow run "Documentation & Sync Pipeline"
+
+# Monitor workflow status
+gh run list --workflow="Intelligent CI/CD Pipeline"
+gh run watch
+
+# View workflow logs
+gh run view --log
+```
+
 ### AI Tools Integration Commands
 
 ```powershell
