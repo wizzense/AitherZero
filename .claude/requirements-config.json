@@ -1,0 +1,19 @@
+{
+  "installedDate": "2025-06-28 21:53:03",
+  "structure": {
+    "cleanupVersion": "1.1.0",
+    "note": "Post-cleanup: unified directory structure",
+    "cleanupDate": "2025-06-28 21:53:03"
+  },
+  "version": "1.1.0",
+  "documentationPath": "/workspaces/AitherZero/claude-requirements",
+  "requirementsPath": "/workspaces/AitherZero/requirements",
+  "commands": {
+    "status": "/requirements-status",
+    "remind": "/remind",
+    "end": "/requirements-end",
+    "start": "/requirements-start",
+    "list": "/requirements-list",
+    "current": "/requirements-current"
+  }
+}
