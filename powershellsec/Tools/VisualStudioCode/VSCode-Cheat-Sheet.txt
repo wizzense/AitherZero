@@ -1,0 +1,42 @@
+#########################################################################
+#  Visual Studio Code Cheat Sheet
+#  https://code.visualstudio.com/docs/getstarted/keybindings
+#  https://code.visualstudio.com/shortcuts/keyboard-shortcuts-windows.pdf
+#########################################################################
+
+
+###################################
+#  Show Command Bar
+###################################
+Command Bar : Ctrl-Shft-P 
+
+
+###################################
+#  Files & Tabs
+###################################
+Open File   : Ctrl-P
+Close Tab   : Ctrl-W
+New File    : Ctrl-N 
+Save File   : Ctrl-S 
+Line Wrap   : Alt-Z 
+
+
+###################################
+#  Search & Replace
+###################################
+Find        : Ctrl-F 
+Replace     : Ctrl-H 
+
+
+###################################
+#  Input Focus & Run Selection 
+###################################
+Next Tab    : Ctrl-Tab
+Hide Sidebar: Ctrl-B 
+Hide PoSh   : Ctrl-`
+Run Select  : F8 
+Return Focus: Ctrl-Tab 
+
+
+
+
