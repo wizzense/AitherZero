@@ -89,6 +89,11 @@
             LicenseUri = ''
             ProjectUri = 'https://github.com/wizzense/opentofu-lab-automation'
             ReleaseNotes = 'v1.2.0: Added Advanced Features (Drift Detection, Rollback, Snapshots, History, Automation) and Performance Optimization (Memory Management, Caching, Concurrent Testing). Complete Infrastructure Abstraction Layer with comprehensive testing and integration capabilities.'
+            Licensing = @{
+                Tier = 'pro'
+                Feature = 'infrastructure'
+                RequiresLicense = $true
+            }
         }
     }
 }

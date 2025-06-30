@@ -39,6 +39,10 @@ param(
     [ValidateSet('minimal', 'standard', 'full')]
     [string]$PackageProfile = 'standard',
     
+    [Parameter()]
+    [ValidateSet('free', 'pro', 'enterprise')]
+    [string]$FeatureTier,
+    
     [switch]$NoProgress
 )
 
@@ -168,6 +172,45 @@ try {
     $profileInfo = $packageProfiles[$PackageProfile]
     $selectedModules = $profileInfo.Modules
     
+    # Apply feature tier filtering if specified
+    if ($FeatureTier) {
+        Write-Host "Feature Tier: $FeatureTier" -ForegroundColor Cyan
+        
+        # Load feature registry
+        $featureRegistryPath = Join-Path (Split-Path -Parent $PSScriptRoot) "configs/feature-registry.json"
+        if (Test-Path $featureRegistryPath) {
+            $featureRegistry = Get-Content $featureRegistryPath -Raw | ConvertFrom-Json
+            
+            # Get allowed modules for tier
+            $allowedModules = @()
+            $tierFeatures = $featureRegistry.tiers.$FeatureTier.features
+            
+            foreach ($feature in $tierFeatures) {
+                if ($featureRegistry.features.$feature.modules) {
+                    $allowedModules += $featureRegistry.features.$feature.modules
+                }
+            }
+            
+            # Add module overrides that are always available
+            foreach ($override in $featureRegistry.moduleOverrides.PSObject.Properties) {
+                if ($override.Value.alwaysAvailable) {
+                    $allowedModules += $override.Name
+                }
+            }
+            
+            # Filter selected modules based on tier
+            $originalCount = $selectedModules.Count
+            $selectedModules = $selectedModules | Where-Object { $_ -in $allowedModules }
+            $filteredCount = $originalCount - $selectedModules.Count
+            
+            if ($filteredCount -gt 0) {
+                Write-Host "Filtered out $filteredCount modules due to $FeatureTier tier restrictions" -ForegroundColor Yellow
+            }
+        } else {
+            Write-Warning "Feature registry not found. Building without tier restrictions."
+        }
+    }
+    
     Write-Host "Package Profile: $PackageProfile" -ForegroundColor Yellow
     Write-Host "Description: $($profileInfo.Description)" -ForegroundColor Gray
     Write-Host "Use Case: $($profileInfo.UseCase)" -ForegroundColor Gray
@@ -234,7 +277,7 @@ try {
     
     New-Item -Path "$packageDir/configs" -ItemType Directory -Force | Out-Null
     $essentialConfigs = @(
-        'default-config.json', 'core-runner-config.json', 'recommended-config.json'
+        'default-config.json', 'core-runner-config.json', 'recommended-config.json', 'feature-registry.json'
     )
     foreach ($config in $essentialConfigs) {
         $configPath = "configs/$config"

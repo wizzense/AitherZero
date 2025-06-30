@@ -773,6 +773,72 @@
             }
         },
         {
+            "label": "Git: Sync Current Branch",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module '${workspaceFolder}/aither-core/modules/PatchManager/PatchManager.psm1' -Force; Write-Host 'Syncing current branch with remote...' -ForegroundColor Cyan; Sync-GitBranch -Force; Write-Host 'Sync completed' -ForegroundColor Green"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "Git: Fix Branch Divergence",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "'${workspaceFolder}/scripts/Fix-GitDivergence.ps1' -Force"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "Git: Full Cleanup and Sync",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module '${workspaceFolder}/aither-core/modules/PatchManager/PatchManager.psm1' -Force; Write-Host 'Performing full Git cleanup and sync...' -ForegroundColor Yellow; Sync-GitBranch -BranchName 'main' -Force -CleanupOrphaned -ValidateTags; Write-Host 'Cleanup completed' -ForegroundColor Green"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
             "label": "📚 Documentation: Generate/Update All Docs",
             "type": "shell",
             "command": "pwsh",

@@ -31,6 +31,11 @@
             Tags = @('AitherZero', 'AI', 'Tools', 'Claude', 'Gemini', 'Codex', 'Automation')
             ProjectUri = 'https://github.com/wizzense/AitherZero'
             ReleaseNotes = 'Initial release of AI Tools Integration module'
+            Licensing = @{
+                Tier = 'pro'
+                Feature = 'ai'
+                RequiresLicense = $true
+            }
         }
     }
 }
