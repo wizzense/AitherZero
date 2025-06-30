@@ -130,6 +130,32 @@ jobs:
             if (Test-Path "./build/Build-Package.ps1") {
               Write-Host "Using custom build script..." -ForegroundColor Green
               ./build/Build-Package.ps1 @buildParams
+              
+              # Custom build script creates different directory structure
+              $customPackagePath = "AitherZero-$version-$platform-${{ matrix.profile }}"
+              
+              # Validate custom build output
+              if (Test-Path $customPackagePath) {
+                Write-Host "✅ Custom build package found: $customPackagePath" -ForegroundColor Green
+                
+                # Check for main script in custom package
+                if (Test-Path "$customPackagePath/Start-AitherZero.ps1") {
+                  Write-Host "✅ Main script validated in custom package" -ForegroundColor Green
+                } else {
+                  throw "Package validation failed: Main script not found in $customPackagePath"
+                }
+                
+                # Create compatibility symlink for archive step
+                $expectedPath = "dist/aitherzero-${{ matrix.profile }}-${{ matrix.os }}"
+                New-Item -ItemType Directory -Path "dist" -Force | Out-Null
+                
+                # Copy custom package to expected location for archive step
+                Copy-Item $customPackagePath -Destination $expectedPath -Recurse -Force
+                Write-Host "✅ Package copied to expected location: $expectedPath" -ForegroundColor Green
+              } else {
+                throw "Custom build failed: Package directory not found: $customPackagePath"
+              }
+              
             } else {
               Write-Host "Using default build process..." -ForegroundColor Yellow
               
@@ -195,15 +221,15 @@ jobs:
               $versionInfo | Out-File "$outputDir/build-info.json" -Encoding UTF8
               
               Write-Host "✅ Package built successfully" -ForegroundColor Green
+              
+              # Validate default build package integrity
+              $packagePath = "dist/aitherzero-${{ matrix.profile }}-${{ matrix.os }}"
+              if (-not (Test-Path "$packagePath/Start-AitherZero.ps1")) {
+                throw "Package validation failed: Main script not found"
+              }
+              
+              Write-Host "✅ Package validation successful" -ForegroundColor Green
             }
-            
-            # Validate package integrity
-            $packagePath = "dist/aitherzero-${{ matrix.profile }}-${{ matrix.os }}"
-            if (-not (Test-Path "$packagePath/Start-AitherZero.ps1")) {
-              throw "Package validation failed: Main script not found"
-            }
-            
-            Write-Host "✅ Package validation successful" -ForegroundColor Green
             
           } catch {
             Write-Host "❌ Build failed: $_" -ForegroundColor Red
