@@ -184,6 +184,6 @@ Write-Host "  git push origin 'v$newVersion'" -ForegroundColor White
         New-Item -ItemType Directory -Path "./scripts" -Force | Out-Null
     }
     
-    Set-Content "./scripts/Create-Release.ps1" -Value $releaseScript
+    Set-Content (Join-Path $PSScriptRoot "scripts/Create-Release.ps1") -Value $releaseScript
     
 } -CreatePR -Priority "Medium"
