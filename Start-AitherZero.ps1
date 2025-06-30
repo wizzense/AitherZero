@@ -43,19 +43,11 @@ param(
     [ValidateSet('minimal', 'developer', 'full', 'interactive')]
     [string]$InstallationProfile = 'interactive',
     
-<<<<<<< Updated upstream
     [Parameter(HelpMessage = 'Launch interactive quickstart experience')]
     [switch]$Quickstart,
     
     [Parameter(HelpMessage = 'Apply a license key to unlock features')]
-    [string]$ApplyLicense
-=======
-    [Parameter(HelpMessage = 'Apply a license key to unlock features')]
     [string]$ApplyLicense,
-    
-    [Parameter(HelpMessage = 'Quick start with interactive setup')]
-    [switch]$Quickstart
->>>>>>> Stashed changes
 )
 
 # Detect PowerShell version for compatibility messaging
