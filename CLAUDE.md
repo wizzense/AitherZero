@@ -503,3 +503,11 @@ When implementing features:
 - **Long-running operations**: Use ProgressTracking module for visual feedback
 - **New user onboarding**: Use quickstart validation and setup wizard
 - **Environment validation**: Use bulletproof validation with appropriate level
+
+## Important Reminders
+
+- **IMPORTANT: ALWAYS USE PATCHMANAGER**
+  - For ALL Git operations, no exceptions
+  - Creates consistent workflow tracking
+  - Ensures proper issue and PR management
+  - Provides rollback and validation capabilities
