@@ -258,11 +258,13 @@ jobs:
             $archivePath = "$archiveName.zip"
             Write-Host "Creating Windows ZIP archive: $archivePath" -ForegroundColor Cyan
             # Change to package directory to avoid nested folder structure
-            Push-Location $packageDir
+            $currentDir = Get-Location
+            Set-Location $packageDir
             try {
-              Compress-Archive -Path "*" -DestinationPath "../../../$archivePath" -Force
+              $destinationPath = Join-Path $currentDir $archivePath
+              Compress-Archive -Path "*" -DestinationPath $destinationPath -Force
             } finally {
-              Pop-Location
+              Set-Location $currentDir
             }
           } else {
             $archivePath = "$archiveName.tar.gz"
