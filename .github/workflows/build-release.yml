@@ -131,8 +131,8 @@ jobs:
               Write-Host "Using custom build script..." -ForegroundColor Green
               ./build/Build-Package.ps1 @buildParams
               
-              # Custom build script creates different directory structure
-              $customPackagePath = "AitherZero-$version-$platform-${{ matrix.profile }}"
+              # Custom build script creates packages in build-output/{platform}/ directory
+              $customPackagePath = "build-output/$platform/AitherZero-$version-$platform-${{ matrix.profile }}"
               
               # Validate custom build output
               if (Test-Path $customPackagePath) {
@@ -145,7 +145,7 @@ jobs:
                   throw "Package validation failed: Main script not found in $customPackagePath"
                 }
                 
-                # Create compatibility symlink for archive step
+                # Create compatibility directory structure for archive step
                 $expectedPath = "dist/aitherzero-${{ matrix.profile }}-${{ matrix.os }}"
                 New-Item -ItemType Directory -Path "dist" -Force | Out-Null
                 
