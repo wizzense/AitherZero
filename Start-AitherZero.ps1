@@ -47,7 +47,7 @@ param(
     [switch]$Quickstart,
     
     [Parameter(HelpMessage = 'Apply a license key to unlock features')]
-    [string]$ApplyLicense,
+    [string]$ApplyLicense
 )
 
 # Detect PowerShell version for compatibility messaging
