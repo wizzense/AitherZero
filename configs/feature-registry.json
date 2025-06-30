@@ -1,0 +1,97 @@
+{
+  "tiers": {
+    "free": {
+      "name": "Free Tier",
+      "description": "Core functionality for individual users",
+      "features": ["core", "development"]
+    },
+    "pro": {
+      "name": "Professional",
+      "description": "Advanced features for teams and automation",
+      "features": ["core", "development", "infrastructure", "ai", "automation"]
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "description": "Full suite with security and monitoring",
+      "features": ["core", "development", "infrastructure", "ai", "automation", "security", "monitoring", "enterprise"]
+    }
+  },
+  "features": {
+    "core": {
+      "name": "Core Features",
+      "tier": "free",
+      "modules": [
+        "Logging",
+        "TestingFramework",
+        "ProgressTracking",
+        "StartupExperience",
+        "LicenseManager"
+      ]
+    },
+    "development": {
+      "name": "Development Tools",
+      "tier": "free",
+      "modules": [
+        "DevEnvironment",
+        "PatchManager",
+        "BackupManager"
+      ]
+    },
+    "infrastructure": {
+      "name": "Infrastructure Automation",
+      "tier": "pro",
+      "modules": [
+        "OpenTofuProvider",
+        "CloudProviderIntegration",
+        "ISOManager",
+        "ISOCustomizer"
+      ]
+    },
+    "ai": {
+      "name": "AI Integration",
+      "tier": "pro",
+      "modules": [
+        "AIToolsIntegration",
+        "ConfigurationCarousel"
+      ]
+    },
+    "automation": {
+      "name": "Advanced Automation",
+      "tier": "pro",
+      "modules": [
+        "OrchestrationEngine",
+        "ParallelExecution",
+        "ConfigurationRepository"
+      ]
+    },
+    "security": {
+      "name": "Security Features",
+      "tier": "enterprise",
+      "modules": [
+        "SecureCredentials",
+        "RemoteConnection"
+      ]
+    },
+    "monitoring": {
+      "name": "Monitoring & Analytics",
+      "tier": "enterprise",
+      "modules": [
+        "SystemMonitoring",
+        "RestAPIServer"
+      ]
+    },
+    "enterprise": {
+      "name": "Enterprise Management",
+      "tier": "enterprise",
+      "modules": [
+        "LabRunner"
+      ]
+    }
+  },
+  "moduleOverrides": {
+    "SetupWizard": {
+      "tier": "free",
+      "alwaysAvailable": true
+    }
+  }
+}
