@@ -269,8 +269,17 @@ jobs:
           } else {
             $archivePath = "$archiveName.tar.gz"
             Write-Host "Creating Unix TAR.GZ archive: $archivePath" -ForegroundColor Cyan
-            # Use --transform to strip the parent directory path
-            tar -czf $archivePath --transform "s|^dist/aitherzero-${{ matrix.profile }}-$platformName/||" -C dist "aitherzero-${{ matrix.profile }}-$platformName"
+            
+            # macOS uses BSD tar which doesn't support --transform
+            # Use a different approach for cross-platform compatibility
+            $currentDir = Get-Location
+            Set-Location "dist/aitherzero-${{ matrix.profile }}-$platformName"
+            try {
+              $destinationPath = Join-Path $currentDir $archivePath
+              tar -czf $destinationPath *
+            } finally {
+              Set-Location $currentDir
+            }
           }
           
           # Verify archive was created and show details
