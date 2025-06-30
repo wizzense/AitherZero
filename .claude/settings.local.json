@@ -31,7 +31,11 @@
       "Bash(\"/mnt/c/Program Files/PowerShell/7/pwsh.exe\" -NoProfile -File ./fix-quickstart.ps1)",
       "Bash(true)",
       "Bash(\"/mnt/c/Program Files/PowerShell/7/pwsh.exe\" .claude/scripts/patchmanager.ps1 consolidate --strategy Compatible --max-prs 3)",
-      "Bash(\"/mnt/c/Program Files/Git/cmd/git.exe\" pull --rebase)"
+      "Bash(\"/mnt/c/Program Files/Git/cmd/git.exe\" pull --rebase)",
+      "Bash(\"/mnt/c/Program Files/GitHub CLI/gh.exe\" run list --workflow=\"📦 Build & Release Pipeline\" --limit 1)",
+      "Bash(\"/mnt/c/Program Files/GitHub CLI/gh.exe\" run view 15981554277)",
+      "Bash(\"/mnt/c/Program Files/Git/cmd/git.exe\" commit -m \"Release v1.2.8 - Working build pipeline\n\n- Fixed package path validation for custom build script\n- Custom packages are in build-output/{platform}/ directory\n- Quick-release script included for future releases\n\n🤖 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
+      "Bash(\"/mnt/c/Program Files/Git/cmd/git.exe\" push origin main)"
     ],
     "deny": []
   }

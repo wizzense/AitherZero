@@ -131,8 +131,8 @@ jobs:
               Write-Host "Using custom build script..." -ForegroundColor Green
               ./build/Build-Package.ps1 @buildParams
               
-              # Custom build script creates different directory structure
-              $customPackagePath = "AitherZero-$version-$platform-${{ matrix.profile }}"
+              # Custom build script creates packages in build-output/{platform}/ directory
+              $customPackagePath = "build-output/$platform/AitherZero-$version-$platform-${{ matrix.profile }}"
               
               # Validate custom build output
               if (Test-Path $customPackagePath) {
@@ -145,7 +145,7 @@ jobs:
                   throw "Package validation failed: Main script not found in $customPackagePath"
                 }
                 
-                # Create compatibility symlink for archive step
+                # Create compatibility directory structure for archive step
                 $expectedPath = "dist/aitherzero-${{ matrix.profile }}-${{ matrix.os }}"
                 New-Item -ItemType Directory -Path "dist" -Force | Out-Null
                 
@@ -257,11 +257,20 @@ jobs:
           if ($IsWindows) {
             $archivePath = "$archiveName.zip"
             Write-Host "Creating Windows ZIP archive: $archivePath" -ForegroundColor Cyan
-            Compress-Archive -Path "$packageDir/*" -DestinationPath $archivePath -Force
+            # Change to package directory to avoid nested folder structure
+            $currentDir = Get-Location
+            Set-Location $packageDir
+            try {
+              $destinationPath = Join-Path $currentDir $archivePath
+              Compress-Archive -Path "*" -DestinationPath $destinationPath -Force
+            } finally {
+              Set-Location $currentDir
+            }
           } else {
             $archivePath = "$archiveName.tar.gz"
             Write-Host "Creating Unix TAR.GZ archive: $archivePath" -ForegroundColor Cyan
-            tar -czf $archivePath -C dist "aitherzero-${{ matrix.profile }}-$platformName"
+            # Use --transform to strip the parent directory path
+            tar -czf $archivePath --transform "s|^dist/aitherzero-${{ matrix.profile }}-$platformName/||" -C dist "aitherzero-${{ matrix.profile }}-$platformName"
           }
           
           # Verify archive was created and show details

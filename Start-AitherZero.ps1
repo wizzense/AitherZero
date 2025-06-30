@@ -288,7 +288,7 @@ if ($startupExperienceAvailable) {
 # Handle default mode selection message
 if (-not $Interactive -and -not $Auto -and -not $Scripts -and -not $useEnhancedStartup) {
     Write-Host ''
-    Write-Host '💡 Starting in traditional mode. Use -Interactive for enhanced UI or -Help for more options.' -ForegroundColor Cyan
+    Write-Host 'Starting in traditional mode. Use -Interactive for enhanced UI or -Help for more options.' -ForegroundColor Cyan
     Write-Host ''
 }
 
@@ -377,7 +377,7 @@ try {
         Write-Host "Tried the following paths:" -ForegroundColor Yellow
         foreach ($path in $possiblePaths) {
             if ($path) {
-                $exists = if (Test-Path $path) { "✓" } else { "✗" }
+                $exists = if (Test-Path $path) { "[OK]" } else { "[MISSING]" }
                 Write-Host "  $exists $path" -ForegroundColor $(if (Test-Path $path) { 'Green' } else { 'Red' })
             }
         }
@@ -392,39 +392,26 @@ try {
 
     # Enhanced execution for PowerShell version compatibility
     if ($psVersion -lt 7) {
-        # Check if PowerShell 7 is available for optimal execution
-        $pwsh7Available = try { Get-Command pwsh -ErrorAction Stop; $true } catch { $false }
-
-        if ($pwsh7Available) {
-            Write-Host "⚠️  PowerShell $psVersion detected, but PowerShell 7 is available" -ForegroundColor Yellow
-            Write-Host '   Attempting to use PowerShell 7 for optimal compatibility...' -ForegroundColor White
+        # Use bootstrap script for PowerShell 5.1 - it handles PowerShell 7 installation and handoff
+        $bootstrapPath = Join-Path (Split-Path $coreScriptPath -Parent) "aither-core-bootstrap.ps1"
+        
+        if (Test-Path $bootstrapPath) {
+            Write-Host "⚠️  PowerShell $psVersion detected - using compatibility bootstrap..." -ForegroundColor Yellow
+            Write-Host '   The bootstrap will ensure optimal PowerShell 7+ compatibility.' -ForegroundColor White
             Write-Host ''
 
-            # Build the command line for PowerShell 7
-            $pwshArgs = @('-ExecutionPolicy', 'Bypass', '-File', $coreScriptPath)
-
-            # Add core arguments to pwsh command
-            foreach ($key in $coreArgs.Keys) {
-                if ($coreArgs[$key] -eq $true) {
-                    # Switch parameter
-                    $pwshArgs += "-$key"
-                } else {
-                    # Value parameter
-                    $pwshArgs += "-$key"
-                    $pwshArgs += $coreArgs[$key]
-                }
-            }
-
-            # Execute in PowerShell 7
-            & pwsh $pwshArgs
+            # Execute bootstrap script with current PowerShell version
+            # Bootstrap handles PowerShell 7 installation and handoff automatically
+            & $bootstrapPath @coreArgs
             $exitCode = $LASTEXITCODE
 
             if ($exitCode -ne 0) {
-                throw "Core application exited with code: $exitCode"
+                throw "Bootstrap script exited with code: $exitCode"
             }
         } else {
-            Write-Host "⚠️  PowerShell 7 not available, attempting to run with PowerShell $psVersion..." -ForegroundColor Yellow
-            Write-Host '   Some features may be limited.' -ForegroundColor White
+            # Fallback to old behavior if bootstrap not available
+            Write-Host "⚠️  PowerShell 7 not available and bootstrap script missing..." -ForegroundColor Yellow
+            Write-Host '   Attempting to run with PowerShell $psVersion - some features may be limited.' -ForegroundColor White
             Write-Host ''
 
             # Try to run with current PowerShell version using hashtable splatting
@@ -446,26 +433,27 @@ try {
     }
 
     Write-Host ''
-    Write-Host '✅ AitherZero completed successfully!' -ForegroundColor Green
+    Write-Host 'AitherZero completed successfully!' -ForegroundColor Green
 
 } catch {
     Write-Host ''
-    Write-Host "❌ Error running AitherZero: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Error running AitherZero: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host ''
-    Write-Host '💡 Troubleshooting Steps:' -ForegroundColor Yellow
+    Write-Host 'Troubleshooting Steps:' -ForegroundColor Yellow
     Write-Host '  1. Try setup mode: ./Start-AitherZero.ps1 -Setup' -ForegroundColor White
     Write-Host '  2. Get help: ./Start-AitherZero.ps1 -Help' -ForegroundColor White
-    Write-Host "  3. Check PowerShell version: `$PSVersionTable.PSVersion" -ForegroundColor White
+    Write-Host '  3. Check PowerShell version: $PSVersionTable.PSVersion' -ForegroundColor White
     Write-Host '  4. Ensure all files extracted properly' -ForegroundColor White
     Write-Host ''
 
     if ($psVersion -lt 7) {
-        Write-Host '💡 Consider upgrading to PowerShell 7+ for full compatibility:' -ForegroundColor Cyan
-        Write-Host '   https://aka.ms/powershell-release-windows' -ForegroundColor White
+        Write-Host 'For automatic PowerShell 7 installation and full compatibility:' -ForegroundColor Cyan
+        Write-Host '   Try the bootstrap script: aither-core/aither-core-bootstrap.ps1' -ForegroundColor White
         Write-Host ''
-        Write-Host '   Or use these alternative launch methods:' -ForegroundColor Cyan
-        Write-Host '   - Windows: Use AitherZero.bat launcher' -ForegroundColor White
-        Write-Host '   - PowerShell: pwsh -ExecutionPolicy Bypass -File aither-core.ps1 -Help' -ForegroundColor White
+        Write-Host '   Or install PowerShell 7 manually:' -ForegroundColor Cyan
+        Write-Host '   - Download: https://aka.ms/powershell-release-windows' -ForegroundColor White
+        Write-Host '   - winget: winget install Microsoft.PowerShell' -ForegroundColor White
+        Write-Host '   - chocolatey: choco install powershell-core' -ForegroundColor White
     }
 
     Write-Host ''

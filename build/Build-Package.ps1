@@ -326,7 +326,10 @@ try {
     }
     
     if (Test-Path 'templates/launchers/Start-AitherZero.ps1') {
-        Copy-Item -Path 'templates/launchers/Start-AitherZero.ps1' -Destination "$packageDir/Start-AitherZero.ps1" -Force
+        # Copy and update version in PowerShell launcher
+        $ps1Content = Get-Content 'templates/launchers/Start-AitherZero.ps1' -Raw
+        $ps1Content = $ps1Content -replace 'v\d+\.\d+\.\d+', "v$Version"
+        Set-Content -Path "$packageDir/Start-AitherZero.ps1" -Value $ps1Content -NoNewline
         Write-Host '✓ PowerShell launcher (from template)' -ForegroundColor Green
     } else {
         Write-Warning 'PowerShell launcher template not found'
@@ -336,7 +339,10 @@ try {
     }
 
     if (Test-Path 'templates/launchers/AitherZero.bat') {
-        Copy-Item -Path 'templates/launchers/AitherZero.bat' -Destination "$packageDir/AitherZero.bat" -Force
+        # Copy and update version in batch launcher
+        $batContent = Get-Content 'templates/launchers/AitherZero.bat' -Raw
+        $batContent = $batContent -replace 'AitherZero v\d+\.\d+\.\d+', "AitherZero v$Version"
+        Set-Content -Path "$packageDir/AitherZero.bat" -Value $batContent -NoNewline
         Write-Host '✓ Windows batch launcher (from template)' -ForegroundColor Green
     } else {
         Write-Warning 'Batch launcher template not found'
