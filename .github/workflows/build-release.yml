@@ -94,13 +94,35 @@ jobs:
           Write-Host "Platform: $($PSVersionTable.Platform)" -ForegroundColor Cyan
           Write-Host "Profile: ${{ matrix.profile }}" -ForegroundColor Cyan
           
-          # Set build parameters
+          # Set build parameters for Build-Package.ps1
+          $platformMap = @{
+            'windows-latest' = 'windows'
+            'ubuntu-latest' = 'linux'
+            'macos-latest' = 'macos'
+          }
+          
+          $extensionMap = @{
+            'windows' = 'zip'
+            'linux' = 'tar.gz'
+            'macos' = 'tar.gz'
+          }
+          
+          $platform = $platformMap['${{ matrix.os }}']
+          $extension = $extensionMap[$platform]
+          
+          # Get version from tag or use dev version
+          $version = if ($env:GITHUB_REF -match 'refs/tags/v(.+)') { 
+            $matches[1] 
+          } else { 
+            "dev-$($env:GITHUB_SHA.Substring(0,7))" 
+          }
+          
           $buildParams = @{
-            Profile = '${{ matrix.profile }}'
-            Platform = '${{ matrix.os }}'
-            OutputPath = 'dist'
-            IncludeTests = $false
-            Compress = $true
+            Platform = $platform
+            Version = $version
+            ArtifactExtension = $extension
+            PackageProfile = '${{ matrix.profile }}'
+            NoProgress = $true  # Disable progress for CI
           }
           
           try {
