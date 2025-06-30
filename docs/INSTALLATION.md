@@ -57,7 +57,7 @@ AitherZero can be installed in two ways:
 ```powershell
 # Download, extract, and run
 $url = (irm "https://api.github.com/repos/wizzense/AitherZero/releases/latest").assets | 
-    ? name -like "*windows.zip" | % browser_download_url
+    ? name -like "*-windows-*.zip" | % browser_download_url
 iwr $url -OutFile "AitherZero.zip"
 Expand-Archive "AitherZero.zip" -Force
 cd AitherZero-*
