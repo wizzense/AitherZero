@@ -27,13 +27,8 @@
       "Bash(/mnt/c/Program\\ Files/Git/cmd/git.exe grep -n \"## Important Notes\" /mnt/c/Users/alexa/OneDrive/Documents/0.\\ wizzense/AitherZero/CLAUDE.md)",
       "Bash(/mnt/c/Program Files/Git/cmd/git.exe log --oneline main ^origin/main)",
       "Bash(/mnt/c/Program Files/Git/cmd/git.exe log --oneline -1 origin/main)",
-<<<<<<< Updated upstream
       "Bash(\"/mnt/c/Program Files/PowerShell/7/pwsh.exe\" -Command \"Set-Location 'C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero'; Import-Module ./aither-core/modules/PatchManager -Force; Sync-GitBranch -Force\")",
-      "Bash(\"/mnt/c/Program Files/PowerShell/7/pwsh.exe\" -NoProfile -File ./fix-quickstart.ps1)",
-      "Bash(true)"
-=======
-      "Bash(\"/mnt/c/Program Files/PowerShell/7/pwsh.exe\" -Command \"Set-Location 'C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero'; Import-Module ./aither-core/modules/PatchManager -Force; Sync-GitBranch -Force\")"
->>>>>>> Stashed changes
+      "Bash(\"/mnt/c/Program Files/PowerShell/7/pwsh.exe\" -NoProfile -File ./fix-quickstart.ps1)"
     ],
     "deny": []
   }
