@@ -1,4 +1,4 @@
-Import-Module ./aither-core/modules/PatchManager -Force
+Import-Module (Join-Path $env:PWSH_MODULES_PATH 'PatchManager') -Force
 
 # Create clean v1.2.1 release
 Invoke-PatchWorkflow -PatchDescription "Release v1.2.1 - Clean hotfix release" -PatchOperation {
