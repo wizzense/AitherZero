@@ -78,15 +78,11 @@ FunctionsToExport = @(
     'Invoke-PostMergeCleanup',
     'Update-RepositoryDocumentation',
     'Invoke-PRConsolidation',
-<<<<<<< Updated upstream
-    'Show-GitStatusGuidance', 'Get-PatchWorkflowBackup', 'Test-PatchWorkflowSafety', 'Restore-PatchWorkflowBackup'
-=======
     'Show-GitStatusGuidance',
     'Get-PatchWorkflowBackup',
     'Test-PatchWorkflowSafety',
     'Restore-PatchWorkflowBackup',
     'Sync-GitBranch'
->>>>>>> Stashed changes
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
