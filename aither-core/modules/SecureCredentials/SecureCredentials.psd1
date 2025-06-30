@@ -24,6 +24,11 @@
             Tags = @('Security', 'Credentials', 'Enterprise', 'AitherZero')
             ProjectUri = 'https://github.com/wizzense/AitherZero'
             RequireLicenseAcceptance = $false
+            Licensing = @{
+                Tier = 'enterprise'
+                Feature = 'security'
+                RequiresLicense = $true
+            }
         }
     }
 }

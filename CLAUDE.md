@@ -354,6 +354,87 @@ Invoke-PatchRollback -RollbackType "LastCommit" -CreateBackup
 Invoke-PatchValidation -ModuleName "ModuleName"
 ```
 
+### Git Workflow Best Practices - PREVENTING BRANCH DIVERGENCE
+
+**CRITICAL**: Follow these practices to prevent branch divergence and merge conflicts:
+
+#### Before Starting Any Work
+
+```powershell
+# ALWAYS sync with remote before making changes
+Import-Module ./aither-core/modules/PatchManager -Force
+
+# Sync current branch with remote
+Sync-GitBranch -Force
+
+# Or if you need to fix existing divergence
+./scripts/Fix-GitDivergence.ps1
+```
+
+#### PatchManager Automatic Sync
+
+PatchManager v2.1+ automatically syncs with remote before creating branches:
+- Fetches latest from origin/main
+- Detects if local main is behind/ahead/diverged
+- Resets local main to match remote if diverged
+- Creates new branches from synchronized main
+
+#### Manual Git Operations (AVOID THESE)
+
+**DO NOT** use these commands directly - use PatchManager instead:
+```powershell
+# DON'T DO THIS:
+git checkout -b feature-branch  # Creates from potentially outdated local
+git commit -m "message"         # May cause conflicts
+git merge                       # Can create divergence
+
+# DO THIS INSTEAD:
+Invoke-PatchWorkflow -PatchDescription "Your feature" -PatchOperation {
+    # Your changes
+} -CreatePR
+```
+
+#### Fixing Divergence Issues
+
+If branches have already diverged:
+
+```powershell
+# Option 1: Use the fix script
+./scripts/Fix-GitDivergence.ps1 -Force
+
+# Option 2: Use Sync-GitBranch
+Sync-GitBranch -BranchName "main" -Force -CleanupOrphaned -ValidateTags
+
+# Option 3: Manual fix (last resort)
+git checkout main
+git fetch origin main
+git reset --hard origin/main  # WARNING: Loses local commits
+```
+
+#### Preventing Common Issues
+
+1. **Always use PatchManager** for all git operations
+2. **Never commit directly to main** - PatchManager prevents this
+3. **Sync before starting work** - Run `Sync-GitBranch` first
+4. **Let PatchManager handle branches** - It auto-syncs and prevents conflicts
+5. **Don't cherry-pick between branches** - Creates divergence
+6. **Avoid manual merges** - Use PR process instead
+
+#### Daily Workflow
+
+```powershell
+# Start of day
+Sync-GitBranch -Force
+
+# Create new feature
+Invoke-PatchWorkflow -PatchDescription "New feature" -PatchOperation {
+    # Make changes
+} -CreatePR
+
+# After PR is merged
+Invoke-PostMergeCleanup -BranchName "patch/your-branch"
+```
+
 ### Dynamic Repository Detection
 
 The project works across fork chains (AitherZero → AitherLabs → Aitherium):
@@ -463,10 +544,14 @@ Access tasks via: `Ctrl+Shift+P → Tasks: Run Task`
 ## Important Notes
 
 - The main branch is `main` (not master)
+- **CRITICAL: Always sync with remote before starting work** - Use `Sync-GitBranch -Force`
+- **NEVER commit directly to main** - Always use PatchManager workflows
+- **Fix divergence immediately** - Run `./scripts/Fix-GitDivergence.ps1` if branches diverge
 - GitHub Actions run on develop branch and PRs
 - The project supports Windows, Linux, and macOS
 - Always use absolute paths with platform-agnostic construction
-- PatchManager v2.1 is consolidated to 4 core functions
+- PatchManager v2.1 is consolidated to 4 core functions (now includes Sync-GitBranch)
+- PatchManager automatically syncs with remote to prevent merge conflicts
 - Bulletproof validation has four levels: Quick (30s), Standard (2-5m), Complete (10-15m), Quickstart (new user validation)
 - SetupWizard provides intelligent first-time setup with progress tracking and installation profiles
 - Installation profiles: minimal (infrastructure only), developer (includes AI tools), full (everything)

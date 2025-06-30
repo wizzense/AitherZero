@@ -43,7 +43,14 @@ param(
     [ValidateSet('minimal', 'developer', 'full', 'interactive')]
     [string]$InstallationProfile = 'interactive',
     
+<<<<<<< Updated upstream
     [Parameter(HelpMessage = 'Launch interactive quickstart experience')]
+=======
+    [Parameter(HelpMessage = 'Apply a license key to unlock features')]
+    [string]$ApplyLicense,
+    
+    [Parameter(HelpMessage = 'Quick start with interactive setup')]
+>>>>>>> Stashed changes
     [switch]$Quickstart
 )
 
@@ -71,15 +78,19 @@ if ($Help) {
     Write-Host '  -Verbosity           Logging level: silent, normal, detailed'
     Write-Host '  -ConfigFile          Custom configuration file path'
     Write-Host '  -InstallationProfile Installation profile: minimal, developer, full, interactive'
+    Write-Host '  -ApplyLicense        Apply a license key to unlock features'
+    Write-Host '  -Quickstart          Quick start with interactive setup (implies -Interactive)'
     Write-Host '  -WhatIf              Preview mode - show what would be done'
     Write-Host '  -Help                This help information'
     Write-Host ''
     Write-Host 'Examples:' -ForegroundColor Cyan
-    Write-Host '  .\Start-AitherZero.ps1 -Setup -InstallationProfile minimal'
-    Write-Host '  .\Start-AitherZero.ps1 -Setup -InstallationProfile developer'
-    Write-Host '  .\Start-AitherZero.ps1 -Interactive'
-    Write-Host '  .\Start-AitherZero.ps1 -Auto -Verbosity detailed'
-    Write-Host "  .\Start-AitherZero.ps1 -Scripts 'LabRunner' -WhatIf"
+    Write-Host '  .\Start-AitherZero.ps1 -Quickstart                          # First-time users'
+    Write-Host '  .\Start-AitherZero.ps1 -Setup -InstallationProfile minimal  # Minimal setup'
+    Write-Host '  .\Start-AitherZero.ps1 -Setup -InstallationProfile developer # Developer setup'
+    Write-Host '  .\Start-AitherZero.ps1 -Interactive                         # Enhanced UI mode'
+    Write-Host '  .\Start-AitherZero.ps1 -Auto -Verbosity detailed            # CI/CD mode'
+    Write-Host "  .\Start-AitherZero.ps1 -Scripts 'LabRunner' -WhatIf         # Run specific module"
+    Write-Host '  .\Start-AitherZero.ps1 -ApplyLicense "license-key"          # Apply license'
     Write-Host ''
     Write-Host 'Direct Core Access:' -ForegroundColor Cyan
     Write-Host "  pwsh -ExecutionPolicy Bypass -File 'aither-core.ps1' -Help"
@@ -236,17 +247,94 @@ if ($PSBoundParameters.ContainsKey('WhatIf')) { $coreArgs['WhatIf'] = $true }
 
 # Note: Setup, Help, Interactive are launcher-specific and not passed to core script
 
-# Handle default mode selection
-if (-not $Interactive -and -not $Auto -and -not $Scripts) {
-    # Default to interactive mode if no specific mode is chosen
-    Write-Host ''
-    Write-Host '💡 Starting in interactive mode. Use -Auto for automated execution or -Help for more options.' -ForegroundColor Cyan
+# Check for enhanced startup experience modules
+$startupExperienceAvailable = $false
+$licenseManagerAvailable = $false
+
+if ($loadedModules -gt 0) {
+    $startupExperienceAvailable = Get-Module -Name 'StartupExperience' -ListAvailable
+    $licenseManagerAvailable = Get-Module -Name 'LicenseManager' -ListAvailable
+}
+
+# Handle license application if provided
+if ($PSBoundParameters.ContainsKey('ApplyLicense') -and $licenseManagerAvailable) {
+    try {
+        Write-Host "Applying license..." -ForegroundColor Yellow
+        Set-License -LicenseKey $ApplyLicense
+        Write-Host ""
+    } catch {
+        Write-Warning "Failed to apply license: $_"
+    }
+}
+
+# Determine startup mode
+$useEnhancedStartup = $false
+$startupMode = 'Traditional'
+
+# If Quickstart flag is set, force interactive mode
+if ($Quickstart) {
+    $Interactive = $true
+    Write-Host '🚀 Quickstart mode - launching interactive setup...' -ForegroundColor Cyan
     Write-Host ''
 }
 
-# Start the core application with enhanced error handling and PowerShell version awareness
-Write-Host 'Starting AitherZero core application...' -ForegroundColor Green
-Write-Host ''
+# Check if we should use enhanced startup
+if ($startupExperienceAvailable) {
+    # Determine appropriate mode
+    $modeInfo = Get-StartupMode -Parameters $PSBoundParameters
+    
+    if ($Interactive -or $Quickstart -or ($modeInfo.UseEnhancedUI -and -not $Auto -and -not $Scripts)) {
+        $useEnhancedStartup = $true
+        $startupMode = 'Enhanced Interactive'
+    }
+}
+
+# Handle default mode selection message
+if (-not $Interactive -and -not $Auto -and -not $Scripts -and -not $useEnhancedStartup) {
+    Write-Host ''
+    Write-Host '💡 Starting in traditional mode. Use -Interactive for enhanced UI or -Help for more options.' -ForegroundColor Cyan
+    Write-Host ''
+}
+
+# Start the application based on mode
+if ($useEnhancedStartup) {
+    # Use enhanced interactive startup experience
+    Write-Host "Starting $startupMode mode..." -ForegroundColor Green
+    Write-Host ''
+    
+    try {
+        $startupParams = @{}
+        
+        # Pass configuration profile if specified
+        if ($PSBoundParameters.ContainsKey('ConfigFile')) {
+            # Extract profile name from config file
+            $profileName = [System.IO.Path]::GetFileNameWithoutExtension($ConfigFile)
+            $startupParams['Profile'] = $profileName
+        }
+        
+        # Skip license check if already applied
+        if ($PSBoundParameters.ContainsKey('ApplyLicense')) {
+            $startupParams['SkipLicenseCheck'] = $true
+        }
+        
+        # Start interactive mode
+        Start-InteractiveMode @startupParams
+        
+        # Interactive mode completed successfully
+        exit 0
+        
+    } catch {
+        Write-Error "Enhanced startup failed: $_"
+        Write-Host "Falling back to traditional mode..." -ForegroundColor Yellow
+        Write-Host ''
+        $useEnhancedStartup = $false
+    }
+}
+
+# If not using enhanced startup, continue with traditional core runner
+if (-not $useEnhancedStartup) {
+    Write-Host 'Starting AitherZero core application...' -ForegroundColor Green
+    Write-Host ''
 
 try {
     # Resolve path to core application script with robust detection
@@ -386,4 +474,5 @@ try {
 
     Write-Host ''
     exit 1
+}
 }

@@ -18,17 +18,31 @@
 
 ## ⚡ Quick Start - One-Click Setup (30 seconds)
 
-### 🔥 Super Simple - Just 3 Steps:
+### 🎉 NEW: Interactive Quickstart Experience!
+
+```powershell
+# First-time users - try our new interactive quickstart:
+./Start-AitherZero.ps1 -Quickstart
+```
+
+This launches:
+- ✨ **Enhanced Interactive UI** with rich terminal experience
+- 🎯 **Module Explorer** to discover all available features
+- 📦 **Configuration Manager** with visual editing
+- 🔐 **License Management** for feature tiers
+- 💾 **Profile System** with GitHub sync
+
+### 🔥 Traditional Quick Start - Just 3 Steps:
 
 #### 🖱️ **Windows (One-Click)**
 1. **Download**: Go to **[Releases](https://github.com/wizzense/AitherZero/releases/latest)** → Download `AitherZero-*-windows.zip`
 2. **Extract**: Right-click → Extract All
-3. **Run**: Double-click `AitherZero.bat` ✨
+3. **Run**: Double-click `AitherZero.bat` or use `.\Start-AitherZero.ps1 -Quickstart` ✨
 
-#### �️ **Linux/macOS (One-Command)**
+#### 🐧 **Linux/macOS (One-Command)**
 ```bash
 # One command downloads and runs AitherZero:
-curl -s https://api.github.com/repos/wizzense/AitherZero/releases/latest | grep "browser_download_url.*$(uname -s | tr '[:upper:]' '[:lower:]').tar.gz" | head -1 | cut -d '"' -f 4 | xargs curl -L | tar -xz && cd AitherZero-* && ./aitherzero.sh
+curl -s https://api.github.com/repos/wizzense/AitherZero/releases/latest | grep "browser_download_url.*$(uname -s | tr '[:upper:]' '[:lower:]').tar.gz" | head -1 | cut -d '"' -f 4 | xargs curl -L | tar -xz && cd AitherZero-* && ./Start-AitherZero.ps1 -Quickstart
 ```
 
 ### 🚀 Alternative Downloads

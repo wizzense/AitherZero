@@ -42,6 +42,24 @@ AitherZero can be installed in two ways:
 
 ### Quick Start (Recommended)
 
+#### New Users - Interactive Quickstart
+
+For first-time users, AitherZero now includes an enhanced interactive experience:
+
+```powershell
+# Windows
+.\Start-AitherZero.ps1 -Quickstart
+
+# Linux/macOS
+./Start-AitherZero.ps1 -Quickstart
+```
+
+This will:
+- ✨ Launch the enhanced interactive UI
+- 🔧 Guide you through initial setup
+- 📦 Help you create your first configuration profile
+- 🚀 Show you all available modules and features
+
 #### Option 1: One-Click Download
 
 1. Visit [Latest Release](https://github.com/wizzense/AitherZero/releases/latest)
@@ -222,13 +240,63 @@ pwsh -File ./aither-core/aither-core.ps1 -Setup
 
 ### Configuration
 
-1. **Review default settings**: `configs/default-config.json`
-2. **Create custom config**: Copy to `configs/custom-config.json`
-3. **Set environment variables** (optional):
+1. **Interactive Configuration Manager**: 
    ```powershell
-   $env:AITHERZERO_CONFIG = "custom"
-   $env:AITHERZERO_LOG_LEVEL = "Debug"
+   # Launch interactive mode to manage configurations
+   ./Start-AitherZero.ps1 -Interactive
+   # Navigate to Configuration Manager
    ```
+
+2. **Configuration Profiles**:
+   - Create named profiles for different environments
+   - Switch between profiles easily
+   - Export/Import configurations
+   - Sync with GitHub for team sharing
+
+3. **Traditional Method**:
+   - **Review default settings**: `configs/default-config.json`
+   - **Create custom config**: Copy to `configs/custom-config.json`
+   - **Set environment variables** (optional):
+     ```powershell
+     $env:AITHERZERO_CONFIG = "custom"
+     $env:AITHERZERO_LOG_LEVEL = "Debug"
+     ```
+
+### Licensing and Feature Tiers
+
+AitherZero offers different feature tiers:
+
+#### Free Tier (Default)
+- ✅ Core modules (Logging, Testing, Progress Tracking)
+- ✅ Development tools (DevEnvironment, PatchManager)
+- ✅ Basic automation features
+- ✅ Local configuration profiles
+
+#### Professional Tier
+- ✅ Everything in Free tier
+- ✅ Infrastructure automation (OpenTofu/Terraform)
+- ✅ AI tools integration (Claude Code, Gemini)
+- ✅ Advanced orchestration
+- ✅ Cloud provider integration
+- ✅ GitHub configuration sync
+
+#### Enterprise Tier
+- ✅ Everything in Professional tier
+- ✅ Secure credentials management
+- ✅ System monitoring
+- ✅ Remote connections
+- ✅ REST API server
+- ✅ Priority support
+
+#### Applying a License
+```powershell
+# Apply license during startup
+./Start-AitherZero.ps1 -ApplyLicense "your-license-key"
+
+# Or through interactive mode
+./Start-AitherZero.ps1 -Interactive
+# Navigate to License Management
+```
 
 ### Verify Installation
 
