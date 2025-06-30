@@ -9,7 +9,7 @@ We're thrilled to announce the first stable release of AitherZero - a comprehens
 **Windows:**
 ```powershell
 # Download and run in one command:
-$url = (irm "https://api.github.com/repos/wizzense/AitherZero/releases/latest").assets | ? name -like "*windows.zip" | % browser_download_url; iwr $url -OutFile "AitherZero.zip"; Expand-Archive "AitherZero.zip" -Force; cd AitherZero-*; .\AitherZero.bat
+$url = (irm "https://api.github.com/repos/wizzense/AitherZero/releases/latest").assets | ? name -like "*-windows-*.zip" | % browser_download_url; iwr $url -OutFile "AitherZero.zip"; Expand-Archive "AitherZero.zip" -Force; cd AitherZero-*; .\AitherZero.bat
 ```
 
 **Linux/macOS:**
