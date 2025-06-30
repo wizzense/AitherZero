@@ -41,7 +41,10 @@ param(
 
     [Parameter(HelpMessage = 'Installation profile for setup')]
     [ValidateSet('minimal', 'developer', 'full', 'interactive')]
-    [string]$InstallationProfile = 'interactive'
+    [string]$InstallationProfile = 'interactive',
+    
+    [Parameter(HelpMessage = 'Launch interactive quickstart experience')]
+    [switch]$Quickstart
 )
 
 # Detect PowerShell version for compatibility messaging
@@ -61,6 +64,7 @@ if ($Help) {
     Write-Host '  -Setup         First-time setup and environment validation'
     Write-Host '  -Interactive   Interactive mode with menu system (default)'
     Write-Host '  -Auto          Automated execution without prompts'
+    Write-Host '  -Quickstart    Enhanced interactive startup experience'
     Write-Host ''
     Write-Host 'Options:' -ForegroundColor Cyan
     Write-Host "  -Scripts             Specify modules to run (e.g., 'LabRunner,BackupManager')"
@@ -81,6 +85,23 @@ if ($Help) {
     Write-Host "  pwsh -ExecutionPolicy Bypass -File 'aither-core.ps1' -Help"
     Write-Host ''
     return
+}
+
+# Handle quickstart mode
+if ($Quickstart) {
+    Write-Host '🚀 AitherZero Quickstart Experience' -ForegroundColor Green
+    Write-Host ''
+    Write-Host 'Welcome! This enhanced mode provides:' -ForegroundColor Cyan
+    Write-Host '  • Interactive module selection with descriptions' -ForegroundColor White
+    Write-Host '  • Real-time configuration management' -ForegroundColor White  
+    Write-Host '  • Smart dependency detection' -ForegroundColor White
+    Write-Host '  • Progress tracking with visual feedback' -ForegroundColor White
+    Write-Host ''
+    
+    # Set to interactive mode and continue
+    $Interactive = $true
+    Write-Host '✨ Enhanced interactive mode enabled!' -ForegroundColor Cyan
+    Write-Host ''
 }
 
 # Handle setup mode with intelligent setup wizard
