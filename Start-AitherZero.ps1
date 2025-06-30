@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# AitherZero Cross-Platform Application Launcher v1.1.0+
+# AitherZero Cross-Platform Application Launcher v1.2.1
 # Compatible with PowerShell 5.1+ and 7.x
 # Automatic PowerShell version detection and parameter mapping
 
@@ -43,18 +43,26 @@ param(
     [ValidateSet('minimal', 'developer', 'full', 'interactive')]
     [string]$InstallationProfile = 'interactive',
     
+<<<<<<< Updated upstream
     [Parameter(HelpMessage = 'Launch interactive quickstart experience')]
     [switch]$Quickstart,
     
     [Parameter(HelpMessage = 'Apply a license key to unlock features')]
     [string]$ApplyLicense
+=======
+    [Parameter(HelpMessage = 'Apply a license key to unlock features')]
+    [string]$ApplyLicense,
+    
+    [Parameter(HelpMessage = 'Quick start with interactive setup')]
+    [switch]$Quickstart
+>>>>>>> Stashed changes
 )
 
 # Detect PowerShell version for compatibility messaging
 $psVersion = $PSVersionTable.PSVersion.Major
 
 # Show banner
-Write-Host 'AitherZero Infrastructure Automation Framework v1.1.0+' -ForegroundColor Green
+Write-Host 'AitherZero Infrastructure Automation Framework v1.2.1' -ForegroundColor Green
 Write-Host ''
 Write-Host '   Cross-Platform Infrastructure Automation with OpenTofu/Terraform' -ForegroundColor Cyan
 Write-Host ''
