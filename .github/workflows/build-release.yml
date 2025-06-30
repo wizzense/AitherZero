@@ -257,11 +257,18 @@ jobs:
           if ($IsWindows) {
             $archivePath = "$archiveName.zip"
             Write-Host "Creating Windows ZIP archive: $archivePath" -ForegroundColor Cyan
-            Compress-Archive -Path "$packageDir/*" -DestinationPath $archivePath -Force
+            # Change to package directory to avoid nested folder structure
+            Push-Location $packageDir
+            try {
+              Compress-Archive -Path "*" -DestinationPath "../../../$archivePath" -Force
+            } finally {
+              Pop-Location
+            }
           } else {
             $archivePath = "$archiveName.tar.gz"
             Write-Host "Creating Unix TAR.GZ archive: $archivePath" -ForegroundColor Cyan
-            tar -czf $archivePath -C dist "aitherzero-${{ matrix.profile }}-$platformName"
+            # Use --transform to strip the parent directory path
+            tar -czf $archivePath --transform "s|^dist/aitherzero-${{ matrix.profile }}-$platformName/||" -C dist "aitherzero-${{ matrix.profile }}-$platformName"
           }
           
           # Verify archive was created and show details
