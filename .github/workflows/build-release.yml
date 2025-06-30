@@ -105,9 +105,9 @@ jobs:
           
           try {
             # Check if custom build script exists
-            if (Test-Path "./scripts/Build-Package.ps1") {
+            if (Test-Path "./build/Build-Package.ps1") {
               Write-Host "Using custom build script..." -ForegroundColor Green
-              ./scripts/Build-Package.ps1 @buildParams
+              ./build/Build-Package.ps1 @buildParams
             } else {
               Write-Host "Using default build process..." -ForegroundColor Yellow
               
