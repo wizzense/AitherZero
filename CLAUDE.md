@@ -86,6 +86,85 @@ Invoke-ScriptAnalyzer -Path . -Recurse
 cd mcp-server && npm run lint
 ```
 
+
+### Release Management Commands
+
+```powershell
+# Create a new release (automatically increments version)
+Import-Module ./aither-core/modules/PatchManager -Force
+
+# Patch release (1.2.3 -> 1.2.4)
+Invoke-PatchWorkflow -PatchDescription "Release vX.X.X - [Brief description]" -PatchOperation {
+    $version = Get-Content "VERSION" -Raw
+    $parts = $version.Trim() -split '\.'
+    $parts[2] = [int]$parts[2] + 1
+    $newVersion = $parts -join '.'
+    Set-Content "VERSION" -Value $newVersion -NoNewline
+    Write-Host "Updated version to $newVersion"
+} -CreatePR -Priority "High"
+
+# Minor release (1.2.3 -> 1.3.0)
+Invoke-PatchWorkflow -PatchDescription "Release vX.X.0 - [Feature description]" -PatchOperation {
+    $version = Get-Content "VERSION" -Raw
+    $parts = $version.Trim() -split '\.'
+    $parts[1] = [int]$parts[1] + 1
+    $parts[2] = "0"
+    $newVersion = $parts -join '.'
+    Set-Content "VERSION" -Value $newVersion -NoNewline
+    Write-Host "Updated version to $newVersion"
+} -CreatePR -Priority "High"
+
+# Major release (1.2.3 -> 2.0.0)
+Invoke-PatchWorkflow -PatchDescription "Release vX.0.0 - [Major change description]" -PatchOperation {
+    $version = Get-Content "VERSION" -Raw
+    $parts = $version.Trim() -split '\.'
+    $parts[0] = [int]$parts[0] + 1
+    $parts[1] = "0"
+    $parts[2] = "0"
+    $newVersion = $parts -join '.'
+    Set-Content "VERSION" -Value $newVersion -NoNewline
+    Write-Host "Updated version to $newVersion"
+} -CreatePR -Priority "High"
+
+# After PR is merged, tag and push the release
+git checkout main
+git pull
+$version = Get-Content "VERSION" -Raw
+git tag -a "v$($version.Trim())" -m "Release v$($version.Trim())"
+git push origin "v$($version.Trim())"
+
+# Monitor release build
+gh run list --workflow="Build & Release Pipeline" --limit 1
+gh run watch
+```
+
+### Quick Release Workflow
+
+```powershell
+# One-command release creation (example for patch release)
+./scripts/Create-Release.ps1 -ReleaseType "patch" -Description "Bug fixes and improvements"
+
+# Create release with specific version
+./scripts/Create-Release.ps1 -Version "1.3.0" -Description "New features added"
+
+# Emergency hotfix release
+./scripts/Create-Release.ps1 -ReleaseType "hotfix" -Description "Critical bug fix" -FastTrack
+```
+
+### Build Testing Commands
+
+```powershell
+# Test build locally before release
+./build/Build-Package.ps1 -Platform "windows" -Version "test" -ArtifactExtension "zip" -PackageProfile "standard"
+
+# Test all profiles
+@("minimal", "standard", "full") | ForEach-Object {
+    ./build/Build-Package.ps1 -Platform "windows" -Version "test" -ArtifactExtension "zip" -PackageProfile $_
+}
+
+# Validate build output
+./tests/Test-BuildOutput.ps1 -Platform "windows" -Profile "standard"
+```
 ### GitHub Actions Workflows
 
 The project uses a unified CI/CD pipeline with 3 streamlined workflows:
