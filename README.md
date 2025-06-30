@@ -36,7 +36,7 @@ curl -s https://api.github.com/repos/wizzense/AitherZero/releases/latest | grep 
 #### Windows PowerShell One-Liner
 ```powershell
 # Download and run in one command:
-$url = (irm "https://api.github.com/repos/wizzense/AitherZero/releases/latest").assets | ? name -like "*-windows-*.zip" | % browser_download_url; iwr $url -OutFile "AitherZero.zip"; Expand-Archive "AitherZero.zip" -Force; $folder = (gci -Directory | ? Name -like "AitherZero*")[0].Name; cd $folder; .\AitherZero.bat
+$url = (irm "https://api.github.com/repos/wizzense/AitherZero/releases/latest").assets | ? name -like "*-windows-*.zip" | Select -First 1 | % browser_download_url; iwr $url -OutFile "AitherZero.zip"; Expand-Archive "AitherZero.zip" -Force; $folder = (gci -Directory | ? Name -like "AitherZero*")[0].Name; cd $folder; .\AitherZero.bat
 ```
 
 #### Quick Environment Validation
