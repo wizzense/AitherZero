@@ -117,8 +117,20 @@ try {
     Copy-Item -Path 'aither-core/aither-core.ps1' -Destination "$packageDir/aither-core.ps1" -Force
     Write-Host '✓ Core runner script' -ForegroundColor Green
     
+    # CRITICAL: Copy bootstrap script for PowerShell 5.1 compatibility
+    $bootstrapPath = 'aither-core/aither-core-bootstrap.ps1'
+    if (Test-Path $bootstrapPath) {
+        Copy-Item -Path $bootstrapPath -Destination "$packageDir/aither-core-bootstrap.ps1" -Force
+        Write-Host '✓ PowerShell compatibility bootstrap script' -ForegroundColor Green
+    } else {
+        Write-Warning "Bootstrap script not found at: $bootstrapPath"
+        if ($progressAvailable) {
+            Add-ProgressWarning -OperationId $progressOperationId -Warning "Bootstrap script missing: $bootstrapPath"
+        }
+    }
+    
     if ($progressAvailable) {
-        Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Copied core runner"
+        Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Copied core runner and bootstrap"
     }
 
     # Package Profile Definitions
@@ -318,24 +330,36 @@ try {
     Copy-Item -Path 'LICENSE' -Destination "$packageDir/LICENSE" -Force
     Write-Host '✓ Essential documentation' -ForegroundColor Green
 
-    # Copy FIXED launcher templates instead of generating inline
-    Write-Host 'Copying fixed launcher templates...' -ForegroundColor Yellow
+    # Copy FIXED launcher templates with validation
+    Write-Host 'Copying and validating launcher templates...' -ForegroundColor Yellow
     
     if ($progressAvailable) {
-        Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Creating launchers"
+        Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Creating and validating launchers"
     }
     
-    if (Test-Path 'templates/launchers/Start-AitherZero.ps1') {
-        # Copy and update version in PowerShell launcher
-        $ps1Content = Get-Content 'templates/launchers/Start-AitherZero.ps1' -Raw
-        $ps1Content = $ps1Content -replace 'v\d+\.\d+\.\d+', "v$Version"
-        Set-Content -Path "$packageDir/Start-AitherZero.ps1" -Value $ps1Content -NoNewline
-        Write-Host '✓ PowerShell launcher (from template)' -ForegroundColor Green
-    } else {
-        Write-Warning 'PowerShell launcher template not found'
-        if ($progressAvailable) {
-            Add-ProgressWarning -OperationId $progressOperationId -Warning "PowerShell launcher template not found"
+    # CRITICAL: Validate PowerShell launcher template exists and has compatibility features
+    $ps1TemplatePath = 'templates/launchers/Start-AitherZero.ps1'
+    if (Test-Path $ps1TemplatePath) {
+        $ps1Content = Get-Content $ps1TemplatePath -Raw
+        
+        # Validate template has PowerShell compatibility features
+        $hasCompatibilityCheck = $ps1Content -match '\$psVersion.*PSVersionTable\.PSVersion\.Major'
+        $hasBootstrapSupport = $ps1Content -match 'aither-core-bootstrap\.ps1'
+        
+        if ($hasCompatibilityCheck -and $hasBootstrapSupport) {
+            # Template is valid - copy and update version
+            $ps1Content = $ps1Content -replace 'v\d+\.\d+\.\d+', "v$Version"
+            Set-Content -Path "$packageDir/Start-AitherZero.ps1" -Value $ps1Content -NoNewline
+            Write-Host '✓ PowerShell launcher (validated template with compatibility)' -ForegroundColor Green
+        } else {
+            Write-Error "Template launcher is missing PowerShell compatibility features!"
+            Write-Error "  Has version check: $hasCompatibilityCheck"
+            Write-Error "  Has bootstrap support: $hasBootstrapSupport"
+            throw "Template validation failed - launcher template is outdated"
         }
+    } else {
+        Write-Error "PowerShell launcher template not found at: $ps1TemplatePath"
+        throw "Critical template missing - cannot create package"
     }
 
     if (Test-Path 'templates/launchers/AitherZero.bat') {
@@ -521,6 +545,53 @@ pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1 -Setup
             Set-Content -Path "$archivePath.sha256" -Value $hash
             Write-Host "✓ SHA256: $hash" -ForegroundColor Green
         }
+    }
+    
+    # CRITICAL: Post-build PowerShell compatibility validation
+    Write-Host '🔍 Validating packaged launcher PowerShell compatibility...' -ForegroundColor Cyan
+    
+    $packagedLauncher = "$packageDir/Start-AitherZero.ps1"
+    $packagedBootstrap = "$packageDir/aither-core-bootstrap.ps1"
+    
+    if (Test-Path $packagedLauncher) {
+        $launcherContent = Get-Content $packagedLauncher -Raw
+        
+        # Validate packaged launcher has required features
+        $validationResults = @{
+            'PowerShell version detection' = $launcherContent -match '\$psVersion.*PSVersionTable\.PSVersion\.Major'
+            'Bootstrap script support' = $launcherContent -match 'aither-core-bootstrap\.ps1'
+            'PowerShell 5.1 compatibility' = $launcherContent -match 'if.*psVersion.*-lt 7'
+            'Error handling for missing bootstrap' = $launcherContent -match 'bootstrap.*missing'
+            'Cross-platform compatibility' = $launcherContent -match 'Cross-Platform.*Launcher'
+        }
+        
+        $validationPassed = $true
+        foreach ($check in $validationResults.GetEnumerator()) {
+            if ($check.Value) {
+                Write-Host "  ✅ $($check.Key)" -ForegroundColor Green
+            } else {
+                Write-Host "  ❌ $($check.Key)" -ForegroundColor Red
+                $validationPassed = $false
+            }
+        }
+        
+        # Validate bootstrap script exists
+        if (Test-Path $packagedBootstrap) {
+            Write-Host "  ✅ Bootstrap script included" -ForegroundColor Green
+        } else {
+            Write-Host "  ❌ Bootstrap script missing" -ForegroundColor Red
+            $validationPassed = $false
+        }
+        
+        if ($validationPassed) {
+            Write-Host '✅ Package validation PASSED - PowerShell compatibility confirmed!' -ForegroundColor Green
+        } else {
+            Write-Error "Package validation FAILED - PowerShell compatibility issues detected!"
+            throw "Package build failed validation - cannot release broken launcher"
+        }
+    } else {
+        Write-Error "Packaged launcher not found at: $packagedLauncher"
+        throw "Package build failed - launcher missing"
     }
     
     # Complete progress tracking if available

@@ -151,7 +151,8 @@ Export-ModuleMember -Function @(
     'New-CrossForkPR',
     'Show-GitStatusGuidance',
     'Sync-GitBranch',
-    'Invoke-ReleaseWorkflow'
+    'Invoke-ReleaseWorkflow',
+    'Watch-ReleasePR'
 )
 
 # Module initialization message
