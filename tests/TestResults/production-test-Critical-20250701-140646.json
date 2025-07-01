@@ -1,0 +1,4765 @@
+{
+  "Summary": {
+    "TotalTests": 512,
+    "TestSuite": "Critical",
+    "Passed": 0,
+    "Platform": {
+      "Architecture": 1,
+      "PowerShell": "7.5.1",
+      "OS": "Win32NT"
+    },
+    "Skipped": 0,
+    "Failed": 512,
+    "PassRate": 0.0,
+    "Duration": 5.4260349,
+    "ExecutionDate": "2025-07-01 14:06:46"
+  },
+  "IssuesCreated": [],
+  "Containers": [
+    {
+      "Path": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "Failed": 45,
+      "Passed": 0,
+      "Total": 45,
+      "Duration": 1.16062,
+      "Result": "Failed",
+      "Name": "aither-core.Tests.ps1"
+    },
+    {
+      "Path": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "Failed": 28,
+      "Passed": 0,
+      "Total": 28,
+      "Duration": 0.2042291,
+      "Result": "Failed",
+      "Name": "API-NonInteractive-Modes.Tests.ps1"
+    },
+    {
+      "Path": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "Failed": 23,
+      "Passed": 0,
+      "Total": 23,
+      "Duration": 0.231243,
+      "Result": "Failed",
+      "Name": "Build-Integrity.Tests.ps1"
+    },
+    {
+      "Path": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "Failed": 24,
+      "Passed": 0,
+      "Total": 24,
+      "Duration": 0.2494582,
+      "Result": "Failed",
+      "Name": "Centralized-Logging.Tests.ps1"
+    },
+    {
+      "Path": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "Failed": 32,
+      "Passed": 0,
+      "Total": 32,
+      "Duration": 0.2334362,
+      "Result": "Failed",
+      "Name": "Cross-Platform-Deployment.Tests.ps1"
+    },
+    {
+      "Path": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "Failed": 20,
+      "Passed": 0,
+      "Total": 20,
+      "Duration": 0.2025262,
+      "Result": "Failed",
+      "Name": "E2E-Release-Scenarios.Tests.ps1"
+    },
+    {
+      "Path": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "Failed": 44,
+      "Passed": 0,
+      "Total": 44,
+      "Duration": 0.2579871,
+      "Result": "Failed",
+      "Name": "Find-ProjectRoot.Tests.ps1"
+    },
+    {
+      "Path": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "Failed": 45,
+      "Passed": 0,
+      "Total": 45,
+      "Duration": 0.2540705,
+      "Result": "Failed",
+      "Name": "Git-Integration.Tests.ps1"
+    },
+    {
+      "Path": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "Failed": 56,
+      "Passed": 0,
+      "Total": 56,
+      "Duration": 0.2831065,
+      "Result": "Failed",
+      "Name": "LabRunner.Tests.ps1"
+    },
+    {
+      "Path": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "Failed": 28,
+      "Passed": 0,
+      "Total": 28,
+      "Duration": 0.2241423,
+      "Result": "Failed",
+      "Name": "LicenseManager.Tests.ps1"
+    },
+    {
+      "Path": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "Failed": 45,
+      "Passed": 0,
+      "Total": 45,
+      "Duration": 0.2274043,
+      "Result": "Failed",
+      "Name": "OpenTofuProvider.Tests.ps1"
+    },
+    {
+      "Path": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "Failed": 39,
+      "Passed": 0,
+      "Total": 39,
+      "Duration": 0.2923772,
+      "Result": "Failed",
+      "Name": "PowerShell-Version-Handling.Tests.ps1"
+    },
+    {
+      "Path": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Release-EndToEnd.Tests.ps1",
+      "Failed": 0,
+      "Passed": 0,
+      "Total": 0,
+      "Duration": 0.0399944,
+      "Result": "Failed",
+      "Name": "Release-EndToEnd.Tests.ps1"
+    },
+    {
+      "Path": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "Failed": 53,
+      "Passed": 0,
+      "Total": 53,
+      "Duration": 1.3136298,
+      "Result": "Failed",
+      "Name": "SetupWizard.Tests.ps1"
+    },
+    {
+      "Path": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "Failed": 30,
+      "Passed": 0,
+      "Total": 30,
+      "Duration": 0.2518101,
+      "Result": "Failed",
+      "Name": "Start-AitherZero.Tests.ps1"
+    }
+  ],
+  "FailedTests": [
+    {
+      "Line": 176,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should display help when -Help parameter is used",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 190,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect and reject conflicting UI mode parameters",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 194,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should resolve UI mode based on parameters correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 218,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should map Quiet parameter to silent verbosity",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 234,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate verbosity parameter values",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 246,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect non-interactive mode correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 271,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should find project root using multiple strategies",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 282,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect module paths correctly for different structures",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 293,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should set up environment variables correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 298,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate PowerShell 7 requirements",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 318,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate critical module paths before import",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 326,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle module import failures gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 333,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should load required modules in correct order",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 345,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect StartupExperience module availability",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 354,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should provide comprehensive troubleshooting information on module failures",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 373,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should find configuration files in multiple locations",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 384,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should parse JSON configuration correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 393,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing configuration files gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 407,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle malformed JSON configuration files",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 414,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should extract UI preferences from configuration",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 429,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should parse comma-separated component list correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 439,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should prioritize module loading over legacy scripts",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 450,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should execute default functions for loaded modules",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 460,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should search multiple script paths for legacy scripts",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 477,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle component not found scenarios",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 490,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should define correct default auto-mode modules",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 499,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should verify auto-mode modules exist",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 508,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should execute auto-mode modules with -Auto parameter",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 520,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle auto-mode module failures gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 545,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should determine UI mode based on availability and preference",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 573,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect first run correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 595,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should load dynamic menu system from multiple paths",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 607,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should provide fallback when dynamic menu is not available",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 629,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should provide comprehensive error messages for module import failures",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 647,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should track scripts with no output for reporting",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 671,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should generate no-output summary with suggestions",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 692,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle exit codes correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 702,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should save no-output summary to logs",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 716,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should use Join-Path for all path construction",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 729,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect PowerShell executable correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 743,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle platform-specific behaviors",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 755,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should use UTF8 encoding for all file operations",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 770,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should map verbosity levels correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 789,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle script output correctly based on verbosity",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 816,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\aither-core.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should set LAB_CONSOLE_LEVEL environment variable",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 688,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should start API server with default configuration",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 697,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should start API server with custom configuration",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 706,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should get comprehensive API status information",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 720,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should register custom API endpoints",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 728,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle API requests to default endpoints",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 747,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle API authentication correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 759,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle POST requests with JSON body",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 770,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle invalid endpoints gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 780,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle invalid HTTP methods gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 789,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should track API metrics correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 805,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should test API connection successfully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 813,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should stop API server cleanly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 828,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect non-interactive mode automatically",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 867,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle automatic mode execution",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 901,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should propagate errors correctly in non-interactive mode",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 912,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle timeout scenarios in automation",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 937,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle configuration loading in non-interactive mode",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 950,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate environment prerequisites in automation",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 968,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle module loading failures gracefully in automation",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 989,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should support headless execution for CI/CD pipelines",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1038,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle batch processing scenarios",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1081,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should support parallel automation execution",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1132,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle API automation workflows",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1193,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle error propagation in automation chains",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1263,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should support integration with external monitoring systems",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1324,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle high-frequency API requests efficiently",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1357,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should manage memory efficiently during automation",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1388,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\API-NonInteractive-Modes.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle concurrent automation workflows efficiently",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 383,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate required parameters",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 392,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate package profile parameter",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 404,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should create correct directory structure",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 430,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should include correct files based on package profile",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 480,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate PowerShell compatibility in launchers",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 522,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should exclude development and test files",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 561,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should filter modules based on feature tier",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 627,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing feature registry gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 659,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should build packages for different platforms",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 702,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should create platform-appropriate line endings",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 727,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should create comprehensive package metadata",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 761,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should create installation guide with correct information",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 791,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should include essential documentation files",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 814,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should calculate and display package size correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 842,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should generate SHA256 checksum for archives",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 861,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate package integrity after build",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 895,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing launcher templates gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 920,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing modules gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 952,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate launcher compatibility features are not broken",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 998,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should support NoProgress flag for CI environments",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1017,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle CI environment variables correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1046,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should build packages efficiently",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1065,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Build-Integrity.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle multiple concurrent builds",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 140,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle hierarchical log levels correctly across all components",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 168,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should filter log levels correctly with different console and file settings",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 212,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should maintain performance under high-volume logging scenarios",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 251,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle concurrent logging from multiple sources safely",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 292,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should rotate logs when size limit is exceeded",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 320,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should clean up old log files beyond the retention limit",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 349,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle disk space and permission issues gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 378,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should track performance metrics accurately across operations",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 409,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should monitor memory usage during intensive logging",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 438,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should provide performance insights for different log levels",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 471,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle different path formats correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 497,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should use appropriate default log locations per platform",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 518,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle different file encoding scenarios",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 547,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should integrate properly with Start-AitherZero.ps1 execution flow",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 564,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should maintain logging state across module imports and reloads",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 597,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle environment variable configuration dynamically",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 634,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should recover gracefully from file system errors",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 661,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle configuration errors without breaking the system",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 674,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should maintain stability under resource constraints",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 720,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should support dynamic configuration changes without restart",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 757,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should support multiple output formats simultaneously",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 799,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should sanitize sensitive information in log messages",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 834,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should enforce appropriate file permissions on log files",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 861,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Centralized-Logging.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should provide consistent performance across multiple test runs",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 219,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should initialize cross-platform environment successfully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 236,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect platform correctly on each supported OS",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 268,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing project root gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 283,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should use existing valid PROJECT_ROOT when available",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 295,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should set platform-specific path separators correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 316,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should find project root using multiple strategies",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 340,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should use environment variable when valid and not forcing",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 349,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should force re-detection when requested",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 361,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should find project root via git repository detection",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 380,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle characteristic file detection across platforms",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 403,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle path resolution across different path formats",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 427,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should use Join-Path for all path construction",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 448,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle nested path construction correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 457,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should resolve relative paths correctly across platforms",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 478,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle long paths on Windows correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 497,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle platform-specific installation paths",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 527,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect platform capabilities correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 558,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle environment variables across platforms",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 572,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should execute platform-appropriate commands",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 602,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should load modules correctly across platforms",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 624,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle module dependencies across platforms",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 639,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should resolve module paths correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 656,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle file operations consistently across platforms",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 685,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle directory operations consistently",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 702,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle special characters in paths",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 725,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle path-related errors gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 742,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should recover from platform detection failures",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 756,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle insufficient permissions gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 770,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should provide meaningful error messages for platform issues",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 786,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should initialize environment efficiently",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 798,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle large directory structures efficiently",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 823,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Cross-Platform-Deployment.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should manage memory efficiently during operations",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 215,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should perform clean installation from package",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 253,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should run setup wizard on first launch",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 310,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate PowerShell version requirements",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 323,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle different installation profiles",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 360,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should create proper directory structure on first run",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 408,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect existing installation and preserve user data",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 438,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle breaking changes between major versions",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 506,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate module compatibility during upgrade",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 537,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should support rollback mechanism for failed upgrades",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 574,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should support unattended installation with predefined configuration",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 616,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate system requirements before installation",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 669,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle enterprise proxy and firewall configurations",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 712,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should generate installation audit log for compliance",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 759,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should support high availability and load balancing configurations",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 806,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should integrate with enterprise monitoring and alerting systems",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 862,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should build consistent packages across platforms",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 901,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle platform-specific path separators",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 920,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate Docker container deployment",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1004,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should enforce feature restrictions based on license tier",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1054,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\E2E-Release-Scenarios.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate license during runtime initialization",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 162,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should use existing PROJECT_ROOT when valid and not forcing",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 171,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should ignore invalid PROJECT_ROOT environment variable",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 180,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should verify PROJECT_ROOT has characteristic files",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 190,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should force re-detection when -Force is specified",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 201,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should set PROJECT_ROOT environment variable after detection",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 213,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should find project root via aither-core directory",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 221,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should find project root via .git directory",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 229,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should find project root via multiple characteristic files",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 237,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should prioritize aither-core as definitive indicator",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 245,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should require multiple definitive files for non-aither-core detection",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 254,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should traverse up directory tree correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 262,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle filesystem root boundaries",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 291,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect project root from module directory",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 314,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect project root from module subdirectory",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 325,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect project root from tests directory structure",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 336,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle shared directory detection",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 365,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should use git command for repository root detection",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 392,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should verify git root has aither-core directory",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 406,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle git command failures gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 432,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should properly restore location after git detection",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 456,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect AitherZero pattern in path",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 462,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect AitherLabs pattern in path",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 468,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect Aitherium pattern in path",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 474,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should find project root when path contains known pattern",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 482,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should traverse up to find aither-core when pattern matches",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 505,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should test common path patterns",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 527,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should verify aither-core exists in common locations",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 547,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle non-existent common paths gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 559,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle Windows-style paths correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 572,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle Unix-style paths correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 582,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should use Join-Path for cross-platform compatibility",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 601,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should normalize paths correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 617,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle path resolution failures gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 638,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should prefer AitherZero when context suggests it",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 663,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should provide warning when fallback to current directory",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 686,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle edge case with StartPath parameter",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 714,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle access denied scenarios gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 731,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle invalid characters in paths",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 748,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle very deep directory structures",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 781,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle network paths appropriately",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 796,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle circular symbolic links gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 830,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should complete detection within reasonable time",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 841,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should cache result in environment variable",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 850,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Find-ProjectRoot.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should minimize filesystem operations when possible",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 300,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect AitherZero development repository correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 313,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect fork chain correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 325,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle repository remotes correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 332,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle different repository types across fork chain",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 352,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should fallback gracefully when Git info unavailable",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 364,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing remote configuration",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 378,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should synchronize up-to-date branch successfully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 391,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle branch ahead of remote",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 399,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle branch behind remote",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 407,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle diverged branches with force reset",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 420,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should stash and restore uncommitted changes during reset",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 432,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should cleanup orphaned branches when requested",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 443,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate tags when requested",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 450,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle local-only branches",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 464,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should use current branch when not specified",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 470,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle Git fetch failures",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 486,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should create pull request with comprehensive details",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 501,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should create pull request with issue linking",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 511,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle dry run mode",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 519,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should commit pending changes before creating PR",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 531,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should push branch to remote before creating PR",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 539,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle existing pull request gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 555,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle GitHub CLI unavailability",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 562,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle repository detection failure",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 569,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should create patch label if missing",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 582,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle push failures",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 598,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle AitherLabs public repository",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 616,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle Aitherium premium repository",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 634,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should work across different repository contexts",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 668,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect infrastructure-related file changes",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 689,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should integrate with lab deployment workflows",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 702,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle configuration changes that affect Git workflows",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 721,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle merge conflicts during sync",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 736,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle network connectivity issues",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 749,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle authentication failures",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 764,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle corrupted Git repository state",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 778,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle disk space issues during operations",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 793,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate Git repository integrity",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 805,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should complete branch sync within reasonable time",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 814,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle large repository operations efficiently",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 833,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should manage memory efficiently during Git operations",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 855,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle concurrent Git operations safely",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 883,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should execute complete patch workflow with Git integration",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 903,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should integrate with infrastructure deployment pipelines",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 920,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Git-Integration.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate complete Git workflow state",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 299,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should load LabRunner module successfully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 305,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should export all required functions",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 329,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing Logging module gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 351,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing ProgressTracking module gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 377,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect platform correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 386,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should get cross-platform temp path",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 392,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle cross-platform commands correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 417,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should read simple lab configuration",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 427,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should read complex lab configuration",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 438,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle absolute paths",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 446,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing configuration file",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 451,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle invalid configuration format",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 455,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should parse YAML-like configuration correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 469,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should execute lab step with script block",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 481,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle lab step errors properly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 489,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should suppress console output when requested",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 504,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle config parameter variations",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 524,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should execute scripts in parallel with default settings",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 540,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should respect MaxConcurrency parameter",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 563,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle script failures gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 577,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should work with SafeMode enabled",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 589,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should generate scripts from config when none provided",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 599,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should integrate with progress tracking when available",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 613,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle timeout scenarios",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 626,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should start basic lab automation successfully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 634,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should execute specific lab steps",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 644,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle lab automation with configuration",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 657,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should integrate with progress tracking",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 665,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle automation failures",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 672,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should get lab status correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 681,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should get detailed lab status",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 692,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should perform enhanced deployment with simple configuration",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 704,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle complex lab deployment",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 714,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should integrate with OpenTofu when available",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 740,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should support stage-specific deployment",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 749,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle deployment with Force flag",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 767,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should track progress during enhanced deployment",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 777,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should perform deployment health checks",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 793,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle Read-LoggedInput in non-interactive mode",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 804,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect non-interactive environment correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 818,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle lab web requests",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 827,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle web request failures",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 833,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should execute lab download with action",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 847,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle custom download extensions",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 863,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing configuration gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 869,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle corrupted configuration",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 876,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should clean up resources on failure",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 889,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle timeout in lab steps",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 902,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should resolve project paths correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 909,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should use PROJECT_ROOT environment variable",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 927,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should complete simple automation within reasonable time",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 938,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle multiple concurrent deployments",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 960,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should efficiently handle large script batches",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 980,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should support end-to-end lab deployment workflow",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 999,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle complex deployment with all features enabled",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1015,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LabRunner.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should gracefully degrade when optional features are unavailable",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 259,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect and reject malformed licenses",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 272,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect and reject expired licenses",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 286,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect and reject licenses with invalid signatures",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 299,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate legitimate licenses correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 317,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing license file appropriately",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 332,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should protect license file from tampering",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 354,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should enforce free tier module restrictions",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 373,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should enforce pro tier module restrictions",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 395,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should grant full access with enterprise tier",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 414,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle module overrides correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 434,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle unknown modules gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 443,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should set and validate new licenses",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 467,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle license downgrade scenarios",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 486,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should provide comprehensive available features list",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 525,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should prevent loading of restricted modules",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 545,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle license checks during module import",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 574,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle licenses nearing expiry",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 593,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should gracefully handle immediate expiry",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 612,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should support license renewal",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 632,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should use appropriate license paths per platform",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 648,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle different file system permissions",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 671,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should resist license elevation attacks",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 688,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle corrupted license files",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 701,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should prevent replay attacks with old licenses",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 719,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should cache license status for performance",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 744,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should efficiently check feature access",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 766,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should provide license audit information",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 788,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\LicenseManager.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should track feature usage attempts",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 331,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should read and validate simple deployment configuration",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 345,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should read and validate complex lab deployment configuration",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 359,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing configuration files gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 365,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate configuration with ExpandVariables",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 378,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should create valid deployment plan for simple configuration",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 399,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should create deployment plan with custom stages",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 413,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should create dry-run deployment plan",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 427,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should analyze resource dependencies correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 441,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should enable parallel execution for large deployments",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 452,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect and report validation errors",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 464,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should skip pre-checks when requested",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 475,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should calculate estimated duration correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 484,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should identify required ISOs",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 495,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should identify required modules",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 511,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should execute simple deployment successfully in dry-run mode",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 525,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should execute specific deployment stage",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 535,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle deployment with repository override",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 545,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle deployment failures gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 551,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should continue on errors with Force flag",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 561,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should skip pre-checks when requested",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 570,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should respect MaxRetries parameter",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 580,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should generate deployment logs",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 588,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should integrate with progress tracking when available",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 605,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should save and load deployment state",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 622,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should create and manage checkpoints",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 638,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should support checkpoint resume functionality",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 655,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle Windows paths correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 667,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle Linux/macOS paths correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 679,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should use platform-appropriate directory separators",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 695,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing configuration file",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 701,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle corrupted configuration file",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 708,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing template files gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 718,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should timeout on long-running operations",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 729,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle deployment cleanup on failure",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 752,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should complete simple deployment within reasonable time",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 763,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle multiple concurrent deployments",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 791,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should efficiently parse large configuration files",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 819,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should manage memory efficiently during large deployments",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 843,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect OpenTofu binary availability",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 855,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing OpenTofu binary gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 865,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should execute OpenTofu commands correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 885,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should generate comprehensive deployment summary",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 904,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should track stage execution details",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 920,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should collect and report deployment outputs",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 929,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\OpenTofuProvider.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should record warnings and errors appropriately",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 113,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect PowerShell 7+ correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 121,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle PowerShell 7+ direct handoff",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 130,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should provide bootstrap help information",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 142,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect when PowerShell 7 is available",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 151,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing pwsh executable gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 178,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should attempt winget installation first on Windows",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 186,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should fall back to chocolatey if winget fails",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 195,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle non-Windows platforms appropriately",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 205,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should provide manual installation guidance when all methods fail",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 218,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should preserve all switch parameters during handoff",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 238,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should preserve value parameters during handoff",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 252,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should prompt for installation in interactive mode",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 265,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should skip prompts in Auto mode",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 272,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should skip prompts in NonInteractive mode",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 281,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing core script gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 288,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should provide troubleshooting information on failure",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 307,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle installation exit codes correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 323,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect PowerShell version in launcher",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 331,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should show PowerShell 7+ compatibility message",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 338,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should reference bootstrap script for older versions",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 346,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should provide PowerShell installation guidance",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 357,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should enforce PowerShell 7 requirement in core script",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 364,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should have re-launch logic for older PowerShell versions",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 373,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should preserve arguments during re-launch",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 381,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle pwsh executable detection",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 391,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should complete successfully when PowerShell 7+ is available",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 398,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle bootstrap script execution path",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 403,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should pass parameters correctly through version handling chain",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 411,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should provide consistent error messages across components",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 426,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle Windows PowerShell detection",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 434,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should provide platform-specific installation guidance",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 442,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle cross-platform pwsh executable detection",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 452,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should complete version detection quickly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 463,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle concurrent version checking gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 480,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should maintain consistent behavior across multiple executions",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 495,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate PowerShell executable before execution",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 503,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle execution policy appropriately",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 510,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should not expose sensitive information in error messages",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 521,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\PowerShell-Version-Handling.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate downloaded installers before execution",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 331,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect platform information correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 341,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate platform requirements",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 358,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate PowerShell version requirements",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 379,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should check Git installation and configuration",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 393,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should check infrastructure tools availability",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 407,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate module dependencies",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 423,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should test network connectivity",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 436,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate security settings",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 452,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should provide interactive profile selection",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 462,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should display installation profile information",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 470,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should generate setup steps for minimal profile",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 484,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should generate setup steps for developer profile",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 498,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should generate setup steps for full profile",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 515,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should execute minimal setup profile successfully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 529,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should execute developer setup profile successfully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 538,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should execute full setup profile successfully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 547,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle interactive profile selection",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 556,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should support minimal setup flag",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 563,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should skip optional steps when requested",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 570,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle setup step failures gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 584,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should test Node.js installation for developer profile",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 598,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should install AI tools for developer profile",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 613,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should install AI tools for full profile",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 628,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should skip AI tools for minimal profile",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 642,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should test cloud CLIs for full profile",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 659,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should initialize configuration files",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 680,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should create default configuration with proper structure",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 705,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should edit existing configuration interactively",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 720,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should create configuration if missing when requested",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 729,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should review configuration during setup",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 747,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing configuration during review",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 770,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should generate platform-specific quick start guide",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 794,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should include platform-specific content in quick start guide",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 821,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should perform final validation with all successful steps",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 839,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle setup with warnings appropriately",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 854,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle setup with multiple failures",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 869,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should display comprehensive setup summary",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 886,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle Windows-specific platform detection",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 897,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle Linux-specific platform detection",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 922,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle macOS-specific platform detection",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 945,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should use appropriate configuration paths per platform",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 964,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing external commands gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 980,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle network connectivity failures",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 994,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing AIToolsIntegration module",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1010,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle configuration file corruption",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1017,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle permission issues during configuration creation",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1034,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should complete minimal setup within reasonable time",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1043,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle multiple concurrent setup operations",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1075,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should manage memory efficiently during setup",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1097,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should integrate with ProgressTracking module when available",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1103,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should work without ProgressTracking module",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1113,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should integrate with Find-ProjectRoot utility",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 1124,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\SetupWizard.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate end-to-end setup workflow",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 100,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should display help information",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 112,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should display banner and version",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 120,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate InstallationProfile parameter",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 130,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should validate Verbosity parameter",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 145,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should execute basic setup mode",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 156,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing dependencies in setup",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 167,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should use SetupWizard when available",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 191,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should detect PowerShell 7+ and show full compatibility message",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 199,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle PowerShell version detection",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 206,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should use bootstrap script for PowerShell 5.1",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 234,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should discover and load modules successfully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 244,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle module loading failures gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 251,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing modules directory",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 263,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should find core script in standard location",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 271,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should pass parameters correctly to core script",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 281,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle missing core script gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 295,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should use Find-ProjectRoot utility when available",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 327,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should use enhanced startup for Interactive mode",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 334,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should use enhanced startup for Quickstart mode",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 343,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should fallback to traditional mode when enhanced startup fails",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 378,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should apply valid license successfully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 386,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle invalid license gracefully",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 395,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should provide troubleshooting information on core script failure",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 407,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should show PowerShell 7 installation guidance for older versions",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 414,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should provide comprehensive error context",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 431,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle Scripts parameter correctly",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 438,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle WhatIf mode",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 445,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should handle ConfigFile parameter",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 457,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should exit with 0 on successful execution",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    },
+    {
+      "Line": 465,
+      "Error": null,
+      "Duration": 0.0,
+      "File": "C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense\\AitherZero\\tests\\Critical\\Start-AitherZero.Tests.ps1",
+      "StackTrace": null,
+      "Name": "Should exit with 1 on core script failure",
+      "FullError": "System.Collections.Generic.List`1[System.Object]"
+    }
+  ]
+}

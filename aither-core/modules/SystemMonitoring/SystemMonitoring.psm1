@@ -68,7 +68,12 @@ Export-ModuleMember -Function @(
     'Get-MonitoringConfiguration',
     'Set-MonitoringConfiguration',
     'Export-MonitoringData',
-    'Import-MonitoringData'
+    'Import-MonitoringData',
+    'Get-IntelligentResourceMetrics',
+    'Watch-SystemResourcePressure',
+    'Stop-ResourcePressureMonitoring',
+    'Get-ResourcePressureReport',
+    'New-ParallelExecutionBaseline'
 )
 
 # Initialize module-level variables for performance tracking

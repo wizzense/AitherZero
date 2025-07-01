@@ -1,0 +1,380 @@
+{
+  "Scope": "Complete",
+  "ResourceManagement": {
+    "PerformanceBaselines": {},
+    "SystemMonitoring": {
+      "AvailableFunctions": [
+        "Export-MonitoringData",
+        "Get-MonitoringConfiguration",
+        "Get-ServiceStatus",
+        "Get-SystemAlerts",
+        "Get-SystemDashboard",
+        "Get-SystemPerformance",
+        "Import-MonitoringData",
+        "Invoke-HealthCheck",
+        "Search-SystemLogs",
+        "Set-MonitoringConfiguration",
+        "Set-PerformanceBaseline",
+        "Start-SystemMonitoring",
+        "Stop-SystemMonitoring"
+      ],
+      "EnhancedFunctions": false,
+      "Status": "Basic"
+    },
+    "ResourceDetection": {},
+    "OverallStatus": "Fail",
+    "PressureMonitoring": {}
+  },
+  "StartTime": "2025-07-01T16:01:57.6347496-07:00",
+  "OverallResult": "Failed",
+  "ParallelExecution": {
+    "ParallelModule": {
+      "CoreFunctions": true,
+      "EnhancedFunctions": false,
+      "AvailableFunctions": [
+        "Invoke-ParallelForEach",
+        "Invoke-ParallelPesterTests",
+        "Merge-ParallelTestResults",
+        "Start-ParallelJob",
+        "Wait-ParallelJobs"
+      ],
+      "Status": "Partial"
+    },
+    "AdaptiveExecution": {},
+    "IntelligentSettings": {},
+    "PerformanceOptimization": {
+      "Duration": 0.449039,
+      "ItemsProcessed": 10,
+      "ThroughputPerSecond": 22.27,
+      "Status": "Working"
+    },
+    "OverallStatus": "Fail"
+  },
+  "ValidationStages": [
+    {
+      "Message": "Validating core testing infrastructure...",
+      "Level": "INFO",
+      "Stage": "Testing-Infrastructure",
+      "Timestamp": "2025-07-01T16:01:57.6724316-07:00"
+    },
+    {
+      "Message": "Testing Run-ProductionTests.ps1...",
+      "Level": "INFO",
+      "Stage": "Testing-Infrastructure",
+      "Timestamp": "2025-07-01T16:01:57.6741287-07:00"
+    },
+    {
+      "Message": "Production test runner validated ✓",
+      "Level": "SUCCESS",
+      "Stage": "Testing-Infrastructure",
+      "Timestamp": "2025-07-01T16:01:57.7040703-07:00"
+    },
+    {
+      "Message": "Testing Invoke-QuickTests.ps1...",
+      "Level": "INFO",
+      "Stage": "Testing-Infrastructure",
+      "Timestamp": "2025-07-01T16:01:57.7047256-07:00"
+    },
+    {
+      "Message": "Quick test runner validated ✓",
+      "Level": "SUCCESS",
+      "Stage": "Testing-Infrastructure",
+      "Timestamp": "2025-07-01T16:01:57.7101896-07:00"
+    },
+    {
+      "Message": "Testing Test-Module.ps1...",
+      "Level": "INFO",
+      "Stage": "Testing-Infrastructure",
+      "Timestamp": "2025-07-01T16:01:57.7106197-07:00"
+    },
+    {
+      "Message": "Module test runner validated ✓",
+      "Level": "SUCCESS",
+      "Stage": "Testing-Infrastructure",
+      "Timestamp": "2025-07-01T16:01:57.715409-07:00"
+    },
+    {
+      "Message": "Testing Invoke-ReleaseValidation.ps1...",
+      "Level": "INFO",
+      "Stage": "Testing-Infrastructure",
+      "Timestamp": "2025-07-01T16:01:57.7158105-07:00"
+    },
+    {
+      "Message": "Release validation runner validated ✓",
+      "Level": "SUCCESS",
+      "Stage": "Testing-Infrastructure",
+      "Timestamp": "2025-07-01T16:01:57.7228428-07:00"
+    },
+    {
+      "Message": "Testing test utilities...",
+      "Level": "INFO",
+      "Stage": "Testing-Infrastructure",
+      "Timestamp": "2025-07-01T16:01:57.723266-07:00"
+    },
+    {
+      "Message": "Test utilities validated ✓",
+      "Level": "SUCCESS",
+      "Stage": "Testing-Infrastructure",
+      "Timestamp": "2025-07-01T16:01:57.7278904-07:00"
+    },
+    {
+      "Message": "Testing infrastructure validation: 4/4 runners validated ✓",
+      "Level": "SUCCESS",
+      "Stage": "Testing-Infrastructure",
+      "Timestamp": "2025-07-01T16:01:57.7341755-07:00"
+    },
+    {
+      "Message": "Validating parallel execution capabilities...",
+      "Level": "INFO",
+      "Stage": "Parallel-Execution",
+      "Timestamp": "2025-07-01T16:01:57.740425-07:00"
+    },
+    {
+      "Message": "Testing ParallelExecution module...",
+      "Level": "INFO",
+      "Stage": "Parallel-Execution",
+      "Timestamp": "2025-07-01T16:01:57.7408413-07:00"
+    },
+    {
+      "Message": "ParallelExecution module partially available",
+      "Level": "WARN",
+      "Stage": "Parallel-Execution",
+      "Timestamp": "2025-07-01T16:01:57.9406599-07:00"
+    },
+    {
+      "Message": "Testing basic parallel execution...",
+      "Level": "INFO",
+      "Stage": "Parallel-Execution",
+      "Timestamp": "2025-07-01T16:01:57.9420455-07:00"
+    },
+    {
+      "Message": "Parallel execution test: 10 items in 0.45s ✓",
+      "Level": "SUCCESS",
+      "Stage": "Parallel-Execution",
+      "Timestamp": "2025-07-01T16:01:58.3974075-07:00"
+    },
+    {
+      "Message": "Parallel execution validation: 1/4 components validated",
+      "Level": "WARN",
+      "Stage": "Parallel-Execution",
+      "Timestamp": "2025-07-01T16:01:58.399888-07:00"
+    },
+    {
+      "Message": "Validation stage failed but continuing...",
+      "Level": "WARN",
+      "Stage": "General",
+      "Timestamp": "2025-07-01T16:01:58.4007863-07:00"
+    },
+    {
+      "Message": "Validating resource management capabilities...",
+      "Level": "INFO",
+      "Stage": "Resource-Management",
+      "Timestamp": "2025-07-01T16:01:58.4145997-07:00"
+    },
+    {
+      "Message": "Testing SystemMonitoring module...",
+      "Level": "INFO",
+      "Stage": "Resource-Management",
+      "Timestamp": "2025-07-01T16:01:58.4151161-07:00"
+    },
+    {
+      "Message": "SystemMonitoring module basic functionality only",
+      "Level": "WARN",
+      "Stage": "Resource-Management",
+      "Timestamp": "2025-07-01T16:01:58.644434-07:00"
+    },
+    {
+      "Message": "Resource management validation: 0/3 components validated",
+      "Level": "WARN",
+      "Stage": "Resource-Management",
+      "Timestamp": "2025-07-01T16:01:58.6460099-07:00"
+    },
+    {
+      "Message": "Validation stage failed but continuing...",
+      "Level": "WARN",
+      "Stage": "General",
+      "Timestamp": "2025-07-01T16:01:58.6468508-07:00"
+    },
+    {
+      "Message": "Testing adaptive throttling capabilities...",
+      "Level": "INFO",
+      "Stage": "Adaptive-Throttling",
+      "Timestamp": "2025-07-01T16:01:58.6800261-07:00"
+    },
+    {
+      "Message": "Adaptive throttling test skipped (not requested)",
+      "Level": "INFO",
+      "Stage": "Adaptive-Throttling",
+      "Timestamp": "2025-07-01T16:01:58.6812128-07:00"
+    },
+    {
+      "Message": "Creating performance baselines...",
+      "Level": "INFO",
+      "Stage": "Performance-Baselines",
+      "Timestamp": "2025-07-01T16:01:58.6958857-07:00"
+    },
+    {
+      "Message": "Baseline creation skipped (not requested)",
+      "Level": "INFO",
+      "Stage": "Performance-Baselines",
+      "Timestamp": "2025-07-01T16:01:58.6964928-07:00"
+    },
+    {
+      "Message": "Validating CI/CD integration...",
+      "Level": "INFO",
+      "Stage": "CICD-Integration",
+      "Timestamp": "2025-07-01T16:01:58.7028641-07:00"
+    },
+    {
+      "Message": "Checking GitHub Actions workflows...",
+      "Level": "INFO",
+      "Stage": "CICD-Integration",
+      "Timestamp": "2025-07-01T16:01:58.7033513-07:00"
+    },
+    {
+      "Message": "GitHub workflows: 1/3 critical workflows found ✓",
+      "Level": "SUCCESS",
+      "Stage": "CICD-Integration",
+      "Timestamp": "2025-07-01T16:01:58.7116949-07:00"
+    },
+    {
+      "Message": "Checking build and release pipeline...",
+      "Level": "INFO",
+      "Stage": "CICD-Integration",
+      "Timestamp": "2025-07-01T16:01:58.7121714-07:00"
+    },
+    {
+      "Message": "Build pipeline script validated ✓",
+      "Level": "SUCCESS",
+      "Stage": "CICD-Integration",
+      "Timestamp": "2025-07-01T16:01:58.7177571-07:00"
+    },
+    {
+      "Message": "Testing PatchManager release workflow...",
+      "Level": "INFO",
+      "Stage": "CICD-Integration",
+      "Timestamp": "2025-07-01T16:01:58.7183342-07:00"
+    },
+    {
+      "Message": "PatchManager release workflow available ✓",
+      "Level": "SUCCESS",
+      "Stage": "CICD-Integration",
+      "Timestamp": "2025-07-01T16:01:59.1888563-07:00"
+    },
+    {
+      "Message": "CI/CD integration validation: 2/3 components validated",
+      "Level": "WARN",
+      "Stage": "CICD-Integration",
+      "Timestamp": "2025-07-01T16:01:59.1911318-07:00"
+    },
+    {
+      "Message": "Generating comprehensive validation report...",
+      "Level": "INFO",
+      "Stage": "Report-Generation",
+      "Timestamp": "2025-07-01T16:01:59.1934517-07:00"
+    }
+  ],
+  "EndTime": "2025-07-01T16:01:59.1935198-07:00",
+  "CICDIntegration": {
+    "WorkflowFiles": {
+      "FoundWorkflows": [
+        "build-release.yml"
+      ],
+      "TotalWorkflows": 4,
+      "CriticalWorkflows": 1,
+      "Status": "Partial"
+    },
+    "OverallStatus": "Partial",
+    "GitHubActions": {
+      "ReleaseWorkflow": "Available",
+      "PatchManager": "Loaded",
+      "Status": "Available"
+    },
+    "BuildPipeline": {
+      "Features": [
+        "Multi-platform",
+        "Multi-profile",
+        "Automated"
+      ],
+      "Status": "Available"
+    }
+  },
+  "Recommendations": [
+    "Infrastructure validation successful - ready for production use"
+  ],
+  "TotalDuration": {
+    "Ticks": 15587702,
+    "Days": 0,
+    "Hours": 0,
+    "Milliseconds": 558,
+    "Microseconds": 770,
+    "Nanoseconds": 200,
+    "Minutes": 0,
+    "Seconds": 1,
+    "TotalDays": 1.804132175925926E-05,
+    "TotalHours": 0.0004329917222222222,
+    "TotalMilliseconds": 1558.7702,
+    "TotalMicroseconds": 1558770.2,
+    "TotalNanoseconds": 1558770200.0,
+    "TotalMinutes": 0.025979503333333334,
+    "TotalSeconds": 1.5587702
+  },
+  "TestingInfrastructure": {
+    "IssueCreation": {},
+    "TestUtilities": {
+      "SharedUtilities": {
+        "Functions": [
+          "Write-TestLog",
+          "Assert-TestResult",
+          "Test-FileExists"
+        ],
+        "Status": "Valid"
+      }
+    },
+    "ReportGeneration": {},
+    "TestRunners": {
+      "ReleaseValidation": {
+        "Features": [
+          "Parallel Stages",
+          "Multi-level Validation",
+          "Automated Release"
+        ],
+        "Status": "Valid"
+      },
+      "ProductionTests": {
+        "Features": [
+          "Parallel",
+          "GitHub Integration",
+          "Multi-format Reporting"
+        ],
+        "Status": "Valid"
+      },
+      "ModuleTests": {
+        "Features": [
+          "Parallel",
+          "Watch Mode",
+          "Coverage Analysis"
+        ],
+        "Status": "Valid"
+      },
+      "QuickTests": {
+        "Features": [
+          "Parallel",
+          "Coverage Enforcement",
+          "CI Optimization"
+        ],
+        "Status": "Valid"
+      }
+    },
+    "OverallStatus": "Pass"
+  },
+  "AdaptiveThrottling": {
+    "Reason": "Not requested",
+    "Status": "Skipped"
+  },
+  "Issues": [],
+  "PerformanceBaselines": {
+    "Reason": "Not requested",
+    "Status": "Skipped"
+  }
+}

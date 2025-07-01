@@ -290,7 +290,7 @@ function Start-$moduleName {
             }
         }
         default {
-            Write-Host "$moduleName: Standard functionality" -ForegroundColor Cyan
+            Write-Host "${moduleName}: Standard functionality" -ForegroundColor Cyan
             return @{ Result = 'Success'; Module = '$moduleName'; Version = '$Version' }
         }
     }

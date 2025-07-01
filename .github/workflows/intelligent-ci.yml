@@ -215,20 +215,48 @@ jobs:
             /Users/runner/.local/share/powershell/Modules
           key: ps-modules-${{ runner.os }}-${{ hashFiles('**/*.psd1') }}
         
-      - name: Run Quick Validation Tests
+      - name: Run Enhanced Parallel Test Suite
         shell: pwsh
         run: |
-          Write-Host "🚀 Starting Quick Validation on $($PSVersionTable.Platform)..." -ForegroundColor Yellow
+          Write-Host "🚀 Starting Enhanced Parallel Test Suite on $($PSVersionTable.Platform)..." -ForegroundColor Yellow
           
           # Set error handling
           $ErrorActionPreference = 'Stop'
           
           try {
-            # Run bulletproof validation
-            ./tests/Run-BulletproofValidation.ps1 -ValidationLevel Quick -CI
-            Write-Host "✅ Quick validation completed successfully on $($PSVersionTable.Platform)" -ForegroundColor Green
+            # Create platform-specific test results directory
+            $testResultsDir = "TestResults-$($PSVersionTable.Platform.ToString().Replace(' ', ''))"
+            New-Item -ItemType Directory -Path $testResultsDir -Force | Out-Null
+            
+            # Run enhanced production test suite with parallel execution
+            ./tests/Run-ProductionTests.ps1 `
+              -TestSuite Critical `
+              -ReportLevel Detailed `
+              -CI `
+              -CreateIssues `
+              -GenerateHTML `
+              -ShowCoverage `
+              -UploadArtifacts `
+              -EnableParallel `
+              -UseIntelligentThrottling `
+              -OutputPath $testResultsDir
+              
+            Write-Host "✅ Enhanced parallel test suite completed successfully on $($PSVersionTable.Platform)" -ForegroundColor Green
           } catch {
-            Write-Host "❌ Quick validation failed on $($PSVersionTable.Platform): $_" -ForegroundColor Red
+            Write-Host "❌ Enhanced parallel test suite failed on $($PSVersionTable.Platform): $_" -ForegroundColor Red
+            
+            # Even if tests fail, try to create an issue about the test execution failure
+            try {
+              Write-Host "Creating issue for test execution failure..." -ForegroundColor Yellow
+              ./tests/Run-ProductionTests.ps1 `
+                -TestSuite Critical `
+                -CreateIssues `
+                -OutputPath $testResultsDir `
+                -DryRun:$false
+            } catch {
+              Write-Host "Failed to create test failure issue: $_" -ForegroundColor Red
+            }
+            
             throw
           }
         
@@ -262,17 +290,143 @@ jobs:
             # Don't fail the build for platform-specific test issues
           }
         
-      - name: Upload Test Results
+      - name: Upload Test Results and Reports
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results-${{ matrix.os }}-${{ github.run_number }}
-          path: TestResults-*
+          path: |
+            TestResults-*/*.xml
+            TestResults-*/*.json
+            TestResults-*/*.html
+            TestResults-*/*.log
+            TestResults-*/artifacts-*
+          retention-days: 30
+          
+      - name: Generate Test Summary for PR
+        if: github.event_name == 'pull_request'
+        shell: pwsh
+        run: |
+          Write-Host "📊 Generating test summary for PR..." -ForegroundColor Yellow
+          
+          # Find the latest JSON report
+          $testResultsDir = "TestResults-$($PSVersionTable.Platform.ToString().Replace(' ', ''))"
+          $jsonReports = Get-ChildItem -Path $testResultsDir -Filter "*.json" | Sort-Object LastWriteTime -Descending
+          
+          if ($jsonReports.Count -gt 0) {
+            $latestReport = $jsonReports[0]
+            $reportData = Get-Content $latestReport.FullName | ConvertFrom-Json
+            
+            $summary = @"
+          ## 🧪 Test Results - $($PSVersionTable.Platform)
+          
+          | Metric | Value |
+          |--------|--------|
+          | Total Tests | $($reportData.Summary.TotalTests) |
+          | Passed | $($reportData.Summary.PassedTests) ✅ |
+          | Failed | $($reportData.Summary.FailedTests) ❌ |
+          | Pass Rate | $($reportData.Summary.PassRate)% |
+          | Duration | $($reportData.Summary.Duration.Formatted) |
+          
+          $(if ($reportData.Summary.FailedTests -gt 0) {
+            "### ❌ Failed Tests`n" + (($reportData.Failures | ForEach-Object { "- $($_.Name) ($($_.File):$($_.Line))" }) -join "`n") + "`n`n### 🐛 GitHub Issues Created`n" + (($reportData.IssuesCreated | ForEach-Object { "- [Issue #$($_.IssueNumber)]($($_.IssueUrl)): $($_.Title)" }) -join "`n")
+          } else {
+            "### ✅ All tests passed!"
+          })
+          
+          [View detailed report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          "@
+            
+            # Save summary for comment
+            $summary | Out-File -FilePath "test-summary-$($PSVersionTable.Platform.ToString().Replace(' ', '')).md" -Encoding UTF8
+          }
+
+  performance-validation:
+    name: ⚡ Performance Validation
+    needs: [change-detection, cross-platform-tests]
+    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.force-full == 'true' || github.event_name == 'pull_request'
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: Download Test Results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*-${{ github.run_number }}
+          merge-multiple: true
+        
+      - name: Validate Parallel Execution Performance
+        shell: pwsh
+        run: |
+          Write-Host "⚡ Validating parallel execution performance improvements..." -ForegroundColor Yellow
+          
+          try {
+            # Run performance validation
+            ./tests/Validate-CompleteTestingInfrastructure.ps1 -ValidationScope Standard -TestParallelOptimization -GenerateReport
+            
+            # Extract performance metrics from test results
+            $testResults = Get-ChildItem -Path "TestResults-*" -Filter "*.json" | ForEach-Object {
+              Get-Content $_.FullName | ConvertFrom-Json
+            }
+            
+            $performanceSummary = @()
+            foreach ($result in $testResults) {
+              if ($result.Summary.ParallelExecutionEnabled) {
+                $performanceSummary += [PSCustomObject]@{
+                  Platform = $result.Platform
+                  TotalDuration = $result.Summary.Duration.TotalSeconds
+                  ParallelThreadsUsed = $result.Summary.ParallelThreadsUsed
+                  PerformanceImprovement = $result.Summary.PerformanceImprovement
+                  ResourceUtilization = $result.Summary.ResourceUtilization
+                }
+              }
+            }
+            
+            if ($performanceSummary.Count -gt 0) {
+              Write-Host "`n📊 Parallel Execution Performance Summary:" -ForegroundColor Cyan
+              $performanceSummary | Format-Table -AutoSize
+              
+              # Generate performance report
+              $performanceReport = @"
+              ## ⚡ Parallel Execution Performance Report
+              
+              | Platform | Duration | Threads | Improvement | Resource Usage |
+              |----------|----------|---------|-------------|----------------|
+              $($performanceSummary | ForEach-Object {
+                "| $($_.Platform) | $($_.TotalDuration)s | $($_.ParallelThreadsUsed) | $($_.PerformanceImprovement)% | $($_.ResourceUtilization)% |"
+              } | Join-String -Separator "`n")
+              
+              ### 🎯 Performance Targets Met:
+              - ✅ Target 60-80% improvement: $(if (($performanceSummary | Measure-Object -Property PerformanceImprovement -Average).Average -ge 60) { 'ACHIEVED' } else { 'NEEDS IMPROVEMENT' })
+              - ✅ Resource efficiency: $(if (($performanceSummary | Measure-Object -Property ResourceUtilization -Average).Average -le 80) { 'OPTIMAL' } else { 'HIGH USAGE' })
+              "@
+              
+              $performanceReport | Out-File -FilePath "performance-summary.md" -Encoding UTF8
+              Write-Host "✅ Performance validation completed successfully" -ForegroundColor Green
+            } else {
+              Write-Host "⚠️ No parallel execution performance data found" -ForegroundColor Yellow
+            }
+          } catch {
+            Write-Host "❌ Performance validation failed: $_" -ForegroundColor Red
+            # Don't fail the build for performance validation issues
+          }
+        
+      - name: Upload Performance Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-report-${{ github.run_number }}
+          path: |
+            performance-summary.md
+            tests/TestResults/validation-report.html
           retention-days: 30
 
   code-coverage-analysis:
     name: 📊 Code Coverage Analysis  
-    needs: [change-detection, cross-platform-tests]
+    needs: [change-detection, cross-platform-tests, performance-validation]
     if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.force-full == 'true' || github.event_name == 'pull_request'
     
     runs-on: ubuntu-latest
@@ -406,7 +560,7 @@ jobs:
 
   failure-summary:
     name: 📋 Failure Summary
-    needs: [change-detection, setup-environment, security-analysis, cross-platform-tests, code-coverage-analysis, build-validation]
+    needs: [change-detection, setup-environment, security-analysis, cross-platform-tests, performance-validation, code-coverage-analysis, build-validation]
     if: always()
     
     runs-on: ubuntu-latest
@@ -430,6 +584,7 @@ jobs:
           - Setup Environment: ${{ needs.setup-environment.result }}
           - Security Analysis: ${{ needs.security-analysis.result }}
           - Cross-Platform Tests: ${{ needs.cross-platform-tests.result }}
+          - Performance Validation: ${{ needs.performance-validation.result }}
           - Code Coverage: ${{ needs.code-coverage-analysis.result }}
           - Build Validation: ${{ needs.build-validation.result }}
           
