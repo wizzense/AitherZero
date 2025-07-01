@@ -141,7 +141,7 @@ try {
     )
     $platformServices = @(
         'ConfigurationCarousel', 'ConfigurationRepository', 'OrchestrationEngine',
-        'ParallelExecution', 'ProgressTracking'
+        'ParallelExecution', 'ProgressTracking', 'StartupExperience'
     )
     $featureModules = @(
         'ISOManager', 'ISOCustomizer', 'SecureCredentials',

@@ -118,6 +118,11 @@ function Get-ModuleCapabilities {
             Category = 'UI'
             MenuPriority = 130
         }
+        'StartupExperience' = @{
+            Description = 'Enhanced interactive UI with rich terminal experience'
+            Category = 'UI'
+            MenuPriority = 1
+        }
     }
     
     # Get all module directories
@@ -196,6 +201,23 @@ function Get-ModuleQuickActions {
     )
     
     $quickActions = @{
+        'StartupExperience' = @(
+            @{
+                Name = 'Launch Enhanced UI'
+                Function = 'Start-InteractiveMode'
+                Description = 'Start the enhanced interactive experience'
+            }
+            @{
+                Name = 'Configuration Manager'
+                Function = 'Show-ConfigurationManager'
+                Description = 'Visual configuration editor'
+            }
+            @{
+                Name = 'Module Explorer'
+                Function = 'Show-ModuleExplorer'
+                Description = 'Interactive module browser'
+            }
+        )
         'SetupWizard' = @(
             @{
                 Name = 'Run Intelligent Setup'

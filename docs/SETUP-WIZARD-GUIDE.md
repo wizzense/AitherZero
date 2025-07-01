@@ -75,7 +75,6 @@ The setup wizard now supports different installation profiles to match user need
 ### 👨‍💻 Developer Profile  
 - Everything in Minimal profile
 - Claude Code integration
-- MCP server setup and testing
 - AI tools installation
 - Development utilities
 - Setup time (~5-7 minutes)
@@ -164,19 +163,13 @@ The setup wizard follows a structured process with 10-12 steps (depending on pro
 - Validates AI tool functionality
 - Configures tool-specific settings
 
-### 10. MCP Server Setup (Developer/Full Profiles)
-- Installs MCP server dependencies
-- Runs MCP server tests
-- Sets up Claude Code MCP integration
-- Validates server functionality
-
-### 11. Cloud CLIs Detection (Full Profile Only)
+### 10. Cloud CLIs Detection (Full Profile Only)
 - Detects Azure CLI, AWS CLI, Google Cloud SDK
 - Checks for Kubernetes CLI (kubectl) and Helm
 - Validates Docker availability
 - Provides installation recommendations
 
-### 12. Final Validation
+### 11. Final Validation
 - Summarizes setup results
 - Reports completion statistics
 - Identifies any remaining issues

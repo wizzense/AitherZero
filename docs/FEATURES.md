@@ -11,11 +11,10 @@ AitherZero is a comprehensive PowerShell-based infrastructure automation framewo
 - **Linux**: Ubuntu, Debian, RHEL, CentOS compatibility
 - **macOS**: Intel and Apple Silicon support
 - **PowerShell 7+**: Modern PowerShell Core foundation
-- **Automatic PowerShell Installation**: MCP server auto-installs PowerShell 7 if needed
 
 ### 🤖 AI-Powered Automation
-- **Claude Code MCP Integration**: Direct integration with Claude Code
-- **14 Exposed Tools**: All modules accessible through MCP protocol
+- **Claude Code Integration**: Direct integration with Claude Code
+- **14 PowerShell Modules**: All modules accessible for automation
 - **Intelligent Automation**: AI-powered infrastructure management
 - **Natural Language Interface**: Describe what you want, AI executes
 - **Context-Aware Operations**: Claude understands your infrastructure
@@ -270,7 +269,7 @@ AitherZero is a comprehensive PowerShell-based infrastructure automation framewo
 
 ### External Tool Integration
 - VS Code tasks (100+ pre-configured)
-- Claude Code MCP
+- Claude Code AI assistant
 - Git workflows
 - Docker support
 - Kubernetes integration

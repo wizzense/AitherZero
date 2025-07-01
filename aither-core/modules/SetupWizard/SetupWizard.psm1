@@ -854,7 +854,6 @@ function Show-InstallationProfile {
         'developer' {
             Write-Host "     • Everything in Minimal profile" -ForegroundColor White
             Write-Host "     • Claude Code integration" -ForegroundColor White
-            Write-Host "     • MCP server setup" -ForegroundColor White
             Write-Host "     • AI tools integration" -ForegroundColor White
             Write-Host "     • Development utilities" -ForegroundColor White
         }
@@ -895,7 +894,6 @@ function Get-SetupSteps {
             @{Name = 'Network Connectivity'; Function = 'Test-NetworkConnectivity'},
             @{Name = 'Node.js Detection'; Function = 'Test-NodeJsInstallation'},
             @{Name = 'AI Tools Setup'; Function = 'Install-AITools'},
-            @{Name = 'MCP Server Setup'; Function = 'Setup-MCPServer'},
             @{Name = 'Security Settings'; Function = 'Test-SecuritySettings'},
             @{Name = 'Configuration Files'; Function = 'Initialize-Configuration'},
             @{Name = 'Configuration Review'; Function = 'Review-Configuration'},
@@ -906,7 +904,6 @@ function Get-SetupSteps {
             @{Name = 'Network Connectivity'; Function = 'Test-NetworkConnectivity'},
             @{Name = 'Node.js Detection'; Function = 'Test-NodeJsInstallation'},
             @{Name = 'AI Tools Setup'; Function = 'Install-AITools'},
-            @{Name = 'MCP Server Setup'; Function = 'Setup-MCPServer'},
             @{Name = 'Cloud CLIs Detection'; Function = 'Test-CloudCLIs'},
             @{Name = 'Security Settings'; Function = 'Test-SecuritySettings'},
             @{Name = 'Configuration Files'; Function = 'Initialize-Configuration'},
@@ -1050,63 +1047,6 @@ function Install-AITools {
     return $result
 }
 
-function Setup-MCPServer {
-    param($SetupState)
-    
-    $result = @{
-        Name = 'MCP Server Setup'
-        Status = 'Unknown'
-        Details = @()
-    }
-    
-    # Check if MCP server directory exists
-    $mcpServerPath = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) "mcp-server"
-    
-    if (Test-Path $mcpServerPath) {
-        try {
-            Push-Location $mcpServerPath
-            
-            # Install dependencies
-            $result.Details += "⏳ Installing MCP server dependencies..."
-            $installResult = npm install 2>&1
-            if ($LASTEXITCODE -eq 0) {
-                $result.Details += "✓ MCP server dependencies installed"
-                
-                # Test MCP server
-                $result.Details += "⏳ Testing MCP server..."
-                $testResult = npm test 2>&1
-                if ($LASTEXITCODE -eq 0) {
-                    $result.Details += "✓ MCP server tests passed"
-                    $result.Status = 'Passed'
-                } else {
-                    $result.Details += "⚠️ MCP server tests had issues"
-                    $result.Status = 'Warning'
-                }
-                
-                # Setup Claude Code integration
-                $setupScript = Join-Path $mcpServerPath "setup-claude-code-mcp.sh"
-                if (Test-Path $setupScript) {
-                    $result.Details += "ℹ️ Claude Code MCP setup script available"
-                    $SetupState.Recommendations += "Run: cd mcp-server && ./setup-claude-code-mcp.sh to complete Claude Code integration"
-                }
-            } else {
-                $result.Details += "❌ Failed to install MCP server dependencies"
-                $result.Status = 'Failed'
-            }
-        } catch {
-            $result.Details += "❌ Error setting up MCP server: $_"
-            $result.Status = 'Failed'
-        } finally {
-            Pop-Location
-        }
-    } else {
-        $result.Status = 'Warning'
-        $result.Details += "⚠️ MCP server directory not found at: $mcpServerPath"
-    }
-    
-    return $result
-}
-
 function Test-CloudCLIs {
     param($SetupState)
     
@@ -1165,7 +1105,6 @@ Export-ModuleMember -Function @(
     'Generate-QuickStartGuide',
     'Get-InstallationProfile',
     'Install-AITools',
-    'Setup-MCPServer',
     'Edit-Configuration',
     'Review-Configuration'
 )

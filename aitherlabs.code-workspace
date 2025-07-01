@@ -21,10 +21,6 @@
             "path": "./opentofu"
         },
         {
-            "name": "MCP Server",
-            "path": "./mcp-server"
-        },
-        {
             "name": "Tests",
             "path": "./tests"
         },

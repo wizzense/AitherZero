@@ -7,7 +7,6 @@
 - [Installation Methods](#installation-methods)
   - [Quick Start (Recommended)](#quick-start-recommended)
   - [Developer Installation](#developer-installation)
-  - [Claude Code MCP Setup](#claude-code-mcp-setup)
 - [Platform-Specific Instructions](#platform-specific-instructions)
   - [Windows](#windows)
   - [Linux](#linux)
@@ -35,7 +34,7 @@ AitherZero can be installed in two ways:
 
 - **Git**: For PatchManager and repository operations
 - **OpenTofu/Terraform**: For infrastructure automation
-- **Node.js 18+**: For Claude Code MCP integration
+- **Node.js 18+**: For AI tools integration
 - **Claude Code**: For AI-powered automation
 
 ## Installation Methods
@@ -108,24 +107,6 @@ pwsh -File ./aither-core/aither-core.ps1
 
 # Run tests
 pwsh -File ./tests/Run-BulletproofValidation.ps1 -ValidationLevel Quick
-```
-
-### Claude Code MCP Setup
-
-Enable AI-powered automation:
-
-```bash
-# Navigate to MCP server directory
-cd mcp-server
-
-# Install dependencies
-npm install
-
-# Add MCP server to Claude Code
-claude mcp add aitherzero -- node claude-code-mcp-server.js
-
-# Or use the setup script
-./setup-claude-code-mcp.sh
 ```
 
 ## Platform-Specific Instructions
@@ -373,7 +354,6 @@ Get-Module -ListAvailable | Where Name -like "Aither*" | Remove-Module -Force
 
 - Review the [Quick Start Guide](../QUICK-START-GUIDE.md)
 - Explore [Module Documentation](MODULE-REFERENCE.md)
-- Set up [Claude Code MCP Integration](CLAUDE-CODE-MCP-INTEGRATION.md)
 - Read [Contributing Guidelines](../CONTRIBUTING.md) for development
 
 ---

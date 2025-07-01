@@ -50,11 +50,34 @@ param(
     [string]$Scripts,
     [switch]$Force,
     [switch]$NonInteractive,
-    [switch]$Help
+    [switch]$Help,
+    
+    [Parameter(HelpMessage = 'Force enhanced UI experience with StartupExperience module')]
+    [switch]$EnhancedUI,
+    
+    [Parameter(HelpMessage = 'Force classic menu experience with Show-DynamicMenu')]
+    [switch]$ClassicUI,
+    
+    [Parameter(HelpMessage = 'UI preference mode')]
+    [ValidateSet('auto', 'enhanced', 'classic')]
+    [string]$UIMode = 'auto'
 )
 
 # Set up environment
 $ErrorActionPreference = 'Stop'
+
+# Handle UI mode parameter conflicts
+if ($EnhancedUI -and $ClassicUI) {
+    Write-Error "Cannot specify both -EnhancedUI and -ClassicUI. Please choose one."
+    exit 1
+}
+
+# Resolve UI mode based on parameters
+if ($EnhancedUI) {
+    $UIMode = 'enhanced'
+} elseif ($ClassicUI) {
+    $UIMode = 'classic'
+}
 
 # Handle help request
 if ($Help) {
@@ -71,6 +94,9 @@ if ($Help) {
     Write-Host "  -Scripts        Specific scripts to run"
     Write-Host "  -Force          Force operations even if validations fail"
     Write-Host "  -NonInteractive Run in non-interactive mode"
+    Write-Host "  -EnhancedUI     Force enhanced UI experience"
+    Write-Host "  -ClassicUI      Force classic menu experience"
+    Write-Host "  -UIMode         UI preference: auto, enhanced, classic"
     Write-Host "  -Help           Show this help information"
     Write-Host ""
     Write-Host "Examples:" -ForegroundColor Cyan
@@ -426,6 +452,53 @@ try {
         Write-CustomLog "Loading dynamic menu system from: $dynamicMenuPath" -Level DEBUG
         . $dynamicMenuPath
     }
+    
+    # Check for StartupExperience module availability
+    $startupExperienceAvailable = $false
+    $startupExperiencePath = Join-Path $env:PWSH_MODULES_PATH 'StartupExperience'
+    
+    if (Test-Path $startupExperiencePath) {
+        try {
+            Import-Module $startupExperiencePath -Force -ErrorAction Stop
+            $startupExperienceAvailable = $true
+            Write-CustomLog "StartupExperience module loaded successfully" -Level DEBUG
+        } catch {
+            Write-CustomLog "Failed to load StartupExperience module: $_" -Level WARN
+        }
+    }
+    
+    # Check config for UI preferences if not explicitly set
+    if ($UIMode -eq 'auto' -and $config.UIPreferences) {
+        $configUIMode = $config.UIPreferences.Mode
+        if ($configUIMode -and $configUIMode -ne 'auto') {
+            $UIMode = $configUIMode
+            Write-CustomLog "Using UI mode from configuration: $UIMode" -Level DEBUG
+        }
+    }
+    
+    # Determine which UI to use based on availability and preference
+    $useEnhancedUI = $false
+    
+    if ($UIMode -eq 'enhanced') {
+        if ($startupExperienceAvailable) {
+            $useEnhancedUI = $true
+        } else {
+            Write-CustomLog "Enhanced UI requested but StartupExperience module not available. Falling back to classic menu." -Level WARN
+            Write-Host "⚠️  Enhanced UI not available. Using classic menu instead." -ForegroundColor Yellow
+        }
+    } elseif ($UIMode -eq 'classic') {
+        # Explicitly requested classic UI
+        $useEnhancedUI = $false
+    } elseif ($UIMode -eq 'auto') {
+        # Auto mode - check config preference
+        $defaultUI = if ($config.UIPreferences.DefaultUI) { $config.UIPreferences.DefaultUI } else { 'enhanced' }
+        
+        # Use enhanced if available and we're in interactive mode
+        if ($startupExperienceAvailable -and -not $NonInteractive -and -not $Auto -and -not $Scripts) {
+            $useEnhancedUI = ($defaultUI -eq 'enhanced')
+            Write-CustomLog "Auto mode: Using $($useEnhancedUI ? 'enhanced' : 'classic') UI based on config preference" -Level DEBUG
+        }
+    }
 
     # Handle different execution modes
     if ($Scripts) {
@@ -511,36 +584,62 @@ try {
             Write-CustomLog '  -Scripts "LabRunner,BackupManager" : Run specific modules' -Level INFO
             Write-CustomLog '  -Auto : Run default automated tasks' -Level INFO
         } else {
-            # Interactive mode - show dynamic menu
-            Write-CustomLog 'Starting interactive mode with dynamic menu' -Level INFO
-            
-            # Check if this is first run
-            $firstRunFile = Join-Path $env:APPDATA 'AitherZero' '.firstrun'
-            $isFirstRun = -not (Test-Path $firstRunFile)
-            
-            if ($isFirstRun) {
-                # Create first run marker
-                $firstRunDir = Split-Path $firstRunFile -Parent
-                if (-not (Test-Path $firstRunDir)) {
-                    New-Item -ItemType Directory -Path $firstRunDir -Force | Out-Null
+            # Interactive mode - choose UI based on availability and preference
+            if ($useEnhancedUI) {
+                Write-CustomLog 'Starting enhanced interactive mode with StartupExperience' -Level INFO
+                
+                try {
+                    # Use enhanced startup experience
+                    $startupParams = @{}
+                    
+                    # Pass configuration if available
+                    if ($ConfigFile -and (Test-Path $ConfigFile)) {
+                        $profileName = [System.IO.Path]::GetFileNameWithoutExtension($ConfigFile)
+                        $startupParams['Profile'] = $profileName
+                    }
+                    
+                    # Start enhanced interactive mode
+                    Start-InteractiveMode @startupParams
+                    
+                } catch {
+                    Write-CustomLog "Enhanced UI failed: $_. Falling back to classic menu." -Level WARN
+                    Write-Host "⚠️  Enhanced UI encountered an error. Switching to classic menu..." -ForegroundColor Yellow
+                    $useEnhancedUI = $false
                 }
-                New-Item -ItemType File -Path $firstRunFile -Force | Out-Null
             }
             
-            # Show dynamic menu
-            if (Get-Command Show-DynamicMenu -ErrorAction SilentlyContinue) {
-                Show-DynamicMenu -Title "Infrastructure Automation Platform" -Config $config -FirstRun:$isFirstRun
-            } else {
-                Write-CustomLog 'Dynamic menu system not available, falling back to basic menu' -Level WARN
+            # If not using enhanced UI or if it failed, use classic menu
+            if (-not $useEnhancedUI) {
+                Write-CustomLog 'Starting interactive mode with classic dynamic menu' -Level INFO
                 
-                # Fallback basic menu
-                Write-Host "`n" + "=" * 60 -ForegroundColor Cyan
-                Write-Host " AitherZero - Infrastructure Automation" -ForegroundColor Cyan
-                Write-Host "=" * 60 -ForegroundColor Cyan
-                Write-Host ""
-                Write-Host "Dynamic menu system not loaded." -ForegroundColor Yellow
-                Write-Host "Try running with -Scripts or -Auto parameter." -ForegroundColor Yellow
-                Write-Host ""
+                # Check if this is first run
+                $firstRunFile = Join-Path $env:APPDATA 'AitherZero' '.firstrun'
+                $isFirstRun = -not (Test-Path $firstRunFile)
+                
+                if ($isFirstRun) {
+                    # Create first run marker
+                    $firstRunDir = Split-Path $firstRunFile -Parent
+                    if (-not (Test-Path $firstRunDir)) {
+                        New-Item -ItemType Directory -Path $firstRunDir -Force | Out-Null
+                    }
+                    New-Item -ItemType File -Path $firstRunFile -Force | Out-Null
+                }
+                
+                # Show dynamic menu
+                if (Get-Command Show-DynamicMenu -ErrorAction SilentlyContinue) {
+                    Show-DynamicMenu -Title "Infrastructure Automation Platform" -Config $config -FirstRun:$isFirstRun
+                } else {
+                    Write-CustomLog 'Dynamic menu system not available, falling back to basic menu' -Level WARN
+                    
+                    # Fallback basic menu
+                    Write-Host "`n" + "=" * 60 -ForegroundColor Cyan
+                    Write-Host " AitherZero - Infrastructure Automation" -ForegroundColor Cyan
+                    Write-Host "=" * 60 -ForegroundColor Cyan
+                    Write-Host ""
+                    Write-Host "Dynamic menu system not loaded." -ForegroundColor Yellow
+                    Write-Host "Try running with -Scripts or -Auto parameter." -ForegroundColor Yellow
+                    Write-Host ""
+                }
             }
         }
     }

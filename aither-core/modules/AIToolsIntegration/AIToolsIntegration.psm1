@@ -68,16 +68,6 @@ function Install-ClaudeCode {
         $version = claude-code --version 2>$null
         Write-CustomLog -Level 'SUCCESS' -Message "Claude Code $version installed successfully"
         
-        # Configure for AitherZero if MCP server exists
-        $mcpServerPath = Join-Path $projectRoot "mcp-server"
-        if (Test-Path $mcpServerPath) {
-            try {
-                Configure-ClaudeCodeMCP -MCPServerPath $mcpServerPath
-            } catch {
-                Write-CustomLog -Level 'WARNING' -Message "MCP configuration failed: $_"
-            }
-        }
-        
         return @{
             Success = $true
             Message = "Claude Code installed successfully"
@@ -249,7 +239,6 @@ function Test-AIToolsInstallation {
         ClaudeCode = Test-ClaudeCodeInstallation
         GeminiCLI = Test-GeminiCLIInstallation  
         CodexCLI = Test-CodexCLIInstallation
-        MCPServer = Test-MCPServerSetup
         Summary = @{}
     }
     
@@ -312,21 +301,6 @@ function Test-CodexCLIInstallation {
     }
 }
 
-function Test-MCPServerSetup {
-    $mcpServerPath = Join-Path $projectRoot "mcp-server"
-    if (Test-Path $mcpServerPath) {
-        $packageJson = Join-Path $mcpServerPath "package.json"
-        $nodeModules = Join-Path $mcpServerPath "node_modules"
-        
-        return @{
-            Installed = (Test-Path $packageJson) -and (Test-Path $nodeModules)
-            Path = $mcpServerPath
-            Status = if ((Test-Path $packageJson) -and (Test-Path $nodeModules)) { 'Ready' } else { 'Needs setup' }
-        }
-    }
-    return @{ Installed = $false; Status = 'Not found' }
-}
-
 function Test-NodeJsPrerequisites {
     try {
         $nodeVersion = node --version 2>$null
@@ -353,20 +327,6 @@ function Test-NodeJsPrerequisites {
     }
 }
 
-function Configure-ClaudeCodeMCP {
-    param(
-        [string]$MCPServerPath
-    )
-    
-    $setupScript = Join-Path $MCPServerPath "setup-claude-code-mcp.sh"
-    if (Test-Path $setupScript) {
-        Write-CustomLog -Level 'INFO' -Message "MCP setup script found - manual configuration may be required"
-        Write-CustomLog -Level 'INFO' -Message "Run: cd $MCPServerPath && ./setup-claude-code-mcp.sh"
-    } else {
-        Write-CustomLog -Level 'WARNING' -Message "MCP setup script not found at: $setupScript"
-    }
-}
-
 function Get-PlatformInfo {
     return @{
         OS = if ($IsWindows) { 'Windows' } elseif ($IsLinux) { 'Linux' } elseif ($IsMacOS) { 'macOS' } else { 'Unknown' }
@@ -388,7 +348,7 @@ function Get-AIToolsStatus {
     Write-Host "🤖 AI Tools Status:" -ForegroundColor Cyan
     Write-Host ""
     
-    foreach ($tool in @('ClaudeCode', 'GeminiCLI', 'CodexCLI', 'MCPServer')) {
+    foreach ($tool in @('ClaudeCode', 'GeminiCLI', 'CodexCLI')) {
         $toolStatus = $status[$tool]
         $icon = if ($toolStatus.Installed) { '✅' } else { '❌' }
         $color = if ($toolStatus.Installed) { 'Green' } else { 'Red' }
@@ -429,7 +389,6 @@ function Configure-AITools {
     # Implementation would include:
     # - Claude Code API key setup
     # - Gemini API credentials
-    # - MCP server configuration
     # - Integration testing
     
     Write-CustomLog -Level 'INFO' -Message "AI Tools configuration wizard - implementation in progress"
@@ -452,20 +411,6 @@ function Update-AITools {
             Write-CustomLog -Level 'SUCCESS' -Message "Claude Code updated"
         } catch {
             Write-CustomLog -Level 'WARNING' -Message "Failed to update Claude Code: $_"
-        }
-    }
-    
-    # Update MCP server if available
-    $mcpServerPath = Join-Path $projectRoot "mcp-server"
-    if (Test-Path $mcpServerPath) {
-        try {
-            Push-Location $mcpServerPath
-            npm update
-            Write-CustomLog -Level 'SUCCESS' -Message "MCP server dependencies updated"
-        } catch {
-            Write-CustomLog -Level 'WARNING' -Message "Failed to update MCP server: $_"
-        } finally {
-            Pop-Location
         }
     }
 }

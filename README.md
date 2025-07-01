@@ -1,13 +1,12 @@
 # AitherZero Infrastructure Automation
 
-**🚀 Standalone PowerShell automation framework** for OpenTofu/Terraform infrastructure management with comprehensive testing, modular architecture, and AI-powered automation through Claude Code MCP integration.
+**🚀 Standalone PowerShell automation framework** for OpenTofu/Terraform infrastructure management with comprehensive testing, modular architecture, and AI-powered automation.
 
 [![Build Status](https://github.com/wizzense/AitherZero/actions/workflows/build-release.yml/badge.svg)](https://github.com/wizzense/AitherZero/actions)
 [![PowerShell](https://img.shields.io/badge/PowerShell-7.0+-blue.svg)](https://github.com/PowerShell/PowerShell)
 [![OpenTofu](https://img.shields.io/badge/OpenTofu-Compatible-orange.svg)](https://opentofu.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Contributors Welcome](https://img.shields.io/badge/Contributors-Welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![Claude Code MCP](https://img.shields.io/badge/Claude%20Code-MCP%20Enabled-purple.svg)](docs/CLAUDE-CODE-MCP-INTEGRATION.md)
 
 > **🚨 HOTFIX AVAILABLE (See Latest Release)**: If you're experiencing PowerShell compatibility errors with v0.10.0, use the **fixed launchers**:
 > - **Windows**: Use AitherZero-Fixed.bat or Start-AitherZero-Fixed.ps1
@@ -76,7 +75,7 @@ $url = (irm "https://api.github.com/repos/wizzense/AitherZero/releases/latest").
 
 # Installation profiles for different needs:
 ./Start-AitherZero.ps1 -Setup -InstallationProfile minimal     # Core features only
-./Start-AitherZero.ps1 -Setup -InstallationProfile developer   # + AI tools & MCP
+./Start-AitherZero.ps1 -Setup -InstallationProfile developer   # + AI tools
 ./Start-AitherZero.ps1 -Setup -InstallationProfile full        # + Cloud CLIs & enterprise
 
 # Legacy options still supported:
@@ -113,7 +112,7 @@ $url = (irm "https://api.github.com/repos/wizzense/AitherZero/releases/latest").
 - ✅ **Platform-specific guidance** and recommendations
 - ✅ **No compilation or installation** required
 - ✅ **Cross-platform launchers** included
-- ✅ **Claude Code MCP integration** for AI-powered automation
+- ✅ **AI-powered automation** support
 
 ---
 
@@ -171,7 +170,7 @@ AitherZero now provides an enhanced user experience with intelligent setup and v
 ### 🧠 Intelligent Setup Wizard
 - **Installation Profiles**: Choose from Minimal, Developer, Full, or Interactive profiles
 - **Platform Detection**: Automatically detects your OS, PowerShell version, and architecture
-- **AI Tools Integration**: Automatic Claude Code and MCP server setup (Developer/Full profiles)
+- **AI Tools Integration**: Automatic Claude Code setup (Developer/Full profiles)
 - **Dependency Checking**: Validates Git, OpenTofu/Terraform, Node.js, and cloud tools
 - **Configuration Generation**: Creates platform-specific configuration files
 - **Progress Tracking**: Visual progress bars with time estimates and completion status
@@ -224,7 +223,7 @@ AitherZero provides a comprehensive infrastructure automation framework:
 - **Cross-Platform**: Windows, Linux, macOS support with PowerShell 7.0+
 - **Infrastructure as Code**: OpenTofu/Terraform integration for lab environments
 - **Modular Architecture**: 14+ specialized PowerShell modules
-- **AI-Powered Automation**: Claude Code MCP server for intelligent infrastructure management
+- **AI-Powered Automation**: Support for intelligent infrastructure management
 - **Advanced Automation**: Lab setup, backup management, parallel execution
 - **Enterprise Logging**: Centralized logging with multiple levels
 - **Patch Management**: Git-controlled workflows with automated PR/issue creation
@@ -251,26 +250,12 @@ AitherZero provides a comprehensive infrastructure automation framework:
 
 ## 🔧 Requirements
 
-- **PowerShell 7.0 or later** (automatically installed by MCP server if needed)
+- **PowerShell 7.0 or later**
 - **Git** (for repository operations and PatchManager)
 - **OpenTofu/Terraform** (for infrastructure automation)
 - **Windows/Linux/macOS** (cross-platform compatible)
-- **Node.js 18+** (optional, for Claude Code MCP integration)
+- **Node.js 18+** (optional, for AI tools)
 - **Claude Code** (optional, for AI-powered automation)
-
-## 🤖 Claude Code MCP Integration (New!)
-
-AitherZero now includes a Model Context Protocol (MCP) server for seamless integration with Claude Code:
-
-```bash
-# Quick setup from mcp-server directory
-claude mcp add aitherzero -- node claude-code-mcp-server.js
-
-# Or use the setup script
-./setup-claude-code-mcp.sh
-```
-
-This enables AI-powered infrastructure automation with access to all 14 AitherZero modules directly from Claude Code. See [Claude Code MCP Integration Guide](docs/CLAUDE-CODE-MCP-INTEGRATION.md) for details.
 
 ## 📖 Usage Examples
 
@@ -326,7 +311,6 @@ AitherZero Application Package/
 - **[Setup Wizard Guide](docs/SETUP-WIZARD-GUIDE.md)** - Comprehensive setup wizard documentation
 - **[Progress Tracking Guide](docs/PROGRESS-TRACKING-GUIDE.md)** - Visual progress indicators guide
 - **[Quickstart Validation Guide](docs/QUICKSTART-VALIDATION-GUIDE.md)** - New user validation system
-- **[Claude Code MCP Integration](docs/CLAUDE-CODE-MCP-INTEGRATION.md)** - AI-powered automation setup
 - **[Contributing Guide](CONTRIBUTING.md)** - Development setup and guidelines
 - **[Module Reference](docs/MODULE-REFERENCE.md)** - Complete module documentation
 - **[Testing Guide](docs/BULLETPROOF-TESTING-GUIDE.md)** - Comprehensive testing documentation
