@@ -1,4 +1,11 @@
 {
+  "UIPreferences": {
+    "Mode": "auto",
+    "DefaultUI": "enhanced",
+    "FallbackUI": "classic",
+    "ShowUISelector": true,
+    "RememberUIChoice": true
+  },
   "ComputerName": "default-lab",
   "SetComputerName": false,
   "DNSServers": "8.8.8.8,1.1.1.1",

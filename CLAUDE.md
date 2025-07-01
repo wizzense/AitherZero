@@ -8,7 +8,6 @@ AitherZero is a **standalone PowerShell automation framework** for OpenTofu/Terr
 
 **Technology Stack:**
 - Primary Language: PowerShell 7.0+
-- Secondary: JavaScript/Node.js (MCP server)
 - Infrastructure: OpenTofu/Terraform
 - Testing: Pester framework
 - CI/CD: GitHub Actions
@@ -81,9 +80,6 @@ AitherZero is a **standalone PowerShell automation framework** for OpenTofu/Terr
 ```powershell
 # PowerShell analysis (use VS Code task or manual PSScriptAnalyzer)
 Invoke-ScriptAnalyzer -Path . -Recurse
-
-# JavaScript linting (from mcp-server directory)
-cd mcp-server && npm run lint
 ```
 
 
@@ -213,53 +209,6 @@ Update-AITools
 # Remove AI tools
 Remove-AITools -Tools @('claude-code')
 ```
-
-### MCP Server Commands
-
-```bash
-# Navigate to MCP server directory
-cd mcp-server
-
-# Install dependencies
-npm install
-
-# Run server
-npm start
-
-# Run with debugging
-npm run dev
-
-# Run all tests
-npm test
-
-# Run specific test suites
-npm run test:tools
-npm run test:integration
-
-# Generate documentation
-npm run docs
-
-# Setup with Claude Code
-./setup-claude-code-mcp.sh
-./setup-claude-code-mcp.sh --project  # Project scope
-./setup-claude-code-mcp.sh --list     # List configured servers
-```
-
-### Enhanced MCP Tools Available
-
-The AitherZero MCP server now provides 20+ tools for AI integration:
-
-**New Configuration Management Tools:**
-- `aither_configuration_management` - Multi-environment configuration switching
-- `aither_configuration_repository` - Git-based configuration repositories
-- `aither_environment_context` - Smart security and confirmation handling
-
-**New AI Tools & Integration:**
-- `aither_ai_tools_integration` - Install and manage AI development tools
-- `aither_setup_wizard` - Enhanced setup with installation profiles
-
-**New Orchestration & Automation:**
-- `aither_orchestration_playbooks` - Advanced workflow orchestration with conditional logic
 
 ### Configuration Management Commands
 
@@ -597,7 +546,6 @@ Access tasks via: `Ctrl+Shift+P → Tasks: Run Task`
 - **Shared Utilities**: `aither-core/shared/`
 - **Tests**: `tests/`
 - **Configurations**: `configs/`
-- **MCP Server**: `mcp-server/`
 - **OpenTofu Templates**: `opentofu/`
 - **VS Code Configuration**: `.vscode/`
 - **GitHub Workflows**: `.github/workflows/`
@@ -634,7 +582,6 @@ Access tasks via: `Ctrl+Shift+P → Tasks: Run Task`
 - Configuration repositories support Git-based custom configurations with multi-environment support
 - Orchestration Engine provides advanced workflow execution with conditional logic and parallel processing
 - AI Tools Integration automates installation and management of Claude Code, Gemini CLI, and other AI tools
-- MCP server now provides 20+ tools for comprehensive AI integration
 - Module manifests should specify PowerShellVersion 7.0 minimum
 - Use VS Code tasks for interactive development, command line for automation
 - Quickstart validation includes platform detection, dependency checking, and guided setup

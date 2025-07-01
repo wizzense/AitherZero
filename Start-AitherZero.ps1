@@ -243,6 +243,18 @@ if ($PSBoundParameters.ContainsKey('NonInteractive')) { $coreArgs['NonInteractiv
 if ($PSBoundParameters.ContainsKey('Quiet')) { $coreArgs['Quiet'] = $true }
 if ($PSBoundParameters.ContainsKey('WhatIf')) { $coreArgs['WhatIf'] = $true }
 
+# Handle UI mode based on parameters
+# Interactive and Quickstart flags suggest enhanced UI preference
+if ($Interactive -or $Quickstart) {
+    # If using enhanced startup experience at launcher level, pass enhanced UI to core
+    if ($startupExperienceAvailable -and $useEnhancedStartup) {
+        $coreArgs['UIMode'] = 'enhanced'
+    } else {
+        # Otherwise, let core decide based on availability
+        $coreArgs['UIMode'] = 'auto'
+    }
+}
+
 # Note: Setup, Help, Interactive are launcher-specific and not passed to core script
 
 # Check for enhanced startup experience modules

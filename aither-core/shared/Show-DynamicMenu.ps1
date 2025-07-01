@@ -335,8 +335,7 @@ function Edit-Configuration {
                 }
             }
             '2' {
-                Write-Host "`nInteractive configuration editing not yet implemented" -ForegroundColor Yellow
-                # TODO: Implement interactive config editor
+                Edit-ConfigurationInteractive -ConfigFile $configFile
             }
             '3' {
                 Write-Host "`nReset to defaults not yet implemented" -ForegroundColor Yellow
@@ -434,6 +433,130 @@ function Invoke-LegacyScript {
         & $Script.FullName -Config $Config
     } catch {
         Write-Host "Error executing script: $_" -ForegroundColor Red
+    }
+}
+
+function Edit-ConfigurationInteractive {
+    [CmdletBinding()]
+    param(
+        [string]$ConfigFile
+    )
+    
+    Write-Host "`n📝 Interactive Configuration Editor" -ForegroundColor Green
+    Write-Host "$('=' * 50)" -ForegroundColor Cyan
+    
+    try {
+        $config = Get-Content $ConfigFile -Raw | ConvertFrom-Json
+        
+        # Show UI preferences
+        Write-Host "`nUI Preferences:" -ForegroundColor Yellow
+        Write-Host "  [1] UI Mode: $($config.UIPreferences.Mode ?? 'auto')" -ForegroundColor White
+        Write-Host "  [2] Default UI: $($config.UIPreferences.DefaultUI ?? 'enhanced')" -ForegroundColor White
+        Write-Host "  [3] Show UI Selector: $($config.UIPreferences.ShowUISelector ?? $true)" -ForegroundColor White
+        
+        # Show common settings
+        Write-Host "`nCommon Settings:" -ForegroundColor Yellow
+        Write-Host "  [4] Computer Name: $($config.ComputerName)" -ForegroundColor White
+        Write-Host "  [5] DNS Servers: $($config.DNSServers)" -ForegroundColor White
+        Write-Host "  [6] Install Git: $($config.InstallGit)" -ForegroundColor White
+        Write-Host "  [7] Install OpenTofu: $($config.InstallOpenTofu)" -ForegroundColor White
+        
+        Write-Host "`n  [S] Save changes" -ForegroundColor Green
+        Write-Host "  [B] Back without saving" -ForegroundColor Gray
+        Write-Host ""
+        
+        $editing = $true
+        $modified = $false
+        
+        while ($editing) {
+            $choice = Read-Host "Select option to edit (1-7, S, B)"
+            
+            switch ($choice.ToUpper()) {
+                '1' {
+                    $newValue = Read-Host "Enter UI Mode (auto/enhanced/classic) [current: $($config.UIPreferences.Mode)]"
+                    if ($newValue -and $newValue -in @('auto', 'enhanced', 'classic')) {
+                        if (-not $config.UIPreferences) { $config | Add-Member -NotePropertyName UIPreferences -NotePropertyValue @{} }
+                        $config.UIPreferences.Mode = $newValue
+                        $modified = $true
+                        Write-Host "✓ UI Mode set to: $newValue" -ForegroundColor Green
+                    }
+                }
+                '2' {
+                    $newValue = Read-Host "Enter Default UI (enhanced/classic) [current: $($config.UIPreferences.DefaultUI)]"
+                    if ($newValue -and $newValue -in @('enhanced', 'classic')) {
+                        if (-not $config.UIPreferences) { $config | Add-Member -NotePropertyName UIPreferences -NotePropertyValue @{} }
+                        $config.UIPreferences.DefaultUI = $newValue
+                        $modified = $true
+                        Write-Host "✓ Default UI set to: $newValue" -ForegroundColor Green
+                    }
+                }
+                '3' {
+                    $newValue = Read-Host "Show UI Selector (true/false) [current: $($config.UIPreferences.ShowUISelector)]"
+                    if ($newValue -in @('true', 'false')) {
+                        if (-not $config.UIPreferences) { $config | Add-Member -NotePropertyName UIPreferences -NotePropertyValue @{} }
+                        $config.UIPreferences.ShowUISelector = ($newValue -eq 'true')
+                        $modified = $true
+                        Write-Host "✓ Show UI Selector set to: $newValue" -ForegroundColor Green
+                    }
+                }
+                '4' {
+                    $newValue = Read-Host "Enter Computer Name [current: $($config.ComputerName)]"
+                    if ($newValue) {
+                        $config.ComputerName = $newValue
+                        $modified = $true
+                        Write-Host "✓ Computer Name set to: $newValue" -ForegroundColor Green
+                    }
+                }
+                '5' {
+                    $newValue = Read-Host "Enter DNS Servers (comma-separated) [current: $($config.DNSServers)]"
+                    if ($newValue) {
+                        $config.DNSServers = $newValue
+                        $modified = $true
+                        Write-Host "✓ DNS Servers set to: $newValue" -ForegroundColor Green
+                    }
+                }
+                '6' {
+                    $newValue = Read-Host "Install Git (true/false) [current: $($config.InstallGit)]"
+                    if ($newValue -in @('true', 'false')) {
+                        $config.InstallGit = ($newValue -eq 'true')
+                        $modified = $true
+                        Write-Host "✓ Install Git set to: $newValue" -ForegroundColor Green
+                    }
+                }
+                '7' {
+                    $newValue = Read-Host "Install OpenTofu (true/false) [current: $($config.InstallOpenTofu)]"
+                    if ($newValue -in @('true', 'false')) {
+                        $config.InstallOpenTofu = ($newValue -eq 'true')
+                        $modified = $true
+                        Write-Host "✓ Install OpenTofu set to: $newValue" -ForegroundColor Green
+                    }
+                }
+                'S' {
+                    if ($modified) {
+                        $config | ConvertTo-Json -Depth 10 | Out-File $ConfigFile -Encoding UTF8
+                        Write-Host "`n✅ Configuration saved successfully!" -ForegroundColor Green
+                    } else {
+                        Write-Host "`nNo changes to save." -ForegroundColor Yellow
+                    }
+                    $editing = $false
+                }
+                'B' {
+                    if ($modified) {
+                        $confirm = Read-Host "You have unsaved changes. Discard them? (Y/N)"
+                        if ($confirm -eq 'Y') {
+                            $editing = $false
+                        }
+                    } else {
+                        $editing = $false
+                    }
+                }
+                default {
+                    Write-Host "Invalid option: $choice" -ForegroundColor Red
+                }
+            }
+        }
+    } catch {
+        Write-Host "Error editing configuration: $_" -ForegroundColor Red
     }
 }
 
