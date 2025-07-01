@@ -10,14 +10,16 @@ Comprehensive service lifecycle management for Windows and Linux systems.
 ## Actions
 
 ### `list` - Service inventory and status
-Display comprehensive service inventory across all managed systems.
+Display comprehensive service inventory across all managed systems with PowerShell service monitoring.
 
 **Options:**
 - `--platform [windows|linux|all]` - Target platform (default: all)
 - `--status [running|stopped|error|all]` - Filter by service status
-- `--category [web,database,messaging,system]` - Service categories
+- `--category [web,database,messaging,system,powershell]` - Service categories
 - `--detailed` - Show detailed service information
 - `--export` - Export service inventory
+- `--powershell-services` - Include PowerShell and Git services
+- `--compatibility-check` - Check PowerShell version compatibility
 
 **Examples:**
 ```bash

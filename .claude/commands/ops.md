@@ -108,10 +108,36 @@ Execute predefined operational procedures and runbooks.
 - `--validate` - Validate before execution
 - `--emergency` - Emergency procedure execution
 
+### `version` - Version and release management
+Coordinate version management and release operations.
+
+**Options:**
+- `--current` - Show current version status
+- `--release` - Trigger release process
+- `--rollback` - Rollback to previous version
+- `--validate` - Validate version consistency
+- `--sync` - Synchronize version across environments
+
+### `troubleshoot` - Operational troubleshooting
+Automated troubleshooting for common operational issues.
+
+**Options:**
+- `--git-issues` - Fix Git divergence and conflict issues
+- `--powershell` - Fix PowerShell compatibility issues
+- `--modules` - Troubleshoot module loading problems
+- `--permissions` - Check and fix permission issues
+- `--auto-fix` - Automatically apply common fixes
+
 **Examples:**
 ```bash
 /ops runbook --execute --procedure disaster-recovery
 /ops runbook --execute --procedure backup-validation --validate
+
+/ops version --current --validate
+/ops version --release --type patch
+
+/ops troubleshoot --git-issues --auto-fix
+/ops troubleshoot --powershell --modules
 ```
 
 ## Operational Categories

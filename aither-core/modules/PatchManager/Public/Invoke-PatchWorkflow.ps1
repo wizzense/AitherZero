@@ -232,31 +232,51 @@ function Invoke-PatchWorkflow {
                     }
                 }
 
-                # Always sync with remote main to prevent merge conflicts
-                Write-PatchLog "Syncing with remote main to ensure we have latest changes..." -Level "INFO"
-                git fetch origin main 2>&1 | Out-Null
-                if ($LASTEXITCODE -ne 0) {
-                    throw "Failed to fetch from remote main"
-                }
-
-                # Check if local main is behind remote
-                $behindCommits = git rev-list --count main..origin/main 2>&1
-                if ($behindCommits -and $behindCommits -gt 0) {
-                    Write-PatchLog "Local main is $behindCommits commits behind remote. Syncing..." -Level "INFO"
-                    git merge origin/main --ff-only 2>&1 | Out-Null
-                    if ($LASTEXITCODE -ne 0) {
-                        # If fast-forward fails, we have diverged - need to reset
-                        Write-PatchLog "Fast-forward merge failed. Local main has diverged from remote. Performing hard reset..." -Level "WARN"
-                        git reset --hard origin/main 2>&1 | Out-Null
-                        if ($LASTEXITCODE -ne 0) {
-                            throw "Failed to reset local main to match remote"
+                # Use Sync-GitBranch to ensure proper synchronization
+                Write-PatchLog "Using Sync-GitBranch to ensure proper synchronization with remote..." -Level "INFO"
+                
+                try {
+                    # Check if Sync-GitBranch is available
+                    if (Get-Command Sync-GitBranch -ErrorAction SilentlyContinue) {
+                        $syncResult = Sync-GitBranch -BranchName "main" -Force
+                        if ($syncResult.Success) {
+                            Write-PatchLog "Successfully synchronized main branch with remote" -Level "SUCCESS"
+                        } else {
+                            Write-PatchLog "Warning: Sync-GitBranch reported: $($syncResult.Message)" -Level "WARN"
                         }
-                        Write-PatchLog "Successfully reset local main to match remote main" -Level "SUCCESS"
                     } else {
-                        Write-PatchLog "Successfully synced with remote main" -Level "SUCCESS"
+                        # Fallback to manual sync if Sync-GitBranch is not available
+                        Write-PatchLog "Sync-GitBranch not available, using manual sync..." -Level "INFO"
+                        
+                        # Always sync with remote main to prevent merge conflicts
+                        git fetch origin main 2>&1 | Out-Null
+                        if ($LASTEXITCODE -ne 0) {
+                            throw "Failed to fetch from remote main"
+                        }
+
+                        # Check if local main is behind remote
+                        $behindCommits = git rev-list --count main..origin/main 2>&1
+                        if ($behindCommits -and $behindCommits -gt 0) {
+                            Write-PatchLog "Local main is $behindCommits commits behind remote. Syncing..." -Level "INFO"
+                            git merge origin/main --ff-only 2>&1 | Out-Null
+                            if ($LASTEXITCODE -ne 0) {
+                                # If fast-forward fails, we have diverged - need to reset
+                                Write-PatchLog "Fast-forward merge failed. Local main has diverged from remote. Performing hard reset..." -Level "WARN"
+                                git reset --hard origin/main 2>&1 | Out-Null
+                                if ($LASTEXITCODE -ne 0) {
+                                    throw "Failed to reset local main to match remote"
+                                }
+                                Write-PatchLog "Successfully reset local main to match remote main" -Level "SUCCESS"
+                            } else {
+                                Write-PatchLog "Successfully synced with remote main" -Level "SUCCESS"
+                            }
+                        } else {
+                            Write-PatchLog "Local main is up to date with remote" -Level "INFO"
+                        }
                     }
-                } else {
-                    Write-PatchLog "Local main is up to date with remote" -Level "INFO"
+                } catch {
+                    Write-PatchLog "Error during synchronization: $($_.Exception.Message)" -Level "ERROR"
+                    throw
                 }
             } else {
                 Write-PatchLog "DRY RUN: Would sync with remote main before creating branch" -Level "INFO"

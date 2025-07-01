@@ -10,7 +10,7 @@ Lab environment management and testing automation for AitherZero.
 ## Actions
 
 ### `create` - Create new lab environment
-Rapidly provision new lab environments for testing and development.
+Rapidly provision new lab environments for testing and development with enhanced PowerShell compatibility.
 
 **Options:**
 - `--env [environment-name]` - Name for the lab environment
@@ -18,6 +18,8 @@ Rapidly provision new lab environments for testing and development.
 - `--ttl [duration]` - Time-to-live for the environment (e.g., 4h, 2d)
 - `--resources [spec]` - Resource specifications
 - `--isolated` - Create isolated network environment
+- `--sync` - Synchronize with Git remote before creation
+- `--powershell-mode [auto|5.1|7]` - PowerShell compatibility mode
 
 **Examples:**
 ```bash
