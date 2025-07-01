@@ -38,11 +38,21 @@ function Show-DynamicMenu {
         Write-Host "$('=' * 80)" -ForegroundColor Cyan
         
         # Get module capabilities
-        $modules = Get-ModuleCapabilities
+        $modules = @()
+        try {
+            $modules = Get-ModuleCapabilities
+        } catch {
+            Write-Host "⚠️  Could not load module information. Basic menu will be shown." -ForegroundColor Yellow
+        }
         
         if ($FirstRun) {
             Write-Host "`n🎉 Welcome to AitherZero!" -ForegroundColor Green
-            Write-Host "This appears to be your first run. Let's get you started!" -ForegroundColor Yellow
+            Write-Host "This powerful infrastructure automation platform helps you:" -ForegroundColor White
+            Write-Host "  • Manage infrastructure with OpenTofu/Terraform" -ForegroundColor Gray
+            Write-Host "  • Automate deployments and configurations" -ForegroundColor Gray
+            Write-Host "  • Integrate with AI development tools" -ForegroundColor Gray
+            Write-Host ""
+            Write-Host "💡 Start with option [1] Quick Start Wizard for guided setup!" -ForegroundColor Cyan
             Write-Host ""
         }
         
@@ -252,30 +262,96 @@ function Invoke-QuickStart {
         [hashtable]$Config
     )
     
+    Clear-Host
     Write-Host "`n🚀 AitherZero Quick Start Wizard" -ForegroundColor Green
-    Write-Host "$('=' * 50)" -ForegroundColor Cyan
+    Write-Host "$('=' * 60)" -ForegroundColor Cyan
+    Write-Host ""
     
-    # Try to use SetupWizard module
-    try {
-        if (Get-Module SetupWizard -ListAvailable) {
-            Import-Module SetupWizard -Force
+    # Try to use SetupWizard module if available
+    $setupWizardAvailable = Get-Module SetupWizard -ListAvailable
+    
+    if ($setupWizardAvailable) {
+        try {
+            Import-Module SetupWizard -Force -ErrorAction Stop
             Start-IntelligentSetup -Interactive
-        } else {
-            Write-Host "SetupWizard module not available. Running basic setup..." -ForegroundColor Yellow
-            
-            # Basic setup steps
-            Write-Host "`nChecking environment..." -ForegroundColor Yellow
-            Write-Host "✓ PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Green
-            
-            # Prompt for configuration
-            $editConfig = Read-Host "`nWould you like to edit the configuration? (Y/N)"
-            if ($editConfig -eq 'Y') {
-                Edit-Configuration -Config $Config
-            }
+            return
+        } catch {
+            Write-Host "⚠️  Advanced setup wizard unavailable. Using simplified setup." -ForegroundColor Yellow
+            Write-Host ""
         }
-    } catch {
-        Write-Host "Error during setup: $_" -ForegroundColor Red
     }
+    
+    # Simplified quick start for better user experience
+    Write-Host "Let's get you started with AitherZero!" -ForegroundColor White
+    Write-Host ""
+    
+    # Step 1: Environment Check
+    Write-Host "📋 Step 1: Environment Check" -ForegroundColor Cyan
+    Write-Host "  ✅ PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Green
+    Write-Host "  ✅ Operating System: $($PSVersionTable.OS ?? $env:OS)" -ForegroundColor Green
+    
+    # Check for common tools
+    $gitInstalled = Get-Command git -ErrorAction SilentlyContinue
+    $tofuInstalled = Get-Command tofu -ErrorAction SilentlyContinue
+    $terraformInstalled = Get-Command terraform -ErrorAction SilentlyContinue
+    
+    if ($gitInstalled) {
+        Write-Host "  ✅ Git: Installed" -ForegroundColor Green
+    } else {
+        Write-Host "  ⚠️  Git: Not found (optional but recommended)" -ForegroundColor Yellow
+    }
+    
+    if ($tofuInstalled -or $terraformInstalled) {
+        Write-Host "  ✅ Infrastructure Tool: $(if($tofuInstalled){'OpenTofu'}else{'Terraform'}) installed" -ForegroundColor Green
+    } else {
+        Write-Host "  ℹ️  Infrastructure Tool: Not found (install later if needed)" -ForegroundColor Cyan
+    }
+    
+    Write-Host ""
+    
+    # Step 2: Quick Configuration
+    Write-Host "📝 Step 2: Basic Configuration" -ForegroundColor Cyan
+    Write-Host "  Current configuration file contains default settings." -ForegroundColor White
+    Write-Host ""
+    
+    $configChoice = Read-Host "Would you like to [V]iew, [E]dit, or [S]kip configuration? (V/E/S)"
+    
+    switch ($configChoice.ToUpper()) {
+        'V' {
+            # Show key configuration items
+            Write-Host "`nKey Configuration Settings:" -ForegroundColor Yellow
+            Write-Host "  • Computer Name: $($Config.ComputerName ?? 'default-lab')" -ForegroundColor White
+            Write-Host "  • UI Mode: $($Config.UIPreferences.Mode ?? 'auto')" -ForegroundColor White
+            Write-Host "  • Install Git: $($Config.InstallGit ?? $true)" -ForegroundColor White
+            Write-Host "  • Install OpenTofu: $($Config.InstallOpenTofu ?? $false)" -ForegroundColor White
+            Write-Host ""
+            Read-Host "Press Enter to continue"
+        }
+        'E' {
+            Edit-Configuration -Config $Config
+        }
+        'S' {
+            Write-Host "  Configuration skipped." -ForegroundColor Gray
+        }
+    }
+    
+    Write-Host ""
+    
+    # Step 3: Next Steps
+    Write-Host "✨ Step 3: Getting Started" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Here's what you can do next:" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  1️⃣  Explore Modules - Browse available automation modules" -ForegroundColor White
+    Write-Host "  2️⃣  Run Setup Wizard - Configure your environment (if available)" -ForegroundColor White
+    Write-Host "  3️⃣  Check Documentation - Learn more about features" -ForegroundColor White
+    Write-Host ""
+    Write-Host "Most users start by exploring the available modules to see" -ForegroundColor Gray
+    Write-Host "what automation capabilities are available." -ForegroundColor Gray
+    Write-Host ""
+    
+    Write-Host "Quick start completed! Returning to main menu..." -ForegroundColor Green
+    Start-Sleep -Seconds 3
 }
 
 function Edit-Configuration {
@@ -559,6 +635,3 @@ function Edit-ConfigurationInteractive {
         Write-Host "Error editing configuration: $_" -ForegroundColor Red
     }
 }
-
-# Export main function
-Export-ModuleMember -Function Show-DynamicMenu

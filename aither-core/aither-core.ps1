@@ -369,52 +369,81 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
     exit $LASTEXITCODE
 }
 
-# Import required modules
+# Define fallback logging function if Logging module is not available
+if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
+    function Write-CustomLog {
+        param(
+            [string]$Message,
+            [string]$Level = 'INFO'
+        )
+        # Fallback logging to console
+        $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+        $color = switch ($Level) {
+            'ERROR' { 'Red' }
+            'WARN' { 'Yellow' }
+            'SUCCESS' { 'Green' }
+            'DEBUG' { 'Gray' }
+            default { 'White' }
+        }
+        if ($script:ConsoleLevel -ge 1 -or $Level -in @('ERROR', 'WARN')) {
+            Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
+        }
+    }
+}
+
+# Import required modules with better error handling
+$moduleLoadErrors = @()
+$criticalModulesLoaded = $true
+
 try {
-    Write-Verbose 'Importing Logging module...'
+    Write-Verbose 'Importing core modules...'
 
-    # Validate module paths before attempting import
+    # Try to load Logging module first
     $loggingModulePath = Join-Path $env:PWSH_MODULES_PATH "Logging"
-    $labRunnerModulePath = Join-Path $env:PWSH_MODULES_PATH "LabRunner"
-
-    if (-not (Test-Path $loggingModulePath)) {
-        throw "Logging module not found at: $loggingModulePath"
-    }
-    if (-not (Test-Path $labRunnerModulePath)) {
-        throw "LabRunner module not found at: $labRunnerModulePath"
-    }
-
-    # In silent mode, suppress all output during module import and initialization
-    if ($Verbosity -eq 'silent') {
-        Import-Module $loggingModulePath -Force -ErrorAction Stop *>$null
-        Import-Module $labRunnerModulePath -Force -ErrorAction Stop *>$null
-        # Initialize logging system with proper verbosity mapping (Force required to override auto-init)
-        Initialize-LoggingSystem -ConsoleLevel $script:LogLevel -LogLevel 'DEBUG' -Force *>$null
+    if (Test-Path $loggingModulePath) {
+        try {
+            if ($Verbosity -eq 'silent') {
+                Import-Module $loggingModulePath -Force -ErrorAction Stop *>$null
+                Initialize-LoggingSystem -ConsoleLevel $script:LogLevel -LogLevel 'DEBUG' -Force *>$null
+            } else {
+                Import-Module $loggingModulePath -Force -ErrorAction Stop
+                Initialize-LoggingSystem -ConsoleLevel $script:LogLevel -LogLevel 'DEBUG' -Force
+            }
+            Write-Verbose 'Logging module loaded successfully'
+        } catch {
+            $moduleLoadErrors += "Logging: $_"
+            Write-Warning "Logging module failed to load. Using fallback logging."
+        }
     } else {
-        Import-Module $loggingModulePath -Force -ErrorAction Stop
-        Write-Verbose 'Importing LabRunner module...'
-        Import-Module $labRunnerModulePath -Force -ErrorAction Stop
-        # Initialize logging system with proper verbosity mapping (Force required to override auto-init)
-        Initialize-LoggingSystem -ConsoleLevel $script:LogLevel -LogLevel 'DEBUG' -Force
+        $moduleLoadErrors += "Logging module not found at: $loggingModulePath"
+        Write-Warning "Logging module not found. Using fallback logging."
+    }
+
+    # Try to load LabRunner module (not critical for basic menu functionality)
+    $labRunnerModulePath = Join-Path $env:PWSH_MODULES_PATH "LabRunner"
+    if (Test-Path $labRunnerModulePath) {
+        try {
+            Import-Module $labRunnerModulePath -Force -ErrorAction Stop
+            Write-Verbose 'LabRunner module loaded successfully'
+        } catch {
+            $moduleLoadErrors += "LabRunner: $_"
+            Write-Warning "LabRunner module failed to load. Some features may be unavailable."
+        }
     }
 
     Write-CustomLog 'Core runner started' -Level DEBUG
+    
+    # Show module load warnings if any
+    if ($moduleLoadErrors.Count -gt 0 -and $Verbosity -ne 'silent') {
+        Write-Host "`n⚠️  Some modules failed to load:" -ForegroundColor Yellow
+        $moduleLoadErrors | ForEach-Object { Write-Host "  • $_" -ForegroundColor Yellow }
+        Write-Host "  The application will continue with reduced functionality.`n" -ForegroundColor Yellow
+    }
+    
 } catch {
-    Write-Host "❌ Error importing required modules: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "" -ForegroundColor White
-    Write-Host "💡 Troubleshooting Steps:" -ForegroundColor Yellow
-    Write-Host "  1. Verify project structure is complete" -ForegroundColor White
-    Write-Host "  2. Check that modules exist at: $env:PWSH_MODULES_PATH" -ForegroundColor White
-    Write-Host "  3. Ensure all files were extracted properly" -ForegroundColor White
-    Write-Host "  4. Try running from the project root directory" -ForegroundColor White
-    Write-Host "  5. Check PowerShell version: `$PSVersionTable.PSVersion" -ForegroundColor White
-    Write-Host "" -ForegroundColor White
-    Write-Host "🔍 Current paths:" -ForegroundColor Cyan
-    Write-Host "  Project Root: $env:PROJECT_ROOT" -ForegroundColor White
-    Write-Host "  Modules Path: $env:PWSH_MODULES_PATH" -ForegroundColor White
-    Write-Host "  Script Location: $PSScriptRoot" -ForegroundColor White
-    Write-Host "" -ForegroundColor White
-    exit 1
+    # Non-critical error - log but continue
+    Write-Warning "Module loading encountered errors: $($_.Exception.Message)"
+    Write-Warning "The application will continue with basic functionality."
 }
 
 # Set console verbosity level for LabRunner (maintain compatibility)
@@ -459,11 +488,24 @@ try {
     
     if (Test-Path $startupExperiencePath) {
         try {
+            # Suppress warnings during import attempt
+            $oldWarningPreference = $WarningPreference
+            $WarningPreference = 'SilentlyContinue'
+            
             Import-Module $startupExperiencePath -Force -ErrorAction Stop
-            $startupExperienceAvailable = $true
-            Write-CustomLog "StartupExperience module loaded successfully" -Level DEBUG
+            
+            # Check if the main function is available
+            if (Get-Command Start-InteractiveMode -ErrorAction SilentlyContinue) {
+                $startupExperienceAvailable = $true
+                Write-CustomLog "StartupExperience module loaded successfully" -Level DEBUG
+            } else {
+                Write-CustomLog "StartupExperience module loaded but main function not found" -Level WARN
+            }
+            
+            $WarningPreference = $oldWarningPreference
         } catch {
             Write-CustomLog "Failed to load StartupExperience module: $_" -Level WARN
+            $WarningPreference = $oldWarningPreference
         }
     }
     
@@ -688,10 +730,26 @@ try {
     }
 
     Write-CustomLog 'Core runner completed successfully' -Level DEBUG
-    exit 0  # Explicitly set success exit code
+    
+    # Ensure we exit with success code
+    if (-not $global:LASTEXITCODE -or $global:LASTEXITCODE -eq 0) {
+        exit 0
+    } else {
+        exit $global:LASTEXITCODE
+    }
 
 } catch {
     Write-CustomLog "Core runner failed: $($_.Exception.Message)" -Level ERROR
-    Write-CustomLog "Stack trace: $($_.ScriptStackTrace)" -Level INFO
-    exit 1
+    Write-CustomLog "Stack trace: $($_.ScriptStackTrace)" -Level DEBUG
+    
+    # Only exit with error if it's a critical failure
+    if ($_.Exception.Message -match 'critical|fatal') {
+        exit 1
+    } else {
+        # Non-critical error - try to continue
+        Write-Host "`n⚠️  An error occurred but the application may still function." -ForegroundColor Yellow
+        Write-Host "  Error: $($_.Exception.Message)" -ForegroundColor Yellow
+        Write-Host "  Try running with -Help for more options.`n" -ForegroundColor Yellow
+        exit 0
+    }
 }

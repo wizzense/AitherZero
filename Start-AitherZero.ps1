@@ -208,8 +208,27 @@ Write-Host 'Loading AitherZero modules...' -ForegroundColor Cyan
 
 if (Test-Path $modulesPath) {
     $loadedModules = 0
-    $totalModules = (Get-ChildItem $modulesPath -Directory).Count
-    Get-ChildItem $modulesPath -Directory | ForEach-Object {
+    
+    # Get all module directories, excluding common non-module directories
+    $moduleDirs = Get-ChildItem $modulesPath -Directory | Where-Object { 
+        $_.Name -notmatch '^(shared|Private|Public|tests|docs|scripts|bin|lib)$' 
+    }
+    $totalModules = $moduleDirs.Count
+    
+    # Load Logging module first if it exists
+    $loggingModule = $moduleDirs | Where-Object { $_.Name -eq 'Logging' }
+    if ($loggingModule) {
+        try {
+            Import-Module $loggingModule.FullName -Force -ErrorAction Stop
+            $loadedModules++
+            Write-Host "  ✅ Logging (loaded first)" -ForegroundColor Green
+        } catch {
+            Write-Host "  ⚠️  Logging: $($_.Exception.Message)" -ForegroundColor Yellow
+        }
+    }
+    
+    # Load remaining modules
+    $moduleDirs | Where-Object { $_.Name -ne 'Logging' } | ForEach-Object {
         try {
             Import-Module $_.FullName -Force -ErrorAction Stop
             $loadedModules++
@@ -218,6 +237,7 @@ if (Test-Path $modulesPath) {
             Write-Host "  ⚠️  $($_.Name): $($_.Exception.Message)" -ForegroundColor Yellow
         }
     }
+    
     Write-Host "Loaded $loadedModules/$totalModules modules successfully" -ForegroundColor Cyan
 } else {
     Write-Host '⚠️  Modules directory not found at expected locations' -ForegroundColor Yellow
