@@ -416,133 +416,139 @@ try {
     Write-CustomLog "Configuration file: $ConfigFile" -Level DEBUG
     Write-CustomLog "Verbosity level: $Verbosity" -Level DEBUG
 
-    # Load dynamic menu system
-    $dynamicMenuPath = Join-Path $PSScriptRoot 'shared' 'Show-DynamicMenu.ps1'
-    if (-not (Test-Path $dynamicMenuPath)) {
-        $dynamicMenuPath = Join-Path $repoRoot 'aither-core' 'shared' 'Show-DynamicMenu.ps1'
+    # Get available scripts - try multiple locations
+    # In release packages, scripts/ is alongside aither-core.ps1
+    # In development, scripts/ is in aither-core/scripts
+    $scriptsPaths = @(
+        (Join-Path $PSScriptRoot 'scripts'),                    # Release: same as script
+        (Join-Path $repoRoot "aither-core" "scripts"),         # Dev: aither-core/scripts
+        (Join-Path $repoRoot "scripts")                        # Alternative: root/scripts
+    )
+    
+    $scriptsPath = $null
+    $availableScripts = @()
+    
+    foreach ($path in $scriptsPaths) {
+        if (Test-Path $path) {
+            $scriptsPath = $path
+            $availableScripts = Get-ChildItem -Path $scriptsPath -Filter '*.ps1' | Sort-Object Name
+            Write-CustomLog "Found $($availableScripts.Count) scripts in: $scriptsPath" -Level DEBUG
+            break
+        }
     }
     
-    if (Test-Path $dynamicMenuPath) {
-        Write-CustomLog "Loading dynamic menu system from: $dynamicMenuPath" -Level DEBUG
-        . $dynamicMenuPath
-    }
+    if ($scriptsPath -and $availableScripts.Count -gt 0) {
 
-    # Handle different execution modes
-    if ($Scripts) {
-        # Run specific modules/scripts
-        Write-CustomLog "Running specific components: $Scripts" -Level INFO
-        
-        $componentList = $Scripts -split ','
-        foreach ($componentName in $componentList) {
-            $componentName = $componentName.Trim()
-            
-            # Try to find and run as module first
-            $modulePath = Join-Path $env:PWSH_MODULES_PATH $componentName
-            if (Test-Path $modulePath) {
-                Write-CustomLog "Loading module: $componentName" -Level INFO
-                try {
-                    Import-Module $modulePath -Force
-                    Write-Host "✓ Module loaded: $componentName" -ForegroundColor Green
-                    
-                    # Try to run default function if exists
-                    $defaultFunction = "Start-$componentName"
-                    if (Get-Command $defaultFunction -ErrorAction SilentlyContinue) {
-                        Write-Host "Executing: $defaultFunction" -ForegroundColor Cyan
-                        & $defaultFunction
-                    } else {
-                        Write-Host "Module loaded. Use Get-Command -Module $componentName to see available functions." -ForegroundColor Yellow
+        if ($Scripts) {
+            # Run specific scripts
+            $scriptList = $Scripts -split ','
+            foreach ($scriptName in $scriptList) {
+                $scriptPath = Join-Path $scriptsPath "$scriptName.ps1"
+                if (Test-Path $scriptPath) {
+                    Write-CustomLog "Executing script: $scriptName" -Level DEBUG
+                    if ($PSCmdlet.ShouldProcess($scriptName, 'Execute script')) {
+                        Invoke-ScriptWithOutputHandling -ScriptName $scriptName -ScriptPath $scriptPath -Config $config -Force:$Force -Verbosity $Verbosity
                     }
-                } catch {
-                    Write-CustomLog "Error loading module $componentName : $_" -Level ERROR
-                }
-            } else {
-                # Fallback to legacy script execution
-                $scriptsPaths = @(
-                    (Join-Path $PSScriptRoot 'scripts'),
-                    (Join-Path $repoRoot "aither-core" "scripts"),
-                    (Join-Path $repoRoot "scripts")
-                )
-                
-                $scriptFound = $false
-                foreach ($scriptsPath in $scriptsPaths) {
-                    $scriptPath = Join-Path $scriptsPath "$componentName.ps1"
-                    if (Test-Path $scriptPath) {
-                        Write-CustomLog "Executing script: $componentName" -Level INFO
-                        if ($PSCmdlet.ShouldProcess($componentName, 'Execute script')) {
-                            Invoke-ScriptWithOutputHandling -ScriptName $componentName -ScriptPath $scriptPath -Config $config -Force:$Force -Verbosity $Verbosity
-                        }
-                        $scriptFound = $true
-                        break
-                    }
-                }
-                
-                if (-not $scriptFound) {
-                    Write-CustomLog "Component not found: $componentName" -Level WARN
+                } else {
+                    Write-CustomLog "Script not found: $scriptName" -Level WARN
                 }
             }
-        }
-    } elseif ($Auto) {
-        # Auto mode - run all default operations
-        Write-CustomLog 'Running in automatic mode' -Level INFO
-        
-        # Define default auto-mode modules
-        $autoModules = @('SetupWizard', 'SystemMonitoring', 'BackupManager')
-        
-        foreach ($moduleName in $autoModules) {
-            $modulePath = Join-Path $env:PWSH_MODULES_PATH $moduleName
-            if (Test-Path $modulePath) {
-                try {
-                    Import-Module $modulePath -Force
-                    $defaultFunction = "Start-$moduleName"
-                    if (Get-Command $defaultFunction -ErrorAction SilentlyContinue) {
-                        Write-Host "Auto-executing: $defaultFunction" -ForegroundColor Cyan
-                        & $defaultFunction -Auto
-                    }
-                } catch {
-                    Write-CustomLog "Error in auto mode for $moduleName : $_" -Level WARN
+        } elseif ($Auto) {
+            # Run all scripts in auto mode
+            Write-CustomLog 'Running all scripts in automatic mode' -Level INFO
+            foreach ($script in $availableScripts) {
+                Write-CustomLog "Executing script: $($script.BaseName)" -Level INFO
+                if ($PSCmdlet.ShouldProcess($script.BaseName, 'Execute script')) {
+                    Invoke-ScriptWithOutputHandling -ScriptName $script.BaseName -ScriptPath $script.FullName -Config $config -Force:$Force -Verbosity $Verbosity
                 }
+            }
+        } else {
+            # Check if running in non-interactive mode without specific scripts
+            if ($NonInteractive -or $PSCmdlet.WhatIf) {
+                Write-CustomLog 'Non-interactive mode: use -Scripts parameter to specify which scripts to run, or -Auto for all scripts' -Level INFO
+
+                # In non-interactive mode, if no scripts specified but Auto is enabled, run all scripts
+                if ($Auto) {
+                    Write-CustomLog 'Non-interactive auto mode: Running all scripts automatically' -Level INFO
+                    foreach ($script in $availableScripts) {
+                        Write-CustomLog "Executing script: $($script.BaseName)" -Level INFO
+                        if ($PSCmdlet.ShouldProcess($script.BaseName, 'Execute script')) {
+                            Invoke-ScriptWithOutputHandling -ScriptName $script.BaseName -ScriptPath $script.FullName -Config $config -Force:$Force -Verbosity $Verbosity
+                        }
+                    }                } else {
+                    Write-CustomLog 'No scripts specified for non-interactive execution' -Level WARN
+                    Write-CustomLog 'Consider using -Auto to run all scripts, or -Scripts to specify particular scripts' -Level INFO
+                }
+                # Don't use return here - let the script complete naturally to reach success logging
+            } else {
+                # Interactive mode - show menu in a loop
+                do {
+                    Write-Host "`n" + "=" * 60 -ForegroundColor Cyan
+                    Write-Host "     _    _ _   _               _                 " -ForegroundColor Cyan
+                    Write-Host "    / \  (_) |_| |__   ___ _ __(_)_   _ _ __ ___  " -ForegroundColor Cyan
+                    Write-Host "   / _ \ | | __| '_ \ / _ \ '__| | | | | '_ \` _ \ " -ForegroundColor Cyan
+                    Write-Host "  / ___ \| | |_| | | |  __/ |  | | |_| | | | | | |" -ForegroundColor Cyan
+                    Write-Host " /_/   \_\_|\__|_| |_|\___|_|  |_|\__,_|_| |_| |_|" -ForegroundColor Cyan
+                    Write-Host "                                                   " -ForegroundColor Cyan
+                    Write-Host " Infrastructure Automation That Transcends Boundaries" -ForegroundColor Cyan
+                    Write-Host "=" * 60 -ForegroundColor Cyan
+                    Write-Host "`nAvailable Scripts:" -ForegroundColor Cyan
+                    for ($i = 0; $i -lt $availableScripts.Count; $i++) {
+                        $script = $availableScripts[$i]
+                        Write-Host "  $($i + 1). $($script.BaseName)" -ForegroundColor Gray
+                    }
+
+                    Write-Host "`nOptions:" -ForegroundColor Yellow
+                    Write-Host "  • Enter script numbers (comma-separated)" -ForegroundColor Gray
+                    Write-Host "  • Type 'all' to run all scripts" -ForegroundColor Gray
+                    Write-Host "  • Type 'exit' or 'quit' to quit" -ForegroundColor Gray
+                    Write-Host ""
+
+                    $selection = Read-Host 'Selection'
+
+                    if ($selection -eq 'exit' -or $selection -eq 'quit' -or $selection -eq '') {
+                        Write-CustomLog 'Exiting at user request' -Level INFO
+                        break
+                    } elseif ($selection -eq 'all') {
+                        foreach ($script in $availableScripts) {
+                            Write-CustomLog "Executing script: $($script.BaseName)" -Level INFO
+                            Invoke-ScriptWithOutputHandling -ScriptName $script.BaseName -ScriptPath $script.FullName -Config $config -Force:$Force
+                        }
+                        Write-Host "`nPress any key to return to menu..." -ForegroundColor Yellow
+                        $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+                    } else {
+                        $selectedItems = $selection -split ',' | ForEach-Object { $_.Trim() }
+                        foreach ($item in $selectedItems) {
+                            $script = $null
+                            # Check if input is a menu number (1-2 digits, within menu range)
+                            if ($item -match '^\d{1,2}$' -and [int]$item -le $availableScripts.Count -and [int]$item -gt 0) {
+                                $script = $availableScripts[[int]$item - 1]
+                            }
+                            # Check if input is a 4-digit script name (like 0002, 0006)
+                            elseif ($item -match '^\d{4}$') {
+                                $script = $availableScripts | Where-Object { $_.BaseName -like "*$item*" } | Select-Object -First 1
+                            }
+                            # Fallback to name-based matching
+                            else {
+                                $script = $availableScripts | Where-Object { $_.BaseName -eq $item -or $_.BaseName -like "$item*" } | Select-Object -First 1
+                            }
+
+                            if ($script) {
+                                Write-CustomLog "Executing script: $($script.BaseName)" -Level INFO
+                                Invoke-ScriptWithOutputHandling -ScriptName $script.BaseName -ScriptPath $script.FullName -Config $config -Force:$Force -Verbosity $Verbosity
+                            } else {
+                                Write-CustomLog "Invalid selection: $item" -Level WARN
+                            }
+                        }
+                        Write-Host "`nPress any key to return to menu..." -ForegroundColor Yellow
+                        $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+                    }
+                } while ($true)
             }
         }
     } else {
-        # Check if running in non-interactive mode
-        if ($NonInteractive -or $PSCmdlet.WhatIf) {
-            Write-CustomLog 'Non-interactive mode: use -Scripts parameter to specify components, or -Auto for automatic mode' -Level INFO
-            Write-CustomLog 'Available options:' -Level INFO
-            Write-CustomLog '  -Scripts "LabRunner,BackupManager" : Run specific modules' -Level INFO
-            Write-CustomLog '  -Auto : Run default automated tasks' -Level INFO
-        } else {
-            # Interactive mode - show dynamic menu
-            Write-CustomLog 'Starting interactive mode with dynamic menu' -Level INFO
-            
-            # Check if this is first run
-            $firstRunFile = Join-Path $env:APPDATA 'AitherZero' '.firstrun'
-            $isFirstRun = -not (Test-Path $firstRunFile)
-            
-            if ($isFirstRun) {
-                # Create first run marker
-                $firstRunDir = Split-Path $firstRunFile -Parent
-                if (-not (Test-Path $firstRunDir)) {
-                    New-Item -ItemType Directory -Path $firstRunDir -Force | Out-Null
-                }
-                New-Item -ItemType File -Path $firstRunFile -Force | Out-Null
-            }
-            
-            # Show dynamic menu
-            if (Get-Command Show-DynamicMenu -ErrorAction SilentlyContinue) {
-                Show-DynamicMenu -Title "Infrastructure Automation Platform" -Config $config -FirstRun:$isFirstRun
-            } else {
-                Write-CustomLog 'Dynamic menu system not available, falling back to basic menu' -Level WARN
-                
-                # Fallback basic menu
-                Write-Host "`n" + "=" * 60 -ForegroundColor Cyan
-                Write-Host " AitherZero - Infrastructure Automation" -ForegroundColor Cyan
-                Write-Host "=" * 60 -ForegroundColor Cyan
-                Write-Host ""
-                Write-Host "Dynamic menu system not loaded." -ForegroundColor Yellow
-                Write-Host "Try running with -Scripts or -Auto parameter." -ForegroundColor Yellow
-                Write-Host ""
-            }
-        }
+        Write-CustomLog "Scripts directory not found: $scriptsPath" -Level WARN
+        Write-CustomLog 'No scripts to execute' -Level INFO
     }
 
     # Generate summary of scripts with no output issues

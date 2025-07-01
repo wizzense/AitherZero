@@ -111,6 +111,15 @@ if ($Quickstart) {
     Write-Host ''
 }
 
+# Determine modules directory early for setup wizard
+$modulesPath = Join-Path $PSScriptRoot 'modules'
+if (-not (Test-Path $modulesPath)) {
+    $modulesPath = Join-Path $PSScriptRoot 'aither-core/modules'
+}
+if (-not (Test-Path $modulesPath)) {
+    $modulesPath = Join-Path $PSScriptRoot '../../aither-core/modules'
+}
+
 # Handle setup mode with intelligent setup wizard
 if ($Setup) {
     # Try to use the intelligent SetupWizard module if available
@@ -195,14 +204,7 @@ if ($Setup) {
 # Import essential modules with error handling (if available)
 Write-Host 'Loading AitherZero modules...' -ForegroundColor Cyan
 
-# Determine modules directory based on launcher location
-$modulesPath = Join-Path $PSScriptRoot 'modules'
-if (-not (Test-Path $modulesPath)) {
-    $modulesPath = Join-Path $PSScriptRoot 'aither-core/modules'
-}
-if (-not (Test-Path $modulesPath)) {
-    $modulesPath = Join-Path $PSScriptRoot '../../aither-core/modules'
-}
+# Module path already determined above for setup wizard
 
 if (Test-Path $modulesPath) {
     $loadedModules = 0
