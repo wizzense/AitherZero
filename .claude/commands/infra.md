@@ -19,6 +19,8 @@ Deploy infrastructure using OpenTofu/Terraform configurations with validation an
 - `--validate` - Validate before deployment
 - `--plan` - Show deployment plan without executing
 - `--auto-approve` - Skip manual approval for automation
+- `--sync` - Synchronize with Git remote before deployment
+- `--powershell-mode [auto|5.1|7]` - PowerShell compatibility mode
 
 **Examples:**
 ```bash

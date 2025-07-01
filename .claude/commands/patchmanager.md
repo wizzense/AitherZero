@@ -1,6 +1,6 @@
 # /patchmanager
 
-Execute PatchManager workflows for Git operations, automated patching, and PR creation.
+Execute PatchManager workflows for Git operations, automated patching, and PR creation with enhanced conflict prevention.
 
 ## Usage
 ```
@@ -10,7 +10,7 @@ Execute PatchManager workflows for Git operations, automated patching, and PR cr
 ## Actions
 
 ### `workflow` - Main patch workflow (default)
-Create branches, apply changes, commit, and optionally create issues/PRs.
+Create branches, apply changes, commit, and optionally create issues/PRs with automatic synchronization.
 
 **Options:**
 - `--description "text"` - Description of the patch (required)
@@ -23,6 +23,7 @@ Create branches, apply changes, commit, and optionally create issues/PRs.
 - `--force` - Force operation on dirty working tree
 - `--auto-consolidate` - Auto-consolidate open PRs
 - `--test "command"` - Test command to run
+- `--sync` - Force Git synchronization before operations (automatic)
 
 ### `rollback` - Rollback operations
 Undo recent changes or revert to previous state.
@@ -35,6 +36,32 @@ Undo recent changes or revert to previous state.
 ### `status` - Git status and guidance
 Show current repository status with intelligent guidance.
 
+### `sync` - Git branch synchronization
+Synchronize local branches with remote to prevent conflicts.
+
+**Options:**
+- `--branch "name"` - Specific branch to sync (default: current)
+- `--force` - Force reset if branches have diverged
+- `--cleanup` - Remove orphaned branches
+- `--validate-tags` - Check for duplicate tags
+
+### `release` - Automated release workflow
+Create releases with automatic conflict prevention and tag management.
+
+**Options:**
+- `--type [patch|minor|major]` - Release type for version bump
+- `--version "x.y.z"` - Specific version (overrides type)
+- `--description "text"` - Release description (required)
+- `--auto-merge` - Enable auto-merge for release PR
+- `--skip-pr` - Skip PR and create tag directly (emergency releases)
+
+### `fix-divergence` - Fix Git divergence issues
+Automatically fix Git branch divergence and conflicts.
+
+**Options:**
+- `--force` - Fix without confirmation prompts
+- `--backup-path "path"` - Custom backup location
+
 ### `consolidate` - PR consolidation
 Consolidate multiple open pull requests.
 
@@ -45,11 +72,11 @@ Consolidate multiple open pull requests.
 ## Examples
 
 ```bash
-# Basic patch workflow
+# Basic patch workflow with automatic sync
 /patchmanager workflow --description "Fix module loading issue" --operation "Get-Content module.ps1 | ForEach-Object { $_ -replace 'old', 'new' } | Set-Content module.ps1"
 
-# Create patch with PR
-/patchmanager workflow --description "Update configuration" --create-pr --priority High
+# Create patch with PR and sync
+/patchmanager workflow --description "Update configuration" --create-pr --priority High --sync
 
 # Cross-fork PR to upstream
 /patchmanager workflow --description "Feature ready for staging" --create-pr --target-fork upstream
@@ -59,6 +86,18 @@ Consolidate multiple open pull requests.
 
 # Preview changes only
 /patchmanager workflow --description "Test changes" --dry-run
+
+# Sync branches to prevent conflicts
+/patchmanager sync --force --cleanup
+
+# Create patch release
+/patchmanager release --type patch --description "Bug fixes and improvements"
+
+# Emergency release (skip PR)
+/patchmanager release --version "1.2.15" --description "Critical security fix" --skip-pr
+
+# Fix Git divergence issues
+/patchmanager fix-divergence --force
 
 # Rollback last commit
 /patchmanager rollback --type LastCommit --create-backup
@@ -72,8 +111,18 @@ Consolidate multiple open pull requests.
 
 ## Integration Notes
 
-- Automatically handles cross-platform PowerShell execution
-- Integrates with existing PatchManager module
-- Supports automated and interactive modes
-- Maintains git workflow consistency
-- Includes unicode sanitization and validation
+- **PowerShell Compatibility**: Automatically handles PowerShell 5.1 → 7 transitions
+- **Conflict Prevention**: Automatic Git synchronization before all operations
+- **Cross-platform Support**: Works on Windows, Linux, and macOS
+- **Release Automation**: Complete release workflow with tag management
+- **Rollback Safety**: Comprehensive backup and rollback capabilities
+- **Unicode Sanitization**: Automatic cleanup of problematic characters
+- **Workflow Consistency**: Maintains consistent Git workflows across all operations
+
+## Key Improvements
+
+- **Automatic Sync**: All operations now include automatic remote synchronization
+- **Conflict Detection**: Proactive detection and resolution of merge conflicts
+- **Branch Divergence Fix**: Automatic detection and repair of diverged branches
+- **Release Workflow**: One-command release process with automated tag creation
+- **PowerShell Bootstrap**: Seamless PowerShell version handling

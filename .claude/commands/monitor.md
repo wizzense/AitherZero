@@ -10,13 +10,15 @@ Real-time system monitoring and health management for AitherZero infrastructure.
 ## Actions
 
 ### `dashboard` - System overview and metrics
-Display comprehensive system health and performance metrics.
+Display comprehensive system health and performance metrics with real-time PowerShell compatibility status.
 
 **Options:**
 - `--system [all|specific]` - Target systems (default: all)
 - `--timeframe [1h|4h|24h|7d]` - Time range for metrics (default: 1h)
 - `--detailed` - Show detailed performance breakdown
 - `--export` - Export dashboard data
+- `--powershell-status` - Include PowerShell compatibility monitoring
+- `--git-health` - Monitor Git repository health and conflicts
 
 **Examples:**
 ```bash

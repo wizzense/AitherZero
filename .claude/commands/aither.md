@@ -10,23 +10,26 @@ Main unified command for AitherZero orchestration - coordinate multiple modules 
 ## Actions
 
 ### `setup` - Complete environment setup
-Initialize and configure AitherZero components for development or production use.
+Initialize and configure AitherZero components for development or production use with intelligent PowerShell version detection.
 
 **Options:**
 - `--dev-env` - Setup development environment only
 - `--lab` - Setup lab environment components
 - `--infra` - Setup infrastructure components
 - `--all` - Complete setup (default)
+- `--profile` - Installation profile: minimal, developer, full
+- `--force-ps7` - Force PowerShell 7 installation if needed
+- `--quickstart` - Enhanced interactive setup experience
 
 **Examples:**
 ```bash
-/aither setup --dev-env
-/aither setup --lab --infra
-/aither setup --all
+/aither setup --dev-env --profile developer
+/aither setup --lab --infra --force-ps7
+/aither setup --all --quickstart
 ```
 
 ### `workflow` - Multi-module workflow execution
-Execute coordinated workflows across multiple AitherZero modules.
+Execute coordinated workflows across multiple AitherZero modules with enhanced conflict prevention.
 
 **Options:**
 - `--patch "description"` - Create patch workflow with PatchManager
@@ -35,11 +38,13 @@ Execute coordinated workflows across multiple AitherZero modules.
 - `--create-pr` - Include PR creation in workflow
 - `--validate` - Include validation steps
 - `--force` - Force execution even with warnings
+- `--sync` - Force Git synchronization before operations
+- `--auto-fix-conflicts` - Automatically resolve Git conflicts
 
 **Examples:**
 ```bash
-/aither workflow --patch "Fix module loading issue" --create-pr
-/aither workflow --deploy staging --validate
+/aither workflow --patch "Fix module loading issue" --create-pr --sync
+/aither workflow --deploy staging --validate --auto-fix-conflicts
 /aither workflow --test regression --create-pr
 ```
 

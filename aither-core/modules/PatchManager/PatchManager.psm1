@@ -149,7 +149,9 @@ Export-ModuleMember -Function @(
     'Start-PostMergeMonitor',
     'Update-RepositoryDocumentation',
     'New-CrossForkPR',
-    'Show-GitStatusGuidance'
+    'Show-GitStatusGuidance',
+    'Sync-GitBranch',
+    'Invoke-ReleaseWorkflow'
 )
 
 # Module initialization message
