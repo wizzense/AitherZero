@@ -270,13 +270,15 @@ jobs:
             $archivePath = "$archiveName.tar.gz"
             Write-Host "Creating Unix TAR.GZ archive: $archivePath" -ForegroundColor Cyan
             
-            # macOS uses BSD tar which doesn't support --transform
-            # Use a different approach for cross-platform compatibility
+            # Use cross-platform approach that works on both Linux and macOS
+            # Change to package directory to avoid nested folder structure
             $currentDir = Get-Location
-            Set-Location "dist/aitherzero-${{ matrix.profile }}-$platformName"
+            Set-Location $packageDir
             try {
               $destinationPath = Join-Path $currentDir $archivePath
+              # Create archive with all files in current directory
               tar -czf $destinationPath *
+              Write-Host "Archive created successfully using cross-platform approach" -ForegroundColor Green
             } finally {
               Set-Location $currentDir
             }

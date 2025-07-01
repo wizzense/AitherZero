@@ -90,42 +90,36 @@ cd mcp-server && npm run lint
 ### Release Management Commands
 
 ```powershell
-# Create a new release (automatically increments version)
+# AUTOMATED RELEASE WORKFLOW - One command does everything!
 Import-Module ./aither-core/modules/PatchManager -Force
 
 # Patch release (1.2.3 -> 1.2.4)
-Invoke-PatchWorkflow -PatchDescription "Release vX.X.X - [Brief description]" -PatchOperation {
-    $version = Get-Content "VERSION" -Raw
-    $parts = $version.Trim() -split '\.'
-    $parts[2] = [int]$parts[2] + 1
-    $newVersion = $parts -join '.'
-    Set-Content "VERSION" -Value $newVersion -NoNewline
-    Write-Host "Updated version to $newVersion"
-} -CreatePR -Priority "High"
+Invoke-ReleaseWorkflow -ReleaseType "patch" -Description "Bug fixes and improvements"
 
 # Minor release (1.2.3 -> 1.3.0)
-Invoke-PatchWorkflow -PatchDescription "Release vX.X.0 - [Feature description]" -PatchOperation {
-    $version = Get-Content "VERSION" -Raw
-    $parts = $version.Trim() -split '\.'
-    $parts[1] = [int]$parts[1] + 1
-    $parts[2] = "0"
-    $newVersion = $parts -join '.'
-    Set-Content "VERSION" -Value $newVersion -NoNewline
-    Write-Host "Updated version to $newVersion"
-} -CreatePR -Priority "High"
+Invoke-ReleaseWorkflow -ReleaseType "minor" -Description "New features added"
 
 # Major release (1.2.3 -> 2.0.0)
-Invoke-PatchWorkflow -PatchDescription "Release vX.0.0 - [Major change description]" -PatchOperation {
-    $version = Get-Content "VERSION" -Raw
-    $parts = $version.Trim() -split '\.'
-    $parts[0] = [int]$parts[0] + 1
-    $parts[1] = "0"
-    $parts[2] = "0"
-    $newVersion = $parts -join '.'
-    Set-Content "VERSION" -Value $newVersion -NoNewline
-    Write-Host "Updated version to $newVersion"
-} -CreatePR -Priority "High"
+Invoke-ReleaseWorkflow -ReleaseType "major" -Description "Breaking changes"
 
+# Specific version release
+Invoke-ReleaseWorkflow -Version "1.2.14" -Description "Critical security fix"
+
+# With auto-merge (requires permissions)
+Invoke-ReleaseWorkflow -ReleaseType "patch" -Description "Automated patch" -AutoMerge
+
+# Dry run to preview
+Invoke-ReleaseWorkflow -ReleaseType "minor" -Description "Test release" -DryRun
+
+# The command handles EVERYTHING:
+# ✓ Updates VERSION file
+# ✓ Creates PR with proper description
+# ✓ Waits for PR merge (optional)
+# ✓ Automatically creates and pushes release tag
+# ✓ Monitors build pipeline
+# ✓ No manual steps required!
+
+# Manual approach (if needed):
 # After PR is merged, tag and push the release
 git checkout main
 git pull
@@ -141,14 +135,15 @@ gh run watch
 ### Quick Release Workflow
 
 ```powershell
-# One-command release creation (example for patch release)
+# RECOMMENDED: Use PatchManager's built-in release automation
+Import-Module ./aither-core/modules/PatchManager -Force
+Invoke-ReleaseWorkflow -ReleaseType "patch" -Description "Bug fixes and improvements"
+
+# Alternative: Standalone script (creates PR only, manual tag required)
 ./scripts/Create-Release.ps1 -ReleaseType "patch" -Description "Bug fixes and improvements"
 
-# Create release with specific version
-./scripts/Create-Release.ps1 -Version "1.3.0" -Description "New features added"
-
-# Emergency hotfix release
-./scripts/Create-Release.ps1 -ReleaseType "hotfix" -Description "Critical bug fix" -FastTrack
+# Alternative: Full automation script
+./scripts/Create-AutomatedRelease.ps1 -ReleaseType "patch" -Description "Bug fixes" -SkipPR
 ```
 
 ### Build Testing Commands
