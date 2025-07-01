@@ -12,7 +12,7 @@
 RootModule = 'PatchManager.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.0.0'
+ModuleVersion = '2.2.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -30,7 +30,7 @@ CompanyName = 'Aitherium'
 Copyright = '(c) 2025 Aitherium. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'Simplified and reliable patch management with 4 core functions: workflow, issue creation, PR creation, and rollback. Legacy functions moved to Legacy folder.'
+Description = 'Complete patch and release management for AitherZero. Core functions: workflow, issue creation, PR creation, rollback, and fully automated releases with tag management.'
 
 # Minimum version of the PowerShell engine required by this module
 PowerShellVersion = '7.0'
@@ -82,7 +82,8 @@ FunctionsToExport = @(
     'Get-PatchWorkflowBackup',
     'Test-PatchWorkflowSafety',
     'Restore-PatchWorkflowBackup',
-    'Sync-GitBranch'
+    'Sync-GitBranch',
+    'Invoke-ReleaseWorkflow'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
