@@ -4,7 +4,7 @@
 
 try {
     # Import PatchManager module
-    Import-Module "./aither-core/modules/PatchManager" -Force
+    Import-Module (Join-Path -Path $PSScriptRoot -ChildPath "aither-core/modules/PatchManager") -Force
     
     Write-Host "Creating emergency patch release v1.2.17..." -ForegroundColor Green
     Write-Host "This fixes the critical PowerShell 5.1 compatibility issue in the packaged launcher." -ForegroundColor Yellow
