@@ -1,0 +1,63 @@
+name: 🏷️ Auto-Tag Releases
+run-name: 🏷️ Auto-tagging release for VERSION ${{ github.event.head_commit.message }}
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'VERSION'
+
+jobs:
+  create-tag:
+    name: 🏷️ Create Release Tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          
+      - name: Read Version
+        id: version
+        run: |
+          VERSION=$(cat VERSION | tr -d '[:space:]')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          
+      - name: Check if Tag Exists
+        id: check-tag
+        run: |
+          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Tag v${{ steps.version.outputs.version }} already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Tag v${{ steps.version.outputs.version }} does not exist"
+          fi
+          
+      - name: Create and Push Tag
+        if: steps.check-tag.outputs.exists == 'false'
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          
+          # Get commit message for context
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          
+          # Create annotated tag
+          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"$'\n\n'"$COMMIT_MSG"
+          
+          # Push tag
+          git push origin "v${{ steps.version.outputs.version }}"
+          
+      - name: Summary
+        run: |
+          if [ "${{ steps.check-tag.outputs.exists }}" == "false" ]; then
+            echo "✅ Created and pushed tag v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+            echo "🚀 Build & Release Pipeline will trigger automatically" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ Tag v${{ steps.version.outputs.version }} already exists - skipping" >> $GITHUB_STEP_SUMMARY
+          fi
