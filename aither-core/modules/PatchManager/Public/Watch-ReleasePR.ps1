@@ -117,7 +117,9 @@ function Watch-ReleasePR {
                             if ($LASTEXITCODE -eq 0) {
                                 Write-WatchLog "Tag v$Version pushed successfully!" "SUCCESS"
                                 Write-WatchLog "GitHub Actions Build & Release Pipeline should now trigger" "SUCCESS"
-                                Write-WatchLog "Monitor at: https://github.com/$(git config --get remote.origin.url | sed 's/.*github.com[:/]\([^.]*\).*/\1/')/actions" "INFO"
+                                $remoteUrl = git config --get remote.origin.url
+                                $repoName = $remoteUrl -replace '.*github.com[:/](.*?)(\.git)?$', '$1'
+                                Write-WatchLog "Monitor at: https://github.com/$repoName/actions" "INFO"
                                 return $true
                             } else {
                                 Write-WatchLog "Failed to push tag" "ERROR"
