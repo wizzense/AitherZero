@@ -236,6 +236,67 @@ jobs:
             throw
           }
       
+      - name: Validate Build Features
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Validating build features..." -ForegroundColor Yellow
+          
+          # Determine package directory
+          $packageDir = "dist/aitherzero-${{ matrix.profile }}-${{ matrix.os }}"
+          
+          if (-not (Test-Path $packageDir)) {
+            Write-Error "Package directory not found: $packageDir"
+            exit 1
+          }
+          
+          Write-Host "Validating package at: $packageDir" -ForegroundColor Cyan
+          
+          # Check if validation script exists
+          if (Test-Path "./build/Validate-BuildFeatures.ps1") {
+            Write-Host "Running comprehensive build feature validation..." -ForegroundColor Green
+            ./build/Validate-BuildFeatures.ps1 -BuildPath $packageDir -FailFast
+            
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "❌ Build feature validation failed!"
+              exit $LASTEXITCODE
+            }
+          } else {
+            Write-Host "⚠️ Build validation script not found - performing basic checks..." -ForegroundColor Yellow
+            
+            # Basic validation
+            $requiredFiles = @(
+              "Start-AitherZero.ps1",
+              "aither-core.ps1"
+            )
+            
+            $missingFiles = @()
+            foreach ($file in $requiredFiles) {
+              if (-not (Test-Path (Join-Path $packageDir $file))) {
+                $missingFiles += $file
+              }
+            }
+            
+            if ($missingFiles.Count -gt 0) {
+              Write-Error "Missing required files: $($missingFiles -join ', ')"
+              exit 1
+            }
+            
+            # Check for dynamic menu integration - CRITICAL
+            $coreScript = Join-Path $packageDir "aither-core.ps1"
+            if (Test-Path $coreScript) {
+              $content = Get-Content $coreScript -Raw
+              if ($content -match "Show-DynamicMenu") {
+                Write-Host "✅ Dynamic menu system detected" -ForegroundColor Green
+              } else {
+                Write-Error "❌ CRITICAL: Dynamic menu system NOT found in aither-core.ps1"
+                Write-Error "This means the release would have the old static menu!"
+                exit 1
+              }
+            }
+          }
+          
+          Write-Host "✅ Build feature validation passed!" -ForegroundColor Green
+      
       - name: Create Package Archive
         shell: pwsh
         run: |
