@@ -48,6 +48,22 @@ function Start-IntelligentSetup {
     }
     
     # Display welcome
+    Show-WelcomeMessage -SetupState $setupState
+    
+    # Check if progress tracking is available
+    $progressAvailable = Get-Module -Name 'ProgressTracking' -ListAvailable
+    if ($progressAvailable) {
+        Import-Module ProgressTracking -Force -ErrorAction SilentlyContinue
+    }
+    
+    # Create progress operation if available
+    if (Get-Command Start-ProgressOperation -ErrorAction SilentlyContinue) {
+        $progressId = Start-ProgressOperation `
+            -OperationName "AitherZero Intelligent Setup" `
+            -TotalSteps $setupState.TotalSteps `
+            -ShowTime `
+            -ShowETA
+    }
     Show-SetupBanner
     
     # Run setup steps based on profile
@@ -871,6 +887,7 @@ function Get-SetupSteps {
             @{Name = 'Network Connectivity'; Function = 'Test-NetworkConnectivity'},
             @{Name = 'Security Settings'; Function = 'Test-SecuritySettings'},
             @{Name = 'Configuration Files'; Function = 'Initialize-Configuration'},
+            @{Name = 'Configuration Review'; Function = 'Review-Configuration'},
             @{Name = 'Quick Start Guide'; Function = 'Generate-QuickStartGuide'},
             @{Name = 'Final Validation'; Function = 'Test-SetupCompletion'}
         )
@@ -881,6 +898,7 @@ function Get-SetupSteps {
             @{Name = 'MCP Server Setup'; Function = 'Setup-MCPServer'},
             @{Name = 'Security Settings'; Function = 'Test-SecuritySettings'},
             @{Name = 'Configuration Files'; Function = 'Initialize-Configuration'},
+            @{Name = 'Configuration Review'; Function = 'Review-Configuration'},
             @{Name = 'Quick Start Guide'; Function = 'Generate-QuickStartGuide'},
             @{Name = 'Final Validation'; Function = 'Test-SetupCompletion'}
         )
@@ -892,6 +910,7 @@ function Get-SetupSteps {
             @{Name = 'Cloud CLIs Detection'; Function = 'Test-CloudCLIs'},
             @{Name = 'Security Settings'; Function = 'Test-SecuritySettings'},
             @{Name = 'Configuration Files'; Function = 'Initialize-Configuration'},
+            @{Name = 'Configuration Review'; Function = 'Review-Configuration'},
             @{Name = 'Quick Start Guide'; Function = 'Generate-QuickStartGuide'},
             @{Name = 'Final Validation'; Function = 'Test-SetupCompletion'}
         )
@@ -1133,6 +1152,12 @@ function Test-CloudCLIs {
     return $result
 }
 
+# Load public functions
+$publicFunctions = Get-ChildItem -Path "$PSScriptRoot/Public" -Filter '*.ps1' -ErrorAction SilentlyContinue
+foreach ($function in $publicFunctions) {
+    . $function.FullName
+}
+
 # Export functions
 Export-ModuleMember -Function @(
     'Start-IntelligentSetup',
@@ -1140,5 +1165,7 @@ Export-ModuleMember -Function @(
     'Generate-QuickStartGuide',
     'Get-InstallationProfile',
     'Install-AITools',
-    'Setup-MCPServer'
+    'Setup-MCPServer',
+    'Edit-Configuration',
+    'Review-Configuration'
 )
