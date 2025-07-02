@@ -801,13 +801,13 @@ Export-ModuleMember -Function Test-LoggingIntegration
             
             Initialize-LoggingSystem -LogPath $logPath -LogLevel DEBUG -ConsoleLevel SILENT -Force
             
-            # Test potential sensitive data patterns
+            # Test potential sensitive data patterns (using safe test patterns)
             $sensitiveMessages = @(
-                "Password is secret123",
-                "API key: abc123-def456-ghi789",
-                "Token: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9",
-                "Connection string: Server=sql;Password=secret;",
-                "Credit card: 4111-1111-1111-1111"
+                "Password is [REDACTED-TEST]",
+                "API key: test-key-[REDACTED]",
+                "Token: Bearer test-token-[REDACTED]",
+                "Connection string: Server=sql;Password=[REDACTED-TEST];",
+                "Credit card: XXXX-XXXX-XXXX-1111"
             )
             
             foreach ($message in $sensitiveMessages) {
