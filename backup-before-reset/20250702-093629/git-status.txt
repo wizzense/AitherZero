@@ -1,0 +1,7 @@
+ M .claude/settings.local.json
+ M aither-core/modules/ConfigurationCore/Private/Invoke-ConfigurationReload.ps1
+ M aither-core/modules/ConfigurationCore/Private/Validate-Configuration.ps1
+?? .last_backup_dir
+?? backup-before-reset/
+?? backup-tags-and-releases.ps1
+?? tests/Unit/ConfigurationCore/

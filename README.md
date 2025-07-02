@@ -1,5 +1,12 @@
 # AitherZero Infrastructure Automation
 
+
+## Beta Notice
+
+> **⚠️ This is a beta release (v0.5-beta)**  
+> AitherZero is currently in beta. While core functionality is stable, you may encounter bugs or incomplete features.  
+> We welcome feedback and contributions!
+
 **🚀 Standalone PowerShell automation framework** for OpenTofu/Terraform infrastructure management with comprehensive testing, modular architecture, and AI-powered automation.
 
 [![Build Status](https://github.com/wizzense/AitherZero/actions/workflows/build-release.yml/badge.svg)](https://github.com/wizzense/AitherZero/actions)
@@ -365,3 +372,4 @@ AitherZero Application Package/
 ---
 
 **Made with ❤️ for infrastructure automation**
+
