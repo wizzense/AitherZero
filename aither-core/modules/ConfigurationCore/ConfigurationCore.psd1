@@ -27,9 +27,8 @@
     PowerShellVersion = '7.0'
 
     # Modules that must be imported into the global environment prior to importing this module
-    RequiredModules = @(
-        @{ModuleName = 'Logging'; ModuleVersion = '2.0.0'; GUID = 'B5D8F9A1-C2E3-4F6A-8B9C-1D2E3F4A5B6C'}
-    )
+    # RequiredModules = @()
+    # Note: Logging module is a core dependency and should be loaded by the main script, not as a circular dependency
 
     # Functions to export from this module
     FunctionsToExport = @(
