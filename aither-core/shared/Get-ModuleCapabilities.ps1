@@ -167,10 +167,17 @@ function Get-ModuleCapabilities {
                     }
                 }
                 
+                # Add spaces between camelCase words for display
+                $displayName = $module.Name
+                # Add space before uppercase letters that follow lowercase
+                $displayName = $displayName -replace '([a-z])([A-Z])', '$1 $2'
+                # Handle consecutive capitals (e.g., "AITools" -> "AI Tools")
+                $displayName = $displayName -replace '([A-Z]+)([A-Z][a-z])', '$1 $2'
+                
                 # Create module capability object
                 $moduleCapability = [PSCustomObject]@{
                     Name = $module.Name
-                    DisplayName = $module.Name -replace '([A-Z])', ' $1' -replace '^ ', ''
+                    DisplayName = $displayName
                     Description = $info.Description
                     Category = $info.Category
                     MenuPriority = $info.MenuPriority
