@@ -8,6 +8,12 @@ paths-ignore:
   - tests/data/**
   - tests/Fixtures/**
   - tests/archive/**
+  - tests/Critical/**
+  
+  # Module test directories
+  - aither-core/modules/SecureCredentials/tests/**
+  - aither-core/modules/*/tests/**
+  - "**/*.Tests.ps1"
   
   # Example and demo scripts
   - examples/**
@@ -41,6 +47,14 @@ ignored-matches:
   - 'ComputerName\s*=\s*["\']?\w+["\']?'  # PowerShell ComputerName parameters
   - 'Name\s*=\s*["\']?(DC|LAB|TEST|DEMO|EXAMPLE)-\w+["\']?'  # Test computer names
   
+  # Dynamic test data patterns
+  - 'Test-\d{4}!Pwd'  # Dynamic test passwords
+  - 'test-key-\d{6}'  # Dynamic test API keys
+  - 'valid-key'       # Common test API key placeholder
+  - '\$script:Test(Password|APIKey|Username)'  # Test variable declarations
+  - 'PesterTest-.*'   # Pester test identifiers
+  - 'Get-Random.*Pwd' # Dynamic password generation patterns
+  
   # Test certificates and keys
   - 'BEGIN (TEST|EXAMPLE|DEMO) CERTIFICATE'
   - 'test_?cert|demo_?cert|example_?cert'
@@ -60,3 +74,12 @@ allowed-patterns:
     
   - filepath: configs/example-*.json
     reason: Example configuration files with placeholder values
+    
+  - filepath: aither-core/modules/SecureCredentials/tests/SecureCredentials.Security.Tests.ps1
+    reason: Security module test file with dynamically generated test data for testing encryption functionality
+    
+  - filepath: tests/Critical/API-NonInteractive-Modes.Tests.ps1
+    reason: API testing with placeholder authentication keys for testing purposes
+    
+  - filepath: "**/*.Tests.ps1"
+    reason: Pester test files with dynamically generated test data

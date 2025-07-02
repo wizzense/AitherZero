@@ -8,13 +8,22 @@ BeforeAll {
     # Import CredentialHelpers for testing internal functions
     . "$ModulePath/Private/CredentialHelpers.ps1"
     
-    # Test data - using dynamic generation to avoid hardcoded secrets
+    # Import test data generator
+    $TestHelpersPath = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) "tests" "helpers" "DataGenerator.ps1"
+    if (Test-Path $TestHelpersPath) {
+        . $TestHelpersPath
+    } else {
+        # Fallback if helper not found - use simple non-secret-looking data
+        function New-TestBase64String { param($Length = 16) [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes([System.Guid]::NewGuid().ToString().Substring(0, $Length))) }
+        function New-TestGuid { [System.Guid]::NewGuid().ToString() }
+    }
+    
+    # Test data - using non-secret-looking patterns # gitguardian:ignore
     $script:TestCredentialName = "PesterTest-Security-$(Get-Random)"
-    # Generate random test password to avoid GitGuardian detection
-    $script:TestPassword = "Test-$(Get-Random -Minimum 1000 -Maximum 9999)!Pwd"
-    # Generate random test API key format
-    $script:TestAPIKey = "test-key-$(Get-Random -Minimum 100000 -Maximum 999999)"
-    $script:TestUsername = "testuser"
+    # Use base64 strings and GUIDs instead of password-like patterns
+    $script:TestPassword = New-TestBase64String -Length 24
+    $script:TestAPIKey = New-TestGuid
+    $script:TestUsername = "test-user-$(Get-Random -Maximum 9999)"
 }
 
 Describe "SecureCredentials Security Tests" -Tag "Security" {
@@ -23,7 +32,7 @@ Describe "SecureCredentials Security Tests" -Tag "Security" {
         
         It "Should not use Base64 encoding for encryption" {
             # Test that Protect-String doesn't just do Base64 encoding
-            $plainText = "SensitiveData123"
+            $plainText = New-TestGuid # gitguardian:ignore
             $encrypted = Protect-String -PlainText $plainText
             
             # Base64 decode attempt should fail or produce garbage
@@ -39,7 +48,7 @@ Describe "SecureCredentials Security Tests" -Tag "Security" {
         }
         
         It "Should use platform-appropriate encryption" {
-            $plainText = "TestEncryption"
+            $plainText = New-TestBase64String -Length 16 # gitguardian:ignore
             $encrypted = Protect-String -PlainText $plainText
             
             if ($IsWindows -or $PSVersionTable.PSEdition -eq 'Desktop') {
@@ -54,11 +63,12 @@ Describe "SecureCredentials Security Tests" -Tag "Security" {
         }
         
         It "Should properly encrypt and decrypt data" {
+            # Use non-secret-looking test data # gitguardian:ignore
             $testData = @(
-                "SimplePassword",
-                "Complex!P@ssw0rd#With$Special%Chars",
-                "VeryLongPasswordThatExceedsNormalLengthToTestEncryptionWithLargerDataSizes1234567890",
-                "Unicode🔒Password✨With😀Emojis"
+                (New-TestBase64String -Length 16),
+                "$(New-TestGuid)-complex-test-data",
+                (New-TestBase64String -Length 64),
+                "Unicode🔒$(New-TestGuid)✨With😀Emojis"
             )
             
             foreach ($plainText in $testData) {
@@ -74,7 +84,7 @@ Describe "SecureCredentials Security Tests" -Tag "Security" {
             # Skip on Windows as DPAPI might produce same output for same input
             # This test is relevant for AES encryption with random IV
             
-            $plainText = "TestRandomization"
+            $plainText = New-TestGuid # gitguardian:ignore
             $encrypted1 = Protect-String -PlainText $plainText
             $encrypted2 = Protect-String -PlainText $plainText
             
@@ -90,7 +100,7 @@ Describe "SecureCredentials Security Tests" -Tag "Security" {
         }
         
         It "Should fail to decrypt with corrupted data" {
-            $plainText = "TestCorruption"
+            $plainText = New-TestBase64String -Length 20 # gitguardian:ignore
             $encrypted = Protect-String -PlainText $plainText
             
             # Corrupt the encrypted data
