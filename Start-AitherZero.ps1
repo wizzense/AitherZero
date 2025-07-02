@@ -265,7 +265,7 @@ if (Test-Path $modulesPath) {
     $totalModules = (Get-ChildItem $modulesPath -Directory).Count
     
     # Priority modules that need to load first (to resolve dependencies)
-    $priorityModules = @('Logging', 'ModuleCommunication', 'ConfigurationCore')
+    $priorityModules = @('Logging', 'LicenseManager', 'ModuleCommunication', 'ConfigurationCore')
     
     # Load priority modules first
     foreach ($moduleName in $priorityModules) {
