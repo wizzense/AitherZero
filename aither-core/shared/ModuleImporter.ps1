@@ -13,7 +13,7 @@ function Import-AitherCoreModules {
 
     try {
         # Get project root
-        $ProjectRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+        $ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 
         # Import shared utilities with warning suppression
         $oldWarningPreference = $WarningPreference

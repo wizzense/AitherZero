@@ -5,7 +5,7 @@ BeforeAll {
     } elseif (Test-Path '/workspaces/AitherLabs') { 
         '/workspaces/AitherLabs' 
     } else { 
-        Split-Path -Parent (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))) 
+        Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent 
     }
     
     # Import all available modules for workflow testing

@@ -31,7 +31,7 @@ function Show-DynamicMenu {
         Write-Host "    _    _ _   _               _____                 " -ForegroundColor Cyan -NoNewline
         Write-Host "    $Title" -ForegroundColor Yellow
         Write-Host "   / \  (_) |_| |__   ___ _ _|__  /___ _ __ ___     " -ForegroundColor Cyan -NoNewline
-        Write-Host "    Version $(Get-Content (Join-Path (Split-Path $PSScriptRoot -Parent -Parent) 'VERSION') -ErrorAction SilentlyContinue)" -ForegroundColor DarkGray
+        Write-Host "    Version $(Get-Content (Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) 'VERSION') -ErrorAction SilentlyContinue)" -ForegroundColor DarkGray
         Write-Host "  / _ \ | | __| '_ \ / _ \ '__| / // _ \ '__/ _ \    " -ForegroundColor Cyan
         Write-Host " / ___ \| | |_| | | |  __/ |   / /|  __/ | | (_) |   " -ForegroundColor Cyan
         Write-Host "/_/   \_\_|\__|_| |_|\___|_|  /____\___|_|  \___/    " -ForegroundColor Cyan
