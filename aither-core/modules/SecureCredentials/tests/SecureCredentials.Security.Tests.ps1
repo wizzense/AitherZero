@@ -8,10 +8,12 @@ BeforeAll {
     # Import CredentialHelpers for testing internal functions
     . "$ModulePath/Private/CredentialHelpers.ps1"
     
-    # Test data
+    # Test data - using dynamic generation to avoid hardcoded secrets
     $script:TestCredentialName = "PesterTest-Security-$(Get-Random)"
-    $script:TestPassword = "TestP@ssw0rd123!"
-    $script:TestAPIKey = "sk-test-1234567890abcdef"
+    # Generate random test password to avoid GitGuardian detection
+    $script:TestPassword = "Test-$(Get-Random -Minimum 1000 -Maximum 9999)!Pwd"
+    # Generate random test API key format
+    $script:TestAPIKey = "test-key-$(Get-Random -Minimum 100000 -Maximum 999999)"
     $script:TestUsername = "testuser"
 }
 
@@ -115,6 +117,8 @@ Describe "SecureCredentials Security Tests" -Tag "Security" {
         }
         
         It "Should store passwords as SecureString, not plaintext" {
+            # Suppress analyzer warning - this is a test file using dynamically generated test passwords
+            [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '', Justification = 'Test file using dynamically generated test data')]
             $securePassword = ConvertTo-SecureString $script:TestPassword -AsPlainText -Force
             $cred = New-Object PSCredential($script:TestUsername, $securePassword)
             
@@ -169,6 +173,8 @@ Describe "SecureCredentials Security Tests" -Tag "Security" {
         
         BeforeEach {
             # Create a test credential
+            # Suppress analyzer warning - this is a test file using dynamically generated test passwords
+            [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '', Justification = 'Test file using dynamically generated test data')]
             $securePassword = ConvertTo-SecureString $script:TestPassword -AsPlainText -Force
             $cred = New-Object PSCredential($script:TestUsername, $securePassword)
             New-SecureCredential -CredentialName $script:TestCredentialName -CredentialType "UserPassword" -Credential $cred -Force
