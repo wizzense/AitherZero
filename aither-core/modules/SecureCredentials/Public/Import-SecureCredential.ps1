@@ -61,6 +61,22 @@ function Import-SecureCredential {
             if (-not $importData.Credentials) {
                 throw 'Invalid import file format - no credentials section found'
             }
+            
+            # Check if file contains plaintext secrets
+            if ($importData.ExportInfo.IncludesSecrets -and -not $SkipSecrets) {
+                Write-CustomLog -Level 'WARN' -Message '======== SECURITY WARNING ========'
+                Write-CustomLog -Level 'WARN' -Message 'IMPORTING PLAINTEXT SECRETS!'
+                Write-CustomLog -Level 'WARN' -Message 'This file contains unencrypted passwords/API keys'
+                Write-CustomLog -Level 'WARN' -Message 'Ensure this file was transmitted securely'
+                Write-CustomLog -Level 'WARN' -Message 'Delete the import file after importing'
+                Write-CustomLog -Level 'WARN' -Message '================================'
+                
+                # Check for security warnings in credentials
+                $hasWarnings = $importData.Credentials | Where-Object { $_.WARNING }
+                if ($hasWarnings) {
+                    Write-CustomLog -Level 'WARN' -Message "Found $($hasWarnings.Count) credentials with security warnings"
+                }
+            }
 
             $importResults = @{
                 Success             = $true

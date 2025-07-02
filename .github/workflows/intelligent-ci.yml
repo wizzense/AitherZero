@@ -14,6 +14,11 @@ on:
         default: 'false'
         type: boolean
 
+# Prevent multiple CI runs on the same branch/PR to avoid resource conflicts
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
 
@@ -80,9 +85,14 @@ jobs:
       - name: Install PowerShell 7 (Linux)
         if: runner.os == 'Linux'
         run: |
-          # Download and install PowerShell 7
-          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.4.1/powershell_7.4.1-1.deb_amd64.deb
-          sudo dpkg -i powershell_7.4.1-1.deb_amd64.deb
+          # Get latest PowerShell stable release
+          LATEST_PS=$(curl -s https://api.github.com/repos/PowerShell/PowerShell/releases/latest | grep "tag_name" | cut -d '"' -f 4)
+          PS_VERSION=${LATEST_PS#v}
+          echo "Installing PowerShell $PS_VERSION"
+          
+          # Download and install latest stable PowerShell
+          wget -q "https://github.com/PowerShell/PowerShell/releases/download/${LATEST_PS}/powershell_${PS_VERSION}-1.deb_amd64.deb"
+          sudo dpkg -i "powershell_${PS_VERSION}-1.deb_amd64.deb"
           sudo apt-get install -f -y
         
       - name: Install PowerShell 7 (macOS)
@@ -194,7 +204,7 @@ jobs:
           name: security-analysis-results-${{ github.run_number }}
           path: |
             security-analysis-results.xml
-          retention-days: 30
+          retention-days: 90
 
   cross-platform-tests:
     name: 🧪 Cross-Platform Tests
@@ -274,7 +284,7 @@ jobs:
         with:
           name: test-results-${{ matrix.os }}-${{ github.run_number }}
           path: TestResults-*
-          retention-days: 30
+          retention-days: 14
 
   code-coverage-analysis:
     name: 📊 Code Coverage Analysis  
@@ -327,7 +337,7 @@ jobs:
             coverage*.xml
             coverage*.html
             coverage*.txt
-          retention-days: 30
+          retention-days: 180
         
       - name: Upload to Codecov
         uses: codecov/codecov-action@v4
@@ -377,37 +387,100 @@ jobs:
             Write-Host "✅ All module manifests are valid" -ForegroundColor Green
           }
         
-      - name: Quick Package Integrity Test
+      - name: Comprehensive Package Integrity Test
         shell: pwsh
         run: |
-          Write-Host "📦 Testing package integrity..." -ForegroundColor Yellow
+          Write-Host "📦 Testing comprehensive package integrity..." -ForegroundColor Yellow
           
           try {
-            # Test minimal profile package creation
+            # Test package integrity using the dedicated script
             if (Test-Path "./scripts/Test-PackageIntegrity.ps1") {
-              ./scripts/Test-PackageIntegrity.ps1 -Profile minimal
-            } else {
-              Write-Host "Package integrity test script not found, performing basic checks..." -ForegroundColor Yellow
+              Write-Host "Running comprehensive package integrity tests..." -ForegroundColor Cyan
               
-              # Basic integrity checks
-              $coreFiles = @(
-                "Start-AitherZero.ps1",
-                "aither-core/aither-core.ps1",
-                "aither-core/shared/Find-ProjectRoot.ps1"
+              # Create a test package directory structure
+              $testPackageDir = "test-package-integrity"
+              if (Test-Path $testPackageDir) {
+                Remove-Item $testPackageDir -Recurse -Force
+              }
+              
+              # Copy current repository structure for testing
+              Copy-Item -Path "." -Destination $testPackageDir -Recurse -Exclude @('.git', 'build-output', 'TestResults-*', '*.tmp')
+              
+              # Run package integrity tests
+              ./scripts/Test-PackageIntegrity.ps1 -PackagePath $testPackageDir -Platform "linux" -PackageProfile "standard" -GenerateReport -QuickCheck
+              
+              # Check if validation report was generated
+              if (Test-Path "$testPackageDir/VALIDATION-REPORT.md") {
+                Write-Host "📊 Validation report generated successfully" -ForegroundColor Green
+                Get-Content "$testPackageDir/VALIDATION-REPORT.md" | Select-Object -First 20
+              }
+              
+            } else {
+              Write-Host "Package integrity test script not found, performing enhanced basic checks..." -ForegroundColor Yellow
+              
+              # Enhanced basic integrity checks
+              $coreChecks = @{
+                "Critical Files" = @(
+                  "Start-AitherZero.ps1",
+                  "aither-core/aither-core.ps1",
+                  "aither-core/shared/Find-ProjectRoot.ps1",
+                  "VERSION",
+                  "README.md",
+                  "LICENSE"
+                )
+                "Configuration Files" = @(
+                  "configs/default-config.json",
+                  "tests/config/PSScriptAnalyzerSettings.psd1"
+                )
+                "Module Directories" = @(
+                  "aither-core/modules/Logging",
+                  "aither-core/modules/PatchManager",
+                  "aither-core/modules/TestingFramework"
+                )
+              }
+              
+              foreach ($category in $coreChecks.Keys) {
+                Write-Host "`n🔍 Checking $category..." -ForegroundColor Cyan
+                foreach ($item in $coreChecks[$category]) {
+                  if (Test-Path $item) {
+                    Write-Host "  ✅ $item" -ForegroundColor Green
+                  } else {
+                    Write-Host "  ❌ $item" -ForegroundColor Red
+                    throw "Critical $category missing: $item"
+                  }
+                }
+              }
+              
+              # Test module manifest validity
+              Write-Host "`n🔍 Validating core module manifests..." -ForegroundColor Cyan
+              $coreManifests = @(
+                "aither-core/modules/Logging/Logging.psd1",
+                "aither-core/modules/PatchManager/PatchManager.psd1",
+                "aither-core/modules/TestingFramework/TestingFramework.psd1"
               )
               
-              foreach ($file in $coreFiles) {
-                if (-not (Test-Path $file)) {
-                  throw "Critical file missing: $file"
+              foreach ($manifest in $coreManifests) {
+                if (Test-Path $manifest) {
+                  try {
+                    $null = Test-ModuleManifest -Path $manifest -ErrorAction Stop
+                    Write-Host "  ✅ $manifest" -ForegroundColor Green
+                  } catch {
+                    Write-Host "  ❌ $manifest - Invalid: $($_.Exception.Message)" -ForegroundColor Red
+                    throw "Invalid module manifest: $manifest"
+                  }
                 }
-                Write-Host "  ✅ $file" -ForegroundColor Green
               }
             }
             
-            Write-Host "✅ Package integrity validation completed" -ForegroundColor Green
+            Write-Host "`n✅ Comprehensive package integrity validation completed" -ForegroundColor Green
           } catch {
             Write-Host "❌ Package integrity test failed: $_" -ForegroundColor Red
             throw
+          } finally {
+            # Cleanup test directory
+            if (Test-Path "test-package-integrity") {
+              Remove-Item "test-package-integrity" -Recurse -Force -ErrorAction SilentlyContinue
+            }
           }
 
   failure-summary:

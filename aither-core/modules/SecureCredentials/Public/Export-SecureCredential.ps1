@@ -38,7 +38,21 @@ function Export-SecureCredential {
         Write-CustomLog -Level 'INFO' -Message "Exporting secure credential: $CredentialName"
 
         if ($IncludeSecrets) {
-            Write-CustomLog -Level 'WARN' -Message 'Including secrets in export - ensure secure handling of export file'
+            Write-CustomLog -Level 'WARN' -Message '======== SECURITY WARNING ========'
+            Write-CustomLog -Level 'WARN' -Message 'INCLUDING SECRETS IN PLAINTEXT!'
+            Write-CustomLog -Level 'WARN' -Message 'This export will contain unencrypted passwords/API keys'
+            Write-CustomLog -Level 'WARN' -Message 'Ensure secure handling and transmission of export file'
+            Write-CustomLog -Level 'WARN' -Message 'Delete the export file immediately after use'
+            Write-CustomLog -Level 'WARN' -Message '================================'
+            
+            # Interactive warning prompt
+            if (-not $PSCmdlet.MyInvocation.BoundParameters.ContainsKey('WhatIf')) {
+                $confirmation = Read-Host "Are you sure you want to export secrets in plaintext? (yes/no)"
+                if ($confirmation -ne 'yes') {
+                    Write-CustomLog -Level 'INFO' -Message 'Export cancelled by user'
+                    return
+                }
+            }
         }
     }
 
@@ -92,6 +106,7 @@ function Export-SecureCredential {
                                 [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($storedCred.Credential.Password)
                             )
                             $credentialExport.Password = $plainPassword
+                            $credentialExport.WARNING = "PASSWORD EXPORTED IN PLAINTEXT - HANDLE WITH EXTREME CARE"
                         }
                     }
                 }
@@ -104,6 +119,7 @@ function Export-SecureCredential {
                                 [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($storedCred.Credential.Password)
                             )
                             $credentialExport.Password = $plainPassword
+                            $credentialExport.WARNING = "PASSWORD EXPORTED IN PLAINTEXT - HANDLE WITH EXTREME CARE"
                         }
                     }
                 }
@@ -112,6 +128,7 @@ function Export-SecureCredential {
                         $storedCred = Get-SecureCredential -CredentialName $CredentialName
                         if ($storedCred) {
                             $credentialExport.APIKey = $storedCred.APIKey
+                            $credentialExport.WARNING = "API KEY EXPORTED IN PLAINTEXT - HANDLE WITH EXTREME CARE"
                         }
                     }
                 }

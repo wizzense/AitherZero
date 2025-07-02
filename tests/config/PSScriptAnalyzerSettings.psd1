@@ -1,10 +1,15 @@
+# PSScriptAnalyzer Configuration for AitherZero
+# 
+# Policy: Do not use global rule exclusions. Instead:
+# 1. Fix the code to comply with best practices
+# 2. Use targeted suppressions with [Diagnostics.CodeAnalysis.SuppressMessageAttribute] when truly necessary
+# 3. Always provide clear justification for any suppression
+#
+# Security rules should NEVER be globally suppressed.
+
 @{
     ExcludeRules = @(
-        'PSAvoidUsingWriteHost',  # We use Write-Host for colored console output
-        'PSUseShouldProcessForStateChangingFunctions',  # Not all functions need this
-        'PSAvoidUsingConvertToSecureStringWithPlainText',  # Legitimate use in credential modules
-        'PSAvoidUsingComputerNameHardcoded',  # Example scripts may use hardcoded names
-        'PSAvoidUsingEmptyCatchBlock'  # Some catch blocks intentionally suppress errors
+        # No global exclusions - use targeted suppressions where necessary
     )
     IncludeDefaultRules = $true
     Severity = @('Error', 'Warning', 'Information')

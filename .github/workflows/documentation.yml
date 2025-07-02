@@ -156,24 +156,17 @@ jobs:
                     if ($exportedFunctions) {
                       Write-Host "  Found $($exportedFunctions.Count) exported functions" -ForegroundColor Green
                       
-                      # Create module overview
-                      $moduleOverview = @"
-# `$moduleName Module
-
-**Module Path**: aither-core/modules/`$moduleName
-**Exported Functions**: `$(`$exportedFunctions.Count)
-
-## Functions
-
-`$(`$exportedFunctions | ForEach-Object { "- [`$(`$_.Name)](./" + `$_.Name + ".md)" } | Out-String)
-
-## Module Description
-
-This module is part of the AitherZero PowerShell automation framework.
-
----
-*Generated on `$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')*
-"@
+                      # Create module overview using string concatenation to avoid YAML parsing issues
+                      $functionsList = $exportedFunctions | ForEach-Object { "- [$($_.Name)](./$($_.Name).md)" } | Out-String
+                      $moduleOverview = "# $moduleName Module`n`n" +
+                        "Module Path: aither-core/modules/$moduleName`n" +
+                        "Exported Functions: $($exportedFunctions.Count)`n`n" +
+                        "## Functions`n`n" +
+                        "$functionsList`n" +
+                        "## Module Description`n`n" +
+                        "This module is part of the AitherZero PowerShell automation framework.`n`n" +
+                        "---`n" +
+                        "Generated on $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')`n"
                       
                       $moduleOverview | Out-File (Join-Path $moduleDocsPath "README.md") -Encoding UTF8
                       
@@ -181,42 +174,23 @@ This module is part of the AitherZero PowerShell automation framework.
                       foreach ($function in $exportedFunctions) {
                         try {
                           $help = Get-Help $function.Name -Full
-                          $functionDoc = @"
-# `$(`$function.Name)
-
-## Synopsis
-`$(`$help.Synopsis)
-
-## Description
-`$(`$help.Description.Text -join "``n``n")
-
-## Syntax
-``````powershell
-`$(`$help.Syntax.syntaxItem | ForEach-Object { `$_.name + " " + (`$_.parameter | ForEach-Object { "[-`$(`$_.name) <`$(`$_.type.name)>]" }) -join " " })
-``````
-
-## Parameters
-`$(`$help.Parameters.parameter | ForEach-Object {
-"### -`$(`$_.name)
-**Type**: `$(`$_.type.name)
-**Required**: `$(`$_.required)
-**Position**: `$(`$_.position)
-
-`$(`$_.description.text)"
-} | Out-String)
-
-## Examples
-`$(`$help.Examples.example | ForEach-Object {
-"### Example `$(`$_.title -replace 'EXAMPLE ', '')
-``````powershell
-`$(`$_.code)
-``````
-`$(`$_.remarks.text)"
-} | Out-String)
-
----
-*Generated on `$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')*
-"@
+                          # Use string concatenation to avoid YAML parsing issues
+                          $syntaxInfo = $help.Syntax.syntaxItem | ForEach-Object { $_.name + " " + ($_.parameter | ForEach-Object { "[-$($_.name) <$($_.type.name)>]" }) -join " " }
+                          $parametersInfo = $help.Parameters.parameter | ForEach-Object {
+                            "### -$($_.name)`n**Type**: $($_.type.name)`n**Required**: $($_.required)`n**Position**: $($_.position)`n`n$($_.description.text)"
+                          } | Out-String
+                          $examplesInfo = $help.Examples.example | ForEach-Object {
+                            "### Example $($_.title -replace 'EXAMPLE ', '')`n``````powershell`n$($_.code)`n``````n$($_.remarks.text)"
+                          } | Out-String
+                          
+                          $functionDoc = "# $($function.Name)`n`n" +
+                            "## Synopsis`n$($help.Synopsis)`n`n" +
+                            "## Description`n$($help.Description.Text -join "`n`n")`n`n" +
+                            "## Syntax`n``````powershell`n$syntaxInfo`n``````n`n" +
+                            "## Parameters`n$parametersInfo`n" +
+                            "## Examples`n$examplesInfo`n" +
+                            "---`n" +
+                            "Generated on $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')`n"
                           
                           $functionDoc | Out-File (Join-Path $moduleDocsPath "$($function.Name).md") -Encoding UTF8
                           Write-Host "    ✅ Generated docs for $($function.Name)" -ForegroundColor Green
@@ -238,29 +212,22 @@ This module is part of the AitherZero PowerShell automation framework.
               }
               
               # Generate master API index
-              $apiIndex = @"
-# AitherZero API Documentation
-
-This directory contains auto-generated API documentation for all AitherZero PowerShell modules.
-
-## Available Modules
-
-`$(`$moduleDirectories | ForEach-Object { "- [`$(`$_.Name)](./`$((`$_.Name))/README.md)" } | Out-String)
-
-## About
-
-AitherZero is a standalone PowerShell automation framework for OpenTofu/Terraform infrastructure management.
-
-**Technology Stack:**
-- Primary Language: PowerShell 7.0+
-- Infrastructure: OpenTofu/Terraform  
-- Testing: Pester framework
-- CI/CD: GitHub Actions
-
----
-*Last updated: `$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')*
-*Generated by: GitHub Actions Documentation Pipeline*
-"@
+              # Use string concatenation to avoid YAML parsing issues
+              $modulesList = $moduleDirectories | ForEach-Object { "- [$($_.Name)](./$($_.Name)/README.md)" } | Out-String
+              $apiIndex = "# AitherZero API Documentation`n`n" +
+                "This directory contains auto-generated API documentation for all AitherZero PowerShell modules.`n`n" +
+                "## Available Modules`n`n" +
+                "$modulesList`n" +
+                "## About`n`n" +
+                "AitherZero is a standalone PowerShell automation framework for OpenTofu/Terraform infrastructure management.`n`n" +
+                "Technology Stack:`n" +
+                "- Primary Language: PowerShell 7.0+`n" +
+                "- Infrastructure: OpenTofu/Terraform`n" +
+                "- Testing: Pester framework`n" +
+                "- CI/CD: GitHub Actions`n`n" +
+                "---`n" +
+                "Last updated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')`n" +
+                "Generated by: GitHub Actions Documentation Pipeline`n"
               
               $apiIndex | Out-File (Join-Path $docsPath "README.md") -Encoding UTF8
             }

@@ -1,0 +1,19 @@
+{
+  "TestCounts": {
+    "Passed": null,
+    "Total": null,
+    "Failed": null,
+    "Skipped": null
+  },
+  "Performance": {
+    "TargetTime": 45,
+    "TestsPerSecond": 0.0,
+    "ParallelJobs": 4,
+    "WithinTarget": true
+  },
+  "TestRunTime": "2025-07-01T22:29:34.2397939-07:00",
+  "Duration": 1.5683854,
+  "TestPaths": 3,
+  "EnhancementFlags": [],
+  "ValidationLevel": "Quick"
+}
