@@ -49,11 +49,27 @@ function Get-ADSecurityAssessment {
     begin {
         Write-CustomLog -Level 'INFO' -Message "Starting Active Directory security assessment for domain: $Domain"
         
+        # Check if ActiveDirectory module is available
+        if (-not (Get-Module -ListAvailable -Name ActiveDirectory)) {
+            $errorMessage = "ActiveDirectory module is not available on this system. This function requires:"
+            $errorMessage += "`n  - Windows Server with AD DS role"
+            $errorMessage += "`n  - Windows 10/11 with RSAT (Remote Server Administration Tools)"
+            $errorMessage += "`n  - PowerShell ActiveDirectory module installed"
+            $errorMessage += "`n`nTo install RSAT on Windows 10/11:"
+            $errorMessage += "`n  Add-WindowsCapability -Online -Name Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0"
+            
+            Write-CustomLog -Level 'ERROR' -Message $errorMessage
+            Write-Warning "ActiveDirectory module not available. Skipping AD security assessment."
+            return $null
+        }
+        
         try {
             Import-Module ActiveDirectory -ErrorAction Stop
+            Write-CustomLog -Level 'DEBUG' -Message "ActiveDirectory module imported successfully"
         } catch {
             Write-CustomLog -Level 'ERROR' -Message "Failed to import ActiveDirectory module: $($_.Exception.Message)"
-            throw
+            Write-Warning "Cannot perform AD security assessment. ActiveDirectory module import failed."
+            return $null
         }
         
         $AssessmentResults = @{

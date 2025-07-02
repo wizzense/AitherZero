@@ -7,9 +7,9 @@
     Copyright = '(c) 2025 AitherZero Project. All rights reserved.'
     Description = 'PowerShell security automation module for enterprise security management'
     PowerShellVersion = '7.0'
-    RequiredModules = @(
-        @{ ModuleName = 'ActiveDirectory'; RequiredVersion = '1.0.0.0' }
-    )
+    # RequiredModules = @()
+    # Note: ActiveDirectory module is optional and only required for AD-specific functions.
+    # Functions that need ActiveDirectory will check for its availability at runtime.
     FunctionsToExport = @(
         # Active Directory
         'Get-ADSecurityAssessment',

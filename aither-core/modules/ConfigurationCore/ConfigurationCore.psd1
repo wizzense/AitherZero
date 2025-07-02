@@ -28,7 +28,7 @@
 
     # Modules that must be imported into the global environment prior to importing this module
     RequiredModules = @(
-        @{ModuleName = 'Logging'; ModuleVersion = '1.0.0'; GUID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'}
+        @{ModuleName = 'Logging'; ModuleVersion = '2.0.0'; GUID = 'B5D8F9A1-C2E3-4F6A-8B9C-1D2E3F4A5B6C'}
     )
 
     # Functions to export from this module
