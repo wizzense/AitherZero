@@ -33,8 +33,8 @@
     # Functions to export from this module
     FunctionsToExport = @(
         # Message Bus Functions
-        'Publish-ModuleMessage',
-        'Subscribe-ModuleMessage',
+        'Send-ModuleMessage',
+        'Register-ModuleMessageHandler',
         'Unsubscribe-ModuleMessage',
         'Get-MessageSubscriptions',
         'Clear-MessageQueue',
@@ -58,8 +58,8 @@
         'Get-APIMiddleware',
         
         # Event System (Enhanced)
-        'Publish-ModuleEvent',
-        'Subscribe-ModuleEvent',
+        'Send-ModuleEvent',
+        'Register-ModuleEventHandler',
         'Unsubscribe-ModuleEvent',
         'Get-ModuleEvents',
         'Clear-EventHistory',
@@ -74,7 +74,13 @@
         'Test-ModuleCommunication',
         'Get-CommunicationStatus',
         'Start-MessageProcessor',
-        'Stop-MessageProcessor'
+        'Stop-MessageProcessor',
+        
+        # Backward Compatibility Aliases
+        'Publish-ModuleMessage',
+        'Subscribe-ModuleMessage', 
+        'Publish-ModuleEvent',
+        'Subscribe-ModuleEvent'
     )
 
     # Cmdlets to export from this module
