@@ -40,16 +40,8 @@ param(
 $ProgressPreference = 'SilentlyContinue'
 $VerbosePreference = 'Continue'
 
-function Find-ProjectRoot {
-    $currentPath = $PSScriptRoot
-    while ($currentPath -and -not (Test-Path (Join-Path $currentPath "Start-AitherZero.ps1"))) {
-        $currentPath = Split-Path $currentPath -Parent
-    }
-    if (-not $currentPath) {
-        throw "Could not find project root (looking for Start-AitherZero.ps1)"
-    }
-    return $currentPath
-}
+# Source the shared Find-ProjectRoot implementation
+. "$PSScriptRoot/../aither-core/shared/Find-ProjectRoot.ps1"
 
 function Get-ModuleInfo {
     param(
