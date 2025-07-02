@@ -1,17 +1,17 @@
-function Subscribe-ModuleEvent {
+function Register-ModuleEventHandler {
     <#
     .SYNOPSIS
-        Subscribe to module events
+        Register a handler for module events
     .DESCRIPTION
-        Simplified event subscription wrapper around message subscription
+        Simplified event handler registration wrapper around message subscription
     .PARAMETER EventName
-        Event name to subscribe to (supports wildcards)
+        Event name to register handler for (supports wildcards)
     .PARAMETER Handler
         ScriptBlock to execute when event occurs
     .PARAMETER Channel
         Channel to listen on (default: 'Events')
     .EXAMPLE
-        Subscribe-ModuleEvent -EventName "Configuration*" -Handler {
+        Register-ModuleEventHandler -EventName "Configuration*" -Handler {
             param($Event)
             Write-Host "Configuration event: $($Event.Name)"
         }
@@ -36,8 +36,8 @@ function Subscribe-ModuleEvent {
         & $Handler $event
     }.GetNewClosure()
     
-    # Subscribe to messages with event type
-    $subscription = Subscribe-ModuleMessage `
+    # Register handler for messages with event type
+    $subscription = Register-ModuleMessageHandler `
         -Channel $Channel `
         -MessageType "Event:$EventName" `
         -Handler $messageHandler `

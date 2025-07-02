@@ -1,9 +1,9 @@
-function Publish-ModuleEvent {
+function Send-ModuleEvent {
     <#
     .SYNOPSIS
-        Publish an event for module communication
+        Send an event for module communication
     .DESCRIPTION
-        Enhanced event publishing with channel support and persistence
+        Enhanced event sending with channel support and persistence
     .PARAMETER EventName
         Name of the event
     .PARAMETER EventData
@@ -15,7 +15,7 @@ function Publish-ModuleEvent {
     .PARAMETER Persist
         Store in event history
     .EXAMPLE
-        Publish-ModuleEvent -EventName "ConfigurationChanged" -EventData @{
+        Send-ModuleEvent -EventName "ConfigurationChanged" -EventData @{
             Module = "LabRunner"
             Setting = "MaxJobs"
             OldValue = 5
@@ -69,11 +69,11 @@ function Publish-ModuleEvent {
         if ($Broadcast) {
             # Send to all channels
             foreach ($channelName in $script:MessageBus.Channels.Keys) {
-                Publish-ModuleMessage -Channel $channelName -MessageType "Event:$EventName" -Data $event -Priority 'Normal'
+                Send-ModuleMessage -Channel $channelName -MessageType "Event:$EventName" -Data $event -Priority 'Normal'
             }
         } else {
             # Send to specific channel
-            Publish-ModuleMessage -Channel $Channel -MessageType "Event:$EventName" -Data $event -Priority 'Normal'
+            Send-ModuleMessage -Channel $Channel -MessageType "Event:$EventName" -Data $event -Priority 'Normal'
         }
         
         # Update channel activity

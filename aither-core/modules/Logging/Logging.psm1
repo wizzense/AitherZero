@@ -2,7 +2,7 @@
 
 <#
 .SYNOPSIS
-    Comprehensive centralized logging system for OpenTofu Lab Automation
+    Comprehensive centralized logging system for AitherZero
 
 .DESCRIPTION
     Enterprise-grade logging module providing:
@@ -30,11 +30,11 @@ $script:LoggingConfig = @{
     LogFilePath = if ($env:LAB_LOG_PATH) {
         $env:LAB_LOG_PATH
     } elseif ($env:TEMP) {
-        (Join-Path $env:TEMP "opentofu-lab-automation.log")
+        (Join-Path $env:TEMP "AitherZero.log")
     } elseif (Test-Path '/tmp') {
-        "/tmp/opentofu-lab-automation.log"
+        "/tmp/AitherZero.log"
     } else {
-        (Join-Path (Get-Location) "logs/opentofu-lab-automation.log")
+        (Join-Path (Get-Location) "logs/AitherZero.log")
     }
     MaxLogSizeMB = if ($env:LAB_MAX_LOG_SIZE_MB) { [int]$env:LAB_MAX_LOG_SIZE_MB } else { 50 }
     MaxLogFiles = if ($env:LAB_MAX_LOG_FILES) { [int]$env:LAB_MAX_LOG_FILES } else { 10 }
@@ -114,7 +114,7 @@ function Initialize-LoggingSystem {
     # Initialize log file with session header
     $sessionHeader = @"
 ================================================================================
-OpenTofu Lab Automation - New Session Started
+AitherZero - New Session Started
 ================================================================================
 Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
 PowerShell Version: $($PSVersionTable.PSVersion)

@@ -1,23 +1,23 @@
-function Subscribe-ModuleMessage {
+function Register-ModuleMessageHandler {
     <#
     .SYNOPSIS
-        Subscribe to messages on a specific channel
+        Register a handler for messages on a specific channel
     .DESCRIPTION
         Register a handler to receive messages from a channel with optional filtering
     .PARAMETER Channel
-        Channel to subscribe to
+        Channel to register handler for
     .PARAMETER Handler
         ScriptBlock to execute when message is received
     .PARAMETER MessageType
         Optional message type filter
     .PARAMETER SubscriberModule
-        Module subscribing to messages
+        Module registering handler for messages
     .PARAMETER Filter
         Additional filter scriptblock
     .PARAMETER RunAsync
         Run handler asynchronously
     .EXAMPLE
-        Subscribe-ModuleMessage -Channel "Configuration" -MessageType "ConfigChanged" -Handler {
+        Register-ModuleMessageHandler -Channel "Configuration" -MessageType "ConfigChanged" -Handler {
             param($Message)
             Write-Host "Config changed: $($Message.Data.Module)"
         }
@@ -50,8 +50,8 @@ function Subscribe-ModuleMessage {
             New-MessageChannel -Name $Channel | Out-Null
         }
         
-        # Create subscription
-        $subscription = @{
+        # Create handler registration
+        $handlerRegistration = @{
             Id = [Guid]::NewGuid().ToString()
             Channel = $Channel
             MessageType = $MessageType
@@ -65,28 +65,28 @@ function Subscribe-ModuleMessage {
             Errors = @()
         }
         
-        # Add to subscriptions
-        $subscriptionKey = "$Channel|$($subscription.Id)"
-        if (-not $script:MessageBus.Subscriptions.TryAdd($subscriptionKey, $subscription)) {
-            throw "Failed to add subscription"
+        # Add to handler registrations
+        $handlerKey = "$Channel|$($handlerRegistration.Id)"
+        if (-not $script:MessageBus.Subscriptions.TryAdd($handlerKey, $handlerRegistration)) {
+            throw "Failed to add handler registration"
         }
         
         # Update channel subscription count
         $channelInfo = $script:MessageBus.Channels[$Channel]
         $channelInfo.SubscriptionCount++
         
-        Write-CustomLog -Level 'INFO' -Message "Subscription created: Channel=$Channel, Type=$MessageType, ID=$($subscription.Id)"
+        Write-CustomLog -Level 'INFO' -Message "Handler registered: Channel=$Channel, Type=$MessageType, ID=$($handlerRegistration.Id)"
         
-        # Return subscription info for management
+        # Return handler info for management
         return @{
-            SubscriptionId = $subscription.Id
+            SubscriptionId = $handlerRegistration.Id
             Channel = $Channel
             MessageType = $MessageType
             SubscriberModule = $SubscriberModule
         }
         
     } catch {
-        Write-CustomLog -Level 'ERROR' -Message "Failed to create subscription: $_"
+        Write-CustomLog -Level 'ERROR' -Message "Failed to register handler: $_"
         throw
     }
 }

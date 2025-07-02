@@ -1,11 +1,11 @@
-function Publish-ModuleMessage {
+function Send-ModuleMessage {
     <#
     .SYNOPSIS
-        Publish a message to a module communication channel
+        Send a message to a module communication channel
     .DESCRIPTION
         Sends a message to all subscribers of a specific channel with optional filtering
     .PARAMETER Channel
-        The channel to publish to
+        The channel to send to
     .PARAMETER MessageType
         Type of message for filtering
     .PARAMETER Data
@@ -17,7 +17,7 @@ function Publish-ModuleMessage {
     .PARAMETER TimeToLive
         Message expiration time in seconds
     .EXAMPLE
-        Publish-ModuleMessage -Channel "Configuration" -MessageType "ConfigChanged" -Data @{Module="LabRunner"; Setting="MaxJobs"} -SourceModule "ConfigurationCore"
+        Send-ModuleMessage -Channel "Configuration" -MessageType "ConfigChanged" -Data @{Module="LabRunner"; Setting="MaxJobs"} -SourceModule "ConfigurationCore"
     #>
     [CmdletBinding()]
     param(
@@ -71,7 +71,7 @@ function Publish-ModuleMessage {
         
         # Trace if enabled
         if ($script:Configuration.EnableTracing) {
-            Write-CustomLog -Level 'DEBUG' -Message "Message published: Channel=$Channel, Type=$MessageType, ID=$($message.Id)"
+            Write-CustomLog -Level 'DEBUG' -Message "Message sent: Channel=$Channel, Type=$MessageType, ID=$($message.Id)"
         }
         
         # Wake up processor if high priority
@@ -83,7 +83,7 @@ function Publish-ModuleMessage {
         return $message.Id
         
     } catch {
-        Write-CustomLog -Level 'ERROR' -Message "Failed to publish message: $_"
+        Write-CustomLog -Level 'ERROR' -Message "Failed to send message: $_"
         throw
     }
 }
