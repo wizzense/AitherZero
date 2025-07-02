@@ -122,7 +122,6 @@ function Import-AitherCoreModules {
         throw    }
 }
 
-# Export the function for use in scripts (only if we're in a module context)
-if ($MyInvocation.MyCommand.ScriptBlock.Module) {
-    Export-ModuleMember -Function Import-AitherCoreModules
-}
+# Function is automatically available when dot-sourced
+# Export-ModuleMember is only valid in .psm1 modules, not dot-sourced .ps1 files
+# The conditional check doesn't work reliably for dot-sourced scripts

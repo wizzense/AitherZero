@@ -15,33 +15,51 @@
 >
 > See [HOTFIX-README.md](HOTFIX-README.md) for detailed instructions.
 
-## ⚡ Quick Start - One-Click Setup (30 seconds)
+## ⚡ Quick Start - Modern CLI Interface (30 seconds)
 
-### 🎉 NEW: Interactive Quickstart Experience!
+### 🎉 NEW: Modern CLI Interface (v1.4.1)
 
-```powershell
-# First-time users - try our new interactive quickstart:
+AitherZero now features a **clean, modern CLI** that's consistent with tools like `docker`, `kubectl`, and `gh`:
+
+```bash
+# 🚀 RECOMMENDED: New Modern CLI Interface
+./aither.ps1 help                              # Show all commands
+./aither.ps1 init                              # Interactive setup
+./aither.ps1 dev release patch "Bug fix"       # Development workflow  
+./aither.ps1 deploy plan ./infrastructure      # Infrastructure deployment
+```
+
+**Windows users** can use the convenient batch wrapper:
+```cmd
+aither help
+aither init
+aither dev release patch "Bug fix"
+```
+
+### ⚡ Super Quick Setup (2 minutes):
+
+```bash
+# Option 1: Streamlined setup (RECOMMENDED)
+./quick-setup-simple.ps1
+
+# Option 2: Modern CLI setup
+./aither.ps1 init
+
+# Option 3: Traditional interactive setup
 ./Start-AitherZero.ps1 -Quickstart
 ```
 
-This launches:
-- ✨ **Enhanced Interactive UI** with rich terminal experience
-- 🎯 **Module Explorer** to discover all available features
-- 📦 **Configuration Manager** with visual editing
-- 🔐 **License Management** for feature tiers
-- 💾 **Profile System** with GitHub sync
-
-### 🔥 Traditional Quick Start - Just 3 Steps:
+### 🔥 Platform-Specific Quick Start:
 
 #### 🖱️ **Windows (One-Click)**
 1. **Download**: Go to **[Releases](https://github.com/wizzense/AitherZero/releases/latest)** → Download `AitherZero-*-windows.zip`
 2. **Extract**: Right-click → Extract All
-3. **Run**: Double-click `AitherZero.bat` or use `.\Start-AitherZero.ps1 -Quickstart` ✨
+3. **Run**: Double-click `aither.bat` (new!) or `AitherZero.bat` (legacy) ✨
 
 #### 🐧 **Linux/macOS (One-Command)**
 ```bash
 # One command downloads and runs AitherZero:
-curl -s https://api.github.com/repos/wizzense/AitherZero/releases/latest | grep "browser_download_url.*$(uname -s | tr '[:upper:]' '[:lower:]').tar.gz" | head -1 | cut -d '"' -f 4 | xargs curl -L | tar -xz && cd AitherZero-* && ./Start-AitherZero.ps1 -Quickstart
+curl -s https://api.github.com/repos/wizzense/AitherZero/releases/latest | grep "browser_download_url.*$(uname -s | tr '[:upper:]' '[:lower:]').tar.gz" | head -1 | cut -d '"' -f 4 | xargs curl -L | tar -xz && cd AitherZero-* && ./aither.ps1 init
 ```
 
 ### 🚀 Alternative Downloads
@@ -86,33 +104,47 @@ $url = (irm "https://api.github.com/repos/wizzense/AitherZero/releases/latest").
 ```
 
 ### 💡 Usage Examples
+
+#### 🚀 **Modern CLI Interface (v1.4.1)**
 ```bash
-# Interactive menu (default)
-./Start-AitherZero.ps1
+# Command Reference
+aither help                                    # Show all commands
+aither init                                    # Initialize AitherZero
+aither dev release patch "Fix auth bug"        # Development workflow
+aither deploy plan ./infrastructure            # Infrastructure planning
+aither workflow run deployment.yaml            # Execute workflows
+aither config switch production               # Switch environments
 
-# Run all automation scripts
-./Start-AitherZero.ps1 -Auto
+# Development workflow examples
+aither dev release minor "Add new features"   # Minor release
+aither dev release major "Breaking changes"   # Major release
+```
 
-# Run specific modules
-./Start-AitherZero.ps1 -Scripts "LabRunner,BackupManager"
-
-# Get help and see all options
-./Start-AitherZero.ps1 -Help
+#### 🔧 **Legacy Interface (Still Supported)**
+```bash
+# Traditional interface (backwards compatible)
+./Start-AitherZero.ps1                        # Interactive menu
+./Start-AitherZero.ps1 -Auto                  # Automated mode
+./Start-AitherZero.ps1 -Scripts "LabRunner"   # Specific modules
+./Start-AitherZero.ps1 -Help                  # Legacy help
 ```
 
 ## 🎯 What You Get
 
 **Ready-to-Run Application Package:**
+- 🆕 **Modern CLI Interface** with clean command structure (`aither [command]`)
 - ✅ **One-click execution** on all platforms
-- ✅ **Intelligent setup wizard** with progress tracking (`-Setup`)
-- ✅ **Interactive menu system** for guided usage
-- ✅ **Automated execution mode** (`-Auto`)
+- ✅ **Intelligent setup wizard** with progress tracking (`aither init`)
+- ✅ **Interactive menu system** for guided usage (legacy mode)
+- ✅ **Automated execution mode** (`aither dev`, `aither deploy`)
 - ✅ **Quickstart validation** for new user environments
 - ✅ **Visual progress indicators** for long-running operations
 - ✅ **Platform-specific guidance** and recommendations
 - ✅ **No compilation or installation** required
-- ✅ **Cross-platform launchers** included
+- ✅ **Cross-platform launchers** included (both modern and legacy)
 - ✅ **AI-powered automation** support
+- 🆕 **Developer workflow automation** (`aither dev release`)
+- 🆕 **Backward compatibility** with existing scripts
 
 ---
 

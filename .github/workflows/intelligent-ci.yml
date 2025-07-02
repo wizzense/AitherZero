@@ -44,6 +44,9 @@ jobs:
               - '**/*.psd1'
               - 'aither-core/**'
               - 'Start-AitherZero.ps1'
+              - 'aither.ps1'
+              - 'aither.bat'
+              - 'quick-setup-simple.ps1'
               - 'scripts/**'
             tests:
               - 'tests/**'

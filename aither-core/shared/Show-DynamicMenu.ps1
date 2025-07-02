@@ -560,5 +560,5 @@ function Edit-ConfigurationInteractive {
     }
 }
 
-# Export main function
-Export-ModuleMember -Function Show-DynamicMenu
+# Function is automatically available when dot-sourced
+# Export-ModuleMember is only valid in .psm1 modules, not dot-sourced .ps1 files
