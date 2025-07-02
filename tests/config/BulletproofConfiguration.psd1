@@ -5,23 +5,17 @@
     # Core test execution settings
     Run = @{
         Path = @(
-            'tests/unit/modules/CoreApp',
-            'tests/unit/modules/Logging',
-            'tests/unit/modules/LabRunner',
-            'tests/unit/modules/TestingFramework',
-            'tests/unit/modules/ParallelExecution',
-            'tests/unit/modules/BackupManager',
-            'tests/unit/modules/ScriptManager',
-            'tests/unit/modules/DevEnvironment',
-            'tests/unit/modules/UnifiedMaintenance',
-            'tests/unit/modules/PatchManager',
-            'tests/integration',
-            'tests/system'
+            'tests/Unit/Logging',
+            'tests/Unit/TestingFramework', 
+            'tests/Unit/PatchManager',
+            'tests/Critical',
+            'tests/Integration',
+            'tests/Performance'
         )
         Exit = $false
         PassThru = $true
         Throw = $false
-        Container = New-PesterContainer -Path "tests/unit/modules/CoreApp/NonInteractiveMode.Tests.ps1" -Data @{
+        Container = New-PesterContainer -Path "tests/Critical/Start-AitherZero.Tests.ps1" -Data @{
             ProjectRoot = $env:PROJECT_ROOT
         }
     }
