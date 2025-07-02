@@ -369,7 +369,11 @@ jobs:
     needs: [auto-tag, build-matrix]
     runs-on: ubuntu-latest
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     if: always() && needs.build-matrix.result == 'success' && ((startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true'))
+=======
+    if: always() && needs.build-matrix.result == 'success' && (needs.auto-tag.outputs.tag-created == 'true' || startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true'))
+>>>>>>> Stashed changes
 =======
     if: always() && needs.build-matrix.result == 'success' && (needs.auto-tag.outputs.tag-created == 'true' || startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true'))
 >>>>>>> Stashed changes
