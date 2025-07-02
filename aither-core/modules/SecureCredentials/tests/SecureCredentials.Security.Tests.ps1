@@ -1,4 +1,5 @@
 #Requires -Modules Pester
+# gitguardian:ignore-file
 
 BeforeAll {
     # Import the module
