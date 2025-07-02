@@ -3,6 +3,9 @@ run-name: 📦 Build & Release - ${{ github.event_name }} on ${{ github.ref_name
 
 on:
   push:
+    branches: [main]
+    paths:
+      - 'VERSION'
     tags:
       - 'v*'  # Trigger on version tags like v1.0.0, v2.1.3
   workflow_dispatch:
@@ -40,9 +43,63 @@ permissions:
   packages: write
 
 jobs:
+  auto-tag:
+    name: 🏷️ Auto-Tag Release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && contains(github.event.head_commit.modified, 'VERSION')
+    permissions:
+      contents: write
+    outputs:
+      tag-created: ${{ steps.create-tag.outputs.tag-created }}
+      version: ${{ steps.version.outputs.version }}
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          
+      - name: Read Version
+        id: version
+        run: |
+          VERSION=$(cat VERSION | tr -d '[:space:]')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          
+      - name: Check if Tag Exists
+        id: check-tag
+        run: |
+          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Create and Push Tag
+        id: create-tag
+        if: steps.check-tag.outputs.exists == 'false'
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"$'\n\n'"$COMMIT_MSG"
+          git push origin "v${{ steps.version.outputs.version }}"
+          echo "tag-created=true" >> $GITHUB_OUTPUT
+          
+      - name: Summary
+        run: |
+          if [ "${{ steps.check-tag.outputs.exists }}" == "false" ]; then
+            echo "✅ Created and pushed tag v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ Tag v${{ steps.version.outputs.version }} already exists - skipping" >> $GITHUB_STEP_SUMMARY
+          fi
+
   build-matrix:
     name: 🔨 Build Matrix
     runs-on: ${{ matrix.os }}
+    needs: [auto-tag]
+    if: always() && (needs.auto-tag.outputs.tag-created == 'true' || startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch')
     
     strategy:
       matrix:
@@ -309,9 +366,13 @@ jobs:
 
   create-release:
     name: 🚀 Create Release
-    needs: build-matrix
+    needs: [auto-tag, build-matrix]
     runs-on: ubuntu-latest
+<<<<<<< Updated upstream
     if: always() && needs.build-matrix.result == 'success' && ((startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true'))
+=======
+    if: always() && needs.build-matrix.result == 'success' && (needs.auto-tag.outputs.tag-created == 'true' || startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true'))
+>>>>>>> Stashed changes
     
     steps:
       - name: Checkout Repository
