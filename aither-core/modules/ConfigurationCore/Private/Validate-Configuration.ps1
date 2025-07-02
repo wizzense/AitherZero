@@ -64,25 +64,25 @@ function Validate-Configuration {
                 
                 if ($value -isnot $expectedType) {
                     $result.IsValid = $false
-                    $result.Errors += "$propName: Expected type $($propSchema.Type), got $($value.GetType().Name)"
+                    $result.Errors += "${propName}: Expected type $($propSchema.Type), got $($value.GetType().Name)"
                 }
             }
             
             # Valid values validation
             if ($propSchema.ValidValues -and $value -notin $propSchema.ValidValues) {
                 $result.IsValid = $false
-                $result.Errors += "$propName: Value '$value' not in valid values: $($propSchema.ValidValues -join ', ')"
+                $result.Errors += "${propName}: Value '$value' not in valid values: $($propSchema.ValidValues -join ', ')"
             }
             
             # Range validation for numbers
             if ($value -is [int] -or $value -is [double]) {
                 if ($propSchema.Min -and $value -lt $propSchema.Min) {
                     $result.IsValid = $false
-                    $result.Errors += "$propName: Value $value is less than minimum $($propSchema.Min)"
+                    $result.Errors += "${propName}: Value $value is less than minimum $($propSchema.Min)"
                 }
                 if ($propSchema.Max -and $value -gt $propSchema.Max) {
                     $result.IsValid = $false
-                    $result.Errors += "$propName: Value $value is greater than maximum $($propSchema.Max)"
+                    $result.Errors += "${propName}: Value $value is greater than maximum $($propSchema.Max)"
                 }
             }
             
@@ -90,7 +90,7 @@ function Validate-Configuration {
             if ($value -is [string] -and $propSchema.Pattern) {
                 if ($value -notmatch $propSchema.Pattern) {
                     $result.IsValid = $false
-                    $result.Errors += "$propName: Value '$value' does not match pattern: $($propSchema.Pattern)"
+                    $result.Errors += "${propName}: Value '$value' does not match pattern: $($propSchema.Pattern)"
                 }
             }
         }

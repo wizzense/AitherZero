@@ -54,6 +54,6 @@ function Invoke-ConfigurationReload {
         }
         
     } catch {
-        Write-CustomLog -Level 'WARNING' -Message "Failed to reload configuration for $ModuleName: $_"
+        Write-CustomLog -Level 'WARNING' -Message "Failed to reload configuration for ${ModuleName}: $_"
     }
 }
