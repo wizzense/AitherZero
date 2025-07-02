@@ -2,9 +2,9 @@
 
 <#
 .SYNOPSIS
-    Dynamic menu system for AitherZero with module discovery
+    Enhanced dynamic menu system for AitherZero with multi-input support
 .DESCRIPTION
-    Provides an enhanced interactive menu with module capabilities
+    Provides an interactive menu with multi-column layout and flexible input options
 #>
 
 # Source module capabilities if not already loaded
@@ -26,148 +26,313 @@ function Show-DynamicMenu {
     while ($menuRunning) {
         Clear-Host
         
-        # Show banner
-        Write-Host "`n$('=' * 80)" -ForegroundColor Cyan
-        Write-Host "     _    _ _   _               _____                 " -ForegroundColor Cyan
-        Write-Host "    / \  (_) |_| |__   ___ _ _|__  /___ _ __ ___     " -ForegroundColor Cyan
-        Write-Host "   / _ \ | | __| '_ \ / _ \ '__| / // _ \ '__/ _ \    " -ForegroundColor Cyan
-        Write-Host "  / ___ \| | |_| | | |  __/ |   / /|  __/ | | (_) |   " -ForegroundColor Cyan
-        Write-Host " /_/   \_\_|\__|_| |_|\___|_|  /____\___|_|  \___/    " -ForegroundColor Cyan
-        Write-Host "                                                       " -ForegroundColor Cyan
-        Write-Host " $Title" -ForegroundColor Yellow
-        Write-Host "$('=' * 80)" -ForegroundColor Cyan
-        
-        # Get module capabilities
-        $modules = Get-ModuleCapabilities
+        # Show compact banner
+        Write-Host "`n$('═' * 80)" -ForegroundColor Cyan
+        Write-Host "    _    _ _   _               _____                 " -ForegroundColor Cyan -NoNewline
+        Write-Host "    $Title" -ForegroundColor Yellow
+        Write-Host "   / \  (_) |_| |__   ___ _ _|__  /___ _ __ ___     " -ForegroundColor Cyan -NoNewline
+        Write-Host "    Version $(Get-Content (Join-Path (Split-Path $PSScriptRoot -Parent -Parent) 'VERSION') -ErrorAction SilentlyContinue)" -ForegroundColor DarkGray
+        Write-Host "  / _ \ | | __| '_ \ / _ \ '__| / // _ \ '__/ _ \    " -ForegroundColor Cyan
+        Write-Host " / ___ \| | |_| | | |  __/ |   / /|  __/ | | (_) |   " -ForegroundColor Cyan
+        Write-Host "/_/   \_\_|\__|_| |_|\___|_|  /____\___|_|  \___/    " -ForegroundColor Cyan
+        Write-Host "$('═' * 80)" -ForegroundColor Cyan
         
         if ($FirstRun) {
             Write-Host "`n🎉 Welcome to AitherZero!" -ForegroundColor Green
             Write-Host "This appears to be your first run. Let's get you started!" -ForegroundColor Yellow
-            Write-Host ""
         }
         
-        # Group modules by category
-        $categories = $modules | Group-Object Category | Sort-Object Name
+        # Build menu structure
+        $menuStructure = Build-MenuStructure -Config $Config
         
-        Write-Host "`n🧩 Available Modules:" -ForegroundColor Green
-        Write-Host ""
+        # Display menu with multi-column layout
+        Display-MenuColumns -MenuStructure $menuStructure
         
-        $menuIndex = 1
-        $menuMap = @{}
-        
-        # Special menu items at the top
-        Write-Host "📋 Quick Actions:" -ForegroundColor Yellow
-        Write-Host "  [$menuIndex] 🚀 Quick Start Wizard" -ForegroundColor Cyan
-        $menuMap[$menuIndex] = @{ Type = 'QuickStart' }
-        $menuIndex++
-        
-        Write-Host "  [$menuIndex] ⚙️  Edit Configuration" -ForegroundColor Cyan
-        $menuMap[$menuIndex] = @{ Type = 'EditConfig' }
-        $menuIndex++
-        
-        Write-Host "  [$menuIndex] 🔄 Switch Configuration Profile" -ForegroundColor Cyan
-        $menuMap[$menuIndex] = @{ Type = 'SwitchConfig' }
-        $menuIndex++
-        
-        Write-Host ""
-        
-        # Display modules by category
-        foreach ($category in $categories) {
-            Write-Host "📁 $($category.Name):" -ForegroundColor Yellow
-            
-            foreach ($module in $category.Group) {
-                $displayName = "[$menuIndex] $($module.DisplayName)"
-                Write-Host "  $displayName" -ForegroundColor White -NoNewline
-                Write-Host " - $($module.Description)" -ForegroundColor Gray
-                
-                $menuMap[$menuIndex] = @{
-                    Type = 'Module'
-                    Module = $module
-                }
-                $menuIndex++
-            }
-            Write-Host ""
-        }
-        
-        # Legacy scripts support
-        $scriptsPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'scripts'
-        if (Test-Path $scriptsPath) {
-            $scripts = Get-ChildItem -Path $scriptsPath -Filter '*.ps1' | Sort-Object Name
-            if ($scripts) {
-                Write-Host "📜 Legacy Scripts:" -ForegroundColor Yellow
-                foreach ($script in $scripts) {
-                    Write-Host "  [$menuIndex] $($script.BaseName)" -ForegroundColor DarkGray
-                    $menuMap[$menuIndex] = @{
-                        Type = 'Script'
-                        Script = $script
-                    }
-                    $menuIndex++
-                }
-                Write-Host ""
-            }
-        }
-        
-        # Menu options
-        Write-Host "🔧 Options:" -ForegroundColor Magenta
-        Write-Host "  [R] Refresh menu" -ForegroundColor Gray
-        Write-Host "  [H] Help & Documentation" -ForegroundColor Gray
-        Write-Host "  [Q] Quit" -ForegroundColor Gray
-        Write-Host ""
+        # Show input options
+        Write-Host "`n📝 Input Options:" -ForegroundColor Magenta
+        Write-Host "  • Menu number (e.g., 3)" -ForegroundColor Gray
+        Write-Host "  • Script prefix (e.g., 0200)" -ForegroundColor Gray
+        Write-Host "  • Script name (e.g., Get-SystemInfo)" -ForegroundColor Gray
+        Write-Host "  • Multiple items (e.g., 0200,0201,0202 or 3,5,7)" -ForegroundColor Gray
+        Write-Host "  • [R] Refresh  [H] Help  [Q] Quit" -ForegroundColor Gray
         
         # Get user selection
-        $selection = Read-Host "Select an option (1-$($menuIndex-1), R, H, Q)"
+        $selection = Read-Host "`nEnter your selection"
         
-        switch ($selection.ToUpper()) {
-            'Q' {
-                $menuRunning = $false
-                Write-Host "`n👋 Thank you for using AitherZero!" -ForegroundColor Green
-                return
-            }
-            'R' {
-                Write-Host "`n🔄 Refreshing menu..." -ForegroundColor Yellow
-                Start-Sleep -Seconds 1
-                continue
-            }
-            'H' {
-                Show-Help
+        # Process input
+        $result = Process-MenuInput -Selection $selection -MenuStructure $menuStructure -Config $Config
+        
+        if ($result.Exit) {
+            $menuRunning = $false
+            Write-Host "`n👋 Thank you for using AitherZero!" -ForegroundColor Green
+        } elseif ($result.Message) {
+            Write-Host "`n$($result.Message)" -ForegroundColor $result.Color
+            if (-not $result.NoWait) {
                 Read-Host "`nPress Enter to continue"
-                continue
             }
-            default {
-                if ($selection -match '^\d+$') {
-                    $selectedIndex = [int]$selection
-                    if ($menuMap.ContainsKey($selectedIndex)) {
-                        $selectedItem = $menuMap[$selectedIndex]
-                        
-                        switch ($selectedItem.Type) {
-                            'QuickStart' {
-                                Invoke-QuickStart -Config $Config
-                            }
-                            'EditConfig' {
-                                Edit-Configuration -Config $Config
-                            }
-                            'SwitchConfig' {
-                                Switch-ConfigurationProfile -Config $Config
-                            }
-                            'Module' {
-                                Show-ModuleMenu -Module $selectedItem.Module -Config $Config
-                            }
-                            'Script' {
-                                Invoke-LegacyScript -Script $selectedItem.Script -Config $Config
-                            }
-                        }
-                        
-                        Write-Host "`nPress Enter to return to main menu..."
-                        Read-Host
-                    } else {
-                        Write-Host "`n❌ Invalid selection: $selection" -ForegroundColor Red
-                        Start-Sleep -Seconds 2
+        }
+    }
+}
+
+function Build-MenuStructure {
+    param([hashtable]$Config)
+    
+    $structure = @{
+        Items = @()
+        ByIndex = @{}
+        ByPrefix = @{}
+        ByName = @{}
+        NextIndex = 1
+    }
+    
+    # Add quick actions
+    $quickActions = @(
+        @{ Type = 'QuickStart'; Name = '🚀 Quick Start Wizard'; Description = 'First-time setup' }
+        @{ Type = 'EditConfig'; Name = '⚙️  Edit Configuration'; Description = 'Modify settings' }
+        @{ Type = 'SwitchConfig'; Name = '🔄 Switch Profile'; Description = 'Change configuration' }
+    )
+    
+    foreach ($action in $quickActions) {
+        $item = @{
+            Index = $structure.NextIndex
+            Type = $action.Type
+            Name = $action.Name
+            Description = $action.Description
+            Category = '📋 Quick Actions'
+            DisplayName = $action.Name
+        }
+        $structure.Items += $item
+        $structure.ByIndex[$structure.NextIndex] = $item
+        $structure.NextIndex++
+    }
+    
+    # Get modules
+    $modules = Get-ModuleCapabilities
+    
+    foreach ($module in $modules) {
+        $item = @{
+            Index = $structure.NextIndex
+            Type = 'Module'
+            Module = $module
+            Name = $module.Name
+            DisplayName = $module.DisplayName
+            Description = $module.Description
+            Category = "📁 $($module.Category)"
+        }
+        $structure.Items += $item
+        $structure.ByIndex[$structure.NextIndex] = $item
+        $structure.ByName[$module.Name.ToLower()] = $item
+        $structure.NextIndex++
+    }
+    
+    # Get legacy scripts
+    $scriptsPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'scripts'
+    if (Test-Path $scriptsPath) {
+        $scripts = Get-ChildItem -Path $scriptsPath -Filter '*.ps1' | Sort-Object Name
+        foreach ($script in $scripts) {
+            # Extract prefix if present (e.g., "0200_Get-SystemInfo.ps1")
+            $prefix = $null
+            if ($script.BaseName -match '^(\d{4})_(.+)$') {
+                $prefix = $matches[1]
+                $scriptName = $matches[2]
+            } else {
+                $scriptName = $script.BaseName
+            }
+            
+            $item = @{
+                Index = $structure.NextIndex
+                Type = 'Script'
+                Script = $script
+                Name = $scriptName
+                DisplayName = $script.BaseName
+                Description = "Legacy script"
+                Category = '📜 Legacy Scripts'
+                Prefix = $prefix
+            }
+            
+            $structure.Items += $item
+            $structure.ByIndex[$structure.NextIndex] = $item
+            $structure.ByName[$scriptName.ToLower()] = $item
+            $structure.ByName[$script.BaseName.ToLower()] = $item
+            
+            if ($prefix) {
+                $structure.ByPrefix[$prefix] = $item
+            }
+            
+            $structure.NextIndex++
+        }
+    }
+    
+    return $structure
+}
+
+function Display-MenuColumns {
+    param($MenuStructure)
+    
+    # Get terminal width
+    $terminalWidth = $Host.UI.RawUI.WindowSize.Width
+    if ($terminalWidth -lt 80) { $terminalWidth = 80 }
+    
+    # Calculate column layout
+    $columnWidth = 38  # Width for each menu item column
+    $columnCount = [Math]::Floor(($terminalWidth - 4) / $columnWidth)
+    if ($columnCount -lt 1) { $columnCount = 1 }
+    if ($columnCount -gt 3) { $columnCount = 3 }  # Max 3 columns for readability
+    
+    # Group items by category
+    $categories = $MenuStructure.Items | Group-Object Category | Sort-Object Name
+    
+    foreach ($category in $categories) {
+        Write-Host "`n$($category.Name):" -ForegroundColor Yellow
+        
+        # Process items in columns
+        $items = $category.Group
+        $itemsPerColumn = [Math]::Ceiling($items.Count / $columnCount)
+        
+        for ($row = 0; $row -lt $itemsPerColumn; $row++) {
+            $line = ""
+            for ($col = 0; $col -lt $columnCount; $col++) {
+                $itemIndex = $row + ($col * $itemsPerColumn)
+                if ($itemIndex -lt $items.Count) {
+                    $item = $items[$itemIndex]
+                    
+                    # Format item display
+                    $indexStr = "[$($item.Index)]"
+                    $nameStr = $item.DisplayName
+                    
+                    # Add prefix if available
+                    if ($item.Prefix) {
+                        $indexStr = "[$($item.Index)/$($item.Prefix)]"
                     }
-                } else {
-                    Write-Host "`n❌ Invalid option: $selection" -ForegroundColor Red
-                    Start-Sleep -Seconds 2
+                    
+                    # Truncate name if too long
+                    $maxNameLength = $columnWidth - $indexStr.Length - 3
+                    if ($nameStr.Length -gt $maxNameLength) {
+                        $nameStr = $nameStr.Substring(0, $maxNameLength - 3) + "..."
+                    }
+                    
+                    # Build column entry
+                    $entry = "$indexStr $nameStr"
+                    $line += $entry.PadRight($columnWidth)
                 }
             }
+            Write-Host "  $line" -ForegroundColor White
+        }
+    }
+}
+
+function Process-MenuInput {
+    param(
+        [string]$Selection,
+        $MenuStructure,
+        [hashtable]$Config
+    )
+    
+    switch ($Selection.ToUpper()) {
+        'Q' {
+            return @{ Exit = $true }
+        }
+        'R' {
+            return @{ Message = "🔄 Refreshing menu..."; Color = 'Yellow'; NoWait = $true }
+        }
+        'H' {
+            Show-Help
+            return @{ Message = ""; NoWait = $false }
+        }
+        default {
+            # Parse comma-separated inputs
+            $inputs = $Selection -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+            
+            if ($inputs.Count -eq 0) {
+                return @{ Message = "❌ No valid input provided"; Color = 'Red'; NoWait = $true }
+            }
+            
+            $executedItems = @()
+            
+            foreach ($input in $inputs) {
+                $item = Find-MenuItem -Input $input -MenuStructure $MenuStructure
+                
+                if ($item) {
+                    $executedItems += $item
+                    Execute-MenuItem -Item $item -Config $Config
+                } else {
+                    Write-Host "❌ Invalid selection: $input" -ForegroundColor Red
+                }
+            }
+            
+            if ($executedItems.Count -gt 0) {
+                $names = $executedItems | ForEach-Object { $_.DisplayName }
+                return @{ 
+                    Message = "✅ Executed: $($names -join ', ')"
+                    Color = 'Green'
+                    NoWait = $false
+                }
+            } else {
+                return @{ Message = "❌ No valid items found"; Color = 'Red'; NoWait = $true }
+            }
+        }
+    }
+}
+
+function Find-MenuItem {
+    param(
+        [string]$Input,
+        $MenuStructure
+    )
+    
+    # Try as menu index
+    if ($Input -match '^\d+$') {
+        $index = [int]$Input
+        if ($MenuStructure.ByIndex.ContainsKey($index)) {
+            return $MenuStructure.ByIndex[$index]
+        }
+    }
+    
+    # Try as 4-digit prefix
+    if ($Input -match '^\d{4}$') {
+        if ($MenuStructure.ByPrefix.ContainsKey($Input)) {
+            return $MenuStructure.ByPrefix[$Input]
+        }
+    }
+    
+    # Try as name (case-insensitive)
+    $lowerInput = $Input.ToLower()
+    if ($MenuStructure.ByName.ContainsKey($lowerInput)) {
+        return $MenuStructure.ByName[$lowerInput]
+    }
+    
+    # Try partial name match
+    $matches = $MenuStructure.ByName.Keys | Where-Object { $_ -like "*$lowerInput*" }
+    if ($matches.Count -eq 1) {
+        return $MenuStructure.ByName[$matches[0]]
+    }
+    
+    return $null
+}
+
+function Execute-MenuItem {
+    param(
+        $Item,
+        [hashtable]$Config
+    )
+    
+    Write-Host "`n🚀 Executing: $($Item.DisplayName)" -ForegroundColor Green
+    
+    switch ($Item.Type) {
+        'QuickStart' {
+            Invoke-QuickStart -Config $Config
+        }
+        'EditConfig' {
+            Edit-Configuration -Config $Config
+        }
+        'SwitchConfig' {
+            Switch-ConfigurationProfile -Config $Config
+        }
+        'Module' {
+            Show-ModuleMenu -Module $Item.Module -Config $Config
+        }
+        'Script' {
+            Invoke-LegacyScript -Script $Item.Script -Config $Config
         }
     }
 }
@@ -398,6 +563,13 @@ function Show-Help {
     Write-Host "$('=' * 50)" -ForegroundColor Cyan
     
     Write-Host "`nAitherZero is a comprehensive infrastructure automation framework." -ForegroundColor White
+    Write-Host ""
+    
+    Write-Host "Input Methods:" -ForegroundColor Yellow
+    Write-Host "  • Menu Number: Type the number shown in brackets (e.g., 3)" -ForegroundColor White
+    Write-Host "  • Script Prefix: Type the 4-digit prefix (e.g., 0200)" -ForegroundColor White
+    Write-Host "  • Script Name: Type the script or module name (e.g., Get-SystemInfo)" -ForegroundColor White
+    Write-Host "  • Multiple: Comma-separated list (e.g., 0200,0201,0202)" -ForegroundColor White
     Write-Host ""
     
     Write-Host "Key Features:" -ForegroundColor Yellow
