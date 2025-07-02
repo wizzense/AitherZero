@@ -5,31 +5,21 @@
     # Core test execution settings
     Run = @{
         Path = @(
-            'tests/unit/modules/CoreApp',
-            'tests/unit/modules/Logging',
-            'tests/unit/modules/LabRunner',
-            'tests/unit/modules/TestingFramework',
-            'tests/unit/modules/ParallelExecution',
-            'tests/unit/modules/BackupManager',
-            'tests/unit/modules/ScriptManager',
-            'tests/unit/modules/DevEnvironment',
-            'tests/unit/modules/UnifiedMaintenance',
-            'tests/unit/modules/PatchManager',
-            'tests/integration',
-            'tests/system'
+            'tests/Unit',
+            'tests/Integration',
+            'tests/Critical',
+            'tests/Performance'
         )
         Exit = $false
         PassThru = $true
         Throw = $false
-        Container = New-PesterContainer -Path "tests/unit/modules/CoreApp/NonInteractiveMode.Tests.ps1" -Data @{
-            ProjectRoot = $env:PROJECT_ROOT
-        }
+        Container = $null  # Will be set dynamically based on discovered tests
     }
 
     # Advanced filtering for targeted testing
     Filter = @{
         ExcludeTag = @()  # Include all tests by default
-        Tag = @('Unit', 'Integration', 'CoreApp', 'NonInteractive', 'Bulletproof')
+        Tag = @()  # No tag filtering by default
         FullName = @()
         Line = @()
         ExcludeLine = @()

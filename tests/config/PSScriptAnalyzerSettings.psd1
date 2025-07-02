@@ -2,7 +2,9 @@
     ExcludeRules = @(
         'PSAvoidUsingWriteHost',  # We use Write-Host for colored console output
         'PSUseShouldProcessForStateChangingFunctions',  # Not all functions need this
-        'PSAvoidUsingConvertToSecureStringWithPlainText'  # Legitimate use in credential modules
+        'PSAvoidUsingConvertToSecureStringWithPlainText',  # Legitimate use in credential modules
+        'PSAvoidUsingComputerNameHardcoded',  # Example scripts may use hardcoded names
+        'PSAvoidUsingEmptyCatchBlock'  # Some catch blocks intentionally suppress errors
     )
     IncludeDefaultRules = $true
     Severity = @('Error', 'Warning', 'Information')
