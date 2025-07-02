@@ -149,8 +149,14 @@ jobs:
           # Install PSScriptAnalyzer
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
           
-          # Run comprehensive analysis
-          $analysisResults = Invoke-ScriptAnalyzer -Path . -Recurse -ReportSummary -Settings PSGallery
+          # Run comprehensive analysis with project settings
+          $settingsPath = './tests/config/PSScriptAnalyzerSettings.psd1'
+          if (Test-Path $settingsPath) {
+              Write-Host "Using project-specific PSScriptAnalyzer settings" -ForegroundColor Cyan
+              $analysisResults = Invoke-ScriptAnalyzer -Path . -Recurse -ReportSummary -Settings $settingsPath
+          } else {
+              $analysisResults = Invoke-ScriptAnalyzer -Path . -Recurse -ReportSummary -Settings PSGallery
+          }
           
           # Export results for summary
           $analysisResults | Export-Clixml -Path "security-analysis-results.xml"
@@ -451,6 +457,9 @@ jobs:
           else
             echo "WORKFLOW_SUCCESS=true" >> $GITHUB_ENV
           fi
+          
+          # Create failure_details.txt for the summary job
+          cp job_status.txt failure_details.txt
         
       - name: Create Failure Summary Issue
         if: env.WORKFLOW_FAILED == 'true'
