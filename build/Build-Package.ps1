@@ -337,6 +337,37 @@ try {
         Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Creating and validating launchers"
     }
     
+    # NEW: Copy modern CLI interface files (v1.4.1+)
+    if (Test-Path 'aither.ps1') {
+        Copy-Item -Path 'aither.ps1' -Destination "$packageDir/aither.ps1" -Force
+        Write-Host '✓ Modern CLI interface (aither.ps1)' -ForegroundColor Green
+    } else {
+        Write-Warning 'Modern CLI interface (aither.ps1) not found'
+        if ($progressAvailable) {
+            Add-ProgressWarning -OperationId $progressOperationId -Warning "Modern CLI interface not found"
+        }
+    }
+    
+    if (Test-Path 'aither.bat') {
+        Copy-Item -Path 'aither.bat' -Destination "$packageDir/aither.bat" -Force
+        Write-Host '✓ Modern CLI batch wrapper (aither.bat)' -ForegroundColor Green
+    } else {
+        Write-Warning 'Modern CLI batch wrapper (aither.bat) not found'
+        if ($progressAvailable) {
+            Add-ProgressWarning -OperationId $progressOperationId -Warning "Modern CLI batch wrapper not found"
+        }
+    }
+    
+    if (Test-Path 'quick-setup-simple.ps1') {
+        Copy-Item -Path 'quick-setup-simple.ps1' -Destination "$packageDir/quick-setup-simple.ps1" -Force
+        Write-Host '✓ Quick setup script (quick-setup-simple.ps1)' -ForegroundColor Green
+    } else {
+        Write-Warning 'Quick setup script (quick-setup-simple.ps1) not found'
+        if ($progressAvailable) {
+            Add-ProgressWarning -OperationId $progressOperationId -Warning "Quick setup script not found"
+        }
+    }
+    
     # CRITICAL: Validate PowerShell launcher template exists and has compatibility features
     $ps1TemplatePath = 'templates/launchers/Start-AitherZero.ps1'
     if (Test-Path $ps1TemplatePath) {

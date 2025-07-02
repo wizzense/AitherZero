@@ -5,6 +5,87 @@ All notable changes to AitherZero will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2025-07-02
+
+### 🚀 Modern CLI Interface & Enhanced User Experience
+
+This release introduces a completely redesigned command-line interface that modernizes the AitherZero user experience while maintaining backward compatibility.
+
+### ✨ New Features
+
+#### Modern CLI Interface (`aither.ps1`)
+- **Clean Command Structure**: Modern `aither [command] [subcommand]` syntax consistent with tools like `docker`, `kubectl`, and `gh`
+- **Intuitive Commands**: 
+  - `aither init` - Interactive setup and initialization
+  - `aither dev release patch "description"` - Automated development workflow
+  - `aither deploy plan ./infrastructure` - Infrastructure deployment (coming soon)
+  - `aither workflow run playbook.yaml` - Orchestration execution (coming soon)
+  - `aither help` - Comprehensive help system
+- **Windows Batch Wrapper**: Convenient `aither.bat` for Windows users
+- **Streamlined Setup**: New `quick-setup-simple.ps1` for 2-minute onboarding
+
+#### Enhanced Documentation & User Experience
+- **Updated README.md**: Features modern CLI as primary interface
+- **Progressive Enhancement**: Multiple entry points for different user preferences
+- **Improved Error Messages**: Clear guidance and troubleshooting steps
+- **Cross-Platform Compatibility**: Consistent experience across Windows, Linux, and macOS
+
+### 🔧 Fixes
+
+#### Critical Startup Issues Resolved
+- **Fixed Export-ModuleMember Error**: Resolved critical startup crash caused by improper module member exports
+- **Module Loading Order**: Fixed dependency issues by loading Logging module first
+- **PowerShell Version Compatibility**: Improved compatibility with PowerShell 5.1
+- **Error Handling**: Added comprehensive error checking and user guidance
+
+#### Infrastructure Improvements
+- **Pre-flight Validation**: Environment checks before startup
+- **Dependency Resolution**: Proper module loading order prevents dependency errors
+- **Unicode Character Issues**: Fixed emoji rendering problems in PowerShell 5.1
+
+### 🧪 Testing
+
+#### Comprehensive Test Coverage
+- **Critical Tests**: New `Modern-CLI-Interface.Tests.ps1` for integration testing
+- **Unit Tests**: New `CLI-ArgumentParsing.Tests.ps1` for focused unit testing
+- **Cross-Platform Testing**: Validates CLI functionality across platforms
+- **Error Scenario Testing**: Comprehensive error handling validation
+
+### 📚 Documentation
+
+#### Updated Documentation
+- **README.md**: Complete rewrite featuring modern CLI interface
+- **NEW-CLI-README.md**: Detailed CLI usage guide and examples
+- **Migration Guide**: Clear path from legacy interface to modern CLI
+- **Troubleshooting**: Enhanced error resolution guidance
+
+### 🔄 Backward Compatibility
+
+#### Legacy Support Maintained
+- **Start-AitherZero.ps1**: Original interface still fully functional
+- **Existing Scripts**: No breaking changes to automation scripts
+- **Configuration**: Existing configurations work without modification
+- **Gradual Migration**: Users can adopt new interface at their own pace
+
+### 💻 Developer Experience
+
+#### Enhanced Development Workflow
+- **aither dev release**: Streamlined release automation
+- **Improved Testing**: Bulletproof validation with new CLI tests
+- **Better Error Messages**: Clear guidance for troubleshooting issues
+- **Modern Patterns**: Industry-standard CLI design patterns
+
+### 🎯 What's Next
+
+#### Upcoming Features (v1.5.0)
+- Complete `aither deploy` command implementation
+- Full `aither workflow` orchestration commands
+- `aither config` management features
+- Plugin system foundation
+- REST API server mode (`aither server`)
+
+---
+
 ## [1.0.0] - 2025-01-28
 
 ### 🎉 Initial Major Release

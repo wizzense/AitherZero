@@ -337,5 +337,5 @@ function Get-ModuleQuickActions {
     return $quickActions[$ModuleName] ?? @()
 }
 
-# Export functions
-Export-ModuleMember -Function Get-ModuleCapabilities, Get-ModuleQuickActions
+# Functions are automatically available when dot-sourced
+# Export-ModuleMember is only valid in .psm1 modules, not dot-sourced .ps1 files

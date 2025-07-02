@@ -50,8 +50,62 @@ param(
     [string]$ApplyLicense
 )
 
+# Enhanced error handling and user guidance
+$ErrorActionPreference = 'Stop'
+
 # Detect PowerShell version for compatibility messaging
 $psVersion = $PSVersionTable.PSVersion.Major
+
+# Pre-flight checks for better user experience
+function Test-AitherZeroEnvironment {
+    $issues = @()
+    
+    # Check for critical files
+    $criticalPaths = @(
+        'aither-core',
+        'aither-core/aither-core.ps1',
+        'aither-core/modules',
+        'aither-core/shared'
+    )
+    
+    foreach ($path in $criticalPaths) {
+        if (-not (Test-Path (Join-Path $PSScriptRoot $path))) {
+            $issues += "Missing critical path: $path"
+        }
+    }
+    
+    # Check PowerShell version
+    if ($psVersion -lt 5) {
+        $issues += "PowerShell 5.0+ required (current: $($PSVersionTable.PSVersion))"
+    }
+    
+    if ($issues.Count -gt 0) {
+        Write-Host "❌ Environment Issues Detected:" -ForegroundColor Red
+        foreach ($issue in $issues) {
+            Write-Host "   • $issue" -ForegroundColor Yellow
+        }
+        Write-Host ""
+        Write-Host "💡 Try these solutions:" -ForegroundColor Cyan
+        Write-Host "   1. Re-download AitherZero from: https://github.com/wizzense/AitherZero/releases"
+        Write-Host "   2. Ensure all files were extracted properly"
+        Write-Host "   3. Run: .\quick-setup.ps1 for guided setup"
+        Write-Host "   4. For help: .\aither.ps1 help"
+        Write-Host ""
+        return $false
+    }
+    return $true
+}
+
+# Run environment check (unless explicitly skipped)
+if (-not $env:AITHER_SKIP_CHECKS) {
+    if (-not (Test-AitherZeroEnvironment)) {
+        Write-Host "🚀 Quick Start Alternative:" -ForegroundColor Green
+        Write-Host "   .\quick-setup.ps1        # Streamlined setup experience"
+        Write-Host "   .\aither.ps1 init        # Modern CLI interface"
+        Write-Host ""
+        exit 1
+    }
+}
 
 # Show banner
 Write-Host 'AitherZero Infrastructure Automation Framework v1.1.0+' -ForegroundColor Green
@@ -209,13 +263,32 @@ Write-Host 'Loading AitherZero modules...' -ForegroundColor Cyan
 if (Test-Path $modulesPath) {
     $loadedModules = 0
     $totalModules = (Get-ChildItem $modulesPath -Directory).Count
-    Get-ChildItem $modulesPath -Directory | ForEach-Object {
+    
+    # Priority modules that need to load first (to resolve dependencies)
+    $priorityModules = @('Logging', 'ModuleCommunication', 'ConfigurationCore')
+    
+    # Load priority modules first
+    foreach ($moduleName in $priorityModules) {
+        $modulePath = Join-Path $modulesPath $moduleName
+        if (Test-Path $modulePath) {
+            try {
+                Import-Module $modulePath -Force -ErrorAction Stop
+                $loadedModules++
+                Write-Host "  ✅ $moduleName" -ForegroundColor Green
+            } catch {
+                Write-Host "  [WARN] $moduleName`: $($_.Exception.Message)" -ForegroundColor Yellow
+            }
+        }
+    }
+    
+    # Load remaining modules alphabetically (exclude already loaded priority modules)
+    Get-ChildItem $modulesPath -Directory | Where-Object { $_.Name -notin $priorityModules } | ForEach-Object {
         try {
             Import-Module $_.FullName -Force -ErrorAction Stop
             $loadedModules++
             Write-Host "  ✅ $($_.Name)" -ForegroundColor Green
         } catch {
-            Write-Host "  ⚠️  $($_.Name): $($_.Exception.Message)" -ForegroundColor Yellow
+            Write-Host "  [WARN] $($_.Name)`: $($_.Exception.Message)" -ForegroundColor Yellow
         }
     }
     Write-Host "Loaded $loadedModules/$totalModules modules successfully" -ForegroundColor Cyan
