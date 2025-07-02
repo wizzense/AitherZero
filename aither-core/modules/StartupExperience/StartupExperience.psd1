@@ -42,7 +42,7 @@
     
     # Dependencies
     RequiredModules = @(
-        @{ModuleName = 'Logging'; ModuleVersion = '1.0.0'},
-        @{ModuleName = 'LicenseManager'; ModuleVersion = '1.0.0'}
+        @{ModuleName = 'Logging'; ModuleVersion = '2.0.0'; GUID = 'B5D8F9A1-C2E3-4F6A-8B9C-1D2E3F4A5B6C'},
+        @{ModuleName = 'LicenseManager'; ModuleVersion = '1.0.0'; GUID = 'f1e2d3c4-b5a6-7890-abcd-ef1234567890'}
     )
 }

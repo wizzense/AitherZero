@@ -117,7 +117,7 @@ function Invoke-ScriptWithOutputHandling {
         [string]$ScriptPath,
 
         [Parameter(Mandatory)]
-        $Config,
+        [hashtable]$Config,
 
         [switch]$Force,
 
@@ -424,7 +424,19 @@ $env:LAB_CONSOLE_LEVEL = $script:LogLevel
 try {
     if (Test-Path $ConfigFile) {
         Write-CustomLog "Loading configuration from: $ConfigFile" -Level DEBUG
-        $config = Get-Content $ConfigFile -Raw | ConvertFrom-Json
+        $configObject = Get-Content $ConfigFile -Raw | ConvertFrom-Json
+        
+        # Convert PSCustomObject to Hashtable for proper parameter binding
+        # This prevents "Cannot convert PSCustomObject to Hashtable" errors
+        if ($configObject -is [PSCustomObject]) {
+            $config = @{}
+            $configObject.PSObject.Properties | ForEach-Object {
+                $config[$_.Name] = $_.Value
+            }
+            Write-CustomLog "Configuration converted from PSCustomObject to Hashtable" -Level DEBUG
+        } else {
+            $config = $configObject
+        }
     } else {
         Write-CustomLog "Configuration file not found: $ConfigFile" -Level WARN
         Write-CustomLog 'Using default configuration' -Level DEBUG
