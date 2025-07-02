@@ -7,7 +7,7 @@ on:
     paths:
       - 'VERSION'
     tags:
-      - 'v*'  # Trigger on version tags like v1.0.0, v2.1.3
+      - 'v*'
   workflow_dispatch:
     inputs:
       release_type:
@@ -17,7 +17,7 @@ on:
         type: choice
         options:
           - major
-          - minor  
+          - minor
           - patch
           - prerelease
       profiles:
@@ -33,7 +33,6 @@ on:
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
 
-# Prevent concurrent release builds
 concurrency:
   group: build-release-${{ github.ref }}
   cancel-in-progress: false
@@ -84,6 +83,7 @@ jobs:
           
           COMMIT_MSG=$(git log -1 --pretty=%B)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
           git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}
 
 $COMMIT_MSG"
@@ -92,6 +92,9 @@ $COMMIT_MSG"
 
 $COMMIT_MSG"
           git tag -a "v${{ steps.version.outputs.version }}" -m "$TAG_MSG"
+>>>>>>> Stashed changes
+=======
+          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"$'\n\n'"$COMMIT_MSG"
 >>>>>>> Stashed changes
           git push origin "v${{ steps.version.outputs.version }}"
           echo "tag-created=true" >> $GITHUB_OUTPUT
@@ -120,7 +123,7 @@ $COMMIT_MSG"
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history for version calculation
+          fetch-depth: 0
       
       - name: Install PowerShell 7 (Linux)
         if: runner.os == 'Linux'
@@ -160,7 +163,6 @@ $COMMIT_MSG"
           Write-Host "Platform: $($PSVersionTable.Platform)" -ForegroundColor Cyan
           Write-Host "Profile: ${{ matrix.profile }}" -ForegroundColor Cyan
           
-          # Set build parameters for Build-Package.ps1
           $platformMap = @{
             'windows-latest' = 'windows'
             'ubuntu-latest' = 'linux'
@@ -176,7 +178,6 @@ $COMMIT_MSG"
           $platform = $platformMap['${{ matrix.os }}']
           $extension = $extensionMap[$platform]
           
-          # Get version from tag or use dev version
           $version = if ($env:GITHUB_REF -match 'refs/tags/v(.+)') { 
             $matches[1] 
           } else { 
@@ -188,34 +189,28 @@ $COMMIT_MSG"
             Version = $version
             ArtifactExtension = $extension
             PackageProfile = '${{ matrix.profile }}'
-            NoProgress = $true  # Disable progress for CI
+            NoProgress = $true
           }
           
           try {
-            # Check if custom build script exists
             if (Test-Path "./build/Build-Package.ps1") {
               Write-Host "Using custom build script..." -ForegroundColor Green
               ./build/Build-Package.ps1 @buildParams
               
-              # Custom build script creates packages in build-output/{platform}/ directory
               $customPackagePath = "build-output/$platform/AitherZero-$version-$platform-${{ matrix.profile }}"
               
-              # Validate custom build output
               if (Test-Path $customPackagePath) {
                 Write-Host "✅ Custom build package found: $customPackagePath" -ForegroundColor Green
                 
-                # Check for main script in custom package
                 if (Test-Path "$customPackagePath/Start-AitherZero.ps1") {
                   Write-Host "✅ Main script validated in custom package" -ForegroundColor Green
                 } else {
                   throw "Package validation failed: Main script not found in $customPackagePath"
                 }
                 
-                # Create compatibility directory structure for archive step
                 $expectedPath = "dist/aitherzero-${{ matrix.profile }}-${{ matrix.os }}"
                 New-Item -ItemType Directory -Path "dist" -Force | Out-Null
                 
-                # Copy custom package to expected location for archive step
                 Copy-Item $customPackagePath -Destination $expectedPath -Recurse -Force
                 Write-Host "✅ Package copied to expected location: $expectedPath" -ForegroundColor Green
               } else {
@@ -225,11 +220,9 @@ $COMMIT_MSG"
             } else {
               Write-Host "Using default build process..." -ForegroundColor Yellow
               
-              # Create output directory
               $outputDir = "dist/aitherzero-${{ matrix.profile }}-${{ matrix.os }}"
               New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
               
-              # Copy core files based on profile
               $coreFiles = @(
                 "Start-AitherZero.ps1",
                 "aither-core/",
@@ -249,22 +242,18 @@ $COMMIT_MSG"
                 }
               }
               
-              # Profile-specific inclusions
               switch ('${{ matrix.profile }}') {
                 'minimal' {
                   Write-Host "Building minimal profile..." -ForegroundColor Cyan
-                  # Include only essential modules
                 }
                 'standard' {
                   Write-Host "Building standard profile..." -ForegroundColor Cyan
-                  # Include standard modules and tools
                   if (Test-Path "tools/") {
                     Copy-Item "tools/" -Destination $outputDir -Recurse -Force
                   }
                 }
                 'full' {
                   Write-Host "Building full profile..." -ForegroundColor Cyan
-                  # Include everything
                   $additionalItems = @("tools/", "docs/", "examples/")
                   foreach ($item in $additionalItems) {
                     if (Test-Path $item) {
@@ -275,7 +264,6 @@ $COMMIT_MSG"
                 }
               }
               
-              # Create version info
               $versionInfo = @{
                 Version = if ($env:GITHUB_REF -match 'refs/tags/v(.+)') { $matches[1] } else { "dev-$($env:GITHUB_SHA.Substring(0,7))" }
                 Profile = '${{ matrix.profile }}'
@@ -288,7 +276,6 @@ $COMMIT_MSG"
               
               Write-Host "✅ Package built successfully" -ForegroundColor Green
               
-              # Validate default build package integrity
               $packagePath = "dist/aitherzero-${{ matrix.profile }}-${{ matrix.os }}"
               if (-not (Test-Path "$packagePath/Start-AitherZero.ps1")) {
                 throw "Package validation failed: Main script not found"
@@ -307,12 +294,10 @@ $COMMIT_MSG"
         run: |
           Write-Host "📦 Creating package archive..." -ForegroundColor Yellow
           
-          # Use consistent platform naming
           $platformName = "${{ matrix.os }}"
           $packageDir = "dist/aitherzero-${{ matrix.profile }}-$platformName"
           $archiveName = "aitherzero-${{ matrix.profile }}-$platformName"
           
-          # Check if package directory exists
           if (-not (Test-Path $packageDir)) {
             throw "Package directory not found: $packageDir"
           }
@@ -323,7 +308,6 @@ $COMMIT_MSG"
           if ($IsWindows) {
             $archivePath = "$archiveName.zip"
             Write-Host "Creating Windows ZIP archive: $archivePath" -ForegroundColor Cyan
-            # Change to package directory to avoid nested folder structure
             $currentDir = Get-Location
             Set-Location $packageDir
             try {
@@ -336,13 +320,10 @@ $COMMIT_MSG"
             $archivePath = "$archiveName.tar.gz"
             Write-Host "Creating Unix TAR.GZ archive: $archivePath" -ForegroundColor Cyan
             
-            # Use cross-platform approach that works on both Linux and macOS
-            # Change to package directory to avoid nested folder structure
             $currentDir = Get-Location
             Set-Location $packageDir
             try {
               $destinationPath = Join-Path $currentDir $archivePath
-              # Create archive with all files in current directory
               tar -czf $destinationPath *
               Write-Host "Archive created successfully using cross-platform approach" -ForegroundColor Green
             } finally {
@@ -350,12 +331,10 @@ $COMMIT_MSG"
             }
           }
           
-          # Verify archive was created and show details
           if (Test-Path $archivePath) {
             $size = (Get-Item $archivePath).Length
             Write-Host "✅ Archive created: $archivePath ($([math]::Round($size/1MB, 2)) MB)" -ForegroundColor Green
             
-            # List created files for upload step
             Write-Host "📋 Files created for upload:" -ForegroundColor Yellow
             Get-ChildItem -Path . -Filter "$archiveName.*" | ForEach-Object {
               Write-Host "  - $($_.Name)" -ForegroundColor Green
@@ -381,7 +360,11 @@ $COMMIT_MSG"
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     if: always() && needs.build-matrix.result == 'success' && ((startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true'))
+=======
+    if: always() && needs.build-matrix.result == 'success' && (needs.auto-tag.outputs.tag-created == 'true' || startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true'))
+>>>>>>> Stashed changes
 =======
     if: always() && needs.build-matrix.result == 'success' && (needs.auto-tag.outputs.tag-created == 'true' || startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true'))
 >>>>>>> Stashed changes
@@ -412,17 +395,14 @@ $COMMIT_MSG"
         run: |
           echo "📁 Organizing release assets..."
           
-          # Create release directory
           mkdir -p release-assets
           
-          # Move and organize artifacts
           for profile in minimal standard full; do
             for os in windows-latest ubuntu-latest macos-latest; do
               artifact_dir="aitherzero-$profile-$os"
               if [ -d "$artifact_dir" ]; then
                 echo "Processing $artifact_dir..."
                 
-                # Find the archive file
                 if [ -f "$artifact_dir/aitherzero-$profile-$os.zip" ]; then
                   mv "$artifact_dir/aitherzero-$profile-$os.zip" "release-assets/"
                 elif [ -f "$artifact_dir/aitherzero-$profile-$os.tar.gz" ]; then
@@ -432,7 +412,6 @@ $COMMIT_MSG"
             done
           done
           
-          # List final assets
           echo "📦 Release assets:"
           ls -la release-assets/
       
@@ -441,17 +420,14 @@ $COMMIT_MSG"
         run: |
           echo "📝 Generating release notes..."
           
-          # Get version from tag, input, or VERSION file
           if [[ "${{ github.ref }}" =~ refs/tags/v(.+) ]]; then
             VERSION="${BASH_REMATCH[1]}"
           elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            # Use VERSION file for manual dispatch
             VERSION=$(cat VERSION || echo "1.0.0")
           else
             VERSION="dev-$(echo ${{ github.sha }} | cut -c1-7)"
           fi
           
-          # Generate release notes
           cat << EOF > release-notes.md
           # AitherZero v${VERSION}
           
