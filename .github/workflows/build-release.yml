@@ -82,20 +82,7 @@ jobs:
           git config user.email "actions@github.com"
           
           COMMIT_MSG=$(git log -1 --pretty=%B)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}
-
-$COMMIT_MSG"
-=======
-          TAG_MSG="Release v${{ steps.version.outputs.version }}
-
-$COMMIT_MSG"
-          git tag -a "v${{ steps.version.outputs.version }}" -m "$TAG_MSG"
->>>>>>> Stashed changes
-=======
           git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"$'\n\n'"$COMMIT_MSG"
->>>>>>> Stashed changes
           git push origin "v${{ steps.version.outputs.version }}"
           echo "tag-created=true" >> $GITHUB_OUTPUT
           
@@ -356,27 +343,7 @@ $COMMIT_MSG"
     name: 🚀 Create Release
     needs: [auto-tag, build-matrix]
     runs-on: ubuntu-latest
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    if: always() && needs.build-matrix.result == 'success' && ((startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true'))
-=======
     if: always() && needs.build-matrix.result == 'success' && (needs.auto-tag.outputs.tag-created == 'true' || startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true'))
->>>>>>> Stashed changes
-=======
-    if: always() && needs.build-matrix.result == 'success' && (needs.auto-tag.outputs.tag-created == 'true' || startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true'))
->>>>>>> Stashed changes
-=======
-    if: always() && needs.build-matrix.result == 'success' && (needs.auto-tag.outputs.tag-created == 'true' || startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true'))
->>>>>>> Stashed changes
-=======
-    if: always() && needs.build-matrix.result == 'success' && (needs.auto-tag.outputs.tag-created == 'true' || startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true'))
->>>>>>> Stashed changes
-=======
-    if: always() && needs.build-matrix.result == 'success' && (needs.auto-tag.outputs.tag-created == 'true' || startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true'))
->>>>>>> Stashed changes
     
     steps:
       - name: Checkout Repository
