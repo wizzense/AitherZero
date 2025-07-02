@@ -38,7 +38,8 @@
       "Bash(\"/mnt/c/Program Files/Git/cmd/git.exe\" push origin main)",
       "Bash(\"/mnt/c/Program Files/GitHub CLI/gh.exe\" run list --workflow='🧠 Intelligent CI/CD Pipeline' --limit 5)",
       "Bash(\"/mnt/c/Program Files/PowerShell/7/pwsh.exe\" -Command \"Import-Module ./aither-core/modules/PatchManager -Force; Invoke-ReleaseWorkflow -ReleaseType ''patch'' -Description ''Fix workflow dependencies and release automation''\")",
-      "Bash(\"/mnt/c/Program Files/PowerShell/7/pwsh.exe\" -Command \"Import-Module ./aither-core/modules/PatchManager -Force; Invoke-PatchWorkflow -PatchDescription ''Fix YAML syntax errors and merge conflicts in workflow'' -PatchOperation { Write-Host ''Syntax errors fixed'' } -CreatePR\")"
+      "Bash(\"/mnt/c/Program Files/PowerShell/7/pwsh.exe\" -Command \"Import-Module ./aither-core/modules/PatchManager -Force; Invoke-PatchWorkflow -PatchDescription ''Fix YAML syntax errors and merge conflicts in workflow'' -PatchOperation { Write-Host ''Syntax errors fixed'' } -CreatePR\")",
+      "Bash(\"/mnt/c/Program Files/PowerShell/7/pwsh.exe\" -Command \"Import-Module ./aither-core/modules/PatchManager -Force; Get-Command New-Feature\")"
     ],
     "deny": []
   }
