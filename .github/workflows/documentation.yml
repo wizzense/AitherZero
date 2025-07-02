@@ -158,21 +158,21 @@ jobs:
                       
                       # Create module overview
                       $moduleOverview = @"
-# `$moduleName Module
+# $($moduleName) Module
 
-**Module Path**: aither-core/modules/`$moduleName
-**Exported Functions**: `$(`$exportedFunctions.Count)
+**Module Path**: aither-core/modules/$($moduleName)
+**Exported Functions**: $($exportedFunctions.Count)
 
 ## Functions
 
-`$(`$exportedFunctions | ForEach-Object { "- [`$(`$_.Name)](./" + `$_.Name + ".md)" } | Out-String)
+$($exportedFunctions | ForEach-Object { "- [$($_.Name)](./$($_.Name).md)" } | Out-String)
 
 ## Module Description
 
 This module is part of the AitherZero PowerShell automation framework.
 
 ---
-*Generated on `$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')*
+*Generated on $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')*
 "@
                       
                       $moduleOverview | Out-File (Join-Path $moduleDocsPath "README.md") -Encoding UTF8

@@ -355,107 +355,148 @@ if ($IsWindows) {
 }
 ```
 
-### PatchManager Workflows
+### PatchManager v3.0 Workflows (Atomic Operations)
 
-**IMPORTANT**: Use PatchManager for ALL Git operations:
+**IMPORTANT**: PatchManager v3.0 eliminates git stashing issues and provides atomic operations:
+
+#### Main Functions (Recommended)
 
 ```powershell
-# Standard workflow - creates issue and PR
-Invoke-PatchWorkflow -PatchDescription "Clear description" -PatchOperation {
+# Smart patch creation (auto-detects mode and approach)
+New-Patch -Description "Clear description" -Changes {
     # Your changes here
-} -CreatePR
+}
 
-# Local-only changes
-Invoke-PatchWorkflow -PatchDescription "Local fix" -CreateIssue:$false -PatchOperation {
+# Quick fixes for minor changes (no branching)
+New-QuickFix -Description "Fix typo in comment" -Changes {
+    $content = Get-Content "file.ps1"
+    $content = $content -replace "teh", "the"  
+    Set-Content "file.ps1" -Value $content
+}
+
+# Feature development (automatic PR creation)
+New-Feature -Description "Add authentication module" -Changes {
+    # Feature implementation
+    New-AuthenticationModule
+}
+
+# Emergency hotfixes (high priority, automatic PR)
+New-Hotfix -Description "Fix critical security issue" -Changes {
+    # Critical fix implementation
+}
+```
+
+#### Advanced Usage
+
+```powershell
+# Explicit mode control
+New-Patch -Description "Complex change" -Mode "Standard" -CreatePR -Changes {
     # Your changes
 }
 
-# Emergency rollback
-Invoke-PatchRollback -RollbackType "LastCommit" -CreateBackup
+# Cross-fork operations
+New-Feature -Description "Upstream feature" -TargetFork "upstream" -Changes {
+    # Feature for upstream repository
+}
 
-# Validate module manifest
-Invoke-PatchValidation -ModuleName "ModuleName"
+# Dry run to preview
+New-Patch -Description "Test change" -DryRun -Changes {
+    # Preview what would happen
+}
 ```
 
-### Git Workflow Best Practices - PREVENTING BRANCH DIVERGENCE
-
-**CRITICAL**: Follow these practices to prevent branch divergence and merge conflicts:
-
-#### Before Starting Any Work
+#### Legacy Compatibility
 
 ```powershell
-# ALWAYS sync with remote before making changes
-Import-Module ./aither-core/modules/PatchManager -Force
-
-# Sync current branch with remote
-Sync-GitBranch -Force
-
-# Or if you need to fix existing divergence
-./scripts/Fix-GitDivergence.ps1
-```
-
-#### PatchManager Automatic Sync
-
-PatchManager v2.1+ automatically syncs with remote before creating branches:
-- Fetches latest from origin/main
-- Detects if local main is behind/ahead/diverged
-- Resets local main to match remote if diverged
-- Creates new branches from synchronized main
-
-#### Manual Git Operations (AVOID THESE)
-
-**DO NOT** use these commands directly - use PatchManager instead:
-```powershell
-# DON'T DO THIS:
-git checkout -b feature-branch  # Creates from potentially outdated local
-git commit -m "message"         # May cause conflicts
-git merge                       # Can create divergence
-
-# DO THIS INSTEAD:
-Invoke-PatchWorkflow -PatchDescription "Your feature" -PatchOperation {
+# Legacy function still works (alias to New-Patch)
+Invoke-PatchWorkflow -PatchDescription "Legacy syntax" -PatchOperation {
     # Your changes
 } -CreatePR
+
+# Other legacy functions remain available
+Invoke-PatchRollback -RollbackType "LastCommit" -CreateBackup
 ```
 
-#### Fixing Divergence Issues
+### Git Workflow Best Practices - V3.0 ATOMIC OPERATIONS
 
-If branches have already diverged:
+**BREAKTHROUGH**: PatchManager v3.0 eliminates git stashing issues through atomic operations:
+
+#### Key Improvements in v3.0
+
+- **No More Git Stashing**: Eliminates the root cause of merge conflicts
+- **Atomic Operations**: All-or-nothing operations with automatic rollback
+- **Smart Mode Detection**: Automatically chooses the best approach
+- **Multi-Mode System**: Simple/Standard/Advanced modes for different needs
+
+#### Recommended Daily Workflow (v3.0)
 
 ```powershell
-# Option 1: Use the fix script
-./scripts/Fix-GitDivergence.ps1 -Force
+# Import the new PatchManager
+Import-Module ./aither-core/modules/PatchManager -Force
 
-# Option 2: Use Sync-GitBranch
-Sync-GitBranch -BranchName "main" -Force -CleanupOrphaned -ValidateTags
+# Quick fixes (no branching needed)
+New-QuickFix -Description "Fix typo" -Changes { /* fix */ }
 
-# Option 3: Manual fix (last resort)
-git checkout main
-git fetch origin main
-git reset --hard origin/main  # WARNING: Loses local commits
+# Standard features (automatic branching and PR)
+New-Feature -Description "Add new functionality" -Changes { /* implementation */ }
+
+# Let smart mode choose automatically
+New-Patch -Description "Smart analysis will determine best approach" -Changes { /* changes */ }
+
+# Emergency fixes
+New-Hotfix -Description "Critical security fix" -Changes { /* urgent fix */ }
 ```
 
-#### Preventing Common Issues
+#### v3.0 Modes Explained
 
-1. **Always use PatchManager** for all git operations
-2. **Never commit directly to main** - PatchManager prevents this
-3. **Sync before starting work** - Run `Sync-GitBranch` first
-4. **Let PatchManager handle branches** - It auto-syncs and prevents conflicts
-5. **Don't cherry-pick between branches** - Creates divergence
-6. **Avoid manual merges** - Use PR process instead
+- **Simple Mode**: Direct changes to current branch (for minor fixes)
+- **Standard Mode**: Full branch workflow with PR creation
+- **Advanced Mode**: Cross-fork operations and enterprise features
 
-#### Daily Workflow
+#### Migration from v2.x
 
 ```powershell
-# Start of day
-Sync-GitBranch -Force
-
-# Create new feature
-Invoke-PatchWorkflow -PatchDescription "New feature" -PatchOperation {
-    # Make changes
+# OLD (v2.x) - Had stashing issues
+Invoke-PatchWorkflow -PatchDescription "Feature" -PatchOperation {
+    # Changes
 } -CreatePR
 
-# After PR is merged
-Invoke-PostMergeCleanup -BranchName "patch/your-branch"
+# NEW (v3.0) - Atomic operations, no stashing
+New-Feature -Description "Feature" -Changes {
+    # Same changes
+}
+
+# Legacy syntax still works (automatic translation)
+Invoke-PatchWorkflow -PatchDescription "Legacy" -PatchOperation {
+    # Your changes
+} -CreatePR  # This now uses New-Patch internally
+```
+
+#### Error Recovery (v3.0)
+
+If something goes wrong, v3.0 provides automatic recovery:
+- **Automatic Rollback**: Failed operations restore previous state
+- **Smart Error Analysis**: Categorizes errors and suggests solutions  
+- **No Manual Cleanup**: Atomic operations handle cleanup automatically
+
+#### When to Use Each Function
+
+```powershell
+# Use New-QuickFix for:
+# - Typos, formatting, minor documentation updates
+# - Changes that don't need review
+
+# Use New-Feature for:  
+# - New functionality, enhancements
+# - Changes that should have PR review
+
+# Use New-Hotfix for:
+# - Critical security fixes, production issues
+# - Emergency changes that need immediate attention
+
+# Use New-Patch for:
+# - When you want smart auto-detection
+# - Complex scenarios requiring custom mode selection
 ```
 
 ### Dynamic Repository Detection

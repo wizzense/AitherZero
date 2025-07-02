@@ -2,33 +2,20 @@
 
 <#
 .SYNOPSIS
-    PatchManager Module v3.0 - Atomic, Reliable Patch Management
+    PatchManager Module - Simplified and Reliable Patch Management
 
 .DESCRIPTION
-    This module provides atomic patch operations that eliminate git stashing issues:
-    
-    Main Functions:
-    - New-Patch: Smart, atomic patch creation (replaces Invoke-PatchWorkflow)
-    - New-QuickFix: Simple fixes without branch overhead
-    - New-Feature: Full feature development workflow
-    - New-Hotfix: Emergency critical fixes
-    
-    Modes:
-    - Simple: Direct changes without branches (for minor fixes)
-    - Standard: Full branch workflow (recommended)
-    - Advanced: Cross-fork and enterprise features
-    
-    Key Features:
-    - Atomic operations with automatic rollback
-    - Smart mode detection and recommendations
-    - No more git stashing conflicts
-    - Multi-mode operation system
-    - Backward compatibility with legacy functions
+    This module provides 4 core functions for patch management:
+    1. Invoke-PatchWorkflow - Main entry point for all patch operations
+    2. New-PatchIssue - Create GitHub issues for patches
+    3. New-PatchPR - Create GitHub pull requests
+    4. Invoke-PatchRollback - Rollback patch operations
+
+    All legacy functions have been moved to the Legacy folder.
 
 .NOTES
-    Version: 3.0.0 (Atomic Operations)
+    Version: 2.1 (Enhanced Intelligence)
     Author: Aitherium Contributors
-    Breaking Changes: Eliminates git stashing to prevent merge conflicts
 #>
 
 # Initialize cross-platform environment
@@ -152,20 +139,8 @@ try {
     Write-Verbose "Cross-platform environment initialization skipped: $($_.Exception.Message)"
 }
 
-# Export v3.0 functions with legacy compatibility
+# Export only the core functions
 Export-ModuleMember -Function @(
-    # V3.0 Main Functions
-    'New-Patch',
-    'New-QuickFix', 
-    'New-Feature',
-    'New-Hotfix',
-    
-    # V3.0 Core Functions
-    'Invoke-MultiModeOperation',
-    'Invoke-AtomicOperation',
-    'Get-SmartOperationMode',
-    
-    # Legacy Functions (for backward compatibility)
     'Invoke-PatchWorkflow',
     'New-PatchIssue',
     'New-PatchPR',
@@ -178,17 +153,11 @@ Export-ModuleMember -Function @(
     'Sync-GitBranch',
     'Invoke-ReleaseWorkflow',
     'Watch-ReleasePR'
-) -Alias @(
-    'Invoke-PatchWorkflow'  # Alias for New-Patch for backward compatibility
 )
 
 # Module initialization message
 if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-    Write-CustomLog -Level 'INFO' -Message 'PatchManager v3.0 loaded - Atomic Operations Ready'
-    Write-CustomLog -Level 'INFO' -Message 'New functions: New-Patch, New-QuickFix, New-Feature, New-Hotfix'
-    Write-CustomLog -Level 'INFO' -Message 'Legacy functions available for backward compatibility'
+    Write-CustomLog -Level 'INFO' -Message 'PatchManager v2.1 loaded - 4 core functions available'
 } else {
-    Write-Host '[INFO] PatchManager v3.0 loaded - Atomic Operations Ready'
-    Write-Host '[INFO] New functions: New-Patch, New-QuickFix, New-Feature, New-Hotfix'
-    Write-Host '[INFO] Legacy functions available for backward compatibility'
+    Write-Verbose 'PatchManager v2.1 loaded - 4 core functions available'
 }
