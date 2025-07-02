@@ -213,7 +213,7 @@ function Sync-ContentToRepository {
             
             if (Test-Path $sourcePath) {
                 # Handle wildcards
-                if ($path -contains '*') {
+                if ($path -like '*') {
                     $items = Get-ChildItem -Path $sourcePath -Recurse -File
                 } else {
                     $items = if (Test-Path $sourcePath -PathType Container) {
