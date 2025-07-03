@@ -52,18 +52,6 @@ try {
     Set-Location $folder.Name
     Write-Host "✅ Extracted to: $(Get-Location)" -ForegroundColor Green
     
-    # Fix directory structure if needed (for flat package structure)
-    if ((Test-Path "modules") -and -not (Test-Path "aither-core/modules")) {
-        Write-Host "🔧 Fixing directory structure..." -ForegroundColor Yellow
-        New-Item -ItemType Directory -Path "aither-core" -Force | Out-Null
-        Move-Item "modules" "aither-core/modules" -Force -ErrorAction SilentlyContinue
-        Move-Item "shared" "aither-core/shared" -Force -ErrorAction SilentlyContinue
-        @("aither-core.ps1", "aither-core-bootstrap.ps1") | ForEach-Object {
-            if (Test-Path $_) { Move-Item $_ "aither-core/$_" -Force -ErrorAction SilentlyContinue }
-        }
-        Write-Host "✅ Directory structure fixed" -ForegroundColor Green
-    }
-    
     # Auto-start with best available method
     Write-Host "🚀 Starting AitherZero..." -ForegroundColor Cyan
     if (Test-Path "quick-setup-simple.ps1") {

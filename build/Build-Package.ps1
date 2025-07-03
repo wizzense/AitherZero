@@ -113,14 +113,19 @@ try {
     # Copy ONLY essential application files for running AitherZero
     Write-Host 'Copying core application files...' -ForegroundColor Yellow
 
+    # Create aither-core directory structure
+    $aithercoreDir = Join-Path $packageDir 'aither-core'
+    New-Item -Path $aithercoreDir -ItemType Directory -Force | Out-Null
+    Write-Host '✓ Created aither-core directory structure' -ForegroundColor Green
+    
     # Core runner and main entry point
-    Copy-Item -Path 'aither-core/aither-core.ps1' -Destination "$packageDir/aither-core.ps1" -Force
+    Copy-Item -Path 'aither-core/aither-core.ps1' -Destination "$aithercoreDir/aither-core.ps1" -Force
     Write-Host '✓ Core runner script' -ForegroundColor Green
     
     # CRITICAL: Copy bootstrap script for PowerShell 5.1 compatibility
     $bootstrapPath = 'aither-core/aither-core-bootstrap.ps1'
     if (Test-Path $bootstrapPath) {
-        Copy-Item -Path $bootstrapPath -Destination "$packageDir/aither-core-bootstrap.ps1" -Force
+        Copy-Item -Path $bootstrapPath -Destination "$aithercoreDir/aither-core-bootstrap.ps1" -Force
         Write-Host '✓ PowerShell compatibility bootstrap script' -ForegroundColor Green
     } else {
         Write-Warning "Bootstrap script not found at: $bootstrapPath"
@@ -229,7 +234,7 @@ try {
     Write-Host "Estimated Size: $($profileInfo.EstimatedSize)" -ForegroundColor Gray
     Write-Host "Modules to include: $($selectedModules.Count)" -ForegroundColor Gray
 
-    New-Item -Path (Join-Path $packageDir "modules") -ItemType Directory -Force | Out-Null
+    New-Item -Path (Join-Path $aithercoreDir "modules") -ItemType Directory -Force | Out-Null
     foreach ($module in $selectedModules) {
         $modulePath = Join-Path "aither-core" "modules" $module
         if (Test-Path $modulePath) {
@@ -237,7 +242,7 @@ try {
                 Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Copying module: $module"
             }
             
-            Copy-Item -Path $modulePath -Destination (Join-Path $packageDir 'modules' $module) -Recurse -Force
+            Copy-Item -Path $modulePath -Destination (Join-Path $aithercoreDir 'modules' $module) -Recurse -Force
             Write-Host "✓ Essential module: $module" -ForegroundColor Green
         } else {
             if ($progressAvailable) {
@@ -254,7 +259,7 @@ try {
             Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Copying shared utilities"
         }
         
-        Copy-Item -Path 'aither-core/shared' -Destination "$packageDir/shared" -Recurse -Force
+        Copy-Item -Path 'aither-core/shared' -Destination "$aithercoreDir/shared" -Recurse -Force
         Write-Host '✓ Shared utilities' -ForegroundColor Green
     } else {
         if ($progressAvailable) {
