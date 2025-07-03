@@ -73,13 +73,16 @@ function Write-SetupHeader {
     param([string]$Title)
     
     Write-Host ""
-    Write-SetupMessage "🚀 AitherZero Quick Setup - $Title" -Type Primary
+    # Use ASCII-compatible characters for PowerShell 5.1 compatibility
+    $rocket = if ($PSVersionTable.PSVersion.Major -ge 6) { "🚀" } else { "[SETUP]" }
+    Write-SetupMessage "$rocket AitherZero Quick Setup - $Title" -Type Primary
     Write-SetupMessage ("=" * 60) -Type Muted
     Write-Host ""
 }
 
 function Test-Prerequisites {
-    Write-SetupMessage "🔍 Checking prerequisites..." -Type Info
+    $checkIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "🔍" } else { "[CHECK]" }
+    Write-SetupMessage "$checkIcon Checking prerequisites..." -Type Info
     
     $issues = @()
     
@@ -88,26 +91,31 @@ function Test-Prerequisites {
     if ($psVersion.Major -lt 5) {
         $issues += "PowerShell 5.0+ required (current: $psVersion)"
     } elseif ($psVersion.Major -eq 5) {
-        Write-SetupMessage "  ⚠️  PowerShell 5.1 detected - some features may be limited" -Type Warning
+        $warnIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "⚠️" } else { "[WARN]" }
+        Write-SetupMessage "  $warnIcon  PowerShell 5.1 detected - some features may be limited" -Type Warning
         Write-SetupMessage "     Consider upgrading to PowerShell 7+ for best experience" -Type Muted
     } else {
-        Write-SetupMessage "  ✅ PowerShell $psVersion" -Type Success
+        $okIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "✅" } else { "[OK]" }
+        Write-SetupMessage "  $okIcon PowerShell $psVersion" -Type Success
     }
     
     # Check execution policy
     $executionPolicy = Get-ExecutionPolicy -Scope CurrentUser
     if ($executionPolicy -eq 'Restricted') {
-        Write-SetupMessage "  ⚠️  Execution policy is Restricted" -Type Warning
+        $warnIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "⚠️" } else { "[WARN]" }
+        Write-SetupMessage "  $warnIcon  Execution policy is Restricted" -Type Warning
         Write-SetupMessage "     This may prevent script execution" -Type Muted
     } else {
-        Write-SetupMessage "  ✅ Execution policy: $executionPolicy" -Type Success
+        $okIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "✅" } else { "[OK]" }
+        Write-SetupMessage "  $okIcon Execution policy: $executionPolicy" -Type Success
     }
     
     # Check if we're in the right directory
     $currentDir = $PWD.Path
     $scriptDir = $PSScriptRoot
     if ($currentDir -ne $scriptDir) {
-        Write-SetupMessage "  ℹ️  Working directory: $currentDir" -Type Info
+        $infoIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "ℹ️" } else { "[INFO]" }
+        Write-SetupMessage "  $infoIcon  Working directory: $currentDir" -Type Info
         Write-SetupMessage "     Script directory: $scriptDir" -Type Muted
     }
     
@@ -121,26 +129,31 @@ function Test-Prerequisites {
     foreach ($dir in $requiredDirs) {
         $fullPath = Join-Path $PSScriptRoot $dir
         if (Test-Path $fullPath) {
-            Write-SetupMessage "  ✅ Directory: $dir" -Type Success
+            $okIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "✅" } else { "[OK]" }
+            Write-SetupMessage "  $okIcon Directory: $dir" -Type Success
         } else {
             $issues += "Missing required directory: $dir"
         }
     }
     
     if ($issues.Count -gt 0) {
-        Write-SetupMessage "❌ Prerequisites check failed:" -Type Error
+        $errorIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "❌" } else { "[ERROR]" }
+        Write-SetupMessage "$errorIcon Prerequisites check failed:" -Type Error
         foreach ($issue in $issues) {
-            Write-SetupMessage "   • $issue" -Type Error
+            $bullet = if ($PSVersionTable.PSVersion.Major -ge 6) { "•" } else { "-" }
+            Write-SetupMessage "   $bullet $issue" -Type Error
         }
         return $false
     }
     
-    Write-SetupMessage "✅ All prerequisites satisfied!" -Type Success
+    $successIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "✅" } else { "[OK]" }
+    Write-SetupMessage "$successIcon All prerequisites satisfied!" -Type Success
     return $true
 }
 
 function Import-CoreModules {
-    Write-SetupMessage "📦 Loading core modules..." -Type Info
+    $moduleIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "📦" } else { "[MODULES]" }
+    Write-SetupMessage "$moduleIcon Loading core modules..." -Type Info
     
     $modulesPath = Join-Path $PSScriptRoot "aither-core/modules"
     
@@ -157,7 +170,8 @@ function Import-CoreModules {
         if (Test-Path $modulePath) {
             try {
                 Import-Module $modulePath -Force -ErrorAction Stop
-                Write-SetupMessage "  ✅ $moduleName" -Type Success
+                $okIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "✅" } else { "[OK]" }
+                Write-SetupMessage "  $okIcon $moduleName" -Type Success
                 $loadedCount++
             } catch {
                 Write-SetupMessage "  WARNING $moduleName`: $($_.Exception.Message)" -Type Warning
@@ -173,7 +187,8 @@ function Import-CoreModules {
     foreach ($module in $otherModules) {
         try {
             Import-Module $module.FullName -Force -ErrorAction Stop
-            Write-SetupMessage "  ✅ $($module.Name)" -Type Success
+            $okIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "✅" } else { "[OK]" }
+            Write-SetupMessage "  $okIcon $($module.Name)" -Type Success
             $loadedCount++
         } catch {
             Write-SetupMessage "  WARNING $($module.Name)`: Failed to load" -Type Warning
@@ -181,7 +196,8 @@ function Import-CoreModules {
     }
     
     $totalModules = (Get-ChildItem $modulesPath -Directory).Count
-    Write-SetupMessage "📦 Loaded $loadedCount/$totalModules modules" -Type Info
+    $moduleIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "📦" } else { "[MODULES]" }
+    Write-SetupMessage "$moduleIcon Loaded $loadedCount/$totalModules modules" -Type Info
     
     return $loadedCount -gt 0
 }
@@ -189,37 +205,44 @@ function Import-CoreModules {
 function Initialize-AitherZero {
     param([string]$ProfileName)
     
-    Write-SetupMessage "⚙️  Initializing AitherZero with '$ProfileName' profile..." -Type Info
+    $gearIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "⚙️" } else { "[INIT]" }
+    Write-SetupMessage "$gearIcon  Initializing AitherZero with '$ProfileName' profile..." -Type Info
     
     try {
         # Check if SetupWizard is available
         if (Get-Command Start-IntelligentSetup -ErrorAction SilentlyContinue) {
             if ($Auto) {
-                Write-SetupMessage "  🤖 Running automated setup..." -Type Info
+                $robotIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "🤖" } else { "[AUTO]" }
+                Write-SetupMessage "  $robotIcon Running automated setup..." -Type Info
                 $result = Start-IntelligentSetup -MinimalSetup -SkipOptional
             } else {
-                Write-SetupMessage "  👥 Starting interactive setup..." -Type Info
+                $peopleIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "👥" } else { "[INTERACTIVE]" }
+                Write-SetupMessage "  $peopleIcon Starting interactive setup..." -Type Info
                 $result = Start-IntelligentSetup
             }
             
             if ($result) {
-                Write-SetupMessage "✅ AitherZero initialized successfully!" -Type Success
+                $successIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "✅" } else { "[OK]" }
+                Write-SetupMessage "$successIcon AitherZero initialized successfully!" -Type Success
                 return $true
             }
         } else {
-            Write-SetupMessage "  ⚠️  SetupWizard not available, using basic initialization" -Type Warning
+            $warnIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "⚠️" } else { "[WARN]" }
+            Write-SetupMessage "  $warnIcon  SetupWizard not available, using basic initialization" -Type Warning
             
             # Basic initialization without SetupWizard
             $configDir = Join-Path $env:USERPROFILE ".aither"
             if (-not (Test-Path $configDir)) {
                 New-Item -ItemType Directory -Path $configDir -Force | Out-Null
-                Write-SetupMessage "  ✅ Created configuration directory" -Type Success
+                $okIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "✅" } else { "[OK]" }
+                Write-SetupMessage "  $okIcon Created configuration directory" -Type Success
             }
             
             return $true
         }
     } catch {
-        Write-SetupMessage "❌ Initialization failed: $($_.Exception.Message)" -Type Error
+        $errorIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "❌" } else { "[ERROR]" }
+        Write-SetupMessage "$errorIcon Initialization failed: $($_.Exception.Message)" -Type Error
         return $false
     }
     
@@ -227,7 +250,8 @@ function Initialize-AitherZero {
 }
 
 function Show-QuickStart {
-    Write-SetupMessage "🎉 AitherZero is ready to use!" -Type Success
+    $partyIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "🎉" } else { "[READY]" }
+    Write-SetupMessage "$partyIcon AitherZero is ready to use!" -Type Success
     Write-Host ""
     Write-SetupMessage "QUICK START COMMANDS:" -Type Primary
     Write-Host ""
@@ -281,11 +305,13 @@ try {
     }
     
 } catch {
-    Write-SetupMessage "❌ Quick setup failed: $($_.Exception.Message)" -Type Error
+    $errorIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "❌" } else { "[ERROR]" }
+    Write-SetupMessage "$errorIcon Quick setup failed: $($_.Exception.Message)" -Type Error
     Write-SetupMessage "Stack trace: $($_.ScriptStackTrace)" -Type Muted
     Show-TroubleshootingInfo
     exit 1
 }
 
 Write-Host ""
-Write-SetupMessage "Happy automating with AitherZero! 🚀" -Type Primary
+$rocketIcon = if ($PSVersionTable.PSVersion.Major -ge 6) { "🚀" } else { ""} 
+Write-SetupMessage "Happy automating with AitherZero! $rocketIcon" -Type Primary

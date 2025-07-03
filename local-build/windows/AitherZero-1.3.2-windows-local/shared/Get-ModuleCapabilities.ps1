@@ -167,10 +167,36 @@ function Get-ModuleCapabilities {
                     }
                 }
                 
+                # Format display name with proper spacing
+                $displayName = switch ($module.Name) {
+                    'OrchestrationEngine' { 'Orchestration Engine' }
+                    'AIToolsIntegration' { 'AI Tools Integration' }
+                    'ConfigurationCarousel' { 'Configuration Carousel' }
+                    'ConfigurationRepository' { 'Configuration Repository' }
+                    'BackupManager' { 'Backup Manager' }
+                    'SetupWizard' { 'Setup Wizard' }
+                    'DevEnvironment' { 'Dev Environment' }
+                    'OpenTofuProvider' { 'OpenTofu Provider' }
+                    'ISOManager' { 'ISO Manager' }
+                    'ISOCustomizer' { 'ISO Customizer' }
+                    'SecureCredentials' { 'Secure Credentials' }
+                    'RemoteConnection' { 'Remote Connection' }
+                    'SystemMonitoring' { 'System Monitoring' }
+                    'ParallelExecution' { 'Parallel Execution' }
+                    'TestingFramework' { 'Testing Framework' }
+                    'ProgressTracking' { 'Progress Tracking' }
+                    'StartupExperience' { 'Startup Experience' }
+                    'LabRunner' { 'Lab Runner' }
+                    default { 
+                        # Fallback to regex for unknown modules
+                        $module.Name -replace '([a-z])([A-Z])', '$1 $2'
+                    }
+                }
+                
                 # Create module capability object
                 $moduleCapability = [PSCustomObject]@{
                     Name = $module.Name
-                    DisplayName = $module.Name -replace '([A-Z])', ' $1' -replace '^ ', ''
+                    DisplayName = $displayName
                     Description = $info.Description
                     Category = $info.Category
                     MenuPriority = $info.MenuPriority
