@@ -51,7 +51,9 @@
       "Bash(\"/mnt/c/Program Files/PowerShell/7/pwsh.exe\" -c \"gh run view 16032364263\")",
       "Bash(powershell:*)",
       "Bash(\"/mnt/c/Program Files/Git/cmd/git.exe\" add aither-core/modules/PatchManager test-git-detection.ps1)",
-      "Bash(/mnt/c/Program Files/PowerShell/7/pwsh.exe ./test-patchmanager.ps1)"
+      "Bash(/mnt/c/Program Files/PowerShell/7/pwsh.exe ./test-patchmanager.ps1)",
+      "Bash(\"/mnt/c/Program Files/Git/cmd/git.exe\" branch -a)",
+      "Bash(/mnt/c/Program Files/PowerShell/7/pwsh.exe -Command \"\nImport-Module ./aither-core/modules/PatchManager -Force\n$currentBranch = & ''/mnt/c/Program Files/Git/cmd/git.exe'' branch --show-current\nWrite-Host \"\"Creating PR for branch: $currentBranch\"\"\nNew-PatchPR -Description ''Update README.md with ultra-simple bootstrap approach'' -BranchName $currentBranch\n\")"
     ],
     "deny": []
   }

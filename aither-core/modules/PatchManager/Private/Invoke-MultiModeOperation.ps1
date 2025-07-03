@@ -179,8 +179,18 @@ function Invoke-StandardMode {
                 Invoke-GitCommand "add ." -AllowFailure | Out-Null
                 Invoke-GitCommand "commit -m `"PatchManager v3.0: $PatchDescription`"" -AllowFailure | Out-Null
                 Write-CustomLog "Changes committed to branch $script:branchName" -Level "SUCCESS"
+                
+                # Push branch to remote (required for PR creation)
+                Write-CustomLog "Pushing branch to remote..." -Level "INFO"
+                $pushResult = Invoke-GitCommand "push -u origin $script:branchName" -AllowFailure
+                if ($pushResult.Success) {
+                    Write-CustomLog "Branch pushed to remote successfully" -Level "SUCCESS"
+                } else {
+                    Write-CustomLog "Failed to push branch: $($pushResult.Output)" -Level "ERROR"
+                    throw "Failed to push branch to remote - PR creation will fail"
+                }
             } else {
-                Write-CustomLog "DRY RUN: Would commit changes to branch" -Level "INFO"
+                Write-CustomLog "DRY RUN: Would commit and push changes to branch" -Level "INFO"
             }
         }
 
@@ -226,14 +236,53 @@ function Invoke-StandardMode {
 
     # Handle PR/Issue creation if successful
     if ($result.Success -and -not $DryRun) {
+        # Initialize tracking variables
+        $issueNumber = $null
+        $prUrl = $null
+        
         if ($CreateIssue) {
             Write-CustomLog "Creating issue..." -Level "INFO"
-            # Issue creation logic would go here
+            try {
+                $issueResult = New-PatchIssue -Description $PatchDescription
+                if ($issueResult.Success) {
+                    Write-CustomLog "Issue created: $($issueResult.IssueUrl)" -Level "SUCCESS"
+                    $issueNumber = $issueResult.IssueNumber
+                    $result.IssueNumber = $issueNumber
+                    $result.IssueUrl = $issueResult.IssueUrl
+                } else {
+                    Write-CustomLog "Issue creation failed: $($issueResult.Message)" -Level "WARN"
+                }
+            } catch {
+                Write-CustomLog "Issue creation error: $($_.Exception.Message)" -Level "ERROR"
+            }
         }
 
         if ($CreatePR) {
             Write-CustomLog "Creating PR..." -Level "INFO"
-            # PR creation logic would go here
+            try {
+                # Build PR parameters
+                $prParams = @{
+                    Description = $PatchDescription
+                    BranchName = $result.BranchCreated
+                }
+                
+                # Add issue number if we created one
+                if ($issueNumber) {
+                    $prParams.IssueNumber = $issueNumber
+                }
+                
+                $prResult = New-PatchPR @prParams
+                if ($prResult.Success) {
+                    Write-CustomLog "PR created: $($prResult.PullRequestUrl)" -Level "SUCCESS"
+                    $prUrl = $prResult.PullRequestUrl
+                    $result.PullRequestUrl = $prUrl
+                    $result.PullRequestNumber = $prResult.PullRequestNumber
+                } else {
+                    Write-CustomLog "PR creation failed: $($prResult.Message)" -Level "ERROR"
+                }
+            } catch {
+                Write-CustomLog "PR creation error: $($_.Exception.Message)" -Level "ERROR"
+            }
         }
     }
 
