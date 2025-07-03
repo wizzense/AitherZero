@@ -56,3 +56,5 @@ kicker-git-backup.ps1
 
 # PowerShell Security Scripts (Private - Never Commit)
 powershellsec/
+
+requirements/
