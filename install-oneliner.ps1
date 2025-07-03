@@ -14,7 +14,7 @@ Write-Host "`nAitherZero Quick Installer" -ForegroundColor Cyan
 Write-Host "=========================" -ForegroundColor Cyan
 
 # Create temp file for the installer
-$installerUrl = 'https://raw.githubusercontent.com/wizzense/AitherZero/main/get-aither-fixed.ps1'
+$installerUrl = 'https://raw.githubusercontent.com/wizzense/AitherZero/main/get-aither.ps1'
 $tempFile = [System.IO.Path]::GetTempFileName() + '.ps1'
 
 try {
