@@ -1,5 +1,6 @@
-# AitherZero Bootstrap Script v1.2 - PowerShell 5.1+ Compatible
+# AitherZero Bootstrap Script v1.3 - PowerShell 5.1+ Compatible
 # Usage: iex (irm "https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1")
+# Non-interactive: $env:AITHER_BOOTSTRAP_MODE='update'|'clean'|'new'; iex (irm ...)
 
 # Enable TLS 1.2 for older systems
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -8,6 +9,71 @@
 $ErrorActionPreference = 'Stop'
 
 try {
+    # Check if AitherZero already exists
+    $aither_files = @('Start-AitherZero.ps1', 'aither-core', 'quick-setup-simple.ps1')
+    $existing_found = $false
+    foreach ($file in $aither_files) {
+        if (Test-Path $file) {
+            $existing_found = $true
+            break
+        }
+    }
+    
+    if ($existing_found) {
+        # Check for non-interactive mode
+        $mode = $env:AITHER_BOOTSTRAP_MODE
+        if ($mode) {
+            Write-Host "🤖 Non-interactive mode: $mode" -ForegroundColor Cyan
+            $choice = switch ($mode.ToLower()) {
+                'update' { 'U' }
+                'clean' { 'C' }
+                'new' { 'N' }
+                'cancel' { 'X' }
+                default { 'U' }
+            }
+        } else {
+            Write-Host "⚠️  AitherZero files detected in current directory" -ForegroundColor Yellow
+            Write-Host "Choose an option:" -ForegroundColor Cyan
+            Write-Host "  [U] Update existing installation (default)" -ForegroundColor White
+            Write-Host "  [C] Clean install (remove existing files)" -ForegroundColor White
+            Write-Host "  [N] Install to new subdirectory" -ForegroundColor White
+            Write-Host "  [X] Cancel installation" -ForegroundColor White
+            
+            $choice = Read-Host "Enter your choice (U/C/N/X)"
+            if (-not $choice) { $choice = 'U' }
+        }
+        
+        switch ($choice.ToUpper()) {
+            'C' {
+                Write-Host "🧹 Cleaning existing installation..." -ForegroundColor Yellow
+                $cleanup_items = @('Start-AitherZero.ps1', 'aither-core', 'aither.ps1', 
+                                 'aither.bat', 'quick-setup-simple.ps1', 'configs', 
+                                 'opentofu', 'scripts', 'tests', 'build', 'docs')
+                foreach ($item in $cleanup_items) {
+                    if (Test-Path $item) {
+                        Remove-Item $item -Recurse -Force -ErrorAction SilentlyContinue
+                    }
+                }
+            }
+            'N' {
+                $subdir = "AitherZero-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+                Write-Host "📁 Creating new directory: $subdir" -ForegroundColor Cyan
+                New-Item -ItemType Directory -Force -Path $subdir | Out-Null
+                Set-Location $subdir
+            }
+            'X' {
+                Write-Host "❌ Installation cancelled" -ForegroundColor Red
+                exit 0
+            }
+            'U' {
+                Write-Host "🔄 Updating existing installation..." -ForegroundColor Cyan
+            }
+            default {
+                Write-Host "🔄 Updating existing installation..." -ForegroundColor Cyan
+            }
+        }
+    }
+    
     Write-Host "🚀 Downloading AitherZero..." -ForegroundColor Cyan
     
     # Get latest Windows release
@@ -17,7 +83,7 @@ try {
     # Find Windows ZIP file
     $windowsAsset = $null
     foreach ($asset in $release.assets) {
-        if ($asset.name -match "windows.*\.zip$") {
+        if ($asset.name -match 'windows.*\\.zip$') {
             $windowsAsset = $asset
             break
         }
@@ -47,6 +113,9 @@ try {
     
     # Create temp directory
     $tempDir = "AitherZero-temp-$(Get-Random)"
+    if (Test-Path $tempDir) {
+        Remove-Item $tempDir -Recurse -Force
+    }
     New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
     
     # Extract based on PowerShell version
@@ -67,13 +136,48 @@ try {
     # If there's a single directory, move its contents
     if ($extractedItems.Count -eq 1 -and $extractedItems[0].PSIsContainer) {
         $innerDir = $extractedItems[0]
-        Get-ChildItem -Path $innerDir.FullName -Force | ForEach-Object {
-            Move-Item -Path $_.FullName -Destination $PWD -Force
-        }
+        $sourceItems = Get-ChildItem -Path $innerDir.FullName -Force
     } else {
-        # Move all items from temp dir
-        Get-ChildItem -Path $tempDir -Force | ForEach-Object {
-            Move-Item -Path $_.FullName -Destination $PWD -Force
+        # Use all items from temp dir
+        $sourceItems = Get-ChildItem -Path $tempDir -Force
+    }
+    
+    # Copy files with better error handling
+    foreach ($item in $sourceItems) {
+        $destPath = Join-Path $PWD $item.Name
+        
+        try {
+            if (Test-Path $destPath) {
+                # Try to remove existing item
+                Remove-Item $destPath -Recurse -Force -ErrorAction Stop
+            }
+            
+            # Copy instead of move for better reliability
+            if ($item.PSIsContainer) {
+                Copy-Item -Path $item.FullName -Destination $destPath -Recurse -Force
+            } else {
+                Copy-Item -Path $item.FullName -Destination $destPath -Force
+            }
+        } catch {
+            # If removal fails, try to overwrite
+            try {
+                if ($item.PSIsContainer) {
+                    # For directories, remove and recreate
+                    if (Test-Path $destPath) {
+                        # Try renaming old directory first
+                        $backupPath = "$destPath.old"
+                        if (Test-Path $backupPath) {
+                            Remove-Item $backupPath -Recurse -Force -ErrorAction SilentlyContinue
+                        }
+                        Rename-Item -Path $destPath -NewName "$($item.Name).old" -Force -ErrorAction SilentlyContinue
+                    }
+                    Copy-Item -Path $item.FullName -Destination $destPath -Recurse -Force
+                } else {
+                    Copy-Item -Path $item.FullName -Destination $destPath -Force
+                }
+            } catch {
+                Write-Host "⚠️  Warning: Could not update $($item.Name): $_" -ForegroundColor Yellow
+            }
         }
     }
     
