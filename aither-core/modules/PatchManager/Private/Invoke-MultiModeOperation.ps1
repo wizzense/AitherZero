@@ -105,11 +105,11 @@ function Invoke-SimpleMode {
         }
 
         # Check if there are changes to commit
-        $gitStatus = git status --porcelain 2>&1
-        if ($gitStatus -and ($gitStatus | Where-Object { $_ -match '\S' })) {
+        $gitStatusResult = Invoke-GitCommand "status --porcelain" -AllowFailure
+        if ($gitStatusResult.Success -and $gitStatusResult.Output -and ($gitStatusResult.Output | Where-Object { $_ -match '\S' })) {
             if (-not $DryRun) {
-                git add . 2>&1 | Out-Null
-                git commit -m "Simple patch: $PatchDescription" 2>&1 | Out-Null
+                Invoke-GitCommand "add ." -AllowFailure | Out-Null
+                Invoke-GitCommand "commit -m `"Simple patch: $PatchDescription`"" -AllowFailure | Out-Null
                 Write-CustomLog "Changes committed directly to current branch" -Level "SUCCESS"
             } else {
                 Write-CustomLog "DRY RUN: Would commit changes to current branch" -Level "INFO"
@@ -126,7 +126,8 @@ function Invoke-SimpleMode {
 
     $preConditions = {
         # Verify no merge conflicts
-        $conflicts = git grep -l "^<<<<<<< HEAD" 2>$null
+        $conflictsResult = Invoke-GitCommand "grep -l '^<<<<<<< HEAD'" -AllowFailure
+        $conflicts = if ($conflictsResult.Success) { $conflictsResult.Output } else { $null }
         if ($conflicts) {
             Write-CustomLog "Cannot proceed: merge conflicts detected" -Level "ERROR"
             return $false
@@ -160,9 +161,9 @@ function Invoke-StandardMode {
         Write-CustomLog "Creating branch: $script:branchName" -Level "INFO"
         
         if (-not $DryRun) {
-            git checkout -b $script:branchName 2>&1 | Out-Null
-            if ($LASTEXITCODE -ne 0) {
-                throw "Failed to create branch $script:branchName"
+            $checkoutResult = Invoke-GitCommand "checkout -b $script:branchName" -AllowFailure
+            if (-not $checkoutResult.Success) {
+                throw "Failed to create branch $script:branchName: $($checkoutResult.Output)"
             }
         }
 
@@ -172,11 +173,11 @@ function Invoke-StandardMode {
         }
 
         # Commit changes
-        $gitStatus = git status --porcelain 2>&1
-        if ($gitStatus -and ($gitStatus | Where-Object { $_ -match '\S' })) {
+        $gitStatusResult = Invoke-GitCommand "status --porcelain" -AllowFailure
+        if ($gitStatusResult.Success -and $gitStatusResult.Output -and ($gitStatusResult.Output | Where-Object { $_ -match '\S' })) {
             if (-not $DryRun) {
-                git add . 2>&1 | Out-Null
-                git commit -m "PatchManager v3.0: $PatchDescription" 2>&1 | Out-Null
+                Invoke-GitCommand "add ." -AllowFailure | Out-Null
+                Invoke-GitCommand "commit -m `"PatchManager v3.0: $PatchDescription`"" -AllowFailure | Out-Null
                 Write-CustomLog "Changes committed to branch $script:branchName" -Level "SUCCESS"
             } else {
                 Write-CustomLog "DRY RUN: Would commit changes to branch" -Level "INFO"
@@ -192,16 +193,17 @@ function Invoke-StandardMode {
 
     $preConditions = {
         # Ensure we're in a good state to create branches
-        $conflicts = git grep -l "^<<<<<<< HEAD" 2>$null
+        $conflictsResult = Invoke-GitCommand "grep -l '^<<<<<<< HEAD'" -AllowFailure
+        $conflicts = if ($conflictsResult.Success) { $conflictsResult.Output } else { $null }
         if ($conflicts) {
             Write-CustomLog "Cannot proceed: merge conflicts detected" -Level "ERROR"
             return $false
         }
 
         # Ensure we have a valid git repository
-        $gitDir = git rev-parse --git-dir 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            Write-CustomLog "Not in a git repository" -Level "ERROR"
+        $gitDirResult = Invoke-GitCommand "rev-parse --git-dir" -AllowFailure
+        if (-not $gitDirResult.Success) {
+            Write-CustomLog "Not in a git repository: $($gitDirResult.Output)" -Level "ERROR"
             return $false
         }
 
@@ -212,8 +214,8 @@ function Invoke-StandardMode {
         if ($script:branchName -and -not $DryRun) {
             try {
                 Write-CustomLog "Rolling back: deleting branch $script:branchName" -Level "INFO"
-                git checkout main 2>&1 | Out-Null
-                git branch -D $script:branchName 2>&1 | Out-Null
+                Invoke-GitCommand "checkout main" -AllowFailure | Out-Null
+                Invoke-GitCommand "branch -D $script:branchName" -AllowFailure | Out-Null
             } catch {
                 Write-CustomLog "Rollback warning: $($_.Exception.Message)" -Level "WARN"
             }

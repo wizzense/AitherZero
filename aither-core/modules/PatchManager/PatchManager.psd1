@@ -81,6 +81,10 @@ FunctionsToExport = @(
     'Invoke-AtomicOperation',
     'Get-SmartOperationMode',
     
+    # V3.0 Cross-Platform Git Support
+    'Get-GitCommand',
+    'Invoke-GitCommand',
+    
     # Legacy Functions - Backward compatibility
     'Invoke-PatchWorkflow',
     'New-PatchIssue',

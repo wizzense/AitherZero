@@ -4,8 +4,9 @@ function Test-PatchWorkflowSafety {
         [string]$PatchDescription
     )
     
-    # Check for uncommitted changes
-    $status = git status --porcelain
+    # Check for uncommitted changes using cross-platform git detection
+    $gitResult = Invoke-GitCommand "status --porcelain" -AllowFailure
+    $status = $gitResult.Output
     if ($status) {
         Write-Warning "SAFETY CHECK: Uncommitted changes detected!"
         Write-Host "The following files have uncommitted changes:" -ForegroundColor Yellow
@@ -33,7 +34,7 @@ function Test-PatchWorkflowSafety {
         
         # Also create a git stash as secondary backup
         $stashMessage = "SAFETY-STASH: Before $PatchDescription - $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
-        git stash push -u -m $stashMessage
+        Invoke-GitCommand "stash push -u -m `"$stashMessage`"" -AllowFailure
         Write-Host "Git stash created: $stashMessage" -ForegroundColor Green
         
         return @{
@@ -69,10 +70,13 @@ function Restore-PatchWorkflowBackup {
     
     if ($StashMessage) {
         Write-Host "Restoring git stash: $StashMessage" -ForegroundColor Yellow
-        git stash list | Where-Object { $_ -match [regex]::Escape($StashMessage) } | ForEach-Object {
-            $stashId = ($_ -split ':')[0]
-            git stash apply $stashId
-            Write-Host "Stash restored successfully!" -ForegroundColor Green
+        $stashListResult = Invoke-GitCommand "stash list" -AllowFailure
+        if ($stashListResult.Success) {
+            $stashListResult.Output | Where-Object { $_ -match [regex]::Escape($StashMessage) } | ForEach-Object {
+                $stashId = ($_ -split ':')[0]
+                Invoke-GitCommand "stash apply $stashId" -AllowFailure
+                Write-Host "Stash restored successfully!" -ForegroundColor Green
+            }
         }
     }
 }
