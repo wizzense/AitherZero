@@ -4,15 +4,18 @@
     Ultra-simple AitherZero bootstrap script for one-liner execution
 
 .DESCRIPTION
-    Clean, readable 50-line script that downloads and runs AitherZero.
+    Clean, readable script that downloads and runs AitherZero.
     Compatible with PowerShell 5.1+ and designed for endpoints without GUI.
+    
+    For Linux/macOS users, use bootstrap.sh instead:
+    curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
 
 .EXAMPLE
-    # One-liner usage:
+    # Windows one-liner usage:
     iex (irm "https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1")
 
 .NOTES
-    AitherZero Bootstrap v1.0 - Ultra-simple edition
+    AitherZero Bootstrap v1.1 - Fixed extraction and path issues
 #>
 
 [CmdletBinding()]
@@ -40,17 +43,35 @@ try {
     Invoke-WebRequest $asset.browser_download_url -OutFile $zipFile
     
     Write-Host "📂 Extracting..." -ForegroundColor Yellow
-    Expand-Archive $zipFile -DestinationPath "." -Force
-    Remove-Item $zipFile
     
-    # Find and enter AitherZero directory
-    $folder = Get-ChildItem -Directory | Where-Object { $_.Name -like "AitherZero*" } | Select-Object -First 1
-    if (-not $folder) {
-        throw "AitherZero directory not found after extraction"
+    # Create temporary extraction directory
+    $tempExtract = "AitherZero-temp-extract"
+    if (Test-Path $tempExtract) {
+        Remove-Item $tempExtract -Recurse -Force
     }
     
-    Set-Location $folder.Name
-    Write-Host "✅ Extracted to: $(Get-Location)" -ForegroundColor Green
+    Expand-Archive $zipFile -DestinationPath $tempExtract -Force
+    Remove-Item $zipFile
+    
+    # Find the AitherZero directory inside temp extract
+    $innerFolder = Get-ChildItem -Path $tempExtract -Directory | Where-Object { $_.Name -like "AitherZero*" } | Select-Object -First 1
+    
+    if ($innerFolder) {
+        # Move contents from inner folder to current directory
+        Write-Host "📁 Moving files from $($innerFolder.Name) to current directory..." -ForegroundColor Yellow
+        Get-ChildItem -Path $innerFolder.FullName | ForEach-Object {
+            Move-Item -Path $_.FullName -Destination "." -Force
+        }
+        Remove-Item $tempExtract -Recurse -Force
+        Write-Host "✅ Extracted to: $(Get-Location)" -ForegroundColor Green
+    } else {
+        # No nested folder, move everything from temp
+        Get-ChildItem -Path $tempExtract | ForEach-Object {
+            Move-Item -Path $_.FullName -Destination "." -Force
+        }
+        Remove-Item $tempExtract -Recurse -Force
+        Write-Host "✅ Extracted to: $(Get-Location)" -ForegroundColor Green
+    }
     
     # Auto-start with best available method
     Write-Host "🚀 Starting AitherZero..." -ForegroundColor Cyan

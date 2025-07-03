@@ -61,19 +61,50 @@ function Test-Prerequisites {
         Write-Message "  [OK] PowerShell $psVersion" -Type Success
     }
     
-    # Check for required directories
-    $requiredDirs = @(
-        'aither-core',
-        'aither-core/modules',
-        'aither-core/shared'
+    # Find script root - handle different execution contexts
+    $scriptRoot = $PSScriptRoot
+    if (-not $scriptRoot) {
+        $scriptRoot = Get-Location
+    }
+    
+    # Try to find aither-core in multiple locations
+    $searchPaths = @(
+        $scriptRoot,
+        (Get-Location),
+        (Split-Path $scriptRoot -Parent),
+        $PWD
     )
     
-    foreach ($dir in $requiredDirs) {
-        $fullPath = Join-Path $PSScriptRoot $dir
-        if (Test-Path $fullPath) {
-            Write-Message "  [OK] Directory: $dir" -Type Success
-        } else {
-            $issues += "Missing required directory: $dir"
+    $aithercorePath = $null
+    foreach ($path in $searchPaths) {
+        $testPath = Join-Path $path "aither-core"
+        if (Test-Path $testPath) {
+            $aithercorePath = $path
+            Write-Message "  [OK] Found aither-core in: $path" -Type Success
+            break
+        }
+    }
+    
+    if (-not $aithercorePath) {
+        $issues += "Cannot find aither-core directory in any of: $($searchPaths -join ', ')"
+    } else {
+        # Update script root to the correct location
+        $script:PSScriptRoot = $aithercorePath
+        
+        # Check for required directories
+        $requiredDirs = @(
+            'aither-core',
+            'aither-core/modules',
+            'aither-core/shared'
+        )
+        
+        foreach ($dir in $requiredDirs) {
+            $fullPath = Join-Path $aithercorePath $dir
+            if (Test-Path $fullPath) {
+                Write-Message "  [OK] Directory: $dir" -Type Success
+            } else {
+                $issues += "Missing required directory: $dir"
+            }
         }
     }
     
@@ -92,7 +123,11 @@ function Test-Prerequisites {
 function Import-CoreModules {
     Write-Message "Loading core modules..." -Type Info
     
-    $modulesPath = Join-Path $PSScriptRoot "aither-core/modules"
+    # Use the corrected script root if available
+    $rootPath = if ($script:PSScriptRoot) { $script:PSScriptRoot } else { $PSScriptRoot }
+    if (-not $rootPath) { $rootPath = Get-Location }
+    
+    $modulesPath = Join-Path $rootPath "aither-core/modules"
     
     if (-not (Test-Path $modulesPath)) {
         Write-Message "Modules directory not found at: $modulesPath" -Type Error
