@@ -286,6 +286,12 @@ function Invoke-StandardMode {
                     $prUrl = $prResult.PullRequestUrl
                     $result.PullRequestUrl = $prUrl
                     $result.PullRequestNumber = $prResult.PullRequestNumber
+                    
+                    # Also add to Result hashtable for consistency
+                    if ($result.Result) {
+                        $result.Result.PullRequestUrl = $prUrl
+                        $result.Result.PullRequestNumber = $prResult.PullRequestNumber
+                    }
                 } else {
                     Write-CustomLog "PR creation failed: $($prResult.Message)" -Level "ERROR"
                 }
