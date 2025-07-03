@@ -11,6 +11,7 @@
     - Creates GitHub issue for tracking
     - Creates pull request for review
     - Uses Standard mode with full safety checks
+    - Optionally specifies release type for automatic versioning
 
 .PARAMETER Description
     Description of the feature being developed
@@ -20,6 +21,10 @@
 
 .PARAMETER Priority
     Priority level for the GitHub issue (Low, Medium, High, Critical)
+
+.PARAMETER ReleaseType
+    Type of release this feature represents (patch, minor, major)
+    Default: patch (for features, typically use minor)
 
 .PARAMETER TargetFork
     Target fork for cross-repository features
@@ -33,6 +38,14 @@
         New-Item "auth-module.ps1"
         # ... implementation code
     }
+    # Creates feature with default patch release
+
+.EXAMPLE
+    New-Feature -Description "Add OAuth support" -ReleaseType "minor" -Changes {
+        # New feature = minor release
+        Add-OAuthModule
+    }
+    # Creates feature marked for minor version bump (0.5.4 -> 0.6.0)
 
 .EXAMPLE
     New-Feature -Description "Enterprise logging integration" -Priority "High" -Changes {
@@ -62,6 +75,10 @@ function New-Feature {
         [string]$Priority = "Medium",
 
         [Parameter(Mandatory = $false)]
+        [ValidateSet("patch", "minor", "major")]
+        [string]$ReleaseType = "patch",
+
+        [Parameter(Mandatory = $false)]
         [ValidateSet("current", "upstream", "root")]
         [string]$TargetFork = "current",
 
@@ -74,7 +91,7 @@ function New-Feature {
     # Determine mode based on target fork
     $mode = if ($TargetFork -ne "current") { "Advanced" } else { "Standard" }
 
-    return New-Patch -Description $Description -Changes $Changes -Mode $mode -CreatePR -CreateIssue $true -TargetFork $TargetFork -DryRun:$DryRun
+    return New-Patch -Description $Description -Changes $Changes -Mode $mode -CreatePR -CreateIssue $true -TargetFork $TargetFork -ReleaseType $ReleaseType -DryRun:$DryRun
 }
 
 Export-ModuleMember -Function New-Feature

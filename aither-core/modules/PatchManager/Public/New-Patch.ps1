@@ -36,6 +36,10 @@
 .PARAMETER TargetFork
     For cross-fork PRs: 'current', 'upstream', or 'root'
 
+.PARAMETER ReleaseType
+    Type of release this patch represents (patch, minor, major)
+    Default: patch
+
 .PARAMETER DryRun
     Preview what would be done without making changes
 
@@ -94,6 +98,10 @@ function New-Patch {
         [Parameter(Mandatory = $false)]
         [ValidateSet("current", "upstream", "root")]
         [string]$TargetFork = "current",
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet("patch", "minor", "major")]
+        [string]$ReleaseType = "patch",
 
         [Parameter(Mandatory = $false)]
         [switch]$DryRun,
@@ -157,7 +165,7 @@ function New-Patch {
             Write-CustomLog "Using $Mode mode (CreatePR: $CreatePR, CreateIssue: $CreateIssue)" -Level "INFO"
 
             # Step 2: Execute multi-mode operation
-            $result = Invoke-MultiModeOperation -Mode $Mode -PatchDescription $Description -PatchOperation $Changes -CreatePR:$CreatePR -CreateIssue $CreateIssue -TargetFork $TargetFork -DryRun:$DryRun
+            $result = Invoke-MultiModeOperation -Mode $Mode -PatchDescription $Description -PatchOperation $Changes -CreatePR:$CreatePR -CreateIssue $CreateIssue -TargetFork $TargetFork -ReleaseType $ReleaseType -DryRun:$DryRun
 
             if ($result.Success) {
                 Write-CustomLog "Patch creation completed successfully!" -Level "SUCCESS"

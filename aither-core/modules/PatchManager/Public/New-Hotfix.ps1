@@ -21,6 +21,10 @@
 .PARAMETER SkipPR
     Skip PR creation for truly emergency situations (not recommended)
 
+.PARAMETER ReleaseType
+    Type of release this hotfix represents (patch, minor, major)
+    Default: patch (hotfixes are typically patches)
+
 .PARAMETER DryRun
     Preview the hotfix without applying it
 
@@ -51,6 +55,10 @@ function New-Hotfix {
         [switch]$SkipPR,
 
         [Parameter(Mandatory = $false)]
+        [ValidateSet("patch", "minor", "major")]
+        [string]$ReleaseType = "patch",
+
+        [Parameter(Mandatory = $false)]
         [switch]$DryRun
     )
 
@@ -72,7 +80,7 @@ function New-Hotfix {
 
     $createPR = -not $SkipPR
 
-    return New-Patch -Description "HOTFIX: $Description" -Changes $Changes -Mode "Standard" -CreatePR:$createPR -CreateIssue $true -DryRun:$DryRun -Force
+    return New-Patch -Description "HOTFIX: $Description" -Changes $Changes -Mode "Standard" -CreatePR:$createPR -CreateIssue $true -ReleaseType $ReleaseType -DryRun:$DryRun -Force
 }
 
 Export-ModuleMember -Function New-Hotfix

@@ -20,6 +20,10 @@
 .PARAMETER AffectedFiles
     Files affected by the patch
 
+.PARAMETER ReleaseType
+    Type of release this PR represents (patch, minor, major)
+    Default: patch
+
 .PARAMETER DryRun
     Preview what would be created without actually creating
 
@@ -52,6 +56,10 @@ function New-PatchPR {
 
         [Parameter(Mandatory = $false)]
         [string[]]$AffectedFiles = @(),
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet("patch", "minor", "major")]
+        [string]$ReleaseType = "patch",
 
         [Parameter(Mandatory = $false)]
         [switch]$DryRun
@@ -174,9 +182,18 @@ $(if ($IssueNumber) {
     "### Standalone Patch`nThis is a standalone patch without a linked tracking issue."
 })
 
+### Release Information
+- **Release Type**: ``$ReleaseType``
+- **Version Impact**: $(switch($ReleaseType) {
+    "patch" { "Bug fixes and minor improvements (0.0.x)" }
+    "minor" { "New features and enhancements (0.x.0)" }
+    "major" { "Breaking changes (x.0.0)" }
+})
+- **Auto-Release**: Enabled - merging this PR will trigger automatic version bump
+
 ### Automation Details
-- **PatchManager Version**: 2.0 (Consolidated)
-- **Workflow**: ``Invoke-PatchWorkflow``
+- **PatchManager Version**: 3.0 (Atomic Operations)
+- **Workflow**: ``New-Feature/New-Patch/New-Hotfix``
 - **Unicode Sanitization**: Applied to all changed files
 - **Branch Strategy**: Feature branch with clean history
 - **Auto-merge**: Not enabled (requires manual review)
@@ -239,6 +256,19 @@ $(if ($IssueNumber) {
             if (-not $labelCheck.Contains("patch")) {
                 Write-PRLog "Creating missing patch label" -Level "INFO"
                 gh label create "patch" --repo $repoInfo.GitHubRepo --color "0366d6" --description "Auto-created by PatchManager" 2>&1 | Out-Null
+            }
+            
+            # Ensure release type label exists
+            $releaseLabel = "release:$ReleaseType"
+            $releaseLabelCheck = gh label list --repo $repoInfo.GitHubRepo --search "$releaseLabel" 2>&1 | Out-String
+            if (-not $releaseLabelCheck.Contains($releaseLabel)) {
+                Write-PRLog "Creating missing release label: $releaseLabel" -Level "INFO"
+                $labelColor = switch($ReleaseType) {
+                    "patch" { "0e8a16" }  # Green
+                    "minor" { "1d76db" }  # Blue  
+                    "major" { "b60205" }  # Red
+                }
+                gh label create "$releaseLabel" --repo $repoInfo.GitHubRepo --color $labelColor --description "Release type: $ReleaseType" 2>&1 | Out-Null
             }            # Create PR with robust error handling
             Write-PRLog "Creating pull request: $prTitle" -Level "INFO"
             
@@ -247,7 +277,7 @@ $(if ($IssueNumber) {
                 Write-PatchProgressLog -Message "Submitting pull request to GitHub" -Level 'Info'
             }
             
-            $result = gh pr create --repo $repoInfo.GitHubRepo --title $prTitle --body $prBody --head $BranchName --label "patch" 2>&1
+            $result = gh pr create --repo $repoInfo.GitHubRepo --title $prTitle --body $prBody --head $BranchName --label "patch,$releaseLabel" 2>&1
 
             # Handle any remaining label errors gracefully
             if ($LASTEXITCODE -ne 0 -and $result -match "not found") {

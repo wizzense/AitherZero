@@ -53,6 +53,10 @@ function Invoke-MultiModeOperation {
         [string]$TargetFork = "current",
 
         [Parameter(Mandatory = $false)]
+        [ValidateSet("patch", "minor", "major")]
+        [string]$ReleaseType = "patch",
+
+        [Parameter(Mandatory = $false)]
         [switch]$DryRun
     )
 
@@ -75,10 +79,10 @@ function Invoke-MultiModeOperation {
                     return Invoke-SimpleMode -PatchDescription $PatchDescription -PatchOperation $PatchOperation -DryRun:$DryRun
                 }
                 "Standard" {
-                    return Invoke-StandardMode -PatchDescription $PatchDescription -PatchOperation $PatchOperation -CreatePR:$CreatePR -CreateIssue $CreateIssue -DryRun:$DryRun
+                    return Invoke-StandardMode -PatchDescription $PatchDescription -PatchOperation $PatchOperation -CreatePR:$CreatePR -CreateIssue $CreateIssue -ReleaseType $ReleaseType -DryRun:$DryRun
                 }
                 "Advanced" {
-                    return Invoke-AdvancedMode -PatchDescription $PatchDescription -PatchOperation $PatchOperation -CreatePR:$CreatePR -CreateIssue $CreateIssue -TargetFork $TargetFork -DryRun:$DryRun
+                    return Invoke-AdvancedMode -PatchDescription $PatchDescription -PatchOperation $PatchOperation -CreatePR:$CreatePR -CreateIssue $CreateIssue -TargetFork $TargetFork -ReleaseType $ReleaseType -DryRun:$DryRun
                 }
             }
         } catch {
@@ -145,6 +149,7 @@ function Invoke-StandardMode {
         [scriptblock]$PatchOperation,
         [switch]$CreatePR,
         [bool]$CreateIssue,
+        [string]$ReleaseType = "patch",
         [switch]$DryRun
     )
 
@@ -273,6 +278,7 @@ function Invoke-StandardMode {
                 $prParams = @{
                     Description = $PatchDescription
                     BranchName = $branchName
+                    ReleaseType = $ReleaseType
                 }
                 
                 # Add issue number if we created one
@@ -314,13 +320,14 @@ function Invoke-AdvancedMode {
         [switch]$CreatePR,
         [bool]$CreateIssue,
         [string]$TargetFork,
+        [string]$ReleaseType = "patch",
         [switch]$DryRun
     )
 
     Write-CustomLog "ADVANCED MODE: Full workflow with cross-fork support" -Level "INFO"
 
     # Advanced mode includes all Standard mode features plus cross-fork capabilities
-    $standardResult = Invoke-StandardMode -PatchDescription $PatchDescription -PatchOperation $PatchOperation -CreatePR:$CreatePR -CreateIssue $CreateIssue -DryRun:$DryRun
+    $standardResult = Invoke-StandardMode -PatchDescription $PatchDescription -PatchOperation $PatchOperation -CreatePR:$CreatePR -CreateIssue $CreateIssue -ReleaseType $ReleaseType -DryRun:$DryRun
 
     if ($standardResult.Success -and $CreatePR -and $TargetFork -ne "current") {
         Write-CustomLog "Advanced mode: Cross-fork PR to $TargetFork" -Level "INFO"
