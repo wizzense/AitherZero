@@ -82,11 +82,12 @@ Write-ColorOutput "Current branch: $currentBranch" "Info"
 $mainBranch = if (git show-ref --verify --quiet refs/heads/main) { "main" } else { "master" }
 if ($currentBranch -ne $mainBranch) {
     Write-ColorOutput "Switching to $mainBranch branch..." "Info"
-    git checkout $mainBranch
+    git checkout $mainBranch 2>$null
     if ($LASTEXITCODE -ne 0) {
         Write-ColorOutput "ERROR: Failed to switch to $mainBranch branch" "Error"
         exit 1
     }
+    $currentBranch = $mainBranch
 }
 
 # Pull latest changes
