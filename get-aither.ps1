@@ -1,44 +1,9 @@
-# AitherZero One-Liner Download Script
+# AitherZero One-Liner Download Script - FIXED VERSION
 # PowerShell 5.1+ Compatible - Can be executed via iex/Invoke-Expression
+# 
+# USAGE:
+# iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/wizzense/AitherZero/main/get-aither.ps1'))
 
-<#
-.SYNOPSIS
-    AitherZero One-Liner Download and Installation Script
-
-.DESCRIPTION
-    This script is designed to be executed as a one-liner for quick AitherZero installation.
-    It's fully compatible with PowerShell 5.1+ and handles all the complexity of downloading
-    and setting up AitherZero in a single command.
-
-.USAGE EXAMPLES
-    # Basic one-liner installation:
-    iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/wizzense/AitherZero/main/get-aither.ps1'))
-
-    # PowerShell 5.1 compatible alternative:
-    (New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/wizzense/AitherZero/main/get-aither.ps1') | iex
-
-    # With custom parameters (requires saving to file first):
-    # Download this script, then run: .\get-aither.ps1 -InstallPath "C:\Tools" -Profile developer
-
-.PARAMETER InstallPath
-    Installation directory (defaults to current directory)
-
-.PARAMETER Profile  
-    Installation profile: minimal, standard, developer, full
-
-.PARAMETER Silent
-    Run in silent mode
-
-.PARAMETER Force
-    Force installation over existing directory
-
-.NOTES
-    AitherZero One-Liner Installer v1.0
-    Optimized for web execution via iex/Invoke-Expression
-    Compatible with PowerShell 5.1+ on Windows
-#>
-
-[CmdletBinding()]
 param(
     [string]$InstallPath = $PWD.Path,
     [ValidateSet('minimal', 'standard', 'developer', 'full')]
@@ -47,188 +12,217 @@ param(
     [switch]$Force
 )
 
-# One-liner execution detection
-$isOneLineExecution = $MyInvocation.Line -match 'iex|Invoke-Expression'
-
-# Compact configuration for one-liner
-$c = @{
-    Owner = 'wizzense'
-    Repo = 'AitherZero'
-    Branch = 'main'
-    Dir = 'AitherZero'
-    Temp = [System.IO.Path]::GetTempPath()
-    UserAgent = 'AitherZero-GetScript/1.0'
+# Banner
+function Show-Banner {
+    Write-Host ""
+    Write-Host "     _    _ _   _               ______                    " -ForegroundColor Cyan
+    Write-Host "    / \  (_) |_| |__   ___ _ _|__  / ___ _ __ ___       " -ForegroundColor Cyan
+    Write-Host "   / _ \ | | __| '_ \ / _ \ '__/ / / _ \ '__/ _ \      " -ForegroundColor Cyan
+    Write-Host "  / ___ \| | |_| | | |  __/ | / /_|  __/ | | (_) |     " -ForegroundColor Cyan
+    Write-Host " /_/   \_\_|\__|_| |_|\___|_|/____/\___|_|  \___/      " -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host " Infrastructure Automation Framework" -ForegroundColor White
+    Write-Host ""
 }
 
-# Compact logging function
-function log($msg, $type = 'Info') {
-    if ($Silent) { return }
-    $colors = @{ Info = 'Cyan'; Success = 'Green'; Warning = 'Yellow'; Error = 'Red' }
-    $prefixes = @{ Info = 'ℹ️'; Success = '✅'; Warning = '⚠️'; Error = '❌' }
-    Write-Host "$($prefixes[$type]) $msg" -ForegroundColor $colors[$type]
+# Configuration
+$config = @{
+    Owner = "wizzense"
+    Repo = "AitherZero"
+    Branch = "main"
 }
 
-# Compact PowerShell version check
-function Test-PSVersion {
-    $v = $PSVersionTable.PSVersion.Major
-    if ($v -lt 5) {
-        log "PowerShell 5.0+ required (current: $($PSVersionTable.PSVersion))" 'Error'
-        return $false
-    }
-    log "PowerShell $($PSVersionTable.PSVersion) detected" 'Success'
-    return $true
-}
-
-# Compact network test
+# Test network connectivity
 function Test-Network {
     try {
         $wc = New-Object System.Net.WebClient
-        $wc.Headers.Add('User-Agent', $c.UserAgent)
-        $null = $wc.DownloadString("https://api.github.com/repos/$($c.Owner)/$($c.Repo)")
-        $wc.Dispose()
-        log "Network connectivity verified" 'Success'
+        $wc.Headers.Add("User-Agent", "AitherZero-Installer")
+        # Fixed: Added quotes around URL
+        $null = $wc.DownloadString("https://api.github.com/repos/$($config.Owner)/$($config.Repo)")
         return $true
     } catch {
-        log "Network test failed: $($_.Exception.Message)" 'Error'
         return $false
     }
 }
 
-# Compact download function
-function Get-AitherZero($url, $path) {
-    try {
-        log "Downloading from: $url"
-        $wc = New-Object System.Net.WebClient
-        $wc.Headers.Add('User-Agent', $c.UserAgent)
-        
-        if (-not $Silent) {
-            Register-ObjectEvent -InputObject $wc -EventName DownloadProgressChanged -Action {
-                $p = $Event.SourceEventArgs
-                $pct = [math]::Round(($p.BytesReceived / $p.TotalBytesToReceive) * 100, 1)
-                Write-Progress -Activity "Downloading AitherZero" -Status "$pct%" -PercentComplete $pct
-            } | Out-Null
+# Download function with retry
+function Download-WithRetry {
+    param(
+        [string]$Url,
+        [string]$OutFile,
+        [int]$MaxRetries = 3
+    )
+    
+    for ($i = 1; $i -le $MaxRetries; $i++) {
+        try {
+            Write-Host "Downloading (Attempt $i/$MaxRetries)..." -ForegroundColor Yellow
+            
+            $wc = New-Object System.Net.WebClient
+            $wc.Headers.Add("User-Agent", "AitherZero-Installer")
+            $wc.DownloadFile($Url, $OutFile)
+            
+            if (Test-Path $OutFile) {
+                $fileSize = (Get-Item $OutFile).Length
+                if ($fileSize -gt 0) {
+                    Write-Host "Download successful ($fileSize bytes)" -ForegroundColor Green
+                    return $true
+                }
+            }
         }
-        
-        $wc.DownloadFile($url, $path)
-        $wc.Dispose()
-        
-        if (-not $Silent) { Write-Progress -Activity "Downloading AitherZero" -Completed }
-        log "Download completed" 'Success'
-        return $true
-    } catch {
-        log "Download failed: $($_.Exception.Message)" 'Error'
-        return $false
+        catch {
+            Write-Host "Download attempt $i failed: $_" -ForegroundColor Red
+            if ($i -lt $MaxRetries) {
+                Write-Host "Retrying in 2 seconds..." -ForegroundColor Yellow
+                Start-Sleep -Seconds 2
+            }
+        }
     }
+    return $false
 }
 
-# Compact extraction function
-function Expand-Archive51($archive, $dest) {
+# Main installation function
+function Install-AitherZero {
+    Show-Banner
+    
+    Write-Host "Installation Path: $InstallPath" -ForegroundColor Cyan
+    Write-Host "Profile: $Profile" -ForegroundColor Cyan
+    Write-Host ""
+    
+    # Check PowerShell version
+    if ($PSVersionTable.PSVersion.Major -lt 5 -or 
+        ($PSVersionTable.PSVersion.Major -eq 5 -and $PSVersionTable.PSVersion.Minor -lt 1)) {
+        Write-Host "ERROR: PowerShell 5.1 or higher is required" -ForegroundColor Red
+        Write-Host "Current version: $($PSVersionTable.PSVersion)" -ForegroundColor Red
+        return
+    }
+    
+    # Test network
+    Write-Host "Testing network connectivity..." -ForegroundColor Yellow
+    if (-not (Test-Network)) {
+        Write-Host "ERROR: Cannot reach GitHub. Check your internet connection." -ForegroundColor Red
+        return
+    }
+    Write-Host "Network check passed" -ForegroundColor Green
+    
+    # Prepare paths
+    $tempDir = Join-Path $env:TEMP "AitherZero-Install-$(Get-Date -Format 'yyyyMMddHHmmss')"
+    $zipFile = Join-Path $tempDir "aitherzero.zip"
+    $extractPath = Join-Path $tempDir "extract"
+    $finalPath = Join-Path $InstallPath "AitherZero"
+    
+    # Check if already exists
+    if ((Test-Path $finalPath) -and -not $Force) {
+        Write-Host "ERROR: AitherZero already exists at: $finalPath" -ForegroundColor Red
+        Write-Host "Use -Force to overwrite or choose a different location" -ForegroundColor Yellow
+        return
+    }
+    
+    # Create temp directory
+    Write-Host "Creating temporary directory..." -ForegroundColor Yellow
+    New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+    
+    # Download
+    $downloadUrl = "https://github.com/$($config.Owner)/$($config.Repo)/archive/refs/heads/$($config.Branch).zip"
+    
+    if (-not (Download-WithRetry -Url $downloadUrl -OutFile $zipFile)) {
+        Write-Host "ERROR: Failed to download AitherZero after multiple attempts" -ForegroundColor Red
+        Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+        return
+    }
+    
+    # Extract
+    Write-Host "Extracting files..." -ForegroundColor Yellow
     try {
-        log "Extracting archive..."
-        if ($PSVersionTable.PSVersion.Major -ge 5) {
-            Expand-Archive -Path $archive -DestinationPath $dest -Force
-        } else {
-            Add-Type -AssemblyName System.IO.Compression.FileSystem
-            [System.IO.Compression.ZipFile]::ExtractToDirectory($archive, $dest)
-        }
-        log "Extraction completed" 'Success'
-        return $true
-    } catch {
-        log "Extraction failed: $($_.Exception.Message)" 'Error'
-        return $false
+        # Create extraction directory
+        New-Item -ItemType Directory -Path $extractPath -Force | Out-Null
+        
+        # Use built-in extraction for PowerShell 5.1+
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($zipFile, $extractPath)
+        
+        Write-Host "Extraction successful" -ForegroundColor Green
     }
-}
-
-# Main execution for one-liner
-try {
-    # Header for one-liner mode
-    if ($isOneLineExecution) {
-        Write-Host ""
-        log "🚀 AitherZero One-Liner Installer" 'Info'
-        log "Compatible with PowerShell 5.1+" 'Info'
-        Write-Host ""
+    catch {
+        Write-Host "ERROR: Failed to extract files: $_" -ForegroundColor Red
+        Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+        return
     }
     
-    # Quick prerequisite checks
-    if (-not (Test-PSVersion)) { exit 1 }
-    if (-not (Test-Network)) { exit 1 }
-    
-    # Setup paths
-    $installDir = Join-Path $InstallPath $c.Dir
-    if (Test-Path $installDir) {
-        if ($Force) {
-            log "Removing existing installation..." 'Warning'
-            Remove-Item $installDir -Recurse -Force
-        } else {
-            log "Directory exists: $installDir (use -Force to overwrite)" 'Error'
-            exit 1
-        }
+    # Find extracted folder
+    $extractedFolder = Get-ChildItem -Path $extractPath -Directory | Select-Object -First 1
+    if (-not $extractedFolder) {
+        Write-Host "ERROR: No extracted folder found" -ForegroundColor Red
+        Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+        return
     }
     
-    # Download URL
-    $downloadUrl = "https://github.com/$($c.Owner)/$($c.Repo)/archive/refs/heads/$($c.Branch).zip"
-    
-    # Temporary paths
-    $tempZip = Join-Path $c.Temp "AitherZero-$(Get-Date -Format 'yyyyMMddHHmmss').zip"
-    $tempExtract = Join-Path $c.Temp "AitherZero-Extract-$(Get-Date -Format 'yyyyMMddHHmmss')"
-    
+    # Move to final location
+    Write-Host "Installing to: $finalPath" -ForegroundColor Yellow
     try {
-        # Download
-        if (-not (Get-AitherZero $downloadUrl $tempZip)) { throw "Download failed" }
-        
-        # Extract
-        if (-not (Expand-Archive51 $tempZip $tempExtract)) { throw "Extraction failed" }
-        
-        # Move content
-        log "Moving content to final location..."
-        $extractedDir = Get-ChildItem -Path $tempExtract -Directory | Select-Object -First 1
-        if ($extractedDir) {
-            Move-Item $extractedDir.FullName $installDir -Force
-            log "Installation completed" 'Success'
-        } else {
-            throw "Unexpected archive structure"
-        }
-        
-        # Quick setup
-        $quickSetup = Join-Path $installDir "quick-setup-simple.ps1"
-        if (Test-Path $quickSetup) {
-            log "Running quick setup..."
-            Push-Location $installDir
-            try {
-                $setupArgs = if ($Silent) { @('-Auto') } else { @() }
-                & $quickSetup @setupArgs
-                log "Setup completed" 'Success'
-            } catch {
-                log "Setup had issues: $($_.Exception.Message)" 'Warning'
-            } finally {
-                Pop-Location
+        if (Test-Path $finalPath) {
+            if ($Force) {
+                Write-Host "Removing existing installation..." -ForegroundColor Yellow
+                Remove-Item -Path $finalPath -Recurse -Force
             }
         }
         
-        # Success message
-        Write-Host ""
-        log "🎉 AitherZero installed successfully!" 'Success'
-        Write-Host ""
-        log "NEXT STEPS:" 'Info'
-        Write-Host "  cd '$installDir'"
-        Write-Host "  .\aither.ps1 help"
-        Write-Host "  .\aither.ps1 init"
-        Write-Host ""
-        
-    } finally {
-        # Cleanup
-        @($tempZip, $tempExtract) | ForEach-Object {
-            if (Test-Path $_) { Remove-Item $_ -Recurse -Force -ErrorAction SilentlyContinue }
+        # Ensure parent directory exists
+        $parentPath = Split-Path -Parent $finalPath
+        if (-not (Test-Path $parentPath)) {
+            New-Item -ItemType Directory -Path $parentPath -Force | Out-Null
         }
+        
+        Move-Item -Path $extractedFolder.FullName -Destination $finalPath -Force
+        Write-Host "Installation successful" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "ERROR: Failed to move files: $_" -ForegroundColor Red
+        Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+        return
     }
     
-} catch {
-    log "Installation failed: $($_.Exception.Message)" 'Error'
+    # Cleanup
+    Write-Host "Cleaning up..." -ForegroundColor Yellow
+    Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    
+    # Run quick setup
     Write-Host ""
-    log "TROUBLESHOOTING:" 'Warning'
-    Write-Host "  1. Check internet connection"
-    Write-Host "  2. Run PowerShell as Administrator"
-    Write-Host "  3. Try manual download: https://github.com/$($c.Owner)/$($c.Repo)/releases"
+    Write-Host "Running quick setup..." -ForegroundColor Cyan
+    
+    $setupScript = Join-Path $finalPath "quick-setup-simple.ps1"
+    if (Test-Path $setupScript) {
+        try {
+            Set-Location $finalPath
+            & $setupScript -Profile $Profile -Silent:$Silent
+        }
+        catch {
+            Write-Host "WARNING: Quick setup encountered an error: $_" -ForegroundColor Yellow
+            Write-Host "You can run setup manually later" -ForegroundColor Yellow
+        }
+    }
+    else {
+        Write-Host "Quick setup script not found, skipping..." -ForegroundColor Yellow
+    }
+    
+    # Final message
     Write-Host ""
-    exit 1
+    Write-Host "===================================" -ForegroundColor Green
+    Write-Host " AitherZero Installation Complete! " -ForegroundColor Green
+    Write-Host "===================================" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Installation location: $finalPath" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "To get started:" -ForegroundColor Yellow
+    Write-Host "  cd AitherZero" -ForegroundColor White
+    Write-Host "  .\Start-AitherZero.ps1" -ForegroundColor White
+    Write-Host ""
+    
+    if ($PSVersionTable.PSVersion.Major -eq 5) {
+        Write-Host "NOTE: You're using PowerShell 5.1" -ForegroundColor Yellow
+        Write-Host "For the best experience, consider upgrading to PowerShell 7+" -ForegroundColor Yellow
+        Write-Host "Download from: https://aka.ms/powershell" -ForegroundColor Yellow
+    }
 }
+
+# Execute installation
+Install-AitherZero

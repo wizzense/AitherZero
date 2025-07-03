@@ -282,7 +282,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
                 $versionFile = Join-Path $projectRoot "VERSION"
                 Set-Content $versionFile -Value $nextVersion -NoNewline
                 Write-Host "Updated VERSION to $nextVersion"
-            } -CreatePR -Priority "High"
+            } -CreatePR
             
             # Extract PR number from output
             $prNumber = $null
