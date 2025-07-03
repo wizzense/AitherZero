@@ -99,7 +99,11 @@ function New-Patch {
         [switch]$DryRun,
 
         [Parameter(Mandatory = $false)]
-        [switch]$Force
+        [switch]$Force,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('QuickFix', 'Feature', 'Hotfix', 'Patch', 'Release')]
+        [string]$OperationType = 'Patch'
     )
 
     begin {
@@ -157,7 +161,7 @@ function New-Patch {
             Write-CustomLog "Using $Mode mode (CreatePR: $CreatePR, CreateIssue: $CreateIssue)" -Level "INFO"
 
             # Step 2: Execute multi-mode operation
-            $result = Invoke-MultiModeOperation -Mode $Mode -PatchDescription $Description -PatchOperation $Changes -CreatePR:$CreatePR -CreateIssue $CreateIssue -TargetFork $TargetFork -DryRun:$DryRun
+            $result = Invoke-MultiModeOperation -Mode $Mode -PatchDescription $Description -PatchOperation $Changes -CreatePR:$CreatePR -CreateIssue $CreateIssue -TargetFork $TargetFork -DryRun:$DryRun -OperationType $OperationType
 
             if ($result.Success) {
                 Write-CustomLog "Patch creation completed successfully!" -Level "SUCCESS"

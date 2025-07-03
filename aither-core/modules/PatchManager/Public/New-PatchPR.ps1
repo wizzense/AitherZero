@@ -54,6 +54,10 @@ function New-PatchPR {
         [string[]]$AffectedFiles = @(),
 
         [Parameter(Mandatory = $false)]
+        [ValidateSet('QuickFix', 'Feature', 'Hotfix', 'Patch', 'Release')]
+        [string]$OperationType = 'Patch',
+
+        [Parameter(Mandatory = $false)]
         [switch]$DryRun
     )
 
@@ -234,11 +238,38 @@ $(if ($IssueNumber) {
 
             if ($LASTEXITCODE -ne 0) {
                 throw "Failed to push branch $BranchName"
-            }            # Ensure patch label exists
-            $labelCheck = gh label list --repo $repoInfo.GitHubRepo --search "patch" 2>&1 | Out-String
-            if (-not $labelCheck.Contains("patch")) {
-                Write-PRLog "Creating missing patch label" -Level "INFO"
-                gh label create "patch" --repo $repoInfo.GitHubRepo --color "0366d6" --description "Auto-created by PatchManager" 2>&1 | Out-Null
+            }            # Determine labels based on operation type
+            $labels = @("patch") # Default patch label
+            $releaseLabel = switch ($OperationType) {
+                'QuickFix' { "release:patch" }
+                'Feature'  { "release:minor" }
+                'Hotfix'   { "release:patch" }
+                'Release'  { "release:patch" }
+                default    { "release:patch" }
+            }
+            $labels += $releaseLabel
+            
+            # Ensure required labels exist
+            foreach ($label in $labels) {
+                $labelCheck = gh label list --repo $repoInfo.GitHubRepo --search $label 2>&1 | Out-String
+                if (-not $labelCheck.Contains($label)) {
+                    Write-PRLog "Creating missing label: $label" -Level "INFO"
+                    $color = switch ($label) {
+                        'patch' { "0366d6" }
+                        'release:patch' { "d73a4a" }
+                        'release:minor' { "fbca04" }
+                        'release:major' { "b60205" }
+                        default { "0366d6" }
+                    }
+                    $description = switch ($label) {
+                        'patch' { "Auto-created by PatchManager" }
+                        'release:patch' { "Triggers patch release (x.y.Z)" }
+                        'release:minor' { "Triggers minor release (x.Y.0)" }
+                        'release:major' { "Triggers major release (X.0.0)" }
+                        default { "Auto-created by PatchManager" }
+                    }
+                    gh label create $label --repo $repoInfo.GitHubRepo --color $color --description $description 2>&1 | Out-Null
+                }
             }            # Create PR with robust error handling
             Write-PRLog "Creating pull request: $prTitle" -Level "INFO"
             
@@ -247,7 +278,14 @@ $(if ($IssueNumber) {
                 Write-PatchProgressLog -Message "Submitting pull request to GitHub" -Level 'Info'
             }
             
-            $result = gh pr create --repo $repoInfo.GitHubRepo --title $prTitle --body $prBody --head $BranchName --label "patch" 2>&1
+            # Build label arguments
+            $labelArgs = @()
+            foreach ($label in $labels) {
+                $labelArgs += "--label"
+                $labelArgs += $label
+            }
+            
+            $result = gh pr create --repo $repoInfo.GitHubRepo --title $prTitle --body $prBody --head $BranchName @labelArgs 2>&1
 
             # Handle any remaining label errors gracefully
             if ($LASTEXITCODE -ne 0 -and $result -match "not found") {

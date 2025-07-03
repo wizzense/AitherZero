@@ -125,6 +125,8 @@ try {
     # CRITICAL: Copy bootstrap script for PowerShell 5.1 compatibility
     $bootstrapPath = 'aither-core/aither-core-bootstrap.ps1'
     if (Test-Path $bootstrapPath) {
+        # Copy to both locations - package root for validation and aither-core for runtime
+        Copy-Item -Path $bootstrapPath -Destination "$packageDir/aither-core-bootstrap.ps1" -Force
         Copy-Item -Path $bootstrapPath -Destination "$aithercoreDir/aither-core-bootstrap.ps1" -Force
         Write-Host '✓ PowerShell compatibility bootstrap script' -ForegroundColor Green
     } else {

@@ -54,7 +54,7 @@ function New-QuickFix {
 
     Write-Host "[QUICK FIX] $Description" -ForegroundColor Cyan
 
-    return New-Patch -Description $Description -Changes $Changes -Mode "Simple" -CreatePR:$false -CreateIssue $false -DryRun:$DryRun
+    return New-Patch -Description $Description -Changes $Changes -Mode "Simple" -CreatePR:$false -CreateIssue $false -OperationType 'QuickFix' -DryRun:$DryRun
 }
 
 Export-ModuleMember -Function New-QuickFix
