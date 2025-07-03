@@ -240,6 +240,15 @@ function Invoke-StandardMode {
         $issueNumber = $null
         $prUrl = $null
         
+        # Extract branch name from result
+        $branchName = if ($result.Result -and $result.Result.BranchCreated) { 
+            $result.Result.BranchCreated 
+        } elseif ($result.BranchCreated) { 
+            $result.BranchCreated 
+        } else { 
+            $null 
+        }
+        
         if ($CreateIssue) {
             Write-CustomLog "Creating issue..." -Level "INFO"
             try {
@@ -257,13 +266,13 @@ function Invoke-StandardMode {
             }
         }
 
-        if ($CreatePR) {
+        if ($CreatePR -and $branchName) {
             Write-CustomLog "Creating PR..." -Level "INFO"
             try {
                 # Build PR parameters
                 $prParams = @{
                     Description = $PatchDescription
-                    BranchName = $result.BranchCreated
+                    BranchName = $branchName
                 }
                 
                 # Add issue number if we created one
@@ -283,6 +292,8 @@ function Invoke-StandardMode {
             } catch {
                 Write-CustomLog "PR creation error: $($_.Exception.Message)" -Level "ERROR"
             }
+        } elseif ($CreatePR -and -not $branchName) {
+            Write-CustomLog "PR creation skipped: No branch name available" -Level "WARN"
         }
     }
 
