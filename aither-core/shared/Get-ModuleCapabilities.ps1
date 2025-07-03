@@ -188,8 +188,9 @@ function Get-ModuleCapabilities {
                     'StartupExperience' { 'Startup Experience' }
                     'LabRunner' { 'Lab Runner' }
                     default { 
-                        # Fallback to regex for unknown modules
-                        $module.Name -replace '([a-z])([A-Z])', '$1 $2'
+                        # Fallback to regex for unknown modules - add space between camelCase words
+                        # Use lookahead to prevent multiple replacements
+                        $module.Name -replace '(?<!^)(?=[A-Z])', ' '
                     }
                 }
                 

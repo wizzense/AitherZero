@@ -13,8 +13,11 @@
 > 🎯 **Get AitherZero running with a single command** - compatible with PowerShell 5.1+ on Windows/Linux/macOS
 
 ```powershell
-# One command downloads and runs AitherZero:
+# Windows - One command downloads and runs AitherZero:
 iex (irm "https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1")
+
+# Linux/macOS - One command downloads and runs AitherZero:
+curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
 ```
 
 ### 📖 **What This Command Does**
