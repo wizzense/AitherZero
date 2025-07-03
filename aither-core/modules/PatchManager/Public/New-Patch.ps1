@@ -99,7 +99,11 @@ function New-Patch {
         [switch]$DryRun,
 
         [Parameter(Mandatory = $false)]
-        [switch]$Force
+        [switch]$Force,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('QuickFix', 'Feature', 'Hotfix', 'Patch', 'Release')]
+        [string]$OperationType = 'Patch'
     )
 
     begin {

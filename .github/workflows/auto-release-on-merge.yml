@@ -18,26 +18,65 @@ jobs:
       contents: write
       
     steps:
-      - name: 🔍 Check for Release Label
+      - name: 🔍 Smart Release Detection
         id: check-label
         run: |
-          echo "Checking PR labels..."
+          echo "Starting smart release detection..."
           LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
+          PR_TITLE='${{ github.event.pull_request.title }}'
           echo "PR Labels: $LABELS"
+          echo "PR Title: $PR_TITLE"
           
-          # Check for release labels
-          if echo "$LABELS" | grep -q "release:patch"; then
-            echo "release_type=patch" >> $GITHUB_OUTPUT
+          # Check for explicit no-release label first
+          if echo "$LABELS" | grep -q "no-release"; then
+            echo "has_release_label=false" >> $GITHUB_OUTPUT
+            echo "❌ No-release label found - skipping release"
+            exit 0
+          fi
+          
+          # Check for explicit release labels
+          if echo "$LABELS" | grep -q "release:major"; then
+            echo "release_type=major" >> $GITHUB_OUTPUT
             echo "has_release_label=true" >> $GITHUB_OUTPUT
+            echo "🏷️ Explicit major release label found"
           elif echo "$LABELS" | grep -q "release:minor"; then
             echo "release_type=minor" >> $GITHUB_OUTPUT
             echo "has_release_label=true" >> $GITHUB_OUTPUT
-          elif echo "$LABELS" | grep -q "release:major"; then
-            echo "release_type=major" >> $GITHUB_OUTPUT
+            echo "🏷️ Explicit minor release label found"
+          elif echo "$LABELS" | grep -q "release:patch"; then
+            echo "release_type=patch" >> $GITHUB_OUTPUT
             echo "has_release_label=true" >> $GITHUB_OUTPUT
+            echo "🏷️ Explicit patch release label found"
           else
-            echo "has_release_label=false" >> $GITHUB_OUTPUT
-            echo "No release label found - skipping release"
+            # Smart auto-detection based on PR title and content
+            echo "🤖 No explicit release label - performing smart detection..."
+            
+            # Check for breaking changes (major release)
+            if echo "$PR_TITLE" | grep -qi "BREAKING\|breaking change\|major"; then
+              echo "release_type=major" >> $GITHUB_OUTPUT
+              echo "🚨 Breaking change detected in title - major release"
+            # Check for features (minor release)
+            elif echo "$PR_TITLE" | grep -qi "feat\|feature\|add\|new\|enhance"; then
+              echo "release_type=minor" >> $GITHUB_OUTPUT
+              echo "✨ Feature detected in title - minor release"
+            # Check for documentation/cleanup only (skip release)
+            elif echo "$PR_TITLE" | grep -qi "docs\|documentation\|readme\|typo\|cleanup\|refactor"; then
+              # Check if this is a substantial change that should still trigger a patch
+              if echo "$PR_TITLE" | grep -qi "simplify\|clean up.*script\|installation"; then
+                echo "release_type=patch" >> $GITHUB_OUTPUT
+                echo "🔧 Substantial cleanup/improvement - patch release"
+              else
+                echo "has_release_label=false" >> $GITHUB_OUTPUT
+                echo "📝 Documentation-only change - skipping release"
+                exit 0
+              fi
+            # Default to patch release for any other changes
+            else
+              echo "release_type=patch" >> $GITHUB_OUTPUT
+              echo "🔄 Default to patch release for merged PR"
+            fi
+            
+            echo "has_release_label=true" >> $GITHUB_OUTPUT
           fi
           
       - name: 📥 Checkout Repository
@@ -130,6 +169,12 @@ jobs:
           else
             echo "## ℹ️ No Release Required" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "PR #${{ github.event.pull_request.number }} was merged without a release label." >> $GITHUB_STEP_SUMMARY
-            echo "To trigger a release, PRs must have one of: release:patch, release:minor, release:major" >> $GITHUB_STEP_SUMMARY
+            echo "PR #${{ github.event.pull_request.number }} was determined to not require a release." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Smart Detection Results:**" >> $GITHUB_STEP_SUMMARY
+            echo "- Documentation-only or no-release label detected" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Manual Override Options:**" >> $GITHUB_STEP_SUMMARY
+            echo "- Add \`release:patch\`, \`release:minor\`, or \`release:major\` label" >> $GITHUB_STEP_SUMMARY
+            echo "- Add \`no-release\` label to explicitly skip releases" >> $GITHUB_STEP_SUMMARY
           fi
