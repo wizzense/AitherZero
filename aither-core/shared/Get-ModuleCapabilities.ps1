@@ -167,12 +167,31 @@ function Get-ModuleCapabilities {
                     }
                 }
                 
-                # Add spaces between camelCase words for display
-                $displayName = $module.Name
-                # Add space before uppercase letters that follow lowercase
-                $displayName = $displayName -replace '([a-z])([A-Z])', '$1 $2'
-                # Handle consecutive capitals (e.g., "AITools" -> "AI Tools")
-                $displayName = $displayName -replace '([A-Z]+)([A-Z][a-z])', '$1 $2'
+                # Format display name with proper spacing
+                $displayName = switch ($module.Name) {
+                    'OrchestrationEngine' { 'Orchestration Engine' }
+                    'AIToolsIntegration' { 'AI Tools Integration' }
+                    'ConfigurationCarousel' { 'Configuration Carousel' }
+                    'ConfigurationRepository' { 'Configuration Repository' }
+                    'BackupManager' { 'Backup Manager' }
+                    'SetupWizard' { 'Setup Wizard' }
+                    'DevEnvironment' { 'Dev Environment' }
+                    'OpenTofuProvider' { 'OpenTofu Provider' }
+                    'ISOManager' { 'ISO Manager' }
+                    'ISOCustomizer' { 'ISO Customizer' }
+                    'SecureCredentials' { 'Secure Credentials' }
+                    'RemoteConnection' { 'Remote Connection' }
+                    'SystemMonitoring' { 'System Monitoring' }
+                    'ParallelExecution' { 'Parallel Execution' }
+                    'TestingFramework' { 'Testing Framework' }
+                    'ProgressTracking' { 'Progress Tracking' }
+                    'StartupExperience' { 'Startup Experience' }
+                    'LabRunner' { 'Lab Runner' }
+                    default { 
+                        # Fallback to regex for unknown modules
+                        $module.Name -replace '([a-z])([A-Z])', '$1 $2'
+                    }
+                }
                 
                 # Create module capability object
                 $moduleCapability = [PSCustomObject]@{

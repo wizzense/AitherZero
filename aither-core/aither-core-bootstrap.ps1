@@ -160,8 +160,8 @@ function Install-PowerShell7 {
         Write-BootstrapLog "Attempting direct download installation..." -Level 'Info'
         
         try {
-            # Download latest PowerShell 7 installer
-            $downloadUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/PowerShell-7.4.6-win-x64.msi"
+            # Download latest PowerShell 7 installer (using a stable version for compatibility)
+            $downloadUrl = "https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/PowerShell-7.4.6-win-x64.msi"
             $tempPath = [System.IO.Path]::GetTempPath()
             $installerPath = Join-Path $tempPath "PowerShell-7-latest.msi"
             
