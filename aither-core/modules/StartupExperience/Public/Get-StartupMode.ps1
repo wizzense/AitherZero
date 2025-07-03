@@ -48,7 +48,7 @@ function Get-StartupMode {
         )
         
         foreach ($var in $ciVariables) {
-            if ($env:$var) {
+            if (Get-Item "Env:$var" -ErrorAction SilentlyContinue) {
                 return [PSCustomObject]@{
                     Mode = 'NonInteractive'
                     Reason = "CI/CD environment detected ($var)"
