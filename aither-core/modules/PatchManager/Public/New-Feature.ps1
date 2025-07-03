@@ -74,7 +74,7 @@ function New-Feature {
     # Determine mode based on target fork
     $mode = if ($TargetFork -ne "current") { "Advanced" } else { "Standard" }
 
-    return New-Patch -Description $Description -Changes $Changes -Mode $mode -CreatePR -CreateIssue $true -TargetFork $TargetFork -DryRun:$DryRun
+    return New-Patch -Description $Description -Changes $Changes -Mode $mode -CreatePR -CreateIssue $true -TargetFork $TargetFork -OperationType 'Feature' -DryRun:$DryRun
 }
 
 Export-ModuleMember -Function New-Feature

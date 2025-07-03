@@ -72,7 +72,7 @@ function New-Hotfix {
 
     $createPR = -not $SkipPR
 
-    return New-Patch -Description "HOTFIX: $Description" -Changes $Changes -Mode "Standard" -CreatePR:$createPR -CreateIssue $true -DryRun:$DryRun -Force
+    return New-Patch -Description "HOTFIX: $Description" -Changes $Changes -Mode "Standard" -CreatePR:$createPR -CreateIssue $true -OperationType 'Hotfix' -DryRun:$DryRun -Force
 }
 
 Export-ModuleMember -Function New-Hotfix
