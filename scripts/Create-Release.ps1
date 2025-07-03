@@ -79,7 +79,13 @@ $currentBranch = git rev-parse --abbrev-ref HEAD
 Write-ColorOutput "Current branch: $currentBranch" "Info"
 
 # Ensure we're on main/master
-$mainBranch = if (git show-ref --verify --quiet refs/heads/main) { "main" } else { "master" }
+# Check which branch exists
+$null = git show-ref --verify --quiet refs/heads/main 2>$null
+$hasMain = $LASTEXITCODE -eq 0
+$null = git show-ref --verify --quiet refs/heads/master 2>$null
+$hasMaster = $LASTEXITCODE -eq 0
+
+$mainBranch = if ($hasMain) { "main" } elseif ($hasMaster) { "master" } else { "main" }
 if ($currentBranch -ne $mainBranch) {
     Write-ColorOutput "Switching to $mainBranch branch..." "Info"
     git checkout $mainBranch 2>$null
