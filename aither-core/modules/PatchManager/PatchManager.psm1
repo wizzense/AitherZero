@@ -63,11 +63,24 @@ foreach ($function in $privateFunctions) {
 }
 
 # Load Public Functions
-$publicFunctions = Get-ChildItem -Path (Join-Path $PSScriptRoot 'Public') -Filter '*.ps1' -ErrorAction SilentlyContinue
+$publicFuncPath = Join-Path $PSScriptRoot 'Public'
+Write-Verbose "DEBUG: Looking for public functions in: $publicFuncPath"
+$publicFunctions = Get-ChildItem -Path $publicFuncPath -Filter '*.ps1' -ErrorAction SilentlyContinue
+Write-Verbose "DEBUG: Found $($publicFunctions.Count) public function files"
 foreach ($function in $publicFunctions) {
     try {
         . $function.FullName
         Write-Verbose "Loaded public function: $($function.BaseName)"
+        
+        # Debug: Check if Get-GitCommand was loaded
+        if ($function.BaseName -eq 'Get-GitCommand') {
+            Write-Verbose "DEBUG: Get-GitCommand file loaded, checking if function exists..."
+            if (Get-Command Get-GitCommand -ErrorAction SilentlyContinue) {
+                Write-Verbose "DEBUG: Get-GitCommand function is available"
+            } else {
+                Write-Warning "DEBUG: Get-GitCommand function NOT available after loading file"
+            }
+        }
     } catch {
         Write-Warning "Failed to load public function $($function.Name): $_"
     }
