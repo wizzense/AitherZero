@@ -10,25 +10,19 @@
 
 ## ⚡ Ultra-Simple Installation (30 seconds)
 
-> 🎯 **Get AitherZero running with a single command** - compatible with PowerShell 5.1+ on any Windows endpoint
+> 🎯 **Get AitherZero running with a single command** - compatible with PowerShell 5.1+ on Windows/Linux/macOS
 
-### 🚀 **Recommended: Clean & Readable** 
 ```powershell
 # One command downloads and runs AitherZero:
 iex (irm "https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1")
 ```
 
-### ⚡ **Power Users: Optimized Version**
-```powershell
-# Compact version with progress tracking:
-iex (irm "https://raw.githubusercontent.com/wizzense/AitherZero/main/get-aither.ps1")
-```
-
-### 📖 **What These Commands Do**
-1. ✅ **Download** the latest AitherZero release from GitHub
-2. ✅ **Extract** it to your current directory  
-3. ✅ **Auto-start** the setup process
-4. ✅ **PowerShell 5.1+ Compatible** - works on older Windows systems
+### 📖 **What This Command Does**
+1. ✅ **Downloads** the latest AitherZero release from GitHub
+2. ✅ **Extracts** it to your current directory  
+3. ✅ **Auto-starts** the setup process
+4. ✅ **Cross-platform** - works on Windows, Linux, and macOS
+5. ✅ **PowerShell 5.1+ Compatible** - works on older systems
 
 > 💡 **That's it!** No complex setup, no manual downloads, no configuration needed.
 
