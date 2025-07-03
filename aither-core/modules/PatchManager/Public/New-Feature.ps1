@@ -83,6 +83,13 @@ function New-Feature {
         [string]$TargetFork = "current",
 
         [Parameter(Mandatory = $false)]
+        [ValidateSet("SinglePR", "Stacked", "Replace", "Auto")]
+        [string]$WorkflowMode = "Auto",
+
+        [Parameter(Mandatory = $false)]
+        [switch]$ReturnToMain,
+
+        [Parameter(Mandatory = $false)]
         [switch]$DryRun
     )
 
@@ -91,7 +98,7 @@ function New-Feature {
     # Determine mode based on target fork
     $mode = if ($TargetFork -ne "current") { "Advanced" } else { "Standard" }
 
-    return New-Patch -Description $Description -Changes $Changes -Mode $mode -CreatePR -CreateIssue $true -TargetFork $TargetFork -ReleaseType $ReleaseType -DryRun:$DryRun
+    return New-Patch -Description $Description -Changes $Changes -Mode $mode -CreatePR -CreateIssue $true -TargetFork $TargetFork -ReleaseType $ReleaseType -WorkflowMode $WorkflowMode -ReturnToMain:$ReturnToMain -DryRun:$DryRun
 }
 
 Export-ModuleMember -Function New-Feature

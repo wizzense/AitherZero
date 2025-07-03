@@ -104,6 +104,13 @@ function New-Patch {
         [string]$ReleaseType = "patch",
 
         [Parameter(Mandatory = $false)]
+        [ValidateSet("SinglePR", "Stacked", "Replace", "Auto")]
+        [string]$WorkflowMode = "Auto",
+
+        [Parameter(Mandatory = $false)]
+        [switch]$ReturnToMain,
+
+        [Parameter(Mandatory = $false)]
         [switch]$DryRun,
 
         [Parameter(Mandatory = $false)]
@@ -119,11 +126,50 @@ function New-Patch {
             }
         }
 
-        Write-CustomLog "PatchManager v3.0: Starting patch creation" -Level "INFO"
+        Write-CustomLog "PatchManager v3.1: Starting patch creation" -Level "INFO"
         Write-CustomLog "Description: $Description" -Level "INFO"
 
         if ($DryRun) {
             Write-CustomLog "DRY RUN MODE: No actual changes will be made" -Level "WARN"
+        }
+        
+        # v3.1: Check for existing open PRs
+        $openPRs = @()
+        try {
+            $openPRs = @(Get-OpenPatchPRs)
+            if ($openPRs.Count -gt 0) {
+                Write-CustomLog "Found $($openPRs.Count) open PR(s)" -Level "WARNING"
+                
+                # Determine workflow mode
+                if ($WorkflowMode -eq "Auto") {
+                    $WorkflowMode = if ($openPRs.Count -ge 3) { "SinglePR" } else { "Stacked" }
+                    Write-CustomLog "Auto-selected workflow mode: $WorkflowMode" -Level "INFO"
+                }
+                
+                # Display open PRs
+                switch ($WorkflowMode) {
+                    "SinglePR" {
+                        Write-CustomLog "SinglePR mode: Consider updating existing PR instead" -Level "WARNING"
+                        foreach ($pr in $openPRs | Select-Object -First 5) {
+                            Write-CustomLog "  - PR #$($pr.number): $($pr.title)" -Level "INFO"
+                        }
+                        if (-not $Force -and -not $DryRun) {
+                            $continue = Read-Host "Continue creating new PR? (y/N)"
+                            if ($continue -ne 'y') {
+                                return @{ Success = $false; Message = "Operation cancelled - resolve existing PRs first" }
+                            }
+                        }
+                    }
+                    "Replace" {
+                        Write-CustomLog "Replace mode: Will close old PRs after creating new one" -Level "INFO"
+                    }
+                    "Stacked" {
+                        Write-CustomLog "Stacked mode: Creating additional PR" -Level "INFO"
+                    }
+                }
+            }
+        } catch {
+            Write-CustomLog "Unable to check for open PRs: $_" -Level "DEBUG"
         }
     }
 
@@ -165,7 +211,24 @@ function New-Patch {
             Write-CustomLog "Using $Mode mode (CreatePR: $CreatePR, CreateIssue: $CreateIssue)" -Level "INFO"
 
             # Step 2: Execute multi-mode operation
-            $result = Invoke-MultiModeOperation -Mode $Mode -PatchDescription $Description -PatchOperation $Changes -CreatePR:$CreatePR -CreateIssue $CreateIssue -TargetFork $TargetFork -ReleaseType $ReleaseType -DryRun:$DryRun
+            $multiModeParams = @{
+                Mode = $Mode
+                PatchDescription = $Description
+                CreatePR = $CreatePR
+                TargetFork = $TargetFork
+                ReleaseType = $ReleaseType
+                DryRun = $DryRun
+            }
+            
+            if ($Changes) {
+                $multiModeParams.PatchOperation = $Changes
+            }
+            
+            if ($null -ne $CreateIssue) {
+                $multiModeParams.CreateIssue = $CreateIssue
+            }
+            
+            $result = Invoke-MultiModeOperation @multiModeParams
 
             if ($result.Success) {
                 Write-CustomLog "Patch creation completed successfully!" -Level "SUCCESS"
@@ -177,6 +240,34 @@ function New-Patch {
                 
                 if ($CreatePR -and -not $DryRun) {
                     Write-CustomLog "Next steps: PR will be created for review and merge" -Level "INFO"
+                    
+                    # v3.1: Auto-return to main after PR creation
+                    if (($ReturnToMain -or $WorkflowMode -eq "SinglePR") -and $result.Result.BranchCreated) {
+                        Write-CustomLog "Returning to main branch..." -Level "INFO"
+                        try {
+                            $checkoutResult = Invoke-GitCommand "checkout main" -AllowFailure
+                            if ($checkoutResult.Success) {
+                                Write-CustomLog "Switched back to main branch" -Level "SUCCESS"
+                                $result.ReturnedToMain = $true
+                            }
+                        } catch {
+                            Write-CustomLog "Failed to return to main: $_" -Level "WARNING"
+                        }
+                    }
+                    
+                    # v3.1: Handle Replace mode
+                    if ($WorkflowMode -eq "Replace" -and $result.PullRequestNumber -and $openPRs.Count -gt 0) {
+                        Write-CustomLog "Replace mode: Closing old PRs..." -Level "INFO"
+                        foreach ($pr in $openPRs) {
+                            try {
+                                $closeCmd = "gh pr close $($pr.number) --comment `"Replaced by PR #$($result.PullRequestNumber)`""
+                                $closeResult = Invoke-Expression $closeCmd 2>&1
+                                Write-CustomLog "Closed PR #$($pr.number)" -Level "SUCCESS"
+                            } catch {
+                                Write-CustomLog "Failed to close PR #$($pr.number): $_" -Level "WARNING"
+                            }
+                        }
+                    }
                 } elseif ($result.Result.CommittedDirectly) {
                     Write-CustomLog "Changes have been committed directly" -Level "INFO"
                 } else {
@@ -213,6 +304,11 @@ function New-Patch {
 
     end {
         Write-CustomLog "Patch operation completed" -Level "INFO"
+        
+        # v3.1: Suggest next steps based on workflow
+        if (-not $DryRun) {
+            Write-CustomLog "Tip: Use 'Get-PatchStatus' to see your current patch workflow state" -Level "INFO"
+        }
     }
 }
 

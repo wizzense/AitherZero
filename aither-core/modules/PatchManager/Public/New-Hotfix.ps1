@@ -59,6 +59,13 @@ function New-Hotfix {
         [string]$ReleaseType = "patch",
 
         [Parameter(Mandatory = $false)]
+        [ValidateSet("SinglePR", "Replace", "Auto")]
+        [string]$WorkflowMode = "Replace",
+
+        [Parameter(Mandatory = $false)]
+        [switch]$ReturnToMain,
+
+        [Parameter(Mandatory = $false)]
         [switch]$DryRun
     )
 
@@ -80,7 +87,7 @@ function New-Hotfix {
 
     $createPR = -not $SkipPR
 
-    return New-Patch -Description "HOTFIX: $Description" -Changes $Changes -Mode "Standard" -CreatePR:$createPR -CreateIssue $true -ReleaseType $ReleaseType -DryRun:$DryRun -Force
+    return New-Patch -Description "HOTFIX: $Description" -Changes $Changes -Mode "Standard" -CreatePR:$createPR -CreateIssue $true -ReleaseType $ReleaseType -WorkflowMode $WorkflowMode -ReturnToMain:$ReturnToMain -DryRun:$DryRun -Force
 }
 
 Export-ModuleMember -Function New-Hotfix

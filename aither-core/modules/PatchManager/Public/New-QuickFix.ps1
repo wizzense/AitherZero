@@ -49,12 +49,19 @@ function New-QuickFix {
         [scriptblock]$Changes,
 
         [Parameter(Mandatory = $false)]
+        [switch]$CreatePR,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet("SinglePR", "Stacked", "Auto")]
+        [string]$WorkflowMode = "Auto",
+
+        [Parameter(Mandatory = $false)]
         [switch]$DryRun
     )
 
     Write-Host "[QUICK FIX] $Description" -ForegroundColor Cyan
 
-    return New-Patch -Description $Description -Changes $Changes -Mode "Simple" -CreatePR:$false -CreateIssue $false -DryRun:$DryRun
+    return New-Patch -Description $Description -Changes $Changes -Mode "Simple" -CreatePR:$CreatePR -CreateIssue $false -WorkflowMode $WorkflowMode -DryRun:$DryRun
 }
 
 Export-ModuleMember -Function New-QuickFix
