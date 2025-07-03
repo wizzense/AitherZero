@@ -70,11 +70,15 @@ RequiredModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = @(
-    # V3.0 Main Functions - Primary interface
+    # V3.1 Main Functions - Primary interface
     'New-Patch',
     'New-QuickFix',
     'New-Feature', 
     'New-Hotfix',
+    
+    # V3.1 Workflow Management
+    'Get-PatchStatus',
+    'Invoke-PatchCleanup',
     
     # V3.0 Core Functions
     'Invoke-MultiModeOperation',
