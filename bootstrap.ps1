@@ -1,4 +1,4 @@
-# AitherZero Bootstrap Script v1.2 - PowerShell 5.1+ Compatible
+# AitherZero Bootstrap Script v1.5 - PowerShell 5.1+ Compatible
 # Usage: iex (irm "https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1")
 
 # Enable TLS 1.2 for older systems
@@ -8,7 +8,7 @@
 $ErrorActionPreference = 'Stop'
 
 try {
-    Write-Host "🚀 Downloading AitherZero..." -ForegroundColor Cyan
+    Write-Host ">> Downloading AitherZero..." -ForegroundColor Cyan
     
     # Get latest Windows release
     $apiUrl = "https://api.github.com/repos/wizzense/AitherZero/releases/latest"
@@ -27,11 +27,11 @@ try {
         throw "No Windows release found"
     }
     
-    Write-Host "📦 Found release: $($windowsAsset.name)" -ForegroundColor Green
+    Write-Host "[*] Found release: $($windowsAsset.name)" -ForegroundColor Green
     
     # Download
     $zipFile = "AitherZero.zip"
-    Write-Host "⬇️  Downloading $($windowsAsset.name)..." -ForegroundColor Yellow
+    Write-Host "[-] Downloading $($windowsAsset.name)..." -ForegroundColor Yellow
     
     # Use different method for PS 5.1 vs 7+
     if ($PSVersionTable.PSVersion.Major -ge 7) {
@@ -43,7 +43,7 @@ try {
         $webClient.Dispose()
     }
     
-    Write-Host "📂 Extracting..." -ForegroundColor Yellow
+    Write-Host "[~] Extracting..." -ForegroundColor Yellow
     
     # Create temp directory
     $tempDir = "AitherZero-temp-$(Get-Random)"
@@ -80,10 +80,14 @@ try {
     # Clean up temp directory
     Remove-Item $tempDir -Recurse -Force
     
-    Write-Host "✅ Extracted to: $PWD" -ForegroundColor Green
+    Write-Host "[+] Extracted to: $PWD" -ForegroundColor Green
     
     # Auto-start
-    Write-Host "🚀 Starting AitherZero..." -ForegroundColor Cyan
+    Write-Host ">> Starting AitherZero..." -ForegroundColor Cyan
+    
+    # Ensure we're in the correct directory for the application
+    $extractionPath = Get-Location
+    Write-Host "[~] Working directory: $extractionPath" -ForegroundColor Yellow
     
     $startScript = $null
     if (Test-Path ".\quick-setup-simple.ps1") {
@@ -93,13 +97,21 @@ try {
     }
     
     if ($startScript) {
-        & $startScript -Auto
+        # Set working directory and start with explicit path
+        Push-Location $extractionPath
+        try {
+            Write-Host "[~] Starting from: $(Get-Location)" -ForegroundColor Yellow
+            & $startScript -Auto
+        } finally {
+            Pop-Location
+        }
     } else {
-        Write-Host "✅ AitherZero ready! Run .\Start-AitherZero.ps1 to begin." -ForegroundColor Green
+        Write-Host "[+] AitherZero ready! Run .\Start-AitherZero.ps1 to begin." -ForegroundColor Green
+        Write-Host "[~] Working directory: $extractionPath" -ForegroundColor Yellow
     }
     
 } catch {
-    Write-Host "❌ Installation failed: $_" -ForegroundColor Red
-    Write-Host "💡 Try manual download from: https://github.com/wizzense/AitherZero/releases" -ForegroundColor Yellow
+    Write-Host "[!] Installation failed: $_" -ForegroundColor Red
+    Write-Host "[i] Try manual download from: https://github.com/wizzense/AitherZero/releases" -ForegroundColor Yellow
     exit 1
 }
