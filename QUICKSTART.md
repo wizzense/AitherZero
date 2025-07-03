@@ -1,28 +1,28 @@
 # AitherZero Quick Start Guide
 
-## 🚀 Installation (3 Methods)
+## 🚀 Ultra-Simple Installation
 
-### Method 1: One-Liner (Recommended)
+**One command installs and runs AitherZero:**
+
 ```powershell
-# For PowerShell 5.1+ (Windows)
-iex (New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/wizzense/AitherZero/main/install-oneliner.ps1')
-
-# Alternative syntax
-(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/wizzense/AitherZero/main/install-oneliner.ps1') | iex
+# Copy and paste this command:
+iex (irm "https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1")
 ```
 
-### Method 2: Git Clone
-```powershell
-git clone https://github.com/wizzense/AitherZero.git
-cd AitherZero
-.\Start-AitherZero.ps1 -Setup
-```
+**That's it!** This command:
+- ✅ Downloads the latest release
+- ✅ Extracts it automatically  
+- ✅ Starts the setup wizard
+- ✅ Works on Windows, Linux, and macOS
+- ✅ Compatible with PowerShell 5.1+
 
-### Method 3: Manual Download
-1. Download: https://github.com/wizzense/AitherZero/archive/refs/heads/main.zip
-2. Extract the ZIP file
-3. Open PowerShell and navigate to the extracted folder
-4. Run: `.\Start-AitherZero.ps1 -Setup`
+## 📦 Alternative: Manual Installation
+
+If you prefer manual control:
+
+1. **Download**: Go to [releases](https://github.com/wizzense/AitherZero/releases/latest)
+2. **Extract**: Unzip the downloaded file
+3. **Run**: `.\Start-AitherZero.ps1 -Setup`
 
 ## 🏃 Getting Started
 
