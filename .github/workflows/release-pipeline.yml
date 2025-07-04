@@ -112,16 +112,7 @@ jobs:
             ps-release-${{ runner.os }}-v3
             ps-build-${{ runner.os }}-v2
       
-      - name: Install PowerShell (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.5.2/powershell_7.5.2-1.deb_amd64.deb
-          sudo dpkg -i powershell_7.5.2-1.deb_amd64.deb || sudo apt-get install -f -y
-      
-      - name: Install PowerShell (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          brew install --cask powershell
+      # PowerShell is pre-installed on GitHub runners
       
       - name: Build Release Package
         shell: pwsh
@@ -183,10 +174,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
       
-      - name: Install PowerShell
-        run: |
-          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.5.2/powershell_7.5.2-1.deb_amd64.deb
-          sudo dpkg -i powershell_7.5.2-1.deb_amd64.deb || sudo apt-get install -f -y
+      # PowerShell is pre-installed on GitHub runners
       
       - name: Download All Release Artifacts
         uses: actions/download-artifact@v4

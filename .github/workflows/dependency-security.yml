@@ -42,10 +42,7 @@ jobs:
         with:
           fetch-depth: 0
       
-      - name: Install PowerShell
-        run: |
-          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.5.2/powershell_7.5.2-1.deb_amd64.deb
-          sudo dpkg -i powershell_7.5.2-1.deb_amd64.deb || sudo apt-get install -f -y
+      # PowerShell is pre-installed on GitHub runners
       
       - name: Cache Security Tools
         uses: actions/cache@v4
@@ -309,10 +306,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
       
-      - name: Install PowerShell
-        run: |
-          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.5.2/powershell_7.5.2-1.deb_amd64.deb
-          sudo dpkg -i powershell_7.5.2-1.deb_amd64.deb || sudo apt-get install -f -y
+      # PowerShell is pre-installed on GitHub runners
       
       - name: License Compliance Check
         shell: pwsh

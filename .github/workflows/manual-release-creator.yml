@@ -39,10 +39,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Setup PowerShell
-        uses: PowerShell/setup-powershell@v1.0.0
-        with:
-          powershell-version: '7.4'
+      # PowerShell is pre-installed on GitHub runners
       
       - name: Configure Git
         run: |
