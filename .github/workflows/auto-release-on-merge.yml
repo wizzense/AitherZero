@@ -166,11 +166,57 @@ jobs:
           
           git tag -a "$TAG_NAME" -m "$TAG_MESSAGE"
           
-          # Push changes and tag
-          git push origin main
+          # Only push the tag, not to main (branch protection rules prevent this)
           git push origin "$TAG_NAME" $FORCE_PUSH
           
           echo "✅ Created and pushed tag: $TAG_NAME"
+          echo "⚠️ Note: VERSION file in main will be updated via automated PR"
+          
+      - name: 🔄 Create VERSION Update PR
+        if: steps.check-label.outputs.has_release_label == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Create a new branch from main for VERSION update
+          BRANCH_NAME="auto-update/version-${{ steps.version.outputs.new_version }}"
+          
+          # Reset to main and create new branch
+          git checkout main
+          git checkout -b "$BRANCH_NAME"
+          
+          # Update VERSION file
+          echo "${{ steps.version.outputs.new_version }}" > VERSION
+          git add VERSION
+          git commit -m "Update VERSION to ${{ steps.version.outputs.new_version }}
+
+          Automated VERSION update after release tag v${{ steps.version.outputs.new_version }} was created.
+          
+          This PR was automatically created by the release workflow to keep the VERSION file in sync with release tags."
+          
+          # Push branch
+          git push origin "$BRANCH_NAME"
+          
+          # Create PR using GitHub CLI
+          gh pr create \
+            --title "🔄 Update VERSION to ${{ steps.version.outputs.new_version }}" \
+            --body "## Automated VERSION Update
+
+          This PR updates the VERSION file after release tag \`v${{ steps.version.outputs.new_version }}\` was created.
+
+          ### Details
+          - **Previous version**: ${{ steps.version.outputs.current_version }}
+          - **New version**: ${{ steps.version.outputs.new_version }}
+          - **Release type**: ${{ steps.check-label.outputs.release_type }}
+          - **Triggered by**: PR #$PR_NUMBER - $PR_TITLE
+
+          ### Why is this needed?
+          Branch protection rules prevent the workflow from pushing directly to main, so the VERSION update is done via this automated PR.
+
+          > **Note**: This PR should be merged promptly to keep the VERSION file in sync with the latest release tag." \
+            --base main \
+            --head "$BRANCH_NAME" \
+            --label "auto-update" \
+            --label "no-release"
           
       - name: 📋 Summary
         if: always()
