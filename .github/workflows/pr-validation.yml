@@ -240,22 +240,41 @@ jobs:
       
       - name: Run Validation Tests
         shell: pwsh
+        timeout-minutes: 10
         if: needs.pr-analysis.outputs.test-level != 'none'
         run: |
           Write-Host "🧪 Running Validation Tests..." -ForegroundColor Yellow
           
-          if (Test-Path "./tests/Run-BulletproofValidation.ps1") {
-            $testLevel = '${{ needs.pr-analysis.outputs.test-level }}'
-            $validationLevel = switch ($testLevel) {
-              'full' { 'Standard' }
-              'standard' { 'Standard' }
-              default { 'Quick' }
-            }
+          try {
+            $ErrorActionPreference = 'Stop'
             
-            Write-Host "Running $validationLevel validation..." -ForegroundColor Cyan
-            ./tests/Run-BulletproofValidation.ps1 -ValidationLevel $validationLevel -CI
-          } else {
-            Write-Host "No validation script found, skipping tests" -ForegroundColor Yellow
+            if (Test-Path "./tests/Run-BulletproofValidation.ps1") {
+              $testLevel = '${{ needs.pr-analysis.outputs.test-level }}'
+              $validationLevel = switch ($testLevel) {
+                'full' { 'Standard' }
+                'standard' { 'Standard' }
+                default { 'Quick' }
+              }
+              
+              Write-Host "Running $validationLevel validation..." -ForegroundColor Cyan
+              ./tests/Run-BulletproofValidation.ps1 -ValidationLevel $validationLevel -CI
+              Write-Host "✅ Validation tests completed successfully" -ForegroundColor Green
+            } else {
+              Write-Host "⚠️ Validation script not found, checking test directory..." -ForegroundColor Yellow
+              if (Test-Path "./tests") {
+                Write-Host "🔍 Available test files:" -ForegroundColor Yellow
+                Get-ChildItem "./tests" -Filter "*.ps1" | ForEach-Object { 
+                  Write-Host "  - $($_.Name)" -ForegroundColor Gray 
+                }
+              } else {
+                Write-Host "  (tests directory does not exist)" -ForegroundColor Gray
+              }
+              Write-Host "⚠️ Skipping validation tests" -ForegroundColor Yellow
+            }
+          } catch {
+            Write-Host "❌ Validation tests failed: $_" -ForegroundColor Red
+            Write-Host "💡 This may indicate issues with the test framework or test dependencies." -ForegroundColor Yellow
+            exit 1
           }
 
   build-test:
@@ -283,17 +302,34 @@ jobs:
       
       - name: Test Build System
         shell: pwsh
+        timeout-minutes: 15
         run: |
           Write-Host "🔨 Testing Build System..." -ForegroundColor Yellow
           
-          # Test minimal build only for PR validation (fastest)
-          if (Test-Path "./build/Build-Package.ps1") {
-            ./build/Build-Package.ps1 -Profile minimal -Platform linux -DryRun
-          } else {
-            Write-Host "Build script not found, skipping build test" -ForegroundColor Yellow
+         try {
+            $ErrorActionPreference = 'Stop'
+            
+            # Test minimal build only for PR validation (fastest)
+            if (Test-Path "./build/Build-Package.ps1") {
+              Write-Host "📦 Testing build script with dry run..." -ForegroundColor Cyan
+              ./build/Build-Package.ps1 -Profile minimal -Platform linux -DryRun
+              Write-Host "✅ Build script validation passed" -ForegroundColor Green
+            } else {
+              Write-Host "⚠️ Build script not found at ./build/Build-Package.ps1" -ForegroundColor Yellow
+              Write-Host "🔍 Available files in build directory:" -ForegroundColor Yellow
+              if (Test-Path "./build") {
+                Get-ChildItem "./build" | ForEach-Object { 
+                  Write-Host "  - $($_.Name)" -ForegroundColor Gray 
+                }
+              } else {
+                Write-Host "  (build directory does not exist)" -ForegroundColor Gray
+              }
+            }
+          } catch {
+            Write-Host "❌ Build system test failed: $_" -ForegroundColor Red
+            Write-Host "💡 This indicates the build system has issues that need to be fixed." -ForegroundColor Yellow
+            exit 1
           }
-          
-          Write-Host "✅ Build system validation passed" -ForegroundColor Green
 
   pr-summary:
     name: 📋 PR Summary
