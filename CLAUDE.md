@@ -99,6 +99,26 @@ pwsh -NoProfile -File "./script.ps1"
 
 **DO NOT FORGET THIS PATH. EVER.**
 
+### CRITICAL: How to ACTUALLY Use PatchManager
+
+**TO CREATE A PR WITH PATCHMANAGER:**
+```bash
+cd "/mnt/c/Users/alexa/OneDrive/Documents/0. wizzense/AitherZero"
+"/mnt/c/Program Files/PowerShell/7/pwsh.exe" -NoProfile -Command '
+Import-Module ./aither-core/modules/PatchManager -Force
+New-Feature -Description "Your feature description" -Changes {
+    # Your changes here
+    Set-Content "file.txt" -Value "content"
+}'
+```
+
+**PROOF IT WORKS:**
+- Issue created: https://github.com/wizzense/AitherZero/issues/328
+- PR created: https://github.com/wizzense/AitherZero/pull/329
+- Branch: patch/20250703-221849-Add-workflow-validation-proof-and-test-results
+
+**DO NOT CLAIM THINGS WORK WITHOUT ACTUALLY RUNNING THEM!**
+
 
 ### Release Management - SUPER SIMPLE! 🚀
 
