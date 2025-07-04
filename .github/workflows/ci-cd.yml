@@ -1,0 +1,322 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/**'
+      - 'LICENSE'
+      - 'VERSION'
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/**'
+      - 'LICENSE'
+      - 'VERSION'
+  workflow_dispatch:
+    inputs:
+      full_validation:
+        description: 'Run full validation suite'
+        type: boolean
+        default: false
+      release_type:
+        description: 'Release type (if applicable)'
+        type: choice
+        options:
+          - 'none'
+          - 'patch'
+          - 'minor'
+          - 'major'
+        default: 'none'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+      modules: ${{ steps.filter.outputs.modules }}
+      tests: ${{ steps.filter.outputs.tests }}
+      config: ${{ steps.filter.outputs.config }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - 'aither-core/**/*.ps1'
+              - 'aither-core/**/*.psm1'
+              - 'aither-core/**/*.psd1'
+              - 'scripts/**/*.ps1'
+              - '*.ps1'
+            modules:
+              - 'aither-core/modules/**'
+            tests:
+              - 'tests/**'
+            config:
+              - 'configs/**'
+              - 'aither-core/default-config.json'
+
+  validate:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.modules == 'true' || github.event.inputs.full_validation == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PowerShell
+        shell: pwsh
+        run: |
+          Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Cyan
+          Write-Host "Platform: $($PSVersionTable.Platform)" -ForegroundColor Cyan
+
+      - name: Validate Module Structure
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Validating module structure..." -ForegroundColor Cyan
+          $modules = Get-ChildItem -Path "aither-core/modules" -Directory -ErrorAction SilentlyContinue
+          if ($modules) {
+            foreach ($module in $modules) {
+              Write-Host "📦 Checking module: $($module.Name)" -ForegroundColor Yellow
+              $manifest = Join-Path $module.FullName "$($module.Name).psd1"
+              if (Test-Path $manifest) {
+                Test-ModuleManifest -Path $manifest -ErrorAction Stop
+                Write-Host "✅ Module manifest valid: $($module.Name)" -ForegroundColor Green
+              } else {
+                Write-Warning "⚠️ Missing manifest: $($module.Name)"
+              }
+            }
+          } else {
+            Write-Host "ℹ️ No modules found to validate" -ForegroundColor Blue
+          }
+
+      - name: Quick Module Import Test
+        shell: pwsh
+        run: |
+          Write-Host "🧪 Testing module imports..." -ForegroundColor Cyan
+          $modules = Get-ChildItem -Path "aither-core/modules" -Directory -ErrorAction SilentlyContinue
+          $importErrors = @()
+          foreach ($module in $modules) {
+            try {
+              Write-Host "Testing: $($module.Name)" -ForegroundColor Yellow
+              Import-Module $module.FullName -Force -ErrorAction Stop
+              Write-Host "✅ Import successful: $($module.Name)" -ForegroundColor Green
+            } catch {
+              $importErrors += "$($module.Name): $($_.Exception.Message)"
+              Write-Host "❌ Import failed: $($module.Name)" -ForegroundColor Red
+            }
+          }
+          if ($importErrors) {
+            Write-Host "Import errors found:" -ForegroundColor Red
+            $importErrors | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
+            exit 1
+          }
+
+      - name: Run Tests
+        shell: pwsh
+        if: needs.changes.outputs.tests == 'true' || github.event.inputs.full_validation == 'true'
+        run: |
+          Write-Host "🧪 Running test suite..." -ForegroundColor Cyan
+          if (Test-Path "tests/Run-BulletproofValidation.ps1") {
+            $validationLevel = if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch' -and $env:FULL_VALIDATION -eq 'true') { 'Standard' } else { 'Quick' }
+            Write-Host "Running validation level: $validationLevel" -ForegroundColor Yellow
+            & "tests/Run-BulletproofValidation.ps1" -ValidationLevel $validationLevel -CI -FailFast
+          } else {
+            Write-Host "ℹ️ No bulletproof validation found, running basic tests..." -ForegroundColor Blue
+            if (Test-Path "tests") {
+              $testFiles = Get-ChildItem -Path "tests" -Filter "*.Tests.ps1" -Recurse
+              if ($testFiles) {
+                foreach ($testFile in $testFiles) {
+                  Write-Host "Running: $($testFile.Name)" -ForegroundColor Yellow
+                  Invoke-Pester -Path $testFile.FullName -Show Failed
+                }
+              }
+            }
+          }
+        env:
+          FULL_VALIDATION: ${{ github.event.inputs.full_validation }}
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [changes, validate]
+    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.config == 'true' || github.event.inputs.release_type != 'none'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PowerShell
+        shell: pwsh
+        run: |
+          Write-Host "🏗️ Setting up build environment..." -ForegroundColor Cyan
+
+      - name: Build Package
+        shell: pwsh
+        run: |
+          Write-Host "📦 Building package..." -ForegroundColor Cyan
+          $version = "1.0.0"
+          if (Test-Path "VERSION") {
+            $version = Get-Content "VERSION" -Raw | ForEach-Object { $_.Trim() }
+          }
+          
+          $buildDir = "build-output"
+          New-Item -Path $buildDir -ItemType Directory -Force | Out-Null
+          
+          # Copy essential files
+          $essentialFiles = @(
+            "aither-core/aither-core.ps1",
+            "README.md",
+            "LICENSE"
+          )
+          
+          foreach ($file in $essentialFiles) {
+            if (Test-Path $file) {
+              Copy-Item -Path $file -Destination $buildDir -Force
+              Write-Host "✅ Copied: $file" -ForegroundColor Green
+            }
+          }
+          
+          # Copy modules
+          if (Test-Path "aither-core/modules") {
+            Copy-Item -Path "aither-core/modules" -Destination "$buildDir/modules" -Recurse -Force
+            Write-Host "✅ Copied modules" -ForegroundColor Green
+          }
+          
+          # Copy shared utilities
+          if (Test-Path "aither-core/shared") {
+            Copy-Item -Path "aither-core/shared" -Destination "$buildDir/shared" -Recurse -Force
+            Write-Host "✅ Copied shared utilities" -ForegroundColor Green
+          }
+          
+          # Copy essential configs
+          if (Test-Path "configs") {
+            $configFiles = @("default-config.json", "core-runner-config.json", "recommended-config.json")
+            New-Item -Path "$buildDir/configs" -ItemType Directory -Force | Out-Null
+            foreach ($config in $configFiles) {
+              $configPath = "configs/$config"
+              if (Test-Path $configPath) {
+                Copy-Item -Path $configPath -Destination "$buildDir/configs/" -Force
+                Write-Host "✅ Copied config: $config" -ForegroundColor Green
+              }
+            }
+          }
+          
+          Write-Host "🎉 Build completed successfully!" -ForegroundColor Green
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: aitherzero-build
+          path: build-output/
+          retention-days: 7
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [changes, validate, build]
+    if: github.event.inputs.release_type != 'none' && github.event.inputs.release_type != '' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: aitherzero-build
+          path: build-output/
+
+      - name: Create Release
+        shell: pwsh
+        run: |
+          Write-Host "🚀 Creating release..." -ForegroundColor Cyan
+          
+          # Determine version
+          $currentVersion = "0.0.0"
+          $latestTag = git describe --tags --abbrev=0 2>$null
+          if ($latestTag) {
+            $currentVersion = $latestTag -replace '^v', ''
+          }
+          
+          $releaseType = "${{ github.event.inputs.release_type }}"
+          Write-Host "Current version: $currentVersion" -ForegroundColor Yellow
+          Write-Host "Release type: $releaseType" -ForegroundColor Yellow
+          
+          if ($currentVersion -match '^(\d+)\.(\d+)\.(\d+)') {
+            $major = [int]$matches[1]
+            $minor = [int]$matches[2]
+            $patch = [int]$matches[3]
+            
+            switch ($releaseType) {
+              'major' { $newVersion = "$($major + 1).0.0" }
+              'minor' { $newVersion = "$major.$($minor + 1).0" }
+              'patch' { $newVersion = "$major.$minor.$($patch + 1)" }
+              default { $newVersion = "$major.$minor.$($patch + 1)" }
+            }
+          } else {
+            $newVersion = "1.0.0"
+          }
+          
+          Write-Host "New version: $newVersion" -ForegroundColor Green
+          
+          # Create release notes
+          $releaseNotes = @"
+          # AitherZero Infrastructure Automation v$newVersion
+          
+          ## Changes in this release
+          
+          This is an automated release created by the CI/CD pipeline.
+          
+          ## Installation
+          
+          Download the build artifacts and extract them to your desired location.
+          
+          ## Usage
+          
+          Run \`aither-core.ps1\` to start the AitherZero Infrastructure Automation framework.
+          
+          For more information, see the [README](README.md).
+          "@
+          
+          # Create and push tag
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$newVersion" -m "Release v$newVersion"
+          git push origin "v$newVersion"
+          
+          # Create GitHub release
+          gh release create "v$newVersion" --title "AitherZero v$newVersion" --notes "$releaseNotes" --target main
+          
+          Write-Host "✅ Release v$newVersion created successfully!" -ForegroundColor Green
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  cleanup:
+    runs-on: ubuntu-latest
+    needs: [validate, build, release]
+    if: always()
+    steps:
+      - name: Cleanup Summary
+        shell: pwsh
+        run: |
+          Write-Host "🧹 CI/CD Pipeline Summary" -ForegroundColor Cyan
+          Write-Host "Validation: ${{ needs.validate.result }}" -ForegroundColor Yellow
+          Write-Host "Build: ${{ needs.build.result }}" -ForegroundColor Yellow
+          Write-Host "Release: ${{ needs.release.result }}" -ForegroundColor Yellow
+          
+          if ("${{ needs.validate.result }}" -eq "failure" -or "${{ needs.build.result }}" -eq "failure") {
+            Write-Host "❌ Pipeline failed - check logs above" -ForegroundColor Red
+            exit 1
+          } else {
+            Write-Host "✅ Pipeline completed successfully" -ForegroundColor Green
+          }
