@@ -170,7 +170,7 @@ function Update-ModuleForBuild {
         [string]$ModuleName,
         [string[]]$BuildProfiles = @("minimal", "standard", "development")
     )
-    
+
     foreach ($profile in $BuildProfiles) {
         # Test module inclusion in each profile
         $buildConfig = Get-Content "build/profiles/$profile.json" | ConvertFrom-Json
@@ -186,15 +186,15 @@ function Update-ModuleForBuild {
 # Function that updates workflows safely
 function Update-WorkflowSafely {
     param([string]$WorkflowFile, [scriptblock]$Changes)
-    
+
     try {
         # Backup existing workflow
         $backup = "$WorkflowFile.backup"
         Copy-Item $WorkflowFile $backup
-        
+
         # Apply changes
         & $Changes
-        
+
         # Validate workflow syntax
         if (Test-Path $WorkflowFile) {
             Write-Host "Workflow updated successfully"

@@ -1,0 +1,58 @@
+{
+  "name": "standard",
+  "description": "Production-ready with comprehensive infrastructure automation features",
+  "estimatedSize": "15-25 MB", 
+  "targetAudience": "Production infrastructure management",
+  "extends": "minimal",
+  "additionalModules": [
+    "BackupManager",
+    "SystemMonitoring", 
+    "RemoteConnection",
+    "SecureCredentials",
+    "ISOManager",
+    "ISOCustomizer",
+    "UnifiedMaintenance",
+    "ScriptManager",
+    "LicenseManager",
+    "ModuleCommunication",
+    "StartupExperience"
+  ],
+  "additionalDirectories": {
+    "aither-core/scripts": [
+      "0100_Enable-WinRM.ps1",
+      "0101_Enable-RemoteDesktop.ps1", 
+      "0102_Configure-Firewall.ps1",
+      "0103_Change-ComputerName.ps1",
+      "0104_Install-CA.ps1",
+      "0105_Install-HyperV.ps1",
+      "0106_Install-WAC.ps1",
+      "0111_Disable-TCPIP6.ps1",
+      "0112_Enable-PXE.ps1",
+      "0113_Config-DNS.ps1",
+      "0114_Config-TrustedHosts.ps1",
+      "0200_Get-SystemInfo.ps1"
+    ],
+    "docs": "all",
+    "templates": "all"
+  },
+  "additionalConfigs": [
+    "recommended-config.json",
+    "full-config.json"
+  ],
+  "features": {
+    "infrastructure": true,
+    "opentofu": true,
+    "advancedLogging": true,
+    "systemMonitoring": true,
+    "remoteManagement": true,
+    "backupManagement": true,
+    "isoManagement": true,
+    "secureCredentials": true,
+    "scriptAutomation": true,
+    "licenseManagement": true,
+    "development": false,
+    "aiTools": false,
+    "advancedSecurity": false,
+    "testing": false
+  }
+}

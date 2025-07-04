@@ -48,6 +48,12 @@ Thumbs.db
 # Build artifacts
 dist/
 build/
+# Exception: Keep build configuration files
+!build/profiles/
+!build/profiles/*.json
+!build/Build-Package.ps1
+!build/README.md
+!build/Test-*.ps1
 build-output/
 *.egg-info/
 kicker-git-backup.ps1
