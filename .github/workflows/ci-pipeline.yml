@@ -102,23 +102,23 @@ jobs:
           build_profiles='["minimal"]'
           
           # Force full build conditions
-          if [[ "${{ steps.changes.outputs.core }}" == "true" || 
-                "${{ steps.changes.outputs.build }}" == "true" || 
-                "${{ github.event.inputs.force_full_build }}" == "true" ||
-                "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+          if [[ "${{ steps.changes.outputs.core }}" == "true" || \
+                "${{ steps.changes.outputs.build }}" == "true" || \
+                "${{ github.event.inputs.force_full_build }}" == "true" || \
+                ( "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ) ]]; then
             should_build="true"
             build_profiles='["minimal","standard","development"]'
           # Selective build conditions  
-          elif [[ "${{ steps.changes.outputs.code }}" == "true" || 
-                  "${{ steps.changes.outputs.modules }}" == "true" ||
+          elif [[ "${{ steps.changes.outputs.code }}" == "true" || \
+                  "${{ steps.changes.outputs.modules }}" == "true" || \
                   "${{ steps.changes.outputs.config }}" == "true" ]]; then
             should_build="true"
             # Determine profiles based on changed modules
-            if [[ "${{ steps.changes.outputs.modules }}" == *"DevEnvironment"* || 
-                  "${{ steps.changes.outputs.modules }}" == *"PatchManager"* ||
+            if [[ "${{ steps.changes.outputs.modules }}" == *"DevEnvironment"* || \
+                  "${{ steps.changes.outputs.modules }}" == *"PatchManager"* || \
                   "${{ steps.changes.outputs.modules }}" == *"TestingFramework"* ]]; then
               build_profiles='["minimal","standard","development"]'
-            elif [[ "${{ steps.changes.outputs.modules }}" == *"BackupManager"* ||
+            elif [[ "${{ steps.changes.outputs.modules }}" == *"BackupManager"* || \
                     "${{ steps.changes.outputs.modules }}" == *"SystemMonitoring"* ]]; then
               build_profiles='["minimal","standard"]'
             fi
@@ -145,8 +145,16 @@ jobs:
         
       - name: Install PowerShell
         run: |
+          # Update package list and install prerequisites
+          sudo apt-get update
+          sudo apt-get install -y wget apt-transport-https software-properties-common
+          
+          # Download and install PowerShell
           wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.5.2/powershell_7.5.2-1.deb_amd64.deb
           sudo dpkg -i powershell_7.5.2-1.deb_amd64.deb || sudo apt-get install -f -y
+          
+          # Clean up
+          rm powershell_7.5.2-1.deb_amd64.deb
         
       - name: Cache PowerShell Modules
         uses: actions/cache@v4
@@ -161,8 +169,9 @@ jobs:
           Write-Host "🔒 Running PowerShell Security Analysis..." -ForegroundColor Yellow
           
           # Install PSScriptAnalyzer
-          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction SilentlyContinue
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction Stop
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -Repository PSGallery -ErrorAction Stop
+          Import-Module PSScriptAnalyzer -ErrorAction Stop
           
           # Run security-focused analysis
           $analysisParams = @{
@@ -370,7 +379,7 @@ jobs:
           Write-Host "🧪 Testing Package Functionality" -ForegroundColor Yellow
           
           # Find the package archive
-          $archives = Get-ChildItem -Path "test-packages" -Filter "*.zip", "*.tar.gz"
+          $archives = Get-ChildItem -Path "test-packages" -Include "*.zip", "*.tar.gz" -File
           if ($archives.Count -eq 0) {
             throw "No package archive found"
           }
@@ -434,8 +443,16 @@ jobs:
       
       - name: Install PowerShell
         run: |
+          # Update package list and install prerequisites
+          sudo apt-get update
+          sudo apt-get install -y wget apt-transport-https software-properties-common
+          
+          # Download and install PowerShell
           wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.5.2/powershell_7.5.2-1.deb_amd64.deb
           sudo dpkg -i powershell_7.5.2-1.deb_amd64.deb || sudo apt-get install -f -y
+          
+          # Clean up
+          rm powershell_7.5.2-1.deb_amd64.deb
       
       - name: Cache PowerShell Modules
         uses: actions/cache@v4
