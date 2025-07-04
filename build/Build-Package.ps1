@@ -446,6 +446,9 @@ function New-Package {
         $sourcePath = Join-Path $projectRoot $file
         if (Test-Path $sourcePath) {
             Copy-Item $sourcePath -Destination $packagePath -Force
+            Write-BuildLog "Copied core file: $file" -Level "DEBUG"
+        } else {
+            Write-BuildLog "Core file not found (skipping): $file" -Level "WARNING"
         }
     }
     
@@ -460,6 +463,9 @@ function New-Package {
         $sourcePath = Join-Path $aitherCoreSource $file
         if (Test-Path $sourcePath) {
             Copy-Item $sourcePath -Destination $aitherCoreDest -Force
+            Write-BuildLog "Copied aither-core file: $file" -Level "DEBUG"
+        } else {
+            Write-BuildLog "Aither-core file not found (skipping): $file" -Level "WARNING"
         }
     }
     
@@ -473,15 +479,21 @@ function New-Package {
             
             if ($subdirConfig -eq "all") {
                 Copy-Item $subdirSource -Destination $subdirDest -Recurse -Force
+                Write-BuildLog "Copied subdirectory: $subdir (all files)" -Level "DEBUG"
             } elseif ($subdirConfig -is [array]) {
                 New-Item -ItemType Directory -Path $subdirDest -Force | Out-Null
                 foreach ($file in $subdirConfig) {
                     $filePath = Join-Path $subdirSource $file
                     if (Test-Path $filePath) {
                         Copy-Item $filePath -Destination $subdirDest -Force
+                        Write-BuildLog "Copied subdirectory file: $subdir/$file" -Level "DEBUG"
+                    } else {
+                        Write-BuildLog "Subdirectory file not found (skipping): $subdir/$file" -Level "WARNING"
                     }
                 }
             }
+        } else {
+            Write-BuildLog "Subdirectory not found (skipping): $subdir" -Level "WARNING"
         }
     }
     
