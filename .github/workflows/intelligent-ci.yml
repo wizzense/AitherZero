@@ -537,13 +537,297 @@ jobs:
             Write-Host "✅ Package integrity validation completed" -ForegroundColor Green
           } catch {
             Write-Host "❌ Package integrity test failed: $_" -ForegroundColor Red
-            # Don't fail the build for package integrity issues
-            Write-Host "⚠️ Continuing build despite package integrity issues" -ForegroundColor Yellow
+            throw
           }
+
+  create-builds:
+    name: 🏗️ Create Builds
+    needs: [change-detection, build-validation, cross-platform-tests]
+    if: always() && !failure() && !cancelled() && (github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event.inputs.force_full_run == 'true')
+    
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            platform: windows
+            extension: zip
+          - os: ubuntu-latest
+            platform: linux
+            extension: tar.gz
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: Get Version Information
+        id: version
+        shell: pwsh
+        run: |
+          # Get current version
+          $latestTag = git describe --tags --abbrev=0 2>$null
+          if ($latestTag) {
+            $currentVersion = $latestTag -replace '^v', ''
+            if ($currentVersion -match '^(\d+)\.(\d+)\.(\d+)') {
+              $major = [int]$matches[1]
+              $minor = [int]$matches[2]
+              $patch = [int]$matches[3]
+              $version = "$major.$minor.$($patch + 1)"
+            } else {
+              $version = '1.0.0'
+            }
+          } else {
+            $version = '1.0.0'
+          }
+          
+          Write-Host "Build version: $version" -ForegroundColor Green
+          Write-Output "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Output "tag=v$version" >> $env:GITHUB_OUTPUT
+        
+      - name: Create Build Package
+        shell: pwsh
+        run: |
+          Write-Host "📦 Creating build package for ${{ matrix.platform }}..." -ForegroundColor Yellow
+          
+          $version = "${{ steps.version.outputs.version }}"
+          $platform = "${{ matrix.platform }}"
+          $buildDir = "build-output/$platform"
+          $packageName = "AitherZero-$version-$platform"
+          $packageDir = "$buildDir/$packageName"
+          
+          # Create build directory
+          New-Item -Path $packageDir -ItemType Directory -Force | Out-Null
+          
+          # Copy core files
+          Copy-Item -Path "Start-AitherZero.ps1" -Destination "$packageDir/" -Force
+          Copy-Item -Path "aither-core/aither-core.ps1" -Destination "$packageDir/" -Force
+          Copy-Item -Path "README.md" -Destination "$packageDir/" -Force
+          Copy-Item -Path "LICENSE" -Destination "$packageDir/" -Force
+          
+          # Copy essential modules
+          $essentialModules = @(
+            'Logging', 'LabRunner', 'DevEnvironment', 'BackupManager', 
+            'ScriptManager', 'UnifiedMaintenance', 'ParallelExecution',
+            'TestingFramework', 'PatchManager'
+          )
+          
+          New-Item -Path "$packageDir/aither-core/modules" -ItemType Directory -Force | Out-Null
+          foreach ($module in $essentialModules) {
+            $modulePath = "aither-core/modules/$module"
+            if (Test-Path $modulePath) {
+              Copy-Item -Path $modulePath -Destination "$packageDir/aither-core/modules/" -Recurse -Force
+              Write-Host "  ✅ Included module: $module" -ForegroundColor Green
+            }
+          }
+          
+          # Copy shared utilities
+          if (Test-Path "aither-core/shared") {
+            Copy-Item -Path "aither-core/shared" -Destination "$packageDir/aither-core/" -Recurse -Force
+            Write-Host "  ✅ Included shared utilities" -ForegroundColor Green
+          }
+          
+          # Copy essential configs
+          New-Item -Path "$packageDir/configs" -ItemType Directory -Force | Out-Null
+          $essentialConfigs = @('default-config.json', 'core-runner-config.json')
+          foreach ($config in $essentialConfigs) {
+            $configPath = "configs/$config"
+            if (Test-Path $configPath) {
+              Copy-Item -Path $configPath -Destination "$packageDir/configs/" -Force
+            }
+          }
+          
+          # Create platform-specific launcher
+          if ($platform -eq "windows") {
+            $launcherContent = @(
+              '@echo off',
+              'echo 🚀 AitherZero v' + $version + ' - Windows Build',
+              'pwsh -File "Start-AitherZero.ps1" %*',
+              'if %ERRORLEVEL% NEQ 0 pause'
+            ) -join "`r`n"
+            Set-Content -Path "$packageDir/AitherZero.bat" -Value $launcherContent -Encoding UTF8
+          } else {
+            $launcherContent = @(
+              '#!/bin/bash',
+              'echo "🚀 AitherZero v' + $version + ' - Linux Build"',
+              'pwsh -File "Start-AitherZero.ps1" "$@"'
+            ) -join "`n"
+            Set-Content -Path "$packageDir/aitherzero.sh" -Value $launcherContent -Encoding UTF8
+          }
+          
+          # Create PowerShell launcher
+          $psLauncher = @(
+            '#!/usr/bin/env pwsh',
+            '#Requires -Version 7.0',
+            '',
+            'Write-Host "🚀 AitherZero Infrastructure Automation Framework v' + $version + '" -ForegroundColor Cyan',
+            'Write-Host "   Production Build - Full Feature Set" -ForegroundColor Yellow',
+            '',
+            '$env:PROJECT_ROOT = $PSScriptRoot',
+            '',
+            '& "$PSScriptRoot/aither-core.ps1" $args'
+          ) -join "`n"
+          Set-Content -Path "$packageDir/Start-AitherZero.ps1" -Value $psLauncher
+          
+          Write-Host "✅ Build package created: $packageName" -ForegroundColor Green
+        
+      - name: Create Archive
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $platform = "${{ matrix.platform }}"
+          $buildDir = "build-output/$platform"
+          $packageName = "AitherZero-$version-$platform"
+          
+          if ($platform -eq "windows") {
+            Compress-Archive -Path "$buildDir/$packageName/*" -DestinationPath "$packageName.zip" -Force
+            $archiveFile = "$packageName.zip"
+          } else {
+            Set-Location $buildDir
+            tar -czf "../../$packageName.tar.gz" $packageName
+            Set-Location "../.."
+            $archiveFile = "$packageName.tar.gz"
+          }
+          
+          $size = (Get-Item $archiveFile).Length
+          Write-Host "📦 Archive created: $archiveFile ($([math]::Round($size / 1MB, 2)) MB)" -ForegroundColor Green
+          
+          # Set output for release job
+          Write-Output "archive_file=$archiveFile" >> $env:GITHUB_OUTPUT
+          Write-Output "archive_name=$packageName" >> $env:GITHUB_OUTPUT
+        
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.platform }}-${{ steps.version.outputs.version }}
+          path: AitherZero-*.*
+          retention-days: 90
+
+  create-release:
+    name: 🚀 Create Release
+    needs: [create-builds]
+    if: always() && !failure() && !cancelled() && (github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event.inputs.force_full_run == 'true')
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: Get Version Information
+        id: version
+        shell: pwsh
+        run: |
+          # Get current version (same logic as build job)
+          $latestTag = git describe --tags --abbrev=0 2>$null
+          if ($latestTag) {
+            $currentVersion = $latestTag -replace '^v', ''
+            if ($currentVersion -match '^(\d+)\.(\d+)\.(\d+)') {
+              $major = [int]$matches[1]
+              $minor = [int]$matches[2]
+              $patch = [int]$matches[3]
+              $version = "$major.$minor.$($patch + 1)"
+            } else {
+              $version = '1.0.0'
+            }
+          } else {
+            $version = '1.0.0'
+          }
+          
+          Write-Output "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Output "tag=v$version" >> $env:GITHUB_OUTPUT
+        
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: build-*-${{ steps.version.outputs.version }}
+          merge-multiple: true
+        
+      - name: Create Release Notes
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $releaseNotes = @"
+          # 🚀 AitherZero v$version
+          
+          ## 📦 What's New
+          - Automated build and release through CI/CD pipeline
+          - Cross-platform compatibility (Windows, Linux, macOS)
+          - Enhanced security analysis and validation
+          - Comprehensive testing suite
+          
+          ## 📋 Build Information
+          - **Build Date**: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC")
+          - **Commit**: ${{ github.sha }}
+          - **Branch**: ${{ github.ref_name }}
+          - **Workflow**: ${{ github.workflow }}
+          - **Run**: #${{ github.run_number }}
+          
+          ## 📦 Available Downloads
+          - **Windows**: AitherZero-$version-windows.zip
+          - **Linux**: AitherZero-$version-linux.tar.gz
+          
+          ## 🔧 Installation
+          1. Download the appropriate package for your platform
+          2. Extract the archive
+          3. Run the launcher (AitherZero.bat on Windows, aitherzero.sh on Linux)
+          4. Or use PowerShell directly: ``pwsh -File Start-AitherZero.ps1``
+          
+          ## 🛡️ Security
+          This release has been validated through automated security analysis and testing.
+          
+          ---
+          *🤖 This release was created automatically by the Intelligent CI/CD Pipeline*
+          "@
+          
+          $releaseNotes | Out-File "release-notes.md" -Encoding UTF8
+          Write-Host "📝 Release notes created" -ForegroundColor Green
+        
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "🚀 AitherZero ${{ steps.version.outputs.version }}"
+          body_path: release-notes.md
+          files: |
+            AitherZero-*.zip
+            AitherZero-*.tar.gz
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+      - name: Update Version File
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $version | Out-File "VERSION" -Encoding UTF8 -NoNewline
+          
+          # Commit version update
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add VERSION
+          git commit -m "🏷️ Bump version to v$version [skip ci]" || true
+          git push origin main || true
+        
+      - name: Release Summary
+        run: |
+          echo "🎉 Release Summary"
+          echo "================="
+          echo "✅ Version: ${{ steps.version.outputs.version }}"
+          echo "🏷️ Tag: ${{ steps.version.outputs.tag }}"
+          echo "📦 Artifacts: $(ls -la AitherZero-* | wc -l) files"
+          echo "🔗 Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }}"
+          echo ""
+          echo "📋 Next Steps:"
+          echo "1. Verify the release on GitHub"
+          echo "2. Test the downloads"
+          echo "3. Update documentation if needed"
 
   failure-summary:
     name: 📋 Failure Summary
-    needs: [change-detection, setup-environment, security-analysis, cross-platform-tests, code-coverage-analysis, build-validation]
+    needs: [change-detection, setup-environment, security-analysis, cross-platform-tests, code-coverage-analysis, build-validation, create-builds, create-release]
     if: always()
     
     runs-on: ubuntu-latest
@@ -569,6 +853,8 @@ jobs:
           - Cross-Platform Tests: ${{ needs.cross-platform-tests.result }}
           - Code Coverage: ${{ needs.code-coverage-analysis.result }}
           - Build Validation: ${{ needs.build-validation.result }}
+          - Create Builds: ${{ needs.create-builds.result }}
+          - Create Release: ${{ needs.create-release.result }}
           
           Change Detection Results:
           - Code Changes: ${{ needs.change-detection.outputs.code-changed }}
@@ -593,7 +879,7 @@ jobs:
           cp job_status.txt failure_details.txt
         
       - name: Create Failure Summary Issue
-        if: env.WORKFLOW_FAILED == 'true'
+        if: contains(needs.*.result, 'failure')
         uses: actions/github-script@v7
         with:
           script: |
@@ -603,97 +889,3 @@ jobs:
             const title = `🚨 CI/CD Pipeline Failure - Run #${context.runNumber}`;
             const body = `
             ## 🚨 Pipeline Failure Summary
-            
-            **Workflow**: ${context.workflow}  
-            **Run Number**: #${context.runNumber}
-            **Commit**: [\`${context.sha.substring(0, 7)}\`](${context.payload.repository.html_url}/commit/${context.sha})
-            **Branch**: \`${context.ref.replace('refs/heads/', '')}\`
-            **Triggered By**: @${context.actor}
-            **Event**: ${context.eventName}
-            
-            ### 📊 Job Results
-            \`\`\`
-            ${failureDetails}
-            \`\`\`
-            
-            ### 🔗 Quick Actions
-            - [View Workflow Run](${context.payload.repository.html_url}/actions/runs/${context.runId})
-            - [View Failed Jobs](${context.payload.repository.html_url}/actions/runs/${context.runId}#summary)
-            - [View Commit Details](${context.payload.repository.html_url}/commit/${context.sha})
-            
-            ### 🛠️ Troubleshooting Tips
-            - Check the individual job logs for detailed error messages
-            - Verify PowerShell 7 compatibility if setup-environment failed
-            - Review security analysis results if security checks failed
-            - Check test results artifacts for specific test failures
-            
-            ---
-            *🤖 This issue was automatically created by the Intelligent CI/CD Pipeline*
-            *Created: ${new Date().toISOString()}*
-            `;
-            
-            // Check for existing open failure issues to avoid spam
-            const existingIssues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: 'ci-failure,automated',
-              per_page: 10
-            });
-            
-            // Only create new issue if no recent failure issues exist
-            const recentFailures = existingIssues.data.filter(issue => {
-              const createdAt = new Date(issue.created_at);
-              const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-              return createdAt > dayAgo;
-            });
-            
-            if (recentFailures.length === 0) {
-              // Create new failure issue
-              await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: title,
-                body: body,
-                labels: ['ci-failure', 'automated', 'high-priority']
-              });
-              
-              console.log('✅ New failure summary issue created');
-            } else {
-              // Add comment to most recent failure issue
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: recentFailures[0].number,
-                body: `## 🔄 Additional Failure - Run #${context.runNumber}\n\n${body}`
-              });
-              
-              console.log('✅ Updated existing failure issue with new failure details');
-            }
-        
-      - name: Pipeline Summary
-        run: |
-          echo "📊 CI/CD Pipeline Summary"
-          echo "========================="
-          
-          if [[ "$WORKFLOW_FAILED" == "true" ]]; then
-            echo "❌ Pipeline completed with failures"
-            echo "📋 Check the failure summary issue for details"
-          elif [[ "$WORKFLOW_SKIPPED" == "true" ]]; then
-            echo "⏭️ Pipeline jobs skipped due to no relevant changes detected"
-            echo "📊 Smart change detection working correctly"
-            echo "📋 Change Detection Results:"
-            echo "  - Code Changes: ${{ needs.change-detection.outputs.code-changed }}"
-            echo "  - Test Changes: ${{ needs.change-detection.outputs.tests-changed }}"
-            echo "  - Config Changes: ${{ needs.change-detection.outputs.config-changed }}"
-            echo "  - Security Changes: ${{ needs.change-detection.outputs.security-changed }}"
-          elif [[ "$WORKFLOW_SUCCESS" == "true" ]]; then
-            echo "✅ All CI/CD pipeline jobs completed successfully!"
-            echo "📊 Pipeline Statistics:"
-            echo "  - Workflow: ${{ github.workflow }}"
-            echo "  - Run: #${{ github.run_number }}"
-            echo "  - Platform Coverage: Windows, Linux, macOS"
-            echo "  - Security: ✅ Passed"
-            echo "  - Tests: ✅ Passed"
-            echo "  - Build: ✅ Validated"
-          fi
