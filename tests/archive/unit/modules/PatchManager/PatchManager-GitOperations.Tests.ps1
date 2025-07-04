@@ -189,11 +189,12 @@ Describe "PatchManager Git Operations" {
             { Invoke-GitControlledPatch -PatchDescription "test: custom base" -PatchOperation $patchOperation -BaseBranch "develop" -DryRun } | Should -Not -Throw
         }
         
-        It "Should auto-commit uncommitted changes when requested" {
+        It "Should handle uncommitted changes properly" {
             $script:workingTreeDirty = $true
             $patchOperation = { Write-Host "Test patch operation" }
             
-            { Invoke-GitControlledPatch -PatchDescription "test: auto commit" -PatchOperation $patchOperation -AutoCommitUncommitted -Force -DryRun } | Should -Not -Throw
+            # Use current PatchManager API - Invoke-PatchWorkflow handles uncommitted changes automatically
+            { Invoke-PatchWorkflow -PatchDescription "test: handle uncommitted changes" -PatchOperation $patchOperation -Force -DryRun } | Should -Not -Throw
         }
     }
     

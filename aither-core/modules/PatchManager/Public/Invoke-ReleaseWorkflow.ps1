@@ -188,36 +188,85 @@ function Invoke-ReleaseWorkflow {
             return $false
         }
         
-        # Helper to create and push tag
+        # Helper to create and push tag with comprehensive error handling
         function New-ReleaseTag {
             param(
                 [string]$Version,
                 [string]$Message
             )
             
-            Write-ReleaseLog "Creating release tag v$Version..."
+            Write-ReleaseLog "Creating release tag v$Version with enhanced error handling..."
             
-            # Ensure we're on main and up to date
-            $currentBranch = & git branch --show-current
-            if ($currentBranch -ne "main") {
-                Write-ReleaseLog "Switching to main branch..."
-                & git checkout main
-            }
-            
-            Write-ReleaseLog "Pulling latest changes..."
-            & git pull origin main
-            
-            # Verify VERSION file matches expected version
-            $actualVersion = Get-CurrentVersion
-            if ($actualVersion -ne $Version) {
-                Write-ReleaseLog "VERSION file shows $actualVersion but expected $Version" "WARNING"
-                Write-ReleaseLog "PR may not have been merged yet or VERSION was changed" "WARNING"
-                return $false
-            }
-            
-            # Create annotated tag
-            $tagName = "v$Version"
-            $tagMessage = @"
+            try {
+                # Step 1: Ensure we're on main and up to date
+                $currentBranch = git branch --show-current 2>&1 | Out-String | ForEach-Object Trim
+                if ($LASTEXITCODE -ne 0) {
+                    Write-ReleaseLog "Failed to get current branch" "ERROR"
+                    return $false
+                }
+                
+                if ($currentBranch -ne "main") {
+                    Write-ReleaseLog "Switching from '$currentBranch' to main branch..."
+                    git checkout main 2>&1 | Out-Null
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-ReleaseLog "Failed to checkout main branch" "ERROR"
+                        return $false
+                    }
+                }
+                
+                # Step 2: Fetch and sync with remote
+                Write-ReleaseLog "Fetching latest changes from remote..."
+                git fetch origin main 2>&1 | Out-Null
+                if ($LASTEXITCODE -ne 0) {
+                    Write-ReleaseLog "Failed to fetch from remote" "ERROR"
+                    return $false
+                }
+                
+                # Check if we're behind remote
+                $behindCommits = git rev-list --count main..origin/main 2>&1 | Out-String | ForEach-Object Trim
+                if ($LASTEXITCODE -eq 0 -and $behindCommits -gt 0) {
+                    Write-ReleaseLog "Pulling $behindCommits commits from remote..."
+                    git pull --ff-only origin main 2>&1 | Out-Null
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-ReleaseLog "Failed to pull changes from remote" "ERROR"
+                        return $false
+                    }
+                }
+                
+                # Step 3: Verify VERSION file matches expected version
+                $actualVersion = Get-CurrentVersion
+                if ($actualVersion -ne $Version) {
+                    Write-ReleaseLog "VERSION file mismatch: found '$actualVersion', expected '$Version'" "ERROR"
+                    Write-ReleaseLog "This may indicate the PR was not merged or VERSION was modified" "WARNING"
+                    return $false
+                }
+                
+                # Step 4: Check if tag already exists
+                $tagName = "v$Version"
+                $existingTag = git tag -l $tagName 2>&1 | Out-String | ForEach-Object Trim
+                if ($LASTEXITCODE -eq 0 -and $existingTag) {
+                    Write-ReleaseLog "Tag $tagName already exists locally" "WARNING"
+                    
+                    # Check if it exists on remote
+                    $remoteTag = git ls-remote --tags origin $tagName 2>&1 | Out-String | ForEach-Object Trim
+                    if ($LASTEXITCODE -eq 0 -and $remoteTag) {
+                        Write-ReleaseLog "Tag $tagName already exists on remote - release complete" "SUCCESS"
+                        return $true
+                    } else {
+                        Write-ReleaseLog "Tag exists locally but not on remote - pushing existing tag..."
+                        git push origin $tagName 2>&1 | Out-Null
+                        if ($LASTEXITCODE -eq 0) {
+                            Write-ReleaseLog "Existing tag pushed successfully" "SUCCESS"
+                            return $true
+                        } else {
+                            Write-ReleaseLog "Failed to push existing tag" "ERROR"
+                            return $false
+                        }
+                    }
+                }
+                
+                # Step 5: Create annotated tag
+                $tagMessage = @"
 Release $tagName - $Message
 
 $Message
@@ -226,19 +275,41 @@ $Message
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 "@
-            
-            try {
-                & git tag -a $tagName -m $tagMessage
+                
+                Write-ReleaseLog "Creating annotated tag $tagName..."
+                git tag -a $tagName -m $tagMessage 2>&1 | Out-Null
+                if ($LASTEXITCODE -ne 0) {
+                    Write-ReleaseLog "Failed to create tag $tagName" "ERROR"
+                    return $false
+                }
                 Write-ReleaseLog "Tag created successfully" "SUCCESS"
                 
-                # Push tag
-                & git push origin $tagName
+                # Step 6: Push tag to remote
+                Write-ReleaseLog "Pushing tag $tagName to remote..."
+                git push origin $tagName 2>&1 | Out-Null
+                if ($LASTEXITCODE -ne 0) {
+                    Write-ReleaseLog "Failed to push tag to remote" "ERROR"
+                    Write-ReleaseLog "Tag exists locally but could not be pushed" "WARNING"
+                    Write-ReleaseLog "You can manually push with: git push origin $tagName" "INFO"
+                    return $false
+                }
                 Write-ReleaseLog "Tag pushed successfully" "SUCCESS"
                 
-                return $true
+                # Step 7: Verify tag was pushed successfully
+                Start-Sleep -Seconds 2  # Give remote time to process
+                $remoteTagVerify = git ls-remote --tags origin $tagName 2>&1 | Out-String | ForEach-Object Trim
+                if ($LASTEXITCODE -eq 0 -and $remoteTagVerify) {
+                    Write-ReleaseLog "✅ Tag $tagName verified on remote" "SUCCESS"
+                    return $true
+                } else {
+                    Write-ReleaseLog "⚠️ Could not verify tag on remote (may still be processing)" "WARNING"
+                    return $true  # Still consider success since push didn't error
+                }
+                
             }
             catch {
-                Write-ReleaseLog "Failed to create/push tag: $_" "ERROR"
+                Write-ReleaseLog "Unexpected error in tag creation: $($_.Exception.Message)" "ERROR"
+                Write-ReleaseLog "Stack trace: $($_.ScriptStackTrace)" "DEBUG"
                 return $false
             }
         }
@@ -277,33 +348,13 @@ Co-Authored-By: Claude <noreply@anthropic.com>
             
             $prDescription = "Release v$nextVersion - $Description"
             
-            # Use Invoke-PatchWorkflow to create the PR with immediate tag creation
+            # Use Invoke-PatchWorkflow to create the PR (without tag creation)
             $patchResult = Invoke-PatchWorkflow -PatchDescription $prDescription -PatchOperation {
-                # Update VERSION file
+                # Update VERSION file only
                 $versionFile = Join-Path $projectRoot "VERSION"
                 Set-Content $versionFile -Value $nextVersion -NoNewline
                 Write-Host "Updated VERSION to $nextVersion"
-                
-                # Create the release tag immediately 
-                $tagName = "v$nextVersion"
-                $tagMessage = @"
-Release $tagName - $Description
-
-$Description
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-"@
-                
-                Write-Host "Creating release tag $tagName..."
-                & git tag -a $tagName -m $tagMessage
-                Write-Host "Tag $tagName created successfully"
-                
-                # Push the tag immediately
-                Write-Host "Pushing tag to remote..."
-                & git push origin $tagName
-                Write-Host "Tag pushed successfully - build pipeline will trigger when PR is merged"
+                Write-Host "Tag will be created after PR merge to trigger build pipeline properly"
             } -CreatePR
             
             # Extract PR number from output
@@ -329,13 +380,13 @@ Co-Authored-By: Claude <noreply@anthropic.com>
                 }
             }
             
-            # Step 3: Tag already created! Just notify about PR
+            # Step 3: Prepare for tag creation after merge
             Write-Host ""
-            Write-ReleaseLog "✅ Release tag v$nextVersion created and pushed!" "SUCCESS"
+            Write-ReleaseLog "✅ Release PR created successfully!" "SUCCESS"
             Write-ReleaseLog "Next steps:" "INFO"
             Write-ReleaseLog "  1. Review and merge PR #$prNumber" "INFO" 
-            Write-ReleaseLog "  2. Build pipeline will trigger automatically" "INFO"
-            Write-ReleaseLog "  3. Release artifacts will be created" "INFO"
+            Write-ReleaseLog "  2. Tag v$nextVersion will be created after merge" "INFO"
+            Write-ReleaseLog "  3. Build pipeline will trigger automatically" "INFO"
             
             if ($WaitForMerge -and $prNumber) {
                 Write-Host ""
@@ -346,25 +397,38 @@ Co-Authored-By: Claude <noreply@anthropic.com>
                 if ($merged) {
                     Write-Host ""
                     Write-ReleaseLog "✅ PR merged successfully!" "SUCCESS"
-                    Write-ReleaseLog "Build pipeline should be running now..." "INFO"
                     
                     Write-Host ""
-                    Write-ReleaseLog "Step 4: Build pipeline monitoring..."
+                    Write-ReleaseLog "Step 4: Creating release tag..."
                     
-                    Write-Host ""
-                    Write-Host "✅ Release v$nextVersion created successfully!" -ForegroundColor Green
-                    Write-Host ""
-                    Write-Host "Monitor build at: https://github.com/wizzense/AitherZero/actions" -ForegroundColor Cyan
-                    Write-Host "View release at: https://github.com/wizzense/AitherZero/releases/tag/v$nextVersion" -ForegroundColor Cyan
+                    # Now create and push the tag after successful merge
+                    $tagCreated = New-ReleaseTag -Version $nextVersion -Message $Description
+                    
+                    if ($tagCreated) {
+                        Write-Host ""
+                        Write-Host "✅ Release v$nextVersion created successfully!" -ForegroundColor Green
+                        Write-Host ""
+                        Write-Host "Monitor build at: https://github.com/wizzense/AitherZero/actions" -ForegroundColor Cyan
+                        Write-Host "View release at: https://github.com/wizzense/AitherZero/releases/tag/v$nextVersion" -ForegroundColor Cyan
+                    } else {
+                        Write-Host ""
+                        Write-Host "⚠️ PR merged but tag creation failed!" -ForegroundColor Yellow
+                        Write-Host "You can manually create the tag with:" -ForegroundColor Cyan
+                        Write-Host "  git tag -a v$nextVersion -m 'Release v$nextVersion - $Description'" -ForegroundColor Gray
+                        Write-Host "  git push origin v$nextVersion" -ForegroundColor Gray
+                    }
                 }
                 else {
                     Write-Host ""
-                    Write-Host "⏳ PR not merged within timeout. Tag already created!" -ForegroundColor Yellow
+                    Write-Host "⏳ PR not merged within timeout. Tag will be created after merge." -ForegroundColor Yellow
                     Write-Host ""
                     Write-Host "Next steps:" -ForegroundColor Cyan
                     Write-Host "  1. Review and merge PR #$prNumber"
-                    Write-Host "  2. Build pipeline will trigger automatically (tag is already pushed)"
-                    Write-Host "  3. Monitor at: https://github.com/wizzense/AitherZero/actions"
+                    Write-Host "  2. Run this command again to create tag and trigger build:"
+                    Write-Host "     Invoke-ReleaseWorkflow -Version '$nextVersion' -Description '$Description' -WaitForMerge"
+                    Write-Host "  3. Or manually create tag after merge:"
+                    Write-Host "     git tag -a v$nextVersion -m 'Release v$nextVersion - $Description'"
+                    Write-Host "     git push origin v$nextVersion"
                 }
             }
             else {
@@ -373,13 +437,59 @@ Co-Authored-By: Claude <noreply@anthropic.com>
                 Write-Host ""
                 Write-Host "Next steps:" -ForegroundColor Cyan
                 Write-Host "  1. Review and merge PR: https://github.com/wizzense/AitherZero/pulls"
-                Write-Host "  2. After merge, run: Invoke-ReleaseWorkflow -Version '$nextVersion' -Description '$Description' -WaitForMerge"
+                Write-Host "  2. After merge, create tag to trigger build:"
+                Write-Host "     Invoke-ReleaseWorkflow -Version '$nextVersion' -Description '$Description' -WaitForMerge"
+                Write-Host "  3. Or manually create tag after merge:"
+                Write-Host "     git tag -a v$nextVersion -m 'Release v$nextVersion - $Description'"
+                Write-Host "     git push origin v$nextVersion"
             }
             
         }
         catch {
-            Write-ReleaseLog "Release workflow failed: $_" "ERROR"
-            throw
+            Write-ReleaseLog "Release workflow failed: $($_.Exception.Message)" "ERROR"
+            Write-ReleaseLog "Error occurred at: $($_.InvocationInfo.ScriptLineNumber)" "DEBUG"
+            
+            # Provide recovery guidance based on error type
+            $errorMessage = $_.Exception.Message
+            Write-Host ""
+            Write-Host "🛠️ Error Recovery Guidance:" -ForegroundColor Yellow
+            
+            if ($errorMessage -like "*git*" -or $errorMessage -like "*fetch*" -or $errorMessage -like "*pull*") {
+                Write-Host "  Git Operation Error detected:" -ForegroundColor Cyan
+                Write-Host "  1. Check network connectivity and git remote settings" -ForegroundColor Gray
+                Write-Host "  2. Verify you have push permissions to the repository" -ForegroundColor Gray
+                Write-Host "  3. Try running: git fetch origin && git status" -ForegroundColor Gray
+                Write-Host "  4. If diverged, run: ./scripts/Fix-GitDivergence.ps1" -ForegroundColor Gray
+            }
+            elseif ($errorMessage -like "*VERSION*" -or $errorMessage -like "*file*") {
+                Write-Host "  VERSION File Error detected:" -ForegroundColor Cyan
+                Write-Host "  1. Check if VERSION file exists and is accessible" -ForegroundColor Gray
+                Write-Host "  2. Verify current directory is the project root" -ForegroundColor Gray
+                Write-Host "  3. Ensure no other process is using the VERSION file" -ForegroundColor Gray
+            }
+            elseif ($errorMessage -like "*PR*" -or $errorMessage -like "*GitHub*") {
+                Write-Host "  GitHub API Error detected:" -ForegroundColor Cyan
+                Write-Host "  1. Check if GitHub CLI (gh) is installed and authenticated" -ForegroundColor Gray
+                Write-Host "  2. Verify repository permissions and network access" -ForegroundColor Gray
+                Write-Host "  3. Try running: gh auth status" -ForegroundColor Gray
+            }
+            else {
+                Write-Host "  General Error Recovery:" -ForegroundColor Cyan
+                Write-Host "  1. Check error details above for specific guidance" -ForegroundColor Gray
+                Write-Host "  2. Ensure all prerequisites are met (git, gh cli, permissions)" -ForegroundColor Gray
+                Write-Host "  3. Try running the command again with -DryRun first" -ForegroundColor Gray
+            }
+            
+            Write-Host ""
+            Write-Host "📋 Manual Recovery Commands:" -ForegroundColor Yellow
+            Write-Host "  # If you need to create the tag manually:" -ForegroundColor Gray
+            Write-Host "  git tag -a v$nextVersion -m 'Release v$nextVersion - $Description'" -ForegroundColor Gray
+            Write-Host "  git push origin v$nextVersion" -ForegroundColor Gray
+            Write-Host ""
+            Write-Host "  # If you need to retry the release workflow:" -ForegroundColor Gray
+            Write-Host "  Invoke-ReleaseWorkflow -ReleaseType '$ReleaseType' -Description '$Description'" -ForegroundColor Gray
+            
+            throw "Release workflow failed. See recovery guidance above."
         }
     }
 }

@@ -5,6 +5,9 @@ on:
   push:
     tags:
       - 'v*'
+  pull_request:
+    types: [closed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       release_type:
@@ -39,10 +42,76 @@ permissions:
   packages: write
 
 jobs:
+  check-release-trigger:
+    name: 🔍 Check Release Trigger
+    runs-on: ubuntu-latest
+    outputs:
+      should-build: ${{ steps.check.outputs.should-build }}
+      version: ${{ steps.check.outputs.version }}
+      is-release-pr: ${{ steps.check.outputs.is-release-pr }}
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Check Trigger Type
+        id: check
+        run: |
+          echo "Event: ${{ github.event_name }}"
+          
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref_type }}" == "tag" ]]; then
+            # Tag push - always build
+            echo "should-build=true" >> $GITHUB_OUTPUT
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+            echo "is-release-pr=false" >> $GITHUB_OUTPUT
+            echo "✅ Tag push detected - will build"
+            
+          elif [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.pull_request.merged }}" == "true" ]]; then
+            # Check if this is a release PR
+            PR_TITLE="${{ github.event.pull_request.title }}"
+            if [[ "$PR_TITLE" =~ ^Release\ v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+              echo "✅ Release PR merged detected: $PR_TITLE"
+              
+              # Extract version from PR title
+              VERSION=$(echo "$PR_TITLE" | grep -oP 'v\K[0-9]+\.[0-9]+\.[0-9]+')
+              echo "version=$VERSION" >> $GITHUB_OUTPUT
+              echo "is-release-pr=true" >> $GITHUB_OUTPUT
+              
+              # Check if tag already exists
+              if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+                echo "✅ Tag v$VERSION already exists - will build"
+                echo "should-build=true" >> $GITHUB_OUTPUT
+              else
+                echo "⚠️ Tag v$VERSION does not exist yet - skipping build"
+                echo "💡 Tag will be created by release workflow, then build will trigger"
+                echo "should-build=false" >> $GITHUB_OUTPUT
+              fi
+            else
+              echo "ℹ️ Non-release PR merged - skipping build"
+              echo "should-build=false" >> $GITHUB_OUTPUT
+              echo "is-release-pr=false" >> $GITHUB_OUTPUT
+            fi
+            
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            # Manual trigger - always build
+            echo "should-build=true" >> $GITHUB_OUTPUT
+            echo "version=manual" >> $GITHUB_OUTPUT
+            echo "is-release-pr=false" >> $GITHUB_OUTPUT
+            echo "✅ Manual trigger - will build"
+            
+          else
+            echo "ℹ️ No build trigger detected"
+            echo "should-build=false" >> $GITHUB_OUTPUT
+            echo "is-release-pr=false" >> $GITHUB_OUTPUT
+          fi
+
   build-matrix:
     name: 🔨 Build Matrix
+    needs: [check-release-trigger]
     runs-on: ${{ matrix.os }}
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    if: needs.check-release-trigger.outputs.should-build == 'true'
     
     strategy:
       matrix:
@@ -285,9 +354,9 @@ jobs:
 
   create-release:
     name: 🚀 Create Release
-    needs: [build-matrix]
+    needs: [check-release-trigger, build-matrix]
     runs-on: ubuntu-latest
-    if: needs.build-matrix.result == 'success' && (startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true'))
+    if: needs.build-matrix.result == 'success' && needs.check-release-trigger.outputs.should-build == 'true' && (startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true'))
     
     steps:
       - name: Checkout Repository

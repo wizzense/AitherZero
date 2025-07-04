@@ -70,12 +70,14 @@ function Sync-GitBranch {
         try {
             # Get current branch if not specified
             if (-not $BranchName) {
-                $branchResult = Invoke-GitCommand "branch --show-current" -AllowFailure
-                if ($branchResult.Success) {
-                    $BranchName = $branchResult.Output | Out-String | ForEach-Object Trim
-                }
-                if (-not $BranchName) {
-                    throw "Could not determine current branch: $($branchResult.Output)"
+                # Use direct git command instead of Invoke-GitCommand to avoid dependency issues
+                try {
+                    $BranchName = git branch --show-current 2>&1 | Out-String | ForEach-Object Trim
+                    if ($LASTEXITCODE -ne 0 -or -not $BranchName) {
+                        throw "Could not determine current branch"
+                    }
+                } catch {
+                    throw "Could not determine current branch: $($_.Exception.Message)"
                 }
             }
 
@@ -83,16 +85,15 @@ function Sync-GitBranch {
 
             # Step 1: Fetch all remote changes
             Write-CustomLog "Fetching latest changes from remote..." -Level "INFO"
-            $fetchResult = Invoke-GitCommand "fetch --all --prune" -AllowFailure
-            if (-not $fetchResult.Success) {
-                throw "Failed to fetch from remote: $($fetchResult.Output)"
+            git fetch --all --prune 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to fetch from remote"
             }
 
             # Step 2: Check if remote branch exists
             $remoteBranch = "origin/$BranchName"
-            $remoteExistsResult = Invoke-GitCommand "ls-remote --heads origin $BranchName" -AllowFailure
-            $remoteExists = if ($remoteExistsResult.Success) { $remoteExistsResult.Output } else { $null }
-            if (-not $remoteExists) {
+            $remoteExists = git ls-remote --heads origin $BranchName 2>&1
+            if ($LASTEXITCODE -ne 0 -or -not $remoteExists) {
                 Write-CustomLog "Branch '$BranchName' does not exist on remote" -Level "WARN"
                 return @{
                     Success = $true
@@ -102,25 +103,25 @@ function Sync-GitBranch {
             }
 
             # Step 3: Check for divergence
-            $localCommitResult = Invoke-GitCommand "rev-parse $BranchName" -AllowFailure
-            $remoteCommitResult = Invoke-GitCommand "rev-parse $remoteBranch" -AllowFailure
-            
-            if (-not $localCommitResult.Success -or -not $remoteCommitResult.Success) {
-                throw "Failed to get commit hashes for comparison"
+            $localCommit = git rev-parse $BranchName 2>&1 | Out-String | ForEach-Object Trim
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to get local commit hash for $BranchName"
             }
             
-            $localCommit = $localCommitResult.Output | Out-String | ForEach-Object Trim
-            $remoteCommit = $remoteCommitResult.Output | Out-String | ForEach-Object Trim
+            $remoteCommit = git rev-parse $remoteBranch 2>&1 | Out-String | ForEach-Object Trim
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to get remote commit hash for $remoteBranch"
+            }
 
             if ($localCommit -eq $remoteCommit) {
                 Write-CustomLog "Branch '$BranchName' is up to date with remote" -Level "SUCCESS"
             } else {
                 # Check if we're ahead, behind, or diverged
-                $aheadResult = Invoke-GitCommand "rev-list --count '$remoteBranch..$BranchName'" -AllowFailure
-                $behindResult = Invoke-GitCommand "rev-list --count '$BranchName..$remoteBranch'" -AllowFailure
+                $ahead = git rev-list --count "$remoteBranch..$BranchName" 2>&1 | Out-String | ForEach-Object Trim
+                if ($LASTEXITCODE -ne 0) { $ahead = "0" }
                 
-                $ahead = if ($aheadResult.Success) { $aheadResult.Output } else { "0" }
-                $behind = if ($behindResult.Success) { $behindResult.Output } else { "0" }
+                $behind = git rev-list --count "$BranchName..$remoteBranch" 2>&1 | Out-String | ForEach-Object Trim
+                if ($LASTEXITCODE -ne 0) { $behind = "0" }
 
                 if ($ahead -gt 0 -and $behind -gt 0) {
                     Write-CustomLog "Branch '$BranchName' has DIVERGED from remote!" -Level "WARN"
