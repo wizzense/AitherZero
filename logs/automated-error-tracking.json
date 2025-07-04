@@ -1,9 +1,0 @@
-{
-  "Summary": "PowerShell FileSystemError: Cannot bind argument to parameter 'Path' because it is an empty string.",
-  "IssueUrl": "https://github.com/wizzense/opentofu-lab-automation/issues/1734",
-  "ErrorType": "FileSystemError",
-  "Timestamp": "2025-06-17 16:04:12 UTC",
-  "IssueNumber": "1734",
-  "Priority": "Critical",
-  "Severity": "Medium"
-}
