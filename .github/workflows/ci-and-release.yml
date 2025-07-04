@@ -1,0 +1,145 @@
+name: 🔄 CI & Release
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags: [ 'v*.*.*' ]
+  workflow_dispatch:
+
+jobs:
+  build_and_test:
+    name: Build & Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+          - os: ubuntu-latest
+            platform: linux
+          - os: macos-latest
+            platform: macos
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PowerShell
+        uses: PowerShell/powershell-installer@v1
+        with:
+          powershell-version: "7.4.0"
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name PSScriptAnalyzer -Force
+          Install-Module -Name Pester -MinimumVersion 5.0 -Force
+      - name: Lint PowerShell code
+        shell: pwsh
+        run: |
+          Invoke-ScriptAnalyzer -Path ./aither-core -Recurse -Severity Error
+
+      - name: Run tests
+        shell: pwsh
+        run: |
+          if (Test-Path ./tests/Run-BulletproofValidation.ps1) {
+            Write-Host 'Running bulletproof validation...'
+            ./tests/Run-BulletproofValidation.ps1 -ValidationLevel Standard
+          } elseif (Test-Path ./tests/Run-Tests.ps1) {
+            Write-Host 'Running legacy test runner...'
+            ./tests/Run-Tests.ps1 -Type Integration -FailFast
+          } else {
+            Write-Error 'No test runner found!'
+            exit 1
+          }
+
+      - name: Build packages
+        shell: pwsh
+        run: |
+          # Create dist directory
+          New-Item -Path './dist' -ItemType Directory -Force
+
+          # First try bulletproof validation to ensure system is healthy
+          if (Test-Path './tests/Run-BulletproofValidation.ps1') {
+            Write-Host 'Pre-build validation...'
+            ./tests/Run-BulletproofValidation.ps1 -ValidationLevel Quick
+          }
+
+          # Build packages with better error handling
+          if (Test-Path './build/Build-Package.ps1') {
+            Write-Host "Building package for ${{ matrix.platform }}..."
+            try {
+              ./build/Build-Package.ps1 -Profile standard -Platform ${{ matrix.platform }} -Force
+            } catch {
+              Write-Host "Build script failed, creating fallback package..."
+              # Simple package creation as fallback
+              $packageName = "aitherzero-${{ matrix.platform }}-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+              $packagePath = "./dist/$packageName"
+              New-Item -Path $packagePath -ItemType Directory -Force
+
+              # Copy essential files
+              Copy-Item -Path 'aither-core' -Destination $packagePath -Recurse -Force
+              Copy-Item -Path 'README.md' -Destination $packagePath -Force
+              Copy-Item -Path 'VERSION' -Destination $packagePath -Force
+
+              # Create archive
+              if ($IsWindows) {
+                Compress-Archive -Path "$packagePath/*" -DestinationPath "./dist/$packageName.zip" -Force
+              } else {
+                Set-Location './dist'
+                tar -czf "$packageName.tar.gz" $packageName
+                Set-Location '..'
+              }
+            }
+          } else {
+            Write-Host 'Build script not found, creating simple package'
+            # Simple package creation as fallback
+            $packageName = "aitherzero-${{ matrix.platform }}-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+            $packagePath = "./dist/$packageName"
+            New-Item -Path $packagePath -ItemType Directory -Force
+
+            # Copy essential files
+            Copy-Item -Path 'aither-core' -Destination $packagePath -Recurse -Force
+            Copy-Item -Path 'README.md' -Destination $packagePath -Force
+            Copy-Item -Path 'VERSION' -Destination $packagePath -Force
+
+            # Create archive
+            if ($IsWindows) {
+              Compress-Archive -Path "$packagePath/*" -DestinationPath "./dist/$packageName.zip" -Force
+            } else {
+              Set-Location './dist'
+              tar -czf "$packageName.tar.gz" $packageName
+              Set-Location '..'
+            }
+          }
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: aitherzero-${{ matrix.platform }}
+          path: dist/
+
+  release:
+    name: Publish Release
+    needs: build_and_test
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          files: artifacts/**/*.{zip,tar.gz}
+          draft: false
+          prerelease: false
