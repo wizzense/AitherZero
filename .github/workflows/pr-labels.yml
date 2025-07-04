@@ -14,6 +14,7 @@ jobs:
   label-pr:
     name: 🏷️ Auto-Label PR
     runs-on: ubuntu-latest
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.merged == false
     
     steps:
       - name: 🔍 Analyze PR and Apply Labels
