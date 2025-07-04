@@ -277,11 +277,33 @@ Co-Authored-By: Claude <noreply@anthropic.com>
             
             $prDescription = "Release v$nextVersion - $Description"
             
-            # Use Invoke-PatchWorkflow to create the PR
+            # Use Invoke-PatchWorkflow to create the PR with immediate tag creation
             $patchResult = Invoke-PatchWorkflow -PatchDescription $prDescription -PatchOperation {
+                # Update VERSION file
                 $versionFile = Join-Path $projectRoot "VERSION"
                 Set-Content $versionFile -Value $nextVersion -NoNewline
                 Write-Host "Updated VERSION to $nextVersion"
+                
+                # Create the release tag immediately 
+                $tagName = "v$nextVersion"
+                $tagMessage = @"
+Release $tagName - $Description
+
+$Description
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+"@
+                
+                Write-Host "Creating release tag $tagName..."
+                & git tag -a $tagName -m $tagMessage
+                Write-Host "Tag $tagName created successfully"
+                
+                # Push the tag immediately
+                Write-Host "Pushing tag to remote..."
+                & git push origin $tagName
+                Write-Host "Tag pushed successfully - build pipeline will trigger when PR is merged"
             } -CreatePR
             
             # Extract PR number from output
@@ -307,44 +329,42 @@ Co-Authored-By: Claude <noreply@anthropic.com>
                 }
             }
             
-            # Step 3: Wait for merge and create tag
+            # Step 3: Tag already created! Just notify about PR
+            Write-Host ""
+            Write-ReleaseLog "✅ Release tag v$nextVersion created and pushed!" "SUCCESS"
+            Write-ReleaseLog "Next steps:" "INFO"
+            Write-ReleaseLog "  1. Review and merge PR #$prNumber" "INFO" 
+            Write-ReleaseLog "  2. Build pipeline will trigger automatically" "INFO"
+            Write-ReleaseLog "  3. Release artifacts will be created" "INFO"
+            
             if ($WaitForMerge -and $prNumber) {
                 Write-Host ""
-                Write-ReleaseLog "Step 3: Waiting for PR merge..."
+                Write-ReleaseLog "Step 3: Monitoring PR merge status..."
                 
                 $merged = Wait-ForPRMerge -PRNumber $prNumber -MaxMinutes $MaxWaitMinutes
                 
                 if ($merged) {
                     Write-Host ""
-                    Write-ReleaseLog "Step 4: Creating release tag..."
+                    Write-ReleaseLog "✅ PR merged successfully!" "SUCCESS"
+                    Write-ReleaseLog "Build pipeline should be running now..." "INFO"
                     
-                    # Give GitHub a moment to update
-                    Start-Sleep -Seconds 5
+                    Write-Host ""
+                    Write-ReleaseLog "Step 4: Build pipeline monitoring..."
                     
-                    $tagCreated = New-ReleaseTag -Version $nextVersion -Message $Description
-                    
-                    if ($tagCreated) {
-                        Write-Host ""
-                        Write-ReleaseLog "Step 5: Monitoring build pipeline..."
-                        
-                        Write-Host ""
-                        Write-Host "✅ Release v$nextVersion created successfully!" -ForegroundColor Green
-                        Write-Host ""
-                        Write-Host "Monitor build at: https://github.com/wizzense/AitherZero/actions" -ForegroundColor Cyan
-                        Write-Host "View release at: https://github.com/wizzense/AitherZero/releases/tag/v$nextVersion" -ForegroundColor Cyan
-                    }
-                    else {
-                        Write-ReleaseLog "Tag creation failed - you may need to create it manually" "ERROR"
-                    }
+                    Write-Host ""
+                    Write-Host "✅ Release v$nextVersion created successfully!" -ForegroundColor Green
+                    Write-Host ""
+                    Write-Host "Monitor build at: https://github.com/wizzense/AitherZero/actions" -ForegroundColor Cyan
+                    Write-Host "View release at: https://github.com/wizzense/AitherZero/releases/tag/v$nextVersion" -ForegroundColor Cyan
                 }
                 else {
                     Write-Host ""
-                    Write-Host "⏳ PR not merged yet. Tag will be created after merge." -ForegroundColor Yellow
+                    Write-Host "⏳ PR not merged within timeout. Tag already created!" -ForegroundColor Yellow
                     Write-Host ""
                     Write-Host "Next steps:" -ForegroundColor Cyan
                     Write-Host "  1. Review and merge PR #$prNumber"
-                    Write-Host "  2. Run this command to create tag: git tag -a 'v$nextVersion' -m 'Release v$nextVersion'"
-                    Write-Host "  3. Push tag: git push origin 'v$nextVersion'"
+                    Write-Host "  2. Build pipeline will trigger automatically (tag is already pushed)"
+                    Write-Host "  3. Monitor at: https://github.com/wizzense/AitherZero/actions"
                 }
             }
             else {

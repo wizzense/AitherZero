@@ -55,12 +55,15 @@ try {
     Write-Host "`n🔧 Creating release..." -ForegroundColor Yellow
     Invoke-ReleaseWorkflow -ReleaseType $Type -Description $Description
     
-    Write-Host "`n✅ Release process started successfully!" -ForegroundColor Green
+    Write-Host "`n✅ Release process completed successfully!" -ForegroundColor Green
+    Write-Host "`n📌 What happened:" -ForegroundColor Cyan
+    Write-Host "   1. ✅ Created PR with version update" -ForegroundColor Green
+    Write-Host "   2. ✅ Created and pushed release tag" -ForegroundColor Green
+    Write-Host "   3. ⏳ Build pipeline will start when PR is merged" -ForegroundColor Yellow
     Write-Host "`n📌 Next steps:" -ForegroundColor Cyan
-    Write-Host "   1. Check the PR that was created" -ForegroundColor White
-    Write-Host "   2. Review and merge it" -ForegroundColor White
-    Write-Host "   3. Tag will be created automatically" -ForegroundColor White
-    Write-Host "   4. Build pipeline will create artifacts" -ForegroundColor White
+    Write-Host "   1. Review and merge the PR" -ForegroundColor White
+    Write-Host "   2. Build pipeline runs automatically" -ForegroundColor White
+    Write-Host "   3. Release artifacts will be created" -ForegroundColor White
     
 } catch {
     Write-Host "`n❌ Release failed: $_" -ForegroundColor Red
