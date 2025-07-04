@@ -139,6 +139,21 @@ jobs:
         run: |
           # Create annotated tag
           TAG_NAME="v${{ steps.version.outputs.new_version }}"
+          
+          # Check if tag already exists
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "⚠️ Tag $TAG_NAME already exists locally, deleting it first..."
+            git tag -d "$TAG_NAME"
+          fi
+          
+          # Check if tag exists on remote
+          if git ls-remote --tags origin | grep -q "refs/tags/$TAG_NAME"; then
+            echo "⚠️ Tag $TAG_NAME already exists on remote, will force update..."
+            FORCE_PUSH="--force"
+          else
+            FORCE_PUSH=""
+          fi
+          
           TAG_MESSAGE="Release $TAG_NAME
 
           Triggered by: PR #$PR_NUMBER
@@ -153,7 +168,7 @@ jobs:
           
           # Push changes and tag
           git push origin main
-          git push origin "$TAG_NAME"
+          git push origin "$TAG_NAME" $FORCE_PUSH
           
           echo "✅ Created and pushed tag: $TAG_NAME"
           
