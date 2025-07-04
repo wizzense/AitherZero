@@ -82,6 +82,23 @@ AitherZero is a **standalone PowerShell automation framework** for OpenTofu/Terr
 Invoke-ScriptAnalyzer -Path . -Recurse
 ```
 
+### CRITICAL: PowerShell Access in WSL/Linux
+
+**ALWAYS USE THIS PATH FOR POWERSHELL:**
+```bash
+# PowerShell 7 is located at:
+/mnt/c/Program\ Files/PowerShell/7/pwsh.exe
+
+# Alias already created:
+alias pwsh='/mnt/c/Program\ Files/PowerShell/7/pwsh.exe'
+
+# Usage examples:
+pwsh -NoProfile -Command "Get-Host"
+pwsh -NoProfile -File "./script.ps1"
+```
+
+**DO NOT FORGET THIS PATH. EVER.**
+
 
 ### Release Management - SUPER SIMPLE! 🚀
 

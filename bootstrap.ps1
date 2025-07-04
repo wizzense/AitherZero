@@ -1,6 +1,10 @@
-# AitherZero Bootstrap Script v1.6 - PowerShell 5.1+ Compatible
+# AitherZero Bootstrap Script v2.0 - PowerShell 5.1+ Compatible
 # Usage: iex (irm "https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1")
-# Non-interactive: $env:AITHER_BOOTSTRAP_MODE='update'|'clean'|'new'; iex (irm ...)
+# 
+# Environment Variables for Automation:
+# $env:AITHER_BOOTSTRAP_MODE = 'update'|'clean'|'new'|'cancel'
+# $env:AITHER_PROFILE = 'minimal'|'standard'|'development'
+# $env:AITHER_INSTALL_DIR = 'custom/path' (default: current directory)
 
 # Enable TLS 1.2 for older systems
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -74,18 +78,58 @@ try {
         }
     }
     
-    Write-Host ">> Downloading AitherZero..." -ForegroundColor Cyan
+    # Determine profile
+    $profile = $env:AITHER_PROFILE
+    if (-not $profile) {
+        if (-not $env:AITHER_BOOTSTRAP_MODE) {
+            Write-Host ""
+            Write-Host "Select AitherZero Profile:" -ForegroundColor Cyan
+            Write-Host "  [1] Minimal (5-8 MB) - Core infrastructure deployment only" -ForegroundColor White
+            Write-Host "  [2] Standard (15-25 MB) - Production-ready automation (recommended)" -ForegroundColor Green
+            Write-Host "  [3] Development (35-50 MB) - Complete contributor environment" -ForegroundColor White
+            Write-Host ""
+            
+            do {
+                $profileChoice = Read-Host "Enter your choice (1/2/3) [default: 2]"
+                if (-not $profileChoice) { $profileChoice = '2' }
+            } while ($profileChoice -notmatch '^[123]$')
+            
+            $profile = switch ($profileChoice) {
+                '1' { 'minimal' }
+                '2' { 'standard' }
+                '3' { 'development' }
+            }
+        } else {
+            # Non-interactive mode defaults to standard
+            $profile = 'standard'
+        }
+    }
+    
+    Write-Host ">> Downloading AitherZero ($profile profile)..." -ForegroundColor Cyan
     
     # Get latest Windows release
     $apiUrl = "https://api.github.com/repos/wizzense/AitherZero/releases/latest"
     $release = Invoke-RestMethod -Uri $apiUrl -UseBasicParsing
     
-    # Find Windows ZIP file
+    # Find Windows ZIP file for the selected profile
     $windowsAsset = $null
+    $profilePattern = "AitherZero-.*-$profile-windows\.zip$"
+    
     foreach ($asset in $release.assets) {
-        if ($asset.name -match "windows.*\.zip$") {
+        if ($asset.name -match $profilePattern) {
             $windowsAsset = $asset
             break
+        }
+    }
+    
+    # Fallback to any Windows package if specific profile not found
+    if (-not $windowsAsset) {
+        Write-Host "[!] Specific profile not found, looking for any Windows package..." -ForegroundColor Yellow
+        foreach ($asset in $release.assets) {
+            if ($asset.name -match "windows.*\.zip$") {
+                $windowsAsset = $asset
+                break
+            }
         }
     }
     
@@ -185,9 +229,10 @@ try {
     Remove-Item $tempDir -Recurse -Force
     
     Write-Host "[+] Extracted to: $PWD" -ForegroundColor Green
+    Write-Host "[i] Profile: $profile" -ForegroundColor Cyan
     
     # Auto-start
-    Write-Host ">> Starting AitherZero..." -ForegroundColor Cyan
+    Write-Host ">> Starting AitherZero ($profile profile)..." -ForegroundColor Cyan
     
     # Ensure we're in the correct directory for the application
     $extractionPath = Get-Location
