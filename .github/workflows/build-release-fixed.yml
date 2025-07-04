@@ -1,0 +1,301 @@
+name: 📦 Build & Release Pipeline (Fixed)
+run-name: 📦 Build & Release - ${{ github.event_name }} on ${{ github.ref_name }} by @${{ github.actor }}
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - prerelease
+      create_release:
+        description: 'Create GitHub Release'
+        required: true
+        default: true
+        type: boolean
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-packages:
+    name: 🔨 Build Packages
+    runs-on: ${{ matrix.os }}
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        profile: [minimal, standard, full]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Install PowerShell 7 (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.4.1/powershell_7.4.1-1.deb_amd64.deb
+          sudo dpkg -i powershell_7.4.1-1.deb_amd64.deb || sudo apt-get install -f -y
+      
+      - name: Install PowerShell 7 (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install --cask powershell
+      
+      - name: Verify PowerShell Installation
+        shell: pwsh
+        run: |
+          Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Green
+          Write-Host "Platform: $($PSVersionTable.Platform)" -ForegroundColor Green
+          
+          if ($PSVersionTable.PSVersion.Major -lt 7) {
+            throw "PowerShell 7 is required but version $($PSVersionTable.PSVersion) was found"
+          }
+      
+      - name: Build Package
+        shell: pwsh
+        run: |
+          Write-Host "🔨 Building AitherZero package..." -ForegroundColor Yellow
+          Write-Host "Platform: $($PSVersionTable.Platform)" -ForegroundColor Cyan
+          Write-Host "Profile: ${{ matrix.profile }}" -ForegroundColor Cyan
+          
+          # Determine version
+          $version = if ($env:GITHUB_REF -match 'refs/tags/v(.+)') { 
+            $matches[1] 
+          } else {
+            $taggedVersion = git describe --tags --abbrev=0 2>$null
+            if ($taggedVersion) {
+              $taggedVersion -replace '^v', ''
+            } else {
+              "1.0.0"
+            }
+          }
+          
+          # Create build directory
+          $platformName = "${{ runner.os }}".ToLower()
+          $buildDir = "dist/aitherzero-${{ matrix.profile }}-$platformName"
+          New-Item -Path $buildDir -ItemType Directory -Force | Out-Null
+          
+          try {
+            # Copy core files
+            Copy-Item -Path "aither-core/aither-core.ps1" -Destination "$buildDir/aither-core.ps1" -Force
+            
+            if (Test-Path "Start-AitherZero.ps1") {
+              Copy-Item -Path "Start-AitherZero.ps1" -Destination "$buildDir/" -Force
+            }
+            
+            # Copy essential modules based on profile
+            $essentialModules = switch ("${{ matrix.profile }}") {
+              "minimal" { @('Logging', 'LabRunner', 'DevEnvironment') }
+              "standard" { @('Logging', 'LabRunner', 'DevEnvironment', 'BackupManager', 'ScriptManager', 'ParallelExecution') }
+              "full" { Get-ChildItem "aither-core/modules" -Directory | ForEach-Object { $_.Name } }
+            }
+            
+            New-Item -Path "$buildDir/modules" -ItemType Directory -Force | Out-Null
+            foreach ($module in $essentialModules) {
+              $modulePath = "aither-core/modules/$module"
+              if (Test-Path $modulePath) {
+                Copy-Item -Path $modulePath -Destination "$buildDir/modules/$module" -Recurse -Force
+                Write-Host "✅ Included module: $module" -ForegroundColor Green
+              } else {
+                Write-Host "⚠️ Module not found: $module" -ForegroundColor Yellow
+              }
+            }
+            
+            # Copy shared utilities
+            if (Test-Path "aither-core/shared") {
+              Copy-Item -Path "aither-core/shared" -Destination "$buildDir/shared" -Recurse -Force
+            }
+            
+            # Copy configurations
+            New-Item -Path "$buildDir/configs" -ItemType Directory -Force | Out-Null
+            $configFiles = @('default-config.json', 'core-runner-config.json', 'recommended-config.json')
+            foreach ($config in $configFiles) {
+              $configPath = "configs/$config"
+              if (Test-Path $configPath) {
+                Copy-Item -Path $configPath -Destination "$buildDir/configs/" -Force
+              }
+            }
+            
+            # Copy documentation
+            @('README.md', 'LICENSE', 'CHANGELOG.md') | ForEach-Object {
+              if (Test-Path $_) { Copy-Item -Path $_ -Destination "$buildDir/" -Force }
+            }
+            
+            # Create build info
+            $buildInfo = @{
+              Version = $version
+              Profile = "${{ matrix.profile }}"
+              Platform = $platformName
+              BuildDate = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss UTC")
+              GitCommit = "${{ github.sha }}"
+              Modules = $essentialModules
+            }
+            $buildInfo | ConvertTo-Json -Depth 3 | Out-File "$buildDir/build-info.json" -Encoding UTF8
+            
+            Write-Host "✅ Package built successfully" -ForegroundColor Green
+            Write-Host "Package location: $buildDir" -ForegroundColor Cyan
+            
+          } catch {
+            Write-Host "❌ Package build failed: $_" -ForegroundColor Red
+            throw
+          }
+      
+      - name: Create Package Archive
+        shell: pwsh
+        run: |
+          Write-Host "📦 Creating package archive..." -ForegroundColor Yellow
+          
+          $platformName = "${{ runner.os }}".ToLower()
+          $packageDir = "dist/aitherzero-${{ matrix.profile }}-$platformName"
+          
+          if (-not (Test-Path $packageDir)) {
+            throw "Package directory not found: $packageDir"
+          }
+          
+          $archiveName = "aitherzero-${{ matrix.profile }}-$platformName"
+          
+          if ($IsWindows) {
+            $archivePath = "$archiveName.zip"
+            Compress-Archive -Path "$packageDir/*" -DestinationPath $archivePath -Force
+          } else {
+            $archivePath = "$archiveName.tar.gz"
+            tar -czf $archivePath -C "dist" "aitherzero-${{ matrix.profile }}-$platformName"
+          }
+          
+          if (Test-Path $archivePath) {
+            $size = [math]::Round((Get-Item $archivePath).Length / 1KB, 2)
+            Write-Host "✅ Archive created: $archivePath ($size KB)" -ForegroundColor Green
+          } else {
+            throw "Failed to create archive: $archivePath"
+          }
+      
+      - name: Upload Package Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aitherzero-${{ matrix.profile }}-${{ runner.os }}
+          path: |
+            aitherzero-${{ matrix.profile }}-${{ runner.os }}*
+            dist/aitherzero-${{ matrix.profile }}-${{ runner.os }}/build-info.json
+          retention-days: 90
+
+  create-release:
+    name: 🚀 Create Release
+    needs: [build-packages]
+    runs-on: ubuntu-latest
+    if: needs.build-packages.result == 'success' && (startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.create_release == true))
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Download All Package Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: aitherzero-*
+          path: release-assets
+          merge-multiple: false
+      
+      - name: Organize Release Assets
+        run: |
+          echo "📁 Organizing release assets..."
+          
+          # Move archives to root level
+          find release-assets -name "*.zip" -o -name "*.tar.gz" | while read file; do
+            mv "$file" .
+          done
+          
+          echo "📦 Release assets:"
+          ls -la *.zip *.tar.gz 2>/dev/null || echo "No archives found"
+      
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          echo "📝 Generating release notes..."
+          
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          if [[ -z "$VERSION" ]]; then
+            VERSION=$(cat VERSION 2>/dev/null || echo "1.0.0")
+          fi
+          
+          cat << EOF > release-notes.md
+          # AitherZero v${VERSION}
+          
+          ## 📦 Package Variants
+          
+          This release includes three installation profiles across all supported platforms:
+          
+          ### 🎯 Installation Profiles
+          - **Minimal**: Core functionality only (fastest installation)
+          - **Standard**: Recommended for most users (balanced features)
+          - **Full**: Complete feature set (comprehensive automation)
+          
+          ### 🌐 Platform Support
+          - **Windows**: .zip archives
+          - **Linux**: .tar.gz archives  
+          - **macOS**: .tar.gz archives
+          
+          ## 🚀 Quick Start
+          
+          1. Download the appropriate package for your platform and needs
+          2. Extract the archive
+          3. Run \`Start-AitherZero.ps1\` to begin setup
+          
+          ## 📋 What's Included
+          
+          - PowerShell 7+ compatible automation framework
+          - Cross-platform infrastructure management
+          - Modular architecture for extensibility
+          - Comprehensive testing and validation tools
+          
+          ---
+          **Full Changelog**: [View Changes](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/compare/v${VERSION}...HEAD)
+          EOF
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: AitherZero ${{ github.ref_name }}
+          body_path: release-notes.md
+          files: |
+            *.zip
+            *.tar.gz
+          draft: false
+          prerelease: false
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Release Summary
+        run: |
+          echo "## 🚀 Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Packages Built**: $(find . -name "*.zip" -o -name "*.tar.gz" | wc -l)" >> $GITHUB_STEP_SUMMARY
+          echo "**Release URL**: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Available Downloads" >> $GITHUB_STEP_SUMMARY
+          find . -name "*.zip" -o -name "*.tar.gz" | sort | while read file; do
+            size=$(ls -lh "$file" | awk '{print $5}')
+            echo "- \`$(basename "$file")\` ($size)" >> $GITHUB_STEP_SUMMARY
+          done
