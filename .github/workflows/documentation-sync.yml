@@ -34,10 +34,18 @@ jobs:
         with:
           fetch-depth: 0
       
-      - name: Setup PowerShell
-        uses: PowerShell/setup-powershell@v1.0.0
-        with:
-          powershell-version: '7.4'
+      - name: Install PowerShell
+        run: |
+          # Update package list and install prerequisites
+          sudo apt-get update
+          sudo apt-get install -y wget apt-transport-https software-properties-common
+          
+          # Download and install PowerShell
+          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.5.2/powershell_7.5.2-1.deb_amd64.deb
+          sudo dpkg -i powershell_7.5.2-1.deb_amd64.deb || sudo apt-get install -f -y
+          
+          # Clean up
+          rm powershell_7.5.2-1.deb_amd64.deb
       
       - name: Generate module documentation
         run: |
@@ -207,10 +215,18 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Setup PowerShell
-        uses: PowerShell/setup-powershell@v1.0.0
-        with:
-          powershell-version: '7.4'
+      - name: Install PowerShell
+        run: |
+          # Update package list and install prerequisites
+          sudo apt-get update
+          sudo apt-get install -y wget apt-transport-https software-properties-common
+          
+          # Download and install PowerShell
+          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.5.2/powershell_7.5.2-1.deb_amd64.deb
+          sudo dpkg -i powershell_7.5.2-1.deb_amd64.deb || sudo apt-get install -f -y
+          
+          # Clean up
+          rm powershell_7.5.2-1.deb_amd64.deb
       
       - name: Configure Git
         run: |

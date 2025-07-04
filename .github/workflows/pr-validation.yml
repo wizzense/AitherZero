@@ -288,7 +288,7 @@ jobs:
           
           # Test minimal build only for PR validation (fastest)
           if (Test-Path "./build/Build-Package.ps1") {
-            ./build/Build-Package.ps1 -Profile minimal -Platform linux -WhatIf
+            ./build/Build-Package.ps1 -Profile minimal -Platform linux -DryRun
           } else {
             Write-Host "Build script not found, skipping build test" -ForegroundColor Yellow
           }
