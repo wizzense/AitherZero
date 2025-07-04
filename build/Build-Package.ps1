@@ -480,9 +480,9 @@ function New-Package {
         $sourcePath = Join-Path $aitherCoreSource $file
         if (Test-Path $sourcePath) {
             Copy-Item $sourcePath -Destination $aitherCoreDest -Force
-            Write-BuildLog "Copied aither-core file: $file" -Level "DEBUG"
+            Write-BuildLog "Copied aither-core file: $file" -Level 'DEBUG'
         } else {
-            Write-BuildLog "Aither-core file not found (skipping): $file" -Level "WARNING"
+            Write-BuildLog "Aither-core file not found (skipping): $file" -Level 'WARNING'
         }
     }
 
