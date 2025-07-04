@@ -187,7 +187,10 @@ jobs:
             echo "No documentation changes to commit"
           else
             git commit -m "docs: update API documentation [skip ci]"
-            git push
+            git push || {
+              echo "⚠️ Push failed, possible conflicts or permissions issue"
+              exit 1
+            }
           fi
 
   sync-repositories:
