@@ -83,63 +83,31 @@ Invoke-ScriptAnalyzer -Path . -Recurse
 ```
 
 
-### Release Management Commands
+### Release Management - SUPER SIMPLE! 🚀
 
 ```powershell
-# AUTOMATED RELEASE WORKFLOW - One command does everything!
-Import-Module ./aither-core/modules/PatchManager -Force
+# ONE COMMAND - THAT'S IT!
+./release.ps1
 
-# Patch release (1.2.3 -> 1.2.4)
-Invoke-ReleaseWorkflow -ReleaseType "patch" -Description "Bug fixes and improvements"
+# Want a minor or major release? Just add the type:
+./release.ps1 -Type minor -Description "New features"
+./release.ps1 -Type major -Description "Breaking changes"
 
-# Minor release (1.2.3 -> 1.3.0)
-Invoke-ReleaseWorkflow -ReleaseType "minor" -Description "New features added"
-
-# Major release (1.2.3 -> 2.0.0)
-Invoke-ReleaseWorkflow -ReleaseType "major" -Description "Breaking changes"
-
-# Specific version release
-Invoke-ReleaseWorkflow -Version "1.2.14" -Description "Critical security fix"
-
-# With auto-merge (requires permissions)
-Invoke-ReleaseWorkflow -ReleaseType "patch" -Description "Automated patch" -AutoMerge
-
-# Dry run to preview
-Invoke-ReleaseWorkflow -ReleaseType "minor" -Description "Test release" -DryRun
-
-# The command handles EVERYTHING:
-# ✓ Updates VERSION file
-# ✓ Creates PR with proper description
-# ✓ Waits for PR merge (optional)
-# ✓ Automatically creates and pushes release tag
-# ✓ Monitors build pipeline
-# ✓ No manual steps required!
-
-# Manual approach (if needed):
-# After PR is merged, tag and push the release
-git checkout main
-git pull
-$version = Get-Content "VERSION" -Raw
-git tag -a "v$($version.Trim())" -m "Release v$($version.Trim())"
-git push origin "v$($version.Trim())"
-
-# Monitor release build
-gh run list --workflow="Build & Release Pipeline" --limit 1
-gh run watch
+# That's literally it. No BS, no complexity.
 ```
 
-### Quick Release Workflow
+**What happens:**
+1. Creates a PR with version bump
+2. You merge the PR
+3. Tag is created automatically
+4. Build pipeline runs and creates artifacts
 
+**Alternative methods:**
 ```powershell
-# RECOMMENDED: Use PatchManager's built-in release automation
+# Use GitHub UI (Actions → Manual Release Creator)
+# Or use PatchManager directly:
 Import-Module ./aither-core/modules/PatchManager -Force
-Invoke-ReleaseWorkflow -ReleaseType "patch" -Description "Bug fixes and improvements"
-
-# Alternative: Standalone script (creates PR only, manual tag required)
-./scripts/Create-Release.ps1 -ReleaseType "patch" -Description "Bug fixes and improvements"
-
-# Alternative: Full automation script
-./scripts/Create-AutomatedRelease.ps1 -ReleaseType "patch" -Description "Bug fixes" -SkipPR
+Invoke-ReleaseWorkflow -ReleaseType "patch" -Description "Bug fixes"
 ```
 
 ### Build Testing Commands
@@ -158,7 +126,7 @@ Invoke-ReleaseWorkflow -ReleaseType "patch" -Description "Bug fixes and improvem
 ```
 ### GitHub Actions Workflows
 
-The project uses a unified CI/CD pipeline with 3 streamlined workflows:
+The project uses streamlined workflows for CI/CD:
 
 ```bash
 # Intelligent CI/CD Pipeline - Main testing and validation
@@ -166,8 +134,16 @@ The project uses a unified CI/CD pipeline with 3 streamlined workflows:
 # Features: Smart change detection, cross-platform testing, security analysis
 
 # Build & Release Pipeline - Package building and releases  
-# Triggers: Version tags (v*), manual dispatch
+# Triggers: Version tags (v*) only, manual dispatch
 # Features: Multi-profile builds (minimal/standard/full), cross-platform packages
+
+# Manual Release Creator - Trigger releases via UI
+# Triggers: Manual dispatch only
+# Features: Uses Invoke-ReleaseWorkflow internally, full automation
+
+# PR Auto-Labeling - Simple PR labeling
+# Triggers: PR opened/edited/synchronized
+# Features: Auto-labels PRs based on content (enhancement, bug, docs, etc.)
 
 # Documentation & Sync Pipeline - Documentation and repository sync
 # Triggers: Documentation changes, daily schedule, manual dispatch
@@ -177,13 +153,16 @@ The project uses a unified CI/CD pipeline with 3 streamlined workflows:
 #### Workflow Commands
 
 ```bash
-# Trigger workflows manually
+# Create a release (RECOMMENDED)
+gh workflow run "Manual Release Creator"
+
+# Trigger other workflows manually
 gh workflow run "Intelligent CI/CD Pipeline"
 gh workflow run "Build & Release Pipeline" 
 gh workflow run "Documentation & Sync Pipeline"
 
 # Monitor workflow status
-gh run list --workflow="Intelligent CI/CD Pipeline"
+gh run list --workflow="Build & Release Pipeline"
 gh run watch
 
 # View workflow logs
