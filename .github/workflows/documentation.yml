@@ -7,24 +7,26 @@ on:
     paths:
       - '**/*.md'
       - 'docs/**'
-      - 'aither-core/**/*.ps1'
-      - 'aither-core/**/*.psm1'
-      - 'aither-core/**/*.psd1'
   schedule:
-    # Daily documentation sync at 6 AM UTC
-    - cron: '0 6 * * *'
+    # Weekly documentation sync on Sunday at 6 AM UTC (reduced frequency)
+    - cron: '0 6 * * 0'
   workflow_dispatch:
     inputs:
       force_sync:
         description: 'Force repository synchronization'
         required: false
-        default: 'false'
+        default: false
         type: boolean
       update_api_docs:
         description: 'Force API documentation update'
         required: false
-        default: 'false'
+        default: false
         type: boolean
+
+# Prevent multiple documentation workflows from running simultaneously
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1

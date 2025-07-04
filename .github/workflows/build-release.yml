@@ -1,22 +1,26 @@
 name: 📦 Build & Release Pipeline
 run-name: 📦 Build & Release - ${{ github.event_name }} on ${{ github.ref_name }} by @${{ github.actor }}
 
-on:
-  push:
-    tags:
-      - 'v*'
-  workflow_dispatch:
-    inputs:
-      release_type:
-        description: 'Release Type'
-        required: true
-        default: 'patch'
-        type: choice
-        options:
-          - major
-          - minor
-          - patch
-          - prerelease
+# DISABLED - Replaced by intelligent-ci.yml workflow
+# This workflow has been superseded by the new Intelligent CI/CD Pipeline
+# To enable this workflow, uncomment the 'on:' section below
+
+# on:
+#   push:
+#     tags:
+#       - 'v*'
+#   workflow_dispatch:
+#     inputs:
+#       release_type:
+#         description: 'Release Type'
+#         required: true
+#         default: 'patch'
+#         type: choice
+#         options:
+#           - major
+#           - minor
+#           - patch
+#           - prerelease
       profiles:
         description: 'Build profiles (comma-separated: minimal,standard,full)'
         required: false

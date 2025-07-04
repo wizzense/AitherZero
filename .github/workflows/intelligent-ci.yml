@@ -3,16 +3,32 @@ run-name: 🔄 CI/CD - ${{ github.event_name }} on ${{ github.ref_name }} by @${
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
   pull_request:
-    branches: [main, develop]
+    branches: [main]
+    types: [opened, synchronize, ready_for_review]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
   workflow_dispatch:
     inputs:
       force_full_run:
         description: 'Force full pipeline execution'
         required: false
-        default: 'false'
+        default: false
         type: boolean
+
+# Prevent multiple workflows from running simultaneously
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
@@ -67,11 +83,12 @@ jobs:
   setup-environment:
     name: 🛠️ Setup Environment
     needs: change-detection
-    if: always() && !failure() && !cancelled()
+    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.force-full == 'true'
     
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        # Reduced matrix - only test on Ubuntu by default, full matrix only on force_full_run
+        os: ${{ github.event.inputs.force_full_run == true && fromJSON('["windows-latest", "ubuntu-latest", "macos-latest"]') || fromJSON('["ubuntu-latest"]') }}
       fail-fast: false
     
     runs-on: ${{ matrix.os }}
@@ -136,7 +153,7 @@ jobs:
   security-analysis:
     name: 🔒 Security Analysis
     needs: [change-detection, setup-environment]
-    if: always() && !failure() && !cancelled()
+    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.security-changed == 'true' || needs.change-detection.outputs.force-full == 'true'
     
     runs-on: ubuntu-latest
     
@@ -202,11 +219,12 @@ jobs:
   cross-platform-tests:
     name: 🧪 Cross-Platform Tests
     needs: [change-detection, setup-environment]
-    if: always() && !failure() && !cancelled()
+    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.tests-changed == 'true' || needs.change-detection.outputs.force-full == 'true'
     
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        # Reduced matrix - only test on Ubuntu by default, full matrix only on force_full_run  
+        os: ${{ github.event.inputs.force_full_run == true && fromJSON('["windows-latest", "ubuntu-latest", "macos-latest"]') || fromJSON('["ubuntu-latest"]') }}
       fail-fast: false
     
     runs-on: ${{ matrix.os }}
@@ -351,7 +369,7 @@ jobs:
   code-coverage-analysis:
     name: 📊 Code Coverage Analysis  
     needs: [change-detection, cross-platform-tests]
-    if: always() && !failure() && !cancelled()
+    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.force-full == 'true'
     
     runs-on: ubuntu-latest
     
@@ -452,7 +470,7 @@ jobs:
   build-validation:
     name: 🔨 Build Validation
     needs: [change-detection, security-analysis]
-    if: always() && !failure() && !cancelled()
+    if: needs.change-detection.outputs.code-changed == 'true' || needs.change-detection.outputs.force-full == 'true'
     
     runs-on: ubuntu-latest
     
@@ -543,7 +561,7 @@ jobs:
   create-builds:
     name: 🏗️ Create Builds
     needs: [change-detection, build-validation, cross-platform-tests]
-    if: always() && !failure() && !cancelled() && (github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event.inputs.force_full_run == 'true')
+    if: success() && (github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event.inputs.force_full_run == true)
     
     strategy:
       matrix:
@@ -707,7 +725,7 @@ jobs:
   create-release:
     name: 🚀 Create Release
     needs: [create-builds]
-    if: always() && !failure() && !cancelled() && (github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event.inputs.force_full_run == 'true')
+    if: success() && (github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event.inputs.force_full_run == true)
     
     runs-on: ubuntu-latest
     
