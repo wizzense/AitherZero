@@ -18,11 +18,11 @@ jobs:
           # Update package list and install prerequisites
           sudo apt-get update
           sudo apt-get install -y wget apt-transport-https software-properties-common
-          
+
           # Download and install PowerShell
           wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.5.2/powershell_7.5.2-1.deb_amd64.deb
           sudo dpkg -i powershell_7.5.2-1.deb_amd64.deb || sudo apt-get install -f -y
-          
+
           # Clean up
           rm powershell_7.5.2-1.deb_amd64.deb
 
@@ -45,10 +45,10 @@ jobs:
         timeout-minutes: 15
         run: |
           Write-Host "🧪 Running Validation Tests..." -ForegroundColor Yellow
-          
+
           try {
             $ErrorActionPreference = 'Stop'
-            
+
             if (Test-Path "./tests/Run-BulletproofValidation.ps1") {
               Write-Host "Running Quick validation..." -ForegroundColor Cyan
               ./tests/Run-BulletproofValidation.ps1 -ValidationLevel Quick -CI
@@ -61,8 +61,8 @@ jobs:
               Write-Host "⚠️ No test runner found, checking test directory..." -ForegroundColor Yellow
               if (Test-Path "./tests") {
                 Write-Host "🔍 Available test files:" -ForegroundColor Yellow
-                Get-ChildItem "./tests" -Filter "*.ps1" | ForEach-Object { 
-                  Write-Host "  - $($_.Name)" -ForegroundColor Gray 
+                Get-ChildItem "./tests" -Filter "*.ps1" | ForEach-Object {
+                  Write-Host "  - $($_.Name)" -ForegroundColor Gray
                 }
               } else {
                 Write-Host "  (tests directory does not exist)" -ForegroundColor Gray
@@ -80,10 +80,10 @@ jobs:
         timeout-minutes: 15
         run: |
           Write-Host "🔨 Testing Build System and Structure..." -ForegroundColor Yellow
-          
+
           try {
             $ErrorActionPreference = 'Stop'
-            
+
             # Check for required files
             if (-not (Test-Path 'aither-core/modules/PatchManager')) {
               Write-Error 'PatchManager module missing'
@@ -94,7 +94,7 @@ jobs:
               exit 1
             }
             Write-Host '✅ Basic structure validation passed' -ForegroundColor Green
-            
+
             # Test minimal build only for PR validation (fastest)
             if (Test-Path "./build/Build-Package.ps1") {
               Write-Host "📦 Testing build script with dry run..." -ForegroundColor Cyan
@@ -104,8 +104,8 @@ jobs:
               Write-Host "⚠️ Build script not found at ./build/Build-Package.ps1" -ForegroundColor Yellow
               Write-Host "🔍 Available files in build directory:" -ForegroundColor Yellow
               if (Test-Path "./build") {
-                Get-ChildItem "./build" | ForEach-Object { 
-                  Write-Host "  - $($_.Name)" -ForegroundColor Gray 
+                Get-ChildItem "./build" | ForEach-Object {
+                  Write-Host "  - $($_.Name)" -ForegroundColor Gray
                 }
               } else {
                 Write-Host "  (build directory does not exist)" -ForegroundColor Gray
