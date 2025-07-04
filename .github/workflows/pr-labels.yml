@@ -6,12 +6,15 @@ on:
     types: [opened, edited, synchronize]
 
 permissions:
+  contents: read
+  issues: write
   pull-requests: write
 
 jobs:
   label-pr:
     name: 🏷️ Auto-Label PR
     runs-on: ubuntu-latest
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.merged == false
     
     steps:
       - name: 🔍 Analyze PR and Apply Labels
@@ -48,16 +51,30 @@ jobs:
               labels.push('maintenance');
             }
             
-            // Add labels if any were detected
-            if (labels.length > 0) {
+            // Check if labels exist before adding them
+            const { data: existingLabels } = await github.rest.issues.listLabelsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            
+            const existingLabelNames = existingLabels.map(label => label.name);
+            const validLabels = labels.filter(label => existingLabelNames.includes(label));
+            
+            // Add labels if any valid ones were detected
+            if (validLabels.length > 0) {
               await github.rest.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: pr.number,
-                labels: labels
+                labels: validLabels
               });
               
-              console.log(`Added labels: ${labels.join(', ')}`);
+              console.log(`Added labels: ${validLabels.join(', ')}`);
+            }
+            
+            if (labels.length > validLabels.length) {
+              const missingLabels = labels.filter(label => !existingLabelNames.includes(label));
+              console.log(`Skipped missing labels: ${missingLabels.join(', ')}`);
             }
             
             // Add size label based on changes
@@ -68,19 +85,30 @@ jobs:
             });
             
             const changes = prData.additions + prData.deletions;
-            let sizeLabel = '';
             
-            if (changes < 10) sizeLabel = 'size/XS';
-            else if (changes < 50) sizeLabel = 'size/S';
-            else if (changes < 200) sizeLabel = 'size/M';
-            else if (changes < 500) sizeLabel = 'size/L';
-            else sizeLabel = 'size/XL';
-            
-            await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr.number,
-              labels: [sizeLabel]
-            });
-            
-            console.log(`Added size label: ${sizeLabel} (${changes} changes)`);
+            // Check if size labels exist and add appropriate one
+            const sizeLabels = existingLabelNames.filter(label => label.startsWith('size/'));
+            if (sizeLabels.length > 0) {
+              let sizeLabel = '';
+              
+              if (changes < 10 && sizeLabels.includes('size/XS')) sizeLabel = 'size/XS';
+              else if (changes < 50 && sizeLabels.includes('size/S')) sizeLabel = 'size/S';
+              else if (changes < 200 && sizeLabels.includes('size/M')) sizeLabel = 'size/M';
+              else if (changes < 500 && sizeLabels.includes('size/L')) sizeLabel = 'size/L';
+              else if (sizeLabels.includes('size/XL')) sizeLabel = 'size/XL';
+              
+              if (sizeLabel && existingLabelNames.includes(sizeLabel)) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  labels: [sizeLabel]
+                });
+                
+                console.log(`Added size label: ${sizeLabel} (${changes} changes)`);
+              } else {
+                console.log(`No appropriate size label found for ${changes} changes`);
+              }
+            } else {
+              console.log('No size labels configured in repository');
+            }
