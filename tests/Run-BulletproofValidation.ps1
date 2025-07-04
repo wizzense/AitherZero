@@ -167,13 +167,13 @@ $validationLevels = @{
         Duration = '45 seconds'  # Enhanced from 30s
         Description = 'Core functionality smoke test with quickstart checks'
         TestPaths = @(
-            'tests/unit/modules/Logging',
-            'tests/unit/modules/LabRunner', 
-            'tests/unit/modules/BackupManager'
+            'tests/Unit/modules/Logging',
+            'tests/Unit/modules/LabRunner', 
+            'tests/Unit/modules/BackupManager'
         )
         EnhancedPaths = @(
-            'tests/unit/core/Test-RepositoryDetection.ps1',
-            'tests/unit/core/Test-LauncherCompatibility.ps1',
+            'tests/Unit/core/Test-RepositoryDetection.ps1',
+            'tests/Unit/core/Test-LauncherCompatibility.ps1',
             'tests/validation/Test-ForkChainDetection.ps1'
         )
     }
@@ -181,8 +181,8 @@ $validationLevels = @{
         Duration = '3-6 minutes'  # Enhanced from 2-5m
         Description = 'Comprehensive module testing with platform validation'
         TestPaths = @(
-            'tests/unit/modules',
-            'tests/unit/scripts',
+            'tests/Unit/modules',
+            'tests/Unit/scripts',
             'tests/package'
         )
         EnhancedPaths = @(
@@ -196,7 +196,7 @@ $validationLevels = @{
         Duration = '12-18 minutes'  # Enhanced from 10-15m
         Description = 'Complete system validation with infrastructure testing'
         TestPaths = @(
-            'tests/unit',
+            'tests/Unit',
             'tests/integration'
         )
         EnhancedPaths = @(
