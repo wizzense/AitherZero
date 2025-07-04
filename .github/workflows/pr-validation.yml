@@ -307,6 +307,7 @@ jobs:
           Write-Host "🔨 Testing Build System..." -ForegroundColor Yellow
           
           try {
+
             $ErrorActionPreference = 'Stop'
             
             # Test minimal build only for PR validation (fastest)
