@@ -1,0 +1,462 @@
+name: 🚀 Release Pipeline
+run-name: 🚀 Release v${{ github.ref_name }} by @${{ github.actor }}
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.2.3)'
+        required: true
+        type: string
+      create_draft:
+        description: 'Create draft release'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  prepare-release:
+    name: 🎯 Prepare Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      is-prerelease: ${{ steps.version.outputs.is_prerelease }}
+      release-name: ${{ steps.version.outputs.release_name }}
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Determine Version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            # Tag push - extract version from tag
+            TAG_NAME="${{ github.ref_name }}"
+            VERSION="${TAG_NAME#v}"
+          else
+            # Manual dispatch - use input version
+            VERSION="${{ github.event.inputs.version }}"
+            TAG_NAME="v$VERSION"
+          fi
+          
+          # Check if this is a prerelease
+          IS_PRERELEASE="false"
+          if [[ "$VERSION" =~ (alpha|beta|rc|pre) ]]; then
+            IS_PRERELEASE="true"
+          fi
+          
+          # Generate release name
+          if [[ "$IS_PRERELEASE" == "true" ]]; then
+            RELEASE_NAME="AitherZero $TAG_NAME (Pre-release)"
+          else
+            RELEASE_NAME="AitherZero $TAG_NAME"
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+          echo "release_name=$RELEASE_NAME" >> $GITHUB_OUTPUT
+          
+          echo "📦 Release Details:"
+          echo "  Version: $VERSION"
+          echo "  Tag: $TAG_NAME"
+          echo "  Pre-release: $IS_PRERELEASE"
+          echo "  Name: $RELEASE_NAME"
+
+  build-release-packages:
+    name: 🔨 Build Release Packages
+    runs-on: ${{ matrix.os }}
+    needs: prepare-release
+    
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        profile: [minimal, standard, development]
+      fail-fast: false
+      max-parallel: 9
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup PowerShell Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/powershell/Modules
+            ~/Documents/PowerShell/Modules
+            /Users/runner/.local/share/powershell/Modules
+          key: ps-release-${{ runner.os }}-${{ hashFiles('**/*.psd1') }}-v3
+          restore-keys: |
+            ps-release-${{ runner.os }}-v3
+            ps-build-${{ runner.os }}-v2
+      
+      - name: Install PowerShell (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/powershell_7.4.6-1.deb_amd64.deb
+          sudo dpkg -i powershell_7.4.6-1.deb_amd64.deb || sudo apt-get install -f -y
+      
+      - name: Install PowerShell (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install --cask powershell
+      
+      - name: Build Release Package
+        shell: pwsh
+        run: |
+          Write-Host "🔨 Building Release Package" -ForegroundColor Yellow
+          Write-Host "Version: ${{ needs.prepare-release.outputs.version }}" -ForegroundColor Cyan
+          Write-Host "Profile: ${{ matrix.profile }}" -ForegroundColor Cyan
+          Write-Host "Platform: ${{ runner.os }}" -ForegroundColor Cyan
+          
+          # Map runner OS to platform name
+          $platformName = switch ('${{ runner.os }}') {
+            'Windows' { 'windows' }
+            'Linux' { 'linux' }
+            'macOS' { 'macos' }
+          }
+          
+          Write-Host "📦 Platform: $platformName" -ForegroundColor Cyan
+          
+          try {
+            # Build with validation
+            ./build/Build-Package.ps1 -Profile '${{ matrix.profile }}' -Platform $platformName -Version '${{ needs.prepare-release.outputs.version }}' -Validate -Force
+            
+            # Find and verify the built package
+            $packagePattern = "AitherZero-${{ needs.prepare-release.outputs.version }}-${{ matrix.profile }}-$platformName.*"
+            $builtPackages = Get-ChildItem -Path "dist" -Filter $packagePattern
+            
+            if ($builtPackages.Count -eq 0) {
+              throw "No packages found matching pattern: $packagePattern"
+            }
+            
+            foreach ($package in $builtPackages) {
+              $sizeInMB = [math]::Round($package.Length / 1MB, 2)
+              Write-Host "✅ Built: $($package.Name) ($sizeInMB MB)" -ForegroundColor Green
+            }
+            
+            # Verify package count
+            Write-Host "📊 Packages built: $($builtPackages.Count)" -ForegroundColor Cyan
+            
+          } catch {
+            Write-Host "❌ Build failed: $_" -ForegroundColor Red
+            throw
+          }
+      
+      - name: Upload Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.profile }}-${{ runner.os }}-${{ needs.prepare-release.outputs.version }}
+          path: |
+            dist/AitherZero-${{ needs.prepare-release.outputs.version }}-${{ matrix.profile }}-*.*
+          retention-days: 90
+          compression-level: 9
+
+  validate-release-packages:
+    name: ✅ Validate Release Packages
+    runs-on: ubuntu-latest
+    needs: [prepare-release, build-release-packages]
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Install PowerShell
+        run: |
+          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/powershell_7.4.6-1.deb_amd64.deb
+          sudo dpkg -i powershell_7.4.6-1.deb_amd64.deb || sudo apt-get install -f -y
+      
+      - name: Download All Release Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*-${{ needs.prepare-release.outputs.version }}
+          path: release-validation
+          merge-multiple: true
+      
+      - name: Validate Release Completeness
+        shell: pwsh
+        run: |
+          Write-Host "✅ Validating Release Completeness" -ForegroundColor Yellow
+          
+          $expectedProfiles = @('minimal', 'standard', 'development')
+          $expectedPlatforms = @('windows', 'linux', 'macos')
+          $version = '${{ needs.prepare-release.outputs.version }}'
+          
+          $allPackages = Get-ChildItem -Path "release-validation" -Filter "AitherZero-*.*"
+          Write-Host "📦 Found $($allPackages.Count) packages" -ForegroundColor Cyan
+          
+          $packageMatrix = @{}
+          $validationErrors = @()
+          $totalExpected = $expectedProfiles.Count * $expectedPlatforms.Count
+          
+          # Parse packages and build matrix
+          foreach ($package in $allPackages) {
+            if ($package.Name -match "AitherZero-$([regex]::Escape($version))-(.+)-(.+)\.(zip|tar\.gz)$") {
+              $profile = $matches[1]
+              $platform = $matches[2]
+              $extension = $matches[3]
+              
+              $key = "$profile-$platform"
+              if (-not $packageMatrix.ContainsKey($key)) {
+                $packageMatrix[$key] = @()
+              }
+              $packageMatrix[$key] += $package
+              
+              Write-Host "  ✓ $profile-$platform ($($package.Name))" -ForegroundColor Green
+            } else {
+              $validationErrors += "Invalid package name format: $($package.Name)"
+            }
+          }
+          
+          # Check for missing combinations
+          foreach ($profile in $expectedProfiles) {
+            foreach ($platform in $expectedPlatforms) {
+              $key = "$profile-$platform"
+              if (-not $packageMatrix.ContainsKey($key)) {
+                $validationErrors += "Missing package: $profile-$platform"
+              } elseif ($packageMatrix[$key].Count -eq 0) {
+                $validationErrors += "No files for: $profile-$platform"
+              }
+            }
+          }
+          
+          # Validate package sizes
+          $packageSizes = @()
+          foreach ($package in $allPackages) {
+            $sizeInMB = [math]::Round($package.Length / 1MB, 2)
+            $packageSizes += "$($package.Name): $sizeInMB MB"
+          }
+          
+          # Summary
+          Write-Host ""
+          Write-Host "📊 Validation Summary:" -ForegroundColor Cyan
+          Write-Host "  Expected packages: $totalExpected" -ForegroundColor White
+          Write-Host "  Found packages: $($allPackages.Count)" -ForegroundColor White
+          Write-Host "  Package combinations: $($packageMatrix.Keys.Count)" -ForegroundColor White
+          
+          if ($validationErrors.Count -gt 0) {
+            Write-Host "❌ Validation errors:" -ForegroundColor Red
+            foreach ($error in $validationErrors) {
+              Write-Host "  • $error" -ForegroundColor Red
+            }
+            throw "Release validation failed with $($validationErrors.Count) errors"
+          }
+          
+          Write-Host "✅ Release validation passed!" -ForegroundColor Green
+          
+          # Export package info for release notes
+          $packageSizes | Out-File "package-sizes.txt"
+      
+      - name: Upload Package Sizes
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-info-${{ needs.prepare-release.outputs.version }}
+          path: package-sizes.txt
+          retention-days: 30
+
+  create-github-release:
+    name: 📋 Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [prepare-release, build-release-packages, validate-release-packages]
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Download All Release Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*-${{ needs.prepare-release.outputs.version }}
+          path: release-assets
+          merge-multiple: true
+      
+      - name: Download Package Info
+        uses: actions/download-artifact@v4
+        with:
+          name: package-info-${{ needs.prepare-release.outputs.version }}
+          path: .
+      
+      - name: Organize Release Assets
+        run: |
+          echo "📁 Organizing release assets..."
+          
+          # Move all packages to root level for release
+          find release-assets -name "*.zip" -o -name "*.tar.gz" | while read file; do
+            mv "$file" .
+          done
+          
+          echo "📦 Release packages:"
+          ls -la AitherZero-*.{zip,tar.gz} 2>/dev/null | head -20
+          
+          # Count packages
+          PACKAGE_COUNT=$(ls AitherZero-*.{zip,tar.gz} 2>/dev/null | wc -l)
+          echo "PACKAGE_COUNT=$PACKAGE_COUNT" >> $GITHUB_ENV
+      
+      - name: Generate Release Notes
+        run: |
+          echo "📝 Generating release notes..."
+          
+          VERSION="${{ needs.prepare-release.outputs.version }}"
+          TAG="${{ needs.prepare-release.outputs.tag }}"
+          
+          cat << EOF > release-notes.md
+          # 🚀 AitherZero $TAG
+          
+          ## What's New
+          
+          AitherZero infrastructure automation framework with comprehensive cross-platform support.
+          
+          ## 📦 Package Variants
+          
+          This release includes **three installation profiles** across **all supported platforms**:
+          
+          ### 🎯 Installation Profiles
+          - **Minimal** (5-8 MB): Core infrastructure deployment only - get OpenTofu running fast
+          - **Standard** (15-25 MB): Production-ready automation (recommended for most users)
+          - **Development** (35-50 MB): Complete contributor environment with all tools
+          
+          ### 🌐 Platform Support
+          - **Windows**: PowerShell 5.1+ compatible (.zip packages)
+          - **Linux**: Cross-distribution support (.tar.gz packages)
+          - **macOS**: Native Apple Silicon and Intel support (.tar.gz packages)
+          
+          ## 🚀 Quick Installation
+          
+          ### Ultra-Simple Bootstrap (Recommended)
+          
+          **Windows:**
+          \`\`\`powershell
+          iex (irm "https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1")
+          \`\`\`
+          
+          **Linux/macOS:**
+          \`\`\`bash
+          curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
+          \`\`\`
+          
+          ### Manual Installation
+          
+          1. Download the appropriate package for your platform and needs
+          2. Extract the archive to your desired location
+          3. Run the launcher:
+             - **Windows**: Double-click \`AitherZero.bat\` or run \`./Start-AitherZero.ps1\`
+             - **Linux/macOS**: Run \`./aitherzero.sh\` or \`pwsh ./Start-AitherZero.ps1\`
+          
+          ## 📋 Package Contents
+          
+          EOF
+          
+          # Add package sizes if available
+          if [ -f "package-sizes.txt" ]; then
+            echo "### 📦 Package Sizes" >> release-notes.md
+            echo "\`\`\`" >> release-notes.md
+            cat package-sizes.txt >> release-notes.md
+            echo "\`\`\`" >> release-notes.md
+            echo "" >> release-notes.md
+          fi
+          
+          cat << EOF >> release-notes.md
+          ## 🔧 Requirements
+          
+          - **PowerShell 7.0+** (PowerShell 5.1+ supported with limitations)
+          - **Git** (for repository operations)
+          - **OpenTofu/Terraform** (automatically installed by AitherZero)
+          - **Windows/Linux/macOS** (cross-platform compatible)
+          
+          *Optional: Node.js 18+, Claude Code (for AI features)*
+          
+          ## ✨ Key Features
+          
+          - 🔄 **Cross-Platform**: Windows, Linux, macOS with PowerShell 5.1+
+          - 🏗️ **Infrastructure as Code**: OpenTofu/Terraform integration  
+          - 🧩 **Modular Architecture**: 18+ specialized PowerShell modules
+          - 🤖 **AI-Powered Automation**: Intelligent infrastructure management
+          - 📊 **Enterprise Logging**: Centralized logging with multiple levels
+          - 🔧 **Git Workflow**: Automated patch management with PR/issue creation
+          - 🧪 **Testing Framework**: Bulletproof validation with Pester integration
+          
+          ## 📊 Build Information
+          
+          - **Version**: $VERSION
+          - **Build Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          - **Commit**: ${{ github.sha }}
+          - **Workflow**: ${{ github.run_number }}
+          - **Packages**: $PACKAGE_COUNT total (3 profiles × 3 platforms)
+          - **Platforms**: Windows, Linux, macOS
+          - **Profiles**: Minimal, Standard, Development
+          
+          ## 🆘 Support
+          
+          - **Documentation**: [GitHub Repository](https://github.com/${{ github.repository }})
+          - **Issues**: [Report Issues](https://github.com/${{ github.repository }}/issues)
+          - **Discussions**: [Community Discussions](https://github.com/${{ github.repository }}/discussions)
+          
+          ---
+          
+          **🤖 This release was created automatically by the AitherZero Release Pipeline**
+          EOF
+          
+          echo "📄 Release notes generated ($(wc -l < release-notes.md) lines)"
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare-release.outputs.tag }}
+          name: ${{ needs.prepare-release.outputs.release-name }}
+          body_path: release-notes.md
+          files: |
+            AitherZero-*.zip
+            AitherZero-*.tar.gz
+          draft: ${{ github.event.inputs.create_draft == 'true' }}
+          prerelease: ${{ needs.prepare-release.outputs.is-prerelease }}
+          generate_release_notes: false
+          make_latest: ${{ needs.prepare-release.outputs.is-prerelease == 'false' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Release Summary
+        run: |
+          echo "## 🚀 Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: ${{ needs.prepare-release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag**: ${{ needs.prepare-release.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Pre-release**: ${{ needs.prepare-release.outputs.is-prerelease }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Packages**: $PACKAGE_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "**Release URL**: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ needs.prepare-release.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Available Downloads" >> $GITHUB_STEP_SUMMARY
+          echo "| Profile | Windows | Linux | macOS |" >> $GITHUB_STEP_SUMMARY  
+          echo "|---------|---------|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Minimal | ✅ ZIP | ✅ TAR.GZ | ✅ TAR.GZ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Standard | ✅ ZIP | ✅ TAR.GZ | ✅ TAR.GZ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Development | ✅ ZIP | ✅ TAR.GZ | ✅ TAR.GZ |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Test the release packages" >> $GITHUB_STEP_SUMMARY
+          echo "2. Update documentation if needed" >> $GITHUB_STEP_SUMMARY
+          echo "3. Announce the release" >> $GITHUB_STEP_SUMMARY
+          echo "4. Monitor for any issues" >> $GITHUB_STEP_SUMMARY

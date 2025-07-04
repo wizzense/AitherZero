@@ -20,14 +20,33 @@ iex (irm "https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.p
 curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
 ```
 
-### 📖 **What This Command Does**
-1. ✅ **Downloads** the latest AitherZero release from GitHub
-2. ✅ **Extracts** it to your current directory  
-3. ✅ **Auto-starts** the setup process
-4. ✅ **Cross-platform** - works on Windows, Linux, and macOS
-5. ✅ **PowerShell 5.1+ Compatible** - works on older systems
+### 📦 **Profile Selection During Install**
+The bootstrap will prompt you to choose your profile:
 
-> 💡 **That's it!** No complex setup, no manual downloads, no configuration needed.
+- **Minimal** (5-8 MB): Core infrastructure deployment only
+- **Standard** (15-25 MB): Production-ready automation (recommended)  
+- **Development** (35-50 MB): Complete contributor environment
+
+### 🤖 **Automated Installation**
+For CI/CD or automated deployment:
+
+```powershell
+# Windows - Automated with specific profile
+$env:AITHER_PROFILE='minimal'; iex (irm "https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1")
+
+# Linux/macOS - Automated with specific profile  
+AITHER_PROFILE=standard curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
+```
+
+### 📖 **What This Command Does**
+1. ✅ **Profile Selection** - Choose minimal, standard, or development
+2. ✅ **Downloads** the appropriate AitherZero package from GitHub
+3. ✅ **Extracts** it to your directory (or custom path)
+4. ✅ **Auto-starts** the setup process  
+5. ✅ **Cross-platform** - works on Windows, Linux, and macOS
+6. ✅ **PowerShell 5.1+ Compatible** - works on older systems
+
+> 💡 **That's it!** No complex setup, no manual downloads, intelligent profile selection.
 
 ---
 
@@ -35,14 +54,18 @@ curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.s
 
 **Alternative if you prefer manual control:**
 
-1. **Download**: Go to **[Releases](https://github.com/wizzense/AitherZero/releases/latest)** → Download `AitherZero-*-windows.zip`
-2. **Extract**: Right-click → Extract All
-3. **Run**: Double-click `AitherZero.bat` or run `./Start-AitherZero.ps1`
+1. **Download**: Go to **[Releases](https://github.com/wizzense/AitherZero/releases/latest)** → Choose your profile and platform
+2. **Extract**: Right-click → Extract All (or `tar -xzf` on Unix)
+3. **Run**: Double-click `AitherZero.bat` (Windows) or run `./aitherzero.sh` (Unix)
 
-**Cross-Platform Packages Available:**
-- **Windows**: `AitherZero-[version]-windows.zip`
-- **Linux**: `AitherZero-[version]-linux.tar.gz`  
-- **macOS**: `AitherZero-[version]-macos.tar.gz`
+**Available Package Matrix:**
+| Profile | Windows | Linux | macOS |
+|---------|---------|-------|-------|
+| **Minimal** (5-8 MB) | `AitherZero-[version]-minimal-windows.zip` | `AitherZero-[version]-minimal-linux.tar.gz` | `AitherZero-[version]-minimal-macos.tar.gz` |
+| **Standard** (15-25 MB) | `AitherZero-[version]-standard-windows.zip` | `AitherZero-[version]-standard-linux.tar.gz` | `AitherZero-[version]-standard-macos.tar.gz` |
+| **Development** (35-50 MB) | `AitherZero-[version]-development-windows.zip` | `AitherZero-[version]-development-linux.tar.gz` | `AitherZero-[version]-development-macos.tar.gz` |
+
+> 💡 **Recommendation**: Start with **Standard** profile for most use cases
 
 ## 🎯 After Installation - Modern CLI Interface
 

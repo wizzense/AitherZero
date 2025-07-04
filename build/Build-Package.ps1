@@ -1,649 +1,725 @@
-#!/usr/bin/env pwsh
 #Requires -Version 7.0
 
 <#
 .SYNOPSIS
-    Build AitherZero application packages for release with package profiles
+    AitherZero Smart Build System - Cross-Platform Package Builder
+
 .DESCRIPTION
-    Creates application packages for different platforms with three profile options:
-    - minimal: Core infrastructure only (~10MB) - CI/CD environments
-    - standard: Production-ready platform (~50MB) - Enterprise deployments  
-    - full: Complete development platform (~100MB) - Development environments
-.PARAMETER Platform
-    Target platform (windows, linux, macos)
+    Creates optimized packages for Windows, Linux, and macOS with three distinct profiles:
+    - Minimal: Core infrastructure deployment (5-8 MB)
+    - Standard: Production-ready automation (15-25 MB) 
+    - Development: Complete contributor environment (35-50 MB)
+
+.PARAMETER Profile
+    Package profile: minimal, standard, or development
+
+.PARAMETER Platform  
+    Target platform: windows, linux, macos, or all
+
 .PARAMETER Version
-    Package version
-.PARAMETER ArtifactExtension
-    Archive format extension (zip, tar.gz)
-.PARAMETER PackageProfile
-    Package profile: minimal, standard, or full (default: standard)
-.PARAMETER NoProgress
-    Disable visual progress tracking (useful for CI/CD environments)
+    Package version (defaults to VERSION file or git tag)
+
+.PARAMETER OutputPath
+    Output directory for packages (defaults to ./dist)
+
+.PARAMETER Force
+    Overwrite existing packages
+
+.PARAMETER DryRun
+    Show what would be built without creating packages
+
+.PARAMETER Validate
+    Validate package contents after creation
+
 .EXAMPLE
-    ./Build-Package.ps1 -Platform "windows" -Version "1.0.0" -ArtifactExtension "zip" -PackageProfile "minimal"
+    ./Build-Package.ps1 -Profile minimal -Platform windows
+    # Creates minimal Windows package
+
 .EXAMPLE
-    ./Build-Package.ps1 -Platform "linux" -Version "1.0.0" -ArtifactExtension "tar.gz" -PackageProfile "full"
+    ./Build-Package.ps1 -Profile all -Platform all -Version "2.1.0"
+    # Creates all profiles for all platforms with specific version
+
+.EXAMPLE
+    ./Build-Package.ps1 -Profile development -Platform linux -DryRun
+    # Preview development Linux package without building
 #>
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
-    [Parameter(Mandatory)]
-    [string]$Platform,
-
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("minimal", "standard", "development", "all")]
+    [string]$Profile = "standard",
+    
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("windows", "linux", "macos", "all")]
+    [string]$Platform = "all",
+    
+    [Parameter(Mandatory = $false)]
     [string]$Version,
-
-    [Parameter(Mandatory)]
-    [string]$ArtifactExtension,
     
-    [Parameter()]
-    [ValidateSet('minimal', 'standard', 'full')]
-    [string]$PackageProfile = 'standard',
+    [Parameter(Mandatory = $false)]
+    [string]$OutputPath = "./dist",
     
-    [Parameter()]
-    [ValidateSet('free', 'pro', 'enterprise')]
-    [string]$FeatureTier,
+    [Parameter(Mandatory = $false)]
+    [switch]$Force,
     
-    [switch]$NoProgress
+    [Parameter(Mandatory = $false)]
+    [switch]$DryRun,
+    
+    [Parameter(Mandatory = $false)]
+    [switch]$Validate
 )
 
+# Initialize build environment
 $ErrorActionPreference = 'Stop'
+$buildStartTime = Get-Date
 
-Write-Host "Building AitherZero $PackageProfile package for $Platform..." -ForegroundColor Cyan
+# Find project root
+function Find-ProjectRoot {
+    param([string]$StartPath = $PWD)
+    
+    $current = Get-Item $StartPath
+    while ($current) {
+        if (Test-Path (Join-Path $current.FullName "aither-core")) {
+            return $current.FullName
+        }
+        $current = $current.Parent
+    }
+    throw "Could not find project root (looking for aither-core directory)"
+}
 
-# Try to import ProgressTracking module (optional enhancement)
-$progressAvailable = $false
-$progressOperationId = $null
-if (-not $NoProgress) {
+$projectRoot = Find-ProjectRoot
+$buildRoot = Join-Path $projectRoot "build"
+
+# Logging functions
+function Write-BuildLog {
+    param(
+        [string]$Message,
+        [ValidateSet("INFO", "SUCCESS", "WARNING", "ERROR", "DEBUG")]
+        [string]$Level = "INFO"
+    )
+    
+    $timestamp = Get-Date -Format "HH:mm:ss"
+    $color = @{
+        "INFO" = "Cyan"
+        "SUCCESS" = "Green" 
+        "WARNING" = "Yellow"
+        "ERROR" = "Red"
+        "DEBUG" = "Gray"
+    }[$Level]
+    
+    Write-Host "[$timestamp] $Message" -ForegroundColor $color
+}
+
+function Write-BuildHeader {
+    param([string]$Title)
+    Write-Host ""
+    Write-Host ("=" * 60) -ForegroundColor Magenta
+    Write-Host " $Title" -ForegroundColor Magenta
+    Write-Host ("=" * 60) -ForegroundColor Magenta
+}
+
+# Version detection
+function Get-BuildVersion {
+    if ($Version) { return $Version }
+    
+    # Try VERSION file
+    $versionFile = Join-Path $projectRoot "VERSION"
+    if (Test-Path $versionFile) {
+        $fileVersion = (Get-Content $versionFile -Raw).Trim()
+        if ($fileVersion) {
+            Write-BuildLog "Version from VERSION file: $fileVersion" -Level "INFO"
+            return $fileVersion
+        }
+    }
+    
+    # Try git tag
     try {
-        # Find project root and import ProgressTracking module
-        $projectRoot = Split-Path -Parent $PSScriptRoot
-        $progressModulePath = Join-Path $projectRoot "aither-core/modules/ProgressTracking"
-        
-        if (Test-Path $progressModulePath) {
-            Import-Module $progressModulePath -Force -ErrorAction Stop
-            $progressAvailable = $true
-        
-        # Calculate total steps for progress tracking
-        $totalSteps = 0
-        $totalSteps += 3  # Initial setup steps
-        $totalSteps += 14 # Essential modules count
-        $totalSteps += 5  # Additional copy operations (shared, scripts, configs, etc.)
-        $totalSteps += 3  # Documentation and launchers
-        $totalSteps += 3  # Metadata and validation
-        
-        # Start progress tracking
-        $progressOperationId = Start-ProgressOperation `
-            -OperationName "Building $Platform Package v$Version" `
-            -TotalSteps $totalSteps `
-            -ShowTime `
-            -ShowETA `
-            -Style 'Detailed'
-            
-            Write-Host "" # Add spacing after progress initialization
+        $gitTag = git describe --tags --abbrev=0 2>$null
+        if ($gitTag -and $gitTag -match '^v?(.+)$') {
+            $gitVersion = $matches[1]
+            Write-BuildLog "Version from git tag: $gitVersion" -Level "INFO"
+            return $gitVersion
         }
     } catch {
-        # Progress tracking is optional - continue without it
-        $progressAvailable = $false
+        Write-BuildLog "Could not get git tag: $_" -Level "DEBUG"
+    }
+    
+    # Default version
+    $defaultVersion = "1.0.0-dev"
+    Write-BuildLog "Using default version: $defaultVersion" -Level "WARNING"
+    return $defaultVersion
+}
+
+# Profile management
+function Get-ProfileConfig {
+    param([string]$ProfileName)
+    
+    $profilePath = Join-Path $buildRoot "profiles" "$ProfileName.json"
+    if (-not (Test-Path $profilePath)) {
+        throw "Profile configuration not found: $profilePath"
+    }
+    
+    $config = Get-Content $profilePath -Raw | ConvertFrom-Json
+    
+    # Handle profile inheritance
+    if ($config.extends) {
+        $baseConfig = Get-ProfileConfig -ProfileName $config.extends
+        
+        # Merge configurations (simplified merge)
+        if ($config.additionalModules) {
+            $config.modules.required = @($baseConfig.modules.required) + @($config.additionalModules)
+        } else {
+            $config.modules = $baseConfig.modules
+        }
+        
+        # Merge other properties
+        foreach ($prop in @("coreFiles", "directories", "features")) {
+            if (-not $config.$prop -and $baseConfig.$prop) {
+                $config | Add-Member -NotePropertyName $prop -NotePropertyValue $baseConfig.$prop -Force
+            }
+        }
+    }
+    
+    return $config
+}
+
+# Platform-specific functions
+function Get-PlatformInfo {
+    param([string]$PlatformName)
+    
+    return @{
+        "windows" = @{
+            name = "windows"
+            extension = "zip"
+            archiver = "zip"
+            launcher = "AitherZero.bat"
+            lineEnding = "`r`n"
+            executable = ".ps1"
+        }
+        "linux" = @{
+            name = "linux"
+            extension = "tar.gz"
+            archiver = "tar"
+            launcher = "aitherzero.sh"
+            lineEnding = "`n"
+            executable = ".ps1"
+        }
+        "macos" = @{
+            name = "macos" 
+            extension = "tar.gz"
+            archiver = "tar"
+            launcher = "aitherzero.sh"
+            lineEnding = "`n"
+            executable = ".ps1"
+        }
+    }[$PlatformName]
+}
+
+# File operations
+function Copy-BuildFiles {
+    param(
+        [string]$SourcePath,
+        [string]$DestinationPath,
+        [string[]]$Include = @("*"),
+        [string[]]$Exclude = @(),
+        [switch]$Recurse
+    )
+    
+    if (-not (Test-Path $SourcePath)) {
+        Write-BuildLog "Source path not found: $SourcePath" -Level "WARNING"
+        return
+    }
+    
+    $params = @{
+        Path = $SourcePath
+        Destination = $DestinationPath
+        Force = $true
+    }
+    
+    if ($Recurse) { $params.Recurse = $true }
+    if ($Include.Count -gt 0 -and $Include[0] -ne "*") { $params.Include = $Include }
+    if ($Exclude.Count -gt 0) { $params.Exclude = $Exclude }
+    
+    try {
+        Copy-Item @params
+        Write-BuildLog "Copied: $SourcePath -> $DestinationPath" -Level "DEBUG"
+    } catch {
+        Write-BuildLog "Failed to copy $SourcePath : $_" -Level "ERROR"
+        throw
     }
 }
 
-try {
-    $buildDir = "build-output/$Platform"
-    New-Item -Path $buildDir -ItemType Directory -Force | Out-Null
-    
-    if ($progressAvailable) {
-        Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Creating build directory"
-    }
-
-    $packageName = "AitherZero-$Version-$Platform-$PackageProfile"
-    $packageDir = "$buildDir/$packageName"
-    New-Item -Path $packageDir -ItemType Directory -Force | Out-Null
-    
-    if ($progressAvailable) {
-        Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Setting up package structure"
-    }
-
-    Write-Host "Creating $PackageProfile application package: $packageName" -ForegroundColor Yellow
-    Write-Host '📦 Application-focused build (not a repository copy)' -ForegroundColor Cyan
-    
-    if ($progressAvailable) {
-        Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Preparing to copy files"
-    }
-
-    # Copy ONLY essential application files for running AitherZero
-    Write-Host 'Copying core application files...' -ForegroundColor Yellow
-
-    # Create aither-core directory structure
-    $aithercoreDir = Join-Path $packageDir 'aither-core'
-    New-Item -Path $aithercoreDir -ItemType Directory -Force | Out-Null
-    Write-Host '✓ Created aither-core directory structure' -ForegroundColor Green
-    
-    # Core runner and main entry point
-    Copy-Item -Path 'aither-core/aither-core.ps1' -Destination "$aithercoreDir/aither-core.ps1" -Force
-    Write-Host '✓ Core runner script' -ForegroundColor Green
-    
-    # CRITICAL: Copy bootstrap script for PowerShell 5.1 compatibility
-    $bootstrapPath = 'aither-core/aither-core-bootstrap.ps1'
-    if (Test-Path $bootstrapPath) {
-        # Copy to both locations - package root for validation and aither-core for runtime
-        Copy-Item -Path $bootstrapPath -Destination "$packageDir/aither-core-bootstrap.ps1" -Force
-        Copy-Item -Path $bootstrapPath -Destination "$aithercoreDir/aither-core-bootstrap.ps1" -Force
-        Write-Host '✓ PowerShell compatibility bootstrap script' -ForegroundColor Green
-    } else {
-        Write-Warning "Bootstrap script not found at: $bootstrapPath"
-        if ($progressAvailable) {
-            Add-ProgressWarning -OperationId $progressOperationId -Warning "Bootstrap script missing: $bootstrapPath"
-        }
-    }
-    
-    if ($progressAvailable) {
-        Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Copied core runner and bootstrap"
-    }
-
-    # Package Profile Definitions
-    # Define base module lists
-    $coreModules = @(
-        'Logging', 'LabRunner', 'OpenTofuProvider',
-        'ModuleCommunication', 'ConfigurationCore'
-    )
-    $platformServices = @(
-        'ConfigurationCarousel', 'ConfigurationRepository', 'OrchestrationEngine',
-        'ParallelExecution', 'ProgressTracking', 'StartupExperience'
-    )
-    $featureModules = @(
-        'ISOManager', 'ISOCustomizer', 'SecureCredentials',
-        'RemoteConnection', 'SystemMonitoring', 'RestAPIServer'
-    )
-    $essentialOperations = @(
-        'BackupManager', 'UnifiedMaintenance', 'ScriptManager',
-        'SecurityAutomation', 'SetupWizard'
-    )
-    $developmentTools = @(
-        'DevEnvironment', 'PatchManager', 'TestingFramework', 'AIToolsIntegration'
-    )
-    $maintenanceOperations = @(
-        'RepoSync'
+# Module packaging
+function Copy-ModuleFiles {
+    param(
+        [string]$ModuleName,
+        [string]$DestinationPath,
+        [object]$ModuleConfig
     )
     
-    # Define package profiles
-    $packageProfiles = @{
-        'minimal' = @{
-            Description = 'Core infrastructure only (~10MB)'
-            Modules = $coreModules
-            EstimatedSize = '~10MB'
-            UseCase = 'CI/CD environments, minimal deployments'
-        }
-        'standard' = @{
-            Description = 'Production-ready platform (~50MB)'
-            Modules = $coreModules + $platformServices + $featureModules + $essentialOperations
-            EstimatedSize = '~50MB'
-            UseCase = 'Production deployments, enterprise environments'
-        }
-        'full' = @{
-            Description = 'Complete development platform (~100MB)'
-            Modules = $coreModules + $platformServices + $featureModules + $developmentTools + $essentialOperations + $maintenanceOperations
-            EstimatedSize = '~100MB'
-            UseCase = 'Development environments, complete feature set'
-        }
+    $modulePath = Join-Path $projectRoot "aither-core" "modules" $ModuleName
+    if (-not (Test-Path $modulePath)) {
+        Write-BuildLog "Module not found: $ModuleName at $modulePath" -Level "WARNING"
+        return
     }
     
-    # Get modules for selected profile
-    $profileInfo = $packageProfiles[$PackageProfile]
-    $selectedModules = $profileInfo.Modules
+    $moduleDestPath = Join-Path $DestinationPath $ModuleName
+    New-Item -ItemType Directory -Path $moduleDestPath -Force | Out-Null
     
-    # Apply feature tier filtering if specified
-    if ($FeatureTier) {
-        Write-Host "Feature Tier: $FeatureTier" -ForegroundColor Cyan
-        
-        # Load feature registry
-        $featureRegistryPath = Join-Path (Split-Path -Parent $PSScriptRoot) "configs/feature-registry.json"
-        if (Test-Path $featureRegistryPath) {
-            $featureRegistry = Get-Content $featureRegistryPath -Raw | ConvertFrom-Json
-            
-            # Get allowed modules for tier
-            $allowedModules = @()
-            $tierFeatures = $featureRegistry.tiers.$FeatureTier.features
-            
-            foreach ($feature in $tierFeatures) {
-                if ($featureRegistry.features.$feature.modules) {
-                    $allowedModules += $featureRegistry.features.$feature.modules
-                }
-            }
-            
-            # Add module overrides that are always available
-            foreach ($override in $featureRegistry.moduleOverrides.PSObject.Properties) {
-                if ($override.Value.alwaysAvailable) {
-                    $allowedModules += $override.Name
-                }
-            }
-            
-            # Filter selected modules based on tier
-            $originalCount = $selectedModules.Count
-            $selectedModules = $selectedModules | Where-Object { $_ -in $allowedModules }
-            $filteredCount = $originalCount - $selectedModules.Count
-            
-            if ($filteredCount -gt 0) {
-                Write-Host "Filtered out $filteredCount modules due to $FeatureTier tier restrictions" -ForegroundColor Yellow
-            }
-        } else {
-            Write-Warning "Feature registry not found. Building without tier restrictions."
-        }
-    }
+    # Copy module files based on configuration
+    $include = $ModuleConfig.include -split ","
+    $exclude = $ModuleConfig.exclude -split ","
     
-    Write-Host "Package Profile: $PackageProfile" -ForegroundColor Yellow
-    Write-Host "Description: $($profileInfo.Description)" -ForegroundColor Gray
-    Write-Host "Use Case: $($profileInfo.UseCase)" -ForegroundColor Gray
-    Write-Host "Estimated Size: $($profileInfo.EstimatedSize)" -ForegroundColor Gray
-    Write-Host "Modules to include: $($selectedModules.Count)" -ForegroundColor Gray
-
-    New-Item -Path (Join-Path $aithercoreDir "modules") -ItemType Directory -Force | Out-Null
-    foreach ($module in $selectedModules) {
-        $modulePath = Join-Path "aither-core" "modules" $module
-        if (Test-Path $modulePath) {
-            if ($progressAvailable) {
-                Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Copying module: $module"
-            }
-            
-            Copy-Item -Path $modulePath -Destination (Join-Path $aithercoreDir 'modules' $module) -Recurse -Force
-            Write-Host "✓ Essential module: $module" -ForegroundColor Green
-        } else {
-            if ($progressAvailable) {
-                # Still increment to maintain accurate progress
-                Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Skipped missing module: $module"
-                Add-ProgressWarning -OperationId $progressOperationId -Warning "Module not found: $module"
-            }
-        }
-    }
-
-    # Shared utilities
-    if (Test-Path 'aither-core/shared') {
-        if ($progressAvailable) {
-            Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Copying shared utilities"
-        }
-        
-        Copy-Item -Path 'aither-core/shared' -Destination "$aithercoreDir/shared" -Recurse -Force
-        Write-Host '✓ Shared utilities' -ForegroundColor Green
-    } else {
-        if ($progressAvailable) {
-            Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Skipped shared utilities"
-        }
-    }
-
-    # Essential scripts directory (runtime scripts only)
-    if (Test-Path 'aither-core/scripts') {
-        if ($progressAvailable) {
-            Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Processing runtime scripts"
-        }
-        
-        New-Item -Path "$packageDir/scripts" -ItemType Directory -Force | Out-Null
-        # Copy only runtime scripts, not development/build scripts
-        $runtimeScripts = Get-ChildItem -Path 'aither-core/scripts' -Filter '*.ps1' -File |
-        Where-Object { $_.Name -notlike '*test*' -and $_.Name -notlike '*dev*' -and $_.Name -notlike '*build*' }
-        foreach ($script in $runtimeScripts) {
-            Copy-Item -Path $script.FullName -Destination "$packageDir/scripts/" -Force
-            Write-Host "✓ Runtime script: $($script.Name)" -ForegroundColor Green
-        }
-    } else {
-        if ($progressAvailable) {
-            Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Skipped scripts directory"
-        }
-    }
-
-    # Essential configuration templates
-    if ($progressAvailable) {
-        Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Copying configuration templates"
-    }
+    Copy-BuildFiles -SourcePath "$modulePath/*" -DestinationPath $moduleDestPath -Include $include -Exclude $exclude -Recurse
     
-    New-Item -Path "$packageDir/configs" -ItemType Directory -Force | Out-Null
-    $essentialConfigs = @(
-        'default-config.json', 'core-runner-config.json', 'recommended-config.json', 'feature-registry.json'
+    Write-BuildLog "Packaged module: $ModuleName" -Level "DEBUG"
+}
+
+# Platform-specific launcher creation
+function New-PlatformLauncher {
+    param(
+        [string]$PlatformName,
+        [string]$PackagePath,
+        [string]$Version
     )
-    foreach ($config in $essentialConfigs) {
-        $configPath = "configs/$config"
-        if (Test-Path $configPath) {
-            Copy-Item -Path $configPath -Destination "$packageDir/configs/$config" -Force
-            Write-Host "✓ Config template: $config" -ForegroundColor Green
-        }
-    }
-
-    # OpenTofu templates (infrastructure automation core feature)
-    if (Test-Path 'opentofu') {
-        if ($progressAvailable) {
-            Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Copying OpenTofu templates"
-        }
-        
-        # Copy only essential OpenTofu files, not development/test environments
-        New-Item -Path "$packageDir/opentofu" -ItemType Directory -Force | Out-Null
-        $essentialTF = @('infrastructure', 'providers', 'modules')
-        foreach ($tfDir in $essentialTF) {
-            $tfPath = "opentofu/$tfDir"
-            if (Test-Path $tfPath) {
-                Copy-Item -Path $tfPath -Destination "$packageDir/opentofu/$tfDir" -Recurse -Force
-                Write-Host "✓ OpenTofu: $tfDir" -ForegroundColor Green
-            }
-        }
-    } else {
-        if ($progressAvailable) {
-            Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Skipped OpenTofu templates"
-        }
-    }
-
-    # Essential documentation
-    if ($progressAvailable) {
-        Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Copying documentation"
-    }
     
-    Copy-Item -Path 'README.md' -Destination "$packageDir/README.md" -Force
-    Copy-Item -Path 'LICENSE' -Destination "$packageDir/LICENSE" -Force
-    Write-Host '✓ Essential documentation' -ForegroundColor Green
-
-    # Copy FIXED launcher templates with validation
-    Write-Host 'Copying and validating launcher templates...' -ForegroundColor Yellow
+    $platformInfo = Get-PlatformInfo -PlatformName $PlatformName
     
-    if ($progressAvailable) {
-        Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Creating and validating launchers"
-    }
-    
-    # NEW: Copy modern CLI interface files (v1.4.1+)
-    if (Test-Path 'aither.ps1') {
-        Copy-Item -Path 'aither.ps1' -Destination "$packageDir/aither.ps1" -Force
-        Write-Host '✓ Modern CLI interface (aither.ps1)' -ForegroundColor Green
-    } else {
-        Write-Warning 'Modern CLI interface (aither.ps1) not found'
-        if ($progressAvailable) {
-            Add-ProgressWarning -OperationId $progressOperationId -Warning "Modern CLI interface not found"
-        }
-    }
-    
-    if (Test-Path 'aither.bat') {
-        Copy-Item -Path 'aither.bat' -Destination "$packageDir/aither.bat" -Force
-        Write-Host '✓ Modern CLI batch wrapper (aither.bat)' -ForegroundColor Green
-    } else {
-        Write-Warning 'Modern CLI batch wrapper (aither.bat) not found'
-        if ($progressAvailable) {
-            Add-ProgressWarning -OperationId $progressOperationId -Warning "Modern CLI batch wrapper not found"
-        }
-    }
-    
-    if (Test-Path 'quick-setup-simple.ps1') {
-        Copy-Item -Path 'quick-setup-simple.ps1' -Destination "$packageDir/quick-setup-simple.ps1" -Force
-        Write-Host '✓ Quick setup script (quick-setup-simple.ps1)' -ForegroundColor Green
-    } else {
-        Write-Warning 'Quick setup script (quick-setup-simple.ps1) not found'
-        if ($progressAvailable) {
-            Add-ProgressWarning -OperationId $progressOperationId -Warning "Quick setup script not found"
-        }
-    }
-    
-    # CRITICAL: Validate PowerShell launcher template exists and has compatibility features
-    $ps1TemplatePath = 'templates/launchers/Start-AitherZero.ps1'
-    if (Test-Path $ps1TemplatePath) {
-        $ps1Content = Get-Content $ps1TemplatePath -Raw
-        
-        # Validate template has PowerShell compatibility features
-        $hasCompatibilityCheck = $ps1Content -match '\$psVersion.*PSVersionTable\.PSVersion\.Major'
-        $hasBootstrapSupport = $ps1Content -match 'aither-core-bootstrap\.ps1'
-        
-        if ($hasCompatibilityCheck -and $hasBootstrapSupport) {
-            # Template is valid - copy and update version
-            $ps1Content = $ps1Content -replace 'v\d+\.\d+\.\d+', "v$Version"
-            Set-Content -Path "$packageDir/Start-AitherZero.ps1" -Value $ps1Content -NoNewline
-            Write-Host '✓ PowerShell launcher (validated template with compatibility)' -ForegroundColor Green
-        } else {
-            Write-Error "Template launcher is missing PowerShell compatibility features!"
-            Write-Error "  Has version check: $hasCompatibilityCheck"
-            Write-Error "  Has bootstrap support: $hasBootstrapSupport"
-            throw "Template validation failed - launcher template is outdated"
-        }
-    } else {
-        Write-Error "PowerShell launcher template not found at: $ps1TemplatePath"
-        throw "Critical template missing - cannot create package"
-    }
+    switch ($PlatformName) {
+        "windows" {
+            $launcherContent = @"
+@echo off
+setlocal
 
-    if (Test-Path 'templates/launchers/AitherZero.bat') {
-        # Copy and update version in batch launcher
-        $batContent = Get-Content 'templates/launchers/AitherZero.bat' -Raw
-        $batContent = $batContent -replace 'AitherZero v\d+\.\d+\.\d+', "AitherZero v$Version"
-        Set-Content -Path "$packageDir/AitherZero.bat" -Value $batContent -NoNewline
-        Write-Host '✓ Windows batch launcher (from template)' -ForegroundColor Green
-    } else {
-        Write-Warning 'Batch launcher template not found'
-        if ($progressAvailable) {
-            Add-ProgressWarning -OperationId $progressOperationId -Warning "Batch launcher template not found"
-        }
-    }
+echo.
+echo ==================================================
+echo  AitherZero Infrastructure Automation v$Version
+echo  Windows Build - $Profile Profile
+echo ==================================================
+echo.
 
-    # For non-Windows platforms, create Unix launcher script
-    if ($Platform -ne 'windows') {
-        $unixScript = "#!/bin/bash`necho `"🚀 AitherZero v$Version - $(if ($Platform -eq 'macos') { 'macOS' } else { 'Linux' }) Quick Start`"`necho `"Cross-Platform Infrastructure Automation with OpenTofu/Terraform`"`necho `"`"`npwsh -File `"Start-AitherZero.ps1`" `$@"
-        Set-Content -Path "$packageDir/aitherzero.sh" -Value $unixScript -Encoding UTF8
-        if (-not $IsWindows) {
-            chmod +x "$packageDir/aitherzero.sh"
-        }
-        Write-Host '✓ Created Unix quick-start script' -ForegroundColor Green
-    }
+REM Check for PowerShell 7
+where pwsh >nul 2>&1
+if %ERRORLEVEL% EQU 0 (
+    echo [INFO] Using PowerShell 7
+    pwsh -File "Start-AitherZero.ps1" %*
+) else (
+    echo [INFO] PowerShell 7 not found, using Windows PowerShell
+    echo [WARN] Consider upgrading to PowerShell 7 for best experience
+    powershell -ExecutionPolicy Bypass -File "Start-AitherZero.ps1" %*
+)
 
-    # Create package metadata and docs
-    Write-Host 'Creating package metadata...' -ForegroundColor Yellow
-    
-    if ($progressAvailable) {
-        Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Creating metadata"
-    }
-    
-    $packageInfo = @{
-        Version        = $Version
-        PackageType    = 'Application'
-        PackageProfile = $PackageProfile
-        BuildDate      = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss UTC')
-        GitCommit      = $env:GITHUB_SHA
-        GitRef         = $env:GITHUB_REF
-        Platform       = $Platform
-        Description    = $profileInfo.Description
-        EstimatedSize  = $profileInfo.EstimatedSize
-        UseCase        = $profileInfo.UseCase
-        ModuleCount    = $selectedModules.Count
-        Modules        = $selectedModules
-        Components     = @(
-            'Core runner', 'Platform modules', 'Configuration templates',
-            'OpenTofu infrastructure', 'Application launcher'
-        )
-        Usage          = 'Run Start-AitherZero.ps1 to begin or aither-core.ps1 for direct access'
-        Repository     = 'https://github.com/wizzense/AitherZero'
-    }
-    $packageInfo | ConvertTo-Json -Depth 3 | Set-Content "$packageDir/PACKAGE-INFO.json"
-
-    # Create comprehensive installation guide
-    $installGuide = @"
-# AitherZero Application Package v$Version
-
-## 🚀 Quick Start (30 Seconds)
-
-### Windows Users:
-1. **Double-click ``AitherZero.bat``** - that's it!
-2. Or run: ``Start-AitherZero-Windows.ps1`` in PowerShell
-3. Or run: ``pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1``
-
-### Linux/macOS Users:
-1. **Run: ``./aitherzero.sh``** - that's it!
-2. Or run: ``pwsh Start-AitherZero.ps1``
-
-## 🔧 First Time Setup
-
-Run setup wizard to check your environment:
-```bash
-# Windows
-pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1 -Setup
-
-# Linux/macOS
-./aitherzero.sh -Setup
-```
-
-## 📖 Usage Examples
-
-```bash
-# Interactive menu (default)
-./Start-AitherZero.ps1
-
-# Run all automation scripts
-./Start-AitherZero.ps1 -Auto
-
-# Run specific scripts
-./Start-AitherZero.ps1 -Scripts 'LabRunner,BackupManager'
-
-# Detailed output mode
-./Start-AitherZero.ps1 -Verbosity detailed
-
-# Get help
-./Start-AitherZero.ps1 -Help
-```
-
-## ⚡ Requirements
-
-- **PowerShell 7.0+** (required)
-- **Git** (recommended for PatchManager and repository operations)
-- **OpenTofu/Terraform** (recommended for infrastructure automation)
-
-## 🔍 Troubleshooting
-
-**Windows Execution Policy Issues:**
-- Use ``AitherZero.bat`` (recommended)
-- Or: ``pwsh -ExecutionPolicy Bypass -File Start-AitherZero.ps1``
-
-**Module Loading Issues:**
-- Run the setup: ``./Start-AitherZero.ps1 -Setup``
-- Check PowerShell version: ``pwsh --version``
-
-**Permission Issues (Linux/macOS):**
-- Make executable: ``chmod +x aitherzero.sh``
-- Or run directly: ``pwsh Start-AitherZero.ps1``
-
-## 🌐 Support
-
-- **Repository**: https://github.com/wizzense/AitherZero
-- **Issues**: https://github.com/wizzense/AitherZero/issues
-- **Documentation**: See repository docs/ folder for advanced usage
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo [ERROR] AitherZero exited with error code %ERRORLEVEL%
+    echo Press any key to continue...
+    pause >nul
+)
 "@
-
-    Set-Content -Path "$packageDir/INSTALL.md" -Value $installGuide
-    Write-Host '✓ Installation guide created' -ForegroundColor Green
-
-    # Calculate package size
-    $packageSize = (Get-ChildItem -Path $packageDir -Recurse | Measure-Object -Property Length -Sum).Sum
-    $packageSizeMB = [math]::Round($packageSize / 1MB, 2)
-
-    Write-Host ''
-    Write-Host '📦 Lean Application Package Created:' -ForegroundColor Green
-    Write-Host "   Package: $packageName" -ForegroundColor White
-    Write-Host "   Size: $packageSizeMB MB (lean build)" -ForegroundColor White
-    Write-Host '   Type: Application (Essential components only)' -ForegroundColor White
-    Write-Host ''
-
-    Write-Host "✓ Package creation completed for $Platform" -ForegroundColor Green
-    
-    # Run validation if Test-PackageIntegrity.ps1 exists
-    $validationScript = Join-Path (Split-Path $PSScriptRoot -Parent) "tests/validation/Test-PackageIntegrity.ps1"
-    if (Test-Path $validationScript) {
-        if ($progressAvailable) {
-            Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Running validation"
         }
         
-        Write-Host ''
-        Write-Host '🔍 Running package integrity validation...' -ForegroundColor Cyan
+        "linux" {
+            $launcherContent = @"
+#!/bin/bash
+
+echo ""
+echo "=================================================="
+echo " AitherZero Infrastructure Automation v$Version"
+echo " Linux Build - $Profile Profile"
+echo "=================================================="
+echo ""
+
+# Check for PowerShell
+if command -v pwsh &> /dev/null; then
+    echo "[INFO] Using PowerShell Core"
+    pwsh -File "./Start-AitherZero.ps1" "\$@"
+elif command -v powershell &> /dev/null; then
+    echo "[INFO] Using PowerShell"
+    powershell -File "./Start-AitherZero.ps1" "\$@"
+else
+    echo "[ERROR] PowerShell not found"
+    echo "Please install PowerShell: https://aka.ms/powershell"
+    exit 1
+fi
+
+exit_code=\$?
+if [ \$exit_code -ne 0 ]; then
+    echo ""
+    echo "[ERROR] AitherZero exited with error code \$exit_code"
+fi
+exit \$exit_code
+"@
+        }
         
-        try {
-            & $validationScript -PackagePath $packageDir -Platform $Platform -Version $Version -GenerateReport
+        "macos" {
+            $launcherContent = @"
+#!/bin/bash
+
+echo ""
+echo "=================================================="
+echo " AitherZero Infrastructure Automation v$Version"
+echo " macOS Build - $Profile Profile"  
+echo "=================================================="
+echo ""
+
+# Check for PowerShell
+if command -v pwsh &> /dev/null; then
+    echo "[INFO] Using PowerShell Core"
+    pwsh -File "./Start-AitherZero.ps1" "\$@"
+elif command -v powershell &> /dev/null; then
+    echo "[INFO] Using PowerShell"
+    powershell -File "./Start-AitherZero.ps1" "\$@"
+else
+    echo "[ERROR] PowerShell not found"
+    echo "Install PowerShell: brew install --cask powershell"
+    exit 1
+fi
+
+exit_code=\$?
+if [ \$exit_code -ne 0 ]; then
+    echo ""
+    echo "[ERROR] AitherZero exited with error code \$exit_code"
+fi
+exit \$exit_code
+"@
+        }
+    }
+    
+    $launcherPath = Join-Path $PackagePath $platformInfo.launcher
+    Set-Content -Path $launcherPath -Value $launcherContent -Encoding UTF8
+    
+    # Set executable permissions for Unix platforms
+    if ($PlatformName -in @("linux", "macos")) {
+        if (Get-Command chmod -ErrorAction SilentlyContinue) {
+            chmod +x $launcherPath
+        }
+    }
+    
+    Write-BuildLog "Created platform launcher: $($platformInfo.launcher)" -Level "DEBUG"
+}
+
+# Package creation
+function New-Package {
+    param(
+        [string]$ProfileName,
+        [string]$PlatformName,
+        [string]$Version
+    )
+    
+    Write-BuildHeader "Building $ProfileName profile for $PlatformName"
+    
+    $config = Get-ProfileConfig -ProfileName $ProfileName
+    $platformInfo = Get-PlatformInfo -PlatformName $PlatformName
+    
+    $packageName = "AitherZero-$Version-$ProfileName-$PlatformName"
+    $packagePath = Join-Path $OutputPath $packageName
+    
+    Write-BuildLog "Package: $packageName" -Level "INFO"
+    Write-BuildLog "Estimated size: $($config.estimatedSize)" -Level "INFO"
+    Write-BuildLog "Target: $($config.targetAudience)" -Level "INFO"
+    
+    if ($DryRun) {
+        Write-BuildLog "DRY RUN: Would create package at $packagePath" -Level "WARNING"
+        return @{
+            Name = $packageName
+            Path = $packagePath
+            Profile = $ProfileName
+            Platform = $PlatformName
+            Size = "N/A (dry run)"
+        }
+    }
+    
+    # Create package directory
+    if (Test-Path $packagePath) {
+        if ($Force) {
+            Remove-Item $packagePath -Recurse -Force
+        } else {
+            throw "Package already exists: $packagePath (use -Force to overwrite)"
+        }
+    }
+    New-Item -ItemType Directory -Path $packagePath -Force | Out-Null
+    
+    # Copy core files
+    Write-BuildLog "Copying core files..." -Level "INFO"
+    foreach ($file in $config.coreFiles) {
+        $sourcePath = Join-Path $projectRoot $file
+        if (Test-Path $sourcePath) {
+            Copy-Item $sourcePath -Destination $packagePath -Force
+        }
+    }
+    
+    # Copy aither-core directory structure
+    Write-BuildLog "Copying aither-core..." -Level "INFO"
+    $aitherCoreSource = Join-Path $projectRoot "aither-core"
+    $aitherCoreDest = Join-Path $packagePath "aither-core"
+    New-Item -ItemType Directory -Path $aitherCoreDest -Force | Out-Null
+    
+    # Copy specified aither-core files
+    foreach ($file in $config.directories."aither-core".include) {
+        $sourcePath = Join-Path $aitherCoreSource $file
+        if (Test-Path $sourcePath) {
+            Copy-Item $sourcePath -Destination $aitherCoreDest -Force
+        }
+    }
+    
+    # Copy subdirectories
+    foreach ($subdir in $config.directories."aither-core".subdirectories.Keys) {
+        $subdirSource = Join-Path $aitherCoreSource $subdir
+        $subdirDest = Join-Path $aitherCoreDest $subdir
+        
+        if (Test-Path $subdirSource) {
+            $subdirConfig = $config.directories."aither-core".subdirectories.$subdir
             
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host '✅ Package validation passed!' -ForegroundColor Green
-            } else {
-                Write-Warning 'Package validation completed with warnings'
-                if ($progressAvailable) {
-                    Add-ProgressWarning -OperationId $progressOperationId -Warning "Package validation completed with warnings"
+            if ($subdirConfig -eq "all") {
+                Copy-Item $subdirSource -Destination $subdirDest -Recurse -Force
+            } elseif ($subdirConfig -is [array]) {
+                New-Item -ItemType Directory -Path $subdirDest -Force | Out-Null
+                foreach ($file in $subdirConfig) {
+                    $filePath = Join-Path $subdirSource $file
+                    if (Test-Path $filePath) {
+                        Copy-Item $filePath -Destination $subdirDest -Force
+                    }
                 }
             }
-        } catch {
-            Write-Warning "Package validation failed: $_"
-            if ($progressAvailable) {
-                Add-ProgressError -OperationId $progressOperationId -Error "Package validation failed: $_"
+        }
+    }
+    
+    # Copy modules
+    Write-BuildLog "Copying modules..." -Level "INFO"
+    $modulesDest = Join-Path $aitherCoreDest "modules"
+    New-Item -ItemType Directory -Path $modulesDest -Force | Out-Null
+    
+    foreach ($moduleName in $config.modules.required) {
+        Copy-ModuleFiles -ModuleName $moduleName -DestinationPath $modulesDest -ModuleConfig $config.modules.moduleComponents
+    }
+    
+    # Copy additional directories
+    if ($config.additionalDirectories) {
+        Write-BuildLog "Copying additional directories..." -Level "INFO"
+        foreach ($dirPath in $config.additionalDirectories.Keys) {
+            $dirConfig = $config.additionalDirectories.$dirPath
+            $sourcePath = Join-Path $projectRoot $dirPath
+            $destPath = Join-Path $packagePath $dirPath
+            
+            if (Test-Path $sourcePath) {
+                if ($dirConfig -eq "all") {
+                    Copy-Item $sourcePath -Destination $destPath -Recurse -Force
+                } elseif ($dirConfig -is [array]) {
+                    New-Item -ItemType Directory -Path $destPath -Force | Out-Null
+                    foreach ($file in $dirConfig) {
+                        $filePath = Join-Path $sourcePath $file
+                        if (Test-Path $filePath) {
+                            Copy-Item $filePath -Destination $destPath -Force
+                        }
+                    }
+                }
             }
         }
-    } else {
-        if ($progressAvailable) {
-            Update-ProgressOperation -OperationId $progressOperationId -IncrementStep -StepName "Skipped validation"
+    }
+    
+    # Copy configurations
+    Write-BuildLog "Copying configurations..." -Level "INFO"
+    $configsDest = Join-Path $packagePath "configs"
+    New-Item -ItemType Directory -Path $configsDest -Force | Out-Null
+    
+    foreach ($configFile in $config.configs) {
+        $configSource = Join-Path $projectRoot "configs" $configFile
+        if (Test-Path $configSource) {
+            Copy-Item $configSource -Destination $configsDest -Force
         }
     }
     
-    # Generate SHA256 checksum for archives
-    if ($ArtifactExtension) {
-        $archivePath = "$packageDir.$ArtifactExtension"
-        
-        if (Test-Path $archivePath) {
-            Write-Host '🔐 Generating package checksum...' -ForegroundColor Yellow
-            $hash = (Get-FileHash -Path $archivePath -Algorithm SHA256).Hash
-            Set-Content -Path "$archivePath.sha256" -Value $hash
-            Write-Host "✓ SHA256: $hash" -ForegroundColor Green
-        }
-    }
-    
-    # CRITICAL: Post-build PowerShell compatibility validation
-    Write-Host '🔍 Validating packaged launcher PowerShell compatibility...' -ForegroundColor Cyan
-    
-    $packagedLauncher = "$packageDir/Start-AitherZero.ps1"
-    $packagedBootstrap = "$packageDir/aither-core-bootstrap.ps1"
-    
-    if (Test-Path $packagedLauncher) {
-        $launcherContent = Get-Content $packagedLauncher -Raw
-        
-        # Validate packaged launcher has required features
-        $validationResults = @{
-            'PowerShell version detection' = $launcherContent -match '\$psVersion.*PSVersionTable\.PSVersion\.Major'
-            'Bootstrap script support' = $launcherContent -match 'aither-core-bootstrap\.ps1'
-            'PowerShell 5.1 compatibility' = $launcherContent -match 'if.*psVersion.*-lt 7'
-            'Error handling for missing bootstrap' = $launcherContent -match 'bootstrap.*missing'
-            'Cross-platform compatibility' = $launcherContent -match 'Cross-Platform.*Launcher'
-        }
-        
-        $validationPassed = $true
-        foreach ($check in $validationResults.GetEnumerator()) {
-            if ($check.Value) {
-                Write-Host "  ✅ $($check.Key)" -ForegroundColor Green
-            } else {
-                Write-Host "  ❌ $($check.Key)" -ForegroundColor Red
-                $validationPassed = $false
+    # Copy additional configs if specified
+    if ($config.additionalConfigs) {
+        foreach ($configFile in $config.additionalConfigs) {
+            $configSource = Join-Path $projectRoot "configs" $configFile
+            if (Test-Path $configSource) {
+                Copy-Item $configSource -Destination $configsDest -Force
             }
         }
-        
-        # Validate bootstrap script exists
-        if (Test-Path $packagedBootstrap) {
-            Write-Host "  ✅ Bootstrap script included" -ForegroundColor Green
-        } else {
-            Write-Host "  ❌ Bootstrap script missing" -ForegroundColor Red
-            $validationPassed = $false
-        }
-        
-        if ($validationPassed) {
-            Write-Host '✅ Package validation PASSED - PowerShell compatibility confirmed!' -ForegroundColor Green
-        } else {
-            Write-Error "Package validation FAILED - PowerShell compatibility issues detected!"
-            throw "Package build failed validation - cannot release broken launcher"
-        }
-    } else {
-        Write-Error "Packaged launcher not found at: $packagedLauncher"
-        throw "Package build failed - launcher missing"
     }
     
-    # Complete progress tracking if available
-    if ($progressAvailable -and $progressOperationId) {
-        Complete-ProgressOperation -OperationId $progressOperationId -ShowSummary
+    # Copy development files for development profile
+    if ($config.developmentFiles) {
+        Write-BuildLog "Copying development files..." -Level "INFO"
+        foreach ($devFile in $config.developmentFiles) {
+            $devSource = Join-Path $projectRoot $devFile
+            if (Test-Path $devSource) {
+                Copy-Item $devSource -Destination $packagePath -Force
+            }
+        }
     }
+    
+    # Create platform-specific launcher
+    New-PlatformLauncher -PlatformName $PlatformName -PackagePath $packagePath -Version $Version
+    
+    # Create build information file
+    $buildInfo = @{
+        version = $Version
+        profile = $ProfileName
+        platform = $PlatformName
+        buildDate = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss UTC")
+        features = $config.features
+        modules = $config.modules.required
+        description = $config.description
+        targetAudience = $config.targetAudience
+        estimatedSize = $config.estimatedSize
+    }
+    
+    $buildInfoPath = Join-Path $packagePath "build-info.json"
+    $buildInfo | ConvertTo-Json -Depth 4 | Set-Content -Path $buildInfoPath -Encoding UTF8
+    
+    # Create archive
+    Write-BuildLog "Creating archive..." -Level "INFO"
+    $archiveName = "$packageName.$($platformInfo.extension)"
+    $archivePath = Join-Path $OutputPath $archiveName
+    
+    if (Test-Path $archivePath) {
+        if ($Force) {
+            Remove-Item $archivePath -Force
+        } else {
+            throw "Archive already exists: $archivePath (use -Force to overwrite)"
+        }
+    }
+    
+    switch ($platformInfo.archiver) {
+        "zip" {
+            Compress-Archive -Path "$packagePath/*" -DestinationPath $archivePath -Force
+        }
+        "tar" {
+            Push-Location $OutputPath
+            try {
+                if (Get-Command tar -ErrorAction SilentlyContinue) {
+                    tar -czf $archiveName $packageName
+                } else {
+                    # Fallback to PowerShell compression
+                    Compress-Archive -Path "$packagePath/*" -DestinationPath "$archiveName.zip" -Force
+                    Write-BuildLog "Created ZIP instead of TAR.GZ (tar command not available)" -Level "WARNING"
+                }
+            } finally {
+                Pop-Location
+            }
+        }
+    }
+    
+    # Calculate package size
+    $packageSize = if (Test-Path $archivePath) {
+        [math]::Round((Get-Item $archivePath).Length / 1MB, 2)
+    } else { 0 }
+    
+    Write-BuildLog "Package created: $archiveName ($packageSize MB)" -Level "SUCCESS"
+    
+    # Validate package if requested
+    if ($Validate) {
+        Write-BuildLog "Validating package..." -Level "INFO"
+        Test-Package -PackagePath $packagePath -Config $config
+    }
+    
+    return @{
+        Name = $packageName
+        Path = $packagePath
+        Archive = $archivePath
+        Profile = $ProfileName
+        Platform = $PlatformName
+        Size = "$packageSize MB"
+    }
+}
 
-} catch {
-    # Log error to progress tracking if available
-    if ($progressAvailable -and $progressOperationId) {
-        Add-ProgressError -OperationId $progressOperationId -Error $_.Exception.Message
-        Complete-ProgressOperation -OperationId $progressOperationId -ShowSummary
+# Package validation
+function Test-Package {
+    param(
+        [string]$PackagePath,
+        [object]$Config
+    )
+    
+    $validationErrors = @()
+    
+    # Check core files
+    foreach ($file in $Config.coreFiles) {
+        $filePath = Join-Path $PackagePath $file
+        if (-not (Test-Path $filePath)) {
+            $validationErrors += "Missing core file: $file"
+        }
     }
     
-    Write-Error "Build failed for $Platform : $($_.Exception.Message)"
+    # Check required modules
+    foreach ($module in $Config.modules.required) {
+        $modulePath = Join-Path $PackagePath "aither-core" "modules" $module
+        if (-not (Test-Path $modulePath)) {
+            $validationErrors += "Missing module: $module"
+        }
+    }
+    
+    # Check launcher
+    $launcherExists = $false
+    foreach ($launcher in @("AitherZero.bat", "aitherzero.sh")) {
+        if (Test-Path (Join-Path $PackagePath $launcher)) {
+            $launcherExists = $true
+            break
+        }
+    }
+    if (-not $launcherExists) {
+        $validationErrors += "No platform launcher found"
+    }
+    
+    if ($validationErrors.Count -gt 0) {
+        Write-BuildLog "Package validation failed:" -Level "ERROR"
+        foreach ($error in $validationErrors) {
+            Write-BuildLog "  - $error" -Level "ERROR"
+        }
+        throw "Package validation failed"
+    } else {
+        Write-BuildLog "Package validation passed" -Level "SUCCESS"
+    }
+}
+
+# Main execution
+try {
+    Write-BuildHeader "AitherZero Smart Build System v2.0"
+    
+    $buildVersion = Get-BuildVersion
+    Write-BuildLog "Build version: $buildVersion" -Level "INFO"
+    Write-BuildLog "Project root: $projectRoot" -Level "INFO"
+    
+    # Create output directory
+    New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
+    Write-BuildLog "Output path: $OutputPath" -Level "INFO"
+    
+    # Determine profiles and platforms to build
+    $profilesToBuild = if ($Profile -eq "all") { @("minimal", "standard", "development") } else { @($Profile) }
+    $platformsToBuild = if ($Platform -eq "all") { @("windows", "linux", "macos") } else { @($Platform) }
+    
+    Write-BuildLog "Building profiles: $($profilesToBuild -join ', ')" -Level "INFO"
+    Write-BuildLog "Building platforms: $($platformsToBuild -join ', ')" -Level "INFO"
+    
+    $packages = @()
+    $totalBuilds = $profilesToBuild.Count * $platformsToBuild.Count
+    $currentBuild = 0
+    
+    foreach ($prof in $profilesToBuild) {
+        foreach ($plat in $platformsToBuild) {
+            $currentBuild++
+            Write-BuildLog "Building $currentBuild of $totalBuilds..." -Level "INFO"
+            
+            $package = New-Package -ProfileName $prof -PlatformName $plat -Version $buildVersion
+            $packages += $package
+        }
+    }
+    
+    # Build summary
+    $buildDuration = (Get-Date) - $buildStartTime
+    Write-BuildHeader "Build Summary"
+    Write-BuildLog "Build completed in $($buildDuration.TotalSeconds.ToString('F1')) seconds" -Level "SUCCESS"
+    Write-BuildLog "Packages created: $($packages.Count)" -Level "INFO"
+    
+    foreach ($package in $packages) {
+        Write-BuildLog "  - $($package.Name) ($($package.Size))" -Level "INFO"
+    }
+    
+    Write-BuildLog "All packages available in: $OutputPath" -Level "SUCCESS"
+    
+} catch {
+    Write-BuildLog "Build failed: $_" -Level "ERROR"
     exit 1
 }

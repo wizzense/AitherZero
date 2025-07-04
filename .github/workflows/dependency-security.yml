@@ -1,0 +1,370 @@
+name: 🔒 Dependency Security
+run-name: 🔒 Security Scan - ${{ github.event_name }}
+
+on:
+  schedule:
+    # Daily security scan at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Type of security scan'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - 'full'
+          - 'dependencies-only'
+          - 'code-only'
+  push:
+    branches: [main]
+    paths:
+      - 'aither-core/modules/SecureCredentials/**'
+      - 'aither-core/modules/SecurityAutomation/**'
+      - 'aither-core/modules/RemoteConnection/**'
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  security-scan:
+    name: 🔍 Security Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Install PowerShell
+        run: |
+          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/powershell_7.4.6-1.deb_amd64.deb
+          sudo dpkg -i powershell_7.4.6-1.deb_amd64.deb || sudo apt-get install -f -y
+      
+      - name: Cache Security Tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/powershell/Modules
+            ~/.cache/security-tools
+          key: security-tools-${{ runner.os }}-${{ hashFiles('**/*.psd1') }}-v2
+          restore-keys: |
+            security-tools-${{ runner.os }}-v2
+            security-tools-${{ runner.os }}-
+      
+      - name: PowerShell Security Analysis
+        shell: pwsh
+        if: github.event.inputs.scan_type != 'dependencies-only'
+        run: |
+          Write-Host "🔒 Running PowerShell Security Analysis..." -ForegroundColor Yellow
+          
+          # Install security analysis tools
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -Repository PSGallery
+          
+          # Comprehensive security rules
+          $securityRules = @(
+            'PSAvoidUsingPlainTextForPassword',
+            'PSAvoidUsingConvertToSecureStringWithPlainText',
+            'PSAvoidUsingUsernameAndPasswordParams',
+            'PSAvoidUsingInvokeExpression',
+            'PSAvoidUsingWriteHost',
+            'PSUseShouldProcessForStateChangingFunctions',
+            'PSAvoidUsingCmdletAliases',
+            'PSAvoidUsingPositionalParameters',
+            'PSUseSecureCmdlets'
+          )
+          
+          # Run comprehensive analysis
+          $analysisParams = @{
+            Path = "."
+            Recurse = $true
+            IncludeRule = $securityRules
+            Severity = @('Error', 'Warning', 'Information')
+            ReportSummary = $true
+          }
+          
+          $results = Invoke-ScriptAnalyzer @analysisParams
+          
+          # Categorize issues
+          $criticalIssues = $results | Where-Object { $_.Severity -eq 'Error' -and $_.RuleName -in $securityRules }
+          $warningIssues = $results | Where-Object { $_.Severity -eq 'Warning' -and $_.RuleName -in $securityRules }
+          $infoIssues = $results | Where-Object { $_.Severity -eq 'Information' -and $_.RuleName -in $securityRules }
+          
+          # Generate security report
+          $securityReport = @{
+            ScanDate = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss UTC")
+            TotalIssues = $results.Count
+            CriticalIssues = $criticalIssues.Count
+            WarningIssues = $warningIssues.Count
+            InfoIssues = $infoIssues.Count
+            SecurityRules = $securityRules
+            Issues = $results | Select-Object Severity, RuleName, ScriptName, Line, Message
+          }
+          
+          # Export results
+          $results | Export-Clixml -Path "security-analysis-detailed.xml"
+          $securityReport | ConvertTo-Json -Depth 4 | Out-File "security-report.json" -Encoding UTF8
+          
+          # Console output
+          Write-Host ""
+          Write-Host "📊 Security Analysis Summary:" -ForegroundColor Cyan
+          Write-Host "  Total Issues: $($results.Count)" -ForegroundColor White
+          Write-Host "  Critical: $($criticalIssues.Count)" -ForegroundColor $(if($criticalIssues.Count -gt 0) { 'Red' } else { 'Green' })
+          Write-Host "  Warnings: $($warningIssues.Count)" -ForegroundColor $(if($warningIssues.Count -gt 0) { 'Yellow' } else { 'Green' })
+          Write-Host "  Info: $($infoIssues.Count)" -ForegroundColor Cyan
+          
+          # Display critical issues
+          if ($criticalIssues.Count -gt 0) {
+            Write-Host ""
+            Write-Host "❌ Critical Security Issues:" -ForegroundColor Red
+            foreach ($issue in $criticalIssues) {
+              Write-Host "  • $($issue.ScriptName):$($issue.Line) - $($issue.RuleName)" -ForegroundColor Red
+              Write-Host "    $($issue.Message)" -ForegroundColor Gray
+            }
+          }
+          
+          # Fail on critical security issues
+          if ($criticalIssues.Count -gt 0) {
+            Write-Host ""
+            Write-Host "❌ Build failed due to critical security issues" -ForegroundColor Red
+            exit 1
+          }
+          
+          Write-Host ""
+          Write-Host "✅ Security analysis completed successfully" -ForegroundColor Green
+      
+      - name: Credential Scanning
+        if: github.event.inputs.scan_type != 'dependencies-only'
+        run: |
+          echo "🔑 Scanning for exposed credentials..."
+          
+          # Common credential patterns
+          PATTERNS=(
+            "password\s*=\s*['\"][^'\"]*['\"]"
+            "api[_-]?key\s*=\s*['\"][^'\"]*['\"]"
+            "secret\s*=\s*['\"][^'\"]*['\"]"
+            "token\s*=\s*['\"][^'\"]*['\"]"
+            "private[_-]?key"
+            "BEGIN RSA PRIVATE KEY"
+            "BEGIN OPENSSH PRIVATE KEY"
+            "AKIAIO[A-Z0-9]{14,18}"  # AWS Access Key
+            "ghp_[a-zA-Z0-9]{36}"     # GitHub Personal Access Token
+          )
+          
+          FOUND_ISSUES=0
+          
+          for pattern in "${PATTERNS[@]}"; do
+            echo "Checking pattern: $pattern"
+            if grep -rn -E -i "$pattern" . --exclude-dir=.git --exclude="*.md" --exclude="*.xml" --exclude="dependency-security.yml" 2>/dev/null; then
+              echo "⚠️ Potential credential found matching pattern: $pattern"
+              FOUND_ISSUES=$((FOUND_ISSUES + 1))
+            fi
+          done
+          
+          if [ $FOUND_ISSUES -gt 0 ]; then
+            echo "❌ Found $FOUND_ISSUES potential credential exposures"
+            echo "Please review and remove any exposed credentials"
+            exit 1
+          else
+            echo "✅ No credential patterns detected"
+          fi
+      
+      - name: Dependency Vulnerability Scan
+        if: github.event.inputs.scan_type != 'code-only'
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Scanning PowerShell module dependencies..." -ForegroundColor Yellow
+          
+          # Find all module manifests
+          $manifests = Get-ChildItem -Path "aither-core/modules" -Filter "*.psd1" -Recurse
+          $vulnerabilities = @()
+          
+          foreach ($manifest in $manifests) {
+            try {
+              $moduleData = Test-ModuleManifest -Path $manifest.FullName -ErrorAction Stop
+              
+              # Check for known vulnerable modules (expand this list as needed)
+              $knownVulnerable = @{
+                'PSWriteHTML' = @('0.0.1', '0.0.2')  # Example
+                'ImportExcel' = @('7.0.0')           # Example
+              }
+              
+              if ($moduleData.RequiredModules) {
+                foreach ($reqModule in $moduleData.RequiredModules) {
+                  $moduleName = if ($reqModule -is [string]) { $reqModule } else { $reqModule.ModuleName }
+                  $moduleVersion = if ($reqModule -is [string]) { $null } else { $reqModule.ModuleVersion }
+                  
+                  if ($knownVulnerable.ContainsKey($moduleName)) {
+                    $vulnVersions = $knownVulnerable[$moduleName]
+                    if (-not $moduleVersion -or $moduleVersion -in $vulnVersions) {
+                      $vulnerabilities += @{
+                        Module = $manifest.BaseName
+                        Dependency = $moduleName
+                        Version = $moduleVersion
+                        Issue = "Known vulnerable version"
+                      }
+                    }
+                  }
+                }
+              }
+            } catch {
+              Write-Host "⚠️ Could not analyze $($manifest.Name): $_" -ForegroundColor Yellow
+            }
+          }
+          
+          # Report vulnerabilities
+          if ($vulnerabilities.Count -gt 0) {
+            Write-Host ""
+            Write-Host "❌ Dependency vulnerabilities found:" -ForegroundColor Red
+            foreach ($vuln in $vulnerabilities) {
+              Write-Host "  • $($vuln.Module) -> $($vuln.Dependency) $($vuln.Version): $($vuln.Issue)" -ForegroundColor Red
+            }
+            
+            # Save vulnerability report
+            $vulnerabilities | ConvertTo-Json -Depth 3 | Out-File "dependency-vulnerabilities.json" -Encoding UTF8
+            
+            Write-Host ""
+            Write-Host "Please update vulnerable dependencies before proceeding" -ForegroundColor Red
+            exit 1
+          } else {
+            Write-Host "✅ No known dependency vulnerabilities found" -ForegroundColor Green
+          }
+      
+      - name: File Permission Check
+        if: github.event.inputs.scan_type != 'dependencies-only'
+        run: |
+          echo "🔐 Checking file permissions..."
+          
+          # Check for files with overly permissive permissions
+          ISSUES=0
+          
+          # Check for executable script files that shouldn't be
+          find . -name "*.ps1" -executable -not -path "./.git/*" | while read file; do
+            echo "⚠️ PowerShell script with execute permission: $file"
+            ISSUES=$((ISSUES + 1))
+          done
+          
+          # Check for world-writable files
+          if find . -perm -002 -not -path "./.git/*" -not -name "*.md" | grep -q .; then
+            echo "⚠️ World-writable files found:"
+            find . -perm -002 -not -path "./.git/*" -not -name "*.md"
+            ISSUES=$((ISSUES + 1))
+          fi
+          
+          if [ $ISSUES -eq 0 ]; then
+            echo "✅ File permissions look good"
+          else
+            echo "❌ File permission issues found"
+            exit 1
+          fi
+      
+      - name: Upload Security Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-scan-results-${{ github.run_number }}
+          path: |
+            security-analysis-detailed.xml
+            security-report.json
+            dependency-vulnerabilities.json
+          retention-days: 90
+      
+      - name: Security Summary
+        if: always()
+        run: |
+          echo "## 🔒 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Scan Type**: ${{ github.event.inputs.scan_type || 'full' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f "security-report.json" ]; then
+            echo "### PowerShell Security Analysis" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+            cat security-report.json >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "### Recommendations" >> $GITHUB_STEP_SUMMARY
+          echo "- Review any security findings above" >> $GITHUB_STEP_SUMMARY
+          echo "- Update dependencies regularly" >> $GITHUB_STEP_SUMMARY
+          echo "- Follow PowerShell security best practices" >> $GITHUB_STEP_SUMMARY
+          echo "- Monitor security advisories for dependencies" >> $GITHUB_STEP_SUMMARY
+
+  license-compliance:
+    name: 📄 License Compliance
+    runs-on: ubuntu-latest
+    if: github.event.inputs.scan_type == 'full' || github.event_name == 'schedule'
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Install PowerShell
+        run: |
+          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/powershell_7.4.6-1.deb_amd64.deb
+          sudo dpkg -i powershell_7.4.6-1.deb_amd64.deb || sudo apt-get install -f -y
+      
+      - name: License Compliance Check
+        shell: pwsh
+        run: |
+          Write-Host "📄 Checking License Compliance..." -ForegroundColor Yellow
+          
+          # Check for required license files
+          $requiredFiles = @('LICENSE', 'CONTRIBUTING.md')
+          $missingFiles = @()
+          
+          foreach ($file in $requiredFiles) {
+            if (-not (Test-Path $file)) {
+              $missingFiles += $file
+            } else {
+              Write-Host "✅ Found: $file" -ForegroundColor Green
+            }
+          }
+          
+          # Check module manifests for license information
+          $manifests = Get-ChildItem -Path "aither-core/modules" -Filter "*.psd1" -Recurse
+          $modulesWithoutLicense = @()
+          
+          foreach ($manifest in $manifests) {
+            try {
+              $moduleData = Import-PowerShellDataFile -Path $manifest.FullName
+              if (-not $moduleData.LicenseUri -and -not $moduleData.License) {
+                $modulesWithoutLicense += $manifest.BaseName
+              }
+            } catch {
+              Write-Host "⚠️ Could not read manifest: $($manifest.Name)" -ForegroundColor Yellow
+            }
+          }
+          
+          # Report findings
+          if ($missingFiles.Count -gt 0) {
+            Write-Host ""
+            Write-Host "❌ Missing required files:" -ForegroundColor Red
+            foreach ($file in $missingFiles) {
+              Write-Host "  • $file" -ForegroundColor Red
+            }
+          }
+          
+          if ($modulesWithoutLicense.Count -gt 0) {
+            Write-Host ""
+            Write-Host "⚠️ Modules without license information:" -ForegroundColor Yellow
+            foreach ($module in $modulesWithoutLicense) {
+              Write-Host "  • $module" -ForegroundColor Yellow
+            }
+          }
+          
+          if ($missingFiles.Count -eq 0 -and $modulesWithoutLicense.Count -eq 0) {
+            Write-Host "✅ License compliance check passed" -ForegroundColor Green
+          } else {
+            Write-Host ""
+            Write-Host "Please address license compliance issues" -ForegroundColor Yellow
+          }

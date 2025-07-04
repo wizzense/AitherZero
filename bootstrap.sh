@@ -1,10 +1,15 @@
 #!/bin/bash
 #
-# AitherZero Bootstrap Script for Linux/macOS
+# AitherZero Bootstrap Script v2.0 for Linux/macOS
 # 
 # Usage:
 #   curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
 #   wget -qO- https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
+#
+# Environment Variables for Automation:
+#   AITHER_PROFILE=minimal|standard|development (default: standard)
+#   AITHER_INSTALL_DIR=/custom/path (default: $HOME/AitherZero)
+#   AITHER_AUTO_START=true|false (default: true)
 #
 
 set -e
@@ -66,9 +71,43 @@ check_prerequisites() {
     fi
 }
 
+# Determine profile
+determine_profile() {
+    PROFILE="${AITHER_PROFILE:-}"
+    
+    if [ -z "$PROFILE" ]; then
+        print_message "$CYAN" ""
+        print_message "$CYAN" "Select AitherZero Profile:"
+        print_message "$WHITE" "  [1] Minimal (5-8 MB) - Core infrastructure deployment only"
+        print_message "$GREEN" "  [2] Standard (15-25 MB) - Production-ready automation (recommended)"
+        print_message "$WHITE" "  [3] Development (35-50 MB) - Complete contributor environment"
+        print_message "$CYAN" ""
+        
+        if [ -t 0 ]; then
+            while true; do
+                printf "Enter your choice (1/2/3) [default: 2]: "
+                read -r choice
+                [ -z "$choice" ] && choice="2"
+                
+                case "$choice" in
+                    1) PROFILE="minimal"; break ;;
+                    2) PROFILE="standard"; break ;;
+                    3) PROFILE="development"; break ;;
+                    *) print_message "$RED" "Invalid choice. Please enter 1, 2, or 3." ;;
+                esac
+            done
+        else
+            # Non-interactive mode defaults to standard
+            PROFILE="standard"
+        fi
+    fi
+    
+    print_message "$CYAN" "Selected profile: $PROFILE"
+}
+
 # Get latest release info
 get_latest_release() {
-    print_message "$CYAN" "🚀 Getting latest AitherZero release..."
+    print_message "$CYAN" "🚀 Getting latest AitherZero release ($PROFILE profile)..."
     
     # Get release info from GitHub API
     RELEASE_INFO=$($DOWNLOADER https://api.github.com/repos/wizzense/AitherZero/releases/latest 2>/dev/null)
@@ -84,11 +123,21 @@ get_latest_release() {
         *)          error_exit "Unsupported platform: $(uname -s)" ;;
     esac
     
-    # Find appropriate asset
+    # Find appropriate asset with profile
     if [ "$ARCHIVE_EXT" = "zip" ]; then
-        ASSET_URL=$(echo "$RELEASE_INFO" | grep -o "https://[^\"]*${PLATFORM}[^\"]*\.zip" | head -1)
+        ASSET_URL=$(echo "$RELEASE_INFO" | grep -o "https://[^\"]*${PROFILE}-${PLATFORM}[^\"]*\.zip" | head -1)
     else
-        ASSET_URL=$(echo "$RELEASE_INFO" | grep -o "https://[^\"]*${PLATFORM}[^\"]*\.tar\.gz" | head -1)
+        ASSET_URL=$(echo "$RELEASE_INFO" | grep -o "https://[^\"]*${PROFILE}-${PLATFORM}[^\"]*\.tar\.gz" | head -1)
+    fi
+    
+    # Fallback to any platform package if specific profile not found
+    if [ -z "$ASSET_URL" ]; then
+        print_message "$YELLOW" "⚠️ Specific profile not found, looking for any $PLATFORM package..."
+        if [ "$ARCHIVE_EXT" = "zip" ]; then
+            ASSET_URL=$(echo "$RELEASE_INFO" | grep -o "https://[^\"]*${PLATFORM}[^\"]*\.zip" | head -1)
+        else
+            ASSET_URL=$(echo "$RELEASE_INFO" | grep -o "https://[^\"]*${PLATFORM}[^\"]*\.tar\.gz" | head -1)
+        fi
     fi
     
     if [ -z "$ASSET_URL" ]; then
@@ -151,7 +200,7 @@ download_and_extract() {
 
 # Start AitherZero
 start_aitherzero() {
-    print_message "$CYAN" "🚀 Starting AitherZero..."
+    print_message "$CYAN" "🚀 Starting AitherZero ($PROFILE profile)..."
     
     cd "$INSTALL_DIR"
     
@@ -173,11 +222,12 @@ start_aitherzero() {
 
 # Main execution
 main() {
-    print_message "$CYAN" "🚀 AitherZero Bootstrap for Linux/macOS"
-    print_message "$CYAN" "========================================"
+    print_message "$CYAN" "🚀 AitherZero Bootstrap for Linux/macOS v2.0"
+    print_message "$CYAN" "============================================="
     echo
     
     check_prerequisites
+    determine_profile
     get_latest_release
     download_and_extract
     start_aitherzero

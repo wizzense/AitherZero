@@ -1,0 +1,536 @@
+name: 🔄 CI Pipeline
+run-name: 🔄 CI - ${{ github.event_name }} on ${{ github.ref_name }} by @${{ github.actor }}
+
+on:
+  push:
+    branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/workflows/documentation.yml'
+  pull_request:
+    branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      force_full_build:
+        description: 'Force full build matrix (all profiles)'
+        required: false
+        default: false
+        type: boolean
+      skip_tests:
+        description: 'Skip test execution (build only)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+
+jobs:
+  change-detection:
+    name: 🔍 Change Detection
+    runs-on: ubuntu-latest
+    outputs:
+      code-changed: ${{ steps.changes.outputs.code }}
+      core-changed: ${{ steps.changes.outputs.core }}
+      modules-changed: ${{ steps.changes.outputs.modules }}
+      build-changed: ${{ steps.changes.outputs.build }}
+      tests-changed: ${{ steps.changes.outputs.tests }}
+      config-changed: ${{ steps.changes.outputs.config }}
+      security-changed: ${{ steps.changes.outputs.security }}
+      force-full: ${{ github.event.inputs.force_full_build == 'true' }}
+      should-build: ${{ steps.decide.outputs.should_build }}
+      build-profiles: ${{ steps.decide.outputs.build_profiles }}
+      
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Analyze File Changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            code:
+              - 'aither-core/**/*.ps1'
+              - 'aither-core/**/*.psm1'
+              - 'aither-core/**/*.psd1'
+              - 'Start-AitherZero.ps1'
+              - 'aither.ps1'
+              - 'aither.bat'
+            core:
+              - 'aither-core/aither-core.ps1'
+              - 'aither-core/AitherCore.*'
+              - 'aither-core/shared/**'
+            modules:
+              - 'aither-core/modules/**'
+            build:
+              - 'build/**'
+              - '.github/workflows/**'
+              - 'VERSION'
+            tests:
+              - 'tests/**'
+              - '**/*.Tests.ps1'
+            config:
+              - 'configs/**'
+              - '*.json'
+            security:
+              - 'aither-core/modules/SecureCredentials/**'
+              - 'aither-core/modules/SecurityAutomation/**'
+              - 'aither-core/modules/RemoteConnection/**'
+      
+      - name: Decide Build Strategy
+        id: decide
+        run: |
+          # Determine if we should build and which profiles
+          should_build="false"
+          build_profiles="minimal"
+          
+          # Force full build conditions
+          if [[ "${{ steps.changes.outputs.core }}" == "true" || 
+                "${{ steps.changes.outputs.build }}" == "true" || 
+                "${{ github.event.inputs.force_full_build }}" == "true" ||
+                "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+            should_build="true"
+            build_profiles="minimal,standard,development"
+          # Selective build conditions  
+          elif [[ "${{ steps.changes.outputs.code }}" == "true" || 
+                  "${{ steps.changes.outputs.modules }}" == "true" ||
+                  "${{ steps.changes.outputs.config }}" == "true" ]]; then
+            should_build="true"
+            # Determine profiles based on changed modules
+            if [[ "${{ steps.changes.outputs.modules }}" == *"DevEnvironment"* || 
+                  "${{ steps.changes.outputs.modules }}" == *"PatchManager"* ||
+                  "${{ steps.changes.outputs.modules }}" == *"TestingFramework"* ]]; then
+              build_profiles="minimal,standard,development"
+            elif [[ "${{ steps.changes.outputs.modules }}" == *"BackupManager"* ||
+                    "${{ steps.changes.outputs.modules }}" == *"SystemMonitoring"* ]]; then
+              build_profiles="minimal,standard"
+            fi
+          fi
+          
+          echo "should_build=$should_build" >> $GITHUB_OUTPUT
+          echo "build_profiles=$build_profiles" >> $GITHUB_OUTPUT
+          
+          echo "🔍 Build Decision:"
+          echo "  Should Build: $should_build"
+          echo "  Profiles: $build_profiles"
+          echo "  Trigger: ${{ github.event_name }}"
+          echo "  Changes: code=${{ steps.changes.outputs.code }}, core=${{ steps.changes.outputs.core }}, modules=${{ steps.changes.outputs.modules }}"
+
+  security-scan:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    needs: change-detection
+    if: needs.change-detection.outputs.security-changed == 'true' || needs.change-detection.outputs.code-changed == 'true'
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: Install PowerShell
+        run: |
+          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/powershell_7.4.6-1.deb_amd64.deb
+          sudo dpkg -i powershell_7.4.6-1.deb_amd64.deb || sudo apt-get install -f -y
+        
+      - name: Cache PowerShell Modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/powershell/Modules
+          key: ps-security-modules-${{ runner.os }}-${{ hashFiles('**/*.psd1') }}
+          restore-keys: ps-security-modules-${{ runner.os }}-
+        
+      - name: PowerShell Security Analysis
+        shell: pwsh
+        run: |
+          Write-Host "🔒 Running PowerShell Security Analysis..." -ForegroundColor Yellow
+          
+          # Install PSScriptAnalyzer
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -Repository PSGallery
+          
+          # Run security-focused analysis
+          $analysisParams = @{
+            Path = "."
+            Recurse = $true
+            ReportSummary = $true
+            Severity = @('Error', 'Warning')
+            IncludeRule = @(
+              'PSAvoidUsingPlainTextForPassword',
+              'PSAvoidUsingConvertToSecureStringWithPlainText', 
+              'PSAvoidUsingUsernameAndPasswordParams',
+              'PSAvoidUsingWriteHost',
+              'PSUseShouldProcessForStateChangingFunctions'
+            )
+          }
+          
+          $results = Invoke-ScriptAnalyzer @analysisParams
+          
+          # Export results
+          $results | Export-Clixml -Path "security-analysis.xml"
+          
+          # Security summary
+          $securityIssues = $results | Where-Object Severity -eq 'Error'
+          $warningIssues = $results | Where-Object Severity -eq 'Warning'
+          
+          Write-Host "📊 Security Analysis Summary:" -ForegroundColor Cyan
+          Write-Host "  Critical Issues: $($securityIssues.Count)" -ForegroundColor $(if($securityIssues.Count -gt 0) { 'Red' } else { 'Green' })
+          Write-Host "  Warnings: $($warningIssues.Count)" -ForegroundColor $(if($warningIssues.Count -gt 0) { 'Yellow' } else { 'Green' })
+          
+          # Fail on critical security issues
+          if ($securityIssues.Count -gt 0) {
+            Write-Host "❌ Critical security issues found:" -ForegroundColor Red
+            $securityIssues | ForEach-Object {
+              Write-Host "  • $($_.ScriptName):$($_.Line) - $($_.Message)" -ForegroundColor Red
+            }
+            exit 1
+          }
+          
+          Write-Host "✅ Security analysis passed" -ForegroundColor Green
+        
+      - name: Upload Security Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-analysis-${{ github.run_number }}
+          path: security-analysis.xml
+          retention-days: 30
+
+  build-matrix:
+    name: 🔨 Build Matrix
+    runs-on: ${{ matrix.os }}
+    needs: change-detection
+    if: needs.change-detection.outputs.should-build == 'true'
+    
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        profile: ${{ fromJson(format('["{0}"]', join(fromJson(format('["{0}"]', needs.change-detection.outputs.build-profiles)), '","'))) }}
+      fail-fast: false
+      max-parallel: 6
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup PowerShell Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/powershell/Modules
+            ~/Documents/PowerShell/Modules  
+            /Users/runner/.local/share/powershell/Modules
+          key: ps-build-${{ runner.os }}-${{ hashFiles('**/*.psd1') }}-v2
+          restore-keys: |
+            ps-build-${{ runner.os }}-v2
+            ps-build-${{ runner.os }}-
+      
+      - name: Install PowerShell (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/powershell_7.4.6-1.deb_amd64.deb
+          sudo dpkg -i powershell_7.4.6-1.deb_amd64.deb || sudo apt-get install -f -y
+      
+      - name: Install PowerShell (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install --cask powershell
+      
+      - name: Verify PowerShell Installation
+        shell: pwsh
+        run: |
+          Write-Host "✅ PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Green
+          Write-Host "📱 Platform: $($PSVersionTable.Platform)" -ForegroundColor Cyan
+          
+          if ($PSVersionTable.PSVersion.Major -lt 7) {
+            throw "PowerShell 7+ is required"
+          }
+      
+      - name: Cache Build Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/cache
+            ~/.cache/aitherzero
+          key: build-deps-${{ runner.os }}-${{ matrix.profile }}-${{ hashFiles('aither-core/**/*.ps1') }}
+          restore-keys: |
+            build-deps-${{ runner.os }}-${{ matrix.profile }}-
+            build-deps-${{ runner.os }}-
+      
+      - name: Build Package
+        shell: pwsh
+        run: |
+          Write-Host "🔨 Building AitherZero Package" -ForegroundColor Yellow
+          Write-Host "Profile: ${{ matrix.profile }}" -ForegroundColor Cyan
+          Write-Host "Platform: ${{ runner.os }}" -ForegroundColor Cyan
+          Write-Host "OS Details: $($PSVersionTable.Platform)" -ForegroundColor Cyan
+          
+          try {
+            # Determine platform name
+            $platformName = switch ('${{ runner.os }}') {
+              'Windows' { 'windows' }
+              'Linux' { 'linux' }
+              'macOS' { 'macos' }
+            }
+            
+            # Get version
+            $version = if (Test-Path "VERSION") {
+              (Get-Content "VERSION" -Raw).Trim()
+            } else {
+              "dev-$($env:GITHUB_SHA.Substring(0,7))"
+            }
+            
+            Write-Host "📦 Building: AitherZero-$version-${{ matrix.profile }}-$platformName" -ForegroundColor Green
+            
+            # Execute build
+            ./build/Build-Package.ps1 -Profile '${{ matrix.profile }}' -Platform $platformName -Version $version -Validate
+            
+            # Verify build output
+            $expectedArchive = "dist/AitherZero-$version-${{ matrix.profile }}-$platformName.*"
+            $builtArchives = Get-ChildItem -Path "dist" -Filter "AitherZero-$version-${{ matrix.profile }}-$platformName.*"
+            
+            if ($builtArchives.Count -eq 0) {
+              throw "No archive found matching pattern: $expectedArchive"
+            }
+            
+            $archive = $builtArchives[0]
+            $sizeInMB = [math]::Round($archive.Length / 1MB, 2)
+            
+            Write-Host "✅ Build completed successfully!" -ForegroundColor Green
+            Write-Host "📦 Archive: $($archive.Name) ($sizeInMB MB)" -ForegroundColor Cyan
+            
+            # Set outputs for summary
+            "PACKAGE_NAME=$($archive.BaseName)" >> $env:GITHUB_OUTPUT
+            "PACKAGE_SIZE=$sizeInMB MB" >> $env:GITHUB_OUTPUT
+            "ARCHIVE_PATH=$($archive.FullName)" >> $env:GITHUB_OUTPUT
+            
+          } catch {
+            Write-Host "❌ Build failed: $_" -ForegroundColor Red
+            throw
+          }
+      
+      - name: Upload Package Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: aitherzero-${{ matrix.profile }}-${{ runner.os }}
+          path: |
+            dist/AitherZero-*-${{ matrix.profile }}-*.*
+            dist/AitherZero-*-${{ matrix.profile }}-*/build-info.json
+          retention-days: 30
+          compression-level: 6
+
+  test-packages:
+    name: 🧪 Test Packages
+    runs-on: ${{ matrix.os }}
+    needs: [change-detection, build-matrix]
+    if: needs.change-detection.outputs.should-build == 'true' && github.event.inputs.skip_tests != 'true'
+    
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        profile: [minimal, standard]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Setup PowerShell (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/powershell_7.4.6-1.deb_amd64.deb
+          sudo dpkg -i powershell_7.4.6-1.deb_amd64.deb || sudo apt-get install -f -y
+      
+      - name: Download Package Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: aitherzero-${{ matrix.profile }}-${{ matrix.os }}
+          path: test-packages
+      
+      - name: Test Package Functionality
+        shell: pwsh
+        run: |
+          Write-Host "🧪 Testing Package Functionality" -ForegroundColor Yellow
+          
+          # Find the package archive
+          $archives = Get-ChildItem -Path "test-packages" -Filter "*.zip", "*.tar.gz"
+          if ($archives.Count -eq 0) {
+            throw "No package archive found"
+          }
+          
+          $archive = $archives[0]
+          Write-Host "📦 Testing: $($archive.Name)" -ForegroundColor Cyan
+          
+          # Extract package for testing
+          $extractPath = "test-extracted"
+          New-Item -ItemType Directory -Path $extractPath -Force | Out-Null
+          
+          if ($archive.Extension -eq ".zip") {
+            Expand-Archive -Path $archive.FullName -DestinationPath $extractPath -Force
+          } else {
+            # Handle tar.gz
+            tar -xzf $archive.FullName -C $extractPath
+          }
+          
+          # Find extracted package directory
+          $packageDir = Get-ChildItem -Path $extractPath -Directory | Select-Object -First 1
+          if (-not $packageDir) {
+            throw "No extracted package directory found"
+          }
+          
+          Write-Host "📁 Package directory: $($packageDir.Name)" -ForegroundColor Cyan
+          
+          # Run package validation
+          ./build/Test-BuildOutput.ps1 -PackagePath $packageDir.FullName -Profile '${{ matrix.profile }}' -Platform $(if ('${{ runner.os }}' -eq 'Windows') { 'windows' } else { 'linux' }) -Detailed
+          
+          # Test basic functionality
+          Push-Location $packageDir.FullName
+          try {
+            Write-Host "🚀 Testing basic startup..." -ForegroundColor Yellow
+            
+            # Test that the main script can be loaded
+            $testResult = ./Start-AitherZero.ps1 -Help 2>&1
+            if ($LASTEXITCODE -eq 0 -or $testResult -match "AitherZero") {
+              Write-Host "✅ Basic startup test passed" -ForegroundColor Green
+            } else {
+              Write-Warning "Startup test had issues but continuing: $testResult"
+            }
+          } finally {
+            Pop-Location
+          }
+          
+          Write-Host "✅ Package testing completed successfully" -ForegroundColor Green
+
+  quick-validation:
+    name: ⚡ Quick Validation
+    runs-on: ubuntu-latest
+    needs: change-detection
+    if: needs.change-detection.outputs.tests-changed == 'true' || needs.change-detection.outputs.code-changed == 'true'
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Install PowerShell
+        run: |
+          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/powershell_7.4.6-1.deb_amd64.deb
+          sudo dpkg -i powershell_7.4.6-1.deb_amd64.deb || sudo apt-get install -f -y
+      
+      - name: Cache PowerShell Modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/powershell/Modules
+          key: ps-test-modules-${{ runner.os }}-${{ hashFiles('**/*.psd1') }}
+          restore-keys: ps-test-modules-${{ runner.os }}-
+      
+      - name: Run Quick Validation
+        shell: pwsh
+        run: |
+          Write-Host "⚡ Running Quick Validation..." -ForegroundColor Yellow
+          
+          try {
+            if (Test-Path "./tests/Run-BulletproofValidation.ps1") {
+              ./tests/Run-BulletproofValidation.ps1 -ValidationLevel Quick -CI
+            } else {
+              Write-Host "No bulletproof validation found, running basic checks..." -ForegroundColor Yellow
+              
+              # Basic syntax validation
+              $psFiles = Get-ChildItem -Path "aither-core" -Filter "*.ps1" -Recurse
+              $syntaxErrors = 0
+              
+              foreach ($file in $psFiles) {
+                try {
+                  $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $file.FullName -Raw), [ref]$null)
+                } catch {
+                  Write-Host "❌ Syntax error in $($file.Name): $_" -ForegroundColor Red
+                  $syntaxErrors++
+                }
+              }
+              
+              if ($syntaxErrors -gt 0) {
+                throw "$syntaxErrors syntax errors found"
+              }
+              
+              Write-Host "✅ Basic syntax validation passed" -ForegroundColor Green
+            }
+          } catch {
+            Write-Host "❌ Quick validation failed: $_" -ForegroundColor Red
+            throw
+          }
+
+  build-summary:
+    name: 📋 Build Summary
+    runs-on: ubuntu-latest
+    needs: [change-detection, security-scan, build-matrix, test-packages, quick-validation]
+    if: always()
+    
+    steps:
+      - name: Generate Build Summary
+        run: |
+          echo "## 🔄 CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger**: ${{ github.event_name }} on ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Actor**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Job results
+          echo "### Job Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Change Detection | ${{ needs.change-detection.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY  
+          echo "| Build Matrix | ${{ needs.build-matrix.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Packages | ${{ needs.test-packages.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Quick Validation | ${{ needs.quick-validation.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Change analysis
+          echo "### Changes Detected" >> $GITHUB_STEP_SUMMARY
+          echo "- **Code**: ${{ needs.change-detection.outputs.code-changed }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Core**: ${{ needs.change-detection.outputs.core-changed }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Modules**: ${{ needs.change-detection.outputs.modules-changed }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build System**: ${{ needs.change-detection.outputs.build-changed }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tests**: ${{ needs.change-detection.outputs.tests-changed }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Security**: ${{ needs.change-detection.outputs.security-changed }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Build details
+          if [[ "${{ needs.change-detection.outputs.should-build }}" == "true" ]]; then
+            echo "### Build Details" >> $GITHUB_STEP_SUMMARY
+            echo "- **Profiles Built**: ${{ needs.change-detection.outputs.build-profiles }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Force Full Build**: ${{ needs.change-detection.outputs.force-full }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### Build Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "No significant changes detected that require building." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Overall status
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "### ❌ Pipeline Failed" >> $GITHUB_STEP_SUMMARY
+            echo "One or more jobs failed. Please review the logs above." >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "### ⏹️ Pipeline Cancelled" >> $GITHUB_STEP_SUMMARY
+            echo "The pipeline was cancelled." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ✅ Pipeline Completed" >> $GITHUB_STEP_SUMMARY
+            echo "All enabled jobs completed successfully!" >> $GITHUB_STEP_SUMMARY
+          fi

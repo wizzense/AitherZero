@@ -1,0 +1,359 @@
+name: 🔍 PR Validation
+run-name: 🔍 PR #${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: [main, develop]
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+
+concurrency:
+  group: pr-validation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  pr-analysis:
+    name: 📊 PR Analysis
+    runs-on: ubuntu-latest
+    outputs:
+      change-scope: ${{ steps.analysis.outputs.scope }}
+      test-level: ${{ steps.analysis.outputs.test_level }}
+      build-needed: ${{ steps.analysis.outputs.build_needed }}
+      
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Analyze PR Changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            core:
+              - 'aither-core/aither-core.ps1'
+              - 'aither-core/AitherCore.*'
+            critical_modules:
+              - 'aither-core/modules/Logging/**'
+              - 'aither-core/modules/LabRunner/**'
+              - 'aither-core/modules/OpenTofuProvider/**'
+            standard_modules:
+              - 'aither-core/modules/BackupManager/**'
+              - 'aither-core/modules/SystemMonitoring/**'
+              - 'aither-core/modules/RemoteConnection/**'
+            dev_modules:
+              - 'aither-core/modules/DevEnvironment/**'
+              - 'aither-core/modules/PatchManager/**'
+              - 'aither-core/modules/TestingFramework/**'
+            build_system:
+              - 'build/**'
+              - '.github/workflows/**'
+            tests:
+              - 'tests/**'
+            docs:
+              - '**/*.md'
+              - 'docs/**'
+      
+      - name: Determine Change Scope
+        id: analysis
+        run: |
+          # Analyze the scope of changes to determine validation strategy
+          
+          if [[ "${{ steps.changes.outputs.core }}" == "true" || "${{ steps.changes.outputs.build_system }}" == "true" ]]; then
+            SCOPE="critical"
+            TEST_LEVEL="full"
+            BUILD_NEEDED="true"
+          elif [[ "${{ steps.changes.outputs.critical_modules }}" == "true" ]]; then
+            SCOPE="important"
+            TEST_LEVEL="standard"
+            BUILD_NEEDED="true"
+          elif [[ "${{ steps.changes.outputs.standard_modules }}" == "true" || "${{ steps.changes.outputs.dev_modules }}" == "true" ]]; then
+            SCOPE="moderate"
+            TEST_LEVEL="quick"
+            BUILD_NEEDED="false"
+          elif [[ "${{ steps.changes.outputs.tests }}" == "true" ]]; then
+            SCOPE="tests-only"
+            TEST_LEVEL="quick"
+            BUILD_NEEDED="false"
+          elif [[ "${{ steps.changes.outputs.docs }}" == "true" ]]; then
+            SCOPE="docs-only"
+            TEST_LEVEL="none"
+            BUILD_NEEDED="false"
+          else
+            SCOPE="minimal"
+            TEST_LEVEL="quick"
+            BUILD_NEEDED="false"
+          fi
+          
+          echo "scope=$SCOPE" >> $GITHUB_OUTPUT
+          echo "test_level=$TEST_LEVEL" >> $GITHUB_OUTPUT
+          echo "build_needed=$BUILD_NEEDED" >> $GITHUB_OUTPUT
+          
+          echo "📊 PR Analysis Results:"
+          echo "  Scope: $SCOPE"
+          echo "  Test Level: $TEST_LEVEL"
+          echo "  Build Needed: $BUILD_NEEDED"
+
+  auto-label:
+    name: 🏷️ Auto-Label PR
+    runs-on: ubuntu-latest
+    needs: pr-analysis
+    if: always()
+    
+    steps:
+      - name: Label PR Based on Changes
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const title = pr.title.toLowerCase();
+            const body = (pr.body || '').toLowerCase();
+            const labels = [];
+            
+            // Type-based labels
+            if (title.match(/feat|feature|add|new/) || body.includes('new feature')) {
+              labels.push('enhancement');
+            }
+            if (title.match(/fix|bug|patch|hotfix/)) {
+              labels.push('bug');
+            }
+            if (title.match(/docs|documentation|readme/)) {
+              labels.push('documentation');
+            }
+            if (title.match(/test|testing|ci|workflow/)) {
+              labels.push('testing');
+            }
+            if (title.match(/refactor|cleanup|clean up/)) {
+              labels.push('maintenance');
+            }
+            if (title.match(/breaking|break/) || body.includes('breaking change')) {
+              labels.push('breaking-change');
+            }
+            
+            // Scope-based labels
+            const scope = '${{ needs.pr-analysis.outputs.change-scope }}';
+            switch (scope) {
+              case 'critical':
+                labels.push('scope/critical');
+                break;
+              case 'important':
+                labels.push('scope/important');
+                break;
+              case 'moderate':
+                labels.push('scope/moderate');
+                break;
+              case 'docs-only':
+                labels.push('scope/docs');
+                break;
+            }
+            
+            // Size label based on changes
+            const { data: prData } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number
+            });
+            
+            const changes = prData.additions + prData.deletions;
+            if (changes < 10) labels.push('size/XS');
+            else if (changes < 50) labels.push('size/S');
+            else if (changes < 200) labels.push('size/M');
+            else if (changes < 500) labels.push('size/L');
+            else labels.push('size/XL');
+            
+            // Apply labels
+            if (labels.length > 0) {
+              try {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  labels: labels
+                });
+                console.log(`Added labels: ${labels.join(', ')}`);
+              } catch (error) {
+                console.log(`Error adding labels: ${error.message}`);
+              }
+            }
+
+  quick-validation:
+    name: ⚡ Quick Validation
+    runs-on: ubuntu-latest
+    needs: pr-analysis
+    if: needs.pr-analysis.outputs.test-level != 'none'
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Install PowerShell
+        run: |
+          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/powershell_7.4.6-1.deb_amd64.deb
+          sudo dpkg -i powershell_7.4.6-1.deb_amd64.deb || sudo apt-get install -f -y
+      
+      - name: Cache PowerShell Modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/powershell/Modules
+          key: ps-pr-modules-${{ runner.os }}-${{ hashFiles('**/*.psd1') }}
+          restore-keys: ps-pr-modules-${{ runner.os }}-
+      
+      - name: PowerShell Syntax Check
+        shell: pwsh
+        run: |
+          Write-Host "⚡ Running PowerShell Syntax Check..." -ForegroundColor Yellow
+          
+          $syntaxErrors = 0
+          $files = Get-ChildItem -Path "aither-core" -Filter "*.ps1" -Recurse
+          
+          foreach ($file in $files) {
+            try {
+              $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $file.FullName -Raw), [ref]$null)
+              Write-Host "✅ $($file.Name)" -ForegroundColor Green
+            } catch {
+              Write-Host "❌ $($file.Name): $_" -ForegroundColor Red
+              $syntaxErrors++
+            }
+          }
+          
+          if ($syntaxErrors -gt 0) {
+            throw "$syntaxErrors syntax errors found"
+          }
+          
+          Write-Host "✅ All PowerShell files have valid syntax" -ForegroundColor Green
+      
+      - name: Run Validation Tests
+        shell: pwsh
+        if: needs.pr-analysis.outputs.test-level != 'quick' || contains(github.event.pull_request.changed_files, 'tests/')
+        run: |
+          Write-Host "🧪 Running Validation Tests..." -ForegroundColor Yellow
+          
+          if (Test-Path "./tests/Run-BulletproofValidation.ps1") {
+            $testLevel = '${{ needs.pr-analysis.outputs.test-level }}'
+            $validationLevel = switch ($testLevel) {
+              'full' { 'Standard' }
+              'standard' { 'Standard' }
+              default { 'Quick' }
+            }
+            
+            Write-Host "Running $validationLevel validation..." -ForegroundColor Cyan
+            ./tests/Run-BulletproofValidation.ps1 -ValidationLevel $validationLevel -CI
+          } else {
+            Write-Host "No validation script found, skipping tests" -ForegroundColor Yellow
+          }
+
+  build-test:
+    name: 🔨 Build Test
+    runs-on: ubuntu-latest
+    needs: pr-analysis
+    if: needs.pr-analysis.outputs.build-needed == 'true'
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Install PowerShell
+        run: |
+          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/powershell_7.4.6-1.deb_amd64.deb
+          sudo dpkg -i powershell_7.4.6-1.deb_amd64.deb || sudo apt-get install -f -y
+      
+      - name: Test Build System
+        shell: pwsh
+        run: |
+          Write-Host "🔨 Testing Build System..." -ForegroundColor Yellow
+          
+          # Test minimal build only for PR validation (fastest)
+          ./build/Build-Package.ps1 -Profile minimal -Platform linux -DryRun
+          
+          Write-Host "✅ Build system validation passed" -ForegroundColor Green
+
+  pr-summary:
+    name: 📋 PR Summary
+    runs-on: ubuntu-latest
+    needs: [pr-analysis, auto-label, quick-validation, build-test]
+    if: always()
+    
+    steps:
+      - name: Generate PR Summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            
+            // Create summary comment
+            const summary = `## 🔍 PR Validation Summary
+            
+            **Change Scope**: \`${{ needs.pr-analysis.outputs.change-scope }}\`
+            **Test Level**: \`${{ needs.pr-analysis.outputs.test-level }}\`
+            **Build Required**: \`${{ needs.pr-analysis.outputs.build-needed }}\`
+            
+            ### Job Results
+            | Job | Status |
+            |-----|--------|
+            | PR Analysis | ${{ needs.pr-analysis.result }} |
+            | Auto-Label | ${{ needs.auto-label.result }} |
+            | Quick Validation | ${{ needs.quick-validation.result }} |
+            | Build Test | ${{ needs.build-test.result }} |
+            
+            ### Next Steps
+            ${getNextSteps('${{ needs.pr-analysis.outputs.change-scope }}', '${{ contains(needs.*.result, 'failure') }}')}
+            
+            ---
+            *🤖 Automated PR validation completed*`;
+            
+            function getNextSteps(scope, hasFailures) {
+              if (hasFailures === 'true') {
+                return '❌ **Please fix the validation failures before merging.**';
+              }
+              
+              switch (scope) {
+                case 'critical':
+                  return '⚠️ **Critical changes detected.** Please ensure thorough testing and consider additional review.';
+                case 'important':
+                  return '📋 **Important changes detected.** Standard review process recommended.';
+                case 'docs-only':
+                  return '📚 **Documentation-only changes.** Ready for merge after review.';
+                default:
+                  return '✅ **Changes look good.** Ready for review and merge.';
+              }
+            }
+            
+            // Add summary to step summary
+            await core.summary
+              .addRaw(summary)
+              .write();
+              
+            console.log('PR validation summary generated');
+
+  # Auto-approve documentation-only PRs (optional)
+  auto-approve-docs:
+    name: 📚 Auto-approve Docs
+    runs-on: ubuntu-latest
+    needs: [pr-analysis, quick-validation]
+    if: |
+      needs.pr-analysis.outputs.change-scope == 'docs-only' && 
+      needs.quick-validation.result == 'success' &&
+      github.event.pull_request.user.login == github.repository_owner
+    
+    steps:
+      - name: Auto-approve Documentation PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              event: 'APPROVE',
+              body: '📚 Auto-approved: Documentation-only changes from repository owner.'
+            });
+            
+            console.log('Auto-approved documentation PR');
