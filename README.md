@@ -52,7 +52,7 @@ curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.s
 # 🚀 Essential Commands
 aither help                                    # Show all commands
 aither init                                    # Interactive setup
-aither dev release patch "Bug fix"             # Development workflow  
+aither dev patch "Bug fix"             # Development workflow  
 aither deploy plan ./infrastructure            # Infrastructure planning
 ```
 
@@ -60,7 +60,7 @@ aither deploy plan ./infrastructure            # Infrastructure planning
 ```cmd
 aither help
 aither init  
-aither dev release patch "Bug fix"
+aither dev patch "Bug fix"
 ```
 
 ### 🛠 Setup Options
@@ -138,8 +138,8 @@ aither init                                    # Interactive setup
 aither help                                    # Show all commands
 
 # Development workflows:
-aither dev release patch "Bug fix"             # Create patch release
-aither dev release minor "New features"        # Create minor release
+# Note: Use Invoke-ReleaseWorkflow for creating releases
+# aither dev commands are for other development tasks
 
 # Infrastructure operations:
 aither deploy plan ./infrastructure            # Plan deployment

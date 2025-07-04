@@ -1,0 +1,104 @@
+name: 🚀 Manual Release Creator
+run-name: 🚀 Manual Release - ${{ inputs.release_type }} by @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      description:
+        description: 'Release Description'
+        required: true
+        default: 'Bug fixes and improvements'
+      auto_merge:
+        description: 'Auto-merge PR if checks pass'
+        required: false
+        default: false
+        type: boolean
+      wait_for_merge:
+        description: 'Wait for PR merge and create tag'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-release:
+    name: 🚀 Create Release via PatchManager
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: 🔧 Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          
+      - name: 💻 Install PowerShell (if needed)
+        run: |
+          if ! command -v pwsh &> /dev/null; then
+            echo "Installing PowerShell 7..."
+            wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.4.1/powershell_7.4.1-1.deb_amd64.deb
+            sudo dpkg -i powershell_7.4.1-1.deb_amd64.deb
+            sudo apt-get install -f -y
+          fi
+          
+      - name: 🚀 Run Release Workflow
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          Write-Host "Starting AitherZero Release Process..." -ForegroundColor Magenta
+          
+          # Import PatchManager module
+          Import-Module ./aither-core/modules/PatchManager -Force
+          
+          # Execute release workflow
+          $params = @{
+            ReleaseType = "${{ inputs.release_type }}"
+            Description = "${{ inputs.description }}"
+            AutoMerge = $${{ inputs.auto_merge }}
+            WaitForMerge = $${{ inputs.wait_for_merge }}
+          }
+          
+          try {
+            Invoke-ReleaseWorkflow @params
+            
+            Write-Host "`n✅ Release workflow completed successfully!" -ForegroundColor Green
+          } catch {
+            Write-Host "`n❌ Release workflow failed: $_" -ForegroundColor Red
+            exit 1
+          }
+          
+      - name: 📋 Summary
+        if: always()
+        run: |
+          echo "## 🚀 Manual Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Release Type**: ${{ inputs.release_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Description**: ${{ inputs.description }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Auto-merge**: ${{ inputs.auto_merge }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Wait for merge**: ${{ inputs.wait_for_merge }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The release process has been initiated using PatchManager's Invoke-ReleaseWorkflow." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Check the created PR in the Pull Requests tab" >> $GITHUB_STEP_SUMMARY
+          echo "2. Review and merge the PR (or wait for auto-merge if enabled)" >> $GITHUB_STEP_SUMMARY
+          echo "3. The release tag will be created automatically after merge" >> $GITHUB_STEP_SUMMARY
+          echo "4. Monitor the build pipeline for release artifacts" >> $GITHUB_STEP_SUMMARY

@@ -180,6 +180,49 @@ Get-ChildItem 'aither-core/modules' -Directory | ForEach-Object {
 Test-ModuleManifest 'aither-core/modules/YourModule/YourModule.psd1'
 ```
 
+## 🚀 Release Management
+
+### Creating Releases (Maintainers Only)
+
+**IMPORTANT**: Always use `Invoke-ReleaseWorkflow` for creating releases. Never manually update VERSION files or create tags.
+
+```powershell
+# Import PatchManager
+Import-Module './aither-core/modules/PatchManager' -Force
+
+# Create a patch release
+Invoke-ReleaseWorkflow -ReleaseType "patch" -Description "Bug fixes and improvements"
+
+# Create a minor release
+Invoke-ReleaseWorkflow -ReleaseType "minor" -Description "New features added"
+
+# Create a major release
+Invoke-ReleaseWorkflow -ReleaseType "major" -Description "Breaking changes"
+
+# With auto-merge (requires permissions)
+Invoke-ReleaseWorkflow -ReleaseType "patch" -Description "Automated patch" -AutoMerge
+
+# Dry run to preview
+Invoke-ReleaseWorkflow -ReleaseType "minor" -Description "Test release" -DryRun
+```
+
+### Release Process
+
+The `Invoke-ReleaseWorkflow` command handles everything automatically:
+1. ✅ Updates VERSION file
+2. ✅ Creates PR with proper release notes
+3. ✅ Waits for PR merge (optional)
+4. ✅ Automatically creates and pushes release tag
+5. ✅ Triggers build pipeline for release artifacts
+
+### Alternative: GitHub Actions UI
+
+You can also trigger releases from the GitHub Actions UI:
+1. Go to Actions → Manual Release Creator
+2. Click "Run workflow"
+3. Select release type and enter description
+4. The workflow uses `Invoke-ReleaseWorkflow` internally
+
 ## 🚨 Common Issues and Solutions
 
 ### PatchManager Workflow Fails
