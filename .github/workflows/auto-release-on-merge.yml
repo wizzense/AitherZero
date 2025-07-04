@@ -8,6 +8,10 @@ on:
 
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
+  PR_TITLE: ${{ github.event.pull_request.title }}
+  PR_NUMBER: ${{ github.event.pull_request.number }}
+  PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+  PR_BODY: ${{ github.event.pull_request.body }}
 
 jobs:
   check-and-release:
@@ -23,7 +27,6 @@ jobs:
         run: |
           echo "Starting smart release detection..."
           LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
-          PR_TITLE='${{ github.event.pull_request.title }}'
           echo "PR Labels: $LABELS"
           echo "PR Title: $PR_TITLE"
           
@@ -127,9 +130,9 @@ jobs:
           git add VERSION
           git commit -m "Bump version to ${{ steps.version.outputs.new_version }} [skip ci]
 
-          Automated version bump triggered by PR #${{ github.event.pull_request.number }}
+          Automated version bump triggered by PR #$PR_NUMBER
           Release type: ${{ steps.check-label.outputs.release_type }}
-          PR: ${{ github.event.pull_request.title }}"
+          PR: $PR_TITLE"
           
       - name: 🏷️ Create and Push Tag
         if: steps.check-label.outputs.has_release_label == 'true'
@@ -138,13 +141,13 @@ jobs:
           TAG_NAME="v${{ steps.version.outputs.new_version }}"
           TAG_MESSAGE="Release $TAG_NAME
 
-          Triggered by: PR #${{ github.event.pull_request.number }}
-          Title: ${{ github.event.pull_request.title }}
-          Author: ${{ github.event.pull_request.user.login }}
+          Triggered by: PR #$PR_NUMBER
+          Title: $PR_TITLE
+          Author: $PR_AUTHOR
           Release Type: ${{ steps.check-label.outputs.release_type }}
 
           Changes included:
-          ${{ github.event.pull_request.body }}"
+          $PR_BODY"
           
           git tag -a "$TAG_NAME" -m "$TAG_MESSAGE"
           
@@ -160,7 +163,7 @@ jobs:
           if [ "${{ steps.check-label.outputs.has_release_label }}" == "true" ]; then
             echo "## 🚀 Auto-Release Summary" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**PR**: #${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}" >> $GITHUB_STEP_SUMMARY
+            echo "**PR**: #$PR_NUMBER - $PR_TITLE" >> $GITHUB_STEP_SUMMARY
             echo "**Release Type**: ${{ steps.check-label.outputs.release_type }}" >> $GITHUB_STEP_SUMMARY
             echo "**Version**: ${{ steps.version.outputs.current_version }} → ${{ steps.version.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
             echo "**Tag**: v${{ steps.version.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
@@ -169,7 +172,7 @@ jobs:
           else
             echo "## ℹ️ No Release Required" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "PR #${{ github.event.pull_request.number }} was determined to not require a release." >> $GITHUB_STEP_SUMMARY
+            echo "PR #$PR_NUMBER was determined to not require a release." >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "**Smart Detection Results:**" >> $GITHUB_STEP_SUMMARY
             echo "- Documentation-only or no-release label detected" >> $GITHUB_STEP_SUMMARY
