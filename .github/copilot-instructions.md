@@ -1,6 +1,47 @@
-# AitherZero Infrastructure Automation - GitHub Copilot Instructions
+````instructions
+# AitherZero Infrastructure Automation - GitHub Copilot Instructions (Updated)
 
 This project is a **PowerShell-based infrastructure automation framework** using OpenTofu/Terraform for lab environments. Follow these instructions when generating code or providing assistance.
+
+## 🚀 CI/CD & Build System Integration
+
+**GitHub Actions Workflows**: The project uses a comprehensive CI/CD pipeline with these key workflows:
+- **ci-and-release.yml**: Primary CI/CD pipeline with build, test, and release stages
+- **pr-validation.yml**: PR validation with bulletproof testing and build verification
+- **build-release.yml**: Cross-platform package building (Windows, Linux, macOS)
+- **documentation.yml**: Automated documentation generation and deployment
+
+**Build System**: Uses `build/Build-Package.ps1` with profiles:
+- **minimal.json**: Core components only (fastest build)
+- **standard.json**: Essential modules and features
+- **development.json**: Full development environment with all tools
+
+**Testing Integration**: Multi-level testing approach:
+```powershell
+# Quick validation (30 seconds) - Use for rapid feedback
+pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Quick"
+
+# Standard validation (2-5 minutes) - Use for PR validation
+pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Standard"
+
+# Complete validation (10-15 minutes) - Use for release preparation
+pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Complete"
+
+# CI mode with fail-fast for automated environments
+pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Standard" -CI -FailFast
+```
+
+**Build Profile Usage**: When making changes, always test across profiles:
+```powershell
+# Test minimal build (essential functionality)
+pwsh -File "build/Build-Package.ps1" -Profile "minimal" -Platform "current"
+
+# Test standard build (typical deployment)
+pwsh -File "build/Build-Package.ps1" -Profile "standard" -Platform "current"
+
+# Test development build (full features)
+pwsh -File "build/Build-Package.ps1" -Profile "development" -Platform "current"
+```
 
 ## Core Standards & Requirements
 
@@ -15,6 +56,11 @@ This project is a **PowerShell-based infrastructure automation framework** using
 **Error Handling**: Always implement comprehensive try-catch blocks with detailed logging using the `Logging` module.
 
 **Testing**: Use the bulletproof testing framework with `Run-BulletproofValidation.ps1` for comprehensive validation.
+
+**Build Integration**: Always consider build profiles when making changes:
+- Test with minimal profile for essential functionality
+- Validate with standard profile for typical deployments
+- Use development profile for full feature testing
 
 ## Project Modules & Their Purposes
 
@@ -36,7 +82,7 @@ Use these existing modules instead of creating new functionality:
 - **TestingFramework**: Bulletproof testing wrapper with project-specific configurations
 - **UnifiedMaintenance**: Unified entry point for all maintenance operations
 
-## Code Generation Patterns
+## 🔧 Code Generation Patterns
 
 **Function Structure**: Use `[CmdletBinding(SupportsShouldProcess)]` with proper parameter validation and begin/process/end blocks.
 
@@ -60,210 +106,108 @@ $projectRoot = Find-ProjectRoot
 Import-Module (Join-Path $projectRoot "aither-core/modules/ModuleName") -Force
 ```
 
-**Shared Utilities**: Always use shared utilities from `aither-core/shared/` directory:
-```powershell
-# Always import Find-ProjectRoot for path detection
-. "$PSScriptRoot/../../shared/Find-ProjectRoot.ps1"
-$projectRoot = Find-ProjectRoot
+## 🧪 Testing & CI/CD Integration
 
-# Use standardized module imports
-Import-Module (Join-Path $projectRoot "aither-core/modules/ModuleName") -Force
+**Pre-commit Testing**: Always run quick validation before committing:
+```powershell
+# Quick pre-commit check (30 seconds)
+pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Quick" -FailFast
 ```
 
-## Intelligent Workflow Patterns
-
-**Problem Analysis**: When users describe issues, use semantic search to find similar problems and solutions:
-- Search for error patterns in existing code
-- Identify related modules and functions
-- Check existing tests for similar scenarios
-- Review documentation for established patterns
-
-**Context-Aware Suggestions**: Leverage repository knowledge:
-- Understand the current module being worked on
-- Suggest appropriate VS Code tasks for the workflow
-- Recommend testing strategies based on changes
-- Identify cross-module dependencies and impacts
-
-**Progressive Enhancement**: Build solutions incrementally:
-1. Start with minimal viable solution using existing tools
-2. Add comprehensive error handling and logging
-3. Include appropriate tests and validation
-4. Consider cross-platform compatibility
-5. Add documentation and examples
-
-**Tool Chain Integration**: Connect tools effectively:
+**PR Validation**: Use standard validation for pull requests:
 ```powershell
-# Example: Complete development workflow
-# 1. Make changes using PatchManager
-Invoke-PatchWorkflow -PatchDescription "Add new feature" -PatchOperation {
-    # Implementation
-} -TestCommands @(
-    # 2. Run appropriate tests
+# Standard PR validation (2-5 minutes)
+pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Standard" -CI
+```
+
+**Build Verification**: Test builds across profiles:
+```powershell
+# Build verification workflow
+$profiles = @("minimal", "standard", "development")
+foreach ($profile in $profiles) {
+    pwsh -File "build/Build-Package.ps1" -Profile $profile -Platform "current" -WhatIf
+}
+```
+
+**GitHub Actions Integration**: When modifying workflows, always:
+1. Test locally with `act` if available
+2. Use `WhatIf` for verification steps
+3. Include proper error handling and fallback logic
+4. Add comprehensive logging for debugging
+
+## 🎯 PatchManager Integration Patterns
+
+**Primary Workflow**: Use PatchManager v2.1 for ALL Git operations:
+```powershell
+# Complete workflow with build validation
+Invoke-PatchWorkflow -PatchDescription "Clear description of changes" -PatchOperation {
+    # Your changes here - ANY working tree state is fine
+    # PatchManager auto-commits existing changes first
+} -CreatePR -TestCommands @(
     "pwsh -File tests/Run-BulletproofValidation.ps1 -ValidationLevel Quick",
-    "pwsh -File tests/unit/modules/MyModule/MyModule-Core.Tests.ps1"
-) -CreatePR
-
-# 3. Use VS Code tasks for interactive workflows
-# Ctrl+Shift+P → Tasks: Run Task → "🔧 Development: Setup Complete Environment"
+    "pwsh -File build/Build-Package.ps1 -Profile minimal -Platform current"
+)
 ```
 
-## Infrastructure as Code Standards
-
-**OpenTofu/Terraform**: Use HCL syntax with proper variable definitions and output declarations.
-
-**Resource Naming**: Follow consistent naming conventions with environment prefixes.
-
-**State Management**: Always consider remote state and workspace isolation.
-
-**Security**: Never hardcode credentials; use variable files and secure practices.
-
-## Testing & Quality Assurance
-
-**Pester Tests**: Create comprehensive test suites with Describe-Context-It structure.
-
-**Mock Strategy**: Use proper mocking for external dependencies and file system operations.
-
-**Code Coverage**: Aim for high test coverage with meaningful assertions.
-
-**Integration Tests**: Include end-to-end testing scenarios for critical workflows.
-
-## Security & Best Practices
-
-**Credential Handling**: Use secure strings and credential objects, never plain text passwords.
-
-**Input Validation**: Validate all user inputs and external data sources.
-
-**Least Privilege**: Follow principle of least privilege for all operations.
-
-**Audit Logging**: Log all significant operations for security and troubleshooting.
-
-## Advanced Copilot Features
-
-**Context Awareness**: Leverage repository-specific instructions to provide context-aware suggestions.
-
-**Prompt Integration**: Use specialized prompt templates for PowerShell development, testing, infrastructure, and troubleshooting.
-
-**Code Review Assistance**: Generate code that adheres to project standards and includes inline comments for clarity.
-
-**Documentation Generation**: Automatically include detailed help documentation for all functions and modules.
-
-**Performance Optimization**: Suggest improvements for parallel execution, memory efficiency, and large dataset handling.
-
-**Error Diagnosis**: Provide troubleshooting steps and common resolutions for errors encountered during development.
-
-**Architecture Awareness**: Follow advanced architecture patterns from `instructions/advanced-architecture.instructions.md` including:
-- Shared utilities integration (Find-ProjectRoot, etc.)
-- Dynamic repository detection and cross-fork operations
-- PatchManager v2.1 single-step workflows
-- Bulletproof testing integration
-- VS Code task creation patterns
-- Comprehensive error handling and logging standards
-
-## Advanced Development Patterns
-
-**Repository-Aware Code**: All generated code should work across the fork chain (AitherZero → AitherLabs → Aitherium):
+**CI/CD Integration**: Coordinate with GitHub Actions:
 ```powershell
-# Dynamic repository detection
-$repoInfo = Get-GitRepositoryInfo
-$targetRepo = "$($repoInfo.Owner)/$($repoInfo.Name)"
-
-# Cross-fork operations
-Invoke-PatchWorkflow -Description "Feature" -TargetFork "upstream" -CreatePR
+# Workflow that triggers CI/CD pipeline
+Invoke-PatchWorkflow -PatchDescription "Feature with CI/CD integration" -PatchOperation {
+    # Implementation changes
+} -CreatePR -Priority "Medium" -TestCommands @(
+    "pwsh -File tests/Run-BulletproofValidation.ps1 -ValidationLevel Standard -CI",
+    "pwsh -File build/Build-Package.ps1 -Profile standard -Platform current"
+)
 ```
 
-**Module Architecture Standards**: Follow standardized module patterns:
-```powershell
-# Module Structure (REQUIRED):
-ModuleName/
-├── ModuleName.psd1          # Manifest with proper exports
-├── ModuleName.psm1          # Main module loader
-├── Public/                  # Exported functions
-├── Private/                 # Internal functions
-└── README.md               # Module documentation
+## 🏗️ Advanced Architecture Patterns
 
-# Function structure template:
-function Public-Function {
-    [CmdletBinding(SupportsShouldProcess)]
+**Build-Aware Development**: Always consider build implications:
+```powershell
+# Module changes that affect build profiles
+function Update-ModuleForBuild {
     param(
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [string]$RequiredParam
+        [string]$ModuleName,
+        [string[]]$BuildProfiles = @("minimal", "standard", "development")
     )
-
-    begin {
-        . "$PSScriptRoot/../../shared/Find-ProjectRoot.ps1"
-        $projectRoot = Find-ProjectRoot
-        Write-Verbose "Starting $($MyInvocation.MyCommand.Name)"
-    }
-
-    process {
-        try {
-            if ($PSCmdlet.ShouldProcess($RequiredParam, "Operation")) {
-                # Main logic with logging
-                Write-CustomLog -Level 'INFO' -Message "Operation started"
-            }
-        } catch {
-            Write-CustomLog -Level 'ERROR' -Message "Error: $($_.Exception.Message)"
-            throw
+    
+    foreach ($profile in $BuildProfiles) {
+        # Test module inclusion in each profile
+        $buildConfig = Get-Content "build/profiles/$profile.json" | ConvertFrom-Json
+        if ($buildConfig.modules -contains $ModuleName) {
+            Write-Host "Module $ModuleName is included in $profile profile"
         }
     }
 }
 ```
 
-**Cross-Platform Standards**: Ensure all code works on Windows, Linux, and macOS:
+**Workflow-Aware Changes**: Consider GitHub Actions impact:
 ```powershell
-# Use Join-Path for ALL path construction
-$configPath = Join-Path $projectRoot "configs/app-config.json"
-
-# Platform-aware conditionals when needed
-if ($IsWindows) {
-    # Windows-specific logic
-} elseif ($IsLinux) {
-    # Linux-specific logic
+# Function that updates workflows safely
+function Update-WorkflowSafely {
+    param([string]$WorkflowFile, [scriptblock]$Changes)
+    
+    try {
+        # Backup existing workflow
+        $backup = "$WorkflowFile.backup"
+        Copy-Item $WorkflowFile $backup
+        
+        # Apply changes
+        & $Changes
+        
+        # Validate workflow syntax
+        if (Test-Path $WorkflowFile) {
+            Write-Host "Workflow updated successfully"
+        }
+    } catch {
+        # Restore backup on failure
+        Move-Item $backup $WorkflowFile
+        throw
+    }
 }
 ```
 
-## Intelligent Workflow Patterns
-
-**Problem Analysis**: When users describe issues, use semantic search to find similar problems and solutions:
-- Search for error patterns in existing code
-- Identify related modules and functions
-- Check existing tests for similar scenarios
-- Review documentation for established patterns
-
-**Context-Aware Suggestions**: Leverage repository knowledge:
-- Understand the current module being worked on
-- Suggest appropriate VS Code tasks for the workflow
-- Recommend testing strategies based on changes
-- Identify cross-module dependencies and impacts
-
-**Progressive Enhancement**: Build solutions incrementally:
-1. Start with minimal viable solution using existing tools
-2. Add comprehensive error handling and logging
-3. Include appropriate tests and validation
-4. Consider cross-platform compatibility
-5. Add documentation and examples
-
-## Tool Chain Integration
-
-Connect tools effectively for complete development workflows:
-
-```powershell
-# Example: Complete development workflow
-# 1. Make changes using PatchManager
-Invoke-PatchWorkflow -PatchDescription "Add new feature" -PatchOperation {
-    # Implementation
-} -TestCommands @(
-    # 2. Run appropriate tests
-    "pwsh -File tests/Run-BulletproofValidation.ps1 -ValidationLevel Quick",
-    "pwsh -File tests/unit/modules/MyModule/MyModule-Core.Tests.ps1"
-) -CreatePR
-
-# 3. Use VS Code tasks for interactive workflows
-# Ctrl+Shift+P → Tasks: Run Task → "🔧 Development: Setup Complete Environment"
-```
-
-## VS Code Integration & Available Tools
+## 📊 VS Code Integration & Available Tools
 
 ### Core Development Tasks
 Use these VS Code tasks for primary development workflows:
@@ -273,6 +217,12 @@ Use these VS Code tasks for primary development workflows:
 - `Ctrl+Shift+P → Tasks: Run Task → "🔥 Bulletproof Validation - Standard"` (2-5 minutes)
 - `Ctrl+Shift+P → Tasks: Run Task → "🎯 Bulletproof Validation - Complete"` (10-15 minutes)
 - `Ctrl+Shift+P → Tasks: Run Task → "⚡ Bulletproof Validation - Quick (Fail-Fast)"`
+
+**Build & Package Management**:
+- `Ctrl+Shift+P → Tasks: Run Task → "📦 Local Build: Create Windows Package"`
+- `Ctrl+Shift+P → Tasks: Run Task → "🐧 Local Build: Create Linux Package"`
+- `Ctrl+Shift+P → Tasks: Run Task → "🚀 Local Build: Full Release Simulation"`
+- `Ctrl+Shift+P → Tasks: Run Task → "🔍 Local Build: Test Local Package"`
 
 **PatchManager Workflows**:
 - `Ctrl+Shift+P → Tasks: Run Task → "PatchManager: Create Feature Patch"`
@@ -285,59 +235,27 @@ Use these VS Code tasks for primary development workflows:
 - `Ctrl+Shift+P → Tasks: Run Task → "🏗️ Architecture: Validate Complete System"`
 - `Ctrl+Shift+P → Tasks: Run Task → "🌐 Repository: Update All Cross-Fork Configs"`
 
-**Build & Release**:
-- `Ctrl+Shift+P → Tasks: Run Task → "📦 Local Build: Create Windows Package"`
-- `Ctrl+Shift+P → Tasks: Run Task → "🐧 Local Build: Create Linux Package"`
-- `Ctrl+Shift+P → Tasks: Run Task → "🚀 Local Build: Full Release Simulation"`
+### Advanced Workflows
 
-### Automated Tool Integration
+**Turbo Mode Tasks** (High-Performance):
+- `Ctrl+Shift+P → Tasks: Run Task → "⚡ TURBO: Lightning Module Check (3s)"`
+- `Ctrl+Shift+P → Tasks: Run Task → "🚀 TURBO: Ultra-Fast Test Suite (10-30s)"`
+- `Ctrl+Shift+P → Tasks: Run Task → "🔥 TURBO: Complete Test Suite (30-60s)"`
+- `Ctrl+Shift+P → Tasks: Run Task → "🚀 TURBO: Full CI Simulation (Local)"`
 
-**Testing Integration**: Always use bulletproof validation with appropriate level:
-```powershell
-# Quick validation (30 seconds) - Use for rapid feedback
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Quick"
+**Release Management**:
+- `Ctrl+Shift+P → Tasks: Run Task → "🚀 Quick Release: Patch Version"`
+- `Ctrl+Shift+P → Tasks: Run Task → "🔧 Quick Release: Minor Version"`
+- `Ctrl+Shift+P → Tasks: Run Task → "🎉 Quick Release: Major Version (v1.0.0 GA Ready!)"`
 
-# Standard validation (2-5 minutes) - Use for thorough testing
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Standard"
-
-# Complete validation (10-15 minutes) - Use for release preparation
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Complete"
-
-# CI mode with fail-fast for automated environments
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Standard" -CI -FailFast
-```
-
-**PatchManager Integration**: Use PatchManager v2.1 for ALL Git operations:
-```powershell
-# Primary workflow - handles dirty trees, creates issues by default
-Invoke-PatchWorkflow -PatchDescription "Clear description of changes" -PatchOperation {
-    # Your changes here - ANY working tree state is fine
-    # PatchManager auto-commits existing changes first
-} -CreatePR -TestCommands @("validation-command")
-
-# Local-only changes (no GitHub integration)
-Invoke-PatchWorkflow -PatchDescription "Local fix" -CreateIssue:$false -PatchOperation {
-    # Your changes
-}
-
-# Cross-fork contributions to upstream
-Invoke-PatchWorkflow -PatchDescription "Upstream improvement" -TargetFork "upstream" -CreatePR -PatchOperation {
-    # Changes for upstream
-}
-
-# Emergency rollback operations
-Invoke-PatchRollback -RollbackType "LastCommit" -CreateBackup -DryRun  # Preview first
-Invoke-PatchRollback -RollbackType "LastCommit" -CreateBackup          # Execute
-```
-
-### Tool Selection Guidelines
+## 🎛️ Tool Selection Guidelines
 
 **When to use VS Code tasks**:
 - Interactive development workflows
 - Quick access to common operations
 - Visual feedback and progress tracking
 - Testing specific modules or components
-- Setting up development environments
+- Building and packaging operations
 - Running predefined automation sequences
 
 **When to use command line tools directly**:
@@ -355,6 +273,13 @@ Invoke-PatchRollback -RollbackType "LastCommit" -CreateBackup          # Execute
 - Rollback and recovery operations
 - Coordinated workflows requiring Git and GitHub integration
 
+**When to use Build System**:
+- Creating distributable packages
+- Testing cross-platform compatibility
+- Validating module dependencies
+- Preparing for releases
+- Testing different deployment scenarios
+
 **When to use Bulletproof Validation**:
 - Before committing any changes (Quick level)
 - Before creating pull requests (Standard level)
@@ -362,20 +287,133 @@ Invoke-PatchRollback -RollbackType "LastCommit" -CreateBackup          # Execute
 - In CI/CD pipelines with fail-fast mode
 - When troubleshooting module issues
 
-**When to use Find-ProjectRoot utility**:
-- ALWAYS when building paths in scripts
-- Module imports and dependency loading
-- Cross-platform path construction
-- Dynamic repository detection needs
+## 🛠️ Workflow Optimization Patterns
 
-## Collaboration and Feedback
+**Development Workflow**:
+```powershell
+# Optimal development cycle
+1. Write code changes
+2. Run quick validation: pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Quick"
+3. Test with minimal build: pwsh -File "build/Build-Package.ps1" -Profile "minimal" -Platform "current"
+4. Use PatchManager for Git operations: Invoke-PatchWorkflow -PatchDescription "..." -CreatePR
+```
 
-**Team Standards**: Ensure generated code aligns with team coding standards and practices.
+**CI/CD Workflow**:
+```powershell
+# Automated pipeline integration
+1. PatchManager creates PR with tests
+2. GitHub Actions runs pr-validation.yml
+3. Build-release.yml creates packages
+4. Documentation.yml updates docs
+5. ci-and-release.yml handles full release
+```
 
-**Feedback Loop**: Continuously refine instructions based on team feedback and project evolution.
+**Release Workflow**:
+```powershell
+# Release preparation
+1. Run complete validation: pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Complete"
+2. Test all build profiles: foreach ($profile in @("minimal","standard","development")) { ... }
+3. Create release: pwsh -File "Quick-Release.ps1" -Type "Minor"
+4. Verify GitHub Actions success
+```
 
-**Version Control**: Track changes to instructions and prompt templates to maintain consistency across the team.
+## 🔍 Error Handling & Debugging
 
-**Training and Onboarding**: Use Copilot to assist new team members in understanding project architecture and standards.
+**Build Errors**: When build fails, check:
+1. Build profile configuration (build/profiles/*.json)
+2. Module dependencies and imports
+3. Cross-platform path issues
+4. PowerShell version compatibility
 
-When suggesting code changes or new features, always consider how they integrate with existing modules and follow these established patterns.
+**Test Failures**: When tests fail, check:
+1. Module loading and imports
+2. Mocking configuration
+3. Test data and fixtures
+4. Cross-platform compatibility
+
+**Workflow Failures**: When GitHub Actions fail, check:
+1. Workflow syntax and structure
+2. Required secrets and variables
+3. Artifact dependencies
+4. Cross-platform runner compatibility
+
+## 🚀 Performance Optimization
+
+**Parallel Execution**: Use ParallelExecution module for performance:
+```powershell
+# Parallel operations
+Import-Module (Join-Path $projectRoot "aither-core/modules/ParallelExecution") -Force
+$operations = @(
+    { Test-Module "ModuleA" },
+    { Test-Module "ModuleB" },
+    { Test-Module "ModuleC" }
+)
+Invoke-ParallelOperation -Operations $operations -MaxParallelJobs 4
+```
+
+**Build Optimization**: Use appropriate build profiles:
+- **minimal**: For quick testing and CI
+- **standard**: For typical deployments
+- **development**: For full feature development
+
+**Test Optimization**: Use appropriate validation levels:
+- **Quick**: For rapid feedback during development
+- **Standard**: For PR validation and CI
+- **Complete**: For release preparation
+
+## 📚 Documentation Standards
+
+**Module Documentation**: Every module must have:
+- README.md with usage examples
+- Function help documentation
+- Build profile inclusion notes
+- Cross-platform compatibility notes
+
+**Workflow Documentation**: Every workflow must have:
+- Clear description of purpose
+- Input/output specifications
+- Error handling documentation
+- Performance characteristics
+
+**Code Documentation**: Every function must have:
+- Parameter descriptions
+- Return value documentation
+- Example usage
+- Error conditions
+
+## 🔗 Integration Points
+
+**GitHub Actions**: Workflows integrate with:
+- PatchManager for automated Git operations
+- Build system for package creation
+- Testing framework for validation
+- Documentation generation
+
+**VS Code**: Tasks integrate with:
+- PowerShell execution environment
+- Git operations through PatchManager
+- Build system for packaging
+- Testing framework for validation
+
+**Build System**: Profiles integrate with:
+- Module dependency resolution
+- Cross-platform packaging
+- Testing framework validation
+- Release management
+
+## 🎯 Best Practices Summary
+
+1. **Always use PatchManager** for Git operations
+2. **Test across build profiles** before committing
+3. **Run appropriate validation level** for the context
+4. **Use VS Code tasks** for interactive workflows
+5. **Follow cross-platform patterns** for compatibility
+6. **Include comprehensive error handling** in all code
+7. **Document all changes** and integration points
+8. **Optimize for performance** with parallel execution
+9. **Validate GitHub Actions** before pushing
+10. **Use shared utilities** instead of custom implementations
+
+When suggesting code changes or new features, always consider how they integrate with the build system, testing framework, and CI/CD pipeline.
+
+````
