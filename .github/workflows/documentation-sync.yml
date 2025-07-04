@@ -1,0 +1,408 @@
+name: Documentation & Sync Pipeline
+
+on:
+  push:
+    paths:
+      - 'docs/**'
+      - '**.md'
+      - 'aither-core/modules/**/README.md'
+      - '.github/workflows/documentation-sync.yml'
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight UTC
+  workflow_dispatch:
+    inputs:
+      generate_api_docs:
+        description: 'Generate API documentation'
+        required: false
+        default: true
+        type: boolean
+      sync_repositories:
+        description: 'Sync with upstream repositories'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  generate-documentation:
+    name: Generate Documentation
+    runs-on: ubuntu-latest
+    if: github.event.inputs.generate_api_docs != 'false'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup PowerShell
+        uses: PowerShell/setup-powershell@v1.0.0
+        with:
+          powershell-version: '7.4'
+      
+      - name: Generate module documentation
+        run: |
+          pwsh -NoProfile -Command @'
+          try {
+            # Find all module directories
+            $modulePath = "./aither-core/modules"
+            $modules = Get-ChildItem -Path $modulePath -Directory
+            
+            # Create docs directory if not exists
+            $apiDocsPath = "./docs/api"
+            if (-not (Test-Path $apiDocsPath)) {
+              New-Item -Path $apiDocsPath -ItemType Directory -Force
+            }
+            
+            Write-Host "📚 Generating API documentation for modules..."
+            
+            foreach ($module in $modules) {
+              $moduleName = $module.Name
+              Write-Host "Processing module: $moduleName"
+              
+              # Import module
+              Import-Module $module.FullName -Force -ErrorAction Continue
+              
+              # Get module commands
+              $commands = Get-Command -Module $moduleName -ErrorAction SilentlyContinue
+              
+              if ($commands) {
+                $docContent = @"
+          # $moduleName Module API Reference
+          
+          Generated on: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+          
+          ## Overview
+          
+          This module provides the following commands:
+          
+          "@
+                
+                foreach ($cmd in $commands) {
+                  $help = Get-Help $cmd.Name -Full -ErrorAction SilentlyContinue
+                  
+                  $docContent += @"
+          
+          ## $($cmd.Name)
+          
+          **Synopsis**: $($help.Synopsis)
+          
+          **Syntax**:
+          ```powershell
+          $($help.Syntax)
+          ```
+          
+          "@
+                  
+                  if ($help.Description) {
+                    $docContent += @"
+          **Description**:
+          $($help.Description.Text)
+          
+          "@
+                  }
+                  
+                  if ($help.Parameters) {
+                    $docContent += "**Parameters**:`n`n"
+                    foreach ($param in $help.Parameters.Parameter) {
+                      $docContent += "- **$($param.Name)**: $($param.Description.Text)`n"
+                    }
+                    $docContent += "`n"
+                  }
+                  
+                  if ($help.Examples) {
+                    $docContent += "**Examples**:`n`n"
+                    foreach ($example in $help.Examples.Example) {
+                      $docContent += "```powershell`n$($example.Code)`n````n"
+                      if ($example.Remarks) {
+                        $docContent += "$($example.Remarks.Text)`n`n"
+                      }
+                    }
+                  }
+                }
+                
+                # Write documentation file
+                $docFile = Join-Path $apiDocsPath "$moduleName.md"
+                Set-Content -Path $docFile -Value $docContent -Encoding UTF8
+                Write-Host "✅ Created documentation: $docFile"
+              }
+            }
+            
+            Write-Host "`n📊 Documentation generation complete!"
+            
+          } catch {
+            Write-Error "Documentation generation failed: $_"
+            exit 1
+          }
+          '@
+      
+      - name: Generate module dependency graph
+        run: |
+          pwsh -NoProfile -Command @'
+          try {
+            $modules = Get-ChildItem -Path "./aither-core/modules" -Directory
+            $dependencies = @{}
+            
+            foreach ($module in $modules) {
+              $manifest = Get-ChildItem -Path $module.FullName -Filter "*.psd1" | Select-Object -First 1
+              if ($manifest) {
+                $data = Import-PowerShellDataFile $manifest.FullName
+                if ($data.RequiredModules) {
+                  $dependencies[$module.Name] = $data.RequiredModules
+                }
+              }
+            }
+            
+            # Create Mermaid diagram
+            $mermaid = @"
+          # Module Dependency Graph
+          
+          ```mermaid
+          graph TD
+          "@
+            
+            foreach ($module in $dependencies.Keys) {
+              foreach ($dep in $dependencies[$module]) {
+                $mermaid += "`n    $module --> $dep"
+              }
+            }
+            
+            $mermaid += "`n```"
+            
+            Set-Content -Path "./docs/module-dependencies.md" -Value $mermaid -Encoding UTF8
+            Write-Host "✅ Created module dependency graph"
+            
+          } catch {
+            Write-Warning "Could not generate dependency graph: $_"
+          }
+          '@
+      
+      - name: Commit documentation changes
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add docs/
+          if git diff --staged --quiet; then
+            echo "No documentation changes to commit"
+          else
+            git commit -m "docs: update API documentation [skip ci]"
+            git push
+          fi
+
+  sync-repositories:
+    name: Sync Repositories
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'schedule' || 
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.sync_repositories == 'true')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup PowerShell
+        uses: PowerShell/setup-powershell@v1.0.0
+        with:
+          powershell-version: '7.4'
+      
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Sync with upstream
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pwsh -NoProfile -Command @'
+          try {
+            # Get repository info
+            $repoInfo = @{
+              Owner = "${{ github.repository_owner }}"
+              Name = "${{ github.event.repository.name }}"
+            }
+            
+            Write-Host "🔄 Checking for upstream repository..."
+            
+            # Determine upstream based on fork chain
+            $upstream = $null
+            switch ($repoInfo.Name) {
+              "AitherZero" { 
+                # This is the root repository
+                Write-Host "This is the root repository. No upstream to sync."
+                exit 0
+              }
+              "AitherLabs" { 
+                $upstream = "wizzense/AitherZero" 
+              }
+              "Aitherium" { 
+                $upstream = "$($repoInfo.Owner)/AitherLabs" 
+              }
+            }
+            
+            if ($upstream) {
+              Write-Host "📥 Syncing with upstream: $upstream"
+              
+              # Add upstream remote if not exists
+              $remotes = git remote
+              if ($remotes -notcontains "upstream") {
+                git remote add upstream "https://github.com/$upstream.git"
+              }
+              
+              # Fetch upstream
+              git fetch upstream
+              
+              # Check for differences
+              $behind = git rev-list --count HEAD..upstream/main
+              
+              if ($behind -gt 0) {
+                Write-Host "⚡ Found $behind commits behind upstream"
+                
+                # Create sync branch
+                $syncBranch = "sync/upstream-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+                git checkout -b $syncBranch
+                
+                # Merge upstream
+                git merge upstream/main --no-edit
+                
+                # Push sync branch
+                git push origin $syncBranch
+                
+                Write-Host "✅ Sync branch created: $syncBranch"
+                Write-Host "A pull request should be created to review the changes."
+              } else {
+                Write-Host "✅ Repository is up to date with upstream"
+              }
+            }
+            
+          } catch {
+            Write-Error "Repository sync failed: $_"
+            exit 1
+          }
+          '@
+      
+      - name: Create sync PR if needed
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { execSync } = require('child_process');
+            
+            try {
+              // Check if we created a sync branch
+              const branches = execSync('git branch -r').toString();
+              const syncBranch = branches.split('\n').find(b => b.includes('sync/upstream-'));
+              
+              if (syncBranch) {
+                const branchName = syncBranch.trim().replace('origin/', '');
+                
+                // Create PR
+                const pr = await github.rest.pulls.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: '🔄 Sync with upstream repository',
+                  head: branchName,
+                  base: 'main',
+                  body: `## Automated Upstream Sync
+                  
+                  This PR synchronizes the repository with upstream changes.
+                  
+                  ### Review Guidelines
+                  - Check for any conflicts that were auto-resolved
+                  - Verify that local customizations are preserved
+                  - Ensure tests pass with the new changes
+                  
+                  ---
+                  *This PR was created automatically by the Documentation & Sync Pipeline*`
+                });
+                
+                console.log(`Created sync PR: ${pr.data.html_url}`);
+              }
+            } catch (error) {
+              console.log('No sync PR needed or error creating PR:', error.message);
+            }
+
+  validate-documentation:
+    name: Validate Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install markdown linter
+        run: npm install -g markdownlint-cli
+      
+      - name: Lint markdown files
+        run: |
+          echo "# Markdown Lint Configuration" > .markdownlint.json
+          echo '{
+            "MD013": false,
+            "MD033": false,
+            "MD041": false
+          }' > .markdownlint.json
+          
+          markdownlint '**/*.md' --ignore node_modules || true
+      
+      - name: Check for broken links
+        run: |
+          pwsh -NoProfile -Command @'
+          $files = Get-ChildItem -Path . -Filter "*.md" -Recurse | 
+                   Where-Object { $_.FullName -notmatch "node_modules" }
+          
+          $brokenLinks = @()
+          
+          foreach ($file in $files) {
+            $content = Get-Content $file.FullName -Raw
+            $links = [regex]::Matches($content, '\[([^\]]+)\]\(([^)]+)\)')
+            
+            foreach ($link in $links) {
+              $url = $link.Groups[2].Value
+              if ($url -match '^\./' -or $url -match '^/') {
+                # Relative link
+                $targetPath = Join-Path (Split-Path $file.FullName) $url
+                if (-not (Test-Path $targetPath)) {
+                  $brokenLinks += @{
+                    File = $file.FullName
+                    Link = $url
+                    Text = $link.Groups[1].Value
+                  }
+                }
+              }
+            }
+          }
+          
+          if ($brokenLinks.Count -gt 0) {
+            Write-Host "⚠️ Found broken links:"
+            $brokenLinks | ForEach-Object {
+              Write-Host "  - $($_.File): [$($_.Text)]($($_.Link))"
+            }
+          } else {
+            Write-Host "✅ No broken links found"
+          }
+          '@
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Documentation Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Jobs Run" >> $GITHUB_STEP_SUMMARY
+          echo "- 📚 Documentation Generation: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔄 Repository Sync: N/A" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Documentation Validation: Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Trigger Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Event**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Actor**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Ref**: ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY

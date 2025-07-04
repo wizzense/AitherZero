@@ -99,7 +99,7 @@ jobs:
         run: |
           # Determine if we should build and which profiles
           should_build="false"
-          build_profiles="minimal"
+          build_profiles='["minimal"]'
           
           # Force full build conditions
           if [[ "${{ steps.changes.outputs.core }}" == "true" || 
@@ -107,7 +107,7 @@ jobs:
                 "${{ github.event.inputs.force_full_build }}" == "true" ||
                 "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
             should_build="true"
-            build_profiles="minimal,standard,development"
+            build_profiles='["minimal","standard","development"]'
           # Selective build conditions  
           elif [[ "${{ steps.changes.outputs.code }}" == "true" || 
                   "${{ steps.changes.outputs.modules }}" == "true" ||
@@ -117,10 +117,10 @@ jobs:
             if [[ "${{ steps.changes.outputs.modules }}" == *"DevEnvironment"* || 
                   "${{ steps.changes.outputs.modules }}" == *"PatchManager"* ||
                   "${{ steps.changes.outputs.modules }}" == *"TestingFramework"* ]]; then
-              build_profiles="minimal,standard,development"
+              build_profiles='["minimal","standard","development"]'
             elif [[ "${{ steps.changes.outputs.modules }}" == *"BackupManager"* ||
                     "${{ steps.changes.outputs.modules }}" == *"SystemMonitoring"* ]]; then
-              build_profiles="minimal,standard"
+              build_profiles='["minimal","standard"]'
             fi
           fi
           
@@ -220,7 +220,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        profile: ${{ fromJson(format('["{0}"]', join(fromJson(format('["{0}"]', needs.change-detection.outputs.build-profiles)), '","'))) }}
+        profile: ${{ fromJson(needs.change-detection.outputs.build-profiles) }}
       fail-fast: false
       max-parallel: 6
     
