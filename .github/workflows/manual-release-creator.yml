@@ -39,7 +39,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
       
-      # PowerShell is pre-installed on GitHub runners
+      - name: Install PowerShell\n        run: |\n          # Update package list and install prerequisites\n          sudo apt-get update\n          sudo apt-get install -y wget apt-transport-https software-properties-common\n          \n          # Download and install PowerShell\n          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.5.2/powershell_7.5.2-1.deb_amd64.deb\n          sudo dpkg -i powershell_7.5.2-1.deb_amd64.deb || sudo apt-get install -f -y\n          \n          # Clean up\n          rm powershell_7.5.2-1.deb_amd64.deb
       
       - name: Configure Git
         run: |
