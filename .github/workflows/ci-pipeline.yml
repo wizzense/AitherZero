@@ -254,13 +254,45 @@ jobs:
       - name: Install PowerShell (Linux)
         if: runner.os == 'Linux'
         run: |
-          wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.5.2/powershell_7.5.2-1.deb_amd64.deb
+          # Update package manager first
+          sudo apt-get update -qq
+          sudo apt-get install -y wget apt-transport-https software-properties-common
+          
+          # Download PowerShell with retry logic
+          for i in {1..3}; do
+            if wget -q https://github.com/PowerShell/PowerShell/releases/download/v7.5.2/powershell_7.5.2-1.deb_amd64.deb; then
+              break
+            fi
+            echo "Download attempt $i failed, retrying..."
+            sleep 5
+          done
+          
+          # Install PowerShell with dependency resolution
           sudo dpkg -i powershell_7.5.2-1.deb_amd64.deb || sudo apt-get install -f -y
+          
+          # Verify installation
+          pwsh --version || (echo "PowerShell installation failed" && exit 1)
+          
+          # Clean up
+          rm powershell_7.5.2-1.deb_amd64.deb
       
       - name: Install PowerShell (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew install --cask powershell
+          # Update Homebrew and install PowerShell with retry
+          brew update
+          
+          # Install with retry logic
+          for i in {1..3}; do
+            if brew install --cask powershell; then
+              break
+            fi
+            echo "Install attempt $i failed, retrying..."
+            sleep 10
+          done
+          
+          # Verify installation
+          pwsh --version || (echo "PowerShell installation failed" && exit 1)
       
       - name: Verify PowerShell Installation
         shell: pwsh
@@ -285,6 +317,7 @@ jobs:
       
       - name: Build Package
         shell: pwsh
+        timeout-minutes: 30
         run: |
           Write-Host "🔨 Building AitherZero Package" -ForegroundColor Yellow
           Write-Host "Profile: ${{ matrix.profile }}" -ForegroundColor Cyan
@@ -292,31 +325,73 @@ jobs:
           Write-Host "OS Details: $($PSVersionTable.Platform)" -ForegroundColor Cyan
           
           try {
+            # Set strict error handling
+            $ErrorActionPreference = 'Stop'
+            $ProgressPreference = 'SilentlyContinue'
+            
             # Determine platform name
             $platformName = switch ('${{ runner.os }}') {
               'Windows' { 'windows' }
               'Linux' { 'linux' }
               'macOS' { 'macos' }
+              default { throw "Unsupported platform: ${{ runner.os }}" }
             }
             
-            # Get version
+            # Get version with validation
             $version = if (Test-Path "VERSION") {
-              (Get-Content "VERSION" -Raw).Trim()
+              $versionContent = (Get-Content "VERSION" -Raw).Trim()
+              if ([string]::IsNullOrWhiteSpace($versionContent)) {
+                "dev-$($env:GITHUB_SHA.Substring(0,7))"
+              } else {
+                $versionContent
+              }
             } else {
               "dev-$($env:GITHUB_SHA.Substring(0,7))"
             }
             
+            # Validate required configuration files exist
+            $requiredConfigs = @(
+              "configs/default-config.json",
+              "configs/full-config.json", 
+              "configs/recommended-config.json"
+            )
+            
+            foreach ($config in $requiredConfigs) {
+              if (-not (Test-Path $config)) {
+                Write-Warning "Configuration file not found: $config"
+              }
+            }
+            
             Write-Host "📦 Building: AitherZero-$version-${{ matrix.profile }}-$platformName" -ForegroundColor Green
             
-            # Execute build
+            # Verify build script exists
+            if (-not (Test-Path "./build/Build-Package.ps1")) {
+              throw "Build script not found: ./build/Build-Package.ps1"
+            }
+            
+            # Execute build with proper parameters
             ./build/Build-Package.ps1 -Profile '${{ matrix.profile }}' -Platform $platformName -Version $version -Validate
             
-            # Verify build output
-            $expectedArchive = "dist/AitherZero-$version-${{ matrix.profile }}-$platformName.*"
-            $builtArchives = Get-ChildItem -Path "dist" -Filter "AitherZero-$version-${{ matrix.profile }}-$platformName.*"
+            # Verify build output with robust searching
+            $expectedPattern = "AitherZero-$version-${{ matrix.profile }}-$platformName.*"
+            $builtArchives = if (Test-Path "dist") {
+              Get-ChildItem -Path "dist" -Include "*.zip", "*.tar.gz" -File | 
+                Where-Object { $_.Name -like $expectedPattern }
+            } else {
+              @()
+            }
             
             if ($builtArchives.Count -eq 0) {
-              throw "No archive found matching pattern: $expectedArchive"
+              Write-Host "❌ No archive found matching pattern: $expectedPattern" -ForegroundColor Red
+              Write-Host "📁 Available files in dist directory:" -ForegroundColor Yellow
+              if (Test-Path "dist") {
+                Get-ChildItem "dist" | ForEach-Object { 
+                  Write-Host "  - $($_.Name)" -ForegroundColor Gray 
+                }
+              } else {
+                Write-Host "  (dist directory does not exist)" -ForegroundColor Gray
+              }
+              throw "Build verification failed - no matching archive found"
             }
             
             $archive = $builtArchives[0]
@@ -325,14 +400,30 @@ jobs:
             Write-Host "✅ Build completed successfully!" -ForegroundColor Green
             Write-Host "📦 Archive: $($archive.Name) ($sizeInMB MB)" -ForegroundColor Cyan
             
-            # Set outputs for summary
-            "PACKAGE_NAME=$($archive.BaseName)" >> $env:GITHUB_OUTPUT
-            "PACKAGE_SIZE=$sizeInMB MB" >> $env:GITHUB_OUTPUT
-            "ARCHIVE_PATH=$($archive.FullName)" >> $env:GITHUB_OUTPUT
+            # Set outputs for summary with proper escaping
+            Add-Content -Path $env:GITHUB_OUTPUT -Value "PACKAGE_NAME=$($archive.BaseName)"
+            Add-Content -Path $env:GITHUB_OUTPUT -Value "PACKAGE_SIZE=$sizeInMB MB"
+            Add-Content -Path $env:GITHUB_OUTPUT -Value "ARCHIVE_PATH=$($archive.FullName)"
             
           } catch {
             Write-Host "❌ Build failed: $_" -ForegroundColor Red
-            throw
+            Write-Host "💡 Error Details:" -ForegroundColor Yellow
+            Write-Host "  Exception Type: $($_.Exception.GetType().Name)" -ForegroundColor Gray
+            Write-Host "  Error Category: $($_.CategoryInfo.Category)" -ForegroundColor Gray
+            Write-Host "  Target Object: $($_.TargetObject)" -ForegroundColor Gray
+            if ($_.ScriptStackTrace) {
+              Write-Host "  Stack Trace: $($_.ScriptStackTrace)" -ForegroundColor Gray
+            }
+            
+            # Provide build context for debugging
+            Write-Host "🔍 Build Context:" -ForegroundColor Yellow
+            Write-Host "  PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Gray
+            Write-Host "  Platform: $($PSVersionTable.Platform)" -ForegroundColor Gray
+            Write-Host "  Working Directory: $(Get-Location)" -ForegroundColor Gray
+            Write-Host "  Profile: ${{ matrix.profile }}" -ForegroundColor Gray
+            Write-Host "  OS: ${{ runner.os }}" -ForegroundColor Gray
+            
+            exit 1
           }
       
       - name: Upload Package Artifacts
