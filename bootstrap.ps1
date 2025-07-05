@@ -18,6 +18,33 @@
 # Simple error handling
 $ErrorActionPreference = 'Stop'
 
+# Helper function for proper exit with pause on error
+function Exit-Bootstrap {
+    param(
+        [int]$ExitCode = 1,
+        [string]$Message
+    )
+    
+    if ($Message) {
+        Write-Host $Message -ForegroundColor $(if ($ExitCode -eq 0) { 'Green' } else { 'Red' })
+    }
+    
+    # If running interactively and not in CI, pause before exit on error
+    if ($ExitCode -ne 0 -and -not $env:CI -and -not $env:AITHER_BOOTSTRAP_MODE -and -not [System.Console]::IsInputRedirected) {
+        Write-Host ""
+        Write-Host "Press any key to exit..." -ForegroundColor Yellow
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    }
+    
+    # Clean up temp files
+    if ($env:AITHER_TEMP_BOOTSTRAP -and (Test-Path $env:AITHER_TEMP_BOOTSTRAP)) {
+        Remove-Item $env:AITHER_TEMP_BOOTSTRAP -Force -ErrorAction SilentlyContinue
+        Remove-Item env:AITHER_TEMP_BOOTSTRAP -ErrorAction SilentlyContinue
+    }
+    
+    exit $ExitCode
+}
+
 # Helper function for network requests with retry
 function Invoke-WebRequestWithRetry {
     param(
@@ -545,21 +572,41 @@ try {
                             $scriptPath = $MyInvocation.MyCommand.Path
                             if (-not $scriptPath) { $scriptPath = $PSCommandPath }
                             
-                            # If neither works, try to find bootstrap.ps1 in current directory
-                            if (-not $scriptPath) {
-                                $scriptPath = Join-Path (Get-Location) "bootstrap.ps1"
+                            # When running via iex, save script to temp for re-launch
+                            if (-not $scriptPath -or -not (Test-Path $scriptPath)) {
+                                Write-Host "[~] Saving bootstrap script for re-launch..." -ForegroundColor Yellow
+                                $tempScriptPath = Join-Path $env:TEMP "aitherzero-bootstrap-$(Get-Random).ps1"
+                                
+                                # Download script content
+                                try {
+                                    $scriptContent = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1" -UseBasicParsing
+                                    Set-Content -Path $tempScriptPath -Value $scriptContent.Content -Encoding UTF8
+                                    $scriptPath = $tempScriptPath
+                                    $env:AITHER_TEMP_BOOTSTRAP = $tempScriptPath
+                                } catch {
+                                    throw "Failed to download bootstrap script for re-launch: $_"
+                                }
                             }
                             
-                            # Re-launch in PowerShell 7 with same parameters
-                            $relaunchArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$scriptPath`"")
+                            # Re-launch in PowerShell 7 with proper window handling
+                            $relaunchArgs = @(
+                                "-NoExit",  # Keep window open
+                                "-NoProfile",
+                                "-ExecutionPolicy", "Bypass", 
+                                "-File", "`"$scriptPath`""
+                            )
                             
                             # Preserve environment variables
                             $env:AITHER_PS7_RELAUNCHED = 'true'
                             
-                            # Start new process and exit current
-                            $process = Start-Process $pwsh7Path -ArgumentList $relaunchArgs -NoNewWindow -PassThru
-                            $process.WaitForExit()
-                            exit $process.ExitCode
+                            Write-Host "[~] Starting new PowerShell 7 window..." -ForegroundColor Cyan
+                            Write-Host "[i] Bootstrap will continue in the new window" -ForegroundColor Yellow
+                            
+                            # Start new process
+                            Start-Process $pwsh7Path -ArgumentList $relaunchArgs -Wait
+                            
+                            # Exit current process
+                            Exit-Bootstrap -ExitCode 0 -Message "[+] Bootstrap completed in new window"
                         } else {
                             throw "PowerShell 7 installation completed but executable not found"
                         }
@@ -570,7 +617,7 @@ try {
                         
                         # In non-interactive mode, exit with error
                         if ($env:AITHER_BOOTSTRAP_MODE) {
-                            exit 1
+                            Exit-Bootstrap -ExitCode 1 -Message "[!] PowerShell 7 installation failed in non-interactive mode"
                         }
                         
                         # In interactive mode, allow continuing with PS 5.1
@@ -578,13 +625,13 @@ try {
                         Write-Host "[?] Continue with limited functionality? (y/N)" -ForegroundColor Yellow
                         $continueResponse = Read-Host
                         if ($continueResponse -notmatch '^[Yy]') {
-                            exit 1
+                            Exit-Bootstrap -ExitCode 1 -Message "[!] Installation cancelled by user"
                         }
                     }
                 } else {
                     Write-Host "[!] PowerShell 7 is required. Please install from: https://aka.ms/powershell" -ForegroundColor Red
                     Write-Host "[i] Then run this bootstrap script again" -ForegroundColor Yellow
-                    exit 1
+                    Exit-Bootstrap -ExitCode 1 -Message "[!] PowerShell 7 installation declined"
                 }
             }
             
@@ -636,5 +683,5 @@ try {
 } catch {
     Write-Host "[!] Installation failed: $_" -ForegroundColor Red
     Write-Host "[i] Try manual download from: https://github.com/wizzense/AitherZero/releases" -ForegroundColor Yellow
-    exit 1
+    Exit-Bootstrap -ExitCode 1 -Message "[!] Bootstrap failed: $_"
 }
