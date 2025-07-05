@@ -26,15 +26,35 @@ param(
 )
 
 # Find the aither-core.ps1 script
-# Handle case where $PSScriptRoot is null (e.g., when run from certain contexts)
-if (-not $PSScriptRoot) {
-    $PSScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-    if (-not $PSScriptRoot) {
-        $PSScriptRoot = $PWD.Path
+# Robust path resolution for various execution contexts
+$scriptPath = $null
+
+# Method 1: $PSScriptRoot (works in most cases)
+if ($PSScriptRoot) {
+    $scriptPath = $PSScriptRoot
+}
+# Method 2: $MyInvocation (works when called as script)
+elseif ($MyInvocation.MyCommand.Path) {
+    $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+}
+# Method 3: Get script path from stack frame (works in more contexts)
+elseif ($MyInvocation.ScriptName) {
+    $scriptPath = Split-Path -Parent $MyInvocation.ScriptName
+}
+# Method 4: Use current directory as fallback
+else {
+    $scriptPath = (Get-Location).Path
+    # Double-check if we're in the right directory
+    if (-not (Test-Path (Join-Path $scriptPath "aither-core"))) {
+        # Try to find Start-AitherZero.ps1 in current directory
+        $thisScript = Get-ChildItem -Path . -Filter "Start-AitherZero.ps1" -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($thisScript) {
+            $scriptPath = $thisScript.DirectoryName
+        }
     }
 }
 
-$coreScript = Join-Path $PSScriptRoot "aither-core" "aither-core.ps1"
+$coreScript = Join-Path $scriptPath "aither-core" "aither-core.ps1"
 
 if (-not (Test-Path $coreScript)) {
     Write-Error "Core script not found at: $coreScript"
