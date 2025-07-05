@@ -382,30 +382,51 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
 
 # Import required modules
 try {
-    Write-Verbose 'Importing Logging module...'
+    Write-Verbose 'Importing core modules...'
 
-    # Validate module paths before attempting import
-    $loggingModulePath = Join-Path $env:PWSH_MODULES_PATH "Logging"
-    $labRunnerModulePath = Join-Path $env:PWSH_MODULES_PATH "LabRunner"
+    # Define core modules that should always be loaded
+    $coreModules = @(
+        'Logging',
+        'LabRunner',
+        'LicenseManager',
+        'ConfigurationCore',
+        'ModuleCommunication'
+    )
 
-    if (-not (Test-Path $loggingModulePath)) {
-        throw "Logging module not found at: $loggingModulePath"
+    # Load each core module
+    foreach ($moduleName in $coreModules) {
+        $modulePath = Join-Path $env:PWSH_MODULES_PATH $moduleName
+        
+        if (Test-Path $modulePath) {
+            try {
+                if ($Verbosity -eq 'silent') {
+                    Import-Module $modulePath -Force -ErrorAction Stop *>$null
+                } else {
+                    Write-Verbose "Importing $moduleName module..."
+                    Import-Module $modulePath -Force -ErrorAction Stop
+                }
+                Write-CustomLog "$moduleName module loaded successfully" -Level DEBUG
+            } catch {
+                # Non-critical modules can fail silently
+                if ($moduleName -in @('Logging', 'LabRunner')) {
+                    throw "Critical module $moduleName failed to load: $_"
+                } else {
+                    Write-CustomLog "Optional module $moduleName failed to load: $_" -Level WARN
+                }
+            }
+        } else {
+            if ($moduleName -in @('Logging', 'LabRunner')) {
+                throw "$moduleName module not found at: $modulePath"
+            } else {
+                Write-CustomLog "Optional module $moduleName not found at: $modulePath" -Level DEBUG
+            }
+        }
     }
-    if (-not (Test-Path $labRunnerModulePath)) {
-        throw "LabRunner module not found at: $labRunnerModulePath"
-    }
 
-    # In silent mode, suppress all output during module import and initialization
+    # Initialize logging system with proper verbosity mapping (Force required to override auto-init)
     if ($Verbosity -eq 'silent') {
-        Import-Module $loggingModulePath -Force -ErrorAction Stop *>$null
-        Import-Module $labRunnerModulePath -Force -ErrorAction Stop *>$null
-        # Initialize logging system with proper verbosity mapping (Force required to override auto-init)
         Initialize-LoggingSystem -ConsoleLevel $script:LogLevel -LogLevel 'DEBUG' -Force *>$null
     } else {
-        Import-Module $loggingModulePath -Force -ErrorAction Stop
-        Write-Verbose 'Importing LabRunner module...'
-        Import-Module $labRunnerModulePath -Force -ErrorAction Stop
-        # Initialize logging system with proper verbosity mapping (Force required to override auto-init)
         Initialize-LoggingSystem -ConsoleLevel $script:LogLevel -LogLevel 'DEBUG' -Force
     }
 

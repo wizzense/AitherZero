@@ -571,6 +571,15 @@ try {
         exit 1
     }
     
+    # Extract version from release tag
+    $releaseVersion = if ($release.tag_name -match '^v?(.+)$') {
+        $matches[1]
+    } else {
+        Write-Host "[!] Could not extract version from release tag: $($release.tag_name)" -ForegroundColor Yellow
+        $release.tag_name
+    }
+    Write-Host "[i] Release version: $releaseVersion" -ForegroundColor Cyan
+    
     # Find Windows ZIP file for the selected profile
     $windowsAsset = $null
     # Map bootstrap profile names to build profile names
@@ -580,7 +589,8 @@ try {
         'full' { 'development' }  # Build uses 'development' for full profile
         default { 'standard' }
     }
-    $profilePattern = "aitherzero-$buildProfile-windows-.*\.zip$"
+    # Updated pattern to match versioned files: AitherZero-{version}-{profile}-windows.zip
+    $profilePattern = "AitherZero-.*-$buildProfile-windows\.zip$"
     
     foreach ($asset in $release.assets) {
         if ($asset.name -match $profilePattern) {
@@ -593,7 +603,8 @@ try {
     if (-not $windowsAsset) {
         Write-Host "[!] Specific profile '$buildProfile' not found, looking for any Windows package..." -ForegroundColor Yellow
         foreach ($asset in $release.assets) {
-            if ($asset.name -match "aitherzero.*windows.*\.zip$") {
+            # Updated pattern to match versioned files
+            if ($asset.name -match "AitherZero-.*-windows\.zip$") {
                 $windowsAsset = $asset
                 Write-Host "[i] Found alternative package: $($asset.name)" -ForegroundColor Cyan
                 break
