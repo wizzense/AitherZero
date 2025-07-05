@@ -14,9 +14,9 @@ param(
     [Parameter(HelpMessage = "Run first-time setup wizard")]
     [switch]$Setup,
     
-    [Parameter(HelpMessage = "Installation profile: minimal, standard, or full")]
-    [ValidateSet("minimal", "developer", "full")]
-    [string]$InstallationProfile,
+    [Parameter(HelpMessage = "Installation profile: minimal, developer, full, or interactive")]
+    [ValidateSet("minimal", "developer", "full", "interactive")]
+    [string]$InstallationProfile = "interactive",
     
     [Parameter(HelpMessage = "Preview mode - show what would be done")]
     [switch]$WhatIf,
@@ -26,6 +26,14 @@ param(
 )
 
 # Find the aither-core.ps1 script
+# Handle case where $PSScriptRoot is null (e.g., when run from certain contexts)
+if (-not $PSScriptRoot) {
+    $PSScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+    if (-not $PSScriptRoot) {
+        $PSScriptRoot = $PWD.Path
+    }
+}
+
 $coreScript = Join-Path $PSScriptRoot "aither-core" "aither-core.ps1"
 
 if (-not (Test-Path $coreScript)) {

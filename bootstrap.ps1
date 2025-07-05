@@ -185,8 +185,8 @@ try {
             Write-Host ""
             Write-Host "Select AitherZero Profile:" -ForegroundColor Cyan
             Write-Host "  [1] Minimal (5-8 MB) - Core infrastructure deployment only" -ForegroundColor White
-            Write-Host "  [2] Standard (15-25 MB) - Production-ready automation (recommended)" -ForegroundColor Green
-            Write-Host "  [3] Development (35-50 MB) - Complete contributor environment" -ForegroundColor White
+            Write-Host "  [2] Developer (15-25 MB) - Development environment (recommended)" -ForegroundColor Green
+            Write-Host "  [3] Full (35-50 MB) - Complete enterprise environment" -ForegroundColor White
             Write-Host ""
             
             do {
@@ -196,12 +196,12 @@ try {
             
             $profile = switch ($profileChoice) {
                 '1' { 'minimal' }
-                '2' { 'standard' }
-                '3' { 'development' }
+                '2' { 'developer' }
+                '3' { 'full' }
             }
         } else {
-            # Non-interactive mode defaults to standard
-            $profile = 'standard'
+            # Non-interactive mode defaults to developer
+            $profile = 'developer'
         }
     }
     
@@ -221,7 +221,14 @@ try {
     
     # Find Windows ZIP file for the selected profile
     $windowsAsset = $null
-    $profilePattern = "AitherZero-.*-$profile-windows\.zip$"
+    # Map bootstrap profile names to build profile names
+    $buildProfile = switch ($profile) {
+        'minimal' { 'minimal' }
+        'developer' { 'standard' }  # Build uses 'standard' for developer profile
+        'full' { 'development' }  # Build uses 'development' for full profile
+        default { 'standard' }
+    }
+    $profilePattern = "aitherzero-$buildProfile-windows-.*\.zip$"
     
     foreach ($asset in $release.assets) {
         if ($asset.name -match $profilePattern) {
@@ -232,10 +239,11 @@ try {
     
     # Fallback to any Windows package if specific profile not found
     if (-not $windowsAsset) {
-        Write-Host "[!] Specific profile not found, looking for any Windows package..." -ForegroundColor Yellow
+        Write-Host "[!] Specific profile '$buildProfile' not found, looking for any Windows package..." -ForegroundColor Yellow
         foreach ($asset in $release.assets) {
-            if ($asset.name -match "windows.*\.zip$") {
+            if ($asset.name -match "aitherzero.*windows.*\.zip$") {
                 $windowsAsset = $asset
+                Write-Host "[i] Found alternative package: $($asset.name)" -ForegroundColor Cyan
                 break
             }
         }

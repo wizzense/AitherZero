@@ -52,17 +52,32 @@ function Start-IntelligentSetup {
     
     # Check if progress tracking is available
     $progressAvailable = Get-Module -Name 'ProgressTracking' -ListAvailable
-    if ($progressAvailable) {
-        Import-Module ProgressTracking -Force -ErrorAction SilentlyContinue
+    $useProgress = $false
+    if ($progressAvailable -and -not $env:NO_PROGRESS) {
+        try {
+            Import-Module ProgressTracking -Force -ErrorAction Stop
+            # Test if we can use progress in current environment
+            if (-not [System.Console]::IsInputRedirected -and $Host.UI.RawUI.WindowSize.Width -gt 0) {
+                $useProgress = $true
+            }
+        } catch {
+            Write-Verbose "ProgressTracking module not available: $_"
+        }
     }
     
-    # Create progress operation if available
-    if (Get-Command Start-ProgressOperation -ErrorAction SilentlyContinue) {
-        $progressId = Start-ProgressOperation `
-            -OperationName "AitherZero Intelligent Setup" `
-            -TotalSteps $setupState.TotalSteps `
-            -ShowTime `
-            -ShowETA
+    # Create progress operation if available (skip in non-interactive mode)
+    $progressId = $null
+    if ($useProgress -and (Get-Command Start-ProgressOperation -ErrorAction SilentlyContinue)) {
+        try {
+            $progressId = Start-ProgressOperation `
+                -OperationName "AitherZero Intelligent Setup" `
+                -TotalSteps $setupState.TotalSteps `
+                -ShowTime `
+                -ShowETA
+        } catch {
+            Write-Verbose "Progress tracking not available in current environment: $_"
+            $useProgress = $false
+        }
     }
     Show-SetupBanner
     
@@ -119,8 +134,28 @@ function Get-PlatformInfo {
     }
 }
 
+function Show-WelcomeMessage {
+    param($SetupState)
+    
+    Write-Host ""
+    Write-Host "Welcome to AitherZero Setup!" -ForegroundColor Cyan
+    Write-Host "============================" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Platform: $($SetupState.Platform.OS) $($SetupState.Platform.Version)" -ForegroundColor Yellow
+    Write-Host "PowerShell: $($SetupState.Platform.PowerShell)" -ForegroundColor Yellow
+    Write-Host "Installation Profile: $($SetupState.InstallationProfile)" -ForegroundColor Yellow
+    Write-Host ""
+}
+
 function Show-SetupBanner {
-    Clear-Host
+    # Skip Clear-Host in non-interactive environments
+    if (-not [System.Console]::IsInputRedirected -and $Host.UI.RawUI.WindowSize.Width -gt 0) {
+        try {
+            Clear-Host
+        } catch {
+            # Ignore Clear-Host errors in restricted environments
+        }
+    }
     Write-Host ""
     Write-Host "    ╔═══════════════════════════════════════════════════════╗" -ForegroundColor Cyan
     Write-Host "    ║          AitherZero Intelligent Setup Wizard          ║" -ForegroundColor Cyan
@@ -804,10 +839,21 @@ function Show-SetupPrompt {
         [switch]$DefaultYes
     )
     
-    $choices = '&Yes', '&No'
-    $decision = $Host.UI.PromptForChoice('', $Message, $choices, $(if ($DefaultYes) { 0 } else { 1 }))
+    # In non-interactive mode or when host doesn't support prompts, use default
+    if ([System.Console]::IsInputRedirected -or $env:NO_PROMPT -or $global:WhatIfPreference) {
+        Write-Host "$Message [$(if ($DefaultYes) { 'Y' } else { 'N' })]" -ForegroundColor Yellow
+        return $DefaultYes
+    }
     
-    return $decision -eq 0
+    try {
+        $choices = '&Yes', '&No'
+        $decision = $Host.UI.PromptForChoice('', $Message, $choices, $(if ($DefaultYes) { 0 } else { 1 }))
+        return $decision -eq 0
+    } catch {
+        # Fallback to default if prompt fails
+        Write-Host "$Message [$(if ($DefaultYes) { 'Y' } else { 'N' })] (auto-selected)" -ForegroundColor Yellow
+        return $DefaultYes
+    }
 }
 
 function Get-InstallationProfile {
@@ -1106,5 +1152,13 @@ Export-ModuleMember -Function @(
     'Get-InstallationProfile',
     'Install-AITools',
     'Edit-Configuration',
-    'Review-Configuration'
+    'Review-Configuration',
+    'Show-WelcomeMessage',
+    'Show-SetupBanner',
+    'Show-Progress',
+    'Show-SetupSummary',
+    'Show-SetupPrompt',
+    'Show-InstallationProfile',
+    'Get-SetupSteps',
+    'Test-*'
 )

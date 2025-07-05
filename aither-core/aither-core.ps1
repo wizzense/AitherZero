@@ -52,6 +52,13 @@ param(
     [switch]$NonInteractive,
     [switch]$Help,
     
+    [Parameter(HelpMessage = 'Run first-time setup wizard')]
+    [switch]$Setup,
+    
+    [Parameter(HelpMessage = 'Installation profile: minimal, developer, full, or interactive')]
+    [ValidateSet('minimal', 'developer', 'full', 'interactive')]
+    [string]$InstallationProfile = 'interactive',
+    
     [Parameter(HelpMessage = 'Force enhanced UI experience with StartupExperience module')]
     [switch]$EnhancedUI,
     
@@ -94,6 +101,8 @@ if ($Help) {
     Write-Host "  -Scripts        Specific scripts to run"
     Write-Host "  -Force          Force operations even if validations fail"
     Write-Host "  -NonInteractive Run in non-interactive mode"
+    Write-Host "  -Setup          Run first-time setup wizard"
+    Write-Host "  -InstallationProfile Installation profile: minimal, developer, full, interactive"
     Write-Host "  -EnhancedUI     Force enhanced UI experience"
     Write-Host "  -ClassicUI      Force classic menu experience"
     Write-Host "  -UIMode         UI preference: auto, enhanced, classic"
@@ -103,6 +112,8 @@ if ($Help) {
     Write-Host "  .\aither-core.ps1"
     Write-Host "  .\aither-core.ps1 -Verbosity detailed -Auto"
     Write-Host "  .\aither-core.ps1 -ConfigFile custom.json -Scripts LabRunner"
+    Write-Host "  .\aither-core.ps1 -Setup -InstallationProfile developer"
+    Write-Host "  .\aither-core.ps1 -Setup  # Interactive profile selection"
     Write-Host ""
     return
 }
@@ -513,7 +524,30 @@ try {
     }
 
     # Handle different execution modes
-    if ($Scripts) {
+    if ($Setup) {
+        # Run setup wizard
+        Write-CustomLog "Running setup wizard with profile: $InstallationProfile" -Level INFO
+        
+        $setupWizardPath = Join-Path $env:PWSH_MODULES_PATH 'SetupWizard'
+        if (Test-Path $setupWizardPath) {
+            try {
+                Import-Module $setupWizardPath -Force
+                if ($InstallationProfile -eq 'interactive') {
+                    $result = Start-IntelligentSetup
+                } else {
+                    $result = Start-IntelligentSetup -InstallationProfile $InstallationProfile
+                }
+                Write-Host "✓ Setup completed successfully" -ForegroundColor Green
+            } catch {
+                Write-CustomLog "Error running setup wizard: $_" -Level ERROR
+                throw
+            }
+        } else {
+            Write-Error "SetupWizard module not found at: $setupWizardPath"
+            exit 1
+        }
+        return
+    } elseif ($Scripts) {
         # Run specific modules/scripts
         Write-CustomLog "Running specific components: $Scripts" -Level INFO
         

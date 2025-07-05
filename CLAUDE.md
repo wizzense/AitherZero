@@ -131,11 +131,11 @@ Invoke-ReleaseWorkflow -ReleaseType "patch" -Description "Bug fixes"
 
 ```powershell
 # Test build locally before release
-./build/Build-Package.ps1 -Platform "windows" -Version "test" -ArtifactExtension "zip" -PackageProfile "standard"
+./build/Build-Package.ps1 -Platform "windows" -Version "test" -Profile "standard"
 
 # Test all profiles
-@("minimal", "standard", "full") | ForEach-Object {
-    ./build/Build-Package.ps1 -Platform "windows" -Version "test" -ArtifactExtension "zip" -PackageProfile $_
+@("minimal", "standard", "development") | ForEach-Object {
+    ./build/Build-Package.ps1 -Platform "windows" -Version "test" -Profile $_
 }
 
 # Validate build output
@@ -152,7 +152,7 @@ The project uses streamlined workflows for CI/CD:
 
 # Build & Release Pipeline - Package building and releases  
 # Triggers: Version tags (v*) only, manual dispatch
-# Features: Multi-profile builds (minimal/standard/full), cross-platform packages
+# Features: Multi-profile builds (minimal/standard/development), cross-platform packages
 
 # Manual Release Creator - Trigger releases via UI
 # Triggers: Manual dispatch only
