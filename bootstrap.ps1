@@ -165,20 +165,53 @@ function Install-PowerShell7 {
                     throw "MSI installation failed with exit code: $($process.ExitCode)"
                 }
             } else {
-                Write-Host "[!] Administrator privileges required for installation" -ForegroundColor Yellow
+                # Try portable installation for non-admin users
+                Write-Host "[!] No administrator privileges - trying portable installation..." -ForegroundColor Yellow
                 
-                if ($NonInteractive) {
-                    throw "Cannot install PowerShell 7 without administrator privileges in non-interactive mode"
-                }
-                
-                Write-Host "[~] Launching installer with elevation prompt..." -ForegroundColor Cyan
-                Start-Process msiexec.exe -ArgumentList "/i `"$msiPath`"" -Verb RunAs -Wait
-                
-                # Check if installation succeeded
-                if (Test-Path $pwsh7Path) {
-                    Write-Host "[+] PowerShell 7 installed successfully!" -ForegroundColor Green
-                } else {
-                    throw "Installation appears to have failed - PowerShell 7 not found at expected location"
+                try {
+                    # Download portable zip instead
+                    $zipUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/PowerShell-win-x64.zip"
+                    $zipPath = "$env:TEMP\PowerShell-7-win-x64.zip"
+                    $portableDir = "$env:LOCALAPPDATA\Microsoft\PowerShell\7"
+                    
+                    Write-Host "[~] Downloading PowerShell 7 portable..." -ForegroundColor Yellow
+                    Invoke-WebRequestWithRetry -Uri $zipUrl -OutFile $zipPath
+                    
+                    Write-Host "[~] Installing to user directory..." -ForegroundColor Yellow
+                    if (Test-Path $portableDir) {
+                        Remove-Item $portableDir -Recurse -Force
+                    }
+                    New-Item -ItemType Directory -Force -Path $portableDir | Out-Null
+                    
+                    # Extract portable version
+                    if ($PSVersionTable.PSVersion.Major -ge 7) {
+                        Expand-Archive -Path $zipPath -DestinationPath $portableDir -Force
+                    } else {
+                        $shell = New-Object -ComObject Shell.Application
+                        $zip = $shell.NameSpace($zipPath)
+                        $dest = $shell.NameSpace($portableDir)
+                        $dest.CopyHere($zip.Items(), 4)
+                    }
+                    
+                    # Add to PATH for current session
+                    $env:PATH = "$portableDir;$env:PATH"
+                    
+                    # Verify installation
+                    $portablePwsh = Join-Path $portableDir "pwsh.exe"
+                    if (Test-Path $portablePwsh) {
+                        Write-Host "[+] PowerShell 7 installed successfully (portable)!" -ForegroundColor Green
+                        Write-Host "[i] Installed to: $portableDir" -ForegroundColor Cyan
+                    } else {
+                        throw "Portable installation failed - pwsh.exe not found"
+                    }
+                    
+                    # Clean up
+                    Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
+                    
+                } catch {
+                    Write-Host "[!] Portable installation failed: $_" -ForegroundColor Red
+                    Write-Host "[!] Please install PowerShell 7 manually from: https://aka.ms/powershell" -ForegroundColor Yellow
+                    throw "PowerShell 7 installation failed"
                 }
             }
         } finally {
@@ -189,55 +222,178 @@ function Install-PowerShell7 {
     }
     elseif ($IsMacOS) {
         Write-Host "[~] Installing PowerShell 7 for macOS..." -ForegroundColor Yellow
-        # macOS: Use brew if available, otherwise download pkg
+        
+        # Try Homebrew first (non-interactive)
         if (Get-Command brew -ErrorAction SilentlyContinue) {
             Write-Host "[~] Using Homebrew to install PowerShell..." -ForegroundColor Yellow
-            & brew install --cask powershell
-        } else {
-            Write-Host "[~] Downloading PowerShell pkg installer..." -ForegroundColor Yellow
-            $pkgUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/powershell-lts.pkg"
-            $pkgPath = "/tmp/powershell-lts.pkg"
-            & curl -L $pkgUrl -o $pkgPath
-            Write-Host "[~] Installing PowerShell package..." -ForegroundColor Yellow
-            & sudo installer -pkg $pkgPath -target /
-            & rm $pkgPath
+            try {
+                & brew install --cask powershell 2>/dev/null
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Host "[+] PowerShell 7 installed via Homebrew!" -ForegroundColor Green
+                    return
+                }
+            } catch {
+                Write-Host "[!] Homebrew installation failed, trying portable..." -ForegroundColor Yellow
+            }
+        }
+        
+        # Portable installation for macOS
+        Write-Host "[~] Installing PowerShell 7 portable for macOS..." -ForegroundColor Yellow
+        try {
+            $tarUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/powershell-lts-osx-x64.tar.gz"
+            $installDir = "$HOME/.local/share/powershell"
+            $tarPath = "/tmp/powershell-osx.tar.gz"
+            
+            # Create installation directory
+            & mkdir -p $installDir
+            
+            # Download and extract
+            Write-Host "[~] Downloading PowerShell portable..." -ForegroundColor Yellow
+            & curl -L $tarUrl -o $tarPath
+            
+            Write-Host "[~] Extracting to user directory..." -ForegroundColor Yellow
+            & tar -xzf $tarPath -C $installDir
+            
+            # Make executable
+            & chmod +x "$installDir/pwsh"
+            
+            # Add to PATH for current session
+            $env:PATH = "$installDir" + ":" + $env:PATH
+            
+            # Verify installation
+            if (Test-Path "$installDir/pwsh") {
+                Write-Host "[+] PowerShell 7 installed successfully (portable)!" -ForegroundColor Green
+                Write-Host "[i] Installed to: $installDir" -ForegroundColor Cyan
+            } else {
+                throw "Portable installation failed - pwsh not found"
+            }
+            
+            # Clean up
+            & rm -f $tarPath
+            
+        } catch {
+            Write-Host "[!] PowerShell 7 installation failed: $_" -ForegroundColor Red
+            Write-Host "[!] Please install manually from: https://aka.ms/powershell" -ForegroundColor Yellow
+            throw "PowerShell 7 installation failed"
         }
     }
     else {
         Write-Host "[~] Installing PowerShell 7 for Linux..." -ForegroundColor Yellow
-        # Linux: Use package manager or direct download
+        # Try package managers first (if user has sudo access)
+        $installedViaPkg = $false
+        
         if (Test-Path /etc/debian_version) {
-            # Debian/Ubuntu
-            Write-Host "[~] Detected Debian/Ubuntu. Using apt package manager..." -ForegroundColor Yellow
-            & wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb" -O /tmp/packages-microsoft-prod.deb
-            & sudo dpkg -i /tmp/packages-microsoft-prod.deb
-            & sudo apt-get update
-            & sudo apt-get install -y powershell
-            & rm /tmp/packages-microsoft-prod.deb
+            # Debian/Ubuntu - try with sudo first
+            Write-Host "[~] Detected Debian/Ubuntu. Attempting package installation..." -ForegroundColor Yellow
+            try {
+                if (Get-Command sudo -ErrorAction SilentlyContinue) {
+                    & wget -q "https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb" -O /tmp/packages-microsoft-prod.deb 2>/dev/null
+                    & sudo dpkg -i /tmp/packages-microsoft-prod.deb 2>/dev/null
+                    & sudo apt-get update -qq 2>/dev/null
+                    & sudo apt-get install -y powershell 2>/dev/null
+                    & rm -f /tmp/packages-microsoft-prod.deb
+                    
+                    if (Get-Command pwsh -ErrorAction SilentlyContinue) {
+                        Write-Host "[+] PowerShell 7 installed via apt!" -ForegroundColor Green
+                        $installedViaPkg = $true
+                    }
+                }
+            } catch {
+                Write-Host "[!] Package installation failed, trying portable..." -ForegroundColor Yellow
+            }
         } elseif (Test-Path /etc/redhat-release) {
             # RHEL/CentOS/Fedora
-            Write-Host "[~] Detected RHEL/CentOS/Fedora. Using yum/dnf..." -ForegroundColor Yellow
-            & sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-            & curl https://packages.microsoft.com/config/rhel/7/prod.repo | sudo tee /etc/yum.repos.d/microsoft.repo
-            & sudo yum install -y powershell
-        } else {
-            # Generic Linux - download tar.gz
-            Write-Host "[~] Using generic Linux installation method..." -ForegroundColor Yellow
-            $tarUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/powershell-lts-linux-x64.tar.gz"
-            $installDir = "/opt/microsoft/powershell/7"
-            & sudo mkdir -p $installDir
-            & curl -L $tarUrl | sudo tar -xz -C $installDir
-            & sudo chmod +x "$installDir/pwsh"
-            & sudo ln -s "$installDir/pwsh" /usr/bin/pwsh
+            Write-Host "[~] Detected RHEL/CentOS/Fedora. Attempting package installation..." -ForegroundColor Yellow
+            try {
+                if (Get-Command sudo -ErrorAction SilentlyContinue) {
+                    & sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc 2>/dev/null
+                    & curl -s https://packages.microsoft.com/config/rhel/7/prod.repo | sudo tee /etc/yum.repos.d/microsoft.repo >/dev/null 2>&1
+                    
+                    if (Get-Command dnf -ErrorAction SilentlyContinue) {
+                        & sudo dnf install -y powershell 2>/dev/null
+                    } else {
+                        & sudo yum install -y powershell 2>/dev/null
+                    }
+                    
+                    if (Get-Command pwsh -ErrorAction SilentlyContinue) {
+                        Write-Host "[+] PowerShell 7 installed via package manager!" -ForegroundColor Green
+                        $installedViaPkg = $true
+                    }
+                }
+            } catch {
+                Write-Host "[!] Package installation failed, trying portable..." -ForegroundColor Yellow
+            }
+        }
+        
+        # If package installation failed or no sudo, use portable installation
+        if (-not $installedViaPkg) {
+            Write-Host "[~] Installing PowerShell 7 portable for Linux..." -ForegroundColor Yellow
+            try {
+                $tarUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/powershell-lts-linux-x64.tar.gz"
+                $installDir = "$HOME/.local/share/powershell"
+                $tarPath = "/tmp/powershell-linux.tar.gz"
+                
+                # Create installation directory
+                & mkdir -p $installDir
+                
+                # Download and extract
+                Write-Host "[~] Downloading PowerShell portable..." -ForegroundColor Yellow
+                & curl -L $tarUrl -o $tarPath
+                
+                Write-Host "[~] Extracting to user directory..." -ForegroundColor Yellow
+                & tar -xzf $tarPath -C $installDir
+                
+                # Make executable
+                & chmod +x "$installDir/pwsh"
+                
+                # Add to PATH for current session
+                $env:PATH = "$installDir" + ":" + $env:PATH
+                
+                # Verify installation
+                if (Test-Path "$installDir/pwsh") {
+                    Write-Host "[+] PowerShell 7 installed successfully (portable)!" -ForegroundColor Green
+                    Write-Host "[i] Installed to: $installDir" -ForegroundColor Cyan
+                } else {
+                    throw "Portable installation failed - pwsh not found"
+                }
+                
+                # Clean up
+                & rm -f $tarPath
+                
+            } catch {
+                Write-Host "[!] PowerShell 7 installation failed: $_" -ForegroundColor Red
+                Write-Host "[!] Please install manually from: https://aka.ms/powershell" -ForegroundColor Yellow
+                throw "PowerShell 7 installation failed"
+            }
         }
     }
     
-    # Verify installation
-    if (Test-Path $pwsh7Path) {
+    # Verify installation - check multiple possible locations
+    $pwsh7Found = $false
+    $pwsh7Location = ""
+    
+    # Check standard locations
+    $possiblePaths = @(
+        $pwsh7Path,  # Standard system location
+        "$env:LOCALAPPDATA\Microsoft\PowerShell\7\pwsh.exe",  # Windows portable
+        "$HOME/.local/share/powershell/pwsh",  # Linux/macOS portable
+        (Get-Command pwsh -ErrorAction SilentlyContinue).Source  # In PATH
+    )
+    
+    foreach ($path in $possiblePaths) {
+        if ($path -and (Test-Path $path)) {
+            $pwsh7Found = $true
+            $pwsh7Location = $path
+            break
+        }
+    }
+    
+    if ($pwsh7Found) {
         Write-Host "[+] PowerShell 7 installation verified!" -ForegroundColor Green
-        return $pwsh7Path
+        Write-Host "[i] Located at: $pwsh7Location" -ForegroundColor Cyan
+        return $pwsh7Location
     } else {
-        throw "PowerShell 7 installation completed but executable not found at: $pwsh7Path"
+        throw "PowerShell 7 installation completed but executable not found in any expected location"
     }
 }
 
