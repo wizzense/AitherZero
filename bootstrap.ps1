@@ -576,7 +576,7 @@ try {
     # Map bootstrap profile names to build profile names
     $buildProfile = switch ($profile) {
         'minimal' { 'minimal' }
-        'developer' { 'standard' }  # Build uses 'standard' for developer profile
+        'developer' { 'development' }  # Use development package which includes SetupWizard
         'full' { 'development' }  # Build uses 'development' for full profile
         default { 'standard' }
     }
