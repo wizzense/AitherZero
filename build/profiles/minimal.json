@@ -5,6 +5,8 @@
   "targetAudience": "Quick infrastructure deployment",
   "coreFiles": [
     "Start-AitherZero.ps1",
+    "quick-setup.ps1",
+    "uninstall.ps1",
     "aither.ps1", 
     "aither.bat",
     "README.md",
