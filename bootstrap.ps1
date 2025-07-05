@@ -376,16 +376,21 @@ try {
                 Write-Host "[i] The setup wizard will help install PowerShell 7 if needed" -ForegroundColor Cyan
             }
             
-            # Check execution policy first
-            $executionPolicy = Get-ExecutionPolicy -Scope CurrentUser
-            if ($executionPolicy -eq 'Restricted') {
-                Write-Host "[!] PowerShell execution policy is restricted" -ForegroundColor Yellow
-                Write-Host "[i] To enable scripts, run as Administrator:" -ForegroundColor Cyan
-                Write-Host "    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser" -ForegroundColor White
-                Write-Host "[i] Or run AitherZero with:" -ForegroundColor Cyan
-                Write-Host "    powershell.exe -ExecutionPolicy Bypass -File .\Start-AitherZero.ps1 -Setup" -ForegroundColor White
-            } else {
+            # For PowerShell 5.1, don't check execution policy in-process
+            # Just try to run and handle the error
+            try {
                 & $startScript @startParams
+            } catch {
+                if ($_.Exception.Message -like '*running scripts is disabled*' -or $_.Exception.Message -like '*execution policy*') {
+                    Write-Host "[!] PowerShell execution policy prevents running scripts" -ForegroundColor Red
+                    Write-Host "[i] To enable scripts, run as Administrator:" -ForegroundColor Cyan
+                    Write-Host "    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser" -ForegroundColor White
+                    Write-Host "[i] Or run AitherZero with:" -ForegroundColor Cyan
+                    Write-Host "    powershell.exe -ExecutionPolicy Bypass -File .\Start-AitherZero.ps1 -Setup" -ForegroundColor White
+                } else {
+                    # Rethrow if it's a different error
+                    throw
+                }
             }
         } catch {
             $errorMessage = $_.Exception.Message
