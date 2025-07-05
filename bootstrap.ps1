@@ -5,6 +5,7 @@
 # $env:AITHER_BOOTSTRAP_MODE = 'update'|'clean'|'new'|'remove'|'cancel'
 # $env:AITHER_PROFILE = 'minimal'|'standard'|'development'
 # $env:AITHER_INSTALL_DIR = 'custom/path' (default: ./AitherZero)
+# $env:AITHER_AUTO_INSTALL_PS7 = 'true' (auto-install PowerShell 7 if needed)
 #
 # New in v2.1:
 # - Installs to subdirectory by default (./AitherZero) for easier cleanup
@@ -51,6 +52,148 @@ function Invoke-WebRequestWithRetry {
                 throw
             }
         }
+    }
+}
+
+# Helper function to install PowerShell 7
+function Install-PowerShell7 {
+    param(
+        [switch]$Force,
+        [switch]$NonInteractive
+    )
+    
+    Write-Host "[~] Detecting platform and checking for existing PowerShell 7..." -ForegroundColor Yellow
+    
+    # Check if already installed
+    $pwsh7Path = $null
+    $isWindows = $PSVersionTable.Platform -eq 'Win32NT' -or $PSVersionTable.PSVersion.Major -le 5
+    
+    if ($isWindows) {
+        $pwsh7Path = "$env:ProgramFiles\PowerShell\7\pwsh.exe"
+    } elseif ($IsMacOS) {
+        $pwsh7Path = "/usr/local/bin/pwsh"
+    } else {
+        $pwsh7Path = "/usr/bin/pwsh"
+    }
+    
+    if ((Test-Path $pwsh7Path) -and -not $Force) {
+        Write-Host "[+] PowerShell 7 already installed at: $pwsh7Path" -ForegroundColor Green
+        return $pwsh7Path
+    }
+    
+    Write-Host "[~] Installing PowerShell 7 for your platform..." -ForegroundColor Cyan
+    
+    # Download and install based on platform
+    if ($isWindows) {
+        Write-Host "[~] Downloading PowerShell 7 MSI installer..." -ForegroundColor Yellow
+        # Get latest release URL
+        try {
+            $latestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/PowerShell/PowerShell/releases/latest" -UseBasicParsing
+            $msiAsset = $latestRelease.assets | Where-Object { $_.name -like "PowerShell-*-win-x64.msi" } | Select-Object -First 1
+            $msiUrl = $msiAsset.browser_download_url
+            
+            if (-not $msiUrl) {
+                # Fallback to known good version
+                $msiUrl = "https://github.com/PowerShell/PowerShell/releases/download/v7.4.1/PowerShell-7.4.1-win-x64.msi"
+            }
+        } catch {
+            # Fallback URL if API fails
+            $msiUrl = "https://github.com/PowerShell/PowerShell/releases/download/v7.4.1/PowerShell-7.4.1-win-x64.msi"
+        }
+        
+        $msiPath = "$env:TEMP\PowerShell-7-win-x64.msi"
+        
+        try {
+            Invoke-WebRequestWithRetry -Uri $msiUrl -OutFile $msiPath
+            Write-Host "[~] Download complete. Installing PowerShell 7..." -ForegroundColor Yellow
+            
+            # Check if running as admin
+            $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")
+            
+            if ($isAdmin) {
+                # Install silently
+                $arguments = "/i `"$msiPath`" /quiet ADD_EXPLORER_CONTEXT_MENU_OPENPOWERSHELL=1 ADD_FILE_CONTEXT_MENU_RUNPOWERSHELL=1 ENABLE_PSREMOTING=0 REGISTER_MANIFEST=1"
+                $process = Start-Process msiexec.exe -ArgumentList $arguments -Wait -PassThru
+                
+                if ($process.ExitCode -eq 0) {
+                    Write-Host "[+] PowerShell 7 installed successfully!" -ForegroundColor Green
+                } else {
+                    throw "MSI installation failed with exit code: $($process.ExitCode)"
+                }
+            } else {
+                Write-Host "[!] Administrator privileges required for installation" -ForegroundColor Yellow
+                
+                if ($NonInteractive) {
+                    throw "Cannot install PowerShell 7 without administrator privileges in non-interactive mode"
+                }
+                
+                Write-Host "[~] Launching installer with elevation prompt..." -ForegroundColor Cyan
+                Start-Process msiexec.exe -ArgumentList "/i `"$msiPath`"" -Verb RunAs -Wait
+                
+                # Check if installation succeeded
+                if (Test-Path $pwsh7Path) {
+                    Write-Host "[+] PowerShell 7 installed successfully!" -ForegroundColor Green
+                } else {
+                    throw "Installation appears to have failed - PowerShell 7 not found at expected location"
+                }
+            }
+        } finally {
+            if (Test-Path $msiPath) {
+                Remove-Item $msiPath -Force -ErrorAction SilentlyContinue
+            }
+        }
+    }
+    elseif ($IsMacOS) {
+        Write-Host "[~] Installing PowerShell 7 for macOS..." -ForegroundColor Yellow
+        # macOS: Use brew if available, otherwise download pkg
+        if (Get-Command brew -ErrorAction SilentlyContinue) {
+            Write-Host "[~] Using Homebrew to install PowerShell..." -ForegroundColor Yellow
+            & brew install --cask powershell
+        } else {
+            Write-Host "[~] Downloading PowerShell pkg installer..." -ForegroundColor Yellow
+            $pkgUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/powershell-lts.pkg"
+            $pkgPath = "/tmp/powershell-lts.pkg"
+            & curl -L $pkgUrl -o $pkgPath
+            Write-Host "[~] Installing PowerShell package..." -ForegroundColor Yellow
+            & sudo installer -pkg $pkgPath -target /
+            & rm $pkgPath
+        }
+    }
+    else {
+        Write-Host "[~] Installing PowerShell 7 for Linux..." -ForegroundColor Yellow
+        # Linux: Use package manager or direct download
+        if (Test-Path /etc/debian_version) {
+            # Debian/Ubuntu
+            Write-Host "[~] Detected Debian/Ubuntu. Using apt package manager..." -ForegroundColor Yellow
+            & wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb" -O /tmp/packages-microsoft-prod.deb
+            & sudo dpkg -i /tmp/packages-microsoft-prod.deb
+            & sudo apt-get update
+            & sudo apt-get install -y powershell
+            & rm /tmp/packages-microsoft-prod.deb
+        } elseif (Test-Path /etc/redhat-release) {
+            # RHEL/CentOS/Fedora
+            Write-Host "[~] Detected RHEL/CentOS/Fedora. Using yum/dnf..." -ForegroundColor Yellow
+            & sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+            & curl https://packages.microsoft.com/config/rhel/7/prod.repo | sudo tee /etc/yum.repos.d/microsoft.repo
+            & sudo yum install -y powershell
+        } else {
+            # Generic Linux - download tar.gz
+            Write-Host "[~] Using generic Linux installation method..." -ForegroundColor Yellow
+            $tarUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/powershell-lts-linux-x64.tar.gz"
+            $installDir = "/opt/microsoft/powershell/7"
+            & sudo mkdir -p $installDir
+            & curl -L $tarUrl | sudo tar -xz -C $installDir
+            & sudo chmod +x "$installDir/pwsh"
+            & sudo ln -s "$installDir/pwsh" /usr/bin/pwsh
+        }
+    }
+    
+    # Verify installation
+    if (Test-Path $pwsh7Path) {
+        Write-Host "[+] PowerShell 7 installation verified!" -ForegroundColor Green
+        return $pwsh7Path
+    } else {
+        throw "PowerShell 7 installation completed but executable not found at: $pwsh7Path"
     }
 }
 
@@ -372,8 +515,83 @@ try {
             # Check PowerShell version
             if ($PSVersionTable.PSVersion.Major -lt 7) {
                 Write-Host "[!] PowerShell $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor) detected" -ForegroundColor Yellow
-                Write-Host "[i] AitherZero requires PowerShell 7.0 or later for full functionality" -ForegroundColor Cyan
-                Write-Host "[i] The setup wizard will help install PowerShell 7 if needed" -ForegroundColor Cyan
+                Write-Host "[i] AitherZero requires PowerShell 7.0 or later" -ForegroundColor Cyan
+                
+                # Check for non-interactive mode
+                $installPS7 = $false
+                if ($env:AITHER_AUTO_INSTALL_PS7 -eq 'true' -or $env:AITHER_BOOTSTRAP_MODE) {
+                    Write-Host "[i] Non-interactive mode: Auto-installing PowerShell 7..." -ForegroundColor Cyan
+                    $installPS7 = $true
+                } else {
+                    # Interactive prompt
+                    Write-Host ""
+                    Write-Host "[?] Would you like to install PowerShell 7 now? (Y/n)" -ForegroundColor Yellow
+                    $response = Read-Host
+                    if (-not $response -or $response -match '^[Yy]') {
+                        $installPS7 = $true
+                    }
+                }
+                
+                if ($installPS7) {
+                    Write-Host "[~] Installing PowerShell 7..." -ForegroundColor Cyan
+                    try {
+                        $pwsh7Path = Install-PowerShell7 -NonInteractive:($env:AITHER_BOOTSTRAP_MODE -ne $null)
+                        
+                        if (Test-Path $pwsh7Path) {
+                            Write-Host "[+] PowerShell 7 installed successfully!" -ForegroundColor Green
+                            Write-Host "[~] Re-launching bootstrap in PowerShell 7..." -ForegroundColor Cyan
+                            
+                            # Prepare arguments for re-launch
+                            $scriptPath = $MyInvocation.MyCommand.Path
+                            if (-not $scriptPath) { $scriptPath = $PSCommandPath }
+                            
+                            # If neither works, try to find bootstrap.ps1 in current directory
+                            if (-not $scriptPath) {
+                                $scriptPath = Join-Path (Get-Location) "bootstrap.ps1"
+                            }
+                            
+                            # Re-launch in PowerShell 7 with same parameters
+                            $relaunchArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$scriptPath`"")
+                            
+                            # Preserve environment variables
+                            $env:AITHER_PS7_RELAUNCHED = 'true'
+                            
+                            # Start new process and exit current
+                            $process = Start-Process $pwsh7Path -ArgumentList $relaunchArgs -NoNewWindow -PassThru
+                            $process.WaitForExit()
+                            exit $process.ExitCode
+                        } else {
+                            throw "PowerShell 7 installation completed but executable not found"
+                        }
+                    } catch {
+                        Write-Host "[!] Failed to install PowerShell 7: $_" -ForegroundColor Red
+                        Write-Host "[i] Please install manually from: https://aka.ms/powershell" -ForegroundColor Yellow
+                        Write-Host "[i] Then run this bootstrap script again" -ForegroundColor Yellow
+                        
+                        # In non-interactive mode, exit with error
+                        if ($env:AITHER_BOOTSTRAP_MODE) {
+                            exit 1
+                        }
+                        
+                        # In interactive mode, allow continuing with PS 5.1
+                        Write-Host ""
+                        Write-Host "[?] Continue with limited functionality? (y/N)" -ForegroundColor Yellow
+                        $continueResponse = Read-Host
+                        if ($continueResponse -notmatch '^[Yy]') {
+                            exit 1
+                        }
+                    }
+                } else {
+                    Write-Host "[!] PowerShell 7 is required. Please install from: https://aka.ms/powershell" -ForegroundColor Red
+                    Write-Host "[i] Then run this bootstrap script again" -ForegroundColor Yellow
+                    exit 1
+                }
+            }
+            
+            # If we got here with PS7, we may have been relaunched
+            if ($env:AITHER_PS7_RELAUNCHED -eq 'true') {
+                Write-Host "[+] Successfully relaunched in PowerShell 7!" -ForegroundColor Green
+                Remove-Item env:AITHER_PS7_RELAUNCHED -ErrorAction SilentlyContinue
             }
             
             # For PowerShell 5.1, don't check execution policy in-process
