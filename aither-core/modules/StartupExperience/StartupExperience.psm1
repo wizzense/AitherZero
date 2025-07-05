@@ -47,5 +47,38 @@ foreach ($function in $privateFunctions) {
 # Export public functions
 Export-ModuleMember -Function $publicFunctions.BaseName
 
+# Try to import LicenseManager module if available
+try {
+    $licenseManagerPath = Join-Path (Split-Path $moduleRoot -Parent) "LicenseManager"
+    if (Test-Path $licenseManagerPath) {
+        Import-Module $licenseManagerPath -Force -ErrorAction Stop
+        Write-Verbose "LicenseManager module loaded successfully"
+    }
+} catch {
+    Write-Verbose "LicenseManager module not available: $_"
+}
+
+# Provide fallback Test-FeatureAccess function if LicenseManager is not loaded
+if (-not (Get-Command Test-FeatureAccess -ErrorAction SilentlyContinue)) {
+    function Test-FeatureAccess {
+        <#
+        .SYNOPSIS
+            Fallback function when LicenseManager is not available
+        .DESCRIPTION
+            Always returns true to allow all features when license management is not loaded
+        #>
+        param(
+            [string]$Feature,
+            [string]$Module,
+            [string]$CurrentTier
+        )
+        
+        # Without license management, all features are accessible
+        return $true
+    }
+    
+    Write-Verbose "Using fallback Test-FeatureAccess function"
+}
+
 # Module initialization
 Write-Verbose "StartupExperience module loaded from $moduleRoot"
