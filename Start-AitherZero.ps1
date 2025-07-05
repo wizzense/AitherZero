@@ -54,7 +54,7 @@ else {
     }
 }
 
-$coreScript = Join-Path $scriptPath "aither-core" "aither-core.ps1"
+$coreScript = Join-Path (Join-Path $scriptPath "aither-core") "aither-core.ps1"
 
 if (-not (Test-Path $coreScript)) {
     Write-Error "Core script not found at: $coreScript"
