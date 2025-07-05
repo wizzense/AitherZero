@@ -121,7 +121,8 @@ function Install-PowerShell7 {
                 & winget install Microsoft.PowerShell --accept-source-agreements --accept-package-agreements --disable-interactivity
                 if ($LASTEXITCODE -eq 0) {
                     Write-Host "[+] PowerShell 7 installed successfully via winget!" -ForegroundColor Green
-                    return
+                    # Return the standard PowerShell 7 path for Windows
+                    return "$env:ProgramFiles\PowerShell\7\pwsh.exe"
                 }
             } catch {
                 Write-Host "[!] Winget installation failed: $_" -ForegroundColor Yellow
@@ -230,7 +231,8 @@ function Install-PowerShell7 {
                 & brew install --cask powershell 2>/dev/null
                 if ($LASTEXITCODE -eq 0) {
                     Write-Host "[+] PowerShell 7 installed via Homebrew!" -ForegroundColor Green
-                    return
+                    # Return the standard Homebrew PowerShell path
+                    return "/opt/homebrew/bin/pwsh"
                 }
             } catch {
                 Write-Host "[!] Homebrew installation failed, trying portable..." -ForegroundColor Yellow
