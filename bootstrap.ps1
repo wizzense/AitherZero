@@ -162,6 +162,8 @@ function Install-PowerShell7 {
                 
                 if ($process.ExitCode -eq 0) {
                     Write-Host "[+] PowerShell 7 installed successfully!" -ForegroundColor Green
+                    # Return the standard PowerShell 7 path after MSI installation
+                    return "$env:ProgramFiles\PowerShell\7\pwsh.exe"
                 } else {
                     throw "MSI installation failed with exit code: $($process.ExitCode)"
                 }
@@ -202,6 +204,8 @@ function Install-PowerShell7 {
                     if (Test-Path $portablePwsh) {
                         Write-Host "[+] PowerShell 7 installed successfully (portable)!" -ForegroundColor Green
                         Write-Host "[i] Installed to: $portableDir" -ForegroundColor Cyan
+                        # Return the portable PowerShell 7 path
+                        return $portablePwsh
                     } else {
                         throw "Portable installation failed - pwsh.exe not found"
                     }
@@ -266,6 +270,8 @@ function Install-PowerShell7 {
             if (Test-Path "$installDir/pwsh") {
                 Write-Host "[+] PowerShell 7 installed successfully (portable)!" -ForegroundColor Green
                 Write-Host "[i] Installed to: $installDir" -ForegroundColor Cyan
+                # Return the portable PowerShell 7 path
+                return "$installDir/pwsh"
             } else {
                 throw "Portable installation failed - pwsh not found"
             }
@@ -282,7 +288,6 @@ function Install-PowerShell7 {
     else {
         Write-Host "[~] Installing PowerShell 7 for Linux..." -ForegroundColor Yellow
         # Try package managers first (if user has sudo access)
-        $installedViaPkg = $false
         
         if (Test-Path /etc/debian_version) {
             # Debian/Ubuntu - try with sudo first
@@ -297,7 +302,8 @@ function Install-PowerShell7 {
                     
                     if (Get-Command pwsh -ErrorAction SilentlyContinue) {
                         Write-Host "[+] PowerShell 7 installed via apt!" -ForegroundColor Green
-                        $installedViaPkg = $true
+                        # Return the standard Linux PowerShell path
+                        return "/usr/bin/pwsh"
                     }
                 }
             } catch {
@@ -319,7 +325,8 @@ function Install-PowerShell7 {
                     
                     if (Get-Command pwsh -ErrorAction SilentlyContinue) {
                         Write-Host "[+] PowerShell 7 installed via package manager!" -ForegroundColor Green
-                        $installedViaPkg = $true
+                        # Return the standard Linux PowerShell path  
+                        return "/usr/bin/pwsh"
                     }
                 }
             } catch {
@@ -327,46 +334,46 @@ function Install-PowerShell7 {
             }
         }
         
-        # If package installation failed or no sudo, use portable installation
-        if (-not $installedViaPkg) {
-            Write-Host "[~] Installing PowerShell 7 portable for Linux..." -ForegroundColor Yellow
-            try {
-                $tarUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/powershell-lts-linux-x64.tar.gz"
-                $installDir = "$HOME/.local/share/powershell"
-                $tarPath = "/tmp/powershell-linux.tar.gz"
-                
-                # Create installation directory
-                & mkdir -p $installDir
-                
-                # Download and extract
-                Write-Host "[~] Downloading PowerShell portable..." -ForegroundColor Yellow
-                & curl -L $tarUrl -o $tarPath
-                
-                Write-Host "[~] Extracting to user directory..." -ForegroundColor Yellow
-                & tar -xzf $tarPath -C $installDir
-                
-                # Make executable
-                & chmod +x "$installDir/pwsh"
-                
-                # Add to PATH for current session
-                $env:PATH = "$installDir" + ":" + $env:PATH
-                
-                # Verify installation
-                if (Test-Path "$installDir/pwsh") {
-                    Write-Host "[+] PowerShell 7 installed successfully (portable)!" -ForegroundColor Green
-                    Write-Host "[i] Installed to: $installDir" -ForegroundColor Cyan
-                } else {
-                    throw "Portable installation failed - pwsh not found"
-                }
-                
-                # Clean up
-                & rm -f $tarPath
-                
-            } catch {
-                Write-Host "[!] PowerShell 7 installation failed: $_" -ForegroundColor Red
-                Write-Host "[!] Please install manually from: https://aka.ms/powershell" -ForegroundColor Yellow
-                throw "PowerShell 7 installation failed"
+        # If we reach here, package installation failed, use portable installation
+        Write-Host "[~] Installing PowerShell 7 portable for Linux..." -ForegroundColor Yellow
+        try {
+            $tarUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/powershell-lts-linux-x64.tar.gz"
+            $installDir = "$HOME/.local/share/powershell"
+            $tarPath = "/tmp/powershell-linux.tar.gz"
+            
+            # Create installation directory
+            & mkdir -p $installDir
+            
+            # Download and extract
+            Write-Host "[~] Downloading PowerShell portable..." -ForegroundColor Yellow
+            & curl -L $tarUrl -o $tarPath
+            
+            Write-Host "[~] Extracting to user directory..." -ForegroundColor Yellow
+            & tar -xzf $tarPath -C $installDir
+            
+            # Make executable
+            & chmod +x "$installDir/pwsh"
+            
+            # Add to PATH for current session
+            $env:PATH = "$installDir" + ":" + $env:PATH
+            
+            # Verify installation
+            if (Test-Path "$installDir/pwsh") {
+                Write-Host "[+] PowerShell 7 installed successfully (portable)!" -ForegroundColor Green
+                Write-Host "[i] Installed to: $installDir" -ForegroundColor Cyan
+                # Return the portable PowerShell 7 path
+                return "$installDir/pwsh"
+            } else {
+                throw "Portable installation failed - pwsh not found"
             }
+            
+            # Clean up
+            & rm -f $tarPath
+            
+        } catch {
+            Write-Host "[!] PowerShell 7 installation failed: $_" -ForegroundColor Red
+            Write-Host "[!] Please install manually from: https://aka.ms/powershell" -ForegroundColor Yellow
+            throw "PowerShell 7 installation failed"
         }
     }
     
