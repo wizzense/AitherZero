@@ -6,6 +6,9 @@
 # $env:AITHER_PROFILE = 'minimal'|'standard'|'development'
 # $env:AITHER_INSTALL_DIR = 'custom/path' (default: ./AitherZero)
 # $env:AITHER_AUTO_INSTALL_PS7 = 'true' (auto-install PowerShell 7 if needed)
+# $env:AITHER_REINSTALL_PS7 = 'true' (force reinstall PowerShell 7)
+# $env:AITHER_PS7_MSI_URL = 'custom-url' (override PS7 download URL)
+# $env:AITHER_BYPASS_PS7_CHECK = 'true' (skip PS7 check entirely)
 #
 # New in v2.1:
 # - Installs to subdirectory by default (./AitherZero) for easier cleanup
@@ -17,6 +20,37 @@
 
 # Simple error handling
 $ErrorActionPreference = 'Stop'
+
+# Helper function for proper exit with pause on error
+function Exit-Bootstrap {
+    param(
+        [int]$ExitCode = 1,
+        [string]$Message
+    )
+    
+    if ($Message) {
+        Write-Host $Message -ForegroundColor $(if ($ExitCode -eq 0) { 'Green' } else { 'Red' })
+    }
+    
+    # If running interactively and not in CI, pause before exit
+    if (-not $env:CI -and -not $env:AITHER_BOOTSTRAP_MODE -and -not [System.Console]::IsInputRedirected) {
+        # Check if we're in a terminal that will close
+        $parentProcess = Get-Process -Id $PID
+        if ($parentProcess.Parent -and $parentProcess.Parent.ProcessName -match 'explorer|cmd') {
+            Write-Host ""
+            Write-Host "Press any key to exit..." -ForegroundColor Yellow
+            $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        }
+    }
+    
+    # Clean up temp files
+    if ($env:AITHER_TEMP_BOOTSTRAP -and (Test-Path $env:AITHER_TEMP_BOOTSTRAP)) {
+        Remove-Item $env:AITHER_TEMP_BOOTSTRAP -Force -ErrorAction SilentlyContinue
+        Remove-Item env:AITHER_TEMP_BOOTSTRAP -ErrorAction SilentlyContinue
+    }
+    
+    exit $ExitCode
+}
 
 # Helper function for network requests with retry
 function Invoke-WebRequestWithRetry {
@@ -76,6 +110,33 @@ function Install-PowerShell7 {
         $pwsh7Path = "/usr/bin/pwsh"
     }
     
+    # Check for reinstall/clean request
+    if (($env:AITHER_REINSTALL_PS7 -eq 'true' -or $env:AITHER_CLEAN_PS7 -eq 'true') -and (Test-Path $pwsh7Path)) {
+        Write-Host "[~] Removing existing PowerShell 7 installation..." -ForegroundColor Yellow
+        if ($isWindows) {
+            # Try to uninstall via MSI
+            try {
+                $ps7Installed = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" -ErrorAction SilentlyContinue | 
+                    Where-Object { $_.DisplayName -like "PowerShell 7*" }
+                
+                if ($ps7Installed -and $ps7Installed.UninstallString) {
+                    $uninstallCmd = $ps7Installed.UninstallString
+                    if ($uninstallCmd -match 'msiexec.exe /[IX] \{([^}]+)\}') {
+                        $productCode = $matches[1]
+                        Write-Host "[~] Uninstalling PowerShell 7 (Product Code: $productCode)..." -ForegroundColor Yellow
+                        $process = Start-Process msiexec.exe -ArgumentList "/x", "{$productCode}", "/quiet", "/norestart" -Wait -PassThru
+                        if ($process.ExitCode -eq 0) {
+                            Write-Host "[+] PowerShell 7 uninstalled successfully" -ForegroundColor Green
+                        }
+                    }
+                }
+            } catch {
+                Write-Host "[!] Could not uninstall existing PowerShell 7: $_" -ForegroundColor Yellow
+            }
+        }
+        $Force = $true
+    }
+    
     if ((Test-Path $pwsh7Path) -and -not $Force) {
         Write-Host "[+] PowerShell 7 already installed at: $pwsh7Path" -ForegroundColor Green
         return $pwsh7Path
@@ -86,19 +147,26 @@ function Install-PowerShell7 {
     # Download and install based on platform
     if ($isWindows) {
         Write-Host "[~] Downloading PowerShell 7 MSI installer..." -ForegroundColor Yellow
-        # Get latest release URL
-        try {
-            $latestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/PowerShell/PowerShell/releases/latest" -UseBasicParsing
-            $msiAsset = $latestRelease.assets | Where-Object { $_.name -like "PowerShell-*-win-x64.msi" } | Select-Object -First 1
-            $msiUrl = $msiAsset.browser_download_url
-            
-            if (-not $msiUrl) {
-                # Fallback to known good version
+        
+        # Check for custom MSI URL
+        if ($env:AITHER_PS7_MSI_URL) {
+            $msiUrl = $env:AITHER_PS7_MSI_URL
+            Write-Host "[i] Using custom PS7 MSI URL: $msiUrl" -ForegroundColor Yellow
+        } else {
+            # Get latest release URL
+            try {
+                $latestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/PowerShell/PowerShell/releases/latest" -UseBasicParsing
+                $msiAsset = $latestRelease.assets | Where-Object { $_.name -like "PowerShell-*-win-x64.msi" } | Select-Object -First 1
+                $msiUrl = $msiAsset.browser_download_url
+                
+                if (-not $msiUrl) {
+                    # Fallback to known good version
+                    $msiUrl = "https://github.com/PowerShell/PowerShell/releases/download/v7.4.1/PowerShell-7.4.1-win-x64.msi"
+                }
+            } catch {
+                # Fallback URL if API fails
                 $msiUrl = "https://github.com/PowerShell/PowerShell/releases/download/v7.4.1/PowerShell-7.4.1-win-x64.msi"
             }
-        } catch {
-            # Fallback URL if API fails
-            $msiUrl = "https://github.com/PowerShell/PowerShell/releases/download/v7.4.1/PowerShell-7.4.1-win-x64.msi"
         }
         
         $msiPath = "$env:TEMP\PowerShell-7-win-x64.msi"
@@ -512,8 +580,10 @@ try {
         try {
             Write-Host "[~] Starting from: $(Get-Location)" -ForegroundColor Yellow
             
-            # Check PowerShell version
-            if ($PSVersionTable.PSVersion.Major -lt 7) {
+            # Check PowerShell version (unless bypassed)
+            if ($env:AITHER_BYPASS_PS7_CHECK -eq 'true') {
+                Write-Host "[i] PowerShell 7 check bypassed by environment variable" -ForegroundColor Yellow
+            } elseif ($PSVersionTable.PSVersion.Major -lt 7) {
                 Write-Host "[!] PowerShell $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor) detected" -ForegroundColor Yellow
                 Write-Host "[i] AitherZero requires PowerShell 7.0 or later" -ForegroundColor Cyan
                 
@@ -545,21 +615,41 @@ try {
                             $scriptPath = $MyInvocation.MyCommand.Path
                             if (-not $scriptPath) { $scriptPath = $PSCommandPath }
                             
-                            # If neither works, try to find bootstrap.ps1 in current directory
-                            if (-not $scriptPath) {
-                                $scriptPath = Join-Path (Get-Location) "bootstrap.ps1"
+                            # When running via iex, save script to temp for re-launch
+                            if (-not $scriptPath -or -not (Test-Path $scriptPath)) {
+                                Write-Host "[~] Saving bootstrap script for re-launch..." -ForegroundColor Yellow
+                                $tempScriptPath = Join-Path $env:TEMP "aitherzero-bootstrap-$(Get-Random).ps1"
+                                
+                                # Download script content
+                                try {
+                                    $scriptContent = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1" -UseBasicParsing
+                                    Set-Content -Path $tempScriptPath -Value $scriptContent.Content -Encoding UTF8
+                                    $scriptPath = $tempScriptPath
+                                    $env:AITHER_TEMP_BOOTSTRAP = $tempScriptPath
+                                } catch {
+                                    throw "Failed to download bootstrap script for re-launch: $_"
+                                }
                             }
                             
-                            # Re-launch in PowerShell 7 with same parameters
-                            $relaunchArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$scriptPath`"")
+                            # Re-launch in PowerShell 7 with proper window handling
+                            $relaunchArgs = @(
+                                "-NoExit",  # Keep window open
+                                "-NoProfile",
+                                "-ExecutionPolicy", "Bypass", 
+                                "-File", "`"$scriptPath`""
+                            )
                             
                             # Preserve environment variables
                             $env:AITHER_PS7_RELAUNCHED = 'true'
                             
-                            # Start new process and exit current
-                            $process = Start-Process $pwsh7Path -ArgumentList $relaunchArgs -NoNewWindow -PassThru
-                            $process.WaitForExit()
-                            exit $process.ExitCode
+                            Write-Host "[~] Starting new PowerShell 7 window..." -ForegroundColor Cyan
+                            Write-Host "[i] Bootstrap will continue in the new window" -ForegroundColor Yellow
+                            
+                            # Start new process
+                            Start-Process $pwsh7Path -ArgumentList $relaunchArgs -Wait
+                            
+                            # Exit current process
+                            Exit-Bootstrap -ExitCode 0 -Message "[+] Bootstrap completed in new window"
                         } else {
                             throw "PowerShell 7 installation completed but executable not found"
                         }
@@ -570,7 +660,7 @@ try {
                         
                         # In non-interactive mode, exit with error
                         if ($env:AITHER_BOOTSTRAP_MODE) {
-                            exit 1
+                            Exit-Bootstrap -ExitCode 1 -Message "[!] PowerShell 7 installation failed in non-interactive mode"
                         }
                         
                         # In interactive mode, allow continuing with PS 5.1
@@ -578,13 +668,13 @@ try {
                         Write-Host "[?] Continue with limited functionality? (y/N)" -ForegroundColor Yellow
                         $continueResponse = Read-Host
                         if ($continueResponse -notmatch '^[Yy]') {
-                            exit 1
+                            Exit-Bootstrap -ExitCode 1 -Message "[!] Installation cancelled by user"
                         }
                     }
                 } else {
                     Write-Host "[!] PowerShell 7 is required. Please install from: https://aka.ms/powershell" -ForegroundColor Red
                     Write-Host "[i] Then run this bootstrap script again" -ForegroundColor Yellow
-                    exit 1
+                    Exit-Bootstrap -ExitCode 1 -Message "[!] PowerShell 7 installation declined"
                 }
             }
             
@@ -636,5 +726,5 @@ try {
 } catch {
     Write-Host "[!] Installation failed: $_" -ForegroundColor Red
     Write-Host "[i] Try manual download from: https://github.com/wizzense/AitherZero/releases" -ForegroundColor Yellow
-    exit 1
+    Exit-Bootstrap -ExitCode 1 -Message "[!] Bootstrap failed: $_"
 }

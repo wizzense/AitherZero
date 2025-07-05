@@ -1,3 +1,5 @@
+YOU ARE RUNNING IN WSL ON WINDOWS 11.
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -150,7 +152,7 @@ The project uses streamlined workflows for CI/CD:
 # Triggers: Push to main/develop, PRs, manual dispatch
 # Features: Smart change detection, cross-platform testing, security analysis
 
-# Build & Release Pipeline - Package building and releases  
+# Build & Release Pipeline - Package building and releases
 # Triggers: Version tags (v*) only, manual dispatch
 # Features: Multi-profile builds (minimal/standard/development), cross-platform packages
 
@@ -175,7 +177,7 @@ gh workflow run "Manual Release Creator"
 
 # Trigger other workflows manually
 gh workflow run "Intelligent CI/CD Pipeline"
-gh workflow run "Build & Release Pipeline" 
+gh workflow run "Build & Release Pipeline"
 gh workflow run "Documentation & Sync Pipeline"
 
 # Monitor workflow status
@@ -366,7 +368,7 @@ New-Patch -Description "Clear description" -Changes {
 # Quick fixes for minor changes (no branching)
 New-QuickFix -Description "Fix typo in comment" -Changes {
     $content = Get-Content "file.ps1"
-    $content = $content -replace "teh", "the"  
+    $content = $content -replace "teh", "the"
     Set-Content "file.ps1" -Value $content
 }
 
@@ -472,7 +474,7 @@ Invoke-PatchWorkflow -PatchDescription "Legacy" -PatchOperation {
 
 If something goes wrong, v3.0 provides automatic recovery:
 - **Automatic Rollback**: Failed operations restore previous state
-- **Smart Error Analysis**: Categorizes errors and suggests solutions  
+- **Smart Error Analysis**: Categorizes errors and suggests solutions
 - **No Manual Cleanup**: Atomic operations handle cleanup automatically
 
 #### When to Use Each Function
@@ -482,7 +484,7 @@ If something goes wrong, v3.0 provides automatic recovery:
 # - Typos, formatting, minor documentation updates
 # - Changes that don't need review
 
-# Use New-Feature for:  
+# Use New-Feature for:
 # - New functionality, enhancements
 # - Changes that should have PR review
 
