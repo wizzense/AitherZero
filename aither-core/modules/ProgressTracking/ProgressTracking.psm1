@@ -257,8 +257,15 @@ function Show-ProgressDetailed {
         }
     }
     
-    # Move cursor back up
-    [Console]::SetCursorPosition(0, [Math]::Max(0, [Console]::CursorTop - $linesToClear + 1))
+    # Move cursor back up (with error handling for non-interactive environments)
+    try {
+        if ([Console]::IsInputRedirected -eq $false -and [Console]::IsOutputRedirected -eq $false) {
+            [Console]::SetCursorPosition(0, [Math]::Max(0, [Console]::CursorTop - $linesToClear + 1))
+        }
+    } catch {
+        # Silently ignore cursor positioning errors in non-interactive terminals
+        Write-Verbose "Could not set cursor position: $_"
+    }
     
     # Display detailed progress
     Write-Host "╔════════════════════════════════════════════════════════╗" -ForegroundColor DarkGray

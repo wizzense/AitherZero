@@ -14,8 +14,13 @@ $ErrorActionPreference = 'Stop'
 $moduleRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $moduleRoot))
 
-# Import shared functions
-. (Join-Path $projectRoot "aither-core" "shared" "Find-ProjectRoot.ps1")
+# Import shared functions - use absolute path construction
+$sharedPath = Join-Path $projectRoot "aither-core" "shared" "Find-ProjectRoot.ps1"
+if (Test-Path $sharedPath) {
+    . $sharedPath
+} else {
+    Write-Warning "Find-ProjectRoot.ps1 not found at: $sharedPath"
+}
 
 # Module-level variables
 $script:ConfigProfilePath = Join-Path ([Environment]::GetFolderPath('UserProfile')) '.aitherzero' 'profiles'
