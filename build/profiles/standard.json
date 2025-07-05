@@ -15,7 +15,9 @@
     "ScriptManager",
     "LicenseManager",
     "ModuleCommunication",
-    "StartupExperience"
+    "StartupExperience",
+    "SetupWizard",
+    "ProgressTracking"
   ],
   "additionalDirectories": {
     "aither-core/scripts": [
