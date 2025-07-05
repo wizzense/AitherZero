@@ -58,7 +58,8 @@
       "Bash(/mnt/c/Program Files/Git/cmd/git.exe commit -m \"Update Claude settings for session work\")",
       "Bash(/mnt/c/Program Files/Git/cmd/git.exe show patch/20250702-200059-PatchManager-v3-1-PR-Awareness-and-Workflow-Management:.github/workflows/auto-release-on-merge.yml)",
       "Bash(git clone:*)",
-      "Bash(/mnt/c/Program Files/PowerShell/7/pwsh.exe -NoProfile -Command \"$PSVersionTable.PSVersion; $Host.UI.RawUI.WindowSize\")"
+      "Bash(/mnt/c/Program Files/PowerShell/7/pwsh.exe -NoProfile -Command \"$PSVersionTable.PSVersion; $Host.UI.RawUI.WindowSize\")",
+      "Bash(cd:*)"
     ],
     "deny": []
   }
