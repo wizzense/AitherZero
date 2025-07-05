@@ -63,7 +63,8 @@ function Invoke-WebRequestWithRetry {
                     Invoke-WebRequest -Uri $Uri -OutFile $OutFile -UseBasicParsing -TimeoutSec 30
                 } else {
                     $webClient = New-Object System.Net.WebClient
-                    $webClient.DownloadFile($Uri, (Join-Path $PWD $OutFile))
+                    $fullPath = if ([System.IO.Path]::IsPathRooted($OutFile)) { $OutFile } else { Join-Path $PWD $OutFile }
+                    $webClient.DownloadFile($Uri, $fullPath)
                     $webClient.Dispose()
                 }
             } else {
@@ -112,6 +113,22 @@ function Install-PowerShell7 {
     
     # Download and install based on platform
     if ($isWindows) {
+        # Try winget first as it's more reliable
+        Write-Host "[~] Checking for winget..." -ForegroundColor Yellow
+        if (Get-Command winget -ErrorAction SilentlyContinue) {
+            try {
+                Write-Host "[~] Installing PowerShell 7 via winget..." -ForegroundColor Cyan
+                & winget install Microsoft.PowerShell --accept-source-agreements --accept-package-agreements --disable-interactivity
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Host "[+] PowerShell 7 installed successfully via winget!" -ForegroundColor Green
+                    return
+                }
+            } catch {
+                Write-Host "[!] Winget installation failed: $_" -ForegroundColor Yellow
+                Write-Host "[~] Falling back to MSI installer..." -ForegroundColor Yellow
+            }
+        }
+        
         Write-Host "[~] Downloading PowerShell 7 MSI installer..." -ForegroundColor Yellow
         # Get latest release URL
         try {
