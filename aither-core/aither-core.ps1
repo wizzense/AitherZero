@@ -553,12 +553,26 @@ try {
         if (Test-Path $setupWizardPath) {
             try {
                 Import-Module $setupWizardPath -Force
-                if ($InstallationProfile -eq 'interactive') {
-                    $result = Start-IntelligentSetup
-                } else {
-                    $result = Start-IntelligentSetup -InstallationProfile $InstallationProfile
+                
+                # Build setup parameters
+                $setupParams = @{}
+                if ($InstallationProfile -ne 'interactive') {
+                    $setupParams['InstallationProfile'] = $InstallationProfile
                 }
+                if ($NonInteractive) {
+                    $setupParams['SkipOptional'] = $true
+                    # Set environment variable for child processes
+                    $env:NO_PROMPT = 'true'
+                }
+                
+                $result = Start-IntelligentSetup @setupParams
                 Write-Host "✓ Setup completed successfully" -ForegroundColor Green
+                
+                # After setup, if non-interactive, launch into auto mode
+                if ($NonInteractive) {
+                    Write-CustomLog "Non-interactive setup complete, launching application in auto mode" -Level INFO
+                    $Auto = $true
+                }
             } catch {
                 Write-CustomLog "Error running setup wizard: $_" -Level ERROR
                 throw

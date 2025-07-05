@@ -6,6 +6,8 @@
 # $env:AITHER_PROFILE = 'minimal'|'standard'|'development'
 # $env:AITHER_INSTALL_DIR = 'custom/path' (default: ./AitherZero)
 # $env:AITHER_AUTO_INSTALL_PS7 = 'true' (auto-install PowerShell 7 if needed)
+# $env:AITHER_NON_INTERACTIVE = 'true' (run in non-interactive mode)
+# $env:AITHER_NO_AUTOSTART = 'true' (skip auto-start after installation)
 #
 # New in v2.1:
 # - Installs to subdirectory by default (./AitherZero) for easier cleanup
@@ -121,8 +123,47 @@ function Install-PowerShell7 {
                 & winget install Microsoft.PowerShell --accept-source-agreements --accept-package-agreements --disable-interactivity
                 if ($LASTEXITCODE -eq 0) {
                     Write-Host "[+] PowerShell 7 installed successfully via winget!" -ForegroundColor Green
-                    # Return the standard PowerShell 7 path for Windows
-                    return "$env:ProgramFiles\PowerShell\7\pwsh.exe"
+                    
+                    # Wait for PowerShell 7 to be available and find its path
+                    Write-Host "[~] Locating PowerShell 7 installation..." -ForegroundColor Yellow
+                    $maxAttempts = 10
+                    $attempt = 0
+                    $pwsh7Path = $null
+                    
+                    while ($attempt -lt $maxAttempts -and -not $pwsh7Path) {
+                        $attempt++
+                        Start-Sleep -Seconds 2
+                        
+                        # Check common locations
+                        $checkPaths = @(
+                            "$env:ProgramFiles\PowerShell\7\pwsh.exe",
+                            "$env:ProgramFiles\PowerShell\7.5.2\pwsh.exe",
+                            "$env:ProgramFiles\PowerShell\7.4.1\pwsh.exe",
+                            "$env:LOCALAPPDATA\Microsoft\PowerShell\7\pwsh.exe"
+                        )
+                        
+                        foreach ($checkPath in $checkPaths) {
+                            if (Test-Path $checkPath) {
+                                $pwsh7Path = $checkPath
+                                break
+                            }
+                        }
+                        
+                        # Also check if pwsh is in PATH
+                        if (-not $pwsh7Path) {
+                            $pwshCommand = Get-Command pwsh -ErrorAction SilentlyContinue
+                            if ($pwshCommand) {
+                                $pwsh7Path = $pwshCommand.Source
+                            }
+                        }
+                    }
+                    
+                    if ($pwsh7Path) {
+                        Write-Host "[+] Found PowerShell 7 at: $pwsh7Path" -ForegroundColor Green
+                        return $pwsh7Path
+                    } else {
+                        throw "PowerShell 7 installed but executable not found after $maxAttempts attempts"
+                    }
                 }
             } catch {
                 Write-Host "[!] Winget installation failed: $_" -ForegroundColor Yellow
@@ -724,6 +765,18 @@ try {
         $startScript = ".\Start-AitherZero.ps1"
         # Add -Setup parameter for first-time installation
         $startParams = @{Setup = $true; InstallationProfile = $profile}
+        
+        # Add non-interactive mode if specified
+        if ($env:AITHER_NON_INTERACTIVE -eq 'true' -or $env:AITHER_BOOTSTRAP_MODE) {
+            $startParams['NonInteractive'] = $true
+        }
+        
+        # Check if we should skip auto-start
+        if ($env:AITHER_NO_AUTOSTART -eq 'true') {
+            Write-Host "[i] Auto-start disabled. To start AitherZero manually, run:" -ForegroundColor Cyan
+            Write-Host "    ./Start-AitherZero.ps1" -ForegroundColor White
+            Exit-Bootstrap -ExitCode 0 -Message "[+] Installation completed successfully!"
+        }
     }
     
     if ($startScript) {

@@ -12,15 +12,48 @@ $ErrorActionPreference = 'Stop'
 
 # Get the path to the project root
 $moduleRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$projectRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $moduleRoot))
-
-# Import shared functions - use absolute path construction
-$sharedPath = Join-Path $projectRoot "aither-core" "shared" "Find-ProjectRoot.ps1"
-if (Test-Path $sharedPath) {
-    . $sharedPath
-} else {
-    Write-Warning "Find-ProjectRoot.ps1 not found at: $sharedPath"
+if (-not $moduleRoot) {
+    $moduleRoot = $PSScriptRoot
 }
+
+# Import shared functions - try multiple locations
+$sharedPaths = @(
+    (Join-Path (Split-Path (Split-Path $moduleRoot -Parent) -Parent) "shared" "Find-ProjectRoot.ps1"),
+    (Join-Path (Split-Path $moduleRoot -Parent) "shared" "Find-ProjectRoot.ps1"),
+    (Join-Path $moduleRoot ".." ".." "shared" "Find-ProjectRoot.ps1")
+)
+
+$foundSharedUtil = $false
+foreach ($sharedPath in $sharedPaths) {
+    if (Test-Path $sharedPath) {
+        . $sharedPath
+        Write-Verbose "Loaded Find-ProjectRoot from: $sharedPath"
+        $foundSharedUtil = $true
+        break
+    }
+}
+
+if (-not $foundSharedUtil) {
+    # Define Find-ProjectRoot locally if shared utility is not found
+    function Find-ProjectRoot {
+        param([string]$StartPath = $PWD.Path)
+        
+        $currentPath = $StartPath
+        while ($currentPath -and $currentPath -ne (Split-Path $currentPath -Parent)) {
+            if (Test-Path (Join-Path $currentPath "Start-AitherZero.ps1")) {
+                return $currentPath
+            }
+            $currentPath = Split-Path $currentPath -Parent
+        }
+        
+        # Fallback to module root's parent parent
+        return Split-Path (Split-Path $moduleRoot -Parent) -Parent
+    }
+    Write-Verbose "Using fallback Find-ProjectRoot function"
+}
+
+# Now get the project root
+$projectRoot = Find-ProjectRoot -StartPath $moduleRoot
 
 # Module-level variables
 $script:ConfigProfilePath = Join-Path ([Environment]::GetFolderPath('UserProfile')) '.aitherzero' 'profiles'

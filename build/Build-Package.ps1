@@ -514,6 +514,16 @@ function New-Package {
         }
     }
 
+    # Always copy shared directory (critical for module dependencies)
+    $sharedSource = Join-Path $aitherCoreSource 'shared'
+    $sharedDest = Join-Path $aitherCoreDest 'shared'
+    if (Test-Path $sharedSource) {
+        Copy-Item $sharedSource -Destination $sharedDest -Recurse -Force
+        Write-BuildLog "Copied shared utilities directory" -Level 'DEBUG'
+    } else {
+        Write-BuildLog "Shared utilities directory not found at: $sharedSource" -Level 'WARNING'
+    }
+
     # Copy modules
     Write-BuildLog 'Copying modules...' -Level 'INFO'
     $modulesDest = Join-Path $aitherCoreDest 'modules'

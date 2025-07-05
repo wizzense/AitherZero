@@ -22,7 +22,10 @@ param(
     [switch]$WhatIf,
     
     [Parameter(HelpMessage = "Show help information")]
-    [switch]$Help
+    [switch]$Help,
+    
+    [Parameter(HelpMessage = "Run in non-interactive mode (no prompts)")]
+    [switch]$NonInteractive
 )
 
 # Find the aither-core.ps1 script
@@ -71,6 +74,7 @@ if ($Setup) { $coreparams['Setup'] = $true }
 if ($InstallationProfile) { $coreparams['InstallationProfile'] = $InstallationProfile }
 if ($WhatIf) { $coreparams['WhatIf'] = $true }
 if ($Help) { $coreparams['Help'] = $true }
+if ($NonInteractive) { $coreparams['NonInteractive'] = $true }
 
 try {
     & $coreScript @coreparams

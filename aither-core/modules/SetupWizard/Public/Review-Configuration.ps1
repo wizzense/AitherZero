@@ -152,9 +152,11 @@ function Review-Configuration {
         }
         
     } catch {
-        $result.Status = 'Failed'
-        $result.Details += "❌ Error during configuration review: $_"
-        $SetupState.Errors += $_
+        # Don't fail the entire setup just because of config review
+        $result.Status = 'Success' 
+        $result.Details += "⚠️ Configuration review skipped due to error: $_"
+        $result.Details += "✓ Configuration can be edited later using Edit-Configuration"
+        $SetupState.Warnings += "Configuration review encountered an error but setup can continue"
     }
     
     return $result
