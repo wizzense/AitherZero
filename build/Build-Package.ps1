@@ -549,13 +549,18 @@ function New-Package {
 
     # Copy configurations
     Write-BuildLog 'Copying configurations...' -Level 'INFO'
+    # Create configs in both locations for compatibility
     $configsDest = Join-Path $packagePath 'configs'
+    $aitherCoreConfigsDest = Join-Path $packagePath 'aither-core' 'configs'
     New-Item -ItemType Directory -Path $configsDest -Force | Out-Null
+    New-Item -ItemType Directory -Path $aitherCoreConfigsDest -Force | Out-Null
 
     foreach ($configFile in $config.configs) {
         $configSource = Join-Path $projectRoot 'configs' $configFile
         if (Test-Path $configSource) {
             Copy-Item $configSource -Destination $configsDest -Force
+            # Also copy to aither-core/configs for compatibility
+            Copy-Item $configSource -Destination $aitherCoreConfigsDest -Force
         }
     }
 
@@ -565,6 +570,8 @@ function New-Package {
             $configSource = Join-Path $projectRoot 'configs' $configFile
             if (Test-Path $configSource) {
                 Copy-Item $configSource -Destination $configsDest -Force
+                # Also copy to aither-core/configs for compatibility
+                Copy-Item $configSource -Destination $aitherCoreConfigsDest -Force
             }
         }
     }
