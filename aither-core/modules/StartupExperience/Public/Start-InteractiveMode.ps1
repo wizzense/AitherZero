@@ -30,17 +30,42 @@ function Start-InteractiveMode {
         
         # Check license status unless skipped
         if (-not $SkipLicenseCheck) {
-            $licenseStatus = Get-LicenseStatus
-            $availableTier = $licenseStatus.Tier ?? 'free'
+            # Try to load LicenseManager module if not already loaded
+            if (-not (Get-Command Get-LicenseStatus -ErrorAction SilentlyContinue)) {
+                try {
+                    $projectRoot = Find-ProjectRoot
+                    $licenseManagerPath = Join-Path $projectRoot "aither-core" "modules" "LicenseManager"
+                    if (Test-Path $licenseManagerPath) {
+                        Import-Module $licenseManagerPath -Force -ErrorAction Stop
+                    }
+                } catch {
+                    Write-Warning "Could not load LicenseManager module: $_"
+                }
+            }
+            
+            # Get license status with fallback
+            try {
+                $licenseStatus = Get-LicenseStatus
+                $availableTier = $licenseStatus.Tier ?? 'free'
+            } catch {
+                Write-Warning "Could not get license status: $_"
+                $availableTier = 'free' # Default to free tier
+            }
         } else {
             $availableTier = 'enterprise' # Full access for testing
         }
         
         # Load configuration profile if specified
         if ($Profile) {
-            $config = Get-ConfigurationProfile -Name $Profile
-            if ($config) {
-                Set-ConfigurationProfile -Name $Profile
+            try {
+                $config = Get-ConfigurationProfile -Name $Profile
+                if ($config) {
+                    Set-ConfigurationProfile -Name $Profile
+                }
+            } catch {
+                Write-Warning "Configuration profile '$Profile' not found: $_"
+                Write-Host "Continuing with default configuration..." -ForegroundColor Yellow
+                # Continue without the profile - the application will use default config
             }
         }
         

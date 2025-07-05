@@ -9,21 +9,45 @@ function Initialize-TerminalUI {
     param()
     
     try {
-        # Save current state
-        $script:OriginalWindowTitle = $Host.UI.RawUI.WindowTitle
-        $script:OriginalBackgroundColor = $Host.UI.RawUI.BackgroundColor
-        $script:OriginalForegroundColor = $Host.UI.RawUI.ForegroundColor
+        # Save current state (with error handling)
+        try {
+            $script:OriginalWindowTitle = $Host.UI.RawUI.WindowTitle
+        } catch {
+            Write-Verbose "Could not access WindowTitle: $_"
+            $script:OriginalWindowTitle = $null
+        }
         
-        # Set new window title
-        $Host.UI.RawUI.WindowTitle = "AitherZero Interactive Mode"
+        try {
+            $script:OriginalBackgroundColor = $Host.UI.RawUI.BackgroundColor
+            $script:OriginalForegroundColor = $Host.UI.RawUI.ForegroundColor
+        } catch {
+            Write-Verbose "Could not access terminal colors: $_"
+        }
+        
+        # Set new window title (with error handling)
+        try {
+            if ($script:OriginalWindowTitle -ne $null) {
+                $Host.UI.RawUI.WindowTitle = "AitherZero Interactive Mode"
+            }
+        } catch {
+            Write-Verbose "Could not set WindowTitle: $_"
+        }
         
         # Enable UTF-8 for better character support
         if ($IsWindows) {
-            $null = [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+            try {
+                $null = [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+            } catch {
+                Write-Verbose "Could not set console encoding: $_"
+            }
         }
         
         # Clear screen for fresh start
-        Clear-Host
+        try {
+            Clear-Host
+        } catch {
+            Write-Verbose "Could not clear host: $_"
+        }
         
         $script:TerminalUIEnabled = $true
         
@@ -44,15 +68,27 @@ function Reset-TerminalUI {
     
     try {
         if ($script:TerminalUIEnabled) {
-            # Restore original settings
+            # Restore original settings (with error handling)
             if ($script:OriginalWindowTitle) {
-                $Host.UI.RawUI.WindowTitle = $script:OriginalWindowTitle
+                try {
+                    $Host.UI.RawUI.WindowTitle = $script:OriginalWindowTitle
+                } catch {
+                    Write-Verbose "Could not restore WindowTitle: $_"
+                }
             }
             if ($script:OriginalBackgroundColor) {
-                $Host.UI.RawUI.BackgroundColor = $script:OriginalBackgroundColor
+                try {
+                    $Host.UI.RawUI.BackgroundColor = $script:OriginalBackgroundColor
+                } catch {
+                    Write-Verbose "Could not restore BackgroundColor: $_"
+                }
             }
             if ($script:OriginalForegroundColor) {
-                $Host.UI.RawUI.ForegroundColor = $script:OriginalForegroundColor
+                try {
+                    $Host.UI.RawUI.ForegroundColor = $script:OriginalForegroundColor
+                } catch {
+                    Write-Verbose "Could not restore ForegroundColor: $_"
+                }
             }
             
             $script:TerminalUIEnabled = $false

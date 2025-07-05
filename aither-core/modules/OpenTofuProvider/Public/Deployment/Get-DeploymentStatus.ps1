@@ -291,10 +291,22 @@ function Watch-DeploymentStatus {
                     Write-Host "`r$(' ' * 80)" -NoNewline
                     if ($i -lt ($linesToClear - 1)) {
                         Write-Host "`n" -NoNewline
-                        [Console]::SetCursorPosition(0, [Console]::CursorTop - 1)
+                        try {
+                            if ([Console]::IsInputRedirected -eq $false -and [Console]::IsOutputRedirected -eq $false) {
+                                [Console]::SetCursorPosition(0, [Console]::CursorTop - 1)
+                            }
+                        } catch {
+                            Write-Verbose "Could not set cursor position: $_"
+                        }
                     }
                 }
-                [Console]::SetCursorPosition(0, [Console]::CursorTop - $linesToClear + 1)
+                try {
+                    if ([Console]::IsInputRedirected -eq $false -and [Console]::IsOutputRedirected -eq $false) {
+                        [Console]::SetCursorPosition(0, [Console]::CursorTop - $linesToClear + 1)
+                    }
+                } catch {
+                    Write-Verbose "Could not set cursor position: $_"
+                }
             }
             
             # Get current status
