@@ -1,65 +1,157 @@
 name: Release
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       version:
         description: 'Version to release (e.g., 1.2.3)'
         required: true
         type: string
-      release_type:
-        description: 'Release type'
-        required: true
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
       description:
         description: 'Release description'
         required: false
         default: 'New release'
 
 jobs:
+  build:
+    name: Build Release Artifacts
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [windows, linux, macos]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PowerShell
+      shell: bash
+      run: |
+        # Update package lists
+        sudo apt-get update
+        
+        # Install PowerShell
+        sudo apt-get install -y wget apt-transport-https software-properties-common
+        wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+        sudo dpkg -i packages-microsoft-prod.deb
+        sudo apt-get update
+        sudo apt-get install -y powershell
+        
+    - name: Get Version
+      id: get_version
+      shell: bash
+      run: |
+        if [ "${{ github.event_name }}" == "push" ]; then
+          # Extract version from tag
+          VERSION=${GITHUB_REF#refs/tags/v}
+        else
+          # Use input version
+          VERSION="${{ github.event.inputs.version }}"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        
+    - name: Build Package
+      shell: pwsh
+      run: |
+        Write-Host "Building ${{ matrix.platform }} package for version ${{ steps.get_version.outputs.version }}"
+        ./build/Build-Package.ps1 -Platform ${{ matrix.platform }} -Version "${{ steps.get_version.outputs.version }}"
+        
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: aitherzero-${{ matrix.platform }}-${{ steps.get_version.outputs.version }}
+        path: build/output/*
+        
   release:
+    name: Create Release
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
       
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Get Version
+      id: get_version
+      shell: bash
+      run: |
+        if [ "${{ github.event_name }}" == "push" ]; then
+          # Extract version from tag
+          VERSION=${GITHUB_REF#refs/tags/v}
+        else
+          # Use input version
+          VERSION="${{ github.event.inputs.version }}"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        path: artifacts
         
-    - name: Configure Git
+    - name: Prepare Release Files
       run: |
-        git config user.name "GitHub Actions"
-        git config user.email "actions@github.com"
+        mkdir -p release-files
+        find artifacts -type f \( -name "*.zip" -o -name "*.tar.gz" \) -exec cp {} release-files/ \;
+        ls -la release-files/
         
-    - name: Create Release Tag
+    - name: Read Changelog
+      id: changelog
       run: |
-        git tag -a "v${{ inputs.version }}" -m "${{ inputs.description }}"
-        git push origin "v${{ inputs.version }}"
+        # Try to extract relevant changelog section
+        VERSION="${{ steps.get_version.outputs.version }}"
+        CHANGELOG=""
         
-    - name: Build Packages
-      shell: pwsh
-      run: |
-        ./build/Build-Package.ps1 -Version "${{ inputs.version }}"
+        if [ -f "CHANGELOG.md" ]; then
+          # Extract section for this version if it exists
+          SECTION=$(awk "/## \[?v?$VERSION\]?/{flag=1; next} /## \[?v?[0-9]+\.[0-9]+\.[0-9]+\]?/{flag=0} flag" CHANGELOG.md | head -20)
+          if [ -n "$SECTION" ]; then
+            CHANGELOG="$SECTION"
+          fi
+        fi
+        
+        # Default changelog if nothing found
+        if [ -z "$CHANGELOG" ]; then
+          CHANGELOG="${{ github.event.inputs.description || 'New release with improvements and bug fixes' }}"
+        fi
+        
+        # Escape for GitHub Actions
+        CHANGELOG="${CHANGELOG//'%'/'%25'}"
+        CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
+        CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
+        
+        echo "changelog=$CHANGELOG" >> $GITHUB_OUTPUT
         
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: v${{ inputs.version }}
-        name: Release v${{ inputs.version }}
+        tag_name: v${{ steps.get_version.outputs.version }}
+        name: AitherZero v${{ steps.get_version.outputs.version }}
         body: |
-          ## ${{ inputs.description }}
+          ## AitherZero v${{ steps.get_version.outputs.version }}
           
-          ### Installation
+          ${{ steps.changelog.outputs.changelog }}
           
-          Download the appropriate package for your platform below.
+          ### 📦 Downloads
           
-        files: |
-          build/output/*.zip
-          build/output/*.tar.gz
+          - **Windows**: `AitherZero-v${{ steps.get_version.outputs.version }}-windows.zip`
+          - **Linux**: `AitherZero-v${{ steps.get_version.outputs.version }}-linux.tar.gz`
+          - **macOS**: `AitherZero-v${{ steps.get_version.outputs.version }}-macos.tar.gz`
+          
+          ### 🚀 Quick Start
+          
+          1. Download the appropriate package for your platform
+          2. Extract the archive
+          3. Run `./Start-AitherZero.ps1`
+          
+          For detailed instructions, see the [Quick Start Guide](https://github.com/${{ github.repository }}/blob/main/QUICKSTART.md).
+          
+        files: release-files/*
         draft: false
         prerelease: false
+        fail_on_unmatched_files: true

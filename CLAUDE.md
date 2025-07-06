@@ -92,18 +92,27 @@ pwsh -NoProfile -File "./script.ps1"
 # That's literally it. No BS, no complexity.
 ```
 
-**What happens:**
+**What happens automatically:**
 1. Creates a PR with version bump
 2. You merge the PR
 3. Tag is created automatically
-4. Build pipeline runs and creates artifacts
+4. **NEW: GitHub Actions automatically builds artifacts for all platforms**
+5. **NEW: Release is created with downloadable packages**
+
+**Build Artifacts Created:**
+- `AitherZero-vX.X.X-windows.zip` - Windows package
+- `AitherZero-vX.X.X-linux.tar.gz` - Linux package
+- `AitherZero-vX.X.X-macos.tar.gz` - macOS package
 
 **Alternative methods:**
 ```powershell
-# Use GitHub UI (Actions → Manual Release Creator)
+# Use GitHub UI (Actions → Release → Run workflow)
 # Or use PatchManager directly:
 Import-Module ./aither-core/modules/PatchManager -Force
 Invoke-ReleaseWorkflow -ReleaseType "patch" -Description "Bug fixes"
+
+# Test build locally:
+./build/Build-Package.ps1 -Platform all
 ```
 
 ### Build Commands - NO MORE PROFILES! 🎯

@@ -34,3 +34,37 @@ jobs:
           *.xml
           *.log
         retention-days: 7
+        
+  build-test:
+    name: Test Build Process
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Test Build Script
+      shell: pwsh
+      run: |
+        Write-Host "Testing build process..." -ForegroundColor Cyan
+        
+        # Test building for each platform
+        @('windows', 'linux', 'macos') | ForEach-Object {
+          Write-Host "Testing $_ build..." -ForegroundColor Yellow
+          ./build/Build-Package.ps1 -Platform $_ -Version "0.0.1-test"
+          
+          # Verify output exists
+          $expectedFile = if ($_ -eq 'windows') {
+            "build/output/AitherZero-v0.0.1-test-$_.zip"
+          } else {
+            "build/output/AitherZero-v0.0.1-test-$_.tar.gz"
+          }
+          
+          if (Test-Path $expectedFile) {
+            Write-Host "✅ $_ build successful: $expectedFile" -ForegroundColor Green
+          } else {
+            Write-Host "❌ $_ build failed: $expectedFile not found" -ForegroundColor Red
+            exit 1
+          }
+        }
+        
+        Write-Host "✅ All build tests passed!" -ForegroundColor Green
