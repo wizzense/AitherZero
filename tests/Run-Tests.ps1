@@ -60,6 +60,16 @@ Write-Host "  Total:  $($results.TotalCount)" -ForegroundColor White
 Write-Host "  Time:   $($results.Duration.TotalSeconds.ToString('0.00'))s" -ForegroundColor Cyan
 
 # Exit with proper code for CI
-if ($CI -and $results.Failed -gt 0) {
-    exit 1
+if ($CI) {
+    # Ensure we have valid results object
+    if ($null -eq $results) {
+        Write-Error "Test execution failed - no results returned"
+        exit 1
+    }
+    
+    # Check for failures
+    $failureCount = if ($null -ne $results.Failed) { $results.Failed } else { 0 }
+    if ($failureCount -gt 0) {
+        exit 1
+    }
 }

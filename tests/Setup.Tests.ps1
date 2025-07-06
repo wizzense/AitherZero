@@ -44,7 +44,8 @@ Describe "Setup and Installation Tests" {
             Write-Host "Git Version: $gitVersion" -ForegroundColor Green
         }
         
-        It "Should detect OpenTofu or Terraform" {
+        It "Should detect OpenTofu or Terraform" -Skip:($env:CI -eq 'true') {
+            # Skip this test in CI environments where tools might not be installed
             $tofuCommand = Get-Command tofu -ErrorAction SilentlyContinue
             $terraformCommand = Get-Command terraform -ErrorAction SilentlyContinue
             
