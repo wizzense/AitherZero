@@ -1,0 +1,82 @@
+{
+  "environment": "prod",
+  "description": "Production environment overrides - maximum security, strict validation",
+  "appliesTo": ["minimal", "standard", "enterprise", "recommended"],
+  
+  "overrides": {
+    "logging": {
+      "LogLevel": "WARN",
+      "EnableConsoleLogging": false,
+      "EnableFileLogging": true,
+      "EnableAuditLogging": true,
+      "EnableSecurityLogging": true,
+      "MaxLogFiles": 50,
+      "MaxLogSizeMB": 200
+    },
+    
+    "security": {
+      "RequireEncryption": true,
+      "AllowUnsignedScripts": false,
+      "ValidateModules": true,
+      "SecureBootRequired": true,
+      "RequireConfirmation": true,
+      "EnableAdvancedSecurity": true,
+      "AuditMode": true,
+      "BlockDestructiveOperations": true
+    },
+    
+    "system": {
+      "ComputerName": "aither-prod",
+      "AllowRemoteDesktop": false,
+      "ConfigureFirewall": true,
+      "SetDNSServers": true,
+      "SetTrustedHosts": false,
+      "DisableTCPIP6": true
+    },
+    
+    "infrastructure": {
+      "AutoConfirm": false,
+      "SkipValidation": false,
+      "EnableExperimentalFeatures": false,
+      "RequireApproval": true,
+      "RequireBackup": true,
+      "ValidateBeforeApply": true
+    },
+    
+    "aiTools": {
+      "EnableBetaFeatures": false,
+      "VerboseOutput": false,
+      "EnableSafetyChecks": true,
+      "RestrictedMode": true
+    },
+    
+    "testing": {
+      "RunInDevMode": false,
+      "EnableTestingExtensions": false,
+      "RunFullTestSuite": true,
+      "RequirePassingTests": true,
+      "RequireSecurityTests": true
+    },
+    
+    "monitoring": {
+      "EnableSystemMonitoring": true,
+      "EnablePerformanceTracking": true,
+      "EnableSecurityMonitoring": true,
+      "AlertingEnabled": true,
+      "ImmediateNotification": true
+    },
+    
+    "hyperv": {
+      "Memory": 4096,
+      "ProcessorCount": 2,
+      "DiskSize": 40,
+      "EnableNesting": false
+    },
+    
+    "network": {
+      "RestrictedAccess": true,
+      "RequireVPN": true,
+      "BlockExternalAccess": true
+    }
+  }
+}

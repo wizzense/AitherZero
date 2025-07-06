@@ -1,0 +1,93 @@
+{
+  "version": "1.0",
+  "description": "Base configuration for AitherZero - contains common settings for all profiles",
+  "metadata": {
+    "lastUpdated": "2025-07-06",
+    "managedBy": "ConfigurationCarousel"
+  },
+  
+  "system": {
+    "ComputerName": "aither-lab",
+    "SetComputerName": false,
+    "DNSServers": "8.8.8.8,1.1.1.1",
+    "SetDNSServers": false,
+    "TrustedHosts": "",
+    "SetTrustedHosts": false,
+    "DisableTCPIP6": false,
+    "AllowRemoteDesktop": false,
+    "ConfigureFirewall": false,
+    "FirewallPorts": [3389, 5985, 5986, 445, 135, "49152-65535"],
+    "ConfigPXE": false
+  },
+  
+  "tools": {
+    "InstallGit": true,
+    "InstallGitHubCLI": true,
+    "InstallPwsh": true,
+    "InstallHyperV": false,
+    "InstallWAC": false,
+    "InstallGo": false,
+    "InstallPoetry": false,
+    "InstallOpenTofu": false,
+    "InstallCA": false,
+    "InstallCosign": false,
+    "InstallGPG": false,
+    "InstallPython": false,
+    "InstallNodeCore": false,
+    "InstallAzureCLI": false,
+    "InstallAWSCLI": false,
+    "InstallPacker": false,
+    "InstallDockerDesktop": false,
+    "Install7Zip": false,
+    "InstallVSCode": false,
+    "InstallVSBuildTools": false,
+    "InstallChocolatey": false,
+    "InstallSysinternals": false
+  },
+  
+  "versions": {
+    "PoetryVersion": "latest",
+    "OpenTofuVersion": "latest",
+    "PythonVersion": "3.11",
+    "NodeVersion": "18"
+  },
+  
+  "infrastructure": {
+    "InitializeOpenTofu": false,
+    "PrepareHyperVHost": false,
+    "RepoUrl": "https://github.com/wizzense/AitherZero.git",
+    "LocalPath": "C:\\temp\\AitherZero",
+    "ConfigFile": "configs/default-config.json"
+  },
+  
+  "hyperv": {
+    "SwitchName": "Default Switch",
+    "VMPath": "C:\\VMs",
+    "ISOPath": "C:\\ISOs",
+    "Memory": 4096,
+    "ProcessorCount": 2,
+    "DiskSize": 40
+  },
+  
+  "network": {
+    "DefaultGateway": "192.168.1.1",
+    "SubnetMask": "255.255.255.0",
+    "IPRange": "192.168.1.100-192.168.1.200"
+  },
+  
+  "logging": {
+    "LogLevel": "INFO",
+    "LogPath": "logs",
+    "EnableConsoleLogging": true,
+    "EnableFileLogging": true,
+    "MaxLogFiles": 10,
+    "MaxLogSizeMB": 50
+  },
+  
+  "security": {
+    "RequireEncryption": false,
+    "AllowUnsignedScripts": false,
+    "ValidateModules": true,
+    "SecureBootRequired": false
+  }
+}
