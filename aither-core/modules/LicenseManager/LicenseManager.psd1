@@ -18,7 +18,16 @@
         'Clear-License',
         'Get-FeatureTier',
         'Test-ModuleAccess',
-        'Get-LicenseInfo'
+        'Get-LicenseInfo',
+        'New-License',
+        'Register-LicenseHook',
+        'Test-ModuleLicenseHook',
+        'Get-RegisteredLicenseHooks',
+        'Unregister-LicenseHook',
+        'Test-AllRegisteredModules',
+        'Clear-LicenseCache',
+        'Set-LicenseCacheEnabled',
+        'Get-LicenseCacheStatistics'
     )
     
     # Private data
@@ -36,8 +45,6 @@
         }
     }
     
-    # Dependencies
-    RequiredModules = @(
-        @{ModuleName = 'Logging'; ModuleVersion = '2.0.0'; GUID = 'B5D8F9A1-C2E3-4F6A-8B9C-1D2E3F4A5B6C'}
-    )
+    # Dependencies - Logging is optional and loaded dynamically
+    RequiredModules = @()
 }

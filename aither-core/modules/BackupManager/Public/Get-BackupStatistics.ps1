@@ -30,9 +30,19 @@ function Get-BackupStatistics {
     $ErrorActionPreference = "Stop"
 
     try {
-        # Import LabRunner for logging
-        if (Get-Module LabRunner -ErrorAction SilentlyContinue) {
-            Write-CustomLog "Analyzing backup file statistics" "INFO"
+        # Import shared utilities and logging
+        . "$PSScriptRoot/../../../shared/Find-ProjectRoot.ps1"
+        $projectRoot = Find-ProjectRoot
+        
+        # Import logging if available
+        $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
+        if (Test-Path $loggingPath) {
+            Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
+        }
+        
+        # Check for logging capability
+        if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+            Write-CustomLog "Analyzing backup file statistics" -Level INFO
         } else {
             Write-Host "INFO Analyzing backup file statistics" -ForegroundColor Green
         }
@@ -112,8 +122,8 @@ function Get-BackupStatistics {
 
         # Log summary
         $summaryMessage = "Backup statistics analysis completed: $($result.TotalFiles) files, $($result.TotalSize) MB"
-        if (Get-Module LabRunner -ErrorAction SilentlyContinue) {
-            Write-CustomLog $summaryMessage "INFO"
+        if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+            Write-CustomLog $summaryMessage -Level INFO
         } else {
             Write-Host "INFO $summaryMessage" -ForegroundColor Green
         }
@@ -122,8 +132,8 @@ function Get-BackupStatistics {
 
     } catch {
         $ErrorMessage = "Failed to get backup statistics: $($_.Exception.Message)"
-        if (Get-Module LabRunner -ErrorAction SilentlyContinue) {
-            Write-CustomLog $ErrorMessage "ERROR"
+        if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+            Write-CustomLog $ErrorMessage -Level ERROR
         } else {
             Write-Host "ERROR $ErrorMessage" -ForegroundColor Red
         }

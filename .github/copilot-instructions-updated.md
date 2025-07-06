@@ -18,17 +18,17 @@ This project is a **PowerShell-based infrastructure automation framework** using
 
 **Testing Integration**: Multi-level testing approach:
 ```powershell
-# Quick validation (30 seconds) - Use for rapid feedback
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Quick"
+# Core validation - Use for rapid feedback
+pwsh -File "tests/Run-Tests.ps1"
 
-# Standard validation (2-5 minutes) - Use for PR validation
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Standard"
+# Setup validation - Use for setup/installation testing
+pwsh -File "tests/Run-Tests.ps1" -Setup
 
-# Complete validation (10-15 minutes) - Use for release preparation
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Complete"
+# All tests - Use for comprehensive validation
+pwsh -File "tests/Run-Tests.ps1" -All
 
 # CI mode with fail-fast for automated environments
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Standard" -CI -FailFast
+pwsh -File "tests/Run-Tests.ps1" -All -CI
 ```
 
 **Build Profile Usage**: When making changes, always test across profiles:
@@ -55,7 +55,7 @@ pwsh -File "build/Build-Package.ps1" -Profile "development" -Platform "current"
 
 **Error Handling**: Always implement comprehensive try-catch blocks with detailed logging using the `Logging` module.
 
-**Testing**: Use the bulletproof testing framework with `Run-BulletproofValidation.ps1` for comprehensive validation.
+**Testing**: Use the simplified testing framework with `Run-Tests.ps1` for validation.
 
 **Build Integration**: Always consider build profiles when making changes:
 - Test with minimal profile for essential functionality

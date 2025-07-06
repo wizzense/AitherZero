@@ -1,7 +1,0 @@
-{
-  "timestamp": "$(date -Iseconds)",
-  "title": "PowerShell Module to Claude Commands Integration",
-  "description": "Convert PowerShell modules (PatchManager, etc.) into /.claude/commands for seamless AI integration",
-  "phase": "discovery",
-  "status": "active"
-}

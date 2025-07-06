@@ -1,5 +1,3 @@
-#Requires -Version 7.0
-
 <#
 .SYNOPSIS
     Core application runner for Aitherium Infrastructure Automation
@@ -385,12 +383,13 @@ try {
     Write-Verbose 'Importing core modules...'
 
     # Define core modules that should always be loaded
+    # IMPORTANT: Logging must be loaded first as other modules depend on it
     $coreModules = @(
-        'Logging',
-        'LabRunner',
+        'Logging',              # Must be first - provides Write-CustomLog
         'LicenseManager',
         'ConfigurationCore',
-        'ModuleCommunication'
+        'ModuleCommunication',
+        'LabRunner'
     )
 
     # Load each core module
@@ -405,20 +404,35 @@ try {
                     Write-Verbose "Importing $moduleName module..."
                     Import-Module $modulePath -Force -ErrorAction Stop
                 }
-                Write-CustomLog "$moduleName module loaded successfully" -Level DEBUG
+                # Only use Write-CustomLog after Logging module is loaded
+                if ($moduleName -eq 'Logging' -or (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
+                    Write-CustomLog "$moduleName module loaded successfully" -Level DEBUG
+                } else {
+                    Write-Verbose "$moduleName module loaded successfully"
+                }
             } catch {
                 # Non-critical modules can fail silently
                 if ($moduleName -in @('Logging', 'LabRunner')) {
                     throw "Critical module $moduleName failed to load: $_"
                 } else {
-                    Write-CustomLog "Optional module $moduleName failed to load: $_" -Level WARN
+                    # Only use Write-CustomLog if available
+                    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                        Write-CustomLog "Optional module $moduleName failed to load: $_" -Level WARN
+                    } else {
+                        Write-Warning "Optional module $moduleName failed to load: $_"
+                    }
                 }
             }
         } else {
             if ($moduleName -in @('Logging', 'LabRunner')) {
                 throw "$moduleName module not found at: $modulePath"
             } else {
-                Write-CustomLog "Optional module $moduleName not found at: $modulePath" -Level DEBUG
+                # Only use Write-CustomLog if available
+                if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                    Write-CustomLog "Optional module $moduleName not found at: $modulePath" -Level DEBUG
+                } else {
+                    Write-Verbose "Optional module $moduleName not found at: $modulePath"
+                }
             }
         }
     }
@@ -568,10 +582,41 @@ try {
                 $result = Start-IntelligentSetup @setupParams
                 Write-Host "✓ Setup completed successfully" -ForegroundColor Green
                 
+                # Show clear next steps
+                Write-Host ""
+                Write-Host "🚀 SETUP COMPLETE! HERE'S HOW TO USE AITHERZERO:" -ForegroundColor Green
+                Write-Host "=" * 60 -ForegroundColor Green
+                Write-Host ""
+                Write-Host "OPTION 1 - Interactive Mode (Recommended):" -ForegroundColor Cyan
+                Write-Host "  ./Start-AitherZero.ps1" -ForegroundColor Yellow
+                Write-Host ""
+                Write-Host "OPTION 2 - Run Specific Modules:" -ForegroundColor Cyan
+                Write-Host "  ./Start-AitherZero.ps1 -Scripts 'LabRunner'" -ForegroundColor Yellow
+                Write-Host "  ./Start-AitherZero.ps1 -Scripts 'BackupManager,OpenTofuProvider'" -ForegroundColor Yellow
+                Write-Host ""
+                Write-Host "OPTION 3 - Automated Mode:" -ForegroundColor Cyan
+                Write-Host "  ./Start-AitherZero.ps1 -Auto" -ForegroundColor Yellow
+                Write-Host ""
+                Write-Host "=" * 60 -ForegroundColor Green
+                
                 # After setup, if non-interactive, launch into auto mode
                 if ($NonInteractive) {
                     Write-CustomLog "Non-interactive setup complete, launching application in auto mode" -Level INFO
                     $Auto = $true
+                } else {
+                    # Ask if user wants to launch now
+                    Write-Host ""
+                    $launch = Read-Host "Would you like to launch AitherZero now? [Y/n]"
+                    if ([string]::IsNullOrWhiteSpace($launch) -or $launch -match '^[Yy]') {
+                        Write-Host ""
+                        Write-Host "Launching AitherZero..." -ForegroundColor Cyan
+                        Write-Host ""
+                        # Don't return - continue to interactive mode
+                    } else {
+                        Write-Host ""
+                        Write-Host "To launch AitherZero later, run: ./Start-AitherZero.ps1" -ForegroundColor Yellow
+                        return
+                    }
                 }
             } catch {
                 Write-CustomLog "Error running setup wizard: $_" -Level ERROR
@@ -581,7 +626,13 @@ try {
             Write-Error "SetupWizard module not found at: $setupWizardPath"
             exit 1
         }
-        return
+        
+        # If we didn't return above, continue to launch the app
+        if (-not $Auto -and -not $Scripts -and -not $NonInteractive) {
+            # Fall through to interactive mode
+        } else {
+            return
+        }
     } elseif ($Scripts) {
         # Run specific modules/scripts
         Write-CustomLog "Running specific components: $Scripts" -Level INFO

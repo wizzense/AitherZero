@@ -37,9 +37,9 @@ Brief description of the changes in this pull request.
 - [ ] Tests pass locally with my changes
 - [ ] New tests added for new functionality
 - [ ] Existing tests still pass
-- [ ] Bulletproof validation successful:
+- [ ] Validation successful:
   ```powershell
-  ./tests/Run-BulletproofValidation.ps1 -ValidationLevel 'Standard'
+  ./tests/Run-Tests.ps1
   ```
 
 ### 📚 Documentation

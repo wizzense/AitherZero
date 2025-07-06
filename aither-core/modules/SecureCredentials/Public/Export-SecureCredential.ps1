@@ -53,15 +53,14 @@ function Export-SecureCredential {
                 }
             }
 
-            # Get credential metadata
-            $metadataPath = Get-CredentialMetadataPath
-            $metadataFile = Join-Path $metadataPath "$CredentialName.json"
-
-            if (-not (Test-Path $metadataFile)) {
-                throw "Credential metadata not found: $CredentialName"
+            # Get credential data using the retrieval function
+            $credentialResult = Retrieve-CredentialSecurely -CredentialName $CredentialName -SkipIntegrityCheck
+            
+            if (-not $credentialResult.Success) {
+                throw "Failed to retrieve credential: $CredentialName"
             }
-
-            $metadata = Get-Content $metadataFile | ConvertFrom-Json
+            
+            $credentialData = $credentialResult.Credential
 
             # Create export data structure
             $exportData = @{
@@ -75,50 +74,39 @@ function Export-SecureCredential {
             }
 
             $credentialExport = @{
-                Name         = $metadata.Name
-                Type         = $metadata.Type
-                CreatedDate  = $metadata.CreatedDate
-                LastModified = $metadata.LastModified
+                Name         = $credentialData.Name
+                Type         = $credentialData.Type
+                CreatedDate  = $credentialData.Created
+                LastModified = $credentialData.LastModified
+                Username     = $credentialData.Username
+                Description  = $credentialData.Description
             }
 
             # Add type-specific metadata
-            switch ($metadata.Type) {
+            switch ($credentialData.Type) {
                 'UserPassword' {
-                    $credentialExport.Username = $metadata.Username
-                    if ($IncludeSecrets) {
-                        $storedCred = Get-SecureCredential -CredentialName $CredentialName
-                        if ($storedCred) {
-                            $plainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
-                                [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($storedCred.Credential.Password)
-                            )
-                            $credentialExport.Password = $plainPassword
-                        }
+                    if ($IncludeSecrets -and $credentialData.Password) {
+                        $plainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
+                            [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($credentialData.Password)
+                        )
+                        $credentialExport.Password = $plainPassword
                     }
                 }
                 'ServiceAccount' {
-                    $credentialExport.Username = $metadata.Username
-                    if ($IncludeSecrets) {
-                        $storedCred = Get-SecureCredential -CredentialName $CredentialName
-                        if ($storedCred) {
-                            $plainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
-                                [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($storedCred.Credential.Password)
-                            )
-                            $credentialExport.Password = $plainPassword
-                        }
+                    if ($IncludeSecrets -and $credentialData.Password) {
+                        $plainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
+                            [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($credentialData.Password)
+                        )
+                        $credentialExport.Password = $plainPassword
                     }
                 }
                 'APIKey' {
-                    if ($IncludeSecrets) {
-                        $storedCred = Get-SecureCredential -CredentialName $CredentialName
-                        if ($storedCred) {
-                            $credentialExport.APIKey = $storedCred.APIKey
-                        }
+                    if ($IncludeSecrets -and $credentialData.APIKey) {
+                        $credentialExport.APIKey = $credentialData.APIKey
                     }
                 }
                 'Certificate' {
-                    $credentialExport.CertificatePath = $metadata.CertificatePath
-                    $credentialExport.Thumbprint = $metadata.Thumbprint
-                    $credentialExport.ExpiryDate = $metadata.ExpiryDate
+                    $credentialExport.CertificatePath = $credentialData.CertificatePath
                 }
             }
 

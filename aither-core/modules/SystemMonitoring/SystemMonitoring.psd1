@@ -1,12 +1,12 @@
 @{
     # Module metadata
     RootModule = 'SystemMonitoring.psm1'
-    ModuleVersion = '1.0.0'
+    ModuleVersion = '2.0.0'
     GUID = '12345678-1234-1234-1234-123456781234'
     Author = 'AitherZero Development Team'
     CompanyName = 'AitherZero'
     Copyright = '(c) 2024 AitherZero. All rights reserved.'
-    Description = 'Comprehensive system monitoring and health management for AitherZero infrastructure'
+    Description = 'Advanced system monitoring with real-time analytics, intelligent alerting, and predictive capabilities for AitherZero infrastructure'
     
     # PowerShell version compatibility
     PowerShellVersion = '7.0'
@@ -28,7 +28,9 @@
         'Get-MonitoringConfiguration',
         'Set-MonitoringConfiguration',
         'Export-MonitoringData',
-        'Import-MonitoringData'
+        'Import-MonitoringData',
+        'Enable-PredictiveAlerting',
+        'Get-MonitoringInsights'
     )
     
     # Cmdlets to export

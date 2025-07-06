@@ -190,7 +190,9 @@ Export-ModuleMember -Function @(
     'Show-GitStatusGuidance',
     'Sync-GitBranch',
     'Invoke-ReleaseWorkflow',
-    'Watch-ReleasePR'
+    'Watch-ReleasePR',
+    'Invoke-PostMergeTagging',
+    'Find-MissingReleaseTags'
 ) -Alias @(
     'Invoke-PatchWorkflow'  # Alias for New-Patch for backward compatibility
 )

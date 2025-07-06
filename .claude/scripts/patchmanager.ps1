@@ -14,8 +14,8 @@
 
 param(
     [Parameter(Mandatory = $false, Position = 0)]
-    [ValidateSet("workflow", "rollback", "status", "consolidate")]
-    [string]$Action = "workflow",
+    [ValidateSet("quickfix", "feature", "hotfix", "patch", "workflow", "rollback", "status", "consolidate", "sync", "release")]
+    [string]$Action = "patch",
     
     [Parameter(Mandatory = $false, ValueFromRemainingArguments = $true)]
     [string[]]$Arguments = @()
@@ -70,11 +70,17 @@ try {
         switch -Regex ($arg) {
             "^--description$" {
                 if ($i + 1 -lt $Arguments.Count) {
-                    $params.PatchDescription = $Arguments[++$i]
+                    $params.Description = $Arguments[++$i]
+                    $params.PatchDescription = $Arguments[$i]  # Legacy compatibility
                 }
             }
+            "^--changes$" {
+                $params.Changes = [scriptblock]::Create($Arguments[++$i])
+            }
             "^--operation$" {
-                $params.PatchOperation = [scriptblock]::Create($Arguments[++$i])
+                # Legacy compatibility - map to new Changes parameter
+                $params.Changes = [scriptblock]::Create($Arguments[++$i])
+                $params.PatchOperation = [scriptblock]::Create($Arguments[$i])  # Legacy compatibility
             }
             "^--create-issue$" {
                 $params.CreateIssue = $true
@@ -130,8 +136,166 @@ try {
     }
     
     switch ($Action) {
+        "quickfix" {
+            Write-CommandLog "Executing quick fix..." -Level "INFO"
+            
+            # Validate required parameters
+            if (-not $params.Description) {
+                Write-CommandLog "Error: --description is required for quickfix action" -Level "ERROR"
+                exit 1
+            }
+            
+            # Execute using New-QuickFix if available, fallback to legacy
+            if (Get-Command New-QuickFix -ErrorAction SilentlyContinue) {
+                $result = New-QuickFix -Description $params.Description -Changes $params.Changes -DryRun:($params.DryRun -eq $true)
+            } else {
+                Write-CommandLog "Warning: Using legacy workflow for quickfix" -Level "WARNING"
+                $legacyParams = @{
+                    PatchDescription = $params.Description
+                    PatchOperation = $params.Changes
+                    CreateIssue = $false
+                    CreatePR = $false
+                }
+                if ($params.DryRun) { $legacyParams.DryRun = $true }
+                $result = Invoke-PatchWorkflow @legacyParams
+            }
+            
+            if ($result.Success) {
+                Write-CommandLog "Quick fix completed successfully" -Level "SUCCESS"
+            } else {
+                Write-CommandLog "Quick fix failed: $($result.Message)" -Level "ERROR"
+                exit 1
+            }
+        }
+        
+        "feature" {
+            Write-CommandLog "Executing feature development workflow..." -Level "INFO"
+            
+            # Validate required parameters
+            if (-not $params.Description) {
+                Write-CommandLog "Error: --description is required for feature action" -Level "ERROR"
+                exit 1
+            }
+            
+            # Execute using New-Feature if available, fallback to legacy
+            if (Get-Command New-Feature -ErrorAction SilentlyContinue) {
+                $featureParams = @{
+                    Description = $params.Description
+                    Changes = $params.Changes
+                }
+                if ($params.TargetFork) { $featureParams.TargetFork = $params.TargetFork }
+                if ($params.DryRun) { $featureParams.DryRun = $true }
+                $result = New-Feature @featureParams
+            } else {
+                Write-CommandLog "Warning: Using legacy workflow for feature" -Level "WARNING"
+                $legacyParams = @{
+                    PatchDescription = $params.Description
+                    PatchOperation = $params.Changes
+                    CreatePR = $true
+                }
+                if ($params.TargetFork) { $legacyParams.TargetFork = $params.TargetFork }
+                if ($params.DryRun) { $legacyParams.DryRun = $true }
+                $result = Invoke-PatchWorkflow @legacyParams
+            }
+            
+            if ($result.Success) {
+                Write-CommandLog "Feature development completed successfully" -Level "SUCCESS"
+                if ($result.PullRequestUrl) {
+                    Write-CommandLog "PR: $($result.PullRequestUrl)" -Level "SUCCESS"
+                }
+            } else {
+                Write-CommandLog "Feature development failed: $($result.Message)" -Level "ERROR"
+                exit 1
+            }
+        }
+        
+        "hotfix" {
+            Write-CommandLog "Executing emergency hotfix..." -Level "INFO"
+            
+            # Validate required parameters
+            if (-not $params.Description) {
+                Write-CommandLog "Error: --description is required for hotfix action" -Level "ERROR"
+                exit 1
+            }
+            
+            # Execute using New-Hotfix if available, fallback to legacy
+            if (Get-Command New-Hotfix -ErrorAction SilentlyContinue) {
+                $hotfixParams = @{
+                    Description = $params.Description
+                    Changes = $params.Changes
+                }
+                if ($params.DryRun) { $hotfixParams.DryRun = $true }
+                $result = New-Hotfix @hotfixParams
+            } else {
+                Write-CommandLog "Warning: Using legacy workflow for hotfix" -Level "WARNING"
+                $legacyParams = @{
+                    PatchDescription = $params.Description
+                    PatchOperation = $params.Changes
+                    Priority = "Critical"
+                    CreatePR = $true
+                }
+                if ($params.DryRun) { $legacyParams.DryRun = $true }
+                $result = Invoke-PatchWorkflow @legacyParams
+            }
+            
+            if ($result.Success) {
+                Write-CommandLog "Emergency hotfix completed successfully" -Level "SUCCESS"
+                if ($result.PullRequestUrl) {
+                    Write-CommandLog "PR: $($result.PullRequestUrl)" -Level "SUCCESS"
+                }
+            } else {
+                Write-CommandLog "Emergency hotfix failed: $($result.Message)" -Level "ERROR"
+                exit 1
+            }
+        }
+        
+        "patch" {
+            Write-CommandLog "Executing smart patch with auto-detection..." -Level "INFO"
+            
+            # Validate required parameters
+            if (-not $params.Description) {
+                Write-CommandLog "Error: --description is required for patch action" -Level "ERROR"
+                exit 1
+            }
+            
+            # Execute using New-Patch if available, fallback to legacy
+            if (Get-Command New-Patch -ErrorAction SilentlyContinue) {
+                $patchParams = @{
+                    Description = $params.Description
+                    Changes = $params.Changes
+                }
+                if ($params.Mode) { $patchParams.Mode = $params.Mode }
+                if ($params.CreatePR) { $patchParams.CreatePR = $true }
+                if ($params.DryRun) { $patchParams.DryRun = $true }
+                $result = New-Patch @patchParams
+            } else {
+                Write-CommandLog "Warning: Using legacy workflow for patch" -Level "WARNING"
+                $legacyParams = @{
+                    PatchDescription = $params.Description
+                    PatchOperation = $params.Changes
+                }
+                if ($params.CreatePR) { $legacyParams.CreatePR = $true }
+                if ($params.DryRun) { $legacyParams.DryRun = $true }
+                $result = Invoke-PatchWorkflow @legacyParams
+            }
+            
+            if ($result.Success) {
+                Write-CommandLog "Smart patch completed successfully" -Level "SUCCESS"
+                if ($result.IssueUrl) {
+                    Write-CommandLog "Issue: $($result.IssueUrl)" -Level "SUCCESS"
+                }
+                if ($result.PullRequestUrl) {
+                    Write-CommandLog "PR: $($result.PullRequestUrl)" -Level "SUCCESS"
+                }
+            } else {
+                Write-CommandLog "Smart patch failed: $($result.Message)" -Level "ERROR"
+                exit 1
+            }
+        }
+        
         "workflow" {
-            Write-CommandLog "Executing PatchManager workflow..." -Level "INFO"
+            Write-CommandLog "Executing legacy PatchManager workflow..." -Level "WARNING"
+            Write-CommandLog "Note: Consider using 'patch', 'feature', 'quickfix', or 'hotfix' actions instead" -Level "WARNING"
             
             # Validate required parameters
             if (-not $params.PatchDescription) {

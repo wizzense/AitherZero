@@ -4,7 +4,7 @@
     RootModule = 'Logging.psm1'
     
     # Version of this module
-    ModuleVersion = '2.0.0'
+    ModuleVersion = '2.1.0'
     
     # ID used to uniquely identify this module
     GUID = 'B5D8F9A1-C2E3-4F6A-8B9C-1D2E3F4A5B6C'
@@ -33,7 +33,10 @@
         'Write-TraceLog',
         'Write-DebugContext',
         'Get-LoggingConfiguration',
-        'Set-LoggingConfiguration'
+        'Set-LoggingConfiguration',
+        'Write-BulkLog',
+        'Test-LoggingPerformance',
+        'Import-ProjectModule'
     )
     
     # Variables to export from this module
@@ -56,6 +59,18 @@
             
             # Release notes of this module
             ReleaseNotes = @'
+Version 2.1.0
+- PowerShell 7+ modernization with null-coalescing operators
+- Modern environment variable naming (AITHER_*) with LAB_* fallback
+- Enhanced exception logging with inner exception chains
+- Improved file I/O performance with thread-safe operations
+- Added Write-BulkLog for efficient batch logging
+- Added Test-LoggingPerformance for performance monitoring
+- Performance tracking enabled by default for better insights
+- Enhanced Import-ProjectModule with automatic path resolution
+- Optimized mutex-based file locking for concurrent scenarios
+- Improved error handling with structured error details
+
 Version 2.0.0
 - Complete rewrite with enterprise-grade features
 - Added structured logging with context support

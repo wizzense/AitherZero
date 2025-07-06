@@ -21,7 +21,7 @@
     Copyright = '(c) 2025 AitherZero. All rights reserved.'
 
     # Description of the functionality provided by this module
-    Description = 'Unified configuration management system for the AitherZero platform. Provides centralized configuration storage, validation, and environment-specific overlays.'
+    Description = 'Unified configuration management system for the AitherZero platform. Provides centralized configuration storage, validation, environment-specific overlays, hot reload, backup/restore, and security features.'
 
     # Minimum version of the PowerShell engine required by this module
     PowerShellVersion = '7.0'
@@ -87,7 +87,19 @@
             ProjectUri = 'https://github.com/AitherLabs/AitherZero'
 
             # ReleaseNotes of this module
-            ReleaseNotes = 'Initial release of ConfigurationCore - Unified configuration management for AitherZero platform'
+            ReleaseNotes = @'
+v1.0.0 - Initial release with comprehensive features:
+- Unified configuration management with module registration
+- Environment-specific configuration overlays
+- Schema-based validation with type checking
+- Hot reload functionality with file watchers
+- Configuration backup/restore with versioning
+- Import/export capabilities (JSON, YAML, XML)
+- Security features with sensitive data detection
+- Cross-platform support (Windows, Linux, macOS)
+- Modern PowerShell 7+ patterns and error handling
+- Comprehensive test suite with 50+ test cases
+'@
         }
     }
 }

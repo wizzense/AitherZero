@@ -10,7 +10,10 @@
     RequiredModules   = @()
     FunctionsToExport = @(
         'New-CustomISO',
+        'New-CustomISOWithProgress',
         'New-AutounattendFile',
+        'New-AdvancedAutounattendFile',
+        'Test-ISOIntegrity',
         'Get-AutounattendTemplate',
         'Get-BootstrapTemplate',
         'Get-KickstartTemplate'

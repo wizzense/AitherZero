@@ -14,65 +14,163 @@ if (Test-Path $loggingModule) {
 function Install-ClaudeCode {
     <#
     .SYNOPSIS
-        Installs Claude Code CLI tool
+        Installs Claude Code CLI tool with enhanced version management
     .DESCRIPTION
-        Installs Claude Code using npm and configures it for AitherZero integration
+        Installs Claude Code using npm with improved error handling, version management,
+        and cross-platform compatibility. Supports both global and local installations.
+    .PARAMETER Force
+        Force reinstallation even if Claude Code is already installed
+    .PARAMETER Global
+        Install globally (default: true)
+    .PARAMETER Version
+        Specific version to install (default: 'latest')
+    .PARAMETER SkipVerification
+        Skip post-installation verification
+    .PARAMETER ConfigureIntegration
+        Configure Claude Code for AitherZero integration
     #>
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [switch]$Force,
         [switch]$Global = $true,
-        [string]$Version = 'latest'
+        [string]$Version = 'latest',
+        [switch]$SkipVerification,
+        [switch]$ConfigureIntegration = $true
     )
     
     try {
-        Write-CustomLog -Level 'INFO' -Message "Starting Claude Code installation..."
+        Write-CustomLog -Level 'INFO' -Message "🤖 Starting Claude Code installation..."
         
-        # Check prerequisites
-        $nodeInstalled = Test-NodeJsPrerequisites
-        if (-not $nodeInstalled.Success) {
-            throw "Node.js prerequisites not met: $($nodeInstalled.Message)"
+        # Enhanced prerequisites check
+        $nodeCheck = Test-NodeJsPrerequisites
+        if (-not $nodeCheck.Success) {
+            throw "Node.js prerequisites not met: $($nodeCheck.Message). $($nodeCheck.InstallHint)"
         }
         
-        # Check if already installed
+        Write-CustomLog -Level 'SUCCESS' -Message "✅ Node.js prerequisites verified: Node $($nodeCheck.NodeVersion), npm $($nodeCheck.NPMVersion)"
+        
+        # Enhanced existing installation check
         $existingInstall = Get-Command claude-code -ErrorAction SilentlyContinue
         if ($existingInstall -and -not $Force) {
-            Write-CustomLog -Level 'INFO' -Message "Claude Code already installed at: $($existingInstall.Source)"
-            return @{
-                Success = $true
-                Message = "Claude Code already installed"
-                Version = (claude-code --version 2>$null)
-                Path = $existingInstall.Source
+            try {
+                $currentVersion = & claude-code --version 2>$null
+                Write-CustomLog -Level 'INFO' -Message "Claude Code already installed: $currentVersion at $($existingInstall.Source)"
+                
+                if ($ConfigureIntegration) {
+                    Configure-ClaudeCodeIntegration
+                }
+                
+                return @{
+                    Success = $true
+                    Message = "Claude Code already installed"
+                    Version = $currentVersion
+                    Path = $existingInstall.Source
+                    AlreadyInstalled = $true
+                }
+            } catch {
+                Write-CustomLog -Level 'WARNING' -Message "Existing Claude Code installation may be corrupted, proceeding with installation"
             }
         }
         
-        # Install Claude Code
+        # Prepare installation command
+        $packageName = if ($Version -eq 'latest') { 
+            '@anthropic-ai/claude-code' 
+        } else { 
+            "@anthropic-ai/claude-code@$Version" 
+        }
+        
         $installArgs = @('install')
         if ($Global) { $installArgs += '--global' }
-        $installArgs += "@anthropic/claude-code"
-        if ($Version -ne 'latest') { $installArgs += "@$Version" }
+        $installArgs += $packageName
         
-        Write-CustomLog -Level 'INFO' -Message "Installing Claude Code: npm $($installArgs -join ' ')"
-        $installResult = & npm @installArgs 2>&1
+        # Add npm configuration for better reliability
+        $installArgs += '--no-audit'  # Skip audit for faster installation
+        $installArgs += '--no-fund'   # Skip funding messages
         
-        if ($LASTEXITCODE -ne 0) {
-            throw "npm install failed: $installResult"
+        Write-CustomLog -Level 'INFO' -Message "📦 Installing Claude Code: npm $($installArgs -join ' ')"
+        
+        if ($PSCmdlet.ShouldProcess("Claude Code $Version", "Install via npm")) {
+            # Execute installation with enhanced error handling
+            $installProcess = Start-Process -FilePath 'npm' -ArgumentList $installArgs -NoNewWindow -Wait -PassThru -RedirectStandardOutput "npm-out.txt" -RedirectStandardError "npm-err.txt"
+            
+            $installOutput = if (Test-Path "npm-out.txt") { Get-Content "npm-out.txt" -Raw } else { "" }
+            $installError = if (Test-Path "npm-err.txt") { Get-Content "npm-err.txt" -Raw } else { "" }
+            
+            # Clean up temp files
+            Remove-Item "npm-out.txt", "npm-err.txt" -ErrorAction SilentlyContinue
+            
+            if ($installProcess.ExitCode -ne 0) {
+                throw "npm install failed (Exit Code: $($installProcess.ExitCode)). Output: $installOutput. Error: $installError"
+            }
+            
+            Write-CustomLog -Level 'SUCCESS' -Message "📦 npm installation completed successfully"
         }
         
-        # Verify installation
-        $claudeCmd = Get-Command claude-code -ErrorAction SilentlyContinue
+        # Enhanced verification with retries
+        $maxRetries = 3
+        $claudeCmd = $null
+        
+        for ($retry = 1; $retry -le $maxRetries; $retry++) {
+            Start-Sleep -Seconds ($retry * 2)  # Progressive delay
+            $claudeCmd = Get-Command claude-code -ErrorAction SilentlyContinue
+            if ($claudeCmd) { break }
+            
+            if ($retry -lt $maxRetries) {
+                Write-CustomLog -Level 'WARNING' -Message "Attempt $retry/$maxRetries: Claude Code not found in PATH, retrying..."
+            }
+        }
+        
         if (-not $claudeCmd) {
-            throw "Claude Code installation verification failed"
+            # Try to refresh PATH and check again
+            if ($IsWindows) {
+                $env:PATH = [Environment]::GetEnvironmentVariable('PATH', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH', 'User')
+            } else {
+                # Source common profile locations
+                $env:PATH += ":$HOME/.local/bin:$HOME/bin:/usr/local/bin"
+            }
+            
+            $claudeCmd = Get-Command claude-code -ErrorAction SilentlyContinue
         }
         
-        $version = claude-code --version 2>$null
-        Write-CustomLog -Level 'SUCCESS' -Message "Claude Code $version installed successfully"
+        if (-not $claudeCmd -and -not $SkipVerification) {
+            throw "Claude Code installation verification failed. Command not found in PATH after installation."
+        }
+        
+        # Get version information
+        $version = "Unknown"
+        if ($claudeCmd) {
+            try {
+                $version = & claude-code --version 2>$null
+                if ([string]::IsNullOrEmpty($version)) {
+                    $version = "Installed (version check failed)"
+                }
+            } catch {
+                $version = "Installed (version unavailable)"
+            }
+        }
+        
+        # Configure integration if requested
+        $integrationResult = $null
+        if ($ConfigureIntegration -and $claudeCmd) {
+            try {
+                $integrationResult = Configure-ClaudeCodeIntegration
+                Write-CustomLog -Level 'SUCCESS' -Message "🔧 Claude Code integration configured"
+            } catch {
+                Write-CustomLog -Level 'WARNING' -Message "Failed to configure Claude Code integration: $($_.Exception.Message)"
+            }
+        }
+        
+        Write-CustomLog -Level 'SUCCESS' -Message "✅ Claude Code $version installed successfully!"
         
         return @{
             Success = $true
             Message = "Claude Code installed successfully"
             Version = $version
-            Path = $claudeCmd.Source
+            Path = if ($claudeCmd) { $claudeCmd.Source } else { "Not found in PATH" }
+            IntegrationConfigured = $null -ne $integrationResult
+            InstallationMethod = "npm"
+            Global = $Global
+            PackageName = $packageName
         }
         
     } catch {
@@ -302,27 +400,243 @@ function Test-CodexCLIInstallation {
 }
 
 function Test-NodeJsPrerequisites {
+    <#
+    .SYNOPSIS
+        Enhanced Node.js and npm prerequisites check with version validation
+    #>
+    [CmdletBinding()]
+    param(
+        [Version]$MinimumNodeVersion = '16.0.0',
+        [Version]$MinimumNpmVersion = '8.0.0'
+    )
+    
     try {
-        $nodeVersion = node --version 2>$null
-        $npmVersion = npm --version 2>$null
+        $result = @{
+            Success = $false
+            NodeInstalled = $false
+            NPMInstalled = $false
+            NodeVersion = $null
+            NPMVersion = $null
+            NodeVersionParsed = $null
+            NPMVersionParsed = $null
+            Message = ""
+            InstallHint = ""
+            Recommendations = @()
+        }
         
-        if ($nodeVersion -and $npmVersion) {
-            return @{
-                Success = $true
-                NodeVersion = $nodeVersion
-                NPMVersion = $npmVersion
-                Message = "Node.js and npm are available"
+        # Check if node command exists
+        $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
+        if (-not $nodeCmd) {
+            $result.Message = "Node.js is not installed or not in PATH"
+            $result.InstallHint = if ($IsWindows) { 
+                "Install with: winget install OpenJS.NodeJS" 
+            } elseif ($IsMacOS) {
+                "Install with: brew install node"
+            } else { 
+                "Visit: https://nodejs.org/en/download/ or use package manager" 
+            }
+            return $result
+        }
+        
+        $result.NodeInstalled = $true
+        
+        # Check if npm command exists
+        $npmCmd = Get-Command npm -ErrorAction SilentlyContinue
+        if (-not $npmCmd) {
+            $result.Message = "npm is not found (usually comes with Node.js)"
+            $result.InstallHint = "Reinstall Node.js to get npm, or install npm separately"
+            return $result
+        }
+        
+        $result.NPMInstalled = $true
+        
+        # Get versions with enhanced error handling
+        try {
+            $nodeVersionRaw = & $nodeCmd --version 2>$null
+            if ($nodeVersionRaw) {
+                $result.NodeVersion = $nodeVersionRaw.TrimStart('v')
+                $result.NodeVersionParsed = [Version]$result.NodeVersion
+            }
+        } catch {
+            Write-CustomLog -Level 'WARNING' -Message "Failed to get Node.js version: $($_.Exception.Message)"
+        }
+        
+        try {
+            $npmVersionRaw = & $npmCmd --version 2>$null
+            if ($npmVersionRaw) {
+                $result.NPMVersion = $npmVersionRaw
+                $result.NPMVersionParsed = [Version]$result.NPMVersion
+            }
+        } catch {
+            Write-CustomLog -Level 'WARNING' -Message "Failed to get npm version: $($_.Exception.Message)"
+        }
+        
+        # Version validation
+        if ($result.NodeVersionParsed -and $result.NPMVersionParsed) {
+            $nodeVersionOk = $result.NodeVersionParsed -ge $MinimumNodeVersion
+            $npmVersionOk = $result.NPMVersionParsed -ge $MinimumNpmVersion
+            
+            if ($nodeVersionOk -and $npmVersionOk) {
+                $result.Success = $true
+                $result.Message = "Node.js and npm meet requirements"
+            } else {
+                $versionIssues = @()
+                if (-not $nodeVersionOk) {
+                    $versionIssues += "Node.js $($result.NodeVersion) is below minimum $MinimumNodeVersion"
+                    $result.Recommendations += "Upgrade Node.js to version $MinimumNodeVersion or later"
+                }
+                if (-not $npmVersionOk) {
+                    $versionIssues += "npm $($result.NPMVersion) is below minimum $MinimumNpmVersion"
+                    $result.Recommendations += "Upgrade npm with: npm install -g npm@latest"
+                }
+                $result.Message = $versionIssues -join "; "
             }
         } else {
-            return @{
-                Success = $false
-                Message = "Node.js or npm not found"
-            }
+            $result.Message = "Failed to validate Node.js or npm versions"
         }
+        
+        # Additional system checks
+        try {
+            # Check npm registry connectivity
+            $npmConfig = & npm config get registry 2>$null
+            if ($npmConfig) {
+                $result.NPMRegistry = $npmConfig
+            }
+            
+            # Check global npm packages directory
+            $npmGlobalDir = & npm config get prefix 2>$null
+            if ($npmGlobalDir) {
+                $result.NPMGlobalDir = $npmGlobalDir
+                $result.NPMGlobalDirExists = Test-Path $npmGlobalDir
+            }
+        } catch {
+            Write-CustomLog -Level 'DEBUG' -Message "Failed to get npm configuration details: $($_.Exception.Message)"
+        }
+        
+        return $result
+        
     } catch {
         return @{
             Success = $false
-            Message = "Error checking Node.js: $_"
+            Message = "Error checking Node.js prerequisites: $($_.Exception.Message)"
+            Error = $_.Exception
+        }
+    }
+}
+
+function Configure-ClaudeCodeIntegration {
+    <#
+    .SYNOPSIS
+        Configures Claude Code for optimal integration with AitherZero
+    #>
+    [CmdletBinding()]
+    param()
+    
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Configuring Claude Code integration..."
+        
+        $configResult = @{
+            Success = $false
+            ConfigurationsApplied = @()
+            Issues = @()
+        }
+        
+        # Check if Claude Code is available
+        $claudeCmd = Get-Command claude-code -ErrorAction SilentlyContinue
+        if (-not $claudeCmd) {
+            throw "Claude Code command not found. Please install Claude Code first."
+        }
+        
+        # Get Claude Code configuration directory
+        $configDir = if ($IsWindows) {
+            Join-Path $env:APPDATA "claude-code"
+        } elseif ($IsMacOS) {
+            Join-Path $HOME "Library/Application Support/claude-code"
+        } else {
+            Join-Path $HOME ".config/claude-code"
+        }
+        
+        # Create configuration directory if it doesn't exist
+        if (-not (Test-Path $configDir)) {
+            New-Item -ItemType Directory -Path $configDir -Force | Out-Null
+            $configResult.ConfigurationsApplied += "Created configuration directory: $configDir"
+        }
+        
+        # Create AitherZero-specific configuration
+        $aitherZeroConfig = @{
+            project = "AitherZero"
+            language = "powershell"
+            framework = "module-based"
+            preferences = @{
+                codeStyle = "OTBS"
+                indentation = "spaces"
+                tabSize = 4
+                maxLineLength = 120
+            }
+            integrations = @{
+                vscode = $true
+                git = $true
+                pester = $true
+            }
+            aiAssistance = @{
+                contextAware = $true
+                projectSpecific = $true
+                includeComments = $true
+                suggestOptimizations = $true
+            }
+        }
+        
+        $configFile = Join-Path $configDir "aitherzero-config.json"
+        $aitherZeroConfig | ConvertTo-Json -Depth 10 | Set-Content -Path $configFile -Encoding UTF8
+        $configResult.ConfigurationsApplied += "Created AitherZero configuration: $configFile"
+        
+        # Set up workspace-specific Claude Code settings
+        $workspaceConfig = @{
+            ".ps1" = @{
+                language = "powershell"
+                style = "OTBS"
+                analysis = $true
+            }
+            ".psm1" = @{
+                language = "powershell-module"
+                moduleStructure = $true
+                exportValidation = $true
+            }
+            ".psd1" = @{
+                language = "powershell-manifest"
+                manifestValidation = $true
+            }
+        }
+        
+        $workspaceConfigFile = Join-Path $configDir "workspace-config.json"
+        $workspaceConfig | ConvertTo-Json -Depth 10 | Set-Content -Path $workspaceConfigFile -Encoding UTF8
+        $configResult.ConfigurationsApplied += "Created workspace configuration: $workspaceConfigFile"
+        
+        # Test Claude Code functionality
+        try {
+            $claudeTest = & claude-code --version 2>$null
+            if ($claudeTest) {
+                $configResult.ConfigurationsApplied += "Verified Claude Code functionality"
+            }
+        } catch {
+            $configResult.Issues += "Claude Code functionality test failed: $($_.Exception.Message)"
+        }
+        
+        $configResult.Success = $configResult.Issues.Count -eq 0
+        
+        if ($configResult.Success) {
+            Write-CustomLog -Level 'SUCCESS' -Message "Claude Code integration configured successfully"
+        } else {
+            Write-CustomLog -Level 'WARNING' -Message "Claude Code integration configured with issues: $($configResult.Issues -join '; ')"
+        }
+        
+        return $configResult
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to configure Claude Code integration: $($_.Exception.Message)"
+        return @{
+            Success = $false
+            Error = $_.Exception.Message
         }
     }
 }
@@ -469,12 +783,21 @@ if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
 
 # Export functions
 Export-ModuleMember -Function @(
+    # Installation Functions
     'Install-ClaudeCode',
     'Install-GeminiCLI', 
     'Install-CodexCLI',
+    
+    # Testing and Status Functions
     'Test-AIToolsInstallation',
+    'Test-NodeJsPrerequisites',
     'Get-AIToolsStatus',
+    
+    # Configuration Functions
     'Configure-AITools',
+    'Configure-ClaudeCodeIntegration',
+    
+    # Management Functions
     'Update-AITools',
     'Remove-AITools'
 )

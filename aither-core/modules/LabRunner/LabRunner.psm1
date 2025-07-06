@@ -527,6 +527,130 @@ function Start-LabAutomation {
     }
 }
 
+function Test-ParallelRunnerSupport {
+    <#
+    .SYNOPSIS
+        Tests whether the current environment supports parallel execution
+
+    .DESCRIPTION
+        Validates if the current PowerShell environment has the necessary components
+        for parallel execution, including ThreadJob module and runspace support
+
+    .PARAMETER Detailed
+        Return detailed information about parallel execution capabilities
+
+    .EXAMPLE
+        Test-ParallelRunnerSupport
+
+    .EXAMPLE
+        Test-ParallelRunnerSupport -Detailed
+    #>
+    [CmdletBinding()]
+    param(
+        [switch]$Detailed
+    )
+
+    $result = @{
+        Supported = $false
+        PowerShellVersion = $PSVersionTable.PSVersion
+        ThreadJobAvailable = $false
+        RunspaceSupport = $false
+        MaxConcurrency = 1
+        Platform = Get-Platform
+        Details = @()
+    }
+
+    try {
+        # Check PowerShell version (7.0+ recommended for best performance)
+        if ($PSVersionTable.PSVersion.Major -ge 7) {
+            $result.Details += "PowerShell 7+ detected - optimal parallel support"
+        } elseif ($PSVersionTable.PSVersion.Major -ge 5) {
+            $result.Details += "PowerShell 5+ detected - basic parallel support"
+        } else {
+            $result.Details += "PowerShell version too old for reliable parallel execution"
+            if ($Detailed) { return $result }
+        }
+
+        # Check ThreadJob module availability
+        try {
+            Import-Module ThreadJob -Force -ErrorAction Stop
+            $result.ThreadJobAvailable = $true
+            $result.Details += "ThreadJob module available"
+        } catch {
+            try {
+                # Try to install ThreadJob if not available
+                Install-Module ThreadJob -Force -Scope CurrentUser -ErrorAction Stop
+                Import-Module ThreadJob -Force -ErrorAction Stop
+                $result.ThreadJobAvailable = $true
+                $result.Details += "ThreadJob module installed and loaded"
+            } catch {
+                $result.Details += "ThreadJob module not available and could not be installed"
+                if ($Detailed) { return $result }
+            }
+        }
+
+        # Test runspace creation
+        try {
+            $testRunspace = [powershell]::Create()
+            $testRunspace.AddScript({ 1 + 1 }) | Out-Null
+            $testResult = $testRunspace.Invoke()
+            $testRunspace.Dispose()
+            
+            if ($testResult -eq 2) {
+                $result.RunspaceSupport = $true
+                $result.Details += "Runspace creation and execution successful"
+            }
+        } catch {
+            $result.Details += "Runspace creation failed: $($_.Exception.Message)"
+            if ($Detailed) { return $result }
+        }
+
+        # Determine maximum concurrency
+        $processorCount = [Environment]::ProcessorCount
+        $availableMemory = if ($IsWindows) {
+            try {
+                (Get-CimInstance -ClassName Win32_OperatingSystem).TotalVisibleMemorySize / 1MB
+            } catch { 4 }  # Default fallback
+        } else {
+            try {
+                # Linux/macOS memory detection
+                if (Test-Path '/proc/meminfo') {
+                    $memInfo = Get-Content '/proc/meminfo' | Where-Object { $_ -match '^MemTotal:' }
+                    if ($memInfo -match '(\d+)') {
+                        [int]($matches[1]) / 1024 / 1024  # Convert KB to GB
+                    } else { 4 }
+                } else { 4 }
+            } catch { 4 }
+        }
+
+        # Calculate optimal concurrency (conservative approach)
+        $memoryBasedLimit = [Math]::Max(1, [Math]::Floor($availableMemory / 0.5))  # 512MB per thread
+        $result.MaxConcurrency = [Math]::Min($processorCount * 2, $memoryBasedLimit)
+        $result.Details += "Optimal concurrency: $($result.MaxConcurrency) (CPU: $processorCount, Memory: ${availableMemory}GB)"
+
+        # Final determination
+        $result.Supported = $result.ThreadJobAvailable -and $result.RunspaceSupport
+
+        if ($result.Supported) {
+            $result.Details += "Parallel execution fully supported"
+            Write-CustomLog -Message "✅ Parallel execution support validated successfully" -Level "INFO"
+        } else {
+            $result.Details += "Parallel execution not supported - falling back to sequential"
+            Write-CustomLog -Message "⚠️ Parallel execution not available - using sequential execution" -Level "WARN"
+        }
+
+    } catch {
+        $result.Details += "Error during parallel support test: $($_.Exception.Message)"
+        Write-CustomLog -Message "❌ Failed to test parallel support: $($_.Exception.Message)" -Level "ERROR"
+    }
+
+    if ($Detailed) {
+        return $result
+    } else {
+        return $result.Supported
+    }
+}
+
 function Get-LabStatus {
     <#
     .SYNOPSIS
@@ -557,6 +681,7 @@ function Get-LabStatus {
             $config = Get-LabConfig -ErrorAction SilentlyContinue
             $status.Configuration = $config
             $status.AvailableSteps = if ($config) { $config.Keys } else { @() }
+            $status.ParallelSupportDetails = Test-ParallelRunnerSupport -Detailed
         }
 
         return $status
@@ -953,7 +1078,9 @@ Export-ModuleMember -Function @(
     'Get-Platform',
     'Invoke-OpenTofuInstaller',
     'Invoke-ParallelLabRunner',
+    'Test-ParallelRunnerSupport',
     'Start-LabAutomation',
     'Get-LabStatus',
-    'Start-EnhancedLabDeployment'
+    'Start-EnhancedLabDeployment',
+    'Start-AdvancedLabOrchestration'
 )

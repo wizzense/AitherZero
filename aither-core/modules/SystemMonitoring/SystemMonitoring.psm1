@@ -52,7 +52,7 @@ foreach ($function in $publicFunctions) {
 }
 
 # Module initialization
-Write-CustomLog -Message "SystemMonitoring v1.0.0 loaded - Real-time infrastructure monitoring" -Level "INFO"
+Write-CustomLog -Message "SystemMonitoring v2.0.0 loaded - Advanced monitoring with intelligent analytics" -Level "INFO"
 
 # Export module members
 Export-ModuleMember -Function @(
@@ -68,7 +68,9 @@ Export-ModuleMember -Function @(
     'Get-MonitoringConfiguration',
     'Set-MonitoringConfiguration',
     'Export-MonitoringData',
-    'Import-MonitoringData'
+    'Import-MonitoringData',
+    'Enable-PredictiveAlerting',
+    'Get-MonitoringInsights'
 )
 
 # Initialize module-level variables for performance tracking
@@ -80,3 +82,13 @@ $script:PerformanceBaselines = @{}
 $script:MonitoringJob = $null
 $script:MonitoringConfig = $null
 $script:MonitoringStartTime = $null
+
+# Initialize new v2.0 variables for enhanced monitoring
+$script:AlertHistory = @()
+$script:MutedAlerts = @()
+$script:NotificationConfig = @{}
+$script:RetentionPolicy = @{}
+$script:PredictiveJob = $null
+$script:PredictiveConfig = @{}
+$script:IntelligentThresholds = $false
+$script:MonitoringInsights = @{}

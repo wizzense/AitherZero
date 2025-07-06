@@ -23,7 +23,8 @@
         'Test-ParallelRunnerSupport',
         'Initialize-StandardParameters',
         'Start-LabAutomation',
-        'Get-LabStatus'
+        'Get-LabStatus',
+        'Start-AdvancedLabOrchestration'
     )
 
     NestedModules = @('Resolve-ProjectPath.psm1')

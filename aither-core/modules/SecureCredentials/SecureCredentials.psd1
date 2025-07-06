@@ -14,7 +14,10 @@
         'Remove-SecureCredential',
         'Test-SecureCredential',
         'Export-SecureCredential',
-        'Import-SecureCredential'
+        'Import-SecureCredential',
+        'Get-AllSecureCredentials',
+        'Test-SecureCredentialStore',
+        'Backup-SecureCredentialStore'
     )
     CmdletsToExport = @()
     VariablesToExport = @()

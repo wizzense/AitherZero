@@ -20,8 +20,10 @@ jobs:
     name: Build Release Artifacts
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         platform: [windows, linux, macos]
+      max-parallel: 3
     
     steps:
     - name: Checkout code

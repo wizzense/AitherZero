@@ -1,5 +1,3 @@
-#Requires -Version 7.0
-
 <#
 .SYNOPSIS
     AitherZero Infrastructure Automation Framework Launcher
@@ -66,6 +64,71 @@ param(
     [Parameter(HelpMessage = "Run in non-interactive mode (no prompts)")]
     [switch]$NonInteractive
 )
+
+# Check PowerShell version and relaunch if needed
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    Write-Host "AitherZero requires PowerShell 7.0 or later." -ForegroundColor Yellow
+    Write-Host "Current version: $($PSVersionTable.PSVersion)" -ForegroundColor Yellow
+    
+    # Try to find PowerShell 7
+    $pwsh7 = $null
+    
+    # Check common installation paths
+    $pwsh7Paths = @(
+        "C:\Program Files\PowerShell\7\pwsh.exe",
+        "C:\Program Files\PowerShell\7-preview\pwsh.exe",
+        "/usr/local/bin/pwsh",
+        "/usr/bin/pwsh",
+        "/opt/microsoft/powershell/7/pwsh"
+    )
+    
+    foreach ($path in $pwsh7Paths) {
+        if (Test-Path $path) {
+            $pwsh7 = $path
+            break
+        }
+    }
+    
+    # Try Get-Command as fallback
+    if (-not $pwsh7) {
+        $pwshCmd = Get-Command pwsh -ErrorAction SilentlyContinue
+        if ($pwshCmd) {
+            $pwsh7 = $pwshCmd.Source
+        }
+    }
+    
+    if ($pwsh7) {
+        Write-Host "Found PowerShell 7 at: $pwsh7" -ForegroundColor Green
+        Write-Host "Relaunching with PowerShell 7..." -ForegroundColor Cyan
+        
+        # Build argument list
+        $argList = @('-NoProfile', '-File', $MyInvocation.MyCommand.Path)
+        foreach ($key in $PSBoundParameters.Keys) {
+            if ($PSBoundParameters[$key] -is [switch]) {
+                if ($PSBoundParameters[$key].IsPresent) {
+                    $argList += "-$key"
+                }
+            } else {
+                $argList += "-$key"
+                $argList += $PSBoundParameters[$key]
+            }
+        }
+        
+        & $pwsh7 @argList
+        exit $LASTEXITCODE
+    } else {
+        Write-Host "`n❌ PowerShell 7 is not installed!" -ForegroundColor Red
+        Write-Host "`nTo install PowerShell 7:" -ForegroundColor Yellow
+        if ($IsWindows -or $PSVersionTable.Platform -eq 'Win32NT') {
+            Write-Host "  winget install Microsoft.PowerShell" -ForegroundColor Cyan
+            Write-Host "  or download from: https://aka.ms/powershell-release" -ForegroundColor Cyan
+        } else {
+            Write-Host "  Visit: https://docs.microsoft.com/powershell/scripting/install/installing-powershell" -ForegroundColor Cyan
+        }
+        Write-Host "`nAfter installing PowerShell 7, run this script again." -ForegroundColor Yellow
+        exit 1
+    }
+}
 
 # Find the aither-core.ps1 script
 # Robust path resolution for various execution contexts

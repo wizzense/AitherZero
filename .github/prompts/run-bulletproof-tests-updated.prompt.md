@@ -14,17 +14,17 @@ You are assisting with testing in the AitherZero Infrastructure Automation proje
 ### Bulletproof Validation (Primary)
 
 ```powershell
-# Quick validation - Use for rapid feedback during development
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Quick"
+# Core validation - Use for rapid feedback during development
+pwsh -File "tests/Run-Tests.ps1"
 
-# Standard validation - Use for pre-commit validation
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Standard"
+# Setup validation - Use for setup/installation testing
+pwsh -File "tests/Run-Tests.ps1" -Setup
 
-# Complete validation - Use for release preparation
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Complete"
+# All tests - Use for comprehensive validation
+pwsh -File "tests/Run-Tests.ps1" -All
 
 # CI/CD mode with fail-fast
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Standard" -CI -FailFast
+pwsh -File "tests/Run-Tests.ps1" -All -CI
 ```
 
 ### Core Runner Testing
@@ -143,21 +143,21 @@ Mock Write-CustomLog { }
 
 ```powershell
 # Minimal validation for fast feedback
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Quick" -CI
+pwsh -File "tests/Run-Tests.ps1" -CI
 ```
 
 ### Pre-Push Validation
 
 ```powershell
 # Comprehensive validation before push
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Standard" -CI -FailFast
+pwsh -File "tests/Run-Tests.ps1" -All -CI
 ```
 
 ### Release Validation
 
 ```powershell
 # Complete validation for releases
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Complete" -GenerateReport
+pwsh -File "tests/Run-Tests.ps1" -All
 ```
 
 ## Test Result Analysis

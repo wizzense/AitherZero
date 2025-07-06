@@ -1,0 +1,617 @@
+name: Audit - Documentation, Tests & Duplicates
+
+on:
+  push:
+    branches: [ main, develop, 'release/**' ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run weekly audits on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      audit_type:
+        description: 'Type of audit to run'
+        required: true
+        default: 'comprehensive'
+        type: choice
+        options:
+          - comprehensive
+          - documentation
+          - testing
+          - duplicates
+      create_issues:
+        description: 'Create GitHub issues for findings'
+        required: false
+        default: true
+        type: boolean
+      detailed_analysis:
+        description: 'Run detailed analysis (slower but more thorough)'
+        required: false
+        default: false
+        type: boolean
+
+# Cancel in-progress runs for the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  PSCORE_VERSION: '7.4.5'
+
+jobs:
+  # Initialize audit state and determine what needs to be audited
+  audit-initialization:
+    name: Initialize Audit State
+    runs-on: ubuntu-latest
+    outputs:
+      documentation-state-exists: ${{ steps.check.outputs.docs-state }}
+      test-state-exists: ${{ steps.check.outputs.test-state }}
+      audit-scope: ${{ steps.scope.outputs.scope }}
+      changed-files: ${{ steps.files.outputs.changed }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Setup PowerShell
+      uses: PowerShell/setup-powershell@v1
+      with:
+        version: ${{ env.PSCORE_VERSION }}
+        
+    - name: Check existing state files
+      id: check
+      shell: pwsh
+      run: |
+        $docsState = Test-Path ".github/documentation-state.json"
+        $testState = Test-Path ".github/test-state.json"
+        
+        echo "docs-state=$docsState" >> $env:GITHUB_OUTPUT
+        echo "test-state=$testState" >> $env:GITHUB_OUTPUT
+        
+    - name: Determine audit scope
+      id: scope
+      shell: pwsh
+      run: |
+        $scope = @{
+          documentation = $true
+          testing = $true
+          duplicates = $true
+          comprehensive = $true
+        }
+        
+        # Override based on workflow inputs
+        if ('${{ github.event.inputs.audit_type }}' -ne '') {
+          $inputType = '${{ github.event.inputs.audit_type }}'
+          $scope = @{
+            documentation = $inputType -in @('documentation', 'comprehensive')
+            testing = $inputType -in @('testing', 'comprehensive')
+            duplicates = $inputType -in @('duplicates', 'comprehensive')
+            comprehensive = $inputType -eq 'comprehensive'
+          }
+        }
+        
+        # For PR events, focus on changed areas
+        if ('${{ github.event_name }}' -eq 'pull_request') {
+          $scope.duplicates = $true  # Always check for duplicates in PRs
+        }
+        
+        $scopeJson = $scope | ConvertTo-Json -Compress
+        echo "scope=$scopeJson" >> $env:GITHUB_OUTPUT
+        
+    - name: Analyze changed files
+      id: files
+      shell: pwsh
+      run: |
+        if ('${{ github.event_name }}' -eq 'pull_request') {
+          $base = '${{ github.event.pull_request.base.sha }}'
+          $head = '${{ github.event.pull_request.head.sha }}'
+          $changes = git diff --name-only $base $head
+        } else {
+          $changes = git diff --name-only HEAD~1 HEAD
+        }
+        
+        $changeTypes = @{
+          powershell = $false
+          documentation = $false
+          configuration = $false
+          infrastructure = $false
+        }
+        
+        foreach ($change in $changes) {
+          if ($change -match '\.(ps1|psm1|psd1)$') { $changeTypes.powershell = $true }
+          if ($change -match '\.md$') { $changeTypes.documentation = $true }
+          if ($change -match '\.(json|yaml|yml|toml|ini)$') { $changeTypes.configuration = $true }
+          if ($change -match '\.tf$') { $changeTypes.infrastructure = $true }
+        }
+        
+        $changedJson = $changeTypes | ConvertTo-Json -Compress
+        echo "changed=$changedJson" >> $env:GITHUB_OUTPUT
+
+  # Documentation audit and automation
+  documentation-audit:
+    name: Documentation Audit
+    runs-on: ubuntu-latest
+    needs: audit-initialization
+    if: fromJson(needs.audit-initialization.outputs.audit-scope).documentation
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup PowerShell
+      uses: PowerShell/setup-powershell@v1
+      with:
+        version: ${{ env.PSCORE_VERSION }}
+        
+    - name: Cache audit state
+      uses: actions/cache@v4
+      with:
+        path: .github/documentation-state.json
+        key: ${{ runner.os }}-docs-state-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-docs-state-
+          
+    - name: Initialize documentation state
+      if: needs.audit-initialization.outputs.documentation-state-exists == 'false'
+      shell: pwsh
+      run: |
+        Write-Host "🔧 Initializing documentation state..." -ForegroundColor Yellow
+        ./scripts/documentation/Track-DocumentationState.ps1 -Initialize
+        
+    - name: Analyze documentation deltas
+      shell: pwsh
+      run: |
+        Write-Host "📊 Analyzing documentation changes..." -ForegroundColor Cyan
+        
+        $params = @{
+          ExportChanges = $true
+        }
+        
+        if ('${{ github.event.inputs.detailed_analysis }}' -eq 'true') {
+          $params.DetailedAnalysis = $true
+        }
+        
+        $analysis = ./scripts/documentation/Analyze-ContentDeltas.ps1 @params
+        
+        Write-Host "📈 Documentation Analysis Results:" -ForegroundColor Green
+        Write-Host "  Total Analyzed: $($analysis.totalAnalyzed)"
+        Write-Host "  Significant Changes: $($analysis.significantChanges)"
+        Write-Host "  Needs Review: $($analysis.needsReview)"
+        Write-Host "  Auto-Gen Candidates: $($analysis.autoGenerationCandidates.Count)"
+        
+        # Create GitHub annotations for significant findings
+        if ($analysis.needsReview -gt 5) {
+          Write-Host "::warning::$($analysis.needsReview) directories need documentation review"
+        }
+        
+        foreach ($candidate in $analysis.autoGenerationCandidates) {
+          if ($candidate.confidence -gt 70) {
+            Write-Host "::notice file=$($candidate.path)::High-confidence auto-documentation candidate ($($candidate.confidence)%)"
+          }
+        }
+        
+    - name: Generate missing documentation
+      if: github.event_name == 'pull_request'
+      shell: pwsh
+      run: |
+        Write-Host "🤖 Checking for auto-generation candidates..." -ForegroundColor Magenta
+        
+        if (Test-Path "change-analysis.json") {
+          $analysis = Get-Content "change-analysis.json" | ConvertFrom-Json
+          $highConfidence = $analysis.autoGenerationCandidates | Where-Object { $_.confidence -gt 75 }
+          
+          if ($highConfidence.Count -gt 0 -and $highConfidence.Count -le 3) {
+            Write-Host "📝 Generating documentation for $($highConfidence.Count) directories..." -ForegroundColor Green
+            
+            $targetDirs = $highConfidence | ForEach-Object { $_.path }
+            ./scripts/documentation/Generate-SmartReadmes.ps1 -TargetDirectories $targetDirs
+            
+            # Check if any READMEs were generated
+            $newReadmes = git status --porcelain | Where-Object { $_ -match "README\.md" -and $_ -match "^\?\?" }
+            if ($newReadmes) {
+              Write-Host "✅ Generated $($newReadmes.Count) new README(s)" -ForegroundColor Green
+              Write-Host "::notice::AI-generated documentation created - please review before merging"
+              
+              # List generated files
+              foreach ($readme in $newReadmes) {
+                $file = $readme.Substring(3).Trim()
+                Write-Host "  📄 $file" -ForegroundColor Gray
+              }
+            }
+          }
+        }
+        
+    - name: Flag documentation reviews
+      if: github.event.inputs.create_issues == 'true' || github.event_name == 'schedule'
+      shell: pwsh
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        Write-Host "🚩 Flagging documentation for review..." -ForegroundColor Yellow
+        
+        $params = @{
+          MinimumPriority = "Medium"
+        }
+        
+        if ('${{ github.event.inputs.create_issues }}' -eq 'true' -or '${{ github.event_name }}' -eq 'schedule') {
+          $params.CreateIssues = $true
+        } else {
+          $params.ReportOnly = $true
+        }
+        
+        ./scripts/documentation/Flag-DocumentationReviews.ps1 @params
+        
+    - name: Upload documentation reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation-audit-reports
+        path: |
+          change-analysis.json
+          documentation-report.md
+          .github/documentation-state.json
+        retention-days: 30
+
+  # Test coverage and quality audit
+  testing-audit:
+    name: Testing Audit
+    runs-on: ubuntu-latest
+    needs: audit-initialization
+    if: fromJson(needs.audit-initialization.outputs.audit-scope).testing
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PowerShell
+      uses: PowerShell/setup-powershell@v1
+      with:
+        version: ${{ env.PSCORE_VERSION }}
+        
+    - name: Cache audit state
+      uses: actions/cache@v4
+      with:
+        path: .github/test-state.json
+        key: ${{ runner.os }}-test-state-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-test-state-
+          
+    - name: Initialize test state
+      if: needs.audit-initialization.outputs.test-state-exists == 'false'
+      shell: pwsh
+      run: |
+        Write-Host "🔧 Initializing test state..." -ForegroundColor Yellow
+        ./scripts/testing/Track-TestState.ps1 -Initialize
+        
+    - name: Analyze test deltas
+      shell: pwsh
+      run: |
+        Write-Host "🧪 Analyzing test coverage and deltas..." -ForegroundColor Cyan
+        
+        $params = @{
+          ExportChanges = $true
+        }
+        
+        if ('${{ github.event.inputs.detailed_analysis }}' -eq 'true') {
+          $params.DetailedAnalysis = $true
+        }
+        
+        $analysis = ./scripts/testing/Analyze-TestDeltas.ps1 @params
+        
+        Write-Host "📊 Test Analysis Results:" -ForegroundColor Green
+        Write-Host "  Modules Analyzed: $($analysis.summary.totalAnalyzed)"
+        Write-Host "  Modules With Tests: $($analysis.summary.modulesWithTests)"
+        Write-Host "  Modules Without Tests: $($analysis.summary.modulesWithoutTests)"
+        Write-Host "  Stale Tests: $($analysis.summary.staleModules)"
+        Write-Host "  High Risk: $($analysis.summary.highRiskModules)"
+        Write-Host "  Auto-Gen Candidates: $($analysis.summary.autoGenCandidates)"
+        
+        # Create GitHub annotations for critical findings
+        if ($analysis.summary.highRiskModules -gt 0) {
+          Write-Host "::error::Found $($analysis.summary.highRiskModules) high-risk modules requiring immediate test attention"
+        }
+        
+        if ($analysis.summary.modulesWithoutTests -gt 5) {
+          Write-Host "::warning::$($analysis.summary.modulesWithoutTests) modules have no tests"
+        }
+        
+        foreach ($candidate in $analysis.autoGenerationCandidates) {
+          if ($candidate.confidence -gt 70) {
+            Write-Host "::notice::Module '$($candidate.moduleName)' is candidate for auto-test generation ($($candidate.confidence)% confidence)"
+          }
+        }
+        
+    - name: Comprehensive test audit
+      shell: pwsh
+      run: |
+        Write-Host "📋 Running comprehensive test audit..." -ForegroundColor Magenta
+        
+        $params = @{
+          GenerateHTML = $true
+        }
+        
+        if ('${{ github.event.inputs.detailed_analysis }}' -eq 'true') {
+          $params.DetailedAnalysis = $true
+          $params.CrossReference = $true
+        }
+        
+        $audit = ./scripts/testing/Audit-TestCoverage.ps1 @params
+        
+        Write-Host "🎯 Test Coverage Summary:" -ForegroundColor Green
+        Write-Host "  Overall Health: $($audit.overallHealth.grade) ($($audit.overallHealth.score)%)"
+        Write-Host "  Coverage: $($audit.coverage.modulesWithTests)/$($audit.coverage.totalModules) modules"
+        Write-Host "  Average Coverage: $($audit.coverage.averageCoverage)%"
+        Write-Host "  Critical Modules: $($audit.quality.criticalModules)"
+        
+        # Set job output for use in summary
+        echo "AUDIT_GRADE=$($audit.overallHealth.grade)" >> $env:GITHUB_ENV
+        echo "AUDIT_SCORE=$($audit.overallHealth.score)" >> $env:GITHUB_ENV
+        echo "COVERAGE_PERCENT=$($audit.coverage.averageCoverage)" >> $env:GITHUB_ENV
+        
+        # Fail if health is critical
+        if ($audit.overallHealth.grade -eq "F") {
+          Write-Host "::error::Test health is critical (Grade F) - immediate attention required"
+          exit 1
+        }
+        
+        # Warning for poor health
+        if ($audit.overallHealth.score -lt 60) {
+          Write-Host "::warning::Test health is below acceptable threshold ($($audit.overallHealth.score)%)"
+        }
+        
+    - name: Generate missing tests
+      if: github.event_name == 'pull_request'
+      shell: pwsh
+      run: |
+        Write-Host "🤖 Checking for test generation candidates..." -ForegroundColor Magenta
+        
+        if (Test-Path "test-delta-analysis.json") {
+          $analysis = Get-Content "test-delta-analysis.json" | ConvertFrom-Json
+          $highConfidence = $analysis.autoGenerationCandidates | Where-Object { $_.confidence -gt 70 }
+          
+          if ($highConfidence.Count -gt 0 -and $highConfidence.Count -le 2) {
+            Write-Host "🧪 Generating tests for $($highConfidence.Count) modules..." -ForegroundColor Green
+            
+            $modules = $highConfidence | ForEach-Object { $_.moduleName }
+            ./scripts/testing/Generate-AllMissingTests.ps1 -TargetModules $modules
+            
+            # Check if any tests were generated
+            $newTests = git status --porcelain | Where-Object { $_ -match "\.Tests\.ps1" -and $_ -match "^\?\?" }
+            if ($newTests) {
+              Write-Host "✅ Generated $($newTests.Count) new test file(s)" -ForegroundColor Green
+              Write-Host "::notice::AI-generated tests created - please review before merging"
+              
+              # List generated files
+              foreach ($test in $newTests) {
+                $file = $test.Substring(3).Trim()
+                Write-Host "  🧪 $file" -ForegroundColor Gray
+              }
+            }
+          }
+        }
+        
+    - name: Upload test reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: testing-audit-reports
+        path: |
+          test-delta-analysis.json
+          test-audit-report.json
+          test-audit-report.html
+          .github/test-state.json
+        retention-days: 30
+
+  # Duplicate file detection
+  duplicate-detection:
+    name: Duplicate File Detection
+    runs-on: ubuntu-latest
+    needs: audit-initialization
+    if: fromJson(needs.audit-initialization.outputs.audit-scope).duplicates
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PowerShell
+      uses: PowerShell/setup-powershell@v1
+      with:
+        version: ${{ env.PSCORE_VERSION }}
+        
+    - name: Detect duplicate files
+      shell: pwsh
+      run: |
+        Write-Host "🔍 Scanning for duplicate and AI-generated files..." -ForegroundColor Cyan
+        
+        $daysThreshold = if ('${{ github.event_name }}' -eq 'pull_request') { 7 } else { 30 }
+        $confidence = if ('${{ github.event_name }}' -eq 'pull_request') { "Medium" } else { "Low" }
+        
+        $results = ./scripts/auditing/Simple-DuplicateDetector.ps1 -DaysThreshold $daysThreshold
+        
+        Write-Host "📊 Duplicate Detection Results:" -ForegroundColor Green
+        Write-Host "  Files Scanned: $($results.totalFiles)"
+        Write-Host "  AI-Suspicious Files: $($results.summary.aiSuspicious)"
+        Write-Host "  Similar File Pairs: $($results.summary.similarPairs)"
+        Write-Host "  Recent Duplicates: $($results.summary.recentFiles)"
+        
+        # Create annotations for suspicious files
+        $highPriority = $results.suspiciousFiles | Where-Object { $_.confidence -gt 70 -and $_.isRecent }
+        foreach ($suspicious in $highPriority) {
+          $patterns = $suspicious.patterns -join ", "
+          Write-Host "::warning file=$($suspicious.path)::Potential AI duplicate ($($suspicious.confidence)%): $patterns"
+        }
+        
+        # Create annotations for similar pairs
+        $similarPairs = $results.potentialDuplicates | Where-Object { $_.priority -eq "HIGH" }
+        foreach ($pair in $similarPairs) {
+          Write-Host "::notice::Similar files detected: $($pair.file1.name) vs $($pair.file2.name) ($($pair.similarity)% similar)"
+        }
+        
+        # Fail if too many high-confidence duplicates in PR
+        if ('${{ github.event_name }}' -eq 'pull_request' -and $highPriority.Count -gt 3) {
+          Write-Host "::error::Too many potential AI duplicates detected in PR - please review and clean up"
+          exit 1
+        }
+        
+    - name: Upload duplicate detection reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: duplicate-detection-reports
+        path: |
+          duplicate-files-simple.json
+        retention-days: 30
+
+  # Audit summary and reporting
+  audit-summary:
+    name: Audit Summary
+    runs-on: ubuntu-latest
+    needs: [audit-initialization, documentation-audit, testing-audit, duplicate-detection]
+    if: always()
+    
+    steps:
+    - name: Download all reports
+      uses: actions/download-artifact@v4
+      with:
+        path: audit-reports
+        
+    - name: Generate unified summary
+      shell: pwsh
+      run: |
+        Write-Host "📋 Generating unified audit summary..." -ForegroundColor Cyan
+        
+        $summary = @{
+          auditDate = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
+          gitRef = "${{ github.ref }}"
+          gitSha = "${{ github.sha }}"
+          eventName = "${{ github.event_name }}"
+          results = @{
+            documentation = @{
+              status = '${{ needs.documentation-audit.result }}'
+              executed = '${{ fromJson(needs.audit-initialization.outputs.audit-scope).documentation }}'
+            }
+            testing = @{
+              status = '${{ needs.testing-audit.result }}'
+              executed = '${{ fromJson(needs.audit-initialization.outputs.audit-scope).testing }}'
+              grade = "${{ env.AUDIT_GRADE }}"
+              score = "${{ env.AUDIT_SCORE }}"
+              coverage = "${{ env.COVERAGE_PERCENT }}"
+            }
+            duplicates = @{
+              status = '${{ needs.duplicate-detection.result }}'
+              executed = '${{ fromJson(needs.audit-initialization.outputs.audit-scope).duplicates }}'
+            }
+          }
+        }
+        
+        Write-Host "`n🎯 AitherZero Audit Summary:" -ForegroundColor Cyan
+        Write-Host "================================" -ForegroundColor Cyan
+        
+        $failed = 0
+        foreach ($category in $summary.results.GetEnumerator()) {
+          if (-not [bool]::Parse($category.Value.executed)) {
+            $status = "⏭️ SKIPPED"
+          } else {
+            $status = switch ($category.Value.status) {
+              'success' { '✅ PASSED' }
+              'failure' { '❌ FAILED'; $failed++ }
+              'cancelled' { '⚠️ CANCELLED' }
+              default { '❓ UNKNOWN' }
+            }
+          }
+          Write-Host "$($category.Key.ToUpper()): $status"
+        }
+        
+        # Special formatting for test results
+        if ([bool]::Parse($summary.results.testing.executed) -and $summary.results.testing.status -eq 'success') {
+          Write-Host "  Test Health: Grade $($summary.results.testing.grade) ($($summary.results.testing.score)%)"
+          Write-Host "  Test Coverage: $($summary.results.testing.coverage)%"
+        }
+        
+        Write-Host "`n📊 Overall Status: $(if ($failed -eq 0) { '✅ ALL CHECKS PASSED' } else { "❌ $failed CHECK(S) FAILED" })" -ForegroundColor $(if ($failed -eq 0) { 'Green' } else { 'Red' })
+        
+        # Export summary
+        $summary | ConvertTo-Json -Depth 10 | Set-Content "audit-summary.json"
+        
+        if ($failed -gt 0) {
+          Write-Host "::error::Audit failed - $failed check(s) failed"
+          exit 1
+        }
+        
+    - name: Comment on PR with audit results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          let body = '## 🔍 AitherZero Audit Results\n\n';
+          
+          const results = {
+            'Documentation': '${{ needs.documentation-audit.result }}',
+            'Testing': '${{ needs.testing-audit.result }}',
+            'Duplicates': '${{ needs.duplicate-detection.result }}'
+          };
+          
+          body += '| Audit Type | Status | Details |\n';
+          body += '|------------|--------|---------|\n';
+          
+          for (const [audit, result] of Object.entries(results)) {
+            const emoji = result === 'success' ? '✅' : 
+                         result === 'failure' ? '❌' : 
+                         result === 'skipped' ? '⏭️' : '⚠️';
+            
+            let details = '';
+            if (audit === 'Testing' && result === 'success') {
+              details = `Grade ${{ env.AUDIT_GRADE }} (${{ env.AUDIT_SCORE }}%), Coverage: ${{ env.COVERAGE_PERCENT }}%`;
+            }
+            
+            body += `| ${audit} | ${emoji} ${result} | ${details} |\n`;
+          }
+          
+          body += '\n### 📋 Actions Taken\n';
+          body += '- 🔍 Scanned for duplicate and AI-generated files\n';
+          body += '- 📊 Analyzed documentation coverage and staleness\n';
+          body += '- 🧪 Evaluated test coverage and quality\n';
+          body += '- 🤖 Generated missing documentation/tests where appropriate\n';
+          
+          body += `\n[View detailed audit logs](${context.payload.pull_request.html_url}/checks)`;
+          
+          // Find existing comment
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number
+          });
+          
+          const botComment = comments.find(comment => 
+            comment.user.type === 'Bot' && 
+            comment.body.includes('🔍 AitherZero Audit Results')
+          );
+          
+          if (botComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+          }
+          
+    - name: Upload unified audit summary
+      uses: actions/upload-artifact@v4
+      with:
+        name: audit-summary
+        path: audit-summary.json
+        retention-days: 90

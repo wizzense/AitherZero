@@ -123,30 +123,99 @@ function Start-IntelligentSetup {
     Show-SetupBanner
     
     # Run setup steps based on profile
-    $setupSteps = Get-SetupSteps -Profile $setupState.InstallationProfile
+    $setupStepsInfo = Get-SetupSteps -Profile $setupState.InstallationProfile
+    $setupSteps = $setupStepsInfo.Steps
+    $profileInfo = $setupStepsInfo.Profile
     
-    # Show profile information
-    Show-InstallationProfile -Profile $setupState.InstallationProfile
+    # Show enhanced profile information
+    Show-EnhancedInstallationProfile -Profile $setupState.InstallationProfile -ProfileInfo $profileInfo
     
     $setupState.TotalSteps = $setupSteps.Count
+    $setupState.ProfileInfo = $profileInfo
     
     foreach ($step in $setupSteps) {
         $setupState.CurrentStep++
-        Show-Progress -State $setupState -StepName $step.Name
+        Show-EnhancedProgress -State $setupState -StepName $step.Name -Status 'Running'
         
-        try {
-            $result = & $step.Function -SetupState $setupState
-            $setupState.Steps += $result
+        $stepAttempts = 0
+        $maxAttempts = 2
+        $stepCompleted = $false
+        
+        while ($stepAttempts -lt $maxAttempts -and -not $stepCompleted) {
+            $stepAttempts++
             
-            if ($result.Status -eq 'Failed' -and -not $SkipOptional) {
-                if (-not (Show-SetupPrompt -Message "Step failed. Continue anyway?" -DefaultYes)) {
-                    Write-Host "`n❌ Setup cancelled by user" -ForegroundColor Red
-                    return $setupState
+            try {
+                $result = & $step.Function -SetupState $setupState
+                $setupState.Steps += $result
+                
+                if ($result.Status -eq 'Passed' -or $result.Status -eq 'Success') {
+                    Show-EnhancedProgress -State $setupState -StepName $step.Name -Status 'Success'
+                    $stepCompleted = $true
+                } elseif ($result.Status -eq 'Warning') {
+                    Show-EnhancedProgress -State $setupState -StepName $step.Name -Status 'Warning'
+                    $stepCompleted = $true
+                } elseif ($result.Status -eq 'Failed') {
+                    Show-EnhancedProgress -State $setupState -StepName $step.Name -Status 'Failed' `
+                        -ErrorContext @{ LastError = $result.Details -join '; ' }
+                    
+                    # Attempt recovery if this is the first attempt
+                    if ($stepAttempts -eq 1) {
+                        Write-Host "  🔧 Attempting automatic recovery..." -ForegroundColor Blue
+                        Show-EnhancedProgress -State $setupState -StepName $step.Name -Status 'Recovering'
+                        
+                        $recovery = Invoke-ErrorRecovery -StepResult $result -SetupState $setupState -StepName $step.Name
+                        
+                        if ($recovery.Success) {
+                            Write-Host "  ✓ Recovery successful, retrying step..." -ForegroundColor Green
+                            Show-EnhancedProgress -State $setupState -StepName $step.Name -Status 'Retrying' `
+                                -ErrorContext @{ RecoveryAttempted = $true; RecoveryMethod = $recovery.Method }
+                            continue
+                        } else {
+                            Write-Host "  ⚠️ Recovery failed or not applicable" -ForegroundColor Yellow
+                            $result.Details += $recovery.Details
+                        }
+                    }
+                    
+                    # Prompt user for action if not in skip mode
+                    if (-not $SkipOptional) {
+                        Write-Host ""
+                        Write-Host "Step Failed: $($step.Name)" -ForegroundColor Red
+                        Write-Host "Details: $($result.Details -join '; ')" -ForegroundColor Gray
+                        
+                        $choice = Show-SetupPrompt -Message "Continue anyway? (y=yes, n=abort setup, r=retry manually)" -DefaultYes:$false
+                        
+                        if ($choice) {
+                            Write-Host "  ⚠️ Continuing with failed step" -ForegroundColor Yellow
+                            $stepCompleted = $true
+                        } else {
+                            Write-Host "`n❌ Setup cancelled by user" -ForegroundColor Red
+                            return $setupState
+                        }
+                    } else {
+                        Write-Host "  ⚠️ Skipping failed step (optional components mode)" -ForegroundColor Yellow
+                        $stepCompleted = $true
+                    }
+                }
+                
+            } catch {
+                $errorMessage = "Error in $($step.Name): $_"
+                $setupState.Errors += $errorMessage
+                
+                Show-EnhancedProgress -State $setupState -StepName $step.Name -Status 'Failed' `
+                    -ErrorContext @{ LastError = $_.Exception.Message }
+                
+                Write-Host "  ❌ Exception: $_" -ForegroundColor Red
+                
+                if ($stepAttempts -eq 1) {
+                    Write-Host "  🔄 Retrying step due to exception..." -ForegroundColor Magenta
+                    Show-EnhancedProgress -State $setupState -StepName $step.Name -Status 'Retrying'
+                    Start-Sleep -Milliseconds 1000
+                    continue
+                } else {
+                    Write-Host "  ❌ Maximum retry attempts reached" -ForegroundColor Red
+                    $stepCompleted = $true
                 }
             }
-        } catch {
-            $setupState.Errors += "Error in $($step.Name): $_"
-            Write-Host "❌ Error: $_" -ForegroundColor Red
         }
         
         Start-Sleep -Milliseconds 500  # Brief pause for visual feedback
@@ -587,67 +656,122 @@ function Initialize-Configuration {
         Details = @()
     }
     
-    # Determine config directory
-    $configDir = if ($SetupState.Platform.OS -eq 'Windows') {
-        Join-Path $env:APPDATA "AitherZero"
-    } else {
-        Join-Path $env:HOME ".config/aitherzero"
-    }
-    
-    # Create config directory if needed
-    if (-not (Test-Path $configDir)) {
-        try {
-            New-Item -Path $configDir -ItemType Directory -Force | Out-Null
-            $result.Details += "✓ Created configuration directory: $configDir"
-        } catch {
-            $result.Status = 'Failed'
-            $result.Details += "❌ Failed to create config directory: $_"
-            return $result
-        }
-    } else {
-        $result.Details += "✓ Configuration directory exists: $configDir"
-    }
-    
-    # Create default configuration
-    $defaultConfig = @{
-        Version = '1.0'
-        Platform = $SetupState.Platform.OS
-        CreatedAt = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
-        Settings = @{
-            Verbosity = 'normal'
-            AutoUpdate = $true
-            TelemetryEnabled = $false
-            MaxParallelJobs = 4
-        }
-        Modules = @{
-            EnabledByDefault = @('Logging', 'PatchManager', 'LabRunner')
-            AutoLoad = $true
-        }
-    }
-    
-    $configFile = Join-Path $configDir "config.json"
-    
-    if (-not (Test-Path $configFile)) {
-        try {
-            $defaultConfig | ConvertTo-Json -Depth 5 | Set-Content -Path $configFile
-            $result.Details += "✓ Created default configuration file"
-        } catch {
-            $result.Details += "⚠️ Could not create config file: $_"
-        }
-    } else {
-        $result.Details += "✓ Configuration file already exists"
-    }
-    
-    # Save setup state
-    $setupStateFile = Join-Path $configDir "setup-state.json"
     try {
-        $SetupState | ConvertTo-Json -Depth 10 | Set-Content -Path $setupStateFile
-        $result.Details += "✓ Saved setup state for future reference"
+        # Import ConfigurationCore module for unified configuration management
+        $configCoreModule = Join-Path (Split-Path $PSScriptRoot -Parent) "ConfigurationCore"
+        if (Test-Path $configCoreModule) {
+            Import-Module $configCoreModule -Force -ErrorAction Stop
+            $result.Details += "✓ Loaded ConfigurationCore module"
+            
+            # Initialize ConfigurationCore
+            Initialize-ConfigurationCore
+            
+            # Register SetupWizard module configuration
+            Register-ModuleConfiguration -ModuleName 'SetupWizard' -Schema @{
+                Platform = @{ Type = 'string'; Required = $true }
+                InstallationProfile = @{ Type = 'string'; Required = $true }
+                Settings = @{
+                    Type = 'object'
+                    Properties = @{
+                        Verbosity = @{ Type = 'string'; Default = 'normal' }
+                        AutoUpdate = @{ Type = 'boolean'; Default = $true }
+                        TelemetryEnabled = @{ Type = 'boolean'; Default = $false }
+                        MaxParallelJobs = @{ Type = 'integer'; Default = 4 }
+                    }
+                }
+                Modules = @{
+                    Type = 'object'
+                    Properties = @{
+                        EnabledByDefault = @{ Type = 'array'; Default = @('Logging', 'PatchManager', 'LabRunner') }
+                        AutoLoad = @{ Type = 'boolean'; Default = $true }
+                    }
+                }
+            }
+            
+            # Set initial configuration
+            $initialConfig = @{
+                Platform = $SetupState.Platform.OS
+                InstallationProfile = $SetupState.InstallationProfile
+                Settings = @{
+                    Verbosity = 'normal'
+                    AutoUpdate = $true
+                    TelemetryEnabled = $false
+                    MaxParallelJobs = 4
+                }
+                Modules = @{
+                    EnabledByDefault = @('Logging', 'PatchManager', 'LabRunner')
+                    AutoLoad = $true
+                }
+            }
+            
+            Set-ModuleConfiguration -ModuleName 'SetupWizard' -Configuration $initialConfig
+            $result.Details += "✓ Initialized SetupWizard configuration with ConfigurationCore"
+            
+            # Save setup state as module configuration
+            Register-ModuleConfiguration -ModuleName 'SetupWizard.State' -Schema @{
+                SetupHistory = @{ Type = 'array'; Default = @() }
+                LastSetupDate = @{ Type = 'string'; Default = '' }
+                SetupVersion = @{ Type = 'string'; Default = '1.0.0' }
+            }
+            
+            $setupStateConfig = @{
+                SetupHistory = @($SetupState)
+                LastSetupDate = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+                SetupVersion = '1.0.0'
+            }
+            
+            Set-ModuleConfiguration -ModuleName 'SetupWizard.State' -Configuration $setupStateConfig
+            $result.Details += "✓ Saved setup state using ConfigurationCore"
+            
+        } else {
+            # Fallback to legacy configuration method
+            $result.Details += "⚠️ ConfigurationCore not found, using legacy configuration"
+            
+            # Determine config directory
+            $configDir = if ($SetupState.Platform.OS -eq 'Windows') {
+                Join-Path $env:APPDATA "AitherZero"
+            } else {
+                Join-Path $env:HOME ".config/aitherzero"
+            }
+            
+            # Create config directory if needed
+            if (-not (Test-Path $configDir)) {
+                New-Item -Path $configDir -ItemType Directory -Force | Out-Null
+                $result.Details += "✓ Created configuration directory: $configDir"
+            }
+            
+            # Create default configuration
+            $defaultConfig = @{
+                Version = '1.0'
+                Platform = $SetupState.Platform.OS
+                CreatedAt = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+                Settings = @{
+                    Verbosity = 'normal'
+                    AutoUpdate = $true
+                    TelemetryEnabled = $false
+                    MaxParallelJobs = 4
+                }
+                Modules = @{
+                    EnabledByDefault = @('Logging', 'PatchManager', 'LabRunner')
+                    AutoLoad = $true
+                }
+            }
+            
+            $configFile = Join-Path $configDir "config.json"
+            if (-not (Test-Path $configFile)) {
+                $defaultConfig | ConvertTo-Json -Depth 5 | Set-Content -Path $configFile
+                $result.Details += "✓ Created legacy configuration file"
+            }
+        }
+        
+        $result.Status = 'Passed'
+        
     } catch {
-        $result.Details += "⚠️ Could not save setup state"
+        $result.Status = 'Warning'
+        $result.Details += "⚠️ Configuration initialization had issues: $_"
+        $result.Details += "✓ Setup can continue, configuration can be set up later"
     }
     
-    $result.Status = 'Passed'
     return $result
 }
 
@@ -833,14 +957,32 @@ function Show-SetupSummary {
     Write-Host "╚═══════════════════════════════════════════════════════╝" -ForegroundColor Cyan
     Write-Host ""
     
-    # Overall status
-    $failed = ($State.Steps | Where-Object { $_.Status -eq 'Failed' }).Count
-    if ($failed -eq 0) {
-        Write-Host "  🎉 Setup Status: SUCCESS" -ForegroundColor Green
-    } elseif ($failed -le 2) {
-        Write-Host "  ⚠️  Setup Status: COMPLETED WITH WARNINGS" -ForegroundColor Yellow
+    # Define critical vs optional steps
+    $criticalSteps = @('Platform Detection', 'PowerShell Version', 'Configuration Files', 'Final Validation')
+    
+    # Check status of critical vs optional steps
+    $criticalFailed = ($State.Steps | Where-Object { 
+        $_.Status -eq 'Failed' -and $_.Name -in $criticalSteps 
+    }).Count
+    
+    $optionalWarnings = ($State.Steps | Where-Object { 
+        $_.Status -eq 'Warning' -and $_.Name -notin $criticalSteps 
+    }).Count
+    
+    $allPassed = ($State.Steps | Where-Object { $_.Status -eq 'Passed' -or $_.Status -eq 'Success' }).Count
+    $totalSteps = $State.Steps.Count
+    
+    # Overall status based on critical failures
+    if ($criticalFailed -gt 0) {
+        Write-Host "  ❌ Setup Status: CRITICAL FAILURE" -ForegroundColor Red
+        Write-Host "     Critical components failed - AitherZero cannot run!" -ForegroundColor Red
+    } elseif ($allPassed -eq $totalSteps) {
+        Write-Host "  🎉 Setup Status: PERFECT! ALL COMPONENTS READY" -ForegroundColor Green
+    } elseif ($optionalWarnings -gt 0) {
+        Write-Host "  ✅ Setup Status: READY TO USE (with optional components missing)" -ForegroundColor Yellow
+        Write-Host "     AitherZero will work, but some features may be limited" -ForegroundColor Yellow
     } else {
-        Write-Host "  ❌ Setup Status: FAILED" -ForegroundColor Red
+        Write-Host "  ✅ Setup Status: READY TO USE" -ForegroundColor Green
     }
     
     Write-Host ""
@@ -875,11 +1017,44 @@ function Show-SetupSummary {
     }
     
     Write-Host ""
-    Write-Host "  📁 Configuration saved to:" -ForegroundColor Cyan
-    Write-Host "     $(if ($State.Platform.OS -eq 'Windows') { "$env:APPDATA\AitherZero" } else { "~/.config/aitherzero" })" -ForegroundColor White
-    
     Write-Host ""
-    Write-Host "  🚀 Ready to use AitherZero!" -ForegroundColor Green
+    Write-Host "  📁 Configuration saved to:" -ForegroundColor White
+    Write-Host "     $(if ($State.Platform.OS -eq 'Windows') { "$env:APPDATA\AitherZero" } else { "~/.config/aitherzero" })" -ForegroundColor Gray
+    Write-Host ""
+    
+    # Show clear what to do next
+    Write-Host "  🚀 WHAT TO DO NEXT:" -ForegroundColor Green
+    Write-Host "  ═══════════════════" -ForegroundColor Green
+    Write-Host ""
+    
+    if ($criticalFailed -eq 0) {
+        Write-Host "  Your setup is complete! AitherZero is ready to use." -ForegroundColor White
+        Write-Host ""
+        Write-Host "  TO START USING AITHERZERO:" -ForegroundColor Cyan
+        Write-Host "  1. Close this setup window" -ForegroundColor White
+        Write-Host "  2. Run one of these commands:" -ForegroundColor White
+        Write-Host ""
+        Write-Host "     INTERACTIVE MODE (Recommended for first time):" -ForegroundColor Yellow
+        Write-Host "     ./Start-AitherZero.ps1" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "     RUN SPECIFIC MODULE:" -ForegroundColor Yellow
+        Write-Host "     ./Start-AitherZero.ps1 -Scripts 'LabRunner'" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "     AUTOMATED MODE:" -ForegroundColor Yellow
+        Write-Host "     ./Start-AitherZero.ps1 -Auto" -ForegroundColor Green
+    } else {
+        Write-Host "  ⚠️  CRITICAL ISSUES MUST BE FIXED FIRST:" -ForegroundColor Red
+        Write-Host ""
+        foreach ($critical in ($State.Steps | Where-Object { $_.Status -eq 'Failed' -and $_.Name -in $criticalSteps })) {
+            Write-Host "     • Fix: $($critical.Name)" -ForegroundColor Red
+            if ($critical.Details) {
+                $critical.Details | Where-Object { $_ -match "^❌" } | ForEach-Object {
+                    Write-Host "       $_" -ForegroundColor Gray
+                }
+            }
+        }
+    }
+    
     Write-Host ""
 }
 
@@ -964,53 +1139,267 @@ function Show-InstallationProfile {
     Write-Host ""
 }
 
-function Get-SetupSteps {
+function Show-EnhancedInstallationProfile {
     param(
-        [string]$Profile
+        [string]$Profile,
+        [hashtable]$ProfileInfo
     )
     
-    $baseSteps = @(
-        @{Name = 'Platform Detection'; Function = 'Test-PlatformRequirements'; AllProfiles = $true},
-        @{Name = 'PowerShell Version'; Function = 'Test-PowerShellVersion'; AllProfiles = $true},
-        @{Name = 'Git Installation'; Function = 'Test-GitInstallation'; AllProfiles = $true},
-        @{Name = 'Infrastructure Tools'; Function = 'Test-InfrastructureTools'; AllProfiles = $true},
-        @{Name = 'Module Dependencies'; Function = 'Test-ModuleDependencies'; AllProfiles = $true}
-    )
+    Write-Host ""
+    Write-Host "  🎯 Installation Profile: $($ProfileInfo.Name.ToUpper())" -ForegroundColor Cyan
+    Write-Host "  Description: $($ProfileInfo.Description)" -ForegroundColor Gray
+    Write-Host "  Estimated Time: $($ProfileInfo.EstimatedTime)" -ForegroundColor Yellow
     
-    $profileSpecificSteps = @{
-        'minimal' = @(
-            @{Name = 'Network Connectivity'; Function = 'Test-NetworkConnectivity'},
-            @{Name = 'Security Settings'; Function = 'Test-SecuritySettings'},
-            @{Name = 'Configuration Files'; Function = 'Initialize-Configuration'},
-            @{Name = 'Configuration Review'; Function = 'Review-Configuration'},
-            @{Name = 'Quick Start Guide'; Function = 'Generate-QuickStartGuide'},
-            @{Name = 'Final Validation'; Function = 'Test-SetupCompletion'}
-        )
-        'developer' = @(
-            @{Name = 'Network Connectivity'; Function = 'Test-NetworkConnectivity'},
-            @{Name = 'Node.js Detection'; Function = 'Test-NodeJsInstallation'},
-            @{Name = 'AI Tools Setup'; Function = 'Install-AITools'},
-            @{Name = 'Security Settings'; Function = 'Test-SecuritySettings'},
-            @{Name = 'Configuration Files'; Function = 'Initialize-Configuration'},
-            @{Name = 'Configuration Review'; Function = 'Review-Configuration'},
-            @{Name = 'Quick Start Guide'; Function = 'Generate-QuickStartGuide'},
-            @{Name = 'Final Validation'; Function = 'Test-SetupCompletion'}
-        )
-        'full' = @(
-            @{Name = 'Network Connectivity'; Function = 'Test-NetworkConnectivity'},
-            @{Name = 'Node.js Detection'; Function = 'Test-NodeJsInstallation'},
-            @{Name = 'AI Tools Setup'; Function = 'Install-AITools'},
-            @{Name = 'Cloud CLIs Detection'; Function = 'Test-CloudCLIs'},
-            @{Name = 'Security Settings'; Function = 'Test-SecuritySettings'},
-            @{Name = 'Configuration Files'; Function = 'Initialize-Configuration'},
-            @{Name = 'Configuration Review'; Function = 'Review-Configuration'},
-            @{Name = 'Quick Start Guide'; Function = 'Generate-QuickStartGuide'},
-            @{Name = 'Final Validation'; Function = 'Test-SetupCompletion'}
-        )
+    if ($ProfileInfo.TargetUse -and $ProfileInfo.TargetUse.Count -gt 0) {
+        Write-Host "  Target Use Cases: $($ProfileInfo.TargetUse -join ', ')" -ForegroundColor Blue
     }
     
-    $allSteps = $baseSteps + $profileSpecificSteps[$Profile]
-    return $allSteps
+    Write-Host ""
+    Write-Host "  Setup Steps ($($ProfileInfo.Steps.Count + 5) total):" -ForegroundColor White
+    
+    # Show required vs optional steps
+    $requiredSteps = ($ProfileInfo.Steps | Where-Object { $_.Required -eq $true }).Count + 3  # Base required steps
+    $optionalSteps = ($ProfileInfo.Steps | Where-Object { $_.Required -ne $true }).Count + 2  # Base optional steps
+    
+    Write-Host "    ✓ Required Steps: $requiredSteps" -ForegroundColor Green
+    Write-Host "    ⚠️ Optional Steps: $optionalSteps" -ForegroundColor Yellow
+    
+    Write-Host ""
+}
+
+function Get-SetupSteps {
+    param(
+        [string]$Profile,
+        [hashtable]$CustomProfile = @{}
+    )
+    
+    # Define base steps that run for all profiles
+    $baseSteps = @(
+        @{Name = 'Platform Detection'; Function = 'Test-PlatformRequirements'; AllProfiles = $true; Required = $true},
+        @{Name = 'PowerShell Version'; Function = 'Test-PowerShellVersion'; AllProfiles = $true; Required = $true},
+        @{Name = 'Git Installation'; Function = 'Test-GitInstallation'; AllProfiles = $true; Required = $false},
+        @{Name = 'Infrastructure Tools'; Function = 'Test-InfrastructureTools'; AllProfiles = $true; Required = $false},
+        @{Name = 'Module Dependencies'; Function = 'Test-ModuleDependencies'; AllProfiles = $true; Required = $true}
+    )
+    
+    # Enhanced profile definitions with metadata
+    $profileDefinitions = @{
+        'minimal' = @{
+            Name = 'Minimal'
+            Description = 'Core AitherZero functionality only'
+            TargetUse = @('CI/CD', 'Containers', 'Basic Infrastructure')
+            EstimatedTime = '2-3 minutes'
+            Steps = @(
+                @{Name = 'Network Connectivity'; Function = 'Test-NetworkConnectivity'; Required = $false},
+                @{Name = 'Security Settings'; Function = 'Test-SecuritySettings'; Required = $false},
+                @{Name = 'Configuration Files'; Function = 'Initialize-Configuration'; Required = $true},
+                @{Name = 'Configuration Review'; Function = 'Review-Configuration'; Required = $false},
+                @{Name = 'Quick Start Guide'; Function = 'Generate-QuickStartGuide'; Required = $false},
+                @{Name = 'Final Validation'; Function = 'Test-SetupCompletion'; Required = $true}
+            )
+        }
+        'developer' = @{
+            Name = 'Developer'
+            Description = 'Development workstation setup with AI tools'
+            TargetUse = @('Development', 'AI Tools', 'VS Code Integration')
+            EstimatedTime = '5-8 minutes'
+            Steps = @(
+                @{Name = 'Network Connectivity'; Function = 'Test-NetworkConnectivity'; Required = $false},
+                @{Name = 'Node.js Detection'; Function = 'Test-NodeJsInstallation'; Required = $false},
+                @{Name = 'AI Tools Setup'; Function = 'Install-AITools'; Required = $false},
+                @{Name = 'Development Environment'; Function = 'Test-DevEnvironment'; Required = $false},
+                @{Name = 'Security Settings'; Function = 'Test-SecuritySettings'; Required = $false},
+                @{Name = 'Configuration Files'; Function = 'Initialize-Configuration'; Required = $true},
+                @{Name = 'Configuration Review'; Function = 'Review-Configuration'; Required = $false},
+                @{Name = 'Quick Start Guide'; Function = 'Generate-QuickStartGuide'; Required = $false},
+                @{Name = 'Final Validation'; Function = 'Test-SetupCompletion'; Required = $true}
+            )
+        }
+        'full' = @{
+            Name = 'Full'
+            Description = 'Complete installation with all features'
+            TargetUse = @('Production', 'Enterprise', 'Complete Infrastructure')
+            EstimatedTime = '8-12 minutes'
+            Steps = @(
+                @{Name = 'Network Connectivity'; Function = 'Test-NetworkConnectivity'; Required = $false},
+                @{Name = 'Node.js Detection'; Function = 'Test-NodeJsInstallation'; Required = $false},
+                @{Name = 'AI Tools Setup'; Function = 'Install-AITools'; Required = $false},
+                @{Name = 'Cloud CLIs Detection'; Function = 'Test-CloudCLIs'; Required = $false},
+                @{Name = 'Development Environment'; Function = 'Test-DevEnvironment'; Required = $false},
+                @{Name = 'Security Settings'; Function = 'Test-SecuritySettings'; Required = $false},
+                @{Name = 'License Management'; Function = 'Test-LicenseIntegration'; Required = $false},
+                @{Name = 'Module Communication'; Function = 'Test-ModuleCommunication'; Required = $false},
+                @{Name = 'Configuration Files'; Function = 'Initialize-Configuration'; Required = $true},
+                @{Name = 'Configuration Review'; Function = 'Review-Configuration'; Required = $false},
+                @{Name = 'Quick Start Guide'; Function = 'Generate-QuickStartGuide'; Required = $false},
+                @{Name = 'Final Validation'; Function = 'Test-SetupCompletion'; Required = $true}
+            )
+        }
+        'custom' = @{
+            Name = 'Custom'
+            Description = 'User-defined custom profile'
+            TargetUse = @('Customized Setup')
+            EstimatedTime = 'Variable'
+            Steps = $CustomProfile.Steps ?? @()
+        }
+    }
+    
+    # Handle custom profile
+    if ($CustomProfile.Count -gt 0) {
+        $Profile = 'custom'
+        $profileDefinitions['custom'] = $CustomProfile
+    }
+    
+    # Get the profile definition
+    $profileDef = $profileDefinitions[$Profile]
+    if (-not $profileDef) {
+        Write-Warning "Unknown profile '$Profile', falling back to minimal"
+        $profileDef = $profileDefinitions['minimal']
+    }
+    
+    # Combine base steps with profile-specific steps
+    $allSteps = $baseSteps + $profileDef.Steps
+    
+    return @{
+        Steps = $allSteps
+        Profile = $profileDef
+        EstimatedSteps = $allSteps.Count
+    }
+}
+
+function Test-DevEnvironment {
+    param($SetupState)
+    
+    $result = @{
+        Name = 'Development Environment'
+        Status = 'Unknown'
+        Details = @()
+    }
+    
+    try {
+        # Check for VS Code
+        $vsCodeFound = $false
+        $vsCodePaths = @(
+            "${env:ProgramFiles}\Microsoft VS Code\Code.exe",
+            "${env:LOCALAPPDATA}\Programs\Microsoft VS Code\Code.exe",
+            "/usr/bin/code",
+            "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"
+        )
+        
+        foreach ($path in $vsCodePaths) {
+            if (Test-Path $path) {
+                $vsCodeFound = $true
+                $result.Details += "✓ VS Code found at: $path"
+                break
+            }
+        }
+        
+        if (-not $vsCodeFound -and (Get-Command code -ErrorAction SilentlyContinue)) {
+            $vsCodeFound = $true
+            $result.Details += "✓ VS Code available in PATH"
+        }
+        
+        if (-not $vsCodeFound) {
+            $result.Details += "⚠️ VS Code not found"
+            $SetupState.Recommendations += "Install VS Code for enhanced development experience"
+        }
+        
+        # Check for DevEnvironment module
+        $devEnvModule = Join-Path (Split-Path $PSScriptRoot -Parent) "DevEnvironment"
+        if (Test-Path $devEnvModule) {
+            Import-Module $devEnvModule -Force -ErrorAction SilentlyContinue
+            $result.Details += "✓ DevEnvironment module available"
+            
+            # Test VS Code workspace setup
+            if ($vsCodeFound -and (Get-Command Initialize-VSCodeWorkspace -ErrorAction SilentlyContinue)) {
+                $result.Details += "✓ VS Code workspace setup available"
+            }
+        } else {
+            $result.Details += "⚠️ DevEnvironment module not found"
+        }
+        
+        $result.Status = if ($vsCodeFound) { 'Passed' } else { 'Warning' }
+        
+    } catch {
+        $result.Status = 'Warning'
+        $result.Details += "⚠️ Development environment check failed: $_"
+    }
+    
+    return $result
+}
+
+function Test-LicenseIntegration {
+    param($SetupState)
+    
+    $result = @{
+        Name = 'License Management'
+        Status = 'Unknown'
+        Details = @()
+    }
+    
+    try {
+        # Check for LicenseManager module
+        $licenseModule = Join-Path (Split-Path $PSScriptRoot -Parent) "LicenseManager"
+        if (Test-Path $licenseModule) {
+            Import-Module $licenseModule -Force -ErrorAction SilentlyContinue
+            $result.Details += "✓ LicenseManager module available"
+            
+            # Test basic license functionality
+            if (Get-Command Get-LicenseStatus -ErrorAction SilentlyContinue) {
+                $result.Details += "✓ License management functions available"
+                $result.Status = 'Passed'
+            } else {
+                $result.Details += "⚠️ License functions not properly loaded"
+                $result.Status = 'Warning'
+            }
+        } else {
+            $result.Details += "ℹ️ LicenseManager module not found (optional)"
+            $result.Status = 'Passed'
+        }
+        
+    } catch {
+        $result.Status = 'Warning'
+        $result.Details += "⚠️ License integration check failed: $_"
+    }
+    
+    return $result
+}
+
+function Test-ModuleCommunication {
+    param($SetupState)
+    
+    $result = @{
+        Name = 'Module Communication'
+        Status = 'Unknown'
+        Details = @()
+    }
+    
+    try {
+        # Check for ModuleCommunication module
+        $commModule = Join-Path (Split-Path $PSScriptRoot -Parent) "ModuleCommunication"
+        if (Test-Path $commModule) {
+            Import-Module $commModule -Force -ErrorAction SilentlyContinue
+            $result.Details += "✓ ModuleCommunication module available"
+            
+            # Test basic communication functionality
+            if (Get-Command Get-CommunicationStatus -ErrorAction SilentlyContinue) {
+                $result.Details += "✓ Module communication functions available"
+                $result.Status = 'Passed'
+            } else {
+                $result.Details += "⚠️ Communication functions not properly loaded"
+                $result.Status = 'Warning'
+            }
+        } else {
+            $result.Details += "ℹ️ ModuleCommunication module not found (optional)"
+            $result.Status = 'Passed'
+        }
+        
+    } catch {
+        $result.Status = 'Warning'
+        $result.Details += "⚠️ Module communication check failed: $_"
+    }
+    
+    return $result
 }
 
 function Test-NodeJsInstallation {
@@ -1020,18 +1409,31 @@ function Test-NodeJsInstallation {
         Name = 'Node.js Detection'
         Status = 'Unknown'
         Details = @()
+        ErrorDetails = @()
+        RecoveryOptions = @()
     }
     
     try {
-        $nodeVersion = node --version 2>$null
-        if ($nodeVersion) {
-            $result.Status = 'Passed'
-            $result.Details += "✓ Node.js $nodeVersion installed"
-            
-            # Check npm
-            $npmVersion = npm --version 2>$null
-            if ($npmVersion) {
-                $result.Details += "✓ npm $npmVersion available"
+        # Check if node command exists first
+        $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
+        
+        if ($nodeCmd) {
+            $nodeVersion = & $nodeCmd --version 2>$null
+            if ($nodeVersion) {
+                $result.Status = 'Passed'
+                $result.Details += "✓ Node.js $nodeVersion installed"
+                
+                # Check npm
+                $npmCmd = Get-Command npm -ErrorAction SilentlyContinue
+                if ($npmCmd) {
+                    $npmVersion = & $npmCmd --version 2>$null
+                    if ($npmVersion) {
+                        $result.Details += "✓ npm $npmVersion available"
+                    }
+                }
+            } else {
+                $result.Status = 'Warning'
+                $result.Details += "⚠️ Node.js found but version check failed"
             }
         }
     } catch {
@@ -1194,6 +1596,269 @@ foreach ($function in $publicFunctions) {
     . $function.FullName
 }
 
+# Enhanced error handling and recovery functions
+function Invoke-ErrorRecovery {
+    <#
+    .SYNOPSIS
+        Enhanced error recovery system for setup failures
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$StepResult,
+        
+        [Parameter(Mandatory)]
+        [hashtable]$SetupState,
+        
+        [string]$StepName
+    )
+    
+    $recovery = @{
+        Attempted = $false
+        Success = $false
+        Method = ''
+        Details = @()
+    }
+    
+    # Determine recovery strategy based on step type and error
+    switch ($StepName) {
+        'Node.js Detection' {
+            $recovery.Method = 'Package Manager Installation'
+            $recovery.Details += "Attempting to install Node.js via package manager..."
+            
+            try {
+                if ($IsWindows) {
+                    if (Get-Command winget -ErrorAction SilentlyContinue) {
+                        & winget install OpenJS.NodeJS --silent
+                        $recovery.Success = $true
+                        $recovery.Details += "✓ Node.js installed via winget"
+                    } elseif (Get-Command choco -ErrorAction SilentlyContinue) {
+                        & choco install nodejs -y
+                        $recovery.Success = $true
+                        $recovery.Details += "✓ Node.js installed via Chocolatey"
+                    }
+                } elseif ($IsLinux) {
+                    if (Get-Command apt -ErrorAction SilentlyContinue) {
+                        & sudo apt update && sudo apt install -y nodejs npm
+                        $recovery.Success = $true
+                        $recovery.Details += "✓ Node.js installed via apt"
+                    } elseif (Get-Command yum -ErrorAction SilentlyContinue) {
+                        & sudo yum install -y nodejs npm
+                        $recovery.Success = $true
+                        $recovery.Details += "✓ Node.js installed via yum"
+                    }
+                } elseif ($IsMacOS) {
+                    if (Get-Command brew -ErrorAction SilentlyContinue) {
+                        & brew install node
+                        $recovery.Success = $true
+                        $recovery.Details += "✓ Node.js installed via Homebrew"
+                    }
+                }
+                
+                $recovery.Attempted = $true
+                
+            } catch {
+                $recovery.Details += "⚠️ Automatic installation failed: $_"
+                $recovery.Details += "Manual installation required: https://nodejs.org"
+            }
+        }
+        
+        'Git Installation' {
+            $recovery.Method = 'Package Manager Installation'
+            $recovery.Details += "Attempting to install Git via package manager..."
+            
+            try {
+                if ($IsWindows) {
+                    if (Get-Command winget -ErrorAction SilentlyContinue) {
+                        & winget install Git.Git --silent
+                        $recovery.Success = $true
+                        $recovery.Details += "✓ Git installed via winget"
+                    }
+                } elseif ($IsLinux) {
+                    if (Get-Command apt -ErrorAction SilentlyContinue) {
+                        & sudo apt update && sudo apt install -y git
+                        $recovery.Success = $true
+                        $recovery.Details += "✓ Git installed via apt"
+                    }
+                } elseif ($IsMacOS) {
+                    if (Get-Command brew -ErrorAction SilentlyContinue) {
+                        & brew install git
+                        $recovery.Success = $true
+                        $recovery.Details += "✓ Git installed via Homebrew"
+                    }
+                }
+                
+                $recovery.Attempted = $true
+                
+            } catch {
+                $recovery.Details += "⚠️ Automatic installation failed: $_"
+                $recovery.Details += "Manual installation required"
+            }
+        }
+        
+        'Configuration Files' {
+            $recovery.Method = 'Directory Creation and Permissions Fix'
+            $recovery.Details += "Attempting to create configuration directories with proper permissions..."
+            
+            try {
+                # Create config directories
+                $configDir = if ($IsWindows) {
+                    Join-Path $env:APPDATA "AitherZero"
+                } else {
+                    Join-Path $env:HOME ".config/aitherzero"
+                }
+                
+                New-Item -Path $configDir -ItemType Directory -Force | Out-Null
+                
+                # Set appropriate permissions
+                if (-not $IsWindows) {
+                    & chmod 755 $configDir
+                }
+                
+                $recovery.Success = $true
+                $recovery.Attempted = $true
+                $recovery.Details += "✓ Configuration directory created: $configDir"
+                
+            } catch {
+                $recovery.Details += "⚠️ Directory creation failed: $_"
+            }
+        }
+        
+        default {
+            $recovery.Method = 'Generic Retry'
+            $recovery.Details += "No specific recovery method available for: $StepName"
+        }
+    }
+    
+    return $recovery
+}
+
+function Show-EnhancedProgress {
+    <#
+    .SYNOPSIS
+        Enhanced progress display with error context
+    #>
+    param(
+        [hashtable]$State,
+        [string]$StepName,
+        [string]$Status = 'Running',
+        [hashtable]$ErrorContext = @{}
+    )
+    
+    $percentage = [math]::Round(($State.CurrentStep / $State.TotalSteps) * 100)
+    $progressBar = "[" + ("█" * [math]::Floor($percentage / 5)) + ("░" * (20 - [math]::Floor($percentage / 5))) + "]"
+    
+    # Status emoji mapping
+    $statusEmoji = @{
+        'Running' = '🔍'
+        'Success' = '✅'
+        'Warning' = '⚠️'
+        'Failed' = '❌'
+        'Retrying' = '🔄'
+        'Recovering' = '🔧'
+    }
+    
+    $emoji = $statusEmoji[$Status] ?? '🔍'
+    
+    Write-Host ""
+    Write-Host "  $progressBar $percentage% - Step $($State.CurrentStep)/$($State.TotalSteps)" -ForegroundColor Cyan
+    
+    # Show status with appropriate color
+    $statusColor = switch ($Status) {
+        'Success' { 'Green' }
+        'Warning' { 'Yellow' }
+        'Failed' { 'Red' }
+        'Retrying' { 'Magenta' }
+        'Recovering' { 'Blue' }
+        default { 'Yellow' }
+    }
+    
+    Write-Host "  $emoji $StepName - $Status" -ForegroundColor $statusColor
+    
+    # Show error context if provided
+    if ($ErrorContext.Count -gt 0) {
+        if ($ErrorContext.LastError) {
+            Write-Host "    Error: $($ErrorContext.LastError)" -ForegroundColor Red
+        }
+        if ($ErrorContext.RecoveryAttempted) {
+            Write-Host "    Recovery: $($ErrorContext.RecoveryMethod)" -ForegroundColor Blue
+        }
+    }
+    
+    # Update ProgressTracking if available
+    if ($global:ProgressTrackingOperationId) {
+        try {
+            Update-ProgressOperation -OperationId $global:ProgressTrackingOperationId `
+                -IncrementStep -StepName "$StepName ($Status)"
+        } catch {
+            # Ignore ProgressTracking errors
+        }
+    }
+}
+
+function Get-DetailedSystemInfo {
+    <#
+    .SYNOPSIS
+        Get detailed system information for troubleshooting
+    #>
+    
+    $sysInfo = @{
+        OS = @{}
+        PowerShell = @{}
+        Hardware = @{}
+        Network = @{}
+        Security = @{}
+    }
+    
+    try {
+        # OS Information
+        $sysInfo.OS.Platform = if ($IsWindows) { 'Windows' } elseif ($IsLinux) { 'Linux' } else { 'macOS' }
+        $sysInfo.OS.Version = [System.Environment]::OSVersion.Version.ToString()
+        $sysInfo.OS.Architecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
+        
+        # PowerShell Information
+        $sysInfo.PowerShell.Version = $PSVersionTable.PSVersion.ToString()
+        $sysInfo.PowerShell.Edition = $PSVersionTable.PSEdition
+        $sysInfo.PowerShell.ExecutionPolicy = Get-ExecutionPolicy
+        
+        # Hardware Information
+        if ($IsWindows) {
+            $sysInfo.Hardware.Memory = [math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB, 2)
+            $sysInfo.Hardware.Processor = (Get-CimInstance Win32_Processor).Name
+        } else {
+            # Basic info for Linux/macOS
+            $sysInfo.Hardware.Memory = "N/A (non-Windows)"
+            $sysInfo.Hardware.Processor = "N/A (non-Windows)"
+        }
+        
+        # Network Information
+        $sysInfo.Network.InternetConnected = Test-Connection -ComputerName '8.8.8.8' -Count 1 -Quiet
+        if ($env:HTTP_PROXY -or $env:HTTPS_PROXY) {
+            $sysInfo.Network.ProxyConfigured = $true
+            $sysInfo.Network.ProxyDetails = @{
+                HTTP = $env:HTTP_PROXY
+                HTTPS = $env:HTTPS_PROXY
+            }
+        } else {
+            $sysInfo.Network.ProxyConfigured = $false
+        }
+        
+        # Security Information
+        if ($IsWindows) {
+            try {
+                $defender = Get-MpPreference -ErrorAction SilentlyContinue
+                $sysInfo.Security.DefenderEnabled = $defender -ne $null
+            } catch {
+                $sysInfo.Security.DefenderEnabled = "Unknown"
+            }
+        }
+        
+    } catch {
+        Write-Verbose "Error gathering system info: $_"
+    }
+    
+    return $sysInfo
+}
+
 # Export functions
 Export-ModuleMember -Function @(
     'Start-IntelligentSetup',
@@ -1206,9 +1871,12 @@ Export-ModuleMember -Function @(
     'Show-WelcomeMessage',
     'Show-SetupBanner',
     'Show-Progress',
+    'Show-EnhancedProgress',
     'Show-SetupSummary',
     'Show-SetupPrompt',
     'Show-InstallationProfile',
     'Get-SetupSteps',
+    'Invoke-ErrorRecovery',
+    'Get-DetailedSystemInfo',
     'Test-*'
 )

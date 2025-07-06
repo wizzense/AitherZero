@@ -28,7 +28,22 @@ function Get-ISODownload {
         [switch]$VerifyIntegrity,
 
         [Parameter(Mandatory = $false)]
-        [switch]$Force
+        [switch]$Force,
+
+        [Parameter(Mandatory = $false)]
+        [int]$RetryCount = 3,
+
+        [Parameter(Mandatory = $false)]
+        [int]$RetryDelaySeconds = 30,
+
+        [Parameter(Mandatory = $false)]
+        [int]$TimeoutSeconds = 3600,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$UseHttpClient,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$ShowProgress = $true
     )
 
     begin {
@@ -104,28 +119,57 @@ function Get-ISODownload {
 
                 $downloadInfo.Status = 'Downloading'
 
-                # Use BITS transfer if available (Windows), otherwise use Invoke-WebRequest
-                if (Get-Command Start-BitsTransfer -ErrorAction SilentlyContinue) {
-                    $bitsJob = Start-BitsTransfer -Source $downloadUrl -Destination $fullPath -Asynchronous -DisplayName "ISO Download: $ISOName"
-
-                    while (($bitsJob.JobState -eq 'Transferring') -or ($bitsJob.JobState -eq 'Connecting')) {
-                        $progress = [math]::Round(($bitsJob.BytesTransferred / $bitsJob.BytesTotal) * 100, 2)
-                        $downloadInfo.Progress = $progress
-                        Write-Progress -Activity "Downloading $ISOName" -Status "$progress% Complete" -PercentComplete $progress
-                        Start-Sleep -Seconds 2
-                        $bitsJob = Get-BitsTransfer -JobId $bitsJob.JobId
+                # Enhanced download with retry logic and modern HTTP clients
+                $downloadSuccess = $false
+                $lastError = $null
+                
+                for ($retry = 0; $retry -lt $RetryCount; $retry++) {
+                    try {
+                        if ($retry -gt 0) {
+                            Write-CustomLog -Level 'INFO' -Message "Retry attempt $retry of $($RetryCount - 1) for $ISOName"
+                            Start-Sleep -Seconds $RetryDelaySeconds
+                        }
+                        
+                        $downloadInfo.Status = 'Downloading'
+                        
+                        # Choose download method based on platform and preferences
+                        if ($UseHttpClient -or (-not (Get-Command Start-BitsTransfer -ErrorAction SilentlyContinue))) {
+                            # Use modern HttpClient approach
+                            $downloadSuccess = Invoke-ModernHttpDownload -Url $downloadUrl -FilePath $fullPath -TimeoutSeconds $TimeoutSeconds -ShowProgress:$ShowProgress -ISOName $ISOName
+                        } elseif (Get-Command Start-BitsTransfer -ErrorAction SilentlyContinue) {
+                            # Use BITS transfer (Windows)
+                            $downloadSuccess = Invoke-BitsDownload -Url $downloadUrl -FilePath $fullPath -ISOName $ISOName -ShowProgress:$ShowProgress
+                        } else {
+                            # Fallback to Invoke-WebRequest with enhanced features
+                            $downloadSuccess = Invoke-WebRequestDownload -Url $downloadUrl -FilePath $fullPath -TimeoutSeconds $TimeoutSeconds -ShowProgress:$ShowProgress -ISOName $ISOName
+                        }
+                        
+                        if ($downloadSuccess) {
+                            $downloadInfo.Status = 'Completed'
+                            break
+                        }
+                        
+                    } catch {
+                        $lastError = $_.Exception.Message
+                        Write-CustomLog -Level 'WARN' -Message "Download attempt $($retry + 1) failed: $lastError"
+                        
+                        # Clean up partial download
+                        if (Test-Path $fullPath) {
+                            try {
+                                Remove-Item $fullPath -Force
+                            } catch {
+                                Write-CustomLog -Level 'WARN' -Message "Failed to clean up partial download: $($_.Exception.Message)"
+                            }
+                        }
+                        
+                        if ($retry -eq ($RetryCount - 1)) {
+                            throw "Download failed after $RetryCount attempts. Last error: $lastError"
+                        }
                     }
-                      if ($bitsJob.JobState -eq 'Transferred') {
-                        Complete-BitsTransfer -BitsJob $bitsJob
-                        $downloadInfo.Status = 'Completed'
-                    } else {
-                        Remove-BitsTransfer -BitsJob $bitsJob
-                        throw "BITS transfer failed with state: $($bitsJob.JobState)"
-                    }
-                } else {
-                    # Fallback to Invoke-WebRequest with progress tracking
-                    Invoke-WebRequest -Uri $downloadUrl -OutFile $fullPath
-                    $downloadInfo.Status = 'Completed'
+                }
+                
+                if (-not $downloadSuccess) {
+                    throw "Download failed after $RetryCount attempts. Last error: $lastError"
                 }
 
                 $downloadInfo.EndTime = Get-Date

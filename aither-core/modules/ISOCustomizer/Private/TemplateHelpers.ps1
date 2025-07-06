@@ -2,7 +2,7 @@ function Get-AutounattendTemplate {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $false)]
-        [ValidateSet('Generic', 'Headless')]
+        [ValidateSet('Generic', 'Headless', 'HeadlessModern')]
         [string]$TemplateType = 'Generic'
     )
 
@@ -11,6 +11,7 @@ function Get-AutounattendTemplate {
     $templateFile = switch ($TemplateType) {
         'Generic' { 'autounattend-generic.xml' }
         'Headless' { 'autounattend-headless.xml' }
+        'HeadlessModern' { 'autounattend-headless-modern.xml' }
         default { 'autounattend-generic.xml' }
     }
 

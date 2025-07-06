@@ -15,7 +15,10 @@
         'Test-RemoteConnection',
         'Connect-RemoteEndpoint',
         'Disconnect-RemoteEndpoint',
-        'Invoke-RemoteCommand'
+        'Invoke-RemoteCommand',
+        'Get-ConnectionPoolStatus',
+        'Reset-ConnectionPool',
+        'Get-ConnectionDiagnosticsReport'
     )
     CmdletsToExport   = @()
     VariablesToExport = @()

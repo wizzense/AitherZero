@@ -1,0 +1,2995 @@
+{
+  "summary": {
+    "recentFiles": 35,
+    "similarPairs": 140,
+    "aiSuspicious": 35
+  },
+  "suspiciousFiles": [
+    {
+      "daysOld": 0.3,
+      "name": "bootstrap-fixed.ps1",
+      "patterns": [
+        "Contains: 'fix'",
+        "Contains: 'fixed'"
+      ],
+      "size": 5248,
+      "isRecent": true,
+      "path": "bootstrap-fixed.ps1",
+      "lastModified": "2025-07-06 00:32:52",
+      "confidence": 40
+    },
+    {
+      "daysOld": 1.1,
+      "name": "Get-ProjectVersion.ps1",
+      "patterns": [
+        "Contains: 'version'",
+        "Contains: 'ver'"
+      ],
+      "size": 758,
+      "isRecent": true,
+      "path": "aither-core/shared/Get-ProjectVersion.ps1",
+      "lastModified": "2025-07-05 05:59:35",
+      "confidence": 40
+    },
+    {
+      "daysOld": 1.1,
+      "name": "New-CertificateTemplate.ps1",
+      "patterns": [
+        "Contains: 'new'",
+        "Contains: 'temp'"
+      ],
+      "size": 15370,
+      "isRecent": true,
+      "path": "aither-core/modules/SecurityAutomation/Public/CertificateServices/New-CertificateTemplate.ps1",
+      "lastModified": "2025-07-05 05:59:35",
+      "confidence": 40
+    },
+    {
+      "daysOld": 1.1,
+      "name": "New-Hotfix.ps1",
+      "patterns": [
+        "Contains: 'fix'",
+        "Contains: 'new'"
+      ],
+      "size": 2193,
+      "isRecent": true,
+      "path": "aither-core/modules/PatchManager/Public/New-Hotfix.ps1",
+      "lastModified": "2025-07-05 05:59:35",
+      "confidence": 40
+    },
+    {
+      "daysOld": 1.1,
+      "name": "New-QuickFix.ps1",
+      "patterns": [
+        "Contains: 'fix'",
+        "Contains: 'new'"
+      ],
+      "size": 1650,
+      "isRecent": true,
+      "path": "aither-core/modules/PatchManager/Public/New-QuickFix.ps1",
+      "lastModified": "2025-07-05 05:59:35",
+      "confidence": 40
+    },
+    {
+      "daysOld": 1.1,
+      "name": "Get-DeploymentVersion.ps1",
+      "patterns": [
+        "Contains: 'version'",
+        "Contains: 'ver'"
+      ],
+      "size": 7116,
+      "isRecent": true,
+      "path": "aither-core/modules/OpenTofuProvider/Public/AdvancedFeatures/Get-DeploymentVersion.ps1",
+      "lastModified": "2025-07-05 05:59:35",
+      "confidence": 40
+    },
+    {
+      "daysOld": 1.1,
+      "name": "New-DeploymentVersion.ps1",
+      "patterns": [
+        "Contains: 'new'",
+        "Contains: 'version'",
+        "Contains: 'ver'"
+      ],
+      "size": 6890,
+      "isRecent": true,
+      "path": "aither-core/modules/OpenTofuProvider/Public/AdvancedFeatures/New-DeploymentVersion.ps1",
+      "lastModified": "2025-07-05 05:59:35",
+      "confidence": 60
+    },
+    {
+      "daysOld": 1.1,
+      "name": "New-TemplateRepository.ps1",
+      "patterns": [
+        "Contains: 'new'",
+        "Contains: 'temp'"
+      ],
+      "size": 10174,
+      "isRecent": true,
+      "path": "aither-core/modules/OpenTofuProvider/Public/RepositoryManagement/New-TemplateRepository.ps1",
+      "lastModified": "2025-07-05 05:59:35",
+      "confidence": 40
+    },
+    {
+      "daysOld": 1.1,
+      "name": "Get-TemplateVersion.ps1",
+      "patterns": [
+        "Contains: 'temp'",
+        "Contains: 'version'",
+        "Contains: 'ver'"
+      ],
+      "size": 7042,
+      "isRecent": true,
+      "path": "aither-core/modules/OpenTofuProvider/Public/TemplateManagement/Get-TemplateVersion.ps1",
+      "lastModified": "2025-07-05 05:59:35",
+      "confidence": 60
+    },
+    {
+      "daysOld": 1.1,
+      "name": "New-VersionedTemplate.ps1",
+      "patterns": [
+        "Contains: 'new'",
+        "Contains: 'temp'",
+        "Contains: 'version'",
+        "Contains: 'ver'"
+      ],
+      "size": 11419,
+      "isRecent": true,
+      "path": "aither-core/modules/OpenTofuProvider/Public/TemplateManagement/New-VersionedTemplate.ps1",
+      "lastModified": "2025-07-05 05:59:35",
+      "confidence": 80
+    },
+    {
+      "daysOld": 1.1,
+      "name": "Update-TemplateVersion.ps1",
+      "patterns": [
+        "Contains: 'temp'",
+        "Contains: 'version'",
+        "Contains: 'ver'"
+      ],
+      "size": 10474,
+      "isRecent": true,
+      "path": "aither-core/modules/OpenTofuProvider/Public/TemplateManagement/Update-TemplateVersion.ps1",
+      "lastModified": "2025-07-05 05:59:35",
+      "confidence": 60
+    },
+    {
+      "daysOld": 0.0,
+      "name": "New-BackupExclusion.ps1",
+      "patterns": [
+        "Contains: 'new'",
+        "Contains: 'backup'"
+      ],
+      "size": 11332,
+      "isRecent": true,
+      "path": "aither-core/modules/BackupManager/Public/New-BackupExclusion.ps1",
+      "lastModified": "2025-07-06 07:10:58",
+      "confidence": 40
+    },
+    {
+      "daysOld": 0.0,
+      "name": "Backup-Configuration-1.ps1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 3862,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/ConfigurationCore/Public/Backup-Configuration-1.ps1",
+      "lastModified": "2025-07-06 06:20:58",
+      "confidence": 35
+    },
+    {
+      "daysOld": 0.0,
+      "name": "Backup-Configuration-2.ps1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 3862,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/ConfigurationCore/Public/Backup-Configuration-2.ps1",
+      "lastModified": "2025-07-06 06:20:58",
+      "confidence": 35
+    },
+    {
+      "daysOld": 1.1,
+      "name": "Get-PatchWorkflowBackup-1.ps1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 1987,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/PatchManager/Public/Get-PatchWorkflowBackup-1.ps1",
+      "lastModified": "2025-07-05 05:59:35",
+      "confidence": 35
+    },
+    {
+      "daysOld": 1.1,
+      "name": "Get-PatchWorkflowBackup-2.ps1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 1987,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/PatchManager/Public/Get-PatchWorkflowBackup-2.ps1",
+      "lastModified": "2025-07-05 05:59:35",
+      "confidence": 35
+    },
+    {
+      "daysOld": 0.0,
+      "name": "Invoke-AdvancedBackup-1.ps1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 17892,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/BackupManager/Public/Invoke-AdvancedBackup-1.ps1",
+      "lastModified": "2025-07-06 07:16:37",
+      "confidence": 35
+    },
+    {
+      "daysOld": 0.0,
+      "name": "Invoke-AdvancedBackup-2.ps1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 17892,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/BackupManager/Public/Invoke-AdvancedBackup-2.ps1",
+      "lastModified": "2025-07-06 07:16:37",
+      "confidence": 35
+    },
+    {
+      "daysOld": 0.0,
+      "name": "Invoke-BackupConsolidation-1.ps1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 9553,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/BackupManager/Public/Invoke-BackupConsolidation-1.ps1",
+      "lastModified": "2025-07-06 07:10:06",
+      "confidence": 35
+    },
+    {
+      "daysOld": 0.0,
+      "name": "Invoke-BackupConsolidation-2.ps1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 9553,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/BackupManager/Public/Invoke-BackupConsolidation-2.ps1",
+      "lastModified": "2025-07-06 07:10:06",
+      "confidence": 35
+    },
+    {
+      "daysOld": 0.0,
+      "name": "Invoke-BackupMaintenance-1.ps1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 19837,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/BackupManager/Public/Invoke-BackupMaintenance-1.ps1",
+      "lastModified": "2025-07-06 07:12:49",
+      "confidence": 35
+    },
+    {
+      "daysOld": 0.0,
+      "name": "Invoke-BackupMaintenance-2.ps1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 19837,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/BackupManager/Public/Invoke-BackupMaintenance-2.ps1",
+      "lastModified": "2025-07-06 07:12:49",
+      "confidence": 35
+    },
+    {
+      "daysOld": 0.0,
+      "name": "New-BackupExclusion-1.ps1",
+      "patterns": [
+        "Contains: 'new'",
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 11332,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/BackupManager/Public/New-BackupExclusion-1.ps1",
+      "lastModified": "2025-07-06 07:10:58",
+      "confidence": 55
+    },
+    {
+      "daysOld": 0.0,
+      "name": "New-BackupExclusion-2.ps1",
+      "patterns": [
+        "Contains: 'new'",
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 11332,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/BackupManager/Public/New-BackupExclusion-2.ps1",
+      "lastModified": "2025-07-06 07:10:58",
+      "confidence": 55
+    },
+    {
+      "daysOld": 0.0,
+      "name": "New-BackupExclusion.ps1",
+      "patterns": [
+        "Contains: 'new'",
+        "Contains: 'backup'"
+      ],
+      "size": 11332,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/BackupManager/Public/New-BackupExclusion.ps1",
+      "lastModified": "2025-07-06 07:10:58",
+      "confidence": 40
+    },
+    {
+      "daysOld": 0.0,
+      "name": "Restore-BackupData-1.ps1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 14453,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/BackupManager/Public/Restore-BackupData-1.ps1",
+      "lastModified": "2025-07-06 07:17:50",
+      "confidence": 35
+    },
+    {
+      "daysOld": 0.0,
+      "name": "Restore-BackupData-2.ps1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 14453,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/BackupManager/Public/Restore-BackupData-2.ps1",
+      "lastModified": "2025-07-06 07:17:50",
+      "confidence": 35
+    },
+    {
+      "daysOld": 0.0,
+      "name": "Start-AutomatedBackup-1.ps1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 18587,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/BackupManager/Public/Start-AutomatedBackup-1.ps1",
+      "lastModified": "2025-07-06 07:19:21",
+      "confidence": 35
+    },
+    {
+      "daysOld": 0.0,
+      "name": "Start-AutomatedBackup-2.ps1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 18587,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/BackupManager/Public/Start-AutomatedBackup-2.ps1",
+      "lastModified": "2025-07-06 07:19:21",
+      "confidence": 35
+    },
+    {
+      "daysOld": 0.0,
+      "name": "BackupManager.Tests-1.ps1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 25577,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/BackupManager/tests/BackupManager.Tests-1.ps1",
+      "lastModified": "2025-07-06 07:22:02",
+      "confidence": 35
+    },
+    {
+      "daysOld": 0.0,
+      "name": "BackupManager.Tests-2.ps1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 25577,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/BackupManager/tests/BackupManager.Tests-2.ps1",
+      "lastModified": "2025-07-06 07:22:02",
+      "confidence": 35
+    },
+    {
+      "daysOld": 1.1,
+      "name": "BackupManager-1.psm1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 679,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/BackupManager/BackupManager-1.psm1",
+      "lastModified": "2025-07-05 05:59:35",
+      "confidence": 35
+    },
+    {
+      "daysOld": 1.1,
+      "name": "BackupManager-2.psm1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 679,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/BackupManager/BackupManager-2.psm1",
+      "lastModified": "2025-07-05 05:59:35",
+      "confidence": 35
+    },
+    {
+      "daysOld": 0.0,
+      "name": "BackupManager-1.psd1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 1029,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/BackupManager/BackupManager-1.psd1",
+      "lastModified": "2025-07-06 07:19:37",
+      "confidence": 35
+    },
+    {
+      "daysOld": 0.0,
+      "name": "BackupManager-2.psd1",
+      "patterns": [
+        "Contains: 'backup'",
+        "Has numbered suffix"
+      ],
+      "size": 1029,
+      "isRecent": true,
+      "path": "backups/aither-core/modules/BackupManager/BackupManager-2.psd1",
+      "lastModified": "2025-07-06 07:19:37",
+      "confidence": 35
+    }
+  ],
+  "potentialDuplicates": [
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-06 06:01:56",
+        "size": 8677,
+        "path": "aither.ps1",
+        "name": "aither.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 05:26:05",
+        "size": 3027,
+        "path": "aitherzero.ps1",
+        "name": "aitherzero.ps1"
+      },
+      "similarity": 80,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 5248,
+        "path": "bootstrap-fixed.ps1",
+        "name": "bootstrap-fixed.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 44042,
+        "path": "bootstrap.ps1",
+        "name": "bootstrap.ps1"
+      },
+      "similarity": 80,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-06 07:04:15",
+        "size": 15538,
+        "path": "test-patchmanager-integration.ps1",
+        "name": "test-patchmanager-integration.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:52:34",
+        "size": 2209,
+        "path": "test-patchmanager.ps1",
+        "name": "test-patchmanager.ps1"
+      },
+      "similarity": 79,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 1462,
+        "path": "release-notes-0.6.14.md",
+        "name": "release-notes-0.6.14.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 2525,
+        "path": "release-notes-0.6.15.md",
+        "name": "release-notes-0.6.15.md"
+      },
+      "similarity": 95,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 1462,
+        "path": "release-notes-0.6.14.md",
+        "name": "release-notes-0.6.14.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3004,
+        "path": "release-notes-0.6.16.md",
+        "name": "release-notes-0.6.16.md"
+      },
+      "similarity": 95,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 1462,
+        "path": "release-notes-0.6.14.md",
+        "name": "release-notes-0.6.14.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 780,
+        "path": "release-notes-0.6.17.md",
+        "name": "release-notes-0.6.17.md"
+      },
+      "similarity": 95,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 1462,
+        "path": "release-notes-0.6.14.md",
+        "name": "release-notes-0.6.14.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3758,
+        "path": "release-notes-0.6.18.md",
+        "name": "release-notes-0.6.18.md"
+      },
+      "similarity": 95,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 1462,
+        "path": "release-notes-0.6.14.md",
+        "name": "release-notes-0.6.14.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3126,
+        "path": "release-notes-0.6.19.md",
+        "name": "release-notes-0.6.19.md"
+      },
+      "similarity": 95,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 1462,
+        "path": "release-notes-0.6.14.md",
+        "name": "release-notes-0.6.14.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 4313,
+        "path": "release-notes-0.6.20.md",
+        "name": "release-notes-0.6.20.md"
+      },
+      "similarity": 90,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 1462,
+        "path": "release-notes-0.6.14.md",
+        "name": "release-notes-0.6.14.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 2808,
+        "path": "release-notes-0.6.21.md",
+        "name": "release-notes-0.6.21.md"
+      },
+      "similarity": 90,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 2525,
+        "path": "release-notes-0.6.15.md",
+        "name": "release-notes-0.6.15.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3004,
+        "path": "release-notes-0.6.16.md",
+        "name": "release-notes-0.6.16.md"
+      },
+      "similarity": 95,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 2525,
+        "path": "release-notes-0.6.15.md",
+        "name": "release-notes-0.6.15.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 780,
+        "path": "release-notes-0.6.17.md",
+        "name": "release-notes-0.6.17.md"
+      },
+      "similarity": 95,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 2525,
+        "path": "release-notes-0.6.15.md",
+        "name": "release-notes-0.6.15.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3758,
+        "path": "release-notes-0.6.18.md",
+        "name": "release-notes-0.6.18.md"
+      },
+      "similarity": 95,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 2525,
+        "path": "release-notes-0.6.15.md",
+        "name": "release-notes-0.6.15.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3126,
+        "path": "release-notes-0.6.19.md",
+        "name": "release-notes-0.6.19.md"
+      },
+      "similarity": 95,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 2525,
+        "path": "release-notes-0.6.15.md",
+        "name": "release-notes-0.6.15.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 4313,
+        "path": "release-notes-0.6.20.md",
+        "name": "release-notes-0.6.20.md"
+      },
+      "similarity": 90,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 2525,
+        "path": "release-notes-0.6.15.md",
+        "name": "release-notes-0.6.15.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 2808,
+        "path": "release-notes-0.6.21.md",
+        "name": "release-notes-0.6.21.md"
+      },
+      "similarity": 90,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3004,
+        "path": "release-notes-0.6.16.md",
+        "name": "release-notes-0.6.16.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 780,
+        "path": "release-notes-0.6.17.md",
+        "name": "release-notes-0.6.17.md"
+      },
+      "similarity": 95,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3004,
+        "path": "release-notes-0.6.16.md",
+        "name": "release-notes-0.6.16.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3758,
+        "path": "release-notes-0.6.18.md",
+        "name": "release-notes-0.6.18.md"
+      },
+      "similarity": 95,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3004,
+        "path": "release-notes-0.6.16.md",
+        "name": "release-notes-0.6.16.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3126,
+        "path": "release-notes-0.6.19.md",
+        "name": "release-notes-0.6.19.md"
+      },
+      "similarity": 95,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3004,
+        "path": "release-notes-0.6.16.md",
+        "name": "release-notes-0.6.16.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 4313,
+        "path": "release-notes-0.6.20.md",
+        "name": "release-notes-0.6.20.md"
+      },
+      "similarity": 90,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3004,
+        "path": "release-notes-0.6.16.md",
+        "name": "release-notes-0.6.16.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 2808,
+        "path": "release-notes-0.6.21.md",
+        "name": "release-notes-0.6.21.md"
+      },
+      "similarity": 90,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 780,
+        "path": "release-notes-0.6.17.md",
+        "name": "release-notes-0.6.17.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3758,
+        "path": "release-notes-0.6.18.md",
+        "name": "release-notes-0.6.18.md"
+      },
+      "similarity": 95,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 780,
+        "path": "release-notes-0.6.17.md",
+        "name": "release-notes-0.6.17.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3126,
+        "path": "release-notes-0.6.19.md",
+        "name": "release-notes-0.6.19.md"
+      },
+      "similarity": 95,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 780,
+        "path": "release-notes-0.6.17.md",
+        "name": "release-notes-0.6.17.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 4313,
+        "path": "release-notes-0.6.20.md",
+        "name": "release-notes-0.6.20.md"
+      },
+      "similarity": 90,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 780,
+        "path": "release-notes-0.6.17.md",
+        "name": "release-notes-0.6.17.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 2808,
+        "path": "release-notes-0.6.21.md",
+        "name": "release-notes-0.6.21.md"
+      },
+      "similarity": 90,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3758,
+        "path": "release-notes-0.6.18.md",
+        "name": "release-notes-0.6.18.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3126,
+        "path": "release-notes-0.6.19.md",
+        "name": "release-notes-0.6.19.md"
+      },
+      "similarity": 95,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3758,
+        "path": "release-notes-0.6.18.md",
+        "name": "release-notes-0.6.18.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 4313,
+        "path": "release-notes-0.6.20.md",
+        "name": "release-notes-0.6.20.md"
+      },
+      "similarity": 90,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3758,
+        "path": "release-notes-0.6.18.md",
+        "name": "release-notes-0.6.18.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 2808,
+        "path": "release-notes-0.6.21.md",
+        "name": "release-notes-0.6.21.md"
+      },
+      "similarity": 90,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3126,
+        "path": "release-notes-0.6.19.md",
+        "name": "release-notes-0.6.19.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 4313,
+        "path": "release-notes-0.6.20.md",
+        "name": "release-notes-0.6.20.md"
+      },
+      "similarity": 90,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3126,
+        "path": "release-notes-0.6.19.md",
+        "name": "release-notes-0.6.19.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 2808,
+        "path": "release-notes-0.6.21.md",
+        "name": "release-notes-0.6.21.md"
+      },
+      "similarity": 90,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 4313,
+        "path": "release-notes-0.6.20.md",
+        "name": "release-notes-0.6.20.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 2808,
+        "path": "release-notes-0.6.21.md",
+        "name": "release-notes-0.6.21.md"
+      },
+      "similarity": 95,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 14511,
+        "path": "aither-core/aither-core-bootstrap.ps1",
+        "name": "aither-core-bootstrap.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 05:56:04",
+        "size": 36497,
+        "path": "aither-core/aither-core.ps1",
+        "name": "aither-core.ps1"
+      },
+      "similarity": 72,
+      "timeDifference": 1.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 42907,
+        "path": "aither-core/AitherCore.psm1",
+        "name": "AitherCore.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 2502,
+        "path": "aither-core/AitherCore.psd1",
+        "name": "AitherCore.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:00:11",
+        "size": 27854,
+        "path": "aither-core/modules/AIToolsIntegration/AIToolsIntegration.psm1",
+        "name": "AIToolsIntegration.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1234,
+        "path": "aither-core/modules/AIToolsIntegration/AIToolsIntegration.psd1",
+        "name": "AIToolsIntegration.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 1.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 679,
+        "path": "aither-core/modules/BackupManager/BackupManager.psm1",
+        "name": "BackupManager.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:19:37",
+        "size": 1029,
+        "path": "aither-core/modules/BackupManager/BackupManager.psd1",
+        "name": "BackupManager.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 1.1
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 22185,
+        "path": "aither-core/modules/ConfigurationCarousel/ConfigurationCarousel.psm1",
+        "name": "ConfigurationCarousel.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1313,
+        "path": "aither-core/modules/ConfigurationCarousel/ConfigurationCarousel.psd1",
+        "name": "ConfigurationCarousel.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 06:35:40",
+        "size": 14455,
+        "path": "aither-core/modules/ConfigurationCore/ConfigurationCore.psm1",
+        "name": "ConfigurationCore.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:24:43",
+        "size": 3553,
+        "path": "aither-core/modules/ConfigurationCore/ConfigurationCore.psd1",
+        "name": "ConfigurationCore.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-06 06:20:41",
+        "size": 4839,
+        "path": "aither-core/modules/ConfigurationCore/Public/Compare-Configuration.ps1",
+        "name": "Compare-Configuration.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:21:59",
+        "size": 5845,
+        "path": "aither-core/modules/ConfigurationCore/Public/Restore-Configuration.ps1",
+        "name": "Restore-Configuration.ps1"
+      },
+      "similarity": 76,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 06:18:07",
+        "size": 3696,
+        "path": "aither-core/modules/ConfigurationCore/Public/Export-ConfigurationStore.ps1",
+        "name": "Export-ConfigurationStore.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:18:26",
+        "size": 5285,
+        "path": "aither-core/modules/ConfigurationCore/Public/Import-ConfigurationStore.ps1",
+        "name": "Import-ConfigurationStore.ps1"
+      },
+      "similarity": 92,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 06:18:38",
+        "size": 2133,
+        "path": "aither-core/modules/ConfigurationCore/Public/Get-ConfigurationEnvironment.ps1",
+        "name": "Get-ConfigurationEnvironment.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:19:09",
+        "size": 4059,
+        "path": "aither-core/modules/ConfigurationCore/Public/New-ConfigurationEnvironment.ps1",
+        "name": "New-ConfigurationEnvironment.ps1"
+      },
+      "similarity": 93,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 06:18:38",
+        "size": 2133,
+        "path": "aither-core/modules/ConfigurationCore/Public/Get-ConfigurationEnvironment.ps1",
+        "name": "Get-ConfigurationEnvironment.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:18:53",
+        "size": 3783,
+        "path": "aither-core/modules/ConfigurationCore/Public/Set-ConfigurationEnvironment.ps1",
+        "name": "Set-ConfigurationEnvironment.ps1"
+      },
+      "similarity": 96,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-06 06:19:36",
+        "size": 2811,
+        "path": "aither-core/modules/ConfigurationCore/Public/Get-ConfigurationSchema.ps1",
+        "name": "Get-ConfigurationSchema.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:17:34",
+        "size": 1405,
+        "path": "aither-core/modules/ConfigurationCore/Public/Get-ConfigurationStore.ps1",
+        "name": "Get-ConfigurationStore.ps1"
+      },
+      "similarity": 78,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-06 06:19:36",
+        "size": 2811,
+        "path": "aither-core/modules/ConfigurationCore/Public/Get-ConfigurationSchema.ps1",
+        "name": "Get-ConfigurationSchema.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:20:21",
+        "size": 2529,
+        "path": "aither-core/modules/ConfigurationCore/Public/Get-ConfigurationWatcher.ps1",
+        "name": "Get-ConfigurationWatcher.ps1"
+      },
+      "similarity": 71,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-06 06:19:36",
+        "size": 2811,
+        "path": "aither-core/modules/ConfigurationCore/Public/Get-ConfigurationSchema.ps1",
+        "name": "Get-ConfigurationSchema.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:17:46",
+        "size": 2464,
+        "path": "aither-core/modules/ConfigurationCore/Public/Set-ConfigurationStore.ps1",
+        "name": "Set-ConfigurationStore.ps1"
+      },
+      "similarity": 74,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-06 06:17:34",
+        "size": 1405,
+        "path": "aither-core/modules/ConfigurationCore/Public/Get-ConfigurationStore.ps1",
+        "name": "Get-ConfigurationStore.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:20:21",
+        "size": 2529,
+        "path": "aither-core/modules/ConfigurationCore/Public/Get-ConfigurationWatcher.ps1",
+        "name": "Get-ConfigurationWatcher.ps1"
+      },
+      "similarity": 71,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 06:17:34",
+        "size": 1405,
+        "path": "aither-core/modules/ConfigurationCore/Public/Get-ConfigurationStore.ps1",
+        "name": "Get-ConfigurationStore.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:17:46",
+        "size": 2464,
+        "path": "aither-core/modules/ConfigurationCore/Public/Set-ConfigurationStore.ps1",
+        "name": "Set-ConfigurationStore.ps1"
+      },
+      "similarity": 96,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 2245,
+        "path": "aither-core/modules/ConfigurationCore/Public/Get-ModuleConfiguration.ps1",
+        "name": "Get-ModuleConfiguration.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 3371,
+        "path": "aither-core/modules/ConfigurationCore/Public/Set-ModuleConfiguration.ps1",
+        "name": "Set-ModuleConfiguration.ps1"
+      },
+      "similarity": 96,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 06:19:09",
+        "size": 4059,
+        "path": "aither-core/modules/ConfigurationCore/Public/New-ConfigurationEnvironment.ps1",
+        "name": "New-ConfigurationEnvironment.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:18:53",
+        "size": 3783,
+        "path": "aither-core/modules/ConfigurationCore/Public/Set-ConfigurationEnvironment.ps1",
+        "name": "Set-ConfigurationEnvironment.ps1"
+      },
+      "similarity": 93,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 25940,
+        "path": "aither-core/modules/ConfigurationRepository/ConfigurationRepository.psm1",
+        "name": "ConfigurationRepository.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1278,
+        "path": "aither-core/modules/ConfigurationRepository/ConfigurationRepository.psd1",
+        "name": "ConfigurationRepository.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 3022,
+        "path": "aither-core/modules/DevEnvironment/DevEnvironment.psm1",
+        "name": "DevEnvironment.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:04:06",
+        "size": 1826,
+        "path": "aither-core/modules/DevEnvironment/DevEnvironment.psd1",
+        "name": "DevEnvironment.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 1.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1572,
+        "path": "aither-core/modules/ISOCustomizer/ISOCustomizer.psm1",
+        "name": "ISOCustomizer.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:22:19",
+        "size": 1182,
+        "path": "aither-core/modules/ISOCustomizer/ISOCustomizer.psd1",
+        "name": "ISOCustomizer.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 1.1
+    },
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 13830,
+        "path": "aither-core/modules/ISOCustomizer/Public/New-CustomISO.ps1",
+        "name": "New-CustomISO.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:21:01",
+        "size": 24240,
+        "path": "aither-core/modules/ISOCustomizer/Public/New-CustomISOWithProgress.ps1",
+        "name": "New-CustomISOWithProgress.ps1"
+      },
+      "similarity": 72,
+      "timeDifference": 1.1
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1359,
+        "path": "aither-core/modules/ISOManager/ISOManager.psm1",
+        "name": "ISOManager.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:14:40",
+        "size": 1307,
+        "path": "aither-core/modules/ISOManager/ISOManager.psd1",
+        "name": "ISOManager.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 1.1
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-06 06:08:21",
+        "size": 21440,
+        "path": "aither-core/modules/ISOManager/README-v1.md",
+        "name": "README-v1.md"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:18:48",
+        "size": 13757,
+        "path": "aither-core/modules/ISOManager/README.md",
+        "name": "README.md"
+      },
+      "similarity": 87,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 4563,
+        "path": "aither-core/modules/ISOManager/Public/Export-ISOInventory.ps1",
+        "name": "Export-ISOInventory.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 6803,
+        "path": "aither-core/modules/ISOManager/Public/Import-ISOInventory.ps1",
+        "name": "Import-ISOInventory.ps1"
+      },
+      "similarity": 90,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:13:42",
+        "size": 39264,
+        "path": "aither-core/modules/LabRunner/LabRunner.psm1",
+        "name": "LabRunner.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:13:29",
+        "size": 978,
+        "path": "aither-core/modules/LabRunner/LabRunner.psd1",
+        "name": "LabRunner.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1898,
+        "path": "aither-core/modules/LicenseManager/LicenseManager.psm1",
+        "name": "LicenseManager.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:25:24",
+        "size": 1626,
+        "path": "aither-core/modules/LicenseManager/LicenseManager.psd1",
+        "name": "LicenseManager.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 1.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-06 06:26:38",
+        "size": 4797,
+        "path": "aither-core/modules/LicenseManager/Public/New-License.ps1",
+        "name": "New-License.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:26:53",
+        "size": 9434,
+        "path": "aither-core/modules/LicenseManager/Public/Set-License.ps1",
+        "name": "Set-License.ps1"
+      },
+      "similarity": 82,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 06:25:47",
+        "size": 26282,
+        "path": "aither-core/modules/Logging/Logging.psm1",
+        "name": "Logging.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:25:08",
+        "size": 3142,
+        "path": "aither-core/modules/Logging/Logging.psd1",
+        "name": "Logging.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 2230,
+        "path": "aither-core/modules/ModuleCommunication/ModuleCommunication.psm1",
+        "name": "ModuleCommunication.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:31:33",
+        "size": 3860,
+        "path": "aither-core/modules/ModuleCommunication/ModuleCommunication.psd1",
+        "name": "ModuleCommunication.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 1.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 2337,
+        "path": "aither-core/modules/ModuleCommunication/Public/Add-APIMiddleware.ps1",
+        "name": "Add-APIMiddleware.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:19:47",
+        "size": 2349,
+        "path": "aither-core/modules/ModuleCommunication/Public/Get-APIMiddleware.ps1",
+        "name": "Get-APIMiddleware.ps1"
+      },
+      "similarity": 82,
+      "timeDifference": 1.0
+    },
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 4975,
+        "path": "aither-core/modules/ModuleCommunication/Public/Get-CommunicationMetrics.ps1",
+        "name": "Get-CommunicationMetrics.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:23:38",
+        "size": 7110,
+        "path": "aither-core/modules/ModuleCommunication/Public/Get-CommunicationStatus.ps1",
+        "name": "Get-CommunicationStatus.ps1"
+      },
+      "similarity": 71,
+      "timeDifference": 1.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-06 06:18:27",
+        "size": 2743,
+        "path": "aither-core/modules/ModuleCommunication/Public/Get-MessageChannels.ps1",
+        "name": "Get-MessageChannels.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 2386,
+        "path": "aither-core/modules/ModuleCommunication/Public/New-MessageChannel.ps1",
+        "name": "New-MessageChannel.ps1"
+      },
+      "similarity": 84,
+      "timeDifference": 1.0
+    },
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-06 06:20:02",
+        "size": 2975,
+        "path": "aither-core/modules/ModuleCommunication/Public/Unsubscribe-ModuleEvent.ps1",
+        "name": "Unsubscribe-ModuleEvent.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:17:34",
+        "size": 4573,
+        "path": "aither-core/modules/ModuleCommunication/Public/Unsubscribe-ModuleMessage.ps1",
+        "name": "Unsubscribe-ModuleMessage.ps1"
+      },
+      "similarity": 72,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:20:00",
+        "size": 2859,
+        "path": "aither-core/modules/OpenTofuProvider/OpenTofuProvider.psm1",
+        "name": "OpenTofuProvider.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:23:51",
+        "size": 3438,
+        "path": "aither-core/modules/OpenTofuProvider/OpenTofuProvider.psd1",
+        "name": "OpenTofuProvider.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 7116,
+        "path": "aither-core/modules/OpenTofuProvider/Public/AdvancedFeatures/Get-DeploymentVersion.ps1",
+        "name": "Get-DeploymentVersion.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 6890,
+        "path": "aither-core/modules/OpenTofuProvider/Public/AdvancedFeatures/New-DeploymentVersion.ps1",
+        "name": "New-DeploymentVersion.ps1"
+      },
+      "similarity": 90,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 24689,
+        "path": "aither-core/modules/OrchestrationEngine/OrchestrationEngine.psm1",
+        "name": "OrchestrationEngine.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1266,
+        "path": "aither-core/modules/OrchestrationEngine/OrchestrationEngine.psd1",
+        "name": "OrchestrationEngine.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 06:20:00",
+        "size": 27315,
+        "path": "aither-core/modules/ParallelExecution/ParallelExecution.psm1",
+        "name": "ParallelExecution.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:20:06",
+        "size": 2597,
+        "path": "aither-core/modules/ParallelExecution/ParallelExecution.psd1",
+        "name": "ParallelExecution.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 05:04:36",
+        "size": 7432,
+        "path": "aither-core/modules/PatchManager/PatchManager.psm1",
+        "name": "PatchManager.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 5118,
+        "path": "aither-core/modules/PatchManager/PatchManager.psd1",
+        "name": "PatchManager.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 1.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 7880,
+        "path": "aither-core/modules/PatchManager/Public/New-Patch.ps1",
+        "name": "New-Patch.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 15409,
+        "path": "aither-core/modules/PatchManager/Public/New-PatchIssue.ps1",
+        "name": "New-PatchIssue.ps1"
+      },
+      "similarity": 84,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 7880,
+        "path": "aither-core/modules/PatchManager/Public/New-Patch.ps1",
+        "name": "New-Patch.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 14069,
+        "path": "aither-core/modules/PatchManager/Public/New-PatchPR.ps1",
+        "name": "New-PatchPR.ps1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 13202,
+        "path": "aither-core/modules/ProgressTracking/ProgressTracking.psm1",
+        "name": "ProgressTracking.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 5183,
+        "path": "aither-core/modules/ProgressTracking/ProgressTracking.psd1",
+        "name": "ProgressTracking.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.8
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1549,
+        "path": "aither-core/modules/RemoteConnection/RemoteConnection.psm1",
+        "name": "RemoteConnection.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1151,
+        "path": "aither-core/modules/RemoteConnection/RemoteConnection.psd1",
+        "name": "RemoteConnection.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 5391,
+        "path": "aither-core/modules/RemoteConnection/Public/Get-RemoteConnection.ps1",
+        "name": "Get-RemoteConnection.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 7942,
+        "path": "aither-core/modules/RemoteConnection/Public/New-RemoteConnection.ps1",
+        "name": "New-RemoteConnection.ps1"
+      },
+      "similarity": 90,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 6283,
+        "path": "aither-core/modules/RepoSync/RepoSync.psm1",
+        "name": "RepoSync.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 871,
+        "path": "aither-core/modules/RepoSync/RepoSync.psd1",
+        "name": "RepoSync.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 2607,
+        "path": "aither-core/modules/RestAPIServer/RestAPIServer.psm1",
+        "name": "RestAPIServer.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1645,
+        "path": "aither-core/modules/RestAPIServer/RestAPIServer.psd1",
+        "name": "RestAPIServer.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 9690,
+        "path": "aither-core/modules/RestAPIServer/Public/Add-WebhookSubscription.ps1",
+        "name": "Add-WebhookSubscription.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 6104,
+        "path": "aither-core/modules/RestAPIServer/Public/Get-WebhookSubscriptions.ps1",
+        "name": "Get-WebhookSubscriptions.ps1"
+      },
+      "similarity": 83,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 12865,
+        "path": "aither-core/modules/ScriptManager/ScriptManager.psm1",
+        "name": "ScriptManager.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 936,
+        "path": "aither-core/modules/ScriptManager/ScriptManager.psd1",
+        "name": "ScriptManager.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1296,
+        "path": "aither-core/modules/SecureCredentials/SecureCredentials.psm1",
+        "name": "SecureCredentials.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1163,
+        "path": "aither-core/modules/SecureCredentials/SecureCredentials.psd1",
+        "name": "SecureCredentials.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 5972,
+        "path": "aither-core/modules/SecureCredentials/Public/Export-SecureCredential.ps1",
+        "name": "Export-SecureCredential.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 8952,
+        "path": "aither-core/modules/SecureCredentials/Public/Import-SecureCredential.ps1",
+        "name": "Import-SecureCredential.ps1"
+      },
+      "similarity": 91,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 5972,
+        "path": "aither-core/modules/SecureCredentials/Public/Export-SecureCredential.ps1",
+        "name": "Export-SecureCredential.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:30:06",
+        "size": 5354,
+        "path": "aither-core/modules/SecureCredentials/Public/Remove-SecureCredential.ps1",
+        "name": "Remove-SecureCredential.ps1"
+      },
+      "similarity": 78,
+      "timeDifference": 1.1
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1061,
+        "path": "aither-core/modules/SecureCredentials/Public/Get-SecureCredential.ps1",
+        "name": "Get-SecureCredential.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 3686,
+        "path": "aither-core/modules/SecureCredentials/Public/New-SecureCredential.ps1",
+        "name": "New-SecureCredential.ps1"
+      },
+      "similarity": 90,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 8952,
+        "path": "aither-core/modules/SecureCredentials/Public/Import-SecureCredential.ps1",
+        "name": "Import-SecureCredential.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:30:06",
+        "size": 5354,
+        "path": "aither-core/modules/SecureCredentials/Public/Remove-SecureCredential.ps1",
+        "name": "Remove-SecureCredential.ps1"
+      },
+      "similarity": 78,
+      "timeDifference": 1.1
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1775,
+        "path": "aither-core/modules/SecurityAutomation/SecurityAutomation.psm1",
+        "name": "SecurityAutomation.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 2486,
+        "path": "aither-core/modules/SecurityAutomation/SecurityAutomation.psd1",
+        "name": "SecurityAutomation.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 33709,
+        "path": "aither-core/modules/SecurityAutomation/Public/PrivilegedAccess/Get-PrivilegedAccountActivity.ps1",
+        "name": "Get-PrivilegedAccountActivity.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 31561,
+        "path": "aither-core/modules/SecurityAutomation/Public/PrivilegedAccess/Set-PrivilegedAccountPolicy.ps1",
+        "name": "Set-PrivilegedAccountPolicy.ps1"
+      },
+      "similarity": 72,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 06:59:32",
+        "size": 70691,
+        "path": "aither-core/modules/SetupWizard/SetupWizard.psm1",
+        "name": "SetupWizard.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 2923,
+        "path": "aither-core/modules/SetupWizard/SetupWizard.psd1",
+        "name": "SetupWizard.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.3
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 00:32:52",
+        "size": 3853,
+        "path": "aither-core/modules/StartupExperience/StartupExperience.psm1",
+        "name": "StartupExperience.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:55:14",
+        "size": 1756,
+        "path": "aither-core/modules/StartupExperience/StartupExperience.psd1",
+        "name": "StartupExperience.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.3
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 2613,
+        "path": "aither-core/modules/SystemMonitoring/SystemMonitoring.psm1",
+        "name": "SystemMonitoring.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1598,
+        "path": "aither-core/modules/SystemMonitoring/SystemMonitoring.psd1",
+        "name": "SystemMonitoring.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:07:48",
+        "size": 72904,
+        "path": "aither-core/modules/TestingFramework/TestingFramework.psm1",
+        "name": "TestingFramework.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:56:38",
+        "size": 1875,
+        "path": "aither-core/modules/TestingFramework/TestingFramework.psd1",
+        "name": "TestingFramework.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 17499,
+        "path": "aither-core/modules/UnifiedMaintenance/UnifiedMaintenance.psm1",
+        "name": "UnifiedMaintenance.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 2703,
+        "path": "aither-core/modules/UnifiedMaintenance/UnifiedMaintenance.psd1",
+        "name": "UnifiedMaintenance.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 11982,
+        "path": "aither-core/Public/Get-PlatformHealth.ps1",
+        "name": "Get-PlatformHealth.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 6040,
+        "path": "aither-core/Public/Get-PlatformStatus.ps1",
+        "name": "Get-PlatformStatus.ps1"
+      },
+      "similarity": 72,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1744,
+        "path": "aither-core/scripts/0007_Install-Go.ps1",
+        "name": "0007_Install-Go.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1736,
+        "path": "aither-core/scripts/0104_Install-CA.ps1",
+        "name": "0104_Install-CA.ps1"
+      },
+      "similarity": 73,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1744,
+        "path": "aither-core/scripts/0007_Install-Go.ps1",
+        "name": "0007_Install-Go.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1541,
+        "path": "aither-core/scripts/0207_Install-Git.ps1",
+        "name": "0207_Install-Git.ps1"
+      },
+      "similarity": 81,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1736,
+        "path": "aither-core/scripts/0104_Install-CA.ps1",
+        "name": "0104_Install-CA.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1869,
+        "path": "aither-core/scripts/0106_Install-WAC.ps1",
+        "name": "0106_Install-WAC.ps1"
+      },
+      "similarity": 81,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 4148,
+        "path": "aither-core/scripts/0203_Install-npm.ps1",
+        "name": "0203_Install-npm.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1541,
+        "path": "aither-core/scripts/0207_Install-Git.ps1",
+        "name": "0207_Install-Git.ps1"
+      },
+      "similarity": 75,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 4148,
+        "path": "aither-core/scripts/0203_Install-npm.ps1",
+        "name": "0203_Install-npm.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1478,
+        "path": "aither-core/scripts/0209_Install-7Zip.ps1",
+        "name": "0209_Install-7Zip.ps1"
+      },
+      "similarity": 71,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "LOW",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1541,
+        "path": "aither-core/scripts/0207_Install-Git.ps1",
+        "name": "0207_Install-Git.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1478,
+        "path": "aither-core/scripts/0209_Install-7Zip.ps1",
+        "name": "0209_Install-7Zip.ps1"
+      },
+      "similarity": 71,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 679,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-1.psm1",
+        "name": "BackupManager-1.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 679,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-2.psm1",
+        "name": "BackupManager-2.psm1"
+      },
+      "similarity": 93,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 679,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-1.psm1",
+        "name": "BackupManager-1.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 679,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager.psm1",
+        "name": "BackupManager.psm1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 679,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-1.psm1",
+        "name": "BackupManager-1.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:19:37",
+        "size": 1029,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-1.psd1",
+        "name": "BackupManager-1.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 1.1
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 679,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-1.psm1",
+        "name": "BackupManager-1.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:19:37",
+        "size": 1029,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-2.psd1",
+        "name": "BackupManager-2.psd1"
+      },
+      "similarity": 93,
+      "timeDifference": 1.1
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 679,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-1.psm1",
+        "name": "BackupManager-1.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:19:37",
+        "size": 1029,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager.psd1",
+        "name": "BackupManager.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 1.1
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 679,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-2.psm1",
+        "name": "BackupManager-2.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 679,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager.psm1",
+        "name": "BackupManager.psm1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 679,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-2.psm1",
+        "name": "BackupManager-2.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:19:37",
+        "size": 1029,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-1.psd1",
+        "name": "BackupManager-1.psd1"
+      },
+      "similarity": 93,
+      "timeDifference": 1.1
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 679,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-2.psm1",
+        "name": "BackupManager-2.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:19:37",
+        "size": 1029,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-2.psd1",
+        "name": "BackupManager-2.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 1.1
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 679,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-2.psm1",
+        "name": "BackupManager-2.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:19:37",
+        "size": 1029,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager.psd1",
+        "name": "BackupManager.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 1.1
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 679,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager.psm1",
+        "name": "BackupManager.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:19:37",
+        "size": 1029,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-1.psd1",
+        "name": "BackupManager-1.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 1.1
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 679,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager.psm1",
+        "name": "BackupManager.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:19:37",
+        "size": 1029,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-2.psd1",
+        "name": "BackupManager-2.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 1.1
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 679,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager.psm1",
+        "name": "BackupManager.psm1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:19:37",
+        "size": 1029,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager.psd1",
+        "name": "BackupManager.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 1.1
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:19:37",
+        "size": 1029,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-1.psd1",
+        "name": "BackupManager-1.psd1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:19:37",
+        "size": 1029,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-2.psd1",
+        "name": "BackupManager-2.psd1"
+      },
+      "similarity": 93,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:19:37",
+        "size": 1029,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-1.psd1",
+        "name": "BackupManager-1.psd1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:19:37",
+        "size": 1029,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager.psd1",
+        "name": "BackupManager.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:19:37",
+        "size": 1029,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager-2.psd1",
+        "name": "BackupManager-2.psd1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:19:37",
+        "size": 1029,
+        "path": "backups/aither-core/modules/BackupManager/BackupManager.psd1",
+        "name": "BackupManager.psd1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:16:37",
+        "size": 17892,
+        "path": "backups/aither-core/modules/BackupManager/Public/Invoke-AdvancedBackup-1.ps1",
+        "name": "Invoke-AdvancedBackup-1.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:16:37",
+        "size": 17892,
+        "path": "backups/aither-core/modules/BackupManager/Public/Invoke-AdvancedBackup-2.ps1",
+        "name": "Invoke-AdvancedBackup-2.ps1"
+      },
+      "similarity": 96,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:16:37",
+        "size": 17892,
+        "path": "backups/aither-core/modules/BackupManager/Public/Invoke-AdvancedBackup-1.ps1",
+        "name": "Invoke-AdvancedBackup-1.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:16:37",
+        "size": 17892,
+        "path": "backups/aither-core/modules/BackupManager/Public/Invoke-AdvancedBackup.ps1",
+        "name": "Invoke-AdvancedBackup.ps1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:16:37",
+        "size": 17892,
+        "path": "backups/aither-core/modules/BackupManager/Public/Invoke-AdvancedBackup-2.ps1",
+        "name": "Invoke-AdvancedBackup-2.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:16:37",
+        "size": 17892,
+        "path": "backups/aither-core/modules/BackupManager/Public/Invoke-AdvancedBackup.ps1",
+        "name": "Invoke-AdvancedBackup.ps1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:10:06",
+        "size": 9553,
+        "path": "backups/aither-core/modules/BackupManager/Public/Invoke-BackupConsolidation-1.ps1",
+        "name": "Invoke-BackupConsolidation-1.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:10:06",
+        "size": 9553,
+        "path": "backups/aither-core/modules/BackupManager/Public/Invoke-BackupConsolidation-2.ps1",
+        "name": "Invoke-BackupConsolidation-2.ps1"
+      },
+      "similarity": 96,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:10:06",
+        "size": 9553,
+        "path": "backups/aither-core/modules/BackupManager/Public/Invoke-BackupConsolidation-1.ps1",
+        "name": "Invoke-BackupConsolidation-1.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:10:06",
+        "size": 9553,
+        "path": "backups/aither-core/modules/BackupManager/Public/Invoke-BackupConsolidation.ps1",
+        "name": "Invoke-BackupConsolidation.ps1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:10:06",
+        "size": 9553,
+        "path": "backups/aither-core/modules/BackupManager/Public/Invoke-BackupConsolidation-2.ps1",
+        "name": "Invoke-BackupConsolidation-2.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:10:06",
+        "size": 9553,
+        "path": "backups/aither-core/modules/BackupManager/Public/Invoke-BackupConsolidation.ps1",
+        "name": "Invoke-BackupConsolidation.ps1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:12:49",
+        "size": 19837,
+        "path": "backups/aither-core/modules/BackupManager/Public/Invoke-BackupMaintenance-1.ps1",
+        "name": "Invoke-BackupMaintenance-1.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:12:49",
+        "size": 19837,
+        "path": "backups/aither-core/modules/BackupManager/Public/Invoke-BackupMaintenance-2.ps1",
+        "name": "Invoke-BackupMaintenance-2.ps1"
+      },
+      "similarity": 96,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:12:49",
+        "size": 19837,
+        "path": "backups/aither-core/modules/BackupManager/Public/Invoke-BackupMaintenance-1.ps1",
+        "name": "Invoke-BackupMaintenance-1.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:12:49",
+        "size": 19837,
+        "path": "backups/aither-core/modules/BackupManager/Public/Invoke-BackupMaintenance.ps1",
+        "name": "Invoke-BackupMaintenance.ps1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:12:49",
+        "size": 19837,
+        "path": "backups/aither-core/modules/BackupManager/Public/Invoke-BackupMaintenance-2.ps1",
+        "name": "Invoke-BackupMaintenance-2.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:12:49",
+        "size": 19837,
+        "path": "backups/aither-core/modules/BackupManager/Public/Invoke-BackupMaintenance.ps1",
+        "name": "Invoke-BackupMaintenance.ps1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:10:58",
+        "size": 11332,
+        "path": "backups/aither-core/modules/BackupManager/Public/New-BackupExclusion-1.ps1",
+        "name": "New-BackupExclusion-1.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:10:58",
+        "size": 11332,
+        "path": "backups/aither-core/modules/BackupManager/Public/New-BackupExclusion-2.ps1",
+        "name": "New-BackupExclusion-2.ps1"
+      },
+      "similarity": 95,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:10:58",
+        "size": 11332,
+        "path": "backups/aither-core/modules/BackupManager/Public/New-BackupExclusion-1.ps1",
+        "name": "New-BackupExclusion-1.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:10:58",
+        "size": 11332,
+        "path": "backups/aither-core/modules/BackupManager/Public/New-BackupExclusion.ps1",
+        "name": "New-BackupExclusion.ps1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:10:58",
+        "size": 11332,
+        "path": "backups/aither-core/modules/BackupManager/Public/New-BackupExclusion-2.ps1",
+        "name": "New-BackupExclusion-2.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:10:58",
+        "size": 11332,
+        "path": "backups/aither-core/modules/BackupManager/Public/New-BackupExclusion.ps1",
+        "name": "New-BackupExclusion.ps1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:17:50",
+        "size": 14453,
+        "path": "backups/aither-core/modules/BackupManager/Public/Restore-BackupData-1.ps1",
+        "name": "Restore-BackupData-1.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:17:50",
+        "size": 14453,
+        "path": "backups/aither-core/modules/BackupManager/Public/Restore-BackupData-2.ps1",
+        "name": "Restore-BackupData-2.ps1"
+      },
+      "similarity": 95,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:17:50",
+        "size": 14453,
+        "path": "backups/aither-core/modules/BackupManager/Public/Restore-BackupData-1.ps1",
+        "name": "Restore-BackupData-1.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:17:50",
+        "size": 14453,
+        "path": "backups/aither-core/modules/BackupManager/Public/Restore-BackupData.ps1",
+        "name": "Restore-BackupData.ps1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:17:50",
+        "size": 14453,
+        "path": "backups/aither-core/modules/BackupManager/Public/Restore-BackupData-2.ps1",
+        "name": "Restore-BackupData-2.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:17:50",
+        "size": 14453,
+        "path": "backups/aither-core/modules/BackupManager/Public/Restore-BackupData.ps1",
+        "name": "Restore-BackupData.ps1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:19:21",
+        "size": 18587,
+        "path": "backups/aither-core/modules/BackupManager/Public/Start-AutomatedBackup-1.ps1",
+        "name": "Start-AutomatedBackup-1.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:19:21",
+        "size": 18587,
+        "path": "backups/aither-core/modules/BackupManager/Public/Start-AutomatedBackup-2.ps1",
+        "name": "Start-AutomatedBackup-2.ps1"
+      },
+      "similarity": 96,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:19:21",
+        "size": 18587,
+        "path": "backups/aither-core/modules/BackupManager/Public/Start-AutomatedBackup-1.ps1",
+        "name": "Start-AutomatedBackup-1.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:19:21",
+        "size": 18587,
+        "path": "backups/aither-core/modules/BackupManager/Public/Start-AutomatedBackup.ps1",
+        "name": "Start-AutomatedBackup.ps1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:19:21",
+        "size": 18587,
+        "path": "backups/aither-core/modules/BackupManager/Public/Start-AutomatedBackup-2.ps1",
+        "name": "Start-AutomatedBackup-2.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:19:21",
+        "size": 18587,
+        "path": "backups/aither-core/modules/BackupManager/Public/Start-AutomatedBackup.ps1",
+        "name": "Start-AutomatedBackup.ps1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:22:02",
+        "size": 25577,
+        "path": "backups/aither-core/modules/BackupManager/tests/BackupManager.Tests-1.ps1",
+        "name": "BackupManager.Tests-1.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:22:02",
+        "size": 25577,
+        "path": "backups/aither-core/modules/BackupManager/tests/BackupManager.Tests-2.ps1",
+        "name": "BackupManager.Tests-2.ps1"
+      },
+      "similarity": 95,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:22:02",
+        "size": 25577,
+        "path": "backups/aither-core/modules/BackupManager/tests/BackupManager.Tests-1.ps1",
+        "name": "BackupManager.Tests-1.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:22:02",
+        "size": 25577,
+        "path": "backups/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1",
+        "name": "BackupManager.Tests.ps1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 07:22:02",
+        "size": 25577,
+        "path": "backups/aither-core/modules/BackupManager/tests/BackupManager.Tests-2.ps1",
+        "name": "BackupManager.Tests-2.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 07:22:02",
+        "size": 25577,
+        "path": "backups/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1",
+        "name": "BackupManager.Tests.ps1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 06:20:58",
+        "size": 3862,
+        "path": "backups/aither-core/modules/ConfigurationCore/Public/Backup-Configuration-1.ps1",
+        "name": "Backup-Configuration-1.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:20:58",
+        "size": 3862,
+        "path": "backups/aither-core/modules/ConfigurationCore/Public/Backup-Configuration-2.ps1",
+        "name": "Backup-Configuration-2.ps1"
+      },
+      "similarity": 96,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 06:20:58",
+        "size": 3862,
+        "path": "backups/aither-core/modules/ConfigurationCore/Public/Backup-Configuration-1.ps1",
+        "name": "Backup-Configuration-1.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:20:58",
+        "size": 3862,
+        "path": "backups/aither-core/modules/ConfigurationCore/Public/Backup-Configuration.ps1",
+        "name": "Backup-Configuration.ps1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-06 06:20:58",
+        "size": 3862,
+        "path": "backups/aither-core/modules/ConfigurationCore/Public/Backup-Configuration-2.ps1",
+        "name": "Backup-Configuration-2.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 06:20:58",
+        "size": 3862,
+        "path": "backups/aither-core/modules/ConfigurationCore/Public/Backup-Configuration.ps1",
+        "name": "Backup-Configuration.ps1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1987,
+        "path": "backups/aither-core/modules/PatchManager/Public/Get-PatchWorkflowBackup-1.ps1",
+        "name": "Get-PatchWorkflowBackup-1.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1987,
+        "path": "backups/aither-core/modules/PatchManager/Public/Get-PatchWorkflowBackup-2.ps1",
+        "name": "Get-PatchWorkflowBackup-2.ps1"
+      },
+      "similarity": 96,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1987,
+        "path": "backups/aither-core/modules/PatchManager/Public/Get-PatchWorkflowBackup-1.ps1",
+        "name": "Get-PatchWorkflowBackup-1.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1987,
+        "path": "backups/aither-core/modules/PatchManager/Public/Get-PatchWorkflowBackup.ps1",
+        "name": "Get-PatchWorkflowBackup.ps1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "HIGH",
+      "file1": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1987,
+        "path": "backups/aither-core/modules/PatchManager/Public/Get-PatchWorkflowBackup-2.ps1",
+        "name": "Get-PatchWorkflowBackup-2.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-05 05:59:35",
+        "size": 1987,
+        "path": "backups/aither-core/modules/PatchManager/Public/Get-PatchWorkflowBackup.ps1",
+        "name": "Get-PatchWorkflowBackup.ps1"
+      },
+      "similarity": 100,
+      "timeDifference": 0.0
+    },
+    {
+      "priority": "MEDIUM",
+      "file1": {
+        "modified": "2025-07-06 03:43:11",
+        "size": 24586,
+        "path": "scripts/Install-DevTools.ps1",
+        "name": "Install-DevTools.ps1"
+      },
+      "isRecent": true,
+      "file2": {
+        "modified": "2025-07-06 03:41:09",
+        "size": 3197,
+        "path": "scripts/Install-DevTools.README.md",
+        "name": "Install-DevTools.README.md"
+      },
+      "similarity": 90,
+      "timeDifference": 0.0
+    }
+  ],
+  "totalFiles": 609,
+  "scanTime": "2025-07-06T07:30:20Z"
+}

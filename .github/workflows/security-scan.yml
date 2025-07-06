@@ -1,0 +1,526 @@
+name: Security Scan
+
+on:
+  schedule:
+    # Run every Monday at 3:00 AM UTC
+    - cron: '0 3 * * 1'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - '**/*.ps1'
+      - '**/*.psm1'
+      - '**/*.psd1'
+      - '**/requirements.psd1'
+      - '**/packages.config'
+      - '.github/workflows/security-scan.yml'
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Type of scan to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - codeql
+          - dependencies
+          - secrets
+
+# Security: Minimal permissions by default
+permissions:
+  contents: read
+
+jobs:
+  # CodeQL Analysis for PowerShell code
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'schedule' || 
+      github.event_name == 'pull_request' || 
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == 'codeql'))
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: 'javascript'  # PowerShell is analyzed as JavaScript
+        queries: security-and-quality
+        
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:powershell"
+        
+  # Dependency vulnerability scanning
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'schedule' || 
+      github.event_name == 'pull_request' || 
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == 'dependencies'))
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PowerShell
+      uses: PowerShell/setup-powershell@v1
+      with:
+        version: '7.4.5'
+        
+    - name: Scan PowerShell module dependencies
+      shell: pwsh
+      run: |
+        Write-Host "Scanning PowerShell module dependencies..." -ForegroundColor Cyan
+        
+        # Get all module manifests
+        $manifests = Get-ChildItem -Path . -Include "*.psd1" -Recurse
+        $vulnerabilities = @()
+        
+        foreach ($manifest in $manifests) {
+          Write-Host "Checking: $($manifest.Name)" -ForegroundColor Gray
+          
+          try {
+            $data = Import-PowerShellDataFile -Path $manifest.FullName
+            
+            # Check required modules
+            if ($data.RequiredModules) {
+              foreach ($module in $data.RequiredModules) {
+                $moduleName = if ($module -is [hashtable]) { $module.ModuleName } else { $module }
+                $moduleVersion = if ($module -is [hashtable]) { $module.ModuleVersion } else { $null }
+                
+                # Check against known vulnerable versions (this is a simplified check)
+                # In production, you'd use a vulnerability database API
+                $knownVulnerabilities = @{
+                  'Az' = @('1.0.0', '1.1.0')  # Example vulnerable versions
+                  'AzureRM' = @('*')  # Deprecated module
+                }
+                
+                if ($knownVulnerabilities.ContainsKey($moduleName)) {
+                  if ($knownVulnerabilities[$moduleName] -contains '*' -or 
+                      $knownVulnerabilities[$moduleName] -contains $moduleVersion) {
+                    $vulnerabilities += @{
+                      Module = $moduleName
+                      Version = $moduleVersion
+                      File = $manifest.Name
+                      Severity = 'High'
+                      Message = "Known vulnerable or deprecated module"
+                    }
+                  }
+                }
+              }
+            }
+          }
+          catch {
+            Write-Warning "Failed to parse $($manifest.Name): $_"
+          }
+        }
+        
+        # Report findings
+        if ($vulnerabilities.Count -gt 0) {
+          Write-Host "`n⚠️ Found $($vulnerabilities.Count) vulnerable dependencies:" -ForegroundColor Yellow
+          $vulnerabilities | ForEach-Object {
+            Write-Host "::warning file=$($_.File)::$($_.Module) $($_.Version): $($_.Message)"
+          }
+          
+          # Create SARIF report
+          $sarif = @{
+            version = "2.1.0"
+            runs = @(@{
+              tool = @{
+                driver = @{
+                  name = "PowerShell Dependency Scanner"
+                  version = "1.0.0"
+                }
+              }
+              results = $vulnerabilities | ForEach-Object {
+                @{
+                  ruleId = "vulnerable-dependency"
+                  level = $_.Severity.ToLower()
+                  message = @{
+                    text = "$($_.Module) $($_.Version): $($_.Message)"
+                  }
+                  locations = @(@{
+                    physicalLocation = @{
+                      artifactLocation = @{
+                        uri = $_.File
+                      }
+                    }
+                  })
+                }
+              }
+            })
+          }
+          
+          $sarif | ConvertTo-Json -Depth 10 | Set-Content -Path dependency-scan.sarif
+          Write-Host "Created SARIF report: dependency-scan.sarif"
+        } else {
+          Write-Host "✅ No vulnerable dependencies found" -ForegroundColor Green
+        }
+        
+    - name: Check for outdated modules
+      shell: pwsh
+      run: |
+        Write-Host "Checking for outdated PowerShell modules..." -ForegroundColor Cyan
+        
+        # Get all unique required modules
+        $allModules = @{}
+        Get-ChildItem -Path . -Include "*.psd1" -Recurse | ForEach-Object {
+          try {
+            $data = Import-PowerShellDataFile -Path $_.FullName
+            if ($data.RequiredModules) {
+              foreach ($module in $data.RequiredModules) {
+                $name = if ($module -is [hashtable]) { $module.ModuleName } else { $module }
+                $version = if ($module -is [hashtable]) { $module.ModuleVersion } else { '0.0.0' }
+                
+                if (-not $allModules.ContainsKey($name) -or 
+                    [version]$version -gt [version]$allModules[$name]) {
+                  $allModules[$name] = $version
+                }
+              }
+            }
+          } catch {}
+        }
+        
+        # Check for updates (simplified - in production use PSGallery API)
+        $outdated = @()
+        foreach ($module in $allModules.GetEnumerator()) {
+          Write-Host "Checking $($module.Key) (current: $($module.Value))..." -NoNewline
+          
+          try {
+            $latest = Find-Module -Name $module.Key -ErrorAction SilentlyContinue | 
+                      Select-Object -First 1 -ExpandProperty Version
+            
+            if ($latest -and [version]$latest -gt [version]$module.Value) {
+              Write-Host " Update available: $latest" -ForegroundColor Yellow
+              $outdated += "$($module.Key): $($module.Value) → $latest"
+            } else {
+              Write-Host " Up to date" -ForegroundColor Green
+            }
+          }
+          catch {
+            Write-Host " Unable to check" -ForegroundColor Gray
+          }
+        }
+        
+        if ($outdated.Count -gt 0) {
+          Write-Host "`n📦 Outdated modules:" -ForegroundColor Yellow
+          $outdated | ForEach-Object { Write-Host "  $_" }
+        }
+        
+    - name: Upload dependency scan results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: dependency-scan-results
+        path: |
+          dependency-scan.sarif
+          outdated-modules.txt
+        retention-days: 30
+        
+  # Secret scanning
+  secrets-scan:
+    name: Secrets Detection
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'schedule' || 
+      github.event_name == 'pull_request' || 
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == 'secrets'))
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for better detection
+        
+    - name: TruffleHog OSS scan
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: ${{ github.event.repository.default_branch }}
+        head: HEAD
+        extra_args: --debug --only-verified
+        
+    - name: GitLeaks scan
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Custom PowerShell secrets scan
+      shell: pwsh
+      run: |
+        Write-Host "Running custom PowerShell secrets scan..." -ForegroundColor Cyan
+        
+        # Common patterns to detect
+        $patterns = @{
+          'API Key' = 'api[_-]?key\s*[:=]\s*["\']?[a-zA-Z0-9]{32,}'
+          'AWS Key' = 'AKIA[0-9A-Z]{16}'
+          'Azure Key' = 'DefaultEndpointsProtocol=https.*AccountKey=[a-zA-Z0-9+/=]{88}'
+          'Private Key' = '-----BEGIN (RSA |EC |DSA )?PRIVATE KEY-----'
+          'Password' = '(?i)(password|passwd|pwd)\s*[:=]\s*["\'][^"\']{8,}'
+          'Token' = '(?i)(token|bearer)\s*[:=]\s*["\'][a-zA-Z0-9._-]{20,}'
+          'Connection String' = '(?i)(server|data source)=.*;(password|pwd)=.*'
+          'GitHub Token' = 'gh[pousr]_[A-Za-z0-9_]{36}'
+        }
+        
+        $findings = @()
+        $files = Get-ChildItem -Path . -Include "*.ps1","*.psm1","*.psd1","*.json","*.xml","*.config" -Recurse |
+                 Where-Object { $_.FullName -notmatch '\\\.git\\|/\.git/' }
+        
+        foreach ($file in $files) {
+          $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
+          if (-not $content) { continue }
+          
+          $lineNumber = 0
+          foreach ($line in ($content -split "`n")) {
+            $lineNumber++
+            
+            foreach ($pattern in $patterns.GetEnumerator()) {
+              if ($line -match $pattern.Value) {
+                # Check if it's a false positive
+                $isFalsePositive = $false
+                
+                # Common false positive patterns
+                if ($line -match '^\s*#' -or                    # Comment
+                    $line -match 'example|sample|test|demo' -or # Example code
+                    $line -match '\$\{.*\}' -or                 # Variable substitution
+                    $line -match '\$env:' -or                   # Environment variable
+                    $line -match 'ConvertTo-SecureString')      # Secure string handling
+                {
+                  $isFalsePositive = $true
+                }
+                
+                if (-not $isFalsePositive) {
+                  $findings += @{
+                    Type = $pattern.Key
+                    File = $file.FullName -replace [regex]::Escape($PWD.Path), '.'
+                    Line = $lineNumber
+                    Content = ($line -replace $pattern.Value, '[REDACTED]').Trim()
+                  }
+                }
+              }
+            }
+          }
+        }
+        
+        # Report findings
+        if ($findings.Count -gt 0) {
+          Write-Host "`n🚨 Found $($findings.Count) potential secrets:" -ForegroundColor Red
+          $findings | ForEach-Object {
+            Write-Host "::error file=$($_.File),line=$($_.Line)::$($_.Type) detected: $($_.Content)"
+          }
+          
+          # Create report
+          $findings | ConvertTo-Json -Depth 3 | Set-Content -Path secrets-scan-report.json
+          
+          # Fail the build
+          throw "Potential secrets detected! Please review and remove them."
+        } else {
+          Write-Host "✅ No secrets detected" -ForegroundColor Green
+        }
+        
+    - name: Upload scan results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: secrets-scan-results
+        path: |
+          secrets-scan-report.json
+          .gitleaks-report.json
+        retention-days: 7
+        
+  # PowerShell-specific security checks
+  powershell-security:
+    name: PowerShell Security Analysis
+    runs-on: windows-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'schedule'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Analyze script security
+      shell: pwsh
+      run: |
+        Write-Host "Analyzing PowerShell script security..." -ForegroundColor Cyan
+        
+        $issues = @()
+        $scripts = Get-ChildItem -Path . -Include "*.ps1","*.psm1" -Recurse
+        
+        foreach ($script in $scripts) {
+          $content = Get-Content $script.FullName -Raw
+          $ast = [System.Management.Automation.Language.Parser]::ParseInput($content, [ref]$null, [ref]$null)
+          
+          # Check for dangerous commands
+          $dangerousCommands = @(
+            'Invoke-Expression',
+            'iex',
+            'Invoke-Command',
+            'Start-Process',
+            'New-Object System.Diagnostics.Process',
+            'Add-Type',
+            '[System.Reflection.Assembly]::Load'
+          )
+          
+          foreach ($cmd in $dangerousCommands) {
+            if ($content -match $cmd) {
+              $issues += @{
+                File = $script.FullName
+                Issue = "Uses potentially dangerous command: $cmd"
+                Severity = 'Warning'
+              }
+            }
+          }
+          
+          # Check for web downloads without validation
+          if ($content -match 'Invoke-WebRequest|Invoke-RestMethod|wget|curl' -and
+              $content -notmatch 'try\s*{[^}]*(?:Invoke-WebRequest|Invoke-RestMethod)') {
+            $issues += @{
+              File = $script.FullName
+              Issue = "Web request without proper error handling"
+              Severity = 'Warning'
+            }
+          }
+          
+          # Check for credential handling
+          if ($content -match 'ConvertTo-SecureString.*-AsPlainText' -and
+              $content -notmatch '\$env:|Get-Credential|\[PSCredential\]') {
+            $issues += @{
+              File = $script.FullName
+              Issue = "Hardcoded credentials or insecure credential handling"
+              Severity = 'High'
+            }
+          }
+          
+          # Check execution policy bypass
+          if ($content -match '-ExecutionPolicy\s+(?:Bypass|Unrestricted)') {
+            $issues += @{
+              File = $script.FullName
+              Issue = "Attempts to bypass execution policy"
+              Severity = 'Warning'
+            }
+          }
+        }
+        
+        # Report issues
+        if ($issues.Count -gt 0) {
+          Write-Host "`n⚠️ Security issues found:" -ForegroundColor Yellow
+          $issues | Group-Object Severity | ForEach-Object {
+            Write-Host "`n$($_.Name) severity issues ($($_.Count)):" -ForegroundColor Yellow
+            $_.Group | ForEach-Object {
+              Write-Host "  - $($_.File): $($_.Issue)"
+            }
+          }
+          
+          # Create annotations
+          $issues | ForEach-Object {
+            $level = if ($_.Severity -eq 'High') { 'error' } else { 'warning' }
+            Write-Host "::$level file=$($_.File)::$($_.Issue)"
+          }
+          
+          if (($issues | Where-Object Severity -eq 'High').Count -gt 0) {
+            throw "High severity security issues found!"
+          }
+        } else {
+          Write-Host "✅ No security issues found" -ForegroundColor Green
+        }
+        
+  # Security report summary
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [codeql, dependency-scan, secrets-scan, powershell-security]
+    if: always()
+    
+    steps:
+    - name: Check results
+      shell: pwsh
+      run: |
+        Write-Host "🔒 Security Scan Summary" -ForegroundColor Cyan
+        Write-Host "========================" -ForegroundColor Cyan
+        
+        $results = @{
+          'CodeQL Analysis' = '${{ needs.codeql.result }}'
+          'Dependency Scan' = '${{ needs.dependency-scan.result }}'
+          'Secrets Scan' = '${{ needs.secrets-scan.result }}'
+          'PowerShell Security' = '${{ needs.powershell-security.result }}'
+        }
+        
+        $failed = 0
+        foreach ($check in $results.GetEnumerator()) {
+          $emoji = if ($check.Value -eq 'success') { '✅' } 
+                   elseif ($check.Value -eq 'failure') { '❌'; $failed++ }
+                   elseif ($check.Value -eq 'skipped') { '⏭️' }
+                   else { '⚠️' }
+          
+          Write-Host "$emoji $($check.Key): $($check.Value)"
+        }
+        
+        if ($failed -gt 0) {
+          Write-Host "`n❌ Security scan failed: $failed check(s) failed" -ForegroundColor Red
+          exit 1
+        } else {
+          Write-Host "`n✅ All security checks passed!" -ForegroundColor Green
+        }
+        
+    - name: Post PR comment
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const results = {
+            'CodeQL Analysis': '${{ needs.codeql.result }}',
+            'Dependency Scan': '${{ needs.dependency-scan.result }}',
+            'Secrets Scan': '${{ needs.secrets-scan.result }}',
+            'PowerShell Security': '${{ needs.powershell-security.result }}'
+          };
+          
+          let body = '## 🔒 Security Scan Results\n\n';
+          body += '| Check | Status |\n';
+          body += '|-------|--------|\n';
+          
+          for (const [check, result] of Object.entries(results)) {
+            const emoji = result === 'success' ? '✅' : 
+                         result === 'failure' ? '❌' : 
+                         result === 'skipped' ? '⏭️' : '⚠️';
+            body += `| ${check} | ${emoji} ${result} |\n`;
+          }
+          
+          body += '\n[View detailed security report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})';
+          
+          // Update or create comment
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number
+          });
+          
+          const botComment = comments.find(comment => 
+            comment.user.type === 'Bot' && 
+            comment.body.includes('🔒 Security Scan Results')
+          );
+          
+          if (botComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+          }

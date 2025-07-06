@@ -88,7 +88,7 @@
             Tags = @('OpenTofu', 'Terraform', 'Infrastructure', 'Security', 'HyperV', 'Automation')
             LicenseUri = ''
             ProjectUri = 'https://github.com/wizzense/opentofu-lab-automation'
-            ReleaseNotes = 'v1.2.0: Added Advanced Features (Drift Detection, Rollback, Snapshots, History, Automation) and Performance Optimization (Memory Management, Caching, Concurrent Testing). Complete Infrastructure Abstraction Layer with comprehensive testing and integration capabilities.'
+            ReleaseNotes = 'v1.2.0: MAJOR UPDATE - Enhanced module loading with 42+ functions, comprehensive deployment automation, security hardening, YAML support, progress tracking, rollback capabilities, and extensive CI/CD integration. Complete Infrastructure Abstraction Layer with enterprise-grade features.'
             Licensing = @{
                 Tier = 'pro'
                 Feature = 'infrastructure'

@@ -41,6 +41,17 @@ function Register-ModuleConfiguration {
             $script:ConfigurationStore.Modules[$ModuleName] = @{}
         }
         
+        # Extract default values from schema if no explicit defaults provided
+        $effectiveDefaults = $DefaultConfiguration.Clone()
+        if ($Schema.Properties) {
+            foreach ($propName in $Schema.Properties.Keys) {
+                $propSchema = $Schema.Properties[$propName]
+                if ($propSchema.ContainsKey('Default') -and -not $effectiveDefaults.ContainsKey($propName)) {
+                    $effectiveDefaults[$propName] = $propSchema.Default
+                }
+            }
+        }
+        
         # Apply defaults to all environments
         foreach ($env in $script:ConfigurationStore.Environments.Keys) {
             if (-not $script:ConfigurationStore.Environments[$env].Settings.ContainsKey($ModuleName)) {
@@ -49,12 +60,12 @@ function Register-ModuleConfiguration {
             
             # Merge defaults with existing settings
             $currentSettings = $script:ConfigurationStore.Environments[$env].Settings[$ModuleName]
-            $mergedSettings = Merge-Configuration -Base $DefaultConfiguration -Override $currentSettings
+            $mergedSettings = Merge-Configuration -Base $effectiveDefaults -Override $currentSettings
             $script:ConfigurationStore.Environments[$env].Settings[$ModuleName] = $mergedSettings
         }
         
-        # Validate the configuration
-        $validationResult = Validate-Configuration -ModuleName $ModuleName -Configuration $DefaultConfiguration
+        # Validate the effective default configuration
+        $validationResult = Validate-Configuration -ModuleName $ModuleName -Configuration $effectiveDefaults
         if (-not $validationResult.IsValid) {
             Write-CustomLog -Level 'WARNING' -Message "Default configuration has validation warnings: $($validationResult.Errors -join ', ')"
         }

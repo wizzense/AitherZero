@@ -105,8 +105,15 @@ function Invoke-PermanentCleanup {
             Write-Host "INFO Starting permanent cleanup process" -ForegroundColor Green
         }
         
-        # Import Logging module for enhanced logging capabilities
-        Import-Module "/pwsh/modules/CodeFixerLogging/" -Force
+        # Import shared utilities and project root detection
+        . "$PSScriptRoot/../../../shared/Find-ProjectRoot.ps1"
+        $projectRoot = Find-ProjectRoot
+        
+        # Import logging if available
+        $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
+        if (Test-Path $loggingPath) {
+            Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
+        }
         
         # Default problematic patterns based on common issues
         $DefaultProblematicPatterns = @(
@@ -189,8 +196,13 @@ function Invoke-PermanentCleanup {
                               ($PSCmdlet.WhatIf)
             
             if ($IsNonInteractive) {
-                Write-CustomLog -Level 'INFO' -Message "Non-interactive mode detected - skipping confirmation (defaulting to cancel)"
-                Write-CustomLog -Level 'INFO' -Message "Operation cancelled - use -Force to proceed in non-interactive mode"
+                if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                    Write-CustomLog "Non-interactive mode detected - skipping confirmation (defaulting to cancel)" -Level INFO
+                    Write-CustomLog "Operation cancelled - use -Force to proceed in non-interactive mode" -Level INFO
+                } else {
+                    Write-Host "INFO Non-interactive mode detected - skipping confirmation (defaulting to cancel)" -ForegroundColor Green
+                    Write-Host "INFO Operation cancelled - use -Force to proceed in non-interactive mode" -ForegroundColor Green
+                }
                 return @{ Success = $false; Message = "Cancelled - non-interactive mode without Force" }
             } else {
                 $Confirmation = Read-Host "Are you sure you want to proceed? (type 'DELETE' to confirm)"
