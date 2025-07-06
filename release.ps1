@@ -24,6 +24,32 @@ param(
 
 Write-Host "🚀 Starting $Type release process..." -ForegroundColor Cyan
 
+# Sync with origin first to prevent merge conflicts
+Write-Host "📥 Syncing with origin/main..." -ForegroundColor Yellow
+try {
+    # Fetch latest changes
+    git fetch origin
+    
+    # Check if we're behind origin/main
+    $behind = git rev-list --count HEAD..origin/main
+    if ($behind -gt 0) {
+        Write-Host "⚠️  Local branch is $behind commits behind origin/main" -ForegroundColor Yellow
+        Write-Host "🔄 Pulling latest changes..." -ForegroundColor Yellow
+        git pull origin main --rebase
+        
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to sync with origin/main. Please resolve conflicts manually."
+        }
+        Write-Host "✅ Successfully synced with origin/main" -ForegroundColor Green
+    } else {
+        Write-Host "✅ Already up to date with origin/main" -ForegroundColor Green
+    }
+} catch {
+    Write-Host "❌ Failed to sync with origin: $_" -ForegroundColor Red
+    Write-Host "Please run 'git pull origin main --rebase' manually and resolve any conflicts" -ForegroundColor Yellow
+    exit 1
+}
+
 # Import PatchManager
 $modulePath = Join-Path $PSScriptRoot "aither-core" "modules" "PatchManager"
 Import-Module $modulePath -Force

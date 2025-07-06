@@ -60,8 +60,30 @@
       "Bash(git clone:*)",
       "Bash(/mnt/c/Program Files/PowerShell/7/pwsh.exe -NoProfile -Command \"$PSVersionTable.PSVersion; $Host.UI.RawUI.WindowSize\")",
       "Bash(cd:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(\"/mnt/c/Program Files/PowerShell/7/pwsh.exe\" .claude/scripts/test.ps1:*)",
+      "Bash(\"/mnt/c/Program Files/PowerShell/7/pwsh.exe\" .claude/scripts/config.ps1:*)",
+      "Bash(\"/mnt/c/Program Files/PowerShell/7/pwsh.exe\" .claude/scripts/security.ps1:*)",
+      "Bash(\"/mnt/c/Program Files/PowerShell/7/pwsh.exe\" .claude/scripts/backup.ps1:*)",
+      "Bash(\"/mnt/c/Program Files/PowerShell/7/pwsh.exe\" .claude/scripts/orchestrate.ps1:*)",
+      "Bash(pwsh .claude/scripts/test.ps1:*)",
+      "Bash(pwsh .claude/scripts/config.ps1:*)",
+      "Bash(pwsh .claude/scripts/security.ps1:*)",
+      "Bash(pwsh .claude/scripts/backup.ps1:*)",
+      "Bash(pwsh .claude/scripts/orchestrate.ps1:*)",
+      "Bash(./tests/Run-Tests.ps1:*)",
+      "Bash(Invoke-Pester:*)",
+      "Bash(gh run:*)",
+      "Bash(gh workflow:*)"
     ],
     "deny": []
+  },
+  "command_aliases": {
+    "/pr": "/patchmanager workflow --create-pr",
+    "/deploy-prod": "/infra deploy --env production --validate",
+    "/quick-test": "/test run --suite quick",
+    "/full-test": "/test run --suite all",
+    "/backup-now": "/backup create --type full --encrypt",
+    "/security-check": "/security scan --type quick --fix"
   }
 }
