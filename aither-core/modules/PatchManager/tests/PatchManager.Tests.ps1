@@ -125,11 +125,12 @@ Describe "PatchManager v3.0 Module Tests" {
             # Create a file with conflict markers
             @"
 Some content
-<<<<<<< HEAD
+# Simulated conflict markers for testing
+# <<<<<<< HEAD
 Conflicted content
-=======
+# =======
 Other content
->>>>>>> branch
+# >>>>>>> branch
 More content
 "@ | Out-File -FilePath "conflict-file.txt"
 

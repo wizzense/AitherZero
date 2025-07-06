@@ -233,4 +233,4 @@ function Invoke-GitCommand {
     }
 }
 
-# Functions are exported via module manifest
+Export-ModuleMember -Function Get-GitCommand, Invoke-GitCommand

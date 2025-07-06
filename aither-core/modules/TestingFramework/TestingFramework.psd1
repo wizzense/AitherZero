@@ -35,7 +35,10 @@
         'Invoke-ParallelTests',
         'Invoke-BulletproofTest',
         'Start-TestSuite',
-        'Write-TestLog'
+        'Write-TestLog',
+        'New-ModuleTest',
+        'Invoke-BulkTestGeneration',
+        'Get-ModuleAnalysis'
     )
 
     CmdletsToExport = @()
