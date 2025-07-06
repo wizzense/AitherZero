@@ -76,6 +76,17 @@ function Set-ModuleConfiguration {
             # Save updated configuration
             Save-ConfigurationStore
             
+            # Publish configuration change event
+            $eventData = @{
+                ModuleName = $ModuleName
+                Environment = $Environment
+                ConfigurationChanged = $true
+                ChangeType = if ($Merge) { "Merged" } else { "Replaced" }
+                Timestamp = Get-Date
+            }
+            
+            Publish-ConfigurationEvent -EventName "ModuleConfigurationChanged" -EventData $eventData -SourceModule "ConfigurationCore"
+            
             Write-CustomLog -Level 'SUCCESS' -Message "Configuration updated for $ModuleName in $Environment"
             return $true
         }

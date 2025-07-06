@@ -53,6 +53,53 @@ function Import-ConfigurationStore {
                     throw "Invalid configuration structure: missing required key '$key'"
                 }
             }
+            
+            # Enhanced security validation
+            Write-CustomLog -Level 'INFO' -Message "Performing security validation on imported configuration"
+            
+            # Check for potentially malicious content
+            $securityIssues = Test-ConfigurationSecurity -Configuration $importedStore
+            if ($securityIssues.Count -gt 0) {
+                Write-CustomLog -Level 'WARNING' -Message "Security issues detected in imported configuration:"
+                foreach ($issue in $securityIssues) {
+                    Write-CustomLog -Level 'WARNING' -Message "  - $issue"
+                }
+                
+                # Ask for confirmation if security issues found
+                $response = Read-Host "Security issues detected. Continue import? (y/N)"
+                if ($response -ne 'y' -and $response -ne 'Y') {
+                    throw "Import cancelled due to security concerns"
+                }
+            }
+            
+            # Validate file integrity if backup metadata exists
+            if ($importedStore.BackupMetadata) {
+                $originalHash = $importedStore.BackupMetadata.ConfigurationHash
+                if ($originalHash) {
+                    $currentHash = Get-ConfigurationHash -Configuration $importedStore.Configuration
+                    if ($currentHash -ne $originalHash) {
+                        Write-CustomLog -Level 'WARNING' -Message "Configuration hash mismatch - file may have been modified"
+                    } else {
+                        Write-CustomLog -Level 'SUCCESS' -Message "Configuration integrity verified"
+                    }
+                }
+            }
+            
+            # Validate environment consistency
+            if ($importedStore.Environments) {
+                foreach ($envName in $importedStore.Environments.Keys) {
+                    $env = $importedStore.Environments[$envName]
+                    if (-not $env.Name -or $env.Name -ne $envName) {
+                        throw "Environment name mismatch for environment '$envName'"
+                    }
+                }
+            }
+            
+            # Validate current environment exists
+            if ($importedStore.CurrentEnvironment -and 
+                -not $importedStore.Environments.ContainsKey($importedStore.CurrentEnvironment)) {
+                throw "Current environment '$($importedStore.CurrentEnvironment)' not found in environments"
+            }
         }
         
         if ($PSCmdlet.ShouldProcess($Path, "Import configuration store")) {

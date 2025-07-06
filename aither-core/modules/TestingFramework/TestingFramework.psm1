@@ -1787,7 +1787,8 @@ function Get-TemplateSubstitutions {
         $functionList = $ModuleAnalysis.ExportedFunctions | ForEach-Object { "'$_'" }
         $substitutions['EXPECTED_FUNCTIONS'] = $functionList -join ",`n                "
     } else {
-        $substitutions['EXPECTED_FUNCTIONS'] = "# TODO: Add expected function names"
+        $expectedFunctions = $ModuleAnalysis.Functions | ForEach-Object { "'$($_.Name)'" }
+        $substitutions['EXPECTED_FUNCTIONS'] = "@(" + ($expectedFunctions -join ", ") + ")"
     }
     
     # Add type-specific substitutions
@@ -1804,13 +1805,28 @@ function Get-TemplateSubstitutions {
     
     # Generate basic test content
     $substitutions['CORE_FUNCTIONALITY_TESTS'] = 'It "Should execute core functions without errors" {
-            # TODO: Add specific functionality tests
-            $true | Should -Be $true
+            $functions = Get-Command -Module $ModuleName -CommandType Function
+            $functions | Should -Not -BeNullOrEmpty
+            
+            foreach ($function in $functions) {
+                { Get-Help $function.Name } | Should -Not -Throw
+            }
         }'
     
     $substitutions['ERROR_HANDLING_TESTS'] = 'It "Should handle errors gracefully" {
-            # TODO: Add specific error handling tests
-            $true | Should -Be $true
+            $functions = Get-Command -Module $ModuleName -CommandType Function
+            
+            foreach ($function in $functions) {
+                $help = Get-Help $function.Name
+                if ($help.Parameters) {
+                    # Test with invalid parameters where possible
+                    $mandatoryParams = $help.Parameters.Parameter | Where-Object { $_.Required -eq "true" }
+                    if ($mandatoryParams) {
+                        # Test should throw when mandatory parameters are missing
+                        { & $function.Name -ErrorAction Stop } | Should -Throw
+                    }
+                }
+            }
         }'
     
     $substitutions['LOGGING_INTEGRATION_TEST'] = '$true | Should -Be $true'
@@ -1820,16 +1836,46 @@ function Get-TemplateSubstitutions {
     $substitutions['CONCURRENCY_TESTS'] = '$true | Should -Be $true'
     $substitutions['RESOURCE_CONSTRAINT_TESTS'] = '$true | Should -Be $true'
     $substitutions['EDGE_CASE_TESTS'] = 'It "Should handle edge cases properly" {
-            # TODO: Add edge case tests
-            $true | Should -Be $true
+            $functions = Get-Command -Module $ModuleName -CommandType Function
+            
+            foreach ($function in $functions) {
+                # Test with null/empty inputs where applicable
+                $help = Get-Help $function.Name
+                $stringParams = $help.Parameters.Parameter | Where-Object { $_.Type -like "*String*" -and $_.Required -eq "false" }
+                
+                foreach ($param in $stringParams) {
+                    { & $function.Name -$($param.Name) "" -ErrorAction SilentlyContinue } | Should -Not -Throw
+                }
+            }
         }'
     $substitutions['INTEGRATION_TESTS'] = 'It "Should integrate with other modules" {
-            # TODO: Add integration tests
-            $true | Should -Be $true
+            # Test module loading and basic dependencies
+            $moduleInfo = Get-Module $ModuleName
+            $moduleInfo | Should -Not -BeNullOrEmpty
+            $moduleInfo.ExportedFunctions | Should -Not -BeNullOrEmpty
+            
+            # Check if common AitherZero patterns are followed
+            $functions = Get-Command -Module $ModuleName -CommandType Function
+            $writeCustomLogAvailable = Get-Command Write-CustomLog -ErrorAction SilentlyContinue
+            if ($writeCustomLogAvailable) {
+                # Module should integrate with logging if available
+                $true | Should -Be $true
+            }
         }'
     $substitutions['REGRESSION_TESTS'] = 'It "Should not regress existing functionality" {
-            # TODO: Add regression tests
-            $true | Should -Be $true
+            # Ensure all expected functions are still exported
+            $moduleInfo = Get-Module $ModuleName
+            $exportedFunctions = $moduleInfo.ExportedFunctions.Keys
+            
+            # Basic regression check - module should have functions
+            $exportedFunctions.Count | Should -BeGreaterThan 0
+            
+            # All exported functions should be callable
+            foreach ($functionName in $exportedFunctions) {
+                $function = Get-Command $functionName -ErrorAction SilentlyContinue
+                $function | Should -Not -BeNullOrEmpty
+                $function.ModuleName | Should -Be $ModuleName
+            }
         }'
     
     return $substitutions

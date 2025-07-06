@@ -634,23 +634,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>
                         Write-ReleaseLog "Could not check PR status in recovery mode: $_" "WARNING"
                     }
                 }
-            } else {
+            }
+            
+        } else {
+            Write-Host ""
+            if ($prNumber) {
+                Write-Host "✅ Release PR ready!" -ForegroundColor Green
                 Write-Host ""
-                if ($prNumber) {
-                    Write-Host "✅ Release PR ready!" -ForegroundColor Green
-                    Write-Host ""
-                    Write-Host "Next steps:" -ForegroundColor Cyan
-                    Write-Host "  1. Review and merge PR #$prNumber`: https://github.com/wizzense/AitherZero/pulls/$prNumber"
-                    Write-Host "  2. After merge, tag v$nextVersion will be created automatically"
-                    Write-Host "  3. Build artifacts will be generated automatically"
-                } else {
-                    Write-Host "⚠️  Release preparation completed but PR creation failed" -ForegroundColor Yellow
-                    Write-Host ""
-                    Write-Host "Next steps:" -ForegroundColor Cyan
-                    Write-Host "  1. Check for existing PR: https://github.com/wizzense/AitherZero/pulls"
-                    Write-Host "  2. If no PR exists, create one manually from the release branch"
-                    Write-Host "  3. After merge, run: Invoke-ReleaseWorkflow -Version '$nextVersion' -Description '$Description' -WaitForMerge:$false"
-                }
+                Write-Host "Next steps:" -ForegroundColor Cyan
+                Write-Host "  1. Review and merge PR #$prNumber`: https://github.com/wizzense/AitherZero/pulls/$prNumber"
+                Write-Host "  2. After merge, tag v$nextVersion will be created automatically"
+                Write-Host "  3. Build artifacts will be generated automatically"
+            } else {
+                Write-Host "⚠️  Release preparation completed but PR creation failed" -ForegroundColor Yellow
+                Write-Host ""
+                Write-Host "Next steps:" -ForegroundColor Cyan
+                Write-Host "  1. Check for existing PR: https://github.com/wizzense/AitherZero/pulls"
+                Write-Host "  2. If no PR exists, create one manually from the release branch"
+                Write-Host "  3. After merge, run: Invoke-ReleaseWorkflow -Version '$nextVersion' -Description '$Description' -WaitForMerge:$false"
             }
             
         } catch {
@@ -695,6 +696,10 @@ Co-Authored-By: Claude <noreply@anthropic.com>
                 throw
             }
         }
+    }
+    
+    end {
+        # No cleanup needed for release workflow
     }
 }
 

@@ -356,20 +356,62 @@ function Execute-ParallelStep {
                     Name = $parallelStep.name
                     ScriptBlock = {
                         param($StepDef, $StepContext)
-                        # Execute the parallel step
-                        Execute-ScriptStep -Step $StepDef -Context $StepContext
+                        # Execute the parallel step based on its type
+                        switch ($StepDef.type) {
+                            'script' {
+                                # Replace parameters in command
+                                $command = $StepDef.command
+                                if ($StepContext -and $StepContext.Parameters) {
+                                    foreach ($param in $StepContext.Parameters.Keys) {
+                                        $command = $command -replace "\{\{$param\}\}", $StepContext.Parameters[$param]
+                                    }
+                                }
+                                # Execute script command
+                                $result = Invoke-Expression $command
+                                return @{
+                                    Success = $true
+                                    Output = $result
+                                    Duration = New-TimeSpan
+                                }
+                            }
+                            'module' {
+                                # Execute module function
+                                if ($StepDef.module -and $StepDef.function) {
+                                    $result = & $StepDef.function @($StepDef.parameters ?? @{})
+                                    return @{
+                                        Success = $true
+                                        Output = $result
+                                        Duration = New-TimeSpan
+                                    }
+                                } else {
+                                    return @{
+                                        Success = $false
+                                        Error = "Module or function not specified for module step"
+                                        Duration = New-TimeSpan
+                                    }
+                                }
+                            }
+                            default {
+                                return @{
+                                    Success = $false
+                                    Error = "Unsupported step type in parallel execution: $($StepDef.type)"
+                                    Duration = New-TimeSpan
+                                }
+                            }
+                        }
                     }
                     Arguments = @($parallelStep, $Context)
                 }
             }
             
+            # Execute all jobs in parallel
             $parallelResult = Start-ParallelExecution -Jobs $parallelJobs -MaxConcurrentJobs 4
             
             return @{
                 Success = $parallelResult.Success
                 Output = "Parallel execution: $($parallelResult.CompletedJobs)/$($parallelResult.TotalJobs) jobs completed"
                 Duration = (Get-Date) - $startTime
-                Error = if (-not $parallelResult.Success) { "Some parallel jobs failed" } else { $null }
+                Error = if (-not $parallelResult.Success) { "Some parallel jobs failed: $($parallelResult.Errors -join '; ')" } else { $null }
             }
         } else {
             # Fallback to PowerShell jobs

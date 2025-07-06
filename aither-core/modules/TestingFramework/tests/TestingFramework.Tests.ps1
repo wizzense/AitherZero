@@ -90,7 +90,13 @@ Describe "TestingFramework Module Tests" {
     
     Context "Test Environment" {
         It "Should initialize test environment" {
-            $tempPath = Join-Path $env:TEMP "test-framework-env"
+            $tempPath = if ($env:TEMP) {
+                Join-Path $env:TEMP "test-framework-env"
+            } elseif (Test-Path '/tmp') {
+                "/tmp/test-framework-env"
+            } else {
+                Join-Path (Get-Location) "test-framework-env"
+            }
             { Initialize-TestEnvironment -OutputPath $tempPath -TestProfile "Development" } | Should -Not -Throw
             
             Test-Path $tempPath | Should -Be $true

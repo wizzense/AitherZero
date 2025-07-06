@@ -3,7 +3,7 @@
     RootModule = 'SystemMonitoring.psm1'
     ModuleVersion = '2.0.0'
     GUID = '12345678-1234-1234-1234-123456781234'
-    Author = 'AitherZero Development Team'
+    Author = 'AitherZero Contributors'
     CompanyName = 'AitherZero'
     Copyright = '(c) 2024 AitherZero. All rights reserved.'
     Description = 'Advanced system monitoring with real-time analytics, intelligent alerting, and predictive capabilities for AitherZero infrastructure'

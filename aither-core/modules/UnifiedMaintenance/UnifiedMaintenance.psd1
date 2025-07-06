@@ -11,7 +11,7 @@
     # ID used to uniquely identify this module
     GUID = 'f47b3c1e-8d2a-4a6b-9c3f-1e2d3c4b5a67'
     
-    # Author of this module    Author = 'Aitherium Contributors'
+    # Author = 'AitherZero Contributors'
 
     # Company or vendor of this module
     CompanyName = 'Aitherium'

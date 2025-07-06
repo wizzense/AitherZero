@@ -465,15 +465,34 @@ function Get-OverallHealthStatus {
 
 function Get-SystemUptime {
     if ($IsWindows) {
-        $os = Get-CimInstance -ClassName Win32_OperatingSystem
-        $uptime = (Get-Date) - $os.LastBootUpTime
-        return "$($uptime.Days)d $($uptime.Hours)h $($uptime.Minutes)m"
+        try {
+            $os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction SilentlyContinue
+            if ($os) {
+                $uptime = (Get-Date) - $os.LastBootUpTime
+                return "$($uptime.Days)d $($uptime.Hours)h $($uptime.Minutes)m"
+            }
+        } catch {
+            Write-CustomLog -Message "Error getting Windows uptime: $($_.Exception.Message)" -Level "WARNING"
+        }
+        # Fallback for Windows
+        return "Unknown"
     } else {
-        $uptimeSeconds = [int](Get-Content /proc/uptime | ForEach-Object { $_.Split()[0] })
-        $days = [math]::Floor($uptimeSeconds / 86400)
-        $hours = [math]::Floor(($uptimeSeconds % 86400) / 3600)
-        $minutes = [math]::Floor(($uptimeSeconds % 3600) / 60)
-        return "${days}d ${hours}h ${minutes}m"
+        try {
+            if (Test-Path '/proc/uptime') {
+                $uptimeContent = Get-Content /proc/uptime -ErrorAction SilentlyContinue
+                if ($uptimeContent) {
+                    $uptimeSeconds = [int]($uptimeContent.Split()[0])
+                    $days = [math]::Floor($uptimeSeconds / 86400)
+                    $hours = [math]::Floor(($uptimeSeconds % 86400) / 3600)
+                    $minutes = [math]::Floor(($uptimeSeconds % 3600) / 60)
+                    return "${days}d ${hours}h ${minutes}m"
+                }
+            }
+        } catch {
+            Write-CustomLog -Message "Error getting Linux uptime: $($_.Exception.Message)" -Level "WARNING"
+        }
+        # Fallback for Linux/macOS
+        return "Unknown"
     }
 }
 
@@ -578,4 +597,253 @@ function Convert-SizeToGB {
         }
     }
     return 0
+}
+
+function ConvertTo-HtmlDashboard {
+    param($Data)
+    
+    $html = @"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AitherZero System Dashboard</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: white; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header { 
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            color: white; 
+            padding: 24px; 
+            text-align: center;
+        }
+        .header h1 { margin: 0; font-size: 2.5em; font-weight: 300; }
+        .header p { margin: 8px 0 0 0; opacity: 0.9; }
+        .metrics-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 24px; 
+            padding: 24px; 
+        }
+        .metric-card { 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-radius: 8px; 
+            border-left: 4px solid #4a90e2;
+            transition: transform 0.2s ease;
+        }
+        .metric-card:hover { transform: translateY(-2px); }
+        .metric-title { 
+            font-size: 1.1em; 
+            font-weight: 600; 
+            color: #333; 
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+        .metric-value { 
+            font-size: 2em; 
+            font-weight: bold; 
+            margin-bottom: 8px;
+        }
+        .metric-status { 
+            font-size: 0.9em; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-weight: 500;
+        }
+        .status-normal { background: #d4edda; color: #155724; }
+        .status-medium { background: #fff3cd; color: #856404; }
+        .status-high { background: #f8d7da; color: #721c24; }
+        .status-critical { background: #f5c6cb; color: #721c24; }
+        .health-badge { 
+            display: inline-block; 
+            padding: 8px 16px; 
+            border-radius: 20px; 
+            font-weight: 600; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .health-healthy { background: #d4edda; color: #155724; }
+        .health-warning { background: #fff3cd; color: #856404; }
+        .health-critical { background: #f8d7da; color: #721c24; }
+        .alerts-section { 
+            margin: 0 24px 24px 24px; 
+            padding: 20px; 
+            background: #fff; 
+            border-radius: 8px; 
+            border: 1px solid #e9ecef;
+        }
+        .alert-item { 
+            padding: 12px; 
+            margin: 8px 0; 
+            border-radius: 6px; 
+            border-left: 4px solid;
+        }
+        .alert-critical { background: #f8d7da; border-left-color: #dc3545; }
+        .alert-high { background: #fff3cd; border-left-color: #ffc107; }
+        .alert-medium { background: #d1ecf1; border-left-color: #17a2b8; }
+        .footer { 
+            text-align: center; 
+            padding: 20px; 
+            color: #6c757d; 
+            font-size: 0.9em;
+            background: #f8f9fa;
+        }
+        .icon { margin-right: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖥️ System Dashboard</h1>
+            <p>Generated on $($Data.Timestamp.ToString('yyyy-MM-dd HH:mm:ss')) | System: $($Data.System.ToUpper())</p>
+            <p>Uptime: $($Data.Summary.SystemUptime) | Overall Health: 
+                <span class="health-badge health-$(($Data.Summary.OverallHealth).ToLower())">$($Data.Summary.OverallHealth)</span>
+            </p>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-title">💻 CPU Performance</div>
+                <div class="metric-value" style="color: $(
+                    switch ($Data.Metrics.CPU.Status) {
+                        'Normal' { '#28a745' }
+                        'Medium' { '#ffc107' }
+                        'High' { '#fd7e14' }
+                        'Critical' { '#dc3545' }
+                        default { '#6c757d' }
+                    }
+                );">$($Data.Metrics.CPU.Usage)%</div>
+                <div class="metric-status status-$(($Data.Metrics.CPU.Status).ToLower())">$($Data.Metrics.CPU.Status)</div>
+                <p style="margin: 8px 0 0 0; color: #6c757d; font-size: 0.9em;">
+                    $($Data.Metrics.CPU.Name) | $($Data.Metrics.CPU.Cores) cores
+                </p>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-title">🧠 Memory Usage</div>
+                <div class="metric-value" style="color: $(
+                    switch ($Data.Metrics.Memory.Status) {
+                        'Normal' { '#28a745' }
+                        'Medium' { '#ffc107' }
+                        'High' { '#fd7e14' }
+                        'Critical' { '#dc3545' }
+                        default { '#6c757d' }
+                    }
+                );">$($Data.Metrics.Memory.UsagePercent)%</div>
+                <div class="metric-status status-$(($Data.Metrics.Memory.Status).ToLower())">$($Data.Metrics.Memory.Status)</div>
+                <p style="margin: 8px 0 0 0; color: #6c757d; font-size: 0.9em;">
+                    $($Data.Metrics.Memory.UsedGB) GB / $($Data.Metrics.Memory.TotalGB) GB used
+                </p>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-title">💾 Storage Overview</div>
+                <div style="margin-top: 8px;">
+"@
+
+    # Add disk information
+    foreach ($disk in $Data.Metrics.Disk) {
+        $diskColor = switch ($disk.Status) {
+            'Normal' { '#28a745' }
+            'Medium' { '#ffc107' }
+            'High' { '#fd7e14' }
+            'Critical' { '#dc3545' }
+            default { '#6c757d' }
+        }
+        
+        $html += @"
+                    <div style="margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 500;">$($disk.Drive)</span>
+                            <span style="color: $diskColor; font-weight: 600;">$($disk.UsagePercent)%</span>
+                        </div>
+                        <div style="background: #e9ecef; border-radius: 4px; height: 6px; margin-top: 4px;">
+                            <div style="background: $diskColor; width: $($disk.UsagePercent)%; height: 100%; border-radius: 4px;"></div>
+                        </div>
+                        <small style="color: #6c757d;">$($disk.UsedGB) GB / $($disk.TotalGB) GB used</small>
+                    </div>
+"@
+    }
+
+    $html += @"
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-title">🔧 Services Status</div>
+                <div class="metric-value" style="color: $(
+                    if ($Data.Summary.RunningServices -eq $Data.Summary.TotalServices) { '#28a745' } else { '#dc3545' }
+                );">$($Data.Summary.RunningServices)/$($Data.Summary.TotalServices)</div>
+                <div class="metric-status $(
+                    if ($Data.Summary.RunningServices -eq $Data.Summary.TotalServices) { 'status-normal' } else { 'status-critical' }
+                )">$(
+                    if ($Data.Summary.RunningServices -eq $Data.Summary.TotalServices) { 'All Running' } else { 'Issues Detected' }
+                )</div>
+                <p style="margin: 8px 0 0 0; color: #6c757d; font-size: 0.9em;">
+                    Critical services monitoring
+                </p>
+            </div>
+        </div>
+        
+        <div class="alerts-section">
+            <h3 style="margin-top: 0; color: #333;">🚨 Active Alerts</h3>
+"@
+
+    if ($Data.Alerts.Count -gt 0) {
+        foreach ($alert in $Data.Alerts) {
+            $alertClass = switch ($alert.Severity) {
+                'Critical' { 'alert-critical' }
+                'High' { 'alert-high' }
+                'Medium' { 'alert-medium' }
+                default { 'alert-medium' }
+            }
+            
+            $html += @"
+            <div class="alert-item $alertClass">
+                <strong>[$($alert.Severity.ToUpper())] $($alert.Type)</strong><br>
+                $($alert.Message)<br>
+                <small style="color: #6c757d;">$($alert.Timestamp.ToString('yyyy-MM-dd HH:mm:ss'))</small>
+            </div>
+"@
+        }
+    } else {
+        $html += @"
+            <div style="text-align: center; padding: 20px; color: #28a745;">
+                <strong>✅ No Active Alerts</strong><br>
+                <small style="color: #6c757d;">All systems operating normally</small>
+            </div>
+"@
+    }
+
+    $html += @"
+        </div>
+        
+        <div class="footer">
+            <p>Generated by AitherZero SystemMonitoring v2.0 | 
+               <span style="color: #007bff;">Timeframe: $($Data.Timeframe)</span> | 
+               Alerts: $($Data.Summary.CriticalAlerts) Critical
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+"@
+
+    return $html
 }

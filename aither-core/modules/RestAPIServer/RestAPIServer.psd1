@@ -3,7 +3,7 @@
     RootModule = 'RestAPIServer.psm1'
     ModuleVersion = '1.0.0'
     GUID = 'f7e8d9c0-1234-5678-9abc-def012345678'
-    Author = 'AitherZero Development Team'
+    Author = 'AitherZero Contributors'
     CompanyName = 'AitherZero'
     Copyright = '(c) 2025 AitherZero. All rights reserved.'
     Description = 'REST API server for AitherZero external system integration and automation'

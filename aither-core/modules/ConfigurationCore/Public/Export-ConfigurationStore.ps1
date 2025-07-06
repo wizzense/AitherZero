@@ -48,13 +48,34 @@ function Export-ConfigurationStore {
             }
         }
         
-        # Add export metadata
+        # Add export metadata with security information
+        $configHash = Get-ConfigurationHash -Configuration $store
+        $securityIssues = Test-ConfigurationSecurity -Configuration $store
+        
         $store.ExportMetadata = @{
             ExportedBy = $env:USERNAME
             ExportedAt = Get-Date -Format 'yyyy-MM-ddTHH:mm:ss.fffZ'
             ExportedFrom = $env:COMPUTERNAME
             Format = $Format
             Version = '1.0.0'
+            ConfigurationHash = $configHash
+            SecurityValidation = @{
+                ValidatedAt = Get-Date
+                IssuesFound = $securityIssues.Count
+                Issues = $securityIssues
+            }
+            Checksum = @{
+                Algorithm = 'SHA256'
+                Value = $configHash
+            }
+        }
+        
+        # Log security issues if found
+        if ($securityIssues.Count -gt 0) {
+            Write-CustomLog -Level 'WARNING' -Message "Security issues found in exported configuration:"
+            foreach ($issue in $securityIssues) {
+                Write-CustomLog -Level 'WARNING' -Message "  - $issue"
+            }
         }
         
         if ($PSCmdlet.ShouldProcess($Path, "Export configuration store")) {

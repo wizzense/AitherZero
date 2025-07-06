@@ -2,7 +2,7 @@
     RootModule = 'OpenTofuProvider.psm1'
     ModuleVersion = '1.2.0'
     GUID = 'a1b2c3d4-e5f6-78ab-9012-123456789abc'
-    Author = 'Aitherium Infrastructure Automation'
+    Author = 'AitherZero Contributors'
     CompanyName = 'Aitherium'
     Copyright = '(c) 2025 Aitherium. All rights reserved.'
     Description = 'PowerShell module for secure OpenTofu infrastructure automation with Taliesins Hyper-V provider integration'

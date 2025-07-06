@@ -21,7 +21,7 @@ CompatiblePSEditions = @('Desktop', 'Core')
 GUID = '12345678-90ab-cdef-1234-567890abcdef'
 
 # Author of this module
-Author = 'Aitherium Contributors'
+Author = 'AitherZero Contributors'
 
 # Company or vendor of this module
 CompanyName = 'Aitherium'

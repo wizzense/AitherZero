@@ -226,4 +226,3 @@ function Test-StartupPerformance {
     
     return [PSCustomObject]$results
 }
-}

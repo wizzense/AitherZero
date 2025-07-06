@@ -127,8 +127,16 @@ function Initialize-VSCodeWorkspace {
                             }
                         } else {
                             if ($PSCmdlet.ShouldProcess($settingsPath, "Update settings.json")) {
-                                Update-VSCodeSettings -SettingsPath $settingsPath -NewSettings $settings
-                                Write-CustomLog -Message "Updated VS Code settings.json" -Level "SUCCESS"
+                                # Create a temporary file with the recommended settings for merging
+                                $tempSettingsFile = [System.IO.Path]::GetTempFileName() + ".json"
+                                $settings | ConvertTo-Json -Depth 10 | Set-Content -Path $tempSettingsFile -Encoding UTF8
+                                
+                                try {
+                                    Update-VSCodeSettings -DefaultSettingsPath $tempSettingsFile -UserSettingsPath $settingsPath -BackupUserSettings
+                                    Write-CustomLog -Message "Updated VS Code settings.json" -Level "SUCCESS"
+                                } finally {
+                                    Remove-Item $tempSettingsFile -ErrorAction SilentlyContinue
+                                }
                             }
                         }
                     }

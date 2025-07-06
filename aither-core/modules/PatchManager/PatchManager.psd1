@@ -21,7 +21,7 @@ ModuleVersion = '3.0.0'
 GUID = '589c2577-c532-4f36-a0ab-8a221ef67690'
 
 # Author of this module
-Author = 'Aitherium Contributors'
+Author = 'AitherZero Contributors'
 
 # Company or vendor of this module
 CompanyName = 'Aitherium'

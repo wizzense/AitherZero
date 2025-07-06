@@ -2,7 +2,7 @@
     RootModule = 'SecurityAutomation.psm1'
     ModuleVersion = '1.0.0'
     GUID = 'a7b8c9d0-e1f2-3456-7890-abcdef123456'
-    Author = 'AitherZero Security Team'
+    Author = 'AitherZero Contributors'
     CompanyName = 'AitherZero Project'
     Copyright = '(c) 2025 AitherZero Project. All rights reserved.'
     Description = 'PowerShell security automation module for enterprise security management'

@@ -2,7 +2,7 @@
     RootModule = 'OrchestrationEngine.psm1'
     ModuleVersion = '1.0.0'
     GUID = 'c1d2e3f4-6a7b-8c9d-0e1f-2a3b4c5d6e7f'
-    Author = 'AitherZero Team'
+    Author = 'AitherZero Contributors'
     CompanyName = 'AitherZero'
     Copyright = '(c) 2025 AitherZero. All rights reserved.'
     Description = 'Orchestration Engine for AitherZero - advanced workflow and playbook execution with conditional logic'

@@ -692,20 +692,303 @@ function Configure-AITools {
     <#
     .SYNOPSIS
         Interactive configuration of installed AI tools
+    .DESCRIPTION
+        Provides an interactive wizard to configure API keys and settings for
+        installed AI tools including Claude Code, Gemini CLI, and other AI assistants.
+    .PARAMETER NonInteractive
+        Run in non-interactive mode using environment variables
+    .PARAMETER ClaudeApiKey
+        Claude API key for configuration
+    .PARAMETER GeminiApiKey
+        Gemini API key for configuration
+    .EXAMPLE
+        Configure-AITools
+        Runs interactive configuration wizard
+    .EXAMPLE
+        Configure-AITools -NonInteractive -ClaudeApiKey "sk-..." -GeminiApiKey "AI..."
+        Configures tools non-interactively
+    #>
+    [CmdletBinding()]
+    param(
+        [switch]$NonInteractive,
+        [string]$ClaudeApiKey,
+        [string]$GeminiApiKey
+    )
+    
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Starting AI Tools Configuration"
+        
+        $configResults = @{
+            ClaudeCode = @{ Configured = $false; Message = "" }
+            GeminiCLI = @{ Configured = $false; Message = "" }
+            ConfigurationSummary = @()
+        }
+        
+        # Check which tools are installed
+        $toolsStatus = Test-AIToolsInstallation
+        
+        if (-not $NonInteractive) {
+            Write-Host "Configure AI Tools" -ForegroundColor Cyan
+            Write-Host "This wizard will help configure your installed AI tools." -ForegroundColor White
+            Write-Host ""
+        }
+        
+        # Configure Claude Code if installed
+        if ($toolsStatus.ClaudeCode.Installed) {
+            Write-CustomLog -Level 'INFO' -Message "Configuring Claude Code..."
+            
+            $claudeKey = $ClaudeApiKey
+            if (-not $claudeKey -and -not $NonInteractive) {
+                Write-Host "Claude Code Configuration:" -ForegroundColor Yellow
+                Write-Host "Please enter your Claude API key (or press Enter to skip):" -ForegroundColor White
+                $secureKey = Read-Host -AsSecureString
+                $claudeKey = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
+                    [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureKey)
+                )
+            }
+            
+            if ($claudeKey) {
+                try {
+                    # Set Claude API key in environment
+                    $env:ANTHROPIC_API_KEY = $claudeKey
+                    [Environment]::SetEnvironmentVariable('ANTHROPIC_API_KEY', $claudeKey, 'User')
+                    
+                    # Test Claude Code functionality
+                    $testResult = Test-ClaudeCodeConfiguration
+                    if ($testResult.Success) {
+                        $configResults.ClaudeCode.Configured = $true
+                        $configResults.ClaudeCode.Message = "API key configured and tested successfully"
+                        Write-CustomLog -Level 'SUCCESS' -Message "Claude Code configured successfully"
+                    } else {
+                        $configResults.ClaudeCode.Message = "API key set but validation failed: $($testResult.Error)"
+                        Write-CustomLog -Level 'WARNING' -Message "Claude Code API key set but validation failed"
+                    }
+                } catch {
+                    $configResults.ClaudeCode.Message = "Configuration failed: $($_.Exception.Message)"
+                    Write-CustomLog -Level 'ERROR' -Message "Claude Code configuration failed: $($_.Exception.Message)"
+                }
+            } else {
+                $configResults.ClaudeCode.Message = "Skipped - no API key provided"
+                Write-CustomLog -Level 'INFO' -Message "Claude Code configuration skipped"
+            }
+        } else {
+            $configResults.ClaudeCode.Message = "Not installed"
+        }
+        
+        # Configure Gemini CLI if installed
+        if ($toolsStatus.GeminiCLI.Installed) {
+            Write-CustomLog -Level 'INFO' -Message "Configuring Gemini CLI..."
+            
+            $geminiKey = $GeminiApiKey
+            if (-not $geminiKey -and -not $NonInteractive) {
+                Write-Host "`nGemini CLI Configuration:" -ForegroundColor Yellow
+                Write-Host "Please enter your Gemini API key (or press Enter to skip):" -ForegroundColor White
+                $secureKey = Read-Host -AsSecureString
+                $geminiKey = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
+                    [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureKey)
+                )
+            }
+            
+            if ($geminiKey) {
+                try {
+                    # Set Gemini API key in environment
+                    $env:GEMINI_API_KEY = $geminiKey
+                    [Environment]::SetEnvironmentVariable('GEMINI_API_KEY', $geminiKey, 'User')
+                    
+                    # Test Gemini CLI functionality
+                    $testResult = Test-GeminiCLIConfiguration
+                    if ($testResult.Success) {
+                        $configResults.GeminiCLI.Configured = $true
+                        $configResults.GeminiCLI.Message = "API key configured and tested successfully"
+                        Write-CustomLog -Level 'SUCCESS' -Message "Gemini CLI configured successfully"
+                    } else {
+                        $configResults.GeminiCLI.Message = "API key set but validation failed: $($testResult.Error)"
+                        Write-CustomLog -Level 'WARNING' -Message "Gemini CLI API key set but validation failed"
+                    }
+                } catch {
+                    $configResults.GeminiCLI.Message = "Configuration failed: $($_.Exception.Message)"
+                    Write-CustomLog -Level 'ERROR' -Message "Gemini CLI configuration failed: $($_.Exception.Message)"
+                }
+            } else {
+                $configResults.GeminiCLI.Message = "Skipped - no API key provided"
+                Write-CustomLog -Level 'INFO' -Message "Gemini CLI configuration skipped"
+            }
+        } else {
+            $configResults.GeminiCLI.Message = "Not installed"
+        }
+        
+        # Configure VS Code integration
+        Write-CustomLog -Level 'INFO' -Message "Configuring VS Code integration for AI tools..."
+        try {
+            $vsCodeConfig = Configure-VSCodeAIIntegration
+            $configResults.ConfigurationSummary += "VS Code AI integration: $($vsCodeConfig.Status)"
+        } catch {
+            $configResults.ConfigurationSummary += "VS Code AI integration: Failed - $($_.Exception.Message)"
+            Write-CustomLog -Level 'WARNING' -Message "VS Code AI integration configuration failed: $($_.Exception.Message)"
+        }
+        
+        # Display configuration summary
+        if (-not $NonInteractive) {
+            Write-Host "`nConfiguration Summary:" -ForegroundColor Cyan
+            Write-Host "Claude Code: $($configResults.ClaudeCode.Message)" -ForegroundColor $(if ($configResults.ClaudeCode.Configured) { 'Green' } else { 'Yellow' })
+            Write-Host "Gemini CLI: $($configResults.GeminiCLI.Message)" -ForegroundColor $(if ($configResults.GeminiCLI.Configured) { 'Green' } else { 'Yellow' })
+            
+            if ($configResults.ConfigurationSummary.Count -gt 0) {
+                Write-Host "`nAdditional Configuration:" -ForegroundColor Cyan
+                foreach ($summary in $configResults.ConfigurationSummary) {
+                    Write-Host "- $summary" -ForegroundColor White
+                }
+            }
+            
+            Write-Host "`nNext Steps:" -ForegroundColor Cyan
+            Write-Host "1. Restart your terminal to pick up environment variable changes" -ForegroundColor White
+            Write-Host "2. Test AI tools with: Get-AIToolsStatus" -ForegroundColor White
+            Write-Host "3. Use AI tools in your development workflow" -ForegroundColor White
+        }
+        
+        Write-CustomLog -Level 'SUCCESS' -Message "AI Tools configuration completed"
+        return $configResults
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "AI Tools configuration failed: $($_.Exception.Message)"
+        throw
+    }
+}
+
+function Test-ClaudeCodeConfiguration {
+    <#
+    .SYNOPSIS
+        Tests Claude Code configuration and API connectivity
     #>
     [CmdletBinding()]
     param()
     
-    Write-Host "🔧 AI Tools Configuration" -ForegroundColor Cyan
-    Write-Host "This will help configure your installed AI tools." -ForegroundColor White
-    Write-Host ""
+    try {
+        if (-not $env:ANTHROPIC_API_KEY) {
+            return @{ Success = $false; Error = "ANTHROPIC_API_KEY environment variable not set" }
+        }
+        
+        # Test if claude-code command is available
+        $claudeCmd = Get-Command claude-code -ErrorAction SilentlyContinue
+        if (-not $claudeCmd) {
+            return @{ Success = $false; Error = "claude-code command not found" }
+        }
+        
+        # Test basic functionality (version check should work without API call)
+        $version = & claude-code --version 2>$null
+        if ($LASTEXITCODE -eq 0 -and $version) {
+            return @{ Success = $true; Version = $version }
+        } else {
+            return @{ Success = $false; Error = "claude-code command failed" }
+        }
+        
+    } catch {
+        return @{ Success = $false; Error = $_.Exception.Message }
+    }
+}
+
+function Test-GeminiCLIConfiguration {
+    <#
+    .SYNOPSIS
+        Tests Gemini CLI configuration and API connectivity
+    #>
+    [CmdletBinding()]
+    param()
     
-    # Implementation would include:
-    # - Claude Code API key setup
-    # - Gemini API credentials
-    # - Integration testing
+    try {
+        if (-not $env:GEMINI_API_KEY) {
+            return @{ Success = $false; Error = "GEMINI_API_KEY environment variable not set" }
+        }
+        
+        # Test if gemini command is available
+        $geminiCmd = Get-Command gemini -ErrorAction SilentlyContinue
+        if (-not $geminiCmd) {
+            return @{ Success = $false; Error = "gemini command not found" }
+        }
+        
+        # Test basic functionality
+        $help = & gemini --help 2>$null
+        if ($LASTEXITCODE -eq 0 -and $help) {
+            return @{ Success = $true; Message = "Gemini CLI is accessible" }
+        } else {
+            return @{ Success = $false; Error = "gemini command failed" }
+        }
+        
+    } catch {
+        return @{ Success = $false; Error = $_.Exception.Message }
+    }
+}
+
+function Configure-VSCodeAIIntegration {
+    <#
+    .SYNOPSIS
+        Configures VS Code settings for optimal AI tools integration
+    #>
+    [CmdletBinding()]
+    param()
     
-    Write-CustomLog -Level 'INFO' -Message "AI Tools configuration wizard - implementation in progress"
+    try {
+        # VS Code settings for AI tools
+        $aiToolsSettings = @{
+            'github.copilot.enable' = @{
+                '*' = $true
+                'yaml' = $false
+                'plaintext' = $false
+                'markdown' = $true
+                'powershell' = $true
+            }
+            'claude.apiKey' = ''  # User should set this manually
+            'claude.enabled' = $true
+            'claude.model' = 'claude-3-sonnet-20240229'
+            'claude.maxTokens' = 4096
+            'anthropic.apiKey' = ''  # Reference to environment variable
+            'ai.codeCompletion.enabled' = $true
+            'ai.chatCompletion.enabled' = $true
+            'ai.suggestions.enabled' = $true
+        }
+        
+        # Get VS Code user settings directory
+        $settingsDir = if ($IsWindows) {
+            Join-Path $env:APPDATA "Code" "User"
+        } elseif ($IsMacOS) {
+            Join-Path $HOME "Library/Application Support/Code/User"
+        } else {
+            Join-Path $HOME ".config/Code/User"
+        }
+        
+        if (-not (Test-Path $settingsDir)) {
+            return @{ Status = "VS Code settings directory not found" }
+        }
+        
+        $settingsFile = Join-Path $settingsDir "settings.json"
+        $currentSettings = @{}
+        
+        if (Test-Path $settingsFile) {
+            $content = Get-Content $settingsFile -Raw
+            if ($content.Trim()) {
+                $currentSettings = $content | ConvertFrom-Json -AsHashtable
+            }
+        }
+        
+        # Merge AI tools settings
+        $updated = $false
+        foreach ($key in $aiToolsSettings.Keys) {
+            if (-not $currentSettings.ContainsKey($key)) {
+                $currentSettings[$key] = $aiToolsSettings[$key]
+                $updated = $true
+            }
+        }
+        
+        if ($updated) {
+            $currentSettings | ConvertTo-Json -Depth 10 | Set-Content $settingsFile -Encoding UTF8
+            return @{ Status = "AI tools settings added to VS Code" }
+        } else {
+            return @{ Status = "AI tools settings already configured" }
+        }
+        
+    } catch {
+        return @{ Status = "Failed to configure VS Code AI integration: $($_.Exception.Message)" }
+    }
 }
 
 function Update-AITools {

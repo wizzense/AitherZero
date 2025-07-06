@@ -48,7 +48,8 @@ function Invoke-PermanentCleanup {
         
         [switch]$Force
     )
-      $ErrorActionPreference = "Stop"
+    
+    $ErrorActionPreference = "Stop"
     
     try {
         # Handle different parameter sets
@@ -97,7 +98,8 @@ function Invoke-PermanentCleanup {
                 Timestamp = Get-Date
             }
         }
-          # Original project cleanup mode
+        
+        # Original project cleanup mode
         # Import LabRunner for logging
         if (Get-Module LabRunner -ErrorAction SilentlyContinue) {
             Write-CustomLog "Starting permanent cleanup process" "INFO"
@@ -162,7 +164,8 @@ function Invoke-PermanentCleanup {
         
         # Find problematic files
         $ProblematicFiles = @()
-        foreach ($Pattern in $AllPatterns) {            $Files = Get-ChildItem -Path $ProjectRoot -Recurse -File -Filter $Pattern -ErrorAction SilentlyContinue
+        foreach ($Pattern in $AllPatterns) {
+            $Files = Get-ChildItem -Path $ProjectRoot -Recurse -File -Filter $Pattern -ErrorAction SilentlyContinue
             # Exclude files in the consolidated backup directory
             $FilteredFiles = $Files | Where-Object {
                 $_.FullName -notlike "*backups/consolidated-backups*" -and
@@ -179,17 +182,20 @@ function Invoke-PermanentCleanup {
                 Message = "No problematic files found"
             }
         }
-          # Show what will be removed
+        
+        # Show what will be removed
         Write-Host "WARNING Found $($ProblematicFiles.Count) problematic files:" -ForegroundColor Yellow
         $ProblematicFiles | ForEach-Object {
             $RelativePath = $_.FullName.Replace($ProjectRoot, "").TrimStart('\', '/')
             Write-Host "  - $RelativePath" -ForegroundColor Yellow
         }
-          # Confirm operation unless Force is specified or running in non-interactive mode
+        
+        # Confirm operation unless Force is specified or running in non-interactive mode
         if (-not $Force) {
             Write-Host ""
             Write-Host "WARNING This will PERMANENTLY DELETE these files!" -ForegroundColor Red
-              # Check if we're in non-interactive mode (test environment, etc.)
+            
+            # Check if we're in non-interactive mode (test environment, etc.)
             $IsNonInteractive = ($Host.Name -eq 'Default Host') -or 
                               ([Environment]::UserInteractive -eq $false) -or
                               ($env:PESTER_RUN -eq 'true') -or
@@ -255,7 +261,8 @@ function Invoke-PermanentCleanup {
         } else {
             Write-Host "INFO $SummaryMessage" -ForegroundColor Green
         }
-          return @{
+        
+        return @{
             Success = $Errors.Count -eq 0
             FilesRemoved = $RemovedCount
             Errors = $Errors
@@ -267,7 +274,8 @@ function Invoke-PermanentCleanup {
     } catch {
         $ErrorMessage = "Permanent cleanup failed: $($_.Exception.Message)"
         if (Get-Module LabRunner -ErrorAction SilentlyContinue) {
-            Write-CustomLog $ErrorMessage "ERROR"        } else {
+            Write-CustomLog $ErrorMessage "ERROR"
+        } else {
             Write-Error $ErrorMessage
         }
         throw

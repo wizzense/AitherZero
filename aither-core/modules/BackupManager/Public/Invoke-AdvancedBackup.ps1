@@ -204,11 +204,16 @@ function Invoke-AdvancedBackup {
 
                 foreach ($file in $batch) {
                     try {
-                        # Note: Backup-SingleFile needs to be implemented or use simplified approach
+                        # Full backup processing with compression/encryption in parallel context
+                        $fileResult = Backup-SingleFile -File $file -Context $using:backupContext -EncryptionKey $using:EncryptionKey
+                        
                         $batchResult.ProcessedFiles += 1
-                        $batchResult.CompressedSize += $file.Length
-                        $batchResult.OriginalSize += $file.Length
-                        # Simplified processing for parallel context
+                        $batchResult.CompressedSize += $fileResult.CompressedSize
+                        $batchResult.OriginalSize += $fileResult.OriginalSize
+                        
+                        if ($fileResult.WasDeduped) {
+                            $batchResult.DeduplicatedFiles += 1
+                        }
                     } catch {
                         $batchResult.Errors += "Failed to backup $($file.FullName): $($_.Exception.Message)"
                     }
@@ -230,11 +235,16 @@ function Invoke-AdvancedBackup {
 
                 foreach ($file in $batch) {
                     try {
-                        # Simplified backup processing for now
+                        # Full backup processing with compression/encryption
+                        $fileResult = Backup-SingleFile -File $file -Context $using:backupContext -EncryptionKey $using:EncryptionKey
+                        
                         $batchResult.ProcessedFiles += 1
-                        $batchResult.CompressedSize += $file.Length
-                        $batchResult.OriginalSize += $file.Length
-                        # TODO: Implement full backup processing with compression/encryption
+                        $batchResult.CompressedSize += $fileResult.CompressedSize
+                        $batchResult.OriginalSize += $fileResult.OriginalSize
+                        
+                        if ($fileResult.WasDeduped) {
+                            $batchResult.DeduplicatedFiles += 1
+                        }
                     } catch {
                         $batchResult.Errors += "Failed to backup $($file.FullName): $($_.Exception.Message)"
                         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {

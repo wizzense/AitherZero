@@ -10,7 +10,7 @@
     GUID = 'B5D8F9A1-C2E3-4F6A-8B9C-1D2E3F4A5B6C'
     
     # Author of this module
-    Author = 'Aitherium Contributors'
+    Author = 'AitherZero Contributors'
     
     # Company or vendor of this module
     CompanyName = 'Aitherium'

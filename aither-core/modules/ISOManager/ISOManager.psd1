@@ -2,7 +2,7 @@
     RootModule        = 'ISOManager.psm1'
     ModuleVersion     = '2.0.0'
     GUID              = '9F8E7D6C-5B4A-3928-1756-0E9D8C7B6A59'
-    Author            = 'AitherZero Development Team'
+    Author = 'AitherZero Contributors'
     CompanyName       = 'AitherZero'
     Copyright         = '(c) 2025 AitherZero. All rights reserved.'
     Description       = 'Enterprise-grade ISO download, management, and organization module with advanced storage optimization, modern download capabilities, and comprehensive integrity validation for automated lab infrastructure deployment'

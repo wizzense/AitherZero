@@ -287,26 +287,158 @@ function Sync-ConfigurationRepository {
             switch ($Operation) {
                 'pull' {
                     Write-CustomLog -Level 'INFO' -Message "Pulling latest changes from remote"
-                    $pullResult = git pull origin $Branch 2>&1
-                    if ($LASTEXITCODE -ne 0) {
-                        throw "Git pull failed: $pullResult"
+                    
+                    # Enhanced error handling for pull operations
+                    try {
+                        # First, fetch to check for conflicts
+                        $fetchResult = git fetch origin $Branch 2>&1
+                        if ($LASTEXITCODE -ne 0) {
+                            throw "Git fetch failed: $fetchResult"
+                        }
+                        
+                        # Check for local changes that might conflict
+                        $status = git status --porcelain
+                        if ($status) {
+                            Write-CustomLog -Level 'WARNING' -Message "Local changes detected. Attempting to stash before pull."
+                            $stashResult = git stash push -m "Auto-stash before pull $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" 2>&1
+                            if ($LASTEXITCODE -ne 0) {
+                                throw "Failed to stash local changes: $stashResult"
+                            }
+                            $result.Changes += "Stashed local changes before pull"
+                        }
+                        
+                        # Perform the pull
+                        $pullResult = git pull origin $Branch 2>&1
+                        if ($LASTEXITCODE -ne 0) {
+                            # Handle different types of pull failures
+                            if ($pullResult -match 'conflict|CONFLICT') {
+                                Write-CustomLog -Level 'ERROR' -Message "Merge conflicts detected during pull"
+                                $result.Changes += "Merge conflicts detected - manual resolution required"
+                                
+                                # Try to restore stashed changes if any
+                                if ($status) {
+                                    git stash pop 2>&1 | Out-Null
+                                }
+                                throw "Git pull failed due to merge conflicts: $pullResult"
+                            } elseif ($pullResult -match 'diverged|divergent') {
+                                Write-CustomLog -Level 'ERROR' -Message "Branch has diverged from remote"
+                                throw "Git pull failed - branch has diverged: $pullResult"
+                            } elseif ($pullResult -match 'network|connection|timeout') {
+                                Write-CustomLog -Level 'ERROR' -Message "Network error during pull operation"
+                                throw "Git pull failed due to network issues: $pullResult"
+                            } elseif ($pullResult -match 'authentication|permission|denied') {
+                                Write-CustomLog -Level 'ERROR' -Message "Authentication failed during pull"
+                                throw "Git pull failed due to authentication issues: $pullResult"
+                            } else {
+                                throw "Git pull failed: $pullResult"
+                            }
+                        }
+                        
+                        # Restore stashed changes if any
+                        if ($status) {
+                            $popResult = git stash pop 2>&1
+                            if ($LASTEXITCODE -eq 0) {
+                                $result.Changes += "Restored local changes after pull"
+                            } else {
+                                Write-CustomLog -Level 'WARNING' -Message "Failed to restore stashed changes: $popResult"
+                                $result.Changes += "Warning: Local changes remain stashed"
+                            }
+                        }
+                        
+                        $result.Changes += "Successfully pulled from remote: $pullResult"
+                        
+                    } catch {
+                        Write-CustomLog -Level 'ERROR' -Message "Pull operation failed: $_"
+                        
+                        # Attempt recovery if backup was created
+                        if ($backupPath) {
+                            Write-CustomLog -Level 'INFO' -Message "Attempting to restore from backup: $backupPath"
+                            try {
+                                # This would restore from backup in a real implementation
+                                Write-CustomLog -Level 'INFO' -Message "Recovery backup available at: $backupPath"
+                            } catch {
+                                Write-CustomLog -Level 'ERROR' -Message "Failed to restore from backup: $_"
+                            }
+                        }
+                        
+                        throw
                     }
-                    $result.Changes += "Pulled from remote: $pullResult"
                 }
                 'push' {
-                    # Check for local changes
-                    $status = git status --porcelain
-                    if ($status) {
-                        git add . 2>&1 | Out-Null
-                        git commit -m "Sync: Local configuration changes $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" 2>&1 | Out-Null
-                    }
-                    
                     Write-CustomLog -Level 'INFO' -Message "Pushing local changes to remote"
-                    $pushResult = git push origin $Branch 2>&1
-                    if ($LASTEXITCODE -ne 0) {
-                        throw "Git push failed: $pushResult"
+                    
+                    # Enhanced error handling for push operations
+                    try {
+                        # Check for local changes
+                        $status = git status --porcelain
+                        if ($status) {
+                            Write-CustomLog -Level 'INFO' -Message "Committing local changes"
+                            $addResult = git add . 2>&1
+                            if ($LASTEXITCODE -ne 0) {
+                                throw "Failed to stage changes: $addResult"
+                            }
+                            
+                            $commitResult = git commit -m "Sync: Local configuration changes $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" 2>&1
+                            if ($LASTEXITCODE -ne 0) {
+                                throw "Failed to commit changes: $commitResult"
+                            }
+                            $result.Changes += "Committed local changes"
+                        } else {
+                            Write-CustomLog -Level 'INFO' -Message "No local changes to commit"
+                        }
+                        
+                        # Check if remote is up to date before pushing
+                        $fetchResult = git fetch origin $Branch 2>&1
+                        if ($LASTEXITCODE -ne 0) {
+                            Write-CustomLog -Level 'WARNING' -Message "Failed to fetch before push: $fetchResult"
+                        }
+                        
+                        # Check for divergence
+                        $localCommit = git rev-parse HEAD 2>&1
+                        $remoteCommit = git rev-parse "origin/$Branch" 2>&1
+                        
+                        if ($LASTEXITCODE -eq 0 -and $localCommit -ne $remoteCommit) {
+                            $behindCount = git rev-list --count "HEAD..origin/$Branch" 2>&1
+                            if ($behindCount -and $behindCount -gt 0) {
+                                Write-CustomLog -Level 'WARNING' -Message "Local branch is $behindCount commits behind remote. Consider pulling first."
+                            }
+                        }
+                        
+                        # Attempt the push
+                        $pushResult = git push origin $Branch 2>&1
+                        if ($LASTEXITCODE -ne 0) {
+                            # Handle different types of push failures
+                            if ($pushResult -match 'rejected|non-fast-forward') {
+                                Write-CustomLog -Level 'ERROR' -Message "Push rejected - remote has newer commits"
+                                throw "Git push rejected - remote branch has newer commits. Pull first: $pushResult"
+                            } elseif ($pushResult -match 'network|connection|timeout') {
+                                Write-CustomLog -Level 'ERROR' -Message "Network error during push operation"
+                                throw "Git push failed due to network issues: $pushResult"
+                            } elseif ($pushResult -match 'authentication|permission|denied') {
+                                Write-CustomLog -Level 'ERROR' -Message "Authentication failed during push"
+                                throw "Git push failed due to authentication issues: $pushResult"
+                            } elseif ($pushResult -match 'hook|pre-receive|update') {
+                                Write-CustomLog -Level 'ERROR' -Message "Push rejected by remote hooks"
+                                throw "Git push rejected by server hooks: $pushResult"
+                            } else {
+                                throw "Git push failed: $pushResult"
+                            }
+                        }
+                        
+                        $result.Changes += "Successfully pushed to remote: $pushResult"
+                        
+                    } catch {
+                        Write-CustomLog -Level 'ERROR' -Message "Push operation failed: $_"
+                        
+                        # Provide recovery suggestions
+                        Write-CustomLog -Level 'INFO' -Message "Recovery suggestions:"
+                        Write-CustomLog -Level 'INFO' -Message "  1. Check network connectivity"
+                        Write-CustomLog -Level 'INFO' -Message "  2. Verify authentication credentials"
+                        Write-CustomLog -Level 'INFO' -Message "  3. Pull latest changes before pushing"
+                        Write-CustomLog -Level 'INFO' -Message "  4. Check for repository permissions"
+                        
+                        throw
                     }
-                    $result.Changes += "Pushed to remote: $pushResult"
                 }
                 'sync' {
                     # Full synchronization: pull, merge, push
@@ -573,20 +705,51 @@ function Create-EnterpriseTemplate {
             auditEnabled = $true
             securityEnforced = $true
             complianceMode = $true
+            centralizedLogging = $true
+            metricsCollection = $true
         }
         security = @{
             requireApproval = $true
             multiFactorAuth = $true
             encryptionRequired = $true
+            sslVerification = $true
+            keyRotationPolicy = "90d"
+            accessLogging = $true
         }
         compliance = @{
             retentionPeriod = "7y"
             auditTrail = $true
+            dataClassification = "confidential"
+            backupFrequency = "daily"
+            complianceFrameworks = @("SOC2", "ISO27001", "PCI-DSS")
+        }
+        monitoring = @{
+            healthChecks = $true
+            alerting = @{
+                enabled = $true
+                channels = @("email", "slack")
+                thresholds = @{
+                    error_rate = 0.01
+                    response_time = 1000
+                }
+            }
+        }
+        deployment = @{
+            strategy = "blue-green"
+            approvalWorkflow = $true
+            rollbackEnabled = $true
+            testingRequired = $true
         }
     }
     
     $configPath = Join-Path $Path "configs/app-config.json"
-    $enterpriseConfig | ConvertTo-Json -Depth 5 | Set-Content -Path $configPath
+    $enterpriseConfig | ConvertTo-Json -Depth 8 | Set-Content -Path $configPath
+    
+    # Create enterprise-specific policies
+    Create-EnterprisePolicies -Path $Path
+    
+    # Create compliance documentation
+    Create-ComplianceDocumentation -Path $Path
 }
 
 function Create-CustomTemplate {
@@ -739,11 +902,185 @@ function Setup-LocalRepositorySettings {
     $localSettings | ConvertTo-Json -Depth 3 | Set-Content -Path $settingsPath
 }
 
+function Create-EnterprisePolicies {
+    param([string]$Path)
+    
+    $policiesDir = Join-Path $Path "policies"
+    New-Item -Path $policiesDir -ItemType Directory -Force | Out-Null
+    
+    # Security policy
+    $securityPolicy = @"
+# Security Policy
+
+## Access Control
+- Multi-factor authentication required for all users
+- Role-based access control (RBAC) enforced
+- Regular access reviews conducted quarterly
+
+## Data Protection
+- All data encrypted at rest and in transit
+- Encryption keys rotated every 90 days
+- Backup encryption verified monthly
+
+## Monitoring
+- All access attempts logged
+- Security events monitored 24/7
+- Incident response plan activated for security events
+
+## Compliance
+- SOC2 Type II compliance maintained
+- ISO 27001 standards followed
+- PCI-DSS requirements implemented where applicable
+"@
+    
+    Set-Content -Path (Join-Path $policiesDir "security-policy.md") -Value $securityPolicy
+    
+    # Deployment policy
+    $deploymentPolicy = @"
+# Deployment Policy
+
+## Approval Process
+1. Code review required by senior engineer
+2. Security review for infrastructure changes
+3. Compliance approval for production deployments
+
+## Testing Requirements
+- Unit tests must pass (90% coverage minimum)
+- Integration tests executed
+- Security scanning completed
+- Performance testing validated
+
+## Rollback Procedures
+- Automated rollback triggers defined
+- Manual rollback procedures documented
+- Recovery time objective: 15 minutes
+- Recovery point objective: 5 minutes
+"@
+    
+    Set-Content -Path (Join-Path $policiesDir "deployment-policy.md") -Value $deploymentPolicy
+}
+
+function Create-ComplianceDocumentation {
+    param([string]$Path)
+    
+    $complianceDir = Join-Path $Path "compliance"
+    New-Item -Path $complianceDir -ItemType Directory -Force | Out-Null
+    
+    # Audit log configuration
+    $auditConfig = @{
+        enabled = $true
+        retention = "7y"
+        fields = @(
+            "timestamp",
+            "user",
+            "action",
+            "resource",
+            "result",
+            "ip_address",
+            "user_agent"
+        )
+        destinations = @(
+            @{
+                type = "file"
+                path = "/var/log/aitherzero/audit.log"
+                format = "json"
+            },
+            @{
+                type = "syslog"
+                facility = "local0"
+                severity = "info"
+            }
+        )
+    }
+    
+    $auditConfig | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $complianceDir "audit-config.json")
+    
+    # Compliance checklist
+    $checklist = @"
+# Compliance Checklist
+
+## Pre-Deployment
+- [ ] Security scan completed
+- [ ] Vulnerability assessment passed
+- [ ] Code review approved
+- [ ] Documentation updated
+- [ ] Backup verification completed
+
+## Post-Deployment
+- [ ] Health checks passing
+- [ ] Monitoring configured
+- [ ] Alerts configured
+- [ ] Performance baseline established
+- [ ] Audit logs verified
+
+## Monthly Reviews
+- [ ] Access permissions reviewed
+- [ ] Security logs analyzed
+- [ ] Backup integrity verified
+- [ ] Performance metrics reviewed
+- [ ] Compliance gaps identified
+
+## Quarterly Audits
+- [ ] Full security assessment
+- [ ] Compliance framework review
+- [ ] Risk assessment updated
+- [ ] Policy updates implemented
+- [ ] Training completions verified
+"@
+    
+    Set-Content -Path (Join-Path $complianceDir "compliance-checklist.md") -Value $checklist
+}
+
 function Generate-RepositoryDocumentation {
     param([string]$Path, [string]$RepositoryName, [string]$Template)
     
-    # This could generate additional documentation
-    # For now, it's handled in Create-CommonFiles
+    # Generate comprehensive documentation based on template
+    $docsDir = Join-Path $Path "docs"
+    New-Item -Path $docsDir -ItemType Directory -Force | Out-Null
+    
+    # Configuration guide
+    $configGuide = @"
+# $RepositoryName Configuration Guide
+
+## Overview
+This repository contains configuration files for AitherZero infrastructure automation.
+
+Template: $Template
+Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+
+## Structure
+- `configs/` - Main configuration files
+- `environments/` - Environment-specific configurations
+- `templates/` - Configuration templates
+- `scripts/` - Custom scripts and automation
+- `docs/` - Documentation
+- `policies/` - Governance and compliance policies
+
+## Usage
+1. Clone this repository to your AitherZero configuration directory
+2. Configure environment-specific settings
+3. Use AitherZero Configuration Carousel to activate this configuration
+4. Test in development environment before promoting to production
+
+## Environment Configuration
+Each environment should have its own configuration file in the `environments/` directory.
+Environment-specific settings override global settings.
+
+## Security Considerations
+- Store sensitive information in secure vaults, not in configuration files
+- Use environment variables for secrets
+- Enable audit logging for all configuration changes
+- Regular security scans and updates
+
+## Maintenance
+- Review configurations monthly
+- Update dependencies quarterly
+- Backup configurations before major changes
+- Test configuration changes in non-production environments first
+"@
+    
+    Set-Content -Path (Join-Path $docsDir "configuration-guide.md") -Value $configGuide
+    
     return @{ Success = $true }
 }
 

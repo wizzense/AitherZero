@@ -46,6 +46,17 @@ try {
     }
 }
 
+# Import private functions
+$privateFunctions = Get-ChildItem -Path "$PSScriptRoot/Private/*.ps1" -ErrorAction SilentlyContinue
+foreach ($function in $privateFunctions) {
+    try {
+        . $function.FullName
+        Write-CustomLog -Message "Loaded private function: $($function.BaseName)" -Level "DEBUG"
+    } catch {
+        Write-CustomLog -Message "Failed to load private function $($function.BaseName): $($_.Exception.Message)" -Level "ERROR"
+    }
+}
+
 # Import public functions
 $publicFunctions = Get-ChildItem -Path "$PSScriptRoot/Public/*.ps1" -ErrorAction SilentlyContinue
 foreach ($function in $publicFunctions) {

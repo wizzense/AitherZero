@@ -12,7 +12,7 @@
     GUID = 'a2b3c4d5-e6f7-8901-bcde-f23456789012'
 
     # Author of this module
-    Author = 'AitherZero Team'
+    Author = 'AitherZero Contributors'
 
     # Company or vendor of this module
     CompanyName = 'AitherZero'
