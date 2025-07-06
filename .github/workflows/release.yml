@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.2.3)'
+        required: true
+        type: string
+      release_type:
+        description: 'Release type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      description:
+        description: 'Release description'
+        required: false
+        default: 'New release'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Configure Git
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        
+    - name: Create Release Tag
+      run: |
+        git tag -a "v${{ inputs.version }}" -m "${{ inputs.description }}"
+        git push origin "v${{ inputs.version }}"
+        
+    - name: Build Packages
+      shell: pwsh
+      run: |
+        ./build/Build-Package.ps1 -Version "${{ inputs.version }}"
+        
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ inputs.version }}
+        name: Release v${{ inputs.version }}
+        body: |
+          ## ${{ inputs.description }}
+          
+          ### Installation
+          
+          Download the appropriate package for your platform below.
+          
+        files: |
+          build/output/*.zip
+          build/output/*.tar.gz
+        draft: false
+        prerelease: false

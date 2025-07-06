@@ -36,44 +36,23 @@ AitherZero is a **standalone PowerShell automation framework** for OpenTofu/Terr
 ./Start-AitherZero.ps1 -WhatIf
 ```
 
-### Testing Commands
+### Testing Commands - SIMPLE & FAST! 🚀
 
 ```powershell
-# Quick validation (30 seconds) - Use for rapid feedback during development
-./tests/Run-BulletproofValidation.ps1 -ValidationLevel Quick
+# Run tests (default - core functionality, <30 seconds)
+./tests/Run-Tests.ps1
 
-# Standard validation (2-5 minutes) - Use before creating PRs
-./tests/Run-BulletproofValidation.ps1 -ValidationLevel Standard
+# Test setup/installation experience
+./tests/Run-Tests.ps1 -Setup
 
-# Complete validation (10-15 minutes) - Use for release preparation
-./tests/Run-BulletproofValidation.ps1 -ValidationLevel Complete
+# Run all tests
+./tests/Run-Tests.ps1 -All
 
-# CI mode with fail-fast
-./tests/Run-BulletproofValidation.ps1 -ValidationLevel Standard -CI -FailFast
-
-# Run all module tests
-./tests/Run-AllModuleTests.ps1
-
-# Run specific module tests
-./tests/Invoke-DynamicTests.ps1 -ModuleName "PatchManager"
-./tests/Invoke-DynamicTests.ps1 -ModuleName "SetupWizard"
-./tests/Invoke-DynamicTests.ps1 -ModuleName "ProgressTracking"
-
-# Test change detection
-./tests/Test-ChangeDetection.ps1
-
-# Code coverage analysis
-./tests/Run-CodeCoverage.ps1
-
-# Launcher functionality tests
-./tests/Test-LauncherFunctionality.ps1
-
-# Performance monitoring tests
-./Test-PerformanceMonitoring.ps1
-
-# Quickstart experience testing
-./tests/Run-BulletproofValidation.ps1 -QuickstartSimulation -CrossPlatformTesting
+# CI mode (for GitHub Actions)
+./tests/Run-Tests.ps1 -All -CI
 ```
+
+That's it! No complexity, no 15-minute test runs, no confusion.
 
 ### Linting Commands
 
@@ -127,63 +106,51 @@ Import-Module ./aither-core/modules/PatchManager -Force
 Invoke-ReleaseWorkflow -ReleaseType "patch" -Description "Bug fixes"
 ```
 
-### Build Testing Commands
+### Build Commands - NO MORE PROFILES! 🎯
 
 ```powershell
-# Test build locally before release
-./build/Build-Package.ps1 -Platform "windows" -Version "test" -Profile "standard"
+# Build packages for all platforms
+./build/Build-Package.ps1
 
-# Test all profiles
-@("minimal", "standard", "development") | ForEach-Object {
-    ./build/Build-Package.ps1 -Platform "windows" -Version "test" -Profile $_
-}
+# Build for specific platform
+./build/Build-Package.ps1 -Platform windows
+./build/Build-Package.ps1 -Platform linux
+./build/Build-Package.ps1 -Platform macos
 
-# Validate build output
-./tests/Test-BuildOutput.ps1 -Platform "windows" -Profile "standard"
+# Build with specific version
+./build/Build-Package.ps1 -Version "1.2.3"
 ```
-### GitHub Actions Workflows
 
-The project uses streamlined workflows for CI/CD:
+No more profile complexity. One package per platform. Simple.
+### GitHub Actions Workflows - DEAD SIMPLE! 💯
 
-```bash
-# Intelligent CI/CD Pipeline - Main testing and validation
-# Triggers: Push to main/develop, PRs, manual dispatch
-# Features: Smart change detection, cross-platform testing, security analysis
+The project now has only 2 workflows:
 
-# Build & Release Pipeline - Package building and releases  
-# Triggers: Version tags (v*) only, manual dispatch
-# Features: Multi-profile builds (minimal/standard/development), cross-platform packages
+**1. CI (ci.yml)** - Runs tests on every push/PR
+- Triggers: Push to main/develop, all PRs
+- What it does: Runs tests on Windows/Linux/macOS
+- Runtime: ~2 minutes
 
-# Manual Release Creator - Trigger releases via UI
-# Triggers: Manual dispatch only
-# Features: Uses Invoke-ReleaseWorkflow internally, full automation
-
-# PR Auto-Labeling - Simple PR labeling
-# Triggers: PR opened/edited/synchronized
-# Features: Auto-labels PRs based on content (enhancement, bug, docs, etc.)
-
-# Documentation & Sync Pipeline - Documentation and repository sync
-# Triggers: Documentation changes, daily schedule, manual dispatch
-# Features: API documentation generation, repository synchronization
-```
+**2. Release (release.yml)** - Creates releases manually
+- Triggers: Manual dispatch only
+- What it does: Creates tag, builds packages, publishes release
+- Runtime: ~5 minutes
 
 #### Workflow Commands
 
 ```bash
-# Create a release (RECOMMENDED)
-gh workflow run "Manual Release Creator"
+# Create a release via GitHub UI
+# Go to Actions → Release → Run workflow
+# Enter version number and description
 
-# Trigger other workflows manually
-gh workflow run "Intelligent CI/CD Pipeline"
-gh workflow run "Build & Release Pipeline" 
-gh workflow run "Documentation & Sync Pipeline"
+# Or use the release script locally:
+./release.ps1
+./release.ps1 -Type minor -Description "New features"
+./release.ps1 -Type major -Description "Breaking changes"
 
-# Monitor workflow status
-gh run list --workflow="Build & Release Pipeline"
+# Monitor CI status
+gh run list --workflow=CI
 gh run watch
-
-# View workflow logs
-gh run view --log
 ```
 
 ### AI Tools Integration Commands
@@ -611,7 +578,7 @@ Access tasks via: `Ctrl+Shift+P → Tasks: Run Task`
 - Always use absolute paths with platform-agnostic construction
 - PatchManager v2.1 is consolidated to 4 core functions (now includes Sync-GitBranch)
 - PatchManager automatically syncs with remote to prevent merge conflicts
-- Bulletproof validation has four levels: Quick (30s), Standard (2-5m), Complete (10-15m), Quickstart (new user validation)
+- **NEW SIMPLE TESTING**: Just run `./tests/Run-Tests.ps1` - tests complete in <1 minute!
 - SetupWizard provides intelligent first-time setup with progress tracking and installation profiles
 - Installation profiles: minimal (infrastructure only), developer (includes AI tools), full (everything)
 - ProgressTracking module offers visual feedback for long-running operations
@@ -621,7 +588,7 @@ Access tasks via: `Ctrl+Shift+P → Tasks: Run Task`
 - AI Tools Integration automates installation and management of Claude Code, Gemini CLI, and other AI tools
 - Module manifests should specify PowerShellVersion 7.0 minimum
 - Use VS Code tasks for interactive development, command line for automation
-- Quickstart validation includes platform detection, dependency checking, and guided setup
+- **SIMPLE CI/CD**: Only 2 workflows - CI (tests) and Release (packages)
 
 ## Progressive Enhancement Methodology
 
@@ -641,11 +608,11 @@ When implementing features:
 - **Parallel operations**: Use ParallelExecution module
 - **Remote operations**: Use RemoteConnection module
 - **Infrastructure deployment**: Use OpenTofuProvider module
-- **Testing**: Use TestingFramework module with Pester
+- **Testing**: Just run `./tests/Run-Tests.ps1` - that's it!
 - **First-time setup**: Use SetupWizard module for intelligent setup
 - **Long-running operations**: Use ProgressTracking module for visual feedback
-- **New user onboarding**: Use quickstart validation and setup wizard
-- **Environment validation**: Use bulletproof validation with appropriate level
+- **New user onboarding**: Use setup wizard with installation profiles
+- **Environment validation**: Run setup tests with `./tests/Run-Tests.ps1 -Setup`
 
 ## Important Reminders
 
