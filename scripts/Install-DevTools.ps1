@@ -103,14 +103,15 @@ try {
     . "$PSScriptRoot/../aither-core/shared/Find-ProjectRoot.ps1"
     $projectRoot = Find-ProjectRoot
     $env:PROJECT_ROOT = $projectRoot
-    
+
     # Import required modules
     Import-Module (Join-Path $projectRoot "aither-core/modules/Logging") -Force
     Import-Module (Join-Path $projectRoot "aither-core/modules/DevEnvironment") -Force
-    
+
     Write-CustomLog -Level 'INFO' -Message "AitherZero Development Tools Installer started"
     Write-CustomLog -Level 'INFO' -Message "Project root: $projectRoot"
-} catch {
+}
+catch {
     Write-Warning "Could not load AitherZero modules. Running in standalone mode."
     # Define fallback Write-CustomLog function
     function global:Write-CustomLog {
@@ -128,8 +129,19 @@ try {
 
 # Platform detection
 $IsWindowsPlatform = $PSVersionTable.Platform -eq 'Win32NT' -or $PSVersionTable.PSVersion.Major -le 5
-$IsLinuxPlatform = $PSVersionTable.Platform -eq 'Unix' -and $PSVersionTable.OS -match 'Linux'
+$IsLinuxPlatform = ($PSVersionTable.Platform -eq 'Unix' -and $PSVersionTable.OS -match 'Linux') -or $IsLinux
 $IsMacOSPlatform = $PSVersionTable.Platform -eq 'Unix' -and $PSVersionTable.OS -match 'Darwin'
+
+# Additional platform detection for edge cases
+if (-not $IsWindowsPlatform -and -not $IsLinuxPlatform -and -not $IsMacOSPlatform) {
+    # Fallback detection
+    if (Test-Path '/proc/version') {
+        $IsLinuxPlatform = $true
+    }
+    elseif (Test-Path '/System/Library/CoreServices/SystemVersion.plist') {
+        $IsMacOSPlatform = $true
+    }
+}
 
 # Color functions for cross-platform output (enhanced with AitherZero logging)
 function Write-ColorMessage {
@@ -146,17 +158,19 @@ function Write-ColorMessage {
         'Cyan' { 'INFO' }
         default { 'INFO' }
     }
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Level $level -Message $Message
-    } else {
+    }
+    else {
         $colorMap = @{
             'Red' = 31; 'Green' = 32; 'Yellow' = 33; 'Blue' = 34; 'Cyan' = 36; 'White' = 37
         }
 
         if ($IsWindowsPlatform -and $Host.UI.RawUI) {
             Write-Host $Message -ForegroundColor $Color
-        } else {
+        }
+        else {
             $ansiColor = $colorMap[$Color]
             Write-Host "`e[${ansiColor}m${Message}`e[0m"
         }
@@ -194,9 +208,9 @@ function Install-DevTools {
 
     # Detect platform and show info
     $platform = if ($IsWindowsPlatform) { "Windows" }
-                elseif ($IsLinuxPlatform) { "Linux" }
-                elseif ($IsMacOSPlatform) { "macOS" }
-                else { "Unknown" }
+    elseif ($IsLinuxPlatform) { "Linux" }
+    elseif ($IsMacOSPlatform) { "macOS" }
+    else { "Unknown" }
 
     Write-ColorMessage "Platform detected: $platform" -Color 'Yellow'
     Write-ColorMessage "PowerShell version: $($PSVersionTable.PSVersion)" -Color 'Yellow'
@@ -227,7 +241,8 @@ function Install-DevTools {
         Write-Success "Development tools installation completed successfully!"
         Show-PostInstallInstructions
 
-    } catch {
+    }
+    catch {
         Write-Error "Installation failed: $($_.Exception.Message)"
         Write-Host ""
         Write-ColorMessage "For troubleshooting help, see: https://github.com/Aitherium/AitherZero/docs/troubleshooting.md" -Color 'Yellow'
@@ -237,9 +252,14 @@ function Install-DevTools {
 
 # Windows-specific installation
 function Install-WindowsDevTools {
+    [CmdletBinding(SupportsShouldProcess)]
+    param()
+
     Write-Step "Setting up development environment for Windows"
 
     try {
+        Write-CustomLog -Level 'INFO' -Message "Starting Windows development tools installation"
+
         # Check if running as administrator
         $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
         $isAdmin = $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -256,35 +276,38 @@ function Install-WindowsDevTools {
         # Use DevEnvironment module if available for WSL setup
         if (Get-Command Install-ClaudeCodeDependencies -ErrorAction SilentlyContinue) {
             Write-Step "Using AitherZero DevEnvironment module for WSL and tool setup"
-            
+
             $installParams = @{
                 WhatIf = $WhatIfPreference
-                Force = $Force
+                Force  = $Force
             }
-            
+
             if (-not $SkipWSL) {
                 $installParams['WSLUsername'] = $WSLUsername
                 if ($WSLPassword) {
                     $installParams['WSLPassword'] = $WSLPassword
                 }
-            } else {
+            }
+            else {
                 $installParams['SkipWSL'] = $true
             }
-            
+
             # Install Claude Code dependencies (includes Node.js, npm)
             Install-ClaudeCodeDependencies @installParams
-            
+
             # Install additional tools using DevEnvironment module
             if (Get-Command Install-GeminiCLIDependencies -ErrorAction SilentlyContinue) {
                 Write-Step "Installing additional development tools"
                 Install-GeminiCLIDependencies @installParams
             }
-            
-        } else {
+
+        }
+        else {
             # Fallback to manual WSL setup
             if (-not $SkipWSL) {
                 Install-WSLEnvironment
-            } else {
+            }
+            else {
                 Write-Step "Skipping WSL installation (using existing WSL)"
                 Test-WSLAvailability
             }
@@ -292,8 +315,11 @@ function Install-WindowsDevTools {
             # Call Unix installation script in WSL
             Install-ToolsInWSL
         }
-        
-    } catch {
+
+        Write-CustomLog -Level 'SUCCESS' -Message "Windows development tools installation completed"
+
+    }
+    catch {
         Write-CustomLog -Level 'ERROR' -Message "Windows installation failed: $($_.Exception.Message)"
         throw
     }
@@ -303,9 +329,9 @@ function Install-WindowsDevTools {
 function Install-ToolsInWSL {
     [CmdletBinding(SupportsShouldProcess)]
     param()
-    
+
     Write-Step "Installing development tools in WSL"
-    
+
     try {
         $scriptPath = Join-Path $PSScriptRoot "install-dev-tools.sh"
         if (-not (Test-Path $scriptPath)) {
@@ -324,14 +350,16 @@ function Install-ToolsInWSL {
 
             Write-CustomLog -Level 'INFO' -Message "Executing installation script in WSL: $wslScriptPath"
             wsl bash $wslScriptPath @wslArgs
-            
+
             if ($LASTEXITCODE -eq 0) {
                 Write-Success "Tools installed successfully in WSL"
-            } else {
+            }
+            else {
                 throw "WSL installation script failed with exit code: $LASTEXITCODE"
             }
         }
-    } catch {
+    }
+    catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to install tools in WSL: $($_.Exception.Message)"
         throw
     }
@@ -339,28 +367,38 @@ function Install-ToolsInWSL {
 
 # Linux-specific installation
 function Install-LinuxDevTools {
+    [CmdletBinding(SupportsShouldProcess)]
+    param()
+
     Write-Step "Setting up development environment for Linux"
 
     try {
+        Write-CustomLog -Level 'INFO' -Message "Starting Linux development tools installation"
+
         # Use DevEnvironment module if available
         if (Get-Command Install-ClaudeCodeDependencies -ErrorAction SilentlyContinue) {
             Write-Step "Using AitherZero DevEnvironment module for tool installation"
-            
+
             $installParams = @{
                 WhatIf = $WhatIfPreference
-                Force = $Force
+                Force  = $Force
             }
-            
+
             Install-ClaudeCodeDependencies @installParams
-            
+
             # Install PowerShell 7 on Linux
             Install-PowerShellLinux
-            
-        } else {
+
+        }
+        else {
             # Fallback to shell script
             Install-ToolsWithShellScript
         }
-    } catch {
+
+        Write-CustomLog -Level 'SUCCESS' -Message "Linux development tools installation completed"
+
+    }
+    catch {
         Write-CustomLog -Level 'ERROR' -Message "Linux installation failed: $($_.Exception.Message)"
         throw
     }
@@ -370,10 +408,12 @@ function Install-LinuxDevTools {
 function Install-MacOSDevTools {
     [CmdletBinding(SupportsShouldProcess)]
     param()
-    
+
     Write-Step "Setting up development environment for macOS"
 
     try {
+        Write-CustomLog -Level 'INFO' -Message "Starting macOS development tools installation"
+
         # Install Homebrew if not present
         if (-not (Get-Command brew -ErrorAction SilentlyContinue)) {
             Write-Step "Installing Homebrew"
@@ -381,26 +421,32 @@ function Install-MacOSDevTools {
                 $installScript = Invoke-RestMethod -Uri "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"
                 bash -c $installScript
             }
-        } else {
+        }
+        else {
             Write-Success "Homebrew already installed"
         }
 
         # Use DevEnvironment module if available
         if (Get-Command Install-ClaudeCodeDependencies -ErrorAction SilentlyContinue) {
             Write-Step "Using AitherZero DevEnvironment module for tool installation"
-            
+
             $installParams = @{
                 WhatIf = $WhatIfPreference
-                Force = $Force
+                Force  = $Force
             }
-            
+
             Install-ClaudeCodeDependencies @installParams
-            
-        } else {
+
+        }
+        else {
             # Fallback to shell script
             Install-ToolsWithShellScript
         }
-    } catch {
+
+        Write-CustomLog -Level 'SUCCESS' -Message "macOS development tools installation completed"
+
+    }
+    catch {
         Write-CustomLog -Level 'ERROR' -Message "macOS installation failed: $($_.Exception.Message)"
         throw
     }
@@ -410,7 +456,7 @@ function Install-MacOSDevTools {
 function Install-PowerShellWindows {
     [CmdletBinding(SupportsShouldProcess)]
     param()
-    
+
     Write-Step "Installing PowerShell 7 on Windows host"
 
     if ($PSCmdlet.ShouldProcess("PowerShell 7", "Install on Windows")) {
@@ -435,7 +481,8 @@ function Install-PowerShellWindows {
             Remove-Item $tempPath -Force -ErrorAction SilentlyContinue
             Write-Success "PowerShell 7 installed successfully"
 
-        } catch {
+        }
+        catch {
             Write-Warning "Failed to install PowerShell 7 on Windows: $($_.Exception.Message)"
             Write-ColorMessage "You can manually install from: https://github.com/PowerShell/PowerShell/releases" -Color 'Yellow'
         }
@@ -446,9 +493,9 @@ function Install-PowerShellWindows {
 function Install-PowerShellLinux {
     [CmdletBinding(SupportsShouldProcess)]
     param()
-    
+
     Write-Step "Installing PowerShell 7 on Linux"
-    
+
     if ($PSCmdlet.ShouldProcess("PowerShell 7", "Install on Linux")) {
         try {
             # Check if already installed
@@ -462,9 +509,9 @@ function Install-PowerShellLinux {
             if (Test-Path '/etc/os-release') {
                 $osInfo = Get-Content '/etc/os-release' | ConvertFrom-StringData
                 $distro = $osInfo.ID.ToLower()
-                
+
                 Write-CustomLog -Level 'INFO' -Message "Detected Linux distribution: $distro"
-                
+
                 switch ($distro) {
                     'ubuntu' {
                         Write-CustomLog -Level 'INFO' -Message "Installing PowerShell 7 on Ubuntu..."
@@ -493,10 +540,11 @@ sudo dnf install -y powershell
                     }
                 }
             }
-            
+
             Write-Success "PowerShell 7 installation completed"
-            
-        } catch {
+
+        }
+        catch {
             Write-Warning "Failed to install PowerShell 7 on Linux: $($_.Exception.Message)"
             Write-CustomLog -Level 'WARN' -Message "You can manually install from: https://github.com/PowerShell/PowerShell/releases"
         }
@@ -507,7 +555,7 @@ sudo dnf install -y powershell
 function Install-WSLEnvironment {
     [CmdletBinding(SupportsShouldProcess)]
     param()
-    
+
     Write-Step "Installing and configuring WSL2 with Ubuntu"
 
     if ($PSCmdlet.ShouldProcess("WSL2", "Install and configure")) {
@@ -546,7 +594,7 @@ function Install-WSLEnvironment {
 function Set-WSLUser {
     [CmdletBinding(SupportsShouldProcess)]
     param()
-    
+
     Write-Step "Configuring WSL user: $WSLUsername"
 
     if ($PSCmdlet.ShouldProcess("WSL user", "Configure")) {
@@ -554,11 +602,12 @@ function Set-WSLUser {
             [Runtime.InteropServices.Marshal]::PtrToStringAuto(
                 [Runtime.InteropServices.Marshal]::SecureStringToBSTR($WSLPassword)
             )
-        } else {
+        }
+        else {
             Read-Host -Prompt "Enter password for WSL user '$WSLUsername'" -AsSecureString |
-                ForEach-Object { [Runtime.InteropServices.Marshal]::PtrToStringAuto(
+            ForEach-Object { [Runtime.InteropServices.Marshal]::PtrToStringAuto(
                     [Runtime.InteropServices.Marshal]::SecureStringToBSTR($_)
-                )}
+                ) }
         }
 
         # Create user in WSL
@@ -587,10 +636,12 @@ function Test-WSLAvailability {
             Write-Success "WSL is available and configured"
             $distributions = wsl --list --quiet
             Write-ColorMessage "Available distributions: $($distributions -join ', ')" -Color 'Yellow'
-        } else {
+        }
+        else {
             throw "WSL is not properly configured"
         }
-    } catch {
+    }
+    catch {
         throw "WSL is not available. Please install WSL first or run without -SkipWSL."
     }
 }
@@ -599,7 +650,7 @@ function Test-WSLAvailability {
 function New-UnixInstallScript {
     [CmdletBinding()]
     param()
-    
+
     $scriptPath = Join-Path $PSScriptRoot "install-dev-tools.sh"
 
     if (Test-Path $scriptPath) {
@@ -621,9 +672,9 @@ function New-UnixInstallScript {
 function Install-ToolsWithShellScript {
     [CmdletBinding(SupportsShouldProcess)]
     param()
-    
+
     Write-Step "Installing tools using shell script"
-    
+
     $scriptPath = Join-Path $PSScriptRoot "install-dev-tools.sh"
     if (-not (Test-Path $scriptPath)) {
         Write-CustomLog -Level 'WARN' -Message "Creating Unix installation script..."
@@ -639,10 +690,11 @@ function Install-ToolsWithShellScript {
 
         Write-CustomLog -Level 'INFO' -Message "Executing installation script: $scriptPath"
         & bash @bashArgs
-        
+
         if ($LASTEXITCODE -eq 0) {
             Write-Success "Tools installed successfully"
-        } else {
+        }
+        else {
             throw "Installation script failed with exit code: $LASTEXITCODE"
         }
     }
@@ -687,7 +739,8 @@ function Show-PostInstallInstructions {
 # Execute main function
 try {
     Install-DevTools
-} catch {
+}
+catch {
     Write-Error "Script execution failed: $($_.Exception.Message)"
     exit 1
 }
