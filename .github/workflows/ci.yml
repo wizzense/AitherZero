@@ -116,10 +116,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup PowerShell
-      uses: PowerShell/setup-powershell@v1
-      with:
-        version: ${{ env.PSCORE_VERSION }}
+    # PowerShell is pre-installed on GitHub runners
         
     - name: Cache PowerShell modules
       uses: actions/cache@v4
@@ -319,10 +316,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup PowerShell
-      uses: PowerShell/setup-powershell@v1
-      with:
-        version: ${{ matrix.pwsh_version }}
+    # PowerShell is pre-installed on GitHub runners
         
     - name: Cache dependencies
       uses: actions/cache@v4
@@ -499,10 +493,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup PowerShell
-      uses: PowerShell/setup-powershell@v1
-      with:
-        version: ${{ env.PSCORE_VERSION }}
+    # PowerShell is pre-installed on GitHub runners
         
     - name: Test build process
       shell: pwsh

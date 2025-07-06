@@ -58,10 +58,7 @@ jobs:
       with:
         fetch-depth: 0
         
-    - name: Setup PowerShell
-      uses: PowerShell/setup-powershell@v1
-      with:
-        version: ${{ env.PSCORE_VERSION }}
+    # PowerShell is pre-installed on GitHub runners
         
     - name: Check existing state files
       id: check
@@ -145,10 +142,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         
-    - name: Setup PowerShell
-      uses: PowerShell/setup-powershell@v1
-      with:
-        version: ${{ env.PSCORE_VERSION }}
+    # PowerShell is pre-installed on GitHub runners
         
     - name: Cache audit state
       uses: actions/cache@v4
@@ -269,10 +263,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup PowerShell
-      uses: PowerShell/setup-powershell@v1
-      with:
-        version: ${{ env.PSCORE_VERSION }}
+    # PowerShell is pre-installed on GitHub runners
         
     - name: Cache audit state
       uses: actions/cache@v4
@@ -418,10 +409,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup PowerShell
-      uses: PowerShell/setup-powershell@v1
-      with:
-        version: ${{ env.PSCORE_VERSION }}
+    # PowerShell is pre-installed on GitHub runners
         
     - name: Detect duplicate files
       shell: pwsh
@@ -480,9 +468,17 @@ jobs:
         path: audit-reports
         
     - name: Generate unified summary
+      env:
+        AUDIT_SCOPE: ${{ needs.audit-initialization.outputs.audit-scope }}
+        DOC_STATUS: ${{ needs.documentation-audit.result }}
+        TEST_STATUS: ${{ needs.testing-audit.result }}
+        DUP_STATUS: ${{ needs.duplicate-detection.result }}
       shell: pwsh
       run: |
         Write-Host "📋 Generating unified audit summary..." -ForegroundColor Cyan
+        
+        # Parse audit scope safely
+        $auditScope = $env:AUDIT_SCOPE | ConvertFrom-Json
         
         $summary = @{
           auditDate = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
@@ -491,19 +487,19 @@ jobs:
           eventName = "${{ github.event_name }}"
           results = @{
             documentation = @{
-              status = '${{ needs.documentation-audit.result }}'
-              executed = '${{ fromJson(needs.audit-initialization.outputs.audit-scope).documentation }}'
+              status = $env:DOC_STATUS
+              executed = $auditScope.documentation
             }
             testing = @{
-              status = '${{ needs.testing-audit.result }}'
-              executed = '${{ fromJson(needs.audit-initialization.outputs.audit-scope).testing }}'
-              grade = "${{ env.AUDIT_GRADE }}"
-              score = "${{ env.AUDIT_SCORE }}"
-              coverage = "${{ env.COVERAGE_PERCENT }}"
+              status = $env:TEST_STATUS
+              executed = $auditScope.testing
+              grade = $env:AUDIT_GRADE
+              score = $env:AUDIT_SCORE
+              coverage = $env:COVERAGE_PERCENT
             }
             duplicates = @{
-              status = '${{ needs.duplicate-detection.result }}'
-              executed = '${{ fromJson(needs.audit-initialization.outputs.audit-scope).duplicates }}'
+              status = $env:DUP_STATUS
+              executed = $auditScope.duplicates
             }
           }
         }

@@ -72,10 +72,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup PowerShell
-      uses: PowerShell/setup-powershell@v1
-      with:
-        version: '7.4.5'
+    # PowerShell is pre-installed on GitHub runners
         
     - name: Scan PowerShell module dependencies
       shell: pwsh
