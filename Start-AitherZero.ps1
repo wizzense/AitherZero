@@ -1,7 +1,46 @@
-# AitherZero Launcher Script
-#
-# This is the main entry point for AitherZero infrastructure automation framework.
-# It delegates to the core application while providing a consistent interface.
+#Requires -Version 7.0
+
+<#
+.SYNOPSIS
+    AitherZero Infrastructure Automation Framework Launcher
+
+.DESCRIPTION
+    This is the main entry point for AitherZero infrastructure automation framework.
+    It delegates to the core application while providing a consistent interface.
+
+.PARAMETER Auto
+    Run in automatic mode without user interaction
+
+.PARAMETER Scripts
+    Comma-separated list of scripts to run
+
+.PARAMETER Setup
+    Run first-time setup wizard
+
+.PARAMETER InstallationProfile
+    Installation profile: minimal, developer, full, or interactive
+
+.PARAMETER WhatIf
+    Preview mode - show what would be done without making changes
+
+.PARAMETER Help
+    Show help information
+
+.PARAMETER NonInteractive
+    Run in non-interactive mode (no prompts)
+
+.EXAMPLE
+    ./Start-AitherZero.ps1
+    # Run in interactive mode
+
+.EXAMPLE
+    ./Start-AitherZero.ps1 -Setup -InstallationProfile developer
+    # Run setup wizard with developer profile
+
+.EXAMPLE
+    ./Start-AitherZero.ps1 -Auto -Scripts "LabRunner,BackupManager"
+    # Run specific scripts in automatic mode
+#>
 
 [CmdletBinding()]
 param(
