@@ -1,46 +1,518 @@
-# ModuleCommunication Module v2.0
+# ModuleCommunication Module v2.0.0
 
-The ModuleCommunication module provides enterprise-grade inter-module communication for the AitherZero platform with comprehensive security, fault tolerance, and monitoring capabilities.
+## Module Overview
+
+The ModuleCommunication module serves as the **central nervous system** of the AitherZero platform, providing enterprise-grade inter-module communication capabilities. It implements a sophisticated messaging architecture with pub/sub patterns, unified API registry, event-driven communication, security features, circuit breaker patterns, and comprehensive monitoring.
+
+### Core Purpose and Architecture
+
+As the backbone of inter-module communication, this module enables scalable, reliable, and secure communication between all AitherZero components through multiple communication patterns and enterprise-grade features.
+
+### What's New in v2.0.0
+
+- ✨ **Enterprise Security**: Authentication tokens, authorization scopes, and secure communication channels
+- 🛡️ **Circuit Breaker Patterns**: Fault tolerance with automatic recovery and failure isolation
+- 📈 **Enhanced Monitoring**: Real-time metrics, comprehensive tracing, and health monitoring
+- 🔄 **Intelligent Retry Logic**: Exponential backoff with configurable retry attempts and error categorization
+- 🧵 **Thread-Safe Operations**: Concurrent collections and thread-safe messaging infrastructure
+- 📊 **Advanced Middleware**: Pluggable middleware pipeline for cross-cutting concerns
+- 🔍 **Message Tracing**: Detailed tracing and debugging capabilities with file logging
+- 🎛️ **Dynamic Configuration**: Flexible configuration management with runtime adjustments
+
+### Integration Points
+
+The module integrates seamlessly with all AitherZero components:
+
+- **🔧 Logging Module**: Centralized logging with structured event data and fallback support
+- **🧪 TestingFramework**: Event-driven test notifications and progress tracking
+- **📊 ProgressTracking**: Real-time progress updates via message bus
+- **🏗️ LabRunner**: Workflow orchestration and step communication
+- **🔧 PatchManager**: Git workflow events and status notifications
+- **⚙️ Configuration System**: Dynamic configuration change notifications
+- **🛡️ Security Modules**: Authentication and authorization events
+- **☁️ Cloud Integrations**: External system communication and webhooks
 
 ## 🚀 Key Features
 
 ### Core Communication
-- **Message Bus**: Channel-based pub/sub messaging with filtering and priority handling
-- **API Registry**: Unified API gateway with comprehensive middleware pipeline
-- **Event System**: Enhanced event publishing and subscription with history persistence
-- **Async Support**: Background message processing with configurable threading
+- **📡 Message Bus System**: Scalable pub/sub messaging with channel-based communication
+- **🔗 Unified API Registry**: Centralized API management with dynamic discovery and invocation
+- **⚡ Event-Driven Architecture**: Real-time event processing with broadcast and filtering capabilities
+- **🔄 Async Support**: Background message processing with configurable threading
 
-### Enterprise Features (New in v2.0)
-- **🔒 Security**: Authentication tokens, authorization scopes, secure communication
-- **⚡ Circuit Breaker**: Fault tolerance with automatic recovery and failure isolation
-- **🔄 Retry Logic**: Exponential backoff with configurable retry attempts
-- **📊 Enhanced Monitoring**: Real-time metrics, tracing, and health monitoring
-- **🛡️ Error Handling**: Comprehensive error categorization and recovery strategies
-- **🔧 Performance Optimization**: Background processing with optimized resource usage
+### Enterprise Features (v2.0.0)
+- **🔐 Security Integration**: Authentication tokens, authorization, and secure communication channels
+- **🛡️ Circuit Breaker Patterns**: Fault tolerance and resilience for distributed operations
+- **📊 Comprehensive Monitoring**: Metrics, tracing, and performance analytics
+- **🔄 Retry Logic**: Intelligent retry mechanisms with exponential backoff
+- **⚙️ Middleware Support**: Pluggable middleware for cross-cutting concerns
 
-## Architecture
+## Architecture and Communication Patterns
+
+The module implements a sophisticated messaging architecture with the following components:
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Publishers    │    │   Message Bus   │    │   Subscribers   │
+│                 │    │                 │    │                 │
+│ • Send Message  │───▶│ • Channels      │───▶│ • Handlers      │
+│ • Send Event    │    │ • Queue         │    │ • Filters       │
+│ • API Call      │    │ • Processor     │    │ • Callbacks     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+        │                       │                       │
+        │              ┌─────────────────┐              │
+        │              │   Middleware    │              │
+        │              │                 │              │
+        └──────────────▶│ • Authentication│◀─────────────┘
+                       │ • Logging       │
+                       │ • Metrics       │
+                       │ • Circuit Breaker│
+                       └─────────────────┘
+```
+
+### Communication Layers
+
+1. **Transport Layer**: Channel-based message routing with priority queues
+2. **Protocol Layer**: Message serialization and deserialization
+3. **Security Layer**: Authentication, authorization, and encryption
+4. **Application Layer**: API registry and event handling
+5. **Monitoring Layer**: Metrics collection and performance tracking
 
 ### Message Bus
-- Channel-based communication
-- Message filtering and routing
-- Priority-based delivery
-- Message expiration (TTL)
-- Background processor thread
+- **Channel-based communication** with isolated message routing
+- **Message filtering and routing** with type-based and custom filters
+- **Priority-based delivery** (Low, Normal, High) with queue management
+- **Message expiration (TTL)** to prevent stale message processing
+- **Background processor thread** for asynchronous message handling
 
 ### API Registry
-- Centralized API registration
-- Parameter validation
-- Middleware pipeline
-- Async execution support
-- Performance tracking
+- **Centralized API registration** with automatic discovery
+- **Parameter validation** and type checking
+- **Middleware pipeline** for cross-cutting concerns
+- **Async execution support** with timeout management
+- **Performance tracking** and metrics collection
 
 ### Event System
-- Built on message bus
-- Event history persistence
-- Channel broadcasting
-- Wildcard subscriptions
+- **Built on message bus** infrastructure for consistency
+- **Event history persistence** with configurable retention
+- **Channel broadcasting** and targeted delivery
+- **Wildcard subscriptions** for pattern-based event handling
 
-## Usage
+## Directory Structure
+
+```
+ModuleCommunication/
+├── ModuleCommunication.psd1         # Module manifest with 34 exported functions
+├── ModuleCommunication.psm1         # Core module initialization and message processor
+├── Public/                          # 34 exported functions organized by functionality
+│   ├── Message Bus Functions/
+│   │   ├── Send-ModuleMessage.ps1
+│   │   ├── Register-ModuleMessageHandler.ps1
+│   │   ├── Unsubscribe-ModuleMessage.ps1
+│   │   ├── Get-MessageSubscriptions.ps1
+│   │   └── Clear-MessageQueue.ps1
+│   ├── Channel Management/
+│   │   ├── New-MessageChannel.ps1
+│   │   ├── Remove-MessageChannel.ps1
+│   │   ├── Get-MessageChannels.ps1
+│   │   └── Test-MessageChannel.ps1
+│   ├── API Registry/
+│   │   ├── Register-ModuleAPI.ps1
+│   │   ├── Unregister-ModuleAPI.ps1
+│   │   ├── Invoke-ModuleAPI.ps1
+│   │   ├── Get-ModuleAPIs.ps1
+│   │   └── Test-ModuleAPI.ps1
+│   ├── Event System/
+│   │   ├── Send-ModuleEvent.ps1
+│   │   ├── Register-ModuleEventHandler.ps1
+│   │   ├── Unsubscribe-ModuleEvent.ps1
+│   │   ├── Get-ModuleEvents.ps1
+│   │   └── Clear-EventHistory.ps1
+│   ├── Security/
+│   │   ├── Enable-CommunicationSecurity.ps1
+│   │   ├── New-AuthenticationToken.ps1
+│   │   └── Revoke-AuthenticationToken.ps1
+│   ├── Middleware/
+│   │   ├── Add-APIMiddleware.ps1
+│   │   ├── Remove-APIMiddleware.ps1
+│   │   └── Get-APIMiddleware.ps1
+│   ├── Circuit Breaker/
+│   │   ├── Get-CircuitBreakerStatus.ps1
+│   │   └── Reset-CircuitBreaker.ps1
+│   ├── Monitoring/
+│   │   ├── Get-CommunicationMetrics.ps1
+│   │   ├── Reset-CommunicationMetrics.ps1
+│   │   ├── Enable-MessageTracing.ps1
+│   │   └── Disable-MessageTracing.ps1
+│   └── Utilities/
+│       ├── Test-ModuleCommunication.ps1
+│       ├── Test-CommunicationSystem.ps1
+│       ├── Get-CommunicationStatus.ps1
+│       ├── Start-MessageProcessor.ps1
+│       └── Stop-MessageProcessor.ps1
+├── Private/                         # Internal helper functions
+│   ├── Initialize-MessageProcessor.ps1
+│   ├── Invoke-WithCircuitBreaker.ps1
+│   ├── Test-APIParameters.ps1
+│   └── Test-AuthenticationToken.ps1
+├── tests/                           # Comprehensive test suite
+│   └── ModuleCommunication.Tests.ps1
+└── README.md                        # This comprehensive documentation
+```
+
+## Function Documentation
+
+### Message Bus Functions
+
+#### Send-ModuleMessage
+Sends messages to specific channels with priority and TTL support.
+
+**Parameters:**
+- `Channel` (string, required): Target communication channel
+- `MessageType` (string, required): Message type for filtering
+- `Data` (object, required): Message payload
+- `SourceModule` (string): Source module name (auto-detected)
+- `Priority` (string): Message priority ('Low', 'Normal', 'High')
+- `TimeToLive` (int): Message expiration time in seconds
+
+**Returns:** Message ID string
+
+**Example:**
+```powershell
+# Send configuration change notification
+$messageId = Send-ModuleMessage -Channel "Configuration" `
+    -MessageType "ConfigChanged" `
+    -Data @{
+        Module = "LabRunner"
+        Setting = "MaxJobs"
+        OldValue = 5
+        NewValue = 10
+    } `
+    -Priority "High" `
+    -TimeToLive 300
+```
+
+#### Register-ModuleMessageHandler
+Registers message handlers for specific channels and message types.
+
+**Parameters:**
+- `Channel` (string, required): Channel to subscribe to
+- `MessageType` (string): Filter by message type (supports wildcards)
+- `Handler` (scriptblock, required): Handler function
+- `ModuleName` (string): Subscribing module name
+- `Priority` (string): Handler priority for ordering
+
+**Returns:** Subscription ID
+
+**Example:**
+```powershell
+# Register configuration change handler
+$subscriptionId = Register-ModuleMessageHandler -Channel "Configuration" `
+    -MessageType "ConfigChanged" `
+    -Handler {
+        param($Message)
+        Write-Host "Configuration changed: $($Message.Data.Setting)"
+        Update-ModuleConfiguration -Setting $Message.Data.Setting -Value $Message.Data.NewValue
+    } `
+    -ModuleName "LabRunner"
+```
+
+### API Registry Functions
+
+#### Register-ModuleAPI
+Registers module APIs for unified access through the communication system.
+
+**Parameters:**
+- `ModuleName` (string, required): Module name registering the API
+- `APIName` (string, required): API operation name
+- `Handler` (scriptblock, required): API implementation
+- `Description` (string): API description
+- `Parameters` (hashtable): Parameter definitions
+- `RequiresAuth` (bool): Authentication requirement
+- `Middleware` (scriptblock[]): Custom middleware
+
+**Returns:** API registration details
+
+**Example:**
+```powershell
+# Register lab execution API
+Register-ModuleAPI -ModuleName "LabRunner" `
+    -APIName "ExecuteStep" `
+    -Handler {
+        param($StepName, $Parameters)
+        try {
+            $result = Invoke-LabStep -Name $StepName -Parameters $Parameters
+            return @{
+                Success = $true
+                Data = $result
+                ExecutionTime = $executionTime
+            }
+        } catch {
+            return @{
+                Success = $false
+                Error = $_.Exception.Message
+                ExecutionTime = $executionTime
+            }
+        }
+    } `
+    -Description "Execute a lab step with parameters" `
+    -Parameters @{
+        StepName = @{
+            Type = "string"
+            Required = $true
+            Description = "Name of the step to execute"
+        }
+        Parameters = @{
+            Type = "hashtable"
+            Required = $false
+            Description = "Step execution parameters"
+        }
+    } `
+    -RequiresAuth $true
+```
+
+#### Invoke-ModuleAPI
+Invokes registered module APIs with automatic retry and circuit breaker protection.
+
+**Parameters:**
+- `APIName` (string, required): Full API name (Module.API)
+- `Parameters` (hashtable): API parameters
+- `TimeoutSeconds` (int): API call timeout
+- `RetryCount` (int): Number of retry attempts
+- `AuthToken` (string): Authentication token
+
+**Returns:** API response object
+
+**Example:**
+```powershell
+# Invoke lab execution API
+$response = Invoke-ModuleAPI -APIName "LabRunner.ExecuteStep" `
+    -Parameters @{
+        StepName = "CreateVM"
+        Parameters = @{
+            VMName = "TestVM01"
+            Template = "Windows2022"
+            CPUs = 2
+            Memory = "4GB"
+        }
+    } `
+    -TimeoutSeconds 300 `
+    -RetryCount 3
+
+if ($response.Success) {
+    Write-Host "Step executed successfully: $($response.Data.Result)"
+} else {
+    Write-Error "Step execution failed: $($response.Error)"
+}
+```
+
+### Event System Functions
+
+#### Send-ModuleEvent
+Sends events with enhanced channel support and persistence.
+
+**Parameters:**
+- `EventName` (string, required): Event name
+- `EventData` (object, required): Event payload
+- `Channel` (string): Event channel (default: 'Events')
+- `Broadcast` (switch): Send to all channels
+- `Persist` (switch): Store in event history
+
+**Returns:** Event ID
+
+**Example:**
+```powershell
+# Send lab completion event
+Send-ModuleEvent -EventName "LabCompleted" `
+    -EventData @{
+        LabName = "Windows2022-Setup"
+        Status = "Success"
+        Duration = "00:15:30"
+        CreatedVMs = @("VM01", "VM02", "VM03")
+        ExecutedSteps = 12
+        Errors = @()
+    } `
+    -Channel "LabRunner" `
+    -Broadcast
+```
+
+#### Register-ModuleEventHandler
+Registers event handlers with filtering and priority support.
+
+**Parameters:**
+- `EventName` (string, required): Event name to handle
+- `Handler` (scriptblock, required): Event handler
+- `Channel` (string): Channel to monitor
+- `Filter` (scriptblock): Event filtering logic
+- `Priority` (string): Handler priority
+
+**Returns:** Subscription ID
+
+**Example:**
+```powershell
+# Register lab completion handler
+Register-ModuleEventHandler -EventName "LabCompleted" `
+    -Handler {
+        param($Event)
+        $labData = $Event.Data
+        
+        # Generate completion report
+        $report = @{
+            LabName = $labData.LabName
+            CompletedAt = $Event.Timestamp
+            Duration = $labData.Duration
+            Success = $labData.Status -eq "Success"
+            VMCount = $labData.CreatedVMs.Count
+        }
+        
+        # Send to monitoring system
+        Send-ModuleMessage -Channel "Monitoring" `
+            -MessageType "LabReport" `
+            -Data $report
+    } `
+    -Channel "LabRunner" `
+    -Filter {
+        param($Event)
+        # Only handle successful lab completions
+        return $Event.Data.Status -eq "Success"
+    }
+```
+
+### Security Functions
+
+#### Enable-CommunicationSecurity
+Enables security features for module communication.
+
+**Parameters:**
+- `AuthenticationRequired` (bool): Require authentication
+- `EncryptionLevel` (string): Encryption level ('None', 'Basic', 'Strong')
+- `TokenLifetime` (int): Token lifetime in minutes
+- `AllowedModules` (string[]): Modules allowed to communicate
+
+**Returns:** Security configuration
+
+**Example:**
+```powershell
+# Enable security for production
+Enable-CommunicationSecurity -AuthenticationRequired $true `
+    -EncryptionLevel "Strong" `
+    -TokenLifetime 60 `
+    -AllowedModules @("LabRunner", "PatchManager", "SystemMonitoring")
+```
+
+#### New-AuthenticationToken
+Creates authentication tokens for secure module communication.
+
+**Parameters:**
+- `ModuleName` (string, required): Module requesting token
+- `Permissions` (string[]): Granted permissions
+- `ExpiresInMinutes` (int): Token lifetime
+- `RefreshToken` (bool): Generate refresh token
+
+**Returns:** Authentication token object
+
+**Example:**
+```powershell
+# Create token for LabRunner
+$token = New-AuthenticationToken -ModuleName "LabRunner" `
+    -Permissions @("ExecuteSteps", "ReadConfiguration", "SendEvents") `
+    -ExpiresInMinutes 120 `
+    -RefreshToken $true
+
+# Use token for API calls
+Invoke-ModuleAPI -APIName "Configuration.GetSetting" `
+    -Parameters @{SettingName = "MaxJobs"} `
+    -AuthToken $token.AccessToken
+```
+
+### Monitoring Functions
+
+#### Get-CommunicationMetrics
+Retrieves comprehensive communication metrics and performance data.
+
+**Parameters:**
+- `ModuleName` (string): Filter by module
+- `Channel` (string): Filter by channel
+- `TimeRange` (string): Time range for metrics
+- `DetailLevel` (string): Level of detail ('Summary', 'Detailed', 'Verbose')
+
+**Returns:** Metrics object
+
+**Example:**
+```powershell
+# Get detailed metrics for last hour
+$metrics = Get-CommunicationMetrics -TimeRange "1h" -DetailLevel "Detailed"
+
+Write-Host "Total Messages: $($metrics.TotalMessages)"
+Write-Host "Success Rate: $($metrics.SuccessRate)%"
+Write-Host "Average Response Time: $($metrics.AverageResponseTime)ms"
+
+# Get module-specific metrics
+$labMetrics = Get-CommunicationMetrics -ModuleName "LabRunner" -DetailLevel "Verbose"
+```
+
+#### Enable-MessageTracing
+Enables detailed message tracing for debugging and monitoring.
+
+**Parameters:**
+- `Level` (string): Tracing level ('Basic', 'Detailed', 'Verbose')
+- `ModuleFilter` (string[]): Modules to trace
+- `ChannelFilter` (string[]): Channels to trace
+- `OutputPath` (string): Trace output path
+
+**Returns:** Tracing configuration
+
+**Example:**
+```powershell
+# Enable verbose tracing for debugging
+Enable-MessageTracing -Level "Verbose" `
+    -ModuleFilter @("LabRunner", "PatchManager") `
+    -ChannelFilter @("Configuration", "Events") `
+    -OutputPath "./logs/message-trace.log"
+```
+
+### Circuit Breaker Functions
+
+#### Get-CircuitBreakerStatus
+Retrieves circuit breaker status for fault tolerance monitoring.
+
+**Parameters:**
+- `APIName` (string): Specific API to check
+- `ModuleName` (string): Module filter
+- `IncludeHistory` (bool): Include failure history
+
+**Returns:** Circuit breaker status
+
+**Example:**
+```powershell
+# Check circuit breaker status
+$status = Get-CircuitBreakerStatus -IncludeHistory $true
+
+foreach ($api in $status.APIs) {
+    Write-Host "API: $($api.Name)"
+    Write-Host "  State: $($api.State)"
+    Write-Host "  Failure Rate: $($api.FailureRate)%"
+    Write-Host "  Next Retry: $($api.NextRetry)"
+}
+```
+
+#### Reset-CircuitBreaker
+Resets circuit breaker state for specific APIs or modules.
+
+**Parameters:**
+- `APIName` (string): API to reset
+- `ModuleName` (string): Module to reset
+- `Force` (bool): Force reset regardless of state
+
+**Returns:** Reset result
+
+**Example:**
+```powershell
+# Reset circuit breaker for problematic API
+Reset-CircuitBreaker -APIName "LabRunner.ExecuteStep" -Force $true
+```
+
+## Usage Patterns and Examples
 
 ### Message Bus
 
