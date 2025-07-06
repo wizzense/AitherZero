@@ -13,7 +13,7 @@ function New-AutounattendFile {
         [string]$OSType = 'Server2025',
 
         [Parameter(Mandatory = $false)]
-        [ValidateSet('Standard', 'Datacenter', 'Core', 'Desktop')]
+        [ValidateSet('Standard', 'Datacenter', 'Core', 'Desktop', 'Pro', 'Enterprise', 'Education')]
         [string]$Edition = 'Datacenter',
 
         [Parameter(Mandatory = $false)]

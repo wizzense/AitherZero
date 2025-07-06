@@ -104,10 +104,8 @@ function Initialize-DevelopmentEnvironment {
             # Step 3: Set up Git aliases for PatchManager integration
             Write-Step "Setting up Git aliases for PatchManager"
             try {
-
-                # TODO: Implement Set-PatchManagerAliases -Install to configure Git aliases for PatchManager integration.
-
-                Write-CustomLog "✓ Git aliases configuration skipped (not implemented)" -Level SUCCESS
+                Set-PatchManagerAliases -Install
+                Write-CustomLog "✓ Git aliases for PatchManager configured successfully" -Level SUCCESS
             } catch {
                 Write-CustomLog "⚠ Git aliases setup failed: $($_.Exception.Message)" -Level WARN
             }
@@ -115,8 +113,8 @@ function Initialize-DevelopmentEnvironment {
             # Step 4: Remove any existing emojis from project
             Write-Step "Removing emojis from project"
             try {
-                # Remove-ProjectEmojis  # Function not yet implemented
-                Write-CustomLog "✓ Project emoji cleanup skipped (not implemented)" -Level SUCCESS
+                Remove-ProjectEmojis
+                Write-CustomLog "✓ Project emoji cleanup completed" -Level SUCCESS
             } catch {
                 Write-CustomLog "⚠ Emoji removal failed: $($_.Exception.Message)" -Level WARN
             }
@@ -289,4 +287,212 @@ function Show-DevEnvironmentSummary {
     Write-CustomLog "  2. Test: Import-Module LabRunner -Force" -Level INFO
     Write-CustomLog "  3. Run: Test-DevelopmentSetup" -Level INFO
     Write-CustomLog "  4. Start developing with PatchManager for all changes" -Level INFO
+}
+
+function Set-PatchManagerAliases {
+    <#
+    .SYNOPSIS
+        Configures Git aliases to integrate with PatchManager workflows
+    
+    .DESCRIPTION
+        This function sets up convenient Git aliases that automatically use
+        PatchManager workflows instead of direct Git commands. This ensures
+        all changes go through proper patch management.
+        
+    .PARAMETER Install
+        Install the Git aliases
+        
+    .PARAMETER Remove
+        Remove the Git aliases
+        
+    .EXAMPLE
+        Set-PatchManagerAliases -Install
+        Configures Git aliases for PatchManager integration
+    #>
+    [CmdletBinding()]
+    param(
+        [switch]$Install,
+        [switch]$Remove
+    )
+    
+    # Define Git aliases that integrate with PatchManager
+    $gitAliases = @{
+        'quick-fix' = 'pwsh -Command "Import-Module PatchManager -Force; New-QuickFix"'
+        'new-feature' = 'pwsh -Command "Import-Module PatchManager -Force; New-Feature"'
+        'hotfix' = 'pwsh -Command "Import-Module PatchManager -Force; New-Hotfix"'
+        'patch' = 'pwsh -Command "Import-Module PatchManager -Force; New-Patch"'
+        'sync-branch' = 'pwsh -Command "Import-Module PatchManager -Force; Sync-GitBranch -Force"'
+        'patch-status' = 'pwsh -Command "Import-Module PatchManager -Force; Get-PatchStatus"'
+        'patch-rollback' = 'pwsh -Command "Import-Module PatchManager -Force; Invoke-PatchRollback"'
+        'safe-commit' = 'pwsh -Command "Import-Module PatchManager -Force; New-Patch -Mode Simple"'
+        'create-pr' = 'pwsh -Command "Import-Module PatchManager -Force; New-PatchPR"'
+        'cleanup-patches' = 'pwsh -Command "Import-Module PatchManager -Force; Invoke-PatchCleanup"'
+    }
+    
+    if ($Install) {
+        Write-CustomLog "Installing Git aliases for PatchManager integration..." -Level INFO
+        
+        foreach ($alias in $gitAliases.Keys) {
+            try {
+                $command = $gitAliases[$alias]
+                $result = git config --global alias.$alias $command 2>&1
+                
+                if ($LASTEXITCODE -eq 0) {
+                    Write-CustomLog "✓ Installed alias: git $alias" -Level SUCCESS
+                } else {
+                    Write-CustomLog "⚠ Failed to install alias $alias`: $result" -Level WARN
+                }
+            } catch {
+                Write-CustomLog "⚠ Error installing alias $alias`: $($_.Exception.Message)" -Level WARN
+            }
+        }
+        
+        # Add helpful information
+        Write-CustomLog "`nGit aliases configured! You can now use:" -Level INFO
+        Write-CustomLog "  git quick-fix     - For small fixes" -Level INFO
+        Write-CustomLog "  git new-feature   - For new features" -Level INFO
+        Write-CustomLog "  git hotfix        - For urgent fixes" -Level INFO
+        Write-CustomLog "  git patch         - For general patches" -Level INFO
+        Write-CustomLog "  git sync-branch   - To sync with remote" -Level INFO
+        Write-CustomLog "  git patch-status  - Check patch status" -Level INFO
+        Write-CustomLog "  git safe-commit   - Safe commit without branching" -Level INFO
+        Write-CustomLog "  git create-pr     - Create pull request" -Level INFO
+        
+    } elseif ($Remove) {
+        Write-CustomLog "Removing Git aliases for PatchManager..." -Level INFO
+        
+        foreach ($alias in $gitAliases.Keys) {
+            try {
+                git config --global --unset alias.$alias 2>$null
+                Write-CustomLog "✓ Removed alias: git $alias" -Level SUCCESS
+            } catch {
+                Write-CustomLog "⚠ Could not remove alias $alias (may not exist)" -Level WARN
+            }
+        }
+    } else {
+        Write-CustomLog "Please specify -Install or -Remove parameter" -Level WARN
+    }
+}
+
+function Remove-ProjectEmojis {
+    <#
+    .SYNOPSIS
+        Removes emojis from project files and replaces with professional language
+    
+    .DESCRIPTION
+        This function scans all project files for emoji usage and replaces them
+        with appropriate professional language. Helps maintain code standards.
+        
+    .PARAMETER WhatIf
+        Show what would be changed without making changes
+        
+    .EXAMPLE
+        Remove-ProjectEmojis
+        Removes all emojis from project files
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param(
+        [switch]$WhatIf
+    )
+    
+    # Define emoji patterns and their professional replacements
+    $emojiReplacements = @{
+        '🚀' = 'Launch'
+        '✅' = 'Success:'
+        '❌' = 'Error:'
+        '⚠️' = 'Warning:'
+        '🔧' = 'Configure'
+        '📦' = 'Package'
+        '🔍' = 'Analyze'
+        '💡' = 'Info:'
+        '🎯' = 'Target'
+        '🛠️' = 'Tools'
+        '📊' = 'Statistics'
+        '🔄' = 'Process'
+        '🧪' = 'Test'
+        '🏗️' = 'Build'
+        '🚢' = 'Deploy'
+        '🔒' = 'Secure'
+        '🌟' = 'Featured'
+        '💯' = 'Complete'
+        '🎉' = 'Celebrate'
+        '🤖' = 'AI'
+        '📝' = 'Document'
+        '🧹' = 'Cleanup'
+        '🔗' = 'Link'
+        '📋' = 'List'
+        '🔃' = 'Refresh'
+        '⭐' = 'Important'
+        '💼' = 'Business'
+        '🌐' = 'Global'
+    }
+    
+    # Find all text files in the project
+    $projectRoot = $env:PROJECT_ROOT ?? (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent)
+    $filesToProcess = Get-ChildItem -Path $projectRoot -Recurse -Include "*.ps1", "*.psm1", "*.md", "*.txt", "*.json", "*.yaml", "*.yml" |
+        Where-Object { 
+            $_.FullName -notlike "*\.git\*" -and 
+            $_.FullName -notlike "*\node_modules\*" -and
+            $_.FullName -notlike "*\backups\*" -and
+            $_.FullName -notlike "*\temp\*" -and
+            $_.FullName -notlike "*\logs\*"
+        }
+    
+    $filesModified = 0
+    $emojisReplaced = 0
+    
+    Write-CustomLog "Scanning $($filesToProcess.Count) files for emoji usage..." -Level INFO
+    
+    foreach ($file in $filesToProcess) {
+        try {
+            $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
+            if (-not $content) { continue }
+            
+            $originalContent = $content
+            $fileModified = $false
+            $fileEmojiCount = 0
+            
+            # Replace each emoji with professional text
+            foreach ($emoji in $emojiReplacements.Keys) {
+                $replacement = $emojiReplacements[$emoji]
+                if ($content -match [regex]::Escape($emoji)) {
+                    $matches = [regex]::Matches($content, [regex]::Escape($emoji))
+                    $content = $content -replace [regex]::Escape($emoji), $replacement
+                    $fileModified = $true
+                    $fileEmojiCount += $matches.Count
+                    $emojisReplaced += $matches.Count
+                }
+            }
+            
+            # Handle any remaining emoji characters (Unicode ranges)
+            $emojiPattern = '[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]'
+            if ($content -match $emojiPattern) {
+                $content = $content -replace $emojiPattern, '[EMOJI-REMOVED]'
+                $fileModified = $true
+                $fileEmojiCount++
+                $emojisReplaced++
+            }
+            
+            if ($fileModified) {
+                if ($PSCmdlet.ShouldProcess($file.FullName, "Remove emojis")) {
+                    if (-not $WhatIf) {
+                        Set-Content -Path $file.FullName -Value $content -Encoding UTF8
+                        $filesModified++
+                        Write-CustomLog "✓ Cleaned $fileEmojiCount emojis from: $($file.Name)" -Level SUCCESS
+                    } else {
+                        Write-CustomLog "WOULD CLEAN $fileEmojiCount emojis from: $($file.Name)" -Level INFO
+                    }
+                }
+            }
+            
+        } catch {
+            Write-CustomLog "⚠ Error processing file $($file.FullName): $($_.Exception.Message)" -Level WARN
+        }
+    }
+    
+    if ($emojisReplaced -gt 0) {
+        Write-CustomLog "Emoji cleanup complete: $emojisReplaced emojis replaced in $filesModified files" -Level SUCCESS
+    } else {
+        Write-CustomLog "No emojis found to remove" -Level SUCCESS
+    }
 }

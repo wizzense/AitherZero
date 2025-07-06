@@ -48,7 +48,8 @@ function Invoke-PermanentCleanup {
         
         [switch]$Force
     )
-      $ErrorActionPreference = "Stop"
+    
+    $ErrorActionPreference = "Stop"
     
     try {
         # Handle different parameter sets
@@ -97,7 +98,8 @@ function Invoke-PermanentCleanup {
                 Timestamp = Get-Date
             }
         }
-          # Original project cleanup mode
+        
+        # Original project cleanup mode
         # Import LabRunner for logging
         if (Get-Module LabRunner -ErrorAction SilentlyContinue) {
             Write-CustomLog "Starting permanent cleanup process" "INFO"
@@ -105,8 +107,15 @@ function Invoke-PermanentCleanup {
             Write-Host "INFO Starting permanent cleanup process" -ForegroundColor Green
         }
         
-        # Import Logging module for enhanced logging capabilities
-        Import-Module "/pwsh/modules/CodeFixerLogging/" -Force
+        # Import shared utilities and project root detection
+        . "$PSScriptRoot/../../../shared/Find-ProjectRoot.ps1"
+        $projectRoot = Find-ProjectRoot
+        
+        # Import logging if available
+        $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
+        if (Test-Path $loggingPath) {
+            Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
+        }
         
         # Default problematic patterns based on common issues
         $DefaultProblematicPatterns = @(
@@ -155,7 +164,8 @@ function Invoke-PermanentCleanup {
         
         # Find problematic files
         $ProblematicFiles = @()
-        foreach ($Pattern in $AllPatterns) {            $Files = Get-ChildItem -Path $ProjectRoot -Recurse -File -Filter $Pattern -ErrorAction SilentlyContinue
+        foreach ($Pattern in $AllPatterns) {
+            $Files = Get-ChildItem -Path $ProjectRoot -Recurse -File -Filter $Pattern -ErrorAction SilentlyContinue
             # Exclude files in the consolidated backup directory
             $FilteredFiles = $Files | Where-Object {
                 $_.FullName -notlike "*backups/consolidated-backups*" -and
@@ -172,25 +182,33 @@ function Invoke-PermanentCleanup {
                 Message = "No problematic files found"
             }
         }
-          # Show what will be removed
+        
+        # Show what will be removed
         Write-Host "WARNING Found $($ProblematicFiles.Count) problematic files:" -ForegroundColor Yellow
         $ProblematicFiles | ForEach-Object {
             $RelativePath = $_.FullName.Replace($ProjectRoot, "").TrimStart('\', '/')
             Write-Host "  - $RelativePath" -ForegroundColor Yellow
         }
-          # Confirm operation unless Force is specified or running in non-interactive mode
+        
+        # Confirm operation unless Force is specified or running in non-interactive mode
         if (-not $Force) {
             Write-Host ""
             Write-Host "WARNING This will PERMANENTLY DELETE these files!" -ForegroundColor Red
-              # Check if we're in non-interactive mode (test environment, etc.)
+            
+            # Check if we're in non-interactive mode (test environment, etc.)
             $IsNonInteractive = ($Host.Name -eq 'Default Host') -or 
                               ([Environment]::UserInteractive -eq $false) -or
                               ($env:PESTER_RUN -eq 'true') -or
                               ($PSCmdlet.WhatIf)
             
             if ($IsNonInteractive) {
-                Write-CustomLog -Level 'INFO' -Message "Non-interactive mode detected - skipping confirmation (defaulting to cancel)"
-                Write-CustomLog -Level 'INFO' -Message "Operation cancelled - use -Force to proceed in non-interactive mode"
+                if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                    Write-CustomLog "Non-interactive mode detected - skipping confirmation (defaulting to cancel)" -Level INFO
+                    Write-CustomLog "Operation cancelled - use -Force to proceed in non-interactive mode" -Level INFO
+                } else {
+                    Write-Host "INFO Non-interactive mode detected - skipping confirmation (defaulting to cancel)" -ForegroundColor Green
+                    Write-Host "INFO Operation cancelled - use -Force to proceed in non-interactive mode" -ForegroundColor Green
+                }
                 return @{ Success = $false; Message = "Cancelled - non-interactive mode without Force" }
             } else {
                 $Confirmation = Read-Host "Are you sure you want to proceed? (type 'DELETE' to confirm)"
@@ -243,7 +261,8 @@ function Invoke-PermanentCleanup {
         } else {
             Write-Host "INFO $SummaryMessage" -ForegroundColor Green
         }
-          return @{
+        
+        return @{
             Success = $Errors.Count -eq 0
             FilesRemoved = $RemovedCount
             Errors = $Errors
@@ -255,7 +274,8 @@ function Invoke-PermanentCleanup {
     } catch {
         $ErrorMessage = "Permanent cleanup failed: $($_.Exception.Message)"
         if (Get-Module LabRunner -ErrorAction SilentlyContinue) {
-            Write-CustomLog $ErrorMessage "ERROR"        } else {
+            Write-CustomLog $ErrorMessage "ERROR"
+        } else {
             Write-Error $ErrorMessage
         }
         throw

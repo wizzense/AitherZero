@@ -1,0 +1,539 @@
+name: Release Automation
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Type of release'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      description:
+        description: 'Release description'
+        required: false
+        default: ''
+      prerelease:
+        description: 'Pre-release version'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  # Calculate version and create changelog
+  prepare-release:
+    name: Prepare Release
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.version.outputs.new_version }}
+      old_version: ${{ steps.version.outputs.old_version }}
+      changelog: ${{ steps.changelog.outputs.content }}
+      pr_number: ${{ steps.pr.outputs.number }}
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup PowerShell
+      uses: PowerShell/setup-powershell@v1
+      with:
+        version: '7.4.5'
+        
+    - name: Configure Git
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        
+    - name: Calculate new version
+      id: version
+      shell: pwsh
+      run: |
+        # Get current version
+        $currentVersion = if (Test-Path ./VERSION) { 
+          Get-Content ./VERSION -Raw | ForEach-Object { $_.Trim() }
+        } else {
+          # Try to get from latest tag
+          $latestTag = git describe --tags --abbrev=0 2>$null
+          if ($latestTag -and $latestTag -match 'v?(\d+\.\d+\.\d+)') {
+            $matches[1]
+          } else {
+            "0.0.0"
+          }
+        }
+        
+        Write-Host "Current version: $currentVersion" -ForegroundColor Cyan
+        
+        # Parse version
+        $versionParts = $currentVersion -split '\.'
+        $major = [int]$versionParts[0]
+        $minor = [int]$versionParts[1]
+        $patch = [int]$versionParts[2]
+        
+        # Calculate new version based on type
+        switch ('${{ github.event.inputs.release_type }}') {
+          'major' { 
+            $major++
+            $minor = 0
+            $patch = 0
+          }
+          'minor' { 
+            $minor++
+            $patch = 0
+          }
+          'patch' { 
+            $patch++
+          }
+        }
+        
+        $newVersion = "$major.$minor.$patch"
+        
+        # Add pre-release suffix if requested
+        if ('${{ github.event.inputs.prerelease }}' -eq 'true') {
+          $timestamp = Get-Date -Format "yyyyMMddHHmm"
+          $newVersion = "$newVersion-pre.$timestamp"
+        }
+        
+        Write-Host "New version: $newVersion" -ForegroundColor Green
+        
+        # Output versions
+        echo "old_version=$currentVersion" >> $env:GITHUB_OUTPUT
+        echo "new_version=$newVersion" >> $env:GITHUB_OUTPUT
+        
+        # Update VERSION file
+        $newVersion | Set-Content ./VERSION -NoNewline
+        
+    - name: Generate changelog
+      id: changelog
+      shell: pwsh
+      run: |
+        Write-Host "Generating changelog..." -ForegroundColor Cyan
+        
+        $oldVersion = '${{ steps.version.outputs.old_version }}'
+        $newVersion = '${{ steps.version.outputs.new_version }}'
+        
+        # Get commits since last version
+        $lastTag = git describe --tags --abbrev=0 2>$null
+        if (-not $lastTag) {
+          $lastTag = git rev-list --max-parents=0 HEAD
+        }
+        
+        $commits = git log "$lastTag..HEAD" --pretty=format:"%h|%s|%an|%ae" --no-merges
+        
+        # Categorize commits
+        $features = @()
+        $fixes = @()
+        $docs = @()
+        $chores = @()
+        $breaking = @()
+        $other = @()
+        
+        foreach ($commit in $commits) {
+          if (-not $commit) { continue }
+          
+          $parts = $commit -split '\|'
+          $hash = $parts[0]
+          $message = $parts[1]
+          $author = $parts[2]
+          
+          # Skip bot commits
+          if ($author -match 'bot\]?$' -or $message -match '^\[skip ci\]') {
+            continue
+          }
+          
+          # Categorize by conventional commit type
+          if ($message -match '^feat(\(.+\))?!?:') {
+            if ($message -match '!:') {
+              $breaking += "- **BREAKING**: $message ($hash)"
+            } else {
+              $features += "- $message ($hash)"
+            }
+          }
+          elseif ($message -match '^fix(\(.+\))?:') {
+            $fixes += "- $message ($hash)"
+          }
+          elseif ($message -match '^docs(\(.+\))?:') {
+            $docs += "- $message ($hash)"
+          }
+          elseif ($message -match '^(chore|build|ci|test|style|refactor|perf)(\(.+\))?:') {
+            $chores += "- $message ($hash)"
+          }
+          else {
+            $other += "- $message ($hash)"
+          }
+        }
+        
+        # Build changelog
+        $changelog = @"
+## What's Changed in v$newVersion
+
+$('${{ github.event.inputs.description }}' ?? 'This release includes improvements and bug fixes.')
+
+"@
+        
+        if ($breaking.Count -gt 0) {
+          $changelog += "`n### 🚨 Breaking Changes`n"
+          $changelog += ($breaking -join "`n") + "`n"
+        }
+        
+        if ($features.Count -gt 0) {
+          $changelog += "`n### ✨ Features`n"
+          $changelog += ($features -join "`n") + "`n"
+        }
+        
+        if ($fixes.Count -gt 0) {
+          $changelog += "`n### 🐛 Bug Fixes`n"
+          $changelog += ($fixes -join "`n") + "`n"
+        }
+        
+        if ($docs.Count -gt 0) {
+          $changelog += "`n### 📚 Documentation`n"
+          $changelog += ($docs -join "`n") + "`n"
+        }
+        
+        if ($chores.Count -gt 0) {
+          $changelog += "`n### 🔧 Maintenance`n"
+          $changelog += ($chores -join "`n") + "`n"
+        }
+        
+        if ($other.Count -gt 0) {
+          $changelog += "`n### 📦 Other Changes`n"
+          $changelog += ($other -join "`n") + "`n"
+        }
+        
+        # Add contributors section
+        $contributors = git log "$lastTag..HEAD" --pretty=format:"%an <%ae>" --no-merges | 
+                       Sort-Object -Unique | 
+                       Where-Object { $_ -notmatch 'bot\]?@' }
+        
+        if ($contributors.Count -gt 0) {
+          $changelog += "`n### 👥 Contributors`n"
+          $contributors | ForEach-Object {
+            $name = ($_ -split '<')[0].Trim()
+            $changelog += "- $name`n"
+          }
+        }
+        
+        $changelog += "`n**Full Changelog**: https://github.com/${{ github.repository }}/compare/v$oldVersion...v$newVersion"
+        
+        # Save changelog
+        $changelog | Set-Content changelog-content.md
+        
+        # Update CHANGELOG.md if it exists
+        if (Test-Path ./CHANGELOG.md) {
+          $existingChangelog = Get-Content ./CHANGELOG.md -Raw
+          $newChangelog = @"
+# Changelog
+
+## [v$newVersion] - $(Get-Date -Format "yyyy-MM-dd")
+
+$changelog
+
+$existingChangelog
+"@
+          $newChangelog | Set-Content ./CHANGELOG.md
+        } else {
+          # Create new CHANGELOG.md
+          @"
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [v$newVersion] - $(Get-Date -Format "yyyy-MM-dd")
+
+$changelog
+"@ | Set-Content ./CHANGELOG.md
+        }
+        
+        # Output changelog for GitHub output (escaped)
+        $escapedChangelog = $changelog -replace '%','%25' -replace "`n",'%0A' -replace "`r",'%0D'
+        echo "content=$escapedChangelog" >> $env:GITHUB_OUTPUT
+        
+    - name: Update module manifests
+      shell: pwsh
+      run: |
+        $newVersion = '${{ steps.version.outputs.new_version }}'
+        
+        # Update all module manifests
+        $manifests = Get-ChildItem -Path . -Filter "*.psd1" -Recurse | 
+                    Where-Object { $_.FullName -notmatch '\\tests\\|/tests/' }
+        
+        foreach ($manifest in $manifests) {
+          Write-Host "Updating $($manifest.Name)..." -ForegroundColor Gray
+          
+          $content = Get-Content $manifest.FullName -Raw
+          
+          # Update ModuleVersion
+          $content = $content -replace "ModuleVersion\s*=\s*'[\d\.]+(-\w+)?'", "ModuleVersion = '$newVersion'"
+          
+          # Update in RequiredModules if it references our modules
+          $content = $content -replace "(ModuleName\s*=\s*'Aither\w+'.+ModuleVersion\s*=\s*)'[\d\.]+(-\w+)?'", "`$1'$newVersion'"
+          
+          $content | Set-Content $manifest.FullName
+        }
+        
+    - name: Create release branch and PR
+      id: pr
+      shell: pwsh
+      run: |
+        $newVersion = '${{ steps.version.outputs.new_version }}'
+        $releaseType = '${{ github.event.inputs.release_type }}'
+        $branchName = "release/v$newVersion"
+        
+        # Create and push branch
+        git checkout -b $branchName
+        git add .
+        git commit -m "chore: prepare release v$newVersion
+        
+        - Bump version to $newVersion
+        - Update module manifests
+        - Generate changelog
+        
+        Release type: $releaseType
+        "
+        
+        git push origin $branchName
+        
+        # Create PR using GitHub CLI
+        $prBody = @"
+## 🚀 Release v$newVersion
+
+This PR prepares the release of version **v$newVersion**.
+
+### Release Type
+**$($releaseType.ToUpper())** - $('${{ github.event.inputs.description }}' ?? 'Standard release')
+
+### Changes Included
+See the updated CHANGELOG.md for a complete list of changes.
+
+### Pre-release Checklist
+- [ ] All tests passing
+- [ ] Documentation updated
+- [ ] CHANGELOG.md reviewed
+- [ ] Version numbers updated
+
+### Post-merge Actions
+After merging this PR:
+1. The auto-tag workflow will create the release tag
+2. The release workflow will build and publish artifacts
+3. GitHub release will be created automatically
+
+---
+*This PR was automatically generated by the Release Automation workflow.*
+"@
+        
+        # Create PR using API
+        $pr = gh pr create `
+          --title "Release v$newVersion" `
+          --body $prBody `
+          --base main `
+          --head $branchName `
+          --label "release" `
+          --assignee "@me" | 
+          Select-String -Pattern '\d+$' | 
+          ForEach-Object { $_.Matches[0].Value }
+        
+        Write-Host "Created PR #$pr" -ForegroundColor Green
+        echo "number=$pr" >> $env:GITHUB_OUTPUT
+        
+  # Run validation tests on the release branch
+  validate-release:
+    name: Validate Release
+    needs: prepare-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        
+    steps:
+    - name: Checkout release branch
+      uses: actions/checkout@v4
+      with:
+        ref: release/v${{ needs.prepare-release.outputs.new_version }}
+        
+    - name: Setup PowerShell
+      uses: PowerShell/setup-powershell@v1
+      with:
+        version: '7.4.5'
+        
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.local/share/powershell/Modules
+          ~/Documents/PowerShell/Modules
+        key: ${{ runner.os }}-release-deps-${{ hashFiles('**/requirements.psd1') }}
+        
+    - name: Install dependencies
+      shell: pwsh
+      run: |
+        if (!(Get-Module -ListAvailable -Name Pester | Where-Object Version -ge 5.0.0)) {
+          Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser
+        }
+        
+    - name: Run release validation tests
+      shell: pwsh
+      run: |
+        Write-Host "Validating release v${{ needs.prepare-release.outputs.new_version }}..." -ForegroundColor Cyan
+        
+        # Run standard tests
+        ./tests/Run-Tests.ps1 -CI
+        
+        # Additional release-specific validations
+        $version = '${{ needs.prepare-release.outputs.new_version }}'
+        
+        # Check VERSION file
+        $versionFile = Get-Content ./VERSION -Raw | ForEach-Object { $_.Trim() }
+        if ($versionFile -ne $version) {
+          throw "VERSION file mismatch: expected $version, got $versionFile"
+        }
+        
+        # Check all manifests have correct version
+        $manifests = Get-ChildItem -Path . -Filter "*.psd1" -Recurse | 
+                    Where-Object { $_.FullName -notmatch '\\tests\\|/tests/' }
+        
+        foreach ($manifest in $manifests) {
+          $data = Import-PowerShellDataFile $manifest.FullName
+          if ($data.ModuleVersion -and $data.ModuleVersion -ne $version) {
+            Write-Warning "$($manifest.Name): Version mismatch (has $($data.ModuleVersion))"
+          }
+        }
+        
+        Write-Host "✅ Release validation passed!" -ForegroundColor Green
+        
+  # Build release artifacts
+  build-artifacts:
+    name: Build Artifacts
+    needs: [prepare-release, validate-release]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [windows, linux, macos]
+        
+    steps:
+    - name: Checkout release branch
+      uses: actions/checkout@v4
+      with:
+        ref: release/v${{ needs.prepare-release.outputs.new_version }}
+        
+    - name: Setup PowerShell
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget apt-transport-https software-properties-common
+        wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+        sudo dpkg -i packages-microsoft-prod.deb
+        sudo apt-get update
+        sudo apt-get install -y powershell
+        
+    - name: Build package
+      shell: pwsh
+      run: |
+        $version = '${{ needs.prepare-release.outputs.new_version }}'
+        Write-Host "Building ${{ matrix.platform }} package for v$version..." -ForegroundColor Cyan
+        
+        ./build/Build-Package.ps1 -Platform ${{ matrix.platform }} -Version $version
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-${{ matrix.platform }}-${{ needs.prepare-release.outputs.new_version }}
+        path: build/output/*
+        retention-days: 30
+        
+  # Update PR with status
+  update-pr:
+    name: Update PR Status
+    needs: [prepare-release, validate-release, build-artifacts]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Update PR with results
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const prNumber = ${{ needs.prepare-release.outputs.pr_number }};
+          const version = '${{ needs.prepare-release.outputs.new_version }}';
+          
+          const validationResult = '${{ needs.validate-release.result }}';
+          const buildResult = '${{ needs.build-artifacts.result }}';
+          
+          let status = '✅ Ready to merge';
+          let body = `## 📊 Release Preparation Status
+          
+          | Step | Status |
+          |------|--------|
+          | Version Bump | ✅ Complete (v${version}) |
+          | Changelog Generation | ✅ Complete |
+          | Validation Tests | ${validationResult === 'success' ? '✅ Passed' : '❌ Failed'} |
+          | Artifact Build | ${buildResult === 'success' ? '✅ Complete' : '❌ Failed'} |
+          `;
+          
+          if (validationResult !== 'success' || buildResult !== 'success') {
+            status = '❌ Issues found - see details below';
+            body += `
+          
+          ### ⚠️ Action Required
+          Some checks failed. Please review the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) and fix any issues before merging.`;
+          } else {
+            body += `
+          
+          ### ✅ Ready to Release
+          All checks passed! Once this PR is merged:
+          1. A release tag will be created automatically
+          2. The release workflow will publish the artifacts
+          3. A GitHub release will be created
+          
+          ### 📦 Preview Artifacts
+          The following artifacts will be published:
+          - \`AitherZero-v${version}-windows.zip\`
+          - \`AitherZero-v${version}-linux.tar.gz\`
+          - \`AitherZero-v${version}-macos.tar.gz\``;
+          }
+          
+          // Add comment to PR
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: prNumber,
+            body
+          });
+          
+          // Update PR labels
+          const labels = ['release'];
+          if (validationResult === 'success' && buildResult === 'success') {
+            labels.push('ready-to-merge');
+          } else {
+            labels.push('needs-work');
+          }
+          
+          await github.rest.issues.addLabels({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: prNumber,
+            labels
+          });
+          
+          // Set workflow status
+          if (validationResult !== 'success' || buildResult !== 'success') {
+            core.setFailed('Release preparation failed - see PR for details');
+          }

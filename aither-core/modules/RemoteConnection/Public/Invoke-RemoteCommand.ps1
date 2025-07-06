@@ -34,19 +34,17 @@ function Invoke-RemoteCommand {
             $config = $connectionConfig.Configuration
 
             if ($PSCmdlet.ShouldProcess($ConnectionName, "Execute command: $Command")) {
-                # Execute command based on endpoint type
-                $result = switch ($config.EndpointType) {
-                    'SSH' { Invoke-SSHCommand -Config $config -Command $Command -Parameters $Parameters -TimeoutSeconds $TimeoutSeconds -AsJob:$AsJob }
-                    'WinRM' { Invoke-WinRMCommand -Config $config -Command $Command -Parameters $Parameters -TimeoutSeconds $TimeoutSeconds -AsJob:$AsJob }
-                    'VMware' { Invoke-VMwareCommand -Config $config -Command $Command -Parameters $Parameters -TimeoutSeconds $TimeoutSeconds -AsJob:$AsJob }
-                    'Hyper-V' { Invoke-HyperVCommand -Config $config -Command $Command -Parameters $Parameters -TimeoutSeconds $TimeoutSeconds -AsJob:$AsJob }
-                    'Docker' { Invoke-DockerCommand -Config $config -Command $Command -Parameters $Parameters -TimeoutSeconds $TimeoutSeconds -AsJob:$AsJob }
-                    'Kubernetes' { Invoke-KubernetesCommand -Config $config -Command $Command -Parameters $Parameters -TimeoutSeconds $TimeoutSeconds -AsJob:$AsJob }
-                    default { throw "Unsupported endpoint type: $($config.EndpointType)" }
-                }
-
-                if ($result.Success) {
+                # Execute command with retry logic
+                $retryResult = Invoke-CommandWithRetry -ConnectionConfig $config -Command $Command -Parameters $Parameters -TimeoutSeconds $TimeoutSeconds -AsJob:$AsJob
+                
+                if ($retryResult.Success) {
+                    $result = $retryResult.Result
                     Write-CustomLog -Level 'SUCCESS' -Message "Successfully executed command on: $ConnectionName"
+                    
+                    if ($retryResult.Attempts -gt 1) {
+                        Write-CustomLog -Level 'INFO' -Message "Command succeeded after $($retryResult.Attempts) attempts"
+                    }
+                    
                     return @{
                         Success = $true
                         ConnectionName = $ConnectionName
@@ -54,9 +52,21 @@ function Invoke-RemoteCommand {
                         ExitCode = $result.ExitCode
                         Job = $result.Job
                         Message = "Command executed successfully"
+                        Attempts = $retryResult.Attempts
                     }
                 } else {
-                    throw "Failed to execute command: $($result.Error)"
+                    # Generate diagnostics for failed command
+                    $diagnostics = Get-ConnectionDiagnostics -ConnectionConfig $config -LastError $retryResult.Error
+                    $formattedError = Format-ConnectionError -Error $retryResult.Error -ConnectionConfig $config -Diagnostics $diagnostics
+                    
+                    Write-CustomLog -Level 'ERROR' -Message "Failed to execute command on $ConnectionName after $($retryResult.Attempts) attempts: $($retryResult.Error.Exception.Message)"
+                    
+                    throw @{
+                        Error = $retryResult.Error.Exception.Message
+                        Attempts = $retryResult.Attempts
+                        Diagnostics = $diagnostics
+                        ErrorDetails = $formattedError
+                    }
                 }
             } else {
                 Write-CustomLog -Level 'INFO' -Message "WhatIf: Would execute command '$Command' on $ConnectionName"

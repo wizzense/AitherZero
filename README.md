@@ -48,6 +48,54 @@ AITHER_PROFILE=standard curl -sSL https://raw.githubusercontent.com/wizzense/Ait
 
 > 💡 **That's it!** No complex setup, no manual downloads, intelligent profile selection.
 
+## 🎯 Quick Start After Installation
+
+### Windows Users
+```cmd
+# Option 1: Use the Windows launcher (works from cmd or PowerShell)
+Start-AitherZero.cmd
+
+# Option 2: Use PowerShell directly (auto-detects PS7)
+.\Start-AitherZero.ps1
+
+# Option 3: Run setup again if needed
+.\Start-AitherZero.ps1 -Setup
+```
+
+### Linux/macOS Users
+```bash
+# Start AitherZero
+./Start-AitherZero.ps1
+
+# Or if PowerShell 7 is not in PATH
+pwsh ./Start-AitherZero.ps1
+```
+
+### 🚀 First Time? Run Setup!
+```powershell
+# Interactive setup wizard
+./Start-AitherZero.ps1 -Setup
+
+# Setup with specific profile
+./Start-AitherZero.ps1 -Setup -InstallationProfile developer
+```
+
+### Common Launch Options
+```powershell
+# Interactive mode (default) - shows menu
+./Start-AitherZero.ps1
+
+# Run specific modules
+./Start-AitherZero.ps1 -Scripts "LabRunner"
+./Start-AitherZero.ps1 -Scripts "BackupManager,OpenTofuProvider"
+
+# Automated mode
+./Start-AitherZero.ps1 -Auto
+
+# Get help
+./Start-AitherZero.ps1 -Help
+```
+
 ---
 
 ## 📦 Manual Installation (If Preferred)

@@ -1,8 +1,19 @@
-# OpenTofuProvider Module
+# OpenTofuProvider Module v1.2.0
 
 ## Overview
 
-The OpenTofuProvider module provides comprehensive, secure infrastructure automation for lab environments using OpenTofu with the Taliesins Hyper-V provider. This module implements security best practices, automated certificate management, and compliance validation.
+The OpenTofuProvider module is the **comprehensive infrastructure-as-code foundation** for the AitherZero platform. It provides enterprise-grade automation for OpenTofu/Terraform deployments with advanced features including deployment snapshots, rollback capabilities, security hardening, and multi-provider support.
+
+### 🚀 What's New in v1.2.0
+
+- **Enhanced Module Loading**: Now exports 42+ functions with improved dependency management
+- **Advanced Deployment Features**: Snapshots, rollback, automation workflows, and drift detection  
+- **Comprehensive Security**: Multi-signature verification, certificate management, and compliance validation
+- **Performance Optimization**: Memory management, caching, and concurrent deployment support
+- **Better Error Handling**: Robust error handling with retry mechanisms and checkpoint recovery
+- **YAML Support**: Built-in YAML parsing for configuration management
+- **Progress Tracking**: Visual feedback for long-running deployments
+- **Cross-Platform**: Full support for Windows, Linux, and macOS platforms
 
 ## Key Features
 
@@ -30,34 +41,70 @@ The OpenTofuProvider module provides comprehensive, secure infrastructure automa
 - **Operational best practices** verification
 - **Detailed reporting** with recommendations
 
-## Quick Start
+## Quick Start Guide
 
-### 1. Install OpenTofu Securely
+### Prerequisites
+- PowerShell 7.0+
+- OpenTofu 1.6.0+ (or use our secure installer)
+- Hyper-V host (for lab deployments)
+
+### Basic Deployment Workflow
+
+#### 1. Import Module and Install OpenTofu
 ```powershell
-Import-Module OpenTofuProvider
-Install-OpenTofuSecure -Version "1.6.0"
+# Import the OpenTofuProvider module
+Import-Module ./aither-core/modules/OpenTofuProvider -Force
+
+# Securely install OpenTofu with signature verification
+Install-OpenTofuSecure -Version "1.8.0"
+
+# Verify installation
+Test-OpenTofuInstallation
 ```
 
-### 2. Configure Secure Credentials
+#### 2. Configure Infrastructure
 ```powershell
+# Set up secure credentials
 $creds = Get-Credential
-Set-SecureCredentials -Target "hyperv-lab-01" -Credentials $creds -CredentialType "Both" -CertificatePath "./certs/lab-01"
-```
+Set-SecureCredentials -Target "hyperv-lab-01" -Credentials $creds -CredentialType "Both"
 
-### 3. Initialize Provider
-```powershell
+# Initialize provider with configuration
 Initialize-OpenTofuProvider -ConfigPath "lab_config.yaml" -ProviderVersion "1.2.1"
 ```
 
-### 4. Deploy Infrastructure
+#### 3. Deploy with Advanced Features
 ```powershell
-New-LabInfrastructure -ConfigPath "lab_config.yaml" -AutoApprove
+# Create deployment snapshot before changes
+New-DeploymentSnapshot -DeploymentId "prod-deployment" -Name "pre-update" -Description "Backup before v1.2 update"
+
+# Start infrastructure deployment with progress tracking
+Start-InfrastructureDeployment -ConfigurationPath "infrastructure.yaml" -DryRun
+
+# Apply changes after review
+Start-InfrastructureDeployment -ConfigurationPath "infrastructure.yaml"
 ```
 
-### 5. Run Security Audit
+#### 4. Monitor and Manage
 ```powershell
+# Check deployment status
+Get-DeploymentStatus -DeploymentId "prod-deployment"
+
+# View deployment history
+Get-DeploymentHistory -DeploymentId "prod-deployment"
+
+# Rollback if needed
+Start-DeploymentRollback -DeploymentId "prod-deployment" -TargetSnapshot "pre-update"
+```
+
+#### 5. Security and Compliance
+```powershell
+# Run comprehensive security audit
 Test-OpenTofuSecurity -Detailed
 Test-InfrastructureCompliance -ComplianceStandard "All" -Detailed
+
+# Optimize performance
+Optimize-DeploymentPerformance
+Optimize-DeploymentCaching
 ```
 
 ## Configuration Example
@@ -270,22 +317,307 @@ All operations are logged using the Logging module:
 
 Check logs in: `logs/opentofu-provider-{date}.log`
 
-## Integration
+## CI/CD Integration Examples
 
-### VS Code Tasks
-The module integrates with existing VS Code tasks:
-- **OpenTofu Plan**: Generate infrastructure plans
-- **OpenTofu Apply**: Deploy infrastructure
-- **Security Audit**: Run comprehensive security validation
-- **Compliance Check**: Validate compliance standards
+### GitHub Actions Workflow
+
+Create `.github/workflows/infrastructure.yml`:
+
+```yaml
+name: Infrastructure Deployment
+on:
+  push:
+    branches: [main]
+    paths: ['infrastructure/**']
+  pull_request:
+    paths: ['infrastructure/**']
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PowerShell
+        uses: microsoft/setup-powershell@v1
+      - name: Install OpenTofu
+        run: |
+          Import-Module ./aither-core/modules/OpenTofuProvider -Force
+          Install-OpenTofuSecure -Version "1.8.0"
+      - name: Plan Infrastructure
+        run: |
+          Start-InfrastructureDeployment -ConfigurationPath "infrastructure/production.yaml" -DryRun
+  
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: plan
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy Infrastructure
+        run: |
+          Import-Module ./aither-core/modules/OpenTofuProvider -Force
+          New-DeploymentSnapshot -DeploymentId "prod" -Name "pre-deploy-$(date +%Y%m%d%H%M%S)"
+          Start-InfrastructureDeployment -ConfigurationPath "infrastructure/production.yaml"
+```
+
+### Azure DevOps Pipeline
+
+Create `azure-pipelines.yml`:
+
+```yaml
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - infrastructure/*
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+- stage: Plan
+  jobs:
+  - job: InfrastructurePlan
+    steps:
+    - pwsh: |
+        Import-Module ./aither-core/modules/OpenTofuProvider -Force
+        Install-OpenTofuSecure -Version "1.8.0"
+        Start-InfrastructureDeployment -ConfigurationPath "infrastructure/$(environment).yaml" -DryRun
+      displayName: 'Plan Infrastructure Changes'
+
+- stage: Deploy
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - deployment: InfrastructureDeployment
+    environment: 'production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - pwsh: |
+              Import-Module ./aither-core/modules/OpenTofuProvider -Force
+              New-DeploymentSnapshot -DeploymentId "$(environment)" -Name "pre-deploy-$(Build.BuildNumber)"
+              Start-InfrastructureDeployment -ConfigurationPath "infrastructure/$(environment).yaml"
+            displayName: 'Deploy Infrastructure'
+```
+
+### GitLab CI/CD
+
+Create `.gitlab-ci.yml`:
+
+```yaml
+stages:
+  - validate
+  - plan
+  - deploy
+
+variables:
+  DEPLOYMENT_ID: "gitlab-${CI_ENVIRONMENT_NAME}"
+
+infrastructure_validate:
+  stage: validate
+  script:
+    - Import-Module ./aither-core/modules/OpenTofuProvider -Force
+    - Test-OpenTofuInstallation
+    - Read-DeploymentConfiguration -Path "infrastructure/${CI_ENVIRONMENT_NAME}.yaml"
+
+infrastructure_plan:
+  stage: plan
+  script:
+    - Import-Module ./aither-core/modules/OpenTofuProvider -Force
+    - Start-InfrastructureDeployment -ConfigurationPath "infrastructure/${CI_ENVIRONMENT_NAME}.yaml" -DryRun
+  artifacts:
+    reports:
+      terraform: tfplan.json
+
+infrastructure_deploy:
+  stage: deploy
+  script:
+    - Import-Module ./aither-core/modules/OpenTofuProvider -Force
+    - New-DeploymentSnapshot -DeploymentId "${DEPLOYMENT_ID}" -Name "pre-deploy-${CI_PIPELINE_ID}"
+    - Start-InfrastructureDeployment -ConfigurationPath "infrastructure/${CI_ENVIRONMENT_NAME}.yaml"
+  only:
+    - main
+  environment:
+    name: production
+```
+
+## Advanced Usage Patterns
+
+### Multi-Environment Deployment
+
+```powershell
+# Define environments
+$environments = @('dev', 'staging', 'production')
+
+foreach ($env in $environments) {
+    Write-Host "Deploying to $env environment..."
+    
+    # Create environment-specific snapshot
+    New-DeploymentSnapshot -DeploymentId "$env-deployment" -Name "automated-backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+    
+    # Deploy with environment-specific configuration
+    $configPath = "environments/$env/infrastructure.yaml"
+    Start-InfrastructureDeployment -ConfigurationPath $configPath
+    
+    # Verify deployment
+    $status = Get-DeploymentStatus -DeploymentId "$env-deployment"
+    if (-not $status.Success) {
+        Write-Error "Deployment to $env failed"
+        Start-DeploymentRollback -DeploymentId "$env-deployment" -RollbackType "LastGood"
+        break
+    }
+}
+```
+
+### Blue-Green Deployment
+
+```powershell
+# Blue-Green deployment pattern
+$currentEnvironment = "blue"
+$newEnvironment = "green"
+
+# Deploy to green environment
+Start-InfrastructureDeployment -ConfigurationPath "infrastructure/$newEnvironment.yaml"
+
+# Verify green environment
+$greenStatus = Get-DeploymentStatus -DeploymentId "$newEnvironment-deployment"
+if ($greenStatus.Success) {
+    # Switch traffic to green
+    Write-Host "Switching traffic to $newEnvironment environment"
+    
+    # Update load balancer configuration
+    Start-InfrastructureDeployment -ConfigurationPath "infrastructure/load-balancer.yaml" -Stage "Apply"
+    
+    # Cleanup old blue environment after successful switch
+    Start-DeploymentRollback -DeploymentId "$currentEnvironment-deployment" -RollbackType "Destroy"
+} else {
+    Write-Error "Green environment deployment failed, staying on blue"
+}
+```
+
+### Infrastructure Testing Pipeline
+
+```powershell
+# Comprehensive infrastructure testing
+function Test-InfrastructurePipeline {
+    param(
+        [string]$ConfigurationPath,
+        [string]$Environment
+    )
+    
+    try {
+        # 1. Validate configuration
+        Write-Host "Step 1: Validating configuration..."
+        $config = Read-DeploymentConfiguration -Path $ConfigurationPath -ExpandVariables
+        
+        # 2. Security audit
+        Write-Host "Step 2: Running security audit..."
+        $securityResult = Test-OpenTofuSecurity -Detailed
+        if (-not $securityResult.Passed) {
+            throw "Security audit failed: $($securityResult.Issues -join '; ')"
+        }
+        
+        # 3. Plan deployment
+        Write-Host "Step 3: Planning deployment..."
+        $planResult = Start-InfrastructureDeployment -ConfigurationPath $ConfigurationPath -DryRun
+        
+        # 4. Create backup
+        Write-Host "Step 4: Creating backup snapshot..."
+        New-DeploymentSnapshot -DeploymentId "$Environment-deployment" -Name "pre-pipeline-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+        
+        # 5. Execute deployment
+        Write-Host "Step 5: Executing deployment..."
+        $deployResult = Start-InfrastructureDeployment -ConfigurationPath $ConfigurationPath
+        
+        # 6. Verify deployment
+        Write-Host "Step 6: Verifying deployment..."
+        $verifyResult = Get-DeploymentStatus -DeploymentId "$Environment-deployment"
+        
+        # 7. Performance optimization
+        Write-Host "Step 7: Optimizing performance..."
+        Optimize-DeploymentPerformance
+        Optimize-DeploymentCaching
+        
+        return @{
+            Success = $true
+            DeploymentId = "$Environment-deployment"
+            Duration = $deployResult.Duration
+        }
+        
+    } catch {
+        Write-Error "Pipeline failed: $($_.Exception.Message)"
+        
+        # Automatic rollback on failure
+        Write-Host "Initiating automatic rollback..."
+        Start-DeploymentRollback -DeploymentId "$Environment-deployment" -RollbackType "LastGood" -Force
+        
+        return @{
+            Success = $false
+            Error = $_.Exception.Message
+        }
+    }
+}
+
+# Usage
+$result = Test-InfrastructurePipeline -ConfigurationPath "infrastructure/production.yaml" -Environment "production"
+```
+
+## Integration with AitherZero Platform
+
+### VS Code Tasks Integration
+The module integrates seamlessly with VS Code tasks defined in `.vscode/tasks.json`:
+
+```json
+{
+    "label": "OpenTofu: Plan Infrastructure",
+    "type": "shell",
+    "command": "pwsh",
+    "args": [
+        "-Command",
+        "Import-Module ./aither-core/modules/OpenTofuProvider -Force; Start-InfrastructureDeployment -ConfigurationPath infrastructure/dev.yaml -DryRun"
+    ],
+    "group": "build",
+    "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+    }
+}
+```
 
 ### PatchManager Integration
-Use with PatchManager for change management:
+Use with PatchManager v3.0 for change management:
+
 ```powershell
-Invoke-PatchWorkflow -PatchDescription "Update lab infrastructure" -PatchOperation {
-    Initialize-OpenTofuProvider -ConfigPath "lab_config.yaml"
-    New-LabInfrastructure -ConfigPath "lab_config.yaml" -AutoApprove
-} -CreatePR
+# Infrastructure updates with automatic PR creation
+New-Feature -Description "Update lab infrastructure to v1.2" -Changes {
+    Import-Module ./aither-core/modules/OpenTofuProvider -Force
+    
+    # Create backup before changes
+    New-DeploymentSnapshot -DeploymentId "lab-deployment" -Name "pre-v1.2-update"
+    
+    # Initialize provider with new configuration
+    Initialize-OpenTofuProvider -ConfigPath "infrastructure/lab_config_v1.2.yaml"
+    
+    # Deploy infrastructure
+    Start-InfrastructureDeployment -ConfigurationPath "infrastructure/lab_config_v1.2.yaml"
+}
+
+# Quick infrastructure fixes
+New-QuickFix -Description "Fix Hyper-V networking configuration" -Changes {
+    # Update only networking components
+    Start-InfrastructureDeployment -ConfigurationPath "infrastructure/networking.yaml" -Stage "Apply"
+}
+
+# Emergency infrastructure rollback
+New-Hotfix -Description "Rollback infrastructure after critical failure" -Changes {
+    Start-DeploymentRollback -DeploymentId "prod-deployment" -RollbackType "LastGood" -Force
+}
 ```
 
 ## Contributing

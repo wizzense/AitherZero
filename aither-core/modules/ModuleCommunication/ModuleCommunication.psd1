@@ -3,7 +3,7 @@
     RootModule = 'ModuleCommunication.psm1'
 
     # Version number of this module.
-    ModuleVersion = '1.0.0'
+    ModuleVersion = '2.0.0'
 
     # Supported PSEditions
     CompatiblePSEditions = @('Core')
@@ -12,7 +12,7 @@
     GUID = 'a2b3c4d5-e6f7-8901-bcde-f23456789012'
 
     # Author of this module
-    Author = 'AitherZero Team'
+    Author = 'AitherZero Contributors'
 
     # Company or vendor of this module
     CompanyName = 'AitherZero'
@@ -21,7 +21,7 @@
     Copyright = '(c) 2025 AitherZero. All rights reserved.'
 
     # Description of the functionality provided by this module
-    Description = 'Provides scalable inter-module communication through pub/sub messaging, API registry, and event-driven architecture for the AitherZero platform'
+    Description = 'Enterprise-grade inter-module communication with pub/sub messaging, API registry, event-driven architecture, security features, circuit breaker patterns, and comprehensive monitoring for the AitherZero platform'
 
     # Minimum version of the PowerShell engine required by this module
     PowerShellVersion = '7.0'
@@ -70,6 +70,15 @@
         'Enable-MessageTracing',
         'Disable-MessageTracing',
         
+        # Security Functions
+        'Enable-CommunicationSecurity',
+        'New-AuthenticationToken',
+        'Revoke-AuthenticationToken',
+        
+        # Circuit Breaker Functions
+        'Get-CircuitBreakerStatus',
+        'Reset-CircuitBreaker',
+        
         # Utilities
         'Test-ModuleCommunication',
         'Get-CommunicationStatus',
@@ -96,13 +105,13 @@
     PrivateData = @{
         PSData = @{
             # Tags applied to this module
-            Tags = @('Communication', 'Messaging', 'PubSub', 'Events', 'API', 'Integration', 'AitherZero')
+            Tags = @('Communication', 'Messaging', 'PubSub', 'Events', 'API', 'Integration', 'Security', 'CircuitBreaker', 'Monitoring', 'AitherZero')
 
             # A URL to the main website for this project
             ProjectUri = 'https://github.com/AitherLabs/AitherZero'
 
             # ReleaseNotes of this module
-            ReleaseNotes = 'Initial release of ModuleCommunication - Scalable inter-module communication for AitherZero platform'
+            ReleaseNotes = 'v2.0.0 - Major update with security features, circuit breaker patterns, enhanced error handling, retry logic, comprehensive testing, and enterprise-grade monitoring capabilities'
         }
     }
 }

@@ -1,16 +1,20 @@
-# BackupManager Module
+# BackupManager Module v2.0
 
-Comprehensive backup management module for the OpenTofu Lab Automation project, following project maintenance standards and integrating with the unified maintenance system.
+Enterprise-grade backup management system for the AitherZero project, providing comprehensive automation, security, and disaster recovery capabilities.
 
 ## Overview
 
-The BackupManager module consolidates all backup-related functionality into a single, well-structured PowerShell module that provides:
+The BackupManager v2.0 module provides a complete backup ecosystem with modern enterprise features:
 
-- **Backup file consolidation** - Centrally manages all backup files
-- **Permanent cleanup** - Removes problematic files and prevents their recreation
-- **Statistics and analysis** - Provides insights into backup file distribution
-- **Integration with unified maintenance** - Seamlessly works with existing project tools
-- **Cross-platform compatibility** - Works on Windows, Linux, and macOS
+### Core Features
+- **Advanced Backup Operations** - Compression, encryption, and deduplication
+- **Automated Backup Scheduling** - Enterprise-grade scheduling with monitoring
+- **Backup Consolidation** - Centralized management of scattered backup files
+- **Disaster Recovery** - Complete restoration and verification capabilities
+- **Retention Management** - Intelligent lifecycle and cleanup policies
+- **Security Integration** - AES encryption and secure credential management
+- **Cross-platform Support** - Windows, Linux, and macOS compatibility
+- **Performance Optimization** - Parallel processing and storage efficiency
 
 ## Installation
 
@@ -20,27 +24,83 @@ The module is automatically available when you import it:
 Import-Module "/pwsh/modules/BackupManager/" -Force
 ```
 
-## Functions
+## Core Functions
 
-### Invoke-BackupMaintenance
+### 🚀 Invoke-AdvancedBackup
 
-Main function that orchestrates all backup management tasks.
+Enterprise-grade backup operations with modern features.
+
+```powershell
+# Basic advanced backup with compression
+Invoke-AdvancedBackup -SourcePath "./src" -BackupPath "./backups/daily" -CompressionLevel 6
+
+# Secure backup with encryption and deduplication
+Invoke-AdvancedBackup -SourcePath "./data" -BackupPath "./secure-backups" -EnableEncryption -EnableDeduplication -VerifyIntegrity
+
+# High-performance backup with parallel processing
+Invoke-AdvancedBackup -SourcePath "./large-dataset" -BackupPath "./backups" -MaxConcurrency 8 -CompressionLevel 9
+```
+
+**Features:**
+- **Compression**: 0-9 levels using modern algorithms
+- **Encryption**: AES encryption for sensitive data
+- **Deduplication**: Storage optimization through file deduplication
+- **Verification**: Integrity checking and validation
+- **Parallel Processing**: Multi-threaded operations for performance
+
+### 🔄 Start-AutomatedBackup
+
+Enterprise scheduling and monitoring system.
+
+```powershell
+# Daily automated backups with monitoring
+Start-AutomatedBackup -SourcePaths @("./src", "./config") -BackupPath "./automated-backups" -Schedule Daily -EnableMonitoring -RetentionDays 30
+
+# Secure automated backups with encryption
+Start-AutomatedBackup -SourcePaths @("./sensitive-data") -BackupPath "./secure-auto" -Schedule Hourly -EnableEncryption -NotificationEmail "admin@company.com"
+```
+
+**Capabilities:**
+- **Flexible Scheduling**: Hourly, Daily, Weekly, Monthly, Custom
+- **Health Monitoring**: Automated health checks and alerts
+- **Retention Policies**: Intelligent cleanup and space management
+- **Cross-Platform**: Windows Task Scheduler and Linux/macOS cron integration
+
+### 🔄 Restore-BackupData
+
+Complete disaster recovery and restoration system.
+
+```powershell
+# Basic restoration
+Restore-BackupData -BackupPath "./backups/2024-01-15" -RestorePath "./restored-data"
+
+# Selective restoration with verification
+Restore-BackupData -BackupPath "./backups/latest" -RestorePath "./restored" -SelectiveRestore @("*.config", "*.json") -VerifyRestore
+
+# Encrypted backup restoration
+Restore-BackupData -BackupPath "./secure-backups" -RestorePath "./restored" -EncryptionKey $secureKey -VerifyRestore
+```
+
+### 📊 Invoke-BackupMaintenance
+
+Comprehensive maintenance orchestration.
 
 ```powershell
 # Quick maintenance
-Invoke-BackupMaintenance -ProjectRoot "." -Mode "Quick"
+Invoke-BackupMaintenance -Mode "Quick"
 
-# Full maintenance with auto-fixes
-Invoke-BackupMaintenance -ProjectRoot "." -Mode "Full" -AutoFix
+# Full maintenance with statistics
+Invoke-BackupMaintenance -Mode "Full" -AutoFix
 
-# Emergency cleanup (destructive)
-Invoke-BackupMaintenance -ProjectRoot "." -Mode "Emergency" -AutoFix
+# Statistics-only mode
+Invoke-BackupMaintenance -Mode "Statistics" -OutputFormat "JSON"
 ```
 
 **Modes:**
 - **Quick**: Basic consolidation and health check
-- **Full**: Consolidation, permanent cleanup, and exclusion updates
-- **Emergency**: Aggressive cleanup including duplicate workflows
+- **Full**: Complete maintenance with cleanup and statistics
+- **Cleanup**: Focus on retention and cleanup operations
+- **Statistics**: Comprehensive analysis and reporting
 
 ### Invoke-BackupConsolidation
 
@@ -130,38 +190,90 @@ After integration, backup management is automatically included when running:
 ./scripts/maintenance/unified-maintenance.ps1 -Mode "All"
 ```
 
-## Usage Examples
+## 🎯 Enterprise Workflow Examples
 
-### Quick Cleanup
-
-```powershell
-# Import module
-Import-Module "/pwsh/modules/BackupManager/" -Force
-
-# Run comprehensive maintenance
-Invoke-BackupMaintenance -ProjectRoot "." -Mode "Full" -AutoFix
-```
-
-### Analysis Before Cleanup
+### Daily Operations Workflow
 
 ```powershell
-# Get current situation
-$stats = Get-BackupStatistics -ProjectRoot "." -IncludeDetails
+# 1. Morning backup health check
+$healthCheck = Invoke-BackupMaintenance -Mode "Statistics" -OutputFormat "JSON" | ConvertFrom-Json
+Write-Host "Backup Health: $($healthCheck.Statistics.TotalFiles) files, Last Success: $($healthCheck.LastSuccess)"
 
-# Review recommendations
-$stats.Recommendations
+# 2. Automated daily backup with monitoring
+Start-AutomatedBackup `
+    -SourcePaths @("./src", "./configs", "./docs") `
+    -BackupPath "./daily-backups" `
+    -Schedule Daily `
+    -EnableMonitoring `
+    -EnableEncryption `
+    -RetentionDays 30 `
+    -CompressionLevel 6
 
-# Act on findings
-if ($stats.TotalFiles -gt 50) {
-    Invoke-BackupConsolidation -ProjectRoot "." -Force
+# 3. Weekly full maintenance
+if ((Get-Date).DayOfWeek -eq "Sunday") {
+    Invoke-BackupMaintenance -Mode "Full" -AutoFix
 }
 ```
 
-### Emergency Cleanup
+### Disaster Recovery Workflow
 
 ```powershell
-# For development environments only - this is destructive!
-Invoke-BackupMaintenance -ProjectRoot "." -Mode "Emergency" -AutoFix
+# 1. Create secure backup before major changes
+Invoke-AdvancedBackup `
+    -SourcePath "./production-data" `
+    -BackupPath "./disaster-recovery/$(Get-Date -Format 'yyyy-MM-dd-HH-mm')" `
+    -EnableEncryption `
+    -EnableDeduplication `
+    -VerifyIntegrity `
+    -CompressionLevel 9
+
+# 2. Test restoration to verify backup integrity
+Restore-BackupData `
+    -BackupPath "./disaster-recovery/latest" `
+    -RestorePath "./test-restore" `
+    -VerifyRestore `
+    -EncryptionKey $secureKey
+
+# 3. Clean up test restoration
+Remove-Item "./test-restore" -Recurse -Force
+```
+
+### Development Environment Setup
+
+```powershell
+# 1. Setup automated development backups
+Start-AutomatedBackup `
+    -SourcePaths @("./src", "./tests", "./.vscode") `
+    -BackupPath "./dev-backups" `
+    -Schedule Hourly `
+    -RetentionDays 7 `
+    -CompressionLevel 3
+
+# 2. Daily cleanup and consolidation
+Invoke-BackupMaintenance -Mode "Quick" -AutoFix
+
+# 3. Weekly statistics review
+$stats = Get-BackupStatistics -ProjectRoot "." -IncludeDetails
+$stats | ConvertTo-Json | Out-File "./reports/backup-stats.json"
+```
+
+### Emergency Recovery Procedures
+
+```powershell
+# CRITICAL: System failure recovery
+# 1. Identify latest good backup
+$backups = Get-ChildItem "./backups" | Sort-Object LastWriteTime -Descending
+
+# 2. Restore critical systems first
+Restore-BackupData `
+    -BackupPath $backups[0].FullName `
+    -RestorePath "./emergency-restore" `
+    -SelectiveRestore @("*.config", "*.json", "*.ps1") `
+    -VerifyRestore `
+    -OverwriteExisting
+
+# 3. Verify system integrity
+Test-Path "./emergency-restore/critical-config.json" | Should -Be $true
 ```
 
 ## File Organization
@@ -217,13 +329,155 @@ Import-Module "/pwsh/modules/BackupManager/" -Force
 Invoke-BackupMaintenance -ProjectRoot "." -Mode "Full"
 ```
 
-## Best Practices
+## 🏆 Best Practices & Security Guidelines
 
-1. **Always run statistics first** to understand what will be affected
-2. **Use Force parameter carefully** - review changes before applying
-3. **Emergency mode is destructive** - only use in development environments
-4. **Integrate with unified maintenance** for consistent project management
-5. **Regular maintenance** prevents backup file accumulation
+### Backup Strategy Best Practices
+
+#### 1. **3-2-1 Backup Rule Implementation**
+```powershell
+# 3 copies of data: Original + 2 backups
+Invoke-AdvancedBackup -SourcePath "./data" -BackupPath "./local-backup" -EnableDeduplication
+Invoke-AdvancedBackup -SourcePath "./data" -BackupPath "./offsite-backup" -EnableEncryption -CompressionLevel 9
+```
+
+#### 2. **Tiered Backup Schedule**
+```powershell
+# Hourly: Critical data only
+Start-AutomatedBackup -SourcePaths @("./critical") -Schedule Hourly -RetentionDays 3
+
+# Daily: Full development environment
+Start-AutomatedBackup -SourcePaths @("./src", "./config") -Schedule Daily -RetentionDays 30
+
+# Weekly: Complete system state
+Start-AutomatedBackup -SourcePaths @("./") -Schedule Weekly -RetentionDays 90 -EnableEncryption
+```
+
+#### 3. **Security-First Approach**
+```powershell
+# Always encrypt sensitive data
+$secureKey = ConvertTo-SecureString "YourSecurePassword" -AsPlainText -Force
+Invoke-AdvancedBackup -SourcePath "./sensitive" -BackupPath "./secure" -EnableEncryption -EncryptionKey $secureKey
+
+# Use exclusion rules to prevent credential leakage
+New-BackupExclusion -Patterns @("*.key", "*.pfx", "credentials.json", ".env") -Force
+```
+
+### Performance Optimization
+
+#### 1. **Large Dataset Handling**
+```powershell
+# Optimize for large files with high compression and parallelism
+Invoke-AdvancedBackup `
+    -SourcePath "./large-dataset" `
+    -BackupPath "./optimized-backup" `
+    -CompressionLevel 9 `
+    -MaxConcurrency 8 `
+    -EnableDeduplication
+```
+
+#### 2. **Network-Attached Storage**
+```powershell
+# Lower compression for network storage to reduce CPU overhead
+Invoke-AdvancedBackup `
+    -SourcePath "./data" `
+    -BackupPath "\\network-storage\backups" `
+    -CompressionLevel 3 `
+    -MaxConcurrency 2
+```
+
+### Monitoring and Alerting
+
+#### 1. **Health Monitoring Setup**
+```powershell
+# Enable comprehensive monitoring
+Start-AutomatedBackup `
+    -SourcePaths @("./production") `
+    -BackupPath "./monitored-backups" `
+    -EnableMonitoring `
+    -NotificationEmail "ops-team@company.com" `
+    -MaxBackupSize 50.0 `
+    -Schedule Daily
+```
+
+#### 2. **Custom Health Checks**
+```powershell
+# Daily health validation script
+$stats = Get-BackupStatistics -ProjectRoot "." -IncludeDetails
+if ($stats.TotalFiles -eq 0) {
+    Send-MailMessage -To "admin@company.com" -Subject "ALERT: No backup files found"
+}
+```
+
+### Disaster Recovery Planning
+
+#### 1. **Recovery Time Objectives (RTO)**
+```powershell
+# Critical systems: < 1 hour recovery
+# - Keep uncompressed backups for fastest restore
+# - Use local storage for critical data
+Invoke-AdvancedBackup -SourcePath "./critical" -BackupPath "./fast-restore" -CompressionLevel 0
+
+# Standard systems: < 4 hour recovery
+# - Balanced compression and performance
+Invoke-AdvancedBackup -SourcePath "./standard" -BackupPath "./balanced-restore" -CompressionLevel 6
+```
+
+#### 2. **Regular Disaster Recovery Testing**
+```powershell
+# Monthly DR test procedure
+$testRestorePath = "./dr-test-$(Get-Date -Format 'yyyy-MM')"
+Restore-BackupData -BackupPath "./production-backup" -RestorePath $testRestorePath -VerifyRestore
+
+# Validate critical services
+Test-Path "$testRestorePath/critical-service.exe" | Should -Be $true
+```
+
+### Integration Guidelines
+
+#### 1. **CI/CD Pipeline Integration**
+```powershell
+# Pre-deployment backup
+Invoke-AdvancedBackup `
+    -SourcePath "./deployment-ready" `
+    -BackupPath "./pre-deploy-backups/$(Get-Date -Format 'yyyy-MM-dd-HH-mm')" `
+    -EnableEncryption `
+    -VerifyIntegrity
+
+# Post-deployment verification
+$verifyResult = Restore-BackupData -BackupPath "./latest-backup" -RestorePath "./verify" -VerifyRestore
+if (-not $verifyResult.VerificationResult.Success) {
+    throw "Backup verification failed - deployment rollback required"
+}
+```
+
+#### 2. **Compliance and Audit Requirements**
+```powershell
+# Generate audit trail
+$auditReport = @{
+    Timestamp = Get-Date
+    BackupInventory = Get-BackupStatistics -ProjectRoot "." -IncludeDetails
+    RetentionCompliance = Test-RetentionCompliance
+    SecurityScan = Test-BackupSecurity
+}
+$auditReport | ConvertTo-Json -Depth 10 | Out-File "./compliance/backup-audit-$(Get-Date -Format 'yyyy-MM').json"
+```
+
+### Common Pitfalls to Avoid
+
+❌ **Don't:**
+- Store backups on the same drive as source data
+- Use weak encryption or store keys with backups
+- Skip verification of backup integrity
+- Ignore backup failure notifications
+- Mix production and development backup schedules
+
+✅ **Do:**
+- Test restoration procedures regularly
+- Monitor backup performance and adjust accordingly
+- Use separate storage locations for different backup tiers
+- Implement automated health checks
+- Document disaster recovery procedures
+- Regularly review and update retention policies
 
 ## Contributing
 
@@ -235,9 +489,23 @@ When adding new functions:
 4. Test with both LabRunner and standalone scenarios
 5. Update this README with new functionality
 
-## Version History
+## 📊 Version History
 
-- **1.0.0**: Initial release with core backup management functionality
+### v2.0.0 - Enterprise Enhancement Release
+- **🚀 NEW**: Advanced backup operations with compression, encryption, and deduplication
+- **🚀 NEW**: Automated backup scheduling and monitoring system  
+- **🚀 NEW**: Complete disaster recovery and restoration capabilities
+- **🚀 NEW**: Performance optimization with parallel processing
+- **✨ Enhanced**: Cross-platform compatibility and security features
+- **✨ Enhanced**: Comprehensive testing framework with 57 test cases
+- **✨ Enhanced**: Enterprise-grade documentation and best practices
+- **🔧 Fixed**: Integration issues and improved error handling
+- **🔧 Fixed**: PowerShell 7+ compatibility and modern syntax
+
+### v1.0.0 - Initial Release  
+- Basic backup management functionality
+- File consolidation and cleanup operations
+- Statistics and analysis capabilities
 
 ## Related
 

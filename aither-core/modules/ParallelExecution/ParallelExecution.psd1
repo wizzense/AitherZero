@@ -21,7 +21,7 @@ CompatiblePSEditions = @('Desktop', 'Core')
 GUID = '12345678-90ab-cdef-1234-567890abcdef'
 
 # Author of this module
-Author = 'Aitherium Contributors'
+Author = 'AitherZero Contributors'
 
 # Company or vendor of this module
 CompanyName = 'Aitherium'
@@ -41,7 +41,10 @@ FunctionsToExport = @(
     'Start-ParallelJob',
     'Wait-ParallelJobs',
     'Invoke-ParallelPesterTests',
-    'Merge-ParallelTestResults'
+    'Merge-ParallelTestResults',
+    'Get-OptimalThrottleLimit',
+    'Measure-ParallelPerformance',
+    'Start-AdaptiveParallelExecution'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.

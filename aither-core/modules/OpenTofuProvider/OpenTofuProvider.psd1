@@ -2,7 +2,7 @@
     RootModule = 'OpenTofuProvider.psm1'
     ModuleVersion = '1.2.0'
     GUID = 'a1b2c3d4-e5f6-78ab-9012-123456789abc'
-    Author = 'Aitherium Infrastructure Automation'
+    Author = 'AitherZero Contributors'
     CompanyName = 'Aitherium'
     Copyright = '(c) 2025 Aitherium. All rights reserved.'
     Description = 'PowerShell module for secure OpenTofu infrastructure automation with Taliesins Hyper-V provider integration'
@@ -88,7 +88,7 @@
             Tags = @('OpenTofu', 'Terraform', 'Infrastructure', 'Security', 'HyperV', 'Automation')
             LicenseUri = ''
             ProjectUri = 'https://github.com/wizzense/opentofu-lab-automation'
-            ReleaseNotes = 'v1.2.0: Added Advanced Features (Drift Detection, Rollback, Snapshots, History, Automation) and Performance Optimization (Memory Management, Caching, Concurrent Testing). Complete Infrastructure Abstraction Layer with comprehensive testing and integration capabilities.'
+            ReleaseNotes = 'v1.2.0: MAJOR UPDATE - Enhanced module loading with 42+ functions, comprehensive deployment automation, security hardening, YAML support, progress tracking, rollback capabilities, and extensive CI/CD integration. Complete Infrastructure Abstraction Layer with enterprise-grade features.'
             Licensing = @{
                 Tier = 'pro'
                 Feature = 'infrastructure'

@@ -43,10 +43,14 @@ function Get-OSImageName {
         'Windows11' = @{
             'Desktop' = 'Windows 11 Pro'
             'Pro' = 'Windows 11 Pro'
+            'Enterprise' = 'Windows 11 Enterprise'
+            'Education' = 'Windows 11 Education'
         }
         'Windows10' = @{
             'Desktop' = 'Windows 10 Pro'
             'Pro' = 'Windows 10 Pro'
+            'Enterprise' = 'Windows 10 Enterprise'
+            'Education' = 'Windows 10 Education'
         }
     }
 

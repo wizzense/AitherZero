@@ -1,0 +1,492 @@
+{
+  "Results": [
+    {
+      "Success": true,
+      "Module": "AIToolsIntegration",
+      "Duration": 0.0137429,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0025609,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/AIToolsIntegration"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "AIToolsIntegration"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "BackupManager",
+      "Duration": 0.0031636,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003223,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/BackupManager"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "BackupManager"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "ConfigurationCarousel",
+      "Duration": 0.0028489,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003136,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/ConfigurationCarousel"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "ConfigurationCarousel"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "ConfigurationCore",
+      "Duration": 0.0028807,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003364,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/ConfigurationCore"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "ConfigurationCore"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "ConfigurationRepository",
+      "Duration": 0.00286,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003386,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/ConfigurationRepository"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "ConfigurationRepository"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "DevEnvironment",
+      "Duration": 0.0028519,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003103,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/DevEnvironment"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "DevEnvironment"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "ISOCustomizer",
+      "Duration": 0.0028393,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003081,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/ISOCustomizer"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "ISOCustomizer"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "ISOManager",
+      "Duration": 0.0028259,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003115,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/ISOManager"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "ISOManager"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "LabRunner",
+      "Duration": 0.0028926,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003584,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/LabRunner"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "LabRunner"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "LicenseManager",
+      "Duration": 0.0028803,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003413,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/LicenseManager"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "LicenseManager"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "Logging",
+      "Duration": 0.0028804,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003269,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/Logging"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "Logging"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "ModuleCommunication",
+      "Duration": 0.0028334,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.000307,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/ModuleCommunication"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "ModuleCommunication"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "OpenTofuProvider",
+      "Duration": 0.0028569,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003289,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/OpenTofuProvider"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "OpenTofuProvider"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "OrchestrationEngine",
+      "Duration": 0.0029164,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003566,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/OrchestrationEngine"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "OrchestrationEngine"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "ParallelExecution",
+      "Duration": 0.0028391,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003043,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/ParallelExecution"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "ParallelExecution"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "PatchManager",
+      "Duration": 0.0029556,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003073,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/PatchManager"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "PatchManager"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "ProgressTracking",
+      "Duration": 0.0028977,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003287,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/ProgressTracking"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "ProgressTracking"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "RemoteConnection",
+      "Duration": 0.0028665,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003063,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/RemoteConnection"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "RemoteConnection"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "RepoSync",
+      "Duration": 0.0028574,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.000308,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/RepoSync"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "RepoSync"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "RestAPIServer",
+      "Duration": 0.0028141,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003069,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/RestAPIServer"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "RestAPIServer"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "ScriptManager",
+      "Duration": 0.0028403,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.000335,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/ScriptManager"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "ScriptManager"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "SecureCredentials",
+      "Duration": 0.0028259,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003284,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/SecureCredentials"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "SecureCredentials"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "SecurityAutomation",
+      "Duration": 0.0028563,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003092,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/SecurityAutomation"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "SecurityAutomation"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "SetupWizard",
+      "Duration": 0.002825,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003065,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/SetupWizard"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "SetupWizard"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "StartupExperience",
+      "Duration": 0.0028814,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003059,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/StartupExperience"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "StartupExperience"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "SystemMonitoring",
+      "Duration": 0.0028181,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003078,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/SystemMonitoring"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "SystemMonitoring"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "TestingFramework",
+      "Duration": 0.0028159,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003296,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/TestingFramework"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "TestingFramework"
+      }
+    },
+    {
+      "Success": true,
+      "Module": "UnifiedMaintenance",
+      "Duration": 0.0030309,
+      "Phase": "Unit",
+      "Result": {
+        "TestsRun": 0,
+        "TestsFailed": 0,
+        "Duration": 0.0003138,
+        "TestsPassed": 0,
+        "Details": [
+          "No unit tests found at: /workspaces/AitherZero/tests/unit/modules/UnifiedMaintenance"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "UnifiedMaintenance"
+      }
+    }
+  ],
+  "Summary": {
+    "SuccessfulModules": 28,
+    "TotalModules": 28,
+    "FailedModules": 0,
+    "TotalTests": null,
+    "TotalDuration": 0.09139740000000003,
+    "Timestamp": "2025-07-06T06:58:10.4436037+00:00",
+    "TotalPassed": null,
+    "TestSuite": "Quick",
+    "TotalFailed": null,
+    "SuccessRate": 0
+  }
+}

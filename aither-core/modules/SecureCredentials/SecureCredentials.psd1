@@ -2,7 +2,7 @@
     RootModule = 'SecureCredentials.psm1'
     ModuleVersion = '1.0.0'
     GUID = '7B8E9F10-2C4D-5E6F-8A9B-1C2D3E4F5A6B'
-    Author = 'AitherZero Development Team'
+    Author = 'AitherZero Contributors'
     CompanyName = 'AitherZero'
     Copyright = '(c) 2025 AitherZero. All rights reserved.'
     Description = 'Generalized secure credential management module for enterprise-wide use across AitherZero infrastructure automation'
@@ -14,7 +14,10 @@
         'Remove-SecureCredential',
         'Test-SecureCredential',
         'Export-SecureCredential',
-        'Import-SecureCredential'
+        'Import-SecureCredential',
+        'Get-AllSecureCredentials',
+        'Test-SecureCredentialStore',
+        'Backup-SecureCredentialStore'
     )
     CmdletsToExport = @()
     VariablesToExport = @()

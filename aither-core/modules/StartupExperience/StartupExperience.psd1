@@ -22,7 +22,11 @@
         'Export-ConfigurationProfile',
         'Import-ConfigurationProfile',
         'Show-ModuleExplorer',
-        'Get-StartupMode'
+        'Get-StartupMode',
+        'Clear-ModuleDiscoveryCache',
+        'Test-StartupPerformance',
+        'Get-UIStatus',
+        'Show-UIDebugInfo'
     )
     
     # Private data

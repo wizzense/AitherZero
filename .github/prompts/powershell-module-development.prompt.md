@@ -268,7 +268,7 @@ Describe "ModuleName Module" -Tags @('Unit', 'ModuleName', 'Fast') {
    Invoke-PatchWorkflow -PatchDescription "Enhance ModuleName with [feature]" -PatchOperation {
        # Your changes
    } -CreatePR -TestCommands @(
-       "pwsh -File tests/Run-BulletproofValidation.ps1 -ValidationLevel Quick",
+       "pwsh -File tests/Run-Tests.ps1",
        "Invoke-Pester -Path tests/unit/modules/ModuleName -Output Detailed"
    )
    ```

@@ -198,6 +198,9 @@ function Clear-License {
             Remove-Item -Path $script:LicensePath -Force
             $script:CurrentLicense = $null
             
+            # Clear all caches when license is removed
+            Clear-LicenseCache -Type All
+            
             Write-Host "✅ License removed. Reverted to free tier." -ForegroundColor Green
             
             if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {

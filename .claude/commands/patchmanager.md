@@ -1,29 +1,48 @@
 # /patchmanager
 
-Execute PatchManager workflows for Git operations, automated patching, and PR creation with enhanced conflict prevention.
+Execute PatchManager v3.0 workflows with atomic operations and smart auto-detection.
 
 ## Usage
 ```
 /patchmanager [action] [options]
 ```
 
-## Actions
+## Actions (v3.0 API)
 
-### `workflow` - Main patch workflow (default)
-Create branches, apply changes, commit, and optionally create issues/PRs with automatic synchronization.
+### `quickfix` - Quick fixes for minor changes
+Minor changes with no branching needed (typos, formatting, documentation).
+
+**Options:**
+- `--description "text"` - Description of the fix (required)
+- `--changes "scriptblock"` - PowerShell code to execute 
+- `--dry-run` - Preview without making changes
+
+### `feature` - Feature development workflow  
+New functionality with automatic branching and PR creation.
+
+**Options:**
+- `--description "text"` - Description of the feature (required)
+- `--changes "scriptblock"` - PowerShell code to execute
+- `--target-fork [current|upstream|root]` - PR target (default: current)
+- `--dry-run` - Preview without making changes
+
+### `hotfix` - Emergency hotfixes
+Critical fixes with high priority and automatic PR creation.
+
+**Options:**
+- `--description "text"` - Description of the hotfix (required)
+- `--changes "scriptblock"` - PowerShell code to execute
+- `--dry-run` - Preview without making changes
+
+### `patch` - Smart patch with auto-detection (default)
+Automatically chooses the best approach based on change analysis.
 
 **Options:**
 - `--description "text"` - Description of the patch (required)
-- `--operation "scriptblock"` - PowerShell code to execute 
-- `--create-issue` - Create GitHub issue (default: true)
-- `--create-pr` - Create pull request (default: false)
-- `--target-fork [current|upstream|root]` - PR target (default: current)
-- `--priority [Low|Medium|High|Critical]` - Issue priority (default: Medium)
+- `--changes "scriptblock"` - PowerShell code to execute
+- `--mode [Simple|Standard|Advanced]` - Force specific mode
+- `--create-pr` - Force PR creation
 - `--dry-run` - Preview without making changes
-- `--force` - Force operation on dirty working tree
-- `--auto-consolidate` - Auto-consolidate open PRs
-- `--test "command"` - Test command to run
-- `--sync` - Force Git synchronization before operations (automatic)
 
 ### `rollback` - Rollback operations
 Undo recent changes or revert to previous state.
@@ -69,60 +88,51 @@ Consolidate multiple open pull requests.
 - `--strategy [Compatible|RelatedFiles|SameAuthor|ByPriority|All]` - Consolidation strategy
 - `--max-prs N` - Maximum PRs to consolidate (default: 5)
 
-## Examples
+## Examples (v3.0 API)
 
 ```bash
-# Basic patch workflow with automatic sync
-/patchmanager workflow --description "Fix module loading issue" --operation "Get-Content module.ps1 | ForEach-Object { $_ -replace 'old', 'new' } | Set-Content module.ps1"
+# Quick fix for typos or minor changes
+/patchmanager quickfix --description "Fix typo in comment" --changes "Get-Content file.ps1 | ForEach-Object { $_ -replace 'teh', 'the' } | Set-Content file.ps1"
 
-# Create patch with PR and sync
-/patchmanager workflow --description "Update configuration" --create-pr --priority High --sync
+# Feature development with automatic PR
+/patchmanager feature --description "Add authentication module" --changes "New-AuthenticationModule"
 
-# Cross-fork PR to upstream
-/patchmanager workflow --description "Feature ready for staging" --create-pr --target-fork upstream
+# Emergency security fix
+/patchmanager hotfix --description "Fix critical security vulnerability" --changes "Apply-SecurityPatch"
 
-# Quick local fix (no issue)
-/patchmanager workflow --description "Local fix" --create-issue:$false --operation "Fix-LocalIssue"
+# Smart patch with auto-detection
+/patchmanager patch --description "Update configuration system" --changes "Update-ConfigurationSystem"
 
-# Preview changes only
-/patchmanager workflow --description "Test changes" --dry-run
+# Cross-fork feature for upstream
+/patchmanager feature --description "Upstream feature" --target-fork upstream --changes "Add-UpstreamFeature"
 
-# Sync branches to prevent conflicts
-/patchmanager sync --force --cleanup
+# Preview changes without executing
+/patchmanager patch --description "Test changes" --dry-run --changes "Test-NewFeature"
 
-# Create patch release
-/patchmanager release --type patch --description "Bug fixes and improvements"
+# Force specific mode
+/patchmanager patch --description "Complex change" --mode Standard --create-pr --changes "Implement-ComplexFeature"
 
-# Emergency release (skip PR)
-/patchmanager release --version "1.2.15" --description "Critical security fix" --skip-pr
-
-# Fix Git divergence issues
-/patchmanager fix-divergence --force
-
-# Rollback last commit
+# Legacy API support (still works)
 /patchmanager rollback --type LastCommit --create-backup
-
-# Check status with guidance
 /patchmanager status
-
-# Consolidate open PRs
-/patchmanager consolidate --strategy Compatible --max-prs 3
+/patchmanager sync --force --cleanup
 ```
 
-## Integration Notes
+## Integration Notes (v3.0)
 
-- **PowerShell Compatibility**: Automatically handles PowerShell 5.1 → 7 transitions
-- **Conflict Prevention**: Automatic Git synchronization before all operations
+- **Atomic Operations**: All-or-nothing operations with automatic rollback on failure
+- **Smart Mode Detection**: Automatically chooses the best approach for changes
+- **No Git Stashing**: Eliminates the root cause of merge conflicts
 - **Cross-platform Support**: Works on Windows, Linux, and macOS
-- **Release Automation**: Complete release workflow with tag management
-- **Rollback Safety**: Comprehensive backup and rollback capabilities
-- **Unicode Sanitization**: Automatic cleanup of problematic characters
-- **Workflow Consistency**: Maintains consistent Git workflows across all operations
+- **Legacy Compatibility**: Old v2.x syntax automatically translated to v3.0
+- **Error Recovery**: Automatic recovery with smart error categorization
+- **Multi-Mode System**: Simple/Standard/Advanced modes for different needs
 
-## Key Improvements
+## Key v3.0 Improvements
 
-- **Automatic Sync**: All operations now include automatic remote synchronization
-- **Conflict Detection**: Proactive detection and resolution of merge conflicts
-- **Branch Divergence Fix**: Automatic detection and repair of diverged branches
-- **Release Workflow**: One-command release process with automated tag creation
-- **PowerShell Bootstrap**: Seamless PowerShell version handling
+- **Breakthrough**: Eliminates git stashing issues through atomic operations
+- **Smart Analysis**: Automatically determines Simple vs Standard vs Advanced mode
+- **No Manual Cleanup**: Atomic operations handle cleanup automatically
+- **Enhanced Safety**: Failed operations restore previous state automatically
+- **Simplified API**: Cleaner function names (New-Patch vs Invoke-PatchWorkflow)
+- **Better Error Handling**: Categorized errors with suggested solutions

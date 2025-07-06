@@ -1,9 +1,0 @@
-{
-  "timestamp": "2025-06-28T20:52:00Z",
-  "title": "PowerShell Module to Claude Commands Integration",
-  "description": "Convert PowerShell modules (PatchManager, etc.) into /.claude/commands for seamless AI integration",
-  "phase": "completed",
-  "status": "completed",
-  "completed_at": "2025-06-28T22:30:00Z",
-  "implementation_summary": "Successfully implemented PowerShell command wrappers for Claude integration with cross-platform support"
-}

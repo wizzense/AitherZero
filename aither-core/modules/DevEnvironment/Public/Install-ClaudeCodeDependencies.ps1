@@ -109,14 +109,60 @@ function Install-ClaudeCodeDependencies {
 
     process {
         try {
+            # Import AIToolsIntegration module for enhanced installation
+            try {
+                Import-Module (Join-Path $projectRoot "aither-core/modules/AIToolsIntegration") -Force -ErrorAction Stop
+                Write-CustomLog -Message "✅ AIToolsIntegration module loaded" -Level "SUCCESS"
+                
+                # Use enhanced AI tools installation
+                $nodeCheck = Test-NodeJsPrerequisites
+                if ($nodeCheck.Success) {
+                    Write-CustomLog -Message "✅ Node.js prerequisites already met" -Level "SUCCESS"
+                    
+                    # Install Claude Code using enhanced function
+                    $claudeResult = Install-ClaudeCode -Force:$Force -ConfigureIntegration -WhatIf:$WhatIf
+                    if ($claudeResult.Success) {
+                        Write-CustomLog -Message "✅ Claude Code installation completed via AIToolsIntegration module" -Level "SUCCESS"
+                        return $claudeResult
+                    } else {
+                        Write-CustomLog -Message "⚠️ AIToolsIntegration installation failed, falling back to platform-specific method" -Level "WARNING"
+                    }
+                } else {
+                    Write-CustomLog -Message "📋 Node.js prerequisites not met, installing dependencies first" -Level "INFO"
+                    Write-CustomLog -Message "Node.js check: $($nodeCheck.Message)" -Level "INFO"
+                }
+            } catch {
+                Write-CustomLog -Message "⚠️ Failed to load AIToolsIntegration module, using legacy installation method" -Level "WARNING"
+            }
+            
+            # Platform-specific installation (legacy method or Node.js setup)
             if ($platform -eq 'Windows') {
                 Install-WindowsClaudeCodeDependencies -SkipWSL:$SkipWSL -WSLUsername $WSLUsername -WSLPassword $WSLPassword -NodeVersion $NodeVersion -Force:$Force -WhatIf:$WhatIf
             } elseif ($platform -eq 'Linux') {
                 Install-LinuxClaudeCodeDependencies -NodeVersion $NodeVersion -Force:$Force -WhatIf:$WhatIf
             }
             
-            Write-CustomLog -Message "✅ Claude Code dependencies installation completed successfully!" -Level "SUCCESS"
-            Write-CustomLog -Message "You can now run Claude Code using: claude-code" -Level "INFO"
+            # Final verification and configuration
+            $claudeCmd = Get-Command claude-code -ErrorAction SilentlyContinue
+            if ($claudeCmd) {
+                Write-CustomLog -Message "✅ Claude Code dependencies installation completed successfully!" -Level "SUCCESS"
+                Write-CustomLog -Message "Claude Code available at: $($claudeCmd.Source)" -Level "INFO"
+                
+                # Try to configure integration if AIToolsIntegration is available
+                if (Get-Module -Name "AIToolsIntegration" -ErrorAction SilentlyContinue) {
+                    try {
+                        Configure-ClaudeCodeIntegration
+                        Write-CustomLog -Message "✅ Claude Code integration configured" -Level "SUCCESS"
+                    } catch {
+                        Write-CustomLog -Message "⚠️ Failed to configure Claude Code integration: $($_.Exception.Message)" -Level "WARNING"
+                    }
+                }
+                
+                Write-CustomLog -Message "You can now run Claude Code using: claude-code" -Level "INFO"
+            } else {
+                Write-CustomLog -Message "⚠️ Claude Code installation completed but command not found in PATH" -Level "WARNING"
+                Write-CustomLog -Message "You may need to restart your terminal or reload your PATH" -Level "INFO"
+            }
             
         } catch {
             Write-CustomLog -Message "❌ Failed to install Claude Code dependencies: $($_.Exception.Message)" -Level "ERROR"

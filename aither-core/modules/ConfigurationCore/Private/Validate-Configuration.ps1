@@ -51,20 +51,101 @@ function Validate-Configuration {
             
             $value = $Configuration[$propName]
             
-            # Type validation
+            # Enhanced type validation with complex types
             if ($propSchema.Type) {
-                $expectedType = switch ($propSchema.Type) {
-                    'string' { [string] }
-                    'int' { [int] }
-                    'bool' { [bool] }
-                    'array' { [array] }
-                    'hashtable' { [hashtable] }
-                    default { [object] }
+                $typeValid = $true
+                $typeError = $null
+                
+                switch ($propSchema.Type) {
+                    'string' { 
+                        if ($value -isnot [string]) {
+                            $typeValid = $false
+                            $typeError = "Expected string, got $($value.GetType().Name)"
+                        }
+                    }
+                    'int' { 
+                        if ($value -isnot [int] -and $value -isnot [long]) {
+                            # Try to convert to int
+                            if ([int]::TryParse($value, [ref]$null)) {
+                                # Can be converted, that's acceptable
+                            } else {
+                                $typeValid = $false
+                                $typeError = "Expected integer, got $($value.GetType().Name)"
+                            }
+                        }
+                    }
+                    'bool' { 
+                        if ($value -isnot [bool]) {
+                            # Try to convert common boolean representations
+                            if ($value -in @('true', 'false', '1', '0', 'yes', 'no')) {
+                                # Can be converted, that's acceptable
+                            } else {
+                                $typeValid = $false
+                                $typeError = "Expected boolean, got $($value.GetType().Name)"
+                            }
+                        }
+                    }
+                    'array' { 
+                        if ($value -isnot [array] -and $value -isnot [System.Collections.IEnumerable]) {
+                            $typeValid = $false
+                            $typeError = "Expected array, got $($value.GetType().Name)"
+                        } elseif ($propSchema.ItemType) {
+                            # Validate array item types
+                            foreach ($item in $value) {
+                                $itemValid = Test-ConfigurationValueType -Value $item -Type $propSchema.ItemType
+                                if (-not $itemValid.IsValid) {
+                                    $typeValid = $false
+                                    $typeError = "Array item validation failed: $($itemValid.Error)"
+                                    break
+                                }
+                            }
+                        }
+                    }
+                    'hashtable' { 
+                        if ($value -isnot [hashtable] -and $value -isnot [System.Collections.IDictionary]) {
+                            $typeValid = $false
+                            $typeError = "Expected hashtable, got $($value.GetType().Name)"
+                        }
+                    }
+                    'email' {
+                        if ($value -isnot [string] -or $value -notmatch '^[^@]+@[^@]+\.[^@]+$') {
+                            $typeValid = $false
+                            $typeError = "Expected valid email address"
+                        }
+                    }
+                    'url' {
+                        try {
+                            $uri = [System.Uri]::new($value)
+                            if (-not $uri.IsAbsoluteUri) {
+                                $typeValid = $false
+                                $typeError = "Expected absolute URL"
+                            }
+                        } catch {
+                            $typeValid = $false
+                            $typeError = "Expected valid URL"
+                        }
+                    }
+                    'path' {
+                        if ($value -isnot [string] -or ([string]::IsNullOrWhiteSpace($value))) {
+                            $typeValid = $false
+                            $typeError = "Expected valid file path"
+                        } elseif ($propSchema.MustExist -and -not (Test-Path $value)) {
+                            $typeValid = $false
+                            $typeError = "Path does not exist: $value"
+                        }
+                    }
+                    default { 
+                        # For unknown types, just check if it's an object
+                        if ($null -eq $value) {
+                            $typeValid = $false
+                            $typeError = "Value cannot be null for type $($propSchema.Type)"
+                        }
+                    }
                 }
                 
-                if ($value -isnot $expectedType) {
+                if (-not $typeValid) {
                     $result.IsValid = $false
-                    $result.Errors += "${propName}: Expected type $($propSchema.Type), got $($value.GetType().Name)"
+                    $result.Errors += "${propName}: $typeError"
                 }
             }
             
@@ -91,6 +172,46 @@ function Validate-Configuration {
                 if ($value -notmatch $propSchema.Pattern) {
                     $result.IsValid = $false
                     $result.Errors += "${propName}: Value '$value' does not match pattern: $($propSchema.Pattern)"
+                }
+            }
+            
+            # Dependency validation
+            if ($propSchema.DependsOn) {
+                foreach ($dependency in $propSchema.DependsOn) {
+                    if (-not $Configuration.ContainsKey($dependency)) {
+                        $result.IsValid = $false
+                        $result.Errors += "${propName}: Depends on property '$dependency' which is not present"
+                    } elseif ($propSchema.DependsOnValue -and $Configuration[$dependency] -ne $propSchema.DependsOnValue[$dependency]) {
+                        $result.IsValid = $false
+                        $result.Errors += "${propName}: Depends on property '$dependency' having value '$($propSchema.DependsOnValue[$dependency])'"
+                    }
+                }
+            }
+            
+            # Conditional validation
+            if ($propSchema.ConditionalValidation) {
+                foreach ($condition in $propSchema.ConditionalValidation) {
+                    $conditionMet = $true
+                    if ($condition.When) {
+                        foreach ($whenKey in $condition.When.Keys) {
+                            if (-not $Configuration.ContainsKey($whenKey) -or $Configuration[$whenKey] -ne $condition.When[$whenKey]) {
+                                $conditionMet = $false
+                                break
+                            }
+                        }
+                    }
+                    
+                    if ($conditionMet -and $condition.Then) {
+                        # Apply conditional validation rules
+                        if ($condition.Then.Required -and [string]::IsNullOrEmpty($value)) {
+                            $result.IsValid = $false
+                            $result.Errors += "${propName}: Required when $($condition.When | ConvertTo-Json -Compress)"
+                        }
+                        if ($condition.Then.ValidValues -and $value -notin $condition.Then.ValidValues) {
+                            $result.IsValid = $false
+                            $result.Errors += "${propName}: Must be one of [$($condition.Then.ValidValues -join ', ')] when $($condition.When | ConvertTo-Json -Compress)"
+                        }
+                    }
                 }
             }
         }

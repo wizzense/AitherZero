@@ -110,12 +110,30 @@ function StartCopilotMonitoring {
                             Write-MonitorLog "Suggestion content: $($suggestionBody.Substring(0, [Math]::Min(100, $suggestionBody.Length)))..." "DEBUG"
                             
                             if ($autoImplement) {
-                                # TODO: Add logic to implement suggestion
-                                # This would require parsing the suggestion and making the appropriate changes
-                                Write-MonitorLog "Auto-implementation logic would go here" "INFO"
+                                # Parse and implement the suggestion
+                                try {
+                                    $implementationResult = Invoke-SuggestionImplementation -Suggestion $suggestion -SuggestionId $suggestionId
+                                    
+                                    if ($implementationResult.Success) {
+                                        Write-MonitorLog "Successfully auto-implemented suggestion: $($implementationResult.Summary)" "INFO"
+                                        
+                                        # Create a patch with the implemented changes
+                                        if ($implementationResult.FilesChanged -and $implementationResult.FilesChanged.Count -gt 0) {
+                                            $patchDescription = "Auto-implement Copilot suggestion: $($implementationResult.Summary)"
+                                            Write-MonitorLog "Creating patch for auto-implemented changes" "INFO"
+                                            
+                                            # Note: This would integrate with PatchManager to create a proper patch
+                                            # For now, we log the implementation
+                                        }
+                                    } else {
+                                        Write-MonitorLog "Failed to auto-implement suggestion: $($implementationResult.Error)" "WARN"
+                                    }
+                                } catch {
+                                    Write-MonitorLog "Error during auto-implementation: $($_.Exception.Message)" "ERROR"
+                                }
                                 
                                 # Add processing marker
-                                Write-MonitorLog "$processedMarker - Auto-implemented suggestion" "INFO"
+                                Write-MonitorLog "$processedMarker - Auto-implementation attempted" "INFO"
                             } else {
                                 Write-MonitorLog "Not implementing suggestion (auto-implement disabled)" "INFO"
                                 Write-MonitorLog "$processedMarker - Tracking only" "INFO"
@@ -166,13 +184,92 @@ function Invoke-CopilotSuggestionImplementation {
         [switch]$DryRun = $false
     )
     
-    # Placeholder for future functionality
-    # This would parse Copilot suggestion content and apply changes to the specified file
-    
+    # This function is deprecated - use Invoke-SuggestionImplementation instead
     return @{
         Success = $true
         FilePath = $FilePath
-        Message = "Copilot suggestion implemented"
+        Message = "Copilot suggestion implemented (legacy function)"
+    }
+}
+
+function Invoke-SuggestionImplementation {
+    <#
+    .SYNOPSIS
+        Implements a Copilot suggestion automatically
+    .PARAMETER Suggestion
+        The suggestion object from GitHub Copilot
+    .PARAMETER SuggestionId
+        Unique identifier for the suggestion
+    .OUTPUTS
+        Implementation result object
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [object]$Suggestion,
+        
+        [Parameter(Mandatory)]
+        [string]$SuggestionId
+    )
+    
+    try {
+        $result = @{
+            Success = $false
+            Summary = ""
+            Error = ""
+            FilesChanged = @()
+        }
+        
+        # Parse suggestion content
+        $suggestionBody = $Suggestion.body
+        
+        # Simple implementation for common suggestion patterns
+        if ($suggestionBody -match "Replace\s+['`""](.+?)['`""]\s+with\s+['`""](.+?)['`""]") {
+            $oldText = $Matches[1]
+            $newText = $Matches[2]
+            
+            # Find files that might contain the old text
+            $files = Get-ChildItem -Path "." -Recurse -Include "*.ps1", "*.psm1", "*.psd1" | 
+                     Where-Object { (Get-Content $_.FullName -Raw) -like "*$oldText*" }
+            
+            foreach ($file in $files) {
+                try {
+                    $content = Get-Content $file.FullName -Raw
+                    if ($content -match [regex]::Escape($oldText)) {
+                        $newContent = $content -replace [regex]::Escape($oldText), $newText
+                        Set-Content -Path $file.FullName -Value $newContent -NoNewline
+                        $result.FilesChanged += $file.FullName
+                    }
+                } catch {
+                    Write-MonitorLog "Failed to update file $($file.FullName): $($_.Exception.Message)" "WARN"
+                }
+            }
+            
+            if ($result.FilesChanged.Count -gt 0) {
+                $result.Success = $true
+                $result.Summary = "Replaced '$oldText' with '$newText' in $($result.FilesChanged.Count) files"
+            } else {
+                $result.Error = "No files found containing the text to replace"
+            }
+        }
+        elseif ($suggestionBody -match "Add\s+function\s+(\w+)") {
+            $functionName = $Matches[1]
+            $result.Summary = "Suggestion to add function '$functionName' - manual implementation required"
+            $result.Error = "Complex suggestions require manual implementation"
+        }
+        else {
+            $result.Error = "Suggestion format not recognized for auto-implementation"
+            $result.Summary = "Manual review required"
+        }
+        
+        return $result
+        
+    } catch {
+        return @{
+            Success = $false
+            Summary = ""
+            Error = "Exception during implementation: $($_.Exception.Message)"
+            FilesChanged = @()
+        }
     }
 }
 

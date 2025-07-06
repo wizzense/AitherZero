@@ -2,7 +2,7 @@
     RootModule        = 'ISOCustomizer.psm1'
     ModuleVersion     = '1.0.0'
     GUID              = 'A1B2C3D4-E5F6-7890-ABCD-EF1234567890'
-    Author            = 'AitherZero Development Team'
+    Author = 'AitherZero Contributors'
     CompanyName       = 'AitherZero'
     Copyright         = '(c) 2025 AitherZero. All rights reserved.'
     Description       = 'Enterprise-grade ISO customization and autounattend file generation module for automated lab deployments'
@@ -10,7 +10,10 @@
     RequiredModules   = @()
     FunctionsToExport = @(
         'New-CustomISO',
+        'New-CustomISOWithProgress',
         'New-AutounattendFile',
+        'New-AdvancedAutounattendFile',
+        'Test-ISOIntegrity',
         'Get-AutounattendTemplate',
         'Get-BootstrapTemplate',
         'Get-KickstartTemplate'

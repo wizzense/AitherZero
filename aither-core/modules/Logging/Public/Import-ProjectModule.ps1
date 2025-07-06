@@ -43,7 +43,15 @@ function Import-ProjectModule {
             }
         }
         
-        # Set standard module path with forward slashes
+        # Initialize PWSH_MODULES_PATH if not set (fallback behavior)
+        if (-not $env:PWSH_MODULES_PATH) {
+            $env:PWSH_MODULES_PATH = Join-Path $env:PROJECT_ROOT "aither-core" "modules"
+            if ($ShowDetails) {
+                Write-Host "Setting PWSH_MODULES_PATH to $env:PWSH_MODULES_PATH" -ForegroundColor Yellow
+            }
+        }
+        
+        # Set standard module path with cross-platform compatibility
         $modulePath = Join-Path $env:PWSH_MODULES_PATH $ModuleName
         
         # Create hashtable for splatting import parameters

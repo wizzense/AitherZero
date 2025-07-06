@@ -56,33 +56,57 @@ function Connect-RemoteEndpoint {
             if ($PSCmdlet.ShouldProcess($ConnectionName, "Connect to remote endpoint")) {
                 $config = $connectionConfig.Configuration
 
-                # Attempt connection based on endpoint type
-                $result = switch ($config.EndpointType) {
-                    'SSH' { Start-SSHSession -Config $config -Timeout $Timeout }
-                    'WinRM' { Start-WinRMSession -Config $config -Timeout $Timeout }
-                    'VMware' { Start-VMwareSession -Config $config -Timeout $Timeout }
-                    'Hyper-V' { Start-HyperVSession -Config $config -Timeout $Timeout }
-                    'Docker' { Start-DockerSession -Config $config -Timeout $Timeout }
-                    'Kubernetes' { Start-KubernetesSession -Config $config -Timeout $Timeout }
-                    default {
-                        @{ Success = $false; Error = "Unsupported endpoint type: $($config.EndpointType)" }
-                    }
-                }
-
-                if ($result.Success) {
-                    Write-CustomLog -Level 'SUCCESS' -Message "Successfully connected to: $ConnectionName"
+                # Try to get connection from pool first
+                $poolResult = Get-PooledConnection -ConnectionName $ConnectionName
+                
+                if ($poolResult.Success -and $poolResult.FromPool) {
+                    Write-CustomLog -Level 'SUCCESS' -Message "Successfully connected to: $ConnectionName (from pool)"
                     return @{
                         Success = $true
                         ConnectionName = $ConnectionName
-                        SessionInfo = $result.SessionInfo
-                        Message = "Connection established successfully"
+                        SessionInfo = $poolResult.Connection
+                        Message = "Connection established successfully from pool"
+                        FromPool = $true
+                    }
+                } elseif ($poolResult.Success -and -not $poolResult.FromPool) {
+                    Write-CustomLog -Level 'SUCCESS' -Message "Successfully connected to: $ConnectionName (new connection)"
+                    return @{
+                        Success = $true
+                        ConnectionName = $ConnectionName
+                        SessionInfo = $poolResult.Connection
+                        Message = "New connection established successfully"
+                        FromPool = $false
                     }
                 } else {
-                    Write-CustomLog -Level 'ERROR' -Message "Failed to connect to $ConnectionName`: $($result.Error)"
-                    return @{
-                        Success = $false
-                        Error = $result.Error
-                        ConnectionName = $ConnectionName
+                    # Pool connection failed, try with retry logic
+                    Write-CustomLog -Level 'WARN' -Message "Pool connection failed, attempting with retry logic"
+                    
+                    $retryResult = New-ConnectionWithRetry -ConnectionConfig $config -TimeoutSeconds $Timeout
+                    
+                    if ($retryResult.Success) {
+                        Write-CustomLog -Level 'SUCCESS' -Message "Successfully connected to: $ConnectionName (with retry)"
+                        return @{
+                            Success = $true
+                            ConnectionName = $ConnectionName
+                            SessionInfo = $retryResult.Result.Session
+                            Message = "Connection established successfully with retry"
+                            Attempts = $retryResult.Attempts
+                        }
+                    } else {
+                        # Generate diagnostics for failed connection
+                        $diagnostics = Get-ConnectionDiagnostics -ConnectionConfig $config -LastError $retryResult.Error
+                        $formattedError = Format-ConnectionError -Error $retryResult.Error -ConnectionConfig $config -Diagnostics $diagnostics
+                        
+                        Write-CustomLog -Level 'ERROR' -Message "Failed to connect to $ConnectionName after $($retryResult.Attempts) attempts: $($retryResult.Error.Exception.Message)"
+                        
+                        return @{
+                            Success = $false
+                            Error = $retryResult.Error.Exception.Message
+                            ConnectionName = $ConnectionName
+                            Attempts = $retryResult.Attempts
+                            Diagnostics = $diagnostics
+                            ErrorDetails = $formattedError
+                        }
                     }
                 }
             } else {

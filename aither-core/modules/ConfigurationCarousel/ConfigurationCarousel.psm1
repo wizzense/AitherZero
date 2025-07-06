@@ -148,10 +148,35 @@ function Switch-ConfigurationSet {
             Write-CustomLog -Level 'INFO' -Message "Current configuration backed up: $($backupResult.BackupPath)"
         }
         
-        # Validate target configuration
+        # Enhanced validation for target configuration
         $validationResult = Validate-ConfigurationSet -ConfigurationName $ConfigurationName -Environment $Environment
-        if (-not $validationResult.IsValid -and -not $Force) {
-            throw "Configuration validation failed: $($validationResult.Errors -join '; ')"
+        if (-not $validationResult.IsValid) {
+            Write-CustomLog -Level 'ERROR' -Message "Configuration validation failed:"
+            foreach ($error in $validationResult.Errors) {
+                Write-CustomLog -Level 'ERROR' -Message "  - $error"
+            }
+            if (-not $Force) {
+                throw "Configuration validation failed. Use -Force to override."
+            } else {
+                Write-CustomLog -Level 'WARNING' -Message "Validation failed but -Force specified, continuing anyway"
+            }
+        }
+        
+        # Additional environment-specific validation
+        $envValidation = Test-EnvironmentCompatibility -ConfigurationName $ConfigurationName -Environment $Environment
+        if (-not $envValidation.IsCompatible) {
+            Write-CustomLog -Level 'WARNING' -Message "Environment compatibility issues detected:"
+            foreach ($warning in $envValidation.Warnings) {
+                Write-CustomLog -Level 'WARNING' -Message "  - $warning"
+            }
+            
+            if ($envValidation.BlockingIssues.Count -gt 0 -and -not $Force) {
+                Write-CustomLog -Level 'ERROR' -Message "Blocking issues found:"
+                foreach ($issue in $envValidation.BlockingIssues) {
+                    Write-CustomLog -Level 'ERROR' -Message "  - $issue"
+                }
+                throw "Environment has blocking compatibility issues. Use -Force to override."
+            }
         }
         
         # Update registry
@@ -360,6 +385,202 @@ function Add-ConfigurationRepository {
         return @{
             Success = $false
             Error = $_.Exception.Message
+        }
+    }
+}
+
+function Sync-ConfigurationRepository {
+    <#
+    .SYNOPSIS
+        Synchronizes a configuration repository with its remote source
+    .DESCRIPTION
+        Updates a configuration repository by pulling changes from its remote source
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$ConfigurationName,
+        
+        [ValidateSet('pull', 'push', 'sync')]
+        [string]$Operation = 'pull',
+        
+        [switch]$Force,
+        
+        [switch]$BackupCurrent = $true
+    )
+    
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Synchronizing configuration repository: $ConfigurationName"
+        
+        $registry = Get-ConfigurationRegistry
+        
+        # Validate configuration exists
+        if (-not $registry.configurations.PSObject.Properties[$ConfigurationName]) {
+            throw "Configuration '$ConfigurationName' not found"
+        }
+        
+        $config = $registry.configurations.$ConfigurationName
+        
+        # Check if configuration has a remote source
+        if (-not $config.source -or $config.sourceType -ne 'git') {
+            throw "Configuration '$ConfigurationName' does not have a Git remote source"
+        }
+        
+        # Validate configuration path exists
+        if (-not (Test-Path $config.path)) {
+            throw "Configuration path does not exist: $($config.path)"
+        }
+        
+        # Backup current if requested
+        $backupResult = $null
+        if ($BackupCurrent) {
+            $backupResult = Backup-CurrentConfiguration -Reason "Before sync of $ConfigurationName"
+            Write-CustomLog -Level 'INFO' -Message "Configuration backed up: $($backupResult.BackupPath)"
+        }
+        
+        # Change to configuration directory
+        Push-Location $config.path
+        
+        try {
+            # Verify it's a Git repository
+            git status 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                throw "Configuration directory is not a Git repository: $($config.path)"
+            }
+            
+            $syncResult = @{
+                Success = $true
+                Operation = $Operation
+                Changes = @()
+                ConflictsDetected = $false
+            }
+            
+            switch ($Operation) {
+                'pull' {
+                    Write-CustomLog -Level 'INFO' -Message "Pulling latest changes from remote"
+                    
+                    # Fetch latest changes
+                    $fetchResult = git fetch origin 2>&1
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Git fetch failed: $fetchResult"
+                    }
+                    
+                    # Check for local changes
+                    $status = git status --porcelain
+                    if ($status -and -not $Force) {
+                        Write-CustomLog -Level 'WARNING' -Message "Local changes detected. Use -Force to override or commit changes first."
+                        $syncResult.Changes += "Local changes detected - sync aborted"
+                        return $syncResult
+                    }
+                    
+                    # Pull changes
+                    $pullResult = git pull origin $config.branch 2>&1
+                    if ($LASTEXITCODE -ne 0) {
+                        if ($pullResult -match 'conflict|merge') {
+                            $syncResult.ConflictsDetected = $true
+                            $syncResult.Changes += "Merge conflicts detected - manual resolution required"
+                        } else {
+                            throw "Git pull failed: $pullResult"
+                        }
+                    } else {
+                        $syncResult.Changes += "Successfully pulled changes from remote"
+                    }
+                }
+                
+                'push' {
+                    Write-CustomLog -Level 'INFO' -Message "Pushing local changes to remote"
+                    
+                    # Check for changes to commit
+                    $status = git status --porcelain
+                    if ($status) {
+                        git add . 2>&1 | Out-Null
+                        $commitResult = git commit -m "Configuration updates from AitherZero $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" 2>&1
+                        if ($LASTEXITCODE -ne 0) {
+                            throw "Git commit failed: $commitResult"
+                        }
+                        $syncResult.Changes += "Committed local changes"
+                    }
+                    
+                    # Push to remote
+                    $pushResult = git push origin $config.branch 2>&1
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Git push failed: $pushResult"
+                    }
+                    $syncResult.Changes += "Successfully pushed changes to remote"
+                }
+                
+                'sync' {
+                    # Full sync: pull then push
+                    Write-CustomLog -Level 'INFO' -Message "Performing full synchronization"
+                    
+                    # Stash local changes if any
+                    $status = git status --porcelain
+                    $hasLocalChanges = [bool]$status
+                    if ($hasLocalChanges) {
+                        git stash push -m "Auto-stash for sync $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" 2>&1 | Out-Null
+                        $syncResult.Changes += "Stashed local changes"
+                    }
+                    
+                    # Pull latest
+                    $pullResult = git pull origin $config.branch 2>&1
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Git pull failed: $pullResult"
+                    }
+                    $syncResult.Changes += "Pulled latest changes"
+                    
+                    # Restore and merge local changes
+                    if ($hasLocalChanges) {
+                        $stashResult = git stash pop 2>&1
+                        if ($LASTEXITCODE -eq 0) {
+                            $syncResult.Changes += "Restored local changes"
+                            
+                            # Commit merged changes
+                            git add . 2>&1 | Out-Null
+                            git commit -m "Sync: Merged local and remote changes $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" 2>&1 | Out-Null
+                            
+                            # Push merged changes
+                            $pushResult = git push origin $config.branch 2>&1
+                            if ($LASTEXITCODE -eq 0) {
+                                $syncResult.Changes += "Pushed merged changes"
+                            } else {
+                                Write-CustomLog -Level 'WARNING' -Message "Failed to push merged changes: $pushResult"
+                            }
+                        } else {
+                            Write-CustomLog -Level 'WARNING' -Message "Merge conflicts detected: $stashResult"
+                            $syncResult.ConflictsDetected = $true
+                            $syncResult.Changes += "Merge conflicts require manual resolution"
+                        }
+                    }
+                }
+            }
+            
+            # Update registry with last sync time
+            $config.lastSync = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+            Set-ConfigurationRegistry -Registry $registry
+            
+            Write-CustomLog -Level 'SUCCESS' -Message "Configuration repository synchronized successfully"
+            
+            return @{
+                Success = $true
+                ConfigurationName = $ConfigurationName
+                Operation = $Operation
+                Changes = $syncResult.Changes
+                ConflictsDetected = $syncResult.ConflictsDetected
+                BackupPath = $backupResult.BackupPath
+                LastSync = $config.lastSync
+            }
+            
+        } finally {
+            Pop-Location
+        }
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to sync configuration repository: $_"
+        return @{
+            Success = $false
+            Error = $_.Exception.Message
+            ConfigurationName = $ConfigurationName
+            Operation = $Operation
         }
     }
 }
@@ -630,6 +851,77 @@ function Validate-ConfigurationPath {
     }
 }
 
+function Test-EnvironmentCompatibility {
+    param(
+        [string]$ConfigurationName,
+        [string]$Environment
+    )
+    
+    $warnings = @()
+    $blockingIssues = @()
+    
+    try {
+        $registry = Get-ConfigurationRegistry
+        $config = $registry.configurations.$ConfigurationName
+        
+        # Check if environment is supported by configuration
+        if ($config.environments -and $Environment -notin $config.environments) {
+            $blockingIssues += "Environment '$Environment' is not supported by configuration '$ConfigurationName'"
+        }
+        
+        # Check platform compatibility
+        $currentPlatform = if ($IsWindows) { 'Windows' } elseif ($IsLinux) { 'Linux' } else { 'macOS' }
+        if ($config.supportedPlatforms -and $currentPlatform -notin $config.supportedPlatforms) {
+            $warnings += "Configuration may not be fully compatible with platform '$currentPlatform'"
+        }
+        
+        # Check version compatibility
+        if ($config.requiredVersion) {
+            $currentVersion = '1.0.0'  # This would be dynamic in real implementation
+            if ([version]$currentVersion -lt [version]$config.requiredVersion) {
+                $blockingIssues += "Configuration requires version $($config.requiredVersion) or higher, current version is $currentVersion"
+            }
+        }
+        
+        # Check dependencies
+        if ($config.dependencies) {
+            foreach ($dependency in $config.dependencies) {
+                # Check if dependency is available
+                if (-not (Test-ConfigurationDependency -Dependency $dependency)) {
+                    $warnings += "Configuration dependency '$dependency' may not be available"
+                }
+            }
+        }
+        
+        return @{
+            IsCompatible = ($blockingIssues.Count -eq 0)
+            Warnings = $warnings
+            BlockingIssues = $blockingIssues
+        }
+        
+    } catch {
+        return @{
+            IsCompatible = $false
+            Warnings = @()
+            BlockingIssues = @("Error checking compatibility: $($_.Exception.Message)")
+        }
+    }
+}
+
+function Test-ConfigurationDependency {
+    param([string]$Dependency)
+    
+    # Basic dependency checking - this could be expanded
+    switch ($Dependency.ToLower()) {
+        'git' { return (Get-Command git -ErrorAction SilentlyContinue) -ne $null }
+        'powershell' { return $true }  # Always available in this context
+        'docker' { return (Get-Command docker -ErrorAction SilentlyContinue) -ne $null }
+        'terraform' { return (Get-Command terraform -ErrorAction SilentlyContinue) -ne $null }
+        'tofu' { return (Get-Command tofu -ErrorAction SilentlyContinue) -ne $null }
+        default { return $true }  # Unknown dependencies assumed available
+    }
+}
+
 function New-ConfigurationFromTemplate {
     param(
         [string]$TemplateName,
@@ -672,6 +964,7 @@ Export-ModuleMember -Function @(
     'Get-AvailableConfigurations', 
     'Add-ConfigurationRepository',
     'Remove-ConfigurationRepository',
+    'Sync-ConfigurationRepository',
     'Get-CurrentConfiguration',
     'Backup-CurrentConfiguration',
     'Validate-ConfigurationSet'

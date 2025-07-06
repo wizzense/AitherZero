@@ -46,7 +46,7 @@ When suggesting solutions, prioritize these existing modules:
 # Use PatchManager single-step workflow
 Invoke-PatchWorkflow -PatchDescription "Fix [clear description]" -PatchOperation {
     # Your fix here
-} -CreatePR -TestCommands @("pwsh -File tests/Run-BulletproofValidation.ps1 -ValidationLevel Quick")
+} -CreatePR -TestCommands @("pwsh -File tests/Run-Tests.ps1")
 ```
 
 ### For Feature Development
@@ -56,7 +56,7 @@ Invoke-PatchWorkflow -PatchDescription "Fix [clear description]" -PatchOperation
 Invoke-PatchWorkflow -PatchDescription "Add [feature description]" -PatchOperation {
     # Feature implementation
 } -CreatePR -TestCommands @(
-    "pwsh -File tests/Run-BulletproofValidation.ps1 -ValidationLevel Standard",
+    "pwsh -File tests/Run-Tests.ps1",
     "Import-Module '$env:PWSH_MODULES_PATH/NewModule' -Force"
 )
 ```
@@ -64,10 +64,10 @@ Invoke-PatchWorkflow -PatchDescription "Add [feature description]" -PatchOperati
 ### For Testing
 
 ```powershell
-# Always use bulletproof validation
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Quick"    # 30 seconds
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Standard" # 2-5 minutes
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Complete" # 10-15 minutes
+# Simple and fast testing approach
+pwsh -File "tests/Run-Tests.ps1"              # Core functionality, <30 seconds
+pwsh -File "tests/Run-Tests.ps1" -Setup       # Test setup/installation
+pwsh -File "tests/Run-Tests.ps1" -All         # Run all tests
 ```
 
 ## Code Standards

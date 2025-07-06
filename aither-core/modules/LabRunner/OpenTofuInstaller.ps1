@@ -71,50 +71,50 @@ PS> .\install-opentofu.ps1 -installMethod standalone
 #>
 param(
 
-    Parameter(Mandatory = $false)
-    switch$help = $false,
+    [Parameter(Mandatory = $false)]
+    [switch]$help = $false,
 
-    Parameter(Mandatory = $false)
-    string$installPath = "",
+    [Parameter(Mandatory = $false)]
+    [string]$installPath = "",
 
-    Parameter(Mandatory = $false)
-    string$opentofuVersion = "latest",
+    [Parameter(Mandatory = $false)]
+    [string]$opentofuVersion = "latest",
 
-    Parameter(Mandatory = $false)
-    string$installMethod,
+    [Parameter(Mandatory = $false)]
+    [string]$installMethod,
 
-    Parameter(Mandatory = $false)
-    string$cosignPath = "cosign.exe",
+    [Parameter(Mandatory = $false)]
+    [string]$cosignPath = "cosign.exe",
 
-    Parameter(Mandatory = $false)
-    string$cosignOidcIssuer = "https://token.actions.githubusercontent.com",
+    [Parameter(Mandatory = $false)]
+    [string]$cosignOidcIssuer = "https://token.actions.githubusercontent.com",
 
-    Parameter(Mandatory = $false)
-    string$cosignIdentity = "autodetect",
+    [Parameter(Mandatory = $false)]
+    [string]$cosignIdentity = "autodetect",
 
-    Parameter(Mandatory = $false)
-    string$gpgPath = "gpg.exe",
+    [Parameter(Mandatory = $false)]
+    [string]$gpgPath = "gpg.exe",
 
-    Parameter(Mandatory = $false)
-    string$gpgURL = "https://get.opentofu.org/opentofu.asc",
+    [Parameter(Mandatory = $false)]
+    [string]$gpgURL = "https://get.opentofu.org/opentofu.asc",
 
-    Parameter(Mandatory = $false)
-    string$gpgKeyID = "E3E6E43D84CB852EADB0051D0C0AF313E5FD9F80",
+    [Parameter(Mandatory = $false)]
+    [string]$gpgKeyID = "E3E6E43D84CB852EADB0051D0C0AF313E5FD9F80",
 
-    Parameter(Mandatory = $false)
-    switch$skipVerify = $false,
+    [Parameter(Mandatory = $false)]
+    [switch]$skipVerify = $false,
 
-    Parameter(Mandatory = $false)
-    switch$skipChangePath = $false,
+    [Parameter(Mandatory = $false)]
+    [switch]$skipChangePath = $false,
 
-    Parameter(Mandatory = $false)
-    switch$allUsers = $false,
+    [Parameter(Mandatory = $false)]
+    [switch]$allUsers = $false,
 
-    Parameter(Mandatory = $false)
-    switch$internalContinue = $false,
+    [Parameter(Mandatory = $false)]
+    [switch]$internalContinue = $false,
 
-    Parameter(Mandatory = $false)
-    string$internalZipFile = ""
+    [Parameter(Mandatory = $false)]
+    [string]$internalZipFile = ""
 )
 
 . $PSScriptRoot/Logger.ps1

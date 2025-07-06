@@ -24,11 +24,12 @@
 #>
 
 # Module-level variables for logging configuration
+# Modern environment variable naming (AITHER_*) with LAB_* fallback for compatibility
 $script:LoggingConfig = @{
-    LogLevel = if ($env:LAB_LOG_LEVEL) { $env:LAB_LOG_LEVEL } else { "INFO" }
-    ConsoleLevel = if ($env:LAB_CONSOLE_LEVEL) { $env:LAB_CONSOLE_LEVEL } else { "INFO" }
-    LogFilePath = if ($env:LAB_LOG_PATH) {
-        $env:LAB_LOG_PATH
+    LogLevel = ($env:AITHER_LOG_LEVEL ?? $env:LAB_LOG_LEVEL ?? "INFO")
+    ConsoleLevel = ($env:AITHER_CONSOLE_LEVEL ?? $env:LAB_CONSOLE_LEVEL ?? "INFO")
+    LogFilePath = if ($env:AITHER_LOG_PATH ?? $env:LAB_LOG_PATH) {
+        $env:AITHER_LOG_PATH ?? $env:LAB_LOG_PATH
     } elseif ($env:TEMP) {
         (Join-Path $env:TEMP "AitherZero.log")
     } elseif (Test-Path '/tmp') {
@@ -36,14 +37,14 @@ $script:LoggingConfig = @{
     } else {
         (Join-Path (Get-Location) "logs/AitherZero.log")
     }
-    MaxLogSizeMB = if ($env:LAB_MAX_LOG_SIZE_MB) { [int]$env:LAB_MAX_LOG_SIZE_MB } else { 50 }
-    MaxLogFiles = if ($env:LAB_MAX_LOG_FILES) { [int]$env:LAB_MAX_LOG_FILES } else { 10 }
-    EnableTrace = if ($env:LAB_ENABLE_TRACE) { [bool]$env:LAB_ENABLE_TRACE } else { $false }
-    EnablePerformance = if ($env:LAB_ENABLE_PERFORMANCE) { [bool]$env:LAB_ENABLE_PERFORMANCE } else { $false }
-    LogFormat = if ($env:LAB_LOG_FORMAT) { $env:LAB_LOG_FORMAT } else { "Structured" } # Structured, Simple, JSON
-    EnableCallStack = if ($env:LAB_ENABLE_CALLSTACK) { [bool]$env:LAB_ENABLE_CALLSTACK } else { $true }
-    LogToFile = if ($env:LAB_LOG_TO_FILE) { [bool]$env:LAB_LOG_TO_FILE } else { $true }
-    LogToConsole = if ($env:LAB_LOG_TO_CONSOLE) { [bool]$env:LAB_LOG_TO_CONSOLE } else { $true }
+    MaxLogSizeMB = [int]($env:AITHER_MAX_LOG_SIZE_MB ?? $env:LAB_MAX_LOG_SIZE_MB ?? 50)
+    MaxLogFiles = [int]($env:AITHER_MAX_LOG_FILES ?? $env:LAB_MAX_LOG_FILES ?? 10)
+    EnableTrace = [bool]::Parse(($env:AITHER_ENABLE_TRACE ?? $env:LAB_ENABLE_TRACE ?? 'false'))
+    EnablePerformance = [bool]::Parse(($env:AITHER_ENABLE_PERFORMANCE ?? $env:LAB_ENABLE_PERFORMANCE ?? 'true'))  # Enable by default for better insights
+    LogFormat = ($env:AITHER_LOG_FORMAT ?? $env:LAB_LOG_FORMAT ?? "Structured") # Structured, Simple, JSON
+    EnableCallStack = [bool]::Parse(($env:AITHER_ENABLE_CALLSTACK ?? $env:LAB_ENABLE_CALLSTACK ?? 'true'))
+    LogToFile = [bool]::Parse(($env:AITHER_LOG_TO_FILE ?? $env:LAB_LOG_TO_FILE ?? 'true'))
+    LogToConsole = [bool]::Parse(($env:AITHER_LOG_TO_CONSOLE ?? $env:LAB_LOG_TO_CONSOLE ?? 'true'))
     Initialized = $false  # Track initialization state
 }
 
@@ -248,13 +249,36 @@ function Write-CustomLog {
         $logEntry.CallStack = $callStack
     }
 
-    # Add exception details if provided
+    # Add exception details if provided (enhanced with PowerShell 7+ features)
     if ($Exception) {
         $logEntry.Exception = @{
             Type = $Exception.GetType().FullName
             Message = $Exception.Message
             StackTrace = $Exception.StackTrace
             InnerException = if ($Exception.InnerException) { $Exception.InnerException.Message } else { $null }
+            HResult = $Exception.HResult
+            HelpLink = $Exception.HelpLink
+            Source = $Exception.Source
+            TargetSite = if ($Exception.TargetSite) { $Exception.TargetSite.Name } else { $null }
+            Data = if ($Exception.Data.Count -gt 0) { 
+                $Exception.Data | ConvertTo-Json -Compress -ErrorAction SilentlyContinue 
+            } else { 
+                $null 
+            }
+        }
+        
+        # Add inner exception chain for better debugging
+        $innerExceptions = @()
+        $currentException = $Exception.InnerException
+        while ($currentException) {
+            $innerExceptions += @{
+                Type = $currentException.GetType().FullName
+                Message = $currentException.Message
+            }
+            $currentException = $currentException.InnerException
+        }
+        if ($innerExceptions.Count -gt 0) {
+            $logEntry.Exception.InnerExceptionChain = $innerExceptions
         }
     }
 
@@ -270,20 +294,44 @@ function Write-CustomLog {
         Write-Host $consoleMessage -ForegroundColor $color
     }
 
-    # Output to file if appropriate
+    # Output to file if appropriate (optimized with better error handling)
     if ($script:LoggingConfig.LogToFile -and -not $NoFile.IsPresent -and $messageLevel -le $currentLogLevel) {
         try {
-            # Check if log rotation is needed
-            if ((Test-Path $script:LoggingConfig.LogFilePath) -and
-                (Get-Item $script:LoggingConfig.LogFilePath).Length -gt ($script:LoggingConfig.MaxLogSizeMB * 1MB)) {
+            # Check if log rotation is needed (optimized check)
+            $logFile = $script:LoggingConfig.LogFilePath
+            if ((Test-Path $logFile -PathType Leaf) -and
+                (Get-Item $logFile -ErrorAction SilentlyContinue)?.Length -gt ($script:LoggingConfig.MaxLogSizeMB * 1MB)) {
                 Invoke-LogRotation
             }
 
-            Add-Content -Path $script:LoggingConfig.LogFilePath -Value $fileMessage -Encoding UTF8 -ErrorAction SilentlyContinue
+            # Use StreamWriter for better performance with large volumes
+            $logDir = Split-Path $logFile -Parent
+            if (-not (Test-Path $logDir)) {
+                New-Item -Path $logDir -ItemType Directory -Force | Out-Null
+            }
+            
+            # Thread-safe file writing
+            $mutex = [System.Threading.Mutex]::new($false, "AitherZeroLogMutex")
+            try {
+                if ($mutex.WaitOne(1000)) {  # 1 second timeout
+                    Add-Content -Path $logFile -Value $fileMessage -Encoding UTF8 -ErrorAction Stop
+                } else {
+                    throw "Timeout waiting for log file access"
+                }
+            } finally {
+                $mutex.ReleaseMutex()
+                $mutex.Dispose()
+            }
         }
         catch {
-            # Fallback to console if file logging fails
-            Write-Host "[LOG ERROR] Failed to write to log file: $($_.Exception.Message)" -ForegroundColor Red
+            # Enhanced fallback with structured error information
+            $errorDetails = @{
+                Error = $_.Exception.Message
+                LogFile = $script:LoggingConfig.LogFilePath
+                ThreadId = [System.Threading.Thread]::CurrentThread.ManagedThreadId
+                Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
+            }
+            Write-Host "[LOG ERROR] Failed to write to log file: $($errorDetails | ConvertTo-Json -Compress)" -ForegroundColor Red
         }
     }
 }
@@ -616,8 +664,108 @@ function Set-LoggingConfiguration {
     Write-CustomLog "Logging configuration updated" -Level INFO -Context $script:LoggingConfig
 }
 
-# Export all functions
-Export-ModuleMember -Function Write-CustomLog, Initialize-LoggingSystem, Start-PerformanceTrace, Stop-PerformanceTrace, Write-TraceLog, Write-DebugContext, Get-LoggingConfiguration, Set-LoggingConfiguration, Import-ProjectModule
+function Write-BulkLog {
+    <#
+    .SYNOPSIS
+        Write multiple log entries efficiently (PowerShell 7+ optimized)
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [object[]]$LogEntries,
+
+        [Parameter()]
+        [string]$DefaultLevel = "INFO",
+
+        [Parameter()]
+        [hashtable]$DefaultContext = @{},
+
+        [Parameter()]
+        [switch]$Parallel
+    )
+
+    begin {
+        $entriesToProcess = @()
+    }
+
+    process {
+        $entriesToProcess += $LogEntries
+    }
+
+    end {
+        if ($Parallel -and $entriesToProcess.Count -gt 10) {
+            # Use parallel processing for large batches (PowerShell 7+ feature)
+            $modulePath = Join-Path $env:PWSH_MODULES_PATH "Logging"
+            $entriesToProcess | ForEach-Object -Parallel {
+                $entry = $_
+                $level = if ($entry.Level) { $entry.Level } else { $using:DefaultLevel }
+                $context = if ($entry.Context) { $entry.Context } else { $using:DefaultContext }
+                
+                # Import the logging module in the parallel runspace
+                Import-Module $using:modulePath -Force
+                Write-CustomLog -Message $entry.Message -Level $level -Context $context
+            } -ThrottleLimit 5
+        } else {
+            # Sequential processing for smaller batches
+            foreach ($entry in $entriesToProcess) {
+                $level = if ($entry.Level) { $entry.Level } else { $DefaultLevel }
+                $context = if ($entry.Context) { $entry.Context } else { $DefaultContext }
+                Write-CustomLog -Message $entry.Message -Level $level -Context $context
+            }
+        }
+    }
+}
+
+function Test-LoggingPerformance {
+    <#
+    .SYNOPSIS
+        Test logging system performance and return metrics
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [int]$MessageCount = 1000,
+
+        [Parameter()]
+        [switch]$FileOnly,
+
+        [Parameter()]
+        [switch]$ConsoleOnly
+    )
+
+    Write-CustomLog "Starting logging performance test with $MessageCount messages" -Level INFO
+
+    $testParams = @{}
+    if ($FileOnly) { $testParams.NoConsole = $true }
+    if ($ConsoleOnly) { $testParams.NoFile = $true }
+
+    $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+    
+    1..$MessageCount | ForEach-Object {
+        Write-CustomLog -Message "Performance test message $_" -Level INFO @testParams
+    }
+    
+    $stopwatch.Stop()
+    
+    $metrics = @{
+        MessageCount = $MessageCount
+        TotalTimeMs = $stopwatch.ElapsedMilliseconds
+        MessagesPerSecond = [math]::Round($MessageCount / ($stopwatch.ElapsedMilliseconds / 1000), 2)
+        AverageTimePerMessage = [math]::Round($stopwatch.ElapsedMilliseconds / $MessageCount, 3)
+        TestConfiguration = @{
+            FileOnly = $FileOnly.IsPresent
+            ConsoleOnly = $ConsoleOnly.IsPresent
+            LogLevel = $script:LoggingConfig.LogLevel
+            EnablePerformance = $script:LoggingConfig.EnablePerformance
+        }
+    }
+
+    Write-CustomLog "Performance test completed" -Level SUCCESS -Context $metrics
+    return $metrics
+}
+
+# Export all functions (updated with new PowerShell 7+ features)
+Export-ModuleMember -Function Write-CustomLog, Initialize-LoggingSystem, Start-PerformanceTrace, Stop-PerformanceTrace, Write-TraceLog, Write-DebugContext, Get-LoggingConfiguration, Set-LoggingConfiguration, Write-BulkLog, Test-LoggingPerformance, Import-ProjectModule
 
 # Dot-source public functions
 Get-ChildItem -Path "$PSScriptRoot/Public/*.ps1" -ErrorAction SilentlyContinue | ForEach-Object {

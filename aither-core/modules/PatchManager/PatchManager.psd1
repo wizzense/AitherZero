@@ -21,7 +21,7 @@ ModuleVersion = '3.0.0'
 GUID = '589c2577-c532-4f36-a0ab-8a221ef67690'
 
 # Author of this module
-Author = 'Aitherium Contributors'
+Author = 'AitherZero Contributors'
 
 # Company or vendor of this module
 CompanyName = 'Aitherium'
@@ -102,8 +102,8 @@ FunctionsToExport = @(
     'Get-PatchWorkflowBackup',
     'Test-PatchWorkflowSafety',
     'Restore-PatchWorkflowBackup',
-    'Sync-GitBranch',
-    'Invoke-ReleaseWorkflow'
+    'Sync-GitBranch'
+    # 'Invoke-ReleaseWorkflow'  # Temporarily disabled due to syntax error
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.

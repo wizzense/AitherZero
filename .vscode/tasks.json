@@ -1,621 +1,108 @@
 {
     "version": "2.0.0",
     "tasks": [
-        {
-            "label": "Run All Pester Tests",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Invoke-Pester -Configuration (Import-PowerShellDataFile -Path 'tests/config/PesterConfiguration.psd1')"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "Run Specific Module Tests",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "param($ModuleName); Invoke-Pester -Path \"tests/unit/modules/$ModuleName\" -Output Detailed"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "PowerShell Script Analysis",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Invoke-ScriptAnalyzer -Path '${file}' -Settings 'pwsh/PSScriptAnalyzerSettings.psd1' -Recurse"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },        {
-            "label": "Setup Development Environment",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "& ./core-runner/setup-test-env.ps1"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "Import All Modules",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Get-ChildItem -Path 'aither-core/modules' -Directory | ForEach-Object { Import-Module $_.FullName -Force -Verbose }"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "OpenTofu Plan",
-            "type": "shell",
-            "command": "tofu",
-            "args": [
-                "plan",
-                "-out=tfplan"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}/opentofu/infrastructure"
-            }
-        },
-        {
-            "label": "OpenTofu Apply",
-            "type": "shell",
-            "command": "tofu",
-            "args": [
-                "apply",
-                "tfplan"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}/opentofu/infrastructure"
-            }
-        },
-        {
-            "label": "Generate Test Report",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "$config = Import-PowerShellDataFile -Path 'tests/config/PesterConfiguration.psd1'; $config.TestResult.Enabled = $true; Invoke-Pester -Configuration $config"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "Clean Test Results",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Remove-Item -Path 'tests/results/*' -Force -Recurse -ErrorAction SilentlyContinue; Write-Host 'Test results cleaned'"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }        },
-        {
-            "label": "Validate All Module Manifests",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Get-ChildItem -Path 'aither-core/modules' -Filter '*.psd1' -Recurse | ForEach-Object { Write-Host \"Validating $($_.Name)\"; Test-ModuleManifest $_.FullName }"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🚀 Bulletproof Validation - Quick",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "tests/Run-BulletproofValidation.ps1",
-                "-ValidationLevel",
-                "Quick"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🔥 Bulletproof Validation - Standard",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "tests/Run-BulletproofValidation.ps1",
-                "-ValidationLevel",
-                "Standard"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🎯 Bulletproof Validation - Complete",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "tests/Run-BulletproofValidation.ps1",
-                "-ValidationLevel",
-                "Complete"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "⚡ Bulletproof Validation - Quick (Fail-Fast)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "tests/Run-BulletproofValidation.ps1",
-                "-ValidationLevel",
-                "Quick",
-                "-FailFast"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🔧 Bulletproof Validation - CI Mode",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "tests/Run-BulletproofValidation.ps1",
-                "-ValidationLevel",
-                "Standard",
-                "-CI",
-                "-FailFast"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "📊 Bulletproof Validation - Performance Focus",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "tests/Run-BulletproofValidation.ps1",
-                "-ValidationLevel",
-                "Complete",
-                "-MaxParallelJobs",
-                "4"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🧹 Clean Bulletproof Validation Results",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Remove-Item -Path 'tests/results/bulletproof-validation/*', 'logs/bulletproof-validation/*' -Force -Recurse -ErrorAction SilentlyContinue; Write-Host '🧹 Bulletproof validation results cleaned' -ForegroundColor Green"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },        // ========================================
-        // PatchManager Core Workflows (Consolidated v2.1 - IMPROVED)
+        // ========================================
+        // Core Testing (5 tasks)
         // ========================================
         {
-            "label": "PatchManager: Create Feature Patch",
+            "label": "🚀 Quick Tests - Core Functionality",
             "type": "shell",
             "command": "pwsh",
-            "args": [
-                "-Command",
-                "Import-Module '${workspaceFolder}/aither-core/modules/PatchManager/PatchManager.psm1' -Force; Invoke-PatchWorkflow -PatchDescription '${input:patchDescription}' -PatchOperation { ${input:patchOperation} } -CreatePR -DryRun"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "PatchManager: Quick Patch with Tests",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Import-Module '${workspaceFolder}/aither-core/modules/PatchManager/PatchManager.psm1' -Force; Invoke-PatchWorkflow -PatchDescription '${input:patchDescription}' -PatchOperation { ${input:patchOperation} } -TestCommands @('${input:testCommand}') -CreatePR"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "PatchManager: Create Issue Only",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Import-Module '${workspaceFolder}/aither-core/modules/PatchManager/PatchManager.psm1' -Force; New-PatchIssue -Description '${input:patchDescription}' -Priority '${input:priority}' -DryRun"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "PatchManager: Quick Local Fix (No Issue)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Import-Module '${workspaceFolder}/aither-core/modules/PatchManager/PatchManager.psm1' -Force; Invoke-PatchWorkflow -PatchDescription '${input:patchDescription}' -PatchOperation { ${input:patchOperation} } -CreateIssue:$false"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "PatchManager: Emergency Rollback",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Import-Module '${workspaceFolder}/aither-core/modules/PatchManager/PatchManager.psm1' -Force; Invoke-PatchRollback -RollbackType 'LastCommit' -CreateBackup -DryRun"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "PatchManager: Validate All Modules",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Import-Module '${workspaceFolder}/aither-core/modules/PatchManager/PatchManager.psm1' -Force; Invoke-PatchWorkflow -PatchDescription 'Validate all modules' -PatchOperation { Get-ChildItem 'aither-core/modules' -Directory | ForEach-Object { Import-Module $_.FullName -Force -Verbose } } -TestCommands @('Get-Module | Where-Object { $_.Path -like \"*aither-core/modules*\" }') -DryRun"
-            ],
+            "args": ["-File", "tests/Run-Tests.ps1"],
             "group": "test",
             "presentation": {
                 "echo": true,
                 "reveal": "always",
                 "focus": true,
                 "panel": "shared",
-                "showReuseMessage": false,
+                "showReuseMessage": true,
                 "clear": true
             },
             "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
+            "options": {"cwd": "${workspaceFolder}"}
         },
+        {
+            "label": "🔥 Setup Tests - Installation Validation",
+            "type": "shell",
+            "command": "pwsh",
+            "args": ["-File", "tests/Run-Tests.ps1", "-Setup"],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🎯 All Tests - Comprehensive Validation",
+            "type": "shell",
+            "command": "pwsh",
+            "args": ["-File", "tests/Run-Tests.ps1", "-All"],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🔧 CI Tests - Automated Mode",
+            "type": "shell",
+            "command": "pwsh",
+            "args": ["-File", "tests/Run-Tests.ps1", "-All", "-CI"],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🧹 Clean Test Results",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Remove-Item -Path 'tests/results/*', 'logs/test-*' -Force -Recurse -ErrorAction SilentlyContinue; Write-Host '🧹 Test results cleaned' -ForegroundColor Green"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+
         // ========================================
-        // Testing Workflows
+        // PatchManager v3.0 (4 tasks)
         // ========================================
         {
-            "label": "Tests: Run Bulletproof Validation",
+            "label": "🛠️ PatchManager: Quick Fix",
             "type": "shell",
             "command": "pwsh",
             "args": [
-                "-File",
-                "./tests/Run-BulletproofValidation.ps1",
-                "-ValidationLevel",
-                "${input:validationLevel}"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "Tests: Run Non-Interactive Validation",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "./test-noninteractive-fix.ps1",
-                "-TestMode",
-                "All"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "Tests: Intelligent Test Discovery",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "./tests/Invoke-IntelligentTests.ps1",
-                "-TestType",
-                "${input:testType}",
-                "-Severity",
-                "Standard"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        // ========================================
-        // Core Runner Workflows
-        // ========================================
-        {
-            "label": "CoreRunner: Non-Interactive with Scripts",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "./aither-core/core-runner.ps1",
-                "-NonInteractive",
-                "-Scripts",
-                "${input:scriptNames}",
-                "-Verbosity",
-                "detailed"
+                "-Command",
+                "Import-Module ./aither-core/modules/PatchManager -Force; New-QuickFix -Description '${input:patchDescription}' -Changes { ${input:patchOperation} }"
             ],
             "group": "build",
             "presentation": {
@@ -627,22 +114,15 @@
                 "clear": true
             },
             "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
+            "options": {"cwd": "${workspaceFolder}"}
         },
         {
-            "label": "CoreRunner: Auto Mode with WhatIf",
+            "label": "🚀 PatchManager: Create Feature",
             "type": "shell",
             "command": "pwsh",
             "args": [
-                "-File",
-                "./aither-core/core-runner.ps1",
-                "-NonInteractive",
-                "-Auto",
-                "-WhatIf",
-                "-Verbosity",
-                "detailed"
+                "-Command",
+                "Import-Module ./aither-core/modules/PatchManager -Force; New-Feature -Description '${input:patchDescription}' -Changes { ${input:patchOperation} }"
             ],
             "group": "build",
             "presentation": {
@@ -654,63 +134,96 @@
                 "clear": true
             },
             "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }        },
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🚨 PatchManager: Emergency Hotfix",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module ./aither-core/modules/PatchManager -Force; New-Hotfix -Description '${input:patchDescription}' -Changes { ${input:patchOperation} }"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🧠 PatchManager: Smart Patch",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module ./aither-core/modules/PatchManager -Force; New-Patch -Description '${input:patchDescription}' -Changes { ${input:patchOperation} }"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+
         // ========================================
-        // Development Workflows (Updated for PatchManager v2.1 - IMPROVED)
+        // Development Environment (3 tasks)
         // ========================================
         {
-            "label": "Dev: Git Operations (Legacy - Not Recommended)",
+            "label": "🔧 Setup Development Environment",
             "type": "shell",
             "command": "pwsh",
-            "args": [
-                "-Command",
-                "Write-Warning 'This function has been archived. Use Invoke-PatchWorkflow instead.'; Write-Host 'Try: Invoke-PatchWorkflow -PatchDescription \"Your description\" -PatchOperation { # Your changes }'"
-            ],
+            "args": ["-File", "./Start-AitherZero.ps1", "-Setup"],
             "group": "build",
             "presentation": {
                 "echo": true,
                 "reveal": "always",
                 "focus": true,
                 "panel": "shared",
-                "showReuseMessage": false,
+                "showReuseMessage": true,
                 "clear": true
             },
             "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
+            "options": {"cwd": "${workspaceFolder}"}
         },
         {
-            "label": "Dev: Use New PatchManager Functions",
+            "label": "📦 Import All Modules",
             "type": "shell",
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Write-Host 'NEW PATCHMANAGER CORE FUNCTIONS (v2.1 - IMPROVED):' -ForegroundColor Green; Write-Host '1. Invoke-PatchWorkflow - Main entry point (auto-commits, creates issues by default)' -ForegroundColor Cyan; Write-Host '2. New-PatchIssue - Create issues' -ForegroundColor Cyan; Write-Host '3. New-PatchPR - Create PRs' -ForegroundColor Cyan; Write-Host '4. Invoke-PatchRollback - Rollback operations' -ForegroundColor Cyan; Write-Host 'KEY IMPROVEMENTS: Auto-commit dirty trees, issue creation by default, single-step workflow' -ForegroundColor Yellow"
+                ". ./aither-core/shared/Find-ProjectRoot.ps1; $projectRoot = Find-ProjectRoot; Get-ChildItem '$projectRoot/aither-core/modules' -Directory | ForEach-Object { Import-Module $_.FullName -Force; Write-Host \"✅ Loaded: $($_.Name)\" -ForegroundColor Green }"
             ],
             "group": "build",
             "presentation": {
                 "echo": true,
                 "reveal": "always",
-                "focus": true,
+                "focus": false,
                 "panel": "shared",
-                "showReuseMessage": false,
+                "showReuseMessage": true,
                 "clear": true
             },
             "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
+            "options": {"cwd": "${workspaceFolder}"}
         },
         {
-            "label": "🔍 Test Copilot Instructions Setup",
+            "label": "🔍 System Diagnostics",
             "type": "shell",
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Write-Host '🔍 Testing Copilot instruction file setup...' -ForegroundColor Cyan; $instructionFiles = @('.github/copilot-instructions.md', '.github/instructions/modules.instructions.md', '.github/instructions/testing-workflows.instructions.md', '.github/instructions/patchmanager-workflows.instructions.md'); foreach ($file in $instructionFiles) { if (Test-Path $file) { Write-Host \"✅ Found: $file\" -ForegroundColor Green } else { Write-Host \" FAILMissing: $file\" -ForegroundColor Red } }; $promptFiles = Get-ChildItem '.github/prompts' -Filter '*.prompt.md' -ErrorAction SilentlyContinue; if ($promptFiles) { Write-Host \"✅ Found $($promptFiles.Count) prompt files\" -ForegroundColor Green } else { Write-Host \" FAILNo prompt files found\" -ForegroundColor Red }"
+                "Write-Host '🔍 System Information:' -ForegroundColor Cyan; Write-Host \"PowerShell: $($PSVersionTable.PSVersion)\" -ForegroundColor White; Write-Host \"OS: $($PSVersionTable.OS)\" -ForegroundColor White; Write-Host \"Platform: $($PSVersionTable.Platform)\" -ForegroundColor White; . ./aither-core/shared/Find-ProjectRoot.ps1; $projectRoot = Find-ProjectRoot; Write-Host \"Project Root: $projectRoot\" -ForegroundColor White; Write-Host '📦 Module Status:' -ForegroundColor Yellow; Get-ChildItem '$projectRoot/aither-core/modules' -Directory | ForEach-Object { try { Import-Module $_.FullName -Force; Write-Host \"✅ $($_.Name): OK\" -ForegroundColor Green } catch { Write-Host \"❌ $($_.Name): Failed\" -ForegroundColor Red } }"
             ],
             "group": "test",
             "presentation": {
@@ -718,23 +231,95 @@
                 "reveal": "always",
                 "focus": true,
                 "panel": "shared",
-                "showReuseMessage": false,
+                "showReuseMessage": true,
                 "clear": true
-            },            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
         },
+
         // ========================================
-        // Unicode/Emoji Sanitization
+        // Build & Release (4 tasks)
         // ========================================
         {
-            "label": "PatchManager: Sanitize Unicode/Emoji",
+            "label": "📦 Build Windows Package",
+            "type": "shell",
+            "command": "pwsh",
+            "args": ["-File", "./build/Build-Package.ps1", "-Platform", "windows"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🐧 Build Linux Package",
+            "type": "shell",
+            "command": "pwsh",
+            "args": ["-File", "./build/Build-Package.ps1", "-Platform", "linux"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🍎 Build macOS Package",
+            "type": "shell",
+            "command": "pwsh",
+            "args": ["-File", "./build/Build-Package.ps1", "-Platform", "macos"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🚀 Create Release",
+            "type": "shell",
+            "command": "pwsh",
+            "args": ["-File", "./release.ps1"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+
+        // ========================================
+        // OpenTofu Infrastructure (2 tasks)
+        // ========================================
+        {
+            "label": "🗺️ OpenTofu Plan",
             "type": "shell",
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module '${workspaceFolder}/aither-core/modules/PatchManager/PatchManager.psm1' -Force; $result = Invoke-UnicodeSanitizer -DryRun; Write-Host 'Sanitization complete. Run without -DryRun to apply changes.' -ForegroundColor Green"
+                "Import-Module ./aither-core/modules/OpenTofuProvider -Force; Invoke-OpenTofuPlan"
             ],
             "group": "build",
             "presentation": {
@@ -742,21 +327,19 @@
                 "reveal": "always",
                 "focus": true,
                 "panel": "shared",
-                "showReuseMessage": false,
+                "showReuseMessage": true,
                 "clear": true
             },
             "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
+            "options": {"cwd": "${workspaceFolder}"}
         },
         {
-            "label": "PatchManager: Apply Unicode/Emoji Sanitization",
+            "label": "🏗️ OpenTofu Apply",
             "type": "shell",
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module '${workspaceFolder}/aither-core/modules/PatchManager/PatchManager.psm1' -Force; $result = Invoke-UnicodeSanitizer; Write-Host \"Sanitized $($result.FilesModified) files, removed $($result.CharactersRemoved) characters\" -ForegroundColor Green"
+                "Import-Module ./aither-core/modules/OpenTofuProvider -Force; Invoke-OpenTofuApply"
             ],
             "group": "build",
             "presentation": {
@@ -764,1067 +347,23 @@
                 "reveal": "always",
                 "focus": true,
                 "panel": "shared",
-                "showReuseMessage": false,
+                "showReuseMessage": true,
                 "clear": true
             },
             "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
+            "options": {"cwd": "${workspaceFolder}"}
         },
+
+        // ========================================
+        // Analysis & Validation (4 tasks)
+        // ========================================
         {
-            "label": "Git: Sync Current Branch",
+            "label": "🔍 PowerShell Script Analysis",
             "type": "shell",
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module '${workspaceFolder}/aither-core/modules/PatchManager/PatchManager.psm1' -Force; Write-Host 'Syncing current branch with remote...' -ForegroundColor Cyan; Sync-GitBranch -Force; Write-Host 'Sync completed' -ForegroundColor Green"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "Git: Fix Branch Divergence",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "'${workspaceFolder}/scripts/Fix-GitDivergence.ps1' -Force"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "Git: Full Cleanup and Sync",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Import-Module '${workspaceFolder}/aither-core/modules/PatchManager/PatchManager.psm1' -Force; Write-Host 'Performing full Git cleanup and sync...' -ForegroundColor Yellow; Sync-GitBranch -BranchName 'main' -Force -CleanupOrphaned -ValidateTags; Write-Host 'Cleanup completed' -ForegroundColor Green"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "📚 Documentation: Generate/Update All Docs",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Write-Host '📚 Generating comprehensive documentation...' -ForegroundColor Cyan; Import-Module './aither-core/modules/PatchManager/PatchManager.psm1' -Force; Update-RepositoryDocumentation; Write-Host '✅ Documentation updated successfully' -ForegroundColor Green"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🏗️ Architecture: Validate Complete System",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "$ErrorActionPreference = 'Stop'; Write-Host '🏗️ Validating complete system architecture...' -ForegroundColor Cyan; . './aither-core/shared/Find-ProjectRoot.ps1'; $projectRoot = Find-ProjectRoot; Write-Host \"✅ Project root: $projectRoot\" -ForegroundColor Green; Get-ChildItem '$projectRoot/aither-core/modules' -Directory | ForEach-Object { Write-Host \"📦 Validating module: $($_.Name)\" -ForegroundColor Yellow; Import-Module $_.FullName -Force -ErrorAction Stop; Write-Host \"✅ Module $($_.Name) loaded successfully\" -ForegroundColor Green }; Write-Host '🎯 All modules validated successfully!' -ForegroundColor Green"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🔧 Development: Setup Complete Environment",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Write-Host '🔧 Setting up complete development environment...' -ForegroundColor Cyan; . './aither-core/shared/Find-ProjectRoot.ps1'; $projectRoot = Find-ProjectRoot; $env:PROJECT_ROOT = $projectRoot; Write-Host \"✅ PROJECT_ROOT set to: $projectRoot\" -ForegroundColor Green; Write-Host '📦 Loading all modules...' -ForegroundColor Yellow; Get-ChildItem '$projectRoot/aither-core/modules' -Directory | ForEach-Object { Import-Module $_.FullName -Force; Write-Host \"✅ Loaded: $($_.Name)\" -ForegroundColor Green }; Write-Host '🧪 Running quick validation...' -ForegroundColor Yellow; pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel 'Quick'; Write-Host '🎉 Development environment ready!' -ForegroundColor Green"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🌐 Repository: Update All Cross-Fork Configs",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Write-Host '🌐 Updating cross-fork repository configurations...' -ForegroundColor Cyan; Import-Module './aither-core/modules/PatchManager/PatchManager.psm1' -Force; $repoInfo = Get-GitRepositoryInfo; Write-Host \"📍 Current repository: $($repoInfo.GitHubRepo) ($($repoInfo.Type))\" -ForegroundColor Yellow; Write-Host \"🔗 Fork chain: $($repoInfo.ForkChain.Count) repositories\" -ForegroundColor Yellow; Update-RepositoryDocumentation; Write-Host '✅ All repository configurations updated!' -ForegroundColor Green"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🎯 Testing: Intelligent Discovery and Execution",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Write-Host '🎯 Running intelligent test discovery and execution...' -ForegroundColor Cyan; if (Test-Path './tests/Invoke-IntelligentTests.ps1') { pwsh -File './tests/Invoke-IntelligentTests.ps1' -TestType 'All' -Severity 'Standard' } else { Write-Host '⚠️ Intelligent test discovery not found, running standard tests...' -ForegroundColor Yellow; pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel 'Standard' }; Write-Host '✅ Testing completed!' -ForegroundColor Green"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🚀 Release: Pre-Release Validation",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Write-Host '🚀 Running comprehensive pre-release validation...' -ForegroundColor Cyan; Write-Host '1️⃣ Architecture validation...' -ForegroundColor Yellow; . './aither-core/shared/Find-ProjectRoot.ps1'; $projectRoot = Find-ProjectRoot; Get-ChildItem '$projectRoot/aither-core/modules' -Directory | ForEach-Object { Import-Module $_.FullName -Force }; Write-Host '2️⃣ Complete test suite...' -ForegroundColor Yellow; pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel 'Complete'; Write-Host '3️⃣ Documentation update...' -ForegroundColor Yellow; Import-Module './aither-core/modules/PatchManager/PatchManager.psm1' -Force; Update-RepositoryDocumentation; Write-Host '✅ Pre-release validation completed!' -ForegroundColor Green"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🔍 Debug: Comprehensive System Diagnostics",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "$ErrorActionPreference = 'Continue'; Write-Host '🔍 Running comprehensive system diagnostics...' -ForegroundColor Cyan; Write-Host '📊 System Information:' -ForegroundColor Yellow; Write-Host \"PowerShell Version: $($PSVersionTable.PSVersion)\" -ForegroundColor White; Write-Host \"OS: $($PSVersionTable.OS)\" -ForegroundColor White; Write-Host \"Platform: $($PSVersionTable.Platform)\" -ForegroundColor White; Write-Host '📁 Project Structure:' -ForegroundColor Yellow; . './aither-core/shared/Find-ProjectRoot.ps1'; $projectRoot = Find-ProjectRoot; Write-Host \"Project Root: $projectRoot\" -ForegroundColor White; Write-Host '📦 Module Status:' -ForegroundColor Yellow; Get-ChildItem '$projectRoot/aither-core/modules' -Directory | ForEach-Object { try { Import-Module $_.FullName -Force; Write-Host \"✅ $($_.Name): OK\" -ForegroundColor Green } catch { Write-Host \"❌ $($_.Name): $($_.Exception.Message)\" -ForegroundColor Red } }; Write-Host '🌐 Repository Information:' -ForegroundColor Yellow; try { Import-Module './aither-core/modules/PatchManager/PatchManager.psm1' -Force; $repoInfo = Get-GitRepositoryInfo; Write-Host \"Repository: $($repoInfo.GitHubRepo)\" -ForegroundColor White; Write-Host \"Type: $($repoInfo.Type)\" -ForegroundColor White; Write-Host \"Fork Chain: $($repoInfo.ForkChain.Count) repositories\" -ForegroundColor White } catch { Write-Host \"❌ Repository detection failed: $($_.Exception.Message)\" -ForegroundColor Red }; Write-Host '🔧 Diagnostics completed!' -ForegroundColor Green"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🏗️ Local Build: Version Check",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "$ErrorActionPreference = 'Stop'; Write-Host '🔍 Determining local build version...' -ForegroundColor Cyan; $latestTag = git describe --tags --abbrev=0 2>$null; if ($latestTag) { $currentVersion = $latestTag -replace '^v', ''; if ($currentVersion -match '^(\\d+)\\.(\\d+)\\.(\\d+)') { $major = [int]$matches[1]; $minor = [int]$matches[2]; $patch = [int]$matches[3]; $newVersion = \"$major.$minor.$($patch + 1)\"; Write-Host \"📋 Current version: $currentVersion\" -ForegroundColor Yellow; Write-Host \"📋 Next version would be: $newVersion\" -ForegroundColor Green; } } else { Write-Host '📋 No tags found, would use: 1.0.0' -ForegroundColor Green }"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🔧 Local Build: Pre-Build Validation",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "$ErrorActionPreference = 'Stop'; Write-Host '🔍 Running local pre-build validation...' -ForegroundColor Cyan; $env:PROJECT_ROOT = $PWD; Write-Host \"✓ PROJECT_ROOT set to: $env:PROJECT_ROOT\" -ForegroundColor Green; if (Test-Path './tests/Run-BulletproofValidation.ps1') { Write-Host '🧪 Running bulletproof validation...' -ForegroundColor Yellow; pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel 'Quick' -CI -FailFast } else { Write-Host '📦 Testing module imports...' -ForegroundColor Yellow; if (Test-Path './aither-core/modules') { $modules = Get-ChildItem -Path './aither-core/modules' -Directory; foreach ($module in $modules) { try { Write-Host \"Testing module: $($module.Name)\" -ForegroundColor Cyan; Import-Module $module.FullName -Force -ErrorAction Stop; Write-Host \"✓ Module $($module.Name) imports successfully\" -ForegroundColor Green } catch { Write-Error \"Module $($module.Name) failed to import: $($_.Exception.Message)\"; exit 1 } } } }; Write-Host '✅ Local pre-build validation completed successfully!' -ForegroundColor Green"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "📦 Local Build: Create Windows Package",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "$ErrorActionPreference = 'Stop'; Write-Host '📦 Building local Windows package...' -ForegroundColor Cyan; $latestTag = git describe --tags --abbrev=0 2>$null; if ($latestTag) { $currentVersion = $latestTag -replace '^v', ''; if ($currentVersion -match '^(\\d+)\\.(\\d+)\\.(\\d+)') { $major = [int]$matches[1]; $minor = [int]$matches[2]; $patch = [int]$matches[3]; $version = \"$major.$minor.$($patch + 1)\" } } else { $version = '1.0.0' }; $buildDir = 'local-build/windows'; New-Item -Path $buildDir -ItemType Directory -Force | Out-Null; $packageName = \"AitherZero-$version-windows-local\"; $packageDir = \"$buildDir/$packageName\"; New-Item -Path $packageDir -ItemType Directory -Force | Out-Null; Write-Host \"Creating package: $packageName\" -ForegroundColor Yellow; Copy-Item -Path 'aither-core/aither-core.ps1' -Destination \"$packageDir/aither-core.ps1\" -Force; Write-Host '✓ Core runner script' -ForegroundColor Green; $essentialModules = @('Logging', 'LabRunner', 'DevEnvironment', 'BackupManager', 'ScriptManager', 'UnifiedMaintenance', 'ParallelExecution'); New-Item -Path \"$packageDir/modules\" -ItemType Directory -Force | Out-Null; foreach ($module in $essentialModules) { $modulePath = \"aither-core/modules/$module\"; if (Test-Path $modulePath) { Copy-Item -Path $modulePath -Destination \"$packageDir/modules/$module\" -Recurse -Force; Write-Host \"✓ Essential module: $module\" -ForegroundColor Green } }; if (Test-Path 'aither-core/shared') { Copy-Item -Path 'aither-core/shared' -Destination \"$packageDir/shared\" -Recurse -Force; Write-Host '✓ Shared utilities' -ForegroundColor Green }; New-Item -Path \"$packageDir/configs\" -ItemType Directory -Force | Out-Null; $essentialConfigs = @('default-config.json', 'core-runner-config.json', 'recommended-config.json'); foreach ($config in $essentialConfigs) { $configPath = \"configs/$config\"; if (Test-Path $configPath) { Copy-Item -Path $configPath -Destination \"$packageDir/configs/$config\" -Force; Write-Host \"✓ Config template: $config\" -ForegroundColor Green } }; Copy-Item -Path 'README.md' -Destination \"$packageDir/README.md\" -Force; Copy-Item -Path 'LICENSE' -Destination \"$packageDir/LICENSE\" -Force; $launcherContent = @('@echo off', 'echo 🚀 AitherZero v' + $version + ' - Windows Local Build', 'pwsh -File \"Start-AitherZero.ps1\" %*', 'if %ERRORLEVEL% NEQ 0 pause') -join \"`r`n\"; Set-Content -Path \"$packageDir/AitherZero.bat\" -Value $launcherContent -Encoding UTF8; $psLauncher = @('#!/usr/bin/env pwsh', '#Requires -Version 7.0', '', 'Write-Host \"🚀 AitherZero Infrastructure Automation Framework v' + $version + '\" -ForegroundColor Cyan', 'Write-Host \"   Local Build - Essential Components Only\" -ForegroundColor Yellow', '', '$env:PROJECT_ROOT = $PSScriptRoot', '', '& \"$PSScriptRoot/aither-core.ps1\" $args') -join \"`n\"; Set-Content -Path \"$packageDir/Start-AitherZero.ps1\" -Value $psLauncher; Write-Host '✓ Application launchers created' -ForegroundColor Green; Compress-Archive -Path \"$buildDir/$packageName/*\" -DestinationPath \"$packageName.zip\" -Force; Write-Host \"✅ Local Windows package created: $packageName.zip\" -ForegroundColor Green; $size = (Get-Item \"$packageName.zip\").Length; Write-Host \"Package size: $([math]::Round($size / 1KB, 2)) KB\" -ForegroundColor Cyan"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🐧 Local Build: Create Linux Package",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "$ErrorActionPreference = 'Stop'; Write-Host '📦 Building local Linux package...' -ForegroundColor Cyan; $latestTag = git describe --tags --abbrev=0 2>$null; if ($latestTag) { $currentVersion = $latestTag -replace '^v', ''; if ($currentVersion -match '^(\\d+)\\.(\\d+)\\.(\\d+)') { $major = [int]$matches[1]; $minor = [int]$matches[2]; $patch = [int]$matches[3]; $version = \"$major.$minor.$($patch + 1)\" } } else { $version = '1.0.0' }; $buildDir = 'local-build/linux'; New-Item -Path $buildDir -ItemType Directory -Force | Out-Null; $packageName = \"AitherZero-$version-linux-local\"; $packageDir = \"$buildDir/$packageName\"; New-Item -Path $packageDir -ItemType Directory -Force | Out-Null; Write-Host \"Creating package: $packageName\" -ForegroundColor Yellow; Copy-Item -Path 'aither-core/aither-core.ps1' -Destination \"$packageDir/aither-core.ps1\" -Force; Write-Host '✓ Core runner script' -ForegroundColor Green; $essentialModules = @('Logging', 'LabRunner', 'DevEnvironment', 'BackupManager', 'ScriptManager', 'UnifiedMaintenance', 'ParallelExecution'); New-Item -Path \"$packageDir/modules\" -ItemType Directory -Force | Out-Null; foreach ($module in $essentialModules) { $modulePath = \"aither-core/modules/$module\"; if (Test-Path $modulePath) { Copy-Item -Path $modulePath -Destination \"$packageDir/modules/$module\" -Recurse -Force; Write-Host \"✓ Essential module: $module\" -ForegroundColor Green } }; if (Test-Path 'aither-core/shared') { Copy-Item -Path 'aither-core/shared' -Destination \"$packageDir/shared\" -Recurse -Force; Write-Host '✓ Shared utilities' -ForegroundColor Green }; New-Item -Path \"$packageDir/configs\" -ItemType Directory -Force | Out-Null; $essentialConfigs = @('default-config.json', 'core-runner-config.json', 'recommended-config.json'); foreach ($config in $essentialConfigs) { $configPath = \"configs/$config\"; if (Test-Path $configPath) { Copy-Item -Path $configPath -Destination \"$packageDir/configs/$config\" -Force; Write-Host \"✓ Config template: $config\" -ForegroundColor Green } }; Copy-Item -Path 'README.md' -Destination \"$packageDir/README.md\" -Force; Copy-Item -Path 'LICENSE' -Destination \"$packageDir/LICENSE\" -Force; $unixScript = @('#!/bin/bash', 'echo \"🚀 AitherZero v' + $version + ' - Linux Local Build\"', 'pwsh -File \"Start-AitherZero.ps1\" \"$@\"') -join \"`n\"; Set-Content -Path \"$packageDir/aitherzero.sh\" -Value $unixScript -Encoding UTF8; $psLauncher = @('#!/usr/bin/env pwsh', '#Requires -Version 7.0', '', 'Write-Host \"🚀 AitherZero Infrastructure Automation Framework v' + $version + '\" -ForegroundColor Cyan', 'Write-Host \"   Local Build - Essential Components Only\" -ForegroundColor Yellow', '', '$env:PROJECT_ROOT = $PSScriptRoot', '', '& \"$PSScriptRoot/aither-core.ps1\" $args') -join \"`n\"; Set-Content -Path \"$packageDir/Start-AitherZero.ps1\" -Value $psLauncher; Write-Host '✓ Application launchers created' -ForegroundColor Green; Set-Location $buildDir; tar -czf \"../$packageName.tar.gz\" $packageName; Set-Location '../..'; Write-Host \"✅ Local Linux package created: $packageName.tar.gz\" -ForegroundColor Green; $size = (Get-Item \"$packageName.tar.gz\").Length; Write-Host \"Package size: $([math]::Round($size / 1KB, 2)) KB\" -ForegroundColor Cyan"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🚀 Local Build: Full Release Simulation",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "$ErrorActionPreference = 'Stop'; Write-Host '🚀 Running complete local release simulation...' -ForegroundColor Cyan; Write-Host ''; Write-Host '1️⃣ Version Check' -ForegroundColor Yellow; $latestTag = git describe --tags --abbrev=0 2>$null; if ($latestTag) { $currentVersion = $latestTag -replace '^v', ''; if ($currentVersion -match '^(\\d+)\\.(\\d+)\\.(\\d+)') { $major = [int]$matches[1]; $minor = [int]$matches[2]; $patch = [int]$matches[3]; $version = \"$major.$minor.$($patch + 1)\" } } else { $version = '1.0.0' }; Write-Host \"📋 Build version: $version\" -ForegroundColor Green; Write-Host ''; Write-Host '2️⃣ Pre-Build Validation' -ForegroundColor Yellow; $env:PROJECT_ROOT = $PWD; if (Test-Path './tests/Run-BulletproofValidation.ps1') { pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel 'Quick' -CI -FailFast } else { if (Test-Path './aither-core/modules') { $modules = Get-ChildItem -Path './aither-core/modules' -Directory; foreach ($module in $modules) { Import-Module $module.FullName -Force -ErrorAction Stop; Write-Host \"✓ Module $($module.Name) validated\" -ForegroundColor Green } } }; Write-Host ''; Write-Host '3️⃣ Building Packages' -ForegroundColor Yellow; Remove-Item -Path 'local-build' -Recurse -Force -ErrorAction SilentlyContinue; Remove-Item -Path 'AitherZero-*-local.*' -Force -ErrorAction SilentlyContinue; $platforms = @('windows', 'linux'); foreach ($platform in $platforms) { Write-Host \"Building $platform package...\" -ForegroundColor Cyan; $buildDir = \"local-build/$platform\"; New-Item -Path $buildDir -ItemType Directory -Force | Out-Null; $packageName = \"AitherZero-$version-$platform-local\"; $packageDir = \"$buildDir/$packageName\"; New-Item -Path $packageDir -ItemType Directory -Force | Out-Null; Copy-Item -Path 'aither-core/aither-core.ps1' -Destination \"$packageDir/aither-core.ps1\" -Force; $essentialModules = @('Logging', 'LabRunner', 'DevEnvironment', 'BackupManager', 'ScriptManager', 'UnifiedMaintenance', 'ParallelExecution'); New-Item -Path \"$packageDir/modules\" -ItemType Directory -Force | Out-Null; foreach ($module in $essentialModules) { $modulePath = \"aither-core/modules/$module\"; if (Test-Path $modulePath) { Copy-Item -Path $modulePath -Destination \"$packageDir/modules/$module\" -Recurse -Force } }; if (Test-Path 'aither-core/shared') { Copy-Item -Path 'aither-core/shared' -Destination \"$packageDir/shared\" -Recurse -Force }; New-Item -Path \"$packageDir/configs\" -ItemType Directory -Force | Out-Null; $essentialConfigs = @('default-config.json', 'core-runner-config.json', 'recommended-config.json'); foreach ($config in $essentialConfigs) { $configPath = \"configs/$config\"; if (Test-Path $configPath) { Copy-Item -Path $configPath -Destination \"$packageDir/configs/$config\" -Force } }; Copy-Item -Path 'README.md' -Destination \"$packageDir/README.md\" -Force; Copy-Item -Path 'LICENSE' -Destination \"$packageDir/LICENSE\" -Force; $psLauncher = @('#!/usr/bin/env pwsh', '#Requires -Version 7.0', '', 'Write-Host \"🚀 AitherZero Infrastructure Automation Framework v' + $version + '\" -ForegroundColor Cyan', 'Write-Host \"   Local Build - Essential Components Only\" -ForegroundColor Yellow', '', '$env:PROJECT_ROOT = $PSScriptRoot', '', '& \"$PSScriptRoot/aither-core.ps1\" $args') -join \"`n\"; Set-Content -Path \"$packageDir/Start-AitherZero.ps1\" -Value $psLauncher; if ($platform -eq 'windows') { $winScript = @('@echo off', 'echo 🚀 AitherZero v' + $version + ' - Windows Local Build', 'pwsh -File \"Start-AitherZero.ps1\" %*', 'if %ERRORLEVEL% NEQ 0 pause') -join \"`r`n\"; Set-Content -Path \"$packageDir/AitherZero.bat\" -Value $winScript -Encoding UTF8; Compress-Archive -Path \"$buildDir/$packageName/*\" -DestinationPath \"$packageName.zip\" -Force } else { $unixScript = '#!/bin/bash' + \"`n\" + 'echo \"🚀 AitherZero v' + $version + ' - Linux Local Build\"' + \"`n\" + 'pwsh -File \"Start-AitherZero.ps1\" \"$@\"'; Set-Content -Path \"$packageDir/aitherzero.sh\" -Value $unixScript -Encoding UTF8; Set-Location $buildDir; tar -czf \"../$packageName.tar.gz\" $packageName; Set-Location '../..' }; Write-Host \"✓ $platform package created\" -ForegroundColor Green }; Write-Host ''; Write-Host '4️⃣ Release Summary' -ForegroundColor Yellow; $packages = Get-ChildItem -Filter 'AitherZero-*-local.*'; foreach ($pkg in $packages) { $size = [math]::Round($pkg.Length / 1KB, 2); Write-Host \"📦 $($pkg.Name) ($size KB)\" -ForegroundColor White }; Write-Host ''; Write-Host '✅ Local release simulation completed successfully!' -ForegroundColor Green; Write-Host 'Packages created in current directory.' -ForegroundColor Cyan"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🧹 Local Build: Clean Build Artifacts",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Write-Host '🧹 Cleaning local build artifacts...' -ForegroundColor Cyan; Remove-Item -Path 'local-build' -Recurse -Force -ErrorAction SilentlyContinue; Remove-Item -Path 'AitherZero-*-local.*' -Force -ErrorAction SilentlyContinue; Write-Host '✅ Local build artifacts cleaned!' -ForegroundColor Green"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🔍 Local Build: Test Local Package",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "$ErrorActionPreference = 'Stop'; Write-Host '🔍 Testing local package functionality...' -ForegroundColor Cyan; $packages = Get-ChildItem -Filter 'AitherZero-*-local.*' | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if (-not $packages) { Write-Error 'No local packages found. Run a build task first.'; exit 1 }; $pkg = $packages; Write-Host \"Testing package: $($pkg.Name)\" -ForegroundColor Yellow; $testDir = 'package-test'; Remove-Item -Path $testDir -Recurse -Force -ErrorAction SilentlyContinue; New-Item -Path $testDir -ItemType Directory -Force | Out-Null; if ($pkg.Extension -eq '.zip') { Expand-Archive -Path $pkg.FullName -DestinationPath $testDir -Force } else { Set-Location $testDir; tar -xzf \"../$($pkg.Name)\"; Set-Location '..' }; $extractedDir = Get-ChildItem -Path $testDir -Directory | Select-Object -First 1; if ($extractedDir) { Write-Host \"✓ Package extracted to: $($extractedDir.Name)\" -ForegroundColor Green; $testPath = Join-Path $testDir $extractedDir.Name; Write-Host 'Package contents:' -ForegroundColor Cyan; Get-ChildItem -Path $testPath | ForEach-Object { Write-Host \"  $($_.Name)\" -ForegroundColor White }; if (Test-Path \"$testPath/Start-AitherZero.ps1\") { Write-Host '✓ Main launcher found' -ForegroundColor Green; try { $content = Get-Content \"$testPath/Start-AitherZero.ps1\" -Raw; if ($content -match 'AitherZero Infrastructure Automation Framework') { Write-Host '✓ Launcher content validated' -ForegroundColor Green } else { Write-Warning 'Launcher content may be invalid' } } catch { Write-Warning \"Could not validate launcher: $($_.Exception.Message)\" } } else { Write-Warning 'Main launcher not found' }; if (Test-Path \"$testPath/aither-core.ps1\") { Write-Host '✓ Core script found' -ForegroundColor Green } else { Write-Warning 'Core script not found' }; if (Test-Path \"$testPath/modules\") { $moduleCount = (Get-ChildItem \"$testPath/modules\" -Directory).Count; Write-Host \"✓ Modules directory found ($moduleCount modules)\" -ForegroundColor Green } else { Write-Warning 'Modules directory not found' }; Write-Host '✅ Package test completed!' -ForegroundColor Green } else { Write-Error 'Failed to extract package' }; Remove-Item -Path $testDir -Recurse -Force -ErrorAction SilentlyContinue"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🚀 Quick Release: Patch Version",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "./Quick-Release.ps1",
-                "-Type",
-                "Patch",
-                "-NoPush"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🔧 Quick Release: Minor Version",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "./Quick-Release.ps1",
-                "-Type",
-                "Minor",
-                "-NoPush"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🎉 Quick Release: Major Version (v1.0.0 GA Ready!)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "./Quick-Release.ps1",
-                "-Type",
-                "Major",
-                "-NoPush"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🎯 Quick Release: Specific Version",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "./Quick-Release.ps1",
-                "-Version",
-                "${input:releaseVersion}",
-                "-NoPush"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🚀 Quick Release: Push Patch (LIVE RELEASE)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "./Quick-Release.ps1",
-                "-Type",
-                "Patch"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🔧 Quick Release: Push Minor (LIVE RELEASE)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "./Quick-Release.ps1",
-                "-Type",
-                "Minor"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🎉 Quick Release: Push Major v1.0.0 GA (LIVE RELEASE)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "./Quick-Release.ps1",
-                "-Type",
-                "Major"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "⚡ TURBO: Lightning Module Check (3s)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "Quick-ModuleCheck.ps1",
-                "-MaxParallelJobs",
-                "8"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🚀 TURBO: Ultra-Fast Test Suite (10-30s)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "Turbo-Test.ps1",
-                "-TestLevel",
-                "Fast",
-                "-MaxParallelJobs",
-                "6"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🔥 TURBO: Complete Test Suite (30-60s)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "Turbo-Test.ps1",
-                "-TestLevel",
-                "Complete",
-                "-MaxParallelJobs",
-                "4"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "💨 TURBO: Auto-Merge Preview (Dry Run)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "Power-AutoMerge.ps1",
-                "-DryRun"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🎯 TURBO: Auto-Merge Execute (LIVE)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "Power-AutoMerge.ps1"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "⚡ TURBO: Parallel Module Validation + Tests",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Write-Host '⚡ Running parallel module validation + tests...' -ForegroundColor Cyan; $start = Get-Date; & './Quick-ModuleCheck.ps1' -MaxParallelJobs 8; Write-Host '✅ Module check completed' -ForegroundColor Green; & './Turbo-Test.ps1' -TestLevel Fast -MaxParallelJobs 6; $end = Get-Date; $duration = ($end - $start).TotalSeconds; Write-Host \"🎯 Total time: $([math]::Round($duration, 2)) seconds\" -ForegroundColor Yellow"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🚀 TURBO: Full CI Simulation (Local)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Write-Host '🚀 Simulating full CI pipeline locally...' -ForegroundColor Cyan; $start = Get-Date; Write-Host '1️⃣ Module validation...' -ForegroundColor Yellow; & './Quick-ModuleCheck.ps1' -MaxParallelJobs 8; Write-Host '2️⃣ Fast test suite...' -ForegroundColor Yellow; & './Turbo-Test.ps1' -TestLevel Fast -MaxParallelJobs 6; Write-Host '3️⃣ Build validation...' -ForegroundColor Yellow; pwsh -File './tests/Run-BulletproofValidation.ps1' -ValidationLevel Quick -CI -FailFast; $end = Get-Date; $duration = ($end - $start).TotalSeconds; Write-Host \"✅ Full CI simulation completed in $([math]::Round($duration, 2)) seconds\" -ForegroundColor Green"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🤖 DevEnvironment: Install Claude Code Dependencies",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-ClaudeCodeDependencies"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🪟 DevEnvironment: Install Claude Code (Windows + WSL)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-ClaudeCodeDependencies -WSLUsername '${input:wslUsername}'"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🐧 DevEnvironment: Install Claude Code (Linux)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-ClaudeCodeDependencies"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🔍 DevEnvironment: Preview Claude Code Installation (WhatIf)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-ClaudeCodeDependencies -WhatIf"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🧪 DevEnvironment: Test Claude Code Dependencies Function",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "tests/unit/modules/DevEnvironment/Install-ClaudeCodeDependencies.Tests.ps1"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🧠 DevEnvironment: Install Gemini CLI Dependencies",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-GeminiCLIDependencies"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🪟 DevEnvironment: Install Gemini CLI (Windows + WSL)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-GeminiCLIDependencies -WSLUsername '${input:wslUsername}'"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🐧 DevEnvironment: Install Gemini CLI (Linux)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-GeminiCLIDependencies"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🔍 DevEnvironment: Preview Gemini CLI Installation (WhatIf)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-GeminiCLIDependencies -WhatIf"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🧪 DevEnvironment: Test Gemini CLI Dependencies Function",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "tests/unit/modules/DevEnvironment/Install-GeminiCLIDependencies.Tests.ps1"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🧬 DevEnvironment: Install Codex CLI Dependencies",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-CodexCLIDependencies"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🪟 DevEnvironment: Install Codex CLI (Windows + WSL)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-CodexCLIDependencies -WSLUsername '${input:wslUsername}'"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🐧 DevEnvironment: Install Codex CLI (Linux)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-CodexCLIDependencies"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🔍 DevEnvironment: Preview Codex CLI Installation (WhatIf)",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-Command",
-                "Import-Module './aither-core/modules/DevEnvironment' -Force; Install-CodexCLIDependencies -WhatIf"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🧪 DevEnvironment: Test Codex CLI Dependencies Function",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "tests/unit/modules/DevEnvironment/Install-CodexCLIDependencies.Tests.ps1"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🔬 Run Code Coverage - Full",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "tests/Run-CodeCoverage.ps1",
-                "-Scope",
-                "Full",
-                "-ShowDetails",
-                "-OutputFormat",
-                "Console,JaCoCo,Cobertura"
+                "Invoke-ScriptAnalyzer -Path . -Recurse -Severity Warning,Error"
             ],
             "group": "test",
             "presentation": {
@@ -1832,28 +371,19 @@
                 "reveal": "always",
                 "focus": true,
                 "panel": "shared",
-                "showReuseMessage": false,
+                "showReuseMessage": true,
                 "clear": true
             },
             "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
+            "options": {"cwd": "${workspaceFolder}"}
         },
         {
-            "label": "🔬 Run Code Coverage - Module",
+            "label": "✅ Validate Module Manifests",
             "type": "shell",
             "command": "pwsh",
             "args": [
-                "-File",
-                "tests/Run-CodeCoverage.ps1",
-                "-Scope",
-                "Module",
-                "-Module",
-                "${input:moduleName}",
-                "-ShowDetails",
-                "-OutputFormat",
-                "Console,CoverageGutters"
+                "-Command",
+                "Get-ChildItem -Path './aither-core/modules' -Directory | ForEach-Object { $manifestPath = Join-Path $_.FullName \"$($_.Name).psd1\"; if (Test-Path $manifestPath) { Test-ModuleManifest -Path $manifestPath; Write-Host \"✅ $($_.Name) manifest valid\" -ForegroundColor Green } else { Write-Host \"⚠️ $($_.Name) manifest not found\" -ForegroundColor Yellow } }"
             ],
             "group": "test",
             "presentation": {
@@ -1861,25 +391,116 @@
                 "reveal": "always",
                 "focus": true,
                 "panel": "shared",
-                "showReuseMessage": false,
+                "showReuseMessage": true,
                 "clear": true
             },
             "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
+            "options": {"cwd": "${workspaceFolder}"}
         },
         {
-            "label": "🔬 Quick Coverage Check",
+            "label": "📊 Code Coverage Analysis",
             "type": "shell",
             "command": "pwsh",
             "args": [
-                "-File",
-                "tests/Check-Coverage.ps1",
-                "-Quick",
-                "-ShowUncovered"
+                "-Command",
+                "if (Get-Module -Name Pester -ListAvailable) { Invoke-Pester -Path './tests' -CodeCoverage './aither-core/modules/**/*.ps*' -OutputFile './TestResults/coverage.xml' -OutputFormat 'JaCoCo' -PassThru } else { Write-Host '❌ Pester module required for coverage analysis' -ForegroundColor Red }"
             ],
             "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🔧 Pre-Build Validation",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Write-Host '🔍 Running pre-build validation...' -ForegroundColor Cyan; pwsh -File './tests/Run-Tests.ps1' -CI; Write-Host '📦 Testing module imports...' -ForegroundColor Yellow; Get-ChildItem -Path './aither-core/modules' -Directory | ForEach-Object { Import-Module $_.FullName -Force -ErrorAction Stop; Write-Host \"✓ Module $($_.Name) imports successfully\" -ForegroundColor Green }; Write-Host '✅ Pre-build validation completed!' -ForegroundColor Green"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+
+        // ========================================
+        // Core Utilities (4 tasks)
+        // ========================================
+        {
+            "label": "🚀 Run AitherZero - Interactive",
+            "type": "shell",
+            "command": "pwsh",
+            "args": ["-File", "./Start-AitherZero.ps1"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🤖 Run AitherZero - Automated",
+            "type": "shell",
+            "command": "pwsh",
+            "args": ["-File", "./Start-AitherZero.ps1", "-Auto"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "👁️ Run AitherZero - Preview Mode",
+            "type": "shell",
+            "command": "pwsh",
+            "args": ["-File", "./Start-AitherZero.ps1", "-WhatIf"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🧹 Clean Build Artifacts",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Remove-Item -Path 'build/output/*', 'local-build', 'AitherZero-*-local.*' -Force -Recurse -ErrorAction SilentlyContinue; Write-Host '🧹 Build artifacts cleaned' -ForegroundColor Green"
+            ],
+            "group": "build",
             "presentation": {
                 "echo": true,
                 "reveal": "always",
@@ -1889,178 +510,20 @@
                 "clear": true
             },
             "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🔬 Coverage with Enforcement",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "tests/Run-CodeCoverage.ps1",
-                "-Scope",
-                "Full",
-                "-EnforceThresholds",
-                "-OutputFormat",
-                "JaCoCo"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "📊 All Module Tests with Coverage",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "tests/Run-AllModuleTests.ps1",
-                "-CodeCoverage",
-                "-CoverageFormat",
-                "JaCoCo"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "🛡️ Bulletproof Validation with Coverage",
-            "type": "shell",
-            "command": "pwsh",
-            "args": [
-                "-File",
-                "tests/Run-BulletproofValidation.ps1",
-                "-ValidationLevel",
-                "${input:validationLevel}",
-                "-CodeCoverage",
-                "-EnforceCoverageThresholds"
-            ],
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
+            "options": {"cwd": "${workspaceFolder}"}
         }
     ],
     "inputs": [
         {
             "id": "patchDescription",
-            "description": "Enter a description for the patch",
-            "default": "Automated patch",
+            "description": "Enter a description for your patch",
+            "default": "Update functionality",
             "type": "promptString"
         },
         {
             "id": "patchOperation",
-            "description": "Enter the PowerShell operation to perform",
-            "default": "Write-Host 'Patch operation'",
-            "type": "promptString"
-        },
-        {
-            "id": "validationLevel",
-            "description": "Select validation level",
-            "default": "Standard",
-            "type": "pickString",
-            "options": [
-                "Quick",
-                "Standard",
-                "Complete"
-            ]
-        },
-        {
-            "id": "testType",
-            "description": "Select test type",
-            "default": "Smoke",
-            "type": "pickString",
-            "options": [
-                "All",
-                "Unit",
-                "Integration",
-                "Smoke",
-                "Module",
-                "Script"
-            ]
-        },
-        {
-            "id": "scriptNames",
-            "description": "Enter script names (comma-separated)",
-            "default": "0200_Get-SystemInfo",
-            "type": "promptString"
-        },
-        {
-            "id": "taskName",
-            "description": "Enter task name for monitoring",
-            "default": "Development Task",
-            "type": "promptString"
-        },
-        {
-            "id": "scriptBlock",
-            "description": "Enter PowerShell script block to execute",
-            "default": "Get-Date",
-            "type": "promptString"
-        },        {
-            "id": "functionName",
-            "description": "Enter function name for error tracking",
-            "default": "MyFunction",
-            "type": "promptString"
-        },
-        {
-            "id": "priority",
-            "description": "Select priority level",
-            "default": "Medium",
-            "type": "pickString",
-            "options": [
-                "Low",
-                "Medium",
-                "High",
-                "Critical"
-            ]
-        },
-        {
-            "id": "testCommand",
-            "description": "Enter test command to validate changes",
-            "default": "Get-Module",
-            "type": "promptString"
-        },
-        {
-            "id": "releaseVersion",
-            "description": "Enter specific version to release (e.g., 1.0.0, 2.0.0-beta.1)",
-            "default": "1.0.0",
-            "type": "promptString"
-        },
-        {
-            "id": "wslUsername",
-            "description": "Enter WSL username for Ubuntu setup",
-            "default": "developer",
+            "description": "Enter PowerShell commands to execute",
+            "default": "Write-Host 'Patch operation executed'",
             "type": "promptString"
         }
     ]

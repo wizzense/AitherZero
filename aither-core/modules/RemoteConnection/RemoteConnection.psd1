@@ -2,7 +2,7 @@
     RootModule        = 'RemoteConnection.psm1'
     ModuleVersion     = '1.0.0'
     GUID              = '8C9F0A21-3D5E-6F7A-9B0C-2D3E4F5A6B7C'
-    Author            = 'AitherZero Development Team'
+    Author = 'AitherZero Contributors'
     CompanyName       = 'AitherZero'
     Copyright         = '(c) 2025 AitherZero. All rights reserved.'
     Description       = 'Generalized remote connection management module for enterprise-wide use across AitherZero infrastructure automation'
@@ -15,7 +15,10 @@
         'Test-RemoteConnection',
         'Connect-RemoteEndpoint',
         'Disconnect-RemoteEndpoint',
-        'Invoke-RemoteCommand'
+        'Invoke-RemoteCommand',
+        'Get-ConnectionPoolStatus',
+        'Reset-ConnectionPool',
+        'Get-ConnectionDiagnosticsReport'
     )
     CmdletsToExport   = @()
     VariablesToExport = @()
