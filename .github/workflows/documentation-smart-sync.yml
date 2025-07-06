@@ -1,0 +1,765 @@
+name: Smart Documentation Sync
+# Intelligent documentation management with change detection and time gates
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths: 
+      - '**/*.ps1'
+      - '**/*.psm1'
+      - '**/*.psd1'
+      - '**/*.md'
+      - '**/*.json'
+      - '**/*.yaml'
+      - '**/*.yml'
+      - '**/*.tf'
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run daily at 6 AM UTC to catch stale documentation
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      force_analysis:
+        description: 'Force full analysis regardless of changes'
+        required: false
+        type: boolean
+        default: false
+      target_directories:
+        description: 'Specific directories to analyze (comma-separated)'
+        required: false
+        type: string
+      auto_generate:
+        description: 'Allow automatic README generation'
+        required: false
+        type: boolean
+        default: true
+      create_pr:
+        description: 'Create PR for documentation updates'
+        required: false
+        type: boolean
+        default: true
+
+# Prevent concurrent runs on the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  PSCORE_VERSION: '7.4.5'
+  DOCUMENTATION_STATE_FILE: '.github/documentation-state.json'
+
+jobs:
+  # Analyze repository changes to determine what documentation work is needed
+  analyze-changes:
+    name: Analyze Documentation Changes
+    runs-on: ubuntu-latest
+    outputs:
+      needs-analysis: ${{ steps.analyze.outputs.needs-analysis }}
+      state-exists: ${{ steps.check-state.outputs.state-exists }}
+      directories-changed: ${{ steps.analyze.outputs.directories-changed }}
+      significant-changes: ${{ steps.analyze.outputs.significant-changes }}
+      auto-generation-count: ${{ steps.analyze.outputs.auto-generation-count }}
+      review-required-count: ${{ steps.analyze.outputs.review-required-count }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for accurate change detection
+        
+    - name: Setup PowerShell
+      uses: PowerShell/setup-powershell@v1
+      with:
+        version: ${{ env.PSCORE_VERSION }}
+        
+    - name: Check if documentation state exists
+      id: check-state
+      run: |
+        if [ -f "${{ env.DOCUMENTATION_STATE_FILE }}" ]; then
+          echo "state-exists=true" >> $GITHUB_OUTPUT
+          echo "📊 Found existing documentation state file"
+        else
+          echo "state-exists=false" >> $GITHUB_OUTPUT
+          echo "⚡ No documentation state found - will initialize"
+        fi
+        
+    - name: Analyze repository changes
+      id: analyze
+      shell: pwsh
+      run: |
+        $needsAnalysis = $false
+        $directoriesChanged = @()
+        $significantChanges = 0
+        
+        # Check for manual triggers
+        if ('${{ github.event_name }}' -eq 'workflow_dispatch' -and '${{ inputs.force_analysis }}' -eq 'true') {
+          $needsAnalysis = $true
+          Write-Host "🔄 Forced analysis requested"
+        }
+        
+        # Check for scheduled runs
+        if ('${{ github.event_name }}' -eq 'schedule') {
+          $needsAnalysis = $true
+          Write-Host "⏰ Scheduled documentation review"
+        }
+        
+        # Check for specific directory targets
+        if ('${{ inputs.target_directories }}') {
+          $needsAnalysis = $true
+          $targetDirs = '${{ inputs.target_directories }}' -split ','
+          $directoriesChanged = $targetDirs | ForEach-Object { $_.Trim() }
+          Write-Host "🎯 Targeting specific directories: $($directoriesChanged -join ', ')"
+        }
+        
+        # Analyze git changes for push/PR events
+        if ('${{ github.event_name }}' -in @('push', 'pull_request') -and -not $needsAnalysis) {
+          try {
+            # Get changed files
+            $beforeSha = if ('${{ github.event.before }}') { '${{ github.event.before }}' } else { 'HEAD~1' }
+            $changes = git diff --name-only $beforeSha ${{ github.sha }} 2>/dev/null
+            
+            if ($changes) {
+              $changedDirs = @()
+              foreach ($change in $changes) {
+                # Extract directory path
+                $dirPath = Split-Path $change -Parent
+                if ($dirPath -and $dirPath -ne '.') {
+                  $changedDirs += $dirPath
+                }
+              }
+              
+              # Get unique directories and filter out irrelevant ones
+              $relevantDirs = $changedDirs | 
+                Select-Object -Unique | 
+                Where-Object { 
+                  $_ -notmatch '(\.git|node_modules|\.vscode|bin|obj)' -and
+                  $_ -match '\.(ps1|psm1|psd1|md|json|yaml|yml|tf)$' -or
+                  (Get-ChildItem $_ -File -ErrorAction SilentlyContinue | 
+                   Where-Object { $_.Extension -in @('.ps1', '.psm1', '.psd1', '.md', '.json', '.yaml', '.yml', '.tf') })
+                }
+              
+              if ($relevantDirs.Count -gt 0) {
+                $needsAnalysis = $true
+                $directoriesChanged = $relevantDirs
+                $significantChanges = $relevantDirs.Count
+                Write-Host "📝 Detected changes in $($relevantDirs.Count) relevant directories"
+                Write-Host "Changed directories: $($relevantDirs -join ', ')"
+              }
+            }
+          } catch {
+            Write-Host "⚠️ Could not analyze git changes: $_"
+            $needsAnalysis = $true  # Fallback to full analysis
+          }
+        }
+        
+        # Always analyze if no state file exists
+        if ('${{ steps.check-state.outputs.state-exists }}' -eq 'false') {
+          $needsAnalysis = $true
+          Write-Host "🆕 No state file exists - full analysis required"
+        }
+        
+        # Output results
+        echo "needs-analysis=$($needsAnalysis.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+        echo "directories-changed=$($directoriesChanged -join ',')" >> $env:GITHUB_OUTPUT
+        echo "significant-changes=$significantChanges" >> $env:GITHUB_OUTPUT
+        echo "auto-generation-count=0" >> $env:GITHUB_OUTPUT  # Will be updated by content analysis
+        echo "review-required-count=0" >> $env:GITHUB_OUTPUT  # Will be updated by content analysis
+        
+        Write-Host "📊 Analysis Summary:"
+        Write-Host "  Needs Analysis: $needsAnalysis"
+        Write-Host "  Directories Changed: $($directoriesChanged.Count)"
+        Write-Host "  Significant Changes: $significantChanges"
+
+  # Initialize or update documentation state tracking
+  initialize-state:
+    name: Initialize Documentation State
+    runs-on: ubuntu-latest
+    needs: analyze-changes
+    if: needs.analyze-changes.outputs.state-exists == 'false'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PowerShell
+      uses: PowerShell/setup-powershell@v1
+      with:
+        version: ${{ env.PSCORE_VERSION }}
+        
+    - name: Initialize documentation state
+      shell: pwsh
+      run: |
+        Write-Host "🚀 Initializing documentation state tracking..." -ForegroundColor Cyan
+        
+        # Ensure scripts directory exists
+        $scriptsDir = "./scripts/documentation"
+        if (-not (Test-Path $scriptsDir)) {
+          Write-Host "⚠️ Documentation scripts directory not found: $scriptsDir"
+          exit 1
+        }
+        
+        # Run state initialization
+        try {
+          & "$scriptsDir/Track-DocumentationState.ps1" -Initialize -ProjectRoot "." -StateFilePath "${{ env.DOCUMENTATION_STATE_FILE }}"
+          Write-Host "✅ Documentation state initialized successfully"
+        } catch {
+          Write-Host "❌ Failed to initialize documentation state: $_" -ForegroundColor Red
+          exit 1
+        }
+        
+    - name: Upload state file
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation-state-initial
+        path: ${{ env.DOCUMENTATION_STATE_FILE }}
+        retention-days: 30
+
+  # Perform content delta analysis and change detection
+  content-analysis:
+    name: Content Delta Analysis
+    runs-on: ubuntu-latest
+    needs: [analyze-changes, initialize-state]
+    if: |
+      always() && 
+      needs.analyze-changes.outputs.needs-analysis == 'true' &&
+      (needs.initialize-state.result == 'success' || needs.initialize-state.result == 'skipped')
+    outputs:
+      analysis-complete: ${{ steps.analysis.outputs.analysis-complete }}
+      auto-generation-candidates: ${{ steps.analysis.outputs.auto-generation-candidates }}
+      review-required: ${{ steps.analysis.outputs.review-required }}
+      significant-changes-count: ${{ steps.analysis.outputs.significant-changes-count }}
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PowerShell
+      uses: PowerShell/setup-powershell@v1
+      with:
+        version: ${{ env.PSCORE_VERSION }}
+        
+    - name: Download state file (if exists)
+      if: needs.analyze-changes.outputs.state-exists == 'true'
+      continue-on-error: true
+      uses: actions/download-artifact@v4
+      with:
+        name: documentation-state-initial
+        path: .github/
+        
+    - name: Run content delta analysis
+      id: analysis
+      shell: pwsh
+      run: |
+        Write-Host "🔍 Starting content delta analysis..." -ForegroundColor Cyan
+        
+        $scriptsDir = "./scripts/documentation"
+        $stateFile = "${{ env.DOCUMENTATION_STATE_FILE }}"
+        
+        # Ensure state file exists
+        if (-not (Test-Path $stateFile)) {
+          Write-Host "⚠️ State file not found. Running initialization first..."
+          & "$scriptsDir/Track-DocumentationState.ps1" -Initialize -ProjectRoot "." -StateFilePath $stateFile
+        }
+        
+        # Prepare target directories parameter
+        $targetDirs = @()
+        if ('${{ needs.analyze-changes.outputs.directories-changed }}') {
+          $targetDirs = '${{ needs.analyze-changes.outputs.directories-changed }}' -split ',' | Where-Object { $_.Trim() }
+        }
+        
+        try {
+          # Run content analysis
+          $analysisParams = @{
+            ProjectRoot = "."
+            StateFilePath = $stateFile
+            ExportChanges = $true
+          }
+          
+          if ($targetDirs.Count -gt 0) {
+            $analysisParams.TargetDirectories = $targetDirs
+            Write-Host "🎯 Analyzing specific directories: $($targetDirs -join ', ')"
+          } else {
+            Write-Host "🌍 Analyzing all directories"
+          }
+          
+          & "$scriptsDir/Analyze-ContentDeltas.ps1" @analysisParams
+          
+          # Read analysis results
+          $analysisFile = "./change-analysis.json"
+          if (Test-Path $analysisFile) {
+            $analysis = Get-Content $analysisFile | ConvertFrom-Json
+            
+            # Extract key metrics
+            $autoGenCandidates = $analysis.autoGenerationCandidates.Count
+            $reviewRequired = $analysis.reviewRequired.Count
+            $significantChanges = $analysis.summary.significantChanges
+            
+            # Output for next jobs
+            echo "analysis-complete=true" >> $env:GITHUB_OUTPUT
+            echo "auto-generation-candidates=$autoGenCandidates" >> $env:GITHUB_OUTPUT
+            echo "review-required=$reviewRequired" >> $env:GITHUB_OUTPUT
+            echo "significant-changes-count=$significantChanges" >> $env:GITHUB_OUTPUT
+            
+            Write-Host "📊 Analysis Results:" -ForegroundColor Cyan
+            Write-Host "  Auto-Generation Candidates: $autoGenCandidates" -ForegroundColor Green
+            Write-Host "  Review Required: $reviewRequired" -ForegroundColor Yellow
+            Write-Host "  Significant Changes: $significantChanges" -ForegroundColor Magenta
+            
+            # Create summary for PR comment
+            $summary = @"
+## 📊 Documentation Analysis Summary
+
+- **Directories Analyzed**: $($analysis.summary.totalAnalyzed)
+- **Significant Changes**: $($analysis.summary.significantChanges)
+- **Auto-Generation Candidates**: $autoGenCandidates
+- **Manual Review Required**: $reviewRequired
+
+### Auto-Generation Candidates
+$(if ($analysis.autoGenerationCandidates.Count -gt 0) {
+  $analysis.autoGenerationCandidates | ForEach-Object { "- ``$($_.path)`` - $($_.reason)" }
+} else {
+  "None"
+})
+
+### Manual Review Required  
+$(if ($analysis.reviewRequired.Count -gt 0) {
+  $analysis.reviewRequired | ForEach-Object { "- ``$($_.path)`` - $($_.reasons -join ', ')" }
+} else {
+  "None"
+})
+"@
+            
+            Set-Content -Path "./analysis-summary.md" -Value $summary
+            
+          } else {
+            Write-Host "❌ Analysis results file not found" -ForegroundColor Red
+            echo "analysis-complete=false" >> $env:GITHUB_OUTPUT
+            exit 1
+          }
+          
+        } catch {
+          Write-Host "❌ Content analysis failed: $_" -ForegroundColor Red
+          echo "analysis-complete=false" >> $env:GITHUB_OUTPUT
+          exit 1
+        }
+        
+    - name: Upload analysis results
+      uses: actions/upload-artifact@v4
+      with:
+        name: content-analysis-results
+        path: |
+          change-analysis.json
+          analysis-summary.md
+          ${{ env.DOCUMENTATION_STATE_FILE }}
+        retention-days: 30
+
+  # Flag directories for human review based on analysis
+  flag-review:
+    name: Flag Documentation for Review
+    runs-on: ubuntu-latest
+    needs: [analyze-changes, content-analysis]
+    if: |
+      always() &&
+      needs.content-analysis.outputs.analysis-complete == 'true' &&
+      needs.content-analysis.outputs.review-required > 0
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download analysis results
+      uses: actions/download-artifact@v4
+      with:
+        name: content-analysis-results
+        path: ./
+        
+    - name: Create documentation review issues
+      if: ${{ !inputs.create_pr || inputs.create_pr == 'true' }}
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          // Read analysis results
+          const analysis = JSON.parse(fs.readFileSync('./change-analysis.json', 'utf8'));
+          
+          // Create or update documentation review issue
+          const title = `📝 Documentation Review Required - ${new Date().toISOString().split('T')[0]}`;
+          const reviewItems = analysis.reviewRequired || [];
+          
+          if (reviewItems.length === 0) {
+            console.log('No review items found');
+            return;
+          }
+          
+          let body = `## 📋 Documentation Review Required\n\n`;
+          body += `**Triggered by:** ${context.eventName} on \`${context.ref}\`\n`;
+          body += `**Analysis Date:** ${new Date().toISOString()}\n\n`;
+          
+          body += `### 🔍 Directories Requiring Review\n\n`;
+          
+          reviewItems.forEach(item => {
+            body += `#### \`${item.path}\`\n`;
+            body += `- **Change Type:** ${item.changeType}\n`;
+            body += `- **Confidence:** ${item.confidence}%\n`;
+            body += `- **Reasons:** ${item.reasons.join(', ')}\n`;
+            if (item.deltaPercent > 0) {
+              body += `- **Content Change:** ${item.deltaPercent.toFixed(1)}%\n`;
+            }
+            body += `\n`;
+          });
+          
+          body += `\n### ✅ Review Checklist\n\n`;
+          reviewItems.forEach(item => {
+            body += `- [ ] Review and update \`${item.path}/README.md\`\n`;
+          });
+          
+          body += `\n### 🤖 Automation Info\n`;
+          body += `- **Auto-Generation Available:** ${analysis.autoGenerationCandidates?.length || 0} directories\n`;
+          body += `- **Workflow:** [View Run](${context.payload.repository.html_url}/actions/runs/${context.runId})\n`;
+          
+          body += `\n---\n*This issue was automatically created by the Smart Documentation Sync workflow.*`;
+          
+          // Check for existing review issues
+          const { data: issues } = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            labels: 'documentation,review-needed,auto-flagged'
+          });
+          
+          const existingIssue = issues.find(issue => issue.title.startsWith('📝 Documentation Review Required'));
+          
+          if (existingIssue) {
+            // Update existing issue
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: existingIssue.number,
+              title: title,
+              body: body
+            });
+            console.log(`Updated existing review issue #${existingIssue.number}`);
+          } else {
+            // Create new issue
+            const { data: newIssue } = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['documentation', 'review-needed', 'auto-flagged']
+            });
+            console.log(`Created new review issue #${newIssue.number}`);
+          }
+
+  # Generate missing READMEs using AI (when appropriate)
+  auto-generate:
+    name: Auto-Generate Documentation
+    runs-on: ubuntu-latest
+    needs: [analyze-changes, content-analysis]
+    if: |
+      always() &&
+      needs.content-analysis.outputs.analysis-complete == 'true' &&
+      needs.content-analysis.outputs.auto-generation-candidates > 0 &&
+      (${{ !inputs.auto_generate }} || inputs.auto_generate == 'true')
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup PowerShell
+      uses: PowerShell/setup-powershell@v1
+      with:
+        version: ${{ env.PSCORE_VERSION }}
+        
+    - name: Download analysis results
+      uses: actions/download-artifact@v4
+      with:
+        name: content-analysis-results
+        path: ./
+        
+    - name: Generate missing documentation
+      id: generate
+      shell: pwsh
+      run: |
+        Write-Host "🤖 Starting automatic documentation generation..." -ForegroundColor Cyan
+        
+        # Ensure scripts directory exists
+        $scriptsDir = "./scripts/documentation"
+        if (-not (Test-Path $scriptsDir)) {
+          Write-Host "⚠️ Documentation scripts directory not found: $scriptsDir"
+          exit 1
+        }
+        
+        # Run smart README generation script
+        try {
+          $result = & "$scriptsDir/Generate-SmartReadmes.ps1" -ProjectRoot "." -StateFilePath ".github/documentation-state.json" -MaxGenerations 5
+          
+          # Parse output for generated count
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "✅ Smart README generation completed successfully"
+            
+            # Check how many files were generated by looking at git status
+            $newFiles = git status --porcelain | Where-Object { $_ -match "\?\?.*README\.md$" }
+            $generatedCount = if ($newFiles) { $newFiles.Count } else { 0 }
+            
+            echo "generated-count=$generatedCount" >> $env:GITHUB_OUTPUT
+            Write-Host "🎉 Generated $generatedCount READMEs"
+          } else {
+            Write-Host "❌ Smart README generation failed" -ForegroundColor Red
+            echo "generated-count=0" >> $env:GITHUB_OUTPUT
+            exit 1
+          }
+        } catch {
+          Write-Host "❌ Error running Generate-SmartReadmes.ps1: $_" -ForegroundColor Red
+          echo "generated-count=0" >> $env:GITHUB_OUTPUT
+          exit 1
+        }
+        
+        
+        
+        
+    - name: Create pull request for generated documentation
+      if: |
+        steps.generate.outputs.generated-count > 0 &&
+        (${{ !inputs.create_pr }} || inputs.create_pr == 'true')
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: |
+          📝 Auto-generate missing README documentation
+          
+          Generated ${{ steps.generate.outputs.generated-count }} README files
+          
+          🤖 Generated with Smart Documentation Sync
+          
+          Co-Authored-By: Claude <noreply@anthropic.com>
+        title: "📝 Auto-generated documentation updates"
+        body: |
+          ## 🤖 Auto-Generated Documentation
+          
+          This PR contains automatically generated README files for directories that were missing documentation.
+          
+          ### 📊 Summary
+          - **Generated READMEs:** ${{ steps.generate.outputs.generated-count }}
+          - **Trigger:** ${{ github.event_name }}
+          - **Analysis Date:** ${{ steps.generate.outputs.analysis-date }}
+          
+          ### 📝 Generated Files
+          See changed files in this PR for the complete list.
+          
+          ### ✅ Review Checklist
+          - [ ] Review generated content for accuracy
+          - [ ] Enhance with specific details where needed
+          - [ ] Verify formatting and links
+          - [ ] Confirm integration with existing documentation
+          
+          ### 🔄 Next Steps
+          1. Review the auto-generated content
+          2. Edit files to add specific details
+          3. Merge when satisfied with documentation quality
+          
+          ---
+          *This PR was automatically created by the Smart Documentation Sync workflow*
+        branch: docs/auto-generated-readmes
+        labels: |
+          documentation
+          auto-generated
+          review-needed
+        assignees: ${{ github.actor }}
+
+  # Update root README with documentation index
+  update-index:
+    name: Update Documentation Index
+    runs-on: ubuntu-latest
+    needs: [analyze-changes, content-analysis, auto-generate]
+    if: |
+      always() &&
+      needs.content-analysis.outputs.analysis-complete == 'true' &&
+      (needs.auto-generate.result == 'success' || needs.auto-generate.result == 'skipped')
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup PowerShell
+      uses: PowerShell/setup-powershell@v1
+      with:
+        version: ${{ env.PSCORE_VERSION }}
+        
+    - name: Download analysis results
+      uses: actions/download-artifact@v4
+      with:
+        name: content-analysis-results
+        path: ./
+        
+    - name: Update documentation index
+      id: update-index
+      shell: pwsh
+      run: |
+        Write-Host "📖 Updating documentation index in root README..." -ForegroundColor Cyan
+        
+        # Ensure scripts directory exists
+        $scriptsDir = "./scripts/documentation"
+        if (-not (Test-Path $scriptsDir)) {
+          Write-Host "⚠️ Documentation scripts directory not found: $scriptsDir"
+          exit 1
+        }
+        
+        # Run documentation index update
+        try {
+          & "$scriptsDir/Update-DocumentationIndex.ps1" -ProjectRoot "." -StateFilePath ".github/documentation-state.json" -ReadmePath "README.md"
+          
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "✅ Documentation index updated successfully"
+            
+            # Check if README was modified
+            $readmeChanged = git status --porcelain | Where-Object { $_ -match "README\.md" }
+            $indexUpdated = if ($readmeChanged) { "true" } else { "false" }
+            
+            echo "index-updated=$indexUpdated" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "❌ Documentation index update failed" -ForegroundColor Red
+            exit 1
+          }
+        } catch {
+          Write-Host "❌ Error running Update-DocumentationIndex.ps1: $_" -ForegroundColor Red
+          exit 1
+        }
+        
+    - name: Commit documentation index updates
+      if: steps.update-index.outputs.index-updated == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add README.md
+        git commit -m "📖 Update documentation index
+        
+        Auto-updated documentation table of contents
+        
+        🤖 Generated with Smart Documentation Sync
+        
+        Co-Authored-By: Claude <noreply@anthropic.com>"
+        
+    - name: Push documentation updates
+      if: steps.update-index.outputs.index-updated == 'true'
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ github.ref }}
+
+  # Summary job that provides overall workflow results
+  summary:
+    name: Documentation Sync Summary
+    runs-on: ubuntu-latest
+    needs: [analyze-changes, initialize-state, content-analysis, flag-review, auto-generate, update-index]
+    if: always()
+    
+    steps:
+    - name: Download analysis results
+      if: needs.content-analysis.outputs.analysis-complete == 'true'
+      uses: actions/download-artifact@v4
+      with:
+        name: content-analysis-results
+        path: ./
+        
+    - name: Generate workflow summary
+      shell: pwsh
+      run: |
+        Write-Host "📊 Smart Documentation Sync Summary" -ForegroundColor Cyan
+        Write-Host "=======================================" -ForegroundColor Cyan
+        
+        $summary = @{
+          AnalysisNeeded = '${{ needs.analyze-changes.outputs.needs-analysis }}'
+          StateInitialized = '${{ needs.initialize-state.result }}'
+          ContentAnalysis = '${{ needs.content-analysis.result }}'
+          ReviewFlagging = '${{ needs.flag-review.result }}'
+          AutoGeneration = '${{ needs.auto-generate.result }}'
+          SignificantChanges = '${{ needs.content-analysis.outputs.significant-changes-count }}'
+          AutoGenCandidates = '${{ needs.content-analysis.outputs.auto-generation-candidates }}'
+          ReviewRequired = '${{ needs.content-analysis.outputs.review-required }}'
+        }
+        
+        Write-Host "🔍 Analysis Results:" -ForegroundColor Yellow
+        Write-Host "  Analysis Needed: $($summary.AnalysisNeeded)" -ForegroundColor White
+        Write-Host "  Significant Changes: $($summary.SignificantChanges)" -ForegroundColor White
+        Write-Host "  Auto-Gen Candidates: $($summary.AutoGenCandidates)" -ForegroundColor White
+        Write-Host "  Review Required: $($summary.ReviewRequired)" -ForegroundColor White
+        
+        Write-Host "`n🛠️ Job Results:" -ForegroundColor Yellow
+        Write-Host "  State Initialization: $($summary.StateInitialized)" -ForegroundColor $(if($summary.StateInitialized -eq 'success'){'Green'}elseif($summary.StateInitialized -eq 'skipped'){'Gray'}else{'Red'})
+        Write-Host "  Content Analysis: $($summary.ContentAnalysis)" -ForegroundColor $(if($summary.ContentAnalysis -eq 'success'){'Green'}else{'Red'})
+        Write-Host "  Review Flagging: $($summary.ReviewFlagging)" -ForegroundColor $(if($summary.ReviewFlagging -eq 'success'){'Green'}elseif($summary.ReviewFlagging -eq 'skipped'){'Gray'}else{'Red'})
+        Write-Host "  Auto Generation: $($summary.AutoGeneration)" -ForegroundColor $(if($summary.AutoGeneration -eq 'success'){'Green'}elseif($summary.AutoGeneration -eq 'skipped'){'Gray'}else{'Red'})
+        
+        # Determine overall status
+        $failed = @($summary.ContentAnalysis, $summary.ReviewFlagging, $summary.AutoGeneration) | Where-Object { $_ -eq 'failure' }
+        $overall = if ($failed.Count -gt 0) { "❌ FAILED" } else { "✅ SUCCESS" }
+        
+        Write-Host "`n🎯 Overall Status: $overall" -ForegroundColor $(if($overall.Contains('SUCCESS')){'Green'}else{'Red'})
+        
+        # Read and display analysis summary if available
+        if (Test-Path "./analysis-summary.md") {
+          $analysisContent = Get-Content "./analysis-summary.md" -Raw
+          Write-Host "`n📋 Detailed Analysis:" -ForegroundColor Yellow
+          Write-Host $analysisContent -ForegroundColor Gray
+        }
+        
+    - name: Comment on PR with results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          let body = '## 🤖 Smart Documentation Sync Results\n\n';
+          
+          // Add job status table
+          body += '| Job | Status |\n';
+          body += '|-----|--------|\n';
+          body += `| Content Analysis | ${{ needs.content-analysis.result == 'success' ? '✅' : needs.content-analysis.result == 'skipped' ? '⏭️' : '❌' }} ${{ needs.content-analysis.result }} |\n`;
+          body += `| Review Flagging | ${{ needs.flag-review.result == 'success' ? '✅' : needs.flag-review.result == 'skipped' ? '⏭️' : '❌' }} ${{ needs.flag-review.result }} |\n`;
+          body += `| Auto Generation | ${{ needs.auto-generate.result == 'success' ? '✅' : needs.auto-generate.result == 'skipped' ? '⏭️' : '❌' }} ${{ needs.auto-generate.result }} |\n`;
+          
+          // Add analysis summary if available
+          if (fs.existsSync('./analysis-summary.md')) {
+            const analysisContent = fs.readFileSync('./analysis-summary.md', 'utf8');
+            body += '\n' + analysisContent;
+          }
+          
+          body += `\n[View full workflow run](${context.payload.repository.html_url}/actions/runs/${context.runId})`;
+          
+          // Find existing comment and update or create new one
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number
+          });
+          
+          const botComment = comments.find(comment => 
+            comment.user.type === 'Bot' && 
+            comment.body.includes('🤖 Smart Documentation Sync Results')
+          );
+          
+          if (botComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+          }
