@@ -1,6 +1,11 @@
 name: Release
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'VERSION'
   workflow_dispatch:
     inputs:
       version:
@@ -31,6 +36,21 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         
+    - name: Get Version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "VERSION=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          echo "DESCRIPTION=${{ inputs.description }}" >> $GITHUB_OUTPUT
+        else
+          # Auto-triggered by VERSION file change
+          VERSION=$(cat VERSION)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          # Extract description from last commit
+          DESCRIPTION=$(git log -1 --pretty=%B | head -n 1)
+          echo "DESCRIPTION=$DESCRIPTION" >> $GITHUB_OUTPUT
+        fi
+        
     - name: Configure Git
       run: |
         git config user.name "GitHub Actions"
@@ -38,21 +58,21 @@ jobs:
         
     - name: Create Release Tag
       run: |
-        git tag -a "v${{ inputs.version }}" -m "${{ inputs.description }}"
-        git push origin "v${{ inputs.version }}"
+        git tag -a "v${{ steps.version.outputs.VERSION }}" -m "${{ steps.version.outputs.DESCRIPTION }}"
+        git push origin "v${{ steps.version.outputs.VERSION }}"
         
     - name: Build Packages
       shell: pwsh
       run: |
-        ./build/Build-Package.ps1 -Version "${{ inputs.version }}"
+        ./build/Build-Package.ps1 -Version "${{ steps.version.outputs.VERSION }}"
         
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: v${{ inputs.version }}
-        name: Release v${{ inputs.version }}
+        tag_name: v${{ steps.version.outputs.VERSION }}
+        name: Release v${{ steps.version.outputs.VERSION }}
         body: |
-          ## ${{ inputs.description }}
+          ## ${{ steps.version.outputs.DESCRIPTION }}
           
           ### Installation
           
