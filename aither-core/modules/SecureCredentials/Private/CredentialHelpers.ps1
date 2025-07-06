@@ -154,10 +154,55 @@ function Retrieve-CredentialSecurely {
 
         $encryptedData = Get-Content -Path $credentialFile -Raw | ConvertFrom-Json
 
-        # Validate integrity if security info is present (simplified for now)
+        # Validate integrity if security info is present
         if ($encryptedData.Metadata.SecurityInfo -and -not $SkipIntegrityCheck) {
             Write-CustomLog -Level 'DEBUG' -Message "Security info present for credential: $CredentialName" -Category "Security"
-            # TODO: Implement more robust integrity checking
+            
+            try {
+                # Verify integrity hash if present
+                if ($encryptedData.Metadata.SecurityInfo.IntegrityHash) {
+                    # Create a copy without the integrity hash for verification
+                    $tempData = $encryptedData | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+                    $tempData.Metadata.SecurityInfo.IntegrityHash = $null
+                    
+                    $dataForVerification = ($tempData | ConvertTo-Json -Depth 10 -Compress)
+                    $hash = [System.Security.Cryptography.SHA256]::Create()
+                    $hashBytes = $hash.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($dataForVerification))
+                    $hash.Dispose()
+                    $calculatedHash = [Convert]::ToBase64String($hashBytes)
+                    
+                    if ($calculatedHash -ne $encryptedData.Metadata.SecurityInfo.IntegrityHash) {
+                        Write-CustomLog -Level 'ERROR' -Message "Integrity check failed for credential: $CredentialName" -Category "Security"
+                        return @{ Success = $false; Error = "Credential integrity verification failed" }
+                    }
+                    
+                    Write-CustomLog -Level 'DEBUG' -Message "Integrity check passed for credential: $CredentialName" -Category "Security"
+                }
+                
+                # Verify machine ID matches current machine (if enforcing machine binding)
+                if ($encryptedData.Metadata.SecurityInfo.MachineId) {
+                    $currentMachineId = (Get-MachineKey | ForEach-Object { $_.ToString('X2') }) -join ''
+                    if ($encryptedData.Metadata.SecurityInfo.MachineId -ne $currentMachineId) {
+                        Write-CustomLog -Level 'WARN' -Message "Credential was created on different machine: $CredentialName" -Category "Security"
+                        # Don't fail here as credentials may be legitimately transferred between machines
+                    }
+                }
+                
+                # Check credential age and warn if very old
+                if ($encryptedData.Metadata.SecurityInfo.CreatedOn) {
+                    $createdDate = $null
+                    if ([DateTime]::TryParse($encryptedData.Metadata.SecurityInfo.CreatedOn, [ref]$createdDate)) {
+                        $age = (Get-Date) - $createdDate
+                        if ($age.Days -gt 365) {
+                            Write-CustomLog -Level 'WARN' -Message "Credential is over 1 year old: $CredentialName (Created: $createdDate)" -Category "Security"
+                        }
+                    }
+                }
+                
+            } catch {
+                Write-CustomLog -Level 'ERROR' -Message "Error during integrity check for credential '$CredentialName': $($_.Exception.Message)" -Category "Security"
+                return @{ Success = $false; Error = "Integrity check error: $($_.Exception.Message)" }
+            }
         }
 
         # Build credential object
