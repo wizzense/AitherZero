@@ -9,13 +9,52 @@ function Show-LicenseManager {
     param()
     
     try {
+        # Ensure LicenseManager module is loaded
+        $licenseManagerLoaded = $false
+        try {
+            if (-not (Get-Command Get-LicenseInfo -ErrorAction SilentlyContinue)) {
+                $projectRoot = Find-ProjectRoot
+                $licenseManagerPath = Join-Path $projectRoot "aither-core" "modules" "LicenseManager"
+                if (Test-Path $licenseManagerPath) {
+                    Import-Module $licenseManagerPath -Force -ErrorAction Stop
+                    Write-Host "LicenseManager module loaded successfully" -ForegroundColor Green
+                    $licenseManagerLoaded = $true
+                } else {
+                    Write-Warning "LicenseManager module not found at: $licenseManagerPath"
+                }
+            } else {
+                $licenseManagerLoaded = $true
+            }
+        } catch {
+            Write-Warning "Failed to load LicenseManager module: $_"
+        }
+        
         $exitManager = $false
         
         while (-not $exitManager) {
             Clear-Host
             
-            # Get current license info
-            $licenseInfo = Get-LicenseInfo
+            # Get current license info with fallback
+            $licenseInfo = $null
+            try {
+                if ($licenseManagerLoaded -and (Get-Command Get-LicenseInfo -ErrorAction SilentlyContinue)) {
+                    $licenseInfo = Get-LicenseInfo -ErrorAction Stop
+                } else {
+                    throw "LicenseManager functions not available"
+                }
+            } catch {
+                Write-Warning "Could not get license info: $_"
+                # Create fallback license info
+                $licenseInfo = [PSCustomObject]@{
+                    Status = 'Unavailable'
+                    Tier = 'free'
+                    TierName = 'Free Tier'
+                    IssuedTo = 'License system unavailable'
+                    ExpiryDate = $null
+                    DaysRemaining = $null
+                    Message = "License system error: $_"
+                }
+            }
             
             Write-Host "┌─ License Manager ───────────────────────────┐" -ForegroundColor Cyan
             Write-Host "│ Current License Status" -ForegroundColor Yellow
@@ -57,21 +96,45 @@ function Show-LicenseManager {
             
             switch ($selection.ToUpper()) {
                 'A' {
-                    Apply-LicenseKeyInteractive
+                    if ($licenseManagerLoaded) {
+                        Apply-LicenseKeyInteractive
+                    } else {
+                        Write-Host "License management functions not available" -ForegroundColor Red
+                        Start-Sleep -Seconds 2
+                    }
                 }
                 'F' {
-                    Apply-LicenseFileInteractive
+                    if ($licenseManagerLoaded) {
+                        Apply-LicenseFileInteractive
+                    } else {
+                        Write-Host "License management functions not available" -ForegroundColor Red
+                        Start-Sleep -Seconds 2
+                    }
                 }
                 'V' {
-                    Show-AvailableFeatures
+                    if ($licenseManagerLoaded) {
+                        Show-AvailableFeatures
+                    } else {
+                        Show-FallbackFeatures
+                    }
                 }
                 'G' {
-                    Generate-TestLicenseInteractive
+                    if ($licenseManagerLoaded) {
+                        Generate-TestLicenseInteractive
+                    } else {
+                        Write-Host "License generation not available - module not loaded" -ForegroundColor Red
+                        Start-Sleep -Seconds 2
+                    }
                 }
                 'C' {
-                    if ($licenseInfo.Tier -ne 'free') {
-                        Clear-License
-                        Start-Sleep -Seconds 2
+                    if ($licenseManagerLoaded -and $licenseInfo.Tier -ne 'free') {
+                        try {
+                            Clear-License
+                            Start-Sleep -Seconds 2
+                        } catch {
+                            Write-Host "Error clearing license: $_" -ForegroundColor Red
+                            Start-Sleep -Seconds 3
+                        }
                     } else {
                         Write-Host "No license to clear" -ForegroundColor Yellow
                         Start-Sleep -Seconds 2
@@ -82,6 +145,12 @@ function Show-LicenseManager {
                 }
                 'B' {
                     $exitManager = $true
+                }
+                default {
+                    if ($selection -ne '') {
+                        Write-Host "Invalid selection. Please choose A, F, V, G, C, U, or B." -ForegroundColor Red
+                        Start-Sleep -Seconds 2
+                    }
                 }
             }
         }
@@ -254,6 +323,44 @@ function Show-UpgradeInformation {
     Write-Host "https://github.com/wizzense/AitherZero" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "Contact: license@aitherzero.com" -ForegroundColor White
+    Write-Host ""
+    Write-Host "Press any key to continue..."
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+}
+
+function Show-FallbackFeatures {
+    <#
+    .SYNOPSIS
+        Shows basic feature information when LicenseManager is not available
+    #>
+    Clear-Host
+    Write-Host "Available Features" -ForegroundColor Cyan
+    Write-Host "==================" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "License Manager module is not available." -ForegroundColor Yellow
+    Write-Host "Showing basic feature information:" -ForegroundColor White
+    Write-Host ""
+    
+    Write-Host "FREE TIER:" -ForegroundColor Cyan
+    Write-Host "  ✓ Core Features (Logging, Testing, Progress Tracking)" -ForegroundColor White
+    Write-Host "  ✓ Development Tools (DevEnvironment, PatchManager, BackupManager)" -ForegroundColor White
+    Write-Host "  ✓ Startup Experience and License Management" -ForegroundColor White
+    Write-Host ""
+    
+    Write-Host "PROFESSIONAL TIER:" -ForegroundColor Cyan
+    Write-Host "  🔒 Infrastructure Automation (OpenTofu, Cloud Integration)" -ForegroundColor DarkGray
+    Write-Host "  🔒 AI Tools Integration" -ForegroundColor DarkGray
+    Write-Host "  🔒 Advanced Orchestration Engine" -ForegroundColor DarkGray
+    Write-Host ""
+    
+    Write-Host "ENTERPRISE TIER:" -ForegroundColor Green
+    Write-Host "  🔒 Security Features (Secure Credentials, Remote Connection)" -ForegroundColor DarkGray
+    Write-Host "  🔒 System Monitoring and REST API Server" -ForegroundColor DarkGray
+    Write-Host "  🔒 Enterprise Lab Management" -ForegroundColor DarkGray
+    Write-Host ""
+    
+    Write-Host "Note: To access full license management features, ensure the" -ForegroundColor Yellow
+    Write-Host "LicenseManager module is properly installed and imported." -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Press any key to continue..."
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")

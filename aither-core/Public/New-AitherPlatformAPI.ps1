@@ -510,7 +510,8 @@ function New-AitherPlatformAPI {
             }
             
             # Add TypeName for better object identification
-            $platform.PSObject.TypeNames.Insert(0, 'AitherZero.PlatformAPI')\n            
+            $platform.PSObject.TypeNames.Insert(0, 'AitherZero.PlatformAPI')
+            
             Write-CustomLog -Message "✅ Platform API gateway created with $($platform.PSObject.Properties.Count) service categories" -Level "SUCCESS"
             
             return $platform

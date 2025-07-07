@@ -20,8 +20,8 @@
         'Invoke-SequentialTestExecution',
         'New-TestReport',
         'Export-VSCodeTestResults',
-        'Publish-TestEvent',
-        'Subscribe-TestEvent',
+        'Submit-TestEvent',
+        'Register-TestEventHandler',
         'Get-TestEvents',
         'Register-TestProvider',
         'Get-RegisteredTestProviders',
@@ -43,7 +43,10 @@
 
     CmdletsToExport = @()
     VariablesToExport = @()
-    AliasesToExport = @()
+    AliasesToExport = @(
+        'Publish-TestEvent',
+        'Subscribe-TestEvent'
+    )
 
     PrivateData = @{
         PSData = @{

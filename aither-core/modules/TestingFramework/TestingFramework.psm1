@@ -272,8 +272,8 @@ function Invoke-UnifiedTestExecution {
                 Export-VSCodeTestResults -Results $results -OutputPath $OutputPath
             }
 
-            # Publish completion event
-            Publish-TestEvent -EventType "TestExecutionCompleted" -Data @{
+            # Submit completion event
+            Submit-TestEvent -EventType "TestExecutionCompleted" -Data @{
                 TestSuite = $TestSuite
                 Results = $results
                 Duration = (Get-Date) - $testPlan.StartTime
@@ -575,11 +575,15 @@ function Invoke-ParallelTestExecution {
             try {
                 $result = Invoke-ModuleTestPhase -ModuleName $testJob.ModuleName -Phase $testJob.Phase -TestPath $testJob.TestPath -Configuration $testJob.Configuration
                 return @{
-                    Success = $true
+                    Success = ($result.TestsFailed -eq 0)
                     Module = $testJob.ModuleName
                     Phase = $testJob.Phase
                     Result = $result
                     Duration = $result.Duration
+                    TestsRun = $result.TestsRun
+                    TestsPassed = $result.TestsPassed
+                    TestsFailed = $result.TestsFailed
+                    Details = $result.Details
                 }
             } catch {
                 return @{
@@ -588,6 +592,10 @@ function Invoke-ParallelTestExecution {
                     Phase = $testJob.Phase
                     Error = $_.Exception.Message
                     Duration = 0
+                    TestsRun = 0
+                    TestsPassed = 0
+                    TestsFailed = 1
+                    Details = @("Error: $($_.Exception.Message)")
                 }
             }
         } -MaxConcurrency $maxJobs
@@ -632,11 +640,15 @@ function Invoke-SequentialTestExecution {
                 $result = Invoke-ModuleTestPhase -ModuleName $module.Name -Phase $phase -TestPath $module.TestPath -Configuration $TestPlan.Configuration
 
                 $allResults += @{
-                    Success = $true
+                    Success = ($result.TestsFailed -eq 0)
                     Module = $module.Name
                     Phase = $phase
                     Result = $result
                     Duration = ((Get-Date) - $startTime).TotalSeconds
+                    TestsRun = $result.TestsRun
+                    TestsPassed = $result.TestsPassed
+                    TestsFailed = $result.TestsFailed
+                    Details = $result.Details
                 }
 
                 Write-TestLog "  ✅ $($module.Name) - $phase completed" -Level "SUCCESS"
@@ -648,6 +660,10 @@ function Invoke-SequentialTestExecution {
                     Phase = $phase
                     Error = $_.Exception.Message
                     Duration = ((Get-Date) - $startTime).TotalSeconds
+                    TestsRun = 0
+                    TestsPassed = 0
+                    TestsFailed = 1
+                    Details = @("Error: $($_.Exception.Message)")
                 }
 
                 Write-TestLog "  ❌ $($module.Name) - $phase failed: $($_.Exception.Message)" -Level "ERROR"
@@ -776,14 +792,14 @@ function Invoke-UnitTests {
     }
     
     if (-not $actualTestPath) {
-        # If no tests exist, perform basic module validation instead
+        # If no tests exist, report as skipped
         return @{
             ModuleName = $ModuleName
             Phase = "Unit"
-            TestsRun = 1
-            TestsPassed = 1
+            TestsRun = 0
+            TestsPassed = 0
             TestsFailed = 0
-            Details = @("No unit tests found - performed basic module validation")
+            Details = @("No unit tests found - skipped")
         }
     }
 
@@ -820,13 +836,39 @@ function Invoke-UnitTests {
 
         $pesterResult = Invoke-Pester -Configuration $pesterConfig
 
+        # Handle both Pester 4.x and 5.x result formats
+        $totalCount = 0
+        $passedCount = 0
+        $failedCount = 0
+        
+        if ($pesterResult) {
+            # Pester 5.x format
+            if ($null -ne $pesterResult.Tests) {
+                $totalCount = $pesterResult.Tests.Count
+                $passedCount = ($pesterResult.Tests | Where-Object { $_.Result -eq 'Passed' }).Count
+                $failedCount = ($pesterResult.Tests | Where-Object { $_.Result -eq 'Failed' }).Count
+            }
+            # Pester 4.x format fallback
+            elseif ($null -ne $pesterResult.TotalCount) {
+                $totalCount = $pesterResult.TotalCount
+                $passedCount = $pesterResult.PassedCount
+                $failedCount = $pesterResult.FailedCount
+            }
+            # Additional Pester 5.x properties check
+            elseif ($null -ne $pesterResult.Passed -or $null -ne $pesterResult.Failed) {
+                $passedCount = if ($pesterResult.Passed) { $pesterResult.Passed.Count } else { 0 }
+                $failedCount = if ($pesterResult.Failed) { $pesterResult.Failed.Count } else { 0 }
+                $totalCount = $passedCount + $failedCount
+            }
+        }
+        
         return @{
             ModuleName = $ModuleName
             Phase = "Unit"
-            TestsRun = if ($pesterResult.TotalCount) { $pesterResult.TotalCount } else { 0 }
-            TestsPassed = if ($pesterResult.PassedCount) { $pesterResult.PassedCount } else { 0 }
-            TestsFailed = if ($pesterResult.FailedCount) { $pesterResult.FailedCount } else { 0 }
-            Details = @("Pester tests executed from: $actualTestPath")
+            TestsRun = $totalCount
+            TestsPassed = $passedCount
+            TestsFailed = $failedCount
+            Details = @("Pester tests executed from: $actualTestPath", "Pester version: $(if ($pesterResult.PSVersion) { $pesterResult.PSVersion } else { 'Unknown' })")
         }
 
     } catch {
@@ -1253,7 +1295,7 @@ function Export-VSCodeTestResults {
 # EVENT SYSTEM FOR MODULE COMMUNICATION
 # ============================================================================
 
-function Publish-TestEvent {
+function Submit-TestEvent {
     <#
     .SYNOPSIS
         Publishes test events for module communication
@@ -1279,10 +1321,10 @@ function Publish-TestEvent {
     }
     $script:TestEvents[$EventType] += $event
 
-    Write-TestLog "📡 Published event: $EventType" -Level "INFO"
+    Write-TestLog "📡 Submitted event: $EventType" -Level "INFO"
 }
 
-function Subscribe-TestEvent {
+function Register-TestEventHandler {
     <#
     .SYNOPSIS
         Subscribes to test events (placeholder for future event-driven architecture)
@@ -2191,6 +2233,10 @@ function Start-TestSuite {
 # MODULE EXPORTS
 # ============================================================================
 
+# Create backward compatibility aliases
+New-Alias -Name 'Publish-TestEvent' -Value 'Submit-TestEvent' -Force
+New-Alias -Name 'Subscribe-TestEvent' -Value 'Register-TestEventHandler' -Force
+
 # Export main functions
 Export-ModuleMember -Function @(
     'Invoke-UnifiedTestExecution',
@@ -2201,8 +2247,8 @@ Export-ModuleMember -Function @(
     'Invoke-SequentialTestExecution',
     'New-TestReport',
     'Export-VSCodeTestResults',
-    'Publish-TestEvent',
-    'Subscribe-TestEvent',
+    'Submit-TestEvent',
+    'Register-TestEventHandler',
     'Get-TestEvents',
     'Register-TestProvider',
     'Get-RegisteredTestProviders',
@@ -2220,4 +2266,7 @@ Export-ModuleMember -Function @(
     'Invoke-BulletproofTest',
     'Start-TestSuite',
     'Write-TestLog'
+) -Alias @(
+    'Publish-TestEvent',
+    'Subscribe-TestEvent'
 )

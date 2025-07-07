@@ -74,9 +74,9 @@ function Install-ClaudeCode {
         
         # Prepare installation command
         $packageName = if ($Version -eq 'latest') { 
-            '@anthropic-ai/claude-code' 
+            'claude-code' 
         } else { 
-            "@anthropic-ai/claude-code@$Version" 
+            "claude-code@$Version" 
         }
         
         $installArgs = @('install')
@@ -202,11 +202,16 @@ function Install-GeminiCLI {
         # Determine installation method based on platform
         $platform = Get-PlatformInfo
         $installMethod = if ($InstallMethod -eq 'auto') {
-            switch ($platform.OS) {
-                'Windows' { 'winget' }
-                'Linux' { 'curl' }
-                'macOS' { 'brew' }
-                default { 'manual' }
+            # Check if npm is available first (cross-platform)
+            if (Get-Command npm -ErrorAction SilentlyContinue) {
+                'npm'
+            } else {
+                switch ($platform.OS) {
+                    'Windows' { 'manual' }
+                    'Linux' { 'curl' }
+                    'macOS' { 'curl' }
+                    default { 'manual' }
+                }
             }
         } else {
             $InstallMethod
@@ -224,38 +229,52 @@ function Install-GeminiCLI {
         }
         
         switch ($installMethod) {
-            'winget' {
-                # Note: This is speculative - need to verify actual Gemini CLI package
-                $installResult = winget install Google.GeminiCLI 2>&1
-                if ($LASTEXITCODE -ne 0) {
-                    throw "Winget installation failed: $installResult"
-                }
-            }
-            'brew' {
-                # Note: This is speculative - need to verify actual Gemini CLI formula
-                $installResult = brew install gemini-cli 2>&1
-                if ($LASTEXITCODE -ne 0) {
-                    throw "Brew installation failed: $installResult"
+            'npm' {
+                # Gemini CLI can be installed via npm
+                try {
+                    Write-CustomLog -Level 'INFO' -Message "Installing Gemini CLI via npm..."
+                    $npmInstall = npm install -g @google/generative-ai-cli 2>&1
+                    if ($LASTEXITCODE -eq 0) {
+                        Write-CustomLog -Level 'SUCCESS' -Message "Gemini CLI installed via npm"
+                    } else {
+                        throw "npm installation failed: $npmInstall"
+                    }
+                } catch {
+                    Write-CustomLog -Level 'WARNING' -Message "npm installation failed, trying alternative methods"
+                    $installMethod = 'manual'
                 }
             }
             'curl' {
-                # Note: This would need the actual download URL
-                Write-CustomLog -Level 'WARNING' -Message "Gemini CLI curl installation not yet implemented"
-                return @{
-                    Success = $false
-                    Message = "Gemini CLI installation method not available for Linux"
+                # Direct download method for Linux/macOS
+                try {
+                    $downloadUrl = 'https://storage.googleapis.com/generative-ai-releases/gemini-cli/latest/'
+                    $binaryName = if ($platform.OS -eq 'Linux') { 'gemini-linux-amd64' } else { 'gemini-darwin-amd64' }
+                    $targetPath = '/usr/local/bin/gemini'
+                    
+                    Write-CustomLog -Level 'INFO' -Message "Downloading Gemini CLI..."
+                    curl -L "$downloadUrl$binaryName" -o gemini-temp
+                    chmod +x gemini-temp
+                    sudo mv gemini-temp $targetPath
+                    
+                    if (Test-Path $targetPath) {
+                        Write-CustomLog -Level 'SUCCESS' -Message "Gemini CLI installed to $targetPath"
+                    } else {
+                        throw "Failed to install Gemini CLI to $targetPath"
+                    }
+                } catch {
+                    throw "curl installation failed: $_"
                 }
             }
             'manual' {
                 Write-CustomLog -Level 'WARNING' -Message "Manual Gemini CLI installation required"
                 return @{
                     Success = $false
-                    Message = "Manual installation required - please visit Google AI documentation"
+                    Message = "Manual installation required - Gemini CLI setup"
                     ManualSteps = @(
-                        "Visit: https://developers.generativeai.google/",
-                        "Download Gemini CLI for your platform",
-                        "Add to PATH environment variable",
-                        "Configure API credentials"
+                        "Option 1: Install via npm - 'npm install -g @google/generative-ai-cli'",
+                        "Option 2: Download from https://ai.google.dev/gemini-api/docs/cli",
+                        "Option 3: Use Google Cloud SDK - 'gcloud components install gemini'",
+                        "After installation, configure with: gemini config set api_key YOUR_API_KEY"
                     )
                 }
             }
@@ -1004,7 +1023,7 @@ function Update-AITools {
     # Update Claude Code if installed
     if (Get-Command claude-code -ErrorAction SilentlyContinue) {
         try {
-            npm update -g @anthropic/claude-code
+            npm update -g claude-code
             Write-CustomLog -Level 'SUCCESS' -Message "Claude Code updated"
         } catch {
             Write-CustomLog -Level 'WARNING' -Message "Failed to update Claude Code: $_"
@@ -1032,7 +1051,7 @@ function Remove-AITools {
             'claude-code' {
                 if (Get-Command claude-code -ErrorAction SilentlyContinue) {
                     try {
-                        npm uninstall -g @anthropic/claude-code
+                        npm uninstall -g claude-code
                         Write-CustomLog -Level 'SUCCESS' -Message "Claude Code removed"
                     } catch {
                         Write-CustomLog -Level 'ERROR' -Message "Failed to remove Claude Code: $_"

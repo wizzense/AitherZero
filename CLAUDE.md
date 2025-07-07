@@ -36,6 +36,31 @@ AitherZero is a **standalone PowerShell automation framework** for OpenTofu/Terr
 ./Start-AitherZero.ps1 -WhatIf
 ```
 
+### Developer Setup - ONE COMMAND! 🚀
+
+```powershell
+# Unified developer setup (recommended)
+./Start-DeveloperSetup.ps1
+
+# Quick setup (minimal, fast)
+./Start-DeveloperSetup.ps1 -Profile Quick
+
+# Full setup (all tools and features)
+./Start-DeveloperSetup.ps1 -Profile Full
+
+# Custom setup options
+./Start-DeveloperSetup.ps1 -SkipAITools -SkipGitHooks
+```
+
+**What the developer setup includes:**
+- ✅ Prerequisites validation (PowerShell 7, Git, etc.)
+- ✅ Core development environment configuration
+- ✅ VS Code settings and extensions
+- ✅ Git pre-commit hooks
+- ✅ AI development tools (Claude Code, Gemini CLI)
+- ✅ PatchManager aliases and shortcuts
+- ✅ Module path configuration
+
 ### Testing Commands - SIMPLE & FAST! 🚀
 
 ```powershell
@@ -79,58 +104,50 @@ pwsh -NoProfile -File "./script.ps1"
 **DO NOT FORGET THIS PATH. EVER.**
 
 
-### Release Management - SUPER SIMPLE! 🚀
+### Release Management - ULTRA SIMPLE! 🚀
 
 ```powershell
-# ONE COMMAND - THAT'S IT!
-./release.ps1
+# Create a release with explicit version:
+./release.ps1 -Version 1.2.3 -Message "Bug fixes"
 
-# Want a minor or major release? Just add the type:
-./release.ps1 -Type minor -Description "New features"
-./release.ps1 -Type major -Description "Breaking changes"
+# Or auto-increment version:
+./release.ps1 -Type patch -Message "Bug fixes"
+./release.ps1 -Type minor -Message "New features"
+./release.ps1 -Type major -Message "Breaking changes"
 
-# That's literally it. No BS, no complexity.
+# Preview mode:
+./release.ps1 -Version 1.2.3 -Message "Test release" -DryRun
 ```
 
-**What happens automatically:**
-1. Creates a PR with version bump
-2. You merge the PR
-3. Tag is created automatically
-4. **NEW: GitHub Actions automatically builds artifacts for all platforms**
-5. **NEW: Release is created with downloadable packages**
+**What happens (simplified):**
+1. Updates VERSION file
+2. Commits the change
+3. Creates and pushes tag
+4. GitHub Actions automatically builds and publishes release
 
-**Build Artifacts Created:**
-- `AitherZero-vX.X.X-windows.zip` - Windows package
-- `AitherZero-vX.X.X-linux.tar.gz` - Linux package
-- `AitherZero-vX.X.X-macos.tar.gz` - macOS package
+**That's it! No PR workflow, no complexity.**
 
-**Alternative methods:**
-```powershell
-# Use GitHub UI (Actions → Release → Run workflow)
-# Or use PatchManager directly:
-Import-Module ./aither-core/modules/PatchManager -Force
-Invoke-ReleaseWorkflow -ReleaseType "patch" -Description "Bug fixes"
-
-# Test build locally:
-./build/Build-Package.ps1 -Platform all
-```
-
-### Build Commands - NO MORE PROFILES! 🎯
+### Build Commands - TRUE SIMPLICITY! 🎯
 
 ```powershell
-# Build packages for all platforms
+# Build all platforms (default):
 ./build/Build-Package.ps1
 
-# Build for specific platform
+# Build specific platform:
 ./build/Build-Package.ps1 -Platform windows
 ./build/Build-Package.ps1 -Platform linux
 ./build/Build-Package.ps1 -Platform macos
 
-# Build with specific version
+# Build with specific version:
 ./build/Build-Package.ps1 -Version "1.2.3"
 ```
 
-No more profile complexity. One package per platform. Simple.
+**Output:**
+- `AitherZero-v{version}-windows.zip` - Windows package
+- `AitherZero-v{version}-linux.tar.gz` - Linux package  
+- `AitherZero-v{version}-macos.tar.gz` - macOS package
+
+No profiles. One package per platform. Dead simple.
 ### GitHub Actions Workflows - DEAD SIMPLE! 💯
 
 The project now has only 2 workflows:

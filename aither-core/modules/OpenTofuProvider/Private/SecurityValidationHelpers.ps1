@@ -349,9 +349,9 @@ function Test-SensitiveDataInConfig {
         
         $content = Get-Content $Path -Raw
         $sensitivePatterns = @(
-            '(?i)(password|pwd|secret|token|key)\s*=\s*["\']?[^"\'\s]{6,}',
-            '(?i)api[_-]?key\s*[=:]\s*["\']?[a-zA-Z0-9]{20,}',
-            '(?i)(access[_-]?key|secret[_-]?key)\s*[=:]\s*["\']?[A-Z0-9]{20,}',
+            '(?i)(password|pwd|secret|token|key)\s*=\s*["'']?[^"''\s]{6,}',
+            '(?i)api[_-]?key\s*[=:]\s*["'']?[a-zA-Z0-9]{20,}',
+            '(?i)(access[_-]?key|secret[_-]?key)\s*[=:]\s*["'']?[A-Z0-9]{20,}',
             'BEGIN\s+(RSA\s+)?PRIVATE\s+KEY',
             '(?i)-----BEGIN\s+CERTIFICATE-----'
         )
@@ -394,7 +394,7 @@ function Test-ProviderVersionPinning {
                 $issues += 'No required_providers block found'
             } else {
                 # Check for version constraints
-                if ($content -match 'version\s*=\s*["\']?\>\=?\s*[\d\.]+') {
+                if ($content -match 'version\s*=\s*["'']?>=?\s*[\d\.]+') {
                     # Good - has version constraints
                 } else {
                     $issues += 'Provider versions should be constrained'
@@ -403,7 +403,7 @@ function Test-ProviderVersionPinning {
         }
         
         # Check for latest versions (potentially risky)
-        if ($content -match 'version\s*=\s*["\']?latest["\']?') {
+        if ($content -match 'version\s*=\s*["'']?latest["'']?') {
             $issues += 'Using "latest" version is not recommended for production'
         }
         
@@ -496,7 +496,7 @@ function Test-BackendSecurity {
         $issues = @()
         
         # Check for backend configuration
-        if ($content -match 'backend\s*["\']?(\w+)["\']?\s*{') {
+        if ($content -match 'backend\s*["'']?(\w+)["'']?\s*{') {
             $backendType = $matches[1]
             
             switch ($backendType) {

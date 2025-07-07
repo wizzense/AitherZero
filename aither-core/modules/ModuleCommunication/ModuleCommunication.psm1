@@ -59,10 +59,12 @@ foreach ($import in @($Private + $Public)) {
 Initialize-MessageProcessor
 
 # Create backward compatibility aliases
-New-Alias -Name 'Publish-ModuleMessage' -Value 'Send-ModuleMessage' -Force
+New-Alias -Name 'Send-ModuleMessage' -Value 'Submit-ModuleMessage' -Force
+New-Alias -Name 'Send-ModuleEvent' -Value 'Submit-ModuleEvent' -Force
+New-Alias -Name 'Publish-ModuleMessage' -Value 'Submit-ModuleMessage' -Force
 New-Alias -Name 'Subscribe-ModuleMessage' -Value 'Register-ModuleMessageHandler' -Force
-New-Alias -Name 'Publish-ModuleEvent' -Value 'Send-ModuleEvent' -Force  
+New-Alias -Name 'Publish-ModuleEvent' -Value 'Submit-ModuleEvent' -Force  
 New-Alias -Name 'Subscribe-ModuleEvent' -Value 'Register-ModuleEventHandler' -Force
 
 # Export public functions and aliases
-Export-ModuleMember -Function $Public.BaseName -Alias 'Publish-ModuleMessage', 'Subscribe-ModuleMessage', 'Publish-ModuleEvent', 'Subscribe-ModuleEvent'
+Export-ModuleMember -Function $Public.BaseName -Alias 'Send-ModuleMessage', 'Send-ModuleEvent', 'Publish-ModuleMessage', 'Subscribe-ModuleMessage', 'Publish-ModuleEvent', 'Subscribe-ModuleEvent'

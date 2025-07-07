@@ -1,147 +1,165 @@
-# Core Application Module (CoreApp)
+# AitherZero Core Orchestration System
 
 ## Overview
 
-**CoreApp is now the parent orchestration module** for the entire Aitherium Infrastructure Automation ecosystem. It provides unified management and coordination of all other modules while maintaining backward compatibility with existing functionality.
+**AitherZero Core** has been completely redesigned with a **consolidated module architecture** that provides enterprise-grade orchestration, unified management, and seamless coordination of all infrastructure automation components.
 
-### Architecture Changes
+### Consolidated Architecture (v2.0)
 
-- **Parent Module**: CoreApp now orchestrates all other modules
-- **Unified Interface**: Single point of entry for all lab automation functions
-- **Dynamic Module Loading**: Intelligent discovery and loading of available modules
-- **Dependency Management**: Handles module dependencies and initialization order
-- **Backward Compatibility**: All existing functions continue to work as before
+- **Consolidated Module System**: Unified loading and management of 25+ specialized modules
+- **Intelligent Dependency Resolution**: Automatic module dependency detection and loading order
+- **Backward Compatibility Layer**: 100% compatibility with existing scripts and functions
+- **Unified Status Reporting**: Real-time module health monitoring and statistics
+- **Graceful Degradation**: Core functionality continues even if optional modules fail
+- **Enhanced Error Recovery**: Comprehensive error handling with detailed troubleshooting guidance
 
-## New Orchestration Functions
+## Consolidated Module System Functions
 
-### `Initialize-CoreApplication`
-Complete ecosystem initialization with environment setup and module loading.
+### `Get-ConsolidatedModuleStatus`
+Real-time status of all modules in the consolidated architecture.
 ```powershell
-# Initialize with required modules only
-Initialize-CoreApplication -RequiredOnly
+# Get overview of all modules
+Get-ConsolidatedModuleStatus | Format-Table Name, Loaded, Version, Category, Required
 
-# Initialize with all available modules
-Initialize-CoreApplication -Force
+# Get detailed information for a specific module
+Get-ConsolidatedModuleStatus -ModuleName "PatchManager" -Detailed
+
+# Get detailed information for all modules
+Get-ConsolidatedModuleStatus -Detailed
 ```
 
-### `Import-CoreModules`
-Dynamic module discovery and import with dependency resolution.
+### `Show-ModuleLoadingSummary`
+Visual summary of module loading statistics and health.
 ```powershell
-# Import only required modules (Logging, LabRunner)
-Import-CoreModules -RequiredOnly
-
-# Import all available modules
-Import-CoreModules -Force
+# Display comprehensive loading summary
+Show-ModuleLoadingSummary
 ```
 
-### `Get-CoreModuleStatus`
-Comprehensive status of all modules in the ecosystem.
+### Backward Compatibility Functions
+Legacy function mappings that redirect to new consolidated functions:
 ```powershell
-Get-CoreModuleStatus | Format-Table Name, Required, Available, Loaded
+# These legacy functions automatically redirect to new implementations
+Start-CoreApplication           # → Start-LabRunner
+Initialize-CoreApplication      # → Initialize-LabRunner
+Get-CoreApplicationStatus       # → Get-LabRunnerStatus
+Start-InfrastructureDeployment  # → Start-OpenTofuDeployment
+Start-CredentialManagement      # → Start-SecureCredentials
 ```
 
-### `Invoke-UnifiedMaintenance`
-Orchestrated maintenance across all modules.
-```powershell
-# Quick maintenance
-Invoke-UnifiedMaintenance -Mode Quick
+## Consolidated Module Ecosystem
 
-# Full maintenance with auto-fixes
-Invoke-UnifiedMaintenance -Mode Full -AutoFix
-```
+### Core Infrastructure Modules (Required)
+- **Logging**: Centralized logging system with multiple targets
+- **LicenseManager**: Feature licensing and access control
+- **ConfigurationCore**: Unified configuration management
+- **ModuleCommunication**: Inter-module messaging bus
 
-### `Start-DevEnvironmentSetup`
-Complete development environment setup through orchestration.
-```powershell
-Start-DevEnvironmentSetup -Force
-```
-
-## Module Ecosystem
-
-### Required Modules
-- **Logging**: Centralized logging system ✓
-- **LabRunner**: Lab automation and script execution ✓
-
-### Optional Modules
-- **SecureCredentials**: Enterprise-grade credential management ✓
-- **RemoteConnection**: Multi-protocol remote connection management ✓
-- **DevEnvironment**: Development environment management ✓
-- **PatchManager**: Git-controlled patch management ⚠
-- **BackupManager**: Backup and maintenance operations ✓
-- **ParallelExecution**: Parallel task execution ✓
-- **ScriptManager**: Script management and templates ✓
-- **TestingFramework**: Unified testing framework ✓
-- **UnifiedMaintenance**: Unified maintenance operations ⚠
-
-*Note: ⚠ indicates modules with current issues that are being addressed*
+### Consolidated Feature Modules (25+ Modules)
+- **LabRunner**: Lab automation and orchestration
+- **PatchManager**: Git workflow automation with PR/issue creation
+- **BackupManager**: Backup and recovery operations
+- **DevEnvironment**: Development environment setup and management
+- **OpenTofuProvider**: Infrastructure as code deployment
+- **SecureCredentials**: Enterprise credential management
+- **RemoteConnection**: Multi-protocol remote connections
+- **SystemMonitoring**: System performance monitoring
+- **ParallelExecution**: Parallel task execution with runspaces
+- **ISOManager**: ISO download and management
+- **ISOCustomizer**: ISO customization and templates
+- **TestingFramework**: Unified testing with Pester integration
+- **SetupWizard**: First-time setup with installation profiles
+- **StartupExperience**: Enhanced startup UI and experience
+- **ConfigurationCarousel**: Multi-environment configuration switching
+- **ConfigurationRepository**: Git-based configuration management
+- **OrchestrationEngine**: Advanced workflow and playbook execution
+- **ProgressTracking**: Visual progress feedback for operations
+- **AIToolsIntegration**: AI development tools (Claude Code, Gemini, etc.)
+- **RestAPIServer**: REST API endpoints and webhooks
+- **RepoSync**: Repository synchronization
+- **ScriptManager**: Script repository and template management
+- **SecurityAutomation**: Security hardening and compliance
+- **UnifiedMaintenance**: System maintenance operations
+- **PSScriptAnalyzerIntegration**: PowerShell analysis and quality
 
 ## Usage
 
+### Quick Start with Consolidated Architecture
 ```powershell
-# Import the module
-Import-Module "$env:PWSH_MODULES_PATH/../core_app/" -Force
+# Run AitherZero with consolidated module loading
+./Start-AitherZero.ps1
 
-# Run the core application
-Invoke-CoreApplication -ConfigPath "$env:PROJECT_ROOT/pwsh/core_app/default-config.json"
+# Run with detailed module loading information
+./Start-AitherZero.ps1 -Verbosity detailed
 
-# Or use individual scripts
-& "$env:PROJECT_ROOT/pwsh/core_app/scripts/0008_Install-OpenTofu.ps1"
+# Run specific modules
+./Start-AitherZero.ps1 -Scripts "PatchManager,BackupManager"
+
+# First-time setup with consolidated architecture
+./Start-AitherZero.ps1 -Setup -InstallationProfile developer
 ```
 
-## Usage Examples
-
-### Basic Usage (Backward Compatible)
+### Module Status and Management
 ```powershell
-# Traditional usage - still works exactly as before
-Import-Module CoreApp
-Invoke-CoreApplication -ConfigPath ./default-config.json
+# Check consolidated module status
+Get-ConsolidatedModuleStatus | Format-Table
+
+# Get detailed module information
+Get-ConsolidatedModuleStatus -Detailed | Out-GridView
+
+# Show loading summary
+Show-ModuleLoadingSummary
+
+# Check specific module
+Get-ConsolidatedModuleStatus -ModuleName "PatchManager" -Detailed
 ```
 
-### New Orchestrated Usage
+### Backward Compatible Usage
 ```powershell
-# Modern orchestrated approach
-Import-Module CoreApp
+# All existing scripts continue to work exactly as before
+./Start-AitherZero.ps1 -Auto
+./Start-AitherZero.ps1 -WhatIf
 
-# Initialize the complete ecosystem
-Initialize-CoreApplication
-
-# Check what's available
-Get-CoreModuleStatus
-
-# Run unified maintenance
-Invoke-UnifiedMaintenance -Mode Full -AutoFix
-
-# Setup development environment
-Start-DevEnvironmentSetup
+# Legacy function calls are automatically redirected
+Start-CoreApplication -ConfigPath ./configs/default-config.json
 ```
 
-### Advanced Module Management
+### Advanced Consolidated Features
 ```powershell
-# Load only essential modules for performance
-Import-CoreModules -RequiredOnly
+# Import specific consolidated modules manually
+Import-Module "./aither-core/modules/PatchManager" -Force
+Import-Module "./aither-core/modules/OrchestrationEngine" -Force
 
-# Force reload all modules
-Import-CoreModules -Force
+# Use new unified functions
+New-Patch -Description "Update documentation" -Changes {
+    # Your changes here
+}
 
-# Check loaded modules
-Get-CoreModuleStatus | Where-Object { $_.Loaded }
+# Access consolidated module capabilities
+Invoke-PlaybookWorkflow -PlaybookName "deployment-workflow"
+Start-SystemMonitoring -EnableReporting
 ```
 
 ## Migration Guide
 
-### For Existing Users
-No changes required! All existing code continues to work:
-- `Invoke-CoreApplication` - ✓ Works as before
-- `Start-LabRunner` - ✓ Works as before
-- `Get-CoreConfiguration` - ✓ Works as before
-- `Test-CoreApplicationHealth` - ✓ Works as before
+### For Existing Users (100% Backward Compatibility)
+**Zero changes required!** All existing code continues to work exactly as before:
+- All existing scripts and functions work unchanged
+- Entry points remain the same: `./Start-AitherZero.ps1`
+- All parameters and options preserved
+- Legacy function calls automatically redirected to new implementations
 
-### For New Development
-Use the new orchestration functions for enhanced capabilities:
-1. Start with `Initialize-CoreApplication`
-2. Use `Get-CoreModuleStatus` to check availability
-3. Leverage `Invoke-UnifiedMaintenance` for maintenance
-4. Use `Start-DevEnvironmentSetup` for environment setup
+### For New Development (Recommended)
+Leverage the new consolidated architecture for enhanced capabilities:
+1. Use `Get-ConsolidatedModuleStatus` to check module availability
+2. Use `Show-ModuleLoadingSummary` for comprehensive health checks
+3. Access 25+ consolidated modules for advanced features
+4. Utilize new unified error handling and recovery mechanisms
+
+### Migration Benefits
+- **Enhanced Performance**: Optimized module loading with dependency resolution
+- **Better Diagnostics**: Comprehensive module status tracking and reporting
+- **Graceful Degradation**: Core functionality continues if optional modules fail
+- **Unified Experience**: Consistent interface across all 25+ modules
 
 ## Environment Variables
 
@@ -189,32 +207,40 @@ All original scripts remain available in the `scripts/` directory:
 
 The `default-config.json` provides standard settings that can be customized for different environments. Configuration is now enhanced with module-specific sections.
 
-## Architecture Benefits
+## Consolidated Architecture Benefits
 
-### Before (Individual Modules)
+### Before (Individual Module Management)
 ```
-User → LabRunner → Individual Scripts
-User → PatchManager → Git Operations
-User → BackupManager → Cleanup Tasks
-```
-
-### After (CoreApp Orchestration)
-```
-User → CoreApp → {All Modules} → Coordinated Operations
+User → Manual Module Import → Individual Modules → Separate Operations
+- Manual dependency resolution
+- Individual error handling
+- Separate configuration per module
+- No unified status reporting
 ```
 
-### Advantages
-- **Single Point of Entry**: One module to import and manage everything
-- **Intelligent Loading**: Only loads what's needed when it's needed
-- **Unified Configuration**: Shared configuration across all modules
-- **Better Error Handling**: Centralized error management and recovery
-- **Enhanced Logging**: Coordinated logging across all components
-- **Simplified Maintenance**: One interface for all maintenance operations
+### After (Consolidated Architecture)
+```
+User → AitherZero Core → Consolidated Module System → Coordinated Operations
+- Automatic dependency resolution
+- Unified error handling and recovery
+- Centralized configuration management  
+- Real-time module status tracking
+```
+
+### Architectural Advantages
+- **Intelligent Module Loading**: Automatic dependency resolution and loading order
+- **Unified Status Reporting**: Real-time health monitoring across all 25+ modules
+- **Graceful Degradation**: Core functionality continues even if optional modules fail
+- **Enhanced Error Recovery**: Comprehensive error handling with detailed troubleshooting
+- **Backward Compatibility**: 100% compatibility with existing scripts and workflows
+- **Centralized Configuration**: Shared configuration management across all modules
+- **Performance Optimization**: Optimized loading strategies and resource management
 
 ## Version History
 
-- **1.0.0**: Original CoreApp implementation
-- **2.0.0**: **NEW** - Parent orchestration module with dynamic module management
+- **1.0.0**: Original individual module system
+- **2.0.0**: **NEW** - Consolidated module architecture with intelligent orchestration
+- **2.1.0**: Enhanced backward compatibility and unified status reporting
 
 ## Related
 

@@ -82,10 +82,7 @@ foreach ($function in $privateFunctions) {
     }
 }
 
-# Export public functions
-Export-ModuleMember -Function $publicFunctions.BaseName
-
-# Try to import LicenseManager module if available
+# Try to import LicenseManager module if available BEFORE exporting functions
 try {
     $licenseManagerPath = Join-Path (Split-Path $moduleRoot -Parent) "LicenseManager"
     if (Test-Path $licenseManagerPath) {
@@ -97,9 +94,7 @@ try {
 }
 
 # Provide fallback Test-FeatureAccess function if LicenseManager is not loaded
-# Force creation of fallback function if LicenseManager isn't properly loaded
-if (-not (Get-Command Test-FeatureAccess -ErrorAction SilentlyContinue) -or 
-    (Get-Command Test-FeatureAccess -ErrorAction SilentlyContinue).Source -eq '') {
+if (-not (Get-Command Test-FeatureAccess -ErrorAction SilentlyContinue)) {
     function Test-FeatureAccess {
         <#
         .SYNOPSIS
@@ -108,9 +103,9 @@ if (-not (Get-Command Test-FeatureAccess -ErrorAction SilentlyContinue) -or
             Always returns true to allow all features when license management is not loaded
         #>
         param(
-            [string]$Feature,
-            [string]$Module,
-            [string]$CurrentTier
+            [string]$FeatureName,
+            [string]$ModuleName,
+            [switch]$ThrowOnDenied
         )
         
         # Without license management, all features are accessible
@@ -119,6 +114,12 @@ if (-not (Get-Command Test-FeatureAccess -ErrorAction SilentlyContinue) -or
     
     Write-Verbose "Using fallback Test-FeatureAccess function"
 }
+
+# Export public functions (commenting out to avoid interference with imported functions)
+# The module manifest (.psd1) will handle function exports instead
+# if ($publicFunctions.Count -gt 0) {
+#     Export-ModuleMember -Function $publicFunctions.BaseName
+# }
 
 # Module initialization
 Write-Verbose "StartupExperience module loaded from $moduleRoot"

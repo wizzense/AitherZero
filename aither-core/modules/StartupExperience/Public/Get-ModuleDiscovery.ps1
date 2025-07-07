@@ -45,7 +45,15 @@ function Get-ModuleDiscovery {
                 Write-Verbose "Using cached module discovery results"
                 # Apply tier filtering to cached results
                 return $cacheResult | Where-Object { 
-                    $_.IsLocked = -not (Test-FeatureAccess -Module $_.Name -CurrentTier $Tier)
+                    try {
+                        if (Get-Command Test-FeatureAccess -ErrorAction SilentlyContinue) {
+                            $_.IsLocked = -not (Test-FeatureAccess -ModuleName $_.Name)
+                        } else {
+                            $_.IsLocked = $false  # Default to not locked if function unavailable
+                        }
+                    } catch {
+                        $_.IsLocked = $false  # Default to not locked on error
+                    }
                     $true
                 }
             }
@@ -74,7 +82,15 @@ function Get-ModuleDiscovery {
                     $category = Get-ModuleCategory -ModuleName $moduleName -FeatureRegistry $featureRegistry
                     
                     # Check if module is accessible with current tier
-                    $isAccessible = Test-FeatureAccess -Module $moduleName -CurrentTier $Tier
+                    $isAccessible = try {
+                        if (Get-Command Test-FeatureAccess -ErrorAction SilentlyContinue) {
+                            Test-FeatureAccess -ModuleName $moduleName
+                        } else {
+                            $true  # Default to accessible if function unavailable
+                        }
+                    } catch {
+                        $true  # Default to accessible on error
+                    }
                     $requiredTier = Get-ModuleRequiredTier -ModuleName $moduleName -FeatureRegistry $featureRegistry
                     
                     # Get exported functions
