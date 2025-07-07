@@ -1,0 +1,39 @@
+{
+  "directory": "/path/to/directory",
+  "created": "2025-07-06T10:30:00Z",
+  "updated": "2025-07-06T10:30:00Z",
+  "findings": [
+    {
+      "id": "PSSA-XXXX",
+      "file": "filename.ps1",
+      "line": 0,
+      "column": 0,
+      "severity": "Error|Warning|Information",
+      "ruleName": "PSScriptAnalyzer rule name",
+      "message": "Detailed error/warning message",
+      "status": "open|resolved|ignored|auto-resolved",
+      "assignee": null,
+      "priority": "high|medium|low",
+      "ignored": false,
+      "ignoreReason": null,
+      "created": "2025-07-06T10:30:00Z",
+      "lastSeen": "2025-07-06T10:30:00Z",
+      "resolvedDate": null,
+      "resolvedReason": null,
+      "tags": [],
+      "notes": []
+    }
+  ],
+  "summary": {
+    "open": 0,
+    "resolved": 0,
+    "ignored": 0,
+    "total": 0
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "format": "bugz-1.0",
+    "generator": "PSScriptAnalyzerIntegration",
+    "lastAnalysis": "2025-07-06T10:30:00Z"
+  }
+}

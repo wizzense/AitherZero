@@ -28,11 +28,11 @@ If you prefer manual control:
 
 ### First Time Setup
 ```powershell
-# Run the setup wizard
+# Run the setup wizard (auto-detects PowerShell version)
 .\Start-AitherZero.ps1 -Setup
 
-# Or use the PowerShell 5.1 compatible version
-.\Start-AitherZero-Compatible.ps1 -Setup
+# For PowerShell 5.1 users, ensure execution policy allows scripts
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
 ### Basic Usage
@@ -52,7 +52,7 @@ If you prefer manual control:
 ### PowerShell 5.1 (Windows Default)
 - ✅ Basic functionality works
 - ⚠️ Some advanced features may be limited
-- 🔧 Use `Start-AitherZero-Compatible.ps1` for best compatibility
+- 🔧 `Start-AitherZero.ps1` automatically detects and adapts to your PowerShell version
 
 ### PowerShell 7+ (Recommended)
 - ✅ Full feature support

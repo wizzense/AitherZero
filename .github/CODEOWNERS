@@ -1,0 +1,118 @@
+# CODEOWNERS for AitherZero
+# This file defines who owns what parts of the codebase for automatic PR reviews
+# and issue assignments, particularly for PSScriptAnalyzer findings
+
+# Default owners for everything
+* @aitherzero-maintainers
+
+# Core Framework
+/aither-core/ @core-team
+/aither-core/aither-core.ps1 @lead-architect
+/aither-core/shared/ @core-team
+
+# Security-Critical Modules (require security team review)
+/aither-core/modules/SecureCredentials/ @security-team @core-team
+/aither-core/modules/SecurityAutomation/ @security-team @core-team
+/aither-core/modules/LicenseManager/ @security-team @core-team
+
+# Core Infrastructure Modules
+/aither-core/modules/PatchManager/ @devops-team @core-team
+/aither-core/modules/TestingFramework/ @qa-team @core-team
+/aither-core/modules/ModuleCommunication/ @core-team
+/aither-core/modules/ParallelExecution/ @performance-team @core-team
+/aither-core/modules/PSScriptAnalyzerIntegration/ @quality-team @core-team
+
+# Development & Environment Modules  
+/aither-core/modules/DevEnvironment/ @dev-experience-team
+/aither-core/modules/SetupWizard/ @dev-experience-team
+/aither-core/modules/StartupExperience/ @dev-experience-team
+/aither-core/modules/AIToolsIntegration/ @ai-integration-team
+
+# Configuration & Repository Management
+/aither-core/modules/ConfigurationCore/ @config-team @core-team
+/aither-core/modules/ConfigurationCarousel/ @config-team
+/aither-core/modules/ConfigurationRepository/ @config-team
+/aither-core/modules/RepoSync/ @devops-team
+
+# Utility Modules
+/aither-core/modules/LabRunner/ @lab-team
+/aither-core/modules/BackupManager/ @infrastructure-team
+/aither-core/modules/ISOManager/ @infrastructure-team
+/aither-core/modules/ISOCustomizer/ @infrastructure-team
+/aither-core/modules/SystemMonitoring/ @monitoring-team
+/aither-core/modules/RemoteConnection/ @networking-team
+
+# Application & Service Modules
+/aither-core/modules/RestAPIServer/ @api-team
+/aither-core/modules/ScriptManager/ @automation-team
+/aither-core/modules/OrchestrationEngine/ @orchestration-team
+/aither-core/modules/UnifiedMaintenance/ @maintenance-team
+
+# Infrastructure & OpenTofu
+/aither-core/modules/OpenTofuProvider/ @infrastructure-team @devops-team
+/opentofu/ @infrastructure-team @devops-team
+
+# Shared Libraries and Utilities
+/aither-core/modules/Logging/ @observability-team @core-team
+/aither-core/modules/ProgressTracking/ @ux-team
+
+# Testing Infrastructure
+/tests/ @qa-team @core-team
+/tests/Run-Tests.ps1 @qa-team @quality-team @core-team
+
+# Build and Release
+/build/ @devops-team @release-team
+/release.ps1 @release-team @devops-team
+/.github/workflows/ @devops-team @core-team
+
+# Configuration Files
+/configs/ @config-team @core-team
+/PSScriptAnalyzerSettings.psd1 @quality-team @core-team
+
+# Documentation
+/docs/ @documentation-team
+/README.md @documentation-team @core-team
+/CLAUDE.md @core-team
+/CONTRIBUTING.md @community-team @core-team
+
+# VS Code Integration
+/.vscode/ @dev-experience-team @core-team
+
+# Entry Points
+/Start-AitherZero.ps1 @core-team
+/bootstrap.ps1 @core-team
+/bootstrap.sh @core-team
+
+# PSScriptAnalyzer Integration Files
+**/.pssa-status @quality-team
+**/.bugz @quality-team
+**/.pssa-config.json @quality-team @module-owners
+
+# GitHub Templates and Automation
+/.github/ISSUE_TEMPLATE/ @quality-team @community-team
+/.github/workflows/code-quality-remediation.yml @quality-team @devops-team
+
+# Team Definitions (for reference - these should match GitHub teams)
+# @aitherzero-maintainers - Overall project maintainers
+# @core-team - Core framework developers
+# @security-team - Security specialists
+# @devops-team - DevOps and CI/CD specialists  
+# @qa-team - Quality assurance engineers
+# @quality-team - Code quality specialists
+# @performance-team - Performance optimization specialists
+# @dev-experience-team - Developer experience specialists
+# @ai-integration-team - AI tools integration specialists
+# @config-team - Configuration management specialists
+# @lab-team - Lab automation specialists
+# @infrastructure-team - Infrastructure and deployment specialists
+# @monitoring-team - System monitoring specialists
+# @networking-team - Network and connectivity specialists
+# @api-team - API development specialists
+# @automation-team - Automation specialists
+# @orchestration-team - Workflow orchestration specialists
+# @maintenance-team - System maintenance specialists
+# @observability-team - Logging and observability specialists
+# @ux-team - User experience specialists
+# @release-team - Release management specialists
+# @documentation-team - Documentation specialists
+# @community-team - Community management specialists

@@ -1,0 +1,159 @@
+name: "🔴 PSScriptAnalyzer Error"
+description: "Critical PSScriptAnalyzer error finding that must be fixed"
+title: "[PSScriptAnalyzer] [ERROR] [RULENAME] - SUMMARY"
+labels: 
+  - "code-quality"
+  - "psscriptanalyzer"
+  - "error"
+  - "priority:critical"
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🔴 Critical PSScriptAnalyzer Error
+        
+        This issue was automatically created by the PSScriptAnalyzer integration system. 
+        **Error-level findings must be resolved before merging.**
+
+  - type: input
+    id: rule-name
+    attributes:
+      label: "Rule Name"
+      description: "PSScriptAnalyzer rule that was violated"
+      placeholder: "e.g., PSAvoidUsingPlainTextForPassword"
+    validations:
+      required: true
+
+  - type: input
+    id: file-path
+    attributes:
+      label: "File Path"
+      description: "Relative path to the file containing the issue"
+      placeholder: "e.g., aither-core/modules/ModuleName/ModuleName.psm1"
+    validations:
+      required: true
+
+  - type: input
+    id: line-number
+    attributes:
+      label: "Line Number"
+      description: "Line number where the issue occurs"
+      placeholder: "e.g., 42"
+    validations:
+      required: true
+
+  - type: input
+    id: column-number
+    attributes:
+      label: "Column Number"
+      description: "Column number where the issue occurs"
+      placeholder: "e.g., 15"
+    validations:
+      required: false
+
+  - type: textarea
+    id: message
+    attributes:
+      label: "Error Message"
+      description: "Full PSScriptAnalyzer error message"
+      placeholder: "Paste the complete error message from PSScriptAnalyzer"
+    validations:
+      required: true
+
+  - type: textarea
+    id: code-snippet
+    attributes:
+      label: "Code Snippet"
+      description: "The problematic code section"
+      render: powershell
+      placeholder: |
+        # Paste the problematic code here
+        function Example-Function {
+            # Problem code
+        }
+    validations:
+      required: false
+
+  - type: dropdown
+    id: security-impact
+    attributes:
+      label: "Security Impact"
+      description: "Does this finding have security implications?"
+      options:
+        - "Unknown"
+        - "High - Potential security vulnerability"
+        - "Medium - Security best practice violation"
+        - "Low - Minor security consideration"
+        - "None - No security impact"
+      default: 0
+
+  - type: textarea
+    id: suggested-fix
+    attributes:
+      label: "Suggested Fix"
+      description: "Proposed solution or remediation approach"
+      placeholder: "Describe how this issue should be resolved"
+    validations:
+      required: false
+
+  - type: input
+    id: bugz-id
+    attributes:
+      label: "Bug Tracking ID"
+      description: "Associated .bugz file tracking ID (if available)"
+      placeholder: "e.g., PSSA-1234"
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: automation-metadata
+    attributes:
+      label: "Automation Metadata"
+      description: "Information for automated processing"
+      options:
+        - label: "This issue was created automatically"
+          required: true
+        - label: "Auto-close when finding is no longer detected"
+          required: false
+        - label: "Escalate if not resolved within SLA"
+          required: false
+
+  - type: textarea
+    id: analysis-context
+    attributes:
+      label: "Analysis Context"
+      description: "Additional context from the PSScriptAnalyzer analysis"
+      render: json
+      placeholder: |
+        {
+          "analysisDate": "2025-07-06T10:30:00Z",
+          "moduleContext": "ModuleName",
+          "qualityScore": 75,
+          "totalFindings": 10,
+          "configuration": "SecurityModule"
+        }
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        
+        ## 🔧 Resolution Guidelines
+        
+        **For Error-level findings:**
+        1. **Immediate Action Required** - These must be fixed before merging
+        2. **Security Priority** - Security-related errors have highest priority
+        3. **Testing Required** - Test fixes thoroughly before committing
+        4. **Documentation Update** - Update .bugz file when resolved
+        
+        **Automated Processing:**
+        - This issue will be automatically closed when the finding is no longer detected
+        - Status updates will be posted based on .bugz file changes
+        - Escalation occurs if not resolved within SLA timeframes
+        
+        **Related Documentation:**
+        - [PSScriptAnalyzer Rules Documentation](https://github.com/PowerShell/PSScriptAnalyzer/blob/master/RuleDocumentation)
+        - [AitherZero Code Quality Standards](docs/templates/documentation-standards.md)

@@ -36,6 +36,42 @@
       ],
       "name": "default",
       "type": "builtin"
+    },
+    "minimal": {
+      "name": "minimal",
+      "description": "Minimal configuration for core infrastructure deployment only",
+      "path": "./profiles/minimal",
+      "configFile": "profile-config.json",
+      "baseConfig": "../base-config.json",
+      "type": "builtin",
+      "environments": ["dev", "staging", "prod"]
+    },
+    "standard": {
+      "name": "standard", 
+      "description": "Standard configuration with AI tools and development features",
+      "path": "./profiles/standard",
+      "configFile": "profile-config.json",
+      "baseConfig": "../base-config.json",
+      "type": "builtin",
+      "environments": ["dev", "staging", "prod"]
+    },
+    "enterprise": {
+      "name": "enterprise",
+      "description": "Enterprise configuration with all features and security enhancements", 
+      "path": "./profiles/enterprise",
+      "configFile": "profile-config.json",
+      "baseConfig": "../base-config.json",
+      "type": "builtin",
+      "environments": ["dev", "staging", "prod"]
+    },
+    "recommended": {
+      "name": "recommended",
+      "description": "Recommended configuration with essential development tools and AI integration",
+      "path": "./profiles/recommended",
+      "configFile": "profile-config.json", 
+      "baseConfig": "../base-config.json",
+      "type": "builtin",
+      "environments": ["dev", "staging", "prod"]
     }
   },
   "lastUpdated": "2025-06-29 05:51:12",
