@@ -1,0 +1,116 @@
+{
+  "ComputerName": "default-lab",
+  "SetComputerName": false,
+  "DNSServers": "8.8.8.8,1.1.1.1",
+  "SetDNSServers": false,
+  "TrustedHosts": "",
+  "SetTrustedHosts": false,
+  "DisableTCPIP6": false,
+  "AllowRemoteDesktop": false,
+  "ConfigureFirewall": false,
+  "FirewallPorts": [
+    3389,
+    5985,
+    5986,
+    445,
+    135,
+    "49152-65535"
+  ],
+  "ConfigPXE": false,
+  "InstallGit": true,
+  "InstallGitHubCLI": true,
+  "InstallPwsh": true,
+  "InstallHyperV": false,
+  "InstallWAC": false,
+  "InstallGo": false,
+  "InstallPoetry": false,
+  "PoetryVersion": "latest",
+  "InstallOpenTofu": false,
+  "OpenTofuVersion": "latest",
+  "InitializeOpenTofu": false,
+  "PrepareHyperVHost": false,
+  "InstallCA": false,
+  "InstallCosign": false,
+  "CosignURL": "https://github.com/sigstore/cosign/releases/download/v2.4.3/cosign-windows-amd64.exe",
+  "CosignPath": "C:/temp/cosign",
+  "InstallGPG": false,
+  "InstallPython": false,
+  "InstallDockerDesktop": false,
+  "Install7Zip": false,
+  "InstallVSCode": false,
+  "InstallVSBuildTools": false,
+  "InstallAzureCLI": false,
+  "InstallAWSCLI": false,
+  "InstallPacker": false,
+  "InstallChocolatey": false,
+  "SetupLabProfile": false,
+  "CertificateAuthority": {
+    "CommonName": "default-lab-RootCA",
+    "ValidityYears": 5
+  },
+  "HyperV": {
+    "User": "",
+    "Password": "",
+    "Host": "",
+    "Port": 5986,
+    "Https": true,
+    "Insecure": true,
+    "UseNtlm": true,
+    "EnableManagementTools": true,
+    "TlsServerName": "",
+    "CacertPath": "",
+    "CertPath": "",
+    "KeyPath": "",
+    "ProviderVersion": "1.2.1",
+    "ScriptPath": "C:/Temp/tofu_%RAND%.cmd",
+    "Timeout": "30s"
+  },
+  "WAC": {
+    "InstallPort": 443
+  },
+  "GitHubCLIInstallerUrl": "https://github.com/cli/cli/releases/download/v2.67.0/gh_2.67.0_windows_amd64.msi",
+  "RepoUrl": "https://github.com/Aitherium/AitherLabs.git",
+  "LocalPath": "C:/temp",
+  "RunnerScriptName": "core-runner/core_app/core-runner.ps1",
+  "ConfigFile": "./core-runner/core_app/default-config.json",
+  "Go": {
+    "InstallerUrl": "https://go.dev/dl/go1.24.1.windows-amd64.msi"
+  },
+  "InfraRepoUrl": "https://github.com/Aitherium/aitherium-infrastructure.git",
+  "InfraRepoPath": "C:/Temp/base-infra",
+  "Directories": {
+    "HyperVPath": "C:/HyperV",
+    "IsoSharePath": "C:/iso_share"
+  },
+  "Node_Dependencies": {
+    "InstallNode": true,
+    "InstallYarn": true,
+    "InstallVite": true,
+    "InstallNodemon": true,
+    "InstallNpm": true,
+    "GlobalPackages": [
+      "yarn",
+      "vite",
+      "nodemon"
+    ],
+    "NpmPath": "C:/Projects/vde-mvp/frontend",
+    "CreateNpmPath": false,
+    "Node": {
+      "InstallerUrl": "https://nodejs.org/dist/latest-v20.x/node-v20-x64.msi"
+    }
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "logs/core-app.log",
+    "console": true
+  },
+  "scripts": {
+    "autorun": false,
+    "path": "scripts",
+    "timeout": 3600
+  },
+  "environment": {
+    "name": "development",
+    "platform": "auto"
+  }
+}

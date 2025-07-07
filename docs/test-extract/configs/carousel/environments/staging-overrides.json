@@ -1,0 +1,55 @@
+{
+  "environment": "staging",
+  "description": "Staging environment overrides - balanced security, confirmation prompts",
+  "appliesTo": ["minimal", "standard", "enterprise", "recommended"],
+  
+  "overrides": {
+    "logging": {
+      "LogLevel": "INFO",
+      "EnableConsoleLogging": true,
+      "EnableFileLogging": true,
+      "EnableAuditLogging": true
+    },
+    
+    "security": {
+      "RequireEncryption": false,
+      "AllowUnsignedScripts": false,
+      "ValidateModules": true,
+      "SecureBootRequired": false,
+      "RequireConfirmation": true
+    },
+    
+    "system": {
+      "ComputerName": "aither-staging",
+      "AllowRemoteDesktop": false,
+      "ConfigureFirewall": true,
+      "SetDNSServers": true
+    },
+    
+    "infrastructure": {
+      "AutoConfirm": false,
+      "SkipValidation": false,
+      "EnableExperimentalFeatures": false,
+      "RequireApproval": true
+    },
+    
+    "aiTools": {
+      "EnableBetaFeatures": false,
+      "VerboseOutput": false,
+      "EnableSafetyChecks": true
+    },
+    
+    "testing": {
+      "RunInDevMode": false,
+      "EnableTestingExtensions": true,
+      "RunFullTestSuite": true,
+      "RequirePassingTests": true
+    },
+    
+    "monitoring": {
+      "EnableSystemMonitoring": true,
+      "EnablePerformanceTracking": true,
+      "AlertingEnabled": true
+    }
+  }
+}

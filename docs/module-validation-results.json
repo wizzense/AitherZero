@@ -1,0 +1,153 @@
+[
+  {
+    "ModuleName": "ConfigurationCore",
+    "Status": "Success",
+    "CommandCount": 20,
+    "Version": {
+      "Major": 1,
+      "Minor": 0,
+      "Build": 0,
+      "Revision": -1,
+      "MajorRevision": -1,
+      "MinorRevision": -1
+    },
+    "FirstFewCommands": "Backup-Configuration, Compare-Configuration, Disable-ConfigurationHotReload, Enable-ConfigurationHotReload, Export-ConfigurationStore",
+    "Error": null
+  },
+  {
+    "ModuleName": "PatchManager",
+    "Status": "Success",
+    "CommandCount": 24,
+    "Version": {
+      "Major": 3,
+      "Minor": 0,
+      "Build": 0,
+      "Revision": -1,
+      "MajorRevision": -1,
+      "MinorRevision": -1
+    },
+    "FirstFewCommands": "Invoke-PatchWorkflow, Get-GitCommand, Get-PatchStatus, Get-PatchWorkflowBackup, Get-SmartOperationMode",
+    "Error": null
+  },
+  {
+    "ModuleName": "OpenTofuProvider",
+    "Status": "Failed",
+    "CommandCount": 0,
+    "Version": null,
+    "FirstFewCommands": null,
+    "Error": "Failed to load OpenTofuProvider functions: At /workspaces/AitherZero/aither-core/modules/OpenTofuProvider/Private/SecurityValidationHelpers.ps1:352 char:60\n+             '(?i)(password|pwd|secret|token|key)\\s*=\\s*[\"\\']?[^\"\\'\\s] …\n+                                                            ~\nUnexpected token ']' in expression or statement.\n\nAt /workspaces/AitherZero/aither-core/modules/OpenTofuProvider/Private/SecurityValidationHelpers.ps1:354 char:77\n+ …   '(?i)(access[_-]?key|secret[_-]?key)\\s*[=:]\\s*[\"\\']?[A-Z0-9]{20,}',\n+                                                                     ~\nMissing expression after ','.\n\nAt /workspaces/AitherZero/aither-core/modules/OpenTofuProvider/Private/SecurityValidationHelpers.ps1:369 char:27\n+         return @{ Name = 'Sensitive Data Check'; Passed = $passed; Me …\n+                           ~~~~~~~~~\nUnexpected token 'Sensitive' in expression or statement.\n\nAt /workspaces/AitherZero/aither-core/modules/OpenTofuProvider/Private/SecurityValidationHelpers.ps1:393 char:37\n+             if ($content -notmatch 'required_providers\\s*{') {\n+                                     ~~~~~~~~~~~~~~~~~~~~~\nUnexpected token 'required_providers\\s*' in expression or statement.\n\nAt /workspaces/AitherZero/aither-core/modules/OpenTofuProvider/Private/SecurityValidationHelpers.ps1:394 char:29\n+                 $issues += 'No required_providers block found'\n+                             ~~\nUnexpected token 'No' in expression or statement.\n\nAt /workspaces/AitherZero/aither-core/modules/OpenTofuProvider/Private/SecurityValidationHelpers.ps1:413 char:27\n+         return @{ Name = 'Provider Version Pinning'; Passed = $passed …\n+                           ~~~~~~~~\nUnexpected token 'Provider' in expression or statement.\n\nAt /workspaces/AitherZero/aither-core/modules/OpenTofuProvider/Private/SecurityValidationHelpers.ps1:476 char:27\n+         return @{ Name = 'Resource Security Settings'; Passed = $pass …\n+                           ~~~~~~~~\nUnexpected token 'Resource' in expression or statement.\n\nAt /workspaces/AitherZero/aither-core/modules/OpenTofuProvider/Private/SecurityValidationHelpers.ps1:393 char:58\n+             if ($content -notmatch 'required_providers\\s*{') {\n+                                                          ~\nMissing closing '}' in statement block or type definition.\n\nAt /workspaces/AitherZero/aither-core/modules/OpenTofuProvider/Private/SecurityValidationHelpers.ps1:392 char:42\n+         if ($content -match 'terraform\\s*{') {\n+                                          ~\nMissing closing '}' in statement block or type definition.\n\nAt /workspaces/AitherZero/aither-core/modules/OpenTofuProvider/Private/SecurityValidationHelpers.ps1:499 char:64\n+         if ($content -match 'backend\\s*[\"\\']?(\\w+)[\"\\']?\\s*{') {\n+                                                                ~\nUnexpected token '{' in expression or statement.\n\nNot all parse errors were reported.  Correct the reported errors and try again."
+  },
+  {
+    "ModuleName": "BackupManager",
+    "Status": "Success",
+    "CommandCount": 8,
+    "Version": {
+      "Major": 2,
+      "Minor": 0,
+      "Build": 0,
+      "Revision": -1,
+      "MajorRevision": -1,
+      "MinorRevision": -1
+    },
+    "FirstFewCommands": "Get-BackupStatistics, Invoke-AdvancedBackup, Invoke-BackupConsolidation, Invoke-BackupMaintenance, Invoke-PermanentCleanup",
+    "Error": null
+  },
+  {
+    "ModuleName": "DevEnvironment",
+    "Status": "Success",
+    "CommandCount": 17,
+    "Version": {
+      "Major": 1,
+      "Minor": 0,
+      "Build": 0,
+      "Revision": -1,
+      "MajorRevision": -1,
+      "MinorRevision": -1
+    },
+    "FirstFewCommands": "Get-DevEnvironmentStatus, Initialize-DevelopmentEnvironment, Initialize-DevEnvironment, Initialize-VSCodeWorkspace, Install-ClaudeCodeDependencies",
+    "Error": null
+  },
+  {
+    "ModuleName": "LabRunner",
+    "Status": "Success",
+    "CommandCount": 18,
+    "Version": {
+      "Major": 0,
+      "Minor": 1,
+      "Build": 0,
+      "Revision": -1,
+      "MajorRevision": -1,
+      "MinorRevision": -1
+    },
+    "FirstFewCommands": "Expand-All, Get-GhDownloadArgs, Get-LabConfig, Get-LabStatus, Get-Platform",
+    "Error": null
+  },
+  {
+    "ModuleName": "ModuleCommunication",
+    "Status": "Success",
+    "CommandCount": 35,
+    "Version": {
+      "Major": 2,
+      "Minor": 0,
+      "Build": 0,
+      "Revision": -1,
+      "MajorRevision": -1,
+      "MinorRevision": -1
+    },
+    "FirstFewCommands": "Add-APIMiddleware, Clear-EventHistory, Clear-MessageQueue, Disable-MessageTracing, Enable-CommunicationSecurity",
+    "Error": null
+  },
+  {
+    "ModuleName": "SecurityAutomation",
+    "Status": "Failed",
+    "CommandCount": 0,
+    "Version": null,
+    "FirstFewCommands": null,
+    "Error": "At /workspaces/AitherZero/aither-core/modules/SecurityAutomation/Public/CertificateServices/Invoke-CertificateLifecycleManagement.ps1:623 char:34\n+                                 'oon' { 'warning' }\n+                                  ~\nMissing statement block in switch statement clause.\n\nAt /workspaces/AitherZero/aither-core/modules/SecurityAutomation/Public/CertificateServices/Invoke-CertificateLifecycleManagement.ps1:631 char:77\n+ …              $HtmlReport += \"<td>$($Operation.Details -join '; ')</td …\n+                                                                ~\nMissing statement block in switch statement clause.\n\nAt /workspaces/AitherZero/aither-core/modules/SecurityAutomation/Public/CertificateServices/Invoke-CertificateLifecycleManagement.ps1:675 char:41\n+ … omLog -Level 'INFO' -Message \"TEST MODE: No actual changes were made\"\n+                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nThe string is missing the terminator: '.\n\nAt /workspaces/AitherZero/aither-core/modules/SecurityAutomation/Public/CertificateServices/Invoke-CertificateLifecycleManagement.ps1:642 char:49\n+                     $HtmlReport += \"<div class='header'><h2>Notificat …\n+                                                 ~\nMissing statement block in switch statement clause.\n\nAt /workspaces/AitherZero/aither-core/modules/SecurityAutomation/Public/CertificateServices/Invoke-CertificateLifecycleManagement.ps1:680 char:2\n+ }\n+  ~\nMissing statement block in switch statement clause.\n\nAt /workspaces/AitherZero/aither-core/modules/SecurityAutomation/Public/CertificateServices/Invoke-CertificateLifecycleManagement.ps1:616 char:79\n+ …               foreach ($Operation in $Computer.OperationsPerformed) {\n+                                                                       ~\nMissing closing '}' in statement block or type definition.\n\nAt /workspaces/AitherZero/aither-core/modules/SecurityAutomation/Public/CertificateServices/Invoke-CertificateLifecycleManagement.ps1:612 char:68\n+                     if ($Computer.OperationsPerformed.Count -gt 0) {\n+                                                                    ~\nMissing closing '}' in statement block or type definition.\n\nAt /workspaces/AitherZero/aither-core/modules/SecurityAutomation/Public/CertificateServices/Invoke-CertificateLifecycleManagement.ps1:607 char:77\n+ …         foreach ($Computer in $LifecycleResults.ComputersProcessed) {\n+                                                                       ~\nMissing closing '}' in statement block or type definition.\n\nAt /workspaces/AitherZero/aither-core/modules/SecurityAutomation/Public/CertificateServices/Invoke-CertificateLifecycleManagement.ps1:573 char:17\n+             try {\n+                 ~\nMissing closing '}' in statement block or type definition.\n\nAt /workspaces/AitherZero/aither-core/modules/SecurityAutomation/Public/CertificateServices/Invoke-CertificateLifecycleManagement.ps1:680 char:2\n+ }\n+  ~\nThe Try statement is missing its Catch or Finally block.\n\nNot all parse errors were reported.  Correct the reported errors and try again."
+  },
+  {
+    "ModuleName": "StartupExperience",
+    "Status": "Success",
+    "CommandCount": 16,
+    "Version": {
+      "Major": 1,
+      "Minor": 0,
+      "Build": 0,
+      "Revision": -1,
+      "MajorRevision": -1,
+      "MinorRevision": -1
+    },
+    "FirstFewCommands": "Clear-ModuleDiscoveryCache, Export-ConfigurationProfile, Get-ConfigurationProfile, Get-ModuleDiscovery, Get-StartupMode",
+    "Error": null
+  },
+  {
+    "ModuleName": "SystemMonitoring",
+    "Status": "Success",
+    "CommandCount": 15,
+    "Version": {
+      "Major": 2,
+      "Minor": 0,
+      "Build": 0,
+      "Revision": -1,
+      "MajorRevision": -1,
+      "MinorRevision": -1
+    },
+    "FirstFewCommands": "Enable-PredictiveAlerting, Export-MonitoringData, Get-MonitoringConfiguration, Get-MonitoringInsights, Get-ServiceStatus",
+    "Error": null
+  },
+  {
+    "ModuleName": "TestingFramework",
+    "Status": "Success",
+    "CommandCount": 27,
+    "Version": {
+      "Major": 2,
+      "Minor": 0,
+      "Build": 0,
+      "Revision": -1,
+      "MajorRevision": -1,
+      "MinorRevision": -1
+    },
+    "FirstFewCommands": "Export-VSCodeTestResults, Get-DiscoveredModules, Get-ModuleAnalysis, Get-RegisteredTestProviders, Get-TestConfiguration",
+    "Error": null
+  }
+]

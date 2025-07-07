@@ -1,0 +1,74 @@
+{
+  "name": "standard",
+  "description": "Standard configuration with AI tools and development features",
+  "extends": "base-config.json",
+  "profile": {
+    "size": "15-25 MB",
+    "target": "Developer workstations, interactive environments",
+    "features": ["All minimal features", "AI tools integration", "Enhanced UI", "Development tools"]
+  },
+  
+  "overrides": {
+    "UIPreferences": {
+      "Mode": "auto",
+      "DefaultUI": "enhanced",
+      "FallbackUI": "classic",
+      "ShowUISelector": true,
+      "RememberUIChoice": true
+    },
+    
+    "tools": {
+      "InstallOpenTofu": true,
+      "InstallHyperV": false,
+      "InstallGo": true,
+      "InstallPoetry": false,
+      "InstallPython": true,
+      "InstallNodeCore": true,
+      "InstallAzureCLI": false,
+      "InstallAWSCLI": false,
+      "InstallPacker": false,
+      "InstallDockerDesktop": false,
+      "Install7Zip": true,
+      "InstallVSCode": true,
+      "InstallVSBuildTools": false,
+      "InstallChocolatey": false,
+      "InstallSysinternals": false
+    },
+    
+    "aiTools": {
+      "InstallClaudeCode": true,
+      "InstallGeminiCLI": true,
+      "InstallCodexCLI": false,
+      "EnableAIIntegration": true,
+      "DefaultAIProvider": "claude"
+    },
+    
+    "nodePackages": {
+      "InstallAIPackages": true,
+      "Packages": [
+        "@anthropic-ai/sdk",
+        "@google/generative-ai",
+        "openai",
+        "commander",
+        "chalk",
+        "inquirer"
+      ]
+    },
+    
+    "infrastructure": {
+      "InitializeOpenTofu": true,
+      "PrepareHyperVHost": false
+    },
+    
+    "logging": {
+      "LogLevel": "INFO",
+      "EnableConsoleLogging": true,
+      "EnableFileLogging": true
+    },
+    
+    "security": {
+      "RequireEncryption": false,
+      "ValidateModules": true
+    }
+  }
+}

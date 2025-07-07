@@ -1,0 +1,65 @@
+[
+  {
+    "ModuleName": "ConfigurationCore",
+    "Success": true,
+    "LoadTimeMs": 142.5573,
+    "MemoryIncreaseMB": 14.129999999999995,
+    "Error": null
+  },
+  {
+    "ModuleName": "PatchManager",
+    "Success": true,
+    "LoadTimeMs": 245.0336,
+    "MemoryIncreaseMB": 17.879999999999995,
+    "Error": null
+  },
+  {
+    "ModuleName": "BackupManager",
+    "Success": true,
+    "LoadTimeMs": 45.1047,
+    "MemoryIncreaseMB": -3.6200000000000045,
+    "Error": null
+  },
+  {
+    "ModuleName": "DevEnvironment",
+    "Success": true,
+    "LoadTimeMs": 88.2923,
+    "MemoryIncreaseMB": 17.750000000000014,
+    "Error": null
+  },
+  {
+    "ModuleName": "LabRunner",
+    "Success": true,
+    "LoadTimeMs": 72.4283,
+    "MemoryIncreaseMB": -2.7900000000000205,
+    "Error": null
+  },
+  {
+    "ModuleName": "ModuleCommunication",
+    "Success": true,
+    "LoadTimeMs": 115.2508,
+    "MemoryIncreaseMB": 15.51000000000002,
+    "Error": null
+  },
+  {
+    "ModuleName": "StartupExperience",
+    "Success": true,
+    "LoadTimeMs": 108.6446,
+    "MemoryIncreaseMB": 5.5800000000000125,
+    "Error": null
+  },
+  {
+    "ModuleName": "SystemMonitoring",
+    "Success": true,
+    "LoadTimeMs": 89.7448,
+    "MemoryIncreaseMB": -3.6599999999999966,
+    "Error": null
+  },
+  {
+    "ModuleName": "TestingFramework",
+    "Success": true,
+    "LoadTimeMs": 98.4892,
+    "MemoryIncreaseMB": -0.9799999999999898,
+    "Error": null
+  }
+]

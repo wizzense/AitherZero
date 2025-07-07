@@ -1,0 +1,46 @@
+{
+  "environment": "dev",
+  "description": "Development environment overrides - relaxed security, debug logging",
+  "appliesTo": ["minimal", "standard", "enterprise", "recommended"],
+  
+  "overrides": {
+    "logging": {
+      "LogLevel": "DEBUG",
+      "EnableConsoleLogging": true,
+      "EnableFileLogging": true,
+      "EnableDebugOutput": true
+    },
+    
+    "security": {
+      "RequireEncryption": false,
+      "AllowUnsignedScripts": true,
+      "ValidateModules": false,
+      "SecureBootRequired": false,
+      "SkipSecurityChecks": true
+    },
+    
+    "system": {
+      "ComputerName": "aither-dev",
+      "AllowRemoteDesktop": true,
+      "ConfigureFirewall": false,
+      "SetDNSServers": false
+    },
+    
+    "infrastructure": {
+      "AutoConfirm": true,
+      "SkipValidation": true,
+      "EnableExperimentalFeatures": true
+    },
+    
+    "aiTools": {
+      "EnableBetaFeatures": true,
+      "VerboseOutput": true
+    },
+    
+    "testing": {
+      "RunInDevMode": true,
+      "EnableTestingExtensions": true,
+      "SkipSlowTests": true
+    }
+  }
+}

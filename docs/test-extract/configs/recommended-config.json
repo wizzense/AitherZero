@@ -1,0 +1,16 @@
+{
+  "InstallGo": true,
+  "InstallOpenTofu": true,
+  "InitializeOpenTofu": true,
+  "PrepareHyperVHost": true,
+  "InstallHyperV": true,
+  "InstallCA": true,
+  "InstallCosign": true,
+  "InstallGPG": true,
+  "InstallClaudeCode": true,
+  "ClaudeCodeWSLUsername": "developer",
+  "InstallGeminiCLI": true,
+  "GeminiCLIWSLUsername": "developer",
+  "InstallCodexCLI": true,
+  "CodexCLIWSLUsername": "developer"
+}

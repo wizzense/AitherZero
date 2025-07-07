@@ -1,0 +1,376 @@
+# Enterprise Lab Configuration Example
+# Demonstrates advanced orchestration capabilities with dependency management
+
+name: "Enterprise Web Application Lab"
+version: "2.0"
+description: "Complete enterprise lab environment with load balancing and database clustering"
+environment: "production"
+
+metadata:
+  created: "2025-07-06T07:00:00Z"
+  owner: "Infrastructure Team"
+  tags: ["production", "web", "database", "load-balancer"]
+  cost-center: "IT-INFRA-001"
+
+# Global settings for the entire deployment
+settings:
+  timeout: 60
+  retry-count: 3
+  retry-delay: 30
+  max-concurrency: 8
+  resource-limits:
+    max-memory-gb: 16
+    max-cpu-percent: 80
+    max-network-mbps: 1000
+
+# Infrastructure provider configuration
+infrastructure:
+  provider: "hyperv"
+  region: "on-premises"
+  availability-zones: ["zone-a", "zone-b"]
+  network:
+    vpc-cidr: "10.0.0.0/16"
+    subnets:
+      - name: "web-subnet"
+        cidr: "10.0.1.0/24"
+        zone: "zone-a"
+      - name: "app-subnet"
+        cidr: "10.0.2.0/24"
+        zone: "zone-a"
+      - name: "db-subnet"
+        cidr: "10.0.3.0/24"
+        zone: "zone-b"
+
+# Deployment operations with dependencies and resource requirements
+operations:
+  - id: "setup-network"
+    name: "Setup Network Infrastructure"
+    type: "infrastructure"
+    provider: "opentofu"
+    script: |
+      # Network setup script
+      Write-Host "Setting up network infrastructure..."
+      # Create VPC, subnets, routing tables
+      Start-Sleep -Seconds 5
+    parameters:
+      vpc-cidr: "10.0.0.0/16"
+      enable-dns: true
+    dependencies: []
+    timeout: 20
+    priority: 1
+    retry-count: 2
+    resources:
+      memory-gb: 1
+      cpu-percent: 10
+      network-mbps: 50
+    health-checks:
+      - type: "network-connectivity"
+        target: "10.0.1.1"
+      - type: "dns-resolution"
+        target: "internal.lab.local"
+
+  - id: "deploy-security-groups"
+    name: "Deploy Security Groups"
+    type: "security"
+    provider: "opentofu"
+    script: |
+      Write-Host "Deploying security groups..."
+      # Create security groups and rules
+      Start-Sleep -Seconds 3
+    parameters:
+      web-sg-rules:
+        - port: 80
+          protocol: "tcp"
+          source: "0.0.0.0/0"
+        - port: 443
+          protocol: "tcp"
+          source: "0.0.0.0/0"
+      db-sg-rules:
+        - port: 3306
+          protocol: "tcp"
+          source: "10.0.2.0/24"
+    dependencies: ["setup-network"]
+    timeout: 15
+    priority: 2
+    resources:
+      memory-gb: 0.5
+      cpu-percent: 5
+      network-mbps: 20
+
+  - id: "deploy-load-balancer"
+    name: "Deploy Application Load Balancer"
+    type: "infrastructure"
+    provider: "opentofu"
+    script: |
+      Write-Host "Deploying load balancer..."
+      # Create application load balancer
+      Start-Sleep -Seconds 8
+    parameters:
+      type: "application"
+      scheme: "internet-facing"
+      listeners:
+        - port: 80
+          protocol: "HTTP"
+        - port: 443
+          protocol: "HTTPS"
+    dependencies: ["setup-network", "deploy-security-groups"]
+    timeout: 25
+    priority: 3
+    resources:
+      memory-gb: 2
+      cpu-percent: 15
+      network-mbps: 100
+
+  - id: "deploy-database-cluster"
+    name: "Deploy Database Cluster"
+    type: "database"
+    provider: "opentofu"
+    script: |
+      Write-Host "Deploying database cluster..."
+      # Create MySQL cluster with primary and replica
+      Start-Sleep -Seconds 15
+    parameters:
+      engine: "mysql"
+      version: "8.0"
+      instance-class: "db.r5.xlarge"
+      multi-az: true
+      backup-retention: 7
+      cluster-nodes: 3
+    dependencies: ["setup-network", "deploy-security-groups"]
+    timeout: 45
+    priority: 3
+    resources:
+      memory-gb: 4
+      cpu-percent: 30
+      network-mbps: 200
+    health-checks:
+      - type: "database-connection"
+        connection-string: "mysql://admin@cluster.internal:3306"
+      - type: "replication-status"
+        check-interval: 30
+
+  - id: "deploy-web-servers"
+    name: "Deploy Web Server Fleet"
+    type: "compute"
+    provider: "opentofu"
+    script: |
+      Write-Host "Deploying web servers..."
+      # Create auto-scaling group with web servers
+      Start-Sleep -Seconds 12
+    parameters:
+      instance-type: "Standard_D2s_v3"
+      min-size: 2
+      max-size: 6
+      desired-capacity: 3
+      image-id: "ubuntu-20.04-lts"
+      key-pair: "web-server-key"
+    dependencies: ["deploy-load-balancer", "deploy-database-cluster"]
+    timeout: 35
+    priority: 4
+    resources:
+      memory-gb: 3
+      cpu-percent: 25
+      network-mbps: 150
+    health-checks:
+      - type: "http-health"
+        endpoint: "http://web-servers/health"
+      - type: "auto-scaling-health"
+        check-interval: 60
+
+  - id: "deploy-application"
+    name: "Deploy Web Application"
+    type: "application"
+    provider: "powershell"
+    script: |
+      Write-Host "Deploying web application..."
+      # Deploy application code and configuration
+      Start-Sleep -Seconds 10
+    parameters:
+      app-version: "2.1.0"
+      environment: "production"
+      database-connection: "cluster.internal:3306"
+      redis-cache: "cache.internal:6379"
+    dependencies: ["deploy-web-servers"]
+    timeout: 30
+    priority: 5
+    resources:
+      memory-gb: 2
+      cpu-percent: 20
+      network-mbps: 100
+    health-checks:
+      - type: "application-health"
+        endpoint: "http://app.internal/api/health"
+      - type: "database-connectivity"
+        connection-string: "mysql://cluster.internal:3306"
+
+  - id: "configure-monitoring"
+    name: "Configure Monitoring and Alerting"
+    type: "monitoring"
+    provider: "powershell"
+    script: |
+      Write-Host "Configuring monitoring..."
+      # Setup monitoring, metrics, and alerting
+      Start-Sleep -Seconds 7
+    parameters:
+      metrics-retention: 90
+      alert-channels:
+        - type: "email"
+          target: "ops-team@company.com"
+        - type: "slack"
+          webhook: "https://hooks.slack.com/services/..."
+      dashboards:
+        - "infrastructure-overview"
+        - "application-performance"
+        - "database-metrics"
+    dependencies: ["deploy-application"]
+    timeout: 20
+    priority: 6
+    resources:
+      memory-gb: 1
+      cpu-percent: 10
+      network-mbps: 50
+
+  - id: "run-integration-tests"
+    name: "Run Integration Test Suite"
+    type: "validation"
+    provider: "powershell"
+    script: |
+      Write-Host "Running integration tests..."
+      # Execute comprehensive integration tests
+      Start-Sleep -Seconds 15
+    parameters:
+      test-suites:
+        - "api-endpoints"
+        - "database-operations"
+        - "load-balancer-routing"
+        - "security-compliance"
+      parallel-execution: true
+      timeout-per-test: 300
+    dependencies: ["configure-monitoring"]
+    timeout: 40
+    priority: 7
+    resources:
+      memory-gb: 2
+      cpu-percent: 20
+      network-mbps: 100
+
+  - id: "performance-baseline"
+    name: "Establish Performance Baseline"
+    type: "performance"
+    provider: "powershell"
+    script: |
+      Write-Host "Establishing performance baseline..."
+      # Run performance tests and establish baselines
+      Start-Sleep -Seconds 20
+    parameters:
+      load-test-duration: 1800  # 30 minutes
+      concurrent-users: 100
+      ramp-up-time: 300
+      metrics:
+        - "response-time"
+        - "throughput"
+        - "error-rate"
+        - "resource-utilization"
+    dependencies: ["run-integration-tests"]
+    timeout: 50
+    priority: 8
+    resources:
+      memory-gb: 3
+      cpu-percent: 40
+      network-mbps: 300
+
+# Post-deployment validation rules
+validation:
+  - name: "network-connectivity"
+    type: "network"
+    checks:
+      - ping: "10.0.1.1"
+      - port: 80
+        host: "load-balancer.internal"
+      - port: 3306
+        host: "cluster.internal"
+
+  - name: "service-health"
+    type: "application"
+    checks:
+      - endpoint: "http://app.internal/api/health"
+        expected-status: 200
+      - endpoint: "http://app.internal/api/version"
+        expected-content: "2.1.0"
+
+  - name: "security-compliance"
+    type: "security"
+    checks:
+      - ssl-certificate: "app.internal"
+        validity-days: 30
+      - open-ports: "web-servers"
+        allowed-ports: [80, 443, 22]
+
+  - name: "performance-thresholds"
+    type: "performance"
+    checks:
+      - response-time: "app.internal"
+        max-ms: 500
+      - cpu-utilization: "web-servers"
+        max-percent: 70
+      - memory-utilization: "database-cluster"
+        max-percent: 80
+
+# Resource dependencies for advanced scheduling
+dependencies:
+  explicit:
+    - source: "setup-network"
+      target: "deploy-security-groups"
+      type: "strong"
+    - source: "setup-network"
+      target: "deploy-load-balancer"
+      type: "strong"
+    - source: "deploy-security-groups"
+      target: "deploy-database-cluster"
+      type: "strong"
+    - source: "deploy-load-balancer"
+      target: "deploy-web-servers"
+      type: "strong"
+    - source: "deploy-database-cluster"
+      target: "deploy-web-servers"
+      type: "strong"
+    - source: "deploy-web-servers"
+      target: "deploy-application"
+      type: "strong"
+    - source: "deploy-application"
+      target: "configure-monitoring"
+      type: "weak"
+    - source: "configure-monitoring"
+      target: "run-integration-tests"
+      type: "weak"
+    - source: "run-integration-tests"
+      target: "performance-baseline"
+      type: "weak"
+
+  resource-conflicts:
+    - operations: ["deploy-database-cluster", "performance-baseline"]
+      reason: "High resource usage conflict"
+      resolution: "sequential"
+
+# Rollback and cleanup procedures
+rollback:
+  strategy: "reverse-dependency-order"
+  preserve-data: true
+  backup-before-rollback: true
+  operations:
+    - name: "backup-database"
+      script: "Create-DatabaseBackup -Cluster cluster.internal"
+    - name: "export-configurations"
+      script: "Export-SystemConfigurations -Target ./backups/"
+    - name: "snapshot-volumes"
+      script: "Create-VolumeSnapshots -All"
+
+cleanup:
+  automatic: false
+  retain-logs: true
+  retain-backups: true
+  operations:
+    - name: "cleanup-temporary-resources"
+      script: "Remove-TemporaryResources -DryRun:$false"
+    - name: "archive-deployment-logs"
+      script: "Archive-DeploymentLogs -Destination ./archives/"

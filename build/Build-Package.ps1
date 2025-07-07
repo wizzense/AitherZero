@@ -60,7 +60,6 @@ $includeItems = @(
     "aither-core",
     "configs",
     "opentofu",
-    "tests",
     "scripts",
     "README.md",
     "LICENSE",
@@ -122,6 +121,32 @@ foreach ($plat in $platforms) {
         }
         
         Write-Host "  └─ Total files/directories copied: $filesCopied" -ForegroundColor DarkGray
+        
+        # Validate critical files exist in package
+        Write-Host "  🔍 Validating package contents..." -ForegroundColor Yellow
+        $criticalFiles = @(
+            "Start-AitherZero.ps1",
+            "aither-core/aither-core.ps1",
+            "aither-core/shared/Test-PowerShellVersion.ps1",
+            "aither-core/shared/Find-ProjectRoot.ps1",
+            "aither-core/modules/Logging/Logging.psm1",
+            "configs/default-config.json"
+        )
+        
+        $validationPassed = $true
+        foreach ($criticalFile in $criticalFiles) {
+            $filePath = Join-Path $packageDir $criticalFile
+            if (-not (Test-Path $filePath)) {
+                Write-Warning "  ⚠️  Missing critical file: $criticalFile"
+                $validationPassed = $false
+            }
+        }
+        
+        if (-not $validationPassed) {
+            throw "Package validation failed - critical files missing"
+        }
+        
+        Write-Host "  ✅ Package validation passed" -ForegroundColor Green
         
         # Create package
         $packageName = "AitherZero-v$Version-$plat"
