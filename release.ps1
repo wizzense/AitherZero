@@ -7,17 +7,22 @@
     Release type: patch (default), minor, or major
 .PARAMETER Description
     Description for the release
+.PARAMETER RecoveryMode
+    Enable recovery mode to create missing tags from previous releases
 .EXAMPLE
     ./release.ps1
     ./release.ps1 -Type minor -Description "New features"
     ./release.ps1 -Type major -Description "Breaking changes"
+    ./release.ps1 -RecoveryMode -Description "Create missing tags"
 #>
 
 param(
     [ValidateSet('patch', 'minor', 'major')]
     [string]$Type = 'patch',
     
-    [string]$Description = "Release"
+    [string]$Description = "Release",
+    
+    [switch]$RecoveryMode
 )
 
 Write-Host "🚀 Starting $Type release process..." -ForegroundColor Cyan
@@ -54,7 +59,12 @@ Import-Module $modulePath -Force
 
 # Use PatchManager's release workflow
 try {
-    Invoke-ReleaseWorkflow -ReleaseType $Type -Description $Description
+    if ($RecoveryMode) {
+        Write-Host "🔄 Running in recovery mode to create missing tags..." -ForegroundColor Yellow
+        Invoke-ReleaseWorkflow -ReleaseType $Type -Description $Description -RecoveryMode
+    } else {
+        Invoke-ReleaseWorkflow -ReleaseType $Type -Description $Description
+    }
     Write-Host "✅ Release process completed!" -ForegroundColor Green
 } catch {
     Write-Host "❌ Release failed: $_" -ForegroundColor Red
