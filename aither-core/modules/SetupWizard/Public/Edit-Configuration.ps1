@@ -339,7 +339,7 @@ function Edit-ConfigurationCore {
         
         # Get current configuration environments
         try {
-            $environments = Get-ConfigurationEnvironment -ListAll -ErrorAction SilentlyContinue
+            $environments = Get-ConfigurationEnvironment -All -ErrorAction SilentlyContinue
             $currentEnv = Get-ConfigurationEnvironment -ErrorAction SilentlyContinue
             
             Write-Host "`nCurrent Environment: $($currentEnv.Name ?? 'default')" -ForegroundColor Yellow
@@ -383,8 +383,16 @@ function Edit-ConfigurationCore {
             '1' {
                 Write-Host "`nAvailable Environments:" -ForegroundColor Yellow
                 try {
-                    $allEnvs = Get-ConfigurationEnvironment -ListAll
-                    if ($allEnvs) {
+                    $allEnvsHash = Get-ConfigurationEnvironment -All
+                    if ($allEnvsHash) {
+                        # Convert hashtable to array and add Name property to each environment
+                        $allEnvs = @()
+                        foreach ($envName in $allEnvsHash.Keys) {
+                            $env = $allEnvsHash[$envName]
+                            $env.Name = $envName  # Add the name property
+                            $allEnvs += $env
+                        }
+                        
                         for ($i = 0; $i -lt $allEnvs.Count; $i++) {
                             $env = $allEnvs[$i]
                             $current = if ($env.Name -eq $currentEnv.Name) { " (current)" } else { "" }
