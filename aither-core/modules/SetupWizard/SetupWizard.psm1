@@ -145,7 +145,16 @@ function Start-IntelligentSetup {
             $stepAttempts++
             
             try {
+                # Validate function exists before calling
+                if (-not (Get-Command $step.Function -ErrorAction SilentlyContinue)) {
+                    throw "Step function '$($step.Function)' not found"
+                }
+                
                 $result = & $step.Function -SetupState $setupState
+                
+                # Normalize status values
+                if ($result.Status -eq 'Success') { $result.Status = 'Passed' }
+                
                 $setupState.Steps += $result
                 
                 if ($result.Status -eq 'Passed' -or $result.Status -eq 'Success') {
@@ -990,6 +999,7 @@ function Show-SetupSummary {
     foreach ($step in $State.Steps) {
         $icon = switch ($step.Status) {
             'Passed' { '✅' }
+            'Success' { '✅' }
             'Failed' { '❌' }
             'Warning' { '⚠️' }
             default { '❓' }
@@ -1257,8 +1267,9 @@ function Get-SetupSteps {
         $profileDef = $profileDefinitions['minimal']
     }
     
-    # Combine base steps with profile-specific steps
-    $allSteps = $baseSteps + $profileDef.Steps
+    # Combine base steps with profile-specific steps and deduplicate by name
+    $combinedSteps = $baseSteps + $profileDef.Steps
+    $allSteps = @($combinedSteps | Group-Object Name | ForEach-Object { $_.Group[0] })
     
     return @{
         Steps = $allSteps

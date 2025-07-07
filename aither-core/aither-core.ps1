@@ -736,6 +736,10 @@ try {
                 } catch {
                     Write-CustomLog "Enhanced UI failed: $_. Falling back to classic menu." -Level WARN
                     Write-Host "⚠️  Enhanced UI encountered an error. Switching to classic menu..." -ForegroundColor Yellow
+                    Write-Host "Error details: $($_.Exception.Message)" -ForegroundColor Red
+                    if ($_.Exception.InnerException) {
+                        Write-Host "Inner error: $($_.Exception.InnerException.Message)" -ForegroundColor Red
+                    }
                     $useEnhancedUI = $false
                 }
             }
