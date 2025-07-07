@@ -487,7 +487,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
             
             # STEP 0: Check for missing tags first (auto-recovery)
             Write-Host ""
-            Write-ReleaseLog "Step 0: Checking for missing tags from previous releases..."
+            Write-ReleaseLog "Step 0: Checking for missing tags from previous releases..." "INFO"
             $missingTagCreated = Test-AndCreateMissingTags -ProjectRoot $projectRoot
             
             if ($missingTagCreated) {
