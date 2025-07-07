@@ -842,3 +842,96 @@ jobs:
               body
             });
           }
+
+  # Check for missing tags after successful CI on main branch
+  check-missing-tags:
+    name: Check for Missing Release Tags
+    runs-on: ubuntu-latest
+    needs: [code-quality, test, build-test, docs-check]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Need full history for tag comparison
+        
+    - name: Setup PowerShell
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget apt-transport-https software-properties-common
+        wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+        sudo dpkg -i packages-microsoft-prod.deb
+        sudo apt-get update
+        sudo apt-get install -y powershell
+        
+    - name: Check for Missing Tags
+      shell: pwsh
+      run: |
+        # Get current VERSION
+        $versionFile = "VERSION"
+        if (-not (Test-Path $versionFile)) {
+          Write-Host "No VERSION file found, skipping tag check" -ForegroundColor Yellow
+          return
+        }
+        
+        $currentVersion = (Get-Content $versionFile -Raw).Trim()
+        Write-Host "Current VERSION: $currentVersion" -ForegroundColor Cyan
+        
+        # Get latest tag
+        $latestTag = $null
+        try {
+          $latestTag = & git describe --tags --abbrev=0 2>$null
+          if ($latestTag) {
+            $latestTag = $latestTag.TrimStart('v')
+          }
+        } catch {
+          Write-Host "No existing tags found" -ForegroundColor Yellow
+        }
+        
+        Write-Host "Latest tag: $($latestTag ?? 'none')" -ForegroundColor Cyan
+        
+        # Check if current VERSION is ahead of latest tag
+        if ($latestTag -and $currentVersion -ne $latestTag) {
+          Write-Host "VERSION ($currentVersion) is ahead of latest tag ($latestTag)" -ForegroundColor Yellow
+          
+          # Check if tag already exists for current version
+          $currentTag = & git tag -l "v$currentVersion"
+          if (-not $currentTag) {
+            Write-Host "Creating missing tag for merged version: v$currentVersion" -ForegroundColor Green
+            
+            # Create and push the missing tag
+            & git tag -a "v$currentVersion" -m "Release v$currentVersion (auto-created by CI)"
+            if ($LASTEXITCODE -eq 0) {
+              & git push origin "v$currentVersion"
+              if ($LASTEXITCODE -eq 0) {
+                Write-Host "✅ Successfully created and pushed tag v$currentVersion" -ForegroundColor Green
+                Write-Host "🚀 Release workflow will start automatically!" -ForegroundColor Green
+              } else {
+                Write-Host "❌ Failed to push tag v$currentVersion" -ForegroundColor Red
+                exit 1
+              }
+            } else {
+              Write-Host "❌ Failed to create tag v$currentVersion" -ForegroundColor Red
+              exit 1
+            }
+          } else {
+            Write-Host "✅ Tag v$currentVersion already exists" -ForegroundColor Green
+          }
+        } elseif (-not $latestTag) {
+          # No tags exist yet, check if we should create first tag
+          Write-Host "No tags exist, current VERSION: $currentVersion" -ForegroundColor Yellow
+          if ($currentVersion -ne "0.0.0") {
+            Write-Host "Creating initial tag: v$currentVersion" -ForegroundColor Green
+            & git tag -a "v$currentVersion" -m "Release v$currentVersion (initial tag)"
+            if ($LASTEXITCODE -eq 0) {
+              & git push origin "v$currentVersion"
+              if ($LASTEXITCODE -eq 0) {
+                Write-Host "✅ Successfully created initial tag v$currentVersion" -ForegroundColor Green
+              }
+            }
+          }
+        } else {
+          Write-Host "✅ VERSION ($currentVersion) matches latest tag ($latestTag)" -ForegroundColor Green
+        }
