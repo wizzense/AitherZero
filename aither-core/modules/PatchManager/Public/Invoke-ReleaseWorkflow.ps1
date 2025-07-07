@@ -35,6 +35,9 @@
 .PARAMETER DryRun
     Preview what would be done without making changes
     
+.PARAMETER RecoveryMode
+    Enable recovery mode to create missing tags from previous releases
+    
 .EXAMPLE
     Invoke-ReleaseWorkflow -ReleaseType "patch" -Description "Bug fixes and improvements"
     # Creates v1.2.4 from v1.2.3, handles everything automatically
@@ -46,6 +49,10 @@
 .EXAMPLE
     Invoke-ReleaseWorkflow -ReleaseType "minor" -Description "New features" -WaitForMerge:$false
     # Creates PR but doesn't wait for merge or create tag
+    
+.EXAMPLE
+    Invoke-ReleaseWorkflow -ReleaseType "patch" -Description "Recovery run" -RecoveryMode
+    # Runs in recovery mode to create missing tags from previous releases
 #>
 
 function Invoke-ReleaseWorkflow {
@@ -68,7 +75,9 @@ function Invoke-ReleaseWorkflow {
         
         [int]$MaxWaitMinutes = 30,
         
-        [switch]$DryRun
+        [switch]$DryRun,
+        
+        [switch]$RecoveryMode
     )
     
     begin {
@@ -107,9 +116,9 @@ function Invoke-ReleaseWorkflow {
             return (Get-Content $versionFile -Raw).Trim()
         }
         
-        # Helper to check for missing tags and auto-create them
+        # Helper to check for missing tags and auto-create them (recovery mode only)
         function Test-AndCreateMissingTags {
-            param([string]$ProjectRoot)
+            param([string]$ProjectRoot, [switch]$RecoveryMode)
             
             Write-ReleaseLog "Checking for missing tags..." "INFO"
             
@@ -128,51 +137,63 @@ function Invoke-ReleaseWorkflow {
                     Write-ReleaseLog "No existing tags found" "INFO"
                 }
                 
-                # Check if current VERSION is ahead of latest tag
-                if ($latestTag -and $currentVersion -ne $latestTag) {
-                    Write-ReleaseLog "VERSION ($currentVersion) is ahead of latest tag ($latestTag)" "INFO"
-                    
-                    # Check if tag already exists for current version
-                    $currentTag = & git tag -l "v$currentVersion"
-                    if (-not $currentTag) {
-                        Write-ReleaseLog "Creating missing tag for merged version: v$currentVersion" "SUCCESS"
+                # ONLY create missing tags in explicit recovery mode
+                if ($RecoveryMode) {
+                    # Check if current VERSION is ahead of latest tag
+                    if ($latestTag -and $currentVersion -ne $latestTag) {
+                        Write-ReleaseLog "RECOVERY: VERSION ($currentVersion) is ahead of latest tag ($latestTag)" "INFO"
                         
-                        # Create and push the missing tag
-                        & git tag -a "v$currentVersion" -m "Release v$currentVersion"
-                        if ($LASTEXITCODE -eq 0) {
-                            & git push origin "v$currentVersion"
-                            if ($LASTEXITCODE -eq 0) {
-                                Write-ReleaseLog "Successfully created and pushed tag v$currentVersion" "SUCCESS"
-                                Write-Host "🎉 Missing tag v$currentVersion created! Release workflow should start automatically." -ForegroundColor Green
-                                return $true
-                            } else {
-                                Write-ReleaseLog "Failed to push tag v$currentVersion" "ERROR"
-                            }
-                        } else {
-                            Write-ReleaseLog "Failed to create tag v$currentVersion" "ERROR"
-                        }
-                    } else {
-                        Write-ReleaseLog "Tag v$currentVersion already exists" "INFO"
-                    }
-                } elseif (-not $latestTag) {
-                    # No tags exist yet, check if we should create first tag
-                    Write-ReleaseLog "No tags exist, current VERSION: $currentVersion" "INFO"
-                    if ($currentVersion -ne "0.0.0") {
+                        # Check if tag already exists for current version
                         $currentTag = & git tag -l "v$currentVersion"
                         if (-not $currentTag) {
-                            Write-ReleaseLog "Creating initial tag: v$currentVersion" "SUCCESS"
-                            & git tag -a "v$currentVersion" -m "Release v$currentVersion"
+                            Write-ReleaseLog "RECOVERY: Creating missing tag for merged version: v$currentVersion" "SUCCESS"
+                            
+                            # Create and push the missing tag
+                            & git tag -a "v$currentVersion" -m "Recovery: Release v$currentVersion"
                             if ($LASTEXITCODE -eq 0) {
                                 & git push origin "v$currentVersion"
                                 if ($LASTEXITCODE -eq 0) {
-                                    Write-ReleaseLog "Successfully created initial tag v$currentVersion" "SUCCESS"
+                                    Write-ReleaseLog "RECOVERY: Successfully created and pushed tag v$currentVersion" "SUCCESS"
+                                    Write-Host "🎉 Missing tag v$currentVersion created! Release workflow should start automatically." -ForegroundColor Green
                                     return $true
+                                } else {
+                                    Write-ReleaseLog "RECOVERY: Failed to push tag v$currentVersion" "ERROR"
+                                }
+                            } else {
+                                Write-ReleaseLog "RECOVERY: Failed to create tag v$currentVersion" "ERROR"
+                            }
+                        } else {
+                            Write-ReleaseLog "RECOVERY: Tag v$currentVersion already exists" "INFO"
+                        }
+                    } elseif (-not $latestTag) {
+                        # No tags exist yet, check if we should create first tag
+                        Write-ReleaseLog "RECOVERY: No tags exist, current VERSION: $currentVersion" "INFO"
+                        if ($currentVersion -ne "0.0.0") {
+                            $currentTag = & git tag -l "v$currentVersion"
+                            if (-not $currentTag) {
+                                Write-ReleaseLog "RECOVERY: Creating initial tag: v$currentVersion" "SUCCESS"
+                                & git tag -a "v$currentVersion" -m "Recovery: Initial release v$currentVersion"
+                                if ($LASTEXITCODE -eq 0) {
+                                    & git push origin "v$currentVersion"
+                                    if ($LASTEXITCODE -eq 0) {
+                                        Write-ReleaseLog "RECOVERY: Successfully created initial tag v$currentVersion" "SUCCESS"
+                                        return $true
+                                    }
                                 }
                             }
                         }
+                    } else {
+                        Write-ReleaseLog "RECOVERY: VERSION ($currentVersion) matches latest tag ($latestTag) - no recovery needed" "INFO"
                     }
                 } else {
-                    Write-ReleaseLog "VERSION ($currentVersion) matches latest tag ($latestTag)" "INFO"
+                    # Normal mode - just report status, don't interfere
+                    if ($latestTag -and $currentVersion -ne $latestTag) {
+                        Write-ReleaseLog "STATUS: VERSION ($currentVersion) is ahead of latest tag ($latestTag) - this is normal for merged PRs" "INFO"
+                    } elseif (-not $latestTag) {
+                        Write-ReleaseLog "STATUS: No tags exist yet, current VERSION: $currentVersion" "INFO"
+                    } else {
+                        Write-ReleaseLog "STATUS: VERSION ($currentVersion) matches latest tag ($latestTag)" "INFO"
+                    }
                 }
                 
                 return $false
@@ -485,16 +506,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
             Write-Host "🚀 AitherZero Release Workflow" -ForegroundColor Magenta
             Write-Host ("=" * 50) -ForegroundColor Magenta
             
-            # STEP 0: Check for missing tags first (auto-recovery)
+            # STEP 0: Check for missing tags (recovery mode only)
             Write-Host ""
-            Write-ReleaseLog "Step 0: Checking for missing tags from previous releases..." "INFO"
-            $missingTagCreated = Test-AndCreateMissingTags -ProjectRoot $projectRoot
-            
-            if ($missingTagCreated) {
-                Write-Host ""
-                Write-Host "🎉 Found and created missing tag! Release workflow completed." -ForegroundColor Green
-                Write-Host "Monitor the release build at: https://github.com/wizzense/AitherZero/actions" -ForegroundColor Cyan
-                return
+            if ($RecoveryMode) {
+                Write-ReleaseLog "Step 0: RECOVERY MODE - Checking for missing tags from previous releases..." "INFO"
+                $missingTagCreated = Test-AndCreateMissingTags -ProjectRoot $projectRoot -RecoveryMode
+                
+                if ($missingTagCreated) {
+                    Write-Host ""
+                    Write-Host "🎉 Found and created missing tag! Release workflow completed." -ForegroundColor Green
+                    Write-Host "Monitor the release build at: https://github.com/wizzense/AitherZero/actions" -ForegroundColor Cyan
+                    return
+                }
+            } else {
+                Write-ReleaseLog "Step 0: Status check - Current tag/version state..." "INFO"
+                $null = Test-AndCreateMissingTags -ProjectRoot $projectRoot
+                # Continue with normal release process regardless of output
             }
             
             # Get current and next version
