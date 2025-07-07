@@ -107,6 +107,81 @@ function Invoke-ReleaseWorkflow {
             return (Get-Content $versionFile -Raw).Trim()
         }
         
+        # Helper to check for missing tags and auto-create them
+        function Test-AndCreateMissingTags {
+            param([string]$ProjectRoot)
+            
+            Write-ReleaseLog "Checking for missing tags..." "INFO"
+            
+            try {
+                # Get current VERSION from main branch
+                $currentVersion = Get-CurrentVersion
+                
+                # Get latest tag
+                $latestTag = $null
+                try {
+                    $latestTag = & git describe --tags --abbrev=0 2>$null
+                    if ($latestTag) {
+                        $latestTag = $latestTag.TrimStart('v')
+                    }
+                } catch {
+                    Write-ReleaseLog "No existing tags found" "INFO"
+                }
+                
+                # Check if current VERSION is ahead of latest tag
+                if ($latestTag -and $currentVersion -ne $latestTag) {
+                    Write-ReleaseLog "VERSION ($currentVersion) is ahead of latest tag ($latestTag)" "INFO"
+                    
+                    # Check if tag already exists for current version
+                    $currentTag = & git tag -l "v$currentVersion"
+                    if (-not $currentTag) {
+                        Write-ReleaseLog "Creating missing tag for merged version: v$currentVersion" "SUCCESS"
+                        
+                        # Create and push the missing tag
+                        & git tag -a "v$currentVersion" -m "Release v$currentVersion"
+                        if ($LASTEXITCODE -eq 0) {
+                            & git push origin "v$currentVersion"
+                            if ($LASTEXITCODE -eq 0) {
+                                Write-ReleaseLog "Successfully created and pushed tag v$currentVersion" "SUCCESS"
+                                Write-Host "🎉 Missing tag v$currentVersion created! Release workflow should start automatically." -ForegroundColor Green
+                                return $true
+                            } else {
+                                Write-ReleaseLog "Failed to push tag v$currentVersion" "ERROR"
+                            }
+                        } else {
+                            Write-ReleaseLog "Failed to create tag v$currentVersion" "ERROR"
+                        }
+                    } else {
+                        Write-ReleaseLog "Tag v$currentVersion already exists" "INFO"
+                    }
+                } elseif (-not $latestTag) {
+                    # No tags exist yet, check if we should create first tag
+                    Write-ReleaseLog "No tags exist, current VERSION: $currentVersion" "INFO"
+                    if ($currentVersion -ne "0.0.0") {
+                        $currentTag = & git tag -l "v$currentVersion"
+                        if (-not $currentTag) {
+                            Write-ReleaseLog "Creating initial tag: v$currentVersion" "SUCCESS"
+                            & git tag -a "v$currentVersion" -m "Release v$currentVersion"
+                            if ($LASTEXITCODE -eq 0) {
+                                & git push origin "v$currentVersion"
+                                if ($LASTEXITCODE -eq 0) {
+                                    Write-ReleaseLog "Successfully created initial tag v$currentVersion" "SUCCESS"
+                                    return $true
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Write-ReleaseLog "VERSION ($currentVersion) matches latest tag ($latestTag)" "INFO"
+                }
+                
+                return $false
+            } catch {
+                Write-ReleaseLog "Error checking for missing tags: $_" "ERROR"
+                return $false
+            }
+        }
+        
         # Helper to calculate next version
         function Get-NextVersion {
             param(
@@ -409,6 +484,18 @@ Co-Authored-By: Claude <noreply@anthropic.com>
             Write-Host ""
             Write-Host "🚀 AitherZero Release Workflow" -ForegroundColor Magenta
             Write-Host ("=" * 50) -ForegroundColor Magenta
+            
+            # STEP 0: Check for missing tags first (auto-recovery)
+            Write-Host ""
+            Write-ReleaseLog "Step 0: Checking for missing tags from previous releases..."
+            $missingTagCreated = Test-AndCreateMissingTags -ProjectRoot $projectRoot
+            
+            if ($missingTagCreated) {
+                Write-Host ""
+                Write-Host "🎉 Found and created missing tag! Release workflow completed." -ForegroundColor Green
+                Write-Host "Monitor the release build at: https://github.com/wizzense/AitherZero/actions" -ForegroundColor Cyan
+                return
+            }
             
             # Get current and next version
             $currentVersion = Get-CurrentVersion
