@@ -64,8 +64,9 @@ function Invoke-ModuleAPI {
     $attempt = 0
     $lastError = $null
     
-    # Retry loop with exponential backoff
-    do {
+    try {
+        # Retry loop with exponential backoff
+        do {
         $attempt++
         try {
             # Check if API exists
@@ -231,12 +232,12 @@ function Invoke-ModuleAPI {
             Write-CustomLog -Level 'INFO' -Message "Retrying API call in ${backoffMs}ms (attempt $($attempt + 1) of $($RetryAttempts + 1))"
             Start-Sleep -Milliseconds $backoffMs
         }
-    } while ($attempt -le $RetryAttempts)
-    
-    # If we got here, all attempts failed
-    throw $lastError
-    
-} catch {
+        } while ($attempt -le $RetryAttempts)
+        
+        # If we got here, all attempts failed
+        throw $lastError
+        
+    } catch {
         # Update failure metrics
         $script:APIRegistry.Metrics.FailedCalls++
         
