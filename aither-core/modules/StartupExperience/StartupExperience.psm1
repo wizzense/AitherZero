@@ -71,10 +71,15 @@ foreach ($function in $publicFunctions) {
     . $function.FullName
 }
 
-# Import all private functions
+# Import all private functions with error handling
 $privateFunctions = Get-ChildItem -Path (Join-Path $moduleRoot 'Private') -Filter '*.ps1' -ErrorAction SilentlyContinue
 foreach ($function in $privateFunctions) {
-    . $function.FullName
+    try {
+        . $function.FullName
+        Write-Verbose "Loaded private function: $($function.BaseName)"
+    } catch {
+        Write-Warning "Failed to load private function $($function.BaseName): $_"
+    }
 }
 
 # Export public functions
@@ -92,7 +97,9 @@ try {
 }
 
 # Provide fallback Test-FeatureAccess function if LicenseManager is not loaded
-if (-not (Get-Command Test-FeatureAccess -ErrorAction SilentlyContinue)) {
+# Force creation of fallback function if LicenseManager isn't properly loaded
+if (-not (Get-Command Test-FeatureAccess -ErrorAction SilentlyContinue) -or 
+    (Get-Command Test-FeatureAccess -ErrorAction SilentlyContinue).Source -eq '') {
     function Test-FeatureAccess {
         <#
         .SYNOPSIS

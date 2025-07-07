@@ -612,8 +612,11 @@ try {
         exit 1
     }
     
-    # Extract version from release tag
-    $releaseVersion = if ($release.tag_name -match '^v?(.+)$') {
+    # Extract version from release tag with improved regex
+    $releaseVersion = if ($release.tag_name -match '^v?([0-9]+\.[0-9]+\.[0-9]+(?:-[a-zA-Z0-9.-]+)?)$') {
+        $matches[1]
+    } elseif ($release.tag_name -match '^v?(.+)$') {
+        # Fallback for other version formats
         $matches[1]
     } else {
         Write-Host "[!] Could not extract version from release tag: $($release.tag_name)" -ForegroundColor Yellow
@@ -626,12 +629,13 @@ try {
     # Map bootstrap profile names to build profile names
     $buildProfile = switch ($profile) {
         'minimal' { 'minimal' }
-        'developer' { 'development' }  # Use development package which includes SetupWizard
-        'full' { 'development' }  # Build uses 'development' for full profile
+        'developer' { 'developer' }  # Use developer package which includes SetupWizard
+        'full' { 'developer' }  # Build uses 'developer' for full profile
         default { 'standard' }
     }
     # Updated pattern to match versioned files: AitherZero-{version}-{profile}-windows.zip
-    $profilePattern = "AitherZero-.*-$buildProfile-windows\.zip$"
+    # Make pattern more flexible to handle variations
+    $profilePattern = "AitherZero-.*?-?$buildProfile-windows\.zip$"
     
     foreach ($asset in $release.assets) {
         if ($asset.name -match $profilePattern) {
@@ -664,7 +668,12 @@ try {
     Write-Host "[-] Downloading $($windowsAsset.name)..." -ForegroundColor Yellow
     
     try {
-        Invoke-WebRequestWithRetry -Uri $windowsAsset.browser_download_url -OutFile $zipFile
+        # Check if file already exists to avoid redundant downloads
+        if (Test-Path $zipFile) {
+            Write-Host "[i] Using existing download: $zipFile" -ForegroundColor Cyan
+        } else {
+            Invoke-WebRequestWithRetry -Uri $windowsAsset.browser_download_url -OutFile $zipFile
+        }
     } catch {
         Write-Host "[!] Download failed after multiple attempts" -ForegroundColor Red
         Write-Host "[i] Error: $($_.Exception.Message)" -ForegroundColor Gray
@@ -810,7 +819,7 @@ try {
                     try {
                         $pwsh7Path = Install-PowerShell7 -NonInteractive:($env:AITHER_BOOTSTRAP_MODE -ne $null)
                         
-                        if (Test-Path $pwsh7Path) {
+                        if ($pwsh7Path -and (Test-Path $pwsh7Path)) {
                             Write-Host "[+] PowerShell 7 installed successfully!" -ForegroundColor Green
                             Write-Host "[~] Re-launching bootstrap in PowerShell 7..." -ForegroundColor Cyan
                             
