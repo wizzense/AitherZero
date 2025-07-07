@@ -843,6 +843,11 @@ try {
                                 }
                             }
                             
+                            # Validate script path before re-launch
+                            if (-not $scriptPath -or -not (Test-Path $scriptPath)) {
+                                throw "Bootstrap script path is invalid or empty. Cannot re-launch in PowerShell 7."
+                            }
+                            
                             # Re-launch in PowerShell 7 with proper window handling
                             $relaunchArgs = @(
                                 "-NoExit",  # Keep window open
