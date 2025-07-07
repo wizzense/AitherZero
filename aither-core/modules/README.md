@@ -4,46 +4,39 @@
 
 The `modules` directory contains the modular components that extend AitherCore's functionality. Each module is self-contained with its own manifest, implementation, and tests, following PowerShell module best practices.
 
+**Module Count**: 23 active modules (reduced from 30+ through consolidation)
+
 ```
 modules/
-├── Core Infrastructure (Required)
+├── Core Infrastructure (4 modules - Required)
 │   ├── Logging/                    # Centralized logging system
+│   ├── LicenseManager/             # Feature licensing and access control
+│   ├── ConfigurationCore/          # Core configuration management
+│   └── ModuleCommunication/        # Inter-module messaging bus
+│
+├── Feature Modules (19 modules - Optional)
 │   ├── LabRunner/                  # Lab automation orchestration
-│   └── OpenTofuProvider/           # Infrastructure deployment
-│
-├── Platform Services
-│   ├── ModuleCommunication/        # Inter-module messaging bus
-│   ├── ConfigurationCore/          # Unified configuration management
-│   ├── ConfigurationCarousel/      # Multi-environment configs
-│   ├── ConfigurationRepository/    # Git-based config management
-│   ├── OrchestrationEngine/        # Workflow automation
-│   ├── ParallelExecution/          # Parallel task execution
-│   └── ProgressTracking/           # Visual progress feedback
-│
-├── Feature Modules
+│   ├── PatchManager/               # Git workflow automation (v3.0)
+│   ├── BackupManager/              # Backup and recovery
+│   ├── DevEnvironment/             # Development environment setup
+│   ├── OpenTofuProvider/           # Infrastructure deployment
 │   ├── ISOManager/                 # ISO download and management
 │   ├── ISOCustomizer/              # ISO customization tools
+│   ├── ParallelExecution/          # Parallel task execution
+│   ├── TestingFramework/           # Unified test orchestration
 │   ├── SecureCredentials/          # Enterprise credential management
 │   ├── RemoteConnection/           # Multi-protocol connections
 │   ├── SystemMonitoring/           # Performance monitoring
-│   ├── BackupManager/              # Backup and recovery
-│   ├── PatchManager/               # Git workflow automation
-│   └── DevEnvironment/             # Development setup
-│
-├── Integration Modules
+│   ├── CloudProviderIntegration/   # Cloud provider abstractions
+│   ├── UserExperience/             # Unified user interaction (consolidated)
 │   ├── AIToolsIntegration/         # AI tool management
-│   ├── RestAPIServer/              # REST API endpoints
-│   ├── RepoSync/                   # Repository synchronization
-│   └── ScriptManager/              # Script repository management
+│   ├── ConfigurationCarousel/      # Multi-environment configs
+│   ├── ConfigurationRepository/    # Git-based config management
+│   ├── OrchestrationEngine/        # Workflow automation
+│   └── ProgressTracking/           # Visual progress feedback
 │
-└── Specialized Modules
-    ├── SecurityAutomation/         # Security hardening
-    ├── SetupWizard/                # First-time setup
-    ├── StartupExperience/          # Enhanced startup UI
-    ├── LicenseManager/             # Feature licensing
-    ├── TestingFramework/           # Test automation
-    └── UnifiedMaintenance/         # System maintenance
-```
+└── Compatibility Shims (Legacy Support)
+    └── compatibility/              # Backward compatibility modules
 
 ## Overview
 
@@ -192,11 +185,11 @@ $result = Invoke-ModuleAPI -TargetModule "OtherModule" `
                           -APIName "GetStatus" `
                           -Parameters @{verbose = $true}
 
-# Publish events
-Send-ModuleEvent -EventName "DataProcessed" `
-                -EventData @{RecordCount = 100; Duration = "00:00:45"}
+# Submit events (formerly Send-ModuleEvent)
+Submit-ModuleEvent -EventName "DataProcessed" `
+                  -EventData @{RecordCount = 100; Duration = "00:00:45"}
 
-# Subscribe to events
+# Register event handlers
 Register-ModuleEventHandler -EventName "DataProcessed" `
                            -ModuleName "MyModule" `
                            -Handler { param($data) Write-Log "Processed: $($data.RecordCount)" }
@@ -373,7 +366,7 @@ $data = Invoke-ModuleAPI -TargetModule "DataProvider" -APIName "GetData" -Parame
 #### Publish-Subscribe
 ```powershell
 # Publisher
-Send-ModuleEvent -EventName "ConfigurationChanged" -EventData @{
+Submit-ModuleEvent -EventName "ConfigurationChanged" -EventData @{
     Setting = "MaxConcurrency"
     OldValue = 4
     NewValue = 8

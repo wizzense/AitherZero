@@ -619,8 +619,7 @@ function Invoke-CertificateLifecycleManagement {
                                 'Archived' { 'success' }
                                 'Deployed' { 'success' }
                                 'Failed' { 'error' }
-                                'ExpiringS
-                                'oon' { 'warning' }
+                                'ExpiringSoon' { 'warning' }
                                 default { '' }
                             }
                             

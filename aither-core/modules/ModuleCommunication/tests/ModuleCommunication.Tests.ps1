@@ -28,12 +28,12 @@ Describe "ModuleCommunication Module Tests" {
         It "Should export all expected functions" {
             $ExportedFunctions = (Get-Module ModuleCommunication).ExportedFunctions.Keys
             $ExpectedFunctions = @(
-                'Send-ModuleMessage', 'Register-ModuleMessageHandler', 'Unsubscribe-ModuleMessage',
+                'Submit-ModuleMessage', 'Register-ModuleMessageHandler', 'Unsubscribe-ModuleMessage',
                 'Get-MessageSubscriptions', 'Clear-MessageQueue', 'New-MessageChannel',
                 'Remove-MessageChannel', 'Get-MessageChannels', 'Test-MessageChannel',
                 'Register-ModuleAPI', 'Unregister-ModuleAPI', 'Invoke-ModuleAPI',
                 'Get-ModuleAPIs', 'Test-ModuleAPI', 'Add-APIMiddleware',
-                'Remove-APIMiddleware', 'Get-APIMiddleware', 'Send-ModuleEvent',
+                'Remove-APIMiddleware', 'Get-APIMiddleware', 'Submit-ModuleEvent',
                 'Register-ModuleEventHandler', 'Unsubscribe-ModuleEvent', 'Get-ModuleEvents',
                 'Clear-EventHistory', 'Get-CommunicationMetrics', 'Reset-CommunicationMetrics',
                 'Enable-MessageTracing', 'Disable-MessageTracing', 'Test-ModuleCommunication',
@@ -124,7 +124,7 @@ Describe "ModuleCommunication Module Tests" {
                 $script:ReceivedMessage = $Message
             }
             
-            $MessageId = Send-ModuleMessage -Channel "TestChannel" -MessageType "Test" -Data @{Content = "Hello World"}
+            $MessageId = Submit-ModuleMessage -Channel "TestChannel" -MessageType "Test" -Data @{Content = "Hello World"}
             $MessageId | Should -Not -BeNullOrEmpty
             
             # Wait for message delivery
@@ -257,7 +257,7 @@ Describe "ModuleCommunication Module Tests" {
                 $script:ReceivedEvent = $Event
             }
             
-            $EventId = Send-ModuleEvent -EventName "TestEvent" -EventData @{Message = "Test Event"}
+            $EventId = Submit-ModuleEvent -EventName "TestEvent" -EventData @{Message = "Test Event"}
             $EventId | Should -Not -BeNullOrEmpty
             
             # Wait for event delivery
@@ -273,7 +273,7 @@ Describe "ModuleCommunication Module Tests" {
         }
         
         It "Should get module events from history" {
-            Send-ModuleEvent -EventName "TestEvent" -EventData @{Message = "Test Event"}
+            Submit-ModuleEvent -EventName "TestEvent" -EventData @{Message = "Test Event"}
             
             $Events = Get-ModuleEvents -EventName "TestEvent"
             $Events | Should -Not -BeNullOrEmpty
@@ -291,7 +291,7 @@ Describe "ModuleCommunication Module Tests" {
         }
         
         It "Should clear event history" {
-            Send-ModuleEvent -EventName "TestEvent" -EventData @{Message = "Test Event"}
+            Submit-ModuleEvent -EventName "TestEvent" -EventData @{Message = "Test Event"}
             
             $Result = Clear-EventHistory -Force
             $Result.Success | Should -Be $true
@@ -404,7 +404,7 @@ Describe "ModuleCommunication Module Tests" {
                 param($Data)
                 
                 # Send event about processing
-                Send-ModuleEvent -EventName "DataProcessing" -EventData @{
+                Submit-ModuleEvent -EventName "DataProcessing" -EventData @{
                     Data = $Data
                     ProcessedAt = Get-Date
                 }

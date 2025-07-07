@@ -33,7 +33,7 @@
     # Functions to export from this module
     FunctionsToExport = @(
         # Message Bus Functions
-        'Send-ModuleMessage',
+        'Submit-ModuleMessage',
         'Register-ModuleMessageHandler',
         'Unsubscribe-ModuleMessage',
         'Get-MessageSubscriptions',
@@ -58,7 +58,7 @@
         'Get-APIMiddleware',
         
         # Event System (Enhanced)
-        'Send-ModuleEvent',
+        'Submit-ModuleEvent',
         'Register-ModuleEventHandler',
         'Unsubscribe-ModuleEvent',
         'Get-ModuleEvents',
@@ -99,7 +99,14 @@
     VariablesToExport = @()
 
     # Aliases to export from this module
-    AliasesToExport = @()
+    AliasesToExport = @(
+        'Send-ModuleMessage',
+        'Send-ModuleEvent',
+        'Publish-ModuleMessage',
+        'Subscribe-ModuleMessage',
+        'Publish-ModuleEvent',
+        'Subscribe-ModuleEvent'
+    )
 
     # Private data to pass to the module
     PrivateData = @{

@@ -116,6 +116,282 @@ if ($Help) {
     return
 }
 
+# Backward compatibility and unified initialization functions
+function Initialize-BackwardCompatibilityLayer {
+    [CmdletBinding()]
+    param()
+    
+    # Use Write-CustomLog only if available, otherwise use Write-Verbose
+    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+        Write-CustomLog "Initializing backward compatibility layer..." -Level DEBUG
+    } else {
+        Write-Verbose "Initializing backward compatibility layer..."
+    }
+    
+    # Ensure legacy module aliases are available
+    $legacyModuleAliases = @{
+        'CoreApp' = 'LabRunner'
+        'CoreApplication' = 'LabRunner' 
+        'InfrastructureProvider' = 'OpenTofuProvider'
+        'CredentialManager' = 'SecureCredentials'
+        'ConnectionManager' = 'RemoteConnection'
+        'EnvironmentManager' = 'DevEnvironment'
+        'MaintenanceManager' = 'UnifiedMaintenance'
+        'ScriptExecutor' = 'ScriptManager'
+        'TestRunner' = 'TestingFramework'
+    }
+    
+    # Create backward compatibility aliases
+    foreach ($alias in $legacyModuleAliases.GetEnumerator()) {
+        try {
+            if (Get-Module -Name $alias.Value -ErrorAction SilentlyContinue) {
+                # Create alias for the module
+                $script:BackwardCompatibilityAliases = $script:BackwardCompatibilityAliases ?? @{}
+                $script:BackwardCompatibilityAliases[$alias.Key] = $alias.Value
+                if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                    Write-CustomLog "Created backward compatibility alias: $($alias.Key) -> $($alias.Value)" -Level DEBUG
+                } else {
+                    Write-Verbose "Created backward compatibility alias: $($alias.Key) -> $($alias.Value)"
+                }
+            }
+        } catch {
+            if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                Write-CustomLog "Warning: Could not create backward compatibility alias $($alias.Key): $_" -Level WARN
+            } else {
+                Write-Warning "Could not create backward compatibility alias $($alias.Key): $_"
+            }
+        }
+    }
+    
+    # Initialize legacy function mappings
+    Initialize-LegacyFunctionMappings
+    
+    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+        Write-CustomLog "Backward compatibility layer initialized successfully" -Level DEBUG
+    } else {
+        Write-Verbose "Backward compatibility layer initialized successfully"
+    }
+}
+
+function Initialize-LegacyFunctionMappings {
+    [CmdletBinding()]
+    param()
+    
+    # Map legacy function names to new consolidated functions
+    $legacyFunctionMappings = @{
+        'Start-CoreApplication' = 'Start-LabRunner'
+        'Invoke-CoreApplication' = 'Invoke-LabRunner'
+        'Initialize-CoreApplication' = 'Initialize-LabRunner'
+        'Get-CoreApplicationStatus' = 'Get-LabRunnerStatus'
+        'Test-CoreApplicationHealth' = 'Test-LabRunnerHealth'
+        'Start-InfrastructureDeployment' = 'Start-OpenTofuDeployment'
+        'Get-InfrastructureStatus' = 'Get-OpenTofuStatus'
+        'Start-CredentialManagement' = 'Start-SecureCredentials'
+        'Get-CredentialStatus' = 'Get-SecureCredentialStatus'
+    }
+    
+    foreach ($mapping in $legacyFunctionMappings.GetEnumerator()) {
+        try {
+            # Check if the new function exists
+            if (Get-Command $mapping.Value -ErrorAction SilentlyContinue) {
+                # Create a wrapper function for backward compatibility
+                $wrapperScript = @"
+function $($mapping.Key) {
+    [CmdletBinding()]
+    param()
+    
+    Write-CustomLog "Legacy function $($mapping.Key) called - redirecting to $($mapping.Value)" -Level WARN
+    Write-Warning "Function $($mapping.Key) is deprecated. Use $($mapping.Value) instead."
+    
+    # Forward all parameters to the new function
+    & $($mapping.Value) @PSBoundParameters
+}
+"@
+                Invoke-Expression $wrapperScript
+                if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                    Write-CustomLog "Created legacy function wrapper: $($mapping.Key) -> $($mapping.Value)" -Level DEBUG
+                } else {
+                    Write-Verbose "Created legacy function wrapper: $($mapping.Key) -> $($mapping.Value)"
+                }
+            }
+        } catch {
+            if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                Write-CustomLog "Warning: Could not create legacy function mapping $($mapping.Key): $_" -Level WARN
+            } else {
+                Write-Warning "Could not create legacy function mapping $($mapping.Key): $_"
+            }
+        }
+    }
+}
+
+function Initialize-ModuleStatusTracking {
+    [CmdletBinding()]
+    param()
+    
+    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+        Write-CustomLog "Initializing unified module status tracking..." -Level DEBUG
+    } else {
+        Write-Verbose "Initializing unified module status tracking..."
+    }
+    
+    # Initialize module status registry
+    $script:ModuleStatusRegistry = @{
+        CoreModules = @{}
+        ConsolidatedModules = @{}
+        LoadingStats = $script:ModuleLoadingStats
+        LastUpdate = Get-Date
+    }
+    
+    # Populate core module status
+    foreach ($moduleName in $coreModules) {
+        $moduleInfo = Get-Module -Name $moduleName -ErrorAction SilentlyContinue
+        $script:ModuleStatusRegistry.CoreModules[$moduleName] = @{
+            Name = $moduleName
+            Loaded = $null -ne $moduleInfo
+            Version = if ($moduleInfo) { $moduleInfo.Version.ToString() } else { 'Not Loaded' }
+            Path = if ($moduleInfo) { $moduleInfo.Path } else { 'Unknown' }
+            Functions = if ($moduleInfo) { $moduleInfo.ExportedFunctions.Keys } else { @() }
+            Required = $true
+            Category = 'Core'
+        }
+    }
+    
+    # Populate consolidated module status
+    foreach ($moduleName in $consolidatedModules) {
+        $moduleInfo = Get-Module -Name $moduleName -ErrorAction SilentlyContinue
+        $script:ModuleStatusRegistry.ConsolidatedModules[$moduleName] = @{
+            Name = $moduleName
+            Loaded = $null -ne $moduleInfo
+            Version = if ($moduleInfo) { $moduleInfo.Version.ToString() } else { 'Not Loaded' }
+            Path = if ($moduleInfo) { $moduleInfo.Path } else { 'Unknown' }
+            Functions = if ($moduleInfo) { $moduleInfo.ExportedFunctions.Keys } else { @() }
+            Required = $false
+            Category = 'Consolidated'
+        }
+    }
+    
+    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+        Write-CustomLog "Module status tracking initialized for $($script:ModuleStatusRegistry.CoreModules.Count + $script:ModuleStatusRegistry.ConsolidatedModules.Count) modules" -Level DEBUG
+    } else {
+        Write-Verbose "Module status tracking initialized for $($script:ModuleStatusRegistry.CoreModules.Count + $script:ModuleStatusRegistry.ConsolidatedModules.Count) modules"
+    }
+}
+
+function Get-ConsolidatedModuleStatus {
+    [CmdletBinding()]
+    param(
+        [string]$ModuleName,
+        [switch]$Detailed
+    )
+    
+    if (-not $script:ModuleStatusRegistry) {
+        Write-Warning "Module status tracking not initialized"
+        return
+    }
+    
+    # Update registry with current state
+    $script:ModuleStatusRegistry.LastUpdate = Get-Date
+    
+    if ($ModuleName) {
+        # Return specific module status
+        $moduleStatus = $script:ModuleStatusRegistry.CoreModules[$ModuleName] ?? 
+                       $script:ModuleStatusRegistry.ConsolidatedModules[$ModuleName]
+        
+        if ($moduleStatus) {
+            if ($Detailed) {
+                return $moduleStatus
+            } else {
+                return [PSCustomObject]@{
+                    Name = $moduleStatus.Name
+                    Loaded = $moduleStatus.Loaded
+                    Version = $moduleStatus.Version
+                    Category = $moduleStatus.Category
+                    Required = $moduleStatus.Required
+                }
+            }
+        } else {
+            Write-Warning "Module '$ModuleName' not found in registry"
+            return $null
+        }
+    } else {
+        # Return all module statuses
+        $allModules = @()
+        
+        foreach ($module in $script:ModuleStatusRegistry.CoreModules.Values) {
+            $allModules += if ($Detailed) { $module } else {
+                [PSCustomObject]@{
+                    Name = $module.Name
+                    Loaded = $module.Loaded
+                    Version = $module.Version
+                    Category = $module.Category
+                    Required = $module.Required
+                }
+            }
+        }
+        
+        foreach ($module in $script:ModuleStatusRegistry.ConsolidatedModules.Values) {
+            $allModules += if ($Detailed) { $module } else {
+                [PSCustomObject]@{
+                    Name = $module.Name
+                    Loaded = $module.Loaded
+                    Version = $module.Version
+                    Category = $module.Category
+                    Required = $module.Required
+                }
+            }
+        }
+        
+        return $allModules
+    }
+}
+
+function Show-ModuleLoadingSummary {
+    [CmdletBinding()]
+    param()
+    
+    if (-not $script:ModuleLoadingStats) {
+        Write-Warning "Module loading statistics not available"
+        return
+    }
+    
+    $stats = $script:ModuleLoadingStats
+    $totalModules = $stats.CoreModules.Total + $stats.ConsolidatedModules.Total
+    $totalLoaded = $stats.CoreModules.Loaded + $stats.ConsolidatedModules.Loaded
+    $totalFailed = $stats.CoreModules.Failed + $stats.ConsolidatedModules.Failed
+    
+    Write-Host ""
+    Write-Host "=" * 70 -ForegroundColor Cyan
+    Write-Host " AitherZero Module Loading Summary" -ForegroundColor Cyan
+    Write-Host "=" * 70 -ForegroundColor Cyan
+    Write-Host ""
+    
+    Write-Host "📊 Overall Statistics:" -ForegroundColor Yellow
+    Write-Host "   Total Modules: $totalModules" -ForegroundColor White
+    Write-Host "   Successfully Loaded: $totalLoaded" -ForegroundColor Green
+    Write-Host "   Failed to Load: $totalFailed" -ForegroundColor Red
+    Write-Host "   Success Rate: $([math]::Round(($totalLoaded / $totalModules) * 100, 1))%" -ForegroundColor Cyan
+    Write-Host ""
+    
+    Write-Host "🔧 Core Infrastructure Modules:" -ForegroundColor Yellow
+    Write-Host "   Loaded: $($stats.CoreModules.Loaded)/$($stats.CoreModules.Total)" -ForegroundColor White
+    Write-Host "   Status: $(if ($stats.CoreModules.Failed -eq 0) { 'All Critical Modules Loaded' } else { 'Some Core Modules Failed' })" -ForegroundColor $(if ($stats.CoreModules.Failed -eq 0) { 'Green' } else { 'Red' })
+    Write-Host ""
+    
+    Write-Host "🚀 Consolidated Feature Modules:" -ForegroundColor Yellow
+    Write-Host "   Loaded: $($stats.ConsolidatedModules.Loaded)/$($stats.ConsolidatedModules.Total)" -ForegroundColor White
+    Write-Host "   Status: $(if ($stats.ConsolidatedModules.Loaded -gt 0) { 'Feature Modules Available' } else { 'No Feature Modules Loaded' })" -ForegroundColor $(if ($stats.ConsolidatedModules.Loaded -gt 0) { 'Green' } else { 'Yellow' })
+    Write-Host ""
+    
+    if ($stats.CoreModules.Failed -gt 0 -or $stats.ConsolidatedModules.Failed -gt 0) {
+        Write-Host "⚠️  Module Loading Issues:" -ForegroundColor Red
+        Write-Host "   Some modules failed to load. Run with -Verbosity detailed for more information." -ForegroundColor Yellow
+        Write-Host "   Use Get-ConsolidatedModuleStatus -Detailed to see specific module details." -ForegroundColor Yellow
+        Write-Host ""
+    }
+    
+    Write-Host "=" * 70 -ForegroundColor Cyan
+}
+
 function Invoke-ScriptWithOutputHandling {
     [CmdletBinding()]
     param (
@@ -358,108 +634,291 @@ if (-not (Test-Path $pwshPath)) {
     exit 1
 }
 
-# Re-launch under PowerShell 7 if running under Windows PowerShell
-if ($PSVersionTable.PSVersion.Major -lt 7) {
-    Write-Host 'Switching to PowerShell 7...' -ForegroundColor Yellow
-
-    $argList = @()
-    foreach ($kvp in $PSBoundParameters.GetEnumerator()) {
-        if ($kvp.Value -is [System.Management.Automation.SwitchParameter]) {
-            if ($kvp.Value.IsPresent) {
-                $argList += "-$($kvp.Key)"
-            }
-        } else {
-            $argList += "-$($kvp.Key)"
-            $argList += $kvp.Value
-        }
+# Import PowerShell version checking utility
+$versionCheckPath = Join-Path (Split-Path $PSScriptRoot -Parent) "aither-core/shared/Test-PowerShellVersion.ps1"
+if (Test-Path $versionCheckPath) {
+    . $versionCheckPath
+} else {
+    # Fallback if utility not found
+    if ($PSVersionTable.PSVersion.Major -lt 7) {
+        Write-Host 'AitherZero requires PowerShell 7.0 or later.' -ForegroundColor Yellow
+        Write-Host "Current version: $($PSVersionTable.PSVersion)" -ForegroundColor Yellow
+        exit 1
     }
+}
 
-    & $pwshPath -File $PSCommandPath @argList
-    exit $LASTEXITCODE
+# Check PowerShell version
+if (-not (Test-PowerShellVersion -MinimumVersion "7.0" -Quiet)) {
+    Write-Host 'AitherZero Core requires PowerShell 7.0 or later.' -ForegroundColor Yellow
+    # Note: Start-AitherZero.ps1 handles the relaunch, so we just exit here
+    exit 1
+}
+
+# Import progress indicator utilities
+$progressPath = Join-Path $PSScriptRoot "shared/Show-Progress.ps1"
+if (Test-Path $progressPath) {
+    . $progressPath
 }
 
 # Import required modules
 try {
     Write-Verbose 'Importing core modules...'
+    
+    # Show startup progress if not in quiet mode
+    if (-not $Quiet -and $Verbosity -ne 'silent') {
+        Show-SimpleProgress -Message "Starting AitherZero Infrastructure Automation" -Type Start
+    }
 
-    # Define core modules that should always be loaded
-    # IMPORTANT: Logging must be loaded first as other modules depend on it
+    # Define consolidated module loading strategy
+    # IMPORTANT: Core modules must be loaded first, then consolidated modules
+    
+    # Core infrastructure modules (required for basic operation)
     $coreModules = @(
         'Logging',              # Must be first - provides Write-CustomLog
-        'LicenseManager',
-        'ConfigurationCore',
-        'ModuleCommunication',
-        'LabRunner'
+        'LicenseManager',       # Feature licensing and access control
+        'ConfigurationCore',    # Configuration management
+        'ModuleCommunication'   # Inter-module communication bus
+    )
+    
+    # Consolidated modules (new architecture)
+    $consolidatedModules = @(
+        'LabRunner',            # Lab automation and orchestration
+        'PatchManager',         # Git workflow automation
+        'BackupManager',        # Backup and recovery operations
+        'DevEnvironment',       # Development environment setup
+        'OpenTofuProvider',     # Infrastructure deployment
+        'SecureCredentials',    # Enterprise credential management
+        'RemoteConnection',     # Multi-protocol remote connections
+        'SystemMonitoring',     # System performance monitoring
+        'ParallelExecution',    # Parallel task execution
+        'ISOManager',           # ISO management and customization
+        'ISOCustomizer',        # ISO customization tools
+        'TestingFramework',     # Unified testing framework
+        'SetupWizard',          # First-time setup wizard
+        'StartupExperience',    # Enhanced startup UI
+        'ConfigurationCarousel', # Multi-environment configuration
+        'ConfigurationRepository', # Git-based configuration management
+        'OrchestrationEngine',  # Workflow automation
+        'ProgressTracking',     # Visual progress feedback
+        'AIToolsIntegration',   # AI development tools
+        'RestAPIServer',        # REST API endpoints
+        'RepoSync',             # Repository synchronization
+        'ScriptManager',        # Script repository management
+        'SecurityAutomation',   # Security hardening
+        'UnifiedMaintenance',   # System maintenance
+        'PSScriptAnalyzerIntegration' # PowerShell analysis integration
     )
 
-    # Load each core module
+    # Initialize module loading statistics
+    $moduleLoadingStats = @{
+        CoreModules = @{ Total = 0; Loaded = 0; Failed = 0 }
+        ConsolidatedModules = @{ Total = 0; Loaded = 0; Failed = 0 }
+        StartTime = Get-Date
+    }
+    
+    # Load core modules first (critical for system operation)
+    Write-Verbose "Loading core infrastructure modules..."
+    $moduleLoadingStats.CoreModules.Total = $coreModules.Count
+    
+    # Show loading message
+    if (Get-Command Show-SimpleProgress -ErrorAction SilentlyContinue) {
+        Show-SimpleProgress -Message "Loading $($coreModules.Count) core infrastructure modules..." -Type Update
+    }
+    
+    $coreIndex = 0
     foreach ($moduleName in $coreModules) {
+        $coreIndex++
         $modulePath = Join-Path $env:PWSH_MODULES_PATH $moduleName
         
         if (Test-Path $modulePath) {
             try {
+                # Show progress
+                if (Get-Command Show-ModuleLoadingProgress -ErrorAction SilentlyContinue) {
+                    Show-ModuleLoadingProgress -ModuleName $moduleName -ModuleType "Core" -CurrentIndex $coreIndex -TotalCount $coreModules.Count -Statistics $moduleLoadingStats
+                }
+                
                 if ($Verbosity -eq 'silent') {
                     Import-Module $modulePath -Force -ErrorAction Stop *>$null
                 } else {
-                    Write-Verbose "Importing $moduleName module..."
+                    Write-Verbose "Importing core module: $moduleName"
                     Import-Module $modulePath -Force -ErrorAction Stop
                 }
-                # Only use Write-CustomLog after Logging module is loaded
-                if ($moduleName -eq 'Logging' -or (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-                    Write-CustomLog "$moduleName module loaded successfully" -Level DEBUG
+                
+                # Verify module loaded successfully
+                if (Get-Module -Name $moduleName -ErrorAction SilentlyContinue) {
+                    $moduleLoadingStats.CoreModules.Loaded++
+                    # Only use Write-CustomLog after Logging module is loaded
+                    if ($moduleName -eq 'Logging' -or (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
+                        Write-CustomLog "Core module loaded: $moduleName" -Level DEBUG
+                    } else {
+                        Write-Verbose "Core module loaded: $moduleName"
+                    }
                 } else {
-                    Write-Verbose "$moduleName module loaded successfully"
+                    $moduleLoadingStats.CoreModules.Failed++
+                    Write-Warning "Core module $moduleName loaded but not found in session"
                 }
             } catch {
-                # Non-critical modules can fail silently
-                if ($moduleName -in @('Logging', 'LabRunner')) {
-                    throw "Critical module $moduleName failed to load: $_"
+                $moduleLoadingStats.CoreModules.Failed++
+                # Core modules are critical - fail hard
+                if ($moduleName -in @('Logging')) {
+                    throw "Critical core module $moduleName failed to load: $_"
                 } else {
                     # Only use Write-CustomLog if available
                     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-                        Write-CustomLog "Optional module $moduleName failed to load: $_" -Level WARN
+                        Write-CustomLog "Core module $moduleName failed to load: $_" -Level ERROR
                     } else {
-                        Write-Warning "Optional module $moduleName failed to load: $_"
+                        Write-Error "Core module $moduleName failed to load: $_"
                     }
                 }
             }
         } else {
-            if ($moduleName -in @('Logging', 'LabRunner')) {
-                throw "$moduleName module not found at: $modulePath"
+            $moduleLoadingStats.CoreModules.Failed++
+            if ($moduleName -in @('Logging')) {
+                throw "Critical core module $moduleName not found at: $modulePath"
             } else {
                 # Only use Write-CustomLog if available
                 if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-                    Write-CustomLog "Optional module $moduleName not found at: $modulePath" -Level DEBUG
+                    Write-CustomLog "Core module $moduleName not found at: $modulePath" -Level WARN
                 } else {
-                    Write-Verbose "Optional module $moduleName not found at: $modulePath"
+                    Write-Warning "Core module $moduleName not found at: $modulePath"
                 }
             }
         }
     }
+    
+    # Load consolidated modules with graceful degradation
+    Write-Verbose "Loading consolidated modules..."
+    $moduleLoadingStats.ConsolidatedModules.Total = $consolidatedModules.Count
+    
+    # Show loading message
+    if (Get-Command Show-SimpleProgress -ErrorAction SilentlyContinue) {
+        Show-SimpleProgress -Message "Loading $($consolidatedModules.Count) consolidated modules..." -Type Update
+    }
+    
+    $consolidatedIndex = 0
+    foreach ($moduleName in $consolidatedModules) {
+        $consolidatedIndex++
+        $modulePath = Join-Path $env:PWSH_MODULES_PATH $moduleName
+        
+        if (Test-Path $modulePath) {
+            try {
+                # Show progress
+                if (Get-Command Show-ModuleLoadingProgress -ErrorAction SilentlyContinue) {
+                    Show-ModuleLoadingProgress -ModuleName $moduleName -ModuleType "Consolidated" -CurrentIndex $consolidatedIndex -TotalCount $consolidatedModules.Count -Statistics $moduleLoadingStats
+                }
+                
+                if ($Verbosity -eq 'silent') {
+                    Import-Module $modulePath -Force -ErrorAction Stop *>$null
+                } else {
+                    Write-Verbose "Importing consolidated module: $moduleName"
+                    Import-Module $modulePath -Force -ErrorAction Stop
+                }
+                
+                # Verify module loaded successfully
+                if (Get-Module -Name $moduleName -ErrorAction SilentlyContinue) {
+                    $moduleLoadingStats.ConsolidatedModules.Loaded++
+                    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                        Write-CustomLog "Consolidated module loaded: $moduleName" -Level DEBUG
+                    } else {
+                        Write-Verbose "Consolidated module loaded: $moduleName"
+                    }
+                } else {
+                    $moduleLoadingStats.ConsolidatedModules.Failed++
+                    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                        Write-CustomLog "Consolidated module $moduleName loaded but not found in session" -Level WARN
+                    } else {
+                        Write-Warning "Consolidated module $moduleName loaded but not found in session"
+                    }
+                }
+            } catch {
+                $moduleLoadingStats.ConsolidatedModules.Failed++
+                # Consolidated modules are optional - warn but continue
+                if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                    Write-CustomLog "Consolidated module $moduleName failed to load: $_" -Level WARN
+                } else {
+                    Write-Warning "Consolidated module $moduleName failed to load: $_"
+                }
+            }
+        } else {
+            $moduleLoadingStats.ConsolidatedModules.Failed++
+            if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                Write-CustomLog "Consolidated module $moduleName not found at: $modulePath" -Level DEBUG
+            } else {
+                Write-Verbose "Consolidated module $moduleName not found at: $modulePath"
+            }
+        }
+    }
+    
+    # Complete progress indicator
+    if (Get-Command Complete-StartupProgress -ErrorAction SilentlyContinue) {
+        Complete-StartupProgress -Statistics $moduleLoadingStats
+    }
+    
+    # Report module loading statistics
+    $loadingDuration = (Get-Date) - $moduleLoadingStats.StartTime
+    Write-Verbose "Module loading completed in $($loadingDuration.TotalSeconds) seconds"
+    Write-Verbose "Core modules: $($moduleLoadingStats.CoreModules.Loaded)/$($moduleLoadingStats.CoreModules.Total) loaded"
+    Write-Verbose "Consolidated modules: $($moduleLoadingStats.ConsolidatedModules.Loaded)/$($moduleLoadingStats.ConsolidatedModules.Total) loaded"
+    
+    # Store module loading statistics for later use
+    $script:ModuleLoadingStats = $moduleLoadingStats
 
     # Initialize logging system with proper verbosity mapping (Force required to override auto-init)
-    if ($Verbosity -eq 'silent') {
-        Initialize-LoggingSystem -ConsoleLevel $script:LogLevel -LogLevel 'DEBUG' -Force *>$null
+    if (Get-Command Initialize-LoggingSystem -ErrorAction SilentlyContinue) {
+        if ($Verbosity -eq 'silent') {
+            Initialize-LoggingSystem -ConsoleLevel $script:LogLevel -LogLevel 'DEBUG' -Force *>$null
+        } else {
+            Initialize-LoggingSystem -ConsoleLevel $script:LogLevel -LogLevel 'DEBUG' -Force
+        }
     } else {
-        Initialize-LoggingSystem -ConsoleLevel $script:LogLevel -LogLevel 'DEBUG' -Force
+        Write-Warning "Initialize-LoggingSystem function not available. Logging module may not have loaded properly."
     }
 
-    Write-CustomLog 'Core runner started' -Level DEBUG
+    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+        Write-CustomLog 'Core runner started with consolidated module architecture' -Level INFO
+    } else {
+        Write-Host "✓ Core runner started with consolidated module architecture" -ForegroundColor Green
+    }
+    
+    # Initialize backward compatibility layer
+    Initialize-BackwardCompatibilityLayer
+    
+    # Initialize unified module status tracking
+    Initialize-ModuleStatusTracking
+    
+    # Show module loading summary if verbosity allows
+    if ($Verbosity -in @('normal', 'detailed') -and -not $NonInteractive) {
+        Show-ModuleLoadingSummary
+    }
 } catch {
-    Write-Host "❌ Error importing required modules: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "❌ Error initializing consolidated module architecture: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "" -ForegroundColor White
-    Write-Host "💡 Troubleshooting Steps:" -ForegroundColor Yellow
+    Write-Host "💡 Troubleshooting Steps for Consolidated Modules:" -ForegroundColor Yellow
     Write-Host "  1. Verify project structure is complete" -ForegroundColor White
     Write-Host "  2. Check that modules exist at: $env:PWSH_MODULES_PATH" -ForegroundColor White
-    Write-Host "  3. Ensure all files were extracted properly" -ForegroundColor White
+    Write-Host "  3. Ensure all consolidated modules are properly structured" -ForegroundColor White
     Write-Host "  4. Try running from the project root directory" -ForegroundColor White
     Write-Host "  5. Check PowerShell version: `$PSVersionTable.PSVersion" -ForegroundColor White
+    Write-Host "  6. Run Get-ConsolidatedModuleStatus for detailed module information" -ForegroundColor White
     Write-Host "" -ForegroundColor White
     Write-Host "🔍 Current paths:" -ForegroundColor Cyan
     Write-Host "  Project Root: $env:PROJECT_ROOT" -ForegroundColor White
     Write-Host "  Modules Path: $env:PWSH_MODULES_PATH" -ForegroundColor White
     Write-Host "  Script Location: $PSScriptRoot" -ForegroundColor White
     Write-Host "" -ForegroundColor White
+    Write-Host "🔧 Recovery Options:" -ForegroundColor Yellow
+    Write-Host "  • Run with -Verbosity detailed for more information" -ForegroundColor White
+    Write-Host "  • Use individual module imports as fallback" -ForegroundColor White
+    Write-Host "  • Check logs for specific module loading failures" -ForegroundColor White
+    Write-Host "" -ForegroundColor White
+    
+    # Try to show partial module loading statistics if available
+    if ($script:ModuleLoadingStats) {
+        Write-Host "📊 Partial Loading Statistics:" -ForegroundColor Cyan
+        Write-Host "  Core Modules Loaded: $($script:ModuleLoadingStats.CoreModules.Loaded)" -ForegroundColor White
+        Write-Host "  Consolidated Modules Loaded: $($script:ModuleLoadingStats.ConsolidatedModules.Loaded)" -ForegroundColor White
+    }
+    
     exit 1
 }
 

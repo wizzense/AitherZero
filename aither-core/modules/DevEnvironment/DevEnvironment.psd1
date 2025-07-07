@@ -20,6 +20,7 @@
         'Test-DevEnvironment',
         'Resolve-ModuleImportIssues',
         'Optimize-PlatformEnvironment',
+        'Start-DeveloperSetup',
         
         # VS Code Integration
         'Initialize-VSCodeWorkspace',
@@ -44,7 +45,8 @@
         'Set-DevelopmentEnvironment',
         'Test-DevelopmentSetup',
         'Remove-ProjectEmojis',
-        'Set-PatchManagerAliases'
+        'Set-PatchManagerAliases',
+        'Show-DevEnvironmentSummary'
     )
 
     CmdletsToExport = @()

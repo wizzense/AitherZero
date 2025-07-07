@@ -4,156 +4,108 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to release (e.g., 1.2.3)'
-        required: true
-        type: string
-      description:
-        description: 'Release description'
-        required: false
-        default: 'New release'
 
 jobs:
-  build:
-    name: Build Release Artifacts
+  build-and-release:
+    name: Build and Release
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [windows, linux, macos]
-      max-parallel: 3
+    permissions:
+      contents: write
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup PowerShell
-      shell: bash
-      run: |
-        # Update package lists
-        sudo apt-get update
-        
-        # Install PowerShell
-        sudo apt-get install -y wget apt-transport-https software-properties-common
-        wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
-        sudo dpkg -i packages-microsoft-prod.deb
-        sudo apt-get update
-        sudo apt-get install -y powershell
-        
-    - name: Get Version
+    # PowerShell is pre-installed on GitHub runners
+      
+    - name: Get Version from Tag
       id: get_version
       shell: bash
       run: |
-        if [ "${{ github.event_name }}" == "push" ]; then
-          # Extract version from tag
-          VERSION=${GITHUB_REF#refs/tags/v}
-        else
-          # Use input version
-          VERSION="${{ github.event.inputs.version }}"
-        fi
+        # Extract version from tag (remove 'v' prefix)
+        VERSION=${GITHUB_REF#refs/tags/v}
         echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
         
-    - name: Build Package
+    - name: Build All Packages
       shell: pwsh
       run: |
-        Write-Host "Building ${{ matrix.platform }} package for version ${{ steps.get_version.outputs.version }}"
-        ./build/Build-Package.ps1 -Platform ${{ matrix.platform }} -Version "${{ steps.get_version.outputs.version }}"
+        Write-Host "Building all packages for version ${{ steps.get_version.outputs.version }}"
+        ./build/Build-Package.ps1 -Platform all -Version "${{ steps.get_version.outputs.version }}"
         
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: aitherzero-${{ matrix.platform }}-${{ steps.get_version.outputs.version }}
-        path: build/output/*
-        
-  release:
-    name: Create Release
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Get Version
-      id: get_version
-      shell: bash
-      run: |
-        if [ "${{ github.event_name }}" == "push" ]; then
-          # Extract version from tag
-          VERSION=${GITHUB_REF#refs/tags/v}
-        else
-          # Use input version
-          VERSION="${{ github.event.inputs.version }}"
-        fi
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-        
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: artifacts
-        
-    - name: Prepare Release Files
-      run: |
-        mkdir -p release-files
-        find artifacts -type f \( -name "*.zip" -o -name "*.tar.gz" \) -exec cp {} release-files/ \;
-        ls -la release-files/
+        # List created packages
+        Write-Host "`nCreated packages:"
+        Get-ChildItem ./build/output -Filter "AitherZero-*" | ForEach-Object {
+            Write-Host "  - $($_.Name) ($('{0:N2}' -f ($_.Length / 1MB)) MB)"
+        }
         
     - name: Read Changelog
       id: changelog
+      shell: pwsh
       run: |
-        # Try to extract relevant changelog section
-        VERSION="${{ steps.get_version.outputs.version }}"
-        CHANGELOG=""
+        # Extract changelog for this version
+        $version = "${{ steps.get_version.outputs.version }}"
+        $changelogPath = "./CHANGELOG.md"
+        $releaseNotes = ""
         
-        if [ -f "CHANGELOG.md" ]; then
-          # Extract section for this version if it exists
-          SECTION=$(awk "/## \[?v?$VERSION\]?/{flag=1; next} /## \[?v?[0-9]+\.[0-9]+\.[0-9]+\]?/{flag=0} flag" CHANGELOG.md | head -20)
-          if [ -n "$SECTION" ]; then
-            CHANGELOG="$SECTION"
-          fi
-        fi
+        if (Test-Path $changelogPath) {
+            $content = Get-Content $changelogPath -Raw
+            # Try to extract section for this version
+            if ($content -match "(?ms)## \[?v?$([regex]::Escape($version))\]?.*?(?=## \[|$)") {
+                $releaseNotes = $matches[0].Trim()
+                # Remove the header line
+                $releaseNotes = $releaseNotes -replace "^## \[?v?$([regex]::Escape($version))\]?.*?`n", ""
+            }
+        }
         
-        # Default changelog if nothing found
-        if [ -z "$CHANGELOG" ]; then
-          CHANGELOG="${{ github.event.inputs.description || 'New release with improvements and bug fixes' }}"
-        fi
+        if (-not $releaseNotes) {
+            $releaseNotes = "New release with improvements and bug fixes"
+        }
         
-        # Escape for GitHub Actions
-        CHANGELOG="${CHANGELOG//'%'/'%25'}"
-        CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
-        CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
-        
-        echo "changelog=$CHANGELOG" >> $GITHUB_OUTPUT
+        # Output for GitHub Actions (handle multiline)
+        $releaseNotes = $releaseNotes -replace "`r`n", "`n"
+        $releaseNotes = $releaseNotes -replace "`n", "%0A"
+        $releaseNotes = $releaseNotes -replace "`r", "%0D"
+        echo "notes=$releaseNotes" >> $env:GITHUB_OUTPUT
         
     - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
-        tag_name: v${{ steps.get_version.outputs.version }}
         name: AitherZero v${{ steps.get_version.outputs.version }}
         body: |
-          ## AitherZero v${{ steps.get_version.outputs.version }}
+          ## 🚀 AitherZero v${{ steps.get_version.outputs.version }}
           
-          ${{ steps.changelog.outputs.changelog }}
+          ${{ steps.changelog.outputs.notes }}
           
           ### 📦 Downloads
           
-          - **Windows**: `AitherZero-v${{ steps.get_version.outputs.version }}-windows.zip`
-          - **Linux**: `AitherZero-v${{ steps.get_version.outputs.version }}-linux.tar.gz`
-          - **macOS**: `AitherZero-v${{ steps.get_version.outputs.version }}-macos.tar.gz`
+          | Platform | Package | Size |
+          |----------|---------|------|
+          | 🪟 **Windows** | `AitherZero-v${{ steps.get_version.outputs.version }}-windows.zip` | ~15-20 MB |
+          | 🐧 **Linux** | `AitherZero-v${{ steps.get_version.outputs.version }}-linux.tar.gz` | ~15-20 MB |
+          | 🍎 **macOS** | `AitherZero-v${{ steps.get_version.outputs.version }}-macos.tar.gz` | ~15-20 MB |
           
-          ### 🚀 Quick Start
+          ### 🚀 Quick Installation
           
-          1. Download the appropriate package for your platform
-          2. Extract the archive
-          3. Run `./Start-AitherZero.ps1`
+          #### Windows (PowerShell)
+          ```powershell
+          # One-line install
+          iex (irm "https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1")
+          ```
           
-          For detailed instructions, see the [Quick Start Guide](https://github.com/${{ github.repository }}/blob/main/QUICKSTART.md).
+          #### Linux/macOS (Bash)
+          ```bash
+          # One-line install
+          curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
+          ```
           
-        files: release-files/*
+          ### 📖 Documentation
+          
+          - [Quick Start Guide](https://github.com/${{ github.repository }}/blob/main/QUICKSTART.md)
+          - [Full Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)
+          
+        files: build/output/AitherZero-*
         draft: false
         prerelease: false
         fail_on_unmatched_files: true
+        generate_release_notes: true

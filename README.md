@@ -188,7 +188,7 @@ aither dev patch "Bug fix"
 - ✨ **Ultra-Simple Installation** - One command gets you running
 - 🚀 **Modern CLI Interface** with clean command structure (`aither [command]`)
 - 🧠 **Intelligent Setup Wizard** with progress tracking
-- 🔧 **28+ Specialized Modules** for infrastructure automation
+- 🔧 **23 Consolidated Modules** for infrastructure automation (reduced from 30+)
 - ⚡ **Cross-Platform Support** - Windows, Linux, macOS
 - 🔄 **Developer Workflow Automation** - Git, releases, testing
 - 🎯 **No Installation Required** - Portable application packages
@@ -221,13 +221,14 @@ pwsh -File ./aither-core/aither-core.ps1
 **Infrastructure Automation Framework:**
 - 🔄 **Cross-Platform**: Windows, Linux, macOS with PowerShell 5.1+
 - 🏗️ **Infrastructure as Code**: OpenTofu/Terraform integration
-- 🧩 **Modular Architecture**: 28+ specialized PowerShell modules
+- 🧩 **Modular Architecture**: 23 consolidated PowerShell modules with clear boundaries
 - 🤖 **AI-Powered Automation**: Intelligent infrastructure management
 - 📊 **Enterprise Logging**: Centralized logging with multiple levels
 - 🔧 **Git Workflow**: Automated patch management with PR/issue creation
 - 🧪 **Testing Framework**: Bulletproof validation with Pester integration
 
-**Essential Modules:** LabRunner, PatchManager, BackupManager, DevEnvironment, OpenTofuProvider, SetupWizard, ProgressTracking, SecurityAutomation, and more.
+**Core Modules:** Logging, ConfigurationCore, ModuleCommunication, LicenseManager
+**Feature Modules:** LabRunner, PatchManager, BackupManager, DevEnvironment, OpenTofuProvider, UserExperience, AIToolsIntegration, TestingFramework, and more.
 
 ## 📋 Requirements
 

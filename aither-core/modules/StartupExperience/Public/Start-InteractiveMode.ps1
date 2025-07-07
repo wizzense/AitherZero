@@ -88,9 +88,23 @@ function Start-InteractiveMode {
                 @{Text = "Exit"; Action = "Exit"; Tier = "free"}
             )
             
-            # Filter menu options based on tier
+            # Filter menu options based on tier with fallback
             $availableOptions = $menuOptions | Where-Object { 
-                Test-FeatureAccess -Feature $_.Tier -CurrentTier $availableTier 
+                try {
+                    # Check if LicenseManager functions are available
+                    if (Get-Command Test-TierAccess -ErrorAction SilentlyContinue) {
+                        Test-TierAccess -RequiredTier $_.Tier -CurrentTier $availableTier
+                    } else {
+                        # Fallback tier logic if LicenseManager not available
+                        $tierLevels = @{ 'free' = 1; 'pro' = 2; 'professional' = 2; 'enterprise' = 3 }
+                        $requiredLevel = $tierLevels[$_.Tier.ToLower()] ?? 1
+                        $currentLevel = $tierLevels[$availableTier.ToLower()] ?? 1
+                        $currentLevel -ge $requiredLevel
+                    }
+                } catch {
+                    Write-Warning "Error checking tier access for $($_.Text): $_"
+                    $true  # Default to allowing access if check fails
+                }
             }
             
             $selectedOption = Show-ContextMenu -Title "Main Menu" -Options $availableOptions -ReturnAction
