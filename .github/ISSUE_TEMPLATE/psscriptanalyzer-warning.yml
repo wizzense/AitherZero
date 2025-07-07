@@ -1,0 +1,197 @@
+name: "⚠️ PSScriptAnalyzer Warning"
+description: "PSScriptAnalyzer warning finding that should be reviewed and addressed"
+title: "[PSScriptAnalyzer] [WARNING] [RULENAME] - SUMMARY"
+labels: 
+  - "code-quality"
+  - "psscriptanalyzer"
+  - "warning"
+  - "priority:medium"
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ⚠️ PSScriptAnalyzer Warning
+        
+        This issue was automatically created by the PSScriptAnalyzer integration system. 
+        **Warning-level findings should be reviewed and addressed during regular maintenance.**
+
+  - type: input
+    id: rule-name
+    attributes:
+      label: "Rule Name"
+      description: "PSScriptAnalyzer rule that was violated"
+      placeholder: "e.g., PSUseApprovedVerbs"
+    validations:
+      required: true
+
+  - type: input
+    id: file-path
+    attributes:
+      label: "File Path"
+      description: "Relative path to the file containing the issue"
+      placeholder: "e.g., aither-core/modules/ModuleName/Public/Function.ps1"
+    validations:
+      required: true
+
+  - type: input
+    id: line-number
+    attributes:
+      label: "Line Number"
+      description: "Line number where the issue occurs"
+      placeholder: "e.g., 42"
+    validations:
+      required: true
+
+  - type: textarea
+    id: message
+    attributes:
+      label: "Warning Message"
+      description: "Full PSScriptAnalyzer warning message"
+      placeholder: "Paste the complete warning message from PSScriptAnalyzer"
+    validations:
+      required: true
+
+  - type: textarea
+    id: code-snippet
+    attributes:
+      label: "Code Snippet"
+      description: "The code section that triggered the warning"
+      render: powershell
+      placeholder: |
+        # Paste the problematic code here
+        function Example-Function {
+            # Warning-triggering code
+        }
+    validations:
+      required: false
+
+  - type: dropdown
+    id: fix-priority
+    attributes:
+      label: "Fix Priority"
+      description: "How urgent is this warning to fix?"
+      options:
+        - "Low - Can be addressed in routine maintenance"
+        - "Medium - Should be fixed in next sprint"
+        - "High - Should be fixed soon"
+        - "Framework Exception - May be acceptable for framework needs"
+      default: 0
+
+  - type: dropdown
+    id: auto-fixable
+    attributes:
+      label: "Auto-Fixable"
+      description: "Can this warning be safely fixed automatically?"
+      options:
+        - "Unknown"
+        - "Yes - Safe for automated fixing"
+        - "Partial - Some automation possible"
+        - "No - Requires manual review"
+        - "Complex - Needs detailed analysis"
+      default: 0
+
+  - type: textarea
+    id: business-justification
+    attributes:
+      label: "Business Justification (if ignoring)"
+      description: "If this warning should be ignored, provide business justification"
+      placeholder: "Explain why this warning is acceptable for the framework requirements"
+    validations:
+      required: false
+
+  - type: textarea
+    id: suggested-fix
+    attributes:
+      label: "Suggested Fix"
+      description: "Proposed solution or remediation approach"
+      placeholder: "Describe how this warning could be resolved"
+    validations:
+      required: false
+
+  - type: input
+    id: bugz-id
+    attributes:
+      label: "Bug Tracking ID"
+      description: "Associated .bugz file tracking ID (if available)"
+      placeholder: "e.g., PSSA-5678"
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: automation-options
+    attributes:
+      label: "Automation Options"
+      description: "Automation preferences for this warning"
+      options:
+        - label: "Consider for automated remediation"
+          required: false
+        - label: "Include in next automated fix batch"
+          required: false
+        - label: "Review for framework exception"
+          required: false
+        - label: "Auto-close when finding is no longer detected"
+          required: false
+
+  - type: checkboxes
+    id: impact-assessment
+    attributes:
+      label: "Impact Assessment"
+      description: "Potential impacts of this warning"
+      options:
+        - label: "Affects code readability"
+          required: false
+        - label: "Impacts maintainability"
+          required: false
+        - label: "Cross-platform compatibility concern"
+          required: false
+        - label: "Performance consideration"
+          required: false
+        - label: "Security best practice"
+          required: false
+
+  - type: textarea
+    id: analysis-context
+    attributes:
+      label: "Analysis Context"
+      description: "Additional context from the PSScriptAnalyzer analysis"
+      render: json
+      placeholder: |
+        {
+          "analysisDate": "2025-07-06T10:30:00Z",
+          "moduleContext": "ModuleName",
+          "qualityScore": 85,
+          "totalFindings": 5,
+          "configuration": "CoreModule",
+          "similarFindings": 3
+        }
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        
+        ## 🔧 Resolution Guidelines
+        
+        **For Warning-level findings:**
+        1. **Regular Review** - Address during routine code maintenance
+        2. **Batch Processing** - Can be grouped with similar warnings
+        3. **Automation Candidate** - Consider for automated remediation
+        4. **Documentation** - Update .bugz file with resolution or justification
+        
+        **Framework Considerations:**
+        - Some warnings may be acceptable for framework-specific needs
+        - Business justification required for permanent ignores
+        - Cross-platform compatibility should be maintained
+        
+        **Automated Processing:**
+        - Eligible warnings may be automatically fixed in weekly remediation
+        - This issue will be updated based on .bugz file changes
+        - Auto-closure when finding is resolved or justified
+        
+        **Related Documentation:**
+        - [PSScriptAnalyzer Rules Documentation](https://github.com/PowerShell/PSScriptAnalyzer/blob/master/RuleDocumentation)
+        - [AitherZero Code Quality Standards](docs/templates/documentation-standards.md)
+        - [Framework Exception Guidelines](docs/framework-exceptions.md)

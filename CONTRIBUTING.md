@@ -104,13 +104,13 @@ function Get-ExampleFunction {
 ### Running Tests
 ```powershell
 # Quick validation
-./tests/Run-BulletproofValidation.ps1 -ValidationLevel 'Quick'
+./tests/Run-Tests.ps1 -Quick
 
 # Standard test suite
-./tests/Run-BulletproofValidation.ps1 -ValidationLevel 'Standard'
+./tests/Run-Tests.ps1
 
 # Complete testing
-./tests/Run-BulletproofValidation.ps1 -ValidationLevel 'Complete'
+./tests/Run-Tests.ps1 -All
 ```
 
 ### Test Guidelines
@@ -126,13 +126,13 @@ function Get-ExampleFunction {
 # Complete workflow with PR creation
 Invoke-PatchWorkflow -PatchDescription "Your feature description" -PatchOperation {
     # Your changes
-} -CreatePR -TestCommands @("./tests/Run-BulletproofValidation.ps1 -ValidationLevel 'Standard'")
+} -CreatePR -TestCommands @("./tests/Run-Tests.ps1")
 ```
 
 ### Manual Process (Alternative)
 1. Create feature branch from main
 2. Make your changes
-3. Run tests: `./tests/Run-BulletproofValidation.ps1`
+3. Run tests: `./tests/Run-Tests.ps1`
 4. Commit with descriptive messages
 5. Push to your fork
 6. Create pull request
@@ -246,7 +246,7 @@ Get-Error
 ### Test Failures
 ```powershell
 # Run specific module tests
-./tests/Run-BulletproofValidation.ps1 -ValidationLevel 'Quick' -FailFast
+./tests/Run-Tests.ps1 -Quick -FailFast
 
 # Check test logs
 Get-ChildItem 'tests/results' -Filter '*.xml'

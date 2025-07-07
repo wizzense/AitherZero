@@ -2,8 +2,8 @@
 
 **🚀 Standalone PowerShell automation framework** for OpenTofu/Terraform infrastructure management with comprehensive testing, modular architecture, and AI-powered automation.
 
-[![Build Status](https://github.com/wizzense/AitherZero/actions/workflows/build-release.yml/badge.svg)](https://github.com/wizzense/AitherZero/actions)
-[![PowerShell](https://img.shields.io/badge/PowerShell-5.1+-blue.svg)](https://github.com/PowerShell/PowerShell)
+[![Build Status](https://github.com/wizzense/AitherZero/actions/workflows/ci.yml/badge.svg)](https://github.com/wizzense/AitherZero/actions)
+[![PowerShell](https://img.shields.io/badge/PowerShell-7.0+-blue.svg)](https://github.com/PowerShell/PowerShell)
 [![OpenTofu](https://img.shields.io/badge/OpenTofu-Compatible-orange.svg)](https://opentofu.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Contributors Welcome](https://img.shields.io/badge/Contributors-Welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -44,7 +44,7 @@ AITHER_PROFILE=standard curl -sSL https://raw.githubusercontent.com/wizzense/Ait
 3. ✅ **Extracts** it to your directory (or custom path)
 4. ✅ **Auto-starts** the setup process  
 5. ✅ **Cross-platform** - works on Windows, Linux, and macOS
-6. ✅ **PowerShell 5.1+ Compatible** - works on older systems
+6. ✅ **PowerShell Requirements** - 7.0+ for core features, 5.1+ for bootstrap only
 
 > 💡 **That's it!** No complex setup, no manual downloads, intelligent profile selection.
 
@@ -95,6 +95,43 @@ pwsh ./Start-AitherZero.ps1
 # Get help
 ./Start-AitherZero.ps1 -Help
 ```
+
+## 📚 Documentation Index
+
+### 🚀 **Getting Started**
+- **[Quick Start Guide](QUICKSTART.md)** - Fast setup and basic usage
+- **[Setup Wizard Guide](aither-core/modules/SetupWizard/README.md)** - Interactive setup walkthrough
+- **[Installation Profiles](configs/carousel/README.md)** - Profile selection and configuration
+
+### 📖 **Module Documentation**  
+- **[Module Architecture](aither-core/modules/README.md)** - 28+ specialized modules overview
+- **[Configuration Management](aither-core/modules/ConfigurationCarousel/README.md)** - Multi-environment config system
+- **[Infrastructure Deployment](aither-core/modules/OpenTofuProvider/README.md)** - OpenTofu/Terraform automation
+- **[Git Workflow Automation](aither-core/modules/PatchManager/README.md)** - Automated patch and release management
+- **[System Monitoring](aither-core/modules/SystemMonitoring/README.md)** - Real-time system monitoring and alerting
+- **[Security Automation](aither-core/modules/SecurityAutomation/README.md)** - Enterprise security hardening
+
+### 🛠️ **Development & Contributing**
+- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to AitherZero
+- **[GitHub Automation](.github/README.md)** - CI/CD workflows and release process  
+- **[Testing Framework](aither-core/modules/TestingFramework/README.md)** - Testing patterns and validation
+- **[Development Environment](aither-core/modules/DevEnvironment/README.md)** - Development setup and tools
+
+### 🧪 **Testing & Validation**
+- **[Test Runner Guide](tests/README.md)** - Running tests and validation
+- **[Performance Testing](docs/testing/)** - Performance benchmarks and optimization
+- **[Quality Assurance](scripts/auditing/README.md)** - Code quality and duplicate detection
+
+### 🏗️ **Infrastructure & Deployment**
+- **[OpenTofu Templates](opentofu/README.md)** - Infrastructure as Code templates
+- **[Configuration Templates](configs/README.md)** - Environment and profile configurations
+- **[Build System](build/README.md)** - Package building and distribution
+
+### 🔬 **Advanced Topics**
+- **[Module Communication](aither-core/modules/ModuleCommunication/README.md)** - Inter-module messaging and APIs
+- **[Parallel Execution](aither-core/modules/ParallelExecution/README.md)** - High-performance parallel processing
+- **[License Management](aither-core/modules/LicenseManager/README.md)** - License compliance and management
+- **[API Integration](aither-core/modules/RestAPIServer/README.md)** - REST API server and webhooks
 
 ---
 
@@ -151,7 +188,7 @@ aither dev patch "Bug fix"
 - ✨ **Ultra-Simple Installation** - One command gets you running
 - 🚀 **Modern CLI Interface** with clean command structure (`aither [command]`)
 - 🧠 **Intelligent Setup Wizard** with progress tracking
-- 🔧 **18+ Specialized Modules** for infrastructure automation
+- 🔧 **28+ Specialized Modules** for infrastructure automation
 - ⚡ **Cross-Platform Support** - Windows, Linux, macOS
 - 🔄 **Developer Workflow Automation** - Git, releases, testing
 - 🎯 **No Installation Required** - Portable application packages
@@ -168,7 +205,7 @@ aither dev patch "Bug fix"
 pwsh -File ./aither-core/aither-core.ps1
 
 # Run tests:
-./tests/Run-BulletproofValidation.ps1 -ValidationLevel Quick
+./tests/Run-Tests.ps1 -Quick
 
 # Build packages:
 ./build/Build-Package.ps1
@@ -184,7 +221,7 @@ pwsh -File ./aither-core/aither-core.ps1
 **Infrastructure Automation Framework:**
 - 🔄 **Cross-Platform**: Windows, Linux, macOS with PowerShell 5.1+
 - 🏗️ **Infrastructure as Code**: OpenTofu/Terraform integration
-- 🧩 **Modular Architecture**: 18+ specialized PowerShell modules
+- 🧩 **Modular Architecture**: 28+ specialized PowerShell modules
 - 🤖 **AI-Powered Automation**: Intelligent infrastructure management
 - 📊 **Enterprise Logging**: Centralized logging with multiple levels
 - 🔧 **Git Workflow**: Automated patch management with PR/issue creation
@@ -227,7 +264,7 @@ aither lab deploy --config lab-config.json     # Deploy lab environment
 AitherZero/
 ├── aither.ps1              # Modern CLI interface
 ├── aither-core/            # Core application engine
-│   ├── modules/           # 18+ PowerShell modules
+│   ├── modules/           # 28+ PowerShell modules
 │   └── shared/            # Shared utilities
 ├── configs/                # Configuration templates
 └── opentofu/               # Infrastructure templates

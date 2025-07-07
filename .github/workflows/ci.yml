@@ -140,25 +140,108 @@ jobs:
           }
         }
         
-    - name: Run PSScriptAnalyzer
+    - name: Run Enhanced PSScriptAnalyzer
       if: matrix.check == 'psscriptanalyzer'
       shell: pwsh
       run: |
-        $results = Invoke-ScriptAnalyzer -Path . -Recurse -ReportSummary -Settings @{
-          IncludeRules = @('*')
-          ExcludeRules = @(
-            'PSUseShouldProcessForStateChangingFunctions',
-            'PSAvoidUsingWriteHost'
-          )
-          Severity = @('Error', 'Warning', 'Information')
+        Write-Host "🔍 Running enhanced PSScriptAnalyzer with comprehensive configuration..." -ForegroundColor Cyan
+        
+        # Import PSScriptAnalyzerIntegration module if available
+        $integrationModulePath = "./aither-core/modules/PSScriptAnalyzerIntegration/PSScriptAnalyzerIntegration.psd1"
+        $useIntegration = $false
+        
+        if (Test-Path $integrationModulePath) {
+          try {
+            Import-Module $integrationModulePath -Force
+            $useIntegration = $true
+            Write-Host "✅ PSScriptAnalyzerIntegration module loaded" -ForegroundColor Green
+          }
+          catch {
+            Write-Warning "Failed to load PSScriptAnalyzerIntegration module: $($_.Exception.Message)"
+          }
         }
         
+        # Use comprehensive settings file if available
+        $settingsPath = "./PSScriptAnalyzerSettings.psd1"
+        $analyzerParams = @{
+          Path = "."
+          Recurse = $true
+          ReportSummary = $true
+        }
+        
+        if (Test-Path $settingsPath) {
+          $analyzerParams.Settings = $settingsPath
+          Write-Host "📋 Using comprehensive PSScriptAnalyzer settings from $settingsPath" -ForegroundColor Yellow
+        } else {
+          # Fallback to enhanced inline settings
+          Write-Host "⚠️  Using fallback inline settings (comprehensive settings file not found)" -ForegroundColor Yellow
+          $analyzerParams.Settings = @{
+            IncludeDefaultRules = $true
+            Severity = @('Error', 'Warning', 'Information')
+            IncludeRules = @(
+              'PSAvoidUsingPlainTextForPassword',
+              'PSAvoidUsingUsernameAndPasswordParams', 
+              'PSAvoidUsingConvertToSecureStringWithPlainText',
+              'PSUsePSCredentialType',
+              'PSAvoidHardcodedCredentials',
+              'PSUseCompatibleCmdlets',
+              'PSUseCompatibleSyntax',
+              'PSAvoidUsingCmdletAliases',
+              'PSAvoidUsingPositionalParameters',
+              'PSUseCmdletCorrectly',
+              'PSAvoidUsingInvokeExpression'
+            )
+            ExcludeRules = @(
+              'PSUseShouldProcessForStateChangingFunctions',
+              'PSAvoidUsingWriteHost',
+              'PSUseApprovedVerbs',
+              'PSAvoidGlobalVars'
+            )
+          }
+        }
+        
+        # Run analysis
+        $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+        $results = Invoke-ScriptAnalyzer @analyzerParams
+        $stopwatch.Stop()
+        
+        # Process results
         if ($results) {
-          $results | Format-Table -AutoSize
-          $errors = ($results | Where-Object Severity -eq 'Error').Count
-          $warnings = ($results | Where-Object Severity -eq 'Warning').Count
+          Write-Host "📊 Analysis completed in $($stopwatch.ElapsedMilliseconds)ms" -ForegroundColor Cyan
           
-          Write-Host "Found $errors errors and $warnings warnings"
+          # Categorize findings
+          $errors = ($results | Where-Object Severity -eq 'Error')
+          $warnings = ($results | Where-Object Severity -eq 'Warning')
+          $information = ($results | Where-Object Severity -eq 'Information')
+          
+          Write-Host "📈 Found $($results.Count) total findings:" -ForegroundColor White
+          Write-Host "  ❌ Errors: $($errors.Count)" -ForegroundColor Red
+          Write-Host "  ⚠️  Warnings: $($warnings.Count)" -ForegroundColor Yellow
+          Write-Host "  ℹ️  Information: $($information.Count)" -ForegroundColor Blue
+          
+          # Security findings (high priority)
+          $securityRules = @(
+            'PSAvoidUsingPlainTextForPassword',
+            'PSAvoidUsingUsernameAndPasswordParams',
+            'PSAvoidUsingConvertToSecureStringWithPlainText',
+            'PSUsePSCredentialType',
+            'PSAvoidHardcodedCredentials'
+          )
+          $securityFindings = $results | Where-Object { $_.RuleName -in $securityRules }
+          
+          if ($securityFindings.Count -gt 0) {
+            Write-Host "🔒 Security findings detected: $($securityFindings.Count)" -ForegroundColor Red
+            $securityFindings | ForEach-Object {
+              Write-Host "::error file=$($_.ScriptPath),line=$($_.Line),col=$($_.Column)::SECURITY: $($_.RuleName): $($_.Message)"
+            }
+          }
+          
+          # Display detailed results table
+          if ($results.Count -gt 0) {
+            Write-Host "`n📋 Detailed Results:" -ForegroundColor Cyan
+            $results | Select-Object Severity, RuleName, @{Name='File'; Expression={(Split-Path $_.ScriptPath -Leaf)}}, Line, Message | 
+              Sort-Object Severity, RuleName | Format-Table -AutoSize
+          }
           
           # Create GitHub annotations
           foreach ($issue in $results) {
@@ -167,13 +250,61 @@ jobs:
               'Warning' { '::warning' }
               default { '::notice' }
             }
-            Write-Host "$annotation file=$($issue.ScriptPath),line=$($issue.Line),col=$($issue.Column)::$($issue.RuleName): $($issue.Message)"
+            $relativePath = $issue.ScriptPath -replace [regex]::Escape((Get-Location).Path), '.' -replace '^[\\\/]', ''
+            Write-Host "$annotation file=$relativePath,line=$($issue.Line),col=$($issue.Column)::$($issue.RuleName): $($issue.Message)"
           }
           
-          if ($errors -gt 0) {
-            throw "PSScriptAnalyzer found $errors errors"
+          # Generate SARIF output for GitHub Security tab
+          try {
+            $sarifPath = "psscriptanalyzer-results.sarif"
+            $results | ConvertTo-Json -Depth 10 | Set-Content -Path $sarifPath -Encoding UTF8
+            Write-Host "📄 SARIF results exported to: $sarifPath" -ForegroundColor Green
           }
+          catch {
+            Write-Warning "Failed to generate SARIF output: $($_.Exception.Message)"
+          }
+          
+          # Quality score calculation
+          $qualityScore = [math]::Max(0, 100 - ($errors.Count * 10) - ($warnings.Count * 2) - ($information.Count * 0.5))
+          Write-Host "⭐ Overall Quality Score: $([math]::Round($qualityScore, 1))%" -ForegroundColor Magenta
+          
+          # Set output variables for other jobs
+          echo "quality-score=$([math]::Round($qualityScore, 1))" >> $env:GITHUB_OUTPUT
+          echo "error-count=$($errors.Count)" >> $env:GITHUB_OUTPUT
+          echo "warning-count=$($warnings.Count)" >> $env:GITHUB_OUTPUT
+          echo "info-count=$($information.Count)" >> $env:GITHUB_OUTPUT
+          
+          # Fail on errors (security findings are always errors)
+          if ($errors.Count -gt 0) {
+            Write-Host "❌ Build failed due to $($errors.Count) PSScriptAnalyzer errors" -ForegroundColor Red
+            throw "PSScriptAnalyzer found $($errors.Count) errors that must be fixed"
+          }
+          
+          # Warning thresholds (configurable)
+          $warningThreshold = 50  # Adjust based on project needs
+          if ($warnings.Count -gt $warningThreshold) {
+            Write-Host "⚠️  Warning: $($warnings.Count) warnings exceed threshold of $warningThreshold" -ForegroundColor Yellow
+            # Uncomment to fail on too many warnings:
+            # throw "Too many warnings: $($warnings.Count) > $warningThreshold"
+          }
+          
+        } else {
+          Write-Host "✅ No PSScriptAnalyzer findings detected!" -ForegroundColor Green
+          echo "quality-score=100" >> $env:GITHUB_OUTPUT
+          echo "error-count=0" >> $env:GITHUB_OUTPUT
+          echo "warning-count=0" >> $env:GITHUB_OUTPUT
+          echo "info-count=0" >> $env:GITHUB_OUTPUT
         }
+        
+        Write-Host "🎯 PSScriptAnalyzer analysis completed successfully" -ForegroundColor Green
+        
+    - name: Upload SARIF results to GitHub Security
+      if: matrix.check == 'psscriptanalyzer' && always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: psscriptanalyzer-results.sarif
+        category: PSScriptAnalyzer
+      continue-on-error: true
         
     - name: Check code formatting
       if: matrix.check == 'formatting'

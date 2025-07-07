@@ -355,15 +355,227 @@
         },
 
         // ========================================
-        // Analysis & Validation (4 tasks)
+        // Code Quality & Analysis (8 tasks)
         // ========================================
         {
-            "label": "🔍 PowerShell Script Analysis",
+            "label": "🔍 Code Quality - Full Analysis",
             "type": "shell",
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Invoke-ScriptAnalyzer -Path . -Recurse -Severity Warning,Error"
+                "Import-Module ./aither-core/modules/PSScriptAnalyzerIntegration -Force; Start-DirectoryAudit -Path . -Recurse -UpdateDocumentation"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [
+                {
+                    "owner": "PSScriptAnalyzer",
+                    "fileLocation": ["relative", "${workspaceFolder}"],
+                    "pattern": {
+                        "regexp": "^(.*):(\\d+):(\\d+):\\s+(Error|Warning|Information)\\s+(.*)$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                        "severity": 4,
+                        "message": 5
+                    }
+                }
+            ],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "⚡ Code Quality - Changed Files Only",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module ./aither-core/modules/PSScriptAnalyzerIntegration -Force; $changedFiles = git diff --name-only HEAD~1 HEAD | Where-Object { $_ -match '\\.(ps1|psm1|psd1)$' }; if ($changedFiles) { $dirs = $changedFiles | ForEach-Object { Split-Path $_ -Parent } | Select-Object -Unique; foreach ($dir in $dirs) { if (Test-Path $dir) { Start-DirectoryAudit -Path $dir -Recurse:$false } } } else { Write-Host '📝 No PowerShell files changed' -ForegroundColor Yellow }"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [
+                {
+                    "owner": "PSScriptAnalyzer",
+                    "fileLocation": ["relative", "${workspaceFolder}"],
+                    "pattern": {
+                        "regexp": "^(.*):(\\d+):(\\d+):\\s+(Error|Warning|Information)\\s+(.*)$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                        "severity": 4,
+                        "message": 5
+                    }
+                }
+            ],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "📊 Code Quality - Status Overview",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module ./aither-core/modules/PSScriptAnalyzerIntegration -Force; Get-AnalysisStatus -Path . -Rollup -Format Summary"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🔴 Code Quality - Critical Issues Only",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module ./aither-core/modules/PSScriptAnalyzerIntegration -Force; Get-AnalysisStatus -Path . -StatusFilter critical -ShowDetails"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🔧 Code Quality - Auto Remediation",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module ./aither-core/modules/PSScriptAnalyzerIntegration -Force; if (Get-Command 'Invoke-RemediationWorkflow' -ErrorAction SilentlyContinue) { Invoke-RemediationWorkflow -Path . -AutoFix -SafeRulesOnly } else { Write-Host '⚠️  Remediation workflow not available yet' -ForegroundColor Yellow }"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🎯 Code Quality - Current Module",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module ./aither-core/modules/PSScriptAnalyzerIntegration -Force; $currentFile = '${file}'; if ($currentFile -match 'aither-core[/\\\\]modules[/\\\\]([^/\\\\]+)') { $moduleName = $matches[1]; $modulePath = \"./aither-core/modules/$moduleName\"; if (Test-Path $modulePath) { Start-DirectoryAudit -Path $modulePath -ModuleName $moduleName } else { Write-Host \"❌ Module path not found: $modulePath\" -ForegroundColor Red } } else { Write-Host '⚠️  Current file is not in a module directory' -ForegroundColor Yellow }"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [
+                {
+                    "owner": "PSScriptAnalyzer",
+                    "fileLocation": ["relative", "${workspaceFolder}"],
+                    "pattern": {
+                        "regexp": "^(.*):(\\d+):(\\d+):\\s+(Error|Warning|Information)\\s+(.*)$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                        "severity": 4,
+                        "message": 5
+                    }
+                }
+            ],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "📈 Code Quality - Generate Report",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module ./aither-core/modules/PSScriptAnalyzerIntegration -Force; $timestamp = Get-Date -Format 'yyyy-MM-dd-HHmm'; Start-DirectoryAudit -Path . -Recurse -ReportFormat HTML -ExportPath \"./quality-report-$timestamp.html\"; Write-Host \"📄 Report generated: quality-report-$timestamp.html\" -ForegroundColor Green"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🔍 PSScriptAnalyzer - Basic Analysis",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "if (Test-Path './PSScriptAnalyzerSettings.psd1') { Invoke-ScriptAnalyzer -Path . -Recurse -Settings './PSScriptAnalyzerSettings.psd1' } else { Invoke-ScriptAnalyzer -Path . -Recurse -Severity Warning,Error }"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [
+                {
+                    "owner": "PSScriptAnalyzer",
+                    "fileLocation": ["relative", "${workspaceFolder}"],
+                    "pattern": {
+                        "regexp": "^(.*):(\\d+):(\\d+):\\s+(Error|Warning|Information)\\s+(.*)$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                        "severity": 4,
+                        "message": 5
+                    }
+                }
+            ],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🎫 Code Quality - Test GitHub Issues Integration",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module './aither-core/modules/PSScriptAnalyzerIntegration' -Force; Write-Host '🧪 Testing GitHub Issues integration...' -ForegroundColor Cyan; $findings = Invoke-ScriptAnalyzer -Path './aither-core/modules/PSScriptAnalyzerIntegration' -Recurse -Settings './PSScriptAnalyzerSettings.psd1' | Select-Object -First 3; if ($findings.Count -gt 0) { Write-Host \"📋 Testing with $($findings.Count) sample findings\" -ForegroundColor White; $result = $findings | New-GitHubIssueFromFinding -DryRun; Write-Host \"✅ Test completed: $($result.CreatedIssues.Count) issues would be created\" -ForegroundColor Green; $result.CreatedIssues | ForEach-Object { Write-Host \"  - $($_.Title)\" -ForegroundColor Gray; Write-Host \"    Labels: $($_.Labels -join ', ')\" -ForegroundColor DarkGray; Write-Host \"    Milestone: $($_.Milestone)\" -ForegroundColor DarkGray } } else { Write-Host '✅ No findings to test with' -ForegroundColor Green }"
             ],
             "group": "test",
             "presentation": {

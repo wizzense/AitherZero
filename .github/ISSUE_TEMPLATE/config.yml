@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔍 PSScriptAnalyzer Documentation
+    url: https://github.com/PowerShell/PSScriptAnalyzer/blob/master/RuleDocumentation
+    about: Official PSScriptAnalyzer rule documentation and guidance
+  - name: 📚 AitherZero Code Quality Standards
+    url: https://github.com/Aitherium/AitherZero/blob/main/docs/templates/documentation-standards.md
+    about: AitherZero-specific code quality standards and guidelines
+  - name: 🤖 Automated Code Quality
+    url: https://github.com/Aitherium/AitherZero/actions/workflows/code-quality-remediation.yml
+    about: View or trigger automated code quality remediation workflows
+  - name: 💬 General Questions
+    url: https://github.com/Aitherium/AitherZero/discussions
+    about: Ask questions and discuss ideas with the community
