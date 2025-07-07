@@ -12,6 +12,8 @@ Test-*
 !tests/Test-WindowsFeatures.ps1
 !tests/Test-LinuxFeatures.ps1
 !tests/Test-MacOSFeatures.ps1
+# Exception: Critical shared utilities
+!aither-core/shared/Test-PowerShellVersion.ps1
 *test.ps1
 *debug.ps1
 cleanup-*
