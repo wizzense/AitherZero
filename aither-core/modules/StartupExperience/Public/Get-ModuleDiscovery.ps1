@@ -276,26 +276,33 @@ function Get-ModuleFunctionInfo {
     )
     
     try {
-        # Try to get help information for the function
-        $helpInfo = Get-Help "$ModuleName\$FunctionName" -ErrorAction SilentlyContinue
+        # OPTIMIZED: Use faster approach - try command info first, then help as fallback
+        $command = Get-Command "$ModuleName\$FunctionName" -ErrorAction SilentlyContinue
         
-        $description = if ($helpInfo.Synopsis) {
-            $helpInfo.Synopsis
-        } else {
-            "No description available"
-        }
-        
-        # Get parameters
-        $parameters = @()
-        if ($helpInfo.parameters.parameter) {
-            foreach ($param in $helpInfo.parameters.parameter) {
-                $parameters += [PSCustomObject]@{
-                    Name = $param.name
-                    Type = $param.type.name ?? 'object'
-                    Mandatory = $param.required -eq 'true'
-                    Description = $param.description.Text -join ' '
+        if ($command) {
+            # Get basic info from command metadata (fast)
+            $description = if ($command.Definition -match '\.SYNOPSIS\s+(.+?)(?:\.DESCRIPTION|\.|$)') {
+                $matches[1].Trim()
+            } else {
+                "Available function"
+            }
+            
+            # Get parameters from command (fast)
+            $parameters = @()
+            foreach ($param in $command.Parameters.Values) {
+                if ($param.Name -notmatch '^(Verbose|Debug|ErrorAction|WarningAction|InformationAction|ErrorVariable|WarningVariable|InformationVariable|OutVariable|OutBuffer|PipelineVariable)$') {
+                    $parameters += [PSCustomObject]@{
+                        Name = $param.Name
+                        Type = $param.ParameterType.Name
+                        Mandatory = $param.ParameterSets.Values.IsMandatory -contains $true
+                        Description = ""  # Skip detailed descriptions for speed
+                    }
                 }
             }
+        } else {
+            # Fallback: basic info without Get-Help (for speed)
+            $description = "Available function"
+            $parameters = @()
         }
         
         return [PSCustomObject]@{
@@ -305,7 +312,7 @@ function Get-ModuleFunctionInfo {
         }
         
     } catch {
-        # Return basic info if help is not available
+        # Return basic info if command is not available
         return [PSCustomObject]@{
             Name = $FunctionName
             Description = "Function in $ModuleName module"

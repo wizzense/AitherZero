@@ -624,36 +624,25 @@ try {
     }
     Write-Host "[i] Release version: $releaseVersion" -ForegroundColor Cyan
     
-    # Find Windows ZIP file for the selected profile
+    # Find Windows ZIP file - prioritize generic packages for reliability
     $windowsAsset = $null
-    # Map bootstrap profile names to build profile names
-    $buildProfile = switch ($profile) {
-        'minimal' { 'minimal' }
-        'developer' { 'developer' }  # Use developer package which includes SetupWizard
-        'full' { 'developer' }  # Build uses 'developer' for full profile
-        default { 'standard' }
-    }
-    # Updated pattern to match versioned files: AitherZero-{version}-{profile}-windows.zip
-    # Make pattern more flexible to handle variations
-    $profilePattern = "AitherZero-.*?-?$buildProfile-windows\.zip$"
     
+    # STREAMLINED: Look for any Windows package first (most reliable)
     foreach ($asset in $release.assets) {
-        if ($asset.name -match $profilePattern) {
+        # Generic Windows package pattern (most common)
+        if ($asset.name -match "AitherZero-.*-windows\.zip$") {
             $windowsAsset = $asset
+            Write-Host "[i] Found Windows package: $($asset.name)" -ForegroundColor Cyan
             break
         }
     }
     
-    # Fallback to any Windows package if specific profile not found
+    # Final check - ensure we found a Windows package
     if (-not $windowsAsset) {
-        Write-Host "[!] Specific profile '$buildProfile' not found, looking for any Windows package..." -ForegroundColor Yellow
+        Write-Host "[!] No Windows package found in release assets" -ForegroundColor Red
+        Write-Host "[i] Available assets:" -ForegroundColor Yellow
         foreach ($asset in $release.assets) {
-            # Updated pattern to match versioned files
-            if ($asset.name -match "AitherZero-.*-windows\.zip$") {
-                $windowsAsset = $asset
-                Write-Host "[i] Found alternative package: $($asset.name)" -ForegroundColor Cyan
-                break
-            }
+            Write-Host "    $($asset.name)" -ForegroundColor Gray
         }
     }
     
@@ -799,20 +788,26 @@ try {
                 Write-Host "[!] PowerShell $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor) detected" -ForegroundColor Yellow
                 Write-Host "[i] AitherZero requires PowerShell 7.0 or later" -ForegroundColor Cyan
                 
-                # Check for non-interactive mode
-                $installPS7 = $false
-                if ($env:AITHER_AUTO_INSTALL_PS7 -eq 'true' -or $env:AITHER_BOOTSTRAP_MODE) {
-                    Write-Host "[i] Non-interactive mode: Auto-installing PowerShell 7..." -ForegroundColor Cyan
-                    $installPS7 = $true
+                # DANGEROUS SKIP MODE - Skip PowerShell 7 requirement
+                if ($env:AITHER_SKIP_VALIDATION -eq 'true') {
+                    Write-Host "[!] SKIP MODE: Continuing with PowerShell 5.1 (limited functionality)" -ForegroundColor Red
+                    Write-Host "[i] Some features may not work properly" -ForegroundColor Yellow
+                    # Continue without PowerShell 7
                 } else {
-                    # Interactive prompt
-                    Write-Host ""
-                    Write-Host "[?] Would you like to install PowerShell 7 now? (Y/n)" -ForegroundColor Yellow
-                    $response = Read-Host
-                    if (-not $response -or $response -match '^[Yy]') {
+                    # Check for non-interactive mode
+                    $installPS7 = $false
+                    if ($env:AITHER_AUTO_INSTALL_PS7 -eq 'true' -or $env:AITHER_BOOTSTRAP_MODE) {
+                        Write-Host "[i] Non-interactive mode: Auto-installing PowerShell 7..." -ForegroundColor Cyan
                         $installPS7 = $true
+                    } else {
+                        # Interactive prompt
+                        Write-Host ""
+                        Write-Host "[?] Would you like to install PowerShell 7 now? (Y/n)" -ForegroundColor Yellow
+                        $response = Read-Host
+                        if (-not $response -or $response -match '^[Yy]') {
+                            $installPS7 = $true
+                        }
                     }
-                }
                 
                 if ($installPS7) {
                     Write-Host "[~] Installing PowerShell 7..." -ForegroundColor Cyan
@@ -888,6 +883,7 @@ try {
                     Write-Host "[i] Then run this bootstrap script again" -ForegroundColor Yellow
                     Exit-Bootstrap -ExitCode 1 -Message "[!] PowerShell 7 installation declined"
                 }
+                } # End skip validation else block
             }
             
             # If we got here with PS7, we may have been relaunched
