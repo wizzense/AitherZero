@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+# Note: Tests work best with PowerShell 7.0+ but will attempt to run on older versions
 
 <#
 .SYNOPSIS

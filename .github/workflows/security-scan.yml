@@ -471,51 +471,57 @@ jobs:
     - name: Post PR comment
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v7
+      continue-on-error: true
       with:
         script: |
-          const results = {
-            'CodeQL Analysis': '${{ needs.codeql.result }}',
-            'Dependency Scan': '${{ needs.dependency-scan.result }}',
-            'PowerShell Security': '${{ needs.powershell-security.result }}'
-          };
-          
-          let body = '## 🔒 Security Scan Results\n\n';
-          body += '| Check | Status |\n';
-          body += '|-------|--------|\n';
-          
-          for (const [check, result] of Object.entries(results)) {
-            const emoji = result === 'success' ? '✅' : 
-                         result === 'failure' ? '❌' : 
-                         result === 'skipped' ? '⏭️' : '⚠️';
-            body += `| ${check} | ${emoji} ${result} |\n`;
-          }
-          
-          body += '\n[View detailed security report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})';
-          
-          // Update or create comment
-          const { data: comments } = await github.rest.issues.listComments({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: context.issue.number
-          });
-          
-          const botComment = comments.find(comment => 
-            comment.user.type === 'Bot' && 
-            comment.body.includes('🔒 Security Scan Results')
-          );
-          
-          if (botComment) {
-            await github.rest.issues.updateComment({
+          try {
+            const results = {
+              'CodeQL Analysis': '${{ needs.codeql.result }}',
+              'Dependency Scan': '${{ needs.dependency-scan.result }}',
+              'PowerShell Security': '${{ needs.powershell-security.result }}'
+            };
+            
+            let body = '## 🔒 Security Scan Results\n\n';
+            body += '| Check | Status |\n';
+            body += '|-------|--------|\n';
+            
+            for (const [check, result] of Object.entries(results)) {
+              const emoji = result === 'success' ? '✅' : 
+                           result === 'failure' ? '❌' : 
+                           result === 'skipped' ? '⏭️' : '⚠️';
+              body += `| ${check} | ${emoji} ${result} |\n`;
+            }
+            
+            body += '\n[View detailed security report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})';
+            
+            // Update or create comment
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              comment_id: botComment.id,
-              body
+              issue_number: context.issue.number
             });
-          } else {
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body
-            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('🔒 Security Scan Results')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }
+          } catch (error) {
+            console.log('Failed to post PR comment:', error.message);
+            console.log('This is expected for PRs from forks or with restricted permissions.');
           }

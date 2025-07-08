@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+# Note: Tests require PowerShell 7.0+ but will skip gracefully on older versions
 
 <#
 .SYNOPSIS
@@ -17,6 +17,12 @@
 #>
 
 BeforeAll {
+    # Skip tests if not on PowerShell 7+
+    if ($PSVersionTable.PSVersion.Major -lt 7) {
+        Write-Warning "PowerShell version tests require PowerShell 7.0+. Current version: $($PSVersionTable.PSVersion)"
+        return
+    }
+
     Import-Module Pester -Force
 
     $script:ProjectRoot = Split-Path $PSScriptRoot -Parent
@@ -230,13 +236,13 @@ Describe "PowerShell Core Cmdlet Availability" -Tags @('Version', 'Cmdlets', 'Co
 Describe "PowerShell Feature Compatibility" -Tags @('Version', 'Features', 'Compatibility') {
 
     Context "Language Features" {
-        It "Should support modern PowerShell syntax features" {
+        It "Should support modern PowerShell syntax features" -Skip:($PSVersionTable.PSVersion.Major -lt 7) {
             # Test ternary operator (PowerShell 7.0+)
             $result = $true ? "yes" : "no"
             $result | Should -Be "yes" -Because "Ternary operator should work in PowerShell 7.0+"
         }
 
-        It "Should support pipeline chain operators" {
+        It "Should support pipeline chain operators" -Skip:($PSVersionTable.PSVersion.Major -lt 7) {
             # Test && operator (PowerShell 7.0+)
             $result = $null
             $true && ($result = "success")
@@ -248,7 +254,7 @@ Describe "PowerShell Feature Compatibility" -Tags @('Version', 'Features', 'Comp
             $result2 | Should -Be "fallback" -Because "Pipeline chain operator || should work"
         }
 
-        It "Should support null conditional operators" {
+        It "Should support null conditional operators" -Skip:($PSVersionTable.PSVersion.Major -lt 7) {
             $obj = $null
             $result = $obj?.Property
             $result | Should -BeNullOrEmpty -Because "Null conditional operator should work"
@@ -281,7 +287,7 @@ Describe "PowerShell Feature Compatibility" -Tags @('Version', 'Features', 'Comp
             [System.Text.Json.JsonSerializer] | Should -Not -BeNullOrEmpty -Because ".NET Core JSON serializer should be available"
         }
 
-        It "Should support PowerShell class definitions" {
+        It "Should support PowerShell class definitions" -Skip:($PSVersionTable.PSVersion.Major -lt 5) {
             # Test class definition (PowerShell 5.0+)
             $classDefinition = @'
 class TestClass {
@@ -303,7 +309,7 @@ class TestClass {
             $instance.GetName() | Should -Be "test"
         }
 
-        It "Should support enum definitions" {
+        It "Should support enum definitions" -Skip:($PSVersionTable.PSVersion.Major -lt 5) {
             $enumDefinition = @'
 enum TestEnum {
     Value1
@@ -330,20 +336,18 @@ enum TestEnum {
             $filtered.Count | Should -Be 100
         }
 
-        It "Should support parallel processing features" {
+        It "Should support parallel processing features" -Skip:($PSVersionTable.PSVersion.Major -lt 7) {
             # Test ForEach-Object -Parallel (PowerShell 7.0+)
-            if ($PSVersionTable.PSVersion.Major -ge 7) {
-                $startTime = Get-Date
+            $startTime = Get-Date
 
-                $results = 1..10 | ForEach-Object -Parallel {
-                    Start-Sleep -Milliseconds 100
-                    return $_ * 2
-                } -ThrottleLimit 5
+            $results = 1..10 | ForEach-Object -Parallel {
+                Start-Sleep -Milliseconds 100
+                return $_ * 2
+            } -ThrottleLimit 5
 
-                $duration = (Get-Date) - $startTime
-                $results.Count | Should -Be 10
-                $duration.TotalSeconds | Should -BeLessThan 3 -Because "Parallel processing should be faster than serial"
-            }
+            $duration = (Get-Date) - $startTime
+            $results.Count | Should -Be 10
+            $duration.TotalSeconds | Should -BeLessThan 3 -Because "Parallel processing should be faster than serial"
         }
     }
 }

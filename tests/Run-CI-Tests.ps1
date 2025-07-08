@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+# Note: Tests work best with PowerShell 7.0+ but will attempt to run on older versions
 
 <#
 .SYNOPSIS
@@ -30,10 +30,16 @@ $ErrorActionPreference = 'Stop'
 
 Write-Host "`n🚀 AitherZero CI Test Runner" -ForegroundColor Cyan
 Write-Host "================================" -ForegroundColor Cyan
+Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor $(if($PSVersionTable.PSVersion.Major -ge 7){"Green"}else{"Yellow"})
 Write-Host "Test Suite: $TestSuite" -ForegroundColor Yellow
 Write-Host "Output Format: $OutputFormat" -ForegroundColor Yellow
 Write-Host "Timeout: ${Timeout}s" -ForegroundColor Yellow
 Write-Host ""
+
+# Warn if not on PS7+
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    Write-Warning "Some tests require PowerShell 7.0+. They will be skipped on version $($PSVersionTable.PSVersion)"
+}
 
 # Ensure Pester is available
 if (-not (Get-Module -ListAvailable Pester)) {

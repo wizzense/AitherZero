@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+# Note: Tests work best with PowerShell 7.0+ but will attempt to run on older versions
 
 param(
     [switch]$Quick,
@@ -13,6 +13,11 @@ param(
 # Enhanced test runner - supports centralized, distributed, and consolidated module tests
 # Automatically detects new AitherCore consolidated module structure
 # Includes comprehensive installation and setup testing capabilities
+
+# Warn if not on PS7+
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    Write-Warning "Some tests require PowerShell 7.0+. They will be skipped on version $($PSVersionTable.PSVersion)"
+}
 
 $ErrorActionPreference = 'Stop'
 $testPath = $PSScriptRoot

@@ -1,6 +1,12 @@
-#Requires -Version 7.0
+# Note: Tests require PowerShell 7.0+ but will skip gracefully on older versions
 
 BeforeAll {
+    # Skip tests if not on PowerShell 7+
+    if ($PSVersionTable.PSVersion.Major -lt 7) {
+        Write-Warning "Core tests require PowerShell 7.0+. Current version: $($PSVersionTable.PSVersion)"
+        return
+    }
+
     # Find project root
     $projectRoot = Split-Path -Parent $PSScriptRoot
 

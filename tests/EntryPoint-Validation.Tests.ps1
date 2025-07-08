@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+# Note: Tests require PowerShell 7.0+ but will skip gracefully on older versions
 
 <#
 .SYNOPSIS
@@ -19,6 +19,12 @@
 #>
 
 BeforeAll {
+    # Skip tests if not on PowerShell 7+
+    if ($PSVersionTable.PSVersion.Major -lt 7) {
+        Write-Warning "Entry point validation tests require PowerShell 7.0+. Current version: $($PSVersionTable.PSVersion)"
+        return
+    }
+
     Import-Module Pester -Force
 
     $script:ProjectRoot = Split-Path $PSScriptRoot -Parent

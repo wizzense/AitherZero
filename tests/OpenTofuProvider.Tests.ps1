@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+# Note: Tests require PowerShell 7.0+ but will skip gracefully on older versions
 
 BeforeAll {
     # Find project root
