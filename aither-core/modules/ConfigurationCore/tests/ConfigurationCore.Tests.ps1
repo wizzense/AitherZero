@@ -14,9 +14,11 @@
 #>
 
 BeforeAll {
-    # Import required modules
+    # Import required modules with caching check
     $ModulePath = Split-Path $PSScriptRoot -Parent
-    Import-Module $ModulePath -Force
+    if (-not (Get-Module -Name 'ConfigurationCore' -ErrorAction SilentlyContinue)) {
+        Import-Module $ModulePath -Force
+    }
 
     # Mock Write-CustomLog if not available
     if (-not (Get-Command 'Write-CustomLog' -ErrorAction SilentlyContinue)) {
@@ -37,6 +39,9 @@ BeforeAll {
     # Create test directory
     $TestConfigDir = Join-Path $TestDrive 'ConfigurationCore'
     New-Item -ItemType Directory -Path $TestConfigDir -Force | Out-Null
+
+    # Initialize configuration store for tests
+    Initialize-ConfigurationStore -StorePath (Join-Path $TestConfigDir 'test-config.json') -Force
 
     # Set up test configuration path
     $TestConfigPath = Join-Path $TestConfigDir 'test-config.json'

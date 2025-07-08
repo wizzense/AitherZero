@@ -50,8 +50,8 @@ function Get-CrossPlatformPath {
         [Parameter(Mandatory = $true)]
         [string]$BasePath,
 
-        [Parameter(Mandatory = $true)]
-        [string[]]$ChildPath,
+        [Parameter(Mandatory = $false)]
+        [string[]]$ChildPath = @(),
 
         [Parameter()]
         [switch]$Normalize,
@@ -64,10 +64,12 @@ function Get-CrossPlatformPath {
         # Start with base path
         $resultPath = $BasePath
 
-        # Join each child path component
-        foreach ($component in $ChildPath) {
-            if (-not [string]::IsNullOrWhiteSpace($component)) {
-                $resultPath = Join-Path $resultPath $component
+        # Join each child path component if any are provided
+        if ($ChildPath.Count -gt 0) {
+            foreach ($component in $ChildPath) {
+                if (-not [string]::IsNullOrWhiteSpace($component)) {
+                    $resultPath = Join-Path $resultPath $component
+                }
             }
         }
 
@@ -340,5 +342,7 @@ function ConvertTo-CrossPlatformPath {
     }
 }
 
-# Export functions for use in modules
-Export-ModuleMember -Function Get-CrossPlatformPath, Get-PlatformSpecificPath, Test-CrossPlatformPath, ConvertTo-CrossPlatformPath
+# Export functions for use in modules - only if called from within a module
+if ($MyInvocation.MyCommand.ModuleName) {
+    Export-ModuleMember -Function Get-CrossPlatformPath, Get-PlatformSpecificPath, Test-CrossPlatformPath, ConvertTo-CrossPlatformPath
+}

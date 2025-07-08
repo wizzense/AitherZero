@@ -1,0 +1,239 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="60" errors="0" failures="16" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="23:16:12">
+  <environment machine-name="codespaces-6c6eb1" user="codespace" nunit-version="2.5.8.0" platform="Linux" os-version="6.8.0-1027-azure" user-domain="" cwd="/tmp/SemanticVersioningTests/test-repo" clr-version="9.0.4" />
+  <culture-info current-culture="" current-uiculture="" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="3.1204" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1" executed="True" result="Failure" success="False" time="3.1204" asserts="0" description="/workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="SemanticVersioning Module Tests" executed="True" result="Failure" success="False" time="2.7269" asserts="0" description="SemanticVersioning Module Tests">
+            <results>
+              <test-suite type="TestFixture" name="SemanticVersioning Module Tests.Module Loading and Initialization" executed="True" result="Success" success="True" time="0.0431" asserts="0" description="SemanticVersioning Module Tests.Module Loading and Initialization">
+                <results>
+                  <test-case description="Should import module successfully" name="SemanticVersioning Module Tests.Module Loading and Initialization.Should import module successfully" time="0.0051" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should have valid manifest" name="SemanticVersioning Module Tests.Module Loading and Initialization.Should have valid manifest" time="0.0138" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export expected functions" name="SemanticVersioning Module Tests.Module Loading and Initialization.Should export expected functions" time="0.018" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="SemanticVersioning Module Tests.Test-SemanticVersion Function Tests" executed="True" result="Failure" success="False" time="0.1158" asserts="0" description="SemanticVersioning Module Tests.Test-SemanticVersion Function Tests">
+                <results>
+                  <test-case description="Should validate correct semantic versions" name="SemanticVersioning Module Tests.Test-SemanticVersion Function Tests.Should validate correct semantic versions" time="0.0396" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should reject invalid semantic versions" name="SemanticVersioning Module Tests.Test-SemanticVersion Function Tests.Should reject invalid semantic versions" time="0.0269" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ValidationMetadataException: The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.
+ParameterBindingValidationException: Cannot validate argument on parameter 'Version'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1:123</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="SemanticVersioning Module Tests.Compare-SemanticVersions Function Tests" executed="True" result="Success" success="True" time="0.1819" asserts="0" description="SemanticVersioning Module Tests.Compare-SemanticVersions Function Tests">
+                <results>
+                  <test-case description="Should compare major versions correctly" name="SemanticVersioning Module Tests.Compare-SemanticVersions Function Tests.Should compare major versions correctly" time="0.0209" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should compare minor versions correctly" name="SemanticVersioning Module Tests.Compare-SemanticVersions Function Tests.Should compare minor versions correctly" time="0.0057" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should compare patch versions correctly" name="SemanticVersioning Module Tests.Compare-SemanticVersions Function Tests.Should compare patch versions correctly" time="0.0071" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle pre-release versions correctly" name="SemanticVersioning Module Tests.Compare-SemanticVersions Function Tests.Should handle pre-release versions correctly" time="0.0176" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should throw on invalid versions" name="SemanticVersioning Module Tests.Compare-SemanticVersions Function Tests.Should throw on invalid versions" time="0.0083" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="SemanticVersioning Module Tests.Get-VersionBump Function Tests" executed="True" result="Success" success="True" time="0.2394" asserts="0" description="SemanticVersioning Module Tests.Get-VersionBump Function Tests">
+                <results>
+                  <test-case description="Should detect major version bumps" name="SemanticVersioning Module Tests.Get-VersionBump Function Tests.Should detect major version bumps" time="0.0158" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should detect minor version bumps" name="SemanticVersioning Module Tests.Get-VersionBump Function Tests.Should detect minor version bumps" time="0.0069" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should detect patch version bumps" name="SemanticVersioning Module Tests.Get-VersionBump Function Tests.Should detect patch version bumps" time="0.0066" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should detect no version bump" name="SemanticVersioning Module Tests.Get-VersionBump Function Tests.Should detect no version bump" time="0.0048" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should throw on invalid versions" name="SemanticVersioning Module Tests.Get-VersionBump Function Tests.Should throw on invalid versions" time="0.0169" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="SemanticVersioning Module Tests.Parse-ConventionalCommits Function Tests" executed="True" result="Success" success="True" time="0.3086" asserts="0" description="SemanticVersioning Module Tests.Parse-ConventionalCommits Function Tests">
+                <results>
+                  <test-case description="Should parse valid conventional commits" name="SemanticVersioning Module Tests.Parse-ConventionalCommits Function Tests.Should parse valid conventional commits" time="0.0293" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle non-conventional commits when requested" name="SemanticVersioning Module Tests.Parse-ConventionalCommits Function Tests.Should handle non-conventional commits when requested" time="0.009" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should skip non-conventional commits by default" name="SemanticVersioning Module Tests.Parse-ConventionalCommits Function Tests.Should skip non-conventional commits by default" time="0.0154" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle commit objects with hash and message" name="SemanticVersioning Module Tests.Parse-ConventionalCommits Function Tests.Should handle commit objects with hash and message" time="0.0093" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="SemanticVersioning Module Tests.Get-CommitTypeImpact Function Tests" executed="True" result="Success" success="True" time="0.358" asserts="0" description="SemanticVersioning Module Tests.Get-CommitTypeImpact Function Tests">
+                <results>
+                  <test-case description="Should return correct impact for known commit types" name="SemanticVersioning Module Tests.Get-CommitTypeImpact Function Tests.Should return correct impact for known commit types" time="0.0215" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return Patch for unknown commit types" name="SemanticVersioning Module Tests.Get-CommitTypeImpact Function Tests.Should return Patch for unknown commit types" time="0.0068" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should be case insensitive" name="SemanticVersioning Module Tests.Get-CommitTypeImpact Function Tests.Should be case insensitive" time="0.0059" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="SemanticVersioning Module Tests.Get-NextSemanticVersion Function Tests" executed="True" result="Success" success="True" time="0.7293" asserts="0" description="SemanticVersioning Module Tests.Get-NextSemanticVersion Function Tests">
+                <results>
+                  <test-case description="Should calculate next version based on commits" name="SemanticVersioning Module Tests.Get-NextSemanticVersion Function Tests.Should calculate next version based on commits" time="0.0924" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should force specific version type when requested" name="SemanticVersioning Module Tests.Get-NextSemanticVersion Function Tests.Should force specific version type when requested" time="0.057" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should add pre-release label when specified" name="SemanticVersioning Module Tests.Get-NextSemanticVersion Function Tests.Should add pre-release label when specified" time="0.0508" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should add build metadata when specified" name="SemanticVersioning Module Tests.Get-NextSemanticVersion Function Tests.Should add build metadata when specified" time="0.0583" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should analyze commits correctly" name="SemanticVersioning Module Tests.Get-NextSemanticVersion Function Tests.Should analyze commits correctly" time="0.0481" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should skip commit analysis when requested" name="SemanticVersioning Module Tests.Get-NextSemanticVersion Function Tests.Should skip commit analysis when requested" time="0.0312" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should throw on invalid current version" name="SemanticVersioning Module Tests.Get-NextSemanticVersion Function Tests.Should throw on invalid current version" time="0.0267" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="SemanticVersioning Module Tests.Update-ProjectVersion Function Tests" executed="True" result="Success" success="True" time="0.9348" asserts="0" description="SemanticVersioning Module Tests.Update-ProjectVersion Function Tests">
+                <results>
+                  <test-case description="Should update VERSION file" name="SemanticVersioning Module Tests.Update-ProjectVersion Function Tests.Should update VERSION file" time="0.0353" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should update PowerShell manifest file" name="SemanticVersioning Module Tests.Update-ProjectVersion Function Tests.Should update PowerShell manifest file" time="0.0294" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should update JSON package file" name="SemanticVersioning Module Tests.Update-ProjectVersion Function Tests.Should update JSON package file" time="0.029" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle non-existent files gracefully" name="SemanticVersioning Module Tests.Update-ProjectVersion Function Tests.Should handle non-existent files gracefully" time="0.0206" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should auto-detect version files when none specified" name="SemanticVersioning Module Tests.Update-ProjectVersion Function Tests.Should auto-detect version files when none specified" time="0.0542" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should throw on invalid version" name="SemanticVersioning Module Tests.Update-ProjectVersion Function Tests.Should throw on invalid version" time="0.0302" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="SemanticVersioning Module Tests.New-VersionTag Function Tests" executed="True" result="Success" success="True" time="1.1499" asserts="0" description="SemanticVersioning Module Tests.New-VersionTag Function Tests">
+                <results>
+                  <test-case description="Should create version tag successfully" name="SemanticVersioning Module Tests.New-VersionTag Function Tests.Should create version tag successfully" time="0.0517" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create tag with default message when none provided" name="SemanticVersioning Module Tests.New-VersionTag Function Tests.Should create tag with default message when none provided" time="0.0423" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include release notes in tag message" name="SemanticVersioning Module Tests.New-VersionTag Function Tests.Should include release notes in tag message" time="0.035" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle tag creation without push" name="SemanticVersioning Module Tests.New-VersionTag Function Tests.Should handle tag creation without push" time="0.0337" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should throw on invalid version" name="SemanticVersioning Module Tests.New-VersionTag Function Tests.Should throw on invalid version" time="0.029" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="SemanticVersioning Module Tests.Get-VersionHistory Function Tests" executed="True" result="Failure" success="False" time="1.5005" asserts="0" description="SemanticVersioning Module Tests.Get-VersionHistory Function Tests">
+                <results>
+                  <test-case description="Should retrieve version history from git tags" name="SemanticVersioning Module Tests.Get-VersionHistory Function Tests.Should retrieve version history from git tags" time="0.1567" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>FormatException: The string 'Tagger: GitHub &lt;noreply@github.com&gt;' was not recognized as a valid DateTime. There is an unknown word starting at index '0'.
+MethodInvocationException: Exception calling "Parse" with "1" argument(s): "The string 'Tagger: GitHub &lt;noreply@github.com&gt;' was not recognized as a valid DateTime. There is an unknown word starting at index '0'."</message>
+                      <stack-trace>at Get-VersionHistory, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/SemanticVersioning.psm1:503
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1:438</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should limit results to specified count" name="SemanticVersioning Module Tests.Get-VersionHistory Function Tests.Should limit results to specified count" time="0.05" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>FormatException: The string 'Tagger: GitHub &lt;noreply@github.com&gt;' was not recognized as a valid DateTime. There is an unknown word starting at index '0'.
+MethodInvocationException: Exception calling "Parse" with "1" argument(s): "The string 'Tagger: GitHub &lt;noreply@github.com&gt;' was not recognized as a valid DateTime. There is an unknown word starting at index '0'."</message>
+                      <stack-trace>at Get-VersionHistory, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/SemanticVersioning.psm1:503
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1:449</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should exclude pre-release versions by default" name="SemanticVersioning Module Tests.Get-VersionHistory Function Tests.Should exclude pre-release versions by default" time="0.0641" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>FormatException: The string 'Tagger: GitHub &lt;noreply@github.com&gt;' was not recognized as a valid DateTime. There is an unknown word starting at index '0'.
+MethodInvocationException: Exception calling "Parse" with "1" argument(s): "The string 'Tagger: GitHub &lt;noreply@github.com&gt;' was not recognized as a valid DateTime. There is an unknown word starting at index '0'."</message>
+                      <stack-trace>at Get-VersionHistory, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/SemanticVersioning.psm1:503
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1:458</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should include pre-release versions when requested" name="SemanticVersioning Module Tests.Get-VersionHistory Function Tests.Should include pre-release versions when requested" time="0.0664" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>FormatException: The string 'Tagger: GitHub &lt;noreply@github.com&gt;' was not recognized as a valid DateTime. There is an unknown word starting at index '0'.
+MethodInvocationException: Exception calling "Parse" with "1" argument(s): "The string 'Tagger: GitHub &lt;noreply@github.com&gt;' was not recognized as a valid DateTime. There is an unknown word starting at index '0'."</message>
+                      <stack-trace>at Get-VersionHistory, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/SemanticVersioning.psm1:503
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1:468</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="SemanticVersioning Module Tests.Get-ReleaseNotes Function Tests" executed="True" result="Failure" success="False" time="1.7046" asserts="0" description="SemanticVersioning Module Tests.Get-ReleaseNotes Function Tests">
+                <results>
+                  <test-case description="Should generate markdown release notes" name="SemanticVersioning Module Tests.Get-ReleaseNotes Function Tests.Should generate markdown release notes" time="0.0444" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ParameterBindingValidationException: Cannot bind argument to parameter 'Commits' because it is null.</message>
+                      <stack-trace>at Get-ReleaseNotes, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/SemanticVersioning.psm1:639
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1:485</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should generate text release notes" name="SemanticVersioning Module Tests.Get-ReleaseNotes Function Tests.Should generate text release notes" time="0.0475" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ParameterBindingValidationException: Cannot bind argument to parameter 'Commits' because it is null.</message>
+                      <stack-trace>at Get-ReleaseNotes, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/SemanticVersioning.psm1:639
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1:492</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should generate JSON release notes" name="SemanticVersioning Module Tests.Get-ReleaseNotes Function Tests.Should generate JSON release notes" time="0.0486" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ParameterBindingValidationException: Cannot bind argument to parameter 'Commits' because it is null.</message>
+                      <stack-trace>at Get-ReleaseNotes, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/SemanticVersioning.psm1:639
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1:499</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should categorize commits by type" name="SemanticVersioning Module Tests.Get-ReleaseNotes Function Tests.Should categorize commits by type" time="0.0476" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ParameterBindingValidationException: Cannot bind argument to parameter 'Commits' because it is null.</message>
+                      <stack-trace>at Get-ReleaseNotes, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/SemanticVersioning.psm1:639
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1:506</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="SemanticVersioning Module Tests.Error Handling and Edge Cases" executed="True" result="Failure" success="False" time="1.8724" asserts="0" description="SemanticVersioning Module Tests.Error Handling and Edge Cases">
+                <results>
+                  <test-case description="Should handle git repository not available" name="SemanticVersioning Module Tests.Error Handling and Edge Cases.Should handle git repository not available" time="0.0733" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, but an exception "Cannot bind argument to parameter 'Commits' because it is null." was thrown from /workspaces/AitherZero/aither-core/modules/SemanticVersioning/SemanticVersioning.psm1:134 char:70
+    + …     $commitAnalysis = Parse-ConventionalCommits -Commits $commitRange
+    +                                                            ~~~~~~~~~~~~.</message>
+                      <stack-trace>at { Get-NextSemanticVersion -CurrentVersion "1.0.0" } | Should -Not -Throw, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1:517
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1:517</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle empty commit history" name="SemanticVersioning Module Tests.Error Handling and Edge Cases.Should handle empty commit history" time="0.0547" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ParameterBindingValidationException: Cannot bind argument to parameter 'Commits' because it is null.</message>
+                      <stack-trace>at Get-NextSemanticVersion&lt;Process&gt;, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/SemanticVersioning.psm1:134
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1:526</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle malformed conventional commits gracefully" name="SemanticVersioning Module Tests.Error Handling and Edge Cases.Should handle malformed conventional commits gracefully" time="0.0224" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ParameterBindingException: Parameter set cannot be resolved using the specified named parameters. One or more parameters issued cannot be used together or an insufficient number of parameters were provided.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1:541</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle version comparison edge cases" name="SemanticVersioning Module Tests.Error Handling and Edge Cases.Should handle version comparison edge cases" time="0.0079" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="SemanticVersioning Module Tests.Cross-Platform Compatibility" executed="True" result="Failure" success="False" time="1.9618" asserts="0" description="SemanticVersioning Module Tests.Cross-Platform Compatibility">
+                <results>
+                  <test-case description="Should work on current platform" name="SemanticVersioning Module Tests.Cross-Platform Compatibility.Should work on current platform" time="0.0165" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle path operations cross-platform" name="SemanticVersioning Module Tests.Cross-Platform Compatibility.Should handle path operations cross-platform" time="0.0526" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ParameterBindingValidationException: Cannot bind argument to parameter 'Commits' because it is null.</message>
+                      <stack-trace>at Get-NextSemanticVersion&lt;Process&gt;, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/SemanticVersioning.psm1:134
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1:565</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should work with PowerShell 7+ features" name="SemanticVersioning Module Tests.Cross-Platform Compatibility.Should work with PowerShell 7+ features" time="0.0115" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="SemanticVersioning Module Tests.Performance and Resource Management" executed="True" result="Failure" success="False" time="2.5529" asserts="0" description="SemanticVersioning Module Tests.Performance and Resource Management">
+                <results>
+                  <test-case description="Should handle large version histories efficiently" name="SemanticVersioning Module Tests.Performance and Resource Management.Should handle large version histories efficiently" time="0.1606" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>FormatException: The string 'Tagger: GitHub &lt;noreply@github.com&gt;' was not recognized as a valid DateTime. There is an unknown word starting at index '0'.
+MethodInvocationException: Exception calling "Parse" with "1" argument(s): "The string 'Tagger: GitHub &lt;noreply@github.com&gt;' was not recognized as a valid DateTime. There is an unknown word starting at index '0'."</message>
+                      <stack-trace>at Get-VersionHistory, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/SemanticVersioning.psm1:503
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1:590</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should process many commits efficiently" name="SemanticVersioning Module Tests.Performance and Resource Management.Should process many commits efficiently" time="0.0294" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle concurrent operations" name="SemanticVersioning Module Tests.Performance and Resource Management.Should handle concurrent operations" time="0.3827" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="SemanticVersioning Module Tests.Integration Tests" executed="True" result="Failure" success="False" time="2.7112" asserts="0" description="SemanticVersioning Module Tests.Integration Tests">
+                <results>
+                  <test-case description="Should perform end-to-end version workflow" name="SemanticVersioning Module Tests.Integration Tests.Should perform end-to-end version workflow" time="0.0693" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ParameterBindingValidationException: Cannot bind argument to parameter 'Commits' because it is null.</message>
+                      <stack-trace>at Get-NextSemanticVersion&lt;Process&gt;, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/SemanticVersioning.psm1:134
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1:647</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should generate comprehensive release notes workflow" name="SemanticVersioning Module Tests.Integration Tests.Should generate comprehensive release notes workflow" time="0.0827" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ParameterBindingValidationException: Cannot bind argument to parameter 'Commits' because it is null.</message>
+                      <stack-trace>at Get-ReleaseNotes, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/SemanticVersioning.psm1:639
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1:678</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>

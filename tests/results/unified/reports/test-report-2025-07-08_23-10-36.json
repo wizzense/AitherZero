@@ -1,0 +1,791 @@
+{
+  "Summary": {
+    "FailedModules": 29,
+    "TestSuite": "Unit",
+    "SuccessfulModules": 2,
+    "SuccessRate": 57.89,
+    "TotalTests": 1033.0,
+    "TotalDuration": 169.88054150000002,
+    "TotalModules": 31,
+    "TotalPassed": 598.0,
+    "TotalFailed": 364.0,
+    "Timestamp": "2025-07-08T23:10:36.8006574+00:00"
+  },
+  "Results": [
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "ConfigurationCore",
+        "Duration": 1.7523552,
+        "TestsPassed": 0,
+        "TestsFailed": 34,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 34
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 34,
+      "TestsRun": 34,
+      "Duration": 1.7523552,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "ConfigurationCore"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "ConfigurationCarousel",
+        "Duration": 2.9758741,
+        "TestsPassed": 14,
+        "TestsFailed": 1,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ConfigurationCarousel/tests/ConfigurationCarousel.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 15
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ConfigurationCarousel/tests/ConfigurationCarousel.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 1,
+      "TestsRun": 15,
+      "Duration": 2.9758741,
+      "Success": false,
+      "TestsPassed": 14,
+      "Module": "ConfigurationCarousel"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "AIToolsIntegration",
+        "Duration": 3.2998375,
+        "TestsPassed": 22,
+        "TestsFailed": 0,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/AIToolsIntegration/tests/AIToolsIntegration.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 22
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/AIToolsIntegration/tests/AIToolsIntegration.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 0,
+      "TestsRun": 22,
+      "Duration": 3.2998375,
+      "Success": true,
+      "TestsPassed": 22,
+      "Module": "AIToolsIntegration"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "ConfigurationRepository",
+        "Duration": 1.3812025,
+        "TestsPassed": 12,
+        "TestsFailed": 3,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ConfigurationRepository/tests/ConfigurationRepository.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 38
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ConfigurationRepository/tests/ConfigurationRepository.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 3,
+      "TestsRun": 38,
+      "Duration": 1.3812025,
+      "Success": false,
+      "TestsPassed": 12,
+      "Module": "ConfigurationRepository"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "ISOManager",
+        "Duration": 0.5093911,
+        "TestsPassed": 0,
+        "TestsFailed": 27,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ISOManager/tests/ISOManager.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 27
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ISOManager/tests/ISOManager.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 27,
+      "TestsRun": 27,
+      "Duration": 0.5093911,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "ISOManager"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "ConfigurationManager",
+        "Duration": 3.8296856,
+        "TestsPassed": 38,
+        "TestsFailed": 2,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ConfigurationManager/tests/ConfigurationManager.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 40
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ConfigurationManager/tests/ConfigurationManager.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 2,
+      "TestsRun": 40,
+      "Duration": 3.8296856,
+      "Success": false,
+      "TestsPassed": 38,
+      "Module": "ConfigurationManager"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "LabRunner",
+        "Duration": 0.6790427,
+        "TestsPassed": 0,
+        "TestsFailed": 35,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/LabRunner/tests/LabRunner.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 35
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/LabRunner/tests/LabRunner.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 35,
+      "TestsRun": 35,
+      "Duration": 0.6790427,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "LabRunner"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "LicenseManager",
+        "Duration": 0.5062264,
+        "TestsPassed": 0,
+        "TestsFailed": 32,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/LicenseManager/tests/LicenseManager.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 32
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/LicenseManager/tests/LicenseManager.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 32,
+      "TestsRun": 32,
+      "Duration": 0.5062264,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "LicenseManager"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "DevEnvironment",
+        "Duration": 4.4612976,
+        "TestsPassed": 28,
+        "TestsFailed": 49,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 77
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 49,
+      "TestsRun": 77,
+      "Duration": 4.4612976,
+      "Success": false,
+      "TestsPassed": 28,
+      "Module": "DevEnvironment"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "Logging",
+        "Duration": 3.3602617,
+        "TestsPassed": 31,
+        "TestsFailed": 3,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/Logging/tests/Logging.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 34
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/Logging/tests/Logging.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 3,
+      "TestsRun": 34,
+      "Duration": 3.3602617,
+      "Success": false,
+      "TestsPassed": 31,
+      "Module": "Logging"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "OpenTofuProvider",
+        "Duration": 3.0934105,
+        "TestsPassed": 26,
+        "TestsFailed": 2,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/OpenTofuProvider/tests/OpenTofuProvider.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 28
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/OpenTofuProvider/tests/OpenTofuProvider.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 2,
+      "TestsRun": 28,
+      "Duration": 3.0934105,
+      "Success": false,
+      "TestsPassed": 26,
+      "Module": "OpenTofuProvider"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "OrchestrationEngine",
+        "Duration": 1.9093614,
+        "TestsPassed": 11,
+        "TestsFailed": 11,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 22
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 11,
+      "TestsRun": 22,
+      "Duration": 1.9093614,
+      "Success": false,
+      "TestsPassed": 11,
+      "Module": "OrchestrationEngine"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "ModuleCommunication",
+        "Duration": 8.6249399,
+        "TestsPassed": 7,
+        "TestsFailed": 26,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 33
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 26,
+      "TestsRun": 33,
+      "Duration": 8.6249399,
+      "Success": false,
+      "TestsPassed": 7,
+      "Module": "ModuleCommunication"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "ProgressTracking",
+        "Duration": 0.7591424,
+        "TestsPassed": 21,
+        "TestsFailed": 1,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ProgressTracking/tests/ProgressTracking.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 22
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ProgressTracking/tests/ProgressTracking.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 1,
+      "TestsRun": 22,
+      "Duration": 0.7591424,
+      "Success": false,
+      "TestsPassed": 21,
+      "Module": "ProgressTracking"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "PatchManager",
+        "Duration": 5.6494988,
+        "TestsPassed": 28,
+        "TestsFailed": 4,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/PatchManager/tests/PatchManager.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 32
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/PatchManager/tests/PatchManager.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 4,
+      "TestsRun": 32,
+      "Duration": 5.6494988,
+      "Success": false,
+      "TestsPassed": 28,
+      "Module": "PatchManager"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "PSScriptAnalyzerIntegration",
+        "Duration": 2.7223781,
+        "TestsPassed": 11,
+        "TestsFailed": 13,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 24
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 13,
+      "TestsRun": 24,
+      "Duration": 2.7223781,
+      "Success": false,
+      "TestsPassed": 11,
+      "Module": "PSScriptAnalyzerIntegration"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "RemoteConnection",
+        "Duration": 3.3586296,
+        "TestsPassed": 25,
+        "TestsFailed": 1,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 28
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 1,
+      "TestsRun": 28,
+      "Duration": 3.3586296,
+      "Success": false,
+      "TestsPassed": 25,
+      "Module": "RemoteConnection"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "RepoSync",
+        "Duration": 2.3235307,
+        "TestsPassed": 11,
+        "TestsFailed": 11,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 22
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 11,
+      "TestsRun": 22,
+      "Duration": 2.3235307,
+      "Success": false,
+      "TestsPassed": 11,
+      "Module": "RepoSync"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "RestAPIServer",
+        "Duration": 2.3050161,
+        "TestsPassed": 11,
+        "TestsFailed": 11,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 22
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 11,
+      "TestsRun": 22,
+      "Duration": 2.3050161,
+      "Success": false,
+      "TestsPassed": 11,
+      "Module": "RestAPIServer"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "ScriptManager",
+        "Duration": 2.124854,
+        "TestsPassed": 11,
+        "TestsFailed": 11,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ScriptManager/tests/ScriptManager.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 22
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ScriptManager/tests/ScriptManager.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 11,
+      "TestsRun": 22,
+      "Duration": 2.124854,
+      "Success": false,
+      "TestsPassed": 11,
+      "Module": "ScriptManager"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "SecureCredentials",
+        "Duration": 1.2481663,
+        "TestsPassed": 13,
+        "TestsFailed": 2,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SecureCredentials/tests/SecureCredentials.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 38
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SecureCredentials/tests/SecureCredentials.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 2,
+      "TestsRun": 38,
+      "Duration": 1.2481663,
+      "Success": false,
+      "TestsPassed": 13,
+      "Module": "SecureCredentials"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "SecurityAutomation",
+        "Duration": 2.8723389,
+        "TestsPassed": 13,
+        "TestsFailed": 2,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SecurityAutomation/tests/SecurityAutomation.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 38
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SecurityAutomation/tests/SecurityAutomation.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 2,
+      "TestsRun": 38,
+      "Duration": 2.8723389,
+      "Success": false,
+      "TestsPassed": 13,
+      "Module": "SecurityAutomation"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "SemanticVersioning",
+        "Duration": 3.901461,
+        "TestsPassed": 44,
+        "TestsFailed": 16,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 60
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 16,
+      "TestsRun": 60,
+      "Duration": 3.901461,
+      "Success": false,
+      "TestsPassed": 44,
+      "Module": "SemanticVersioning"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "ParallelExecution",
+        "Duration": 18.4081064,
+        "TestsPassed": 29,
+        "TestsFailed": 8,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 37
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 8,
+      "TestsRun": 37,
+      "Duration": 18.4081064,
+      "Success": false,
+      "TestsPassed": 29,
+      "Module": "ParallelExecution"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "StartupExperience",
+        "Duration": 2.0795485,
+        "TestsPassed": 20,
+        "TestsFailed": 2,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 22
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 2,
+      "TestsRun": 22,
+      "Duration": 2.0795485,
+      "Success": false,
+      "TestsPassed": 20,
+      "Module": "StartupExperience"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "TestingFramework",
+        "Duration": 1.3469453,
+        "TestsPassed": 13,
+        "TestsFailed": 0,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/TestingFramework/tests/TestingFramework.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 13
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/TestingFramework/tests/TestingFramework.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 0,
+      "TestsRun": 13,
+      "Duration": 1.3469453,
+      "Success": true,
+      "TestsPassed": 13,
+      "Module": "TestingFramework"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "SystemMonitoring",
+        "Duration": 2.5150818,
+        "TestsPassed": 11,
+        "TestsFailed": 11,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SystemMonitoring/tests/SystemMonitoring.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 22
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SystemMonitoring/tests/SystemMonitoring.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 11,
+      "TestsRun": 22,
+      "Duration": 2.5150818,
+      "Success": false,
+      "TestsPassed": 11,
+      "Module": "SystemMonitoring"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "BackupManager",
+        "Duration": 32.4501475,
+        "TestsPassed": 49,
+        "TestsFailed": 8,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 57
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 8,
+      "TestsRun": 57,
+      "Duration": 32.4501475,
+      "Success": false,
+      "TestsPassed": 49,
+      "Module": "BackupManager"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "UnifiedMaintenance",
+        "Duration": 2.3008275,
+        "TestsPassed": 11,
+        "TestsFailed": 11,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/UnifiedMaintenance/tests/UnifiedMaintenance.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 22
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/UnifiedMaintenance/tests/UnifiedMaintenance.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 11,
+      "TestsRun": 22,
+      "Duration": 2.3008275,
+      "Success": false,
+      "TestsPassed": 11,
+      "Module": "UnifiedMaintenance"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "SetupWizard",
+        "Duration": 21.6788049,
+        "TestsPassed": 58,
+        "TestsFailed": 13,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SetupWizard/tests/SetupWizard.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 71
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SetupWizard/tests/SetupWizard.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 13,
+      "TestsRun": 71,
+      "Duration": 21.6788049,
+      "Success": false,
+      "TestsPassed": 58,
+      "Module": "SetupWizard"
+    },
+    {
+      "Phase": "Unit",
+      "Result": {
+        "ModuleName": "UtilityServices",
+        "Duration": 25.4531775,
+        "TestsPassed": 30,
+        "TestsFailed": 14,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "TestsRun": 44
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsFailed": 14,
+      "TestsRun": 44,
+      "Duration": 25.4531775,
+      "Success": false,
+      "TestsPassed": 30,
+      "Module": "UtilityServices"
+    }
+  ]
+}

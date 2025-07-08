@@ -7,9 +7,7 @@
     Copyright = '(c) 2025 AitherZero Project. All rights reserved.'
     Description = 'PowerShell security automation module for enterprise security management'
     PowerShellVersion = '7.0'
-    RequiredModules = @(
-        @{ModuleName = 'Logging'; ModuleVersion = '2.1.0'; GUID = 'B5D8F9A1-C2E3-4F6A-8B9C-1D2E3F4A5B6C'}
-    )
+    RequiredModules = @()
     # Note: ActiveDirectory module is optional and only required for AD-specific functions.
     # Functions that need ActiveDirectory will check for its availability at runtime.
     FunctionsToExport = @(
