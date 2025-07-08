@@ -539,11 +539,14 @@ function Get-ModuleRiskLevel {
         "D" { $riskFactors += 1 }
     }
     
-    return switch ($riskFactors) {
-        { $_ -gt 6 } { "Critical"; break }
-        { $_ -gt 4 } { "High"; break }
-        { $_ -gt 2 } { "Medium"; break }
-        default { "Low" }
+    if ($riskFactors -gt 6) {
+        return "Critical"
+    } elseif ($riskFactors -gt 4) {
+        return "High"
+    } elseif ($riskFactors -gt 2) {
+        return "Medium"
+    } else {
+        return "Low"
     }
 }
 
