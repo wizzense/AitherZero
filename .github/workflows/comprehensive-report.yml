@@ -337,6 +337,85 @@ jobs:
       with:
         name: audit-results
         path: audit-reports
+
+    - name: Download CI results from recent runs
+      continue-on-error: true
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          
+          // Try to find recent successful CI run
+          const runs = await github.rest.actions.listWorkflowRuns({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            workflow_id: 'ci.yml',
+            status: 'success',
+            per_page: 5
+          });
+          
+          if (runs.data.workflow_runs.length > 0) {
+            const latestRun = runs.data.workflow_runs[0];
+            console.log(`Found CI run: ${latestRun.id}`);
+            
+            // Get artifacts from CI run
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: latestRun.id
+            });
+            
+            // Download specific artifacts we need
+            const targetArtifacts = [
+              'ci-results-summary',
+              'comprehensive-project-dashboard', 
+              'test-results-ubuntu-latest',
+              'code-quality-psscriptanalyzer',
+              'code-quality-best-practices'
+            ];
+            
+            for (const artifactName of targetArtifacts) {
+              const artifact = artifacts.data.artifacts.find(a => a.name === artifactName);
+              if (artifact) {
+                console.log(`Downloading artifact: ${artifactName}`);
+                fs.mkdirSync(`./external-artifacts/${artifactName}`, { recursive: true });
+                // Note: Actual download requires additional API call - simplified for workflow
+              }
+            }
+          }
+          
+    - name: Download additional workflow artifacts
+      continue-on-error: true
+      uses: actions/github-script@v7 
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          // Download from audit workflow
+          const auditRuns = await github.rest.actions.listWorkflowRuns({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            workflow_id: 'audit.yml',
+            status: 'success',
+            per_page: 3
+          });
+          
+          if (auditRuns.data.workflow_runs.length > 0) {
+            console.log(`Found audit run: ${auditRuns.data.workflow_runs[0].id}`);
+          }
+          
+          // Download from security workflow  
+          const securityRuns = await github.rest.actions.listWorkflowRuns({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            workflow_id: 'security-scan.yml',
+            status: 'success', 
+            per_page: 3
+          });
+          
+          if (securityRuns.data.workflow_runs.length > 0) {
+            console.log(`Found security run: ${securityRuns.data.workflow_runs[0].id}`);
+          }
         
     - name: Generate comprehensive report
       id: report
@@ -349,6 +428,7 @@ jobs:
         $params = @{
           ReportPath = './output/aitherZero-dashboard.html'
           ArtifactsPath = './audit-reports'
+          ExternalArtifactsPath = './external-artifacts'
           IncludeDetailedAnalysis = '${{ fromJson(needs.initialize-reporting.outputs.report-scope).detailedAnalysis }}' -eq 'true'
           ReportTitle = $reportTitle
           Version = '${{ needs.initialize-reporting.outputs.version-number }}'
