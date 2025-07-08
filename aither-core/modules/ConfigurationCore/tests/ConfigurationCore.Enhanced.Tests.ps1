@@ -1259,9 +1259,9 @@ Describe "ConfigurationCore Module - Advanced Features" {
     Context "Security and Access Control" {
         It "Should detect sensitive information in configurations" {
             $configWithSecrets = @{
-                DatabasePassword = 'test-pwd-123'
-                ApiKey = 'test-key-456'
-                ConnectionString = 'Server=localhost;Password=test'
+                DatabasePassword = 'placeholder'
+                ApiKey = 'placeholder'
+                ConnectionString = 'Server=localhost;Password=placeholder'
                 SafeProperty = 'PublicValue'
             }
 
