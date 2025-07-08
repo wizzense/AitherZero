@@ -67,15 +67,15 @@ jobs:
         
         # Generate the report
         ./scripts/reporting/Generate-ComprehensiveReport.ps1 `
-          -ReportPath "./build/output/AitherZero-v${{ steps.get_version.outputs.version }}-report.html" `
+          -ReportPath "./output/AitherZero-v${{ steps.get_version.outputs.version }}-dashboard.html" `
           -IncludeDetailedAnalysis `
-          -ReportTitle "AitherZero v${{ steps.get_version.outputs.version }} Release Report" `
+          -ReportTitle "AitherZero v${{ steps.get_version.outputs.version }} Release Dashboard" `
           -Version "${{ steps.get_version.outputs.version }}"
           
-        if (Test-Path "./build/output/AitherZero-v${{ steps.get_version.outputs.version }}-report.html") {
-          Write-Host "✅ Comprehensive report generated successfully" -ForegroundColor Green
+        if (Test-Path "./output/AitherZero-v${{ steps.get_version.outputs.version }}-dashboard.html") {
+          Write-Host "✅ Comprehensive dashboard generated successfully" -ForegroundColor Green
         } else {
-          Write-Warning "Failed to generate comprehensive report"
+          Write-Warning "Failed to generate comprehensive dashboard"
         }
         
     - name: Read Changelog
@@ -123,7 +123,7 @@ jobs:
           | 🪟 **Windows** | `AitherZero-v${{ steps.get_version.outputs.version }}-windows.zip` | ~15-20 MB |
           | 🐧 **Linux** | `AitherZero-v${{ steps.get_version.outputs.version }}-linux.tar.gz` | ~15-20 MB |
           | 🍎 **macOS** | `AitherZero-v${{ steps.get_version.outputs.version }}-macos.tar.gz` | ~15-20 MB |
-          | 📊 **Report** | `AitherZero-v${{ steps.get_version.outputs.version }}-report.html` | Comprehensive project analysis |
+          | 📊 **Dashboard** | `AitherZero-v${{ steps.get_version.outputs.version }}-dashboard.html` | Unified project dashboard with health metrics and feature map |
           
           ### 🚀 Quick Installation
           
@@ -144,7 +144,9 @@ jobs:
           - [Quick Start Guide](https://github.com/${{ github.repository }}/blob/main/QUICKSTART.md)
           - [Full Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)
           
-        files: build/output/AitherZero-*
+        files: |
+          build/output/AitherZero-*
+          output/AitherZero-*
         draft: false
         prerelease: false
         fail_on_unmatched_files: false  # Don't fail if some files are missing

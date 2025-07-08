@@ -66,3 +66,31 @@ kicker-git-backup.ps1
 powershellsec/
 
 requirements/
+
+# Prevent root directory mess - ALL analysis/validation/temp files go in output/
+*-FIXES-SUMMARY.md
+*-VALIDATION-REPORT.md
+*-ANALYSIS-REPORT.md
+*ASSESSMENT.md
+*-validation-*.json
+*-compatibility-*.json
+*-analysis.json
+workflow_analysis.json
+change-analysis.json
+duplicate-files*.json
+consolidation-report-*.json
+*-test-results*.xml
+*-test-summary.json
+*-dashboard.json
+*-dashboard.html
+test-*.ps1
+check_*.ps1
+fix-*.ps1
+security_status_report.ps1
+platform-specific-*.ps1
+validate-*.ps1
+configuration-*-validation.ps1
+
+# Keep output directory but ignore contents (except in git)
+/output/*
+!/output/.gitkeep
