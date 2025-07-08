@@ -1,6 +1,6 @@
 name: Comprehensive Auditing & Reporting
 
-on:
+"on":
   schedule:
     # Run daily at 6 AM UTC (comprehensive report)
     - cron: '0 6 * * *'
@@ -339,30 +339,30 @@ jobs:
         
         # Create GitHub summary
         $markdownSummary = @"
-## 📊 AitherZero Comprehensive Report Summary
+        ## 📊 AitherZero Comprehensive Report Summary
 
-### 🎯 Overall Health
-- **Grade**: $($summary.healthGrade)
-- **Score**: $($summary.healthScore)%
-- **Version**: $($summary.version)
+        ### 🎯 Overall Health
+        - **Grade**: $($summary.healthGrade)
+        - **Score**: $($summary.healthScore)%
+        - **Version**: $($summary.version)
 
-### 📦 Module Analysis
-- **Total Modules**: $($summary.totalModules)
-- **Analyzed Successfully**: $($summary.analyzedModules)
-- **Analysis Coverage**: $(if ($summary.totalModules -gt 0) { [math]::Round(($summary.analyzedModules / $summary.totalModules) * 100, 1) } else { 0 })%
+        ### 📦 Module Analysis
+        - **Total Modules**: $($summary.totalModules)
+        - **Analyzed Successfully**: $($summary.analyzedModules)
+        - **Analysis Coverage**: $(if ($summary.totalModules -gt 0) { [math]::Round(($summary.analyzedModules / $summary.totalModules) * 100, 1) } else { 0 })%
 
-### 📅 Report Details
-- **Generated**: $($summary.timestamp)
-- **Report Type**: $($summary.reportType)
-- **Baseline Hash**: $($summary.baselineHash)
+        ### 📅 Report Details
+        - **Generated**: $($summary.timestamp)
+        - **Report Type**: $($summary.reportType)
+        - **Baseline Hash**: $($summary.baselineHash)
 
-### 📋 Actions
-- 📄 Download the comprehensive HTML report from artifacts
-- 🗺️ Review the dynamic feature map for module relationships
-- 🔍 Check individual audit results for detailed findings
+        ### 📋 Actions
+        - 📄 Download the comprehensive HTML report from artifacts
+        - 🗺️ Review the dynamic feature map for module relationships
+        - 🔍 Check individual audit results for detailed findings
 
-[View Full Workflow Run]($($summary.workflowUrl))
-"@
+        [View Full Workflow Run]($($summary.workflowUrl))
+        "@
         
         echo $markdownSummary >> $env:GITHUB_STEP_SUMMARY
         
@@ -434,12 +434,10 @@ jobs:
         name: comprehensive-report
         
     - name: Create release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: v${{ needs.initialize-reporting.outputs.version-number }}
-        release_name: AitherZero v${{ needs.initialize-reporting.outputs.version-number }}
+        name: AitherZero v${{ needs.initialize-reporting.outputs.version-number }}
         body: |
           ## 🚀 AitherZero v${{ needs.initialize-reporting.outputs.version-number }}
           
@@ -464,18 +462,10 @@ jobs:
           
           ---
           🤖 This release was validated and created automatically by the AitherZero CI/CD system.
+        files: ./aitherZero-comprehensive-report.html
         draft: false
         prerelease: false
-        
-    - name: Upload release assets
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./aitherZero-comprehensive-report.html
-        asset_name: aitherZero-comprehensive-report-v${{ needs.initialize-reporting.outputs.version-number }}.html
-        asset_content_type: text/html
+        generate_release_notes: true
 
   # Final summary and notifications
   report-summary:
@@ -537,28 +527,28 @@ jobs:
         $status = if ($isSuccess) { 'SUCCESS' } else { 'PARTIAL SUCCESS' }
         
         $workflowSummary = @"
-# $emoji AitherZero Comprehensive Report - $status
+        # $emoji AitherZero Comprehensive Report - $status
 
-## 📊 Report Overview
-- **Version**: v${{ needs.initialize-reporting.outputs.version-number }}
-- **Report Type**: ${{ github.event.inputs.report_type || 'comprehensive' }}
-- **Generated**: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
-- **Workflow**: [View Details](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+        ## 📊 Report Overview
+        - **Version**: v${{ needs.initialize-reporting.outputs.version-number }}
+        - **Report Type**: ${{ github.event.inputs.report_type || 'comprehensive' }}
+        - **Generated**: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+        - **Workflow**: [View Details](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-## 📄 Available Downloads
-- 📊 **Comprehensive HTML Report** - Complete analysis with interactive dashboard
-- 🗺️ **Dynamic Feature Map** - Module relationships and capabilities  
-- 📋 **Audit Results** - Detailed findings from all audit systems
-- 🧪 **Test Results** - Cross-platform testing validation
+        ## 📄 Available Downloads
+        - 📊 **Comprehensive HTML Report** - Complete analysis with interactive dashboard
+        - 🗺️ **Dynamic Feature Map** - Module relationships and capabilities  
+        - 📋 **Audit Results** - Detailed findings from all audit systems
+        - 🧪 **Test Results** - Cross-platform testing validation
 
-## 🎯 Next Steps
-1. Download and review the comprehensive HTML report
-2. Check the dynamic feature map for module insights
-3. Address any issues identified in the audit results
-4. Use the reports for release planning and documentation
+        ## 🎯 Next Steps
+        1. Download and review the comprehensive HTML report
+        2. Check the dynamic feature map for module insights
+        3. Address any issues identified in the audit results
+        4. Use the reports for release planning and documentation
 
----
-*Generated by AitherZero Comprehensive Reporting System v1.0*
-"@
+        ---
+        *Generated by AitherZero Comprehensive Reporting System v1.0*
+        "@
         
         echo $workflowSummary >> $env:GITHUB_STEP_SUMMARY

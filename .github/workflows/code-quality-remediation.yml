@@ -1,6 +1,6 @@
 name: Code Quality Remediation
 
-on:
+"on":
   schedule:
     # Run weekly on Sundays at 02:00 UTC
     - cron: '0 2 * * 0'
@@ -558,106 +558,33 @@ jobs:
         path: github-issues-report.json
         retention-days: 30
 
-    - name: Create Pull Request
+    - name: Check for changes
+      id: check-changes
       if: github.event.inputs.create_pr == 'true'
       shell: pwsh
       run: |
-        # Check if there are changes to commit
         $changes = git status --porcelain
         if (-not $changes) {
           Write-Host "📝 No changes to commit" -ForegroundColor Yellow
-          exit 0
-        }
-        
-        Write-Host "🔧 Creating pull request with automated fixes..." -ForegroundColor Cyan
-        
-        # Import PatchManager if available
-        $patchManagerPath = "./aither-core/modules/PatchManager/PatchManager.psd1"
-        if (Test-Path $patchManagerPath) {
-          Import-Module $patchManagerPath -Force
-          Write-Host "✅ PatchManager module loaded" -ForegroundColor Green
-          
-          # Use PatchManager for atomic PR creation
-          try {
-            $prResult = New-Feature -Description "Automated code quality fixes from PSScriptAnalyzer remediation" -Changes {
-              git add .
-              git commit -m "Automated code quality fixes
-              
-              - Applied safe automatic fixes for PSScriptAnalyzer findings
-              - Fixed formatting, aliases, and style issues
-              - Maintained code functionality while improving quality
-              
-              🤖 Generated with [Claude Code](https://claude.ai/code)
-              
-              Co-Authored-By: Claude <noreply@anthropic.com>"
-            }
-            
-            Write-Host "✅ Pull request created using PatchManager" -ForegroundColor Green
-          }
-          catch {
-            Write-Warning "PatchManager failed, falling back to manual PR creation: $($_.Exception.Message)"
-            
-            # Fallback to manual PR creation
-            $branchName = "automated-code-quality-fixes-$(Get-Date -Format 'yyyy-MM-dd-HHmm')"
-            git checkout -b $branchName
-            git add .
-            git commit -m "Automated code quality fixes
-            
-            - Applied safe automatic fixes for PSScriptAnalyzer findings
-            - Fixed formatting, aliases, and style issues  
-            - Maintained code functionality while improving quality
-            
-            🤖 Generated with [Claude Code](https://claude.ai/code)
-            
-            Co-Authored-By: Claude <noreply@anthropic.com>"
-            
-            git push origin $branchName
-            
-            # Create PR using GitHub CLI
-            gh pr create \
-              --title "🔧 Automated Code Quality Fixes" \
-              --body "$(cat <<'EOF'
-## Summary
-This PR contains automated fixes for PSScriptAnalyzer findings applied by the code quality remediation workflow.
-
-### Changes Made
-- Fixed code formatting issues (whitespace, indentation)
-- Replaced PowerShell aliases with full cmdlet names
-- Removed unnecessary semicolons and trailing whitespace
-- Applied consistent casing for PowerShell keywords
-
-### Safety
-- Only safe, non-functional changes were applied automatically
-- All fixes preserve existing code functionality
-- Changes improve code readability and maintainability
-
-### Review Notes
-- All changes are cosmetic/style improvements
-- No business logic was modified
-- Compatible with existing PowerShell 7.0+ requirements
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-EOF
-)" \
-              --head $branchName \
-              --base main
-          }
+          echo "has-changes=false" >> $env:GITHUB_OUTPUT
         } else {
-          Write-Host "⚠️  PatchManager not available, using manual PR creation" -ForegroundColor Yellow
-          
-          # Manual PR creation
-          $branchName = "automated-code-quality-fixes-$(Get-Date -Format 'yyyy-MM-dd-HHmm')"
-          git checkout -b $branchName
-          git add .
-          git commit -m "Automated code quality fixes"
-          git push origin $branchName
-          
-          gh pr create \
-            --title "🔧 Automated Code Quality Fixes" \
-            --body "Automated fixes for PSScriptAnalyzer findings" \
-            --head $branchName \
-            --base main
+          Write-Host "🔧 Changes detected, preparing for PR creation..." -ForegroundColor Cyan
+          echo "has-changes=true" >> $env:GITHUB_OUTPUT
         }
+        
+    - name: Create Pull Request
+      if: github.event.inputs.create_pr == 'true' && steps.check-changes.outputs.has-changes == 'true'
+      shell: pwsh
+      run: |
+        $branchName = "automated-code-quality-fixes-$(Get-Date -Format 'yyyy-MM-dd-HHmm')"
+        git checkout -b $branchName
+        git add .
+        git commit -m "Automated code quality fixes - Applied safe automatic fixes for PSScriptAnalyzer findings"
+        git push origin $branchName
+        
+        $prBody = "This PR contains automated fixes for PSScriptAnalyzer findings applied by the code quality remediation workflow."
+        
+        gh pr create --title "Automated Code Quality Fixes" --body $prBody --head $branchName --base main
 
   notify-results:
     name: Notify Results
