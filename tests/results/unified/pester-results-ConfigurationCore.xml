@@ -1,194 +1,110 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="34" errors="0" failures="18" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="15:27:17">
-  <environment machine-name="codespaces-6c6eb1" clr-version="9.0.4" user-domain="" nunit-version="2.5.8.0" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" user="codespace" platform="Linux" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="34" errors="0" failures="7" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="18:49:31">
+  <environment machine-name="codespaces-6c6eb1" os-version="6.8.0-1027-azure" user="codespace" clr-version="9.0.4" user-domain="" nunit-version="2.5.8.0" platform="Linux" cwd="/workspaces/AitherZero" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="2.2787" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="2.493" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1" executed="True" result="Failure" success="False" time="2.2787" asserts="0" description="/workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1" executed="True" result="Failure" success="False" time="2.493" asserts="0" description="/workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="ConfigurationCore Module Tests" executed="True" result="Failure" success="False" time="1.7118" asserts="0" description="ConfigurationCore Module Tests">
+          <test-suite type="TestFixture" name="ConfigurationCore Module Tests" executed="True" result="Failure" success="False" time="1.9705" asserts="0" description="ConfigurationCore Module Tests">
             <results>
-              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Module Import and Basic Functions" executed="True" result="Failure" success="False" time="0.3096" asserts="0" description="ConfigurationCore Module Tests.Module Import and Basic Functions">
+              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Module Import and Basic Functions" executed="True" result="Success" success="True" time="0.2421" asserts="0" description="ConfigurationCore Module Tests.Module Import and Basic Functions">
                 <results>
-                  <test-case description="Should import the module without errors" name="ConfigurationCore Module Tests.Module Import and Basic Functions.Should import the module without errors" time="0.1641" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should export all required functions" name="ConfigurationCore Module Tests.Module Import and Basic Functions.Should export all required functions" time="0.1072" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>Expected the actual value to be greater than 20, but got 20.</message>
-                      <stack-trace>at $exportedFunctions.Count | Should -BeGreaterThan 20, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:72
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:72</stack-trace>
-                    </failure>
-                  </test-case>
+                  <test-case description="Should import the module without errors" name="ConfigurationCore Module Tests.Module Import and Basic Functions.Should import the module without errors" time="0.1647" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export all required functions" name="ConfigurationCore Module Tests.Module Import and Basic Functions.Should export all required functions" time="0.032" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Configuration Store Management" executed="True" result="Failure" success="False" time="0.6536" asserts="0" description="ConfigurationCore Module Tests.Configuration Store Management">
+              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Configuration Store Management" executed="True" result="Failure" success="False" time="0.5648" asserts="0" description="ConfigurationCore Module Tests.Configuration Store Management">
                 <results>
-                  <test-case description="Should get configuration store" name="ConfigurationCore Module Tests.Configuration Store Management.Should get configuration store" time="0.0376" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should get configuration store" name="ConfigurationCore Module Tests.Configuration Store Management.Should get configuration store" time="0.1069" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected a value, but got $null or empty.</message>
                       <stack-trace>at $store.Modules | Should -Not -BeNullOrEmpty, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:80
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:80</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should get configuration store as JSON" name="ConfigurationCore Module Tests.Configuration Store Management.Should get configuration store as JSON" time="0.0646" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should set configuration store" name="ConfigurationCore Module Tests.Configuration Store Management.Should set configuration store" time="0.0318" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should export configuration store" name="ConfigurationCore Module Tests.Configuration Store Management.Should export configuration store" time="0.0906" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should import configuration store" name="ConfigurationCore Module Tests.Configuration Store Management.Should import configuration store" time="0.0792" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should get configuration store as JSON" name="ConfigurationCore Module Tests.Configuration Store Management.Should get configuration store as JSON" time="0.0294" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should set configuration store" name="ConfigurationCore Module Tests.Configuration Store Management.Should set configuration store" time="0.0528" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export configuration store" name="ConfigurationCore Module Tests.Configuration Store Management.Should export configuration store" time="0.0651" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should import configuration store" name="ConfigurationCore Module Tests.Configuration Store Management.Should import configuration store" time="0.0574" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Module Configuration Management" executed="True" result="Failure" success="False" time="0.9748" asserts="0" description="ConfigurationCore Module Tests.Module Configuration Management">
+              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Module Configuration Management" executed="True" result="Success" success="True" time="0.9524" asserts="0" description="ConfigurationCore Module Tests.Module Configuration Management">
                 <results>
-                  <test-case description="Should register module configuration" name="ConfigurationCore Module Tests.Module Configuration Management.Should register module configuration" time="0.0861" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should get module configuration" name="ConfigurationCore Module Tests.Module Configuration Management.Should get module configuration" time="0.0497" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should set module configuration" name="ConfigurationCore Module Tests.Module Configuration Management.Should set module configuration" time="0.087" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should validate module configuration" name="ConfigurationCore Module Tests.Module Configuration Management.Should validate module configuration" time="0.0444" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should merge module configuration" name="ConfigurationCore Module Tests.Module Configuration Management.Should merge module configuration" time="0.0458" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>Expected no exception to be thrown, but an exception "Configuration validation failed: Required property missing: TestProperty" was thrown from /workspaces/AitherZero/aither-core/modules/ConfigurationCore/Public/Set-ModuleConfiguration.ps1:51 char:17
-    + …             throw "Configuration validation failed: $($validationResu …
-    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</message>
-                      <stack-trace>at { Set-ModuleConfiguration -ModuleName 'TestModule' -Configuration $mergeConfig -Merge } | Should -Not -Throw, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:182
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:182</stack-trace>
-                    </failure>
-                  </test-case>
+                  <test-case description="Should register module configuration" name="ConfigurationCore Module Tests.Module Configuration Management.Should register module configuration" time="0.0821" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should get module configuration" name="ConfigurationCore Module Tests.Module Configuration Management.Should get module configuration" time="0.0534" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should set module configuration" name="ConfigurationCore Module Tests.Module Configuration Management.Should set module configuration" time="0.1108" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate module configuration" name="ConfigurationCore Module Tests.Module Configuration Management.Should validate module configuration" time="0.0317" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should merge module configuration" name="ConfigurationCore Module Tests.Module Configuration Management.Should merge module configuration" time="0.0996" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Environment Management" executed="True" result="Failure" success="False" time="1.1897" asserts="0" description="ConfigurationCore Module Tests.Environment Management">
+              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Environment Management" executed="True" result="Success" success="True" time="1.1894" asserts="0" description="ConfigurationCore Module Tests.Environment Management">
                 <results>
-                  <test-case description="Should get current environment" name="ConfigurationCore Module Tests.Environment Management.Should get current environment" time="0.0207" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should get all environments" name="ConfigurationCore Module Tests.Environment Management.Should get all environments" time="0.0117" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should create new environment" name="ConfigurationCore Module Tests.Environment Management.Should create new environment" time="0.0516" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>ParameterBindingException: A parameter cannot be found that matches parameter name 'EventName'.</message>
-                      <stack-trace>at New-ConfigurationEnvironment, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/Public/New-ConfigurationEnvironment.ps1:103
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:205</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should set active environment" name="ConfigurationCore Module Tests.Environment Management.Should set active environment" time="0.0483" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should copy environment settings" name="ConfigurationCore Module Tests.Environment Management.Should copy environment settings" time="0.0455" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>ParameterBindingException: A parameter cannot be found that matches parameter name 'EventName'.</message>
-                      <stack-trace>at New-ConfigurationEnvironment, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/Public/New-ConfigurationEnvironment.ps1:103
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:218</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should remove environment" name="ConfigurationCore Module Tests.Environment Management.Should remove environment" time="0.0304" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>Expected no exception to be thrown, but an exception "A parameter cannot be found that matches parameter name 'EventName'." was thrown from /workspaces/AitherZero/aither-core/modules/ConfigurationCore/Public/Remove-ConfigurationEnvironment.ps1:88 char:35
-    +                 Publish-TestEvent -EventName 'EnvironmentRemoved' -Ev …
-    +                                   ~~~~~~~~~~.</message>
-                      <stack-trace>at { Remove-ConfigurationEnvironment -Name 'copied-env' -Force } | Should -Not -Throw, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:224
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:224</stack-trace>
-                    </failure>
-                  </test-case>
+                  <test-case description="Should get current environment" name="ConfigurationCore Module Tests.Environment Management.Should get current environment" time="0.0259" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should get all environments" name="ConfigurationCore Module Tests.Environment Management.Should get all environments" time="0.0139" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create new environment" name="ConfigurationCore Module Tests.Environment Management.Should create new environment" time="0.0627" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should set active environment" name="ConfigurationCore Module Tests.Environment Management.Should set active environment" time="0.031" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should copy environment settings" name="ConfigurationCore Module Tests.Environment Management.Should copy environment settings" time="0.057" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should remove environment" name="ConfigurationCore Module Tests.Environment Management.Should remove environment" time="0.036" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Schema Management" executed="True" result="Success" success="True" time="1.2266" asserts="0" description="ConfigurationCore Module Tests.Schema Management">
+              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Schema Management" executed="True" result="Success" success="True" time="1.2369" asserts="0" description="ConfigurationCore Module Tests.Schema Management">
                 <results>
-                  <test-case description="Should get all schemas" name="ConfigurationCore Module Tests.Schema Management.Should get all schemas" time="0.0181" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should get schema with defaults" name="ConfigurationCore Module Tests.Schema Management.Should get schema with defaults" time="0.0125" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should get all schemas" name="ConfigurationCore Module Tests.Schema Management.Should get all schemas" time="0.0102" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should get schema with defaults" name="ConfigurationCore Module Tests.Schema Management.Should get schema with defaults" time="0.0292" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Configuration Validation" executed="True" result="Failure" success="False" time="1.3389" asserts="0" description="ConfigurationCore Module Tests.Configuration Validation">
+              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Configuration Validation" executed="True" result="Success" success="True" time="1.4464" asserts="0" description="ConfigurationCore Module Tests.Configuration Validation">
                 <results>
-                  <test-case description="Should validate valid configuration" name="ConfigurationCore Module Tests.Configuration Validation.Should validate valid configuration" time="0.0211" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>ValidationMetadataException: The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.
-ParameterBindingValidationException: Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</message>
-                      <stack-trace>at Register-ModuleConfiguration, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/Public/Register-ModuleConfiguration.ps1:70
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:269</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should detect missing required property" name="ConfigurationCore Module Tests.Configuration Validation.Should detect missing required property" time="0.0301" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>ValidationMetadataException: The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.
-ParameterBindingValidationException: Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</message>
-                      <stack-trace>at Register-ModuleConfiguration, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/Public/Register-ModuleConfiguration.ps1:70
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:269</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should detect invalid enum value" name="ConfigurationCore Module Tests.Configuration Validation.Should detect invalid enum value" time="0.0183" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>ValidationMetadataException: The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.
-ParameterBindingValidationException: Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</message>
-                      <stack-trace>at Register-ModuleConfiguration, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/Public/Register-ModuleConfiguration.ps1:70
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:269</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should detect out of range value" name="ConfigurationCore Module Tests.Configuration Validation.Should detect out of range value" time="0.0342" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>ValidationMetadataException: The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.
-ParameterBindingValidationException: Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</message>
-                      <stack-trace>at Register-ModuleConfiguration, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/Public/Register-ModuleConfiguration.ps1:70
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:269</stack-trace>
-                    </failure>
-                  </test-case>
+                  <test-case description="Should validate valid configuration" name="ConfigurationCore Module Tests.Configuration Validation.Should validate valid configuration" time="0.0668" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should detect missing required property" name="ConfigurationCore Module Tests.Configuration Validation.Should detect missing required property" time="0.0515" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should detect invalid enum value" name="ConfigurationCore Module Tests.Configuration Validation.Should detect invalid enum value" time="0.0298" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should detect out of range value" name="ConfigurationCore Module Tests.Configuration Validation.Should detect out of range value" time="0.0532" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Hot Reload Functionality" executed="True" result="Failure" success="False" time="1.4991" asserts="0" description="ConfigurationCore Module Tests.Hot Reload Functionality">
+              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Hot Reload Functionality" executed="True" result="Failure" success="False" time="1.5929" asserts="0" description="ConfigurationCore Module Tests.Hot Reload Functionality">
                 <results>
-                  <test-case description="Should enable hot reload" name="ConfigurationCore Module Tests.Hot Reload Functionality.Should enable hot reload" time="0.0392" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>Expected no exception to be thrown, but an exception "A parameter cannot be found that matches parameter name 'EventName'." was thrown from /workspaces/AitherZero/aither-core/modules/ConfigurationCore/Public/Enable-ConfigurationHotReload.ps1:92 char:35
-    +                 Publish-TestEvent -EventName 'HotReloadEnabled' -Even …
-    +                                   ~~~~~~~~~~.</message>
-                      <stack-trace>at { Enable-ConfigurationHotReload } | Should -Not -Throw, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:313
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:313</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should get watcher information" name="ConfigurationCore Module Tests.Hot Reload Functionality.Should get watcher information" time="0.0404" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should enable hot reload" name="ConfigurationCore Module Tests.Hot Reload Functionality.Should enable hot reload" time="0.0555" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should get watcher information" name="ConfigurationCore Module Tests.Hot Reload Functionality.Should get watcher information" time="0.0135" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected a value, but got $null or empty.</message>
                       <stack-trace>at $watchers | Should -Not -BeNullOrEmpty, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:320
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:320</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should disable hot reload" name="ConfigurationCore Module Tests.Hot Reload Functionality.Should disable hot reload" time="0.0423" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should disable hot reload" name="ConfigurationCore Module Tests.Hot Reload Functionality.Should disable hot reload" time="0.0657" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Configuration Comparison" executed="True" result="Success" success="True" time="1.6656" asserts="0" description="ConfigurationCore Module Tests.Configuration Comparison">
+                <results>
+                  <test-case description="Should compare configurations" name="ConfigurationCore Module Tests.Configuration Comparison.Should compare configurations" time="0.0623" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Backup and Restore" executed="True" result="Failure" success="False" time="1.9024" asserts="0" description="ConfigurationCore Module Tests.Backup and Restore">
+                <results>
+                  <test-case description="Should create configuration backup" name="ConfigurationCore Module Tests.Backup and Restore.Should create configuration backup" time="0.0617" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should restore configuration from backup" name="ConfigurationCore Module Tests.Backup and Restore.Should restore configuration from backup" time="0.1273" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>Expected no exception to be thrown, but an exception "A parameter cannot be found that matches parameter name 'EventName'." was thrown from /workspaces/AitherZero/aither-core/modules/ConfigurationCore/Public/Disable-ConfigurationHotReload.ps1:65 char:35
-    +                 Publish-TestEvent -EventName 'HotReloadDisabled' -Eve …
-    +                                   ~~~~~~~~~~.</message>
-                      <stack-trace>at { Disable-ConfigurationHotReload -RemoveWatchers } | Should -Not -Throw, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:324
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:324</stack-trace>
+                      <message>Expected 'DefaultValue', but got $null.</message>
+                      <stack-trace>at $config.TestProperty | Should -Be 'DefaultValue', /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:378
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:378</stack-trace>
                     </failure>
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Configuration Comparison" executed="True" result="Success" success="True" time="1.5453" asserts="0" description="ConfigurationCore Module Tests.Configuration Comparison">
+              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Variable Expansion" executed="True" result="Failure" success="False" time="1.9545" asserts="0" description="ConfigurationCore Module Tests.Variable Expansion">
                 <results>
-                  <test-case description="Should compare configurations" name="ConfigurationCore Module Tests.Configuration Comparison.Should compare configurations" time="0.0372" asserts="0" success="True" result="Success" executed="True" />
-                </results>
-              </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Backup and Restore" executed="True" result="Failure" success="False" time="1.6209" asserts="0" description="ConfigurationCore Module Tests.Backup and Restore">
-                <results>
-                  <test-case description="Should create configuration backup" name="ConfigurationCore Module Tests.Backup and Restore.Should create configuration backup" time="0.0415" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should expand environment variables" name="ConfigurationCore Module Tests.Variable Expansion.Should expand environment variables" time="0.0178" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>ParameterBindingException: A parameter cannot be found that matches parameter name 'EventName'.</message>
-                      <stack-trace>at Backup-Configuration, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/Public/Backup-Configuration.ps1:93
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:359</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should restore configuration from backup" name="ConfigurationCore Module Tests.Backup and Restore.Should restore configuration from backup" time="0.0229" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>ParameterBindingException: A parameter cannot be found that matches parameter name 'EventName'.</message>
-                      <stack-trace>at Backup-Configuration, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/Public/Backup-Configuration.ps1:93
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:367</stack-trace>
-                    </failure>
-                  </test-case>
-                </results>
-              </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationCore Module Tests.Variable Expansion" executed="True" result="Failure" success="False" time="1.6953" asserts="0" description="ConfigurationCore Module Tests.Variable Expansion">
-                <results>
-                  <test-case description="Should expand environment variables" name="ConfigurationCore Module Tests.Variable Expansion.Should expand environment variables" time="0.0269" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>RuntimeException: Configuration validation failed: Required property missing: TestProperty</message>
-                      <stack-trace>at Set-ModuleConfiguration, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/Public/Set-ModuleConfiguration.ps1:51
+                      <message>RuntimeException: You cannot call a method on a null-valued expression.</message>
+                      <stack-trace>at Set-ModuleConfiguration, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/Public/Set-ModuleConfiguration.ps1:60
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:388</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should expand platform variables" name="ConfigurationCore Module Tests.Variable Expansion.Should expand platform variables" time="0.0191" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should expand platform variables" name="ConfigurationCore Module Tests.Variable Expansion.Should expand platform variables" time="0.0279" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>RuntimeException: Configuration validation failed: Required property missing: TestProperty</message>
-                      <stack-trace>at Set-ModuleConfiguration, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/Public/Set-ModuleConfiguration.ps1:51
+                      <message>RuntimeException: You cannot call a method on a null-valued expression.</message>
+                      <stack-trace>at Set-ModuleConfiguration, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/Public/Set-ModuleConfiguration.ps1:60
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:398</stack-trace>
                     </failure>
                   </test-case>
@@ -196,16 +112,22 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/Configuration
               </test-suite>
             </results>
           </test-suite>
-          <test-suite type="TestFixture" name="ConfigurationCore Integration Tests" executed="True" result="Failure" success="False" time="1.8304" asserts="0" description="ConfigurationCore Integration Tests">
+          <test-suite type="TestFixture" name="ConfigurationCore Integration Tests" executed="True" result="Failure" success="False" time="2.0735" asserts="0" description="ConfigurationCore Integration Tests">
             <results>
-              <test-suite type="TestFixture" name="ConfigurationCore Integration Tests.Module Integration" executed="True" result="Failure" success="False" time="0.1111" asserts="0" description="ConfigurationCore Integration Tests.Module Integration">
+              <test-suite type="TestFixture" name="ConfigurationCore Integration Tests.Module Integration" executed="True" result="Failure" success="False" time="0.0813" asserts="0" description="ConfigurationCore Integration Tests.Module Integration">
                 <results>
-                  <test-case description="Should support module lifecycle" name="ConfigurationCore Integration Tests.Module Integration.Should support module lifecycle" time="0.0632" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should support environment-specific configuration" name="ConfigurationCore Integration Tests.Module Integration.Should support environment-specific configuration" time="0.0287" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should support module lifecycle" name="ConfigurationCore Integration Tests.Module Integration.Should support module lifecycle" time="0.0165" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>ParameterBindingException: A parameter cannot be found that matches parameter name 'EventName'.</message>
-                      <stack-trace>at New-ConfigurationEnvironment, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/Public/New-ConfigurationEnvironment.ps1:103
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:437</stack-trace>
+                      <message>RuntimeException: Cannot index into a null array.</message>
+                      <stack-trace>at Register-ModuleConfiguration, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/Public/Register-ModuleConfiguration.ps1:37
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:416</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should support environment-specific configuration" name="ConfigurationCore Integration Tests.Module Integration.Should support environment-specific configuration" time="0.0579" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>RuntimeException: You cannot call a method on a null-valued expression.</message>
+                      <stack-trace>at Set-ModuleConfiguration, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/Public/Set-ModuleConfiguration.ps1:60
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1:442</stack-trace>
                     </failure>
                   </test-case>
                 </results>

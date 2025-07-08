@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="28" errors="0" failures="2" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="15:27:24">
-  <environment machine-name="codespaces-6c6eb1" clr-version="9.0.4" user-domain="" nunit-version="2.5.8.0" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" user="codespace" platform="Linux" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="28" errors="0" failures="2" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="17:42:11">
+  <environment user-domain="" platform="Linux" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" clr-version="9.0.4" nunit-version="2.5.8.0" user="codespace" machine-name="codespaces-6c6eb1" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="2.8555" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="2.8458" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/OpenTofuProvider/tests/OpenTofuProvider.Tests.ps1" executed="True" result="Failure" success="False" time="2.8555" asserts="0" description="/workspaces/AitherZero/aither-core/modules/OpenTofuProvider/tests/OpenTofuProvider.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/OpenTofuProvider/tests/OpenTofuProvider.Tests.ps1" executed="True" result="Failure" success="False" time="2.8458" asserts="0" description="/workspaces/AitherZero/aither-core/modules/OpenTofuProvider/tests/OpenTofuProvider.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Core Functionality" executed="True" result="Failure" success="False" time="1.5474" asserts="0" description="OpenTofuProvider Provider Module - Core Functionality">
+          <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Core Functionality" executed="True" result="Failure" success="False" time="1.4884" asserts="0" description="OpenTofuProvider Provider Module - Core Functionality">
             <results>
-              <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Core Functionality.Module Import and Structure" executed="True" result="Failure" success="False" time="0.0354" asserts="0" description="OpenTofuProvider Provider Module - Core Functionality.Module Import and Structure">
+              <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Core Functionality.Module Import and Structure" executed="True" result="Failure" success="False" time="0.0682" asserts="0" description="OpenTofuProvider Provider Module - Core Functionality.Module Import and Structure">
                 <results>
-                  <test-case description="Should import the provider module successfully" name="OpenTofuProvider Provider Module - Core Functionality.Module Import and Structure.Should import the provider module successfully" time="0.017" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should export provider functions" name="OpenTofuProvider Provider Module - Core Functionality.Module Import and Structure.Should export provider functions" time="0.014" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should import the provider module successfully" name="OpenTofuProvider Provider Module - Core Functionality.Module Import and Structure.Should import the provider module successfully" time="0.0095" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export provider functions" name="OpenTofuProvider Provider Module - Core Functionality.Module Import and Structure.Should export provider functions" time="0.0497" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected a value, because Provider module should export provider-related functions, but got $null or empty.</message>
                       <stack-trace>at $foundFunctions | Should -Not -BeNullOrEmpty -Because "Provider module should export provider-related functions", /workspaces/AitherZero/aither-core/modules/OpenTofuProvider/tests/OpenTofuProvider.Tests.ps1:76
@@ -20,72 +20,72 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/OpenTofuProvi
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Core Functionality.Connection Management" executed="True" result="Success" success="True" time="0.4766" asserts="0" description="OpenTofuProvider Provider Module - Core Functionality.Connection Management">
+              <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Core Functionality.Connection Management" executed="True" result="Success" success="True" time="0.5167" asserts="0" description="OpenTofuProvider Provider Module - Core Functionality.Connection Management">
                 <results>
-                  <test-case description="Should establish provider connection" name="OpenTofuProvider Provider Module - Core Functionality.Connection Management.Should establish provider connection" time="0.0922" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should test connection validity" name="OpenTofuProvider Provider Module - Core Functionality.Connection Management.Should test connection validity" time="0.0991" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle connection failures gracefully" name="OpenTofuProvider Provider Module - Core Functionality.Connection Management.Should handle connection failures gracefully" time="0.1354" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should disconnect cleanly" name="OpenTofuProvider Provider Module - Core Functionality.Connection Management.Should disconnect cleanly" time="0.1085" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should establish provider connection" name="OpenTofuProvider Provider Module - Core Functionality.Connection Management.Should establish provider connection" time="0.1032" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should test connection validity" name="OpenTofuProvider Provider Module - Core Functionality.Connection Management.Should test connection validity" time="0.0899" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle connection failures gracefully" name="OpenTofuProvider Provider Module - Core Functionality.Connection Management.Should handle connection failures gracefully" time="0.1423" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should disconnect cleanly" name="OpenTofuProvider Provider Module - Core Functionality.Connection Management.Should disconnect cleanly" time="0.1063" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Core Functionality.Configuration Management" executed="True" result="Success" success="True" time="0.8189" asserts="0" description="OpenTofuProvider Provider Module - Core Functionality.Configuration Management">
+              <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Core Functionality.Configuration Management" executed="True" result="Success" success="True" time="0.8177" asserts="0" description="OpenTofuProvider Provider Module - Core Functionality.Configuration Management">
                 <results>
-                  <test-case description="Should validate provider configuration" name="OpenTofuProvider Provider Module - Core Functionality.Configuration Management.Should validate provider configuration" time="0.1097" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should apply configuration changes" name="OpenTofuProvider Provider Module - Core Functionality.Configuration Management.Should apply configuration changes" time="0.1112" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should retrieve current configuration" name="OpenTofuProvider Provider Module - Core Functionality.Configuration Management.Should retrieve current configuration" time="0.1087" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate provider configuration" name="OpenTofuProvider Provider Module - Core Functionality.Configuration Management.Should validate provider configuration" time="0.0994" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should apply configuration changes" name="OpenTofuProvider Provider Module - Core Functionality.Configuration Management.Should apply configuration changes" time="0.0919" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should retrieve current configuration" name="OpenTofuProvider Provider Module - Core Functionality.Configuration Management.Should retrieve current configuration" time="0.1041" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Core Functionality.Resource Operations" executed="True" result="Success" success="True" time="1.2211" asserts="0" description="OpenTofuProvider Provider Module - Core Functionality.Resource Operations">
+              <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Core Functionality.Resource Operations" executed="True" result="Success" success="True" time="1.1879" asserts="0" description="OpenTofuProvider Provider Module - Core Functionality.Resource Operations">
                 <results>
-                  <test-case description="Should list available resources" name="OpenTofuProvider Provider Module - Core Functionality.Resource Operations.Should list available resources" time="0.1068" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should create new resources" name="OpenTofuProvider Provider Module - Core Functionality.Resource Operations.Should create new resources" time="0.098" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should update existing resources" name="OpenTofuProvider Provider Module - Core Functionality.Resource Operations.Should update existing resources" time="0.093" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should remove resources safely" name="OpenTofuProvider Provider Module - Core Functionality.Resource Operations.Should remove resources safely" time="0.091" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should list available resources" name="OpenTofuProvider Provider Module - Core Functionality.Resource Operations.Should list available resources" time="0.0944" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create new resources" name="OpenTofuProvider Provider Module - Core Functionality.Resource Operations.Should create new resources" time="0.095" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should update existing resources" name="OpenTofuProvider Provider Module - Core Functionality.Resource Operations.Should update existing resources" time="0.0864" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should remove resources safely" name="OpenTofuProvider Provider Module - Core Functionality.Resource Operations.Should remove resources safely" time="0.0889" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Core Functionality.Provider-Specific Operations" executed="True" result="Success" success="True" time="1.5432" asserts="0" description="OpenTofuProvider Provider Module - Core Functionality.Provider-Specific Operations">
+              <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Core Functionality.Provider-Specific Operations" executed="True" result="Success" success="True" time="1.4821" asserts="0" description="OpenTofuProvider Provider Module - Core Functionality.Provider-Specific Operations">
                 <results>
-                  <test-case description="Should execute provider operations" name="OpenTofuProvider Provider Module - Core Functionality.Provider-Specific Operations.Should execute provider operations" time="0.1049" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should validate operation parameters" name="OpenTofuProvider Provider Module - Core Functionality.Provider-Specific Operations.Should validate operation parameters" time="0.1074" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle provider-specific errors" name="OpenTofuProvider Provider Module - Core Functionality.Provider-Specific Operations.Should handle provider-specific errors" time="0.1047" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should execute provider operations" name="OpenTofuProvider Provider Module - Core Functionality.Provider-Specific Operations.Should execute provider operations" time="0.0991" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate operation parameters" name="OpenTofuProvider Provider Module - Core Functionality.Provider-Specific Operations.Should validate operation parameters" time="0.0871" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle provider-specific errors" name="OpenTofuProvider Provider Module - Core Functionality.Provider-Specific Operations.Should handle provider-specific errors" time="0.1019" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>
           </test-suite>
-          <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Advanced Scenarios" executed="True" result="Failure" success="False" time="2.5415" asserts="0" description="OpenTofuProvider Provider Module - Advanced Scenarios">
+          <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Advanced Scenarios" executed="True" result="Failure" success="False" time="2.4702" asserts="0" description="OpenTofuProvider Provider Module - Advanced Scenarios">
             <results>
-              <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Advanced Scenarios.Authentication and Security" executed="True" result="Failure" success="False" time="0.231" asserts="0" description="OpenTofuProvider Provider Module - Advanced Scenarios.Authentication and Security">
+              <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Advanced Scenarios.Authentication and Security" executed="True" result="Failure" success="False" time="0.2332" asserts="0" description="OpenTofuProvider Provider Module - Advanced Scenarios.Authentication and Security">
                 <results>
-                  <test-case description="Should handle authentication properly" name="OpenTofuProvider Provider Module - Advanced Scenarios.Authentication and Security.Should handle authentication properly" time="0.1013" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should protect sensitive configuration data" name="OpenTofuProvider Provider Module - Advanced Scenarios.Authentication and Security.Should protect sensitive configuration data" time="0.0321" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should handle authentication properly" name="OpenTofuProvider Provider Module - Advanced Scenarios.Authentication and Security.Should handle authentication properly" time="0.099" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should protect sensitive configuration data" name="OpenTofuProvider Provider Module - Advanced Scenarios.Authentication and Security.Should protect sensitive configuration data" time="0.0306" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Get-OpenTofuConfiguration' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
                       <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/OpenTofuProvider/tests/OpenTofuProvider.Tests.ps1:236</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should validate permissions before operations" name="OpenTofuProvider Provider Module - Advanced Scenarios.Authentication and Security.Should validate permissions before operations" time="0.0931" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate permissions before operations" name="OpenTofuProvider Provider Module - Advanced Scenarios.Authentication and Security.Should validate permissions before operations" time="0.0981" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Advanced Scenarios.Performance and Reliability" executed="True" result="Success" success="True" time="0.5504" asserts="0" description="OpenTofuProvider Provider Module - Advanced Scenarios.Performance and Reliability">
+              <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Advanced Scenarios.Performance and Reliability" executed="True" result="Success" success="True" time="0.489" asserts="0" description="OpenTofuProvider Provider Module - Advanced Scenarios.Performance and Reliability">
                 <results>
-                  <test-case description="Should execute operations within acceptable timeframes" name="OpenTofuProvider Provider Module - Advanced Scenarios.Performance and Reliability.Should execute operations within acceptable timeframes" time="0.116" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle rate limiting gracefully" name="OpenTofuProvider Provider Module - Advanced Scenarios.Performance and Reliability.Should handle rate limiting gracefully" time="0.1117" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should retry failed operations appropriately" name="OpenTofuProvider Provider Module - Advanced Scenarios.Performance and Reliability.Should retry failed operations appropriately" time="0.087" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should execute operations within acceptable timeframes" name="OpenTofuProvider Provider Module - Advanced Scenarios.Performance and Reliability.Should execute operations within acceptable timeframes" time="0.0826" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle rate limiting gracefully" name="OpenTofuProvider Provider Module - Advanced Scenarios.Performance and Reliability.Should handle rate limiting gracefully" time="0.0784" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should retry failed operations appropriately" name="OpenTofuProvider Provider Module - Advanced Scenarios.Performance and Reliability.Should retry failed operations appropriately" time="0.0809" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Advanced Scenarios.Integration with Infrastructure as Code" executed="True" result="Success" success="True" time="0.8183" asserts="0" description="OpenTofuProvider Provider Module - Advanced Scenarios.Integration with Infrastructure as Code">
+              <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Advanced Scenarios.Integration with Infrastructure as Code" executed="True" result="Success" success="True" time="0.7555" asserts="0" description="OpenTofuProvider Provider Module - Advanced Scenarios.Integration with Infrastructure as Code">
                 <results>
-                  <test-case description="Should support IaC template generation" name="OpenTofuProvider Provider Module - Advanced Scenarios.Integration with Infrastructure as Code.Should support IaC template generation" time="0.1005" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should validate IaC configurations" name="OpenTofuProvider Provider Module - Advanced Scenarios.Integration with Infrastructure as Code.Should validate IaC configurations" time="0.0827" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should apply IaC changes safely" name="OpenTofuProvider Provider Module - Advanced Scenarios.Integration with Infrastructure as Code.Should apply IaC changes safely" time="0.0796" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support IaC template generation" name="OpenTofuProvider Provider Module - Advanced Scenarios.Integration with Infrastructure as Code.Should support IaC template generation" time="0.0802" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate IaC configurations" name="OpenTofuProvider Provider Module - Advanced Scenarios.Integration with Infrastructure as Code.Should validate IaC configurations" time="0.0837" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should apply IaC changes safely" name="OpenTofuProvider Provider Module - Advanced Scenarios.Integration with Infrastructure as Code.Should apply IaC changes safely" time="0.095" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Advanced Scenarios.Monitoring and Observability" executed="True" result="Success" success="True" time="0.9901" asserts="0" description="OpenTofuProvider Provider Module - Advanced Scenarios.Monitoring and Observability">
+              <test-suite type="TestFixture" name="OpenTofuProvider Provider Module - Advanced Scenarios.Monitoring and Observability" executed="True" result="Success" success="True" time="0.9766" asserts="0" description="OpenTofuProvider Provider Module - Advanced Scenarios.Monitoring and Observability">
                 <results>
-                  <test-case description="Should provide operation metrics" name="OpenTofuProvider Provider Module - Advanced Scenarios.Monitoring and Observability.Should provide operation metrics" time="0.0813" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should support health checking" name="OpenTofuProvider Provider Module - Advanced Scenarios.Monitoring and Observability.Should support health checking" time="0.0818" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should log operations for audit trail" name="OpenTofuProvider Provider Module - Advanced Scenarios.Monitoring and Observability.Should log operations for audit trail" time="0.0046" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should provide operation metrics" name="OpenTofuProvider Provider Module - Advanced Scenarios.Monitoring and Observability.Should provide operation metrics" time="0.1064" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support health checking" name="OpenTofuProvider Provider Module - Advanced Scenarios.Monitoring and Observability.Should support health checking" time="0.1032" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should log operations for audit trail" name="OpenTofuProvider Provider Module - Advanced Scenarios.Monitoring and Observability.Should log operations for audit trail" time="0.0048" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>

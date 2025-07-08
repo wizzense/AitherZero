@@ -1,0 +1,278 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="57" errors="0" failures="10" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="15:32:39">
+  <environment machine-name="codespaces-6c6eb1" clr-version="9.0.4" cwd="/workspaces/AitherZero" user-domain="" nunit-version="2.5.8.0" os-version="6.8.0-1027-azure" user="codespace" platform="Linux" />
+  <culture-info current-culture="" current-uiculture="" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="15.5502" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1" executed="True" result="Failure" success="False" time="15.5502" asserts="0" description="/workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="BackupManager Module Structure" executed="True" result="Success" success="True" time="0.2175" asserts="0" description="BackupManager Module Structure">
+            <results>
+              <test-suite type="TestFixture" name="BackupManager Module Structure.Module Loading and Structure" executed="True" result="Success" success="True" time="0.2038" asserts="0" description="BackupManager Module Structure.Module Loading and Structure">
+                <results>
+                  <test-case description="Should import successfully" name="BackupManager Module Structure.Module Loading and Structure.Should import successfully" time="0.099" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export all expected functions" name="BackupManager Module Structure.Module Loading and Structure.Should export all expected functions" time="0.0224" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should have proper module manifest" name="BackupManager Module Structure.Module Loading and Structure.Should have proper module manifest" time="0.0561" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Get-BackupStatistics" executed="True" result="Failure" success="False" time="1.7031" asserts="0" description="Get-BackupStatistics">
+            <results>
+              <test-suite type="TestFixture" name="Get-BackupStatistics.Basic Statistics Functionality" executed="True" result="Failure" success="False" time="1.4806" asserts="0" description="Get-BackupStatistics.Basic Statistics Functionality">
+                <results>
+                  <test-case description="Should analyze backup files without errors" name="Get-BackupStatistics.Basic Statistics Functionality.Should analyze backup files without errors" time="0.3308" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return proper statistics structure" name="Get-BackupStatistics.Basic Statistics Functionality.Should return proper statistics structure" time="0.2959" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include details when requested" name="Get-BackupStatistics.Basic Statistics Functionality.Should include details when requested" time="0.5326" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle empty directories gracefully" name="Get-BackupStatistics.Basic Statistics Functionality.Should handle empty directories gracefully" time="0.3094" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected 0, but got 1940.</message>
+                      <stack-trace>at $stats.TotalFiles | Should -Be 0, /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:136
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:136</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Invoke-BackupConsolidation" executed="True" result="Failure" success="False" time="2.1468" asserts="0" description="Invoke-BackupConsolidation">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-BackupConsolidation.Basic Consolidation Functionality" executed="True" result="Failure" success="False" time="0.3667" asserts="0" description="Invoke-BackupConsolidation.Basic Consolidation Functionality">
+                <results>
+                  <test-case description="Should consolidate backup files without errors" name="Invoke-BackupConsolidation.Basic Consolidation Functionality.Should consolidate backup files without errors" time="0.1075" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return proper consolidation results" name="Invoke-BackupConsolidation.Basic Consolidation Functionality.Should return proper consolidation results" time="0.0858" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create backup directory structure" name="Invoke-BackupConsolidation.Basic Consolidation Functionality.Should create backup directory structure" time="0.079" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected path '/tmp/58c4f0f5-1984-4ae1-a561-cbe9fda3d82b/backup-destination/structure-test' to exist, but it did not exist.</message>
+                      <stack-trace>at $consolidationPath | Should -Exist, /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:165
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:165</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle exclusions properly" name="Invoke-BackupConsolidation.Basic Consolidation Functionality.Should handle exclusions properly" time="0.0826" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Invoke-BackupConsolidation.WhatIf Functionality" executed="True" result="Success" success="True" time="0.439" asserts="0" description="Invoke-BackupConsolidation.WhatIf Functionality">
+                <results>
+                  <test-case description="Should support WhatIf parameter" name="Invoke-BackupConsolidation.WhatIf Functionality.Should support WhatIf parameter" time="0.0675" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="New-BackupExclusion" executed="True" result="Failure" success="False" time="2.2568" asserts="0" description="New-BackupExclusion">
+            <results>
+              <test-suite type="TestFixture" name="New-BackupExclusion.Exclusion Rules Creation" executed="True" result="Failure" success="False" time="0.1056" asserts="0" description="New-BackupExclusion.Exclusion Rules Creation">
+                <results>
+                  <test-case description="Should create exclusion rules without errors" name="New-BackupExclusion.Exclusion Rules Creation.Should create exclusion rules without errors" time="0.0352" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return proper exclusion results" name="New-BackupExclusion.Exclusion Rules Creation.Should return proper exclusion results" time="0.0166" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle custom patterns" name="New-BackupExclusion.Exclusion Rules Creation.Should handle custom patterns" time="0.027" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $null.</message>
+                      <stack-trace>at $result.Success | Should -Not -BeFalse, /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:203
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:203</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should support WhatIf parameter" name="New-BackupExclusion.Exclusion Rules Creation.Should support WhatIf parameter" time="0.0149" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Invoke-PermanentCleanup" executed="True" result="Failure" success="False" time="3.1731" asserts="0" description="Invoke-PermanentCleanup">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-PermanentCleanup.Basic Cleanup Functionality" executed="True" result="Failure" success="False" time="0.9116" asserts="0" description="Invoke-PermanentCleanup.Basic Cleanup Functionality">
+                <results>
+                  <test-case description="Should identify problematic files" name="Invoke-PermanentCleanup.Basic Cleanup Functionality.Should identify problematic files" time="0.4333" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle backup cleanup mode" name="Invoke-PermanentCleanup.Basic Cleanup Functionality.Should handle backup cleanup mode" time="0.0299" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support prevention rules creation" name="Invoke-PermanentCleanup.Basic Cleanup Functionality.Should support prevention rules creation" time="0.4377" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $null.</message>
+                      <stack-trace>at $result.PreventionRulesCreated | Should -Be $true, /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:255
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:255</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Invoke-BackupMaintenance" executed="True" result="Success" success="True" time="9.6025" asserts="0" description="Invoke-BackupMaintenance">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-BackupMaintenance.Maintenance Mode Operations" executed="True" result="Success" success="True" time="4.5965" asserts="0" description="Invoke-BackupMaintenance.Maintenance Mode Operations">
+                <results>
+                  <test-case description="Should run Quick maintenance mode" name="Invoke-BackupMaintenance.Maintenance Mode Operations.Should run Quick maintenance mode" time="1.7597" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should run Statistics mode" name="Invoke-BackupMaintenance.Maintenance Mode Operations.Should run Statistics mode" time="0.3433" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return proper maintenance results" name="Invoke-BackupMaintenance.Maintenance Mode Operations.Should return proper maintenance results" time="1.8375" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support different output formats" name="Invoke-BackupMaintenance.Maintenance Mode Operations.Should support different output formats" time="0.6519" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Invoke-BackupMaintenance.AutoFix Functionality" executed="True" result="Success" success="True" time="6.4254" asserts="0" description="Invoke-BackupMaintenance.AutoFix Functionality">
+                <results>
+                  <test-case description="Should support AutoFix parameter" name="Invoke-BackupMaintenance.AutoFix Functionality.Should support AutoFix parameter" time="1.8252" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Invoke-AdvancedBackup" executed="True" result="Failure" success="False" time="11.0491" asserts="0" description="Invoke-AdvancedBackup">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-AdvancedBackup.Advanced Backup Features" executed="True" result="Failure" success="False" time="1.25" asserts="0" description="Invoke-AdvancedBackup.Advanced Backup Features">
+                <results>
+                  <test-case description="Should perform basic advanced backup" name="Invoke-AdvancedBackup.Advanced Backup Features.Should perform basic advanced backup" time="0.224" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return proper backup context" name="Invoke-AdvancedBackup.Advanced Backup Features.Should return proper backup context" time="0.2004" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected /tmp/58c4f0f5-1984-4ae1-a561-cbe9fda3d82b/backup-test-data, but got '/tmp/58c4f0f5-1984-4ae1-a561-cbe9fda3d82b/backup-test-data'.</message>
+                      <stack-trace>at $result.SourcePath | Should -Be (Resolve-Path $script:TestDataPath), /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:312
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:312</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should support compression levels" name="Invoke-AdvancedBackup.Advanced Backup Features.Should support compression levels" time="0.1876" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support encryption (basic test)" name="Invoke-AdvancedBackup.Advanced Backup Features.Should support encryption (basic test)" time="0.232" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support deduplication" name="Invoke-AdvancedBackup.Advanced Backup Features.Should support deduplication" time="0.1855" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create metadata directory" name="Invoke-AdvancedBackup.Advanced Backup Features.Should create metadata directory" time="0.1892" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Invoke-AdvancedBackup.WhatIf Support" executed="True" result="Success" success="True" time="1.4439" asserts="0" description="Invoke-AdvancedBackup.WhatIf Support">
+                <results>
+                  <test-case description="Should support WhatIf parameter" name="Invoke-AdvancedBackup.WhatIf Support.Should support WhatIf parameter" time="0.1895" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Restore-BackupData" executed="True" result="Failure" success="False" time="12.2366" asserts="0" description="Restore-BackupData">
+            <results>
+              <test-suite type="TestFixture" name="Restore-BackupData.Basic Restoration Functionality" executed="True" result="Failure" success="False" time="0.9623" asserts="0" description="Restore-BackupData.Basic Restoration Functionality">
+                <results>
+                  <test-case description="Should restore backup without errors" name="Restore-BackupData.Basic Restoration Functionality.Should restore backup without errors" time="0.2351" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return proper restoration context" name="Restore-BackupData.Basic Restoration Functionality.Should return proper restoration context" time="0.2598" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected /tmp/58c4f0f5-1984-4ae1-a561-cbe9fda3d82b/restore-destination/context-restore, but got '/tmp/58c4f0f5-1984-4ae1-a561-cbe9fda3d82b/restore-destination/context-restore'.</message>
+                      <stack-trace>at $result.RestorePath | Should -Be (Resolve-Path $restorePath), /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:378
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:378</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should support selective restore" name="Restore-BackupData.Basic Restoration Functionality.Should support selective restore" time="0.2274" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support verification" name="Restore-BackupData.Basic Restoration Functionality.Should support verification" time="0.2158" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Restore-BackupData.WhatIf Support" executed="True" result="Failure" success="False" time="1.1748" asserts="0" description="Restore-BackupData.WhatIf Support">
+                <results>
+                  <test-case description="Should support WhatIf parameter" name="Restore-BackupData.WhatIf Support.Should support WhatIf parameter" time="0.2035" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, but an exception "Cannot find path '/tmp/58c4f0f5-1984-4ae1-a561-cbe9fda3d82b/restore-destination/whatif-restore' because it does not exist." was thrown from /workspaces/AitherZero/aither-core/modules/BackupManager/Public/Restore-BackupData.ps1:85 char:24
+    +         $RestorePath = Resolve-Path $RestorePath
+    +                        ~~~~~~~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { Restore-BackupData -BackupPath $script:SourceBackupPath -RestorePath $restorePath -Force -WhatIf } | Should -Not -Throw, /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:405
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:405</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Start-AutomatedBackup" executed="True" result="Failure" success="False" time="12.5522" asserts="0" description="Start-AutomatedBackup">
+            <results>
+              <test-suite type="TestFixture" name="Start-AutomatedBackup.Automation Configuration" executed="True" result="Success" success="True" time="0.2867" asserts="0" description="Start-AutomatedBackup.Automation Configuration">
+                <results>
+                  <test-case description="Should configure automated backup without errors" name="Start-AutomatedBackup.Automation Configuration.Should configure automated backup without errors" time="0.0347" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return proper automation status" name="Start-AutomatedBackup.Automation Configuration.Should return proper automation status" time="0.023" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support different schedules" name="Start-AutomatedBackup.Automation Configuration.Should support different schedules" time="0.0886" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create automation directory structure" name="Start-AutomatedBackup.Automation Configuration.Should create automation directory structure" time="0.022" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support monitoring enablement" name="Start-AutomatedBackup.Automation Configuration.Should support monitoring enablement" time="0.0377" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support encryption enablement" name="Start-AutomatedBackup.Automation Configuration.Should support encryption enablement" time="0.0288" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Start-AutomatedBackup.WhatIf Support" executed="True" result="Failure" success="False" time="0.3117" asserts="0" description="Start-AutomatedBackup.WhatIf Support">
+                <results>
+                  <test-case description="Should support WhatIf parameter" name="Start-AutomatedBackup.WhatIf Support.Should support WhatIf parameter" time="0.0219" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, but an exception "Cannot find path '/tmp/58c4f0f5-1984-4ae1-a561-cbe9fda3d82b/backup-destination/automated-whatif' because it does not exist." was thrown from /workspaces/AitherZero/aither-core/modules/BackupManager/Public/Start-AutomatedBackup.ps1:119 char:23
+    +         $BackupPath = Resolve-Path $BackupPath
+    +                       ~~~~~~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { Start-AutomatedBackup -SourcePaths @($script:TestDataPath) -BackupPath $automatedBackupPath -Force -WhatIf } | Should -Not -Throw, /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:470
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:470</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Error Handling and Edge Cases" executed="True" result="Failure" success="False" time="13.1233" asserts="0" description="Error Handling and Edge Cases">
+            <results>
+              <test-suite type="TestFixture" name="Error Handling and Edge Cases.Invalid Parameters" executed="True" result="Failure" success="False" time="0.3452" asserts="0" description="Error Handling and Edge Cases.Invalid Parameters">
+                <results>
+                  <test-case description="Should handle non-existent source paths gracefully" name="Error Handling and Edge Cases.Invalid Parameters.Should handle non-existent source paths gracefully" time="0.2417" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected an exception to be thrown, but no exception was thrown.</message>
+                      <stack-trace>at { Get-BackupStatistics -ProjectRoot $nonExistentPath } | Should -Throw, /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:480
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:480</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle invalid backup paths gracefully" name="Error Handling and Edge Cases.Invalid Parameters.Should handle invalid backup paths gracefully" time="0.0697" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected an exception to be thrown, but no exception was thrown.</message>
+                      <stack-trace>at { Invoke-BackupConsolidation -SourcePath $script:TestDataPath -BackupPath "/invalid/path/that/does/not/exist" -Force } | Should -Throw, /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:484
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:484</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle missing backup metadata gracefully" name="Error Handling and Edge Cases.Invalid Parameters.Should handle missing backup metadata gracefully" time="0.0265" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Error Handling and Edge Cases.Resource Constraints" executed="True" result="Success" success="True" time="0.5687" asserts="0" description="Error Handling and Edge Cases.Resource Constraints">
+                <results>
+                  <test-case description="Should handle read-only directories appropriately" name="Error Handling and Edge Cases.Resource Constraints.Should handle read-only directories appropriately" time="0.0029" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle large file operations" name="Error Handling and Edge Cases.Resource Constraints.Should handle large file operations" time="0.2109" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Cross-Platform Compatibility" executed="True" result="Success" success="True" time="13.574" asserts="0" description="Cross-Platform Compatibility">
+            <results>
+              <test-suite type="TestFixture" name="Cross-Platform Compatibility.Path Handling" executed="True" result="Success" success="True" time="0.4176" asserts="0" description="Cross-Platform Compatibility.Path Handling">
+                <results>
+                  <test-case description="Should handle cross-platform paths correctly" name="Cross-Platform Compatibility.Path Handling.Should handle cross-platform paths correctly" time="0.2112" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle different path separators" name="Cross-Platform Compatibility.Path Handling.Should handle different path separators" time="0.2038" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Cross-Platform Compatibility.Platform-Specific Features" executed="True" result="Success" success="True" time="0.4471" asserts="0" description="Cross-Platform Compatibility.Platform-Specific Features">
+                <results>
+                  <test-case description="Should handle platform differences gracefully" name="Cross-Platform Compatibility.Platform-Specific Features.Should handle platform differences gracefully" time="0.0221" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Performance and Concurrency" executed="True" result="Success" success="True" time="13.9685" asserts="0" description="Performance and Concurrency">
+            <results>
+              <test-suite type="TestFixture" name="Performance and Concurrency.Performance Characteristics" executed="True" result="Success" success="True" time="0.3921" asserts="0" description="Performance and Concurrency.Performance Characteristics">
+                <results>
+                  <test-case description="Should complete backup operations within reasonable time" name="Performance and Concurrency.Performance Characteristics.Should complete backup operations within reasonable time" time="0.181" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle concurrent operations" name="Performance and Concurrency.Performance Characteristics.Should handle concurrent operations" time="0.1951" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Integration with Other Modules" executed="True" result="Success" success="True" time="14.2249" asserts="0" description="Integration with Other Modules">
+            <results>
+              <test-suite type="TestFixture" name="Integration with Other Modules.Logging Integration" executed="True" result="Success" success="True" time="0.2454" asserts="0" description="Integration with Other Modules.Logging Integration">
+                <results>
+                  <test-case description="Should integrate with logging system" name="Integration with Other Modules.Logging Integration.Should integrate with logging system" time="0.2427" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Integration with Other Modules.Project Root Detection" executed="True" result="Success" success="True" time="0.252" asserts="0" description="Integration with Other Modules.Project Root Detection">
+                <results>
+                  <test-case description="Should detect project root correctly" name="Integration with Other Modules.Project Root Detection.Should detect project root correctly" time="0.0041" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Module Configuration and Customization" executed="True" result="Success" success="True" time="15.0804" asserts="0" description="Module Configuration and Customization">
+            <results>
+              <test-suite type="TestFixture" name="Module Configuration and Customization.Configuration Handling" executed="True" result="Success" success="True" time="0.8525" asserts="0" description="Module Configuration and Customization.Configuration Handling">
+                <results>
+                  <test-case description="Should handle custom patterns correctly" name="Module Configuration and Customization.Configuration Handling.Should handle custom patterns correctly" time="0.0103" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support different compression levels" name="Module Configuration and Customization.Configuration Handling.Should support different compression levels" time="0.8208" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>

@@ -223,8 +223,6 @@ function Retrieve-CredentialSecurely {
             try {
                 $decryptedPassword = Unprotect-String $encryptedData.EncryptedPassword
                 # Suppress security warning: converting decrypted data back to SecureString is secure practice
-                [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '', Justification = 'Converting previously encrypted data back to SecureString after decryption is secure')]
-                param()
                 $credential.Password = ConvertTo-SecureString $decryptedPassword -AsPlainText -Force
                 # Clear decrypted password from memory
                 $decryptedPassword = $null

@@ -213,6 +213,37 @@ function Import-AuditData {
         }
     }
 
+    # Load CI test results
+    $ciTestPaths = @(
+        'ci-test-summary.json',
+        'tests/results/unified/ci-test-summary.json',
+        '../ci-test-summary.json',
+        'core-test-results.xml'
+    )
+    
+    foreach ($ciPath in $ciTestPaths) {
+        $fullPath = if (Test-Path $ciPath) { $ciPath } else { Join-Path $ArtifactsPath $ciPath }
+        if (Test-Path $fullPath) {
+            try {
+                if ($fullPath -like '*.json') {
+                    $content = Get-Content $fullPath -Raw | ConvertFrom-Json
+                    $auditData.CITests = $content
+                    Write-ReportLog "Loaded CI test results from $fullPath" -Level 'SUCCESS'
+                } elseif ($fullPath -like '*.xml') {
+                    # Handle XML test results if available
+                    if (-not $auditData.CITests) {
+                        $auditData.CITests = @{}
+                    }
+                    $auditData.CITests.XmlResults = $fullPath
+                    Write-ReportLog "Found XML test results at $fullPath" -Level 'SUCCESS'
+                }
+                break
+            } catch {
+                Write-ReportLog "Failed to load CI test results from $fullPath : $($_.Exception.Message)" -Level 'WARNING'
+            }
+        }
+    }
+
     # Load security scan results
     $securityArtifacts = @(
         'security-scan-results/dependency-scan.sarif',
@@ -374,7 +405,7 @@ function Get-OverallHealthScore {
         ModuleHealth = 0.1
     }
 
-    # Test coverage score
+    # Test coverage score (includes CI test results)
     if ($AuditData.Testing) {
         if ($AuditData.Testing.coverage) {
             $healthFactors.TestCoverage = [math]::Min(100, $AuditData.Testing.coverage.averageCoverage)
@@ -383,6 +414,26 @@ function Get-OverallHealthScore {
                 ($AuditData.Testing.summary.modulesWithTests / $AuditData.Testing.summary.totalAnalyzed) * 100
             } else { 0 }
             $healthFactors.TestCoverage = $testRatio
+        }
+    }
+    
+    # Boost test coverage score with CI test results
+    if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.QualityMetrics) {
+        $ciScore = $AuditData.CITests.QualityMetrics.SuccessRate
+        if ($ciScore -eq 100) {
+            # Perfect CI test score provides significant boost
+            $healthFactors.TestCoverage = [math]::Min(100, $healthFactors.TestCoverage + 15)
+        } elseif ($ciScore -ge 90) {
+            # Good CI test score provides moderate boost
+            $healthFactors.TestCoverage = [math]::Min(100, $healthFactors.TestCoverage + 10)
+        } elseif ($ciScore -ge 80) {
+            # Decent CI test score provides small boost
+            $healthFactors.TestCoverage = [math]::Min(100, $healthFactors.TestCoverage + 5)
+        } else {
+            # Poor CI test score doesn't boost (or potentially reduces if very low)
+            if ($ciScore -lt 70) {
+                $healthFactors.TestCoverage = [math]::Max(0, $healthFactors.TestCoverage - 5)
+            }
         }
     }
 
@@ -677,6 +728,21 @@ function New-ComprehensiveHtmlReport {
                 </p>
             </div>
 
+            $(if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.QualityMetrics) { @"
+            <div class="card">
+                <h3><span class="icon">🚀</span>CI Test Results</h3>
+                <div style="text-align: center; font-size: 2em; margin: 20px 0;">
+                    <span class="grade-$(if ($AuditData.CITests.QualityMetrics.SuccessRate -eq 100) { 'a' } elseif ($AuditData.CITests.QualityMetrics.SuccessRate -ge 90) { 'b' } elseif ($AuditData.CITests.QualityMetrics.SuccessRate -ge 80) { 'c' } else { 'd' })"><strong>$($AuditData.CITests.QualityMetrics.SuccessRate)%</strong></span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: $($AuditData.CITests.QualityMetrics.SuccessRate)%"></div>
+                </div>
+                <p style="text-align: center;">
+                    $($AuditData.CITests.TotalPassed)/$($AuditData.CITests.TotalTests) tests passed
+                </p>
+            </div>
+"@ })
+
             <div class="card">
                 <h3><span class="icon">🔒</span>Security Status</h3>
                 <div style="text-align: center; font-size: 2em; margin: 20px 0;">
@@ -878,6 +944,15 @@ function New-ComprehensiveHtmlReport {
                         })
                     </div>
                     <div style="padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                        <h4>🚀 CI Test Results</h4>
+                        <p>Status: $(if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.QualityMetrics) { '✅ Available' } else { '⚠️ No data' })</p>
+                        $(if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.QualityMetrics) {
+                            "<p>Total Tests: <strong>$($AuditData.CITests.TotalTests)</strong></p>"
+                            "<p>Success Rate: <strong>$($AuditData.CITests.QualityMetrics.SuccessRate)%</strong></p>"
+                            "<p>Duration: <strong>$([math]::Round($AuditData.CITests.TotalDuration, 2))s</strong></p>"
+                        })
+                    </div>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 5px;">
                         <h4>🔒 Security Audit</h4>
                         <p>Status: $(if ($AuditData.Security) { '✅ Available' } else { '⚠️ No data' })</p>
                     </div>
@@ -972,6 +1047,89 @@ function New-ComprehensiveHtmlReport {
             $html += @"
                     </tbody>
                 </table>
+            </div>
+"@
+        }
+        
+        # CI Test Results Detailed Section
+        if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.QualityMetrics) {
+            $html += @"
+            
+            <button class="collapsible">🚀 CI Test Results Details</button>
+            <div class="content">
+                <h3>Continuous Integration Test Execution</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                    <div>
+                        <h4>Test Summary</h4>
+                        <ul>
+                            <li>Total Tests: <strong>$($AuditData.CITests.TotalTests)</strong></li>
+                            <li>Passed: <strong>$($AuditData.CITests.TotalPassed)</strong></li>
+                            <li>Failed: <strong>$($AuditData.CITests.TotalFailed)</strong></li>
+                            <li>Success Rate: <strong>$($AuditData.CITests.QualityMetrics.SuccessRate)%</strong></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>Performance Metrics</h4>
+                        <ul>
+                            <li>Total Duration: <strong>$([math]::Round($AuditData.CITests.TotalDuration, 2))s</strong></li>
+                            <li>Tests/Second: <strong>$($AuditData.CITests.QualityMetrics.Performance.TestsPerSecond)</strong></li>
+                            <li>Average Test Duration: <strong>$([math]::Round($AuditData.CITests.QualityMetrics.Performance.AverageTestDuration, 3))s</strong></li>
+                            <li>Test Mode: <strong>$($AuditData.CITests.QualityMetrics.Performance.Mode)</strong></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>Platform Info</h4>
+                        <ul>
+                            <li>PowerShell: <strong>$($AuditData.CITests.Platform.PowerShellVersion)</strong></li>
+                            <li>OS: <strong>$($AuditData.CITests.Platform.OS)</strong></li>
+                            <li>Architecture: <strong>$($AuditData.CITests.Platform.Architecture)</strong></li>
+                            <li>Git Branch: <strong>$($AuditData.CITests.Platform.GitBranch)</strong></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <h4>Test Suites Breakdown</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Test Suite</th>
+                            <th>Total Tests</th>
+                            <th>Passed</th>
+                            <th>Failed</th>
+                            <th>Duration</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+"@
+            foreach ($suite in $AuditData.CITests.TestSuites) {
+                $statusClass = if ($suite.Result -eq 'Passed') { 'status-healthy' } else { 'status-critical' }
+                $durationRounded = [math]::Round($suite.Duration, 2)
+                
+                $html += @"
+                        <tr>
+                            <td><strong>$($suite.TestSuite)</strong></td>
+                            <td>$($suite.TotalCount)</td>
+                            <td>$($suite.PassedCount)</td>
+                            <td>$($suite.FailedCount)</td>
+                            <td>${durationRounded}s</td>
+                            <td><span class="status-indicator $statusClass"></span>$($suite.Result)</td>
+                        </tr>
+"@
+            }
+            
+            $html += @"
+                    </tbody>
+                </table>
+                
+                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                    <strong>CI Test Execution Summary:</strong><br>
+                    Generated: <strong>$($AuditData.CITests.Timestamp)</strong><br>
+                    Start Time: <strong>$($AuditData.CITests.StartTime)</strong><br>
+                    End Time: <strong>$($AuditData.CITests.EndTime)</strong><br>
+                    Machine: <strong>$($AuditData.CITests.Platform.MachineName)</strong><br>
+                    Working Directory: <strong>$($AuditData.CITests.Platform.WorkingDirectory)</strong>
+                </div>
             </div>
 "@
         }

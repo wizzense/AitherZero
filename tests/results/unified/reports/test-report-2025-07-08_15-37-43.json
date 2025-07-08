@@ -1,0 +1,91 @@
+{
+  "Results": [
+    {
+      "TestsPassed": 0,
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/Logging/tests/Logging.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "Module": "Logging",
+      "Duration": 1.5503266,
+      "TestsFailed": 34,
+      "Phase": "Unit",
+      "TestsRun": 34,
+      "Result": {
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/Logging/tests/Logging.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Duration": 1.5503266,
+        "TestsFailed": 34,
+        "TestsPassed": 0,
+        "ModuleName": "Logging",
+        "Phase": "Unit",
+        "TestsRun": 34
+      },
+      "Success": false
+    },
+    {
+      "TestsPassed": 17,
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "Module": "ConfigurationCore",
+      "Duration": 2.4041128,
+      "TestsFailed": 17,
+      "Phase": "Unit",
+      "TestsRun": 34,
+      "Result": {
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Duration": 2.4041128,
+        "TestsFailed": 17,
+        "TestsPassed": 17,
+        "ModuleName": "ConfigurationCore",
+        "Phase": "Unit",
+        "TestsRun": 34
+      },
+      "Success": false
+    },
+    {
+      "TestsPassed": 7,
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "Module": "ModuleCommunication",
+      "Duration": 8.7690148,
+      "TestsFailed": 26,
+      "Phase": "Unit",
+      "TestsRun": 33,
+      "Result": {
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Duration": 8.7690148,
+        "TestsFailed": 26,
+        "TestsPassed": 7,
+        "ModuleName": "ModuleCommunication",
+        "Phase": "Unit",
+        "TestsRun": 33
+      },
+      "Success": false
+    }
+  ],
+  "Summary": {
+    "FailedModules": 3,
+    "TotalDuration": 12.7234542,
+    "TotalTests": 101.0,
+    "Timestamp": "2025-07-08T15:37:43.5267482+00:00",
+    "TotalPassed": 24.0,
+    "SuccessRate": 23.76,
+    "TestSuite": "Unit",
+    "SuccessfulModules": 0,
+    "TotalModules": 3,
+    "TotalFailed": 77.0
+  }
+}

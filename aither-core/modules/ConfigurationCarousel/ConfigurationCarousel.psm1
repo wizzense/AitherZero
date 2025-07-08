@@ -127,7 +127,7 @@ function Switch-ConfigurationSet {
         $registry = Get-ConfigurationRegistry
 
         # Validate configuration exists
-        if (-not $registry.configurations.PSObject.Properties[$ConfigurationName]) {
+        if (-not ($registry.configurations.PSObject.Properties.Name -contains $ConfigurationName)) {
             throw "Configuration '$ConfigurationName' not found. Available: $($registry.configurations.PSObject.Properties.Name -join ', ')"
         }
 
@@ -293,7 +293,7 @@ function Add-ConfigurationRepository {
         $registry = Get-ConfigurationRegistry
 
         # Check if configuration already exists
-        if ($registry.configurations.PSObject.Properties[$Name]) {
+        if ($registry.configurations.PSObject.Properties.Name -contains $Name) {
             throw "Configuration '$Name' already exists"
         }
 
@@ -415,7 +415,7 @@ function Sync-ConfigurationRepository {
         $registry = Get-ConfigurationRegistry
 
         # Validate configuration exists
-        if (-not $registry.configurations.PSObject.Properties[$ConfigurationName]) {
+        if (-not ($registry.configurations.PSObject.Properties.Name -contains $ConfigurationName)) {
             throw "Configuration '$ConfigurationName' not found"
         }
 
@@ -604,7 +604,7 @@ function Remove-ConfigurationRepository {
         $registry = Get-ConfigurationRegistry
 
         # Check if configuration exists
-        if (-not $registry.configurations.PSObject.Properties[$Name]) {
+        if (-not ($registry.configurations.PSObject.Properties.Name -contains $Name)) {
             throw "Configuration '$Name' not found"
         }
 
@@ -668,7 +668,7 @@ function Get-CurrentConfiguration {
         $currentName = $registry.currentConfiguration
         $currentEnv = $registry.currentEnvironment
 
-        if ($registry.configurations.PSObject.Properties[$currentName]) {
+        if ($registry.configurations.PSObject.Properties.Name -contains $currentName) {
             $config = $registry.configurations.$currentName
 
             return @{
@@ -885,7 +885,7 @@ function Validate-ConfigurationSet {
     try {
         $registry = Get-ConfigurationRegistry
 
-        if (-not $registry.configurations.PSObject.Properties[$ConfigurationName]) {
+        if (-not ($registry.configurations.PSObject.Properties.Name -contains $ConfigurationName)) {
             return @{
                 IsValid = $false
                 Errors = @("Configuration '$ConfigurationName' not found")
@@ -1058,6 +1058,292 @@ function New-ConfigurationFromTemplate {
     }
 }
 
+function Export-ConfigurationSet {
+    <#
+    .SYNOPSIS
+        Exports a configuration set to a file or archive
+    .DESCRIPTION
+        Exports the specified configuration set for backup or sharing
+    .PARAMETER ConfigurationName
+        Name of the configuration to export
+    .PARAMETER OutputPath
+        Path where the configuration should be exported
+    .PARAMETER Format
+        Export format (JSON, ZIP, TAR)
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ConfigurationName,
+        
+        [Parameter(Mandatory = $true)]
+        [string]$OutputPath,
+        
+        [ValidateSet('JSON', 'ZIP', 'TAR')]
+        [string]$Format = 'JSON'
+    )
+    
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Exporting configuration set: $ConfigurationName"
+        
+        $registry = Get-ConfigurationRegistry
+        if (-not ($registry.configurations.PSObject.Properties.Name -contains $ConfigurationName)) {
+            throw "Configuration '$ConfigurationName' not found"
+        }
+        
+        $config = $registry.configurations.$ConfigurationName
+        
+        switch ($Format) {
+            'JSON' {
+                $config | ConvertTo-Json -Depth 10 | Set-Content -Path $OutputPath -Encoding UTF8
+            }
+            'ZIP' {
+                # Create a temporary directory for the export
+                $tempDir = New-TemporaryFile | ForEach-Object { Remove-Item $_; New-Item -ItemType Directory -Path $_ }
+                
+                # Copy configuration files
+                $configPath = Join-Path $projectRoot $config.path
+                if (Test-Path $configPath) {
+                    Copy-Item -Path $configPath -Destination $tempDir -Recurse -Force
+                }
+                
+                # Create metadata file
+                $metadata = @{
+                    exportTime = Get-Date
+                    configuration = $config
+                    version = "1.0"
+                }
+                $metadata | ConvertTo-Json -Depth 10 | Set-Content -Path (Join-Path $tempDir "metadata.json") -Encoding UTF8
+                
+                # Create ZIP archive
+                Compress-Archive -Path "$tempDir\*" -DestinationPath $OutputPath -Force
+                
+                # Cleanup
+                Remove-Item $tempDir -Recurse -Force
+            }
+            'TAR' {
+                Write-CustomLog -Level 'WARNING' -Message "TAR format not implemented, using JSON format"
+                $config | ConvertTo-Json -Depth 10 | Set-Content -Path $OutputPath -Encoding UTF8
+            }
+        }
+        
+        Write-CustomLog -Level 'SUCCESS' -Message "Configuration set exported to: $OutputPath"
+        
+        return @{
+            Success = $true
+            OutputPath = $OutputPath
+            Format = $Format
+            Message = "Configuration exported successfully"
+        }
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to export configuration set: $($_.Exception.Message)"
+        throw
+    }
+}
+
+function Import-ConfigurationSet {
+    <#
+    .SYNOPSIS
+        Imports a configuration set from a file or archive
+    .DESCRIPTION
+        Imports a previously exported configuration set
+    .PARAMETER InputPath
+        Path to the configuration file or archive
+    .PARAMETER ConfigurationName
+        Name to assign to the imported configuration
+    .PARAMETER Force
+        Overwrite existing configuration with the same name
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$InputPath,
+        
+        [string]$ConfigurationName,
+        
+        [switch]$Force
+    )
+    
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Importing configuration set from: $InputPath"
+        
+        if (-not (Test-Path $InputPath)) {
+            throw "Input path does not exist: $InputPath"
+        }
+        
+        $registry = Get-ConfigurationRegistry
+        
+        # Determine format based on file extension
+        $extension = [System.IO.Path]::GetExtension($InputPath).ToLower()
+        
+        switch ($extension) {
+            '.json' {
+                $importedConfig = Get-Content $InputPath -Raw | ConvertFrom-Json -AsHashtable
+            }
+            '.zip' {
+                # Extract ZIP and read metadata
+                $tempDir = New-TemporaryFile | ForEach-Object { Remove-Item $_; New-Item -ItemType Directory -Path $_ }
+                Expand-Archive -Path $InputPath -DestinationPath $tempDir -Force
+                
+                $metadataPath = Join-Path $tempDir "metadata.json"
+                if (Test-Path $metadataPath) {
+                    $metadata = Get-Content $metadataPath -Raw | ConvertFrom-Json -AsHashtable
+                    $importedConfig = $metadata.configuration
+                } else {
+                    throw "Invalid configuration archive: metadata.json not found"
+                }
+                
+                # Copy configuration files to destination
+                $destPath = Join-Path $script:ConfigCarouselPath $ConfigurationName
+                Copy-Item -Path "$tempDir\*" -Destination $destPath -Recurse -Force
+                
+                # Cleanup
+                Remove-Item $tempDir -Recurse -Force
+            }
+            default {
+                throw "Unsupported file format: $extension"
+            }
+        }
+        
+        # Use provided name or original name
+        $finalName = if ($ConfigurationName) { $ConfigurationName } else { $importedConfig.name }
+        
+        # Check if configuration already exists
+        if ($registry.configurations.PSObject.Properties.Name -contains $finalName -and -not $Force) {
+            throw "Configuration '$finalName' already exists. Use -Force to overwrite."
+        }
+        
+        # Add to registry
+        $importedConfig.name = $finalName
+        $registry.configurations | Add-Member -MemberType NoteProperty -Name $finalName -Value $importedConfig -Force
+        
+        # Save registry
+        Set-ConfigurationRegistry -Registry $registry
+        
+        Write-CustomLog -Level 'SUCCESS' -Message "Configuration set imported as: $finalName"
+        
+        return @{
+            Success = $true
+            ConfigurationName = $finalName
+            Message = "Configuration imported successfully"
+        }
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to import configuration set: $($_.Exception.Message)"
+        throw
+    }
+}
+
+function New-ConfigurationEnvironment {
+    <#
+    .SYNOPSIS
+        Creates a new configuration environment
+    .DESCRIPTION
+        Creates a new environment with specified settings
+    .PARAMETER Name
+        Name of the new environment
+    .PARAMETER Description
+        Description of the environment
+    .PARAMETER SecurityPolicy
+        Security policy settings
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        
+        [string]$Description = "",
+        
+        [hashtable]$SecurityPolicy = @{}
+    )
+    
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Creating new configuration environment: $Name"
+        
+        $registry = Get-ConfigurationRegistry
+        
+        if ($registry.environments.PSObject.Properties.Name -contains $Name) {
+            throw "Environment '$Name' already exists"
+        }
+        
+        $newEnvironment = @{
+            name = $Name
+            description = $Description
+            securityPolicy = if ($SecurityPolicy.Count -gt 0) { $SecurityPolicy } else {
+                @{
+                    destructiveOperations = "prompt"
+                    dataAccess = "restricted"
+                    networkAccess = "limited"
+                }
+            }
+            createdDate = Get-Date
+        }
+        
+        $registry.environments | Add-Member -MemberType NoteProperty -Name $Name -Value $newEnvironment -Force
+        Set-ConfigurationRegistry -Registry $registry
+        
+        Write-CustomLog -Level 'SUCCESS' -Message "Configuration environment created: $Name"
+        
+        return @{
+            Success = $true
+            EnvironmentName = $Name
+            Environment = $newEnvironment
+            Message = "Environment created successfully"
+        }
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to create configuration environment: $($_.Exception.Message)"
+        throw
+    }
+}
+
+function Set-ConfigurationEnvironment {
+    <#
+    .SYNOPSIS
+        Sets the current configuration environment
+    .DESCRIPTION
+        Changes the active environment for configuration operations
+    .PARAMETER EnvironmentName
+        Name of the environment to activate
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$EnvironmentName
+    )
+    
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Setting configuration environment to: $EnvironmentName"
+        
+        $registry = Get-ConfigurationRegistry
+        
+        if (-not ($registry.environments.PSObject.Properties.Name -contains $EnvironmentName)) {
+            throw "Environment '$EnvironmentName' not found"
+        }
+        
+        $previousEnvironment = $registry.currentEnvironment
+        $registry.currentEnvironment = $EnvironmentName
+        
+        Set-ConfigurationRegistry -Registry $registry
+        
+        Write-CustomLog -Level 'SUCCESS' -Message "Configuration environment changed from '$previousEnvironment' to '$EnvironmentName'"
+        
+        return @{
+            Success = $true
+            PreviousEnvironment = $previousEnvironment
+            CurrentEnvironment = $EnvironmentName
+            Message = "Environment changed successfully"
+        }
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to set configuration environment: $($_.Exception.Message)"
+        throw
+    }
+}
+
+# Helper functions (duplicates removed - using the main implementations above)
+
 # Logging fallback functions
 if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
     function Write-CustomLog {
@@ -1089,5 +1375,9 @@ Export-ModuleMember -Function @(
     'Get-CurrentConfiguration',
     'Backup-CurrentConfiguration',
     'Restore-ConfigurationBackup',
-    'Validate-ConfigurationSet'
+    'Validate-ConfigurationSet',
+    'Export-ConfigurationSet',
+    'Import-ConfigurationSet',
+    'New-ConfigurationEnvironment',
+    'Set-ConfigurationEnvironment'
 )

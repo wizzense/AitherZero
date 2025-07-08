@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<testsuites xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="junit_schema_4.xsd" name="Pester" tests="6" errors="1" failures="0" disabled="0" time="0.805">
+  <testsuite name="/workspaces/AitherZero/tests/EntryPoint-Validation.Tests.ps1" tests="6" errors="0" failures="0" hostname="codespaces-6c6eb1" id="0" skipped="0" disabled="0" package="/workspaces/AitherZero/tests/EntryPoint-Validation.Tests.ps1" time="0.805">
+    <properties>
+      <property name="clr-version" value="9.0.4" />
+      <property name="platform" value="Linux" />
+      <property name="junit-version" value="4" />
+      <property name="framework-version" value="5.7.1" />
+      <property name="cwd" value="/workspaces/AitherZero" />
+      <property name="user" value="codespace" />
+      <property name="os-version" value="6.8.0-1027-azure" />
+      <property name="user-domain" value="" />
+      <property name="machine-name" value="codespaces-6c6eb1" />
+    </properties>
+    <testcase name="Entry Point Existence and Accessibility.Entry Point File Validation.Should have all required entry point scripts" status="Passed" classname="/workspaces/AitherZero/tests/EntryPoint-Validation.Tests.ps1" assertions="0" time="0.126" />
+    <testcase name="Entry Point Existence and Accessibility.Entry Point File Validation.Should have executable permissions on Unix systems" status="Passed" classname="/workspaces/AitherZero/tests/EntryPoint-Validation.Tests.ps1" assertions="0" time="0.021" />
+    <testcase name="Entry Point Existence and Accessibility.Entry Point File Validation.Should be accessible from project root directory" status="Passed" classname="/workspaces/AitherZero/tests/EntryPoint-Validation.Tests.ps1" assertions="0" time="0.011" />
+    <testcase name="Entry Point Existence and Accessibility.Entry Point Script Structure.Should have valid PowerShell syntax for all entry points" status="Passed" classname="/workspaces/AitherZero/tests/EntryPoint-Validation.Tests.ps1" assertions="0" time="0.018" />
+    <testcase name="Entry Point Existence and Accessibility.Entry Point Script Structure.Should require PowerShell 7.0 or higher" status="Passed" classname="/workspaces/AitherZero/tests/EntryPoint-Validation.Tests.ps1" assertions="0" time="0.009" />
+    <testcase name="Entry Point Existence and Accessibility.Entry Point Script Structure.Should have proper comment-based help" status="Passed" classname="/workspaces/AitherZero/tests/EntryPoint-Validation.Tests.ps1" assertions="0" time="0.009" />
+  </testsuite>
+</testsuites>

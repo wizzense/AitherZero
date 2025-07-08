@@ -1,0 +1,31 @@
+{
+  "DirectoriesProcessed": 0,
+  "BackupPath": "/workspaces/AitherZero/tmp/58c4f0f5-1984-4ae1-a561-cbe9fda3d82b/backup-destination/consolidated-results",
+  "SourcePath": "/tmp/58c4f0f5-1984-4ae1-a561-cbe9fda3d82b/backup-test-data",
+  "BackupPatterns": [
+    "*.bak",
+    "*.backup",
+    "*.old",
+    "*.orig",
+    "*~",
+    "*.backup.*",
+    "*backup*",
+    "*-backup-*",
+    "*.bak.*"
+  ],
+  "TotalFilesFound": 4,
+  "FilesProcessed": 4,
+  "Errors": [],
+  "Timestamp": "2025-07-08T15:32:41.8995801+00:00",
+  "Success": true,
+  "ExclusionsApplied": [
+    "*.git*",
+    "*node_modules*",
+    "*\\.vscode*",
+    "*backups*",
+    "*packages*",
+    "*bin*",
+    "*obj*",
+    "*\\.vs*"
+  ]
+}

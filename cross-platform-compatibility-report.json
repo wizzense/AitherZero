@@ -1,0 +1,389 @@
+{
+  "OS": "Ubuntu 24.04.2 LTS",
+  "Issues": [],
+  "GeneratedAt": "2025-07-08T17:29:43.8584883+00:00",
+  "CompatibilityScore": 100.0,
+  "PowerShellVersion": "7.5.1",
+  "Platform": "Linux",
+  "Summary": {
+    "PassedTests": 53,
+    "WarnTests": 0,
+    "FailedTests": 0,
+    "TotalTests": 53
+  },
+  "PowerShellEdition": "Core",
+  "Recommendations": [],
+  "TestResults": [
+    {
+      "Timestamp": "2025-07-08T17:29:43.1153222+00:00",
+      "Test": "Version Requirements",
+      "Details": "Version 7.5.1 meets minimum requirement 7.0",
+      "Status": "PASS",
+      "Category": "PowerShell"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1192006+00:00",
+      "Test": "Edition Compatibility",
+      "Details": "PowerShell Core edition supports cross-platform",
+      "Status": "PASS",
+      "Category": "PowerShell"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.119787+00:00",
+      "Test": "Linux Detection",
+      "Details": "Linux platform detected correctly",
+      "Status": "PASS",
+      "Category": "Platform"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1202189+00:00",
+      "Test": "Platform Variables",
+      "Details": "Platform detection variables working correctly",
+      "Status": "PASS",
+      "Category": "Platform"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.156601+00:00",
+      "Test": "Join-Path Basic",
+      "Details": "Join-Path working: folder/subfolder/file.txt",
+      "Status": "PASS",
+      "Category": "Paths"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1587244+00:00",
+      "Test": "Path Separator",
+      "Details": "Unix path separator correct: /",
+      "Status": "PASS",
+      "Category": "Paths"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.162119+00:00",
+      "Test": "Absolute Path Detection",
+      "Details": "Absolute path detection working",
+      "Status": "PASS",
+      "Category": "Paths"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1662091+00:00",
+      "Test": "Temp Directory",
+      "Details": "Temp directory accessible: /tmp",
+      "Status": "PASS",
+      "Category": "FileSystem"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1784645+00:00",
+      "Test": "File Creation",
+      "Details": "File creation successful",
+      "Status": "PASS",
+      "Category": "FileSystem"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1836234+00:00",
+      "Test": "File Reading",
+      "Details": "File reading successful",
+      "Status": "PASS",
+      "Category": "FileSystem"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1893602+00:00",
+      "Test": "Get-Process Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1900063+00:00",
+      "Test": "Start-Process Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1906205+00:00",
+      "Test": "Stop-Process Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1912181+00:00",
+      "Test": "Get-ChildItem Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1918523+00:00",
+      "Test": "New-Item Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1924804+00:00",
+      "Test": "Remove-Item Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1931227+00:00",
+      "Test": "Copy-Item Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1937236+00:00",
+      "Test": "Move-Item Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1942686+00:00",
+      "Test": "Test-Path Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1948635+00:00",
+      "Test": "Resolve-Path Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1954534+00:00",
+      "Test": "Join-Path Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1960093+00:00",
+      "Test": "Split-Path Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1965806+00:00",
+      "Test": "ConvertTo-Json Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1971319+00:00",
+      "Test": "ConvertFrom-Json Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1977523+00:00",
+      "Test": "Select-Object Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1983189+00:00",
+      "Test": "Where-Object Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1989063+00:00",
+      "Test": "ForEach-Object Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.1994833+00:00",
+      "Test": "Sort-Object Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.2000364+00:00",
+      "Test": "Get-Date Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.200631+00:00",
+      "Test": "Get-Location Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.2011883+00:00",
+      "Test": "Set-Location Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.2017723+00:00",
+      "Test": "Write-Host Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.2024182+00:00",
+      "Test": "Write-Output Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.2030466+00:00",
+      "Test": "Write-Error Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.2036881+00:00",
+      "Test": "Write-Warning Availability",
+      "Details": "Cmdlet available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.2059636+00:00",
+      "Test": "Universal Cmdlets",
+      "Details": "All universal cmdlets available",
+      "Status": "PASS",
+      "Category": "Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.2190797+00:00",
+      "Test": "ps (Unix)",
+      "Details": "Unix command available",
+      "Status": "PASS",
+      "Category": "Platform-Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.2318052+00:00",
+      "Test": "ls (Unix)",
+      "Details": "Unix command available",
+      "Status": "PASS",
+      "Category": "Platform-Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.2430558+00:00",
+      "Test": "grep (Unix)",
+      "Details": "Unix command available",
+      "Status": "PASS",
+      "Category": "Platform-Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.2545696+00:00",
+      "Test": "find (Unix)",
+      "Details": "Unix command available",
+      "Status": "PASS",
+      "Category": "Platform-Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.2668601+00:00",
+      "Test": "which (Unix)",
+      "Details": "Unix command available",
+      "Status": "PASS",
+      "Category": "Platform-Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.2794046+00:00",
+      "Test": "hostname (Unix)",
+      "Details": "Unix command available",
+      "Status": "PASS",
+      "Category": "Platform-Cmdlets"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.303941+00:00",
+      "Test": "HOME (Unix)",
+      "Details": "Variable available: /home/codespace...",
+      "Status": "PASS",
+      "Category": "Environment"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.3043992+00:00",
+      "Test": "USER (Unix)",
+      "Details": "Variable available: codespace...",
+      "Status": "PASS",
+      "Category": "Environment"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.3047296+00:00",
+      "Test": "PATH (Unix)",
+      "Details": "Variable available: /opt/microsoft/powershell/7:/usr/local/rvm/gems/ru...",
+      "Status": "PASS",
+      "Category": "Environment"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.3050411+00:00",
+      "Test": "SHELL (Unix)",
+      "Details": "Variable available: /bin/bash...",
+      "Status": "PASS",
+      "Category": "Environment"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.8163723+00:00",
+      "Test": "Pester Module",
+      "Details": "Pester module loaded successfully",
+      "Status": "PASS",
+      "Category": "Modules"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.8190031+00:00",
+      "Test": "Module Path",
+      "Details": "Module path configured with 3 locations",
+      "Status": "PASS",
+      "Category": "Modules"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.8302229+00:00",
+      "Test": "Get-Process",
+      "Details": "Process enumeration working (5 processes found)",
+      "Status": "PASS",
+      "Category": "Process"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.8343966+00:00",
+      "Test": "Current Process",
+      "Details": "Current process accessible: pwsh",
+      "Status": "PASS",
+      "Category": "Process"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.8420659+00:00",
+      "Test": "Try-Catch",
+      "Details": "Exception handling working",
+      "Status": "PASS",
+      "Category": "ErrorHandling"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.8441826+00:00",
+      "Test": "ErrorAction",
+      "Details": "ErrorAction parameter working",
+      "Status": "PASS",
+      "Category": "ErrorHandling"
+    },
+    {
+      "Timestamp": "2025-07-08T17:29:43.8451778+00:00",
+      "Test": "Error Variable",
+      "Details": "Error variable accessible (2 errors)",
+      "Status": "PASS",
+      "Category": "ErrorHandling"
+    }
+  ]
+}

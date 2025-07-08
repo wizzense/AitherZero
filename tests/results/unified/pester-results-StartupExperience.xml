@@ -1,141 +1,94 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="22" errors="0" failures="11" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="15:27:40">
-  <environment machine-name="codespaces-6c6eb1" clr-version="9.0.4" user-domain="" nunit-version="2.5.8.0" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" user="codespace" platform="Linux" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="22" errors="0" failures="4" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="17:42:30">
+  <environment user-domain="" platform="Linux" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" clr-version="9.0.4" nunit-version="2.5.8.0" user="codespace" machine-name="codespaces-6c6eb1" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="1.9717" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="1.7783" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1" executed="True" result="Failure" success="False" time="1.9717" asserts="0" description="/workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1" executed="True" result="Failure" success="False" time="1.7783" asserts="0" description="/workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="StartupExperience Management Module - Core Functionality" executed="True" result="Failure" success="False" time="0.6381" asserts="0" description="StartupExperience Management Module - Core Functionality">
+          <test-suite type="TestFixture" name="StartupExperience Management Module - Core Functionality" executed="True" result="Failure" success="False" time="0.4884" asserts="0" description="StartupExperience Management Module - Core Functionality">
             <results>
-              <test-suite type="TestFixture" name="StartupExperience Management Module - Core Functionality.Module Import and Structure" executed="True" result="Failure" success="False" time="0.035" asserts="0" description="StartupExperience Management Module - Core Functionality.Module Import and Structure">
+              <test-suite type="TestFixture" name="StartupExperience Management Module - Core Functionality.Module Import and Structure" executed="True" result="Success" success="True" time="0.0223" asserts="0" description="StartupExperience Management Module - Core Functionality.Module Import and Structure">
                 <results>
-                  <test-case description="Should import the management module successfully" name="StartupExperience Management Module - Core Functionality.Module Import and Structure.Should import the management module successfully" time="0.0054" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should export management functions" name="StartupExperience Management Module - Core Functionality.Module Import and Structure.Should export management functions" time="0.0256" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>Expected a value, because Management module should export management-related functions, but got $null or empty.</message>
-                      <stack-trace>at $foundFunctions | Should -Not -BeNullOrEmpty -Because "Management module should export management-related functions", /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:77
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:77</stack-trace>
-                    </failure>
-                  </test-case>
+                  <test-case description="Should import the management module successfully" name="StartupExperience Management Module - Core Functionality.Module Import and Structure.Should import the management module successfully" time="0.0044" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export management functions" name="StartupExperience Management Module - Core Functionality.Module Import and Structure.Should export management functions" time="0.0132" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="StartupExperience Management Module - Core Functionality.Resource Management Operations" executed="True" result="Failure" success="False" time="0.1864" asserts="0" description="StartupExperience Management Module - Core Functionality.Resource Management Operations">
+              <test-suite type="TestFixture" name="StartupExperience Management Module - Core Functionality.Resource Management Operations" executed="True" result="Failure" success="False" time="0.0636" asserts="0" description="StartupExperience Management Module - Core Functionality.Resource Management Operations">
                 <results>
-                  <test-case description="Should initialize management state properly" name="StartupExperience Management Module - Core Functionality.Resource Management Operations.Should initialize management state properly" time="0.0383" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should initialize management state properly" name="StartupExperience Management Module - Core Functionality.Resource Management Operations.Should initialize management state properly" time="0.0046" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should track resource state accurately" name="StartupExperience Management Module - Core Functionality.Resource Management Operations.Should track resource state accurately" time="0.0083" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle configuration changes safely" name="StartupExperience Management Module - Core Functionality.Resource Management Operations.Should handle configuration changes safely" time="0.0153" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should execute operations with proper validation" name="StartupExperience Management Module - Core Functionality.Resource Management Operations.Should execute operations with proper validation" time="0.0086" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>Expected no exception to be thrown, but an exception "The term 'Start-StartupExperienceManagement' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:84 char:15
-    +             { Start-StartupExperienceManagement -TestMode } | Should  …
-    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</message>
-                      <stack-trace>at { Start-StartupExperienceManagement -TestMode } | Should -Not -Throw, /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:84
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:84</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should track resource state accurately" name="StartupExperience Management Module - Core Functionality.Resource Management Operations.Should track resource state accurately" time="0.0322" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Get-StartupExperienceStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:89</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should handle configuration changes safely" name="StartupExperience Management Module - Core Functionality.Resource Management Operations.Should handle configuration changes safely" time="0.0455" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>Expected no exception to be thrown, but an exception "The term 'Set-StartupExperienceConfiguration' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:97 char:15
-    +             { Set-StartupExperienceConfiguration -Configuration $test …
-    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</message>
-                      <stack-trace>at { Set-StartupExperienceConfiguration -Configuration $testConfig } | Should -Not -Throw, /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:97
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:97</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should execute operations with proper validation" name="StartupExperience Management Module - Core Functionality.Resource Management Operations.Should execute operations with proper validation" time="0.0313" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Invoke-StartupExperienceOperation' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <message>MetadataException: A parameter with the name 'WhatIf' was defined multiple times for the command.</message>
                       <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:102</stack-trace>
                     </failure>
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="StartupExperience Management Module - Core Functionality.State Management and Persistence" executed="True" result="Failure" success="False" time="0.2691" asserts="0" description="StartupExperience Management Module - Core Functionality.State Management and Persistence">
+              <test-suite type="TestFixture" name="StartupExperience Management Module - Core Functionality.State Management and Persistence" executed="True" result="Failure" success="False" time="0.136" asserts="0" description="StartupExperience Management Module - Core Functionality.State Management and Persistence">
                 <results>
-                  <test-case description="Should maintain consistent state across operations" name="StartupExperience Management Module - Core Functionality.State Management and Persistence.Should maintain consistent state across operations" time="0.0307" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should maintain consistent state across operations" name="StartupExperience Management Module - Core Functionality.State Management and Persistence.Should maintain consistent state across operations" time="0.0129" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>CommandNotFoundException: The term 'Get-StartupExperienceStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:110</stack-trace>
+                      <message>MetadataException: A parameter with the name 'WhatIf' was defined multiple times for the command.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:111</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should persist state information properly" name="StartupExperience Management Module - Core Functionality.State Management and Persistence.Should persist state information properly" time="0.0421" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should persist state information properly" name="StartupExperience Management Module - Core Functionality.State Management and Persistence.Should persist state information properly" time="0.0069" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should restore state from persistence" name="StartupExperience Management Module - Core Functionality.State Management and Persistence.Should restore state from persistence" time="0.0481" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>CommandNotFoundException: The term 'Export-StartupExperienceState' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:120</stack-trace>
+                      <message>Expected no exception to be thrown, but an exception "The term 'Import-StartupExperienceState' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:129 char:19
+    +                 { Import-StartupExperienceState -Path $stateFile } |  …
+    +                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { Import-StartupExperienceState -Path $stateFile } | Should -Not -Throw, /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:129
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:129</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should restore state from persistence" name="StartupExperience Management Module - Core Functionality.State Management and Persistence.Should restore state from persistence" time="0.0046" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="StartupExperience Management Module - Core Functionality.Error Handling and Recovery" executed="True" result="Success" success="True" time="0.4191" asserts="0" description="StartupExperience Management Module - Core Functionality.Error Handling and Recovery">
+              <test-suite type="TestFixture" name="StartupExperience Management Module - Core Functionality.Error Handling and Recovery" executed="True" result="Success" success="True" time="0.2645" asserts="0" description="StartupExperience Management Module - Core Functionality.Error Handling and Recovery">
                 <results>
-                  <test-case description="Should handle invalid operations gracefully" name="StartupExperience Management Module - Core Functionality.Error Handling and Recovery.Should handle invalid operations gracefully" time="0.0332" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should provide meaningful error messages" name="StartupExperience Management Module - Core Functionality.Error Handling and Recovery.Should provide meaningful error messages" time="0.041" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should support rollback operations when possible" name="StartupExperience Management Module - Core Functionality.Error Handling and Recovery.Should support rollback operations when possible" time="0.0708" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle invalid operations gracefully" name="StartupExperience Management Module - Core Functionality.Error Handling and Recovery.Should handle invalid operations gracefully" time="0.0042" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should provide meaningful error messages" name="StartupExperience Management Module - Core Functionality.Error Handling and Recovery.Should provide meaningful error messages" time="0.0114" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support rollback operations when possible" name="StartupExperience Management Module - Core Functionality.Error Handling and Recovery.Should support rollback operations when possible" time="0.1086" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="StartupExperience Management Module - Core Functionality.Event Coordination and Workflow" executed="True" result="Failure" success="False" time="0.6345" asserts="0" description="StartupExperience Management Module - Core Functionality.Event Coordination and Workflow">
+              <test-suite type="TestFixture" name="StartupExperience Management Module - Core Functionality.Event Coordination and Workflow" executed="True" result="Success" success="True" time="0.4842" asserts="0" description="StartupExperience Management Module - Core Functionality.Event Coordination and Workflow">
                 <results>
-                  <test-case description="Should publish management events" name="StartupExperience Management Module - Core Functionality.Event Coordination and Workflow.Should publish management events" time="0.0952" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should coordinate with other management modules" name="StartupExperience Management Module - Core Functionality.Event Coordination and Workflow.Should coordinate with other management modules" time="0.0305" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Test-StartupExperienceCoordination' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:168</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should handle workflow execution properly" name="StartupExperience Management Module - Core Functionality.Event Coordination and Workflow.Should handle workflow execution properly" time="0.0856" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should publish management events" name="StartupExperience Management Module - Core Functionality.Event Coordination and Workflow.Should publish management events" time="0.1069" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should coordinate with other management modules" name="StartupExperience Management Module - Core Functionality.Event Coordination and Workflow.Should coordinate with other management modules" time="0.0082" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle workflow execution properly" name="StartupExperience Management Module - Core Functionality.Event Coordination and Workflow.Should handle workflow execution properly" time="0.1001" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>
           </test-suite>
-          <test-suite type="TestFixture" name="StartupExperience Management Module - Advanced Scenarios" executed="True" result="Failure" success="False" time="1.8065" asserts="0" description="StartupExperience Management Module - Advanced Scenarios">
+          <test-suite type="TestFixture" name="StartupExperience Management Module - Advanced Scenarios" executed="True" result="Failure" success="False" time="1.5864" asserts="0" description="StartupExperience Management Module - Advanced Scenarios">
             <results>
-              <test-suite type="TestFixture" name="StartupExperience Management Module - Advanced Scenarios.Concurrent Operations" executed="True" result="Failure" success="False" time="0.7195" asserts="0" description="StartupExperience Management Module - Advanced Scenarios.Concurrent Operations">
+              <test-suite type="TestFixture" name="StartupExperience Management Module - Advanced Scenarios.Concurrent Operations" executed="True" result="Failure" success="False" time="0.6438" asserts="0" description="StartupExperience Management Module - Advanced Scenarios.Concurrent Operations">
                 <results>
-                  <test-case description="Should handle multiple concurrent management requests" name="StartupExperience Management Module - Advanced Scenarios.Concurrent Operations.Should handle multiple concurrent management requests" time="0.6207" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should handle multiple concurrent management requests" name="StartupExperience Management Module - Advanced Scenarios.Concurrent Operations.Should handle multiple concurrent management requests" time="0.6161" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected a collection with size 3, but got an empty collection.</message>
                       <stack-trace>at $results | Should -HaveCount 3, /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:197
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:197</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should maintain consistency under concurrent access" name="StartupExperience Management Module - Advanced Scenarios.Concurrent Operations.Should maintain consistency under concurrent access" time="0.0667" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Get-StartupExperienceStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:202</stack-trace>
-                    </failure>
-                  </test-case>
+                  <test-case description="Should maintain consistency under concurrent access" name="StartupExperience Management Module - Advanced Scenarios.Concurrent Operations.Should maintain consistency under concurrent access" time="0.0078" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="StartupExperience Management Module - Advanced Scenarios.Performance and Scalability" executed="True" result="Failure" success="False" time="0.9099" asserts="0" description="StartupExperience Management Module - Advanced Scenarios.Performance and Scalability">
+              <test-suite type="TestFixture" name="StartupExperience Management Module - Advanced Scenarios.Performance and Scalability" executed="True" result="Success" success="True" time="0.8153" asserts="0" description="StartupExperience Management Module - Advanced Scenarios.Performance and Scalability">
                 <results>
-                  <test-case description="Should execute management operations within acceptable time limits" name="StartupExperience Management Module - Advanced Scenarios.Performance and Scalability.Should execute management operations within acceptable time limits" time="0.0598" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Get-StartupExperienceStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:213</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should handle large-scale operations efficiently" name="StartupExperience Management Module - Advanced Scenarios.Performance and Scalability.Should handle large-scale operations efficiently" time="0.1224" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should execute management operations within acceptable time limits" name="StartupExperience Management Module - Advanced Scenarios.Performance and Scalability.Should execute management operations within acceptable time limits" time="0.0118" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle large-scale operations efficiently" name="StartupExperience Management Module - Advanced Scenarios.Performance and Scalability.Should handle large-scale operations efficiently" time="0.1454" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="StartupExperience Management Module - Advanced Scenarios.Integration with AitherZero Framework" executed="True" result="Success" success="True" time="1.1646" asserts="0" description="StartupExperience Management Module - Advanced Scenarios.Integration with AitherZero Framework">
+              <test-suite type="TestFixture" name="StartupExperience Management Module - Advanced Scenarios.Integration with AitherZero Framework" executed="True" result="Success" success="True" time="1.0939" asserts="0" description="StartupExperience Management Module - Advanced Scenarios.Integration with AitherZero Framework">
                 <results>
-                  <test-case description="Should integrate with centralized logging" name="StartupExperience Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should integrate with centralized logging" time="0.0085" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should respect framework configuration" name="StartupExperience Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should respect framework configuration" time="0.142" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should support framework-wide operations" name="StartupExperience Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should support framework-wide operations" time="0.0994" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should integrate with centralized logging" name="StartupExperience Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should integrate with centralized logging" time="0.0048" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should respect framework configuration" name="StartupExperience Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should respect framework configuration" time="0.1579" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support framework-wide operations" name="StartupExperience Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should support framework-wide operations" time="0.1113" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>

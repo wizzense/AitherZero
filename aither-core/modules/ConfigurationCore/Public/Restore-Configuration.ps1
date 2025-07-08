@@ -126,7 +126,7 @@ function Restore-Configuration {
 
         # Publish event
         if (Get-Command 'Publish-TestEvent' -ErrorAction SilentlyContinue) {
-            Publish-TestEvent -EventName 'ConfigurationRestored' -EventData @{
+            Publish-TestEvent -EventType 'ConfigurationRestored' -Data @{
                 BackupPath = $Path
                 BackupCreated = $CreateBackup.IsPresent
                 SchemasRestored = $RestoreSchemas.IsPresent

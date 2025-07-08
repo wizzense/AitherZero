@@ -1,0 +1,27 @@
+{
+  "passed": 49,
+  "failed": 0,
+  "platform": "Unix",
+  "duration": 3.4607816,
+  "timestamp": "2025-07-08 18:50:21",
+  "success": true,
+  "totalTests": 49,
+  "successRate": 100.0,
+  "testSuites": [
+    {
+      "name": "Entry",
+      "duration": 1.2308962,
+      "result": "Passed"
+    },
+    {
+      "name": "Core",
+      "duration": 0.6876391,
+      "result": "Passed"
+    },
+    {
+      "name": "PowerShell",
+      "duration": 1.4993659,
+      "result": "Passed"
+    }
+  ]
+}

@@ -150,9 +150,31 @@ function Invoke-ParallelForEach {
             # Convert the scriptblock to handle both parameter-based and $_ based invocations
             $scriptText = $ScriptBlock.ToString()
 
+            # Check if the scriptblock contains $using: variables
+            $hasUsingVariables = $scriptText -match '\$using:'
+            
             # Check if the scriptblock expects a parameter
-            if ($scriptText -match 'param\s*\(') {
-                # Wrap to pass $_ as the first parameter
+            $hasParameters = $scriptText -match 'param\s*\('
+            
+            if ($hasUsingVariables) {
+                # When $using: variables are present, preserve the original scriptblock
+                # to maintain the closure context required for $using: scope
+                Write-CustomLog "Detected `$using: variables, preserving original scriptblock for proper scoping" -Level "INFO"
+                
+                if ($hasParameters) {
+                    # For parameterized scriptblocks with $using: variables, use a different approach
+                    # Create a wrapper that maintains the original scriptblock's closure
+                    $parallelScript = {
+                        param($item)
+                        $_ = $item
+                        & $ScriptBlock $item
+                    }.GetNewClosure()
+                } else {
+                    # Use the original scriptblock as-is to preserve $using: scope
+                    $parallelScript = $ScriptBlock
+                }
+            } elseif ($hasParameters) {
+                # Original parameter-based handling for scriptblocks without $using: variables
                 $parallelScript = [scriptblock]::Create(@"
                     `$___item = `$_
                     & { $scriptText } `$___item
@@ -169,6 +191,9 @@ function Invoke-ParallelForEach {
                 if ($_.Exception.Message -match "timeout") {
                     Write-CustomLog "Parallel execution timed out after $TimeoutSeconds seconds" -Level "ERROR"
                     throw "Parallel execution timeout: Operation exceeded $TimeoutSeconds seconds"
+                } elseif ($_.Exception.Message -match "using variable.*cannot be retrieved") {
+                    Write-CustomLog "Variable scoping issue detected: $($_.Exception.Message)" -Level "ERROR"
+                    throw "Parallel execution variable scoping error: $($_.Exception.Message)"
                 } else {
                     throw
                 }

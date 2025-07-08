@@ -1,52 +1,52 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="13" errors="0" failures="0" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="15:27:42">
-  <environment machine-name="codespaces-6c6eb1" clr-version="9.0.4" user-domain="" nunit-version="2.5.8.0" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" user="codespace" platform="Linux" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="13" errors="0" failures="0" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="17:42:32">
+  <environment user-domain="" platform="Linux" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" clr-version="9.0.4" nunit-version="2.5.8.0" user="codespace" machine-name="codespaces-6c6eb1" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Success" success="True" time="1.2423" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Success" success="True" time="1.1549" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/TestingFramework/tests/TestingFramework.Tests.ps1" executed="True" result="Success" success="True" time="1.2423" asserts="0" description="/workspaces/AitherZero/aither-core/modules/TestingFramework/tests/TestingFramework.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/TestingFramework/tests/TestingFramework.Tests.ps1" executed="True" result="Success" success="True" time="1.1549" asserts="0" description="/workspaces/AitherZero/aither-core/modules/TestingFramework/tests/TestingFramework.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="TestingFramework Module Tests" executed="True" result="Success" success="True" time="1.2075" asserts="0" description="TestingFramework Module Tests">
+          <test-suite type="TestFixture" name="TestingFramework Module Tests" executed="True" result="Success" success="True" time="1.1066" asserts="0" description="TestingFramework Module Tests">
             <results>
-              <test-suite type="TestFixture" name="TestingFramework Module Tests.Basic Functionality" executed="True" result="Success" success="True" time="0.2047" asserts="0" description="TestingFramework Module Tests.Basic Functionality">
+              <test-suite type="TestFixture" name="TestingFramework Module Tests.Basic Functionality" executed="True" result="Success" success="True" time="0.2551" asserts="0" description="TestingFramework Module Tests.Basic Functionality">
                 <results>
-                  <test-case description="Should load the module successfully" name="TestingFramework Module Tests.Basic Functionality.Should load the module successfully" time="0.005" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should export expected functions" name="TestingFramework Module Tests.Basic Functionality.Should export expected functions" time="0.1959" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should load the module successfully" name="TestingFramework Module Tests.Basic Functionality.Should load the module successfully" time="0.0052" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export expected functions" name="TestingFramework Module Tests.Basic Functionality.Should export expected functions" time="0.2454" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="TestingFramework Module Tests.Configuration Management" executed="True" result="Success" success="True" time="0.2309" asserts="0" description="TestingFramework Module Tests.Configuration Management">
+              <test-suite type="TestFixture" name="TestingFramework Module Tests.Configuration Management" executed="True" result="Success" success="True" time="0.2845" asserts="0" description="TestingFramework Module Tests.Configuration Management">
                 <results>
-                  <test-case description="Should return valid configuration for Development profile" name="TestingFramework Module Tests.Configuration Management.Should return valid configuration for Development profile" time="0.0071" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should return valid configuration for CI profile" name="TestingFramework Module Tests.Configuration Management.Should return valid configuration for CI profile" time="0.0078" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should return valid configuration for Production profile" name="TestingFramework Module Tests.Configuration Management.Should return valid configuration for Production profile" time="0.0074" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return valid configuration for Development profile" name="TestingFramework Module Tests.Configuration Management.Should return valid configuration for Development profile" time="0.0134" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return valid configuration for CI profile" name="TestingFramework Module Tests.Configuration Management.Should return valid configuration for CI profile" time="0.0058" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return valid configuration for Production profile" name="TestingFramework Module Tests.Configuration Management.Should return valid configuration for Production profile" time="0.0059" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="TestingFramework Module Tests.Module Discovery" executed="True" result="Success" success="True" time="0.487" asserts="0" description="TestingFramework Module Tests.Module Discovery">
+              <test-suite type="TestFixture" name="TestingFramework Module Tests.Module Discovery" executed="True" result="Success" success="True" time="0.5777" asserts="0" description="TestingFramework Module Tests.Module Discovery">
                 <results>
-                  <test-case description="Should discover project modules" name="TestingFramework Module Tests.Module Discovery.Should discover project modules" time="0.1241" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should include TestingFramework in discovered modules" name="TestingFramework Module Tests.Module Discovery.Should include TestingFramework in discovered modules" time="0.1282" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should discover project modules" name="TestingFramework Module Tests.Module Discovery.Should discover project modules" time="0.1339" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include TestingFramework in discovered modules" name="TestingFramework Module Tests.Module Discovery.Should include TestingFramework in discovered modules" time="0.1456" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="TestingFramework Module Tests.Test Execution Planning" executed="True" result="Success" success="True" time="0.8452" asserts="0" description="TestingFramework Module Tests.Test Execution Planning">
+              <test-suite type="TestFixture" name="TestingFramework Module Tests.Test Execution Planning" executed="True" result="Success" success="True" time="0.8713" asserts="0" description="TestingFramework Module Tests.Test Execution Planning">
                 <results>
-                  <test-case description="Should create test execution plan for Quick suite" name="TestingFramework Module Tests.Test Execution Planning.Should create test execution plan for Quick suite" time="0.1617" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should create test execution plan for All suite" name="TestingFramework Module Tests.Test Execution Planning.Should create test execution plan for All suite" time="0.192" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create test execution plan for Quick suite" name="TestingFramework Module Tests.Test Execution Planning.Should create test execution plan for Quick suite" time="0.1534" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create test execution plan for All suite" name="TestingFramework Module Tests.Test Execution Planning.Should create test execution plan for All suite" time="0.1342" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="TestingFramework Module Tests.Test Environment" executed="True" result="Success" success="True" time="0.9103" asserts="0" description="TestingFramework Module Tests.Test Environment">
+              <test-suite type="TestFixture" name="TestingFramework Module Tests.Test Environment" executed="True" result="Success" success="True" time="0.9414" asserts="0" description="TestingFramework Module Tests.Test Environment">
                 <results>
-                  <test-case description="Should initialize test environment" name="TestingFramework Module Tests.Test Environment.Should initialize test environment" time="0.059" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should initialize test environment" name="TestingFramework Module Tests.Test Environment.Should initialize test environment" time="0.0656" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="TestingFramework Module Tests.Integration Functions" executed="True" result="Success" success="True" time="1.1333" asserts="0" description="TestingFramework Module Tests.Integration Functions">
+              <test-suite type="TestFixture" name="TestingFramework Module Tests.Integration Functions" executed="True" result="Success" success="True" time="1.0706" asserts="0" description="TestingFramework Module Tests.Integration Functions">
                 <results>
-                  <test-case description="Should provide module structure testing" name="TestingFramework Module Tests.Integration Functions.Should provide module structure testing" time="0.2152" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should provide module structure testing" name="TestingFramework Module Tests.Integration Functions.Should provide module structure testing" time="0.1235" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="TestingFramework Module Tests.Event System" executed="True" result="Success" success="True" time="1.2041" asserts="0" description="TestingFramework Module Tests.Event System">
+              <test-suite type="TestFixture" name="TestingFramework Module Tests.Event System" executed="True" result="Success" success="True" time="1.0967" asserts="0" description="TestingFramework Module Tests.Event System">
                 <results>
-                  <test-case description="Should publish test events" name="TestingFramework Module Tests.Event System.Should publish test events" time="0.0166" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should retrieve published events" name="TestingFramework Module Tests.Event System.Should retrieve published events" time="0.0071" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should publish test events" name="TestingFramework Module Tests.Event System.Should publish test events" time="0.0167" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should retrieve published events" name="TestingFramework Module Tests.Event System.Should retrieve published events" time="0.0048" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>

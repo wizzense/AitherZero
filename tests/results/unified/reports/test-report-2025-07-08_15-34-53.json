@@ -1,0 +1,91 @@
+{
+  "Summary": {
+    "TotalTests": 71.0,
+    "TotalDuration": 4.5158973,
+    "Timestamp": "2025-07-08T15:34:53.7011954+00:00",
+    "SuccessRate": 23.94,
+    "FailedModules": 3,
+    "TotalFailed": 54.0,
+    "TotalModules": 3,
+    "SuccessfulModules": 0,
+    "TestSuite": "Unit",
+    "TotalPassed": 17.0
+  },
+  "Results": [
+    {
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ISOManager/tests/ISOManager.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "Success": false,
+      "Module": "ISOManager",
+      "TestsFailed": 10,
+      "Result": {
+        "TestsFailed": 10,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ISOManager/tests/ISOManager.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "ISOManager",
+        "TestsPassed": 17,
+        "Duration": 3.672662,
+        "TestsRun": 27
+      },
+      "TestsRun": 27,
+      "Duration": 3.6841469,
+      "TestsPassed": 17,
+      "Phase": "Unit"
+    },
+    {
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "Success": false,
+      "Module": "RepoSync",
+      "TestsFailed": 22,
+      "Result": {
+        "TestsFailed": 22,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "RepoSync",
+        "TestsPassed": 0,
+        "Duration": 0.4054585,
+        "TestsRun": 22
+      },
+      "TestsRun": 22,
+      "Duration": 0.4092819,
+      "TestsPassed": 0,
+      "Phase": "Unit"
+    },
+    {
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ScriptManager/tests/ScriptManager.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "Success": false,
+      "Module": "ScriptManager",
+      "TestsFailed": 22,
+      "Result": {
+        "TestsFailed": 22,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ScriptManager/tests/ScriptManager.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit",
+        "ModuleName": "ScriptManager",
+        "TestsPassed": 0,
+        "Duration": 0.4192292,
+        "TestsRun": 22
+      },
+      "TestsRun": 22,
+      "Duration": 0.4224685,
+      "TestsPassed": 0,
+      "Phase": "Unit"
+    }
+  ]
+}

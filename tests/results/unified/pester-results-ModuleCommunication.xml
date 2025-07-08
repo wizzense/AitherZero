@@ -1,29 +1,23 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="33" errors="0" failures="27" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="15:27:24">
-  <environment machine-name="codespaces-6c6eb1" clr-version="9.0.4" user-domain="" nunit-version="2.5.8.0" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" user="codespace" platform="Linux" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="33" errors="0" failures="26" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="17:42:10">
+  <environment user-domain="" platform="Linux" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" clr-version="9.0.4" nunit-version="2.5.8.0" user="codespace" machine-name="codespaces-6c6eb1" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="8.14" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="8.0975" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1" executed="True" result="Failure" success="False" time="8.14" asserts="0" description="/workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1" executed="True" result="Failure" success="False" time="8.0975" asserts="0" description="/workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="ModuleCommunication Module Tests" executed="True" result="Failure" success="False" time="7.5212" asserts="0" description="ModuleCommunication Module Tests">
+          <test-suite type="TestFixture" name="ModuleCommunication Module Tests" executed="True" result="Failure" success="False" time="7.5265" asserts="0" description="ModuleCommunication Module Tests">
             <results>
-              <test-suite type="TestFixture" name="ModuleCommunication Module Tests.Module Loading" executed="True" result="Failure" success="False" time="0.0693" asserts="0" description="ModuleCommunication Module Tests.Module Loading">
+              <test-suite type="TestFixture" name="ModuleCommunication Module Tests.Module Loading" executed="True" result="Success" success="True" time="0.1207" asserts="0" description="ModuleCommunication Module Tests.Module Loading">
                 <results>
-                  <test-case description="Should load without errors" name="ModuleCommunication Module Tests.Module Loading.Should load without errors" time="0.0111" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should export all expected functions" name="ModuleCommunication Module Tests.Module Loading.Should export all expected functions" time="0.0345" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>Expected 'Submit-ModuleMessage' to be found in collection @('Add-APIMiddleware', 'Add-EventFilter', 'Clear-EventHistory', 'Clear-MessageQueue', 'Disable-MessageTracing', 'Enable-CommunicationSecurity', 'Enable-MessageTracing', 'Export-EventHistory', 'Get-APIMiddleware', 'Get-CircuitBreakerStatus', ...26 more), but it was not found.</message>
-                      <stack-trace>at $ExportedFunctions | Should -Contain $Function, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:44
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:44</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should have backward compatibility aliases" name="ModuleCommunication Module Tests.Module Loading.Should have backward compatibility aliases" time="0.0105" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should load without errors" name="ModuleCommunication Module Tests.Module Loading.Should load without errors" time="0.0099" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export all expected functions" name="ModuleCommunication Module Tests.Module Loading.Should export all expected functions" time="0.0707" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should have backward compatibility aliases" name="ModuleCommunication Module Tests.Module Loading.Should have backward compatibility aliases" time="0.0099" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ModuleCommunication Module Tests.Message Bus Operations" executed="True" result="Failure" success="False" time="4.169" asserts="0" description="ModuleCommunication Module Tests.Message Bus Operations">
+              <test-suite type="TestFixture" name="ModuleCommunication Module Tests.Message Bus Operations" executed="True" result="Failure" success="False" time="4.1602" asserts="0" description="ModuleCommunication Module Tests.Message Bus Operations">
                 <results>
-                  <test-case description="Should create a new message channel" name="ModuleCommunication Module Tests.Message Bus Operations.Should create a new message channel" time="0.5618" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should create a new message channel" name="ModuleCommunication Module Tests.Message Bus Operations.Should create a new message channel" time="0.5346" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -31,7 +25,7 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:78</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should get message channels" name="ModuleCommunication Module Tests.Message Bus Operations.Should get message channels" time="0.5394" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should get message channels" name="ModuleCommunication Module Tests.Message Bus Operations.Should get message channels" time="0.6026" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -39,7 +33,7 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:85</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should test message channel connectivity" name="ModuleCommunication Module Tests.Message Bus Operations.Should test message channel connectivity" time="0.5175" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should test message channel connectivity" name="ModuleCommunication Module Tests.Message Bus Operations.Should test message channel connectivity" time="0.5077" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -47,7 +41,7 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:91</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should remove a message channel" name="ModuleCommunication Module Tests.Message Bus Operations.Should remove a message channel" time="0.4845" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should remove a message channel" name="ModuleCommunication Module Tests.Message Bus Operations.Should remove a message channel" time="0.4492" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -55,7 +49,7 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:98</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should register and unregister message handlers" name="ModuleCommunication Module Tests.Message Bus Operations.Should register and unregister message handlers" time="0.4682" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should register and unregister message handlers" name="ModuleCommunication Module Tests.Message Bus Operations.Should register and unregister message handlers" time="0.4879" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -63,7 +57,7 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:104</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should send and receive messages" name="ModuleCommunication Module Tests.Message Bus Operations.Should send and receive messages" time="0.4266" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should send and receive messages" name="ModuleCommunication Module Tests.Message Bus Operations.Should send and receive messages" time="0.4388" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -71,7 +65,7 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:119</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should get message subscriptions" name="ModuleCommunication Module Tests.Message Bus Operations.Should get message subscriptions" time="0.5121" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should get message subscriptions" name="ModuleCommunication Module Tests.Message Bus Operations.Should get message subscriptions" time="0.4532" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -79,7 +73,7 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:143</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should clear message queue" name="ModuleCommunication Module Tests.Message Bus Operations.Should clear message queue" time="0.5844" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should clear message queue" name="ModuleCommunication Module Tests.Message Bus Operations.Should clear message queue" time="0.5595" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -89,9 +83,9 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommuni
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ModuleCommunication Module Tests.API Registry Operations" executed="True" result="Failure" success="False" time="5.2218" asserts="0" description="ModuleCommunication Module Tests.API Registry Operations">
+              <test-suite type="TestFixture" name="ModuleCommunication Module Tests.API Registry Operations" executed="True" result="Failure" success="False" time="5.5079" asserts="0" description="ModuleCommunication Module Tests.API Registry Operations">
                 <results>
-                  <test-case description="Should register a module API" name="ModuleCommunication Module Tests.API Registry Operations.Should register a module API" time="0.2516" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should register a module API" name="ModuleCommunication Module Tests.API Registry Operations.Should register a module API" time="0.3474" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -99,7 +93,7 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:180</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should get module APIs" name="ModuleCommunication Module Tests.API Registry Operations.Should get module APIs" time="0.2423" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should get module APIs" name="ModuleCommunication Module Tests.API Registry Operations.Should get module APIs" time="0.2281" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -107,7 +101,7 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:193</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should invoke a module API" name="ModuleCommunication Module Tests.API Registry Operations.Should invoke a module API" time="0.1795" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should invoke a module API" name="ModuleCommunication Module Tests.API Registry Operations.Should invoke a module API" time="0.2434" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -115,7 +109,7 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:206</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should test a module API" name="ModuleCommunication Module Tests.API Registry Operations.Should test a module API" time="0.1834" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should test a module API" name="ModuleCommunication Module Tests.API Registry Operations.Should test a module API" time="0.2689" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -123,7 +117,7 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:220</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should unregister a module API" name="ModuleCommunication Module Tests.API Registry Operations.Should unregister a module API" time="0.1893" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should unregister a module API" name="ModuleCommunication Module Tests.API Registry Operations.Should unregister a module API" time="0.2541" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -133,9 +127,9 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommuni
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ModuleCommunication Module Tests.Event System Operations" executed="True" result="Failure" success="False" time="5.8264" asserts="0" description="ModuleCommunication Module Tests.Event System Operations">
+              <test-suite type="TestFixture" name="ModuleCommunication Module Tests.Event System Operations" executed="True" result="Failure" success="False" time="6.0877" asserts="0" description="ModuleCommunication Module Tests.Event System Operations">
                 <results>
-                  <test-case description="Should send and receive events" name="ModuleCommunication Module Tests.Event System Operations.Should send and receive events" time="0.1827" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should send and receive events" name="ModuleCommunication Module Tests.Event System Operations.Should send and receive events" time="0.1563" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -144,14 +138,15 @@ at Register-ModuleEventHandler, /workspaces/AitherZero/aither-core/modules/Modul
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:255</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should get module events from history" name="ModuleCommunication Module Tests.Event System Operations.Should get module events from history" time="0.1267" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should get module events from history" name="ModuleCommunication Module Tests.Event System Operations.Should get module events from history" time="0.1467" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>CommandNotFoundException: The term 'Submit-ModuleEvent' is not recognized as a name of a cmdlet, function, script file, or executable program.
+                      <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:276</stack-trace>
+                      <stack-trace>at Submit-ModuleEvent, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/Public/Submit-ModuleEvent.ps1:100
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:276</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should unsubscribe from events" name="ModuleCommunication Module Tests.Event System Operations.Should unsubscribe from events" time="0.1563" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should unsubscribe from events" name="ModuleCommunication Module Tests.Event System Operations.Should unsubscribe from events" time="0.1459" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -160,18 +155,19 @@ at Register-ModuleEventHandler, /workspaces/AitherZero/aither-core/modules/Modul
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:284</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should clear event history" name="ModuleCommunication Module Tests.Event System Operations.Should clear event history" time="0.1292" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should clear event history" name="ModuleCommunication Module Tests.Event System Operations.Should clear event history" time="0.1245" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>CommandNotFoundException: The term 'Submit-ModuleEvent' is not recognized as a name of a cmdlet, function, script file, or executable program.
+                      <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:294</stack-trace>
+                      <stack-trace>at Submit-ModuleEvent, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/Public/Submit-ModuleEvent.ps1:100
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:294</stack-trace>
                     </failure>
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ModuleCommunication Module Tests.Middleware Operations" executed="True" result="Failure" success="False" time="6.635" asserts="0" description="ModuleCommunication Module Tests.Middleware Operations">
+              <test-suite type="TestFixture" name="ModuleCommunication Module Tests.Middleware Operations" executed="True" result="Failure" success="False" time="6.8131" asserts="0" description="ModuleCommunication Module Tests.Middleware Operations">
                 <results>
-                  <test-case description="Should add API middleware" name="ModuleCommunication Module Tests.Middleware Operations.Should add API middleware" time="0.2331" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should add API middleware" name="ModuleCommunication Module Tests.Middleware Operations.Should add API middleware" time="0.2417" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -179,7 +175,7 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:318</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should get API middleware" name="ModuleCommunication Module Tests.Middleware Operations.Should get API middleware" time="0.2762" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should get API middleware" name="ModuleCommunication Module Tests.Middleware Operations.Should get API middleware" time="0.2211" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -187,7 +183,7 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:329</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should remove API middleware" name="ModuleCommunication Module Tests.Middleware Operations.Should remove API middleware" time="0.2911" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should remove API middleware" name="ModuleCommunication Module Tests.Middleware Operations.Should remove API middleware" time="0.2555" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -197,10 +193,10 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommuni
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ModuleCommunication Module Tests.Performance and Monitoring" executed="True" result="Failure" success="False" time="6.8899" asserts="0" description="ModuleCommunication Module Tests.Performance and Monitoring">
+              <test-suite type="TestFixture" name="ModuleCommunication Module Tests.Performance and Monitoring" executed="True" result="Failure" success="False" time="7.0536" asserts="0" description="ModuleCommunication Module Tests.Performance and Monitoring">
                 <results>
-                  <test-case description="Should get communication metrics" name="ModuleCommunication Module Tests.Performance and Monitoring.Should get communication metrics" time="0.0265" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should reset communication metrics" name="ModuleCommunication Module Tests.Performance and Monitoring.Should reset communication metrics" time="0.1197" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should get communication metrics" name="ModuleCommunication Module Tests.Performance and Monitoring.Should get communication metrics" time="0.0356" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should reset communication metrics" name="ModuleCommunication Module Tests.Performance and Monitoring.Should reset communication metrics" time="0.1025" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -208,8 +204,8 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:359</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should get communication status" name="ModuleCommunication Module Tests.Performance and Monitoring.Should get communication status" time="0.0222" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should enable and disable message tracing" name="ModuleCommunication Module Tests.Performance and Monitoring.Should enable and disable message tracing" time="0.0805" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should get communication status" name="ModuleCommunication Module Tests.Performance and Monitoring.Should get communication status" time="0.0162" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should enable and disable message tracing" name="ModuleCommunication Module Tests.Performance and Monitoring.Should enable and disable message tracing" time="0.0795" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -219,9 +215,9 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommuni
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ModuleCommunication Module Tests.Message Processor Operations" executed="True" result="Failure" success="False" time="7.084" asserts="0" description="ModuleCommunication Module Tests.Message Processor Operations">
+              <test-suite type="TestFixture" name="ModuleCommunication Module Tests.Message Processor Operations" executed="True" result="Failure" success="False" time="7.2171" asserts="0" description="ModuleCommunication Module Tests.Message Processor Operations">
                 <results>
-                  <test-case description="Should start and stop message processor" name="ModuleCommunication Module Tests.Message Processor Operations.Should start and stop message processor" time="0.1883" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should start and stop message processor" name="ModuleCommunication Module Tests.Message Processor Operations.Should start and stop message processor" time="0.1571" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -231,9 +227,9 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommuni
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ModuleCommunication Module Tests.Integration Tests" executed="True" result="Failure" success="False" time="7.2745" asserts="0" description="ModuleCommunication Module Tests.Integration Tests">
+              <test-suite type="TestFixture" name="ModuleCommunication Module Tests.Integration Tests" executed="True" result="Failure" success="False" time="7.3576" asserts="0" description="ModuleCommunication Module Tests.Integration Tests">
                 <results>
-                  <test-case description="Should run basic communication tests" name="ModuleCommunication Module Tests.Integration Tests.Should run basic communication tests" time="0.0837" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should run basic communication tests" name="ModuleCommunication Module Tests.Integration Tests.Should run basic communication tests" time="0.0653" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -241,7 +237,7 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:393</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should handle end-to-end message flow" name="ModuleCommunication Module Tests.Integration Tests.Should handle end-to-end message flow" time="0.0999" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should handle end-to-end message flow" name="ModuleCommunication Module Tests.Integration Tests.Should handle end-to-end message flow" time="0.07" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -251,11 +247,11 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ModuleCommuni
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ModuleCommunication Module Tests.Error Handling" executed="True" result="Failure" success="False" time="7.515" asserts="0" description="ModuleCommunication Module Tests.Error Handling">
+              <test-suite type="TestFixture" name="ModuleCommunication Module Tests.Error Handling" executed="True" result="Failure" success="False" time="7.519" asserts="0" description="ModuleCommunication Module Tests.Error Handling">
                 <results>
-                  <test-case description="Should handle non-existent API calls gracefully" name="ModuleCommunication Module Tests.Error Handling.Should handle non-existent API calls gracefully" time="0.1439" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle invalid channel operations gracefully" name="ModuleCommunication Module Tests.Error Handling.Should handle invalid channel operations gracefully" time="0.0142" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle parameter validation errors" name="ModuleCommunication Module Tests.Error Handling.Should handle parameter validation errors" time="0.0748" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should handle non-existent API calls gracefully" name="ModuleCommunication Module Tests.Error Handling.Should handle non-existent API calls gracefully" time="0.0746" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle invalid channel operations gracefully" name="ModuleCommunication Module Tests.Error Handling.Should handle invalid channel operations gracefully" time="0.0102" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle parameter validation errors" name="ModuleCommunication Module Tests.Error Handling.Should handle parameter validation errors" time="0.0714" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>

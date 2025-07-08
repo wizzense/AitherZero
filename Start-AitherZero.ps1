@@ -1,3 +1,5 @@
+#Requires -Version 7.0
+
 <#
 .SYNOPSIS
     AitherZero Infrastructure Automation Framework Launcher

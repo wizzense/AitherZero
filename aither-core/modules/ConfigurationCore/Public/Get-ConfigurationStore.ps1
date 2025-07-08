@@ -23,7 +23,15 @@ function Get-ConfigurationStore {
     )
 
     try {
-        $store = $script:ConfigurationStore.Clone()
+        # Create a deep copy of the configuration store
+        $store = @{}
+        foreach ($key in $script:ConfigurationStore.Keys) {
+            if ($script:ConfigurationStore[$key] -is [hashtable]) {
+                $store[$key] = $script:ConfigurationStore[$key].Clone()
+            } else {
+                $store[$key] = $script:ConfigurationStore[$key]
+            }
+        }
 
         if ($IncludeMetadata) {
             $store.Metadata = @{
