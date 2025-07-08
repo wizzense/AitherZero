@@ -424,65 +424,6 @@ function Import-AuditData {
     return $auditData
 }
 
-# Generate dynamic feature map
-function Get-DynamicFeatureMap {
-    Write-ReportLog "Generating dynamic feature map..." -Level 'INFO'
-
-    $moduleFeatures = @{
-        TotalModules = 0
-        LoadedModules = 0
-        ModuleDetails = @{}
-        FeatureCategories = @{}
-        Dependencies = @{}
-    }
-
-    # Scan modules directory
-    $modulesPath = Join-Path $projectRoot "aither-core/modules"
-    if (Test-Path $modulesPath) {
-        $modules = Get-ChildItem $modulesPath -Directory
-        $moduleFeatures.TotalModules = $modules.Count
-
-        foreach ($module in $modules) {
-            $manifestPath = Join-Path $module.FullName "$($module.Name).psd1"
-            if (Test-Path $manifestPath) {
-                try {
-                    $manifest = Import-PowerShellDataFile $manifestPath
-                    $moduleFeatures.ModuleDetails[$module.Name] = @{
-                        Name = $module.Name
-                        Version = $manifest.ModuleVersion
-                        Description = $manifest.Description
-                        FunctionsToExport = $manifest.FunctionsToExport
-                        RequiredModules = $manifest.RequiredModules
-                        PowerShellVersion = $manifest.PowerShellVersion
-                        HasTests = Test-Path (Join-Path $module.FullName "tests")
-                        LastModified = $module.LastWriteTime
-                    }
-                    $moduleFeatures.LoadedModules++
-
-                    # Categorize by module type
-                    $category = switch -Regex ($module.Name) {
-                        'Manager$' { 'Managers' }
-                        'Provider$' { 'Providers' }
-                        'Integration$' { 'Integrations' }
-                        'Core$|Configuration' { 'Core' }
-                        default { 'Utilities' }
-                    }
-
-                    if (-not $moduleFeatures.FeatureCategories[$category]) {
-                        $moduleFeatures.FeatureCategories[$category] = @()
-                    }
-                    $moduleFeatures.FeatureCategories[$category] += $module.Name
-
-                } catch {
-                    Write-ReportLog "Failed to parse manifest for $($module.Name): $($_.Exception.Message)" -Level 'WARNING'
-                }
-            }
-        }
-    }
-
-    Write-ReportLog "Feature map generated: $($moduleFeatures.LoadedModules)/$($moduleFeatures.TotalModules) modules analyzed" -Level 'SUCCESS'
-    return $moduleFeatures
-}
 
 # Calculate overall health score
 function Get-OverallHealthScore {
@@ -947,7 +888,7 @@ function New-ComprehensiveHtmlReport {
             $capabilities = $FeatureMap.Capabilities[$module]
             $status = if ($moduleInfo.HasTests) { 'healthy' } else { 'warning' }
             $healthClass = $moduleInfo.Health.ToLower() -replace ' ', '-'
-            $functionCount = if ($moduleInfo.Functions -and $moduleInfo.Functions.Count) { $moduleInfo.Functions.Count } else { 0 }
+            $functionCount = @($moduleInfo.Functions).Count
             
             $html += @"
                         <div class="module-item">
@@ -956,13 +897,14 @@ function New-ComprehensiveHtmlReport {
                             <span class="health-badge health-$healthClass">$($moduleInfo.Health)</span>
                             <br><small>$functionCount functions • Tests: $(if ($moduleInfo.HasTests) { '✅' } else { '❌' }) • Docs: $(if ($moduleInfo.HasDocumentation) { '✅' } else { '❌' })</small>
 "@
-            if ($capabilities.Features -and $capabilities.Features.Count -gt 0) {
+            $featureCount = @($capabilities.Features).Count
+            if ($featureCount -gt 0) {
                 $html += "<br><div class='features-list'>"
                 foreach ($feature in $capabilities.Features | Select-Object -First 3) {
                     $html += "<span class='feature-tag'>$feature</span>"
                 }
-                if ($capabilities.Features.Count -gt 3) {
-                    $html += "<span class='feature-tag'>+$($capabilities.Features.Count - 3) more</span>"
+                if ($featureCount -gt 3) {
+                    $html += "<span class='feature-tag'>+$($featureCount - 3) more</span>"
                 }
                 $html += "</div>"
             }
@@ -987,7 +929,7 @@ function New-ComprehensiveHtmlReport {
     # Generate dependency visualization
     $dependencies = @{}
     foreach ($module in $FeatureMap.Modules.GetEnumerator()) {
-        if ($module.Value.RequiredModules -and $module.Value.RequiredModules.Count -gt 0) {
+        if ($module.Value.RequiredModules -and @($module.Value.RequiredModules).Count -gt 0) {
             $dependencies[$module.Key] = $module.Value.RequiredModules
         }
     }
@@ -1028,7 +970,7 @@ function New-ComprehensiveHtmlReport {
         $status = if ($module.Value.HasTests) { '✅ Tested' } else { '⚠️ No Tests' }
         $statusClass = if ($module.Value.HasTests) { 'status-healthy' } else { 'status-warning' }
         $lastMod = $module.Value.LastModified.ToString('yyyy-MM-dd')
-        $functionCount = if ($module.Value.Functions -and $module.Value.Functions.Count) { $module.Value.Functions.Count } else { 0 }
+        $functionCount = @($module.Value.Functions).Count
 
         $html += @"
                         <tr>
@@ -1543,15 +1485,15 @@ function Get-SingleModuleAnalysis {
         try {
             $manifest = Import-PowerShellDataFile $manifestPath
             $moduleInfo.Manifest = $manifest
-            $moduleInfo.Version = if ($manifest.ModuleVersion) { $manifest.ModuleVersion } else { '0.0.0' }
-            $moduleInfo.Description = if ($manifest.Description) { $manifest.Description } else { '' }
-            $moduleInfo.Author = if ($manifest.Author) { $manifest.Author } else { '' }
-            $moduleInfo.CompanyName = if ($manifest.CompanyName) { $manifest.CompanyName } else { '' }
-            $moduleInfo.PowerShellVersion = if ($manifest.PowerShellVersion) { $manifest.PowerShellVersion } else { '5.1' }
-            $moduleInfo.RequiredModules = if ($manifest.RequiredModules) { $manifest.RequiredModules } else { @() }
+            $moduleInfo.Version = if ($manifest.PSObject.Properties['ModuleVersion']) { $manifest.ModuleVersion } else { '0.0.0' }
+            $moduleInfo.Description = if ($manifest.PSObject.Properties['Description']) { $manifest.Description } else { '' }
+            $moduleInfo.Author = if ($manifest.PSObject.Properties['Author']) { $manifest.Author } else { '' }
+            $moduleInfo.CompanyName = if ($manifest.PSObject.Properties['CompanyName']) { $manifest.CompanyName } else { '' }
+            $moduleInfo.PowerShellVersion = if ($manifest.PSObject.Properties['PowerShellVersion']) { $manifest.PowerShellVersion } else { '5.1' }
+            $moduleInfo.RequiredModules = if ($manifest.PSObject.Properties['RequiredModules']) { $manifest.RequiredModules } else { @() }
             
             # Get exported functions
-            if ($manifest.FunctionsToExport -and $manifest.FunctionsToExport -ne '*') {
+            if ($manifest.PSObject.Properties['FunctionsToExport'] -and $manifest.FunctionsToExport -ne '*') {
                 $moduleInfo.Functions = if ($manifest.FunctionsToExport -is [array]) { $manifest.FunctionsToExport } else { @($manifest.FunctionsToExport) }
             }
         } catch {
@@ -1565,7 +1507,7 @@ function Get-SingleModuleAnalysis {
         $moduleInfo.HasModuleFile = $true
         
         # Analyze module script for additional functions if not in manifest
-        $currentFunctionCount = if ($moduleInfo.Functions -and $moduleInfo.Functions.Count) { $moduleInfo.Functions.Count } else { 0 }
+        $currentFunctionCount = @($moduleInfo.Functions).Count
         if ($currentFunctionCount -eq 0) {
             $moduleInfo.Functions = Get-FunctionsFromScript -ScriptPath $moduleScriptPath
         }
@@ -1576,7 +1518,7 @@ function Get-SingleModuleAnalysis {
     if (Test-Path $testsPath) {
         $moduleInfo.HasTests = $true
         $testFiles = Get-ChildItem $testsPath -Filter "*.Tests.ps1" -Recurse
-        $moduleInfo.TestCoverage = if ($testFiles.Count -gt 0) { 85 } else { 0 } # Simplified calculation
+        $moduleInfo.TestCoverage = if (@($testFiles).Count -gt 0) { 85 } else { 0 } # Simplified calculation
     }
     
     # Check for documentation
@@ -1626,7 +1568,7 @@ function Get-ModuleCategory {
 function Get-ModuleCapabilities {
     param($ModuleInfo)
     
-    $functionCount = if ($ModuleInfo.Functions -and $ModuleInfo.Functions.Count) { $ModuleInfo.Functions.Count } else { 0 }
+    $functionCount = @($ModuleInfo.Functions).Count
     $capabilities = @{
         FunctionCount = $functionCount
         HasPublicAPI = $functionCount -gt 0
@@ -1634,7 +1576,7 @@ function Get-ModuleCapabilities {
     }
     
     # Analyze function names for features (if functions exist)
-    if ($ModuleInfo.Functions -and $ModuleInfo.Functions.Count -gt 0) {
+    if ($ModuleInfo.Functions -and @($ModuleInfo.Functions).Count -gt 0) {
         foreach ($function in $ModuleInfo.Functions) {
             $functionName = $function.ToString().ToLower()
             
@@ -1733,7 +1675,7 @@ function Get-ModuleHealth {
     if ($ModuleInfo.HasDocumentation) { $score++ }
     
     # Has functions
-    if ($ModuleInfo.Functions -and $ModuleInfo.Functions.Count -gt 0) { $score++ }
+    if ($ModuleInfo.Functions -and @($ModuleInfo.Functions).Count -gt 0) { $score++ }
     
     # Convert to health grade
     $percentage = ($score / $maxScore) * 100
@@ -1754,8 +1696,9 @@ function Get-FeatureStatistics {
     $modulesWithDocs = 0
     
     foreach ($module in $FeatureMap.Modules.Values) {
-        if ($module.Functions -and $module.Functions.Count) {
-            $totalFunctions += $module.Functions.Count
+        $functionCount = @($module.Functions).Count
+        if ($functionCount -gt 0) {
+            $totalFunctions += $functionCount
         }
         if ($module.HasTests) { $modulesWithTests++ }
         if ($module.HasDocumentation) { $modulesWithDocs++ }
