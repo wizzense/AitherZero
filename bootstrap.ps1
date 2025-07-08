@@ -828,7 +828,7 @@ try {
                             if (-not $scriptPath) { $scriptPath = $PSCommandPath }
 
                             # When running via iex, save script to temp for re-launch
-                            if (-not $scriptPath -or -not (Test-Path $scriptPath)) {
+                            if (-not $scriptPath -or ($scriptPath -and -not (Test-Path $scriptPath))) {
                                 Write-Host "[~] Saving bootstrap script for re-launch..." -ForegroundColor Yellow
                                 $tempScriptPath = Join-Path $env:TEMP "aitherzero-bootstrap-$(Get-Random).ps1"
 
@@ -838,14 +838,18 @@ try {
                                     Set-Content -Path $tempScriptPath -Value $scriptContent.Content -Encoding UTF8
                                     $scriptPath = $tempScriptPath
                                     $env:AITHER_TEMP_BOOTSTRAP = $tempScriptPath
+                                    Write-Host "[+] Bootstrap script saved to: $scriptPath" -ForegroundColor Green
                                 } catch {
                                     throw "Failed to download bootstrap script for re-launch: $_"
                                 }
                             }
 
-                            # Validate script path before re-launch
-                            if (-not $scriptPath -or -not (Test-Path $scriptPath)) {
-                                throw "Bootstrap script path is invalid or empty. Cannot re-launch in PowerShell 7."
+                            # Validate script path before re-launch with proper null checking
+                            if ([string]::IsNullOrEmpty($scriptPath)) {
+                                throw "Bootstrap script path is empty. Cannot re-launch in PowerShell 7."
+                            }
+                            if (-not (Test-Path $scriptPath)) {
+                                throw "Bootstrap script not found at '$scriptPath'. Cannot re-launch in PowerShell 7."
                             }
 
                             # Re-launch in PowerShell 7 with proper window handling
