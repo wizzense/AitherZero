@@ -42,7 +42,14 @@ $script:CoreModules = @(
     @{ Name = 'ScriptManager'; Path = 'modules/ScriptManager'; Description = 'Script management and templates'; Required = $false },
     @{ Name = 'RepoSync'; Path = 'modules/RepoSync'; Description = 'Repository synchronization and management'; Required = $false },
     @{ Name = 'SecurityAutomation'; Path = 'modules/SecurityAutomation'; Description = 'Security automation and compliance'; Required = $false },
-    @{ Name = 'SetupWizard'; Path = 'modules/SetupWizard'; Description = 'Intelligent setup and onboarding wizard'; Required = $false }
+    @{ Name = 'SetupWizard'; Path = 'modules/SetupWizard'; Description = 'Intelligent setup and onboarding wizard'; Required = $false },
+    
+    # Utility Services
+    @{ Name = 'UtilityServices'; Path = 'modules/UtilityServices'; Description = 'Utility services integration testing'; Required = $false },
+    @{ Name = 'SemanticVersioning'; Path = 'modules/SemanticVersioning'; Description = 'Semantic versioning utilities'; Required = $false },
+    @{ Name = 'LicenseManager'; Path = 'modules/LicenseManager'; Description = 'License management and feature access control'; Required = $false },
+    @{ Name = 'PSScriptAnalyzerIntegration'; Path = 'modules/PSScriptAnalyzerIntegration'; Description = 'PowerShell code analysis automation'; Required = $false },
+    @{ Name = 'StartupExperience'; Path = 'modules/StartupExperience'; Description = 'Interactive startup and configuration management'; Required = $false }
 )
 
 $script:LoadedModules = @{

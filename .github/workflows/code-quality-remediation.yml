@@ -32,6 +32,13 @@ concurrency:
   group: code-quality-remediation
   cancel-in-progress: false
 
+# Permissions for GITHUB_TOKEN  
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+  issues: write
+
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1

@@ -300,7 +300,7 @@ function Set-SystemHardening {
                             }
 
                         } catch {
-                            $ErrorMsg = "Failed to process registry path $RegistryPath: $($_.Exception.Message)"
+                            $ErrorMsg = "Failed to process registry path $RegistryPath`: " + $_.Exception.Message
                             $ComputerResult.Errors += $ErrorMsg
                             Write-CustomLog -Level 'ERROR' -Message $ErrorMsg
                         }
@@ -346,7 +346,7 @@ function Set-SystemHardening {
                                 }
 
                             } catch {
-                                $ErrorMsg = "Failed to process service $ServiceName: $($_.Exception.Message)"
+                                $ErrorMsg = "Failed to process service $ServiceName`: " + $_.Exception.Message
                                 $ComputerResult.Errors += $ErrorMsg
                                 Write-CustomLog -Level 'ERROR' -Message $ErrorMsg
                             }
@@ -391,7 +391,7 @@ function Set-SystemHardening {
                                 }
 
                             } catch {
-                                $ErrorMsg = "Failed to process feature $FeatureName: $($_.Exception.Message)"
+                                $ErrorMsg = "Failed to process feature $FeatureName`: " + $_.Exception.Message
                                 $ComputerResult.Errors += $ErrorMsg
                                 Write-CustomLog -Level 'ERROR' -Message $ErrorMsg
                             }
@@ -418,7 +418,7 @@ function Set-SystemHardening {
                                 $ComputerResult.AuditPolicies[$Policy] = $Setting
 
                             } catch {
-                                $ErrorMsg = "Failed to set audit policy $Policy: $($_.Exception.Message)"
+                                $ErrorMsg = "Failed to set audit policy $Policy`: " + $_.Exception.Message
                                 $ComputerResult.Errors += $ErrorMsg
                                 Write-CustomLog -Level 'ERROR' -Message $ErrorMsg
                             }
@@ -458,7 +458,7 @@ function Set-SystemHardening {
                     }
 
                 } catch {
-                    $ErrorMsg = "Failed to process computer $Computer: $($_.Exception.Message)"
+                    $ErrorMsg = "Failed to process computer $Computer`: " + $_.Exception.Message
                     $ComputerResult.Errors += $ErrorMsg
                     Write-CustomLog -Level 'ERROR' -Message $ErrorMsg
                 }

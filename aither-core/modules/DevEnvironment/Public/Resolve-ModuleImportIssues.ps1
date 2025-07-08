@@ -29,7 +29,6 @@ function Resolve-ModuleImportIssues {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param(
-        [switch]$WhatIf,
         [switch]$Force
     )
 
