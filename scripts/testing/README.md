@@ -1,7 +1,8 @@
 # AitherZero Testing Automation Scripts
 
-This directory contains automated testing scripts for comprehensive test coverage analysis, delta tracking,
-and AI-assisted test generation optimized for AI + human engineering teams.
+This directory contains automated testing scripts for comprehensive test coverage
+analysis, delta tracking, and AI-assisted test generation optimized for AI + human
+engineering teams.
 
 ## Directory Structure
 
@@ -20,8 +21,9 @@ scripts/testing/
 
 ## Overview
 
-The testing automation system implements **smart delta tracking** and **time-based gates** to automatically
-detect when tests need attention, similar to the documentation system but optimized for test-specific workflows.
+The testing automation system implements **smart delta tracking** and **time-based gates**
+to automatically detect when tests need attention, similar to the documentation system
+but optimized for test-specific workflows.
 
 ## Core Capabilities
 
@@ -148,19 +150,19 @@ detect when tests need attention, similar to the documentation system but optimi
     if (!(Test-Path ".github/test-state.json")) {
       ./scripts/testing/Track-TestState.ps1 -Initialize
     }
-    
+
     # Analyze current state
     ./scripts/testing/Track-TestState.ps1 -Analyze
-    
+
     # Run delta analysis
     $deltas = ./scripts/testing/Analyze-TestDeltas.ps1 -ExportChanges
-    
+
     # Check for critical issues
     if ($deltas.summary.highRiskModules -gt 0) {
       Write-Host "::error::Found $($deltas.summary.highRiskModules) high-risk modules"
       exit 1
     }
-    
+
     # Create annotations for review candidates
     foreach ($candidate in $deltas.autoGenerationCandidates) {
       Write-Host "::notice::Module '$($candidate.moduleName)' is candidate for auto-test generation ($($candidate.confidence)% confidence)"
@@ -170,12 +172,12 @@ detect when tests need attention, similar to the documentation system but optimi
   shell: pwsh
   run: |
     $audit = ./scripts/testing/Audit-TestCoverage.ps1 -GenerateHTML
-    
+
     Write-Host "📊 Test Coverage Summary:"
     Write-Host "  Overall Health: $($audit.overallHealth.grade) ($($audit.overallHealth.score)%)"
     Write-Host "  Modules with Tests: $($audit.coverage.modulesWithTests)/$($audit.coverage.totalModules)"
     Write-Host "  Average Coverage: $($audit.coverage.averageCoverage)%"
-    
+
     # Fail if health is critical
     if ($audit.overallHealth.grade -eq "F") {
       Write-Host "::error::Test health is critical - immediate attention required"
@@ -189,12 +191,12 @@ detect when tests need attention, similar to the documentation system but optimi
     # Only generate for modules that have high confidence
     $analysis = ./scripts/testing/Analyze-TestDeltas.ps1 -ExportChanges
     $highConfidence = $analysis.autoGenerationCandidates | Where-Object { $_.confidence -gt 70 }
-    
+
     if ($highConfidence.Count -gt 0) {
       Write-Host "🤖 Generating tests for $($highConfidence.Count) modules..."
       $modules = $highConfidence | ForEach-Object { $_.moduleName }
       ./scripts/testing/Generate-AllMissingTests.ps1 -TargetModules $modules
-      
+
       # Check if any tests were generated
       $changes = git status --porcelain | Where-Object { $_ -match "\.Tests\.ps1" }
       if ($changes) {
@@ -224,17 +226,17 @@ detect when tests need attention, similar to the documentation system but optimi
     script: |
       const fs = require('fs');
       const audit = JSON.parse(fs.readFileSync('test-audit-report.json', 'utf8'));
-      
+
       const body = `## 🧪 Test Coverage Report
-      
+
       **Overall Health**: ${audit.overallHealth.grade} (${audit.overallHealth.score}%)
       **Coverage**: ${audit.coverage.modulesWithTests}/${audit.coverage.totalModules} modules have tests
       **Average Coverage**: ${audit.coverage.averageCoverage}%
-      
+
       ${audit.quality.criticalModules > 0 ? `⚠️ **${audit.quality.criticalModules} modules need immediate attention**` : '✅ **No critical test issues**'}
-      
+
       [View detailed report](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})`;
-      
+
       // Post comment logic here
 ```
 
@@ -290,13 +292,13 @@ Describe 'ModuleName Module' {
         It 'Should load without errors' {
             { Import-Module ModuleName -Force } | Should -Not -Throw
         }
-        
+
         It 'Should export expected functions' {
             $commands = Get-Command -Module ModuleName
             $commands.Count | Should -BeGreaterThan 0
         }
     }
-    
+
     Context 'Public Functions' {
         # Generated based on module analysis
         It 'Test-Function should work correctly' {
@@ -309,7 +311,7 @@ Describe 'ModuleName Module' {
 ### Template Types
 
 1. **module-test-template.ps1**: Generic PowerShell modules
-2. **manager-module-test-template.ps1**: Modules ending in "Manager" (BackupManager, PatchManager)  
+2. **manager-module-test-template.ps1**: Modules ending in "Manager" (BackupManager, PatchManager)
 3. **provider-module-test-template.ps1**: Provider modules (OpenTofuProvider, CloudProviderIntegration)
 
 ## Delta Analysis Workflow
@@ -343,7 +345,7 @@ Describe 'ModuleName Module' {
 - **Memory**: <30MB typical usage
 - **Accuracy**: High for distributed test discovery
 
-### Analyze-TestDeltas.ps1  
+### Analyze-TestDeltas.ps1
 - **Speed**: ~10-15 seconds for delta analysis
 - **Memory**: 50-100MB for detailed analysis
 - **Accuracy**: 90%+ for staleness detection
