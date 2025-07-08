@@ -94,6 +94,15 @@ function Install-PowerShell7-Portable {
 
     Write-Host "[~] Checking for PowerShell 7..." -ForegroundColor Yellow
 
+    # Get the latest PowerShell release info once
+    $ps7Release = $null
+    try {
+        $ps7ApiUrl = "https://api.github.com/repos/PowerShell/PowerShell/releases/latest"
+        $ps7Release = Invoke-RestMethod -Uri $ps7ApiUrl -UseBasicParsing -TimeoutSec 30
+    } catch {
+        Write-Host "[!] Warning: Could not fetch latest PowerShell release info, using fallback" -ForegroundColor Yellow
+    }
+
     # Define platform-specific paths - check existing installations first
     $isWindows = $PSVersionTable.Platform -eq 'Win32NT' -or $PSVersionTable.PSVersion.Major -le 5
     
@@ -105,7 +114,19 @@ function Install-PowerShell7-Portable {
             "$env:ProgramFiles\PowerShell\7.4.1\pwsh.exe"       # Version-specific
         )
         $portableDir = "$env:LOCALAPPDATA\Microsoft\PowerShell\7"
-        $zipUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/PowerShell-win-x64.zip"
+        # Get the actual download URL from GitHub API
+        if ($ps7Release) {
+            $ps7Asset = $ps7Release.assets | Where-Object { $_.name -match "PowerShell-.*-win-x64\.zip$" } | Select-Object -First 1
+            if ($ps7Asset) {
+                $zipUrl = $ps7Asset.browser_download_url
+            } else {
+                # Fallback to manual construction if asset not found
+                $zipUrl = "https://github.com/PowerShell/PowerShell/releases/download/v$($ps7Release.tag_name.TrimStart('v'))/PowerShell-$($ps7Release.tag_name.TrimStart('v'))-win-x64.zip"
+            }
+        } else {
+            # Ultimate fallback - use a known working version
+            $zipUrl = "https://github.com/PowerShell/PowerShell/releases/download/v7.5.2/PowerShell-7.5.2-win-x64.zip"
+        }
     } elseif ($IsMacOS) {
         $possiblePaths = @(
             "$HOME/.local/share/powershell/pwsh",               # Portable (preferred)
@@ -113,14 +134,38 @@ function Install-PowerShell7-Portable {
             "/usr/local/bin/pwsh"                              # System install
         )
         $portableDir = "$HOME/.local/share/powershell"
-        $zipUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/powershell-lts-osx-x64.tar.gz"
+        # Get the actual download URL from GitHub API
+        if ($ps7Release) {
+            $ps7Asset = $ps7Release.assets | Where-Object { $_.name -match "powershell-.*-osx-x64\.tar\.gz$" } | Select-Object -First 1
+            if ($ps7Asset) {
+                $zipUrl = $ps7Asset.browser_download_url
+            } else {
+                # Fallback to manual construction if asset not found
+                $zipUrl = "https://github.com/PowerShell/PowerShell/releases/download/v$($ps7Release.tag_name.TrimStart('v'))/powershell-$($ps7Release.tag_name.TrimStart('v'))-osx-x64.tar.gz"
+            }
+        } else {
+            # Ultimate fallback - use a known working version
+            $zipUrl = "https://github.com/PowerShell/PowerShell/releases/download/v7.5.2/powershell-7.5.2-osx-x64.tar.gz"
+        }
     } else {
         $possiblePaths = @(
             "$HOME/.local/share/powershell/pwsh",               # Portable (preferred)
             "/usr/bin/pwsh"                                     # System install
         )
         $portableDir = "$HOME/.local/share/powershell"
-        $zipUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/powershell-lts-linux-x64.tar.gz"
+        # Get the actual download URL from GitHub API
+        if ($ps7Release) {
+            $ps7Asset = $ps7Release.assets | Where-Object { $_.name -match "powershell-.*-linux-x64\.tar\.gz$" } | Select-Object -First 1
+            if ($ps7Asset) {
+                $zipUrl = $ps7Asset.browser_download_url
+            } else {
+                # Fallback to manual construction if asset not found
+                $zipUrl = "https://github.com/PowerShell/PowerShell/releases/download/v$($ps7Release.tag_name.TrimStart('v'))/powershell-$($ps7Release.tag_name.TrimStart('v'))-linux-x64.tar.gz"
+            }
+        } else {
+            # Ultimate fallback - use a known working version
+            $zipUrl = "https://github.com/PowerShell/PowerShell/releases/download/v7.5.2/powershell-7.5.2-linux-x64.tar.gz"
+        }
     }
 
     # Check if PowerShell 7 is already available
