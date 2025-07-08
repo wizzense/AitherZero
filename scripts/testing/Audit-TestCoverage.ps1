@@ -5,26 +5,26 @@
 param(
     [Parameter(Mandatory = $false)]
     [string]$StateFilePath = ".github/test-state.json",
-
+    
     [Parameter(Mandatory = $false)]
     [string]$ProjectRoot = (Get-Location),
-
+    
     [Parameter(Mandatory = $false)]
     [string]$OutputPath = "./test-audit-report.json",
-
+    
     [Parameter(Mandatory = $false)]
     [switch]$GenerateHTML,
-
+    
     [Parameter(Mandatory = $false)]
     [switch]$DetailedAnalysis,
-
+    
     [Parameter(Mandatory = $false)]
     [ValidateSet("Critical", "High", "Medium", "Low", "All")]
     [string]$MinimumRiskLevel = "All",
-
+    
     [Parameter(Mandatory = $false)]
     [string[]]$Categories = @("Coverage", "Staleness", "Quality", "Risk"),
-
+    
     [Parameter(Mandatory = $false)]
     [switch]$CrossReference
 )
@@ -58,14 +58,14 @@ function Get-ComprehensiveTestAudit {
     param(
         [Parameter(Mandatory = $true)]
         [string]$ProjectRoot,
-
+        
         [Parameter(Mandatory = $false)]
         [hashtable]$TestState = @{},
-
+        
         [Parameter(Mandatory = $false)]
         [string[]]$Categories = @("Coverage", "Staleness", "Quality", "Risk")
     )
-
+    
     $audit = @{
         auditDate = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
         projectRoot = $ProjectRoot
@@ -112,27 +112,27 @@ function Get-ComprehensiveTestAudit {
         trends = @{}
         crossReference = @{}
     }
-
+    
     Write-Log "Starting comprehensive test audit..." -Level "INFO"
-
+    
     # Get all modules
     $modulesPath = Join-Path $ProjectRoot "aither-core/modules"
     if (-not (Test-Path $modulesPath)) {
         Write-Log "Modules directory not found: $modulesPath" -Level "ERROR"
         return $audit
     }
-
+    
     $moduleDirectories = Get-ChildItem -Path $modulesPath -Directory
     $audit.coverage.totalModules = $moduleDirectories.Count
-
+    
     Write-Log "Auditing $($moduleDirectories.Count) modules..." -Level "INFO"
-
+    
     # Analyze each module
     foreach ($moduleDir in $moduleDirectories) {
         $moduleName = $moduleDir.Name
         $moduleAudit = Get-ModuleTestAudit -ModuleName $moduleName -ModulePath $moduleDir.FullName -ProjectRoot $ProjectRoot -TestState $TestState
         $audit.modules[$moduleName] = $moduleAudit
-
+        
         # Update coverage statistics
         if ($moduleAudit.hasTests) {
             $audit.coverage.modulesWithTests++
@@ -141,7 +141,7 @@ function Get-ComprehensiveTestAudit {
         } else {
             $audit.coverage.modulesWithoutTests++
         }
-
+        
         # Update quality statistics
         switch ($moduleAudit.qualityGrade) {
             "A" { $audit.quality.excellentModules++ }
@@ -150,7 +150,7 @@ function Get-ComprehensiveTestAudit {
             default { $audit.quality.criticalModules++ }
         }
         $audit.quality.totalQualityIssues += $moduleAudit.qualityIssues.Count
-
+        
         # Update staleness statistics
         if ($moduleAudit.staleness.isStale) {
             if ($moduleAudit.staleness.severity -eq "Critical") {
@@ -158,7 +158,7 @@ function Get-ComprehensiveTestAudit {
             } else {
                 $audit.staleness.staleModules++
             }
-
+            
             if ($moduleAudit.staleness.daysSinceUpdate -gt $audit.staleness.oldestTest.daysSinceUpdate) {
                 $audit.staleness.oldestTest = @{
                     module = $moduleName
@@ -168,7 +168,7 @@ function Get-ComprehensiveTestAudit {
         } else {
             $audit.staleness.currentModules++
         }
-
+        
         # Update risk statistics
         switch ($moduleAudit.riskLevel) {
             "Low" { $audit.risk.lowRisk++ }
@@ -177,20 +177,20 @@ function Get-ComprehensiveTestAudit {
             "Critical" { $audit.risk.criticalRisk++ }
         }
     }
-
+    
     # Calculate final statistics
     $audit.coverage.coveragePercentage = if ($audit.coverage.totalModules -gt 0) {
         [Math]::Round(($audit.coverage.modulesWithTests / $audit.coverage.totalModules) * 100, 1)
     } else { 0 }
-
+    
     $audit.coverage.averageTestCases = if ($audit.coverage.modulesWithTests -gt 0) {
         [Math]::Round($audit.coverage.averageTestCases / $audit.coverage.modulesWithTests, 1)
     } else { 0 }
-
+    
     $audit.coverage.averageCoverage = if ($audit.coverage.modulesWithTests -gt 0) {
         [Math]::Round($audit.coverage.averageCoverage / $audit.coverage.modulesWithTests, 1)
     } else { 0 }
-
+    
     $audit.staleness.averageStaleDays = if (($audit.staleness.staleModules + $audit.staleness.outdatedModules) -gt 0) {
         $totalStaleDays = 0
         $staleCount = 0
@@ -202,15 +202,15 @@ function Get-ComprehensiveTestAudit {
         }
         if ($staleCount -gt 0) { [Math]::Round($totalStaleDays / $staleCount, 1) } else { 0 }
     } else { 0 }
-
+    
     # Calculate overall health score
     $audit.overallHealth = Get-OverallHealthScore -Audit $audit
-
+    
     # Generate recommendations
     $audit.recommendations = Get-AuditRecommendations -Audit $audit
-
+    
     Write-Log "Test audit completed for $($audit.coverage.totalModules) modules" -Level "SUCCESS"
-
+    
     return $audit
 }
 
@@ -223,17 +223,17 @@ function Get-ModuleTestAudit {
     param(
         [Parameter(Mandatory = $true)]
         [string]$ModuleName,
-
+        
         [Parameter(Mandatory = $true)]
         [string]$ModulePath,
-
+        
         [Parameter(Mandatory = $true)]
         [string]$ProjectRoot,
-
+        
         [Parameter(Mandatory = $false)]
         [hashtable]$TestState = @{}
     )
-
+    
     $moduleAudit = @{
         moduleName = $ModuleName
         hasTests = $false
@@ -264,7 +264,7 @@ function Get-ModuleTestAudit {
         recommendations = @()
         trends = @{}
     }
-
+    
     try {
         # Use existing test state if available
         if ($TestState.modules -and $TestState.modules.ContainsKey($ModuleName)) {
@@ -275,12 +275,12 @@ function Get-ModuleTestAudit {
             $moduleAudit.testMetrics.estimatedCoverage = $stateData.estimatedCoverage
             $moduleAudit.testMetrics.testStrategy = $stateData.testStrategy
             $moduleAudit.testMetrics.lastModified = $stateData.lastTestModified
-
+            
             $moduleAudit.codeMetrics.totalFiles = $stateData.codeMetrics.totalFiles
             $moduleAudit.codeMetrics.totalLines = $stateData.codeMetrics.totalLines
             $moduleAudit.codeMetrics.publicFunctions = $stateData.codeMetrics.publicFunctions
             $moduleAudit.codeMetrics.lastModified = $stateData.lastCodeModified
-
+            
             $moduleAudit.staleness.isStale = $stateData.isStale
             if ($stateData.reviewReasons) {
                 $moduleAudit.staleness.reasons = $stateData.reviewReasons
@@ -292,40 +292,40 @@ function Get-ModuleTestAudit {
             # For now, we'll mark it as needing analysis
             $moduleAudit.qualityIssues += "Fresh analysis needed"
         }
-
+        
         # Determine complexity
         $complexityFactors = 0
         if ($moduleAudit.codeMetrics.totalFiles -gt 10) { $complexityFactors++ }
         if ($moduleAudit.codeMetrics.totalLines -gt 1000) { $complexityFactors++ }
         if ($moduleAudit.codeMetrics.publicFunctions -gt 20) { $complexityFactors++ }
-
+        
         $moduleAudit.codeMetrics.complexity = switch ($complexityFactors) {
-            { $_ -gt 2 } { "Complex" }
-            { $_ -gt 0 } { "Moderate" }
+            { $_ -gt 2 } { "Complex"; break }
+            { $_ -gt 0 } { "Moderate"; break }
             default { "Simple" }
         }
-
+        
         # Calculate staleness
         $moduleAudit.staleness = Get-ModuleStaleness -ModuleAudit $moduleAudit
-
+        
         # Calculate quality grade and score
         $qualityAssessment = Get-QualityAssessment -ModuleAudit $moduleAudit
         $moduleAudit.qualityGrade = $qualityAssessment.grade
         $moduleAudit.qualityScore = $qualityAssessment.score
         $moduleAudit.qualityIssues += $qualityAssessment.issues
-
+        
         # Calculate risk level
         $moduleAudit.riskLevel = Get-ModuleRiskLevel -ModuleAudit $moduleAudit
-
+        
         # Generate recommendations
         $moduleAudit.recommendations = Get-ModuleRecommendations -ModuleAudit $moduleAudit
-
+        
     } catch {
         Write-Log "Error auditing module $ModuleName : $_" -Level "ERROR"
         $moduleAudit.qualityIssues += "Audit error: $($_.Exception.Message)"
         $moduleAudit.riskLevel = "Critical"
     }
-
+    
     return $moduleAudit
 }
 
@@ -339,14 +339,14 @@ function Get-ModuleStaleness {
         [Parameter(Mandatory = $true)]
         [hashtable]$ModuleAudit
     )
-
+    
     $staleness = @{
         isStale = $false
         severity = "None"
         daysSinceUpdate = 0
         reasons = @()
     }
-
+    
     try {
         if (-not $ModuleAudit.hasTests) {
             $staleness.isStale = $true
@@ -354,26 +354,26 @@ function Get-ModuleStaleness {
             $staleness.reasons += "No tests exist"
             return $staleness
         }
-
+        
         $now = Get-Date
-
+        
         # Calculate days since test update
         if ($ModuleAudit.testMetrics.lastModified) {
             $lastTestUpdate = [DateTime]::Parse($ModuleAudit.testMetrics.lastModified)
             $staleness.daysSinceUpdate = ($now - $lastTestUpdate).TotalDays
         }
-
+        
         # Calculate days since code update
         $daysSinceCodeUpdate = 0
         if ($ModuleAudit.codeMetrics.lastModified) {
             $lastCodeUpdate = [DateTime]::Parse($ModuleAudit.codeMetrics.lastModified)
             $daysSinceCodeUpdate = ($now - $lastCodeUpdate).TotalDays
-
+            
             # Check if code was updated after tests
             if ($ModuleAudit.testMetrics.lastModified -and $lastCodeUpdate -gt $lastTestUpdate) {
                 $staleness.isStale = $true
                 $staleness.reasons += "Code updated after tests"
-
+                
                 $daysSinceCodeChangedAfterTests = ($lastCodeUpdate - $lastTestUpdate).TotalDays
                 if ($daysSinceCodeChangedAfterTests -gt 14) {
                     $staleness.severity = "Critical"
@@ -384,7 +384,7 @@ function Get-ModuleStaleness {
                 }
             }
         }
-
+        
         # Check general staleness
         if ($staleness.daysSinceUpdate -gt 30) {
             $staleness.isStale = $true
@@ -395,14 +395,14 @@ function Get-ModuleStaleness {
             if ($staleness.severity -eq "None") { $staleness.severity = "High" }
             $staleness.reasons += "Tests not updated in over 14 days"
         }
-
+        
     } catch {
         Write-Log "Error assessing staleness: $_" -Level "WARN"
         $staleness.isStale = $true
         $staleness.severity = "Critical"
         $staleness.reasons += "Error in staleness analysis"
     }
-
+    
     return $staleness
 }
 
@@ -416,13 +416,13 @@ function Get-QualityAssessment {
         [Parameter(Mandatory = $true)]
         [hashtable]$ModuleAudit
     )
-
+    
     $assessment = @{
         score = 0
         grade = "F"
         issues = @()
     }
-
+    
     # Base score for having tests
     if ($ModuleAudit.hasTests) {
         $assessment.score += 30
@@ -430,33 +430,33 @@ function Get-QualityAssessment {
         $assessment.issues += "No tests exist"
         return $assessment  # Can't score higher without tests
     }
-
+    
     # Coverage score (0-25 points)
     $coverageScore = [Math]::Min(25, ($ModuleAudit.testMetrics.estimatedCoverage / 100) * 25)
     $assessment.score += $coverageScore
-
+    
     if ($ModuleAudit.testMetrics.estimatedCoverage -lt 50) {
         $assessment.issues += "Low test coverage ($($ModuleAudit.testMetrics.estimatedCoverage)%)"
     }
-
+    
     # Test case adequacy (0-20 points)
     $expectedTestCases = [Math]::Max(5, $ModuleAudit.codeMetrics.publicFunctions)
-    $testCaseRatio = if ($expectedTestCases -gt 0) {
-        [Math]::Min(1, $ModuleAudit.testMetrics.testCases / $expectedTestCases)
+    $testCaseRatio = if ($expectedTestCases -gt 0) { 
+        [Math]::Min(1, $ModuleAudit.testMetrics.testCases / $expectedTestCases) 
     } else { 1 }
     $testCaseScore = $testCaseRatio * 20
     $assessment.score += $testCaseScore
-
+    
     if ($testCaseRatio -lt 0.5) {
         $assessment.issues += "Insufficient test cases ($($ModuleAudit.testMetrics.testCases) for $($ModuleAudit.codeMetrics.publicFunctions) public functions)"
     }
-
+    
     # Freshness score (0-15 points)
     if (-not $ModuleAudit.staleness.isStale) {
         $assessment.score += 15
     } else {
         $assessment.issues += "Tests are stale: $($ModuleAudit.staleness.reasons -join ', ')"
-
+        
         # Partial credit based on staleness severity
         switch ($ModuleAudit.staleness.severity) {
             "Medium" { $assessment.score += 10 }
@@ -464,35 +464,35 @@ function Get-QualityAssessment {
             "Critical" { $assessment.score += 0 }
         }
     }
-
+    
     # Complexity appropriateness (0-10 points)
     $complexityBonus = switch ($ModuleAudit.codeMetrics.complexity) {
-        "Simple" {
+        "Simple" { 
             if ($ModuleAudit.testMetrics.testCases -ge 3) { 10 } else { 5 }
         }
-        "Moderate" {
+        "Moderate" { 
             if ($ModuleAudit.testMetrics.testCases -ge 8) { 10 } else { 3 }
         }
-        "Complex" {
+        "Complex" { 
             if ($ModuleAudit.testMetrics.testCases -ge 15) { 10 } else { 0 }
         }
         default { 0 }
     }
     $assessment.score += $complexityBonus
-
+    
     if ($complexityBonus -lt 5) {
         $assessment.issues += "Test coverage inadequate for code complexity ($($ModuleAudit.codeMetrics.complexity))"
     }
-
+    
     # Convert score to grade
     $assessment.grade = switch ($assessment.score) {
-        { $_ -ge 90 } { "A" }
-        { $_ -ge 80 } { "B" }
-        { $_ -ge 70 } { "C" }
-        { $_ -ge 60 } { "D" }
+        { $_ -ge 90 } { "A"; break }
+        { $_ -ge 80 } { "B"; break }
+        { $_ -ge 70 } { "C"; break }
+        { $_ -ge 60 } { "D"; break }
         default { "F" }
     }
-
+    
     return $assessment
 }
 
@@ -506,43 +506,43 @@ function Get-ModuleRiskLevel {
         [Parameter(Mandatory = $true)]
         [hashtable]$ModuleAudit
     )
-
+    
     $riskFactors = 0
-
+    
     # No tests = automatic high risk
     if (-not $ModuleAudit.hasTests) {
         $riskFactors += 4
     }
-
+    
     # Low coverage
     if ($ModuleAudit.testMetrics.estimatedCoverage -lt 30) {
         $riskFactors += 2
     } elseif ($ModuleAudit.testMetrics.estimatedCoverage -lt 50) {
         $riskFactors += 1
     }
-
+    
     # Staleness
     switch ($ModuleAudit.staleness.severity) {
         "Critical" { $riskFactors += 3 }
         "High" { $riskFactors += 2 }
         "Medium" { $riskFactors += 1 }
     }
-
+    
     # Complex code without adequate tests
     if ($ModuleAudit.codeMetrics.complexity -eq "Complex" -and $ModuleAudit.testMetrics.testCases -lt 10) {
         $riskFactors += 2
     }
-
+    
     # Quality grade factor
     switch ($ModuleAudit.qualityGrade) {
         "F" { $riskFactors += 2 }
         "D" { $riskFactors += 1 }
     }
-
+    
     return switch ($riskFactors) {
-        { $_ -gt 6 } { "Critical" }
-        { $_ -gt 4 } { "High" }
-        { $_ -gt 2 } { "Medium" }
+        { $_ -gt 6 } { "Critical"; break }
+        { $_ -gt 4 } { "High"; break }
+        { $_ -gt 2 } { "Medium"; break }
         default { "Low" }
     }
 }
@@ -557,20 +557,20 @@ function Get-ModuleRecommendations {
         [Parameter(Mandatory = $true)]
         [hashtable]$ModuleAudit
     )
-
+    
     $recommendations = @()
-
+    
     if (-not $ModuleAudit.hasTests) {
         $recommendations += "Create initial test file using automated generation"
         $recommendations += "Focus on testing public functions first"
         return $recommendations
     }
-
+    
     if ($ModuleAudit.testMetrics.estimatedCoverage -lt 50) {
         $recommendations += "Increase test coverage to at least 70%"
         $recommendations += "Add tests for untested public functions"
     }
-
+    
     if ($ModuleAudit.staleness.isStale) {
         switch ($ModuleAudit.staleness.severity) {
             "Critical" { $recommendations += "URGENT: Update tests to match recent code changes" }
@@ -578,21 +578,21 @@ function Get-ModuleRecommendations {
             "Medium" { $recommendations += "Review and refresh existing tests" }
         }
     }
-
+    
     if ($ModuleAudit.testMetrics.testCases -lt $ModuleAudit.codeMetrics.publicFunctions) {
         $recommendations += "Add more test cases to match number of public functions"
     }
-
+    
     if ($ModuleAudit.codeMetrics.complexity -eq "Complex" -and $ModuleAudit.testMetrics.testCases -lt 15) {
         $recommendations += "Add comprehensive tests for complex module functionality"
         $recommendations += "Consider integration tests for complex workflows"
     }
-
+    
     if ($ModuleAudit.qualityGrade -in @("D", "F")) {
         $recommendations += "Focus on test quality improvement"
         $recommendations += "Review existing tests for completeness and accuracy"
     }
-
+    
     return $recommendations
 }
 
@@ -606,16 +606,16 @@ function Get-OverallHealthScore {
         [Parameter(Mandatory = $true)]
         [hashtable]$Audit
     )
-
+    
     $health = @{
         score = 0
         grade = "F"
         status = "Critical"
     }
-
+    
     # Coverage component (40% of score)
     $coverageScore = $Audit.coverage.coveragePercentage * 0.4
-
+    
     # Quality component (30% of score)
     $qualityScore = 0
     if ($Audit.coverage.totalModules -gt 0) {
@@ -623,7 +623,7 @@ function Get-OverallHealthScore {
         $qualityPercentage = ($goodModules / $Audit.coverage.totalModules) * 100
         $qualityScore = $qualityPercentage * 0.3
     }
-
+    
     # Risk component (20% of score)
     $riskScore = 0
     if ($Audit.coverage.totalModules -gt 0) {
@@ -631,33 +631,33 @@ function Get-OverallHealthScore {
         $riskPercentage = ($lowRiskModules / $Audit.coverage.totalModules) * 100
         $riskScore = $riskPercentage * 0.2
     }
-
+    
     # Staleness component (10% of score)
     $stalenessScore = 0
     if ($Audit.coverage.totalModules -gt 0) {
         $currentPercentage = ($Audit.staleness.currentModules / $Audit.coverage.totalModules) * 100
         $stalenessScore = $currentPercentage * 0.1
     }
-
+    
     $health.score = [Math]::Round($coverageScore + $qualityScore + $riskScore + $stalenessScore, 1)
-
+    
     # Determine grade and status
     $health.grade = switch ($health.score) {
-        { $_ -ge 90 } { "A" }
-        { $_ -ge 80 } { "B" }
-        { $_ -ge 70 } { "C" }
-        { $_ -ge 60 } { "D" }
+        { $_ -ge 90 } { "A"; break }
+        { $_ -ge 80 } { "B"; break }
+        { $_ -ge 70 } { "C"; break }
+        { $_ -ge 60 } { "D"; break }
         default { "F" }
     }
-
+    
     $health.status = switch ($health.score) {
-        { $_ -ge 80 } { "Excellent" }
-        { $_ -ge 70 } { "Good" }
-        { $_ -ge 60 } { "Needs Improvement" }
-        { $_ -ge 40 } { "Poor" }
+        { $_ -ge 80 } { "Excellent"; break }
+        { $_ -ge 70 } { "Good"; break }
+        { $_ -ge 60 } { "Needs Improvement"; break }
+        { $_ -ge 40 } { "Poor"; break }
         default { "Critical" }
     }
-
+    
     return $health
 }
 
@@ -671,9 +671,9 @@ function Get-AuditRecommendations {
         [Parameter(Mandatory = $true)]
         [hashtable]$Audit
     )
-
+    
     $recommendations = @()
-
+    
     # Coverage recommendations
     if ($Audit.coverage.coveragePercentage -lt 70) {
         $recommendations += @{
@@ -683,7 +683,7 @@ function Get-AuditRecommendations {
             action = "Generate tests for $($Audit.coverage.modulesWithoutTests) modules without tests"
         }
     }
-
+    
     # Quality recommendations
     if ($Audit.quality.criticalModules -gt 0) {
         $recommendations += @{
@@ -693,7 +693,7 @@ function Get-AuditRecommendations {
             action = "Focus on modules with grade F first"
         }
     }
-
+    
     # Risk recommendations
     if ($Audit.risk.criticalRisk -gt 0) {
         $recommendations += @{
@@ -703,7 +703,7 @@ function Get-AuditRecommendations {
             action = "Prioritize modules with complex code and no tests"
         }
     }
-
+    
     # Staleness recommendations
     if ($Audit.staleness.outdatedModules -gt 0) {
         $recommendations += @{
@@ -713,7 +713,7 @@ function Get-AuditRecommendations {
             action = "Review tests that haven't been updated in over 30 days"
         }
     }
-
+    
     # Overall health recommendations
     if ($Audit.overallHealth.score -lt 60) {
         $recommendations += @{
@@ -723,7 +723,7 @@ function Get-AuditRecommendations {
             action = "Implement comprehensive test improvement plan"
         }
     }
-
+    
     return $recommendations
 }
 
@@ -736,13 +736,13 @@ function Export-AuditHTML {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$Audit,
-
+        
         [Parameter(Mandatory = $true)]
         [string]$OutputPath
     )
-
+    
     $htmlPath = $OutputPath -replace '\.json$', '.html'
-
+    
     $html = @"
 <!DOCTYPE html>
 <html>
@@ -840,13 +840,13 @@ function Export-AuditHTML {
 
     # Add module details
     $html += "<div class=`"modules`"><h2>📦 Module Details</h2>"
-
+    
     $sortedModules = $Audit.modules.GetEnumerator() | Sort-Object { $_.Value.riskLevel -eq "Critical" ? 0 : $_.Value.riskLevel -eq "High" ? 1 : $_.Value.riskLevel -eq "Medium" ? 2 : 3 }, Name
-
+    
     foreach ($moduleEntry in $sortedModules) {
         $module = $moduleEntry.Value
         $riskClass = $module.riskLevel.ToLower()
-
+        
         $html += @"
         <div class="module $riskClass">
             <h3>$($module.moduleName) - Grade: <span class="grade-$($module.qualityGrade)">$($module.qualityGrade)</span> | Risk: <span class="status-$($riskClass)">$($module.riskLevel)</span></h3>
@@ -858,13 +858,13 @@ function Export-AuditHTML {
         </div>
 "@
     }
-
+    
     $html += "</div>"
-
+    
     # Add recommendations
     if ($Audit.recommendations.Count -gt 0) {
         $html += "<div class=`"recommendations`"><h2>💡 Recommendations</h2>"
-
+        
         foreach ($recommendation in $Audit.recommendations) {
             $priorityClass = $recommendation.priority.ToLower()
             $html += @"
@@ -875,10 +875,10 @@ function Export-AuditHTML {
             </div>
 "@
         }
-
+        
         $html += "</div>"
     }
-
+    
     $html += @"
     <div style="margin-top: 40px; text-align: center; color: #666; font-size: 0.9em;">
         <p>Generated by AitherZero Test Coverage Audit System</p>
@@ -890,16 +890,16 @@ function Export-AuditHTML {
 
     Set-Content -Path $htmlPath -Value $html -Encoding UTF8
     Write-Log "HTML report generated: $htmlPath" -Level "SUCCESS"
-
+    
     return $htmlPath
 }
 
 # Main execution
 try {
     $stateFilePath = Join-Path $ProjectRoot $StateFilePath
-
+    
     Write-Log "Starting comprehensive test coverage audit..." -Level "INFO"
-
+    
     # Load test state if available
     $testState = if (Test-Path $stateFilePath) {
         Get-Content -Path $stateFilePath -Raw | ConvertFrom-Json -AsHashtable
@@ -907,10 +907,10 @@ try {
         Write-Log "No test state found, will perform fresh analysis" -Level "WARN"
         @{}
     }
-
+    
     # Perform comprehensive audit
     $auditResults = Get-ComprehensiveTestAudit -ProjectRoot $ProjectRoot -TestState $testState -Categories $Categories
-
+    
     # Cross-reference with documentation if requested
     if ($CrossReference) {
         $docStateFile = Join-Path $ProjectRoot ".github/documentation-state.json"
@@ -924,11 +924,11 @@ try {
                 modulesWithTestsButNoDocs = 0
                 modulesWithNeither = 0
             }
-
+            
             foreach ($moduleName in $auditResults.modules.Keys) {
                 $hasTests = $auditResults.modules[$moduleName].hasTests
                 $hasDocs = $docState.directories.ContainsKey("aither-core/modules/$moduleName") -and $docState.directories["aither-core/modules/$moduleName"].readmeExists
-
+                
                 if ($hasTests -and $hasDocs) {
                     $auditResults.crossReference.modulesWithBothDocsAndTests++
                 } elseif ($hasDocs -and -not $hasTests) {
@@ -939,16 +939,16 @@ try {
                     $auditResults.crossReference.modulesWithNeither++
                 }
             }
-
+            
             Write-Log "Cross-reference with documentation completed" -Level "INFO"
         }
     }
-
+    
     # Filter by risk level if specified
     if ($MinimumRiskLevel -ne "All") {
         $riskOrder = @("Low", "Medium", "High", "Critical")
         $minIndex = $riskOrder.IndexOf($MinimumRiskLevel)
-
+        
         $filteredModules = @{}
         foreach ($moduleKey in $auditResults.modules.Keys) {
             $moduleRiskIndex = $riskOrder.IndexOf($auditResults.modules[$moduleKey].riskLevel)
@@ -958,17 +958,17 @@ try {
         }
         $auditResults.modules = $filteredModules
     }
-
+    
     # Export results
     $auditResults | ConvertTo-Json -Depth 10 | Set-Content -Path $OutputPath -Encoding UTF8
     Write-Log "Audit results exported to: $OutputPath" -Level "SUCCESS"
-
+    
     # Generate HTML report if requested
     if ($GenerateHTML) {
         $htmlPath = Export-AuditHTML -Audit $auditResults -OutputPath $OutputPath
         Write-Log "HTML report available at: $htmlPath" -Level "SUCCESS"
     }
-
+    
     # Display summary
     Write-Host "`n🧪 Test Coverage Audit Summary:" -ForegroundColor Cyan
     Write-Host "=================================" -ForegroundColor Cyan
@@ -985,7 +985,7 @@ try {
     Write-Host "Quality Distribution: A:$($auditResults.quality.excellentModules) B:$($auditResults.quality.goodModules) C:$($auditResults.quality.needsImprovementModules) D/F:$($auditResults.quality.criticalModules)" -ForegroundColor White
     Write-Host "Risk Distribution: Low:$($auditResults.risk.lowRisk) Medium:$($auditResults.risk.mediumRisk) High:$($auditResults.risk.highRisk) Critical:$($auditResults.risk.criticalRisk)" -ForegroundColor White
     Write-Host "Staleness: Current:$($auditResults.staleness.currentModules) Stale:$($auditResults.staleness.staleModules) Outdated:$($auditResults.staleness.outdatedModules)" -ForegroundColor White
-
+    
     if ($auditResults.recommendations.Count -gt 0) {
         Write-Host "`n💡 Top Recommendations:" -ForegroundColor Yellow
         $topRecommendations = $auditResults.recommendations | Where-Object { $_.priority -in @("Critical", "High") } | Select-Object -First 3
@@ -993,9 +993,9 @@ try {
             Write-Host "  [$($rec.priority)] $($rec.description)" -ForegroundColor $(if($rec.priority -eq "Critical"){"Red"}else{"Yellow"})
         }
     }
-
+    
     Write-Log "Test coverage audit completed successfully" -Level "SUCCESS"
-
+    
 } catch {
     Write-Log "Test coverage audit failed: $($_.Exception.Message)" -Level "ERROR"
     exit 1
