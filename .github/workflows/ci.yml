@@ -1421,27 +1421,6 @@ jobs:
           }
         }
         
-        # Create index.html for GitHub Pages
-        @'
-<!DOCTYPE html>
-<html>
-<head>
-    <title>AitherZero CI Dashboard</title>
-    <meta charset="utf-8">
-    <meta http-equiv="refresh" content="0; url=comprehensive-ci-dashboard.html">
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; text-align: center; }
-        a { color: #007bff; text-decoration: none; }
-    </style>
-</head>
-<body>
-    <h1>AitherZero CI Dashboard</h1>
-    <p>Redirecting to comprehensive report...</p>
-    <p>If not redirected, <a href="comprehensive-ci-dashboard.html">click here</a></p>
-</body>
-</html>
-'@ | Set-Content -Path "./docs/index.html"
-        Write-Host "✅ Created index.html for GitHub Pages" -ForegroundColor Green
     
     - name: Deploy to GitHub Pages
       if: github.ref == 'refs/heads/main'
