@@ -22,10 +22,12 @@ BeforeAll {
 
     # Setup test environment for management operations
     $script:TestStartTime = Get-Date
-    $script:TestWorkspace = if ($env:TEMP) {
+    
+    # Use cross-platform path handling
+    $script:TestWorkspace = if ($IsWindows) {
         Join-Path $env:TEMP "SystemMonitoring-Test-$(Get-Random)"
-    } elseif (Test-Path '/tmp') {
-        "/tmp/SystemMonitoring-Test-$(Get-Random)"
+    } elseif ($IsLinux -or $IsMacOS) {
+        Join-Path "/tmp" "SystemMonitoring-Test-$(Get-Random)"
     } else {
         Join-Path (Get-Location) "SystemMonitoring-Test-$(Get-Random)"
     }

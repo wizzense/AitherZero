@@ -626,6 +626,9 @@ try {
                 Write-Host "[!] PowerShell $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor) detected" -ForegroundColor Yellow
                 Write-Host "[i] AitherZero requires PowerShell 7.0 or later" -ForegroundColor Cyan
 
+                # Initialize PowerShell 7 path variable at proper scope
+                $pwsh7Path = $null
+                
                 # Check for non-interactive mode
                 $installPS7 = $false
                 if ($env:AITHER_AUTO_INSTALL_PS7 -eq 'true' -or $env:AITHER_BOOTSTRAP_MODE) {
@@ -693,7 +696,7 @@ try {
                 if ($pwsh7Path -and (Test-Path $pwsh7Path)) {
                     $pwsh7Executable = $pwsh7Path
                     $usePwsh7 = $true
-                    Write-Host "[i] Using PowerShell 7 from: $pwsh7Path" -ForegroundColor Cyan
+                    Write-Host "[i] Using PowerShell 7 from: $pwsh7Executable" -ForegroundColor Cyan
                 } else {
                     # Fallback: try to find PowerShell 7 in common locations
                     $pwsh7Candidates = @(

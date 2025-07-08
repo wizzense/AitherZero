@@ -291,8 +291,8 @@ function Import-AuditData {
     # Load CI test results
     $ciTestPaths = @(
         'ci-test-summary.json',
-        'tests/results/unified/ci-test-summary.json',
         '../ci-test-summary.json',
+        'tests/results/unified/ci-test-summary.json',
         'core-test-results.xml'
     )
     
@@ -316,6 +316,31 @@ function Import-AuditData {
             } catch {
                 Write-ReportLog "Failed to load CI test results from $fullPath : $($_.Exception.Message)" -Level 'WARNING'
             }
+        }
+    }
+    
+    # Load recent test results for module-specific status
+    $recentTestReports = Get-ChildItem -Path (Join-Path $projectRoot "tests/results/unified/reports") -Filter "*.json" -ErrorAction SilentlyContinue | 
+                        Sort-Object LastWriteTime -Descending | 
+                        Select-Object -First 1
+    
+    if ($recentTestReports) {
+        try {
+            $recentTestContent = Get-Content $recentTestReports.FullName -Raw | ConvertFrom-Json
+            if (-not $auditData.CITests) {
+                $auditData.CITests = @{}
+            }
+            # Only add TestResults if it doesn't exist and the property is available
+            if (-not $auditData.CITests.PSObject.Properties['TestResults'] -and $recentTestContent.Results) {
+                $auditData.CITests | Add-Member -NotePropertyName 'TestResults' -NotePropertyValue $recentTestContent.Results
+            }
+            # Update Summary if needed
+            if ($recentTestContent.Summary -and (-not $auditData.CITests.Summary)) {
+                $auditData.CITests | Add-Member -NotePropertyName 'Summary' -NotePropertyValue $recentTestContent.Summary
+            }
+            Write-ReportLog "Loaded recent test results from $($recentTestReports.Name)" -Level 'SUCCESS'
+        } catch {
+            Write-ReportLog "Failed to load recent test results: $($_.Exception.Message)" -Level 'WARNING'
         }
     }
 
@@ -446,36 +471,32 @@ function Get-OverallHealthScore {
         ModuleHealth = 0.1
     }
 
-    # Test coverage score (includes CI test results)
-    if ($AuditData.Testing) {
-        if ($AuditData.Testing.coverage) {
-            $healthFactors.TestCoverage = [math]::Min(100, $AuditData.Testing.coverage.averageCoverage)
-        } elseif ($AuditData.Testing.summary) {
-            $testRatio = if ($AuditData.Testing.summary.totalAnalyzed -gt 0) {
-                ($AuditData.Testing.summary.modulesWithTests / $AuditData.Testing.summary.totalAnalyzed) * 100
-            } else { 0 }
-            $healthFactors.TestCoverage = $testRatio
-        }
-    }
-    
-    # Boost test coverage score with CI test results
+    # Test coverage score - prioritize actual CI test results over estimates
     if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.QualityMetrics) {
+        # Use actual CI test results as primary measure
         $ciScore = $AuditData.CITests.QualityMetrics.SuccessRate
-        if ($ciScore -eq 100) {
-            # Perfect CI test score provides significant boost
-            $healthFactors.TestCoverage = [math]::Min(100, $healthFactors.TestCoverage + 15)
-        } elseif ($ciScore -ge 90) {
-            # Good CI test score provides moderate boost
-            $healthFactors.TestCoverage = [math]::Min(100, $healthFactors.TestCoverage + 10)
-        } elseif ($ciScore -ge 80) {
-            # Decent CI test score provides small boost
-            $healthFactors.TestCoverage = [math]::Min(100, $healthFactors.TestCoverage + 5)
-        } else {
-            # Poor CI test score doesn't boost (or potentially reduces if very low)
-            if ($ciScore -lt 70) {
-                $healthFactors.TestCoverage = [math]::Max(0, $healthFactors.TestCoverage - 5)
-            }
+        $healthFactors.TestCoverage = $ciScore
+        Write-ReportLog "Using CI test results for coverage: $ciScore%" -Level 'INFO'
+    } elseif ($AuditData.Testing -and $AuditData.Testing.coverage) {
+        # Fallback to audit data estimates (but cap at reasonable levels)
+        $estimatedCoverage = $AuditData.Testing.coverage.averageCoverage
+        # Cap unrealistic estimates to more reasonable levels
+        if ($estimatedCoverage -gt 80) {
+            $estimatedCoverage = [math]::Min(70, $estimatedCoverage * 0.7)
         }
+        $healthFactors.TestCoverage = $estimatedCoverage
+        Write-ReportLog "Using estimated coverage (adjusted): $estimatedCoverage%" -Level 'INFO'
+    } elseif ($AuditData.Testing -and $AuditData.Testing.summary) {
+        # Calculate based on modules with tests
+        $testRatio = if ($AuditData.Testing.summary.totalAnalyzed -gt 0) {
+            ($AuditData.Testing.summary.modulesWithTests / $AuditData.Testing.summary.totalAnalyzed) * 100
+        } else { 0 }
+        # Apply realistic factor since having tests doesn't mean they pass
+        $healthFactors.TestCoverage = $testRatio * 0.6
+        Write-ReportLog "Using module test ratio (adjusted): $($healthFactors.TestCoverage)%" -Level 'INFO'
+    } else {
+        $healthFactors.TestCoverage = 0
+        Write-ReportLog "No test data available, using 0% coverage" -Level 'WARNING'
     }
 
     # Security compliance score
@@ -502,12 +523,25 @@ function Get-OverallHealthScore {
         $healthFactors.DocumentationCoverage = 60 # Lower score if no doc data
     }
 
-    # Module health score
+    # Module health score - factor in actual test pass rates
     if ($FeatureMap) {
         $moduleRatio = if ($FeatureMap.TotalModules -gt 0) {
             ($FeatureMap.AnalyzedModules / $FeatureMap.TotalModules) * 100
         } else { 0 }
-        $healthFactors.ModuleHealth = $moduleRatio
+        
+        # Adjust based on actual test performance if available
+        if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.Summary) {
+            $successfulModules = $AuditData.CITests.Summary.SuccessfulModules
+            $totalModules = $AuditData.CITests.Summary.TotalModules
+            $moduleSuccessRate = if ($totalModules -gt 0) {
+                ($successfulModules / $totalModules) * 100
+            } else { 0 }
+            # Weight the module health by actual success rate
+            $healthFactors.ModuleHealth = ($moduleRatio * 0.5) + ($moduleSuccessRate * 0.5)
+            Write-ReportLog "Module health adjusted for CI results: $($healthFactors.ModuleHealth)%" -Level 'INFO'
+        } else {
+            $healthFactors.ModuleHealth = $moduleRatio
+        }
     }
 
     # Calculate weighted overall score
@@ -817,7 +851,7 @@ function New-ComprehensiveHtmlReport {
                     <div class="progress-fill" style="width: $($AuditData.CITests.QualityMetrics.SuccessRate)%"></div>
                 </div>
                 <p style="text-align: center;">
-                    $($AuditData.CITests.TotalPassed)/$($AuditData.CITests.TotalTests) tests passed
+                    $($AuditData.CITests.Summary.TotalPassed)/$($AuditData.CITests.Summary.TotalTests) tests passed
                 </p>
             </div>
 "@ })
@@ -891,7 +925,25 @@ function New-ComprehensiveHtmlReport {
         foreach ($module in $category.Value) {
             $moduleInfo = $FeatureMap.Modules[$module]
             $capabilities = $FeatureMap.Capabilities[$module]
-            $status = if ($moduleInfo.HasTests) { 'healthy' } else { 'warning' }
+            
+            # Check actual test results if available
+            $actualTestStatus = 'unknown'
+            if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.PSObject.Properties['TestResults']) {
+                $testResult = $AuditData.CITests.TestResults | Where-Object { $_.Module -eq $module }
+                if ($testResult) {
+                    $actualTestStatus = if ($testResult.Success) { 'healthy' } else { 'error' }
+                }
+            }
+            
+            # Use actual test status if available, otherwise fall back to indicators
+            $status = if ($actualTestStatus -ne 'unknown') { 
+                $actualTestStatus 
+            } elseif ($moduleInfo.HasTests) { 
+                'warning'  # Has tests but no recent results
+            } else { 
+                'error'    # No tests at all
+            }
+            
             $healthClass = $moduleInfo.Health.ToLower() -replace ' ', '-'
             $functionCount = @($moduleInfo.Functions).Count
             
@@ -1050,9 +1102,9 @@ function New-ComprehensiveHtmlReport {
                         <h4>🚀 CI Test Results</h4>
                         <p>Status: $(if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.QualityMetrics) { '✅ Available' } else { '⚠️ No data' })</p>
                         $(if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.QualityMetrics) {
-                            "<p>Total Tests: <strong>$($AuditData.CITests.TotalTests)</strong></p>"
+                            "<p>Total Tests: <strong>$($AuditData.CITests.Summary.TotalTests)</strong></p>"
                             "<p>Success Rate: <strong>$($AuditData.CITests.QualityMetrics.SuccessRate)%</strong></p>"
-                            "<p>Duration: <strong>$([math]::Round($AuditData.CITests.TotalDuration, 2))s</strong></p>"
+                            "<p>Duration: <strong>$([math]::Round($AuditData.CITests.Summary.TotalDuration, 2))s</strong></p>"
                         })
                     </div>
                     <div style="padding: 15px; background: #f8f9fa; border-radius: 5px;">
@@ -1165,16 +1217,16 @@ function New-ComprehensiveHtmlReport {
                     <div>
                         <h4>Test Summary</h4>
                         <ul>
-                            <li>Total Tests: <strong>$($AuditData.CITests.TotalTests)</strong></li>
-                            <li>Passed: <strong>$($AuditData.CITests.TotalPassed)</strong></li>
-                            <li>Failed: <strong>$($AuditData.CITests.TotalFailed)</strong></li>
+                            <li>Total Tests: <strong>$($AuditData.CITests.Summary.TotalTests)</strong></li>
+                            <li>Passed: <strong>$($AuditData.CITests.Summary.TotalPassed)</strong></li>
+                            <li>Failed: <strong>$($AuditData.CITests.Summary.TotalFailed)</strong></li>
                             <li>Success Rate: <strong>$($AuditData.CITests.QualityMetrics.SuccessRate)%</strong></li>
                         </ul>
                     </div>
                     <div>
                         <h4>Performance Metrics</h4>
                         <ul>
-                            <li>Total Duration: <strong>$([math]::Round($AuditData.CITests.TotalDuration, 2))s</strong></li>
+                            <li>Total Duration: <strong>$([math]::Round($AuditData.CITests.Summary.TotalDuration, 2))s</strong></li>
                             <li>Tests/Second: <strong>$($AuditData.CITests.QualityMetrics.Performance.TestsPerSecond)</strong></li>
                             <li>Average Test Duration: <strong>$([math]::Round($AuditData.CITests.QualityMetrics.Performance.AverageTestDuration, 3))s</strong></li>
                             <li>Test Mode: <strong>$($AuditData.CITests.QualityMetrics.Performance.Mode)</strong></li>
@@ -1205,18 +1257,26 @@ function New-ComprehensiveHtmlReport {
                     </thead>
                     <tbody>
 "@
-            foreach ($suite in $AuditData.CITests.TestSuites) {
-                $statusClass = if ($suite.Result -eq 'Passed') { 'status-healthy' } else { 'status-critical' }
-                $durationRounded = [math]::Round($suite.Duration, 2)
-                
+            if ($AuditData.CITests.TestSuites -and @($AuditData.CITests.TestSuites).Count -gt 0) {
+                foreach ($suite in $AuditData.CITests.TestSuites) {
+                    $statusClass = if ($suite.Result -eq 'Passed') { 'status-healthy' } else { 'status-critical' }
+                    $durationRounded = [math]::Round($suite.Duration, 2)
+                    
+                    $html += @"
+                            <tr>
+                                <td><strong>$($suite.TestSuite)</strong></td>
+                                <td>$($suite.TotalCount)</td>
+                                <td>$($suite.PassedCount)</td>
+                                <td>$($suite.FailedCount)</td>
+                                <td>${durationRounded}s</td>
+                                <td><span class="status-indicator $statusClass"></span>$($suite.Result)</td>
+                            </tr>
+"@
+                }
+            } else {
                 $html += @"
                         <tr>
-                            <td><strong>$($suite.TestSuite)</strong></td>
-                            <td>$($suite.TotalCount)</td>
-                            <td>$($suite.PassedCount)</td>
-                            <td>$($suite.FailedCount)</td>
-                            <td>${durationRounded}s</td>
-                            <td><span class="status-indicator $statusClass"></span>$($suite.Result)</td>
+                            <td colspan="6"><em>No test suite details available</em></td>
                         </tr>
 "@
             }

@@ -531,7 +531,7 @@ function Get-TestConfiguration {
 function Invoke-ParallelTestExecution {
     <#
     .SYNOPSIS
-        Executes tests in parallel using ParallelExecution module
+        Executes tests in parallel using enhanced job management
     #>
     [CmdletBinding()]
     param(
@@ -542,17 +542,19 @@ function Invoke-ParallelTestExecution {
         [string]$OutputPath
     )
 
-    Write-TestLog "🔄 Starting parallel test execution" -Level "INFO"
+    Write-TestLog "🔄 Starting enhanced parallel test execution" -Level "INFO"
 
     # Try to import ParallelExecution module
     $parallelModule = Import-ProjectModule -ModuleName "ParallelExecution"
     if (-not $parallelModule) {
-        Write-TestLog "⚠️  ParallelExecution module unavailable, falling back to sequential" -Level "WARN"
-        return Invoke-SequentialTestExecution -TestPlan $TestPlan -OutputPath $OutputPath
+        Write-TestLog "⚠️  ParallelExecution module unavailable, using built-in parallel execution" -Level "WARN"
+        return Invoke-BuiltInParallelExecution -TestPlan $TestPlan -OutputPath $OutputPath
     }
 
     $allResults = @()
-    $maxJobs = $TestPlan.Configuration.ParallelJobs
+    $maxJobs = [Math]::Min($TestPlan.Configuration.ParallelJobs, ([Environment]::ProcessorCount))
+    
+    Write-TestLog "Using $maxJobs parallel jobs" -Level "INFO"
 
     foreach ($phase in $TestPlan.TestPhases) {
         Write-TestLog "🏃‍♂️ Executing test phase: $phase" -Level "INFO"
@@ -565,44 +567,211 @@ function Invoke-ParallelTestExecution {
                 Phase = $phase
                 TestPath = $module.TestPath
                 Configuration = $TestPlan.Configuration
-                TestingFrameworkPath = $PSScriptRoot  # Pass the module path
+                TestingFrameworkPath = $PSScriptRoot
+                ProjectRoot = $script:ProjectRoot
+                OutputPath = $OutputPath
             }
         }
 
-        # Execute jobs in parallel
-        $phaseResults = Invoke-ParallelForEach -InputObject $testJobs -ScriptBlock {
-            param($testJob)
+        # Execute jobs in parallel with enhanced error handling
+        try {
+            $phaseResults = Invoke-ParallelForEach -InputObject $testJobs -ScriptBlock {
+                param($testJob)
 
-            try {
-                # Import TestingFramework module in the job context
-                Import-Module $testJob.TestingFrameworkPath -Force
+                # Set up isolated environment for this job
+                $ErrorActionPreference = 'Stop'
                 
-                $result = Invoke-ModuleTestPhase -ModuleName $testJob.ModuleName -Phase $testJob.Phase -TestPath $testJob.TestPath -Configuration $testJob.Configuration
-                return @{
-                    Success = ($result.TestsFailed -eq 0)
-                    Module = $testJob.ModuleName
-                    Phase = $testJob.Phase
-                    Result = $result
-                    Duration = $result.Duration
-                    TestsRun = $result.TestsRun
-                    TestsPassed = $result.TestsPassed
-                    TestsFailed = $result.TestsFailed
-                    Details = $result.Details
+                try {
+                    # Re-import required modules in job context
+                    if ($testJob.ProjectRoot) {
+                        $env:PROJECT_ROOT = $testJob.ProjectRoot
+                    }
+                    
+                    # Import TestingFramework module in the job context
+                    Import-Module $testJob.TestingFrameworkPath -Force -ErrorAction Stop
+                    
+                    # Execute the test phase
+                    $result = Invoke-ModuleTestPhase -ModuleName $testJob.ModuleName -Phase $testJob.Phase -TestPath $testJob.TestPath -Configuration $testJob.Configuration
+                    
+                    return @{
+                        Success = ($result.TestsFailed -eq 0)
+                        Module = $testJob.ModuleName
+                        Phase = $testJob.Phase
+                        Result = $result
+                        Duration = $result.Duration
+                        TestsRun = $result.TestsRun
+                        TestsPassed = $result.TestsPassed
+                        TestsFailed = $result.TestsFailed
+                        Details = $result.Details
+                        JobId = [System.Threading.Thread]::CurrentThread.ManagedThreadId
+                    }
+                } catch {
+                    return @{
+                        Success = $false
+                        Module = $testJob.ModuleName
+                        Phase = $testJob.Phase
+                        Error = $_.Exception.Message
+                        Duration = 0
+                        TestsRun = 0
+                        TestsPassed = 0
+                        TestsFailed = 1
+                        Details = @("Parallel execution error: $($_.Exception.Message)", "Stack: $($_.ScriptStackTrace)")
+                        JobId = [System.Threading.Thread]::CurrentThread.ManagedThreadId
+                    }
                 }
-            } catch {
-                return @{
+            } -ThrottleLimit $maxJobs
+
+            $allResults += $phaseResults
+
+            # Enhanced phase summary
+            $phaseSuccess = ($phaseResults | Where-Object { $_.Success }).Count
+            $phaseTotal = $phaseResults.Count
+            $phaseErrors = ($phaseResults | Where-Object { $_.Error }).Count
+            
+            Write-TestLog "✅ Phase $phase completed: $phaseSuccess/$phaseTotal successful, $phaseErrors errors" -Level "INFO"
+            
+            # Log individual failures for debugging
+            $failedJobs = $phaseResults | Where-Object { -not $_.Success }
+            foreach ($failed in $failedJobs) {
+                Write-TestLog "❌ Failed: $($failed.Module) - $($failed.Error)" -Level "ERROR"
+            }
+            
+        } catch {
+            Write-TestLog "❌ Phase $phase execution failed: $($_.Exception.Message)" -Level "ERROR"
+            
+            # Create error results for all modules in this phase
+            $errorResults = @()
+            foreach ($module in $TestPlan.Modules) {
+                $errorResults += @{
                     Success = $false
-                    Module = $testJob.ModuleName
-                    Phase = $testJob.Phase
-                    Error = $_.Exception.Message
+                    Module = $module.Name
+                    Phase = $phase
+                    Error = "Phase execution failed: $($_.Exception.Message)"
                     Duration = 0
                     TestsRun = 0
                     TestsPassed = 0
                     TestsFailed = 1
-                    Details = @("Error: $($_.Exception.Message)")
+                    Details = @("Phase execution error: $($_.Exception.Message)")
                 }
             }
-        } -ThrottleLimit $maxJobs
+            $allResults += $errorResults
+        }
+    }
+
+    return ,$allResults
+}
+
+function Invoke-BuiltInParallelExecution {
+    <#
+    .SYNOPSIS
+        Built-in parallel execution using PowerShell jobs as fallback
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$TestPlan,
+
+        [Parameter(Mandatory)]
+        [string]$OutputPath
+    )
+
+    Write-TestLog "🔄 Using built-in parallel execution" -Level "INFO"
+
+    $allResults = @()
+    $maxJobs = [Math]::Min($TestPlan.Configuration.ParallelJobs, ([Environment]::ProcessorCount))
+
+    foreach ($phase in $TestPlan.TestPhases) {
+        Write-TestLog "🏃‍♂️ Executing test phase: $phase" -Level "INFO"
+
+        $jobs = @()
+        
+        # Start jobs for each module
+        foreach ($module in $TestPlan.Modules) {
+            $job = Start-Job -ScriptBlock {
+                param($ModuleName, $Phase, $TestPath, $Configuration, $FrameworkPath, $ProjectRoot)
+                
+                $ErrorActionPreference = 'Stop'
+                
+                try {
+                    # Set up environment
+                    if ($ProjectRoot) {
+                        $env:PROJECT_ROOT = $ProjectRoot
+                    }
+                    
+                    # Import required modules
+                    Import-Module $FrameworkPath -Force
+                    
+                    # Execute the test phase
+                    $result = Invoke-ModuleTestPhase -ModuleName $ModuleName -Phase $Phase -TestPath $TestPath -Configuration $Configuration
+                    
+                    return @{
+                        Success = ($result.TestsFailed -eq 0)
+                        Module = $ModuleName
+                        Phase = $Phase
+                        Result = $result
+                        Duration = $result.Duration
+                        TestsRun = $result.TestsRun
+                        TestsPassed = $result.TestsPassed
+                        TestsFailed = $result.TestsFailed
+                        Details = $result.Details
+                    }
+                } catch {
+                    return @{
+                        Success = $false
+                        Module = $ModuleName
+                        Phase = $Phase
+                        Error = $_.Exception.Message
+                        Duration = 0
+                        TestsRun = 0
+                        TestsPassed = 0
+                        TestsFailed = 1
+                        Details = @("Built-in parallel execution error: $($_.Exception.Message)")
+                    }
+                }
+            } -ArgumentList $module.Name, $phase, $module.TestPath, $TestPlan.Configuration, $PSScriptRoot, $script:ProjectRoot
+            
+            $jobs += $job
+            
+            # Throttle job creation
+            while ((Get-Job -State Running).Count -ge $maxJobs) {
+                Start-Sleep -Milliseconds 100
+            }
+        }
+
+        # Wait for all jobs to complete with timeout
+        $timeout = New-TimeSpan -Minutes ($TestPlan.Configuration.TimeoutMinutes ?? 30)
+        $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+        
+        while ($jobs | Where-Object { $_.State -eq 'Running' }) {
+            if ($stopwatch.Elapsed -gt $timeout) {
+                Write-TestLog "⏱️ Jobs timed out after $($timeout.TotalMinutes) minutes" -Level "WARN"
+                $jobs | Where-Object { $_.State -eq 'Running' } | Stop-Job
+                break
+            }
+            Start-Sleep -Seconds 1
+        }
+
+        # Collect results
+        $phaseResults = @()
+        foreach ($job in $jobs) {
+            try {
+                $result = Receive-Job -Job $job -ErrorAction Stop
+                $phaseResults += $result
+            } catch {
+                $phaseResults += @{
+                    Success = $false
+                    Module = "Unknown"
+                    Phase = $phase
+                    Error = "Job failed: $($_.Exception.Message)"
+                    Duration = 0
+                    TestsRun = 0
+                    TestsPassed = 0
+                    TestsFailed = 1
+                    Details = @("Job execution error: $($_.Exception.Message)")
+                }
+            }
+            Remove-Job -Job $job
+        }
 
         $allResults += $phaseResults
 
@@ -779,7 +948,7 @@ function Invoke-UnitTests {
     [CmdletBinding()]
     param($ModuleName, $TestPath, $Configuration)
 
-    # Look for test files in multiple possible locations
+    # Enhanced test file discovery with better path resolution
     $testLocations = @(
         $TestPath,
         (Join-Path $script:ProjectRoot "tests/unit/modules/$ModuleName"),
@@ -788,9 +957,12 @@ function Invoke-UnitTests {
     )
 
     $actualTestPath = $null
+    $testFileType = "Unknown"
+    
     foreach ($location in $testLocations) {
         if (Test-Path $location) {
             $actualTestPath = $location
+            $testFileType = if ($location -match "\.ps1$") { "File" } else { "Directory" }
             break
         }
     }
@@ -803,14 +975,27 @@ function Invoke-UnitTests {
             TestsRun = 0
             TestsPassed = 0
             TestsFailed = 0
-            Details = @("No unit tests found - skipped")
+            Details = @("No unit tests found - skipped", "Searched locations: $($testLocations -join ', ')")
         }
     }
 
-    # Use Pester to run unit tests
+    # Use Pester to run unit tests with enhanced error handling
     try {
-        Import-Module Pester -Force -ErrorAction Stop
+        # Ensure Pester is available
+        $pesterModule = Get-Module -Name Pester -ListAvailable | Sort-Object Version -Descending | Select-Object -First 1
+        if (-not $pesterModule) {
+            throw "Pester module not found. Please install Pester 5.0+."
+        }
 
+        # Import Pester with explicit version check
+        Import-Module Pester -Force -ErrorAction Stop
+        $pesterVersion = (Get-Module Pester).Version
+        
+        if ($pesterVersion.Major -lt 5) {
+            throw "Pester version $pesterVersion is not supported. Please upgrade to Pester 5.0+."
+        }
+
+        # Create and configure Pester configuration
         $pesterConfig = New-PesterConfiguration
         $pesterConfig.Run.Path = $actualTestPath
         $pesterConfig.Run.PassThru = $true
@@ -821,50 +1006,152 @@ function Invoke-UnitTests {
             default { "Normal" }
         }
 
-        # Enhanced Pester 5.x configuration
+        # Enhanced output configuration
         $pesterConfig.TestResult.Enabled = $true
         $pesterConfig.TestResult.OutputFormat = "NUnitXml"
-        $pesterConfig.TestResult.OutputPath = Join-Path $env:TEST_OUTPUT_PATH "pester-results-$ModuleName.xml"
+        
+        # Ensure output directory exists
+        $outputPath = if ($env:TEST_OUTPUT_PATH) { $env:TEST_OUTPUT_PATH } else { Join-Path $script:ProjectRoot "tests/results" }
+        if (-not (Test-Path $outputPath)) {
+            New-Item -Path $outputPath -ItemType Directory -Force | Out-Null
+        }
+        
+        $pesterConfig.TestResult.OutputPath = Join-Path $outputPath "pester-results-$ModuleName.xml"
 
-        # Code coverage if available
+        # Code coverage configuration with validation
         if ($Configuration.EnableCoverage -and (Test-Path $actualTestPath)) {
-            $pesterConfig.CodeCoverage.Enabled = $true
-            $pesterConfig.CodeCoverage.Path = $actualTestPath
-            $pesterConfig.CodeCoverage.OutputFormat = "JaCoCo"
-            $pesterConfig.CodeCoverage.OutputPath = Join-Path $env:TEST_OUTPUT_PATH "coverage-$ModuleName.xml"
+            try {
+                $pesterConfig.CodeCoverage.Enabled = $true
+                $pesterConfig.CodeCoverage.Path = $actualTestPath
+                $pesterConfig.CodeCoverage.OutputFormat = "JaCoCo"
+                $pesterConfig.CodeCoverage.OutputPath = Join-Path $outputPath "coverage-$ModuleName.xml"
+            } catch {
+                Write-TestLog "Code coverage configuration failed: $($_.Exception.Message)" -Level "WARN"
+            }
         }
 
         # Performance and timeout settings
-        # Note: Timeout property may not exist in all Pester versions
-        # $pesterConfig.Run.Timeout = [TimeSpan]::FromMinutes($Configuration.TimeoutMinutes)
         $pesterConfig.Run.Exit = $false
+        
+        # Add timeout if supported
+        if ($pesterConfig.Run.PSObject.Properties.Name -contains "Timeout") {
+            $pesterConfig.Run.Timeout = [TimeSpan]::FromMinutes($Configuration.TimeoutMinutes ?? 10)
+        }
 
-        $pesterResult = Invoke-Pester -Configuration $pesterConfig
+        # Execute Pester tests with enhanced isolation and timeout
+        $testStartTime = Get-Date
+        $pesterResult = $null
+        
+        # Try to use TestIsolation module for better test isolation
+        $isolationModule = Get-Module -Name TestIsolation -ErrorAction SilentlyContinue
+        if (-not $isolationModule) {
+            $isolationPath = Join-Path $script:ProjectRoot "tests/TestIsolation.psm1"
+            if (Test-Path $isolationPath) {
+                try {
+                    Import-Module $isolationPath -Force -ErrorAction Stop
+                    $isolationModule = Get-Module -Name TestIsolation
+                } catch {
+                    Write-TestLog "Failed to import TestIsolation module: $($_.Exception.Message)" -Level "WARN"
+                }
+            }
+        }
+        
+        if ($isolationModule) {
+            # Use enhanced isolation
+            try {
+                $pesterResult = Invoke-PesterWithIsolation -TestPath $actualTestPath -PesterConfiguration @{
+                    Run = @{
+                        Path = $actualTestPath
+                        PassThru = $true
+                        Exit = $false
+                    }
+                    TestResult = @{
+                        Enabled = $true
+                        OutputFormat = "NUnitXml"
+                        OutputPath = $pesterConfig.TestResult.OutputPath
+                    }
+                    Output = @{
+                        Verbosity = $pesterConfig.Output.Verbosity
+                    }
+                } -IsolateModules -IsolateEnvironment -PreserveModules @('Microsoft.PowerShell.Core', 'Microsoft.PowerShell.Utility', 'Microsoft.PowerShell.Management', 'Pester', 'TestHelpers')
+                
+                Write-TestLog "Pester executed with isolation" -Level "INFO"
+                
+            } catch {
+                Write-TestLog "Isolated Pester execution failed: $($_.Exception.Message)" -Level "WARN"
+                Write-TestLog "Falling back to standard execution" -Level "INFO"
+                $isolationModule = $null
+            }
+        }
+        
+        # Fallback to standard execution with timeout
+        if (-not $isolationModule -or -not $pesterResult) {
+            $testJob = Start-Job -ScriptBlock {
+                param($TestPath, $Config)
+                Import-Module Pester -Force
+                Invoke-Pester -Configuration $Config
+            } -ArgumentList $actualTestPath, $pesterConfig
+            
+            $timeoutMinutes = $Configuration.TimeoutMinutes ?? 10
+            $testCompleted = Wait-Job -Job $testJob -Timeout ($timeoutMinutes * 60)
+            
+            if ($testCompleted) {
+                $pesterResult = Receive-Job -Job $testJob
+            } else {
+                Write-TestLog "Test execution timed out after $timeoutMinutes minutes" -Level "WARN"
+                Stop-Job -Job $testJob
+                throw "Test execution timed out after $timeoutMinutes minutes"
+            }
+            
+            Remove-Job -Job $testJob
+        }
 
-        # Handle both Pester 4.x and 5.x result formats
+        # Enhanced result parsing with multiple fallback strategies
         $totalCount = 0
         $passedCount = 0
         $failedCount = 0
+        $skippedCount = 0
+        $details = @()
 
         if ($pesterResult) {
-            # Pester 5.x format
+            # Pester 5.x format - primary
             if ($null -ne $pesterResult.Tests) {
                 $totalCount = $pesterResult.Tests.Count
                 $passedCount = ($pesterResult.Tests | Where-Object { $_.Result -eq 'Passed' }).Count
                 $failedCount = ($pesterResult.Tests | Where-Object { $_.Result -eq 'Failed' }).Count
+                $skippedCount = ($pesterResult.Tests | Where-Object { $_.Result -eq 'Skipped' }).Count
+                
+                # Add details about failed tests
+                $failedTests = $pesterResult.Tests | Where-Object { $_.Result -eq 'Failed' }
+                foreach ($failed in $failedTests) {
+                    $details += "Failed: $($failed.Name) - $($failed.ErrorRecord.Exception.Message)"
+                }
             }
             # Pester 4.x format fallback
             elseif ($null -ne $pesterResult.TotalCount) {
                 $totalCount = $pesterResult.TotalCount
                 $passedCount = $pesterResult.PassedCount
                 $failedCount = $pesterResult.FailedCount
+                $skippedCount = $pesterResult.SkippedCount ?? 0
             }
             # Additional Pester 5.x properties check
             elseif ($null -ne $pesterResult.Passed -or $null -ne $pesterResult.Failed) {
                 $passedCount = if ($pesterResult.Passed) { $pesterResult.Passed.Count } else { 0 }
                 $failedCount = if ($pesterResult.Failed) { $pesterResult.Failed.Count } else { 0 }
-                $totalCount = $passedCount + $failedCount
+                $skippedCount = if ($pesterResult.Skipped) { $pesterResult.Skipped.Count } else { 0 }
+                $totalCount = $passedCount + $failedCount + $skippedCount
             }
+            
+            # Add general details
+            $details += "Pester tests executed from: $actualTestPath ($testFileType)"
+            $details += "Pester version: $($pesterVersion)"
+            $details += "Execution time: $((Get-Date) - $testStartTime)"
+            
+            if ($skippedCount -gt 0) {
+                $details += "Skipped tests: $skippedCount"
+            }
+        } else {
+            throw "No Pester results returned"
         }
 
         return @{
@@ -873,17 +1160,35 @@ function Invoke-UnitTests {
             TestsRun = $totalCount
             TestsPassed = $passedCount
             TestsFailed = $failedCount
-            Details = @("Pester tests executed from: $actualTestPath", "Pester version: $(if ($pesterResult.PSVersion) { $pesterResult.PSVersion } else { 'Unknown' })")
+            TestsSkipped = $skippedCount
+            Details = $details
+            TestPath = $actualTestPath
+            PesterVersion = $pesterVersion.ToString()
         }
 
     } catch {
+        $errorDetails = @(
+            "Pester execution failed: $($_.Exception.Message)",
+            "Test path: $actualTestPath",
+            "Module: $ModuleName",
+            "Configuration: $($Configuration | ConvertTo-Json -Depth 1 -Compress)"
+        )
+        
+        # Add stack trace for debugging
+        if ($_.ScriptStackTrace) {
+            $errorDetails += "Stack trace: $($_.ScriptStackTrace)"
+        }
+        
         return @{
             ModuleName = $ModuleName
             Phase = "Unit"
             TestsRun = 0
             TestsPassed = 0
             TestsFailed = 1
-            Details = @("Pester execution failed: $($_.Exception.Message)")
+            TestsSkipped = 0
+            Details = $errorDetails
+            TestPath = $actualTestPath
+            Error = $_.Exception.Message
         }
     }
 }
@@ -1051,7 +1356,7 @@ function Invoke-NonInteractiveTests {
 function New-TestReport {
     <#
     .SYNOPSIS
-        Generates comprehensive test reports in multiple formats
+        Generates comprehensive test reports in multiple formats with enhanced analysis
     #>
     [CmdletBinding()]
     param(
@@ -1069,7 +1374,12 @@ function New-TestReport {
     $reportTimestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
     $reportDir = Join-Path $OutputPath "reports"
 
-    # Generate summary statistics
+    # Ensure report directory exists
+    if (-not (Test-Path $reportDir)) {
+        New-Item -Path $reportDir -ItemType Directory -Force | Out-Null
+    }
+
+    # Generate enhanced summary statistics
     $summary = @{
         TestSuite = $TestSuite
         Timestamp = Get-Date
@@ -1077,9 +1387,13 @@ function New-TestReport {
         TotalTests = ($Results | Measure-Object -Property TestsRun -Sum).Sum
         TotalPassed = ($Results | Measure-Object -Property TestsPassed -Sum).Sum
         TotalFailed = ($Results | Measure-Object -Property TestsFailed -Sum).Sum
+        TotalSkipped = ($Results | Measure-Object -Property TestsSkipped -Sum).Sum
         SuccessfulModules = ($Results | Where-Object { $_.Success -eq $true }).Count
         FailedModules = ($Results | Where-Object { $_.Success -eq $false }).Count
         TotalDuration = ($Results | Measure-Object -Property Duration -Sum).Sum
+        AverageDuration = if ($Results.Count -gt 0) { ($Results | Measure-Object -Property Duration -Average).Average } else { 0 }
+        SlowestModule = ($Results | Sort-Object Duration -Descending | Select-Object -First 1).Module
+        FastestModule = ($Results | Sort-Object Duration | Select-Object -First 1).Module
     }
 
     # Calculate success rate
@@ -1087,17 +1401,44 @@ function New-TestReport {
         [Math]::Round(($summary.TotalPassed / $summary.TotalTests) * 100, 2)
     } else { 0 }
 
-    # Generate JSON report
+    # Add failure analysis
+    $failureAnalysis = @{
+        ModulesWithFailures = $Results | Where-Object { $_.TestsFailed -gt 0 } | Select-Object Module, TestsFailed, @{Name="FailureRate"; Expression={[Math]::Round(($_.TestsFailed / $_.TestsRun) * 100, 2)}}
+        CommonFailurePatterns = @()
+        CriticalFailures = @()
+    }
+
+    # Analyze failure patterns
+    $failedResults = $Results | Where-Object { $_.TestsFailed -gt 0 }
+    foreach ($failed in $failedResults) {
+        if ($failed.Details) {
+            foreach ($detail in $failed.Details) {
+                if ($detail -match "Failed:|Error:|Exception:") {
+                    $failureAnalysis.CommonFailurePatterns += $detail
+                }
+            }
+        }
+        
+        # Mark critical failures (modules with >50% failure rate)
+        if ($failed.TestsRun -gt 0 -and ($failed.TestsFailed / $failed.TestsRun) -gt 0.5) {
+            $failureAnalysis.CriticalFailures += $failed.Module
+        }
+    }
+
+    # Generate enhanced JSON report
     $jsonReport = @{
         Summary = $summary
         Results = $Results
+        FailureAnalysis = $failureAnalysis
+        GeneratedBy = "AitherZero TestingFramework"
+        Version = "1.0.0"
     }
     $jsonPath = Join-Path $reportDir "test-report-$reportTimestamp.json"
     $jsonReport | ConvertTo-Json -Depth 10 | Out-File -FilePath $jsonPath -Encoding UTF8
 
-    # Generate HTML report
+    # Generate enhanced HTML report
     $htmlPath = Join-Path $reportDir "test-report-$reportTimestamp.html"
-    $htmlContent = New-HTMLTestReport -Summary $summary -Results $Results
+    $htmlContent = New-EnhancedHTMLTestReport -Summary $summary -Results $Results -FailureAnalysis $failureAnalysis
     $htmlContent | Out-File -FilePath $htmlPath -Encoding UTF8
 
     # Generate summary log
@@ -1105,12 +1446,215 @@ function New-TestReport {
     $logContent = New-LogTestReport -Summary $summary -Results $Results
     $logContent | Out-File -FilePath $logPath -Encoding UTF8
 
-    Write-TestLog "📊 Reports generated:" -Level "SUCCESS"
+    # Generate CSV report for data analysis
+    $csvPath = Join-Path $reportDir "test-results-$reportTimestamp.csv"
+    $csvContent = New-CSVTestReport -Results $Results
+    $csvContent | Out-File -FilePath $csvPath -Encoding UTF8
+
+    Write-TestLog "📊 Enhanced reports generated:" -Level "SUCCESS"
     Write-TestLog "  JSON: $jsonPath" -Level "INFO"
     Write-TestLog "  HTML: $htmlPath" -Level "INFO"
     Write-TestLog "  Log: $logPath" -Level "INFO"
+    Write-TestLog "  CSV: $csvPath" -Level "INFO"
 
     return $htmlPath
+}
+
+function New-EnhancedHTMLTestReport {
+    <#
+    .SYNOPSIS
+        Generates enhanced HTML test report with failure analysis
+    #>
+    [CmdletBinding()]
+    param($Summary, $Results, $FailureAnalysis)
+
+    $statusColor = if ($Summary.SuccessRate -ge 95) { "green" } elseif ($Summary.SuccessRate -ge 80) { "orange" } else { "red" }
+
+    # Generate failure analysis section
+    $failureAnalysisHtml = ""
+    if ($FailureAnalysis.CriticalFailures.Count -gt 0) {
+        $failureAnalysisHtml = @"
+    <div class="failure-analysis">
+        <h2>🔍 Failure Analysis</h2>
+        <div class="critical-failures">
+            <h3>Critical Failures (>50% failure rate)</h3>
+            <ul>
+"@
+        foreach ($critical in $FailureAnalysis.CriticalFailures) {
+            $failureAnalysisHtml += "<li>$critical</li>"
+        }
+        $failureAnalysisHtml += "</ul></div></div>"
+    }
+
+    $html = @"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AitherZero Test Report - Enhanced</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        .header { background-color: #2c3e50; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .summary { background-color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .metric { display: inline-block; margin: 10px 20px 10px 0; }
+        .metric-value { font-size: 2em; font-weight: bold; color: $statusColor; }
+        .metric-label { font-size: 0.9em; color: #666; }
+        .results { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .failure-analysis { background-color: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ffc107; }
+        .module-result { margin: 10px 0; padding: 15px; border-left: 4px solid #ddd; background-color: #f9f9f9; }
+        .success { border-left-color: #27ae60; }
+        .failure { border-left-color: #e74c3c; }
+        .phase { margin: 5px 0; font-size: 0.9em; }
+        .details { margin-top: 10px; font-size: 0.8em; color: #666; }
+        .performance-metrics { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .chart { display: flex; justify-content: space-around; margin: 20px 0; }
+        .chart-item { text-align: center; }
+        .progress-bar { width: 200px; height: 20px; background-color: #e0e0e0; border-radius: 10px; overflow: hidden; margin: 10px auto; }
+        .progress-fill { height: 100%; background-color: $statusColor; transition: width 0.3s ease; }
+        .critical-failure { background-color: #f8d7da; border-left-color: #dc3545; }
+        .expandable { cursor: pointer; }
+        .expandable:hover { background-color: #f0f0f0; }
+        .details-expanded { display: block; }
+        .details-collapsed { display: none; }
+    </style>
+    <script>
+        function toggleDetails(element) {
+            const details = element.nextElementSibling;
+            if (details.classList.contains('details-collapsed')) {
+                details.classList.remove('details-collapsed');
+                details.classList.add('details-expanded');
+                element.textContent = element.textContent.replace('▶', '▼');
+            } else {
+                details.classList.remove('details-expanded');
+                details.classList.add('details-collapsed');
+                element.textContent = element.textContent.replace('▼', '▶');
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="header">
+        <h1>🧪 AitherZero Test Report - Enhanced</h1>
+        <p>Test Suite: $($Summary.TestSuite) | Generated: $($Summary.Timestamp)</p>
+    </div>
+
+    <div class="summary">
+        <h2>📊 Test Summary</h2>
+        <div class="metric">
+            <div class="metric-value">$($Summary.SuccessRate)%</div>
+            <div class="metric-label">Success Rate</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">$($Summary.TotalPassed)</div>
+            <div class="metric-label">Tests Passed</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">$($Summary.TotalFailed)</div>
+            <div class="metric-label">Tests Failed</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">$($Summary.TotalSkipped)</div>
+            <div class="metric-label">Tests Skipped</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">$($Summary.SuccessfulModules)</div>
+            <div class="metric-label">Modules Passed</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">$([Math]::Round($Summary.TotalDuration, 2))s</div>
+            <div class="metric-label">Total Duration</div>
+        </div>
+    </div>
+
+    <div class="performance-metrics">
+        <h2>⚡ Performance Metrics</h2>
+        <div class="chart">
+            <div class="chart-item">
+                <div class="metric-label">Average Duration</div>
+                <div class="metric-value">$([Math]::Round($Summary.AverageDuration, 2))s</div>
+            </div>
+            <div class="chart-item">
+                <div class="metric-label">Slowest Module</div>
+                <div class="metric-value">$($Summary.SlowestModule)</div>
+            </div>
+            <div class="chart-item">
+                <div class="metric-label">Fastest Module</div>
+                <div class="metric-value">$($Summary.FastestModule)</div>
+            </div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: $($Summary.SuccessRate)%"></div>
+        </div>
+    </div>
+
+    $failureAnalysisHtml
+
+    <div class="results">
+        <h2>📋 Detailed Results</h2>
+"@
+
+    # Group results by module
+    $moduleGroups = $Results | Group-Object -Property Module
+    foreach ($moduleGroup in $moduleGroups) {
+        $moduleSuccess = ($moduleGroup.Group | Where-Object { $_.Success -eq $true }).Count -eq $moduleGroup.Count
+        $cssClass = if ($moduleSuccess) { "success" } else { "failure" }
+        $icon = if ($moduleSuccess) { "✅" } else { "❌" }
+        
+        # Check if this is a critical failure
+        $isCritical = $moduleGroup.Name -in $FailureAnalysis.CriticalFailures
+        $criticalClass = if ($isCritical) { " critical-failure" } else { "" }
+
+        $html += @"
+        <div class="module-result $cssClass$criticalClass">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>$icon $($moduleGroup.Name) $(if ($isCritical) { "🚨" } else { "" }) ▶</h3>
+            </div>
+            <div class="details details-collapsed">
+"@
+
+        foreach ($result in $moduleGroup.Group) {
+            $phaseIcon = if ($result.Success) { "✅" } else { "❌" }
+            $html += "<div class='phase'>$phaseIcon $($result.Phase): $($result.TestsPassed)/$($result.TestsRun) passed ($([Math]::Round($result.Duration, 2))s)</div>"
+
+            if ($result.Details) {
+                $html += "<div class='details'>"
+                foreach ($detail in $result.Details) {
+                    $html += "<div>• $detail</div>"
+                }
+                $html += "</div>"
+            }
+        }
+
+        $html += "</div></div>"
+    }
+
+    $html += @"
+    </div>
+
+    <div class="footer" style="text-align: center; margin-top: 20px; color: #666;">
+        <p>Generated by AitherZero TestingFramework v1.0.0 | $(Get-Date)</p>
+    </div>
+</body>
+</html>
+"@
+
+    return $html
+}
+
+function New-CSVTestReport {
+    <#
+    .SYNOPSIS
+        Generates CSV test report for data analysis
+    #>
+    [CmdletBinding()]
+    param($Results)
+
+    $csvContent = "Module,Phase,TestsRun,TestsPassed,TestsFailed,TestsSkipped,Duration,Success,Error`n"
+    
+    foreach ($result in $Results) {
+        $csvContent += "$($result.Module),$($result.Phase),$($result.TestsRun),$($result.TestsPassed),$($result.TestsFailed),$($result.TestsSkipped ?? 0),$($result.Duration),$($result.Success),$($result.Error -replace ',', ';')`n"
+    }
+
+    return $csvContent
 }
 
 function New-HTMLTestReport {
