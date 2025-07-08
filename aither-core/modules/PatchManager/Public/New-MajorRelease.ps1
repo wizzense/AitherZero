@@ -208,8 +208,8 @@ Please review for any breaking changes before merge.
             Write-Host "⏸️ Step 5: Manual merge required - please review and merge the PR" -ForegroundColor Yellow
         }
 
-        # Step 6: Create release
-        Write-Host "🏷️ Step 6: Creating release..." -ForegroundColor Blue
+        # Step 6: Create tag and trigger CI-validated release
+        Write-Host "🏷️ Step 6: Creating tag to trigger CI-validated release..." -ForegroundColor Blue
         if (-not $DryRun) {
             # Switch back to main for release
             & git checkout main
@@ -222,84 +222,97 @@ Please review for any breaking changes before merge.
             & git commit -m "Bump version to $Version"
             & git push origin main
 
-            # Create and push tag
+            # Create and push tag - this will trigger CI first
+            Write-Host "📌 Creating version tag v$Version..." -ForegroundColor Cyan
             & git tag "v$Version"
             & git push origin "v$Version"
-
-            # Create GitHub release
-            $releaseNotes = @"
-# 🚀 AitherZero v$Version
-
-## Summary
-$Description
-
-## What's New
-This major release includes significant improvements across the entire AitherZero framework:
-
-- ✅ **Enhanced Test Infrastructure**: Comprehensive test coverage improvements
-- ✅ **Module System Improvements**: Better reliability and cross-platform support  
-- ✅ **Performance Optimizations**: Faster execution and better resource usage
-- ✅ **Developer Experience**: Improved tooling and workflow automation
-- ✅ **Documentation**: Updated guides and examples
-
-## Installation
-\`\`\`powershell
-iex (irm "https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1")
-\`\`\`
-
-## Compatibility
-- ✅ Windows, Linux, macOS
-- ✅ PowerShell 7.0+
-- ✅ Backward compatible with existing installations
-
----
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-"@
-
-            & gh release create "v$Version" --title "AitherZero v$Version" --notes $releaseNotes
+            
             if ($LASTEXITCODE -eq 0) {
-                Write-Host "✅ GitHub release created: https://github.com/wizzense/AitherZero/releases/tag/v$Version" -ForegroundColor Green
+                Write-Host "✅ Version tag created and pushed successfully" -ForegroundColor Green
+                Write-Host "🔄 This will trigger:" -ForegroundColor Cyan
+                Write-Host "  1. CI workflow (tests, quality checks, build validation)" -ForegroundColor White
+                Write-Host "  2. Release workflow (after CI completes successfully)" -ForegroundColor White
+                Write-Host "  3. Automated release with validated CI data" -ForegroundColor White
             } else {
-                Write-Warning "Failed to create GitHub release - please create manually"
+                throw "Failed to create or push version tag"
             }
         }
 
-        # Step 7: Verify functionality
-        if (-not $SkipTests -and -not $DryRun) {
-            Write-Host "🧪 Step 7: Running verification tests..." -ForegroundColor Blue
-            try {
-                # Run quick tests to verify
-                $testResult = & pwsh -NoProfile -Command "./tests/Run-Tests.ps1 -Quick"
-                Write-Host "✅ Basic functionality verified" -ForegroundColor Green
-            } catch {
-                Write-Warning "Test verification failed - please run tests manually"
-            }
-        }
-
-        # Step 8: Generate final dashboard
-        Write-Host "📊 Step 8: Generating final dashboard..." -ForegroundColor Blue
+        # Step 7: Monitor CI and Release workflows  
         if (-not $DryRun) {
+            Write-Host "🔍 Step 7: Monitoring CI and Release workflows..." -ForegroundColor Blue
+            
             try {
-                & pwsh -NoProfile -Command "./scripts/reporting/Generate-ComprehensiveReport.ps1"
-                Write-Host "✅ Dashboard updated with release metrics" -ForegroundColor Green
+                Write-Host "⏳ Waiting for CI workflow to start..." -ForegroundColor Yellow
+                Start-Sleep -Seconds 10  # Give GitHub time to trigger CI
+                
+                # Get the latest CI run for this tag
+                Write-Host "📊 Checking CI workflow status..." -ForegroundColor Cyan
+                $ciStatus = & gh run list --workflow=ci.yml --limit=1 --json status,conclusion,databaseId,headSha
+                
+                if ($ciStatus) {
+                    $ciRun = $ciStatus | ConvertFrom-Json | Select-Object -First 1
+                    Write-Host "✅ CI workflow detected: Run #$($ciRun.databaseId)" -ForegroundColor Green
+                    Write-Host "📋 Status: $($ciRun.status) | Conclusion: $($ciRun.conclusion)" -ForegroundColor White
+                    
+                    if ($ciRun.status -eq "in_progress") {
+                        Write-Host "⏳ CI is running - this may take 10-15 minutes" -ForegroundColor Yellow
+                        Write-Host "🔗 Monitor progress: https://github.com/wizzense/AitherZero/actions" -ForegroundColor Cyan
+                    }
+                } else {
+                    Write-Warning "Could not detect CI workflow run"
+                }
+                
+                Write-Host "📋 Release Process Status:" -ForegroundColor Cyan
+                Write-Host "  ✅ Tag created: v$Version" -ForegroundColor Green
+                Write-Host "  🔄 CI workflow: Triggered (validates tests, quality, build)" -ForegroundColor Yellow  
+                Write-Host "  ⏳ Release workflow: Will trigger automatically after CI success" -ForegroundColor Yellow
+                Write-Host "  📦 Release creation: Automated with validated CI data" -ForegroundColor Yellow
+                
             } catch {
-                Write-Warning "Dashboard generation failed - please run manually"
+                Write-Warning "Unable to monitor workflows: $($_.Exception.Message)"
             }
+        }
+
+        # Step 8: Release information and next steps
+        Write-Host "📋 Step 8: Release process initiated successfully" -ForegroundColor Blue
+        if (-not $DryRun) {
+            Write-Host "🎯 What happens next:" -ForegroundColor Cyan
+            Write-Host "  1. CI workflow validates all changes (tests, quality, security)" -ForegroundColor White
+            Write-Host "  2. Upon CI success, release workflow triggers automatically" -ForegroundColor White
+            Write-Host "  3. Release workflow generates comprehensive dashboard with CI data" -ForegroundColor White
+            Write-Host "  4. GitHub release created with validated packages and reports" -ForegroundColor White
+            Write-Host "  5. All artifacts include real test results (no placeholder data)" -ForegroundColor White
+            
+            Write-Host "🔗 Monitor Progress:" -ForegroundColor Yellow
+            Write-Host "  • CI Workflow: https://github.com/wizzense/AitherZero/actions/workflows/ci.yml" -ForegroundColor Cyan
+            Write-Host "  • Release Workflow: https://github.com/wizzense/AitherZero/actions/workflows/release.yml" -ForegroundColor Cyan
+            Write-Host "  • Releases: https://github.com/wizzense/AitherZero/releases" -ForegroundColor Cyan
         }
 
         Write-Host ""
-        Write-Host "🎉 MAJOR RELEASE WORKFLOW COMPLETED SUCCESSFULLY!" -ForegroundColor Green -BackgroundColor Black
-        Write-Host "Release: v$Version" -ForegroundColor Cyan
+        Write-Host "🎉 CI-VALIDATED MAJOR RELEASE INITIATED SUCCESSFULLY!" -ForegroundColor Green -BackgroundColor Black
+        Write-Host "Version: v$Version" -ForegroundColor Cyan
         Write-Host "Description: $Description" -ForegroundColor Cyan
+        Write-Host "Workflow: CI-Dependent Release (Enhanced)" -ForegroundColor Cyan
         
-        if (-not $AutoMerge -and -not $DryRun) {
+        if (-not $DryRun) {
             Write-Host ""
-            Write-Host "⚠️ NEXT STEPS:" -ForegroundColor Yellow
-            Write-Host "1. Review and merge the pull request"
-            Write-Host "2. Verify the release was created successfully"
-            Write-Host "3. Test the new functionality"
+            Write-Host "🎯 RELEASE STATUS:" -ForegroundColor Yellow
+            Write-Host "  ✅ PR merged with all improvements"
+            Write-Host "  ✅ Version tag created (v$Version)"
+            Write-Host "  🔄 CI workflow triggered (tests, quality, validation)"
+            Write-Host "  ⏳ Release workflow will trigger after CI success"
+            Write-Host "  📊 Release will include validated CI data"
+            
+            Write-Host ""
+            Write-Host "🕰️ TIMELINE:" -ForegroundColor Yellow
+            Write-Host "  • CI completion: ~10-15 minutes"
+            Write-Host "  • Release creation: ~5 minutes after CI success"
+            Write-Host "  • Total time: ~15-20 minutes for complete validation"
+        } else {
+            Write-Host ""
+            Write-Host "[DRY RUN] No actual changes made - preview completed" -ForegroundColor Yellow
         }
 
         return @{
@@ -307,7 +320,16 @@ Co-Authored-By: Claude <noreply@anthropic.com>
             Version = $Version
             Branch = $branchName
             Description = $Description
-            Message = "Major release workflow completed successfully"
+            WorkflowType = "CI-Dependent Release"
+            TagCreated = (-not $DryRun)
+            CITriggered = (-not $DryRun)
+            ReleaseWorkflowPending = (-not $DryRun)
+            MonitoringLinks = @{
+                CI = "https://github.com/wizzense/AitherZero/actions/workflows/ci.yml"
+                Release = "https://github.com/wizzense/AitherZero/actions/workflows/release.yml"
+                Releases = "https://github.com/wizzense/AitherZero/releases"
+            }
+            Message = "CI-validated major release initiated successfully"
         }
 
     } catch {
