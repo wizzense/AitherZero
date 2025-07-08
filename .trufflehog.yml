@@ -3,8 +3,8 @@
 
 # Global configuration
 global:
-  # Custom regex patterns to allow (reduce false positives)
-  allow:
+  # Custom regex patterns to allowlist (reduce false positives)
+  allowlist:
     # Test and example patterns
     - "test-.*-key"
     - "mock-.*-key"
@@ -48,7 +48,7 @@ excludePaths:
 detectors:
   # Generic API key detector
   - name: "GenericAPIKey"
-    allow:
+    allowlist:
       - "test-encryption-key-123"
       - "abc123-secret-key"
       - "test-api-key"
@@ -58,7 +58,7 @@ detectors:
     
   # Custom patterns for PowerShell
   - name: "PowerShellSecure"
-    allow:
+    allowlist:
       - "ConvertTo-SecureString.*ToBase64String.*Force"
       - "Generate.*AES.*key"
       - "New.*encryption.*key"

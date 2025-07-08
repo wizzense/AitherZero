@@ -206,11 +206,11 @@ try {
         "performance" {
             Write-CommandLog "Analyzing system performance..." -Level "INFO"
             
-            $host = $params.Host -or "all"
+            $targetHost = $params.Host -or "all"
             $metrics = $params.Metrics -or @("cpu", "memory", "disk", "network")
             
             Write-CommandLog "=== PERFORMANCE ANALYSIS ===" -Level "INFO"
-            Write-CommandLog "Target Host: $host" -Level "INFO"
+            Write-CommandLog "Target Host: $targetHost" -Level "INFO"
             Write-CommandLog "Metrics: $($metrics -join ', ')" -Level "INFO"
             Write-CommandLog ""
             

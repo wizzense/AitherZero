@@ -198,7 +198,7 @@ jobs:
         Write-Host "🤖 Checking for auto-generation candidates..." -ForegroundColor Magenta
         
         if (Test-Path "change-analysis.json") {
-          $analysis = Get-Content "change-analysis.json" | ConvertFrom-Json
+          $analysis = Get-Content "change-analysis.json" | ConvertFrom-Json -AsHashTable
           $highConfidence = $analysis.autoGenerationCandidates | Where-Object { $_.confidence -gt 75 }
           
           if ($highConfidence.Count -gt 0 -and $highConfidence.Count -le 3) {

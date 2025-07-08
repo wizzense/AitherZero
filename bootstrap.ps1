@@ -572,8 +572,8 @@ try {
     }
     
     # Determine profile
-    $profile = $env:AITHER_PROFILE
-    if (-not $profile) {
+    $profileType = $env:AITHER_PROFILE
+    if (-not $profileType) {
         if (-not $env:AITHER_BOOTSTRAP_MODE) {
             Write-Host ""
             Write-Host "Select AitherZero Profile:" -ForegroundColor Cyan
@@ -587,18 +587,18 @@ try {
                 if (-not $profileChoice) { $profileChoice = '2' }
             } while ($profileChoice -notmatch '^[123]$')
             
-            $profile = switch ($profileChoice) {
+            $profileType = switch ($profileChoice) {
                 '1' { 'minimal' }
                 '2' { 'developer' }
                 '3' { 'full' }
             }
         } else {
             # Non-interactive mode defaults to developer
-            $profile = 'developer'
+            $profileType = 'developer'
         }
     }
     
-    Write-Host ">> Downloading AitherZero ($profile profile)..." -ForegroundColor Cyan
+    Write-Host ">> Downloading AitherZero ($profileType profile)..." -ForegroundColor Cyan
     
     # Get latest Windows release with retry logic
     $apiUrl = "https://api.github.com/repos/wizzense/AitherZero/releases/latest"
@@ -627,7 +627,7 @@ try {
     # Find Windows ZIP file for the selected profile
     $windowsAsset = $null
     # Map bootstrap profile names to build profile names
-    $buildProfile = switch ($profile) {
+    $buildProfile = switch ($profileType) {
         'minimal' { 'minimal' }
         'developer' { 'developer' }  # Use developer package which includes SetupWizard
         'full' { 'developer' }  # Build uses 'developer' for full profile
@@ -757,11 +757,11 @@ try {
     Remove-Item $tempDir -Recurse -Force
     
     Write-Host "[+] Extracted to: $PWD" -ForegroundColor Green
-    Write-Host "[i] Profile: $profile" -ForegroundColor Cyan
+    Write-Host "[i] Profile: $profileType" -ForegroundColor Cyan
     Write-Host "[i] To remove later, delete the AitherZero folder or run bootstrap.ps1 again and select Remove" -ForegroundColor Gray
     
     # Auto-start
-    Write-Host ">> Starting AitherZero ($profile profile)..." -ForegroundColor Cyan
+    Write-Host ">> Starting AitherZero ($profileType profile)..." -ForegroundColor Cyan
     
     # Ensure we're in the correct directory for the application
     $extractionPath = Get-Location
@@ -773,7 +773,7 @@ try {
         # Use main launcher
         $startScript = ".\Start-AitherZero.ps1"
         # Add -Setup parameter for first-time installation
-        $startParams = @{Setup = $true; InstallationProfile = $profile}
+        $startParams = @{Setup = $true; InstallationProfile = $profileType}
         
         # Add non-interactive mode if specified
         if ($env:AITHER_NON_INTERACTIVE -eq 'true' -or $env:AITHER_BOOTSTRAP_MODE) {

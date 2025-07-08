@@ -265,7 +265,7 @@ function Get-TestMetrics {
                 $content = Get-Content $testFile.FullName -ErrorAction SilentlyContinue
                 if ($content) {
                     # Count "It" blocks (Pester test cases)
-                    $itMatches = $content | Select-String -Pattern '^\s*It\s+["\']' -AllMatches
+                    $itMatches = $content | Select-String -Pattern "^\s*It\s+[`"`']" -AllMatches
                     $metrics.testCases += $itMatches.Count
                 }
             }

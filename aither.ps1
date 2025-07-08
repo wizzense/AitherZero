@@ -98,15 +98,15 @@ switch ($Command) {
     'setup' {
         Write-Host "`n⚙️  Running setup wizard..." -ForegroundColor Green
         
-        $profile = "interactive"
+        $profileType = "interactive"
         if ($Arguments -contains "-Profile") {
             $profileIndex = [array]::IndexOf($Arguments, "-Profile")
             if ($profileIndex -ge 0 -and $profileIndex + 1 -lt $Arguments.Count) {
-                $profile = $Arguments[$profileIndex + 1]
+                $profileType = $Arguments[$profileIndex + 1]
             }
         }
         
-        & $mainScript -Setup -InstallationProfile $profile
+        & $mainScript -Setup -InstallationProfile $profileType
     }
     
     'config' {
