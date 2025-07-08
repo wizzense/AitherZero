@@ -2,7 +2,8 @@
 
 ## Module Overview
 
-The ConfigurationRepository module provides Git-based configuration management for AitherZero, enabling teams to version control, share, and synchronize their infrastructure configurations. It transforms configuration management into a collaborative, auditable, and scalable process.
+The ConfigurationRepository module provides Git-based configuration management for AitherZero, enabling teams to version control, share, and 
+synchronize their infrastructure configurations. It transforms configuration management into a collaborative, auditable, and scalable process.
 
 ### Primary Purpose and Functionality
 - Creates and manages Git repositories for AitherZero configurations

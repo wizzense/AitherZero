@@ -2,7 +2,9 @@
 
 ## Module Overview
 
-The ISOManager module provides enterprise-grade ISO file management capabilities for the AitherZero infrastructure automation framework. It handles downloading, organizing, validating, and maintaining an inventory of ISO files from various sources including Microsoft, Linux distributions, and custom URLs.
+The ISOManager module provides enterprise-grade ISO file management capabilities for the AitherZero infrastructure automation framework. It 
+handles downloading, organizing, validating, and maintaining an inventory of ISO files from various sources including Microsoft, Linux 
+distributions, and custom URLs.
 
 ### Core Functionality and Use Cases
 

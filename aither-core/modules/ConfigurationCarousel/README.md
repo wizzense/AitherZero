@@ -2,7 +2,9 @@
 
 ## Module Overview
 
-The ConfigurationCarousel module provides dynamic configuration management for AitherZero, allowing seamless switching between multiple configuration sets and environments. It acts as a configuration orchestrator, enabling teams to maintain different configurations for various deployment scenarios, environments, and use cases.
+The ConfigurationCarousel module provides dynamic configuration management for AitherZero, allowing seamless switching between multiple 
+configuration sets and environments. It acts as a configuration orchestrator, enabling teams to maintain different configurations for various 
+deployment scenarios, environments, and use cases.
 
 ### Primary Purpose and Functionality
 - Manages multiple configuration sets with easy switching capabilities

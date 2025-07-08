@@ -2,7 +2,9 @@
 
 ## Module Overview
 
-The DevEnvironment module provides comprehensive development environment setup and management for AitherZero. It automates the installation and configuration of development tools, VS Code extensions, Git hooks, and workspace settings to ensure a consistent and productive development experience across all team members.
+The DevEnvironment module provides comprehensive development environment setup and management for AitherZero. It automates the installation 
+and configuration of development tools, VS Code extensions, Git hooks, and workspace settings to ensure a consistent and productive 
+development experience across all team members.
 
 ### Primary Purpose and Functionality
 - Automated development environment initialization and setup

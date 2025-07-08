@@ -1,6 +1,7 @@
 # ISOManager Module v2.0
 
-Enterprise-grade ISO download, management, and organization module with advanced storage optimization, modern download capabilities, and comprehensive integrity validation for automated lab infrastructure deployment.
+Enterprise-grade ISO download, management, and organization module with advanced storage optimization, modern download capabilities, and 
+comprehensive integrity validation for automated lab infrastructure deployment.
 
 ## Features
 
@@ -448,4 +449,5 @@ This module is part of the AitherZero project and follows the project's licensin
 
 ---
 
-**Note**: This module requires PowerShell 7.0+ and integrates with the AitherZero logging system. For production use, ensure proper network access and sufficient storage space for ISO repositories.
+**Note**: This module requires PowerShell 7.0+ and integrates with the AitherZero logging system. For production use, ensure proper network 
+access and sufficient storage space for ISO repositories.

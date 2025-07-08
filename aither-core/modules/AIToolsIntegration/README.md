@@ -2,7 +2,9 @@
 
 ## Module Overview
 
-The AIToolsIntegration module provides automated installation, configuration, and management of AI development tools within the AitherZero framework. It simplifies the setup process for popular AI coding assistants and ensures they are properly integrated with your development environment.
+The AIToolsIntegration module provides automated installation, configuration, and management of AI development tools within the AitherZero 
+framework. It simplifies the setup process for popular AI coding assistants and ensures they are properly integrated with your development 
+environment.
 
 ### Primary Purpose and Functionality
 - Automated installation of AI development tools (Claude Code, Gemini CLI, etc.)

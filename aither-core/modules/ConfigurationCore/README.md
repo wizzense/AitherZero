@@ -1,6 +1,7 @@
 # ConfigurationCore Module
 
-The ConfigurationCore module provides unified configuration management for the entire AitherZero platform, serving as the central configuration system for all modules with advanced features for enterprise environments.
+The ConfigurationCore module provides unified configuration management for the entire AitherZero platform, serving as the central 
+configuration system for all modules with advanced features for enterprise environments.
 
 ## 🚀 Features
 
