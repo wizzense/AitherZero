@@ -39,7 +39,7 @@
 param(
     [string]$ReportPath = './output/aitherZero-dashboard.html',
     [string]$ArtifactsPath = './audit-reports',
-    [string]$ExternalArtifactsPath = './external-artifacts',
+    [string]$ExternalArtifactsPath = Join-Path $PSScriptRoot 'external-artifacts',
     [switch]$IncludeDetailedAnalysis,
     [string]$ReportTitle = 'AitherZero Comprehensive Dashboard',
     [string]$Version = $null,
