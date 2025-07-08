@@ -1,27 +1,27 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<testsuites xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="junit_schema_4.xsd" name="Pester" tests="11" errors="0" failures="0" disabled="0" time="1.064">
-  <testsuite name="/workspaces/AitherZero/tests/Core.Tests.ps1" tests="11" errors="0" failures="0" hostname="codespaces-6c6eb1" id="0" skipped="0" disabled="0" package="/workspaces/AitherZero/tests/Core.Tests.ps1" time="1.064">
+<testsuites xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="junit_schema_4.xsd" name="Pester" tests="11" errors="0" failures="0" disabled="0" time="0.951">
+  <testsuite name="/workspaces/AitherZero/tests/Core.Tests.ps1" tests="11" errors="0" failures="0" hostname="codespaces-6c6eb1" id="0" skipped="0" disabled="0" package="/workspaces/AitherZero/tests/Core.Tests.ps1" time="0.951">
     <properties>
-      <property name="cwd" value="/workspaces/AitherZero" />
-      <property name="clr-version" value="9.0.4" />
-      <property name="user" value="codespace" />
-      <property name="machine-name" value="codespaces-6c6eb1" />
-      <property name="junit-version" value="4" />
       <property name="user-domain" value="" />
-      <property name="os-version" value="6.8.0-1027-azure" />
-      <property name="framework-version" value="5.7.1" />
       <property name="platform" value="Linux" />
+      <property name="os-version" value="6.8.0-1027-azure" />
+      <property name="user" value="codespace" />
+      <property name="cwd" value="/workspaces/AitherZero" />
+      <property name="framework-version" value="5.7.1" />
+      <property name="junit-version" value="4" />
+      <property name="clr-version" value="9.0.4" />
+      <property name="machine-name" value="codespaces-6c6eb1" />
     </properties>
-    <testcase name="Core Functionality Tests.Project Structure.Should have correct directory structure" status="Passed" classname="/workspaces/AitherZero/tests/Core.Tests.ps1" assertions="0" time="0.126" />
-    <testcase name="Core Functionality Tests.Project Structure.Should have launcher script executable" status="Passed" classname="/workspaces/AitherZero/tests/Core.Tests.ps1" assertions="0" time="0.015" />
-    <testcase name="Core Functionality Tests.Module Loading.Should load all core modules" status="Passed" classname="/workspaces/AitherZero/tests/Core.Tests.ps1" assertions="0" time="0.115" />
-    <testcase name="Core Functionality Tests.Logging System.Should write log messages" status="Passed" classname="/workspaces/AitherZero/tests/Core.Tests.ps1" assertions="0" time="0.026" />
-    <testcase name="Core Functionality Tests.Configuration Management.Should load default configuration" status="Passed" classname="/workspaces/AitherZero/tests/Core.Tests.ps1" assertions="0" time="0.027" />
+    <testcase name="Core Functionality Tests.Project Structure.Should have correct directory structure" status="Passed" classname="/workspaces/AitherZero/tests/Core.Tests.ps1" assertions="0" time="0.109" />
+    <testcase name="Core Functionality Tests.Project Structure.Should have launcher script executable" status="Passed" classname="/workspaces/AitherZero/tests/Core.Tests.ps1" assertions="0" time="0.026" />
+    <testcase name="Core Functionality Tests.Module Loading.Should load all core modules" status="Passed" classname="/workspaces/AitherZero/tests/Core.Tests.ps1" assertions="0" time="0.128" />
+    <testcase name="Core Functionality Tests.Logging System.Should write log messages" status="Passed" classname="/workspaces/AitherZero/tests/Core.Tests.ps1" assertions="0" time="0.034" />
+    <testcase name="Core Functionality Tests.Configuration Management.Should load default configuration" status="Passed" classname="/workspaces/AitherZero/tests/Core.Tests.ps1" assertions="0" time="0.028" />
     <testcase name="Core Functionality Tests.Cross-Platform Compatibility.Should detect current platform" status="Passed" classname="/workspaces/AitherZero/tests/Core.Tests.ps1" assertions="0" time="0.007" />
     <testcase name="Core Functionality Tests.Cross-Platform Compatibility.Should use cross-platform path separators" status="Passed" classname="/workspaces/AitherZero/tests/Core.Tests.ps1" assertions="0" time="0.006" />
-    <testcase name="Core Functionality Tests.PatchManager Basic Operations.Should have PatchManager functions available" status="Passed" classname="/workspaces/AitherZero/tests/Core.Tests.ps1" assertions="0" time="0.014" />
+    <testcase name="Core Functionality Tests.PatchManager Basic Operations.Should have PatchManager functions available" status="Passed" classname="/workspaces/AitherZero/tests/Core.Tests.ps1" assertions="0" time="0.010" />
     <testcase name="Core Functionality Tests.PatchManager Basic Operations.Should work with git repository" status="Passed" classname="/workspaces/AitherZero/tests/Core.Tests.ps1" assertions="0" time="0.014" />
     <testcase name="Core Functionality Tests.PowerShell Version.Should be running PowerShell 7.0 or higher" status="Passed" classname="/workspaces/AitherZero/tests/Core.Tests.ps1" assertions="0" time="0.008" />
-    <testcase name="Core Functionality Tests.PowerShell Version.Should have required PowerShell features" status="Passed" classname="/workspaces/AitherZero/tests/Core.Tests.ps1" assertions="0" time="0.010" />
+    <testcase name="Core Functionality Tests.PowerShell Version.Should have required PowerShell features" status="Passed" classname="/workspaces/AitherZero/tests/Core.Tests.ps1" assertions="0" time="0.012" />
   </testsuite>
 </testsuites>

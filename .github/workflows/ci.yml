@@ -991,7 +991,7 @@ jobs:
           Write-Host "📋 No integration tests found - skipping" -ForegroundColor Yellow
         }
         
-    - name: Upload test results
+    - name: Upload comprehensive test results
       if: always()
       uses: actions/upload-artifact@v4
       with:
@@ -1002,6 +1002,72 @@ jobs:
           ps-version-test-results.xml
           integration-test-results.xml
           ci-test-summary.json
+          ci-test-dashboard.json
+          ci-test-results.xml
+        retention-days: 30
+        
+    - name: Upload test results for dashboard
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: dashboard-data-${{ matrix.os }}
+        path: |
+          ci-test-dashboard.json
+          ci-test-summary.json
+        retention-days: 90  # Keep dashboard data longer for trending
+        
+    - name: Create test report summary
+      if: always()
+      shell: pwsh
+      run: |
+        # Generate a markdown summary for the workflow
+        if (Test-Path 'ci-test-summary.json') {
+          $summary = Get-Content 'ci-test-summary.json' | ConvertFrom-Json
+          
+          $markdownSummary = @"
+        ## Test Results Summary (${{ matrix.os }})
+        
+        - **Total Tests**: $($summary.TotalTests)
+        - **Passed**: $($summary.TotalPassed) ✅
+        - **Failed**: $($summary.TotalFailed) $(if ($summary.TotalFailed -eq 0) { '✅' } else { '❌' })
+        - **Success Rate**: $($summary.QualityMetrics.SuccessRate)%
+        - **Duration**: $([Math]::Round($summary.TotalDuration, 2))s
+        - **Tests/Second**: $($summary.QualityMetrics.Performance.TestsPerSecond)
+        - **Platform**: $($summary.Platform.OS) ($($summary.Platform.Architecture))
+        - **PowerShell**: $($summary.Platform.PowerShellVersion)
+        
+        ### Test Suite Results
+        "@
+        
+        foreach ($suite in $summary.TestSuites) {
+          $markdownSummary += "`n- **$($suite.TestSuite)**: $($suite.Result) ($($suite.PassedCount)/$($suite.TotalCount)) - $([Math]::Round($suite.Duration, 2))s"
+        }
+        
+        if ($summary.TotalFailed -gt 0) {
+          $markdownSummary += "`n`n### Failed Tests"
+          foreach ($error in $summary.ErrorSummary.FailedTestDetails) {
+            $markdownSummary += "`n- **$($error.TestSuite)**: $($error.FailedCount) failures"
+            if ($error.FailedTests) {
+              foreach ($test in $error.FailedTests) {
+                $markdownSummary += "`n  - $test"
+              }
+            }
+          }
+        }
+        
+        $markdownSummary | Set-Content -Path 'test-summary-${{ matrix.os }}.md'
+        Write-Host "📝 Test summary markdown created for workflow annotation"
+        
+        # Add to workflow summary
+        $markdownSummary | Add-Content -Path $env:GITHUB_STEP_SUMMARY
+        }
+        
+    - name: Upload test summary markdown
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-summary-${{ matrix.os }}
+        path: test-summary-${{ matrix.os }}.md
         retention-days: 30
         
     # Code coverage disabled for performance optimization

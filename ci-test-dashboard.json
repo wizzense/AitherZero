@@ -1,0 +1,15 @@
+{
+  "platform": "Unix",
+  "successRate": 100.0,
+  "duration": 1.3891612,
+  "testSuites": {
+    "name": "Core",
+    "result": "Passed",
+    "duration": 1.3652123
+  },
+  "success": true,
+  "passed": 11,
+  "timestamp": "2025-07-08 18:34:12",
+  "failed": 0,
+  "totalTests": 11
+}

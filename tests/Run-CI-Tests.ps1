@@ -120,109 +120,148 @@ try {
         # Parallel test execution for performance
         Write-Host "🚀 Running tests in parallel for performance optimization..." -ForegroundColor Green
         
-        $parallelResults = Invoke-ParallelForEach -InputObject $testsToRun -ThrottleLimit 3 -ScriptBlock {
-            param($testName)
+        try {
+            # Create a comprehensive test configuration object for parallel execution
+            $parallelTestConfig = @{
+                Tests = $tests
+                Timeout = $Timeout
+                OutputFormat = $OutputFormat
+                CI_Platform = $env:CI_PLATFORM
+            }
             
-            # Get test configuration from the global tests hashtable
-            $allTests = $using:tests
-            $test = $allTests[$testName]
-            
-            # Check if test file exists
-            if (-not (Test-Path $test.Path)) {
-                return [PSCustomObject]@{
-                    TestSuite = $testName
-                    TotalCount = 0
-                    PassedCount = 0
-                    FailedCount = 0
-                    SkippedCount = 0
-                    Duration = 0
-                    Result = 'Skipped'
-                    Error = "Test file not found: $($test.Path)"
+            # Create test execution items that include all necessary data
+            $parallelTestItems = $testsToRun | ForEach-Object {
+                $testName = $_
+                $testConfig = $tests[$testName]
+                [PSCustomObject]@{
+                    TestName = $testName
+                    Path = $testConfig.Path
+                    Description = $testConfig.Description
+                    OutputFile = $testConfig.OutputFile
+                    TimeoutValue = $Timeout
+                    OutputFormatValue = $OutputFormat
+                    CI_PlatformValue = $env:CI_PLATFORM
                 }
             }
             
-            # Configure Pester
-            $config = New-PesterConfiguration
-            $config.Run.Path = $test.Path
-            $config.Run.PassThru = $true
-            $config.Output.Verbosity = 'Minimal'  # Reduce output for parallel execution
-            
-            # Set timeout if supported
-            try {
-                $config.Run.Timeout = $using:Timeout
-            } catch {
-                # Timeout not supported in this version
-            }
-            
-            # Configure output formats
-            if ($using:OutputFormat -in @('JUnit', 'Both')) {
-                $config.TestResult.Enabled = $true
-                $config.TestResult.OutputFormat = 'JUnitXml'
-                $config.TestResult.OutputPath = $test.OutputFile
-            }
-            
-            # Set environment variables for platform-specific testing
-            $env:PESTER_PLATFORM = if ($using:env:CI_PLATFORM) { $using:env:CI_PLATFORM } else { "Unknown" }
-            
-            $testStartTime = Get-Date
-            
-            try {
-                $results = Invoke-Pester -Configuration $config
-                $testDuration = (Get-Date) - $testStartTime
+            $parallelResults = Invoke-ParallelForEach -InputObject $parallelTestItems -ThrottleLimit 3 -ScriptBlock {
+                param($testItem)
                 
-                return [PSCustomObject]@{
-                    TestSuite = $testName
-                    TotalCount = $results.TotalCount
-                    PassedCount = $results.PassedCount
-                    FailedCount = $results.FailedCount
-                    SkippedCount = $results.SkippedCount
-                    Duration = $testDuration.TotalSeconds
-                    Result = if ($results.FailedCount -eq 0) { 'Passed' } else { 'Failed' }
-                    FailedTests = if ($results.FailedCount -gt 0) { $results.Failed | ForEach-Object { $_.ExpandedName } } else { @() }
+                # Extract test configuration from the passed object
+                $testName = $testItem.TestName
+                $testPath = $testItem.Path
+                $outputFile = $testItem.OutputFile
+                $timeoutValue = $testItem.TimeoutValue
+                $outputFormatValue = $testItem.OutputFormatValue
+                $ciPlatform = $testItem.CI_PlatformValue
+                
+                # Check if test file exists
+                if (-not (Test-Path $testPath)) {
+                    return [PSCustomObject]@{
+                        TestSuite = $testName
+                        TotalCount = 0
+                        PassedCount = 0
+                        FailedCount = 0
+                        SkippedCount = 0
+                        Duration = 0
+                        Result = 'Skipped'
+                        Error = "Test file not found: $testPath"
+                    }
                 }
-            } catch {
-                $testDuration = (Get-Date) - $testStartTime
-                return [PSCustomObject]@{
-                    TestSuite = $testName
-                    TotalCount = 0
-                    PassedCount = 0
-                    FailedCount = 1
-                    SkippedCount = 0
-                    Duration = $testDuration.TotalSeconds
-                    Result = 'Failed'
-                    Error = $_.Exception.Message
+                
+                # Configure Pester
+                $config = New-PesterConfiguration
+                $config.Run.Path = $testPath
+                $config.Run.PassThru = $true
+                $config.Output.Verbosity = 'Minimal'  # Reduce output for parallel execution
+                
+                # Set timeout if supported
+                try {
+                    $config.Run.Timeout = $timeoutValue
+                } catch {
+                    # Timeout not supported in this version
                 }
-            }
-        }
-        
-        # Process parallel results
-        foreach ($result in $parallelResults) {
-            $allResults += $result
-            $totalTests += $result.TotalCount
-            $totalPassed += $result.PassedCount
-            $totalFailed += $result.FailedCount
-            
-            # Report results
-            $status = if ($result.FailedCount -eq 0) { "✅ PASSED" } else { "❌ FAILED" }
-            Write-Host "📋 $($result.TestSuite): $status - $($result.PassedCount)/$($result.TotalCount) tests in $([math]::Round($result.Duration, 2))s" -ForegroundColor $(if ($result.FailedCount -eq 0) { 'Green' } else { 'Red' })
-            
-            if ($result.FailedCount -gt 0) {
-                if ($result.Error) {
-                    Write-Host "  Error: $($result.Error)" -ForegroundColor Red
+                
+                # Configure output formats
+                if ($outputFormatValue -in @('JUnit', 'Both')) {
+                    $config.TestResult.Enabled = $true
+                    $config.TestResult.OutputFormat = 'JUnitXml'
+                    $config.TestResult.OutputPath = $outputFile
                 }
-                if ($result.FailedTests) {
-                    Write-Host "  Failed tests:" -ForegroundColor Red
-                    foreach ($failure in $result.FailedTests) {
-                        Write-Host "    - $failure" -ForegroundColor Red
+                
+                # Set environment variables for platform-specific testing
+                $env:PESTER_PLATFORM = if ($ciPlatform) { $ciPlatform } else { "Unknown" }
+                
+                $testStartTime = Get-Date
+                
+                try {
+                    $results = Invoke-Pester -Configuration $config
+                    $testDuration = (Get-Date) - $testStartTime
+                    
+                    return [PSCustomObject]@{
+                        TestSuite = $testName
+                        TotalCount = $results.TotalCount
+                        PassedCount = $results.PassedCount
+                        FailedCount = $results.FailedCount
+                        SkippedCount = $results.SkippedCount
+                        Duration = $testDuration.TotalSeconds
+                        Result = if ($results.FailedCount -eq 0) { 'Passed' } else { 'Failed' }
+                        FailedTests = if ($results.FailedCount -gt 0) { $results.Failed | ForEach-Object { $_.ExpandedName } } else { @() }
+                    }
+                } catch {
+                    $testDuration = (Get-Date) - $testStartTime
+                    return [PSCustomObject]@{
+                        TestSuite = $testName
+                        TotalCount = 0
+                        PassedCount = 0
+                        FailedCount = 1
+                        SkippedCount = 0
+                        Duration = $testDuration.TotalSeconds
+                        Result = 'Failed'
+                        Error = $_.Exception.Message
                     }
                 }
             }
+        } catch {
+            Write-Host "⚠️  Parallel execution failed: $($_.Exception.Message)" -ForegroundColor Yellow
+            Write-Host "🔄 Falling back to sequential execution..." -ForegroundColor Cyan
+            $useParallel = $false
+            $parallelResults = $null
         }
         
-        Write-Host "🎯 Parallel test execution completed" -ForegroundColor Green
+        # Process parallel results (only if parallel execution succeeded)
+        if ($parallelResults) {
+            foreach ($result in $parallelResults) {
+                $allResults += $result
+                $totalTests += $result.TotalCount
+                $totalPassed += $result.PassedCount
+                $totalFailed += $result.FailedCount
+                
+                # Report results
+                $status = if ($result.FailedCount -eq 0) { "✅ PASSED" } else { "❌ FAILED" }
+                Write-Host "📋 $($result.TestSuite): $status - $($result.PassedCount)/$($result.TotalCount) tests in $([math]::Round($result.Duration, 2))s" -ForegroundColor $(if ($result.FailedCount -eq 0) { 'Green' } else { 'Red' })
+                
+                if ($result.FailedCount -gt 0) {
+                    if ($result.Error) {
+                        Write-Host "  Error: $($result.Error)" -ForegroundColor Red
+                    }
+                    if ($result.FailedTests) {
+                        Write-Host "  Failed tests:" -ForegroundColor Red
+                        foreach ($failure in $result.FailedTests) {
+                            Write-Host "    - $failure" -ForegroundColor Red
+                        }
+                    }
+                }
+            }
+            
+            Write-Host "🎯 Parallel test execution completed" -ForegroundColor Green
+        }
         
-    } else {
-        # Sequential test execution (fallback)
+    }
+    
+    # Sequential test execution (either as fallback or primary method)
+    if (-not $useParallel -or -not $parallelResults) {
+        # Sequential test execution
         Write-Host "⚡ Running tests sequentially..." -ForegroundColor Yellow
         
         foreach ($testName in $testsToRun) {
@@ -311,26 +350,151 @@ try {
         $allResults | Format-Table -Property TestSuite, TotalCount, PassedCount, FailedCount, @{Name='Duration(s)'; Expression={[math]::Round($_.Duration, 2)}}, Result -AutoSize
     }
 
-    # Generate summary file for CI with performance metrics
-    $summary = @{
-        TotalTests = $totalTests
-        TotalPassed = $totalPassed
-        TotalFailed = $totalFailed
-        TotalDuration = $totalDuration.TotalSeconds
-        TestSuites = $allResults
-        Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
-        Success = ($totalFailed -eq 0)
+    # Generate comprehensive summary file for CI with enhanced metrics
+    $platformInfo = @{
+        OS = if ($env:CI_PLATFORM) { $env:CI_PLATFORM } else { [System.Environment]::OSVersion.Platform.ToString() }
+        OSVersion = [System.Environment]::OSVersion.VersionString
+        PowerShellVersion = $PSVersionTable.PSVersion.ToString()
+        PowerShellEdition = $PSVersionTable.PSEdition
+        Architecture = [System.Environment]::Is64BitOperatingSystem ? "x64" : "x86"
+        ProcessorCount = [Environment]::ProcessorCount
+        MachineName = [Environment]::MachineName
+        UserName = [Environment]::UserName
+        WorkingDirectory = (Get-Location).Path
+        GitBranch = if (Get-Command git -ErrorAction SilentlyContinue) { (git branch --show-current 2>$null) } else { "Unknown" }
+        GitCommit = if (Get-Command git -ErrorAction SilentlyContinue) { (git rev-parse --short HEAD 2>$null) } else { "Unknown" }
+    }
+    
+    # Enhanced error categorization
+    $errorSummary = @{
+        TotalErrors = $totalFailed
+        ErrorsByType = @{}
+        FailedTestDetails = @()
+    }
+    
+    foreach ($result in $allResults) {
+        if ($result.FailedCount -gt 0) {
+            $errorSummary.FailedTestDetails += @{
+                TestSuite = $result.TestSuite
+                FailedCount = $result.FailedCount
+                TotalCount = $result.TotalCount
+                Duration = $result.Duration
+                Error = $result.Error
+                FailedTests = $result.FailedTests
+            }
+        }
+    }
+    
+    # Quality metrics
+    $qualityMetrics = @{
+        SuccessRate = if ($totalTests -gt 0) { [Math]::Round(($totalPassed / $totalTests) * 100, 2) } else { 0 }
+        FailureRate = if ($totalTests -gt 0) { [Math]::Round(($totalFailed / $totalTests) * 100, 2) } else { 0 }
+        TestCoverage = @{
+            CoreTests = ($allResults | Where-Object { $_.TestSuite -eq 'Core' }).TotalCount
+            EntryTests = ($allResults | Where-Object { $_.TestSuite -eq 'Entry' }).TotalCount
+            PowerShellTests = ($allResults | Where-Object { $_.TestSuite -eq 'PowerShell' }).TotalCount
+        }
         Performance = @{
             Mode = if ($performanceMode) { 'Optimized' } else { 'Standard' }
             ParallelExecution = $useParallel
             TestsPerSecond = if ($totalDuration.TotalSeconds -gt 0) { [Math]::Round($totalTests / $totalDuration.TotalSeconds, 2) } else { 0 }
             AverageTestDuration = if ($totalTests -gt 0) { [Math]::Round($totalDuration.TotalSeconds / $totalTests, 3) } else { 0 }
+            FastestTest = if ($allResults.Count -gt 0) { ($allResults | Sort-Object Duration | Select-Object -First 1).TestSuite } else { "N/A" }
+            SlowestTest = if ($allResults.Count -gt 0) { ($allResults | Sort-Object Duration -Descending | Select-Object -First 1).TestSuite } else { "N/A" }
+        }
+    }
+    
+    $summary = @{
+        # Basic metrics
+        TotalTests = $totalTests
+        TotalPassed = $totalPassed
+        TotalFailed = $totalFailed
+        TotalDuration = $totalDuration.TotalSeconds
+        Success = ($totalFailed -eq 0)
+        
+        # Detailed results
+        TestSuites = $allResults
+        
+        # Timing information
+        Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+        StartTime = $startTime.ToString('yyyy-MM-dd HH:mm:ss')
+        EndTime = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+        
+        # Platform information
+        Platform = $platformInfo
+        
+        # Error analysis
+        ErrorSummary = $errorSummary
+        
+        # Quality metrics
+        QualityMetrics = $qualityMetrics
+        
+        # CI/CD information
+        CIInfo = @{
+            CI_PLATFORM = $env:CI_PLATFORM
+            GITHUB_WORKFLOW = $env:GITHUB_WORKFLOW
+            GITHUB_RUN_ID = $env:GITHUB_RUN_ID
+            GITHUB_RUN_NUMBER = $env:GITHUB_RUN_NUMBER
+            GITHUB_REPOSITORY = $env:GITHUB_REPOSITORY
+            GITHUB_REF = $env:GITHUB_REF
+            GITHUB_SHA = $env:GITHUB_SHA
         }
     }
 
+    # Export in multiple formats for dashboard consumption
     $summaryPath = 'ci-test-summary.json'
     $summary | ConvertTo-Json -Depth 10 | Set-Content -Path $summaryPath -Encoding UTF8
     Write-Host "📄 Test summary exported to: $summaryPath" -ForegroundColor Blue
+    
+    # Export simplified version for quick dashboard access
+    $dashboardSummary = @{
+        success = $summary.Success
+        totalTests = $summary.TotalTests
+        passed = $summary.TotalPassed
+        failed = $summary.TotalFailed
+        duration = $summary.TotalDuration
+        timestamp = $summary.Timestamp
+        platform = $summary.Platform.OS
+        successRate = $summary.QualityMetrics.SuccessRate
+        testSuites = $summary.TestSuites | ForEach-Object { @{ name = $_.TestSuite; result = $_.Result; duration = $_.Duration } }
+    }
+    
+    $dashboardPath = 'ci-test-dashboard.json'
+    $dashboardSummary | ConvertTo-Json -Depth 5 | Set-Content -Path $dashboardPath -Encoding UTF8
+    Write-Host "📊 Dashboard summary exported to: $dashboardPath" -ForegroundColor Green
+    
+    # Export test results in JUnit format for better CI integration
+    try {
+        $junitPath = 'ci-test-results.xml'
+        $junitXml = @"
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="AitherZero CI Tests" tests="$totalTests" failures="$totalFailed" time="$($totalDuration.TotalSeconds)">
+"@
+        foreach ($result in $allResults) {
+            $junitXml += @"
+    <testsuite name="$($result.TestSuite)" tests="$($result.TotalCount)" failures="$($result.FailedCount)" time="$($result.Duration)">
+"@
+            if ($result.FailedTests -and $result.FailedTests.Count -gt 0) {
+                foreach ($failedTest in $result.FailedTests) {
+                    $junitXml += @"
+        <testcase name="$failedTest" classname="$($result.TestSuite)">
+            <failure message="Test failed">$($result.Error)</failure>
+        </testcase>
+"@
+                }
+            }
+            $junitXml += @"
+    </testsuite>
+"@
+        }
+        $junitXml += @"
+</testsuites>
+"@
+        $junitXml | Set-Content -Path $junitPath -Encoding UTF8
+        Write-Host "📋 JUnit XML exported to: $junitPath" -ForegroundColor Cyan
+    } catch {
+        Write-Host "⚠️  Failed to generate JUnit XML: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
     
     # Update README.md files with test results
     try {

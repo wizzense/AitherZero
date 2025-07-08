@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<testsuites xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="junit_schema_4.xsd" name="Pester" tests="32" errors="0" failures="0" disabled="0" time="1.973">
+  <testsuite name="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" tests="32" errors="0" failures="0" hostname="codespaces-6c6eb1" id="0" skipped="0" disabled="0" package="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" time="1.973">
+    <properties>
+      <property name="framework-version" value="5.7.1" />
+      <property name="user-domain" value="" />
+      <property name="platform" value="Linux" />
+      <property name="junit-version" value="4" />
+      <property name="os-version" value="6.8.0-1027-azure" />
+      <property name="clr-version" value="9.0.4" />
+      <property name="cwd" value="/workspaces/AitherZero" />
+      <property name="user" value="codespace" />
+      <property name="machine-name" value="codespaces-6c6eb1" />
+    </properties>
+    <testcase name="PowerShell Version Requirements.Core Version Validation.Should be running PowerShell 7.0 or higher" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.082" />
+    <testcase name="PowerShell Version Requirements.Core Version Validation.Should be PowerShell Core (not Windows PowerShell)" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.037" />
+    <testcase name="PowerShell Version Requirements.Core Version Validation.Should have CLR version compatible with .NET Core/5+" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.010" />
+    <testcase name="PowerShell Version Requirements.Core Version Validation.Should support the required PowerShell host features" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.012" />
+    <testcase name="PowerShell Version Requirements.Cross-Platform Variables.Should have cross-platform automatic variables available" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.023" />
+    <testcase name="PowerShell Version Requirements.Cross-Platform Variables.Should correctly identify exactly one platform" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.013" />
+    <testcase name="PowerShell Version Requirements.Cross-Platform Variables.Should have IsCoreCLR set to true" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.009" />
+    <testcase name="PowerShell Version Requirements.Version Detection Functions.Should have version checking utility available" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.019" />
+    <testcase name="PowerShell Version Requirements.Version Detection Functions.Should load and execute version checking utility" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.096" />
+    <testcase name="PowerShell Core Cmdlet Availability.Essential Management Cmdlets.Should have all required management cmdlets available" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.029" />
+    <testcase name="PowerShell Core Cmdlet Availability.Essential Management Cmdlets.Should have utility cmdlets available" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.018" />
+    <testcase name="PowerShell Core Cmdlet Availability.Essential Management Cmdlets.Should have network cmdlets available" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.009" />
+    <testcase name="PowerShell Core Cmdlet Availability.Module Management Cmdlets.Should have module management cmdlets available" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.013" />
+    <testcase name="PowerShell Core Cmdlet Availability.Module Management Cmdlets.Should support advanced module features" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.137" />
+    <testcase name="PowerShell Feature Compatibility.Language Features.Should support modern PowerShell syntax features" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.007" />
+    <testcase name="PowerShell Feature Compatibility.Language Features.Should support pipeline chain operators" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.037" />
+    <testcase name="PowerShell Feature Compatibility.Language Features.Should support null conditional operators" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.044" />
+    <testcase name="PowerShell Feature Compatibility.Language Features.Should support enhanced error handling" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.017" />
+    <testcase name="PowerShell Feature Compatibility.Type System Features.Should support .NET Core/.NET 5+ type loading" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.009" />
+    <testcase name="PowerShell Feature Compatibility.Type System Features.Should support PowerShell class definitions" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.019" />
+    <testcase name="PowerShell Feature Compatibility.Type System Features.Should support enum definitions" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.048" />
+    <testcase name="PowerShell Feature Compatibility.Performance and Memory Features.Should handle large datasets efficiently" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.040" />
+    <testcase name="PowerShell Feature Compatibility.Performance and Memory Features.Should support parallel processing features" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.191" />
+    <testcase name="AitherZero Specific Version Requirements.Entry Point Version Checking.Should validate PowerShell version in Start-AitherZero.ps1" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.010" />
+    <testcase name="AitherZero Specific Version Requirements.Entry Point Version Checking.Should validate PowerShell version in Start-DeveloperSetup.ps1" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.007" />
+    <testcase name="AitherZero Specific Version Requirements.Module Compatibility.Should verify core modules work with current PowerShell version" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.452" />
+    <testcase name="AitherZero Specific Version Requirements.Module Compatibility.Should test version-specific features in modules" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.087" />
+    <testcase name="AitherZero Specific Version Requirements.Performance Validation.Should meet performance expectations for version checking" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.019" />
+    <testcase name="AitherZero Specific Version Requirements.Performance Validation.Should validate module loading performance" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.015" />
+    <testcase name="Version Compatibility Warnings and Recommendations.Version Recommendations.Should identify if running on recommended PowerShell version" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.008" />
+    <testcase name="Version Compatibility Warnings and Recommendations.Version Recommendations.Should warn about deprecated PowerShell versions" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.006" />
+    <testcase name="Version Compatibility Warnings and Recommendations.Feature Availability Assessment.Should assess modern PowerShell feature availability" status="Passed" classname="/workspaces/AitherZero/tests/PowerShell-Version.Tests.ps1" assertions="0" time="0.034" />
+  </testsuite>
+</testsuites>

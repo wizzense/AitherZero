@@ -1,11 +1,22 @@
 {
-  "TotalTests": 11,
-  "TotalDuration": 0.4881656,
-  "Performance": {
-    "Mode": "Optimized",
-    "AverageTestDuration": 0.044,
-    "ParallelExecution": true,
-    "TestsPerSecond": 22.53
+  "TotalFailed": 0,
+  "StartTime": "2025-07-08 18:34:10",
+  "QualityMetrics": {
+    "TestCoverage": {
+      "PowerShellTests": null,
+      "CoreTests": 11,
+      "EntryTests": null
+    },
+    "FailureRate": 0.0,
+    "Performance": {
+      "SlowestTest": "Core",
+      "TestsPerSecond": 7.92,
+      "FastestTest": "Core",
+      "Mode": "Optimized",
+      "ParallelExecution": true,
+      "AverageTestDuration": 0.126
+    },
+    "SuccessRate": 100.0
   },
   "TestSuites": [
     {
@@ -14,12 +25,41 @@
       "PassedCount": 11,
       "FailedCount": 0,
       "SkippedCount": 0,
-      "Duration": 0.4842717,
+      "Duration": 1.3652123,
       "Result": "Passed"
     }
   ],
-  "TotalFailed": 0,
   "Success": true,
-  "TotalPassed": 11,
-  "Timestamp": "2025-07-08 17:29:35"
+  "ErrorSummary": {
+    "ErrorsByType": {},
+    "FailedTestDetails": [],
+    "TotalErrors": 0
+  },
+  "EndTime": "2025-07-08 18:34:12",
+  "Platform": {
+    "UserName": "codespace",
+    "OSVersion": "Unix 6.8.0.1027",
+    "GitCommit": "3b97d8d9",
+    "Architecture": "x64",
+    "GitBranch": "release/v0.7.3",
+    "ProcessorCount": 16,
+    "PowerShellEdition": "Core",
+    "MachineName": "codespaces-6c6eb1",
+    "OS": "Unix",
+    "WorkingDirectory": "/workspaces/AitherZero",
+    "PowerShellVersion": "7.5.1"
+  },
+  "TotalDuration": 1.3891612,
+  "CIInfo": {
+    "CI_PLATFORM": null,
+    "GITHUB_REF": null,
+    "GITHUB_RUN_ID": null,
+    "GITHUB_SHA": null,
+    "GITHUB_REPOSITORY": "wizzense/AitherZero",
+    "GITHUB_WORKFLOW": null,
+    "GITHUB_RUN_NUMBER": null
+  },
+  "Timestamp": "2025-07-08 18:34:12",
+  "TotalTests": 11,
+  "TotalPassed": 11
 }
