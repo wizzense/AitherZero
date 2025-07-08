@@ -1578,7 +1578,7 @@ function Get-FunctionsFromScript {
         
         return $functions
     } catch {
-        Write-ReportLog "Failed to extract functions from $ScriptPath: $($_.Exception.Message)" -Level 'DEBUG'
+        Write-ReportLog "Failed to extract functions from ${ScriptPath}: $($_.Exception.Message)" -Level 'DEBUG'
         return @()
     }
 }
