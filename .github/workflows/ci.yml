@@ -99,11 +99,10 @@ jobs:
           # Dynamic matrix based on changes
           $matrix = @{
             os = @('ubuntu-latest', 'windows-latest', 'macos-latest')
-            pwsh_version = @('7.5.2')  # Always use latest stable PowerShell 7.5.2
           }
           
-          # We don't need to test on older versions - just use latest
-          # All our code requires PS 7.0+ minimum anyway
+          # We use the pre-installed PowerShell 7.x on GitHub runners
+          # All our code requires PS 7.0+ minimum
           
           $matrixJson = $matrix | ConvertTo-Json -Compress
           echo "matrix=$matrixJson" >> $env:GITHUB_OUTPUT
@@ -888,7 +887,7 @@ jobs:
 
   # Main test job with matrix strategy
   test:
-    name: Test - ${{ matrix.os }} / PS ${{ matrix.pwsh_version }}
+    name: Test - ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     needs: [analyze-changes, code-quality]
     if: |
@@ -903,37 +902,18 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Install PowerShell ${{ matrix.pwsh_version }}
-      shell: bash
+    # PowerShell is pre-installed on GitHub runners
+    - name: Verify PowerShell Version
+      shell: pwsh
       run: |
-        echo "Installing PowerShell ${{ matrix.pwsh_version }}..."
+        Write-Host "PowerShell version installed:" -ForegroundColor Cyan
+        $PSVersionTable.PSVersion
         
-        if [[ "${{ runner.os }}" == "Linux" ]]; then
-          # Download and install PowerShell on Linux
-          wget -q https://github.com/PowerShell/PowerShell/releases/download/v${{ matrix.pwsh_version }}/powershell-${{ matrix.pwsh_version }}-linux-x64.tar.gz -O /tmp/powershell.tar.gz
-          sudo mkdir -p /opt/microsoft/powershell/7
-          sudo tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7
-          sudo chmod +x /opt/microsoft/powershell/7/pwsh
-          sudo ln -sf /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh
-        elif [[ "${{ runner.os }}" == "macOS" ]]; then
-          # Install PowerShell on macOS
-          wget -q https://github.com/PowerShell/PowerShell/releases/download/v${{ matrix.pwsh_version }}/powershell-${{ matrix.pwsh_version }}-osx-x64.tar.gz -O /tmp/powershell.tar.gz
-          sudo mkdir -p /usr/local/microsoft/powershell/7
-          sudo tar zxf /tmp/powershell.tar.gz -C /usr/local/microsoft/powershell/7
-          sudo chmod +x /usr/local/microsoft/powershell/7/pwsh
-          sudo ln -sf /usr/local/microsoft/powershell/7/pwsh /usr/local/bin/pwsh
-        elif [[ "${{ runner.os }}" == "Windows" ]]; then
-          # Download PowerShell MSI installer
-          curl -L https://github.com/PowerShell/PowerShell/releases/download/v${{ matrix.pwsh_version }}/PowerShell-${{ matrix.pwsh_version }}-win-x64.msi -o PowerShell.msi
-          # Install silently
-          msiexec.exe /i PowerShell.msi /quiet ADD_PATH=1
-          # Wait a moment for installation to complete
-          sleep 10
-        fi
-        
-        # Verify installation
-        echo "PowerShell version installed:"
-        pwsh --version || powershell --version || echo "PowerShell installation verification failed"
+        # Verify minimum version requirement (7.0+)
+        if ($PSVersionTable.PSVersion.Major -lt 7) {
+          throw "PowerShell 7.0+ is required, but found $($PSVersionTable.PSVersion)"
+        }
+        Write-Host "✅ PowerShell version meets requirements" -ForegroundColor Green
         
     - name: Cache dependencies
       uses: actions/cache@v4
@@ -1531,6 +1511,7 @@ jobs:
         
         # Copy reports to docs for GitHub Pages
         $reportFiles = @(
+          "aitherZero-comprehensive-report.html",
           "comprehensive-ci-dashboard.html",
           "feature-dependency-map.html",
           "executive-summary.md"
@@ -1542,6 +1523,38 @@ jobs:
             Write-Host "✅ Copied $file to docs/" -ForegroundColor Green
           }
         }
+        
+        # Create index.html that redirects to the latest report
+        $indexHtml = @"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AitherZero Reports</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 40px; }
+        h1 { color: #333; }
+        .report-link { display: block; margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 5px; text-decoration: none; color: #007bff; }
+        .report-link:hover { background: #e9ecef; }
+    </style>
+</head>
+<body>
+    <h1>🚀 AitherZero Reports</h1>
+    <p>Welcome to the AitherZero project reports dashboard.</p>
+    <h2>📊 Available Reports</h2>
+    <a href="aitherZero-comprehensive-report.html" class="report-link">📋 Comprehensive Project Report</a>
+    <a href="comprehensive-ci-dashboard.html" class="report-link">🔍 CI Dashboard</a>
+    <a href="feature-dependency-map.html" class="report-link">🗺️ Feature & Dependency Map</a>
+    <a href="executive-summary.md" class="report-link">📄 Executive Summary</a>
+    <hr>
+    <p>Reports are generated automatically by the AitherZero CI/CD system.</p>
+    <p><a href="https://github.com/${{ github.repository }}">← Back to GitHub</a></p>
+</body>
+</html>
+"@
+        Set-Content -Path "./docs/index.html" -Value $indexHtml
+        Write-Host "✅ Created index.html" -ForegroundColor Green
         
     
     - name: Deploy to GitHub Pages

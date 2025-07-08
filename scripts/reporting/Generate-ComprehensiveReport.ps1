@@ -37,7 +37,7 @@
 #>
 
 param(
-    [string]$ReportPath = './comprehensive-report.html',
+    [string]$ReportPath = './aitherZero-comprehensive-report.html',
     [string]$ArtifactsPath = './audit-reports',
     [switch]$IncludeDetailedAnalysis,
     [string]$ReportTitle = 'AitherZero Comprehensive Report',
@@ -145,20 +145,71 @@ function Import-AuditData {
     # Load testing audit results
     $testArtifacts = @(
         'testing-audit-reports/test-audit-report.json',
-        'testing-audit-reports/test-delta-analysis.json'
+        'testing-audit-reports/test-delta-analysis.json',
+        '.github/test-state.json',
+        'test-state.json'
     )
 
-    foreach ($artifact in $testArtifacts) {
-        $path = Join-Path $ArtifactsPath $artifact
-        if (Test-Path $path) {
-            try {
-                $content = Get-Content $path -Raw | ConvertFrom-Json
-                $auditData.Testing = $content
-                Write-ReportLog "Loaded testing audit data" -Level 'SUCCESS'
-            } catch {
-                Write-ReportLog "Failed to load $artifact : $($_.Exception.Message)" -Level 'WARNING'
+    # First try to load test-state.json from project root
+    $testStateFile = Join-Path $projectRoot ".github/test-state.json"
+    if (Test-Path $testStateFile) {
+        try {
+            $testState = Get-Content $testStateFile -Raw | ConvertFrom-Json
+            Write-ReportLog "Loaded test state from .github/test-state.json" -Level 'SUCCESS'
+            
+            # Calculate test coverage from test state
+            $totalModules = 0
+            $modulesWithTests = 0
+            $totalCoverage = 0
+            
+            foreach ($module in $testState.modules.PSObject.Properties) {
+                $totalModules++
+                if ($module.Value.hasTests) {
+                    $modulesWithTests++
+                    $totalCoverage += $module.Value.estimatedCoverage
+                }
             }
-            break
+            
+            $averageCoverage = if ($modulesWithTests -gt 0) { 
+                [math]::Round($totalCoverage / $modulesWithTests, 1) 
+            } else { 0 }
+            
+            $auditData.Testing = @{
+                coverage = @{
+                    averageCoverage = $averageCoverage
+                    modulesWithTests = $modulesWithTests
+                    totalModules = $totalModules
+                    percentage = if ($totalModules -gt 0) { 
+                        [math]::Round(($modulesWithTests / $totalModules) * 100, 1) 
+                    } else { 0 }
+                }
+                summary = @{
+                    totalAnalyzed = $totalModules
+                    modulesWithTests = $modulesWithTests
+                }
+                testState = $testState
+            }
+            
+            Write-ReportLog "Calculated test coverage: $averageCoverage% average, $modulesWithTests/$totalModules modules with tests" -Level 'INFO'
+        } catch {
+            Write-ReportLog "Failed to load test state: $($_.Exception.Message)" -Level 'WARNING'
+        }
+    }
+
+    # If test state not loaded, try other artifacts
+    if (-not $auditData.Testing) {
+        foreach ($artifact in $testArtifacts) {
+            $path = Join-Path $ArtifactsPath $artifact
+            if (Test-Path $path) {
+                try {
+                    $content = Get-Content $path -Raw | ConvertFrom-Json
+                    $auditData.Testing = $content
+                    Write-ReportLog "Loaded testing audit data from $artifact" -Level 'SUCCESS'
+                } catch {
+                    Write-ReportLog "Failed to load $artifact : $($_.Exception.Message)" -Level 'WARNING'
+                }
+                break
+            }
         }
     }
 
@@ -187,7 +238,9 @@ function Import-AuditData {
     # Load code quality results
     $qualityArtifacts = @(
         'quality-analysis-results.json',
-        'remediation-report.json'
+        'remediation-report.json',
+        'psscriptanalyzer-results.sarif',
+        'complexity-analysis-summary.json'
     )
 
     foreach ($artifact in $qualityArtifacts) {
@@ -199,7 +252,38 @@ function Import-AuditData {
                     $auditData.CodeQuality = @{}
                 }
                 $auditData.CodeQuality[$artifact] = $content
-                Write-ReportLog "Loaded code quality data" -Level 'SUCCESS'
+                Write-ReportLog "Loaded code quality data from $artifact" -Level 'SUCCESS'
+            } catch {
+                Write-ReportLog "Failed to load $artifact : $($_.Exception.Message)" -Level 'WARNING'
+            }
+        }
+    }
+    
+    # Load duplicate detection results
+    $duplicateArtifacts = @(
+        'duplicate-detection-report.json',
+        'duplicate-files.json',
+        'ai-generated-files.json'
+    )
+    
+    $auditData.Duplicates = @{
+        totalScanned = 0
+        duplicatesFound = 0
+        aiGeneratedFound = 0
+        files = @()
+    }
+    
+    foreach ($artifact in $duplicateArtifacts) {
+        $path = Join-Path $ArtifactsPath $artifact
+        if (Test-Path $path) {
+            try {
+                $content = Get-Content $path -Raw | ConvertFrom-Json
+                if ($artifact -eq 'duplicate-detection-report.json') {
+                    $auditData.Duplicates = $content
+                    Write-ReportLog "Loaded duplicate detection data" -Level 'SUCCESS'
+                } else {
+                    $auditData.Duplicates[$artifact] = $content
+                }
             } catch {
                 Write-ReportLog "Failed to load $artifact : $($_.Exception.Message)" -Level 'WARNING'
             }
@@ -647,7 +731,7 @@ function New-ComprehensiveHtmlReport {
         </div>
 
         <div class="details-section">
-            <h2>🗺️ Dynamic Feature Map</h2>
+            <h2>🗺️ Dynamic Feature Map & Dependencies</h2>
             <div class="feature-grid">
 "@
 
@@ -669,6 +753,34 @@ function New-ComprehensiveHtmlReport {
 "@
     }
 
+    $html += @"
+            </div>
+        </div>
+
+        <div class="details-section">
+            <h2>🔗 Module Dependencies Visualization</h2>
+            <div id="dependency-graph" style="min-height: 400px; background: #f8f9fa; border-radius: 5px; padding: 20px;">
+                <h3>Module Dependency Network</h3>
+"@
+
+    # Generate dependency visualization
+    $dependencies = @{}
+    foreach ($module in $FeatureMap.ModuleDetails.GetEnumerator()) {
+        if ($module.Value.RequiredModules) {
+            $dependencies[$module.Key] = $module.Value.RequiredModules
+        }
+    }
+    
+    if ($dependencies.Count -gt 0) {
+        $html += "<h4>Module Dependencies:</h4><ul>"
+        foreach ($dep in $dependencies.GetEnumerator()) {
+            $html += "<li><strong>$($dep.Key)</strong> depends on: $($dep.Value -join ', ')</li>"
+        }
+        $html += "</ul>"
+    } else {
+        $html += "<p>No inter-module dependencies detected.</p>"
+    }
+    
     $html += @"
             </div>
         </div>
@@ -760,6 +872,10 @@ function New-ComprehensiveHtmlReport {
                     <div style="padding: 15px; background: #f8f9fa; border-radius: 5px;">
                         <h4>🧪 Testing Audit</h4>
                         <p>Status: $(if ($AuditData.Testing) { '✅ Available' } else { '⚠️ No data' })</p>
+                        $(if ($AuditData.Testing) {
+                            "<p>Coverage: <strong>$($AuditData.Testing.coverage.averageCoverage)%</strong></p>"
+                            "<p>Modules with tests: <strong>$($AuditData.Testing.coverage.modulesWithTests)/$($AuditData.Testing.coverage.totalModules)</strong></p>"
+                        })
                     </div>
                     <div style="padding: 15px; background: #f8f9fa; border-radius: 5px;">
                         <h4>🔒 Security Audit</h4>
@@ -769,8 +885,196 @@ function New-ComprehensiveHtmlReport {
                         <h4>🔧 Code Quality</h4>
                         <p>Status: $(if ($AuditData.CodeQuality) { '✅ Available' } else { '⚠️ No data' })</p>
                     </div>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                        <h4>🔍 Duplicate Detection</h4>
+                        <p>Status: $(if ($AuditData.Duplicates) { '✅ Available' } else { '⚠️ No data' })</p>
+                        $(if ($AuditData.Duplicates) {
+                            "<p>Duplicates found: <strong>$($AuditData.Duplicates.duplicatesFound)</strong></p>"
+                            "<p>AI-generated: <strong>$($AuditData.Duplicates.aiGeneratedFound)</strong></p>"
+                        })
+                    </div>
                 </div>
             </div>
+"@
+            
+    # Add comprehensive sections if detailed analysis is requested
+    if ($IncludeDetailedAnalysis) {
+        
+        # Documentation Coverage Section
+        if ($AuditData.Documentation) {
+            $html += @"
+            
+            <button class="collapsible">📝 Documentation Coverage Analysis</button>
+            <div class="content">
+                <h3>Documentation Health Overview</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    <div>
+                        <h4>Coverage Summary</h4>
+                        <ul>
+                            <li>Total directories analyzed: <strong>$($AuditData.Documentation.totalDirectories)</strong></li>
+                            <li>Directories with README: <strong>$($AuditData.Documentation.directoriesWithReadme)</strong></li>
+                            <li>Directories without README: <strong>$($AuditData.Documentation.directoriesWithoutReadme)</strong></li>
+                            <li>Documentation coverage: <strong>$([math]::Round(($AuditData.Documentation.directoriesWithReadme / $AuditData.Documentation.totalDirectories) * 100, 1))%</strong></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>Documentation Issues</h4>
+                        <ul>
+                            <li>Stale documentation: <strong>$($AuditData.Documentation.staleDocumentationCount)</strong></li>
+                            <li>Missing critical docs: <strong>$($AuditData.Documentation.missingCriticalDocs)</strong></li>
+                            <li>Template-based docs: <strong>$($AuditData.Documentation.templateBasedDocs)</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+"@
+        }
+        
+        # Test Analysis Section
+        if ($AuditData.Testing -and $AuditData.Testing.testState) {
+            $html += @"
+            
+            <button class="collapsible">🧪 Comprehensive Test Analysis</button>
+            <div class="content">
+                <h3>Test Coverage by Module</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Module</th>
+                            <th>Has Tests</th>
+                            <th>Coverage %</th>
+                            <th>Test Cases</th>
+                            <th>Test Strategy</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+"@
+            foreach ($module in $AuditData.Testing.testState.modules.PSObject.Properties) {
+                $moduleData = $module.Value
+                $statusClass = if ($moduleData.hasTests) { 'status-healthy' } else { 'status-critical' }
+                $coverageClass = if ($moduleData.estimatedCoverage -ge 80) { 'grade-a' } 
+                                elseif ($moduleData.estimatedCoverage -ge 60) { 'grade-b' }
+                                elseif ($moduleData.estimatedCoverage -ge 40) { 'grade-c' }
+                                else { 'grade-d' }
+                
+                $html += @"
+                        <tr>
+                            <td><strong>$($module.Name)</strong></td>
+                            <td><span class="status-indicator $statusClass"></span>$($moduleData.hasTests)</td>
+                            <td><span class="$coverageClass">$($moduleData.estimatedCoverage)%</span></td>
+                            <td>$($moduleData.estimatedTestCases)</td>
+                            <td>$($moduleData.testStrategy)</td>
+                            <td>$(if ($moduleData.isStale) { '⚠️ Stale' } else { '✅ Current' })</td>
+                        </tr>
+"@
+            }
+            $html += @"
+                    </tbody>
+                </table>
+            </div>
+"@
+        }
+        
+        # Duplicate Detection Section
+        if ($AuditData.Duplicates -and $AuditData.Duplicates.duplicatesFound -gt 0) {
+            $html += @"
+            
+            <button class="collapsible">🔍 Duplicate File Detection Results</button>
+            <div class="content">
+                <h3>Duplicate and AI-Generated Files</h3>
+                <div style="margin-bottom: 20px;">
+                    <p><strong>Total files scanned:</strong> $($AuditData.Duplicates.totalScanned)</p>
+                    <p><strong>Duplicate files found:</strong> $($AuditData.Duplicates.duplicatesFound)</p>
+                    <p><strong>AI-generated files detected:</strong> $($AuditData.Duplicates.aiGeneratedFound)</p>
+                </div>
+"@
+            if ($AuditData.Duplicates.files -and $AuditData.Duplicates.files.Count -gt 0) {
+                $html += @"
+                <h4>Duplicate Files List</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>File Path</th>
+                            <th>Type</th>
+                            <th>Confidence</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+"@
+                foreach ($file in $AuditData.Duplicates.files) {
+                    $html += @"
+                        <tr>
+                            <td>$($file.path)</td>
+                            <td>$($file.type)</td>
+                            <td>$($file.confidence)</td>
+                            <td>$($file.recommendedAction)</td>
+                        </tr>
+"@
+                }
+                $html += @"
+                    </tbody>
+                </table>
+"@
+            }
+            $html += @"
+            </div>
+"@
+        }
+        
+        # Code Quality Details Section
+        if ($AuditData.CodeQuality) {
+            $html += @"
+            
+            <button class="collapsible">🔧 Code Quality Analysis Details</button>
+            <div class="content">
+                <h3>PSScriptAnalyzer Results</h3>
+"@
+            if ($AuditData.CodeQuality.'psscriptanalyzer-results.sarif') {
+                $sarif = $AuditData.CodeQuality.'psscriptanalyzer-results.sarif'
+                $totalIssues = 0
+                if ($sarif.runs -and $sarif.runs[0].results) {
+                    $totalIssues = $sarif.runs[0].results.Count
+                }
+                
+                $html += @"
+                <p><strong>Total issues found:</strong> $totalIssues</p>
+"@
+                
+                if ($totalIssues -gt 0) {
+                    # Group issues by severity
+                    $issuesBySeverity = @{}
+                    foreach ($issue in $sarif.runs[0].results) {
+                        $severity = $issue.level
+                        if (-not $issuesBySeverity[$severity]) {
+                            $issuesBySeverity[$severity] = @()
+                        }
+                        $issuesBySeverity[$severity] += $issue
+                    }
+                    
+                    foreach ($severity in $issuesBySeverity.Keys | Sort-Object) {
+                        $html += @"
+                <h4>$severity Issues ($($issuesBySeverity[$severity].Count))</h4>
+                <ul>
+"@
+                        foreach ($issue in $issuesBySeverity[$severity] | Select-Object -First 10) {
+                            $html += "<li><strong>$($issue.ruleId)</strong>: $($issue.message.text)</li>"
+                        }
+                        if ($issuesBySeverity[$severity].Count -gt 10) {
+                            $html += "<li><em>... and $($issuesBySeverity[$severity].Count - 10) more</em></li>"
+                        }
+                        $html += "</ul>"
+                    }
+                }
+            }
+            $html += @"
+            </div>
+"@
+        }
+    }
+    
+    $html += @"
         </div>
 
         <div class="footer">

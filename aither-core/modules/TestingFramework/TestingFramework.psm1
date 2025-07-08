@@ -565,6 +565,7 @@ function Invoke-ParallelTestExecution {
                 Phase = $phase
                 TestPath = $module.TestPath
                 Configuration = $TestPlan.Configuration
+                TestingFrameworkPath = $PSScriptRoot  # Pass the module path
             }
         }
 
@@ -573,6 +574,9 @@ function Invoke-ParallelTestExecution {
             param($testJob)
 
             try {
+                # Import TestingFramework module in the job context
+                Import-Module $testJob.TestingFrameworkPath -Force
+                
                 $result = Invoke-ModuleTestPhase -ModuleName $testJob.ModuleName -Phase $testJob.Phase -TestPath $testJob.TestPath -Configuration $testJob.Configuration
                 return @{
                     Success = ($result.TestsFailed -eq 0)
@@ -831,7 +835,8 @@ function Invoke-UnitTests {
         }
 
         # Performance and timeout settings
-        $pesterConfig.Run.Timeout = [TimeSpan]::FromMinutes($Configuration.TimeoutMinutes)
+        # Note: Timeout property may not exist in all Pester versions
+        # $pesterConfig.Run.Timeout = [TimeSpan]::FromMinutes($Configuration.TimeoutMinutes)
         $pesterConfig.Run.Exit = $false
 
         $pesterResult = Invoke-Pester -Configuration $pesterConfig
@@ -925,7 +930,8 @@ function Invoke-IntegrationTests {
             $pesterConfig.TestResult.Enabled = $true
             $pesterConfig.TestResult.OutputFormat = "NUnitXml"
             $pesterConfig.TestResult.OutputPath = Join-Path $env:TEST_OUTPUT_PATH "integration-$($testFile.BaseName)-results.xml"
-            $pesterConfig.Run.Timeout = [TimeSpan]::FromMinutes($Configuration.TimeoutMinutes)
+            # Note: Timeout property may not exist in all Pester versions
+            # $pesterConfig.Run.Timeout = [TimeSpan]::FromMinutes($Configuration.TimeoutMinutes)
 
             $result = Invoke-Pester -Configuration $pesterConfig
 
@@ -2245,6 +2251,12 @@ Export-ModuleMember -Function @(
     'Get-TestConfiguration',
     'Invoke-ParallelTestExecution',
     'Invoke-SequentialTestExecution',
+    'Invoke-ModuleTestPhase',
+    'Invoke-EnvironmentTests',
+    'Invoke-UnitTests',
+    'Invoke-IntegrationTests',
+    'Invoke-PerformanceTests',
+    'Invoke-NonInteractiveTests',
     'New-TestReport',
     'Export-VSCodeTestResults',
     'Submit-TestEvent',

@@ -13,6 +13,12 @@
 
 **Automated reports updated daily:** https://wizzense.github.io/AitherZero/
 
+### 📈 Available Reports:
+- **[Comprehensive Project Report](https://wizzense.github.io/AitherZero/aitherZero-comprehensive-report.html)** - Full project health analysis with test coverage, documentation audit, and code quality metrics
+- **[Feature & Dependency Map](https://wizzense.github.io/AitherZero/feature-dependency-map.html)** - Interactive visualization of module relationships
+- **[CI Dashboard](https://wizzense.github.io/AitherZero/comprehensive-ci-dashboard.html)** - Latest CI/CD results and trends
+- **[Executive Summary](https://wizzense.github.io/AitherZero/executive-summary.md)** - High-level project status for stakeholders
+
 ## ⚡ Ultra-Simple Installation (30 seconds)
 
 > 🎯 **Get AitherZero running with a single command** - compatible with PowerShell 5.1+ on Windows/Linux/macOS

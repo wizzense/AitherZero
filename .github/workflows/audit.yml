@@ -45,7 +45,6 @@ permissions:
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
-  PSCORE_VERSION: '7.5.2'  # Use latest stable PowerShell
 
 jobs:
   # Initialize audit state and determine what needs to be audited
@@ -64,16 +63,7 @@ jobs:
       with:
         fetch-depth: 0
         
-    - name: Install PowerShell ${{ env.PSCORE_VERSION }}
-      shell: bash
-      run: |
-        echo "Installing PowerShell ${{ env.PSCORE_VERSION }}..."
-        wget -q https://github.com/PowerShell/PowerShell/releases/download/v${{ env.PSCORE_VERSION }}/powershell-${{ env.PSCORE_VERSION }}-linux-x64.tar.gz -O /tmp/powershell.tar.gz
-        sudo mkdir -p /opt/microsoft/powershell/7
-        sudo tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7
-        sudo chmod +x /opt/microsoft/powershell/7/pwsh
-        sudo ln -sf /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh
-        pwsh --version
+    # PowerShell is pre-installed on GitHub runners
         
     - name: Check existing state files
       id: check
@@ -157,15 +147,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         
-    - name: Install PowerShell ${{ env.PSCORE_VERSION }}
-      shell: bash
-      run: |
-        wget -q https://github.com/PowerShell/PowerShell/releases/download/v${{ env.PSCORE_VERSION }}/powershell-${{ env.PSCORE_VERSION }}-linux-x64.tar.gz -O /tmp/powershell.tar.gz
-        sudo mkdir -p /opt/microsoft/powershell/7
-        sudo tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7
-        sudo chmod +x /opt/microsoft/powershell/7/pwsh
-        sudo ln -sf /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh
-        pwsh --version
+    # PowerShell is pre-installed on GitHub runners
         
     - name: Cache audit state
       uses: actions/cache@v4
@@ -286,15 +268,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Install PowerShell ${{ env.PSCORE_VERSION }}
-      shell: bash
-      run: |
-        wget -q https://github.com/PowerShell/PowerShell/releases/download/v${{ env.PSCORE_VERSION }}/powershell-${{ env.PSCORE_VERSION }}-linux-x64.tar.gz -O /tmp/powershell.tar.gz
-        sudo mkdir -p /opt/microsoft/powershell/7
-        sudo tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7
-        sudo chmod +x /opt/microsoft/powershell/7/pwsh
-        sudo ln -sf /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh
-        pwsh --version
+    # PowerShell is pre-installed on GitHub runners
         
     - name: Cache audit state
       uses: actions/cache@v4
@@ -440,15 +414,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Install PowerShell ${{ env.PSCORE_VERSION }}
-      shell: bash
-      run: |
-        wget -q https://github.com/PowerShell/PowerShell/releases/download/v${{ env.PSCORE_VERSION }}/powershell-${{ env.PSCORE_VERSION }}-linux-x64.tar.gz -O /tmp/powershell.tar.gz
-        sudo mkdir -p /opt/microsoft/powershell/7
-        sudo tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7
-        sudo chmod +x /opt/microsoft/powershell/7/pwsh
-        sudo ln -sf /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh
-        pwsh --version
+    # PowerShell is pre-installed on GitHub runners
         
     - name: Detect duplicate files
       shell: pwsh
