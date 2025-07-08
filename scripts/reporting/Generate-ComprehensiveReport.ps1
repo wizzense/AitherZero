@@ -112,6 +112,7 @@ function Import-ExternalArtifacts {
         SecurityScan = $null
         TestCoverage = $null
         BuildResults = $null
+        FeatureMap = $null
     }
     
     if (-not (Test-Path $ExternalArtifactsPath)) {
