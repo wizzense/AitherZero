@@ -179,16 +179,16 @@ function Get-SingleModuleAnalysis {
         try {
             $manifest = Import-PowerShellDataFile $manifestPath
             $moduleInfo.Manifest = $manifest
-            $moduleInfo.Version = $manifest.ModuleVersion ?? '0.0.0'
-            $moduleInfo.Description = $manifest.Description ?? ''
-            $moduleInfo.Author = $manifest.Author ?? ''
-            $moduleInfo.CompanyName = $manifest.CompanyName ?? ''
-            $moduleInfo.PowerShellVersion = $manifest.PowerShellVersion ?? '5.1'
-            $moduleInfo.RequiredModules = $manifest.RequiredModules ?? @()
+            $moduleInfo.Version = if ($manifest.ModuleVersion) { $manifest.ModuleVersion } else { '0.0.0' }
+            $moduleInfo.Description = if ($manifest.Description) { $manifest.Description } else { '' }
+            $moduleInfo.Author = if ($manifest.Author) { $manifest.Author } else { '' }
+            $moduleInfo.CompanyName = if ($manifest.CompanyName) { $manifest.CompanyName } else { '' }
+            $moduleInfo.PowerShellVersion = if ($manifest.PowerShellVersion) { $manifest.PowerShellVersion } else { '5.1' }
+            $moduleInfo.RequiredModules = if ($manifest.RequiredModules) { $manifest.RequiredModules } else { @() }
             
             # Get exported functions
             if ($manifest.FunctionsToExport -and $manifest.FunctionsToExport -ne '*') {
-                $moduleInfo.Functions = $manifest.FunctionsToExport
+                $moduleInfo.Functions = if ($manifest.FunctionsToExport -is [array]) { $manifest.FunctionsToExport } else { @($manifest.FunctionsToExport) }
             }
         } catch {
             Write-FeatureLog "Failed to parse manifest for $($ModuleDirectory.Name): $($_.Exception.Message)" -Level 'DEBUG'
@@ -201,7 +201,8 @@ function Get-SingleModuleAnalysis {
         $moduleInfo.HasModuleFile = $true
         
         # Analyze module script for additional functions if not in manifest
-        if ($moduleInfo.Functions.Count -eq 0) {
+        $currentFunctionCount = if ($moduleInfo.Functions -and $moduleInfo.Functions.Count) { $moduleInfo.Functions.Count } else { 0 }
+        if ($currentFunctionCount -eq 0) {
             $moduleInfo.Functions = Get-FunctionsFromScript -ScriptPath $moduleScriptPath
         }
         
@@ -264,9 +265,10 @@ function Get-ModuleCategory {
 function Get-ModuleCapabilities {
     param($ModuleInfo)
     
+    $functionCount = if ($ModuleInfo.Functions -and $ModuleInfo.Functions.Count) { $ModuleInfo.Functions.Count } else { 0 }
     $capabilities = @{
-        FunctionCount = $ModuleInfo.Functions.Count
-        HasPublicAPI = $ModuleInfo.Functions.Count -gt 0
+        FunctionCount = $functionCount
+        HasPublicAPI = $functionCount -gt 0
         HasPrivateFunctions = $false
         HasClasses = $false
         HasEnums = $false
@@ -278,8 +280,9 @@ function Get-ModuleCapabilities {
         Features = @()
     }
     
-    # Analyze function names for features
-    foreach ($function in $ModuleInfo.Functions) {
+    # Analyze function names for features (if functions exist)
+    if ($ModuleInfo.Functions -and $ModuleInfo.Functions.Count -gt 0) {
+        foreach ($function in $ModuleInfo.Functions) {
         $functionName = $function.ToString().ToLower()
         
         # Detect feature patterns
@@ -298,6 +301,7 @@ function Get-ModuleCapabilities {
         if ($functionName -match 'file|directory|path') { $capabilities.Features += 'FileSystem' }
         if ($functionName -match 'deploy|provision') { $capabilities.Features += 'Deployment' }
         if ($functionName -match 'monitor|track|audit') { $capabilities.Features += 'Monitoring' }
+        }
     }
     
     # Remove duplicates and sort
@@ -388,13 +392,15 @@ function Get-ModuleHealth {
     
     $totalScore = ($healthFactors.Values | Measure-Object -Sum).Sum
     
-    return switch ($totalScore) {
+    $healthStatus = switch ($totalScore) {
         {$_ -ge 80} { 'Excellent' }
         {$_ -ge 60} { 'Good' }
         {$_ -ge 40} { 'Fair' }
         {$_ -ge 20} { 'Poor' }
         default { 'Critical' }
     }
+    
+    return $healthStatus
 }
 
 # Generate feature statistics
@@ -419,28 +425,29 @@ function Get-FeatureStatistics {
     
     foreach ($module in $ModuleAnalysis.Modules.Values) {
         # Function count
-        $stats.TotalFunctions += $module.Functions.Count
+        $functionCount = if ($module.Functions -and $module.Functions.Count) { $module.Functions.Count } else { 0 }
+        $stats.TotalFunctions += $functionCount
         
         # Test and documentation tracking
         if ($module.HasTests) { $stats.ModulesWithTests++ }
         if ($module.HasDocumentation) { $stats.ModulesWithDocumentation++ }
         
         # Health distribution
-        if (-not $stats.HealthDistribution[$module.Health]) {
+        if (-not $stats.HealthDistribution.ContainsKey($module.Health)) {
             $stats.HealthDistribution[$module.Health] = 0
         }
-        $stats.HealthDistribution[$module.Health]++
+        $stats.HealthDistribution[$module.Health] = $stats.HealthDistribution[$module.Health] + 1
         
         # Complexity and test coverage
         $totalComplexity += $module.ComplexityScore
         $totalTestCoverage += $module.TestCoverage
         
         # PowerShell version support
-        $psVersion = $module.PowerShellVersion ?? '5.1'
-        if (-not $stats.PowerShellVersionSupport[$psVersion]) {
+        $psVersion = if ($module.PowerShellVersion) { $module.PowerShellVersion } else { '5.1' }
+        if (-not $stats.PowerShellVersionSupport.ContainsKey($psVersion)) {
             $stats.PowerShellVersionSupport[$psVersion] = 0
         }
-        $stats.PowerShellVersionSupport[$psVersion]++
+        $stats.PowerShellVersionSupport[$psVersion] = $stats.PowerShellVersionSupport[$psVersion] + 1
     }
     
     # Calculate averages
@@ -461,10 +468,10 @@ function Get-FeatureStatistics {
     $featureCounts = @{}
     foreach ($capability in $ModuleAnalysis.Capabilities.Values) {
         foreach ($feature in $capability.Features) {
-            if (-not $featureCounts[$feature]) {
+            if (-not $featureCounts.ContainsKey($feature)) {
                 $featureCounts[$feature] = 0
             }
-            $featureCounts[$feature]++
+            $featureCounts[$feature] = $featureCounts[$feature] + 1
         }
     }
     $stats.FeatureDistribution = $featureCounts
@@ -610,13 +617,13 @@ function New-FeatureMapHtml {
                     </div>
                     <div>
                         <strong>Version:</strong> $($module.Version)<br>
-                        <strong>Functions:</strong> $($module.Functions.Count)<br>
+                        <strong>Functions:</strong> $(if ($module.Functions -and $module.Functions.Count) { $module.Functions.Count } else { 0 })<br>
                         <strong>Tests:</strong> $(if ($module.HasTests) { '✅' } else { '❌' })<br>
                         <strong>Docs:</strong> $(if ($module.HasDocumentation) { '✅' } else { '❌' })
                     </div>
 "@
             
-            if ($capabilities.Features.Count -gt 0) {
+            if ($capabilities.Features -and $capabilities.Features.Count -gt 0) {
                 $html += @"
                     <div class="features-list">
 "@
@@ -678,8 +685,29 @@ try {
         AnalyzedIntegrations = $AnalyzeIntegrations.IsPresent
     }
     
+    # Convert hashtables to PSCustomObjects recursively for JSON serialization
+    function ConvertTo-JsonCompatible {
+        param($Object)
+        
+        if ($Object -is [hashtable]) {
+            $converted = @{}
+            foreach ($key in $Object.Keys) {
+                $converted[$key] = ConvertTo-JsonCompatible -Object $Object[$key]
+            }
+            return [PSCustomObject]$converted
+        }
+        elseif ($Object -is [array]) {
+            return $Object | ForEach-Object { ConvertTo-JsonCompatible -Object $_ }
+        }
+        else {
+            return $Object
+        }
+    }
+    
+    $jsonCompatibleMap = ConvertTo-JsonCompatible -Object $featureMap
+    
     # Save JSON output
-    $featureMap | ConvertTo-Json -Depth 10 | Set-Content -Path $OutputPath -Encoding UTF8
+    $jsonCompatibleMap | ConvertTo-Json -Depth 10 | Set-Content -Path $OutputPath -Encoding UTF8
     Write-FeatureLog "Feature map saved to: $OutputPath" -Level 'SUCCESS'
     
     # Generate HTML visualization if requested
