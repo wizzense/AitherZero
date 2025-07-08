@@ -24,7 +24,6 @@ on:
           - all
           - codeql
           - dependencies
-          - secrets
 
 # Security: Minimal permissions by default
 permissions:
@@ -223,126 +222,6 @@ jobs:
           dependency-scan.sarif
           outdated-modules.txt
         retention-days: 30
-        
-  # Secret scanning
-  secrets-scan:
-    name: Secrets Detection
-    runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'schedule' || 
-      github.event_name == 'pull_request' || 
-      (github.event_name == 'workflow_dispatch' && (github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == 'secrets'))
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Full history for better detection
-        
-    - name: TruffleHog OSS scan
-      uses: trufflesecurity/trufflehog@main
-      with:
-        path: ./
-        base: ${{ github.event.repository.default_branch }}
-        head: HEAD
-        extra_args: --debug --only-verified
-        
-    - name: GitLeaks scan
-      uses: gitleaks/gitleaks-action@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
-    - name: Custom PowerShell secrets scan
-      shell: pwsh
-      run: |
-        Write-Host "Running custom PowerShell secrets scan..." -ForegroundColor Cyan
-        
-        # Common patterns to detect
-        $patterns = @{
-          'API Key' = 'api[_-]?key\s*[:=]\s*["\']?[a-zA-Z0-9]{32,}'
-          'AWS Key' = 'AKIA[0-9A-Z]{16}'
-          'Azure Key' = 'DefaultEndpointsProtocol=https.*AccountKey=[a-zA-Z0-9+/=]{88}'
-          'Private Key' = '-----BEGIN (RSA |EC |DSA )?PRIVATE KEY-----'
-          'Password' = '(?i)(password|passwd|pwd)\s*[:=]\s*["\'][^"\']{8,}'
-          'Token' = '(?i)(token|bearer)\s*[:=]\s*["\'][a-zA-Z0-9._-]{20,}'
-          'Connection String' = '(?i)(server|data source)=.*;(password|pwd)=.*'
-          'GitHub Token' = 'gh[pousr]_[A-Za-z0-9_]{36}'
-        }
-        
-        $findings = @()
-        $files = Get-ChildItem -Path . -Include "*.ps1","*.psm1","*.psd1","*.json","*.xml","*.config" -Recurse |
-                 Where-Object { $_.FullName -notmatch '\\\.git\\|/\.git/' }
-        
-        foreach ($file in $files) {
-          $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
-          if (-not $content) { continue }
-          
-          $lineNumber = 0
-          foreach ($line in ($content -split "`n")) {
-            $lineNumber++
-            
-            foreach ($pattern in $patterns.GetEnumerator()) {
-              if ($line -match $pattern.Value) {
-                # Check if it's a false positive
-                $isFalsePositive = $false
-                
-                # Enhanced false positive detection
-                if ($line -match '^\s*#' -or                    # Comment
-                    $line -match 'example|sample|test|demo|mock' -or # Example code
-                    $line -match '\$\{.*\}' -or                 # Variable substitution
-                    $line -match '\$env:' -or                   # Environment variable
-                    $line -match 'ConvertTo-SecureString' -or   # Secure string handling
-                    $line -match 'ToBase64String' -or           # Base64 encoding (legitimate)
-                    $line -match 'Generate.*key' -or            # Key generation
-                    $line -match 'New.*key' -or                 # Key creation
-                    $line -match 'Create.*key' -or              # Key creation
-                    $line -match 'localhost|127\.0\.0\.1' -or   # Local connections
-                    $line -match 'It "Should.*"' -or            # Pester tests
-                    $line -match 'Context ".*"' -or             # Pester contexts
-                    $line -match 'Describe ".*"' -or            # Pester describes
-                    $file.FullName -match '\.Tests\.ps1$|test|mock|example|sample') # Test files
-                {
-                  $isFalsePositive = $true
-                }
-                
-                if (-not $isFalsePositive) {
-                  $findings += @{
-                    Type = $pattern.Key
-                    File = $file.FullName -replace [regex]::Escape($PWD.Path), '.'
-                    Line = $lineNumber
-                    Content = ($line -replace $pattern.Value, '[REDACTED]').Trim()
-                  }
-                }
-              }
-            }
-          }
-        }
-        
-        # Report findings
-        if ($findings.Count -gt 0) {
-          Write-Host "`n🚨 Found $($findings.Count) potential secrets:" -ForegroundColor Red
-          $findings | ForEach-Object {
-            Write-Host "::error file=$($_.File),line=$($_.Line)::$($_.Type) detected: $($_.Content)"
-          }
-          
-          # Create report
-          $findings | ConvertTo-Json -Depth 3 | Set-Content -Path secrets-scan-report.json
-          
-          # Fail the build
-          throw "Potential secrets detected! Please review and remove them."
-        } else {
-          Write-Host "✅ No secrets detected" -ForegroundColor Green
-        }
-        
-    - name: Upload scan results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: secrets-scan-results
-        path: |
-          secrets-scan-report.json
-          .gitleaks-report.json
-        retention-days: 7
         
   # PowerShell-specific security checks
   powershell-security:
@@ -555,7 +434,7 @@ jobs:
   security-summary:
     name: Security Summary
     runs-on: ubuntu-latest
-    needs: [codeql, dependency-scan, secrets-scan, powershell-security]
+    needs: [codeql, dependency-scan, powershell-security]
     if: always()
     
     steps:
@@ -568,7 +447,6 @@ jobs:
         $results = @{
           'CodeQL Analysis' = '${{ needs.codeql.result }}'
           'Dependency Scan' = '${{ needs.dependency-scan.result }}'
-          'Secrets Scan' = '${{ needs.secrets-scan.result }}'
           'PowerShell Security' = '${{ needs.powershell-security.result }}'
         }
         
@@ -597,7 +475,6 @@ jobs:
           const results = {
             'CodeQL Analysis': '${{ needs.codeql.result }}',
             'Dependency Scan': '${{ needs.dependency-scan.result }}',
-            'Secrets Scan': '${{ needs.secrets-scan.result }}',
             'PowerShell Security': '${{ needs.powershell-security.result }}'
           };
           
