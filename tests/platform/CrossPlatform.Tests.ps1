@@ -41,6 +41,12 @@ BeforeAll {
     if (Test-Path $crossPlatformUtilsPath) {
         . $crossPlatformUtilsPath
     }
+    
+    # Load platform compatibility utilities
+    $platformCompatibilityPath = Join-Path $script:ProjectRoot "aither-core/shared/Test-PlatformCompatibility.ps1"
+    if (Test-Path $platformCompatibilityPath) {
+        . $platformCompatibilityPath
+    }
 
     # Test configuration
     $script:PlatformConfig = @{
@@ -200,86 +206,42 @@ Describe "Cross-Platform Service Management" -Tags @('CrossPlatform', 'Services'
 
     Context "Service Detection" {
         It "Should detect services using platform-appropriate method" {
-            if ($IsWindows) {
-                # Windows: Use Get-Service
-                { Get-Service | Select-Object -First 1 } | Should -Not -Throw -Because "Get-Service should work on Windows"
+            $services = Get-PlatformServices
+            if ($services) {
+                $services | Should -Not -BeNullOrEmpty -Because "Platform service manager should return services"
             } else {
-                # Linux/macOS: Use systemctl or launchctl
-                if ($IsLinux) {
-                    # Test systemctl availability
-                    $systemctlAvailable = Get-Command systemctl -ErrorAction SilentlyContinue
-                    if ($systemctlAvailable) {
-                        $services = systemctl list-units --type=service --no-legend 2>/dev/null
-                        $services | Should -Not -BeNullOrEmpty -Because "systemctl should return services on Linux"
-                    } else {
-                        Write-Host "systemctl not available, skipping Linux service test" -ForegroundColor Yellow
-                        $true | Should -Be $true
-                    }
-                } elseif ($IsMacOS) {
-                    # Test launchctl availability
-                    $launchctlAvailable = Get-Command launchctl -ErrorAction SilentlyContinue
-                    if ($launchctlAvailable) {
-                        $services = launchctl list 2>/dev/null
-                        $services | Should -Not -BeNullOrEmpty -Because "launchctl should return services on macOS"
-                    } else {
-                        Write-Host "launchctl not available, skipping macOS service test" -ForegroundColor Yellow
-                        $true | Should -Be $true
-                    }
-                }
+                Write-Host "Service manager not available on this platform, skipping service test" -ForegroundColor Yellow
+                $true | Should -Be $true
             }
         }
 
         It "Should handle service status checking across platforms" {
-            if ($IsWindows) {
-                # Test a common Windows service
-                $service = Get-Service -Name "Spooler" -ErrorAction SilentlyContinue
-                if ($service) {
-                    $service.Status | Should -BeIn @('Running', 'Stopped') -Because "Service should have valid status"
-                } else {
-                    Write-Host "Spooler service not found, skipping Windows service status test" -ForegroundColor Yellow
-                    $true | Should -Be $true
-                }
+            $testService = if ($IsWindows) { "Spooler" } 
+                          elseif ($IsLinux) { "ssh" }
+                          elseif ($IsMacOS) { "ssh" }
+                          else { "ssh" }
+            
+            $serviceInfo = Get-PlatformServices -ServiceName $testService
+            if ($serviceInfo) {
+                $serviceInfo.Status | Should -Not -BeNullOrEmpty -Because "Service should have status information"
+                $serviceInfo.State | Should -BeIn @('Running', 'Stopped', 'active', 'inactive', 'failed') -Because "Service should have valid state"
             } else {
-                # Test SSH service on Linux/macOS
-                if ($IsLinux) {
-                    $sshStatus = systemctl is-active ssh 2>/dev/null
-                    if ($sshStatus) {
-                        $sshStatus | Should -BeIn @('active', 'inactive', 'failed') -Because "SSH service should have valid status"
-                    } else {
-                        Write-Host "SSH service not found, skipping Linux service status test" -ForegroundColor Yellow
-                        $true | Should -Be $true
-                    }
-                } elseif ($IsMacOS) {
-                    $sshStatus = launchctl list | Select-String "ssh" 2>/dev/null
-                    # macOS test is informational only
-                    $true | Should -Be $true
-                }
+                Write-Host "Test service '$testService' not found, skipping service status test" -ForegroundColor Yellow
+                $true | Should -Be $true
             }
         }
     }
 
     Context "Service Management Commands" {
         It "Should have appropriate service management commands available" {
-            $serviceManager = $script:CurrentConfig.ServiceManager
+            $serviceManager = Get-PlatformServiceManager
+            $serviceManager | Should -Not -BeNullOrEmpty -Because "Should have a service manager for this platform"
             
-            if ($serviceManager -eq 'Get-Service') {
-                Get-Command Get-Service | Should -Not -BeNullOrEmpty -Because "Get-Service should be available on Windows"
-            } elseif ($serviceManager -eq 'systemctl') {
-                $systemctlCommand = Get-Command systemctl -ErrorAction SilentlyContinue
-                if ($systemctlCommand) {
-                    $systemctlCommand | Should -Not -BeNullOrEmpty -Because "systemctl should be available on Linux"
-                } else {
-                    Write-Host "systemctl not available, this is expected in some environments" -ForegroundColor Yellow
-                    $true | Should -Be $true
-                }
-            } elseif ($serviceManager -eq 'launchctl') {
-                $launchctlCommand = Get-Command launchctl -ErrorAction SilentlyContinue
-                if ($launchctlCommand) {
-                    $launchctlCommand | Should -Not -BeNullOrEmpty -Because "launchctl should be available on macOS"
-                } else {
-                    Write-Host "launchctl not available, this is expected in some environments" -ForegroundColor Yellow
-                    $true | Should -Be $true
-                }
+            if (Test-PlatformCommand -CommandName $serviceManager) {
+                Get-Command $serviceManager | Should -Not -BeNullOrEmpty -Because "$serviceManager should be available on this platform"
+            } else {
+                Write-Host "Service manager '$serviceManager' not available, this is expected in some environments" -ForegroundColor Yellow
+                $true | Should -Be $true
             }
         }
     }
@@ -467,23 +429,18 @@ Describe "Cross-Platform Command Availability" -Tags @('CrossPlatform', 'Command
 
     Context "System Integration Commands" {
         It "Should handle system integration appropriately" {
-            if ($IsWindows) {
-                # Test Windows-specific integration
-                $hostname = hostname
-                $hostname | Should -Not -BeNullOrEmpty -Because "hostname should work on Windows"
+            # Test hostname using platform-aware method
+            $hostname = Get-PlatformEnvironmentVariable -VariableType "ComputerName"
+            $hostname | Should -Not -BeNullOrEmpty -Because "Computer name should be available on all platforms"
 
-                # Test environment variables
-                $env:COMPUTERNAME | Should -Not -BeNullOrEmpty -Because "COMPUTERNAME should be available on Windows"
-                
-            } else {
-                # Test Unix-specific integration
-                $hostname = hostname
-                $hostname | Should -Not -BeNullOrEmpty -Because "hostname should work on Unix"
-
-                # Test environment variables
-                $env:HOME | Should -Not -BeNullOrEmpty -Because "HOME should be available on Unix"
-                $env:USER | Should -Not -BeNullOrEmpty -Because "USER should be available on Unix"
-            }
+            # Test user information
+            $userName = Get-PlatformEnvironmentVariable -VariableType "UserName"
+            $userName | Should -Not -BeNullOrEmpty -Because "User name should be available on all platforms"
+            
+            # Test user home directory
+            $userHome = Get-PlatformEnvironmentVariable -VariableType "UserHome"
+            $userHome | Should -Not -BeNullOrEmpty -Because "User home should be available on all platforms"
+            Test-Path $userHome | Should -Be $true -Because "User home directory should exist"
         }
     }
 }

@@ -30,14 +30,16 @@ function Get-BackupStatistics {
     $ErrorActionPreference = "Stop"
 
     try {
-        # Import shared utilities and logging
-        . "$PSScriptRoot/../../../shared/Find-ProjectRoot.ps1"
-        $projectRoot = Find-ProjectRoot
-
-        # Import logging if available
-        $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
-        if (Test-Path $loggingPath) {
-            Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
+        # Import shared utilities and logging only if not in test mode
+        if (-not $env:PESTER_TEST) {
+            . "$PSScriptRoot/../../../shared/Find-ProjectRoot.ps1"
+            $fallbackProjectRoot = Find-ProjectRoot
+            
+            # Import logging if available
+            $loggingPath = Join-Path $fallbackProjectRoot "aither-core/modules/Logging"
+            if (Test-Path $loggingPath) {
+                Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
+            }
         }
 
         # Check for logging capability

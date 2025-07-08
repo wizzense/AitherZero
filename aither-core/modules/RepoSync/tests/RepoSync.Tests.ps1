@@ -2,17 +2,17 @@
 
 <#
 .SYNOPSIS
-    Comprehensive Pester tests for the RepoSync management module
+    Comprehensive Pester tests for the RepoSync module
 
 .DESCRIPTION
-    Tests management and orchestration functionality including:
-    - Resource management operations
-    - State tracking and persistence
-    - Event coordination and workflow execution
-    - Error recovery and rollback capabilities
+    Tests repository synchronization functionality including:
+    - Bidirectional sync operations
+    - Git repository management
+    - Remote repository coordination
+    - Status monitoring and reporting
 
 .NOTES
-    Specialized template for *Manager modules - customize based on management functionality
+    Customized for RepoSync module functionality
 #>
 
 BeforeAll {
@@ -20,8 +20,9 @@ BeforeAll {
     $ModulePath = Split-Path -Parent $PSScriptRoot
     Import-Module $ModulePath -Force
 
-    # Setup test environment for management operations
+    # Setup test environment
     $script:TestStartTime = Get-Date
+    $script:ModuleName = "RepoSync"
     $script:TestWorkspace = if ($env:TEMP) {
         Join-Path $env:TEMP "RepoSync-Test-$(Get-Random)"
     } elseif (Test-Path '/tmp') {
@@ -50,165 +51,198 @@ AfterAll {
 
     # Calculate test execution time
     $testDuration = (Get-Date) - $script:TestStartTime
-    Write-Host "Management module test execution completed in $($testDuration.TotalSeconds) seconds" -ForegroundColor Green
+    Write-Host "RepoSync module test execution completed in $($testDuration.TotalSeconds) seconds" -ForegroundColor Green
 }
 
-Describe "RepoSync Management Module - Core Functionality" {
+Describe "RepoSync Module - Core Functionality" {
     Context "Module Import and Structure" {
-        It "Should import the management module successfully" {
-            Get-Module -Name "RepoSync" | Should -Not -BeNullOrEmpty
+        It "Should import the module successfully" {
+            Get-Module -Name $script:ModuleName | Should -Not -BeNullOrEmpty
         }
 
-        It "Should export management functions" {
+        It "Should export expected repository sync functions" {
             $expectedFunctions = @(
-                # Standard management functions - customize based on specific module
-                'Start-RepoSyncManagement',
-                'Stop-RepoSyncManagement',
-                'Get-RepoSyncStatus',
-                'Set-RepoSyncConfiguration',
-                'Invoke-RepoSyncOperation',
-                'Reset-RepoSyncState'
+                'Sync-ToAitherLab',
+                'Sync-FromAitherLab',
+                'Get-SyncStatus',
+                'Get-RepoSyncStatus'
             )
 
-            $exportedFunctions = Get-Command -Module "RepoSync" | Select-Object -ExpandProperty Name
+            $exportedFunctions = Get-Command -Module $script:ModuleName | Select-Object -ExpandProperty Name
 
-            # Check for any expected functions that exist
-            $foundFunctions = $expectedFunctions | Where-Object { $exportedFunctions -contains $_ }
-            $foundFunctions | Should -Not -BeNullOrEmpty -Because "Management module should export management-related functions"
+            foreach ($function in $expectedFunctions) {
+                $exportedFunctions | Should -Contain $function
+            }
+        }
+
+        It "Should require PowerShell 7.0 or higher" {
+            $module = Get-Module $script:ModuleName
+            $module.PowerShellVersion | Should -BeGreaterOrEqual ([Version]"7.0")
+        }
+
+        It "Should have proper module metadata" {
+            $module = Get-Module $script:ModuleName
+            $module | Should -Not -BeNullOrEmpty
+            $module.Description | Should -Not -BeNullOrEmpty
         }
     }
 
-    Context "Resource Management Operations" {
-        It "Should initialize management state properly" {
-            # Test management initialization
-            { Start-RepoSyncManagement -TestMode } | Should -Not -Throw
+    Context "Function Help and Documentation" {
+        It "Should provide help for all exported functions" {
+            $functions = Get-Command -Module $script:ModuleName -CommandType Function
+
+            foreach ($function in $functions) {
+                { Get-Help $function.Name } | Should -Not -Throw
+                $help = Get-Help $function.Name
+                $help.Synopsis | Should -Not -BeNullOrEmpty
+            }
         }
 
-        It "Should track resource state accurately" {
-            # Test state tracking
-            $status = Get-RepoSyncStatus
-            $status | Should -Not -BeNullOrEmpty
-            $status.State | Should -BeIn @('Initialized', 'Running', 'Stopped', 'Error')
-        }
-
-        It "Should handle configuration changes safely" {
-            # Test configuration management
-            $testConfig = @{ TestSetting = "TestValue" }
-            { Set-RepoSyncConfiguration -Configuration $testConfig } | Should -Not -Throw
-        }
-
-        It "Should execute operations with proper validation" {
-            # Test operation execution
-            $result = Invoke-RepoSyncOperation -Operation "Test" -WhatIf
-            $result | Should -Not -BeNullOrEmpty
-        }
-    }
-
-    Context "State Management and Persistence" {
-        It "Should maintain consistent state across operations" {
-            # Test state consistency
-            $initialState = Get-RepoSyncStatus
-            Invoke-RepoSyncOperation -Operation "Test" -TestMode
-            $afterState = Get-RepoSyncStatus
-
-            $afterState.LastOperation | Should -Be "Test"
-        }
-
-        It "Should persist state information properly" {
-            # Test state persistence
-            $stateFile = Join-Path $script:TestWorkspace "state.json"
-            $result = Export-RepoSyncState -Path $stateFile
-
-            Test-Path $stateFile | Should -Be $true
-        }
-
-        It "Should restore state from persistence" {
-            # Test state restoration
-            $stateFile = Join-Path $script:TestWorkspace "state.json"
-            if (Test-Path $stateFile) {
-                { Import-RepoSyncState -Path $stateFile } | Should -Not -Throw
+        It "Should have proper parameter documentation" {
+            $functions = Get-Command -Module $script:ModuleName -CommandType Function
+            
+            foreach ($function in $functions) {
+                $help = Get-Help $function.Name
+                if ($help.Parameters) {
+                    $help.Parameters.Parameter | Should -Not -BeNullOrEmpty
+                }
             }
         }
     }
 
-    Context "Error Handling and Recovery" {
-        It "Should handle invalid operations gracefully" {
-            # Test error handling
-            { Invoke-RepoSyncOperation -Operation "NonExistentOperation" } | Should -Throw
+    Context "Repository Status Operations" {
+        It "Should get repository sync status without errors" {
+            { Get-RepoSyncStatus } | Should -Not -Throw
+        }
+
+        It "Should return proper status structure" {
+            $status = Get-RepoSyncStatus
+            $status | Should -Not -BeNullOrEmpty
+            $status.Status | Should -Not -BeNullOrEmpty
+            $status.LastSync | Should -Not -BeNullOrEmpty
+            $status.RemoteStatus | Should -Not -BeNullOrEmpty
+            $status.PendingChanges | Should -Not -BeNullOrEmpty
+        }
+
+        It "Should handle missing git gracefully" {
+            # Mock git command failure
+            Mock Invoke-Expression { throw "git not found" } -ParameterFilter { $Command -like "*git*" }
+            
+            { Get-RepoSyncStatus } | Should -Not -Throw
+            $status = Get-RepoSyncStatus
+            $status.Status | Should -Be "Git not available"
+        }
+    }
+
+    Context "Sync Operations" {
+        It "Should validate Sync-ToAitherLab parameters" {
+            # Test mandatory parameters
+            { Sync-ToAitherLab -WhatIf } | Should -Throw
+            { Sync-ToAitherLab -CommitMessage "Test" -WhatIf } | Should -Not -Throw
+        }
+
+        It "Should validate Sync-FromAitherLab parameters" {
+            # Test with WhatIf to avoid actual git operations
+            { Sync-FromAitherLab -WhatIf } | Should -Not -Throw
+            { Sync-FromAitherLab -Branch "main" -WhatIf } | Should -Not -Throw
+        }
+
+        It "Should support dry run for Sync-FromAitherLab" {
+            # Test dry run functionality
+            { Sync-FromAitherLab -DryRun } | Should -Not -Throw
+        }
+
+        It "Should support WhatIf for sync operations" {
+            # Test WhatIf support
+            { Sync-ToAitherLab -CommitMessage "Test" -WhatIf } | Should -Not -Throw
+            { Sync-FromAitherLab -WhatIf } | Should -Not -Throw
+        }
+    }
+
+    Context "Error Handling" {
+        It "Should handle missing mandatory parameters gracefully" {
+            { Sync-ToAitherLab -ErrorAction Stop } | Should -Throw
         }
 
         It "Should provide meaningful error messages" {
-            # Test error reporting
             try {
-                Invoke-RepoSyncOperation -Operation "InvalidOperation"
+                Sync-ToAitherLab -ErrorAction Stop
             } catch {
                 $_.Exception.Message | Should -Not -BeNullOrEmpty
-                $_.Exception.Message | Should -Not -Be "An error occurred"
             }
         }
 
-        It "Should support rollback operations when possible" {
-            # Test rollback capability
-            if (Get-Command Reset-RepoSyncState -ErrorAction SilentlyContinue) {
-                { Reset-RepoSyncState -Reason "Test rollback" } | Should -Not -Throw
-            }
+        It "Should handle git command failures gracefully" {
+            # Test with non-existent branch
+            { Sync-FromAitherLab -Branch "non-existent-branch" -DryRun } | Should -Not -Throw
         }
     }
 
-    Context "Event Coordination and Workflow" {
-        It "Should publish management events" {
-            # Test event publishing if module supports it
-            if (Get-Command Publish-RepoSyncEvent -ErrorAction SilentlyContinue) {
-                { Publish-RepoSyncEvent -EventType "Test" -Data @{} } | Should -Not -Throw
-            }
+    Context "Integration with AitherZero Framework" {
+        It "Should integrate with logging system" {
+            # Test logging integration
+            $logFunction = Get-Command Write-CustomLog -ErrorAction SilentlyContinue
+            $logFunction | Should -Not -BeNullOrEmpty
         }
 
-        It "Should coordinate with other management modules" {
-            # Test inter-module coordination
-            $coordination = Test-RepoSyncCoordination
-            $coordination | Should -Not -BeNullOrEmpty
+        It "Should handle configuration properly" {
+            # Test configuration handling
+            $module = Get-Module $script:ModuleName
+            $module.ModuleBase | Should -Exist
         }
 
-        It "Should handle workflow execution properly" {
-            # Test workflow capabilities
-            if (Get-Command Start-RepoSyncWorkflow -ErrorAction SilentlyContinue) {
-                $workflow = Start-RepoSyncWorkflow -WorkflowName "Test" -DryRun
-                $workflow.Status | Should -Be "Simulated"
-            }
+        It "Should support cross-platform operation" {
+            # Test cross-platform compatibility
+            $module = Get-Module $script:ModuleName
+            $module | Should -Not -BeNullOrEmpty
         }
     }
 }
 
-Describe "RepoSync Management Module - Advanced Scenarios" {
-    Context "Concurrent Operations" {
-        It "Should handle multiple concurrent management requests" {
-            # Test concurrency
-            $jobs = 1..3 | ForEach-Object {
-                Start-Job -ScriptBlock {
-                    param($TestWorkspace)
-                    Import-Module "RepoSync" -Force
-                    Get-RepoSyncStatus
-                } -ArgumentList $script:TestWorkspace
-            }
-
-            $results = $jobs | Wait-Job | Receive-Job
-            $jobs | Remove-Job
-
-            $results | Should -HaveCount 3
+Describe "RepoSync Module - Advanced Scenarios" {
+    Context "Sync Configuration" {
+        It "Should handle file exclusions properly" {
+            $excludeFiles = @("*.secret*", "*.env*")
+            { Sync-FromAitherLab -ExcludeFiles $excludeFiles -DryRun } | Should -Not -Throw
         }
 
-        It "Should maintain consistency under concurrent access" {
-            # Test consistency under load
-            $status1 = Get-RepoSyncStatus
-            $status2 = Get-RepoSyncStatus
+        It "Should support selective file sync" {
+            $filesToSync = @("README.md", "VERSION")
+            { Sync-ToAitherLab -CommitMessage "Test" -FilesToSync $filesToSync -WhatIf } | Should -Not -Throw
+        }
 
-            $status1.State | Should -Be $status2.State
+        It "Should support branch specification" {
+            { Sync-FromAitherLab -Branch "develop" -DryRun } | Should -Not -Throw
+        }
+
+        It "Should support PR creation flag" {
+            { Sync-ToAitherLab -CommitMessage "Test" -CreatePR -WhatIf } | Should -Not -Throw
         }
     }
 
-    Context "Performance and Scalability" {
-        It "Should execute management operations within acceptable time limits" {
-            # Test performance
+    Context "Status Reporting" {
+        It "Should provide comprehensive sync status" {
+            { Get-SyncStatus } | Should -Not -Throw
+        }
+
+        It "Should handle missing git repository gracefully" {
+            # Change to non-git directory
+            Push-Location $script:TestWorkspace
+            try {
+                { Get-SyncStatus } | Should -Not -Throw
+            } finally {
+                Pop-Location
+            }
+        }
+
+        It "Should report remote status accurately" {
+            $status = Get-RepoSyncStatus
+            $status.RemoteStatus | Should -BeIn @('Connected', 'Disconnected', 'Unknown', 'Error')
+        }
+    }
+
+    Context "Performance and Reliability" {
+        It "Should execute status operations within acceptable time limits" {
             $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
             Get-RepoSyncStatus | Out-Null
             $stopwatch.Stop()
@@ -216,38 +250,83 @@ Describe "RepoSync Management Module - Advanced Scenarios" {
             $stopwatch.ElapsedMilliseconds | Should -BeLessThan 5000
         }
 
-        It "Should handle large-scale operations efficiently" {
-            # Test scalability
-            if (Get-Command Invoke-RepoSyncBulkOperation -ErrorAction SilentlyContinue) {
-                $items = 1..10
-                $result = Invoke-RepoSyncBulkOperation -Items $items -TestMode
-                $result.ProcessedCount | Should -Be 10
+        It "Should handle concurrent status requests" {
+            $jobs = 1..3 | ForEach-Object {
+                Start-Job -ScriptBlock {
+                    Import-Module "RepoSync" -Force
+                    Get-RepoSyncStatus
+                }
+            }
+
+            $results = $jobs | Wait-Job | Receive-Job
+            $jobs | Remove-Job
+
+            $results | Should -HaveCount 3
+            $results | ForEach-Object { $_.Status | Should -Not -BeNullOrEmpty }
+        }
+
+        It "Should maintain consistent behavior across multiple calls" {
+            $status1 = Get-RepoSyncStatus
+            $status2 = Get-RepoSyncStatus
+
+            $status1.Status | Should -Be $status2.Status
+            $status1.RemoteStatus | Should -Be $status2.RemoteStatus
+        }
+    }
+
+    Context "Git Integration" {
+        It "Should detect git availability" {
+            $gitAvailable = Get-Command git -ErrorAction SilentlyContinue
+            $status = Get-RepoSyncStatus
+            
+            if ($gitAvailable) {
+                $status.Status | Should -Not -Be "Git not available"
+            } else {
+                $status.Status | Should -Be "Git not available"
+            }
+        }
+
+        It "Should handle git repository detection" {
+            # Test behavior in different directory contexts
+            $currentDir = Get-Location
+            try {
+                Set-Location $script:TestWorkspace
+                $status = Get-RepoSyncStatus
+                $status | Should -Not -BeNullOrEmpty
+            } finally {
+                Set-Location $currentDir
             }
         }
     }
 
-    Context "Integration with AitherZero Framework" {
-        It "Should integrate with centralized logging" {
-            # Test logging integration
-            $logEvent = "Test management operation logged"
-            Write-CustomLog -Message $logEvent -Level "INFO"
-            # Additional logging validation can be added here
-        }
+    Context "Regression Testing" {
+        It "Should not regress existing functionality" {
+            # Ensure all expected functions are still exported
+            $moduleInfo = Get-Module $script:ModuleName
+            $exportedFunctions = $moduleInfo.ExportedFunctions.Keys
 
-        It "Should respect framework configuration" {
-            # Test framework integration
-            if (Get-Command Get-AitherZeroConfiguration -ErrorAction SilentlyContinue) {
-                $config = Get-AitherZeroConfiguration
-                $config | Should -Not -BeNullOrEmpty
+            # Basic regression check - module should have the expected functions
+            $exportedFunctions.Count | Should -Be 4
+
+            # All exported functions should be callable
+            foreach ($functionName in $exportedFunctions) {
+                $function = Get-Command $functionName -ErrorAction SilentlyContinue
+                $function | Should -Not -BeNullOrEmpty
+                $function.ModuleName | Should -Be $script:ModuleName
             }
         }
 
-        It "Should support framework-wide operations" {
-            # Test framework operation support
-            if (Get-Command Test-AitherZeroConnectivity -ErrorAction SilentlyContinue) {
-                $connectivity = Test-AitherZeroConnectivity
-                $connectivity | Should -Not -BeNullOrEmpty
-            }
+        It "Should maintain backward compatibility" {
+            # Test that existing function signatures haven't changed
+            $syncToLab = Get-Command Sync-ToAitherLab
+            $syncFromLab = Get-Command Sync-FromAitherLab
+            $getSyncStatus = Get-Command Get-SyncStatus
+            $getRepoSyncStatus = Get-Command Get-RepoSyncStatus
+
+            $syncToLab.Parameters.Keys | Should -Contain "CommitMessage"
+            $syncFromLab.Parameters.Keys | Should -Contain "Branch"
+            $getSyncStatus | Should -Not -BeNullOrEmpty
+            $getRepoSyncStatus | Should -Not -BeNullOrEmpty
         }
     }
 }

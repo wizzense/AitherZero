@@ -1,35 +1,35 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="15" errors="0" failures="3" not-run="23" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="17:42:06">
-  <environment user-domain="" platform="Linux" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" clr-version="9.0.4" nunit-version="2.5.8.0" user="codespace" machine-name="codespaces-6c6eb1" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="15" errors="0" failures="3" not-run="23" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="23:15:52">
+  <environment machine-name="codespaces-6c6eb1" user="codespace" nunit-version="2.5.8.0" platform="Linux" os-version="6.8.0-1027-azure" user-domain="" cwd="/workspaces/AitherZero" clr-version="9.0.4" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="1.1357" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="0.9846" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/ConfigurationRepository/tests/ConfigurationRepository.Tests.ps1" executed="True" result="Failure" success="False" time="1.1357" asserts="0" description="/workspaces/AitherZero/aither-core/modules/ConfigurationRepository/tests/ConfigurationRepository.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/ConfigurationRepository/tests/ConfigurationRepository.Tests.ps1" executed="True" result="Failure" success="False" time="0.9846" asserts="0" description="/workspaces/AitherZero/aither-core/modules/ConfigurationRepository/tests/ConfigurationRepository.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="ConfigurationRepository Module - Core Functionality" executed="True" result="Failure" success="False" time="0.5174" asserts="0" description="ConfigurationRepository Module - Core Functionality">
+          <test-suite type="TestFixture" name="ConfigurationRepository Module - Core Functionality" executed="True" result="Failure" success="False" time="0.4462" asserts="0" description="ConfigurationRepository Module - Core Functionality">
             <results>
-              <test-suite type="TestFixture" name="ConfigurationRepository Module - Core Functionality.Module Import and Structure" executed="True" result="Failure" success="False" time="0.0683" asserts="0" description="ConfigurationRepository Module - Core Functionality.Module Import and Structure">
+              <test-suite type="TestFixture" name="ConfigurationRepository Module - Core Functionality.Module Import and Structure" executed="True" result="Failure" success="False" time="0.0655" asserts="0" description="ConfigurationRepository Module - Core Functionality.Module Import and Structure">
                 <results>
-                  <test-case description="Should import the module successfully" name="ConfigurationRepository Module - Core Functionality.Module Import and Structure.Should import the module successfully" time="0.0066" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should export expected functions" name="ConfigurationRepository Module - Core Functionality.Module Import and Structure.Should export expected functions" time="0.0423" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should import the module successfully" name="ConfigurationRepository Module - Core Functionality.Module Import and Structure.Should import the module successfully" time="0.0063" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export expected functions" name="ConfigurationRepository Module - Core Functionality.Module Import and Structure.Should export expected functions" time="0.0394" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected 'Fork-ConfigurationRepository' to be found in collection @('Clone-ConfigurationRepository', 'New-ConfigurationRepository', 'Publish-ConfigurationRepository', 'Sync-ConfigurationRepository', 'Validate-ConfigurationRepository'), but it was not found.</message>
                       <stack-trace>at $exportedFunctions | Should -Contain $function, /workspaces/AitherZero/aither-core/modules/ConfigurationRepository/tests/ConfigurationRepository.Tests.ps1:68
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationRepository/tests/ConfigurationRepository.Tests.ps1:68</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should require PowerShell 7.0 or higher" name="ConfigurationRepository Module - Core Functionality.Module Import and Structure.Should require PowerShell 7.0 or higher" time="0.0057" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should have proper module metadata" name="ConfigurationRepository Module - Core Functionality.Module Import and Structure.Should have proper module metadata" time="0.0072" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should require PowerShell 7.0 or higher" name="ConfigurationRepository Module - Core Functionality.Module Import and Structure.Should require PowerShell 7.0 or higher" time="0.0056" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should have proper module metadata" name="ConfigurationRepository Module - Core Functionality.Module Import and Structure.Should have proper module metadata" time="0.0068" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationRepository Module - Core Functionality.Core Functionality" executed="True" result="Success" success="True" time="0.3147" asserts="0" description="ConfigurationRepository Module - Core Functionality.Core Functionality">
+              <test-suite type="TestFixture" name="ConfigurationRepository Module - Core Functionality.Core Functionality" executed="True" result="Success" success="True" time="0.2842" asserts="0" description="ConfigurationRepository Module - Core Functionality.Core Functionality">
                 <results>
-                  <test-case description="Should execute core functions without errors" name="ConfigurationRepository Module - Core Functionality.Core Functionality.Should execute core functions without errors" time="0.2401" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should execute core functions without errors" name="ConfigurationRepository Module - Core Functionality.Core Functionality.Should execute core functions without errors" time="0.2118" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationRepository Module - Core Functionality.Error Handling" executed="True" result="Failure" success="False" time="0.4346" asserts="0" description="ConfigurationRepository Module - Core Functionality.Error Handling">
+              <test-suite type="TestFixture" name="ConfigurationRepository Module - Core Functionality.Error Handling" executed="True" result="Failure" success="False" time="0.3702" asserts="0" description="ConfigurationRepository Module - Core Functionality.Error Handling">
                 <results>
-                  <test-case description="Should handle errors gracefully" name="ConfigurationRepository Module - Core Functionality.Error Handling.Should handle errors gracefully" time="0.0937" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should handle errors gracefully" name="ConfigurationRepository Module - Core Functionality.Error Handling.Should handle errors gracefully" time="0.0673" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>ValidationMetadataException: The argument is null. Provide a valid value for the argument, and then try running the command again.
 ParameterBindingValidationException: Cannot validate argument on parameter 'Fixture'. The argument is null. Provide a valid value for the argument, and then try running the command again.</message>
@@ -39,27 +39,27 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/Configuration
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationRepository Module - Core Functionality.Integration with AitherZero Framework" executed="True" result="Success" success="True" time="0.4759" asserts="0" description="ConfigurationRepository Module - Core Functionality.Integration with AitherZero Framework">
+              <test-suite type="TestFixture" name="ConfigurationRepository Module - Core Functionality.Integration with AitherZero Framework" executed="True" result="Success" success="True" time="0.4012" asserts="0" description="ConfigurationRepository Module - Core Functionality.Integration with AitherZero Framework">
                 <results>
-                  <test-case description="Should integrate with logging system" name="ConfigurationRepository Module - Core Functionality.Integration with AitherZero Framework.Should integrate with logging system" time="0.0065" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle configuration properly" name="ConfigurationRepository Module - Core Functionality.Integration with AitherZero Framework.Should handle configuration properly" time="0.0215" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should support cross-platform operation" name="ConfigurationRepository Module - Core Functionality.Integration with AitherZero Framework.Should support cross-platform operation" time="0.0071" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should integrate with logging system" name="ConfigurationRepository Module - Core Functionality.Integration with AitherZero Framework.Should integrate with logging system" time="0.0062" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle configuration properly" name="ConfigurationRepository Module - Core Functionality.Integration with AitherZero Framework.Should handle configuration properly" time="0.0054" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support cross-platform operation" name="ConfigurationRepository Module - Core Functionality.Integration with AitherZero Framework.Should support cross-platform operation" time="0.0054" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationRepository Module - Core Functionality.Performance and Reliability" executed="True" result="Success" success="True" time="0.5116" asserts="0" description="ConfigurationRepository Module - Core Functionality.Performance and Reliability">
+              <test-suite type="TestFixture" name="ConfigurationRepository Module - Core Functionality.Performance and Reliability" executed="True" result="Success" success="True" time="0.4325" asserts="0" description="ConfigurationRepository Module - Core Functionality.Performance and Reliability">
                 <results>
-                  <test-case description="Should execute core functions within acceptable time limits" name="ConfigurationRepository Module - Core Functionality.Performance and Reliability.Should execute core functions within acceptable time limits" time="0.0063" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle concurrent operations safely" name="ConfigurationRepository Module - Core Functionality.Performance and Reliability.Should handle concurrent operations safely" time="0.0054" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should gracefully handle resource constraints" name="ConfigurationRepository Module - Core Functionality.Performance and Reliability.Should gracefully handle resource constraints" time="0.0057" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should execute core functions within acceptable time limits" name="ConfigurationRepository Module - Core Functionality.Performance and Reliability.Should execute core functions within acceptable time limits" time="0.006" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle concurrent operations safely" name="ConfigurationRepository Module - Core Functionality.Performance and Reliability.Should handle concurrent operations safely" time="0.0129" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should gracefully handle resource constraints" name="ConfigurationRepository Module - Core Functionality.Performance and Reliability.Should gracefully handle resource constraints" time="0.0053" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>
           </test-suite>
-          <test-suite type="TestFixture" name="ConfigurationRepository Module - Advanced Scenarios" executed="True" result="Failure" success="False" time="0.6924" asserts="0" description="ConfigurationRepository Module - Advanced Scenarios">
+          <test-suite type="TestFixture" name="ConfigurationRepository Module - Advanced Scenarios" executed="True" result="Failure" success="False" time="0.5941" asserts="0" description="ConfigurationRepository Module - Advanced Scenarios">
             <results>
-              <test-suite type="TestFixture" name="ConfigurationRepository Module - Advanced Scenarios.Edge Cases and Boundary Conditions" executed="True" result="Failure" success="False" time="0.1065" asserts="0" description="ConfigurationRepository Module - Advanced Scenarios.Edge Cases and Boundary Conditions">
+              <test-suite type="TestFixture" name="ConfigurationRepository Module - Advanced Scenarios.Edge Cases and Boundary Conditions" executed="True" result="Failure" success="False" time="0.0848" asserts="0" description="ConfigurationRepository Module - Advanced Scenarios.Edge Cases and Boundary Conditions">
                 <results>
-                  <test-case description="Should handle edge cases properly" name="ConfigurationRepository Module - Advanced Scenarios.Edge Cases and Boundary Conditions.Should handle edge cases properly" time="0.0727" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should handle edge cases properly" name="ConfigurationRepository Module - Advanced Scenarios.Edge Cases and Boundary Conditions.Should handle edge cases properly" time="0.0628" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>ValidationMetadataException: The argument is null. Provide a valid value for the argument, and then try running the command again.
 ParameterBindingValidationException: Cannot validate argument on parameter 'Fixture'. The argument is null. Provide a valid value for the argument, and then try running the command again.</message>
@@ -69,14 +69,14 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/Configuration
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationRepository Module - Advanced Scenarios.Integration Testing" executed="True" result="Success" success="True" time="0.1234" asserts="0" description="ConfigurationRepository Module - Advanced Scenarios.Integration Testing">
+              <test-suite type="TestFixture" name="ConfigurationRepository Module - Advanced Scenarios.Integration Testing" executed="True" result="Success" success="True" time="0.1013" asserts="0" description="ConfigurationRepository Module - Advanced Scenarios.Integration Testing">
                 <results>
-                  <test-case description="Should integrate with other modules" name="ConfigurationRepository Module - Advanced Scenarios.Integration Testing.Should integrate with other modules" time="0.0098" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should integrate with other modules" name="ConfigurationRepository Module - Advanced Scenarios.Integration Testing.Should integrate with other modules" time="0.0095" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationRepository Module - Advanced Scenarios.Regression Testing" executed="True" result="Success" success="True" time="0.1693" asserts="0" description="ConfigurationRepository Module - Advanced Scenarios.Regression Testing">
+              <test-suite type="TestFixture" name="ConfigurationRepository Module - Advanced Scenarios.Regression Testing" executed="True" result="Success" success="True" time="0.141" asserts="0" description="ConfigurationRepository Module - Advanced Scenarios.Regression Testing">
                 <results>
-                  <test-case description="Should not regress existing functionality" name="ConfigurationRepository Module - Advanced Scenarios.Regression Testing.Should not regress existing functionality" time="0.0395" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should not regress existing functionality" name="ConfigurationRepository Module - Advanced Scenarios.Regression Testing.Should not regress existing functionality" time="0.0323" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>
