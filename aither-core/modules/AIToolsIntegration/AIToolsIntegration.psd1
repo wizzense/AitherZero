@@ -45,6 +45,7 @@
         'Set-AIToolsIntegrationConfiguration',
         'Invoke-AIToolsIntegrationOperation',
         'Export-AIToolsIntegrationState',
+        'Import-AIToolsIntegrationState',
         'Test-AIToolsIntegrationCoordination'
     )
 

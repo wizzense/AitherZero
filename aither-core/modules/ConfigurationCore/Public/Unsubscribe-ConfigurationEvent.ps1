@@ -87,7 +87,7 @@ function Unsubscribe-ConfigurationEvent {
 
                 # Publish unsubscription event
                 if (Get-Command 'Publish-TestEvent' -ErrorAction SilentlyContinue) {
-                    Publish-TestEvent -EventName 'ConfigurationEventUnsubscribed' -EventData @{
+                    Publish-TestEvent -EventType 'ConfigurationEventUnsubscribed' -Data @{
                         EventName = $removedSub.EventName
                         ModuleName = $removedSub.ModuleName
                         SubscriptionId = $removedSub.SubscriptionId

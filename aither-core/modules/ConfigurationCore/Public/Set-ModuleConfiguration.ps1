@@ -44,9 +44,21 @@ function Set-ModuleConfiguration {
             throw "Environment '$Environment' not found"
         }
 
+        # Prepare configuration for validation
+        $configToValidate = $Configuration
+        
+        # For merge operations, validate the final merged configuration
+        if ($Merge) {
+            $currentConfig = @{}
+            if ($script:ConfigurationStore.Environments[$Environment].Settings.ContainsKey($ModuleName)) {
+                $currentConfig = $script:ConfigurationStore.Environments[$Environment].Settings[$ModuleName]
+            }
+            $configToValidate = Merge-Configuration -Base $currentConfig -Override $Configuration
+        }
+        
         # Validate configuration against schema if available
         if ($script:ConfigurationStore.Schemas.ContainsKey($ModuleName)) {
-            $validationResult = Validate-Configuration -ModuleName $ModuleName -Configuration $Configuration
+            $validationResult = Validate-Configuration -ModuleName $ModuleName -Configuration $configToValidate
             if (-not $validationResult.IsValid) {
                 throw "Configuration validation failed: $($validationResult.Errors -join ', ')"
             }

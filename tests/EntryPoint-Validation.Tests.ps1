@@ -49,7 +49,7 @@ BeforeAll {
             }
         )
         TestTimeout = 60
-        TempDir = Join-Path $env:TEMP "AitherZero-EntryPoint-Tests-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+        TempDir = Join-Path $(if($env:TEMP) { $env:TEMP } else { "/tmp" }) "AitherZero-EntryPoint-Tests-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
     }
 
     # Create temp directory for tests

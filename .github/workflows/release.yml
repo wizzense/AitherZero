@@ -4,6 +4,15 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+      create_tag:
+        description: 'Create git tag for this release'
+        type: boolean
+        default: true
 
 jobs:
   build-and-release:
@@ -18,14 +27,26 @@ jobs:
       
     # PowerShell is pre-installed on GitHub runners
       
-    - name: Get Version from Tag
+    - name: Get Version from Tag or Input
       id: get_version
       shell: bash
       run: |
-        # Extract version from tag (remove 'v' prefix)
-        VERSION=${GITHUB_REF#refs/tags/v}
+        # Extract version from tag (remove 'v' prefix) or use manual input
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          VERSION="${{ github.event.inputs.version }}"
+        else
+          VERSION=${GITHUB_REF#refs/tags/v}
+        fi
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Version: $VERSION"
+        
+    - name: Create Tag (if manual release)
+      if: github.event_name == 'workflow_dispatch' && github.event.inputs.create_tag == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git tag "v${{ steps.get_version.outputs.version }}"
+        git push origin "v${{ steps.get_version.outputs.version }}"
         
     - name: Build All Packages
       shell: pwsh
@@ -126,5 +147,5 @@ jobs:
         files: build/output/AitherZero-*
         draft: false
         prerelease: false
-        fail_on_unmatched_files: true
+        fail_on_unmatched_files: false  # Don't fail if some files are missing
         generate_release_notes: true

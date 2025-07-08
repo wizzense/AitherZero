@@ -1,0 +1,91 @@
+{
+  "Results": [
+    {
+      "TestsFailed": 0,
+      "Result": {
+        "ModuleName": "ProgressTracking",
+        "TestsPassed": 22,
+        "TestsRun": 22,
+        "Duration": 2.0080381,
+        "TestsFailed": 0,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ProgressTracking/tests/ProgressTracking.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit"
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ProgressTracking/tests/ProgressTracking.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsRun": 22,
+      "TestsPassed": 22,
+      "Phase": "Unit",
+      "Success": true,
+      "Duration": 2.0080381,
+      "Module": "ProgressTracking"
+    },
+    {
+      "TestsFailed": 1,
+      "Result": {
+        "ModuleName": "StartupExperience",
+        "TestsPassed": 21,
+        "TestsRun": 22,
+        "Duration": 2.5570172,
+        "TestsFailed": 1,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit"
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsRun": 22,
+      "TestsPassed": 21,
+      "Phase": "Unit",
+      "Success": false,
+      "Duration": 2.5570172,
+      "Module": "StartupExperience"
+    },
+    {
+      "TestsFailed": 16,
+      "Result": {
+        "ModuleName": "SemanticVersioning",
+        "TestsPassed": 44,
+        "TestsRun": 60,
+        "Duration": 3.5388797,
+        "TestsFailed": 16,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "Phase": "Unit"
+      },
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "TestsRun": 60,
+      "TestsPassed": 44,
+      "Phase": "Unit",
+      "Success": false,
+      "Duration": 3.5388797,
+      "Module": "SemanticVersioning"
+    }
+  ],
+  "Summary": {
+    "Timestamp": "2025-07-08T15:33:21.4188349+00:00",
+    "TotalDuration": 8.103935,
+    "TotalTests": 104.0,
+    "SuccessRate": 83.65,
+    "TotalModules": 3,
+    "TestSuite": "Unit",
+    "TotalFailed": 17.0,
+    "FailedModules": 2,
+    "SuccessfulModules": 9,
+    "TotalPassed": 87.0
+  }
+}

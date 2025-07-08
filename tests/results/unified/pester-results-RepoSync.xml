@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="22" errors="0" failures="11" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="15:27:35">
-  <environment machine-name="codespaces-6c6eb1" clr-version="9.0.4" user-domain="" nunit-version="2.5.8.0" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" user="codespace" platform="Linux" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="22" errors="0" failures="11" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="17:42:21">
+  <environment user-domain="" platform="Linux" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" clr-version="9.0.4" nunit-version="2.5.8.0" user="codespace" machine-name="codespaces-6c6eb1" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="1.9068" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="1.8649" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1" executed="True" result="Failure" success="False" time="1.9068" asserts="0" description="/workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1" executed="True" result="Failure" success="False" time="1.8649" asserts="0" description="/workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="RepoSync Management Module - Core Functionality" executed="True" result="Failure" success="False" time="0.8937" asserts="0" description="RepoSync Management Module - Core Functionality">
+          <test-suite type="TestFixture" name="RepoSync Management Module - Core Functionality" executed="True" result="Failure" success="False" time="0.928" asserts="0" description="RepoSync Management Module - Core Functionality">
             <results>
-              <test-suite type="TestFixture" name="RepoSync Management Module - Core Functionality.Module Import and Structure" executed="True" result="Failure" success="False" time="0.0359" asserts="0" description="RepoSync Management Module - Core Functionality.Module Import and Structure">
+              <test-suite type="TestFixture" name="RepoSync Management Module - Core Functionality.Module Import and Structure" executed="True" result="Failure" success="False" time="0.0382" asserts="0" description="RepoSync Management Module - Core Functionality.Module Import and Structure">
                 <results>
-                  <test-case description="Should import the management module successfully" name="RepoSync Management Module - Core Functionality.Module Import and Structure.Should import the management module successfully" time="0.0193" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should export management functions" name="RepoSync Management Module - Core Functionality.Module Import and Structure.Should export management functions" time="0.0122" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should import the management module successfully" name="RepoSync Management Module - Core Functionality.Module Import and Structure.Should import the management module successfully" time="0.0078" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export management functions" name="RepoSync Management Module - Core Functionality.Module Import and Structure.Should export management functions" time="0.025" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected a value, because Management module should export management-related functions, but got $null or empty.</message>
                       <stack-trace>at $foundFunctions | Should -Not -BeNullOrEmpty -Because "Management module should export management-related functions", /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1:77
@@ -20,9 +20,9 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RepoSync/test
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RepoSync Management Module - Core Functionality.Resource Management Operations" executed="True" result="Failure" success="False" time="0.1985" asserts="0" description="RepoSync Management Module - Core Functionality.Resource Management Operations">
+              <test-suite type="TestFixture" name="RepoSync Management Module - Core Functionality.Resource Management Operations" executed="True" result="Failure" success="False" time="0.2421" asserts="0" description="RepoSync Management Module - Core Functionality.Resource Management Operations">
                 <results>
-                  <test-case description="Should initialize management state properly" name="RepoSync Management Module - Core Functionality.Resource Management Operations.Should initialize management state properly" time="0.0426" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should initialize management state properly" name="RepoSync Management Module - Core Functionality.Resource Management Operations.Should initialize management state properly" time="0.0472" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected no exception to be thrown, but an exception "The term 'Start-RepoSyncManagement' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1:84 char:15
@@ -32,14 +32,14 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1:84</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should track resource state accurately" name="RepoSync Management Module - Core Functionality.Resource Management Operations.Should track resource state accurately" time="0.0321" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should track resource state accurately" name="RepoSync Management Module - Core Functionality.Resource Management Operations.Should track resource state accurately" time="0.042" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Get-RepoSyncStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
                       <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1:89</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should handle configuration changes safely" name="RepoSync Management Module - Core Functionality.Resource Management Operations.Should handle configuration changes safely" time="0.0501" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should handle configuration changes safely" name="RepoSync Management Module - Core Functionality.Resource Management Operations.Should handle configuration changes safely" time="0.0447" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected no exception to be thrown, but an exception "The term 'Set-RepoSyncConfiguration' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1:97 char:15
@@ -49,7 +49,7 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1:97</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should execute operations with proper validation" name="RepoSync Management Module - Core Functionality.Resource Management Operations.Should execute operations with proper validation" time="0.0337" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should execute operations with proper validation" name="RepoSync Management Module - Core Functionality.Resource Management Operations.Should execute operations with proper validation" time="0.0644" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Invoke-RepoSyncOperation' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -58,59 +58,59 @@ Check the spelling of the name, or if a path was included, verify that the path 
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RepoSync Management Module - Core Functionality.State Management and Persistence" executed="True" result="Failure" success="False" time="0.3076" asserts="0" description="RepoSync Management Module - Core Functionality.State Management and Persistence">
+              <test-suite type="TestFixture" name="RepoSync Management Module - Core Functionality.State Management and Persistence" executed="True" result="Failure" success="False" time="0.3589" asserts="0" description="RepoSync Management Module - Core Functionality.State Management and Persistence">
                 <results>
-                  <test-case description="Should maintain consistent state across operations" name="RepoSync Management Module - Core Functionality.State Management and Persistence.Should maintain consistent state across operations" time="0.0331" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should maintain consistent state across operations" name="RepoSync Management Module - Core Functionality.State Management and Persistence.Should maintain consistent state across operations" time="0.0516" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Get-RepoSyncStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
                       <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1:110</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should persist state information properly" name="RepoSync Management Module - Core Functionality.State Management and Persistence.Should persist state information properly" time="0.054" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should persist state information properly" name="RepoSync Management Module - Core Functionality.State Management and Persistence.Should persist state information properly" time="0.0557" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Export-RepoSyncState' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
                       <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1:120</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should restore state from persistence" name="RepoSync Management Module - Core Functionality.State Management and Persistence.Should restore state from persistence" time="0.0163" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should restore state from persistence" name="RepoSync Management Module - Core Functionality.State Management and Persistence.Should restore state from persistence" time="0.0041" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RepoSync Management Module - Core Functionality.Error Handling and Recovery" executed="True" result="Success" success="True" time="0.5698" asserts="0" description="RepoSync Management Module - Core Functionality.Error Handling and Recovery">
+              <test-suite type="TestFixture" name="RepoSync Management Module - Core Functionality.Error Handling and Recovery" executed="True" result="Success" success="True" time="0.6014" asserts="0" description="RepoSync Management Module - Core Functionality.Error Handling and Recovery">
                 <results>
-                  <test-case description="Should handle invalid operations gracefully" name="RepoSync Management Module - Core Functionality.Error Handling and Recovery.Should handle invalid operations gracefully" time="0.0622" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should provide meaningful error messages" name="RepoSync Management Module - Core Functionality.Error Handling and Recovery.Should provide meaningful error messages" time="0.0585" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should support rollback operations when possible" name="RepoSync Management Module - Core Functionality.Error Handling and Recovery.Should support rollback operations when possible" time="0.1138" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle invalid operations gracefully" name="RepoSync Management Module - Core Functionality.Error Handling and Recovery.Should handle invalid operations gracefully" time="0.0577" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should provide meaningful error messages" name="RepoSync Management Module - Core Functionality.Error Handling and Recovery.Should provide meaningful error messages" time="0.0607" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support rollback operations when possible" name="RepoSync Management Module - Core Functionality.Error Handling and Recovery.Should support rollback operations when possible" time="0.1173" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RepoSync Management Module - Core Functionality.Event Coordination and Workflow" executed="True" result="Failure" success="False" time="0.8896" asserts="0" description="RepoSync Management Module - Core Functionality.Event Coordination and Workflow">
+              <test-suite type="TestFixture" name="RepoSync Management Module - Core Functionality.Event Coordination and Workflow" executed="True" result="Failure" success="False" time="0.923" asserts="0" description="RepoSync Management Module - Core Functionality.Event Coordination and Workflow">
                 <results>
-                  <test-case description="Should publish management events" name="RepoSync Management Module - Core Functionality.Event Coordination and Workflow.Should publish management events" time="0.1109" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should coordinate with other management modules" name="RepoSync Management Module - Core Functionality.Event Coordination and Workflow.Should coordinate with other management modules" time="0.0573" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should publish management events" name="RepoSync Management Module - Core Functionality.Event Coordination and Workflow.Should publish management events" time="0.1263" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should coordinate with other management modules" name="RepoSync Management Module - Core Functionality.Event Coordination and Workflow.Should coordinate with other management modules" time="0.0585" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Test-RepoSyncCoordination' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
                       <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1:168</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should handle workflow execution properly" name="RepoSync Management Module - Core Functionality.Event Coordination and Workflow.Should handle workflow execution properly" time="0.1295" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle workflow execution properly" name="RepoSync Management Module - Core Functionality.Event Coordination and Workflow.Should handle workflow execution properly" time="0.1311" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>
           </test-suite>
-          <test-suite type="TestFixture" name="RepoSync Management Module - Advanced Scenarios" executed="True" result="Failure" success="False" time="1.8492" asserts="0" description="RepoSync Management Module - Advanced Scenarios">
+          <test-suite type="TestFixture" name="RepoSync Management Module - Advanced Scenarios" executed="True" result="Failure" success="False" time="1.7597" asserts="0" description="RepoSync Management Module - Advanced Scenarios">
             <results>
-              <test-suite type="TestFixture" name="RepoSync Management Module - Advanced Scenarios.Concurrent Operations" executed="True" result="Failure" success="False" time="0.5855" asserts="0" description="RepoSync Management Module - Advanced Scenarios.Concurrent Operations">
+              <test-suite type="TestFixture" name="RepoSync Management Module - Advanced Scenarios.Concurrent Operations" executed="True" result="Failure" success="False" time="0.4898" asserts="0" description="RepoSync Management Module - Advanced Scenarios.Concurrent Operations">
                 <results>
-                  <test-case description="Should handle multiple concurrent management requests" name="RepoSync Management Module - Advanced Scenarios.Concurrent Operations.Should handle multiple concurrent management requests" time="0.5216" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should handle multiple concurrent management requests" name="RepoSync Management Module - Advanced Scenarios.Concurrent Operations.Should handle multiple concurrent management requests" time="0.4338" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected a collection with size 3, but got an empty collection.</message>
                       <stack-trace>at $results | Should -HaveCount 3, /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1:197
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1:197</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should maintain consistency under concurrent access" name="RepoSync Management Module - Advanced Scenarios.Concurrent Operations.Should maintain consistency under concurrent access" time="0.0593" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should maintain consistency under concurrent access" name="RepoSync Management Module - Advanced Scenarios.Concurrent Operations.Should maintain consistency under concurrent access" time="0.051" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Get-RepoSyncStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -119,23 +119,23 @@ Check the spelling of the name, or if a path was included, verify that the path 
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RepoSync Management Module - Advanced Scenarios.Performance and Scalability" executed="True" result="Failure" success="False" time="0.7458" asserts="0" description="RepoSync Management Module - Advanced Scenarios.Performance and Scalability">
+              <test-suite type="TestFixture" name="RepoSync Management Module - Advanced Scenarios.Performance and Scalability" executed="True" result="Failure" success="False" time="0.6366" asserts="0" description="RepoSync Management Module - Advanced Scenarios.Performance and Scalability">
                 <results>
-                  <test-case description="Should execute management operations within acceptable time limits" name="RepoSync Management Module - Advanced Scenarios.Performance and Scalability.Should execute management operations within acceptable time limits" time="0.0524" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should execute management operations within acceptable time limits" name="RepoSync Management Module - Advanced Scenarios.Performance and Scalability.Should execute management operations within acceptable time limits" time="0.0519" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Get-RepoSyncStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
                       <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1:213</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should handle large-scale operations efficiently" name="RepoSync Management Module - Advanced Scenarios.Performance and Scalability.Should handle large-scale operations efficiently" time="0.101" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle large-scale operations efficiently" name="RepoSync Management Module - Advanced Scenarios.Performance and Scalability.Should handle large-scale operations efficiently" time="0.0899" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RepoSync Management Module - Advanced Scenarios.Integration with AitherZero Framework" executed="True" result="Success" success="True" time="0.9505" asserts="0" description="RepoSync Management Module - Advanced Scenarios.Integration with AitherZero Framework">
+              <test-suite type="TestFixture" name="RepoSync Management Module - Advanced Scenarios.Integration with AitherZero Framework" executed="True" result="Success" success="True" time="0.8166" asserts="0" description="RepoSync Management Module - Advanced Scenarios.Integration with AitherZero Framework">
                 <results>
-                  <test-case description="Should integrate with centralized logging" name="RepoSync Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should integrate with centralized logging" time="0.0065" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should respect framework configuration" name="RepoSync Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should respect framework configuration" time="0.0927" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should support framework-wide operations" name="RepoSync Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should support framework-wide operations" time="0.1011" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should integrate with centralized logging" name="RepoSync Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should integrate with centralized logging" time="0.0196" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should respect framework configuration" name="RepoSync Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should respect framework configuration" time="0.0711" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support framework-wide operations" name="RepoSync Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should support framework-wide operations" time="0.0843" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>

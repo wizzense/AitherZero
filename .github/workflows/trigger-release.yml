@@ -1,0 +1,69 @@
+name: 🚀 Trigger Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.7.3)'
+        required: true
+        type: string
+      create_tag:
+        description: 'Create Git tag'
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  validate-and-trigger-release:
+    name: Validate and Trigger Release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Validate version format
+      shell: pwsh
+      run: |
+        $version = "${{ github.event.inputs.version }}"
+        if ($version -notmatch '^\d+\.\d+\.\d+$') {
+          Write-Host "❌ Invalid version format: $version" -ForegroundColor Red
+          Write-Host "Expected format: X.Y.Z (e.g., 1.0.0)" -ForegroundColor Yellow
+          exit 1
+        }
+        Write-Host "✅ Version format is valid: $version" -ForegroundColor Green
+        
+    - name: Update VERSION file
+      shell: pwsh
+      run: |
+        $version = "${{ github.event.inputs.version }}"
+        Set-Content -Path "VERSION" -Value $version
+        Write-Host "✅ Updated VERSION file to: $version" -ForegroundColor Green
+        
+    - name: Create and push tag
+      if: github.event.inputs.create_tag == 'true'
+      shell: pwsh
+      run: |
+        $version = "${{ github.event.inputs.version }}"
+        $tagName = "v$version"
+        
+        # Configure git
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        
+        # Commit VERSION file change
+        git add VERSION
+        git commit -m "release: Version $version"
+        
+        # Create and push tag
+        git tag -a $tagName -m "Release $version"
+        git push origin main
+        git push origin $tagName
+        
+        Write-Host "✅ Created and pushed tag: $tagName" -ForegroundColor Green
+        
+    - name: Trigger release workflow
+      shell: pwsh
+      run: |
+        Write-Host "🚀 Release workflow will be triggered by the new tag" -ForegroundColor Cyan
+        Write-Host "Monitor release progress at: https://github.com/${{ github.repository }}/actions" -ForegroundColor Blue

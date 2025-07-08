@@ -577,7 +577,11 @@ jobs:
           }
         }
         
-    
+        # Create index.html with professional styling
+        $indexHtml = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AitherZero Reports Dashboard</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:40px;background-color:#f8f9fa}.container{max-width:1200px;margin:0 auto;background:white;padding:20px;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.1)}h1{color:#333;border-bottom:2px solid #007bff;padding-bottom:10px}.report-link{display:block;margin:15px 0;padding:15px;background:linear-gradient(135deg,#007bff,#0056b3);color:white;text-decoration:none;border-radius:5px;transition:all 0.3s ease;box-shadow:0 2px 4px rgba(0,0,0,0.1)}.report-link:hover{transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,0.15)}.description{color:#666;font-size:0.9em;margin-top:5px}.badge{background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:12px;font-size:0.8em;margin-left:10px}.footer{margin-top:30px;text-align:center;color:#666;font-size:0.9em}</style></head><body><div class="container"><h1>🚀 AitherZero Reports Dashboard</h1><p>Welcome to the AitherZero project reports dashboard. All reports are generated automatically by the CI/CD system.</p><h2>📊 Available Reports</h2><a href="aitherZero-comprehensive-report.html" class="report-link">📋 Comprehensive Project Report <span class="badge">Latest</span><div class="description">Complete project health analysis with interactive dashboard, module insights, and quality metrics</div></a><a href="feature-map.html" class="report-link">🗺️ Dynamic Feature Map <span class="badge">Interactive</span><div class="description">Module relationships, dependencies, and capabilities visualization</div></a><a href="comprehensive-report.html" class="report-link">📈 Legacy Comprehensive Report <span class="badge">Archive</span><div class="description">Previous format comprehensive analysis for historical reference</div></a><div class="footer"><p>Reports are generated automatically by the AitherZero CI/CD system.</p><p><a href="https://github.com/wizzense/AitherZero">← Back to GitHub Repository</a></p><p>Last updated: ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC') + '</p></div></div></body></html>'
+        Set-Content -Path "./docs/index.html" -Value $indexHtml
+        Write-Host "✅ Created index.html" -ForegroundColor Green
+        
     - name: Deploy to GitHub Pages
       if: always()
       uses: peaceiris/actions-gh-pages@v3
@@ -585,6 +589,7 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./docs
         force_orphan: true
+        commit_message: "Deploy comprehensive reports to GitHub Pages"
         
     - name: Create workflow summary
       shell: pwsh

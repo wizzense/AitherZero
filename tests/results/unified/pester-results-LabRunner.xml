@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="35" errors="0" failures="35" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="15:27:22">
-  <environment machine-name="codespaces-6c6eb1" clr-version="9.0.4" user-domain="" nunit-version="2.5.8.0" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" user="codespace" platform="Linux" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="35" errors="0" failures="35" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="17:42:08">
+  <environment user-domain="" platform="Linux" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" clr-version="9.0.4" nunit-version="2.5.8.0" user="codespace" machine-name="codespaces-6c6eb1" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="0.3547" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="0.367" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/LabRunner/tests/LabRunner.Tests.ps1" executed="True" result="Failure" success="False" time="0.3547" asserts="0" description="/workspaces/AitherZero/aither-core/modules/LabRunner/tests/LabRunner.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/LabRunner/tests/LabRunner.Tests.ps1" executed="True" result="Failure" success="False" time="0.367" asserts="0" description="/workspaces/AitherZero/aither-core/modules/LabRunner/tests/LabRunner.Tests.ps1">
         <results>
           <test-suite type="TestFixture" name="LabRunner Module Tests" executed="True" result="Failure" success="False" time="0" asserts="0" description="LabRunner Module Tests">
             <results>

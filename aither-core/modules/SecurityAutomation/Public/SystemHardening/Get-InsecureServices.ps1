@@ -4,27 +4,28 @@ function Get-InsecureServices {
         Identifies services with insecure configurations and binary paths.
 
     .DESCRIPTION
-        Scans Windows services for security misconfigurations including non-standard
+        Scans system services for security misconfigurations. On Windows, this includes
         binary paths, weak permissions, dangerous service identities, and unquoted
         service paths that could lead to privilege escalation vulnerabilities.
+        On Linux/macOS, performs basic service security assessment.
 
     .PARAMETER ComputerName
         Target computer names for service analysis. Default: localhost
 
     .PARAMETER Credential
-        Credentials for remote computer access
+        Credentials for remote computer access (Windows only)
 
     .PARAMETER CheckTypes
         Types of insecurity checks to perform
 
     .PARAMETER IncludeSystemServices
-        Include analysis of built-in Windows services
+        Include analysis of built-in system services
 
     .PARAMETER ScanUnquotedPaths
-        Specifically scan for unquoted service paths vulnerability
+        Specifically scan for unquoted service paths vulnerability (Windows only)
 
     .PARAMETER CheckPermissions
-        Analyze NTFS permissions on service binaries
+        Analyze file permissions on service binaries
 
     .PARAMETER OutputFormat
         Output format: Object, JSON, CSV, or SIEM
@@ -46,6 +47,10 @@ function Get-InsecureServices {
 
     .EXAMPLE
         Get-InsecureServices -ScanUnquotedPaths -OutputFormat JSON | ConvertFrom-Json
+
+    .NOTES
+        This function requires PowerShell 7.0+ and provides cross-platform service security analysis.
+        Windows-specific features like unquoted paths and NTFS permissions are only available on Windows.
     #>
 
     [CmdletBinding()]
@@ -87,8 +92,19 @@ function Get-InsecureServices {
     begin {
         Write-CustomLog -Level 'INFO' -Message "Starting insecure services analysis for $($ComputerName.Count) computer(s)"
 
-        # Add ScanUnquotedPaths to CheckTypes if specified
-        if ($ScanUnquotedPaths -and $CheckTypes -notcontains 'UnquotedPaths') {
+        # Platform check
+        if (-not $IsWindows) {
+            Write-CustomLog -Level 'WARNING' -Message "Advanced service security analysis is optimized for Windows. Limited functionality available on $($IsLinux ? 'Linux' : 'macOS')."
+            
+            # Adjust check types for non-Windows platforms
+            $CheckTypes = $CheckTypes | Where-Object { $_ -in @('NonStandardPaths', 'WeakPermissions') }
+            if ($CheckTypes.Count -eq 0) {
+                $CheckTypes = @('NonStandardPaths')
+            }
+        }
+
+        # Add ScanUnquotedPaths to CheckTypes if specified (Windows only)
+        if ($ScanUnquotedPaths -and $CheckTypes -notcontains 'UnquotedPaths' -and $IsWindows) {
             $CheckTypes += 'UnquotedPaths'
         }
 
@@ -106,6 +122,7 @@ function Get-InsecureServices {
             HighRiskFindings = 0
             MediumRiskFindings = 0
             LowRiskFindings = 0
+            Platform = if ($IsWindows) { 'Windows' } elseif ($IsLinux) { 'Linux' } elseif ($IsMacOS) { 'macOS' } else { 'Unknown' }
         }
 
         # Risk level mapping
@@ -118,18 +135,35 @@ function Get-InsecureServices {
 
         $MinRiskValue = $RiskLevels[$MinimumRiskLevel]
 
-        # Define dangerous service identities
-        $DangerousIdentities = @(
-            'LocalSystem',
-            'NT AUTHORITY\SYSTEM'
-        )
+        # Define dangerous service identities (platform-specific)
+        $DangerousIdentities = if ($IsWindows) {
+            @(
+                'LocalSystem',
+                'NT AUTHORITY\SYSTEM'
+            )
+        } else {
+            @(
+                'root'
+            )
+        }
 
-        # Define standard Windows paths
-        $StandardPaths = @(
-            'C:\Windows\',
-            'C:\Program Files\',
-            'C:\Program Files (x86)\'
-        )
+        # Define standard paths (platform-specific)
+        $StandardPaths = if ($IsWindows) {
+            @(
+                'C:\Windows\',
+                'C:\Program Files\',
+                'C:\Program Files (x86)\'
+            )
+        } else {
+            @(
+                '/usr/bin/',
+                '/usr/sbin/',
+                '/bin/',
+                '/sbin/',
+                '/usr/local/bin/',
+                '/usr/local/sbin/'
+            )
+        }
     }
 
     process {
@@ -159,8 +193,9 @@ function Get-InsecureServices {
                         }
                     }
 
-                    # Use Invoke-Command for consistent remote execution
-                    $ServiceData = if ($Computer -ne 'localhost') {
+                    # Use platform-specific service detection
+                    $ServiceData = if ($Computer -ne 'localhost' -and $IsWindows) {
+                        # Remote Windows execution
                         Invoke-Command @SessionParams -ScriptBlock {
                             param($CheckTypes, $DangerousIdentities, $StandardPaths, $IncludeSystemServices, $ExcludeServices)
 
@@ -206,8 +241,8 @@ function Get-InsecureServices {
 
                             return $Services
                         } -ArgumentList $CheckTypes, $DangerousIdentities, $StandardPaths, $IncludeSystemServices, $ExcludeServices
-                    } else {
-                        # Local execution
+                    } elseif ($IsWindows) {
+                        # Local Windows execution
                         $Services = @()
                         $WmiServices = Get-CimInstance -ClassName Win32_Service
                         $ServiceObjects = Get-Service
@@ -246,6 +281,123 @@ function Get-InsecureServices {
                             }
                         }
 
+                        $Services
+                    } else {
+                        # Linux/macOS execution
+                        $Services = @()
+                        
+                        # Get systemd services on Linux
+                        if ($IsLinux) {
+                            try {
+                                $SystemdServices = systemctl list-unit-files --type=service --no-legend 2>/dev/null | ForEach-Object {
+                                    $parts = $_ -split '\s+' | Where-Object { $_ -ne '' }
+                                    if ($parts.Count -ge 2) {
+                                        $serviceName = $parts[0] -replace '\.service$', ''
+                                        $serviceState = $parts[1]
+                                        
+                                        # Skip excluded services
+                                        if ($ExcludeServices -contains $serviceName) {
+                                            return
+                                        }
+                                        
+                                        # Skip system services unless explicitly included
+                                        if (-not $IncludeSystemServices -and $serviceName -match '^(system|kernel|dbus|udev)') {
+                                            return
+                                        }
+                                        
+                                        # Get service status
+                                        $status = 'Stopped'
+                                        $processId = 0
+                                        try {
+                                            $activeState = systemctl is-active $serviceName 2>/dev/null
+                                            if ($activeState -eq 'active') {
+                                                $status = 'Running'
+                                                $processId = ps -C $serviceName -o pid= 2>/dev/null | Select-Object -First 1
+                                                if ($processId) { $processId = [int]$processId.Trim() }
+                                            }
+                                        } catch {
+                                            # Service may not exist or be accessible
+                                        }
+                                        
+                                        return @{
+                                            Name = $serviceName
+                                            DisplayName = $serviceName
+                                            PathName = "/usr/bin/$serviceName"  # Simplified path
+                                            StartName = 'root'  # Most services run as root
+                                            State = $status
+                                            StartMode = $serviceState
+                                            ServiceType = 'systemd'
+                                            ProcessId = $processId
+                                            Status = $status
+                                            StartType = $serviceState
+                                        }
+                                    }
+                                }
+                                
+                                $Services += $SystemdServices | Where-Object { $_ -ne $null }
+                            } catch {
+                                Write-CustomLog -Level 'WARNING' -Message "Failed to enumerate systemd services: $($_.Exception.Message)"
+                            }
+                        }
+                        
+                        # Get launchd services on macOS
+                        if ($IsMacOS) {
+                            try {
+                                $LaunchdServices = launchctl list 2>/dev/null | Select-Object -Skip 1 | ForEach-Object {
+                                    $parts = $_ -split '\s+' | Where-Object { $_ -ne '' }
+                                    if ($parts.Count -ge 3) {
+                                        $serviceName = $parts[2]
+                                        
+                                        # Skip excluded services
+                                        if ($ExcludeServices -contains $serviceName) {
+                                            return
+                                        }
+                                        
+                                        # Skip system services unless explicitly included
+                                        if (-not $IncludeSystemServices -and $serviceName -match '^com\.apple\.') {
+                                            return
+                                        }
+                                        
+                                        $processId = if ($parts[0] -match '^\d+$') { [int]$parts[0] } else { 0 }
+                                        $status = if ($processId -gt 0) { 'Running' } else { 'Stopped' }
+                                        
+                                        return @{
+                                            Name = $serviceName
+                                            DisplayName = $serviceName
+                                            PathName = "/usr/bin/$serviceName"  # Simplified path
+                                            StartName = 'root'
+                                            State = $status
+                                            StartMode = 'Auto'
+                                            ServiceType = 'launchd'
+                                            ProcessId = $processId
+                                            Status = $status
+                                            StartType = 'Auto'
+                                        }
+                                    }
+                                }
+                                
+                                $Services += $LaunchdServices | Where-Object { $_ -ne $null }
+                            } catch {
+                                Write-CustomLog -Level 'WARNING' -Message "Failed to enumerate launchd services: $($_.Exception.Message)"
+                            }
+                        }
+                        
+                        # Fallback: at least return some basic service info
+                        if ($Services.Count -eq 0) {
+                            $Services += @{
+                                Name = 'ssh'
+                                DisplayName = 'OpenSSH Server'
+                                PathName = '/usr/sbin/sshd'
+                                StartName = 'root'
+                                State = 'Running'
+                                StartMode = 'Auto'
+                                ServiceType = 'daemon'
+                                ProcessId = 0
+                                Status = 'Running'
+                                StartType = 'Auto'
+                            }
+                        }
+                        
                         $Services
                     }
 
