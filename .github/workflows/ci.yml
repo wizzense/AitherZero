@@ -1526,34 +1526,32 @@ jobs:
         
         # Create index.html that redirects to the latest report
         $repoUrl = "https://github.com/${{ github.repository }}"
-        $indexHtml = @"
-<!DOCTYPE html>
-<html>
-<head>
-    <title>AitherZero Reports</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 40px; }
-        h1 { color: #333; }
-        .report-link { display: block; margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 5px; text-decoration: none; color: #007bff; }
-        .report-link:hover { background: #e9ecef; }
-    </style>
-</head>
-<body>
-    <h1>🚀 AitherZero Reports</h1>
-    <p>Welcome to the AitherZero project reports dashboard.</p>
-    <h2>📊 Available Reports</h2>
-    <a href="aitherZero-comprehensive-report.html" class="report-link">📋 Comprehensive Project Report</a>
-    <a href="comprehensive-ci-dashboard.html" class="report-link">🔍 CI Dashboard</a>
-    <a href="feature-dependency-map.html" class="report-link">🗺️ Feature & Dependency Map</a>
-    <a href="executive-summary.md" class="report-link">📄 Executive Summary</a>
-    <hr>
-    <p>Reports are generated automatically by the AitherZero CI/CD system.</p>
-    <p><a href="$repoUrl">← Back to GitHub</a></p>
-</body>
-</html>
-"@
+        $indexHtml = '<!DOCTYPE html>' + "`n"
+        $indexHtml += '<html>' + "`n"
+        $indexHtml += '<head>' + "`n"
+        $indexHtml += '    <title>AitherZero Reports</title>' + "`n"
+        $indexHtml += '    <meta charset="utf-8">' + "`n"
+        $indexHtml += '    <meta name="viewport" content="width=device-width, initial-scale=1">' + "`n"
+        $indexHtml += '    <style>' + "`n"
+        $indexHtml += '        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 40px; }' + "`n"
+        $indexHtml += '        h1 { color: #333; }' + "`n"
+        $indexHtml += '        .report-link { display: block; margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 5px; text-decoration: none; color: #007bff; }' + "`n"
+        $indexHtml += '        .report-link:hover { background: #e9ecef; }' + "`n"
+        $indexHtml += '    </style>' + "`n"
+        $indexHtml += '</head>' + "`n"
+        $indexHtml += '<body>' + "`n"
+        $indexHtml += '    <h1>🚀 AitherZero Reports</h1>' + "`n"
+        $indexHtml += '    <p>Welcome to the AitherZero project reports dashboard.</p>' + "`n"
+        $indexHtml += '    <h2>📊 Available Reports</h2>' + "`n"
+        $indexHtml += '    <a href="aitherZero-comprehensive-report.html" class="report-link">📋 Comprehensive Project Report</a>' + "`n"
+        $indexHtml += '    <a href="comprehensive-ci-dashboard.html" class="report-link">🔍 CI Dashboard</a>' + "`n"
+        $indexHtml += '    <a href="feature-dependency-map.html" class="report-link">🗺️ Feature & Dependency Map</a>' + "`n"
+        $indexHtml += '    <a href="executive-summary.md" class="report-link">📄 Executive Summary</a>' + "`n"
+        $indexHtml += '    <hr>' + "`n"
+        $indexHtml += '    <p>Reports are generated automatically by the AitherZero CI/CD system.</p>' + "`n"
+        $indexHtml += "    <p><a href=`"$repoUrl`">← Back to GitHub</a></p>" + "`n"
+        $indexHtml += '</body>' + "`n"
+        $indexHtml += '</html>'
         Set-Content -Path "./docs/index.html" -Value $indexHtml
         Write-Host "✅ Created index.html" -ForegroundColor Green
         
