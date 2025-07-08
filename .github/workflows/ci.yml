@@ -36,7 +36,7 @@ env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   DOTNET_NOLOGO: true
-  PSCORE_VERSION: '7.5.4'  # Pin PowerShell version for consistency
+  PSCORE_VERSION: '7.5.2'  # Pin PowerShell version for consistency
 
 jobs:
   # Job to analyze what changed and determine what needs to be tested
@@ -99,7 +99,7 @@ jobs:
           # Dynamic matrix based on changes
           $matrix = @{
             os = @('ubuntu-latest', 'windows-latest', 'macos-latest')
-            pwsh_version = @('7.5.4')  # Always use latest stable PowerShell 7.5.4+
+            pwsh_version = @('7.5.2')  # Always use latest stable PowerShell 7.5.2
           }
           
           # We don't need to test on older versions - just use latest
@@ -167,7 +167,6 @@ jobs:
         
     - name: Run Enhanced PSScriptAnalyzer
       if: matrix.check == 'psscriptanalyzer'
-      continue-on-error: true  # Don't fail the build on analysis errors
       shell: pwsh
       run: |
         Write-Host "🔍 Starting intelligent PSScriptAnalyzer with ParallelExecution optimization..." -ForegroundColor Cyan
@@ -525,7 +524,7 @@ jobs:
       with:
         sarif_file: psscriptanalyzer-results.sarif
         category: PSScriptAnalyzer
-      continue-on-error: true
+      continue-on-error: true  # SARIF upload requires special permissions
         
     - name: Check code formatting
       if: matrix.check == 'formatting'
@@ -894,7 +893,6 @@ jobs:
     if: |
       always() && 
       (needs.code-quality.result == 'success' || needs.code-quality.result == 'skipped')
-    continue-on-error: true  # Don't fail CI on test failures
     strategy:
       fail-fast: false  # Run all tests even if one fails
       matrix: ${{ fromJson(needs.analyze-changes.outputs.test-matrix) }}
@@ -1175,7 +1173,7 @@ jobs:
       run: npm install -g markdownlint-cli
       
     - name: Lint markdown files
-      continue-on-error: true  # Don't fail the build on markdown issues
+      continue-on-error: true  # Markdown linting is informational only
       run: |
         # Create markdownlint config - very lenient for CI stability
         cat > .markdownlint.json << 'EOF'
@@ -1195,14 +1193,14 @@ jobs:
         markdownlint '**/*.md' --ignore node_modules || echo "::warning::Markdown linting found issues (non-blocking)"
         
     - name: Check for broken links
-      continue-on-error: true  # Don't fail the build on broken links
+      continue-on-error: true  # Link checking is informational only
       uses: gaurav-nelson/github-action-markdown-link-check@v1
       with:
         use-quiet-mode: 'yes'
         config-file: '.markdown-link-check.json'
         
     - name: Validate PowerShell help
-      continue-on-error: true  # Don't fail the build on help issues
+      continue-on-error: true  # Help validation is informational only
       shell: pwsh
       run: |
         # Check that all exported functions have comment-based help
@@ -1258,11 +1256,11 @@ jobs:
           Write-Host "$emoji $($job.Key): $($job.Value)"
         }
         
-        # Don't fail on skipped jobs or jobs with continue-on-error
+        # Check for critical failures
         $criticalFailures = 0
         foreach ($job in $results.GetEnumerator()) {
-          # Only build-test is considered critical
-          if ($job.Value -eq 'failure' -and $job.Key -eq 'build-test') {
+          # Test and build-test are considered critical
+          if ($job.Value -eq 'failure' -and $job.Key -in @('test', 'build-test')) {
             $criticalFailures++
           }
         }
@@ -1280,7 +1278,7 @@ jobs:
     - name: Post PR comment with results
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v7
-      continue-on-error: true
+      continue-on-error: true  # PR commenting may fail for forks
       with:
         script: |
           try {

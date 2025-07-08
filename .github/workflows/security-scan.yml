@@ -471,7 +471,7 @@ jobs:
     - name: Post PR comment
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v7
-      continue-on-error: true
+      continue-on-error: true  # PR commenting may fail for forks
       with:
         script: |
           try {
