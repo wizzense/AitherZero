@@ -296,7 +296,7 @@ jobs:
         
         # Process results
         if ($results) {
-          Write-Host "📊 Analysis completed in $($stopwatch.ElapsedMilliseconds)ms" -ForegroundColor Cyan
+          Write-Host "📊 Analysis completed in $([Math]::Round($analysisDuration * 1000))ms" -ForegroundColor Cyan
           
           # Categorize findings
           $errors = ($results | Where-Object Severity -eq 'Error')
@@ -1326,38 +1326,29 @@ jobs:
         $linuxBuildStatus = if ($ciSummary.BuildResults.ContainsKey('linux')) { '✅ SUCCESS' } else { '❌ FAILED' }
         $macosBuildStatus = if ($ciSummary.BuildResults.ContainsKey('macos')) { '✅ SUCCESS' } else { '❌ FAILED' }
         
-        $executiveSummary = @"
-# AitherZero Project Health Dashboard
-## Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') UTC
-## Git Reference: ${{ github.ref }} (${{ github.sha }})
-
-### 🎯 EXECUTIVE SUMMARY FOR PRIORITIZATION
-
-#### Code Quality Status
-- **PSScriptAnalyzer**: $psAnalyzerStatus
-- **Complexity Analysis**: $complexityStatus
-- **Formatting Check**: $formattingStatus
-- **Best Practices**: $bestPracticesStatus
-
-#### Build Status
-- **Windows Build**: $windowsBuildStatus
-- **Linux Build**: $linuxBuildStatus
-- **macOS Build**: $macosBuildStatus
-
-#### Reports Generated
-- 🗺️ **Dynamic Feature Map**: Interactive module dependency visualization
-- 📊 **Comprehensive Dashboard**: Full project health analysis
-- 🔗 **CI Integration**: Automated workflow results integration
-
-### 📁 Available Reports
-1. **comprehensive-ci-dashboard.html** - Complete project health dashboard
-2. **feature-dependency-map.html** - Interactive module relationships
-3. **ci-integration-summary.json** - Programmatic access to CI results
-
-### 🚀 RECOMMENDED ACTIONS
-Based on this CI run, prioritize work on areas showing in the quality analysis and check the comprehensive dashboard for detailed metrics and trends.
-
-"@
+        $executiveSummary = "# AitherZero Project Health Dashboard`n"
+        $executiveSummary += "## Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') UTC`n"
+        $executiveSummary += "## Git Reference: ${{ github.ref }} (${{ github.sha }})`n"
+        $executiveSummary += "`n### 🎯 EXECUTIVE SUMMARY FOR PRIORITIZATION`n"
+        $executiveSummary += "`n#### Code Quality Status`n"
+        $executiveSummary += "  - **PSScriptAnalyzer**: $psAnalyzerStatus`n"
+        $executiveSummary += "  - **Complexity Analysis**: $complexityStatus`n"
+        $executiveSummary += "  - **Formatting Check**: $formattingStatus`n"
+        $executiveSummary += "  - **Best Practices**: $bestPracticesStatus`n"
+        $executiveSummary += "`n#### Build Status`n"
+        $executiveSummary += "  - **Windows Build**: $windowsBuildStatus`n"
+        $executiveSummary += "  - **Linux Build**: $linuxBuildStatus`n"
+        $executiveSummary += "  - **macOS Build**: $macosBuildStatus`n"
+        $executiveSummary += "`n#### Reports Generated`n"
+        $executiveSummary += "  - 🗺️ **Dynamic Feature Map**: Interactive module dependency visualization`n"
+        $executiveSummary += "  - 📊 **Comprehensive Dashboard**: Full project health analysis`n"
+        $executiveSummary += "  - 🔗 **CI Integration**: Automated workflow results integration`n"
+        $executiveSummary += "`n### 📁 Available Reports`n"
+        $executiveSummary += "1. **comprehensive-ci-dashboard.html** - Complete project health dashboard`n"
+        $executiveSummary += "2. **feature-dependency-map.html** - Interactive module relationships`n"
+        $executiveSummary += "3. **ci-integration-summary.json** - Programmatic access to CI results`n"
+        $executiveSummary += "`n### 🚀 RECOMMENDED ACTIONS`n"
+        $executiveSummary += "Based on this CI run, prioritize work on areas showing in the quality analysis and check the comprehensive dashboard for detailed metrics and trends.`n"
         
         $executiveSummary | Set-Content -Path "./executive-summary.md"
         Write-Host "✅ Executive summary created for informed decision making" -ForegroundColor Green
@@ -1391,7 +1382,7 @@ Based on this CI run, prioritize work on areas showing in the quality analysis a
         Write-Host "💾 Total size: $([Math]::Round(($generatedReports | Measure-Object Size -Sum).Sum / 1KB, 2)) KB" -ForegroundColor White
         Write-Host "🕒 Generation time: $(Get-Date -Format 'HH:mm:ss')" -ForegroundColor White
         Write-Host "`n🎯 Use these reports to make informed decisions about project priorities!" -ForegroundColor Green
-    
+
     - name: Upload comprehensive reports and dashboard
       uses: actions/upload-artifact@v4
       with:
@@ -1431,41 +1422,26 @@ Based on this CI run, prioritize work on areas showing in the quality analysis a
         }
         
         # Create index.html for GitHub Pages
-        $indexContent = @"
+        @'
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AitherZero Project Dashboard</title>
+    <title>AitherZero CI Dashboard</title>
     <meta charset="utf-8">
+    <meta http-equiv="refresh" content="0; url=comprehensive-ci-dashboard.html">
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
-        .report-link { display: block; padding: 15px; margin: 10px 0; background: #3498db; color: white; text-decoration: none; border-radius: 5px; text-align: center; }
-        .report-link:hover { background: #2980b9; }
-        .timestamp { color: #7f8c8d; font-size: 0.9em; }
+        body { font-family: Arial, sans-serif; margin: 40px; text-align: center; }
+        a { color: #007bff; text-decoration: none; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🚀 AitherZero Project Dashboard</h1>
-        <p class="timestamp">Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') UTC | Commit: ${{ github.sha }}</p>
-        
-        <h2>📊 Available Reports</h2>
-        <a href="comprehensive-ci-dashboard.html" class="report-link">📊 Comprehensive CI Dashboard</a>
-        <a href="feature-dependency-map.html" class="report-link">🗺️ Feature Dependency Map</a>
-        <a href="executive-summary.md" class="report-link">📋 Executive Summary</a>
-        
-        <h2>🎯 Quick Links</h2>
-        <a href="https://github.com/${{ github.repository }}" class="report-link">📂 Repository</a>
-        <a href="https://github.com/${{ github.repository }}/actions" class="report-link">🔄 GitHub Actions</a>
-    </div>
+    <h1>AitherZero CI Dashboard</h1>
+    <p>Redirecting to comprehensive report...</p>
+    <p>If not redirected, <a href="comprehensive-ci-dashboard.html">click here</a></p>
 </body>
 </html>
-"@
-        
-        $indexContent | Set-Content -Path "./docs/index.html"
-        Write-Host "✅ GitHub Pages index.html created" -ForegroundColor Green
+'@ | Set-Content -Path "./docs/index.html"
+        Write-Host "✅ Created index.html for GitHub Pages" -ForegroundColor Green
     
     - name: Deploy to GitHub Pages
       if: github.ref == 'refs/heads/main'

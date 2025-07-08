@@ -1,6 +1,6 @@
 name: Comprehensive Auditing & Reporting
 
-"on":
+on:
   schedule:
     # Run daily at 6 AM UTC (comprehensive report)
     - cron: '0 6 * * *'
@@ -266,6 +266,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: [initialize-reporting, run-audits, generate-feature-map]
     if: always() && fromJson(needs.initialize-reporting.outputs.report-scope).generateHtml
+    outputs:
+      health-grade: ${{ steps.report.outputs.health-grade }}
+      health-score: ${{ steps.report.outputs.health-score }}
+      total-modules: ${{ steps.report.outputs.total-modules }}
+      analyzed-modules: ${{ steps.report.outputs.analyzed-modules }}
     
     steps:
     - name: Checkout code
@@ -284,6 +289,7 @@ jobs:
         path: feature-map
         
     - name: Generate comprehensive report
+      id: report
       shell: pwsh
       run: |
         Write-Host "📊 Generating comprehensive HTML report..." -ForegroundColor Cyan
@@ -293,26 +299,54 @@ jobs:
         $params = @{
           ReportPath = './aitherZero-comprehensive-report.html'
           ArtifactsPath = './audit-reports'
-          IncludeDetailedAnalysis = ${{ fromJson(needs.initialize-reporting.outputs.report-scope).detailedAnalysis }}
+          IncludeDetailedAnalysis = '${{ fromJson(needs.initialize-reporting.outputs.report-scope).detailedAnalysis }}' -eq 'true'
           ReportTitle = $reportTitle
           Version = '${{ needs.initialize-reporting.outputs.version-number }}'
           VerboseOutput = $true
         }
         
-        $result = ./scripts/reporting/Generate-ComprehensiveReport.ps1 @params
-        
-        Write-Host "📋 Report Summary:" -ForegroundColor Cyan
-        Write-Host "  Report Path: $($result.ReportPath)" -ForegroundColor White
-        Write-Host "  Version: $($result.Version)" -ForegroundColor White
-        Write-Host "  Overall Health: $($result.OverallHealth.Grade) ($($result.OverallHealth.OverallScore)%)" -ForegroundColor White
-        Write-Host "  Total Modules: $($result.FeatureMap.TotalModules)" -ForegroundColor White
-        Write-Host "  Analyzed Modules: $($result.FeatureMap.AnalyzedModules)" -ForegroundColor White
-        
-        # Set outputs for summary
-        echo "HEALTH_GRADE=$($result.OverallHealth.Grade)" >> $env:GITHUB_ENV
-        echo "HEALTH_SCORE=$($result.OverallHealth.OverallScore)" >> $env:GITHUB_ENV
-        echo "TOTAL_MODULES=$($result.FeatureMap.TotalModules)" >> $env:GITHUB_ENV
-        echo "ANALYZED_MODULES=$($result.FeatureMap.AnalyzedModules)" >> $env:GITHUB_ENV
+        try {
+          $result = ./scripts/reporting/Generate-ComprehensiveReport.ps1 @params
+          
+          if ($result) {
+            Write-Host "📋 Report Summary:" -ForegroundColor Cyan
+            Write-Host "  Report Path: $($result.ReportPath)" -ForegroundColor White
+            Write-Host "  Version: $($result.Version)" -ForegroundColor White
+            Write-Host "  Overall Health: $($result.OverallHealth.Grade) ($($result.OverallHealth.OverallScore)%)" -ForegroundColor White
+            Write-Host "  Total Modules: $($result.FeatureMap.TotalModules)" -ForegroundColor White
+            Write-Host "  Analyzed Modules: $($result.FeatureMap.AnalyzedModules)" -ForegroundColor White
+            
+            # Set outputs for summary
+            echo "HEALTH_GRADE=$($result.OverallHealth.Grade)" >> $env:GITHUB_ENV
+            echo "HEALTH_SCORE=$($result.OverallHealth.OverallScore)" >> $env:GITHUB_ENV
+            echo "TOTAL_MODULES=$($result.FeatureMap.TotalModules)" >> $env:GITHUB_ENV
+            echo "ANALYZED_MODULES=$($result.FeatureMap.AnalyzedModules)" >> $env:GITHUB_ENV
+            # Also set as job outputs
+            echo "health-grade=$($result.OverallHealth.Grade)" >> $env:GITHUB_OUTPUT
+            echo "health-score=$($result.OverallHealth.OverallScore)" >> $env:GITHUB_OUTPUT
+            echo "total-modules=$($result.FeatureMap.TotalModules)" >> $env:GITHUB_OUTPUT
+            echo "analyzed-modules=$($result.FeatureMap.AnalyzedModules)" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Warning "Report generation returned no result"
+            # Set default values
+            echo "HEALTH_GRADE=Unknown" >> $env:GITHUB_ENV
+            echo "HEALTH_SCORE=0" >> $env:GITHUB_ENV
+            echo "TOTAL_MODULES=0" >> $env:GITHUB_ENV
+            echo "ANALYZED_MODULES=0" >> $env:GITHUB_ENV
+            # Also set as job outputs
+            echo "health-grade=Unknown" >> $env:GITHUB_OUTPUT
+            echo "health-score=0" >> $env:GITHUB_OUTPUT
+            echo "total-modules=0" >> $env:GITHUB_OUTPUT
+            echo "analyzed-modules=0" >> $env:GITHUB_OUTPUT
+          }
+        } catch {
+          Write-Warning "Report generation failed: $($_.Exception.Message)"
+          # Set default values
+          echo "HEALTH_GRADE=Unknown" >> $env:GITHUB_ENV
+          echo "HEALTH_SCORE=0" >> $env:GITHUB_ENV
+          echo "TOTAL_MODULES=0" >> $env:GITHUB_ENV
+          echo "ANALYZED_MODULES=0" >> $env:GITHUB_ENV
+        }
         
         Write-Host "✅ Comprehensive report generation completed" -ForegroundColor Green
 
@@ -442,9 +476,9 @@ jobs:
           ## 🚀 AitherZero v${{ needs.initialize-reporting.outputs.version-number }}
           
           ### 📊 Release Health Score
-          - **Overall Grade**: ${{ env.HEALTH_GRADE }}
-          - **Health Score**: ${{ env.HEALTH_SCORE }}%
-          - **Module Coverage**: ${{ env.ANALYZED_MODULES }}/${{ env.TOTAL_MODULES }}
+          - **Overall Grade**: ${{ needs.generate-comprehensive-report.outputs.health-grade }}
+          - **Health Score**: ${{ needs.generate-comprehensive-report.outputs.health-score }}%
+          - **Module Coverage**: ${{ needs.generate-comprehensive-report.outputs.analyzed-modules }}/${{ needs.generate-comprehensive-report.outputs.total-modules }}
           
           ### 📋 Release Validation
           - ✅ Comprehensive testing passed on all platforms
@@ -518,6 +552,39 @@ jobs:
         
         # Set workflow status
         echo "WORKFLOW_SUCCESS=$(if ($failed -eq 0) { 'true' } else { 'false' })" >> $env:GITHUB_ENV
+        
+    - name: Prepare GitHub Pages deployment
+      if: always()
+      shell: pwsh
+      run: |
+        Write-Host "📄 Preparing reports for GitHub Pages..." -ForegroundColor Cyan
+        
+        # Create docs directory
+        New-Item -ItemType Directory -Path "./docs" -Force
+        
+        # Copy all generated reports
+        $reports = @(
+          "comprehensive-report.html",
+          "feature-map.html",
+          "aitherZero-comprehensive-report.html",
+          "feature-dependency-map.html"
+        )
+        
+        foreach ($report in $reports) {
+          if (Test-Path $report) {
+            Copy-Item $report -Destination "./docs/" -Force
+            Write-Host "✅ Copied $report" -ForegroundColor Green
+          }
+        }
+        
+    
+    - name: Deploy to GitHub Pages
+      if: always()
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs
+        force_orphan: true
         
     - name: Create workflow summary
       shell: pwsh

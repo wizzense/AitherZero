@@ -1,6 +1,6 @@
 name: Code Quality Remediation
 
-"on":
+on:
   schedule:
     # Run weekly on Sundays at 02:00 UTC
     - cron: '0 2 * * 0'
@@ -20,6 +20,11 @@ name: Code Quality Remediation
         description: 'Dry run mode (analyze only, no changes)'
         required: false
         default: false
+        type: boolean
+      auto_fix:
+        description: 'Automatically fix issues (safe fixes only)'
+        required: false
+        default: true
         type: boolean
 
 # Ensure only one remediation workflow runs at a time
@@ -471,10 +476,18 @@ jobs:
 
                 foreach ($finding in $criticalFindings) {
                   try {
-                    $issueResult = $finding | New-GitHubIssueFromFinding -DryRun:$false
-                    $issuesCreated += $issueResult.CreatedIssues
-                    $issuesSkipped += $issueResult.SkippedIssues
-                    $issueErrors += $issueResult.Errors
+                    # Check if the function exists before calling it
+                    if (Get-Command 'New-GitHubIssueFromFinding' -ErrorAction SilentlyContinue) {
+                      $issueResult = $finding | New-GitHubIssueFromFinding -DryRun:$false
+                      if ($issueResult) {
+                        if ($issueResult.CreatedIssues) { $issuesCreated += $issueResult.CreatedIssues }
+                        if ($issueResult.SkippedIssues) { $issuesSkipped += $issueResult.SkippedIssues }
+                        if ($issueResult.Errors) { $issueErrors += $issueResult.Errors }
+                      }
+                    } else {
+                      Write-Warning "New-GitHubIssueFromFinding function not available, skipping issue creation for $($finding.RuleName)"
+                      $issuesSkipped += @{Rule = $finding.RuleName; Reason = "Function not available"}
+                    }
                   }
                   catch {
                     $issueErrors += "Failed to process finding $($finding.RuleName): $($_.Exception.Message)"

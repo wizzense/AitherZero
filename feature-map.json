@@ -1,0 +1,418 @@
+{
+  "Capabilities": {
+    "ConfigurationRepository": {
+      "FunctionCount": 10,
+      "HasPrivateFunctions": true,
+      "ModuleType": "Script",
+      "Features": [
+        "BackupRestore",
+        "Configuration",
+        "Creation",
+        "Modification",
+        "Retrieval",
+        "Synchronization",
+        "Validation"
+      ],
+      "HasEnums": false,
+      "HasDSCResources": false,
+      "SupportsTransactions": false,
+      "HasClasses": false,
+      "CrossPlatform": true,
+      "HasPublicAPI": true,
+      "SupportsWhatIf": false
+    },
+    "ConfigurationCarousel": {
+      "FunctionCount": 12,
+      "HasPrivateFunctions": true,
+      "ModuleType": "Script",
+      "Features": [
+        "BackupRestore",
+        "Configuration",
+        "Creation",
+        "DataManagement",
+        "Deletion",
+        "Modification",
+        "Retrieval",
+        "Validation"
+      ],
+      "HasEnums": false,
+      "HasDSCResources": false,
+      "SupportsTransactions": false,
+      "HasClasses": false,
+      "CrossPlatform": true,
+      "HasPublicAPI": true,
+      "SupportsWhatIf": false
+    },
+    "ConfigurationCore": {
+      "FunctionCount": 8,
+      "HasPrivateFunctions": true,
+      "ModuleType": "Script",
+      "Features": [
+        "Configuration",
+        "DataManagement",
+        "Execution",
+        "FileSystem",
+        "Retrieval",
+        "Security",
+        "Validation"
+      ],
+      "HasEnums": false,
+      "HasDSCResources": false,
+      "SupportsTransactions": false,
+      "HasClasses": false,
+      "CrossPlatform": true,
+      "HasPublicAPI": true,
+      "SupportsWhatIf": false
+    }
+  },
+  "Statistics": {
+    "TotalFunctions": 30,
+    "CategoryDistribution": {
+      "Core": 2,
+      "Security": 1
+    },
+    "AverageFunctionsPerModule": 10.0,
+    "FeatureDistribution": {
+      "DataManagement": 2,
+      "Retrieval": 3,
+      "Validation": 3,
+      "Execution": 1,
+      "Synchronization": 1,
+      "Configuration": 3,
+      "FileSystem": 1,
+      "Modification": 2,
+      "Creation": 2,
+      "Security": 1,
+      "BackupRestore": 2,
+      "Deletion": 1
+    },
+    "ComplexityDistribution": {},
+    "DocumentationCoveragePercentage": 100.0,
+    "AverageComplexity": 0.0,
+    "HealthDistribution": {
+      "System.Object[]": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "ModulesWithDocumentation": 3,
+    "TestCoveragePercentage": 100.0,
+    "ModulesWithTests": 3,
+    "PowerShellVersionSupport": {
+      "7.0": 3
+    }
+  },
+  "AnalyzedModules": 3,
+  "Modules": {
+    "ConfigurationRepository": {
+      "FileCount": 5,
+      "HasManifest": true,
+      "HasDocumentation": true,
+      "ComplexityScore": 0,
+      "Description": "Configuration Repository Manager for AitherZero - handles Git-based configuration management",
+      "Path": "/workspaces/AitherZero/aither-core/modules/ConfigurationRepository",
+      "RequiredModules": null,
+      "Author": "AitherZero Contributors",
+      "Functions": [
+        "New-ConfigurationRepository",
+        "Clone-ConfigurationRepository",
+        "Sync-ConfigurationRepository",
+        "Validate-ConfigurationRepository",
+        "Publish-ConfigurationRepository",
+        "Fork-ConfigurationRepository",
+        "Get-ConfigurationRepositoryInfo",
+        "Set-ConfigurationRepositorySettings",
+        "Backup-ConfigurationRepository",
+        "Restore-ConfigurationRepository"
+      ],
+      "Manifest": {
+        "PrivateData": {
+          "PSData": {
+            "Tags": [
+              "AitherZero",
+              "Configuration",
+              "Git",
+              "Repository",
+              "Management"
+            ],
+            "ProjectUri": "https://github.com/wizzense/AitherZero",
+            "ReleaseNotes": "Initial release of Configuration Repository Manager module"
+          }
+        },
+        "FunctionsToExport": [
+          "New-ConfigurationRepository",
+          "Clone-ConfigurationRepository",
+          "Sync-ConfigurationRepository",
+          "Validate-ConfigurationRepository",
+          "Publish-ConfigurationRepository",
+          "Fork-ConfigurationRepository",
+          "Get-ConfigurationRepositoryInfo",
+          "Set-ConfigurationRepositorySettings",
+          "Backup-ConfigurationRepository",
+          "Restore-ConfigurationRepository"
+        ],
+        "CmdletsToExport": null,
+        "RootModule": "ConfigurationRepository.psm1",
+        "Description": "Configuration Repository Manager for AitherZero - handles Git-based configuration management",
+        "AliasesToExport": null,
+        "RequiredModules": null,
+        "Author": "AitherZero Contributors",
+        "ModuleVersion": "1.0.0",
+        "PowerShellVersion": "7.0",
+        "VariablesToExport": null,
+        "GUID": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+        "Copyright": "(c) 2025 AitherZero. All rights reserved.",
+        "CompanyName": "AitherZero"
+      },
+      "HasTests": true,
+      "Name": "ConfigurationRepository",
+      "LastModified": "2025-07-08T00:20:01.8099388+00:00",
+      "Version": "1.0.0",
+      "Health": [
+        "Excellent",
+        "Good",
+        "Fair",
+        "Poor"
+      ],
+      "TestCoverage": 85,
+      "PowerShellVersion": "7.0",
+      "Size": 207764.0,
+      "CompanyName": "AitherZero",
+      "HasModuleFile": true
+    },
+    "ConfigurationCarousel": {
+      "FileCount": 5,
+      "HasManifest": true,
+      "HasDocumentation": true,
+      "ComplexityScore": 0,
+      "Description": "Configuration Carousel module for AitherZero - manages multiple configuration sets and environments",
+      "Path": "/workspaces/AitherZero/aither-core/modules/ConfigurationCarousel",
+      "RequiredModules": null,
+      "Author": "AitherZero Contributors",
+      "Functions": [
+        "Switch-ConfigurationSet",
+        "Get-AvailableConfigurations",
+        "Add-ConfigurationRepository",
+        "Remove-ConfigurationRepository",
+        "Get-CurrentConfiguration",
+        "Backup-CurrentConfiguration",
+        "Restore-ConfigurationBackup",
+        "Validate-ConfigurationSet",
+        "Export-ConfigurationSet",
+        "Import-ConfigurationSet",
+        "New-ConfigurationEnvironment",
+        "Set-ConfigurationEnvironment"
+      ],
+      "Manifest": {
+        "PrivateData": {
+          "PSData": {
+            "Tags": [
+              "AitherZero",
+              "Configuration",
+              "Environment",
+              "Management",
+              "Carousel"
+            ],
+            "ProjectUri": "https://github.com/wizzense/AitherZero",
+            "ReleaseNotes": "Initial release of Configuration Carousel module"
+          }
+        },
+        "FunctionsToExport": [
+          "Switch-ConfigurationSet",
+          "Get-AvailableConfigurations",
+          "Add-ConfigurationRepository",
+          "Remove-ConfigurationRepository",
+          "Get-CurrentConfiguration",
+          "Backup-CurrentConfiguration",
+          "Restore-ConfigurationBackup",
+          "Validate-ConfigurationSet",
+          "Export-ConfigurationSet",
+          "Import-ConfigurationSet",
+          "New-ConfigurationEnvironment",
+          "Set-ConfigurationEnvironment"
+        ],
+        "CmdletsToExport": null,
+        "RootModule": "ConfigurationCarousel.psm1",
+        "Description": "Configuration Carousel module for AitherZero - manages multiple configuration sets and environments",
+        "AliasesToExport": null,
+        "RequiredModules": null,
+        "Author": "AitherZero Contributors",
+        "ModuleVersion": "1.0.0",
+        "PowerShellVersion": "7.0",
+        "VariablesToExport": null,
+        "GUID": "9b3c5d7e-2f4a-5b6c-9d0e-1f2a3b4c5d6e",
+        "Copyright": "(c) 2025 AitherZero. All rights reserved.",
+        "CompanyName": "AitherZero"
+      },
+      "HasTests": true,
+      "Name": "ConfigurationCarousel",
+      "LastModified": "2025-07-06T19:51:18.2661432+00:00",
+      "Version": "1.0.0",
+      "Health": [
+        "Excellent",
+        "Good",
+        "Fair",
+        "Poor"
+      ],
+      "TestCoverage": 85,
+      "PowerShellVersion": "7.0",
+      "Size": 197121.0,
+      "CompanyName": "AitherZero",
+      "HasModuleFile": true
+    },
+    "ConfigurationCore": {
+      "FileCount": 37,
+      "HasManifest": true,
+      "HasDocumentation": true,
+      "ComplexityScore": 0,
+      "Description": "Unified configuration management system for the AitherZero platform. Provides centralized configuration storage, validation, environment-specific overlays, hot reload, backup/restore, and security features.",
+      "Path": "/workspaces/AitherZero/aither-core/modules/ConfigurationCore",
+      "RequiredModules": null,
+      "Author": "AitherZero Contributors",
+      "Functions": [
+        "Test-ConfigurationSecurity",
+        "Test-HashtableForSensitiveData",
+        "Get-ConfigurationHash",
+        "Import-ConfigurationFunctions",
+        "Initialize-ConfigurationStorePath",
+        "Import-ExistingConfiguration",
+        "Invoke-BackupCleanup",
+        "Write-CustomLog"
+      ],
+      "Manifest": {
+        "PrivateData": {
+          "PSData": {
+            "Tags": [
+              "Configuration",
+              "Management",
+              "Settings",
+              "Environment",
+              "AitherZero"
+            ],
+            "ProjectUri": "https://github.com/AitherLabs/AitherZero",
+            "ReleaseNotes": "v1.0.0 - Initial release with comprehensive features:\n- Unified configuration management with module registration\n- Environment-specific configuration overlays\n- Schema-based validation with type checking\n- Hot reload functionality with file watchers\n- Configuration backup/restore with versioning\n- Import/export capabilities (JSON, YAML, XML)\n- Security features with sensitive data detection\n- Cross-platform support (Windows, Linux, macOS)\n- Modern PowerShell 7+ patterns and error handling\n- Comprehensive test suite with 50+ test cases"
+          }
+        },
+        "FunctionsToExport": [
+          "Initialize-ConfigurationCore",
+          "Get-ModuleConfiguration",
+          "Set-ModuleConfiguration",
+          "Test-ModuleConfiguration",
+          "Register-ModuleConfiguration",
+          "Get-ConfigurationStore",
+          "Set-ConfigurationStore",
+          "Export-ConfigurationStore",
+          "Import-ConfigurationStore",
+          "Get-ConfigurationEnvironment",
+          "Set-ConfigurationEnvironment",
+          "New-ConfigurationEnvironment",
+          "Remove-ConfigurationEnvironment",
+          "Register-ConfigurationSchema",
+          "Validate-Configuration",
+          "Get-ConfigurationSchema",
+          "Enable-ConfigurationHotReload",
+          "Disable-ConfigurationHotReload",
+          "Get-ConfigurationWatcher",
+          "Merge-Configuration",
+          "Compare-Configuration",
+          "Backup-Configuration",
+          "Restore-Configuration"
+        ],
+        "CompatiblePSEditions": "Core",
+        "RootModule": "ConfigurationCore.psm1",
+        "Description": "Unified configuration management system for the AitherZero platform. Provides centralized configuration storage, validation, environment-specific overlays, hot reload, backup/restore, and security features.",
+        "CmdletsToExport": null,
+        "AliasesToExport": null,
+        "Author": "AitherZero Contributors",
+        "ModuleVersion": "1.0.0",
+        "PowerShellVersion": "7.0",
+        "VariablesToExport": null,
+        "GUID": "f8a9b7c6-5d4e-3c2b-1a0f-9e8d7c6b5a4f",
+        "Copyright": "(c) 2025 AitherZero. All rights reserved.",
+        "CompanyName": "AitherZero"
+      },
+      "HasTests": true,
+      "Name": "ConfigurationCore",
+      "LastModified": "2025-07-06T19:51:18.2691432+00:00",
+      "Version": "1.0.0",
+      "Health": [
+        "Excellent",
+        "Good",
+        "Fair",
+        "Poor"
+      ],
+      "TestCoverage": 85,
+      "PowerShellVersion": "7.0",
+      "Size": 234792.0,
+      "CompanyName": "AitherZero",
+      "HasModuleFile": true
+    }
+  },
+  "FailedModules": 28,
+  "Categories": {
+    "Core": [
+      "ConfigurationCarousel",
+      "ConfigurationRepository"
+    ],
+    "Security": "ConfigurationCore"
+  },
+  "Dependencies": {},
+  "DependencyGraph": {
+    "OrphanModules": null,
+    "CircularDependencies": null,
+    "Clusters": {},
+    "Nodes": [
+      {
+        "Id": "ConfigurationRepository",
+        "HasTests": true,
+        "FunctionCount": 10,
+        "Category": "Core",
+        "Health": [
+          "Excellent",
+          "Good",
+          "Fair",
+          "Poor"
+        ],
+        "Label": "ConfigurationRepository"
+      },
+      {
+        "Id": "ConfigurationCarousel",
+        "HasTests": true,
+        "FunctionCount": 12,
+        "Category": "Core",
+        "Health": [
+          "Excellent",
+          "Good",
+          "Fair",
+          "Poor"
+        ],
+        "Label": "ConfigurationCarousel"
+      },
+      {
+        "Id": "ConfigurationCore",
+        "HasTests": true,
+        "FunctionCount": 8,
+        "Category": "Security",
+        "Health": [
+          "Excellent",
+          "Good",
+          "Fair",
+          "Poor"
+        ],
+        "Label": "ConfigurationCore"
+      }
+    ],
+    "Edges": null
+  },
+  "TotalModules": 31,
+  "Metadata": {
+    "AnalyzedIntegrations": false,
+    "ProjectRoot": "/workspaces/AitherZero",
+    "IncludesDependencyGraph": true,
+    "GeneratedAt": "2025-07-08T05:49:22Z",
+    "GeneratedBy": "AitherZero Dynamic Feature Map Generator v1.0",
+    "ModulesPath": "/workspaces/AitherZero/aither-core/modules"
+  }
+}

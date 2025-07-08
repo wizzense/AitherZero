@@ -3,10 +3,15 @@
 **🚀 Standalone PowerShell automation framework** for OpenTofu/Terraform infrastructure management with comprehensive testing, modular architecture, and AI-powered automation.
 
 [![Build Status](https://github.com/wizzense/AitherZero/actions/workflows/ci.yml/badge.svg)](https://github.com/wizzense/AitherZero/actions)
+[![Comprehensive Report](https://github.com/wizzense/AitherZero/actions/workflows/comprehensive-report.yml/badge.svg)](https://github.com/wizzense/AitherZero/actions/workflows/comprehensive-report.yml)
 [![PowerShell](https://img.shields.io/badge/PowerShell-7.0+-blue.svg)](https://github.com/PowerShell/PowerShell)
 [![OpenTofu](https://img.shields.io/badge/OpenTofu-Compatible-orange.svg)](https://opentofu.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Contributors Welcome](https://img.shields.io/badge/Contributors-Welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+## 📊 [View Live Dashboard & Reports](https://wizzense.github.io/AitherZero/)
+
+**Automated reports updated daily:** https://wizzense.github.io/AitherZero/
 
 ## ⚡ Ultra-Simple Installation (30 seconds)
 

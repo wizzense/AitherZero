@@ -493,9 +493,9 @@ jobs:
             testing = @{
               status = $env:TEST_STATUS
               executed = $auditScope.testing
-              grade = $env:AUDIT_GRADE
-              score = $env:AUDIT_SCORE
-              coverage = $env:COVERAGE_PERCENT
+              grade = if ($env:AUDIT_GRADE) { $env:AUDIT_GRADE } else { "N/A" }
+              score = if ($env:AUDIT_SCORE) { $env:AUDIT_SCORE } else { "0" }
+              coverage = if ($env:COVERAGE_PERCENT) { $env:COVERAGE_PERCENT } else { "0" }
             }
             duplicates = @{
               status = $env:DUP_STATUS
