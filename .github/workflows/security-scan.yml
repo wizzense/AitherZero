@@ -28,6 +28,7 @@ on:
 # Security: Minimal permissions by default
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   # CodeQL Analysis for PowerShell code
