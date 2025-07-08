@@ -638,17 +638,81 @@ try {
 
             # PowerShell 7 is now available if it was installed
 
-            # For PowerShell 5.1, don't check execution policy in-process
-            # Just try to run and handle the error
+            # Use PowerShell 7 if we're in PS 5.1 and PS7 was found/installed
+            $usePwsh7 = $false
+            $pwsh7Executable = $null
+            
+            # Check if we should use PowerShell 7 (use the result from Install-PowerShell7-Portable)
+            if ($PSVersionTable.PSVersion.Major -lt 7) {
+                # First, try to use the PS7 path from the installation/detection above
+                if ($pwsh7Path -and (Test-Path $pwsh7Path)) {
+                    $pwsh7Executable = $pwsh7Path
+                    $usePwsh7 = $true
+                    Write-Host "[i] Using PowerShell 7 from: $pwsh7Path" -ForegroundColor Cyan
+                } else {
+                    # Fallback: try to find PowerShell 7 in common locations
+                    $pwsh7Candidates = @(
+                        "$env:LOCALAPPDATA\Microsoft\PowerShell\7\pwsh.exe",
+                        "$env:ProgramFiles\PowerShell\7\pwsh.exe",
+                        "$env:ProgramFiles\PowerShell\7.5.2\pwsh.exe",
+                        "$env:ProgramFiles\PowerShell\7.4.1\pwsh.exe"
+                    )
+                    
+                    foreach ($candidate in $pwsh7Candidates) {
+                        if (Test-Path $candidate) {
+                            $pwsh7Executable = $candidate
+                            $usePwsh7 = $true
+                            Write-Host "[i] Found PowerShell 7 at: $candidate" -ForegroundColor Cyan
+                            break
+                        }
+                    }
+                    
+                    # Also check PATH
+                    if (-not $pwsh7Executable) {
+                        $pwshInPath = Get-Command pwsh -ErrorAction SilentlyContinue
+                        if ($pwshInPath) {
+                            $pwsh7Executable = $pwshInPath.Source
+                            $usePwsh7 = $true
+                            Write-Host "[i] Found PowerShell 7 in PATH: $($pwshInPath.Source)" -ForegroundColor Cyan
+                        }
+                    }
+                }
+            }
+            
+            # Execute the start script
             try {
-                & $startScript @startParams
+                if ($usePwsh7 -and $pwsh7Executable) {
+                    Write-Host "[~] Launching AitherZero with PowerShell 7..." -ForegroundColor Cyan
+                    # Convert parameters to argument string
+                    $argList = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$startScript`"")
+                    if ($startParams.Setup) { $argList += "-Setup" }
+                    if ($startParams.InstallationProfile) { $argList += "-InstallationProfile"; $argList += $startParams.InstallationProfile }
+                    if ($startParams.NonInteractive) { $argList += "-NonInteractive" }
+                    
+                    & $pwsh7Executable @argList
+                } else {
+                    # Use current PowerShell version
+                    & $startScript @startParams
+                }
             } catch {
                 if ($_.Exception.Message -like '*running scripts is disabled*' -or $_.Exception.Message -like '*execution policy*') {
                     Write-Host "[!] PowerShell execution policy prevents running scripts" -ForegroundColor Red
                     Write-Host "[i] To enable scripts, run as Administrator:" -ForegroundColor Cyan
                     Write-Host "    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser" -ForegroundColor White
                     Write-Host "[i] Or run AitherZero with:" -ForegroundColor Cyan
-                    Write-Host "    powershell.exe -ExecutionPolicy Bypass -File .\Start-AitherZero.ps1 -Setup" -ForegroundColor White
+                    if ($usePwsh7 -and $pwsh7Executable) {
+                        Write-Host "    `"$pwsh7Executable`" -ExecutionPolicy Bypass -File `"$startScript`" -Setup" -ForegroundColor White
+                    } else {
+                        Write-Host "    powershell.exe -ExecutionPolicy Bypass -File .\Start-AitherZero.ps1 -Setup" -ForegroundColor White
+                    }
+                } elseif ($_.Exception.Message -like '*#requires*') {
+                    Write-Host "[!] Script requires PowerShell 7 but PowerShell 5.1 is being used" -ForegroundColor Red
+                    Write-Host "[i] To run AitherZero, use PowerShell 7:" -ForegroundColor Cyan
+                    if ($pwsh7Executable) {
+                        Write-Host "    `"$pwsh7Executable`" -File `"$startScript`" -Setup" -ForegroundColor White
+                    } else {
+                        Write-Host "    Install PowerShell 7 from: https://aka.ms/powershell" -ForegroundColor White
+                    }
                 } else {
                     # Rethrow if it's a different error
                     throw
