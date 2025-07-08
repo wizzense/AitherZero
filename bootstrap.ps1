@@ -638,34 +638,43 @@ try {
 
             # PowerShell 7 is now available if it was installed
 
-            # Check if we should use PowerShell 7 for execution
+            # Use PowerShell 7 if we're in PS 5.1 and PS7 was found/installed
             $usePwsh7 = $false
             $pwsh7Executable = $null
             
-            # If we're in PowerShell 5.1 and PS7 is available, use PS7
+            # Check if we should use PowerShell 7 (use the result from Install-PowerShell7-Portable)
             if ($PSVersionTable.PSVersion.Major -lt 7) {
-                # Check if PowerShell 7 is available
-                $pwsh7Candidates = @(
-                    "$env:LOCALAPPDATA\Microsoft\PowerShell\7\pwsh.exe",
-                    "$env:ProgramFiles\PowerShell\7\pwsh.exe",
-                    "$env:ProgramFiles\PowerShell\7.5.2\pwsh.exe",
-                    "$env:ProgramFiles\PowerShell\7.4.1\pwsh.exe"
-                )
-                
-                foreach ($candidate in $pwsh7Candidates) {
-                    if (Test-Path $candidate) {
-                        $pwsh7Executable = $candidate
-                        $usePwsh7 = $true
-                        break
+                # First, try to use the PS7 path from the installation/detection above
+                if ($pwsh7Path -and (Test-Path $pwsh7Path)) {
+                    $pwsh7Executable = $pwsh7Path
+                    $usePwsh7 = $true
+                    Write-Host "[i] Using PowerShell 7 from: $pwsh7Path" -ForegroundColor Cyan
+                } else {
+                    # Fallback: try to find PowerShell 7 in common locations
+                    $pwsh7Candidates = @(
+                        "$env:LOCALAPPDATA\Microsoft\PowerShell\7\pwsh.exe",
+                        "$env:ProgramFiles\PowerShell\7\pwsh.exe",
+                        "$env:ProgramFiles\PowerShell\7.5.2\pwsh.exe",
+                        "$env:ProgramFiles\PowerShell\7.4.1\pwsh.exe"
+                    )
+                    
+                    foreach ($candidate in $pwsh7Candidates) {
+                        if (Test-Path $candidate) {
+                            $pwsh7Executable = $candidate
+                            $usePwsh7 = $true
+                            Write-Host "[i] Found PowerShell 7 at: $candidate" -ForegroundColor Cyan
+                            break
+                        }
                     }
-                }
-                
-                # Also check PATH
-                if (-not $pwsh7Executable) {
-                    $pwshInPath = Get-Command pwsh -ErrorAction SilentlyContinue
-                    if ($pwshInPath) {
-                        $pwsh7Executable = $pwshInPath.Source
-                        $usePwsh7 = $true
+                    
+                    # Also check PATH
+                    if (-not $pwsh7Executable) {
+                        $pwshInPath = Get-Command pwsh -ErrorAction SilentlyContinue
+                        if ($pwshInPath) {
+                            $pwsh7Executable = $pwshInPath.Source
+                            $usePwsh7 = $true
+                            Write-Host "[i] Found PowerShell 7 in PATH: $($pwshInPath.Source)" -ForegroundColor Cyan
+                        }
                     }
                 }
             }
