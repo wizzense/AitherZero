@@ -1,10 +1,11 @@
+---
 name: CI - Continuous Integration
 
 on:
   push:
-    branches: [ main, develop, 'release/**' ]
+    branches: [main, develop, 'release/**']
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
   merge_group:
     types: [checks_requested]
   workflow_dispatch:
@@ -22,7 +23,8 @@ on:
 
 # Cancel in-progress runs for the same workflow
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: >-
+    ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 env:
@@ -43,64 +45,65 @@ jobs:
       has-terraform-changes: ${{ steps.filter.outputs.terraform }}
       affected-modules: ${{ steps.analyze.outputs.modules }}
       test-matrix: ${{ steps.matrix.outputs.matrix }}
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Full history for accurate diff
-        
-    - name: Detect file changes
-      uses: dorny/paths-filter@v3
-      id: filter
-      with:
-        filters: |
-          powershell:
-            - '**/*.ps1'
-            - '**/*.psm1'
-            - '**/*.psd1'
-          workflows:
-            - '.github/workflows/**'
-          docs:
-            - '**/*.md'
-            - 'docs/**'
-          terraform:
-            - '**/*.tf'
-            - '**/*.tfvars'
-            
-    - name: Analyze affected modules
-      id: analyze
-      shell: pwsh
-      run: |
-        $changes = git diff --name-only ${{ github.event.before || 'HEAD~1' }} ${{ github.sha }}
-        $modules = @()
-        
-        foreach ($change in $changes) {
-          if ($change -match 'aither-core/modules/([^/]+)/') {
-            $modules += $matches[1]
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for accurate diff
+
+      - name: Detect file changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            powershell:
+              - '**/*.ps1'
+              - '**/*.psm1'
+              - '**/*.psd1'
+            workflows:
+              - '.github/workflows/**'
+            docs:
+              - '**/*.md'
+              - 'docs/**'
+            terraform:
+              - '**/*.tf'
+              - '**/*.tfvars'
+
+      - name: Analyze affected modules
+        id: analyze
+        shell: pwsh
+        run: |
+          $changes = git diff --name-only `
+            ${{ github.event.before || 'HEAD~1' }} ${{ github.sha }}
+          $modules = @()
+          
+          foreach ($change in $changes) {
+            if ($change -match 'aither-core/modules/([^/]+)/') {
+              $modules += $matches[1]
+            }
           }
-        }
-        
-        $uniqueModules = $modules | Select-Object -Unique | ConvertTo-Json -Compress
-        echo "modules=$uniqueModules" >> $env:GITHUB_OUTPUT
-        
-    - name: Generate dynamic test matrix
-      id: matrix
-      shell: pwsh
-      run: |
-        # Dynamic matrix based on changes
-        $matrix = @{
-          os = @('ubuntu-latest', 'windows-latest', 'macos-latest')
-          pwsh_version = @('7.4.5')
-        }
-        
-        # If critical changes, test on more PS versions
-        if ('${{ steps.filter.outputs.powershell }}' -eq 'true') {
-          $matrix.pwsh_version += '7.3.12', '7.2.20'
-        }
-        
-        $matrixJson = $matrix | ConvertTo-Json -Compress
-        echo "matrix=$matrixJson" >> $env:GITHUB_OUTPUT
+          
+          $uniqueModules = $modules | Select-Object -Unique | ConvertTo-Json -Compress
+          echo "modules=$uniqueModules" >> $env:GITHUB_OUTPUT
+
+      - name: Generate dynamic test matrix
+        id: matrix
+        shell: pwsh
+        run: |
+          # Dynamic matrix based on changes
+          $matrix = @{
+            os = @('ubuntu-latest', 'windows-latest', 'macos-latest')
+            pwsh_version = @('7.4.5')
+          }
+          
+          # If critical changes, test on more PS versions
+          if ('${{ steps.filter.outputs.powershell }}' -eq 'true') {
+            $matrix.pwsh_version += '7.3.12', '7.2.20'
+          }
+          
+          $matrixJson = $matrix | ConvertTo-Json -Compress
+          echo "matrix=$matrixJson" >> $env:GITHUB_OUTPUT
 
   # Code quality and linting
   code-quality:
@@ -1313,6 +1316,16 @@ jobs:
         
         # 4. CREATE EXECUTIVE SUMMARY for quick decision making
         Write-Host "📋 Creating executive decision-making summary..." -ForegroundColor Yellow
+        
+        # Pre-calculate status values to avoid PowerShell ternary in YAML context
+        $psAnalyzerStatus = if ($ciSummary.QualityResults.ContainsKey('psscriptanalyzer')) { 'ANALYZED' } else { 'PENDING' }
+        $complexityStatus = if ($ciSummary.QualityResults.ContainsKey('complexity')) { 'ANALYZED' } else { 'PENDING' }
+        $formattingStatus = if ($ciSummary.QualityResults.ContainsKey('formatting')) { 'ANALYZED' } else { 'PENDING' }
+        $bestPracticesStatus = if ($ciSummary.QualityResults.ContainsKey('best-practices')) { 'ANALYZED' } else { 'PENDING' }
+        $windowsBuildStatus = if ($ciSummary.BuildResults.ContainsKey('windows')) { '✅ SUCCESS' } else { '❌ FAILED' }
+        $linuxBuildStatus = if ($ciSummary.BuildResults.ContainsKey('linux')) { '✅ SUCCESS' } else { '❌ FAILED' }
+        $macosBuildStatus = if ($ciSummary.BuildResults.ContainsKey('macos')) { '✅ SUCCESS' } else { '❌ FAILED' }
+        
         $executiveSummary = @"
 # AitherZero Project Health Dashboard
 ## Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') UTC
@@ -1321,15 +1334,15 @@ jobs:
 ### 🎯 EXECUTIVE SUMMARY FOR PRIORITIZATION
 
 #### Code Quality Status
-- **PSScriptAnalyzer**: $($ciSummary.QualityResults.ContainsKey('psscriptanalyzer') ? 'ANALYZED' : 'PENDING')
-- **Complexity Analysis**: $($ciSummary.QualityResults.ContainsKey('complexity') ? 'ANALYZED' : 'PENDING')  
-- **Formatting Check**: $($ciSummary.QualityResults.ContainsKey('formatting') ? 'ANALYZED' : 'PENDING')
-- **Best Practices**: $($ciSummary.QualityResults.ContainsKey('best-practices') ? 'ANALYZED' : 'PENDING')
+- **PSScriptAnalyzer**: $psAnalyzerStatus
+- **Complexity Analysis**: $complexityStatus
+- **Formatting Check**: $formattingStatus
+- **Best Practices**: $bestPracticesStatus
 
 #### Build Status
-- **Windows Build**: $($ciSummary.BuildResults.ContainsKey('windows') ? '✅ SUCCESS' : '❌ FAILED')
-- **Linux Build**: $($ciSummary.BuildResults.ContainsKey('linux') ? '✅ SUCCESS' : '❌ FAILED')  
-- **macOS Build**: $($ciSummary.BuildResults.ContainsKey('macos') ? '✅ SUCCESS' : '❌ FAILED')
+- **Windows Build**: $windowsBuildStatus
+- **Linux Build**: $linuxBuildStatus
+- **macOS Build**: $macosBuildStatus
 
 #### Reports Generated
 - 🗺️ **Dynamic Feature Map**: Interactive module dependency visualization
