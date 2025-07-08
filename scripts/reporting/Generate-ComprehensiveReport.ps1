@@ -516,12 +516,17 @@ function Get-OverallHealthScore {
         $overallScore += $factor.Value * $weights[$factor.Key]
     }
 
-    $grade = switch ($overallScore) {
-        {$_ -ge 90} { 'A' }
-        {$_ -ge 80} { 'B' }
-        {$_ -ge 70} { 'C' }
-        {$_ -ge 60} { 'D' }
-        default { 'F' }
+    # Calculate grade with mutually exclusive conditions
+    if ($overallScore -ge 90) {
+        $grade = 'A'
+    } elseif ($overallScore -ge 80) {
+        $grade = 'B'
+    } elseif ($overallScore -ge 70) {
+        $grade = 'C'
+    } elseif ($overallScore -ge 60) {
+        $grade = 'D'
+    } else {
+        $grade = 'F'
     }
 
     return @{
