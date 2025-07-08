@@ -506,9 +506,9 @@ function Get-RiskLevel {
     }
     
     return switch ($riskFactors) {
-        { $_ -gt 4 } { "Critical"; break }
-        { $_ -gt 2 } { "High"; break }
-        { $_ -gt 0 } { "Medium"; break }
+        { $_ -gt 4 } { "Critical" }
+        { $_ -gt 2 } { "High" }
+        { $_ -gt 0 } { "Medium" }
         default { "Low" }
     }
 }

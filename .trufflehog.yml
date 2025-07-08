@@ -2,7 +2,7 @@
 # This file configures TruffleHog to reduce false positives in our PowerShell automation framework
 
 # File path exclusions (TruffleHog v3.89+ format)
-allow:
+allowlist:
   paths:
     - "tests/**/*"
     - "**/*.Tests.ps1" 
@@ -18,7 +18,7 @@ allow:
     - "dist/**/*"
     
   # Allowlist patterns for legitimate test/example values
-  rules:
+  regexes:
     # Test and example patterns
     - "test-.*-key"
     - "mock-.*-key"  
