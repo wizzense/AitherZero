@@ -1,13 +1,27 @@
-# TruffleHog configuration for AitherZero
+# TruffleHog v3.89+ configuration for AitherZero
 # This file configures TruffleHog to reduce false positives in our PowerShell automation framework
 
-# Global configuration
-global:
-  # Custom regex patterns to allowlist (reduce false positives)
-  allowlist:
+# File path exclusions (TruffleHog v3.89+ format)
+allow:
+  paths:
+    - "tests/**/*"
+    - "**/*.Tests.ps1" 
+    - "**/*.Enhanced.Tests.ps1"
+    - "backups/**/*"
+    - "docs/**/*"
+    - "examples/**/*"
+    - "samples/**/*"
+    - "templates/**/*"
+    - ".vscode/**/*"
+    - ".github/**/*"
+    - "build/**/*"
+    - "dist/**/*"
+    
+  # Allowlist patterns for legitimate test/example values
+  rules:
     # Test and example patterns
     - "test-.*-key"
-    - "mock-.*-key"
+    - "mock-.*-key"  
     - "example-.*-key"
     - "sample-.*-key"
     - "demo-.*-key"
@@ -28,37 +42,3 @@ global:
     - "ConfigurationCore.*test"
     - "ConfigurationBackupRestore.*test"
     - "TestModule.*api"
-
-# File path exclusions
-excludePaths:
-  - "tests/**/*"
-  - "**/*.Tests.ps1"
-  - "**/*.Enhanced.Tests.ps1"
-  - "backups/**/*"
-  - "docs/**/*"
-  - "examples/**/*"
-  - "samples/**/*"
-  - "templates/**/*"
-  - ".vscode/**/*"
-  - ".github/**/*"
-  - "build/**/*"
-  - "dist/**/*"
-
-# Detector-specific configuration
-detectors:
-  # Generic API key detector
-  - name: "GenericAPIKey"
-    allowlist:
-      - "test-encryption-key-123"
-      - "abc123-secret-key"
-      - "test-api-key"
-      - "mock-api-key"
-      - "example-api-key"
-      - "sample-api-key"
-    
-  # Custom patterns for PowerShell
-  - name: "PowerShellSecure"
-    allowlist:
-      - "ConvertTo-SecureString.*ToBase64String.*Force"
-      - "Generate.*AES.*key"
-      - "New.*encryption.*key"
