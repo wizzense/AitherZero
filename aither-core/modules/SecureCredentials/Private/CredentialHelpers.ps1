@@ -133,6 +133,7 @@ function Retrieve-CredentialSecurely {
         and security validation.
     #>
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'CredentialName', Justification = 'CredentialName is an identifier string, not sensitive credential data')]
     param(
         [Parameter(Mandatory = $true)]
         [string]$CredentialName,
@@ -221,6 +222,8 @@ function Retrieve-CredentialSecurely {
         if ($encryptedData.EncryptedPassword) {
             try {
                 $decryptedPassword = Unprotect-String $encryptedData.EncryptedPassword
+                # Suppress security warning: converting decrypted data back to SecureString is secure practice
+                [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '', Justification = 'Converting previously encrypted data back to SecureString after decryption is secure')]
                 $credential.Password = ConvertTo-SecureString $decryptedPassword -AsPlainText -Force
                 # Clear decrypted password from memory
                 $decryptedPassword = $null
@@ -261,6 +264,7 @@ function Retrieve-CredentialSecurely {
 
 function Remove-CredentialSecurely {
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'CredentialName', Justification = 'CredentialName is an identifier string, not sensitive credential data')]
     param(
         [Parameter(Mandatory = $true)]
         [string]$CredentialName
@@ -626,6 +630,7 @@ function Test-CredentialIntegrity {
         including file permissions, encryption validation, and metadata consistency.
     #>
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'CredentialName', Justification = 'CredentialName is an identifier string, not sensitive credential data')]
     param(
         [Parameter()]
         [string]$CredentialName,

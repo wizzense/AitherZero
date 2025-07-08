@@ -262,8 +262,93 @@ jobs:
           # Generate SARIF output for GitHub Security tab
           try {
             $sarifPath = "psscriptanalyzer-results.sarif"
-            $results | ConvertTo-Json -Depth 10 | Set-Content -Path $sarifPath -Encoding UTF8
+            
+            # Create proper SARIF 2.1.0 format
+            $sarif = @{
+              version = "2.1.0"
+              '$schema' = "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json"
+              runs = @(@{
+                tool = @{
+                  driver = @{
+                    name = "PSScriptAnalyzer"
+                    version = "1.21.0"
+                    informationUri = "https://github.com/PowerShell/PSScriptAnalyzer"
+                    rules = @()
+                  }
+                }
+                results = @()
+                columnKind = "utf16CodeUnits"
+              })
+            }
+            
+            # Build unique rules index
+            $rulesIndex = @{}
+            $ruleCounter = 0
+            
+            foreach ($issue in $results) {
+              if (-not $rulesIndex.ContainsKey($issue.RuleName)) {
+                $rulesIndex[$issue.RuleName] = $ruleCounter++
+                $sarif.runs[0].tool.driver.rules += @{
+                  id = $issue.RuleName
+                  name = $issue.RuleName
+                  shortDescription = @{
+                    text = $issue.RuleName
+                  }
+                  fullDescription = @{
+                    text = $issue.Message
+                  }
+                  defaultConfiguration = @{
+                    level = switch ($issue.Severity) {
+                      'Error' { 'error' }
+                      'Warning' { 'warning' }
+                      'Information' { 'note' }
+                      default { 'note' }
+                    }
+                  }
+                  helpUri = "https://github.com/PowerShell/PSScriptAnalyzer/blob/master/RuleDocumentation/$($issue.RuleName).md"
+                }
+              }
+            }
+            
+            # Convert issues to SARIF results
+            foreach ($issue in $results) {
+              $relativePath = $issue.ScriptPath -replace [regex]::Escape((Get-Location).Path), '.' -replace '^[\\\/]', ''
+              
+              $sarifResult = @{
+                ruleId = $issue.RuleName
+                ruleIndex = $rulesIndex[$issue.RuleName]
+                level = switch ($issue.Severity) {
+                  'Error' { 'error' }
+                  'Warning' { 'warning' }
+                  'Information' { 'note' }
+                  default { 'note' }
+                }
+                message = @{
+                  text = $issue.Message
+                }
+                locations = @(@{
+                  physicalLocation = @{
+                    artifactLocation = @{
+                      uri = $relativePath
+                      uriBaseId = '%SRCROOT%'
+                    }
+                    region = @{
+                      startLine = [int]$issue.Line
+                      startColumn = [int]$issue.Column
+                      endLine = [int]$issue.Line
+                      endColumn = [int]($issue.Column + 1)
+                    }
+                  }
+                })
+              }
+              
+              $sarif.runs[0].results += $sarifResult
+            }
+            
+            # Write SARIF file
+            $sarif | ConvertTo-Json -Depth 10 | Set-Content -Path $sarifPath -Encoding UTF8
             Write-Host "📄 SARIF results exported to: $sarifPath" -ForegroundColor Green
+            Write-Host "📊 SARIF contains $($sarif.runs[0].results.Count) findings and $($sarif.runs[0].tool.driver.rules.Count) unique rules" -ForegroundColor Cyan
           }
           catch {
             Write-Warning "Failed to generate SARIF output: $($_.Exception.Message)"

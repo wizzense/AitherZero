@@ -9,10 +9,8 @@ name: Code Quality Remediation
       modules:
         description: 'Specific modules to remediate (comma-separated, or "all" for all modules)'
         required: false
-        default: 'all''
-        '
-        default: true
-        type: boolean
+        default: 'all'
+        type: string
       create_pr:
         description: 'Create pull request with fixes'
         required: false

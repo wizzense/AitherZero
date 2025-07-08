@@ -33,6 +33,7 @@ function Set-SecureCredentials {
     Set-SecureCredentials -Target "hyperv-lab-01" -CertificatePath "./certs/lab-01" -CredentialType "Certificate"
     #>
     [CmdletBinding(SupportsShouldProcess)]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'CredentialType', Justification = 'CredentialType is an enumeration value specifying credential type, not sensitive credential data')]
     param(
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]

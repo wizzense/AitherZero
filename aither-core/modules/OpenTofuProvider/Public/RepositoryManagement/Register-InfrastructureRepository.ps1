@@ -35,6 +35,7 @@ function Register-InfrastructureRepository {
         PSCustomObject with repository details
     #>
     [CmdletBinding(SupportsShouldProcess)]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'CredentialName', Justification = 'CredentialName is an identifier string, not sensitive credential data')]
     param(
         [Parameter(Mandatory)]
         [ValidatePattern('^(https?://|git@).*')]

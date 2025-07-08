@@ -50,6 +50,7 @@ function Test-RepositoryAccess {
         Tests if a repository URL is accessible.
     #>
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'CredentialName', Justification = 'CredentialName is an identifier string, not sensitive credential data')]
     param(
         [Parameter(Mandatory)]
         [string]$Url,
@@ -85,6 +86,7 @@ function Invoke-GitClone {
         Clones a Git repository.
     #>
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'CredentialName', Justification = 'CredentialName is an identifier string, not sensitive credential data')]
     param(
         [Parameter(Mandatory)]
         [string]$Url,
@@ -228,6 +230,7 @@ function Invoke-GitPull {
         Pulls latest changes from Git repository.
     #>
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'CredentialName', Justification = 'CredentialName is an identifier string, not sensitive credential data')]
     param(
         [Parameter(Mandatory)]
         [string]$Path,
