@@ -31,6 +31,8 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write
+  actions: write
+  security-events: write
 
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
@@ -1655,105 +1657,133 @@ jobs:
           *.md
         retention-days: 90  # Keep reports for 3 months
     
-    - name: Generate GitHub Pages deployment artifacts
-      if: github.ref == 'refs/heads/main'
+    - name: CI dashboard summary (optimized architecture)
       shell: pwsh
       run: |
-        Write-Host "📄 Preparing GitHub Pages deployment..." -ForegroundColor Cyan
+        Write-Host "📊 CI Dashboard Summary - Optimized Architecture" -ForegroundColor Cyan
+        Write-Host "=================================================" -ForegroundColor Cyan
+        Write-Host "✅ CI Pipeline Role: Fast validation & test execution" -ForegroundColor Green
+        Write-Host "🔄 Comprehensive Report Role: Deep analysis using CI results" -ForegroundColor Yellow
+        Write-Host "⚡ No Duplication: Tests run once, results consumed by comprehensive report" -ForegroundColor Green
+        Write-Host "🚀 GitHub Pages: Deployed by comprehensive report workflow only" -ForegroundColor Green
+        Write-Host "📈 Result: Faster CI, no resource waste, complementary workflows" -ForegroundColor Green
         
-        # Create docs directory for GitHub Pages
-        New-Item -ItemType Directory -Path "./docs" -Force
-        
-        # Copy reports to docs for GitHub Pages
-        $reportFiles = @(
-          "aitherZero-comprehensive-report.html",
-          "comprehensive-ci-dashboard.html",
-          "feature-dependency-map.html",
-          "executive-summary.md"
-        )
-        
-        foreach ($file in $reportFiles) {
-          if (Test-Path $file) {
-            Copy-Item $file -Destination "./docs/" -Force
-            Write-Host "✅ Copied $file to docs/" -ForegroundColor Green
-          }
-        }
-        
-        # Create index.html that redirects to the latest report
-        $repoUrl = "https://github.com/${{ github.repository }}"
-        $indexHtml = '<!DOCTYPE html>' + "`n"
-        $indexHtml += '<html>' + "`n"
-        $indexHtml += '<head>' + "`n"
-        $indexHtml += '    <title>AitherZero Reports</title>' + "`n"
-        $indexHtml += '    <meta charset="utf-8">' + "`n"
-        $indexHtml += '    <meta name="viewport" content="width=device-width, initial-scale=1">' + "`n"
-        $indexHtml += '    <style>' + "`n"
-        $indexHtml += '        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 40px; }' + "`n"
-        $indexHtml += '        h1 { color: #333; }' + "`n"
-        $indexHtml += '        .report-link { display: block; margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 5px; text-decoration: none; color: #007bff; }' + "`n"
-        $indexHtml += '        .report-link:hover { background: #e9ecef; }' + "`n"
-        $indexHtml += '    </style>' + "`n"
-        $indexHtml += '</head>' + "`n"
-        $indexHtml += '<body>' + "`n"
-        $indexHtml += '    <h1>🚀 AitherZero Reports</h1>' + "`n"
-        $indexHtml += '    <p>Welcome to the AitherZero project reports dashboard.</p>' + "`n"
-        $indexHtml += '    <h2>📊 Available Reports</h2>' + "`n"
-        $indexHtml += '    <a href="aitherZero-comprehensive-report.html" class="report-link">📋 Comprehensive Project Report</a>' + "`n"
-        $indexHtml += '    <a href="comprehensive-ci-dashboard.html" class="report-link">🔍 CI Dashboard</a>' + "`n"
-        $indexHtml += '    <a href="feature-dependency-map.html" class="report-link">🗺️ Feature & Dependency Map</a>' + "`n"
-        $indexHtml += '    <a href="executive-summary.md" class="report-link">📄 Executive Summary</a>' + "`n"
-        $indexHtml += '    <hr>' + "`n"
-        $indexHtml += '    <p>Reports are generated automatically by the AitherZero CI/CD system.</p>' + "`n"
-        $indexHtml += "    <p><a href=`"$repoUrl`">← Back to GitHub</a></p>" + "`n"
-        $indexHtml += '</body>' + "`n"
-        $indexHtml += '</html>'
-        Set-Content -Path "./docs/index.html" -Value $indexHtml
-        Write-Host "✅ Created index.html" -ForegroundColor Green
-        
-    
-    - name: Deploy to GitHub Pages
-      if: github.ref == 'refs/heads/main'
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./docs
-        force_orphan: true
-        
-  # Trigger comprehensive report after successful CI tests
-  trigger-comprehensive-report:
-    name: Trigger Comprehensive Report
+  # Export test results for comprehensive report consumption
+  export-test-results:
+    name: Export Test Results for Comprehensive Report
     runs-on: ubuntu-latest
     needs: test
     if: success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     
     steps:
-    - name: Trigger comprehensive report workflow
-      uses: actions/github-script@v7
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download all test results
+      uses: actions/download-artifact@v4
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          github.rest.actions.createWorkflowDispatch({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            workflow_id: 'comprehensive-report.yml',
-            ref: context.ref,
-            inputs: {
-              report_type: 'comprehensive',
-              include_detailed_analysis: 'true',
-              generate_html: 'true'
-            }
-          })
-          
-          console.log('✅ Comprehensive report workflow triggered successfully')
-          
-    - name: Create workflow summary
+        path: ./ci-artifacts/
+        
+    - name: Create CI results summary for comprehensive report
+      shell: pwsh
       run: |
-        echo "## 🚀 CI Tests Completed Successfully" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "✅ All tests passed across all platforms" >> $GITHUB_STEP_SUMMARY
-        echo "📊 Comprehensive report generation triggered" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Next Steps:" >> $GITHUB_STEP_SUMMARY
-        echo "1. Wait for comprehensive report to complete" >> $GITHUB_STEP_SUMMARY
-        echo "2. Check GitHub Pages for updated dashboard" >> $GITHUB_STEP_SUMMARY
-        echo "3. Review test results in the comprehensive report" >> $GITHUB_STEP_SUMMARY
+        Write-Host "📊 Creating CI results summary for comprehensive report consumption..." -ForegroundColor Cyan
+        
+        # Create structured summary of CI results
+        $ciResultsSummary = @{
+          WorkflowId = '${{ github.run_id }}'
+          WorkflowUrl = '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+          GitSha = '${{ github.sha }}'
+          GitRef = '${{ github.ref }}'
+          Timestamp = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ')
+          Status = 'SUCCESS'
+          TestResults = @{
+            PlatformResults = @{}
+            TotalTests = 0
+            TotalPassed = 0
+            TotalFailed = 0
+            Duration = 0
+          }
+          CodeQuality = @{
+            PSScriptAnalyzer = @{ Status = 'COMPLETED' }
+            Formatting = @{ Status = 'COMPLETED' }
+            Complexity = @{ Status = 'COMPLETED' }
+            BestPractices = @{ Status = 'COMPLETED' }
+          }
+          BuildResults = @{
+            Windows = @{ Status = 'SUCCESS' }
+            Linux = @{ Status = 'SUCCESS' }
+            macOS = @{ Status = 'SUCCESS' }
+          }
+          ArtifactsGenerated = @()
+        }
+        
+        # Collect test results from downloaded artifacts
+        $testArtifacts = Get-ChildItem -Path "./ci-artifacts" -Directory | Where-Object Name -like "*test-results*"
+        foreach ($artifact in $testArtifacts) {
+          $platform = ($artifact.Name -split '-')[-1]
+          $summaryFile = Join-Path $artifact.FullName "ci-test-summary.json"
+          
+          if (Test-Path $summaryFile) {
+            $platformResults = Get-Content $summaryFile | ConvertFrom-Json
+            $ciResultsSummary.TestResults.PlatformResults[$platform] = $platformResults
+            $ciResultsSummary.TestResults.TotalTests += $platformResults.TotalTests
+            $ciResultsSummary.TestResults.TotalPassed += $platformResults.TotalPassed
+            $ciResultsSummary.TestResults.TotalFailed += $platformResults.TotalFailed
+            $ciResultsSummary.TestResults.Duration += $platformResults.TotalDuration
+          }
+        }
+        
+        # List all generated artifacts
+        $allArtifacts = Get-ChildItem -Path "./ci-artifacts" -Directory
+        foreach ($artifact in $allArtifacts) {
+          $files = Get-ChildItem -Path $artifact.FullName -Recurse -File
+          $ciResultsSummary.ArtifactsGenerated += @{
+            Name = $artifact.Name
+            FileCount = $files.Count
+            TotalSize = ($files | Measure-Object Length -Sum).Sum
+          }
+        }
+        
+        # Export summary for comprehensive report to consume
+        $ciResultsSummary | ConvertTo-Json -Depth 10 | Set-Content -Path "./ci-results-summary.json"
+        Write-Host "✅ CI results summary created: $(Get-Item './ci-results-summary.json' | Select-Object Length)" -ForegroundColor Green
+        
+        # Create workflow summary showing complementary architecture
+        $workflowSummary = @"
+        ## 🚀 CI Pipeline - Lightweight & Fast
+        
+        ### ✅ Completed Successfully
+        - **Total Tests**: $($ciResultsSummary.TestResults.TotalTests)
+        - **Passed**: $($ciResultsSummary.TestResults.TotalPassed)
+        - **Failed**: $($ciResultsSummary.TestResults.TotalFailed)
+        - **Duration**: $([Math]::Round($ciResultsSummary.TestResults.Duration, 2))s
+        
+        ### 🎯 Complementary Architecture
+        - **CI Role**: Fast validation and test execution
+        - **Comprehensive Report Role**: Deep analysis using CI results
+        - **No Duplication**: Tests run once, results consumed by comprehensive report
+        - **Optimized**: Separate concerns for maximum efficiency
+        
+        ### 📊 Next Steps
+        1. CI results exported for comprehensive report consumption
+        2. Comprehensive report will use these results (no re-testing)
+        3. Check scheduled comprehensive report for deep analysis
+        
+        ### 🔗 Generated Artifacts
+        - Test results across all platforms
+        - Code quality analysis results
+        - Build validation results
+        - CI results summary for comprehensive report
+        "@
+        
+        echo $workflowSummary >> $env:GITHUB_STEP_SUMMARY
+        
+    - name: Upload CI results summary
+      uses: actions/upload-artifact@v4
+      with:
+        name: ci-results-summary
+        path: |
+          ci-results-summary.json
+          ci-artifacts/**/*
+        retention-days: 30

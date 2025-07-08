@@ -19,9 +19,7 @@ function Invoke-RestAPIServerOperation {
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory = $true)]
-        [string]$Operation,
-        
-        [switch]$WhatIf
+        [string]$Operation
     )
     
     try {

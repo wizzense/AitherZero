@@ -140,10 +140,7 @@ function Remove-ProjectEmojis {
         [string]$Path = ".",
 
         [Parameter()]
-        [string[]]$FileTypes = @('*.ps1', '*.psm1', '*.psd1', '*.md', '*.json', '*.yml', '*.yaml'),
-
-        [Parameter()]
-        [switch]$WhatIf
+        [string[]]$FileTypes = @('*.ps1', '*.psm1', '*.psd1', '*.md', '*.json', '*.yml', '*.yaml')
     )
 
     try {

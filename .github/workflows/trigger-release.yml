@@ -13,6 +13,9 @@ on:
         default: true
         type: boolean
 
+permissions:
+  contents: write
+
 jobs:
   validate-and-trigger-release:
     name: Validate and Trigger Release

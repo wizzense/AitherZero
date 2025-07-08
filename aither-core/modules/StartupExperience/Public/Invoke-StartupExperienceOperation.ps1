@@ -20,9 +20,7 @@ function Invoke-StartupExperienceOperation {
         [ValidateNotNullOrEmpty()]
         [string]$Operation,
 
-        [switch]$TestMode,
-
-        [switch]$WhatIf
+        [switch]$TestMode
     )
 
     try {
