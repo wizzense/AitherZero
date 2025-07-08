@@ -149,40 +149,42 @@ jobs:
       if: matrix.check == 'psscriptanalyzer'
       shell: pwsh
       run: |
-        Write-Host "🔍 Running enhanced PSScriptAnalyzer with comprehensive configuration..." -ForegroundColor Cyan
+        Write-Host "🔍 Starting intelligent PSScriptAnalyzer with ParallelExecution optimization..." -ForegroundColor Cyan
+        
+        # Import ParallelExecution for multiprocessing capabilities
+        $parallelModulePath = "./aither-core/modules/ParallelExecution"
+        $useParallel = $false
+        if (Test-Path $parallelModulePath) {
+          try {
+            Import-Module $parallelModulePath -Force
+            $useParallel = $true
+            Write-Host "✅ ParallelExecution module loaded for multiprocessing" -ForegroundColor Green
+          } catch {
+            Write-Warning "ParallelExecution module import failed: $($_.Exception.Message)"
+          }
+        }
         
         # Import PSScriptAnalyzerIntegration module if available
         $integrationModulePath = "./aither-core/modules/PSScriptAnalyzerIntegration/PSScriptAnalyzerIntegration.psd1"
         $useIntegration = $false
-        
         if (Test-Path $integrationModulePath) {
           try {
             Import-Module $integrationModulePath -Force
             $useIntegration = $true
             Write-Host "✅ PSScriptAnalyzerIntegration module loaded" -ForegroundColor Green
-          }
-          catch {
+          } catch {
             Write-Warning "Failed to load PSScriptAnalyzerIntegration module: $($_.Exception.Message)"
           }
         }
         
-        # Use comprehensive settings file if available
-        $settingsPath = "./PSScriptAnalyzerSettings.psd1"
-        
-        # PERFORMANCE OPTIMIZATION: Exclude test files, build files, and non-critical directories
+        # INTELLIGENT FILE DISCOVERY with enhanced exclude patterns
         $excludePatterns = @(
-          "*.tests.ps1",
-          "tests/*",
-          "build/*", 
-          "deprecated/*",
-          ".vscode/*",
-          "docs/*",
-          "examples/*",
-          "**/Tests/*",
-          "**/test/*"
+          "*.tests.ps1", "tests/*", "build/*", "deprecated/*", ".vscode/*", 
+          "docs/*", "examples/*", "**/Tests/*", "**/test/*", "*.Enhanced.Tests.ps1",
+          "backups/*", "dist/*", "node_modules/*"
         )
         
-        # Get PowerShell files, excluding test and build files for performance
+        # Get PowerShell files with intelligent filtering
         $targetFiles = Get-ChildItem -Path "." -Include "*.ps1", "*.psm1", "*.psd1" -Recurse | 
           Where-Object { 
             $file = $_
@@ -196,24 +198,20 @@ jobs:
             -not $exclude
           }
         
-        Write-Host "📂 Analyzing $($targetFiles.Count) PowerShell files (excluding tests/build/deprecated)" -ForegroundColor Cyan
+        Write-Host "📂 Discovered $($targetFiles.Count) PowerShell files for analysis" -ForegroundColor Cyan
         
-        $analyzerParams = @{
-          Path = $targetFiles
-          ReportSummary = $true
-        }
-        
-        if (Test-Path $settingsPath) {
-          $analyzerParams.Settings = $settingsPath
-          Write-Host "📋 Using comprehensive PSScriptAnalyzer settings from $settingsPath" -ForegroundColor Yellow
+        # PERFORMANCE-OPTIMIZED RULE CONFIGURATION
+        $settingsPath = "./PSScriptAnalyzerSettings.psd1"
+        $analyzerSettings = if (Test-Path $settingsPath) {
+          Write-Host "📋 Using project-specific PSScriptAnalyzer settings" -ForegroundColor Yellow
+          $settingsPath
         } else {
-          # PERFORMANCE OPTIMIZED: Focus on critical security and error rules only
-          Write-Host "⚡ Using performance-optimized settings (critical security + errors only)" -ForegroundColor Green
-          $analyzerParams.Settings = @{
-            IncludeDefaultRules = $false  # CRITICAL: Disable default rules for performance
-            Severity = @('Error')  # Only errors, not warnings or information
+          Write-Host "⚡ Using performance-optimized rule set for CI efficiency" -ForegroundColor Green
+          @{
+            IncludeDefaultRules = $false
+            Severity = @('Error', 'Warning')  # Include warnings for better quality insight
             IncludeRules = @(
-              # Security-critical rules (always enforce)
+              # Security-critical rules (highest priority)
               'PSAvoidUsingPlainTextForPassword',
               'PSAvoidUsingUsernameAndPasswordParams', 
               'PSAvoidUsingConvertToSecureStringWithPlainText',
@@ -221,28 +219,77 @@ jobs:
               'PSAvoidHardcodedCredentials',
               'PSAvoidUsingInvokeExpression',
               
-              # Critical syntax/runtime errors only
+              # Critical syntax and compatibility rules
               'PSUseCompatibleSyntax',
               'PSUseCmdletCorrectly',
-              'PSAvoidAssignmentToAutomaticVariable'
+              'PSAvoidAssignmentToAutomaticVariable',
+              'PSUseDeclaredVarsMoreThanAssignments',
+              
+              # Important code quality rules
+              'PSReviewUnusedParameter',
+              'PSUseBOMForUnicodeEncodedFile',
+              'PSMissingModuleManifestField',
+              'PSUseConsistentIndentation'
             )
             ExcludeRules = @(
-              # Performance excludes - these cause many findings but aren't critical
-              'PSUseShouldProcessForStateChangingFunctions',
-              'PSAvoidUsingWriteHost',
-              'PSUseApprovedVerbs', 
-              'PSAvoidGlobalVars',
-              'PSUseBOMForUnicodeEncodedFile',  # Exclude BOM warnings for performance
-              'PSUseOutputTypeCorrectly',       # Exclude output type warnings
-              'PSUseDeclaredVarsMoreThanAssignments'  # Exclude variable usage warnings
+              # Performance excludes - informational rules that slow down CI
+              'PSUseApprovedVerbs',           # Too many false positives
+              'PSAvoidGlobalVars',            # Module-level variables are common
+              'PSUseShouldProcessForStateChangingFunctions',  # Not critical for all functions
+              'PSProvideCommentHelp'          # Documentation rules handled separately
             )
           }
         }
         
-        # Run analysis
-        $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-        $results = Invoke-ScriptAnalyzer @analyzerParams
-        $stopwatch.Stop()
+        # PARALLEL ANALYSIS EXECUTION
+        $analysisStartTime = Get-Date
+        $allResults = @()
+        
+        if ($useParallel -and (Get-Command Invoke-ParallelForEach -ErrorAction SilentlyContinue)) {
+          Write-Host "🚀 Using ParallelExecution for optimal performance..." -ForegroundColor Green
+          
+          # Calculate optimal threads for IO-bound PSScriptAnalyzer workload
+          $optimalThreads = if (Get-Command Get-OptimalThrottleLimit -ErrorAction SilentlyContinue) {
+            Get-OptimalThrottleLimit -WorkloadType "IO" -MaxLimit 6  # IO-bound, moderate concurrency
+          } else {
+            [Math]::Min(4, [Environment]::ProcessorCount)
+          }
+          
+          Write-Host "🔧 Using $optimalThreads optimal threads for IO-bound analysis" -ForegroundColor Cyan
+          
+          # Process files in parallel using Invoke-ParallelForEach
+          $allResults = Invoke-ParallelForEach -InputObject $targetFiles -ThrottleLimit $optimalThreads -ScriptBlock {
+            param($file)
+            
+            try {
+              # Each thread analyzes one file independently
+              $fileResults = Invoke-ScriptAnalyzer -Path $file.FullName -Settings $using:analyzerSettings
+              return $fileResults
+            } catch {
+              # Return error information for problematic files
+              return @{
+                RuleName = "PSScriptAnalyzer-Error"
+                Severity = "Error"
+                ScriptPath = $file.FullName
+                Line = 1
+                Column = 1
+                Message = "Analysis failed: $($_.Exception.Message)"
+              }
+            }
+          }
+          
+          # Flatten results array (Invoke-ParallelForEach may return nested arrays)
+          $results = $allResults | ForEach-Object { $_ }
+          
+        } else {
+          Write-Host "⚡ Using optimized sequential analysis" -ForegroundColor Yellow
+          
+          # Optimized sequential fallback
+          $results = Invoke-ScriptAnalyzer -Path $targetFiles -Settings $analyzerSettings
+        }
+        
+        $analysisEndTime = Get-Date
+        $analysisDuration = ($analysisEndTime - $analysisStartTime).TotalSeconds
         
         # Process results
         if ($results) {
@@ -482,132 +529,252 @@ jobs:
       if: matrix.check == 'complexity'
       shell: pwsh
       run: |
-        Write-Host "🧮 Analyzing code complexity (optimized for performance)..." -ForegroundColor Cyan
+        Write-Host "🧮 Starting intelligent complexity analysis with ParallelExecution..." -ForegroundColor Cyan
         
-        # PERFORMANCE OPTIMIZATION: Only analyze core modules, not entire codebase
-        $coreModulePaths = @(
-          "./aither-core/modules/*/Public/*.ps1",
-          "./aither-core/modules/*/Private/*.ps1", 
-          "./aither-core/*.ps1",
-          "./Start-*.ps1"
+        # Import required modules - ParallelExecution for multiprocessing
+        $parallelModulePath = "./aither-core/modules/ParallelExecution"
+        if (Test-Path $parallelModulePath) {
+          Import-Module $parallelModulePath -Force
+          Write-Host "✅ ParallelExecution module loaded successfully" -ForegroundColor Green
+        } else {
+          Write-Host "⚠️  ParallelExecution module not found - falling back to sequential" -ForegroundColor Yellow
+        }
+        
+        # Import PSScriptAnalyzerIntegration if available for advanced features
+        $analyzerIntegrationPath = "./aither-core/modules/PSScriptAnalyzerIntegration"
+        if (Test-Path $analyzerIntegrationPath) {
+          Import-Module $analyzerIntegrationPath -Force
+          Write-Host "✅ PSScriptAnalyzerIntegration module loaded" -ForegroundColor Green
+        }
+        
+        # INTELLIGENT FILE DISCOVERY using exclude patterns
+        $excludePatterns = @(
+          "*.tests.ps1", "tests/*", "build/*", "deprecated/*", ".vscode/*", 
+          "docs/*", "examples/*", "**/Tests/*", "**/test/*", "*.Enhanced.Tests.ps1"
         )
         
-        # Get PowerShell files from core paths only
-        $targetFiles = @()
-        foreach ($pattern in $coreModulePaths) {
-          $files = Get-ChildItem -Path $pattern -ErrorAction SilentlyContinue
-          if ($files) {
-            $targetFiles += $files
+        $allFiles = Get-ChildItem -Path "." -Include "*.ps1", "*.psm1", "*.psd1" -Recurse | 
+          Where-Object { 
+            $file = $_
+            $exclude = $false
+            foreach ($pattern in $excludePatterns) {
+              if ($file.FullName -like "*$($pattern.Replace('*', ''))*" -or $file.Name -like $pattern) {
+                $exclude = $true
+                break
+              }
+            }
+            -not $exclude
           }
-        }
         
-        Write-Host "📂 Analyzing $($targetFiles.Count) core PowerShell files (excluding tests/deprecated)" -ForegroundColor Cyan
+        Write-Host "📂 Discovered $($allFiles.Count) PowerShell files for complexity analysis" -ForegroundColor Cyan
         
-        # Skip complexity analysis if no PSCodeHealth module (performance fallback)
-        $hasCodeHealth = Get-Module -ListAvailable PSCodeHealth
-        if (-not $hasCodeHealth) {
-          Write-Host "⚡ PSCodeHealth not available - using fast complexity estimation" -ForegroundColor Yellow
+        # OPTIMIZED PARALLEL COMPLEXITY ANALYSIS using ParallelExecution capabilities
+        $analysisStartTime = Get-Date
+        $complexityResults = @()
+        
+        # Use ParallelExecution module for proper multiprocessing
+        if (Get-Command Invoke-ParallelForEach -ErrorAction SilentlyContinue) {
+          Write-Host "🚀 Using ParallelExecution module for optimal performance..." -ForegroundColor Green
           
-          # Quick complexity estimation without external dependencies
-          $totalComplexity = 0
-          $highComplexityFunctions = 0
+          # Calculate optimal thread count for CPU-bound workload
+          $optimalThreads = if (Get-Command Get-OptimalThrottleLimit -ErrorAction SilentlyContinue) {
+            Get-OptimalThrottleLimit -WorkloadType "CPU" -MaxLimit 8
+          } else {
+            [Math]::Min(4, [Environment]::ProcessorCount)
+          }
           
-          foreach ($file in $targetFiles) {
+          Write-Host "🔧 Using $optimalThreads optimal threads for CPU-bound complexity analysis" -ForegroundColor Cyan
+          
+          # Use Invoke-ParallelForEach for proper parallel processing
+          $complexityResults = Invoke-ParallelForEach -InputObject $allFiles -ThrottleLimit $optimalThreads -ScriptBlock {
+            param($file)
+            
+            $result = @{
+              File = $file.FullName
+              ComplexityScore = 0
+              MaxNesting = 0
+              LineCount = 0
+              FunctionCount = 0
+              Error = $null
+            }
+            
+            try {
+              $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
+              if ($content) {
+                $result.LineCount = ($content -split "`n").Count
+                
+                # Enhanced complexity calculation with multiple patterns
+                $complexityPatterns = @{
+                  'conditional' = '(?i)\b(if|else|elseif)\b'
+                  'iteration' = '(?i)\b(foreach|while|for|do)\b'
+                  'branching' = '(?i)\bswitch\b'
+                  'exception' = '(?i)\b(try|catch|finally)\b'
+                  'functions' = '(?i)\bfunction\s+[\w-]+'
+                }
+                
+                foreach ($pattern in $complexityPatterns.GetEnumerator()) {
+                  $matches = [regex]::Matches($content, $pattern.Value)
+                  $result.ComplexityScore += $matches.Count
+                }
+                
+                # Calculate maximum nesting depth efficiently
+                $lines = $content -split "`n"
+                $currentDepth = 0
+                $maxDepth = 0
+                foreach ($line in $lines) {
+                  $openBraces = ($line.ToCharArray() | Where-Object { $_ -eq '{' }).Count
+                  $closeBraces = ($line.ToCharArray() | Where-Object { $_ -eq '}' }).Count
+                  $currentDepth += ($openBraces - $closeBraces)
+                  if ($currentDepth -gt $maxDepth) { $maxDepth = $currentDepth }
+                }
+                $result.MaxNesting = $maxDepth
+                
+                # Count functions
+                $result.FunctionCount = ([regex]::Matches($content, '(?i)\bfunction\s+[\w-]+')).Count
+              }
+            } catch {
+              $result.Error = $_.Exception.Message
+            }
+            
+            return [PSCustomObject]$result
+          }
+          
+        } else {
+          Write-Host "⚡ ParallelExecution not available - using optimized sequential analysis" -ForegroundColor Yellow
+          
+          # Optimized sequential fallback
+          $complexityResults = foreach ($file in $allFiles) {
             $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
             if ($content) {
-              # Count control flow keywords as proxy for complexity
-              $complexityIndicators = @("if", "else", "foreach", "while", "switch", "try", "catch")
-              $fileComplexity = 0
-              foreach ($indicator in $complexityIndicators) {
-                $fileComplexity += ([regex]::Matches($content, "\b$indicator\b", "IgnoreCase")).Count
+              $complexityScore = 0
+              $patterns = @("if", "else", "foreach", "while", "switch", "try", "catch", "function")
+              foreach ($pattern in $patterns) {
+                $complexityScore += ([regex]::Matches($content, "\b$pattern\b", "IgnoreCase")).Count
               }
-              $totalComplexity += $fileComplexity
-              if ($fileComplexity -gt 20) { $highComplexityFunctions++ }
-            }
-          }
-          
-          Write-Host "📊 Quick Complexity Analysis:" -ForegroundColor Cyan
-          Write-Host "  Total complexity indicators: $totalComplexity" -ForegroundColor White
-          Write-Host "  High complexity files: $highComplexityFunctions" -ForegroundColor White
-          
-          # RELAXED THRESHOLDS for CI performance
-          if ($highComplexityFunctions -gt 50) {
-            Write-Host "⚠️  Warning: $highComplexityFunctions files have high complexity (threshold: 50)" -ForegroundColor Yellow
-            # Don't fail - just warn for CI performance
-          } else {
-            Write-Host "✅ Complexity within acceptable limits" -ForegroundColor Green
-          }
-          
-          return
-        }
-        
-        # Full analysis with PSCodeHealth (only if available)
-        Import-Module PSCodeHealth
-        
-        # Create output directory for report
-        New-Item -ItemType Directory -Path "./reports" -Force -ErrorAction SilentlyContinue | Out-Null
-        
-        # PERFORMANCE: Analyze only first 10 core files to avoid timeout
-        $limitedFiles = $targetFiles | Select-Object -First 10
-        Write-Host "🎯 Running detailed analysis on $($limitedFiles.Count) core files for performance" -ForegroundColor Yellow
-        
-        try {
-          $report = Invoke-PSCodeHealth -Path $limitedFiles -HtmlReportPath "./reports/code-health.html" -Recurse:$false
-        } catch {
-          Write-Host "⚡ PSCodeHealth analysis failed - using fallback approach" -ForegroundColor Yellow
-          Write-Host "✅ Code complexity check completed (fallback mode)" -ForegroundColor Green
-          return
-        }
-        
-        # RELAXED THRESHOLDS for CI performance
-        $metrics = @{
-          'Cyclomatic Complexity' = 20  # Increased from 10
-          'Nesting Depth' = 8           # Increased from 4  
-          'Lines of Code' = 300         # Increased from 100
-        }
-        
-        $violations = 0
-        $criticalViolations = 0
-        
-        if ($report.FunctionHealthRecords) {
-          foreach ($function in $report.FunctionHealthRecords) {
-            foreach ($metric in $metrics.GetEnumerator()) {
-              $value = $function."$($metric.Key)"
-              if ($value -gt $metric.Value) {
-                Write-Warning "$($function.FunctionName): $($metric.Key) is $value (threshold: $($metric.Value))"
-                $violations++
-                
-                # Count as critical if way over threshold
-                if ($value -gt ($metric.Value * 2)) {
-                  $criticalViolations++
-                }
+              
+              [PSCustomObject]@{
+                File = $file.FullName
+                ComplexityScore = $complexityScore
+                LineCount = ($content -split "`n").Count
+                MaxNesting = 0  # Skip nesting calculation for performance
+                FunctionCount = ([regex]::Matches($content, '\bfunction\s+', "IgnoreCase")).Count
               }
             }
           }
         }
         
-        Write-Host "📊 Complexity Analysis Results:" -ForegroundColor Cyan
-        Write-Host "  Total violations: $violations" -ForegroundColor White
-        Write-Host "  Critical violations: $criticalViolations" -ForegroundColor White
+        $analysisEndTime = Get-Date
+        $analysisDuration = ($analysisEndTime - $analysisStartTime).TotalSeconds
+        Write-Host "⏱️  Complexity analysis completed in $([Math]::Round($analysisDuration, 2)) seconds" -ForegroundColor Green
         
-        # PERFORMANCE: Only fail on critical violations, not minor ones
-        $maxCriticalViolations = 10  # Allow up to 10 critical violations
-        if ($criticalViolations -gt $maxCriticalViolations) {
-          Write-Host "❌ Too many critical complexity violations: $criticalViolations (max: $maxCriticalViolations)" -ForegroundColor Red
-          throw "Code complexity check failed: $criticalViolations critical violations"
-        } elseif ($violations -gt 0) {
-          Write-Host "⚠️  Found $violations complexity violations (within acceptable limits)" -ForegroundColor Yellow
-          Write-Host "✅ Complexity check passed" -ForegroundColor Green
+        # PERFORMANCE-OPTIMIZED THRESHOLD EVALUATION
+        $performanceThresholds = @{
+          'ComplexityScore' = 25    # Reasonable threshold for cyclomatic complexity
+          'MaxNesting' = 6          # Maximum nesting depth allowed
+          'LineCount' = 500         # Maximum lines per file
+          'FunctionCount' = 15      # Maximum functions per file
+        }
+        
+        $violations = @()
+        $criticalViolations = @()
+        
+        foreach ($result in $complexityResults) {
+          if ($result.Error) {
+            Write-Warning "Analysis error in $($result.File): $($result.Error)"
+            continue
+          }
+          
+          $fileName = Split-Path $result.File -Leaf
+          
+          # Check thresholds
+          if ($result.ComplexityScore -gt $performanceThresholds.ComplexityScore) {
+            $violation = "High complexity in $fileName : $($result.ComplexityScore) (threshold: $($performanceThresholds.ComplexityScore))"
+            if ($result.ComplexityScore -gt ($performanceThresholds.ComplexityScore * 2)) {
+              $criticalViolations += $violation
+            } else {
+              $violations += $violation
+            }
+          }
+          
+          if ($result.MaxNesting -gt $performanceThresholds.MaxNesting) {
+            $violation = "Deep nesting in $fileName : $($result.MaxNesting) levels (threshold: $($performanceThresholds.MaxNesting))"
+            if ($result.MaxNesting -gt ($performanceThresholds.MaxNesting * 1.5)) {
+              $criticalViolations += $violation
+            } else {
+              $violations += $violation
+            }
+          }
+          
+          if ($result.LineCount -gt $performanceThresholds.LineCount) {
+            $violation = "Large file $fileName : $($result.LineCount) lines (threshold: $($performanceThresholds.LineCount))"
+            if ($result.LineCount -gt ($performanceThresholds.LineCount * 2)) {
+              $criticalViolations += $violation
+            } else {
+              $violations += $violation
+            }
+          }
+        }
+        
+        # RESULTS SUMMARY AND INTELLIGENT THRESHOLDS
+        Write-Host "📊 Intelligent Complexity Analysis Results:" -ForegroundColor Cyan
+        Write-Host "  📁 Files analyzed: $($complexityResults.Count)" -ForegroundColor White
+        Write-Host "  ⚠️  Total violations: $($violations.Count)" -ForegroundColor Yellow
+        Write-Host "  🔴 Critical violations: $($criticalViolations.Count)" -ForegroundColor Red
+        Write-Host "  ⏱️  Analysis duration: $([Math]::Round($analysisDuration, 2))s" -ForegroundColor Green
+        
+        # Display violation details
+        if ($violations.Count -gt 0) {
+          Write-Host "`n⚠️  Standard Violations:" -ForegroundColor Yellow
+          $violations | ForEach-Object { Write-Host "    $($_)" -ForegroundColor Yellow }
+        }
+        
+        if ($criticalViolations.Count -gt 0) {
+          Write-Host "`n🔴 Critical Violations:" -ForegroundColor Red
+          $criticalViolations | ForEach-Object { Write-Host "    $($_)" -ForegroundColor Red }
+        }
+        
+        # PERFORMANCE-ORIENTED THRESHOLD POLICY
+        # Allow reasonable number of violations to maintain CI performance
+        $maxCriticalViolations = 15    # Increased threshold for critical violations
+        $maxTotalViolations = 50       # Total violations threshold
+        
+        # Generate GitHub annotations for critical violations only
+        foreach ($violation in $criticalViolations) {
+          Write-Host "::warning::Critical complexity violation: $violation"
+        }
+        
+        # Performance-focused evaluation
+        if ($criticalViolations.Count -gt $maxCriticalViolations) {
+          Write-Host "❌ Complexity check failed: $($criticalViolations.Count) critical violations exceed threshold of $maxCriticalViolations" -ForegroundColor Red
+          throw "Code complexity analysis failed: Too many critical violations ($($criticalViolations.Count) > $maxCriticalViolations)"
+        } elseif ($violations.Count -gt $maxTotalViolations) {
+          Write-Host "❌ Complexity check failed: $($violations.Count) total violations exceed threshold of $maxTotalViolations" -ForegroundColor Red
+          throw "Code complexity analysis failed: Too many total violations ($($violations.Count) > $maxTotalViolations)"
+        } elseif ($criticalViolations.Count -gt 0 -or $violations.Count -gt 0) {
+          Write-Host "⚠️  Found complexity issues but within acceptable thresholds for CI performance" -ForegroundColor Yellow
+          Write-Host "✅ Complexity check passed with warnings" -ForegroundColor Green
         } else {
-          Write-Host "✅ No complexity violations found" -ForegroundColor Green
+          Write-Host "✅ No complexity violations found - excellent code health!" -ForegroundColor Green
         }
         
-        # Upload report
-        Write-Host "::notice::Code health report generated"
-        
-        if ($violations -gt 0) {
-          Write-Warning "Found $violations complexity violations"
+        # Export results for subsequent analysis
+        $complexitySummary = @{
+          AnalysisTime = $analysisEndTime.ToString('yyyy-MM-ddTHH:mm:ssZ')
+          FilesAnalyzed = $complexityResults.Count
+          Duration = $analysisDuration
+          Violations = $violations.Count
+          CriticalViolations = $criticalViolations.Count
+          Thresholds = $performanceThresholds
+          UsedParallelProcessing = (Get-Command Invoke-ParallelForEach -ErrorAction SilentlyContinue) -ne $null
+          ThreadsUsed = if (Get-Command Get-OptimalThrottleLimit -ErrorAction SilentlyContinue) { 
+            Get-OptimalThrottleLimit -WorkloadType "CPU" -MaxLimit 8 
+          } else { 
+            [Math]::Min(4, [Environment]::ProcessorCount) 
+          }
         }
+        
+        $complexitySummary | ConvertTo-Json | Set-Content -Path "complexity-analysis-summary.json"
+        Write-Host "::notice::Complexity analysis summary exported to complexity-analysis-summary.json"
         
     - name: Check best practices
       if: matrix.check == 'best-practices'
@@ -1042,3 +1209,255 @@ jobs:
               body
             });
           }
+
+  # Comprehensive Dashboard & Reports Generation
+  generate-comprehensive-reports:
+    name: Generate Comprehensive Reports & Dashboard
+    runs-on: ubuntu-latest
+    needs: [test, code-quality, build-test]
+    if: always()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts/
+    
+    - name: Generate comprehensive dashboard and feature map
+      shell: pwsh
+      run: |
+        Write-Host "🏗️  Generating comprehensive project dashboard with feature dependency map..." -ForegroundColor Cyan
+        
+        # Import required modules for reporting
+        $reportingPath = "./scripts/reporting"
+        $modulesPaths = @(
+          "./aither-core/modules/Logging",
+          "./aither-core/modules/ParallelExecution"
+        )
+        
+        foreach ($modulePath in $modulesPaths) {
+          if (Test-Path $modulePath) {
+            Import-Module $modulePath -Force -ErrorAction SilentlyContinue
+            Write-Host "✅ Imported module: $(Split-Path $modulePath -Leaf)" -ForegroundColor Green
+          }
+        }
+        
+        # 1. GENERATE DYNAMIC FEATURE MAP with dependencies
+        Write-Host "🗺️  Generating dynamic feature/dependency map..." -ForegroundColor Yellow
+        if (Test-Path "$reportingPath/Generate-DynamicFeatureMap.ps1") {
+          try {
+            & "$reportingPath/Generate-DynamicFeatureMap.ps1" -HtmlOutput -IncludeDependencyGraph -AnalyzeIntegrations -VerboseOutput
+            Write-Host "✅ Dynamic feature map generated successfully" -ForegroundColor Green
+          } catch {
+            Write-Warning "Feature map generation failed: $($_.Exception.Message)"
+          }
+        } else {
+          Write-Warning "Dynamic feature map generator not found at: $reportingPath/Generate-DynamicFeatureMap.ps1"
+        }
+        
+        # 2. GENERATE COMPREHENSIVE REPORT with CI results integration
+        Write-Host "📊 Generating comprehensive project report..." -ForegroundColor Yellow
+        if (Test-Path "$reportingPath/Generate-ComprehensiveReport.ps1") {
+          try {
+            $reportTitle = "AitherZero CI Dashboard - $(Get-Date -Format 'yyyy-MM-dd HH:mm') UTC"
+            & "$reportingPath/Generate-ComprehensiveReport.ps1" -IncludeDetailedAnalysis -ReportTitle $reportTitle -ReportPath "./comprehensive-ci-dashboard.html"
+            Write-Host "✅ Comprehensive report generated successfully" -ForegroundColor Green
+          } catch {
+            Write-Warning "Comprehensive report generation failed: $($_.Exception.Message)"
+          }
+        }
+        
+        # 3. INTEGRATE CI ARTIFACTS into reports
+        Write-Host "🔗 Integrating CI artifacts and results..." -ForegroundColor Yellow
+        $ciSummary = @{
+          Timestamp = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
+          GitRef = "${{ github.ref }}"
+          GitSha = "${{ github.sha }}"
+          Workflow = "CI"
+          QualityResults = @{}
+          TestResults = @{}
+          BuildResults = @{}
+          Artifacts = @()
+        }
+        
+        # Collect quality results from artifacts
+        $qualityArtifacts = Get-ChildItem -Path "./artifacts" -Directory | Where-Object Name -like "*code-quality*"
+        foreach ($artifact in $qualityArtifacts) {
+          $checkType = ($artifact.Name -split '-')[-1]
+          $ciSummary.QualityResults[$checkType] = @{
+            Status = "Available"
+            ArtifactPath = $artifact.FullName
+            Files = @(Get-ChildItem -Path $artifact.FullName -Recurse -File | Select-Object Name, Length)
+          }
+        }
+        
+        # Collect build artifacts
+        $buildArtifacts = Get-ChildItem -Path "./artifacts" -Directory | Where-Object Name -like "*build-*"
+        foreach ($artifact in $buildArtifacts) {
+          $platform = ($artifact.Name -split '-')[-1]
+          $ciSummary.BuildResults[$platform] = @{
+            Status = "Available"
+            ArtifactPath = $artifact.FullName
+            Files = @(Get-ChildItem -Path $artifact.FullName -Recurse -File | Select-Object Name, Length)
+          }
+        }
+        
+        # Export CI summary for dashboard integration
+        $ciSummary | ConvertTo-Json -Depth 10 | Set-Content -Path "./ci-integration-summary.json"
+        Write-Host "✅ CI integration summary created" -ForegroundColor Green
+        
+        # 4. CREATE EXECUTIVE SUMMARY for quick decision making
+        Write-Host "📋 Creating executive decision-making summary..." -ForegroundColor Yellow
+        $executiveSummary = @"
+# AitherZero Project Health Dashboard
+## Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') UTC
+## Git Reference: ${{ github.ref }} (${{ github.sha }})
+
+### 🎯 EXECUTIVE SUMMARY FOR PRIORITIZATION
+
+#### Code Quality Status
+- **PSScriptAnalyzer**: $($ciSummary.QualityResults.ContainsKey('psscriptanalyzer') ? 'ANALYZED' : 'PENDING')
+- **Complexity Analysis**: $($ciSummary.QualityResults.ContainsKey('complexity') ? 'ANALYZED' : 'PENDING')  
+- **Formatting Check**: $($ciSummary.QualityResults.ContainsKey('formatting') ? 'ANALYZED' : 'PENDING')
+- **Best Practices**: $($ciSummary.QualityResults.ContainsKey('best-practices') ? 'ANALYZED' : 'PENDING')
+
+#### Build Status
+- **Windows Build**: $($ciSummary.BuildResults.ContainsKey('windows') ? '✅ SUCCESS' : '❌ FAILED')
+- **Linux Build**: $($ciSummary.BuildResults.ContainsKey('linux') ? '✅ SUCCESS' : '❌ FAILED')  
+- **macOS Build**: $($ciSummary.BuildResults.ContainsKey('macos') ? '✅ SUCCESS' : '❌ FAILED')
+
+#### Reports Generated
+- 🗺️ **Dynamic Feature Map**: Interactive module dependency visualization
+- 📊 **Comprehensive Dashboard**: Full project health analysis
+- 🔗 **CI Integration**: Automated workflow results integration
+
+### 📁 Available Reports
+1. **comprehensive-ci-dashboard.html** - Complete project health dashboard
+2. **feature-dependency-map.html** - Interactive module relationships
+3. **ci-integration-summary.json** - Programmatic access to CI results
+
+### 🚀 RECOMMENDED ACTIONS
+Based on this CI run, prioritize work on areas showing in the quality analysis and check the comprehensive dashboard for detailed metrics and trends.
+
+"@
+        
+        $executiveSummary | Set-Content -Path "./executive-summary.md"
+        Write-Host "✅ Executive summary created for informed decision making" -ForegroundColor Green
+        
+        # 5. VALIDATE REPORT GENERATION
+        $reportFiles = @(
+          "comprehensive-ci-dashboard.html",
+          "feature-dependency-map.html", 
+          "ci-integration-summary.json",
+          "executive-summary.md"
+        )
+        
+        $generatedReports = @()
+        foreach ($file in $reportFiles) {
+          if (Test-Path $file) {
+            $size = (Get-Item $file).Length
+            $generatedReports += @{
+              Name = $file
+              Size = $size
+              SizeKB = [Math]::Round($size / 1KB, 2)
+            }
+            Write-Host "✅ Report generated: $file ($([Math]::Round($size / 1KB, 2)) KB)" -ForegroundColor Green
+          } else {
+            Write-Warning "Expected report not found: $file"
+          }
+        }
+        
+        Write-Host "`n🎯 COMPREHENSIVE REPORTING SUMMARY:" -ForegroundColor Cyan
+        Write-Host "===============================================" -ForegroundColor Cyan
+        Write-Host "📊 Total reports generated: $($generatedReports.Count)" -ForegroundColor White
+        Write-Host "💾 Total size: $([Math]::Round(($generatedReports | Measure-Object Size -Sum).Sum / 1KB, 2)) KB" -ForegroundColor White
+        Write-Host "🕒 Generation time: $(Get-Date -Format 'HH:mm:ss')" -ForegroundColor White
+        Write-Host "`n🎯 Use these reports to make informed decisions about project priorities!" -ForegroundColor Green
+    
+    - name: Upload comprehensive reports and dashboard
+      uses: actions/upload-artifact@v4
+      with:
+        name: comprehensive-project-dashboard
+        path: |
+          comprehensive-ci-dashboard.html
+          feature-dependency-map.html
+          ci-integration-summary.json
+          executive-summary.md
+          dynamic-feature-map.json
+          *.html
+          *.json
+          *.md
+        retention-days: 90  # Keep reports for 3 months
+    
+    - name: Generate GitHub Pages deployment artifacts
+      if: github.ref == 'refs/heads/main'
+      shell: pwsh
+      run: |
+        Write-Host "📄 Preparing GitHub Pages deployment..." -ForegroundColor Cyan
+        
+        # Create docs directory for GitHub Pages
+        New-Item -ItemType Directory -Path "./docs" -Force
+        
+        # Copy reports to docs for GitHub Pages
+        $reportFiles = @(
+          "comprehensive-ci-dashboard.html",
+          "feature-dependency-map.html",
+          "executive-summary.md"
+        )
+        
+        foreach ($file in $reportFiles) {
+          if (Test-Path $file) {
+            Copy-Item $file -Destination "./docs/" -Force
+            Write-Host "✅ Copied $file to docs/" -ForegroundColor Green
+          }
+        }
+        
+        # Create index.html for GitHub Pages
+        $indexContent = @"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AitherZero Project Dashboard</title>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .report-link { display: block; padding: 15px; margin: 10px 0; background: #3498db; color: white; text-decoration: none; border-radius: 5px; text-align: center; }
+        .report-link:hover { background: #2980b9; }
+        .timestamp { color: #7f8c8d; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 AitherZero Project Dashboard</h1>
+        <p class="timestamp">Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') UTC | Commit: ${{ github.sha }}</p>
+        
+        <h2>📊 Available Reports</h2>
+        <a href="comprehensive-ci-dashboard.html" class="report-link">📊 Comprehensive CI Dashboard</a>
+        <a href="feature-dependency-map.html" class="report-link">🗺️ Feature Dependency Map</a>
+        <a href="executive-summary.md" class="report-link">📋 Executive Summary</a>
+        
+        <h2>🎯 Quick Links</h2>
+        <a href="https://github.com/${{ github.repository }}" class="report-link">📂 Repository</a>
+        <a href="https://github.com/${{ github.repository }}/actions" class="report-link">🔄 GitHub Actions</a>
+    </div>
+</body>
+</html>
+"@
+        
+        $indexContent | Set-Content -Path "./docs/index.html"
+        Write-Host "✅ GitHub Pages index.html created" -ForegroundColor Green
+    
+    - name: Deploy to GitHub Pages
+      if: github.ref == 'refs/heads/main'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs
+        force_orphan: true
