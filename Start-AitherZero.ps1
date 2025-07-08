@@ -62,7 +62,30 @@ param(
     [switch]$Help,
     
     [Parameter(HelpMessage = "Run in non-interactive mode (no prompts)")]
-    [switch]$NonInteractive
+    [switch]$NonInteractive,
+    
+    [Parameter(HelpMessage = "Run in quiet mode with minimal output")]
+    [switch]$Quiet,
+    
+    [Parameter(HelpMessage = "Set verbosity level: silent, normal, detailed")]
+    [ValidateSet('silent', 'normal', 'detailed')]
+    [string]$Verbosity = 'normal',
+    
+    [Parameter(HelpMessage = "Path to configuration file")]
+    [string]$ConfigFile,
+    
+    [Parameter(HelpMessage = "Force operations even if validations fail")]
+    [switch]$Force,
+    
+    [Parameter(HelpMessage = "Force enhanced UI experience")]
+    [switch]$EnhancedUI,
+    
+    [Parameter(HelpMessage = "Force classic menu experience")]
+    [switch]$ClassicUI,
+    
+    [Parameter(HelpMessage = "UI preference mode: auto, enhanced, classic")]
+    [ValidateSet('auto', 'enhanced', 'classic')]
+    [string]$UIMode = 'auto'
 )
 
 # Import PowerShell version checking utility
@@ -133,6 +156,13 @@ if ($InstallationProfile) { $coreparams['InstallationProfile'] = $InstallationPr
 if ($WhatIf) { $coreparams['WhatIf'] = $true }
 if ($Help) { $coreparams['Help'] = $true }
 if ($NonInteractive) { $coreparams['NonInteractive'] = $true }
+if ($Quiet) { $coreparams['Quiet'] = $true }
+if ($Verbosity) { $coreparams['Verbosity'] = $Verbosity }
+if ($ConfigFile) { $coreparams['ConfigFile'] = $ConfigFile }
+if ($Force) { $coreparams['Force'] = $true }
+if ($EnhancedUI) { $coreparams['EnhancedUI'] = $true }
+if ($ClassicUI) { $coreparams['ClassicUI'] = $true }
+if ($UIMode) { $coreparams['UIMode'] = $UIMode }
 
 try {
     & $coreScript @coreparams

@@ -1,0 +1,419 @@
+{
+  "Summary": {
+    "SuccessfulModules": 0,
+    "TotalDuration": 0.0,
+    "TestSuite": "Unit",
+    "Timestamp": "2025-07-08T02:42:57.7078647+00:00",
+    "TotalModules": 31,
+    "FailedModules": 31,
+    "TotalPassed": 0.0,
+    "TotalFailed": 31.0,
+    "SuccessRate": 0,
+    "TotalTests": 0.0
+  },
+  "Results": [
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "BackupManager",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "AIToolsIntegration",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "ConfigurationCarousel",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "ConfigurationCore",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "ConfigurationManager",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "ConfigurationRepository",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "DevEnvironment",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "ISOManager",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "LabRunner",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "LicenseManager",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "Logging",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "ModuleCommunication",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "OpenTofuProvider",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "OrchestrationEngine",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "ParallelExecution",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "PatchManager",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "ProgressTracking",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "RemoteConnection",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "PSScriptAnalyzerIntegration",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "RepoSync",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "RestAPIServer",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "ScriptManager",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "SecureCredentials",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "SecurityAutomation",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "SemanticVersioning",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "SetupWizard",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "StartupExperience",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "SystemMonitoring",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "TestingFramework",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "UnifiedMaintenance",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "Details": [
+        "Error: The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "TestsRun": 0,
+      "Duration": 0,
+      "TestsFailed": 1,
+      "Success": false,
+      "TestsPassed": 0,
+      "Module": "UtilityServices",
+      "Phase": "Unit",
+      "Error": "The term 'Invoke-ModuleTestPhase' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    }
+  ]
+}

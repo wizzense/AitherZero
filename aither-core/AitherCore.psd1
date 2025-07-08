@@ -24,6 +24,7 @@
 
     # Functions to export from this module
     FunctionsToExport = @(
+        # Core platform functions
         'Invoke-CoreApplication',
         'Start-LabRunner',
         'Get-CoreConfiguration',
@@ -34,7 +35,25 @@
         'Import-CoreModules',
         'Get-CoreModuleStatus',
         'Invoke-UnifiedMaintenance',
-        'Start-DevEnvironmentSetup'
+        'Start-DevEnvironmentSetup',
+        'Get-IntegratedToolset',
+        'Invoke-IntegratedWorkflow',
+        'Start-QuickAction',
+        'Test-ConsolidationHealth',
+        
+        # Unified Platform API Gateway (Phase 4)
+        'Initialize-AitherPlatform',
+        'New-AitherPlatformAPI',
+        'Get-PlatformStatus',
+        'Get-PlatformHealth',
+        'Get-PlatformLifecycle',
+        'Start-PlatformServices',
+        
+        # Performance & Error Handling (Phase 5)
+        'Optimize-PlatformPerformance',
+        'Initialize-PlatformErrorHandling',
+        'Write-PlatformError',
+        'Write-PlatformLog'
     )
 
     # Cmdlets to export from this module

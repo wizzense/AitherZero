@@ -288,10 +288,10 @@ function New-AitherPlatformAPI {
                     }
                     Customize = { 
                         param($SourceISO, $CustomizationProfile)
-                        if (Get-Module ISOCustomizer -ErrorAction SilentlyContinue) {
+                        if (Get-Module ISOManager -ErrorAction SilentlyContinue) {
                             New-CustomISO -SourceISO $SourceISO -Profile $CustomizationProfile
                         } else {
-                            throw "ISOCustomizer module not available"
+                            throw "ISOManager module not available"
                         }
                     }
                     Inventory = { 

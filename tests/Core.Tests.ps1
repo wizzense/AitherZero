@@ -23,7 +23,11 @@ Describe "Core Functionality Tests" {
         It "Should have launcher script executable" {
             $launcher = Join-Path (Split-Path -Parent $PSScriptRoot) "Start-AitherZero.ps1"
             Test-Path $launcher | Should -Be $true
-            Get-Content $launcher -First 1 | Should -Match "#Requires -Version 7"
+            
+            # Verify the launcher contains PowerShell version checking logic
+            $content = Get-Content $launcher -Raw
+            $content | Should -Match "Test-PowerShellVersion"
+            $content | Should -Match "Start-WithPowerShell7"
         }
     }
     
@@ -66,7 +70,8 @@ Describe "Core Functionality Tests" {
             
             $config = Get-Content $configPath | ConvertFrom-Json
             $config | Should -Not -BeNullOrEmpty
-            $config.UIPreferences | Should -Not -BeNullOrEmpty
+            $config.ui | Should -Not -BeNullOrEmpty
+            $config.tools | Should -Not -BeNullOrEmpty
         }
     }
     

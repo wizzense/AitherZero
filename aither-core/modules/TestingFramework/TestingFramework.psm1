@@ -569,7 +569,7 @@ function Invoke-ParallelTestExecution {
         }
 
         # Execute jobs in parallel
-        $phaseResults = Invoke-ParallelForEach -InputCollection $testJobs -ScriptBlock {
+        $phaseResults = Invoke-ParallelForEach -InputObject $testJobs -ScriptBlock {
             param($testJob)
 
             try {
@@ -598,7 +598,7 @@ function Invoke-ParallelTestExecution {
                     Details = @("Error: $($_.Exception.Message)")
                 }
             }
-        } -MaxConcurrency $maxJobs
+        } -ThrottleLimit $maxJobs
 
         $allResults += $phaseResults
 

@@ -134,7 +134,7 @@ function Get-AnalysisConfiguration {
     }
     catch {
         if ($script:UseCustomLogging) {
-            Write-CustomLog -Level 'ERROR' -Message "Failed to get analysis configuration for $Path: $($_.Exception.Message)"
+            Write-CustomLog -Level 'ERROR' -Message "Failed to get analysis configuration for ${Path}: $($_.Exception.Message)"
         }
         throw
     }

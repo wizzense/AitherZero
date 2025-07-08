@@ -116,7 +116,7 @@ function Install-ClaudeCode {
             if ($claudeCmd) { break }
             
             if ($retry -lt $maxRetries) {
-                Write-CustomLog -Level 'WARNING' -Message "Attempt $retry/$maxRetries: Claude Code not found in PATH, retrying..."
+                Write-CustomLog -Level 'WARNING' -Message "Attempt ${retry}/${maxRetries}: Claude Code not found in PATH, retrying..."
             }
         }
         

@@ -669,199 +669,79 @@ try {
         Show-SimpleProgress -Message "Starting AitherZero Infrastructure Automation" -Type Start
     }
 
-    # Define consolidated module loading strategy
-    # IMPORTANT: Core modules must be loaded first, then consolidated modules
+    # Standardized Module Loading Architecture
+    # Uses AitherCore.psm1 orchestration approach for consistency and reliability
     
-    # Core infrastructure modules (required for basic operation)
-    $coreModules = @(
-        'Logging',              # Must be first - provides Write-CustomLog
-        'LicenseManager',       # Feature licensing and access control
-        'ConfigurationCore',    # Configuration management
-        'ModuleCommunication'   # Inter-module communication bus
-    )
+    Write-Verbose "Initializing standardized module loading architecture..."
     
-    # Consolidated modules (new architecture)
-    $consolidatedModules = @(
-        'LabRunner',            # Lab automation and orchestration
-        'PatchManager',         # Git workflow automation
-        'BackupManager',        # Backup and recovery operations
-        'DevEnvironment',       # Development environment setup
-        'OpenTofuProvider',     # Infrastructure deployment
-        'SecureCredentials',    # Enterprise credential management
-        'RemoteConnection',     # Multi-protocol remote connections
-        'SystemMonitoring',     # System performance monitoring
-        'ParallelExecution',    # Parallel task execution
-        'ISOManager',           # ISO management and customization
-        'ISOCustomizer',        # ISO customization tools
-        'TestingFramework',     # Unified testing framework
-        'SetupWizard',          # First-time setup wizard
-        'StartupExperience',    # Enhanced startup UI
-        'ConfigurationCarousel', # Multi-environment configuration
-        'ConfigurationRepository', # Git-based configuration management
-        'OrchestrationEngine',  # Workflow automation
-        'ProgressTracking',     # Visual progress feedback
-        'AIToolsIntegration',   # AI development tools
-        'RestAPIServer',        # REST API endpoints
-        'RepoSync',             # Repository synchronization
-        'ScriptManager',        # Script repository management
-        'SecurityAutomation',   # Security hardening
-        'UnifiedMaintenance',   # System maintenance
-        'PSScriptAnalyzerIntegration' # PowerShell analysis integration
-    )
+    # Import AitherCore orchestration module
+    $aitherCorePath = Join-Path $PSScriptRoot "AitherCore.psm1"
+    if (Test-Path $aitherCorePath) {
+        try {
+            Write-Verbose "Loading AitherCore orchestration module..."
+            Import-Module $aitherCorePath -Force -Global -ErrorAction Stop
+            
+            # Initialize the complete CoreApp ecosystem
+            Write-Verbose "Initializing CoreApp ecosystem..."
+            $initResult = Initialize-CoreApplication -RequiredOnly:$false
+            
+            if ($initResult) {
+                Write-Verbose "AitherCore ecosystem initialized successfully"
+                $moduleLoadingSuccess = $true
+            } else {
+                Write-Warning "AitherCore initialization completed with issues"
+                $moduleLoadingSuccess = $false
+            }
+        } catch {
+            Write-Error "Failed to load AitherCore orchestration module: $_"
+            $moduleLoadingSuccess = $false
+        }
+    } else {
+        Write-Error "AitherCore.psm1 not found at: $aitherCorePath"
+        $moduleLoadingSuccess = $false
+    }
 
-    # Initialize module loading statistics
-    $moduleLoadingStats = @{
-        CoreModules = @{ Total = 0; Loaded = 0; Failed = 0 }
-        ConsolidatedModules = @{ Total = 0; Loaded = 0; Failed = 0 }
-        StartTime = Get-Date
-    }
-    
-    # Load core modules first (critical for system operation)
-    Write-Verbose "Loading core infrastructure modules..."
-    $moduleLoadingStats.CoreModules.Total = $coreModules.Count
-    
-    # Show loading message
-    if (Get-Command Show-SimpleProgress -ErrorAction SilentlyContinue) {
-        Show-SimpleProgress -Message "Loading $($coreModules.Count) core infrastructure modules..." -Type Update
-    }
-    
-    $coreIndex = 0
-    foreach ($moduleName in $coreModules) {
-        $coreIndex++
-        $modulePath = Join-Path $env:PWSH_MODULES_PATH $moduleName
-        
-        if (Test-Path $modulePath) {
-            try {
-                # Show progress
-                if (Get-Command Show-ModuleLoadingProgress -ErrorAction SilentlyContinue) {
-                    Show-ModuleLoadingProgress -ModuleName $moduleName -ModuleType "Core" -CurrentIndex $coreIndex -TotalCount $coreModules.Count -Statistics $moduleLoadingStats
+    # Report module loading results
+    if ($moduleLoadingSuccess) {
+        # Get module status from AitherCore orchestration
+        if (Get-Command Get-CoreModuleStatus -ErrorAction SilentlyContinue) {
+            $moduleStatus = Get-CoreModuleStatus
+            $loadedCount = ($moduleStatus | Where-Object { $_.Loaded }).Count
+            $availableCount = ($moduleStatus | Where-Object { $_.Available }).Count
+            
+            Write-Verbose "Standardized module loading completed successfully"
+            Write-Verbose "Modules loaded: $loadedCount/$availableCount available"
+            
+            # Store module loading statistics for later use (compatible format)
+            $script:ModuleLoadingStats = @{
+                CoreModules = @{ 
+                    Total = ($moduleStatus | Where-Object { $_.Required }).Count
+                    Loaded = ($moduleStatus | Where-Object { $_.Required -and $_.Loaded }).Count
+                    Failed = ($moduleStatus | Where-Object { $_.Required -and (-not $_.Loaded) }).Count
                 }
-                
-                if ($Verbosity -eq 'silent') {
-                    Import-Module $modulePath -Force -ErrorAction Stop *>$null
-                } else {
-                    Write-Verbose "Importing core module: $moduleName"
-                    Import-Module $modulePath -Force -ErrorAction Stop
+                ConsolidatedModules = @{ 
+                    Total = ($moduleStatus | Where-Object { -not $_.Required }).Count
+                    Loaded = ($moduleStatus | Where-Object { -not $_.Required -and $_.Loaded }).Count
+                    Failed = ($moduleStatus | Where-Object { -not $_.Required -and (-not $_.Loaded) }).Count
                 }
-                
-                # Verify module loaded successfully
-                if (Get-Module -Name $moduleName -ErrorAction SilentlyContinue) {
-                    $moduleLoadingStats.CoreModules.Loaded++
-                    # Only use Write-CustomLog after Logging module is loaded
-                    if ($moduleName -eq 'Logging' -or (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-                        Write-CustomLog "Core module loaded: $moduleName" -Level DEBUG
-                    } else {
-                        Write-Verbose "Core module loaded: $moduleName"
-                    }
-                } else {
-                    $moduleLoadingStats.CoreModules.Failed++
-                    Write-Warning "Core module $moduleName loaded but not found in session"
-                }
-            } catch {
-                $moduleLoadingStats.CoreModules.Failed++
-                # Core modules are critical - fail hard
-                if ($moduleName -in @('Logging')) {
-                    throw "Critical core module $moduleName failed to load: $_"
-                } else {
-                    # Only use Write-CustomLog if available
-                    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-                        Write-CustomLog "Core module $moduleName failed to load: $_" -Level ERROR
-                    } else {
-                        Write-Error "Core module $moduleName failed to load: $_"
-                    }
-                }
+                StartTime = Get-Date
             }
         } else {
-            $moduleLoadingStats.CoreModules.Failed++
-            if ($moduleName -in @('Logging')) {
-                throw "Critical core module $moduleName not found at: $modulePath"
-            } else {
-                # Only use Write-CustomLog if available
-                if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-                    Write-CustomLog "Core module $moduleName not found at: $modulePath" -Level WARN
-                } else {
-                    Write-Warning "Core module $moduleName not found at: $modulePath"
-                }
+            Write-Warning "Get-CoreModuleStatus function not available. Module status reporting limited."
+            $script:ModuleLoadingStats = @{
+                CoreModules = @{ Total = 0; Loaded = 0; Failed = 0 }
+                ConsolidatedModules = @{ Total = 0; Loaded = 0; Failed = 0 }
+                StartTime = Get-Date
             }
         }
-    }
-    
-    # Load consolidated modules with graceful degradation
-    Write-Verbose "Loading consolidated modules..."
-    $moduleLoadingStats.ConsolidatedModules.Total = $consolidatedModules.Count
-    
-    # Show loading message
-    if (Get-Command Show-SimpleProgress -ErrorAction SilentlyContinue) {
-        Show-SimpleProgress -Message "Loading $($consolidatedModules.Count) consolidated modules..." -Type Update
-    }
-    
-    $consolidatedIndex = 0
-    foreach ($moduleName in $consolidatedModules) {
-        $consolidatedIndex++
-        $modulePath = Join-Path $env:PWSH_MODULES_PATH $moduleName
-        
-        if (Test-Path $modulePath) {
-            try {
-                # Show progress
-                if (Get-Command Show-ModuleLoadingProgress -ErrorAction SilentlyContinue) {
-                    Show-ModuleLoadingProgress -ModuleName $moduleName -ModuleType "Consolidated" -CurrentIndex $consolidatedIndex -TotalCount $consolidatedModules.Count -Statistics $moduleLoadingStats
-                }
-                
-                if ($Verbosity -eq 'silent') {
-                    Import-Module $modulePath -Force -ErrorAction Stop *>$null
-                } else {
-                    Write-Verbose "Importing consolidated module: $moduleName"
-                    Import-Module $modulePath -Force -ErrorAction Stop
-                }
-                
-                # Verify module loaded successfully
-                if (Get-Module -Name $moduleName -ErrorAction SilentlyContinue) {
-                    $moduleLoadingStats.ConsolidatedModules.Loaded++
-                    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-                        Write-CustomLog "Consolidated module loaded: $moduleName" -Level DEBUG
-                    } else {
-                        Write-Verbose "Consolidated module loaded: $moduleName"
-                    }
-                } else {
-                    $moduleLoadingStats.ConsolidatedModules.Failed++
-                    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-                        Write-CustomLog "Consolidated module $moduleName loaded but not found in session" -Level WARN
-                    } else {
-                        Write-Warning "Consolidated module $moduleName loaded but not found in session"
-                    }
-                }
-            } catch {
-                $moduleLoadingStats.ConsolidatedModules.Failed++
-                # Consolidated modules are optional - warn but continue
-                if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-                    Write-CustomLog "Consolidated module $moduleName failed to load: $_" -Level WARN
-                } else {
-                    Write-Warning "Consolidated module $moduleName failed to load: $_"
-                }
-            }
-        } else {
-            $moduleLoadingStats.ConsolidatedModules.Failed++
-            if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-                Write-CustomLog "Consolidated module $moduleName not found at: $modulePath" -Level DEBUG
-            } else {
-                Write-Verbose "Consolidated module $moduleName not found at: $modulePath"
-            }
+    } else {
+        Write-Warning "Module loading failed or completed with issues"
+        $script:ModuleLoadingStats = @{
+            CoreModules = @{ Total = 0; Loaded = 0; Failed = 1 }
+            ConsolidatedModules = @{ Total = 0; Loaded = 0; Failed = 0 }
+            StartTime = Get-Date
         }
     }
-    
-    # Complete progress indicator
-    if (Get-Command Complete-StartupProgress -ErrorAction SilentlyContinue) {
-        Complete-StartupProgress -Statistics $moduleLoadingStats
-    }
-    
-    # Report module loading statistics
-    $loadingDuration = (Get-Date) - $moduleLoadingStats.StartTime
-    Write-Verbose "Module loading completed in $($loadingDuration.TotalSeconds) seconds"
-    Write-Verbose "Core modules: $($moduleLoadingStats.CoreModules.Loaded)/$($moduleLoadingStats.CoreModules.Total) loaded"
-    Write-Verbose "Consolidated modules: $($moduleLoadingStats.ConsolidatedModules.Loaded)/$($moduleLoadingStats.ConsolidatedModules.Total) loaded"
-    
-    # Store module loading statistics for later use
-    $script:ModuleLoadingStats = $moduleLoadingStats
 
     # Initialize logging system with proper verbosity mapping (Force required to override auto-init)
     if (Get-Command Initialize-LoggingSystem -ErrorAction SilentlyContinue) {

@@ -228,7 +228,7 @@ function Invoke-DirectoryAnalysis {
     }
     catch {
         if ($script:UseCustomLogging) {
-            Write-CustomLog -Level 'ERROR' -Message "Failed to analyze directory $Path: $($_.Exception.Message)"
+            Write-CustomLog -Level 'ERROR' -Message "Failed to analyze directory ${Path}: $($_.Exception.Message)"
         }
         throw
     }

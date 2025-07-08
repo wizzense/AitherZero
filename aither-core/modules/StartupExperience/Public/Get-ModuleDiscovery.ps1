@@ -231,7 +231,6 @@ function Get-ModuleCategory {
         'OpenTofuProvider' = 'Infrastructure'
         'CloudProviderIntegration' = 'Infrastructure'
         'ISOManager' = 'Infrastructure'
-        'ISOCustomizer' = 'Infrastructure'
         
         'DevEnvironment' = 'Development'
         'PatchManager' = 'Development'

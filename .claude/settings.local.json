@@ -7,7 +7,9 @@
       "Bash(rg:*)",
       "Bash(find:*)",
       "Bash(ls:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(git add:*)",
+      "Bash(/mnt/c/Program Files/PowerShell/7/pwsh.exe -NoProfile -File \"./Test-AllModules.ps1\" -Detailed)"
     ],
     "deny": []
   }

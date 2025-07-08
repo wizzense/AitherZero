@@ -58,7 +58,6 @@ function Get-PlatformLifecycle {
                     
                     # Feature Layer
                     @{ Name = "ISOManager"; Layer = "Features"; Priority = 15; Description = "ISO management" }
-                    @{ Name = "ISOCustomizer"; Layer = "Features"; Priority = 16; Description = "ISO customization" }
                     @{ Name = "BackupManager"; Layer = "Features"; Priority = 17; Description = "Backup operations" }
                     @{ Name = "UnifiedMaintenance"; Layer = "Features"; Priority = 18; Description = "Maintenance operations" }
                     @{ Name = "ScriptManager"; Layer = "Features"; Priority = 19; Description = "Script management" }
@@ -188,7 +187,6 @@ function Get-PlatformLifecycle {
                     
                     # Feature dependencies
                     "ISOManager" = @("Logging", "ConfigurationCore", "ProgressTracking")
-                    "ISOCustomizer" = @("Logging", "ISOManager")
                     "BackupManager" = @("Logging", "ConfigurationCore")
                     "UnifiedMaintenance" = @("Logging", "BackupManager")
                     

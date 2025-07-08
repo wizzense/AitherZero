@@ -111,11 +111,14 @@ This document describes the REST API endpoints available in the AitherZero autom
 ## Authentication
 
 $(if ($config.Authentication -ne 'None') {
-    "API requests require authentication. Include the Authorization header with your requests:"
-    ""
-    "```"
-    "Authorization: Bearer YOUR_API_TOKEN"
-    "```"
+    $authText = @"
+API requests require authentication. Include the Authorization header with your requests:
+
+``````
+Authorization: Bearer YOUR_API_TOKEN
+``````
+"@
+    $authText
 } else {
     "No authentication required for API requests."
 })
@@ -147,19 +150,22 @@ $(if ($endpoint.Parameters.Count -gt 0) {
 })
 
 $(if ($IncludeExamples) {
-    "**Example Request**:"
-    ""
-    "```bash"
-    "curl -X $($endpoint.Method) http://localhost:$($config.Port)$($endpoint.Path) \"
+    $curlCommand = "curl -X $($endpoint.Method) http://localhost:$($config.Port)$($endpoint.Path)"
     if ($endpoint.Authentication) {
-        "  -H 'Authorization: Bearer YOUR_TOKEN' \"
+        $curlCommand += " -H 'Authorization: Bearer YOUR_TOKEN'"
     }
     if ($endpoint.Method -in @('POST', 'PUT', 'PATCH')) {
-        "  -H 'Content-Type: application/json' \"
-        "  -d '{\"parameter\": \"value\"}'"
+        $curlCommand += " -H 'Content-Type: application/json' -d '{`"parameter`": `"value`"}'"
     }
-    "```"
-    ""
+    
+@"
+**Example Request**:
+
+``````bash
+$curlCommand
+``````
+
+"@
 })
 
 "@
@@ -180,7 +186,7 @@ Webhooks allow external systems to receive real-time notifications about events 
 ### Supported Events
 
 $(foreach ($event in $webhookInfo.SupportedEvents) {
-    "- `$event`"
+    "- ``$event``"
 })
 
 ### Webhook Payload Format

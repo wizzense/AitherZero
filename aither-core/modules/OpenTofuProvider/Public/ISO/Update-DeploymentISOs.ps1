@@ -58,15 +58,11 @@ function Update-DeploymentISOs {
     begin {
         Write-CustomLog -Level 'INFO' -Message "Starting ISO update process"
         
-        # Check for ISOManager and ISOCustomizer modules
+        # Check for ISOManager module
         $script:hasISOManager = (Get-Module -Name 'ISOManager' -ListAvailable) -ne $null
-        $script:hasISOCustomizer = (Get-Module -Name 'ISOCustomizer' -ListAvailable) -ne $null
         
         if ($script:hasISOManager) {
             Import-Module ISOManager -Force
-        }
-        if ($script:hasISOCustomizer) {
-            Import-Module ISOCustomizer -Force
         }
     }
     
@@ -353,9 +349,9 @@ function Customize-ISO {
     }
     
     try {
-        # Use ISOCustomizer if available
-        if ($script:hasISOCustomizer -and (Get-Command -Name 'New-CustomISO' -ErrorAction SilentlyContinue)) {
-            Write-CustomLog -Level 'INFO' -Message "Using ISOCustomizer for customization"
+        # Use ISOManager for customization if available
+        if ($script:hasISOManager -and (Get-Command -Name 'New-CustomISO' -ErrorAction SilentlyContinue)) {
+            Write-CustomLog -Level 'INFO' -Message "Using ISOManager for customization"
             
             $customParams = @{
                 SourceISO = $ISO.Path
@@ -369,11 +365,11 @@ function Customize-ISO {
                 $result.Success = $true
                 $result.Path = $customResult.Path
             } else {
-                $result.Error = "ISOCustomizer failed"
+                $result.Error = "ISOManager customization failed"
             }
         } else {
             # Basic customization simulation
-            Write-CustomLog -Level 'WARN' -Message "ISOCustomizer not available - marking ISO as customized"
+            Write-CustomLog -Level 'WARN' -Message "ISOManager not available - marking ISO as customized"
             
             # Rename ISO to indicate customization
             $dir = [System.IO.Path]::GetDirectoryName($ISO.Path)

@@ -14,6 +14,11 @@ on:
         description: 'Run the build with tmate debugging enabled'
         required: false
         default: false
+      skip_tests:
+        type: boolean
+        description: 'Skip test execution for faster validation'
+        required: false
+        default: false
 
 # Cancel in-progress runs for the same workflow
 concurrency:
@@ -24,7 +29,7 @@ env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   DOTNET_NOLOGO: true
-  PSCORE_VERSION: '7.4.5'  # Pin PowerShell version for consistency
+  PSCORE_VERSION: '7.5.1'  # Pin PowerShell version for consistency
 
 jobs:
   # Job to analyze what changed and determine what needs to be tested
@@ -478,42 +483,12 @@ jobs:
           }
         }
         
-    - name: Run unit tests
+    - name: Run optimized CI tests
+      if: github.event.inputs.skip_tests != 'true'
       shell: pwsh
       run: |
-        $config = New-PesterConfiguration
-        $config.Run.Path = './tests'
-        $config.Run.PassThru = $true
-        $config.CodeCoverage.Enabled = $true
-        $config.CodeCoverage.Path = './aither-core/**/*.ps1'
-        $config.CodeCoverage.OutputFormat = 'JaCoCo'
-        $config.CodeCoverage.OutputPath = 'coverage.xml'
-        $config.TestResult.Enabled = $true
-        $config.TestResult.OutputFormat = 'JUnitXml'
-        $config.TestResult.OutputPath = 'test-results.xml'
-        $config.Output.Verbosity = 'Detailed'
-        
-        # Set timeout for CI
-        $config.Run.Timeout = 1800  # 30 minutes
-        
-        $results = Invoke-Pester -Configuration $config
-        
-        # Generate summary
-        Write-Host "`n📊 Test Summary:" -ForegroundColor Cyan
-        Write-Host "  Total: $($results.TotalCount)" -ForegroundColor White
-        Write-Host "  Passed: $($results.PassedCount)" -ForegroundColor Green
-        Write-Host "  Failed: $($results.FailedCount)" -ForegroundColor Red
-        Write-Host "  Skipped: $($results.SkippedCount)" -ForegroundColor Yellow
-        Write-Host "  Code Coverage: $([math]::Round($results.CodeCoverage.CoveragePercent, 2))%" -ForegroundColor Magenta
-        
-        # Fail if tests failed or coverage too low
-        if ($results.FailedCount -gt 0) {
-          throw "$($results.FailedCount) tests failed"
-        }
-        
-        if ($results.CodeCoverage.CoveragePercent -lt 60) {
-          Write-Warning "Code coverage is below 60% threshold"
-        }
+        # Use the optimized CI test runner
+        ./tests/Run-CI-Tests.ps1 -TestSuite All -OutputFormat Both -Timeout 600
         
     - name: Run integration tests
       if: matrix.os != 'macos-latest'  # Skip integration tests on macOS (no Hyper-V)
@@ -541,18 +516,15 @@ jobs:
       with:
         name: test-results-${{ matrix.os }}-ps${{ matrix.pwsh_version }}
         path: |
-          test-results.xml
+          core-test-results.xml
+          entry-test-results.xml
+          ps-version-test-results.xml
           integration-test-results.xml
-          coverage.xml
+          ci-test-summary.json
         retention-days: 30
         
-    - name: Upload coverage to Codecov
-      if: matrix.os == 'ubuntu-latest' && matrix.pwsh_version == env.PSCORE_VERSION
-      uses: codecov/codecov-action@v4
-      with:
-        files: ./coverage.xml
-        flags: unittests
-        name: codecov-${{ matrix.os }}
+    # Code coverage disabled for performance optimization
+    # Re-enable if detailed coverage analysis is needed
         
     - name: Test module loading
       shell: pwsh

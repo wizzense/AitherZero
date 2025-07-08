@@ -111,8 +111,7 @@ function Get-PlatformStatus {
                                               $script:LoadedModules.ContainsKey('LabRunner'))
                     DevelopmentIntegration = ($script:LoadedModules.ContainsKey('PatchManager') -and 
                                             $script:LoadedModules.ContainsKey('TestingFramework'))
-                    ISOWorkflowIntegration = ($script:LoadedModules.ContainsKey('ISOManager') -and 
-                                            $script:LoadedModules.ContainsKey('ISOCustomizer'))
+                    ISOWorkflowIntegration = $script:LoadedModules.ContainsKey('ISOManager')
                     CommunicationIntegration = $script:LoadedModules.ContainsKey('ModuleCommunication')
                 }
             }

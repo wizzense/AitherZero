@@ -110,7 +110,7 @@ function Update-BugzFile {
                 'Unknown'
             }
             
-            $key = "$fileName:$($result.Line):$($result.RuleName)"
+            $key = "${fileName}:$($result.Line):$($result.RuleName)"
             $currentKeys += $key
             
             if ($existingFindings.ContainsKey($key)) {
@@ -211,7 +211,7 @@ function Update-BugzFile {
     }
     catch {
         if ($script:UseCustomLogging) {
-            Write-CustomLog -Level 'ERROR' -Message "Failed to update .bugz file for $Path: $($_.Exception.Message)"
+            Write-CustomLog -Level 'ERROR' -Message "Failed to update .bugz file for ${Path}: $($_.Exception.Message)"
         }
         throw
     }

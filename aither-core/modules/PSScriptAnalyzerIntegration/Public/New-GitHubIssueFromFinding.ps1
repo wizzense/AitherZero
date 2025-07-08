@@ -337,11 +337,11 @@ function New-GitHubIssueFromFinding {
                     if ($script:UseCustomLogging) {
                         Write-CustomLog -Level 'SUCCESS' -Message "Created GitHub issue #$issueNumber for $($Finding.RuleName) in $fileName"
                     } else {
-                        Write-Host "✅ Created issue #$issueNumber: $issueTitle" -ForegroundColor Green
+                        Write-Host "✅ Created issue #${issueNumber}: ${issueTitle}" -ForegroundColor Green
                     }
                 }
                 catch {
-                    $error = "Failed to create GitHub issue for $($Finding.RuleName) in $fileName: $($_.Exception.Message)"
+                    $error = "Failed to create GitHub issue for $($Finding.RuleName) in ${fileName}: $($_.Exception.Message)"
                     $errors += $error
                     
                     if ($script:UseCustomLogging) {

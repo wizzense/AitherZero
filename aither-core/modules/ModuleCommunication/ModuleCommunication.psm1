@@ -43,6 +43,24 @@ $script:Configuration = @{
     }
 }
 
+# Logging fallback functions (if logging module not available)
+if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
+    function Write-CustomLog {
+        param(
+            [string]$Level,
+            [string]$Message
+        )
+        $color = switch ($Level) {
+            'SUCCESS' { 'Green' }
+            'ERROR' { 'Red' }
+            'WARNING' { 'Yellow' }
+            'INFO' { 'Cyan' }
+            default { 'White' }
+        }
+        Write-Host "[$Level] $Message" -ForegroundColor $color
+    }
+}
+
 # Import functions
 $Public = @(Get-ChildItem -Path "$PSScriptRoot/Public" -Filter '*.ps1' -Recurse -ErrorAction SilentlyContinue)
 $Private = @(Get-ChildItem -Path "$PSScriptRoot/Private" -Filter '*.ps1' -Recurse -ErrorAction SilentlyContinue)

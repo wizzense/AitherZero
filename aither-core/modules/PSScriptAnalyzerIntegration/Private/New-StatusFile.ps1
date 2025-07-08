@@ -151,7 +151,7 @@ function New-StatusFile {
     }
     catch {
         if ($script:UseCustomLogging) {
-            Write-CustomLog -Level 'ERROR' -Message "Failed to create status file for $Path: $($_.Exception.Message)"
+            Write-CustomLog -Level 'ERROR' -Message "Failed to create status file for ${Path}: $($_.Exception.Message)"
         }
         throw
     }

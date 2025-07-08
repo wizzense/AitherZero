@@ -6,24 +6,68 @@ param(
     [switch]$All,
     [switch]$CI,
     [switch]$Distributed,
+    [switch]$Installation,
     [string[]]$Modules = @()
 )
 
 # Enhanced test runner - supports centralized, distributed, and consolidated module tests
 # Automatically detects new AitherCore consolidated module structure
+# Includes comprehensive installation and setup testing capabilities
 
 $ErrorActionPreference = 'Stop'
 $testPath = $PSScriptRoot
 $projectRoot = Split-Path $testPath -Parent
 
+# Check for installation and setup test runner
+$installationTestRunner = Join-Path $testPath "Run-Installation-Tests.ps1"
+$hasInstallationTests = Test-Path $installationTestRunner
+
 # Detect if we're using the new consolidated AitherCore module
 $aitherCorePath = Join-Path $projectRoot "aither-core/AitherCore.psd1"
 $useConsolidatedModule = Test-Path $aitherCorePath
+
+# Handle installation and setup testing
+if ($Installation) {
+    if ($hasInstallationTests) {
+        Write-Host "🔧 Running Installation & Setup Tests..." -ForegroundColor Cyan
+        
+        # Build parameters for installation test runner
+        $installationParams = @{}
+        if ($CI) { $installationParams['CI'] = $true }
+        if ($Quick) { $installationParams['TestSuite'] = 'Quick' }
+        elseif ($Setup) { $installationParams['TestSuite'] = 'Setup' }
+        elseif ($All) { $installationParams['TestSuite'] = 'All' }
+        
+        # Execute installation tests
+        try {
+            & $installationTestRunner @installationParams
+            $installationExitCode = $LASTEXITCODE
+            
+            if ($CI -and $installationExitCode -ne 0) {
+                exit $installationExitCode
+            }
+            
+            return
+        }
+        catch {
+            Write-Host "❌ Installation tests failed: $($_.Exception.Message)" -ForegroundColor Red
+            if ($CI) { exit 1 }
+            return
+        }
+    } else {
+        Write-Host "⚠️  Installation test runner not found at: $installationTestRunner" -ForegroundColor Yellow
+        Write-Host "   Falling back to standard tests..." -ForegroundColor Yellow
+    }
+}
 
 if ($useConsolidatedModule) {
     Write-Host "🔄 Detected consolidated AitherCore module - using enhanced testing mode" -ForegroundColor Cyan
 } else {
     Write-Host "📦 Using legacy individual module structure" -ForegroundColor Yellow
+}
+
+if ($hasInstallationTests) {
+    Write-Host "🔧 Installation & setup tests available - use -Installation to run them" -ForegroundColor Green
 }
 
 # Install Pester if needed (CI environments)
@@ -169,6 +213,16 @@ if ($All) {
     Write-Host "Running Setup tests..." -ForegroundColor Cyan
     $testsToRun = @(Join-Path $testPath "Setup.Tests.ps1")
     
+    # Include installation tests if available and Setup flag is used
+    if ($hasInstallationTests) {
+        Write-Host "  🔧 Including installation & setup validation tests" -ForegroundColor Green
+        $installationTests = @(
+            Join-Path $testPath "Setup-Installation.Tests.ps1",
+            Join-Path $testPath "PowerShell-Version.Tests.ps1"
+        ) | Where-Object { Test-Path $_ }
+        $testsToRun += $installationTests
+    }
+    
 } else {
     # Default to Quick (Core tests only)
     Write-Host "Running Core tests..." -ForegroundColor Cyan
@@ -203,6 +257,16 @@ Write-Host "  Passed: $($results.Passed) " -ForegroundColor Green
 Write-Host "  Failed: $($results.Failed) " -ForegroundColor $(if ($results.Failed -eq 0) { 'Green' } else { 'Red' })
 Write-Host "  Total:  $($results.TotalCount)" -ForegroundColor White
 Write-Host "  Time:   $($results.Duration.TotalSeconds.ToString('0.00'))s" -ForegroundColor Cyan
+
+# Show available test categories
+Write-Host "`n📋 Available Test Categories:" -ForegroundColor White
+Write-Host "  • Core Tests: ./tests/Run-Tests.ps1 (default)" -ForegroundColor Gray
+Write-Host "  • Setup Tests: ./tests/Run-Tests.ps1 -Setup" -ForegroundColor Gray
+Write-Host "  • All Tests: ./tests/Run-Tests.ps1 -All" -ForegroundColor Gray
+if ($hasInstallationTests) {
+    Write-Host "  • Installation & Setup: ./tests/Run-Tests.ps1 -Installation" -ForegroundColor Green
+    Write-Host "  • Comprehensive Installation: ./tests/Run-Installation-Tests.ps1" -ForegroundColor Green
+}
 
 # Display module architecture information
 if ($useConsolidatedModule) {

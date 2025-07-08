@@ -72,11 +72,6 @@ function Get-ModuleCapabilities {
             Category = 'Utilities'
             MenuPriority = 60
         }
-        'ISOCustomizer' = @{
-            Description = 'ISO customization and modification'
-            Category = 'Utilities'
-            MenuPriority = 65
-        }
         'SecureCredentials' = @{
             Description = 'Enterprise credential management'
             Category = 'Security'
@@ -178,7 +173,6 @@ function Get-ModuleCapabilities {
                     'DevEnvironment' { 'Dev Environment' }
                     'OpenTofuProvider' { 'OpenTofu Provider' }
                     'ISOManager' { 'ISO Manager' }
-                    'ISOCustomizer' { 'ISO Customizer' }
                     'SecureCredentials' { 'Secure Credentials' }
                     'RemoteConnection' { 'Remote Connection' }
                     'SystemMonitoring' { 'System Monitoring' }

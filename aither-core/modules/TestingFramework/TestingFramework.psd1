@@ -18,6 +18,7 @@
         'Get-TestConfiguration',
         'Invoke-ParallelTestExecution',
         'Invoke-SequentialTestExecution',
+        'Invoke-ModuleTestPhase',
         'New-TestReport',
         'Export-VSCodeTestResults',
         'Submit-TestEvent',

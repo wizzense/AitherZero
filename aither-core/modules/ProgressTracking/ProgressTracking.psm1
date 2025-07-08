@@ -426,6 +426,48 @@ function Start-MultiProgress {
     return $operationIds
 }
 
+# Simple progress display function for compatibility
+function Show-SimpleProgress {
+    <#
+    .SYNOPSIS
+        Simple progress display for startup and basic operations
+    .DESCRIPTION
+        Provides a lightweight progress display function for use during
+        module loading and basic operations. Compatible with existing
+        aither-core startup sequence.
+    .PARAMETER Message
+        Message to display with the progress indicator
+    .PARAMETER Type
+        Type of progress: Start, Update, or Complete
+    .EXAMPLE
+        Show-SimpleProgress -Message "Loading modules..." -Type Start
+    .EXAMPLE
+        Show-SimpleProgress -Message "Modules loaded" -Type Complete
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Message,
+        
+        [ValidateSet('Start', 'Update', 'Complete')]
+        [string]$Type = 'Update'
+    )
+    
+    $prefix = switch ($Type) {
+        'Start' { '🚀' }
+        'Update' { '⚡' }
+        'Complete' { '✅' }
+    }
+    
+    $color = switch ($Type) {
+        'Start' { 'Cyan' }
+        'Update' { 'Yellow' }
+        'Complete' { 'Green' }
+    }
+    
+    Write-Host "$prefix $Message" -ForegroundColor $color
+}
+
 # Export functions
 Export-ModuleMember -Function @(
     'Start-ProgressOperation',
@@ -435,5 +477,6 @@ Export-ModuleMember -Function @(
     'Add-ProgressError',
     'Write-ProgressLog',
     'Get-ActiveOperations',
-    'Start-MultiProgress'
+    'Start-MultiProgress',
+    'Show-SimpleProgress'
 )

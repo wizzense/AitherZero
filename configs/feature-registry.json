@@ -43,8 +43,7 @@
       "modules": [
         "OpenTofuProvider",
         "CloudProviderIntegration",
-        "ISOManager",
-        "ISOCustomizer"
+        "ISOManager"
       ]
     },
     "ai": {

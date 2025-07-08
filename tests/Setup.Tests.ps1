@@ -87,7 +87,7 @@ Describe "Setup and Installation Tests" {
             
             $config = Get-Content $defaultConfig | ConvertFrom-Json
             $config | Should -Not -BeNullOrEmpty
-            $config.UIPreferences | Should -Not -BeNullOrEmpty
+            $config.ui | Should -Not -BeNullOrEmpty
         }
     }
     

@@ -130,7 +130,7 @@ function Get-AnalysisStatus {
             }
             catch {
                 if ($script:UseCustomLogging) {
-                    Write-CustomLog -Level 'WARNING' -Message "Failed to load status file $statusFilePath: $($_.Exception.Message)"
+                    Write-CustomLog -Level 'WARNING' -Message "Failed to load status file ${statusFilePath}: $($_.Exception.Message)"
                 }
             }
         }

@@ -179,7 +179,7 @@ function Get-PlatformHealth {
                     "ConfigurationIntegration" = @('ConfigurationCore', 'ConfigurationCarousel')
                     "OrchestrationIntegration" = @('OrchestrationEngine', 'LabRunner')
                     "DevelopmentIntegration" = @('PatchManager', 'TestingFramework')
-                    "ISOWorkflowIntegration" = @('ISOManager', 'ISOCustomizer')
+                    "ISOWorkflowIntegration" = @('ISOManager')
                 }
                 
                 foreach ($integration in $keyIntegrations.GetEnumerator()) {
