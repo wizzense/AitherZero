@@ -21,7 +21,7 @@ try {
             . $file.FullName
         }
     }
-    
+
     # Load Public functions
     $publicPath = Join-Path $PSScriptRoot "Public"
     if (Test-Path $publicPath) {
@@ -31,9 +31,9 @@ try {
             . $file.FullName
         }
     }
-    
+
     Write-Verbose "OpenTofuProvider functions loaded successfully"
-    
+
 } catch {
     Write-Error "Failed to load OpenTofuProvider functions: $($_.Exception.Message)"
     Write-Error "Error in file: $($_.InvocationInfo.ScriptName) at line $($_.InvocationInfo.ScriptLineNumber)"

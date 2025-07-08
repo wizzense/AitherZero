@@ -2,7 +2,7 @@ function Save-CredentialSecurely {
     <#
     .SYNOPSIS
         Securely saves credential data with modern encryption and integrity checks.
-    
+
     .DESCRIPTION
         Saves credential data using enterprise-grade encryption with integrity validation,
         audit logging, and secure file permissions.
@@ -29,7 +29,7 @@ function Save-CredentialSecurely {
         $storagePath = Get-CredentialStoragePath
         if (-not (Test-Path $storagePath)) {
             New-Item -Path $storagePath -ItemType Directory -Force | Out-Null
-            
+
             # Set restrictive permissions
             if ($IsWindows -or $PSVersionTable.PSEdition -eq 'Desktop') {
                 $acl = Get-Acl $storagePath
@@ -66,7 +66,7 @@ function Save-CredentialSecurely {
         # Encrypt sensitive data with modern methods
         $encryptedData = @{
             Metadata = $enhancedMetadata
-            EncryptedPassword = if ($Password) { 
+            EncryptedPassword = if ($Password) {
                 $plainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
                     [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
                 )
@@ -91,7 +91,7 @@ function Save-CredentialSecurely {
         # Save with secure file permissions
         $credentialFile = Join-Path $storagePath "$($CredentialData.Name).json"
         $encryptedData | ConvertTo-Json -Depth 10 | Set-Content -Path $credentialFile -Encoding UTF8
-        
+
         # Set file permissions
         if ($IsWindows -or $PSVersionTable.PSEdition -eq 'Desktop') {
             $acl = Get-Acl $credentialFile
@@ -114,7 +114,7 @@ function Save-CredentialSecurely {
             EncryptionMethod = $enhancedMetadata.SecurityInfo.EncryptionMethod
             SavedBy = $env:USERNAME ?? $env:USER ?? 'unknown'
         } -Category "Security"
-        
+
         return @{ Success = $true; SecurityInfo = $enhancedMetadata.SecurityInfo }
     }
     catch {
@@ -127,23 +127,24 @@ function Retrieve-CredentialSecurely {
     <#
     .SYNOPSIS
         Securely retrieves credential data with integrity validation and audit logging.
-    
+
     .DESCRIPTION
         Retrieves and decrypts credential data with integrity checks, access logging,
         and security validation.
     #>
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'CredentialName', Justification = 'CredentialName is an identifier string, not sensitive credential data')]
     param(
         [Parameter(Mandatory = $true)]
         [string]$CredentialName,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$SkipIntegrityCheck
     )
 
     try {
         Write-CustomLog -Level 'DEBUG' -Message "Retrieving credential: $CredentialName" -Category "Security"
-        
+
         $storagePath = Get-CredentialStoragePath
         $credentialFile = Join-Path $storagePath "$CredentialName.json"
 
@@ -157,28 +158,28 @@ function Retrieve-CredentialSecurely {
         # Validate integrity if security info is present
         if ($encryptedData.Metadata.SecurityInfo -and -not $SkipIntegrityCheck) {
             Write-CustomLog -Level 'DEBUG' -Message "Security info present for credential: $CredentialName" -Category "Security"
-            
+
             try {
                 # Verify integrity hash if present
                 if ($encryptedData.Metadata.SecurityInfo.IntegrityHash) {
                     # Create a copy without the integrity hash for verification
                     $tempData = $encryptedData | ConvertTo-Json -Depth 10 | ConvertFrom-Json
                     $tempData.Metadata.SecurityInfo.IntegrityHash = $null
-                    
+
                     $dataForVerification = ($tempData | ConvertTo-Json -Depth 10 -Compress)
                     $hash = [System.Security.Cryptography.SHA256]::Create()
                     $hashBytes = $hash.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($dataForVerification))
                     $hash.Dispose()
                     $calculatedHash = [Convert]::ToBase64String($hashBytes)
-                    
+
                     if ($calculatedHash -ne $encryptedData.Metadata.SecurityInfo.IntegrityHash) {
                         Write-CustomLog -Level 'ERROR' -Message "Integrity check failed for credential: $CredentialName" -Category "Security"
                         return @{ Success = $false; Error = "Credential integrity verification failed" }
                     }
-                    
+
                     Write-CustomLog -Level 'DEBUG' -Message "Integrity check passed for credential: $CredentialName" -Category "Security"
                 }
-                
+
                 # Verify machine ID matches current machine (if enforcing machine binding)
                 if ($encryptedData.Metadata.SecurityInfo.MachineId) {
                     $currentMachineId = (Get-MachineKey | ForEach-Object { $_.ToString('X2') }) -join ''
@@ -187,7 +188,7 @@ function Retrieve-CredentialSecurely {
                         # Don't fail here as credentials may be legitimately transferred between machines
                     }
                 }
-                
+
                 # Check credential age and warn if very old
                 if ($encryptedData.Metadata.SecurityInfo.CreatedOn) {
                     $createdDate = $null
@@ -198,7 +199,7 @@ function Retrieve-CredentialSecurely {
                         }
                     }
                 }
-                
+
             } catch {
                 Write-CustomLog -Level 'ERROR' -Message "Error during integrity check for credential '$CredentialName': $($_.Exception.Message)" -Category "Security"
                 return @{ Success = $false; Error = "Integrity check error: $($_.Exception.Message)" }
@@ -221,6 +222,9 @@ function Retrieve-CredentialSecurely {
         if ($encryptedData.EncryptedPassword) {
             try {
                 $decryptedPassword = Unprotect-String $encryptedData.EncryptedPassword
+                # Suppress security warning: converting decrypted data back to SecureString is secure practice
+                [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '', Justification = 'Converting previously encrypted data back to SecureString after decryption is secure')]
+                param()
                 $credential.Password = ConvertTo-SecureString $decryptedPassword -AsPlainText -Force
                 # Clear decrypted password from memory
                 $decryptedPassword = $null
@@ -229,7 +233,7 @@ function Retrieve-CredentialSecurely {
                 return @{ Success = $false; Error = "Failed to decrypt password data" }
             }
         }
-        
+
         if ($encryptedData.EncryptedAPIKey) {
             try {
                 $credential.APIKey = Unprotect-String $encryptedData.EncryptedAPIKey
@@ -238,7 +242,7 @@ function Retrieve-CredentialSecurely {
                 return @{ Success = $false; Error = "Failed to decrypt API key data" }
             }
         }
-        
+
         if ($encryptedData.CertificatePath) {
             $credential.CertificatePath = $encryptedData.CertificatePath
         }
@@ -261,6 +265,7 @@ function Retrieve-CredentialSecurely {
 
 function Remove-CredentialSecurely {
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'CredentialName', Justification = 'CredentialName is an identifier string, not sensitive credential data')]
     param(
         [Parameter(Mandatory = $true)]
         [string]$CredentialName
@@ -314,7 +319,7 @@ function Protect-String {
     <#
     .SYNOPSIS
         Encrypts a string using AES-256-GCM encryption with platform-specific key derivation.
-    
+
     .DESCRIPTION
         Provides enterprise-grade encryption for sensitive data using AES-256-GCM.
         Uses DPAPI on Windows and secure key derivation on Linux/macOS.
@@ -323,49 +328,49 @@ function Protect-String {
     param(
         [Parameter(Mandatory = $true)]
         [string]$PlainText,
-        
+
         [Parameter(Mandatory = $false)]
         [byte[]]$AdditionalEntropy
     )
 
     try {
         Write-CustomLog -Level 'DEBUG' -Message "Starting string encryption" -Category "Security"
-        
+
         if ($IsWindows -or $PSVersionTable.PSEdition -eq 'Desktop') {
             # Use DPAPI on Windows for maximum security
             $plainTextBytes = [System.Text.Encoding]::UTF8.GetBytes($PlainText)
             $entropyBytes = if ($AdditionalEntropy) { $AdditionalEntropy } else { [byte[]]@() }
-            
+
             $encryptedBytes = [System.Security.Cryptography.ProtectedData]::Protect(
                 $plainTextBytes,
                 $entropyBytes,
                 [System.Security.Cryptography.DataProtectionScope]::CurrentUser
             )
-            
+
             $result = @{
                 Method = 'DPAPI'
                 Data = [Convert]::ToBase64String($encryptedBytes)
                 Entropy = if ($AdditionalEntropy) { [Convert]::ToBase64String($AdditionalEntropy) } else { $null }
             }
-            
+
             Write-CustomLog -Level 'DEBUG' -Message "String encrypted using DPAPI" -Category "Security"
             return ($result | ConvertTo-Json -Compress)
         }
         else {
             # Use AES-256-CBC on Linux/macOS (more compatible than GCM)
             $plainTextBytes = [System.Text.Encoding]::UTF8.GetBytes($PlainText)
-            
+
             # Generate deterministic key from machine characteristics
             $machineKey = Get-MachineKey
             $salt = [byte[]]::new(16)
             [System.Security.Cryptography.RandomNumberGenerator]::Fill($salt)
-            
+
             # Use PBKDF2 for key derivation
             $rfc2898 = [System.Security.Cryptography.Rfc2898DeriveBytes]::new($machineKey, $salt, 100000, [System.Security.Cryptography.HashAlgorithmName]::SHA256)
             $key = $rfc2898.GetBytes(32)  # 256-bit key
             $iv = $rfc2898.GetBytes(16)   # 128-bit IV
             $rfc2898.Dispose()
-            
+
             # Encrypt using AES-256-CBC
             $aes = [System.Security.Cryptography.Aes]::Create()
             $aes.KeySize = 256
@@ -373,13 +378,13 @@ function Protect-String {
             $aes.Padding = [System.Security.Cryptography.PaddingMode]::PKCS7
             $aes.Key = $key
             $aes.IV = $iv
-            
+
             $encryptor = $aes.CreateEncryptor()
             $encryptedBytes = $encryptor.TransformFinalBlock($plainTextBytes, 0, $plainTextBytes.Length)
-            
+
             $encryptor.Dispose()
             $aes.Dispose()
-            
+
             $result = @{
                 Method = 'AES-256-CBC'
                 Salt = [Convert]::ToBase64String($salt)
@@ -387,7 +392,7 @@ function Protect-String {
                 Ciphertext = [Convert]::ToBase64String($encryptedBytes)
                 Entropy = if ($AdditionalEntropy) { [Convert]::ToBase64String($AdditionalEntropy) } else { $null }
             }
-            
+
             Write-CustomLog -Level 'DEBUG' -Message "String encrypted using AES-256-CBC" -Category "Security"
             return ($result | ConvertTo-Json -Compress)
         }
@@ -402,7 +407,7 @@ function Unprotect-String {
     <#
     .SYNOPSIS
         Decrypts a string that was encrypted using Protect-String.
-    
+
     .DESCRIPTION
         Decrypts data using the same method that was used for encryption.
         Automatically detects encryption method from the data structure.
@@ -411,28 +416,28 @@ function Unprotect-String {
     param(
         [Parameter(Mandatory = $true)]
         [string]$EncryptedText,
-        
+
         [Parameter(Mandatory = $false)]
         [byte[]]$AdditionalEntropy
     )
 
     try {
         Write-CustomLog -Level 'DEBUG' -Message "Starting string decryption" -Category "Security"
-        
+
         # Parse the encrypted data structure
         $encryptedData = $EncryptedText | ConvertFrom-Json
-        
+
         if ($encryptedData.Method -eq 'DPAPI') {
             # Decrypt using DPAPI
             $encryptedBytes = [Convert]::FromBase64String($encryptedData.Data)
             $entropyBytes = if ($encryptedData.Entropy) { [Convert]::FromBase64String($encryptedData.Entropy) } else { [byte[]]@() }
-            
+
             $decryptedBytes = [System.Security.Cryptography.ProtectedData]::Unprotect(
                 $encryptedBytes,
                 $entropyBytes,
                 [System.Security.Cryptography.DataProtectionScope]::CurrentUser
             )
-            
+
             $plainText = [System.Text.Encoding]::UTF8.GetString($decryptedBytes)
             Write-CustomLog -Level 'DEBUG' -Message "String decrypted using DPAPI" -Category "Security"
             return $plainText
@@ -442,13 +447,13 @@ function Unprotect-String {
             $salt = [Convert]::FromBase64String($encryptedData.Salt)
             $iv = [Convert]::FromBase64String($encryptedData.IV)
             $ciphertext = [Convert]::FromBase64String($encryptedData.Ciphertext)
-            
+
             # Regenerate the same key using machine key and salt
             $machineKey = Get-MachineKey
             $rfc2898 = [System.Security.Cryptography.Rfc2898DeriveBytes]::new($machineKey, $salt, 100000, [System.Security.Cryptography.HashAlgorithmName]::SHA256)
             $key = $rfc2898.GetBytes(32)  # 256-bit key
             $rfc2898.Dispose()
-            
+
             # Decrypt using AES-256-CBC
             $aes = [System.Security.Cryptography.Aes]::Create()
             $aes.KeySize = 256
@@ -456,13 +461,13 @@ function Unprotect-String {
             $aes.Padding = [System.Security.Cryptography.PaddingMode]::PKCS7
             $aes.Key = $key
             $aes.IV = $iv
-            
+
             $decryptor = $aes.CreateDecryptor()
             $plainTextBytes = $decryptor.TransformFinalBlock($ciphertext, 0, $ciphertext.Length)
-            
+
             $decryptor.Dispose()
             $aes.Dispose()
-            
+
             $plainText = [System.Text.Encoding]::UTF8.GetString($plainTextBytes)
             Write-CustomLog -Level 'DEBUG' -Message "String decrypted using AES-256-CBC" -Category "Security"
             return $plainText
@@ -484,14 +489,14 @@ function Get-MachineKey {
     <#
     .SYNOPSIS
         Generates a machine-specific key for encryption.
-    
+
     .DESCRIPTION
         Creates a deterministic key based on machine characteristics.
         This ensures the same key is generated on the same machine.
     #>
     [CmdletBinding()]
     param()
-    
+
     try {
         # Combine multiple machine characteristics
         $machineInfo = @(
@@ -500,7 +505,7 @@ function Get-MachineKey {
             (Get-Location).Path
             $PSVersionTable.PSVersion.ToString()
         )
-        
+
         # Add platform-specific identifiers
         if ($IsLinux) {
             $machineInfo += (Get-Content '/proc/sys/kernel/random/boot_id' -ErrorAction SilentlyContinue) ?? 'linux-unknown'
@@ -508,12 +513,12 @@ function Get-MachineKey {
         elseif ($IsMacOS) {
             $machineInfo += (system_profiler SPHardwareDataType | grep 'Serial Number' | awk '{print $NF}' 2>/dev/null) ?? 'macos-unknown'
         }
-        
+
         $combinedInfo = $machineInfo -join '|'
         $hash = [System.Security.Cryptography.SHA256]::Create()
         $hashBytes = $hash.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($combinedInfo))
         $hash.Dispose()
-        
+
         return $hashBytes
     }
     catch {
@@ -527,7 +532,7 @@ function Get-AllCredentials {
     <#
     .SYNOPSIS
         Lists all stored credentials with metadata.
-    
+
     .DESCRIPTION
         Returns a list of all credentials in the credential store with their metadata.
         Does not include sensitive data, only metadata for management purposes.
@@ -536,41 +541,41 @@ function Get-AllCredentials {
     param(
         [Parameter()]
         [switch]$IncludeExpired,
-        
+
         [Parameter()]
         [string]$FilterType
     )
-    
+
     try {
         $storagePath = Get-CredentialStoragePath
-        
+
         if (-not (Test-Path $storagePath)) {
             Write-CustomLog -Level 'DEBUG' -Message "Credential storage path does not exist" -Category "Security"
             return @()
         }
-        
+
         $credentialFiles = Get-ChildItem -Path $storagePath -Filter "*.json" -File
         $credentials = @()
-        
+
         foreach ($file in $credentialFiles) {
             try {
                 $credentialName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
-                
+
                 # Skip backup files
                 if ($credentialName -like "*-backup-*") {
                     continue
                 }
-                
+
                 $result = Retrieve-CredentialSecurely -CredentialName $credentialName -SkipIntegrityCheck
-                
+
                 if ($result.Success) {
                     $cred = $result.Credential
-                    
+
                     # Apply filters
                     if ($FilterType -and $cred.Type -ne $FilterType) {
                         continue
                     }
-                    
+
                     # Check expiration
                     $isExpired = $false
                     if ($cred.Metadata -and $cred.Metadata.ExpiresOn) {
@@ -579,11 +584,11 @@ function Get-AllCredentials {
                             $isExpired = $expirationDate -lt (Get-Date)
                         }
                     }
-                    
+
                     if ($isExpired -and -not $IncludeExpired) {
                         continue
                     }
-                    
+
                     # Create summary object (no sensitive data)
                     $credentialSummary = @{
                         Name = $cred.Name
@@ -598,7 +603,7 @@ function Get-AllCredentials {
                         FileSize = $file.Length
                         LastAccessed = $file.LastAccessTime
                     }
-                    
+
                     $credentials += $credentialSummary
                 }
             }
@@ -606,7 +611,7 @@ function Get-AllCredentials {
                 Write-CustomLog -Level 'WARN' -Message "Failed to process credential file $($file.Name): $($_.Exception.Message)" -Category "Security"
             }
         }
-        
+
         Write-CustomLog -Level 'DEBUG' -Message "Found $($credentials.Count) credentials" -Category "Security"
         return $credentials
     }
@@ -620,23 +625,24 @@ function Test-CredentialIntegrity {
     <#
     .SYNOPSIS
         Validates the integrity of all credentials in the store.
-    
+
     .DESCRIPTION
         Performs comprehensive integrity checks on all stored credentials,
         including file permissions, encryption validation, and metadata consistency.
     #>
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'CredentialName', Justification = 'CredentialName is an identifier string, not sensitive credential data')]
     param(
         [Parameter()]
         [string]$CredentialName,
-        
+
         [Parameter()]
         [switch]$FixIssues
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Starting credential integrity check" -Category "Security"
-        
+
         $results = @{
             TotalCredentials = 0
             ValidCredentials = 0
@@ -644,19 +650,19 @@ function Test-CredentialIntegrity {
             Issues = @()
             FixedIssues = @()
         }
-        
+
         $credentialsToCheck = if ($CredentialName) {
             @(@{ Name = $CredentialName })
         } else {
             Get-AllCredentials -IncludeExpired
         }
-        
+
         foreach ($cred in $credentialsToCheck) {
             $results.TotalCredentials++
             $credName = if ($CredentialName) { $CredentialName } else { $cred.Name }
-            
+
             Write-CustomLog -Level 'DEBUG' -Message "Checking credential: $credName" -Category "Security"
-            
+
             # Test basic existence and decryption
             if (Test-SecureCredential -CredentialName $credName -ValidateContent -Quiet) {
                 $results.ValidCredentials++
@@ -666,13 +672,13 @@ function Test-CredentialIntegrity {
                 $issue = "Credential validation failed: $credName"
                 $results.Issues += $issue
                 Write-CustomLog -Level 'WARN' -Message $issue -Category "Security"
-                
+
                 if ($FixIssues) {
                     # Attempt to fix common issues
                     try {
                         $storagePath = Get-CredentialStoragePath
                         $credentialFile = Join-Path $storagePath "$credName.json"
-                        
+
                         if (Test-Path $credentialFile) {
                             # Try to fix file permissions
                             if ($IsWindows -or $PSVersionTable.PSEdition -eq 'Desktop') {
@@ -688,7 +694,7 @@ function Test-CredentialIntegrity {
                             } else {
                                 chmod 600 $credentialFile
                             }
-                            
+
                             $results.FixedIssues += "Fixed file permissions for: $credName"
                             Write-CustomLog -Level 'INFO' -Message "Fixed file permissions for credential: $credName" -Category "Security"
                         }
@@ -700,7 +706,7 @@ function Test-CredentialIntegrity {
                 }
             }
         }
-        
+
         # Summary
         Write-CustomLog -Level 'INFO' -Message "Integrity check completed" -Context @{
             TotalCredentials = $results.TotalCredentials
@@ -709,7 +715,7 @@ function Test-CredentialIntegrity {
             IssuesFound = $results.Issues.Count
             IssuesFixed = $results.FixedIssues.Count
         } -Category "Security"
-        
+
         return $results
     }
     catch {
@@ -722,7 +728,7 @@ function Backup-CredentialStore {
     <#
     .SYNOPSIS
         Creates a backup of the entire credential store.
-    
+
     .DESCRIPTION
         Creates a secure backup of all credentials with metadata preservation
         and optional compression.
@@ -731,17 +737,17 @@ function Backup-CredentialStore {
     param(
         [Parameter(Mandatory)]
         [string]$BackupPath,
-        
+
         [Parameter()]
         [switch]$IncludeSecrets,
-        
+
         [Parameter()]
         [switch]$Compress
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Starting credential store backup" -Category "Security"
-        
+
         $backupData = @{
             BackupInfo = @{
                 CreatedBy = $env:USERNAME ?? $env:USER ?? 'unknown'
@@ -752,9 +758,9 @@ function Backup-CredentialStore {
             }
             Credentials = @()
         }
-        
+
         $allCredentials = Get-AllCredentials -IncludeExpired
-        
+
         foreach ($cred in $allCredentials) {
             try {
                 if ($IncludeSecrets) {
@@ -780,29 +786,29 @@ function Backup-CredentialStore {
                 Write-CustomLog -Level 'WARN' -Message "Failed to backup credential $($cred.Name): $($_.Exception.Message)" -Category "Security"
             }
         }
-        
+
         # Ensure backup directory exists
         $backupDir = Split-Path $BackupPath -Parent
         if ($backupDir -and -not (Test-Path $backupDir)) {
             New-Item -Path $backupDir -ItemType Directory -Force | Out-Null
         }
-        
+
         # Save backup
         if ($Compress) {
             $jsonData = $backupData | ConvertTo-Json -Depth 10 -Compress
         } else {
             $jsonData = $backupData | ConvertTo-Json -Depth 10
         }
-        
+
         Set-Content -Path $BackupPath -Value $jsonData -Encoding UTF8
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "Credential store backup completed" -Context @{
             BackupPath = $BackupPath
             CredentialCount = $backupData.Credentials.Count
             IncludesSecrets = $IncludeSecrets.IsPresent
             BackupSize = (Get-Item $BackupPath).Length
         } -Category "Security"
-        
+
         return @{
             Success = $true
             BackupPath = $BackupPath

@@ -63,18 +63,18 @@ function Start-SystemMonitoring {
         if ($EnableWebhooks -and -not $WebhookUrl) {
             throw "WebhookUrl is required when EnableWebhooks is specified"
         }
-        
+
         Write-CustomLog -Message "Starting system monitoring with profile: $MonitoringProfile" -Level "INFO"
-        
+
         # Check if monitoring is already running
         if ($script:MonitoringJob -and $script:MonitoringJob.State -eq 'Running') {
             Write-CustomLog -Message "Monitoring is already running. Stop it first with Stop-SystemMonitoring" -Level "WARNING"
             return
         }
-        
+
         # Load baselines if available
         Load-PerformanceBaselines
-        
+
         # Configure monitoring settings
         $monitoringConfig = Get-MonitoringProfileConfig -Profile $MonitoringProfile
         $monitoringConfig.AlertThreshold = $AlertThreshold
@@ -89,44 +89,44 @@ function Start-SystemMonitoring {
             # Create monitoring job
             $script:MonitoringJob = Start-Job -Name "AitherZero-SystemMonitoring" -ScriptBlock {
                 param($Config, $ModulePath, $ProjectRoot)
-                
+
                 # Import required modules in job
                 Import-Module (Join-Path $ModulePath "SystemMonitoring") -Force
                 Import-Module (Join-Path $ProjectRoot "aither-core/modules/Logging") -Force
-                
+
                 # Initialize monitoring
                 $startTime = Get-Date
                 $endTime = if ($Config.Duration -eq 0) { [DateTime]::MaxValue } else { $startTime.AddMinutes($Config.Duration) }
                 $alertHistory = @()
                 $performanceLog = @()
-                
+
                 Write-CustomLog -Message "Monitoring session started - Duration: $(if ($Config.Duration -eq 0) { 'Continuous' } else { "$($Config.Duration) minutes" })" -Level "INFO"
-                
+
                 # Main monitoring loop
                 while ((Get-Date) -lt $endTime) {
                     try {
                         # Collect metrics based on profile
                         $metrics = Get-SystemPerformance -MetricType $Config.MetricTypes -Duration $Config.SampleDuration
-                        
+
                         # Check against thresholds and baselines
                         $alerts = Test-PerformanceThresholds -Metrics $metrics -Config $Config
-                        
+
                         # Process alerts
                         if ($alerts.Count -gt 0) {
                             foreach ($alert in $alerts) {
                                 # Log alert
                                 Write-CustomLog -Message "ALERT: $($alert.Message)" -Level $alert.Level
-                                
+
                                 # Add to history
                                 $alertHistory += $alert
-                                
+
                                 # Send webhook if enabled and critical
                                 if ($Config.EnableWebhooks -and $alert.Level -eq 'CRITICAL') {
                                     Send-WebhookAlert -Alert $alert -Url $Config.WebhookUrl
                                 }
                             }
                         }
-                        
+
                         # Log performance data if enabled
                         if ($Config.LogPerformance) {
                             $performanceLog += @{
@@ -134,14 +134,14 @@ function Start-SystemMonitoring {
                                 Metrics = $metrics
                                 Alerts = $alerts
                             }
-                            
+
                             # Write to file every 10 samples
                             if ($performanceLog.Count % 10 -eq 0) {
                                 Export-PerformanceLog -Data $performanceLog
                                 $performanceLog = @()  # Clear buffer
                             }
                         }
-                        
+
                         # Update monitoring data for dashboard
                         $script:MonitoringData = @{
                             Status = "Active"
@@ -151,22 +151,22 @@ function Start-SystemMonitoring {
                             AlertCount = $alertHistory.Count
                             RecentAlerts = $alertHistory | Select-Object -Last 10
                         }
-                        
+
                         # Wait for next sample
                         Start-Sleep -Seconds $Config.SampleInterval
-                        
+
                     } catch {
                         Write-CustomLog -Message "Error in monitoring loop: $($_.Exception.Message)" -Level "ERROR"
                     }
                 }
-                
+
                 # Final log write
                 if ($Config.LogPerformance -and $performanceLog.Count -gt 0) {
                     Export-PerformanceLog -Data $performanceLog
                 }
-                
+
                 Write-CustomLog -Message "Monitoring session completed - Total alerts: $($alertHistory.Count)" -Level "INFO"
-                
+
                 # Return summary
                 return @{
                     StartTime = $startTime
@@ -175,13 +175,13 @@ function Start-SystemMonitoring {
                     AlertsByLevel = $alertHistory | Group-Object Level | Select-Object Name, Count
                     FinalMetrics = $metrics
                 }
-                
+
             } -ArgumentList $monitoringConfig, $script:ModuleRoot, $script:ProjectRoot
-            
+
             # Store job reference
             $script:MonitoringStartTime = Get-Date
             $script:MonitoringConfig = $monitoringConfig
-            
+
             # Return monitoring handle
             return @{
                 JobId = $script:MonitoringJob.Id
@@ -201,7 +201,7 @@ function Start-SystemMonitoring {
 # Helper function to get monitoring profile configuration
 function Get-MonitoringProfileConfig {
     param([string]$Profile)
-    
+
     $profiles = @{
         Basic = @{
             MetricTypes = 'System'
@@ -245,9 +245,9 @@ function Get-MonitoringProfileConfig {
             Thresholds = @{}  # Will be populated from baselines
         }
     }
-    
+
     $config = $profiles[$Profile]
-    
+
     # For custom profile, load thresholds from baselines
     if ($Profile -eq 'Custom' -and $script:PerformanceBaselines) {
         foreach ($baseline in $script:PerformanceBaselines.Values) {
@@ -258,17 +258,17 @@ function Get-MonitoringProfileConfig {
             }
         }
     }
-    
+
     return $config
 }
 
 # Helper function to test performance against thresholds
 function Test-PerformanceThresholds {
     param($Metrics, $Config)
-    
+
     $alerts = @()
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    
+
     # Check system metrics
     if ($Metrics.System) {
         # CPU check
@@ -294,7 +294,7 @@ function Test-PerformanceThresholds {
                 }
             }
         }
-        
+
         # Memory check
         if ($Metrics.System.Memory -and $Config.Thresholds.Memory) {
             $memUsage = $Metrics.System.Memory.Average
@@ -319,7 +319,7 @@ function Test-PerformanceThresholds {
             }
         }
     }
-    
+
     # Check SLA compliance
     if ($Metrics.SLACompliance -and $Metrics.SLACompliance.Overall -eq "Fail") {
         foreach ($slaItem in $Metrics.SLACompliance.Details.Keys) {
@@ -335,21 +335,21 @@ function Test-PerformanceThresholds {
             }
         }
     }
-    
+
     # Filter alerts based on threshold setting
     $alertLevels = switch ($Config.AlertThreshold) {
         'Low' { @('INFO', 'WARNING', 'CRITICAL') }
         'Medium' { @('WARNING', 'CRITICAL') }
         'High' { @('CRITICAL') }
     }
-    
+
     return $alerts | Where-Object { $_.Level -in $alertLevels }
 }
 
 # Helper function to send webhook alerts
 function Send-WebhookAlert {
     param($Alert, $Url)
-    
+
     try {
         $payload = @{
             text = "AitherZero Performance Alert"
@@ -375,7 +375,7 @@ function Send-WebhookAlert {
                 }
             )
         }
-        
+
         $response = Invoke-RestMethod -Uri $Url -Method Post -Body ($payload | ConvertTo-Json -Depth 5) -ContentType 'application/json'
         Write-CustomLog -Message "Webhook alert sent successfully" -Level "DEBUG"
     } catch {
@@ -386,15 +386,15 @@ function Send-WebhookAlert {
 # Helper function to export performance log
 function Export-PerformanceLog {
     param($Data)
-    
+
     try {
         $logPath = Join-Path $script:ProjectRoot "logs/performance"
         if (-not (Test-Path $logPath)) {
             New-Item -Path $logPath -ItemType Directory -Force | Out-Null
         }
-        
+
         $logFile = Join-Path $logPath "performance-$(Get-Date -Format 'yyyyMMdd').json"
-        
+
         # Append to existing file or create new
         if (Test-Path $logFile) {
             $existing = Get-Content $logFile | ConvertFrom-Json
@@ -403,7 +403,7 @@ function Export-PerformanceLog {
         } else {
             $Data | ConvertTo-Json -Depth 10 | Out-File -FilePath $logFile -Encoding UTF8
         }
-        
+
         Write-CustomLog -Message "Performance data logged to: $logFile" -Level "DEBUG"
     } catch {
         Write-CustomLog -Message "Error exporting performance log: $($_.Exception.Message)" -Level "ERROR"
@@ -416,7 +416,7 @@ function Load-PerformanceBaselines {
         $baselinePath = Join-Path $script:ProjectRoot "configs/performance"
         if (Test-Path $baselinePath) {
             $baselineFiles = Get-ChildItem -Path $baselinePath -Filter "current-baseline-*.json"
-            
+
             $script:PerformanceBaselines = @{}
             foreach ($file in $baselineFiles) {
                 $baseline = Get-Content $file.FullName | ConvertFrom-Json

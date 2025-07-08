@@ -5,29 +5,29 @@
 param(
     [Parameter(Mandatory = $false)]
     [string]$ProjectRoot = (Get-Location),
-    
+
     [Parameter(Mandatory = $false)]
     [string]$OutputPath = "./duplicate-files-report.json",
-    
+
     [Parameter(Mandatory = $false)]
     [switch]$GenerateHTML,
-    
+
     [Parameter(Mandatory = $false)]
     [switch]$IncludeDocumentation,
-    
+
     [Parameter(Mandatory = $false)]
     [switch]$IncludeTests,
-    
+
     [Parameter(Mandatory = $false)]
     [switch]$IncludeCode,
-    
+
     [Parameter(Mandatory = $false)]
     [ValidateSet("High", "Medium", "Low", "All")]
     [string]$MinimumConfidence = "Medium",
-    
+
     [Parameter(Mandatory = $false)]
     [int]$DaysThreshold = 30,
-    
+
     [Parameter(Mandatory = $false)]
     [switch]$DetailedAnalysis
 )
@@ -61,32 +61,32 @@ function Get-SimilarityScore {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Name1,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$Name2
     )
-    
+
     # Normalize names for comparison (remove extensions, convert to lowercase)
     $base1 = [System.IO.Path]::GetFileNameWithoutExtension($Name1).ToLower()
     $base2 = [System.IO.Path]::GetFileNameWithoutExtension($Name2).ToLower()
-    
+
     # Calculate Levenshtein distance
     $distance = Get-LevenshteinDistance -String1 $base1 -String2 $base2
     $maxLength = [Math]::Max($base1.Length, $base2.Length)
     $levenshteinSimilarity = if ($maxLength -gt 0) { (1 - ($distance / $maxLength)) * 100 } else { 100 }
-    
+
     # Calculate common substring ratio
     $commonLength = Get-LongestCommonSubstring -String1 $base1 -String2 $base2
     $substringRatio = if ($maxLength -gt 0) { ($commonLength / $maxLength) * 100 } else { 100 }
-    
+
     # Calculate word similarity (for hyphenated or camelCase names)
     $words1 = Split-IntoWords -Text $base1
     $words2 = Split-IntoWords -Text $base2
     $wordSimilarity = Get-WordSetSimilarity -Words1 $words1 -Words2 $words2
-    
+
     # Combined score (weighted average)
     $combinedScore = ($levenshteinSimilarity * 0.4) + ($substringRatio * 0.3) + ($wordSimilarity * 0.3)
-    
+
     return [Math]::Round($combinedScore, 1)
 }
 
@@ -99,22 +99,22 @@ function Get-LevenshteinDistance {
     param(
         [Parameter(Mandatory = $true)]
         [string]$String1,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$String2
     )
-    
+
     $len1 = $String1.Length
     $len2 = $String2.Length
-    
+
     if ($len1 -eq 0) { return $len2 }
     if ($len2 -eq 0) { return $len1 }
-    
+
     $matrix = New-Object 'int[,]' ($len1 + 1), ($len2 + 1)
-    
+
     for ($i = 0; $i -le $len1; $i++) { $matrix[$i, 0] = $i }
     for ($j = 0; $j -le $len2; $j++) { $matrix[0, $j] = $j }
-    
+
     for ($i = 1; $i -le $len1; $i++) {
         for ($j = 1; $j -le $len2; $j++) {
             $cost = if ($String1[$i-1] -eq $String2[$j-1]) { 0 } else { 1 }
@@ -124,7 +124,7 @@ function Get-LevenshteinDistance {
             )
         }
     }
-    
+
     return $matrix[$len1, $len2]
 }
 
@@ -137,15 +137,15 @@ function Get-LongestCommonSubstring {
     param(
         [Parameter(Mandatory = $true)]
         [string]$String1,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$String2
     )
-    
+
     $len1 = $String1.Length
     $len2 = $String2.Length
     $maxLength = 0
-    
+
     for ($i = 0; $i -lt $len1; $i++) {
         for ($j = 0; $j -lt $len2; $j++) {
             $length = 0
@@ -157,7 +157,7 @@ function Get-LongestCommonSubstring {
             }
         }
     }
-    
+
     return $maxLength
 }
 
@@ -171,10 +171,10 @@ function Split-IntoWords {
         [Parameter(Mandatory = $true)]
         [string]$Text
     )
-    
+
     # Split on common separators
     $words = $Text -split '[-_\s\.]' | Where-Object { $_ -ne '' }
-    
+
     # Further split camelCase words
     $expandedWords = @()
     foreach ($word in $words) {
@@ -182,7 +182,7 @@ function Split-IntoWords {
         $camelSplit = $word -creplace '([a-z])([A-Z])', '$1 $2' -split '\s+'
         $expandedWords += $camelSplit | Where-Object { $_ -ne '' }
     }
-    
+
     return $expandedWords | ForEach-Object { $_.ToLower() }
 }
 
@@ -195,17 +195,17 @@ function Get-WordSetSimilarity {
     param(
         [Parameter(Mandatory = $true)]
         [string[]]$Words1,
-        
+
         [Parameter(Mandatory = $true)]
         [string[]]$Words2
     )
-    
+
     if ($Words1.Count -eq 0 -and $Words2.Count -eq 0) { return 100 }
     if ($Words1.Count -eq 0 -or $Words2.Count -eq 0) { return 0 }
-    
+
     $intersection = $Words1 | Where-Object { $Words2 -contains $_ }
     $union = ($Words1 + $Words2) | Sort-Object -Unique
-    
+
     return ($intersection.Count / $union.Count) * 100
 }
 
@@ -218,11 +218,11 @@ function Test-AIGeneratedPattern {
     param(
         [Parameter(Mandatory = $true)]
         [string]$FileName,
-        
+
         [Parameter(Mandatory = $false)]
         [string]$BaseName = ""
     )
-    
+
     $suspiciousPatterns = @{
         "AI_VARIANT_WORDS" = @("fix", "fixed", "enhanced", "improved", "updated", "new", "revised", "modified", "corrected", "optimized", "refactored", "better", "final", "clean", "working", "temp", "tmp", "backup", "copy", "duplicate", "alternative", "alt", "version", "ver", "v2", "v3", "latest", "current")
         "AI_SUFFIXES" = @("-fix", "-fixed", "-enhanced", "-improved", "-updated", "-new", "-revised", "-modified", "-corrected", "-optimized", "-refactored", "-better", "-final", "-clean", "-working", "-temp", "-backup", "-copy", "-alt", "-v2", "-v3", "-latest")
@@ -230,11 +230,11 @@ function Test-AIGeneratedPattern {
         "TIMESTAMP_PATTERNS" = @('\d{4}-\d{2}-\d{2}', '\d{8}', '\d{6}', '\d{4}\d{2}\d{2}')
         "NUMBER_SUFFIXES" = @('\d+$', '-\d+$', '_\d+$', '\(\d+\)$')
     }
-    
+
     $baseName = [System.IO.Path]::GetFileNameWithoutExtension($FileName).ToLower()
     $confidence = 0
     $detectedPatterns = @()
-    
+
     # Check for AI variant words
     foreach ($word in $suspiciousPatterns["AI_VARIANT_WORDS"]) {
         if ($baseName -match $word) {
@@ -242,7 +242,7 @@ function Test-AIGeneratedPattern {
             $detectedPatterns += "Contains word: '$word'"
         }
     }
-    
+
     # Check for AI suffixes
     foreach ($suffix in $suspiciousPatterns["AI_SUFFIXES"]) {
         if ($baseName.EndsWith($suffix)) {
@@ -250,7 +250,7 @@ function Test-AIGeneratedPattern {
             $detectedPatterns += "Ends with: '$suffix'"
         }
     }
-    
+
     # Check for AI prefixes
     foreach ($prefix in $suspiciousPatterns["AI_PREFIXES"]) {
         if ($baseName.StartsWith($prefix)) {
@@ -258,7 +258,7 @@ function Test-AIGeneratedPattern {
             $detectedPatterns += "Starts with: '$prefix'"
         }
     }
-    
+
     # Check for timestamp patterns
     foreach ($pattern in $suspiciousPatterns["TIMESTAMP_PATTERNS"]) {
         if ($baseName -match $pattern) {
@@ -266,7 +266,7 @@ function Test-AIGeneratedPattern {
             $detectedPatterns += "Contains timestamp pattern"
         }
     }
-    
+
     # Check for number suffixes
     foreach ($pattern in $suspiciousPatterns["NUMBER_SUFFIXES"]) {
         if ($baseName -match $pattern) {
@@ -274,16 +274,16 @@ function Test-AIGeneratedPattern {
             $detectedPatterns += "Has numbered suffix"
         }
     }
-    
+
     # Check for parenthetical additions
     if ($baseName -match '\([^)]+\)') {
         $confidence += 15
         $detectedPatterns += "Contains parenthetical text"
     }
-    
+
     # Cap confidence at 100
     $confidence = [Math]::Min(100, $confidence)
-    
+
     return @{
         confidence = $confidence
         patterns = $detectedPatterns
@@ -300,22 +300,22 @@ function Get-DuplicateFileAnalysis {
     param(
         [Parameter(Mandatory = $true)]
         [string]$ProjectRoot,
-        
+
         [Parameter(Mandatory = $false)]
         [bool]$IncludeDocumentation = $true,
-        
+
         [Parameter(Mandatory = $false)]
         [bool]$IncludeTests = $true,
-        
+
         [Parameter(Mandatory = $false)]
         [bool]$IncludeCode = $true,
-        
+
         [Parameter(Mandatory = $false)]
         [int]$DaysThreshold = 30
     )
-    
+
     Write-Log "Starting comprehensive duplicate file analysis..." -Level "INFO"
-    
+
     $analysis = @{
         scanTime = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
         projectRoot = $ProjectRoot
@@ -343,25 +343,25 @@ function Get-DuplicateFileAnalysis {
             totalFlagged = 0
         }
     }
-    
+
     # Define file type patterns
     $fileTypePatterns = @{
         documentation = @("*.md", "*.txt", "*.rst", "*.adoc")
         tests = @("*.Tests.ps1", "*Test*.ps1", "*Spec*.ps1")
         code = @("*.ps1", "*.psm1", "*.psd1", "*.py", "*.js", "*.ts", "*.cs", "*.go", "*.java")
     }
-    
+
     # Build file inclusion list
     $includePatterns = @()
     if ($IncludeDocumentation) { $includePatterns += $fileTypePatterns.documentation }
     if ($IncludeTests) { $includePatterns += $fileTypePatterns.tests }
     if ($IncludeCode) { $includePatterns += $fileTypePatterns.code }
-    
+
     if ($includePatterns.Count -eq 0) {
         Write-Log "No file types selected for analysis" -Level "WARN"
         return $analysis
     }
-    
+
     # Get all relevant files
     $allFiles = @()
     foreach ($pattern in $includePatterns) {
@@ -371,46 +371,46 @@ function Get-DuplicateFileAnalysis {
         }
         $allFiles += $files
     }
-    
+
     $analysis.results.totalFilesScanned = $allFiles.Count
     Write-Log "Scanning $($allFiles.Count) files for duplicates..." -Level "INFO"
-    
+
     # Group files by directory for more focused comparison
     $fileGroups = $allFiles | Group-Object { $_.DirectoryName }
-    
+
     foreach ($group in $fileGroups) {
         $directoryFiles = @($group.Group)  # Force array
-        
+
         # Skip if only one file in directory
         if ($directoryFiles.Count -lt 2) { continue }
-        
+
         # Compare each file with every other file in the directory
         for ($i = 0; $i -lt $directoryFiles.Count; $i++) {
             for ($j = $i + 1; $j -lt $directoryFiles.Count; $j++) {
                 $file1 = $directoryFiles[$i]
                 $file2 = $directoryFiles[$j]
-                
+
                 # Skip if same file
                 if ($file1.FullName -eq $file2.FullName) { continue }
-                
+
                 # Calculate similarity
                 $similarity = Get-SimilarityScore -Name1 $file1.Name -Name2 $file2.Name
-                
+
                 if ($similarity -gt 70) {
                     try {
                         # Check AI generation patterns
                         $aiPattern1 = Test-AIGeneratedPattern -FileName $file1.Name
                         $aiPattern2 = Test-AIGeneratedPattern -FileName $file2.Name
-                        
+
                         # Determine which is likely the original vs duplicate
                         $olderFile = if ($file1.LastWriteTime -lt $file2.LastWriteTime) { $file1 } else { $file2 }
                         $newerFile = if ($file1.LastWriteTime -ge $file2.LastWriteTime) { $file1 } else { $file2 }
-                        
+
                         # Ensure we have proper DateTime objects and calculate time delta
                         $olderTime = $olderFile.LastWriteTime
                         $newerTime = $newerFile.LastWriteTime
                         $timeDelta = ($newerTime - $olderTime).TotalDays
-                    
+
                     $duplicateGroup = @{
                         id = [System.Guid]::NewGuid().ToString("N").Substring(0, 8)
                         similarity = $similarity
@@ -440,32 +440,32 @@ function Get-DuplicateFileAnalysis {
                         recommendedAction = Get-RecommendedAction -Similarity $similarity -TimeDelta $timeDelta -AIPattern1 $aiPattern1 -AIPattern2 $aiPattern2
                         category = Get-DuplicateCategory -File1 $file1 -File2 $file2
                     }
-                    
+
                     $analysis.results.duplicateGroups += $duplicateGroup
-                    
+
                     # Update summary counters
                     switch ($duplicateGroup.confidence) {
                         { $_ -gt 80 } { $analysis.summary.highConfidenceDuplicates++ }
                         { $_ -gt 60 } { $analysis.summary.mediumConfidenceDuplicates++ }
                         default { $analysis.summary.lowConfidenceDuplicates++ }
                     }
-                    
+
                     if ($duplicateGroup.isRecentDuplicate) {
                         $analysis.summary.recentDuplicates++
                     }
-                    
+
                     # Track AI-generated candidates
                     if ($aiPattern1.isLikelyAIGenerated -or $aiPattern2.isLikelyAIGenerated) {
                         $analysis.summary.aiGeneratedCandidates++
                     }
-                    
+
                     } catch {
                         Write-Log "Error processing duplicate comparison for $($file1.Name) vs $($file2.Name): $($_.Exception.Message)" -Level "WARN"
                     }
                 }
             }
         }
-        
+
         # Also check for single files with AI patterns (potential orphaned duplicates)
         foreach ($file in $directoryFiles) {
             $aiPattern = Test-AIGeneratedPattern -FileName $file.Name
@@ -482,11 +482,11 @@ function Get-DuplicateFileAnalysis {
             }
         }
     }
-    
+
     $analysis.summary.totalFlagged = $analysis.results.duplicateGroups.Count + $analysis.results.aiGeneratedCandidates.Count
-    
+
     Write-Log "Duplicate analysis completed: $($analysis.summary.totalFlagged) items flagged for review" -Level "SUCCESS"
-    
+
     return $analysis
 }
 
@@ -499,19 +499,19 @@ function Get-DuplicateConfidence {
     param(
         [Parameter(Mandatory = $true)]
         [double]$Similarity,
-        
+
         [Parameter(Mandatory = $true)]
         [double]$TimeDelta,
-        
+
         [Parameter(Mandatory = $true)]
         [int]$AIConfidence1,
-        
+
         [Parameter(Mandatory = $true)]
         [int]$AIConfidence2
     )
-    
+
     $baseConfidence = $Similarity
-    
+
     # Boost confidence if one file has high AI generation likelihood
     $maxAIConfidence = [Math]::Max($AIConfidence1, $AIConfidence2)
     if ($maxAIConfidence -gt 70) {
@@ -519,14 +519,14 @@ function Get-DuplicateConfidence {
     } elseif ($maxAIConfidence -gt 50) {
         $baseConfidence += 10
     }
-    
+
     # Boost confidence for recent duplicates
     if ($TimeDelta -le 7) {
         $baseConfidence += 10
     } elseif ($TimeDelta -le 30) {
         $baseConfidence += 5
     }
-    
+
     return [Math]::Min(100, [Math]::Round($baseConfidence, 1))
 }
 
@@ -539,37 +539,37 @@ function Get-RecommendedAction {
     param(
         [Parameter(Mandatory = $true)]
         [double]$Similarity,
-        
+
         [Parameter(Mandatory = $true)]
         [double]$TimeDelta,
-        
+
         [Parameter(Mandatory = $true)]
         [hashtable]$AIPattern1,
-        
+
         [Parameter(Mandatory = $true)]
         [hashtable]$AIPattern2
     )
-    
+
     # High similarity + recent creation + AI patterns = likely safe to delete newer
     if ($Similarity -gt 90 -and $TimeDelta -le 7 -and ($AIPattern1.isLikelyAIGenerated -or $AIPattern2.isLikelyAIGenerated)) {
         return "HIGH PRIORITY: Review and likely delete newer AI-generated duplicate"
     }
-    
+
     # High similarity + AI patterns = review needed
     if ($Similarity -gt 85 -and ($AIPattern1.isLikelyAIGenerated -or $AIPattern2.isLikelyAIGenerated)) {
         return "Review for consolidation - likely AI-generated duplicate"
     }
-    
+
     # Recent + AI patterns = investigate
     if ($TimeDelta -le 14 -and ($AIPattern1.confidence -gt 60 -or $AIPattern2.confidence -gt 60)) {
         return "Recent potential AI duplicate - investigate and compare content"
     }
-    
+
     # High similarity = manual review
     if ($Similarity -gt 80) {
         return "Manual review recommended - high similarity detected"
     }
-    
+
     return "Monitor - moderate similarity detected"
 }
 
@@ -582,14 +582,14 @@ function Get-DuplicateCategory {
     param(
         [Parameter(Mandatory = $true)]
         [System.IO.FileInfo]$File1,
-        
+
         [Parameter(Mandatory = $true)]
         [System.IO.FileInfo]$File2
     )
-    
+
     $ext1 = $File1.Extension.ToLower()
     $ext2 = $File2.Extension.ToLower()
-    
+
     if ($ext1 -in @('.md', '.txt', '.rst') -or $ext2 -in @('.md', '.txt', '.rst')) {
         return "Documentation"
     } elseif ($File1.Name -match 'Test' -or $File2.Name -match 'Test') {
@@ -613,9 +613,9 @@ function Get-FileCategory {
         [Parameter(Mandatory = $true)]
         [System.IO.FileInfo]$File
     )
-    
+
     $ext = $File.Extension.ToLower()
-    
+
     if ($ext -in @('.md', '.txt', '.rst')) {
         return "Documentation"
     } elseif ($File.Name -match 'Test') {
@@ -638,26 +638,26 @@ function Export-DuplicateAnalysisReport {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$Analysis,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$OutputPath,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$GenerateHTML
     )
-    
+
     try {
         # Export JSON report
         $Analysis | ConvertTo-Json -Depth 15 | Set-Content -Path $OutputPath -Encoding UTF8
         Write-Log "Duplicate analysis report exported to: $OutputPath" -Level "SUCCESS"
-        
+
         if ($GenerateHTML) {
             $htmlPath = $OutputPath -replace '\.json$', '.html'
             $htmlReport = Generate-DuplicateHTMLReport -Analysis $Analysis
             Set-Content -Path $htmlPath -Value $htmlReport -Encoding UTF8
             Write-Log "HTML report exported to: $htmlPath" -Level "SUCCESS"
         }
-        
+
     } catch {
         Write-Log "Error exporting duplicate analysis report: $($_.Exception.Message)" -Level "ERROR"
         throw
@@ -674,7 +674,7 @@ function Generate-DuplicateHTMLReport {
         [Parameter(Mandatory = $true)]
         [hashtable]$Analysis
     )
-    
+
     $html = @"
 <!DOCTYPE html>
 <html>
@@ -713,7 +713,7 @@ function Generate-DuplicateHTMLReport {
         <p><strong>Generated:</strong> $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")</p>
         <p><strong>Scan Time:</strong> $($Analysis.scanTime)</p>
         <p><strong>Files Scanned:</strong> $($Analysis.results.totalFilesScanned)</p>
-        
+
         <h2>📊 Summary</h2>
         <div class="summary">
             <div class="summary-card high-confidence">
@@ -737,7 +737,7 @@ function Generate-DuplicateHTMLReport {
                 <div class="value">$($Analysis.summary.recentDuplicates)</div>
             </div>
         </div>
-        
+
         <h2>🔄 Duplicate Groups</h2>
 "@
 
@@ -756,27 +756,27 @@ function Generate-DuplicateHTMLReport {
             </thead>
             <tbody>
 "@
-        
+
         foreach ($group in $Analysis.results.duplicateGroups) {
             $confidenceClass = switch ($group.confidence) {
                 { $_ -gt 80 } { "confidence-high" }
                 { $_ -gt 60 } { "confidence-medium" }
                 default { "confidence-low" }
             }
-            
+
             $actionClass = switch ($group.confidence) {
                 { $_ -gt 80 } { "action-high" }
                 { $_ -gt 60 } { "action-medium" }
                 default { "action-low" }
             }
-            
+
             $filesInfo = ""
             foreach ($file in $group.files) {
                 $aiInfo = if ($file.aiGeneratedConfidence -gt 50) { " (AI: $($file.aiGeneratedConfidence)%)" } else { "" }
                 $originalBadge = if ($file.isLikelyOriginal) { " [ORIGINAL]" } else { " [DUPLICATE]" }
                 $filesInfo += "<div class='file-path'>$($file.path)$originalBadge$aiInfo</div>"
             }
-            
+
             $html += @"
                 <tr class="$confidenceClass">
                     <td>$filesInfo</td>
@@ -788,7 +788,7 @@ function Generate-DuplicateHTMLReport {
                 </tr>
 "@
         }
-        
+
         $html += @"
             </tbody>
         </table>
@@ -813,7 +813,7 @@ function Generate-DuplicateHTMLReport {
             </thead>
             <tbody>
 "@
-        
+
         foreach ($candidate in $Analysis.results.aiGeneratedCandidates) {
             $patternsText = $candidate.patterns -join ", "
             $html += @"
@@ -827,7 +827,7 @@ function Generate-DuplicateHTMLReport {
                 </tr>
 "@
         }
-        
+
         $html += @"
             </tbody>
         </table>
@@ -844,7 +844,7 @@ function Generate-DuplicateHTMLReport {
             <li><strong>Minimum Similarity:</strong> $($Analysis.configuration.minimumSimilarity)%</li>
             <li><strong>Minimum AI Confidence:</strong> $($Analysis.configuration.minimumAIConfidence)%</li>
         </ul>
-        
+
         <hr>
         <p style="text-align: center; color: #7f8c8d; font-size: 12px;">
             Generated by AitherZero Duplicate File Detection System<br>
@@ -861,15 +861,15 @@ function Generate-DuplicateHTMLReport {
 # Main execution
 try {
     Write-Log "Starting AitherZero duplicate file detection..." -Level "INFO"
-    
+
     # Set default inclusion based on parameters
     $includeDoc = if ($PSBoundParameters.ContainsKey('IncludeDocumentation')) { $IncludeDocumentation.IsPresent } else { $true }
     $includeTest = if ($PSBoundParameters.ContainsKey('IncludeTests')) { $IncludeTests.IsPresent } else { $true }
     $includeCode = if ($PSBoundParameters.ContainsKey('IncludeCode')) { $IncludeCode.IsPresent } else { $true }
-    
+
     # Perform duplicate analysis
     $analysis = Get-DuplicateFileAnalysis -ProjectRoot $ProjectRoot -IncludeDocumentation $includeDoc -IncludeTests $includeTest -IncludeCode $includeCode -DaysThreshold $DaysThreshold
-    
+
     # Filter results by minimum confidence if specified
     if ($MinimumConfidence -ne "All") {
         $confidenceThreshold = switch ($MinimumConfidence) {
@@ -877,14 +877,14 @@ try {
             "Medium" { 60 }
             "Low" { 40 }
         }
-        
+
         $analysis.results.duplicateGroups = $analysis.results.duplicateGroups | Where-Object { $_.confidence -ge $confidenceThreshold }
         $analysis.results.aiGeneratedCandidates = $analysis.results.aiGeneratedCandidates | Where-Object { $_.confidence -ge $confidenceThreshold }
     }
-    
+
     # Export results
     Export-DuplicateAnalysisReport -Analysis $analysis -OutputPath $OutputPath -GenerateHTML:$GenerateHTML
-    
+
     # Display summary
     Write-Host "`n🔍 Duplicate File Detection Summary:" -ForegroundColor Cyan
     Write-Host "====================================" -ForegroundColor Cyan
@@ -895,10 +895,10 @@ try {
     Write-Host "  Medium Confidence: $($analysis.summary.mediumConfidenceDuplicates)" -ForegroundColor Yellow
     Write-Host "  Recent Duplicates: $($analysis.summary.recentDuplicates)" -ForegroundColor Blue
     Write-Host "  Total Flagged: $($analysis.summary.totalFlagged)" -ForegroundColor Magenta
-    
+
     if ($analysis.summary.totalFlagged -gt 0) {
         Write-Host "`n🚨 Action Required:" -ForegroundColor Red
-        
+
         # Show top priority items
         $highPriorityGroups = $analysis.results.duplicateGroups | Where-Object { $_.recommendedAction -match "HIGH PRIORITY" } | Select-Object -First 5
         if ($highPriorityGroups.Count -gt 0) {
@@ -909,7 +909,7 @@ try {
                 Write-Host "    - $file1 vs $file2 ($($group.similarity)% similar)" -ForegroundColor Gray
             }
         }
-        
+
         # Show AI-generated candidates
         $aiCandidates = $analysis.results.aiGeneratedCandidates | Where-Object { $_.confidence -gt 70 } | Select-Object -First 5
         if ($aiCandidates.Count -gt 0) {
@@ -921,9 +921,9 @@ try {
     } else {
         Write-Host "`n✅ No significant duplicates detected!" -ForegroundColor Green
     }
-    
+
     Write-Log "Duplicate file detection completed successfully" -Level "SUCCESS"
-    
+
 } catch {
     Write-Log "Duplicate file detection failed: $($_.Exception.Message)" -Level "ERROR"
     exit 1

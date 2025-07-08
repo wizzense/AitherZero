@@ -21,7 +21,7 @@ if (-not (Test-Path $ConfigPath)) {
 
 try {
     $config = Get-Content $ConfigPath | ConvertFrom-Json
-    
+
     Write-CustomLog "Starting core application: $($config.ApplicationName)"
 
     # Example operation
@@ -36,4 +36,3 @@ try {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-

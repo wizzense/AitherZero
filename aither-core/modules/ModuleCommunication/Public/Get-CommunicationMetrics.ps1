@@ -16,11 +16,11 @@ function Get-CommunicationMetrics {
     param(
         [Parameter()]
         [switch]$IncludeHistory,
-        
+
         [Parameter()]
         [string]$Channel
     )
-    
+
     try {
         $metrics = @{
             Timestamp = Get-Date
@@ -47,7 +47,7 @@ function Get-CommunicationMetrics {
                 MessageDeliveryRate = 0
             }
         }
-        
+
         # Channel metrics
         if ($Channel) {
             if ($script:MessageBus.Channels.ContainsKey($Channel)) {
@@ -73,12 +73,12 @@ function Get-CommunicationMetrics {
                 }
             }
         }
-        
+
         # Top APIs by call count
-        $topAPIs = $script:APIRegistry.APIs.Values | 
+        $topAPIs = $script:APIRegistry.APIs.Values |
             Sort-Object -Property CallCount -Descending |
             Select-Object -First 10
-        
+
         foreach ($api in $topAPIs) {
             $metrics.API.TopAPIs += @{
                 Name = $api.FullName
@@ -87,7 +87,7 @@ function Get-CommunicationMetrics {
                 LastCalled = $api.LastCalled
             }
         }
-        
+
         # Calculate average API execution time
         $totalTime = 0
         $totalAPIs = 0
@@ -100,14 +100,14 @@ function Get-CommunicationMetrics {
         if ($totalAPIs -gt 0) {
             $metrics.Performance.AverageAPIExecutionTime = [math]::Round($totalTime / $totalAPIs, 2)
         }
-        
+
         # Include history if requested
         if ($IncludeHistory) {
             $metrics.API.RecentCalls = @()
-            $recentCalls = @($script:APIRegistry.Metrics.CallHistory.ToArray()) | 
+            $recentCalls = @($script:APIRegistry.Metrics.CallHistory.ToArray()) |
                 Sort-Object -Property StartTime -Descending |
                 Select-Object -First 50
-                
+
             foreach ($call in $recentCalls) {
                 $metrics.API.RecentCalls += @{
                     RequestId = $call.RequestId
@@ -119,9 +119,9 @@ function Get-CommunicationMetrics {
                 }
             }
         }
-        
+
         return $metrics
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to get communication metrics: $_"
         throw

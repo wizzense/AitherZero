@@ -5,16 +5,16 @@
 param(
     [Parameter(Mandatory = $false)]
     [string]$StateFilePath = ".github/documentation-state.json",
-    
+
     [Parameter(Mandatory = $false)]
     [string]$ProjectRoot = (Get-Location),
-    
+
     [Parameter(Mandatory = $false)]
     [string[]]$TargetDirectories = @(),
-    
+
     [Parameter(Mandatory = $false)]
     [switch]$DetailedAnalysis,
-    
+
     [Parameter(Mandatory = $false)]
     [switch]$ExportChanges
 )
@@ -43,7 +43,7 @@ function Get-DirectoryContentMetrics {
     <#
     .SYNOPSIS
     Calculates comprehensive content metrics for a directory
-    
+
     .DESCRIPTION
     Analyzes file count, character count, modification dates, and content types
     to detect significant changes that warrant documentation updates
@@ -52,11 +52,11 @@ function Get-DirectoryContentMetrics {
     param(
         [Parameter(Mandatory = $true)]
         [string]$DirectoryPath,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$IncludeFileDetails
     )
-    
+
     $metrics = @{
         directoryPath = $DirectoryPath
         scanTime = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
@@ -71,12 +71,12 @@ function Get-DirectoryContentMetrics {
         significantFiles = @()
         contentHash = ""
     }
-    
+
     if (-not (Test-Path $DirectoryPath)) {
         Write-Log "Directory not found: $DirectoryPath" -Level "WARN"
         return $metrics
     }
-    
+
     try {
         # Get all files recursively
         $files = Get-ChildItem -Path $DirectoryPath -File -Recurse -ErrorAction SilentlyContinue | Where-Object {
@@ -84,34 +84,34 @@ function Get-DirectoryContentMetrics {
             $_.Name -notmatch '\.(exe|dll|bin|obj|log|tmp|cache)$' -and
             $_.DirectoryName -notmatch '(node_modules|\.git|bin|obj|target)'
         }
-        
+
         $metrics.totalFiles = $files.Count
         $allContent = @()
-        
+
         foreach ($file in $files) {
             $extension = $file.Extension.ToLower()
             $fileSize = $file.Length
-            
+
             # Track file types
             if (-not $metrics.fileTypes.ContainsKey($extension)) {
                 $metrics.fileTypes[$extension] = @{ count = 0; characters = 0 }
             }
             $metrics.fileTypes[$extension].count++
-            
+
             # Categorize files
             $isCodeFile = $extension -in @('.ps1', '.psm1', '.psd1', '.py', '.js', '.ts', '.cs', '.go', '.java', '.cpp', '.c', '.h')
             $isDocFile = $extension -in @('.md', '.txt', '.rst', '.adoc')
             $isConfigFile = $extension -in @('.json', '.yaml', '.yml', '.xml', '.toml', '.ini', '.conf', '.config')
-            
+
             if ($isCodeFile) { $metrics.codeFiles++ }
             if ($isDocFile) { $metrics.documentationFiles++ }
             if ($isConfigFile) { $metrics.configurationFiles++ }
-            
+
             # Track most recent change
             if (-not $metrics.mostRecentChange -or $file.LastWriteTime -gt [DateTime]::Parse($metrics.mostRecentChange)) {
                 $metrics.mostRecentChange = $file.LastWriteTime.ToString("yyyy-MM-ddTHH:mm:ssZ")
             }
-            
+
             # Read content for analysis (only for text files under reasonable size)
             if ($fileSize -lt 1MB -and $extension -in @('.ps1', '.psm1', '.psd1', '.md', '.txt', '.json', '.yaml', '.yml', '.xml', '.tf', '.py', '.js', '.ts')) {
                 try {
@@ -120,11 +120,11 @@ function Get-DirectoryContentMetrics {
                         $contentLength = $content.Length
                         $metrics.totalCharacters += $contentLength
                         $metrics.fileTypes[$extension].characters += $contentLength
-                        
+
                         if ($isCodeFile) {
                             $metrics.codeCharacters += $contentLength
                         }
-                        
+
                         # Track significant files (large or important)
                         if ($contentLength -gt 1000 -or $isCodeFile -or $isConfigFile) {
                             $metrics.significantFiles += @{
@@ -135,7 +135,7 @@ function Get-DirectoryContentMetrics {
                                 category = if ($isCodeFile) { "code" } elseif ($isConfigFile) { "config" } elseif ($isDocFile) { "docs" } else { "other" }
                             }
                         }
-                        
+
                         # Add to content hash calculation
                         $allContent += $content
                     }
@@ -144,7 +144,7 @@ function Get-DirectoryContentMetrics {
                 }
             }
         }
-        
+
         # Calculate content hash for change detection
         if ($allContent.Count -gt 0) {
             $combinedContent = $allContent -join ""
@@ -153,11 +153,11 @@ function Get-DirectoryContentMetrics {
             $metrics.contentHash = [System.BitConverter]::ToString($hashBytes).Replace("-", "").ToLower()
             $hash.Dispose()
         }
-        
+
     } catch {
         Write-Log "Error analyzing directory $DirectoryPath : $($_.Exception.Message)" -Level "ERROR"
     }
-    
+
     Write-Log "Analyzed $DirectoryPath : $($metrics.totalFiles) files, $($metrics.totalCharacters) chars, $($metrics.codeFiles) code files" -Level "INFO"
     return $metrics
 }
@@ -166,7 +166,7 @@ function Compare-DirectoryMetrics {
     <#
     .SYNOPSIS
     Compares current directory metrics with previous state to detect changes
-    
+
     .DESCRIPTION
     Analyzes differences in file count, content size, and modification dates
     to determine if documentation updates are needed
@@ -175,14 +175,14 @@ function Compare-DirectoryMetrics {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$CurrentMetrics,
-        
+
         [Parameter(Mandatory = $true)]
         [hashtable]$PreviousState,
-        
+
         [Parameter(Mandatory = $true)]
         [hashtable]$Configuration
     )
-    
+
     $analysis = @{
         directoryPath = $CurrentMetrics.directoryPath
         hasSignificantChanges = $false
@@ -195,29 +195,29 @@ function Compare-DirectoryMetrics {
         changeType = "none"
         confidence = 0
     }
-    
+
     # Calculate deltas
     $analysis.fileCountDelta = $CurrentMetrics.totalFiles - $PreviousState.fileCount
     $analysis.characterDelta = $CurrentMetrics.totalCharacters - $PreviousState.totalCharCount
-    
+
     # Calculate percentage change
     if ($PreviousState.totalCharCount -gt 0) {
         $analysis.deltaPercent = [Math]::Abs($analysis.characterDelta) / $PreviousState.totalCharCount * 100
     } else {
         $analysis.deltaPercent = if ($CurrentMetrics.totalCharacters -gt 0) { 100 } else { 0 }
     }
-    
+
     # Check for significant changes based on thresholds
     $charThreshold = $Configuration.changeThresholds.characterDeltaPercent
     $minChange = $Configuration.changeThresholds.minSignificantChange
-    
+
     if ($analysis.deltaPercent -gt $charThreshold -and [Math]::Abs($analysis.characterDelta) -gt $minChange) {
         $analysis.hasSignificantChanges = $true
         $analysis.changeReasons += "Content changed by $([Math]::Round($analysis.deltaPercent, 1))% ($($analysis.characterDelta) characters)"
         $analysis.changeType = if ($analysis.characterDelta -gt 0) { "expansion" } else { "reduction" }
         $analysis.confidence = [Math]::Min(100, $analysis.deltaPercent)
     }
-    
+
     if ([Math]::Abs($analysis.fileCountDelta) -gt 2) {
         $analysis.hasSignificantChanges = $true
         $analysis.changeReasons += "File count changed by $($analysis.fileCountDelta) files"
@@ -226,14 +226,14 @@ function Compare-DirectoryMetrics {
         }
         $analysis.confidence = [Math]::Max($analysis.confidence, 50)
     }
-    
+
     # Check for content hash changes (indicates structural changes)
     if ($CurrentMetrics.contentHash -ne $PreviousState.contentHash -and $PreviousState.contentHash) {
         $analysis.hasSignificantChanges = $true
         $analysis.changeReasons += "Content structure changed (hash mismatch)"
         $analysis.confidence = [Math]::Max($analysis.confidence, 30)
     }
-    
+
     # Check README freshness
     $readmeAge = $null
     if ($PreviousState.readmeLastModified) {
@@ -244,13 +244,13 @@ function Compare-DirectoryMetrics {
             # Invalid date format
         }
     }
-    
+
     # Time-based review triggers
     if ($readmeAge -and $readmeAge.Days -gt $Configuration.changeThresholds.codeChangeReviewDays -and $CurrentMetrics.mostRecentChange) {
         try {
             $lastChange = [DateTime]::Parse($CurrentMetrics.mostRecentChange)
             $changesSinceReadme = $lastChange -gt [DateTime]::Parse($PreviousState.readmeLastModified)
-            
+
             if ($changesSinceReadme) {
                 $analysis.needsReview = $true
                 $analysis.reviewReasons += "Code changes detected since README last updated ($($readmeAge.Days) days ago)"
@@ -259,35 +259,35 @@ function Compare-DirectoryMetrics {
             # Date parsing error
         }
     }
-    
+
     if ($readmeAge -and $readmeAge.Days -gt $Configuration.changeThresholds.staleDays) {
         $analysis.needsReview = $true
         $analysis.reviewReasons += "README is stale (older than $($Configuration.changeThresholds.staleDays) days)"
     }
-    
+
     if (-not $PreviousState.readmeExists) {
         $analysis.needsReview = $true
         $analysis.reviewReasons += "README is missing"
         $analysis.changeType = "new"
         $analysis.confidence = 100
     }
-    
+
     # Determine overall assessment
     if ($analysis.hasSignificantChanges -or $analysis.needsReview) {
         $analysis.needsReview = $true
     }
-    
+
     # Log findings
     if ($analysis.hasSignificantChanges) {
         $reasonText = $analysis.changeReasons -join "; "
         Write-Log "Significant changes detected in $($CurrentMetrics.directoryPath): $reasonText" -Level "WARN"
     }
-    
+
     if ($analysis.needsReview) {
         $reviewText = $analysis.reviewReasons -join "; "
         Write-Log "Review needed for $($CurrentMetrics.directoryPath): $reviewText" -Level "INFO"
     }
-    
+
     return $analysis
 }
 
@@ -300,14 +300,14 @@ function Analyze-AllDirectories {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$State,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$ProjectRoot,
-        
+
         [Parameter(Mandatory = $false)]
         [string[]]$TargetDirectories = @()
     )
-    
+
     $analysisResults = @{
         scanTime = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
         totalAnalyzed = 0
@@ -317,58 +317,58 @@ function Analyze-AllDirectories {
         reviewRequired = @()
         detailedResults = @{}
     }
-    
+
     $directoriesToAnalyze = if ($TargetDirectories.Count -gt 0) {
         $TargetDirectories
     } else {
         $State.directories.Keys
     }
-    
+
     Write-Log "Analyzing $($directoriesToAnalyze.Count) directories for content changes..." -Level "INFO"
-    
+
     foreach ($dirPath in $directoriesToAnalyze) {
         if (-not $State.directories.ContainsKey($dirPath)) {
             Write-Log "Directory not in state: $dirPath" -Level "WARN"
             continue
         }
-        
+
         $fullPath = Join-Path $ProjectRoot $dirPath.TrimStart('/')
         if (-not (Test-Path $fullPath)) {
             Write-Log "Directory not found: $fullPath" -Level "WARN"
             continue
         }
-        
+
         $analysisResults.totalAnalyzed++
-        
+
         # Get current metrics
         $currentMetrics = Get-DirectoryContentMetrics -DirectoryPath $fullPath
-        
+
         # Compare with previous state
         $previousState = $State.directories[$dirPath]
         $comparison = Compare-DirectoryMetrics -CurrentMetrics $currentMetrics -PreviousState $previousState -Configuration $State.configuration
-        
+
         # Update state with current metrics
         $State.directories[$dirPath].totalCharCount = $currentMetrics.totalCharacters
         $State.directories[$dirPath].fileCount = $currentMetrics.totalFiles
         $State.directories[$dirPath].contentHash = $currentMetrics.contentHash
         $State.directories[$dirPath].lastContentScan = $currentMetrics.scanTime
-        
+
         if ($currentMetrics.mostRecentChange) {
             $State.directories[$dirPath].mostRecentFileChange = $currentMetrics.mostRecentChange
         }
-        
+
         # Process analysis results
         if ($comparison.hasSignificantChanges) {
             $analysisResults.significantChanges++
             $State.directories[$dirPath].changesSinceLastReadme = $true
             $State.directories[$dirPath].contentDeltaPercent = $comparison.deltaPercent
         }
-        
+
         if ($comparison.needsReview) {
             $analysisResults.needsReview++
             $State.directories[$dirPath].flaggedForReview = $true
             $State.directories[$dirPath].reviewStatus = if (-not $previousState.readmeExists) { "missing" } else { "outdated" }
-            
+
             # Categorize for action
             if ($comparison.changeType -eq "new" -or (-not $previousState.readmeExists)) {
                 $analysisResults.autoGenerationCandidates += @{
@@ -391,7 +391,7 @@ function Analyze-AllDirectories {
             $State.directories[$dirPath].flaggedForReview = $false
             $State.directories[$dirPath].reviewStatus = "current"
         }
-        
+
         # Store detailed results
         $analysisResults.detailedResults[$dirPath] = @{
             metrics = $currentMetrics
@@ -399,9 +399,9 @@ function Analyze-AllDirectories {
             actionRequired = $comparison.needsReview
         }
     }
-    
+
     Write-Log "Analysis complete: $($analysisResults.totalAnalyzed) analyzed, $($analysisResults.significantChanges) with significant changes, $($analysisResults.needsReview) need review" -Level "SUCCESS"
-    
+
     return $analysisResults
 }
 
@@ -414,11 +414,11 @@ function Export-ChangeAnalysis {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$AnalysisResults,
-        
+
         [Parameter(Mandatory = $false)]
         [string]$OutputPath = "change-analysis.json"
     )
-    
+
     $exportData = @{
         analysisTime = $AnalysisResults.scanTime
         summary = @{
@@ -432,7 +432,7 @@ function Export-ChangeAnalysis {
         reviewRequired = $AnalysisResults.reviewRequired
         detailedResults = $AnalysisResults.detailedResults
     }
-    
+
     try {
         $exportData | ConvertTo-Json -Depth 10 | Set-Content -Path $OutputPath -Encoding UTF8
         Write-Log "Change analysis exported to: $OutputPath" -Level "SUCCESS"
@@ -444,27 +444,27 @@ function Export-ChangeAnalysis {
 # Main execution
 try {
     $stateFilePath = Join-Path $ProjectRoot $StateFilePath
-    
+
     # Load current state
     if (-not (Test-Path $stateFilePath)) {
         Write-Log "State file not found. Run Track-DocumentationState.ps1 -Initialize first." -Level "ERROR"
         exit 1
     }
-    
+
     $content = Get-Content -Path $stateFilePath -Raw -Encoding UTF8
     $state = $content | ConvertFrom-Json -AsHashtable
-    
+
     # Perform analysis
     $analysisResults = Analyze-AllDirectories -State $state -ProjectRoot $ProjectRoot -TargetDirectories $TargetDirectories
-    
+
     # Save updated state
     $state | ConvertTo-Json -Depth 10 | Set-Content -Path $stateFilePath -Encoding UTF8
-    
+
     # Export results if requested
     if ($ExportChanges) {
         Export-ChangeAnalysis -AnalysisResults $analysisResults -OutputPath (Join-Path $ProjectRoot "change-analysis.json")
     }
-    
+
     # Output summary
     Write-Host "`n📊 Content Delta Analysis Summary:" -ForegroundColor Cyan
     Write-Host "  Total Analyzed: $($analysisResults.totalAnalyzed)" -ForegroundColor White
@@ -472,14 +472,14 @@ try {
     Write-Host "  Needs Review: $($analysisResults.needsReview)" -ForegroundColor Red
     Write-Host "  Auto-Generation Candidates: $($analysisResults.autoGenerationCandidates.Count)" -ForegroundColor Green
     Write-Host "  Manual Review Required: $($analysisResults.reviewRequired.Count)" -ForegroundColor Magenta
-    
+
     if ($analysisResults.autoGenerationCandidates.Count -gt 0) {
         Write-Host "`n🤖 Auto-Generation Candidates:" -ForegroundColor Green
         foreach ($candidate in $analysisResults.autoGenerationCandidates) {
             Write-Host "  - $($candidate.path) ($($candidate.reason))" -ForegroundColor Gray
         }
     }
-    
+
     if ($analysisResults.reviewRequired.Count -gt 0) {
         Write-Host "`n🔍 Manual Review Required:" -ForegroundColor Magenta
         foreach ($review in $analysisResults.reviewRequired) {
@@ -487,9 +487,9 @@ try {
             Write-Host "  - $($review.path) - $reasonText" -ForegroundColor Gray
         }
     }
-    
+
     Write-Log "Content delta analysis completed successfully" -Level "SUCCESS"
-    
+
 } catch {
     Write-Log "Content delta analysis failed: $($_.Exception.Message)" -Level "ERROR"
     exit 1

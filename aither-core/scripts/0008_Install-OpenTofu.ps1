@@ -36,16 +36,16 @@ Invoke-LabStep -Config $Config -Body {
             $downloadUrl = "https://github.com/opentofu/opentofu/releases/latest/download/tofu_1.6.0_windows_amd64.zip"
             $tempFile = Join-Path $env:TEMP "tofu.zip"
             $installPath = Join-Path $env:ProgramFiles "OpenTofu"
-            
+
             Invoke-WebRequest -Uri $downloadUrl -OutFile $tempFile
             Expand-Archive -Path $tempFile -DestinationPath $installPath -Force
-            
+
             # Add to PATH if not already there
             $currentPath = [Environment]::GetEnvironmentVariable("PATH", "Machine")
             if ($currentPath -notlike "*$installPath*") {
                 [Environment]::SetEnvironmentVariable("PATH", "$currentPath;$installPath", "Machine")
             }
-            
+
             Remove-Item $tempFile -ErrorAction SilentlyContinue
             Write-CustomLog "OpenTofu installed successfully"
         } catch {
@@ -59,4 +59,3 @@ Invoke-LabStep -Config $Config -Body {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-

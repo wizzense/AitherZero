@@ -128,11 +128,11 @@ function New-Patch {
             # Step 1: Smart mode detection if needed
             if ($Mode -eq "Auto") {
                 Write-CustomLog "Performing smart analysis to determine optimal approach..." -Level "INFO"
-                
+
                 $smartAnalysis = Get-SmartOperationMode -PatchDescription $Description -HasPatchOperation ($null -ne $Changes) -CreatePR $CreatePR -CreateIssue $CreateIssue -TargetFork $TargetFork
-                
+
                 $Mode = $smartAnalysis.RecommendedMode
-                
+
                 # Apply smart recommendations if user didn't explicitly set them
                 if (-not $CreatePR.IsPresent) {
                     $CreatePR = $smartAnalysis.ShouldCreatePR
@@ -165,12 +165,12 @@ function New-Patch {
 
             if ($result.Success) {
                 Write-CustomLog "Patch creation completed successfully!" -Level "SUCCESS"
-                
+
                 # Provide user guidance based on what was created
                 if ($result.Result.BranchCreated) {
                     Write-CustomLog "Branch created: $($result.Result.BranchCreated)" -Level "INFO"
                 }
-                
+
                 if ($CreatePR -and -not $DryRun) {
                     Write-CustomLog "Next steps: PR will be created for review and merge" -Level "INFO"
                 } elseif ($result.Result.CommittedDirectly) {

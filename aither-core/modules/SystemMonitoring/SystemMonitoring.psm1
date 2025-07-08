@@ -3,11 +3,11 @@
 <#
 .SYNOPSIS
     SystemMonitoring module for AitherZero - Comprehensive system monitoring and health management
-    
+
 .DESCRIPTION
     This module provides real-time system monitoring, performance tracking, alerting,
     and health management capabilities for AitherZero infrastructure.
-    
+
 .NOTES
     Author: AitherZero Development Team
     Version: 1.0.0
@@ -57,7 +57,7 @@ Write-CustomLog -Message "SystemMonitoring v2.0.0 loaded - Advanced monitoring w
 # Export module members
 Export-ModuleMember -Function @(
     'Get-SystemDashboard',
-    'Get-SystemAlerts', 
+    'Get-SystemAlerts',
     'Get-SystemPerformance',
     'Get-ServiceStatus',
     'Search-SystemLogs',

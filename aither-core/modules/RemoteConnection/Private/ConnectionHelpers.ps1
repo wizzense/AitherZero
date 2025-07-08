@@ -1,7 +1,7 @@
 function Get-ConnectionMetadataPath {
     [CmdletBinding()]
     param()
-    
+
     return Get-ConnectionStoragePath
 }
 
@@ -216,7 +216,7 @@ function Connect-VMwareEndpoint {
             Server = $Config.HostName
             Port = $Config.Port
         }
-        
+
         if ($credential) {
             $connectParams['Credential'] = $credential
         }
@@ -278,7 +278,7 @@ function Connect-HyperVEndpoint {
         $testParams = @{
             ComputerName = $Config.HostName
         }
-        
+
         if ($credential) {
             $testParams['Credential'] = $credential
         }
@@ -520,11 +520,11 @@ function Start-SSHSession {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$Config,
-        
+
         [Parameter(Mandatory = $false)]
         [int]$Timeout = 30
     )
-    
+
     return Connect-SSHEndpoint -Config $Config -TimeoutSeconds $Timeout
 }
 
@@ -533,11 +533,11 @@ function Start-WinRMSession {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$Config,
-        
+
         [Parameter(Mandatory = $false)]
         [int]$Timeout = 30
     )
-    
+
     return Connect-WinRMEndpoint -Config $Config -TimeoutSeconds $Timeout
 }
 
@@ -546,11 +546,11 @@ function Start-VMwareSession {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$Config,
-        
+
         [Parameter(Mandatory = $false)]
         [int]$Timeout = 30
     )
-    
+
     return Connect-VMwareEndpoint -Config $Config -TimeoutSeconds $Timeout
 }
 
@@ -559,11 +559,11 @@ function Start-HyperVSession {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$Config,
-        
+
         [Parameter(Mandatory = $false)]
         [int]$Timeout = 30
     )
-    
+
     return Connect-HyperVEndpoint -Config $Config -TimeoutSeconds $Timeout
 }
 
@@ -572,11 +572,11 @@ function Start-DockerSession {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$Config,
-        
+
         [Parameter(Mandatory = $false)]
         [int]$Timeout = 30
     )
-    
+
     return Connect-DockerEndpoint -Config $Config -TimeoutSeconds $Timeout
 }
 
@@ -585,11 +585,11 @@ function Start-KubernetesSession {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$Config,
-        
+
         [Parameter(Mandatory = $false)]
         [int]$Timeout = 30
     )
-    
+
     return Connect-KubernetesEndpoint -Config $Config -TimeoutSeconds $Timeout
 }
 
@@ -599,23 +599,23 @@ function Invoke-SSHCommand {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$Config,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$Command,
-        
+
         [Parameter(Mandatory = $false)]
         [hashtable]$Parameters = @{},
-        
+
         [Parameter(Mandatory = $false)]
         [int]$TimeoutSeconds = 300,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$AsJob
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Executing SSH command: $Command"
-        
+
         # Get credential if specified
         $credential = $null
         if ($Config.CredentialName) {
@@ -624,18 +624,18 @@ function Invoke-SSHCommand {
                 $credential = $credResult
             }
         }
-        
+
         # Check if SSH client is available
         if (-not (Get-Command ssh -ErrorAction SilentlyContinue)) {
             throw "SSH client not found. Please install OpenSSH client."
         }
-        
+
         # Build SSH command
         $sshCommand = "ssh"
         if ($Config.Port -ne 22) {
             $sshCommand += " -p $($Config.Port)"
         }
-        
+
         # Add SSH options
         if ($Config.SSHOptions) {
             if ($Config.SSHOptions.StrictHostKeyChecking -eq $false) {
@@ -645,22 +645,22 @@ function Invoke-SSHCommand {
                 $sshCommand += " -o UserKnownHostsFile=$($Config.SSHOptions.UserKnownHostsFile)"
             }
         }
-        
+
         # Add username and host
         if ($credential) {
             $username = $credential.UserName
         } else {
             $username = "root"
         }
-        
+
         $sshCommand += " $username@$($Config.HostName) '$Command'"
-        
+
         if ($AsJob) {
             $job = Start-Job -ScriptBlock {
                 param($SshCmd)
                 Invoke-Expression $SshCmd
             } -ArgumentList $sshCommand
-            
+
             return @{
                 Success = $true
                 Output = "Command started as job"
@@ -670,7 +670,7 @@ function Invoke-SSHCommand {
         } else {
             $output = Invoke-Expression $sshCommand
             $exitCode = $LASTEXITCODE
-            
+
             return @{
                 Success = $exitCode -eq 0
                 Output = $output
@@ -693,23 +693,23 @@ function Invoke-WinRMCommand {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$Config,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$Command,
-        
+
         [Parameter(Mandatory = $false)]
         [hashtable]$Parameters = @{},
-        
+
         [Parameter(Mandatory = $false)]
         [int]$TimeoutSeconds = 300,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$AsJob
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Executing WinRM command: $Command"
-        
+
         # Get credential if specified
         $credential = $null
         if ($Config.CredentialName) {
@@ -718,31 +718,31 @@ function Invoke-WinRMCommand {
                 $credential = $credResult
             }
         }
-        
+
         # Build session options
         $sessionOptions = New-PSSessionOption -SkipCACheck -SkipCNCheck
         if ($Config.WinRMOptions.AllowUnencrypted) {
             $sessionOptions.UseSSL = $false
         }
-        
+
         # Create session parameters
         $sessionParams = @{
             ComputerName = $Config.HostName
             Port = $Config.Port
             SessionOption = $sessionOptions
         }
-        
+
         if ($credential) {
             $sessionParams['Credential'] = $credential
         }
-        
+
         if ($Config.EnableSSL) {
             $sessionParams['UseSSL'] = $true
         }
-        
+
         # Create script block
         $scriptBlock = [scriptblock]::Create($Command)
-        
+
         if ($AsJob) {
             $job = Invoke-Command @sessionParams -ScriptBlock $scriptBlock -AsJob
             return @{
@@ -775,23 +775,23 @@ function Invoke-VMwareCommand {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$Config,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$Command,
-        
+
         [Parameter(Mandatory = $false)]
         [hashtable]$Parameters = @{},
-        
+
         [Parameter(Mandatory = $false)]
         [int]$TimeoutSeconds = 300,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$AsJob
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Executing VMware command: $Command"
-        
+
         # Ensure VMware connection is established
         if (-not $global:DefaultVIServer) {
             $connectResult = Connect-VMwareEndpoint -Config $Config -TimeoutSeconds 30
@@ -799,10 +799,10 @@ function Invoke-VMwareCommand {
                 throw "VMware connection failed: $($connectResult.Error)"
             }
         }
-        
+
         # Create script block
         $scriptBlock = [scriptblock]::Create($Command)
-        
+
         if ($AsJob) {
             $job = Start-Job -ScriptBlock $scriptBlock
             return @{
@@ -835,23 +835,23 @@ function Invoke-HyperVCommand {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$Config,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$Command,
-        
+
         [Parameter(Mandatory = $false)]
         [hashtable]$Parameters = @{},
-        
+
         [Parameter(Mandatory = $false)]
         [int]$TimeoutSeconds = 300,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$AsJob
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Executing Hyper-V command: $Command"
-        
+
         # Get credential if specified
         $credential = $null
         if ($Config.CredentialName) {
@@ -860,17 +860,17 @@ function Invoke-HyperVCommand {
                 $credential = $credResult
             }
         }
-        
+
         # Build command with ComputerName parameter
         $commandWithHost = $Command -replace '(Get-VM|Start-VM|Stop-VM|New-VM|Remove-VM)', '$1 -ComputerName $($Config.HostName)'
-        
+
         if ($credential) {
             $commandWithHost += " -Credential `$credential"
         }
-        
+
         # Create script block
         $scriptBlock = [scriptblock]::Create($commandWithHost)
-        
+
         if ($AsJob) {
             $job = Start-Job -ScriptBlock $scriptBlock -ArgumentList $Config, $credential
             return @{
@@ -903,34 +903,34 @@ function Invoke-DockerCommand {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$Config,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$Command,
-        
+
         [Parameter(Mandatory = $false)]
         [hashtable]$Parameters = @{},
-        
+
         [Parameter(Mandatory = $false)]
         [int]$TimeoutSeconds = 300,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$AsJob
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Executing Docker command: $Command"
-        
+
         # Build Docker endpoint URL
         $protocol = if ($Config.EnableSSL) { 'https' } else { 'http' }
         $dockerUrl = "${protocol}://$($Config.HostName):$($Config.Port)"
-        
+
         # Set Docker host environment variable
         $env:DOCKER_HOST = $dockerUrl
-        
+
         if ($Config.EnableSSL) {
             $env:DOCKER_TLS_VERIFY = "1"
         }
-        
+
         if ($AsJob) {
             $job = Start-Job -ScriptBlock {
                 param($DockerCmd, $DockerHost, $TlsVerify)
@@ -938,7 +938,7 @@ function Invoke-DockerCommand {
                 if ($TlsVerify) { $env:DOCKER_TLS_VERIFY = "1" }
                 Invoke-Expression $DockerCmd
             } -ArgumentList $Command, $dockerUrl, $Config.EnableSSL
-            
+
             return @{
                 Success = $true
                 Output = "Command started as job"
@@ -948,7 +948,7 @@ function Invoke-DockerCommand {
         } else {
             $output = Invoke-Expression $Command
             $exitCode = $LASTEXITCODE
-            
+
             return @{
                 Success = $exitCode -eq 0
                 Output = $output
@@ -971,45 +971,45 @@ function Invoke-KubernetesCommand {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$Config,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$Command,
-        
+
         [Parameter(Mandatory = $false)]
         [hashtable]$Parameters = @{},
-        
+
         [Parameter(Mandatory = $false)]
         [int]$TimeoutSeconds = 300,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$AsJob
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Executing Kubernetes command: $Command"
-        
+
         # Build kubectl command with server and namespace
         $serverUrl = "https://$($Config.HostName):$($Config.Port)"
         $kubectlCommand = $Command
-        
+
         if ($kubectlCommand -notlike "*--server=*") {
             $kubectlCommand += " --server=$serverUrl"
         }
-        
+
         if ($Config.KubernetesOptions.Namespace -and $kubectlCommand -notlike "*--namespace=*") {
             $kubectlCommand += " --namespace=$($Config.KubernetesOptions.Namespace)"
         }
-        
+
         if ($Config.KubernetesOptions.SkipTLSVerify) {
             $kubectlCommand += " --insecure-skip-tls-verify"
         }
-        
+
         if ($AsJob) {
             $job = Start-Job -ScriptBlock {
                 param($KubectlCmd)
                 Invoke-Expression $KubectlCmd
             } -ArgumentList $kubectlCommand
-            
+
             return @{
                 Success = $true
                 Output = "Command started as job"
@@ -1019,7 +1019,7 @@ function Invoke-KubernetesCommand {
         } else {
             $output = Invoke-Expression $kubectlCommand
             $exitCode = $LASTEXITCODE
-            
+
             return @{
                 Success = $exitCode -eq 0
                 Output = $output

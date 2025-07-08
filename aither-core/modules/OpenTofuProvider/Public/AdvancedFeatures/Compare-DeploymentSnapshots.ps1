@@ -21,26 +21,26 @@ function Compare-DeploymentSnapshots {
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$ReferenceSnapshot,
-        
+
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$DifferenceSnapshot,
-        
+
         [Parameter()]
         [switch]$IncludeUnchanged,
-        
+
         [Parameter()]
         [ValidateSet('Table', 'JSON', 'Report')]
         [string]$OutputFormat = 'Table'
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Comparing deployment snapshots"
-        
+
         # Load snapshots
         $refSnapshot = Get-SnapshotData -Identifier $ReferenceSnapshot
         $diffSnapshot = Get-SnapshotData -Identifier $DifferenceSnapshot
-        
+
         # Initialize comparison result
         $comparison = @{
             ReferenceId = $refSnapshot.SnapshotId
@@ -60,20 +60,20 @@ function Compare-DeploymentSnapshots {
                 Unchanged = @()
             }
         }
-        
+
         # Build resource maps for comparison
         $refResources = @{}
         foreach ($resource in $refSnapshot.Resources) {
             $key = "$($resource.Type).$($resource.Name)"
             $refResources[$key] = $resource
         }
-        
+
         $diffResources = @{}
         foreach ($resource in $diffSnapshot.Resources) {
             $key = "$($resource.Type).$($resource.Name)"
             $diffResources[$key] = $resource
         }
-        
+
         # Find removed resources
         foreach ($key in $refResources.Keys) {
             if (-not $diffResources.ContainsKey($key)) {
@@ -85,7 +85,7 @@ function Compare-DeploymentSnapshots {
                 $comparison.Summary.Removed++
             }
         }
-        
+
         # Find added and modified resources
         foreach ($key in $diffResources.Keys) {
             if (-not $refResources.ContainsKey($key)) {
@@ -101,9 +101,9 @@ function Compare-DeploymentSnapshots {
                 # Compare resource attributes
                 $refResource = $refResources[$key]
                 $diffResource = $diffResources[$key]
-                
+
                 $changes = Compare-ResourceAttributes -Reference $refResource -Difference $diffResource
-                
+
                 if ($changes.Count -gt 0) {
                     $comparison.Changes.Modified += @{
                         Type = $diffResource.Type
@@ -121,7 +121,7 @@ function Compare-DeploymentSnapshots {
                 }
             }
         }
-        
+
         # Format output
         switch ($OutputFormat) {
             'Table' {
@@ -135,21 +135,21 @@ function Compare-DeploymentSnapshots {
                 if ($IncludeUnchanged) {
                     Write-Host "  Unchanged: $($comparison.Summary.Unchanged)" -ForegroundColor Gray
                 }
-                
+
                 if ($comparison.Changes.Added.Count -gt 0) {
                     Write-Host "`nAdded Resources:" -ForegroundColor Green
                     $comparison.Changes.Added | ForEach-Object {
                         Write-Host "  + $($_.Type).$($_.Name)"
                     }
                 }
-                
+
                 if ($comparison.Changes.Removed.Count -gt 0) {
                     Write-Host "`nRemoved Resources:" -ForegroundColor Red
                     $comparison.Changes.Removed | ForEach-Object {
                         Write-Host "  - $($_.Type).$($_.Name)"
                     }
                 }
-                
+
                 if ($comparison.Changes.Modified.Count -gt 0) {
                     Write-Host "`nModified Resources:" -ForegroundColor Yellow
                     $comparison.Changes.Modified | ForEach-Object {
@@ -160,25 +160,25 @@ function Compare-DeploymentSnapshots {
                     }
                 }
             }
-            
+
             'JSON' {
                 $comparison | ConvertTo-Json -Depth 10
             }
-            
+
             'Report' {
                 $reportPath = Join-Path $PSScriptRoot "../../reports"
                 if (-not (Test-Path $reportPath)) {
                     New-Item -ItemType Directory -Path $reportPath -Force | Out-Null
                 }
-                
+
                 $reportFile = Join-Path $reportPath "snapshot-comparison-$(Get-Date -Format 'yyyyMMdd-HHmmss').json"
                 $comparison | ConvertTo-Json -Depth 10 | Set-Content -Path $reportFile -Encoding UTF8
-                
+
                 Write-CustomLog -Level 'SUCCESS' -Message "Comparison report saved: $reportFile"
                 return $reportFile
             }
         }
-        
+
         return $comparison
     }
     catch {
@@ -190,15 +190,15 @@ function Compare-DeploymentSnapshots {
 # Helper function to load snapshot data
 function Get-SnapshotData {
     param([string]$Identifier)
-    
+
     $snapshotPath = Join-Path $PSScriptRoot "../../snapshots"
-    
+
     # Check if identifier is a path
     if (Test-Path $Identifier) {
         $content = Get-Content $Identifier -Raw
         return $content | ConvertFrom-Json
     }
-    
+
     # Search for snapshot by ID
     $files = Get-ChildItem -Path $snapshotPath -Filter "*$Identifier*" -File
     if ($files.Count -eq 0) {
@@ -207,7 +207,7 @@ function Get-SnapshotData {
     elseif ($files.Count -gt 1) {
         throw "Multiple snapshots match identifier: $Identifier"
     }
-    
+
     $content = Get-Content $files[0].FullName -Raw
     return $content | ConvertFrom-Json
 }
@@ -215,9 +215,9 @@ function Get-SnapshotData {
 # Helper function to compare resource attributes
 function Compare-ResourceAttributes {
     param($Reference, $Difference)
-    
+
     $changes = @()
-    
+
     # Compare instance counts
     if ($Reference.Instances.Count -ne $Difference.Instances.Count) {
         $changes += @{
@@ -226,22 +226,22 @@ function Compare-ResourceAttributes {
             NewValue = $Difference.Instances.Count
         }
     }
-    
+
     # Compare first instance attributes (simplified)
     if ($Reference.Instances.Count -gt 0 -and $Difference.Instances.Count -gt 0) {
         $refAttrs = $Reference.Instances[0].Attributes
         $diffAttrs = $Difference.Instances[0].Attributes
-        
+
         # Get all unique property names
         $allProps = @()
         $allProps += if ($refAttrs -is [hashtable]) { $refAttrs.Keys } else { $refAttrs.PSObject.Properties.Name }
         $allProps += if ($diffAttrs -is [hashtable]) { $diffAttrs.Keys } else { $diffAttrs.PSObject.Properties.Name }
         $allProps = $allProps | Select-Object -Unique
-        
+
         foreach ($prop in $allProps) {
             $refValue = if ($refAttrs -is [hashtable]) { $refAttrs[$prop] } else { $refAttrs.$prop }
             $diffValue = if ($diffAttrs -is [hashtable]) { $diffAttrs[$prop] } else { $diffAttrs.$prop }
-            
+
             if ($refValue -ne $diffValue) {
                 $changes += @{
                     Property = $prop
@@ -251,6 +251,6 @@ function Compare-ResourceAttributes {
             }
         }
     }
-    
+
     return $changes
 }

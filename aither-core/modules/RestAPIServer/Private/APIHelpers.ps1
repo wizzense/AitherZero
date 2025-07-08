@@ -7,7 +7,7 @@ function Test-APIServerRunning {
     #>
     [CmdletBinding()]
     param()
-    
+
     try {
         return ($null -ne $script:APIServer -and $script:APIServer.IsListening)
     } catch {
@@ -24,7 +24,7 @@ function Get-APIServerConfiguration {
     #>
     [CmdletBinding()]
     param()
-    
+
     return $script:APIConfiguration.Clone()
 }
 
@@ -40,7 +40,7 @@ function Set-APIServerConfiguration {
         [Parameter(Mandatory)]
         [hashtable]$Configuration
     )
-    
+
     $script:APIConfiguration = $Configuration
 }
 
@@ -55,29 +55,29 @@ function Invoke-APIEndpointHandler {
     param(
         [Parameter(Mandatory)]
         [object]$Request,
-        
+
         [Parameter(Mandatory)]
         [object]$Response,
-        
+
         [Parameter(Mandatory)]
         [object]$EndpointConfig
     )
-    
+
     try {
         # Extract parameters from request
         $parameters = @{}
-        
+
         # Get query parameters
         foreach ($key in $Request.QueryString.AllKeys) {
             $parameters[$key] = $Request.QueryString[$key]
         }
-        
+
         # Get body parameters for POST/PUT/PATCH
         if ($Request.HttpMethod -in @('POST', 'PUT', 'PATCH')) {
             $reader = New-Object System.IO.StreamReader($Request.InputStream)
             $body = $reader.ReadToEnd()
             $reader.Close()
-            
+
             if ($body) {
                 try {
                     $bodyData = $body | ConvertFrom-Json
@@ -90,7 +90,7 @@ function Invoke-APIEndpointHandler {
                 }
             }
         }
-        
+
         # Execute handler
         $handlerResult = $null
         if ($EndpointConfig.HandlerType -eq 'ScriptBlock') {
@@ -98,10 +98,10 @@ function Invoke-APIEndpointHandler {
         } else {
             $handlerResult = & $EndpointConfig.Handler -Request $Request -Parameters $parameters
         }
-        
+
         # Return result
         return $handlerResult
-        
+
     } catch {
         Write-CustomLog -Message "Error executing endpoint handler: $($_.Exception.Message)" -Level "ERROR"
         throw
@@ -119,30 +119,30 @@ function Send-APIResponse {
     param(
         [Parameter(Mandatory)]
         [object]$Response,
-        
+
         [Parameter()]
         [object]$Data,
-        
+
         [Parameter()]
         [int]$StatusCode = 200,
-        
+
         [Parameter()]
         [string]$ContentType = 'application/json'
     )
-    
+
     try {
         $Response.StatusCode = $StatusCode
         $Response.ContentType = $ContentType
-        
+
         if ($Data) {
             $jsonResponse = $Data | ConvertTo-Json -Depth 10
             $buffer = [System.Text.Encoding]::UTF8.GetBytes($jsonResponse)
             $Response.ContentLength64 = $buffer.Length
             $Response.OutputStream.Write($buffer, 0, $buffer.Length)
         }
-        
+
         $Response.Close()
-        
+
     } catch {
         Write-CustomLog -Message "Error sending API response: $($_.Exception.Message)" -Level "ERROR"
         throw
@@ -160,11 +160,11 @@ function Test-APIAuthentication {
     param(
         [Parameter(Mandatory)]
         [object]$Request,
-        
+
         [Parameter()]
         [string[]]$RequiredRoles = @()
     )
-    
+
     try {
         # Get authorization header
         $authHeader = $Request.Headers['Authorization']
@@ -174,11 +174,11 @@ function Test-APIAuthentication {
                 Error = 'No authorization header provided'
             }
         }
-        
+
         # Parse bearer token
         if ($authHeader -match '^Bearer\s+(.+)$') {
             $token = $Matches[1]
-            
+
             # Validate token (placeholder - implement actual token validation)
             if ($token -eq 'test-token') {
                 return @{
@@ -198,7 +198,7 @@ function Test-APIAuthentication {
                 Error = 'Invalid authorization header format'
             }
         }
-        
+
     } catch {
         Write-CustomLog -Message "Error validating API authentication: $($_.Exception.Message)" -Level "ERROR"
         return @{
@@ -217,7 +217,7 @@ function Initialize-APIConfiguration {
     #>
     [CmdletBinding()]
     param()
-    
+
     if (-not $script:APIConfiguration.WebhookConfig) {
         $script:APIConfiguration.WebhookConfig = @{
             Enabled = $false
@@ -228,7 +228,7 @@ function Initialize-APIConfiguration {
             DeliveryHistory = @()
         }
     }
-    
+
     if (-not $script:APIConfiguration.RateLimit) {
         $script:APIConfiguration.RateLimit = @{
             Enabled = $true
@@ -238,7 +238,7 @@ function Initialize-APIConfiguration {
             Clients = @{}
         }
     }
-    
+
     if (-not $script:APIConfiguration.Security) {
         $script:APIConfiguration.Security = @{
             RequireHTTPS = $false

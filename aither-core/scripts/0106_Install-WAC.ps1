@@ -25,19 +25,19 @@ Invoke-LabStep -Config $Config -Body {
     try {
         # Check if WAC is already installed
         $wac = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\ServerManagementGateway" -ErrorAction SilentlyContinue
-        
+
         if ($wac) {
             Write-CustomLog "Windows Admin Center is already installed"
         } else {
             Write-CustomLog "Installing Windows Admin Center..."
-            
+
             # Download and install WAC
             $downloadUrl = "https://aka.ms/WACDownload"
             $tempFile = Join-Path $env:TEMP "WindowsAdminCenter.msi"
-            
+
             Invoke-WebRequest -Uri $downloadUrl -OutFile $tempFile
             Start-Process -FilePath "msiexec.exe" -ArgumentList "/i", $tempFile, "/quiet" -Wait
-            
+
             Remove-Item $tempFile -ErrorAction SilentlyContinue
             Write-CustomLog "Windows Admin Center installed successfully"
         }
@@ -50,4 +50,3 @@ Invoke-LabStep -Config $Config -Body {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-

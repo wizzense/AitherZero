@@ -27,12 +27,12 @@
 
 .EXAMPLE
     ./0225_Generate-TestCoverage.ps1
-    
+
     Generates tests for all modules with comprehensive coverage.
 
 .EXAMPLE
     ./0225_Generate-TestCoverage.ps1 -ModuleName "SystemMonitoring" -Force
-    
+
     Regenerates tests specifically for SystemMonitoring module.
 #>
 
@@ -42,20 +42,20 @@ function New-ModuleTestSuite {
     param(
         [Parameter(Mandatory)]
         [string]$ModuleName,
-        
+
         [Parameter(Mandatory)]
         [string]$OutputPath,
-        
+
         [Parameter()]
         [string]$TemplateType = "Comprehensive",
-        
+
         [Parameter()]
         [switch]$Force,
-        
+
         [Parameter()]
         [string]$ModulesPath
     )
-    
+
     $moduleResult = @{
         ModuleName = $ModuleName
         Generated = $false
@@ -63,33 +63,33 @@ function New-ModuleTestSuite {
         Functions = @()
         CoverageEstimate = 0
     }
-    
+
     try {
         # Analyze module structure
         $modulePath = Join-Path $ModulesPath $ModuleName
         $moduleAnalysis = Get-ModuleAnalysis -ModulePath $modulePath
-        
+
         # Generate test file path
         $testFileName = "$ModuleName-Generated.Tests.ps1"
         $testFilePath = Join-Path $OutputPath $testFileName
-        
+
         # Check if file exists and Force not specified
         if ((Test-Path $testFilePath) -and -not $Force) {
             return $moduleResult
         }
-        
+
         # Generate test content
         $testContent = New-ComprehensiveTestContent -ModuleAnalysis $moduleAnalysis -TemplateType $TemplateType
-        
+
         # Write test file
         Set-Content -Path $testFilePath -Value $testContent -Encoding UTF8
         $moduleResult.Generated = $true
         $moduleResult.TestFile = $testFilePath
         $moduleResult.Functions = $moduleAnalysis.Functions
         $moduleResult.CoverageEstimate = $moduleAnalysis.EstimatedCoverage
-        
+
         return $moduleResult
-        
+
     } catch {
         Write-Error "Error generating tests for $ModuleName : $($_.Exception.Message)"
         throw
@@ -102,7 +102,7 @@ function Get-ModuleAnalysis {
         [Parameter(Mandatory)]
         [string]$ModulePath
     )
-    
+
     $analysis = @{
         ModuleName = Split-Path $ModulePath -Leaf
         ModuleFile = $null
@@ -115,18 +115,18 @@ function Get-ModuleAnalysis {
         HasPublicFolder = $false
         HasPrivateFolder = $false
     }
-    
+
     # Check module structure
     $analysis.HasPublicFolder = Test-Path (Join-Path $ModulePath "Public")
     $analysis.HasPrivateFolder = Test-Path (Join-Path $ModulePath "Private")
-    
+
     # Find module files
     $psmFile = Get-ChildItem -Path $ModulePath -Filter "*.psm1" -File | Select-Object -First 1
     $psdFile = Get-ChildItem -Path $ModulePath -Filter "*.psd1" -File | Select-Object -First 1
-    
+
     if ($psmFile) { $analysis.ModuleFile = $psmFile.FullName }
     if ($psdFile) { $analysis.ManifestFile = $psdFile.FullName }
-    
+
     # Analyze public functions
     if ($analysis.HasPublicFolder) {
         $publicFiles = Get-ChildItem -Path (Join-Path $ModulePath "Public") -Filter "*.ps1" -File
@@ -138,7 +138,7 @@ function Get-ModuleAnalysis {
             }
         }
     }
-    
+
     # Analyze private functions
     if ($analysis.HasPrivateFolder) {
         $privateFiles = Get-ChildItem -Path (Join-Path $ModulePath "Private") -Filter "*.ps1" -File
@@ -150,10 +150,10 @@ function Get-ModuleAnalysis {
             }
         }
     }
-    
+
     # Estimate coverage potential
     $analysis.EstimatedCoverage = [math]::Min(85, 60 + ($analysis.Functions.Count * 2))
-    
+
     return $analysis
 }
 
@@ -163,16 +163,16 @@ function Get-FunctionInfo {
         [Parameter(Mandatory)]
         [string]$FilePath
     )
-    
+
     try {
         $content = Get-Content -Path $FilePath -Raw
         $ast = [System.Management.Automation.Language.Parser]::ParseInput($content, [ref]$null, [ref]$null)
-        
+
         $functions = $ast.FindAll({
             param($node)
             $node -is [System.Management.Automation.Language.FunctionDefinitionAst]
         }, $true)
-        
+
         $functionInfo = @()
         foreach ($func in $functions) {
             $info = @{
@@ -183,7 +183,7 @@ function Get-FunctionInfo {
                 HasCmdletBinding = $false
                 HasShouldProcess = $false
             }
-            
+
             # Extract parameters
             if ($func.Parameters) {
                 foreach ($param in $func.Parameters) {
@@ -193,7 +193,7 @@ function Get-FunctionInfo {
                         IsMandatory = $false
                         HasValidation = $false
                     }
-                    
+
                     # Check for mandatory and validation attributes
                     if ($param.Attributes) {
                         foreach ($attr in $param.Attributes) {
@@ -205,23 +205,23 @@ function Get-FunctionInfo {
                             }
                         }
                     }
-                    
+
                     $info.Parameters += $paramInfo
                 }
             }
-            
+
             # Check for CmdletBinding
             if ($func.Body.ParamBlock -and $func.Body.ParamBlock.Attributes) {
                 $info.HasCmdletBinding = $func.Body.ParamBlock.Attributes | Where-Object { $_.TypeName.Name -eq "CmdletBinding" }
-                $info.HasShouldProcess = $func.Body.ParamBlock.Attributes | Where-Object { 
-                    $_.TypeName.Name -eq "CmdletBinding" -and 
+                $info.HasShouldProcess = $func.Body.ParamBlock.Attributes | Where-Object {
+                    $_.TypeName.Name -eq "CmdletBinding" -and
                     $_.NamedArguments | Where-Object { $_.ArgumentName -eq "SupportsShouldProcess" }
                 }
             }
-            
+
             $functionInfo += $info
         }
-        
+
         return $functionInfo
     }
     catch {
@@ -235,11 +235,11 @@ function New-ComprehensiveTestContent {
     param(
         [Parameter(Mandatory)]
         [hashtable]$ModuleAnalysis,
-        
+
         [Parameter()]
         [string]$TemplateType = "Comprehensive"
     )
-    
+
     $moduleName = $ModuleAnalysis.ModuleName
     $testContent = @"
 # Generated Test Suite for $moduleName Module
@@ -251,7 +251,7 @@ BeforeAll {
     # Import shared utilities
     . "`$PSScriptRoot/../../../aither-core/shared/Find-ProjectRoot.ps1"
     `$projectRoot = Find-ProjectRoot
-    
+
     # Set environment variables
     if (-not `$env:PROJECT_ROOT) {
         `$env:PROJECT_ROOT = `$projectRoot
@@ -259,7 +259,7 @@ BeforeAll {
     if (-not `$env:PWSH_MODULES_PATH) {
         `$env:PWSH_MODULES_PATH = Join-Path `$projectRoot 'aither-core/modules'
     }
-    
+
     # Import required modules
     try {
         Import-Module (Join-Path `$env:PWSH_MODULES_PATH "Logging") -Force -ErrorAction Stop
@@ -271,10 +271,10 @@ BeforeAll {
             Write-Host "[`$Level] `$Message"
         }
     }
-    
+
     # Import the module under test
     `$modulePath = Join-Path `$env:PWSH_MODULES_PATH "$moduleName"
-    
+
     try {
         Import-Module `$modulePath -Force -ErrorAction Stop
         Write-CustomLog -Message "$moduleName module imported successfully" -Level "SUCCESS"
@@ -286,19 +286,19 @@ BeforeAll {
 }
 
 Describe "$moduleName Module - Generated Tests" {
-    
+
     Context "Module Structure and Loading" {
         It "Should import the $moduleName module without errors" {
             Get-Module $moduleName | Should -Not -BeNullOrEmpty
         }
-        
+
         It "Should have a valid module manifest" {
             `$manifestPath = Join-Path `$env:PWSH_MODULES_PATH "$moduleName/$moduleName.psd1"
             if (Test-Path `$manifestPath) {
                 { Test-ModuleManifest -Path `$manifestPath } | Should -Not -Throw
             }
         }
-        
+
         It "Should export public functions" {
             `$exportedFunctions = Get-Command -Module $moduleName -CommandType Function
             `$exportedFunctions | Should -Not -BeNullOrEmpty
@@ -313,22 +313,22 @@ Describe "$moduleName Module - Generated Tests" {
             $testContent += New-FunctionTestContent -FunctionInfo $function -ModuleName $moduleName
         }
     }
-    
+
     # Add integration and error handling tests
     $testContent += @"
-    
+
     Context "Error Handling and Edge Cases" {
         It "Should handle module reimport gracefully" {
             { Import-Module (Join-Path `$env:PWSH_MODULES_PATH "$moduleName") -Force } | Should -Not -Throw
         }
-        
+
         It "Should maintain consistent behavior across PowerShell editions" {
             if (`$PSVersionTable.PSEdition -eq 'Core') {
                 Get-Module $moduleName | Should -Not -BeNullOrEmpty
             }
         }
     }
-    
+
     Context "Performance and Resource Usage" {
         It "Should import within reasonable time" {
             `$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -349,19 +349,19 @@ function New-FunctionTestContent {
     param(
         [Parameter(Mandatory)]
         [hashtable]$FunctionInfo,
-        
+
         [Parameter(Mandatory)]
         [string]$ModuleName
     )
-    
+
     $functionName = $FunctionInfo.Name
     $testContent = @"
-    
+
     Context "$functionName Function Tests" {
         It "Should have $functionName function available" {
             Get-Command $functionName -Module $ModuleName -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
         }
-        
+
         It "Should have proper function structure" {
             `$command = Get-Command $functionName -Module $ModuleName
             `$command.CommandType | Should -Be 'Function'
@@ -372,11 +372,11 @@ function New-FunctionTestContent {
     # Generate parameter validation tests
     if ($FunctionInfo.Parameters.Count -gt 0) {
         $testContent += @"
-        
+
         It "Should have expected parameters" {
             `$command = Get-Command $functionName -Module $ModuleName
             `$parameterNames = @($($FunctionInfo.Parameters.Name | ForEach-Object { "'$_'" }) -join ', ')
-            
+
             foreach (`$paramName in `$parameterNames) {
                 `$command.Parameters.Keys | Should -Contain `$paramName
             }
@@ -389,7 +389,7 @@ function New-FunctionTestContent {
         if ($mandatoryParams.Count -gt 0) {
             foreach ($param in $mandatoryParams) {
                 $testContent += @"
-        
+
         It "Should require $($param.Name) parameter" {
             { $functionName } | Should -Throw
         }
@@ -398,11 +398,11 @@ function New-FunctionTestContent {
             }
         }
     }
-    
+
     # Add basic functionality test
     if ($FunctionInfo.HasShouldProcess) {
         $testContent += @"
-        
+
         It "Should support WhatIf parameter" {
             `$command = Get-Command $functionName -Module $ModuleName
             `$command.Parameters.Keys | Should -Contain 'WhatIf'
@@ -410,7 +410,7 @@ function New-FunctionTestContent {
 
 "@
     }
-    
+
     $testContent += @"
     }
 
@@ -424,17 +424,17 @@ function Invoke-CoverageAnalysis {
     param(
         [Parameter(Mandatory)]
         [string]$TestPath,
-        
+
         [Parameter(Mandatory)]
         [string]$ModulesPath
     )
-    
+
     $generatedTests = Get-ChildItem -Path $TestPath -Filter "*-Generated.Tests.ps1" -File
     $totalModules = (Get-ChildItem -Path $ModulesPath -Directory).Count
     $coveredModules = $generatedTests.Count
-    
+
     $estimatedCoverage = [math]::Round(($coveredModules / $totalModules) * 100, 1)
-    
+
     return @{
         TotalModules = $totalModules
         CoveredModules = $coveredModules
@@ -448,14 +448,14 @@ function Invoke-CoverageAnalysis {
 param(
     [Parameter()]
     [string]$ModuleName,
-    
+
     [Parameter()]
     [string]$OutputPath,
-    
+
     [Parameter()]
     [ValidateSet("Basic", "Comprehensive", "Integration")]
     [string]$TemplateType = "Comprehensive",
-    
+
     [Parameter()]
     [switch]$Force
 )
@@ -464,7 +464,7 @@ begin {
     # Import shared utilities
     . "$PSScriptRoot/../shared/Find-ProjectRoot.ps1"
     $projectRoot = Find-ProjectRoot
-    
+
     # Import required modules
     try {
         Import-Module (Join-Path $projectRoot "aither-core/modules/Logging") -Force
@@ -474,21 +474,21 @@ begin {
             Write-Host "[$Level] $Message"
         }
     }
-    
+
     Write-CustomLog -Message "=== Automated Test Generation Engine v1.0 ===" -Level "INFO"
     Write-CustomLog -Message "Target Coverage: 80% across all modules" -Level "INFO"
-    
+
     # Set default output path
     if (-not $OutputPath) {
         $OutputPath = Join-Path $projectRoot "tests/generated"
     }
-    
+
     # Ensure output directory exists
     if (-not (Test-Path $OutputPath)) {
         New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
         Write-CustomLog -Message "Created output directory: $OutputPath" -Level "INFO"
     }
-    
+
     # Module discovery paths
     $modulesPath = Join-Path $projectRoot "aither-core/modules"
     $scriptsPath = Join-Path $projectRoot "aither-core/scripts"
@@ -497,7 +497,7 @@ begin {
 process {
     try {
         Write-CustomLog -Message "🔍 Discovering modules for test generation..." -Level "INFO"
-        
+
         # Get all modules or specific module
         if ($ModuleName) {
             $modulesToProcess = @(Get-ChildItem -Path $modulesPath -Directory -Name | Where-Object { $_ -eq $ModuleName })
@@ -507,19 +507,19 @@ process {
         } else {
             $modulesToProcess = Get-ChildItem -Path $modulesPath -Directory -Name
         }
-        
+
         Write-CustomLog -Message "📋 Found $($modulesToProcess.Count) modules to process" -Level "INFO"
-        
+
         $generatedCount = 0
         $skippedCount = 0
         $errorCount = 0
-        
+
         foreach ($module in $modulesToProcess) {
             Write-CustomLog -Message "🔄 Processing module: $module" -Level "INFO"
-            
+
             try {
                 $result = New-ModuleTestSuite -ModuleName $module -OutputPath $OutputPath -TemplateType $TemplateType -Force:$Force -ModulesPath $modulesPath
-                
+
                 if ($result.Generated) {
                     $generatedCount++
                     Write-CustomLog -Message "✅ Generated tests for $module" -Level "SUCCESS"
@@ -533,7 +533,7 @@ process {
                 Write-CustomLog -Message "❌ Failed to generate tests for $module : $($_.Exception.Message)" -Level "ERROR"
             }
         }
-        
+
         # Generate summary report
         Write-CustomLog -Message "" -Level "INFO"
         Write-CustomLog -Message "📊 Test Generation Summary:" -Level "INFO"
@@ -541,20 +541,20 @@ process {
         Write-CustomLog -Message "  Skipped: $skippedCount modules" -Level "WARN"
         Write-CustomLog -Message "  Errors: $errorCount modules" -Level "ERROR"
         Write-CustomLog -Message "  Total Processed: $($modulesToProcess.Count) modules" -Level "INFO"
-        
+
         # Run coverage analysis if tests were generated
         if ($generatedCount -gt 0) {
             Write-CustomLog -Message "🎯 Running coverage analysis..." -Level "INFO"
             $coverageResult = Invoke-CoverageAnalysis -TestPath $OutputPath -ModulesPath $modulesPath
             Write-CustomLog -Message "📈 Estimated coverage: $($coverageResult.EstimatedCoverage)%" -Level "INFO"
-            
+
             if ($coverageResult.EstimatedCoverage -ge 80) {
                 Write-CustomLog -Message "🎉 Target 80% coverage achieved!" -Level "SUCCESS"
             } else {
                 Write-CustomLog -Message "⚠️ Additional test refinement needed to reach 80%" -Level "WARN"
             }
         }
-        
+
     } catch {
         Write-CustomLog -Message "❌ Test generation failed: $($_.Exception.Message)" -Level "ERROR"
         throw

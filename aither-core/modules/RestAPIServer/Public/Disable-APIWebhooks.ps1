@@ -35,13 +35,13 @@ function Disable-APIWebhooks {
     param(
         [Parameter()]
         [switch]$RemoveSubscriptions,
-        
+
         [Parameter()]
         [switch]$ClearHistory,
-        
+
         [Parameter()]
         [switch]$Force,
-        
+
         [Parameter()]
         [string]$Reason = "Manual disable request"
     )
@@ -61,7 +61,7 @@ function Disable-APIWebhooks {
                     AlreadyDisabled = $true
                 }
             }
-            
+
             $stats = @{
                 SubscriptionCount = $script:WebhookSubscriptions.Count
                 HistoryCount = $script:APIConfiguration.WebhookConfig.DeliveryHistory.Count
@@ -69,13 +69,13 @@ function Disable-APIWebhooks {
                 DisabledBy = $env:USERNAME
                 Reason = $Reason
             }
-            
+
             # Confirm destructive operations if not forced
             if (($RemoveSubscriptions -or $ClearHistory) -and -not $Force) {
                 $actions = @()
                 if ($RemoveSubscriptions) { $actions += "remove $($stats.SubscriptionCount) subscriptions" }
                 if ($ClearHistory) { $actions += "clear $($stats.HistoryCount) history entries" }
-                
+
                 $actionText = $actions -join " and "
                 $confirmation = Read-Host "This will disable webhooks and $actionText. Continue? (y/N)"
                 if ($confirmation -notmatch '^[Yy]') {
@@ -85,7 +85,7 @@ function Disable-APIWebhooks {
                     }
                 }
             }
-            
+
             # Send final notification before disabling
             try {
                 Send-WebhookNotification -Event "webhook.system.disabled" -Data @{
@@ -100,15 +100,15 @@ function Disable-APIWebhooks {
             } catch {
                 Write-CustomLog -Message "Failed to send disable notification: $($_.Exception.Message)" -Level "WARNING"
             }
-            
+
             # Disable webhooks
             $script:APIConfiguration.WebhookConfig.Enabled = $false
             $script:APIConfiguration.WebhookConfig.DisabledAt = Get-Date
             $script:APIConfiguration.WebhookConfig.DisabledBy = $env:USERNAME
             $script:APIConfiguration.WebhookConfig.DisableReason = $Reason
-            
+
             $actions = @("Webhooks disabled")
-            
+
             # Remove subscriptions if requested
             if ($RemoveSubscriptions) {
                 $removedSubscriptions = @()
@@ -122,35 +122,35 @@ function Disable-APIWebhooks {
                         DeliveryStats = $subscription.DeliveryStats.Clone()
                     }
                 }
-                
+
                 $script:WebhookSubscriptions.Clear()
                 $actions += "Removed $($removedSubscriptions.Count) subscriptions"
                 $stats.RemovedSubscriptions = $removedSubscriptions
-                
+
                 Write-CustomLog -Message "Removed all $($removedSubscriptions.Count) webhook subscriptions" -Level "INFO"
             }
-            
+
             # Clear history if requested
             if ($ClearHistory) {
                 $clearedCount = $script:APIConfiguration.WebhookConfig.DeliveryHistory.Count
                 $script:APIConfiguration.WebhookConfig.DeliveryHistory = @()
                 $actions += "Cleared $clearedCount history entries"
                 $stats.ClearedHistoryCount = $clearedCount
-                
+
                 Write-CustomLog -Message "Cleared $clearedCount webhook delivery history entries" -Level "INFO"
             }
-            
+
             # Log the disable action
             $script:APIConfiguration.WebhookConfig.DisableHistory = $script:APIConfiguration.WebhookConfig.DisableHistory + @($stats)
-            
+
             # Maintain disable history size limit
             if ($script:APIConfiguration.WebhookConfig.DisableHistory.Count -gt 50) {
                 $script:APIConfiguration.WebhookConfig.DisableHistory = $script:APIConfiguration.WebhookConfig.DisableHistory | Select-Object -Last 50
             }
-            
+
             $resultMessage = $actions -join "; "
             Write-CustomLog -Message "Webhook disable completed: $resultMessage" -Level "SUCCESS"
-            
+
             return @{
                 Success = $true
                 Message = $resultMessage
@@ -163,11 +163,11 @@ function Disable-APIWebhooks {
                 RemainingSubscriptions = $script:WebhookSubscriptions.Count
                 RemainingHistory = $script:APIConfiguration.WebhookConfig.DeliveryHistory.Count
             }
-            
+
         } catch {
             $errorMessage = "Failed to disable webhooks: $($_.Exception.Message)"
             Write-CustomLog -Message $errorMessage -Level "ERROR"
-            
+
             return @{
                 Success = $false
                 Error = $_.Exception.Message

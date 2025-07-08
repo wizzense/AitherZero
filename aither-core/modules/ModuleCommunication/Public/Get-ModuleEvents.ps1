@@ -21,43 +21,43 @@ function Get-ModuleEvents {
     param(
         [Parameter()]
         [string]$EventName,
-        
+
         [Parameter()]
         [string]$Channel,
-        
+
         [Parameter()]
         [datetime]$Since,
-        
+
         [Parameter()]
         [int]$Last = 0,
-        
+
         [Parameter()]
         [switch]$IncludeSource
     )
-    
+
     try {
         $events = @()
-        
+
         # Get events from history
         $eventHistory = @($script:MessageBus.EventHistory.ToArray())
-        
+
         # Apply filters
         foreach ($event in $eventHistory) {
             # Event name filter
             if ($EventName -and $event.Name -notlike $EventName) {
                 continue
             }
-            
+
             # Channel filter
             if ($Channel -and $event.Channel -ne $Channel) {
                 continue
             }
-            
+
             # Time filter
             if ($Since -and $event.Timestamp -lt $Since) {
                 continue
             }
-            
+
             # Build event info
             $eventInfo = @{
                 Id = $event.Id
@@ -66,24 +66,24 @@ function Get-ModuleEvents {
                 Timestamp = $event.Timestamp
                 Data = $event.Data
             }
-            
+
             if ($IncludeSource) {
                 $eventInfo.Source = $event.Source
             }
-            
+
             $events += $eventInfo
         }
-        
+
         # Sort by timestamp (newest first)
         $events = $events | Sort-Object -Property Timestamp -Descending
-        
+
         # Apply Last filter
         if ($Last -gt 0) {
             $events = $events | Select-Object -First $Last
         }
-        
+
         return $events
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to get events: $_"
         throw

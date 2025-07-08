@@ -21,35 +21,35 @@ function Get-DeploymentSnapshot {
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$DeploymentId,
-        
+
         [Parameter()]
         [switch]$IncludeSecrets,
-        
+
         [Parameter()]
         [string]$OutputPath = (Join-Path $PSScriptRoot "../../snapshots"),
-        
+
         [Parameter()]
         [ValidateSet('JSON', 'YAML')]
         [string]$Format = 'JSON'
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Creating deployment snapshot for: $DeploymentId"
-        
+
         # Get deployment state
         $deploymentState = Get-DeploymentState -DeploymentId $DeploymentId
         if (-not $deploymentState) {
             throw "Deployment not found: $DeploymentId"
         }
-        
+
         # Get OpenTofu state
         $stateFile = Join-Path $deploymentState.WorkingDirectory "terraform.tfstate"
         if (-not (Test-Path $stateFile)) {
             throw "State file not found: $stateFile"
         }
-        
+
         $tfState = Get-Content $stateFile -Raw | ConvertFrom-Json
-        
+
         # Build snapshot object
         $snapshot = @{
             SnapshotId = "snapshot-$(Get-Date -Format 'yyyyMMdd-HHmmss')-$((New-Guid).ToString().Substring(0,8))"
@@ -66,7 +66,7 @@ function Get-DeploymentSnapshot {
                 Tags = $deploymentState.Tags
             }
         }
-        
+
         # Process resources
         foreach ($resource in $tfState.resources) {
             $resourceInfo = @{
@@ -76,7 +76,7 @@ function Get-DeploymentSnapshot {
                 Mode = $resource.mode
                 Instances = @()
             }
-            
+
             foreach ($instance in $resource.instances) {
                 $instanceInfo = @{
                     IndexKey = $instance.index_key
@@ -84,18 +84,18 @@ function Get-DeploymentSnapshot {
                     Attributes = $instance.attributes
                     Dependencies = $instance.dependencies
                 }
-                
+
                 # Handle secrets
                 if (-not $IncludeSecrets) {
                     $instanceInfo.Attributes = Remove-SensitiveData -Data $instanceInfo.Attributes
                 }
-                
+
                 $resourceInfo.Instances += $instanceInfo
             }
-            
+
             $snapshot.Resources += $resourceInfo
         }
-        
+
         # Get outputs
         if ($tfState.outputs) {
             foreach ($output in $tfState.outputs.PSObject.Properties) {
@@ -104,22 +104,22 @@ function Get-DeploymentSnapshot {
                     Type = $output.Value.type
                     Sensitive = $output.Value.sensitive
                 }
-                
+
                 if ($output.Value.sensitive -and -not $IncludeSecrets) {
                     $snapshot.Outputs[$output.Name].Value = "[REDACTED]"
                 }
             }
         }
-        
+
         # Create output directory
         if (-not (Test-Path $OutputPath)) {
             New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
         }
-        
+
         # Generate filename
         $fileName = "deployment-snapshot-$DeploymentId-$(Get-Date -Format 'yyyyMMdd-HHmmss').$($Format.ToLower())"
         $filePath = Join-Path $OutputPath $fileName
-        
+
         # Save snapshot
         switch ($Format) {
             'JSON' {
@@ -132,9 +132,9 @@ function Get-DeploymentSnapshot {
                 $filePath = "$filePath.json"
             }
         }
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "Deployment snapshot created: $filePath"
-        
+
         return [PSCustomObject]@{
             SnapshotId = $snapshot.SnapshotId
             FilePath = $filePath
@@ -142,7 +142,7 @@ function Get-DeploymentSnapshot {
             ResourceCount = $snapshot.Resources.Count
             Timestamp = $snapshot.Timestamp
         }
-        
+
     }
     catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to create deployment snapshot: $_"
@@ -153,16 +153,16 @@ function Get-DeploymentSnapshot {
 # Helper function to remove sensitive data
 function Remove-SensitiveData {
     param($Data)
-    
+
     $sensitiveKeys = @('password', 'secret', 'key', 'token', 'credential', 'private')
-    
+
     if ($Data -is [hashtable] -or $Data -is [PSCustomObject]) {
         $cleaned = @{}
         $properties = if ($Data -is [hashtable]) { $Data.Keys } else { $Data.PSObject.Properties.Name }
-        
+
         foreach ($prop in $properties) {
             $value = if ($Data -is [hashtable]) { $Data[$prop] } else { $Data.$prop }
-            
+
             if ($sensitiveKeys -contains $prop.ToLower() -or $prop -match 'password|secret|key|token') {
                 $cleaned[$prop] = "[REDACTED]"
             }
@@ -173,9 +173,9 @@ function Remove-SensitiveData {
                 $cleaned[$prop] = $value
             }
         }
-        
+
         return $cleaned
     }
-    
+
     return $Data
 }

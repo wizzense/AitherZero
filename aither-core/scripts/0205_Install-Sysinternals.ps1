@@ -20,29 +20,29 @@ Invoke-LabStep -Config $Config -Body {
         return
     }
 
-    $destDir = if ($Config.SysinternalsPath) { 
-        $Config.SysinternalsPath 
-    } else { 
-        'C:/Sysinternals' 
+    $destDir = if ($Config.SysinternalsPath) {
+        $Config.SysinternalsPath
+    } else {
+        'C:/Sysinternals'
     }
-    
+
     if (-not (Test-Path $destDir)) {
         Write-CustomLog "Installing Sysinternals to $destDir"
         $url = 'https://download.sysinternals.com/files/SysinternalsSuite.zip'
-        
+
         Invoke-LabDownload -Uri $url -Prefix 'sysinternals' -Extension '.zip' -Action {
             param($zipPath)
-            
+
             if ($PSCmdlet.ShouldProcess($destDir, 'Create Sysinternals directory')) {
                 New-Item -ItemType Directory -Path $destDir -Force | Out-Null
             }
-            
+
             Write-CustomLog "Extracting to $destDir"
             if ($PSCmdlet.ShouldProcess($zipPath, 'Extract Sysinternals')) {
                 Expand-Archive -Path $zipPath -DestinationPath $destDir -Force
             }
         }
-        
+
         # Add to PATH
         $env:PATH = "$env:PATH;$destDir"
         Write-CustomLog 'Sysinternals installation completed.'
@@ -60,4 +60,3 @@ Invoke-LabStep -Config $Config -Body {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-

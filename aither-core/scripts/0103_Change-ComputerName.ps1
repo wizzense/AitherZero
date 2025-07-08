@@ -20,10 +20,10 @@ Invoke-LabStep -Config $Config -Body {
     if ($Config.SetComputerName -eq $true) {
         try {
             $CurrentName = [System.Net.Dns]::GetHostName()
-            
+
             if ($Config.ComputerName -and $CurrentName -ne $Config.ComputerName) {
                 Write-CustomLog "Changing computer name from '$CurrentName' to '$($Config.ComputerName)'"
-                
+
                 if ($IsWindows) {
                     Rename-Computer -NewName $Config.ComputerName -Force
                     Write-CustomLog "Computer name changed. Restart required."
@@ -45,4 +45,3 @@ Invoke-LabStep -Config $Config -Body {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-

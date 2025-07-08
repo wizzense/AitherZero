@@ -21,37 +21,37 @@ function Export-ConfigurationStore {
     param(
         [Parameter(Mandatory)]
         [string]$Path,
-        
+
         [Parameter()]
         [switch]$ExcludeSchemas,
-        
+
         [Parameter()]
         [string[]]$ExcludeEnvironments = @(),
-        
+
         [Parameter()]
         [ValidateSet('JSON', 'YAML', 'XML')]
         [string]$Format = 'JSON'
     )
-    
+
     try {
         # Get configuration store
         $store = Get-ConfigurationStore -IncludeMetadata
-        
+
         # Apply exclusions
         if ($ExcludeSchemas) {
             $store.Remove('Schemas')
         }
-        
+
         if ($ExcludeEnvironments.Count -gt 0) {
             foreach ($env in $ExcludeEnvironments) {
                 $store.Environments.Remove($env)
             }
         }
-        
+
         # Add export metadata with security information
         $configHash = Get-ConfigurationHash -Configuration $store
         $securityIssues = Test-ConfigurationSecurity -Configuration $store
-        
+
         $store.ExportMetadata = @{
             ExportedBy = $env:USERNAME
             ExportedAt = Get-Date -Format 'yyyy-MM-ddTHH:mm:ss.fffZ'
@@ -69,22 +69,22 @@ function Export-ConfigurationStore {
                 Value = $configHash
             }
         }
-        
+
         # Log security issues if found
         if ($securityIssues.Count -gt 0) {
-            Write-CustomLog -Level 'WARNING' -Message "Security issues found in exported configuration:"
+            Write-CustomLog -Level 'WARN' -Message "Security issues found in exported configuration:"
             foreach ($issue in $securityIssues) {
-                Write-CustomLog -Level 'WARNING' -Message "  - $issue"
+                Write-CustomLog -Level 'WARN' -Message "  - $issue"
             }
         }
-        
+
         if ($PSCmdlet.ShouldProcess($Path, "Export configuration store")) {
             # Ensure directory exists
             $directory = Split-Path $Path -Parent
             if ($directory -and -not (Test-Path $directory)) {
                 New-Item -ItemType Directory -Path $directory -Force | Out-Null
             }
-            
+
             # Export based on format
             switch ($Format) {
                 'JSON' {
@@ -93,12 +93,12 @@ function Export-ConfigurationStore {
                 }
                 'YAML' {
                     # Basic YAML export (requires PowerShell-Yaml module for full support)
-                    Write-CustomLog -Level 'WARNING' -Message "YAML export is basic. Consider using JSON for full compatibility."
+                    Write-CustomLog -Level 'WARN' -Message "YAML export is basic. Consider using JSON for full compatibility."
                     $yaml = $store | ConvertTo-Json -Depth 10 | ConvertFrom-Json | ConvertTo-Yaml -ErrorAction SilentlyContinue
                     if ($yaml) {
                         Set-Content -Path $Path -Value $yaml -Encoding UTF8
                     } else {
-                        Write-CustomLog -Level 'WARNING' -Message "YAML conversion failed, falling back to JSON"
+                        Write-CustomLog -Level 'WARN' -Message "YAML conversion failed, falling back to JSON"
                         $json = $store | ConvertTo-Json -Depth 10
                         Set-Content -Path $Path -Value $json -Encoding UTF8
                     }
@@ -109,11 +109,11 @@ function Export-ConfigurationStore {
                     $xml.Save($Path)
                 }
             }
-            
+
             Write-CustomLog -Level 'SUCCESS' -Message "Configuration store exported to: $Path"
             return $true
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to export configuration store: $_"
         throw

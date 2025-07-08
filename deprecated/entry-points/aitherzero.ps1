@@ -34,7 +34,7 @@ if ($IsWindows -or $PSVersionTable.Platform -eq 'Win32NT' -or $env:OS -eq 'Windo
         "C:\Program Files\PowerShell\7-preview\pwsh.exe",
         "$env:ProgramFiles\PowerShell\7\pwsh.exe"
     )
-    
+
     foreach ($path in $paths) {
         if (Test-Path $path) {
             $pwsh7 = $path
@@ -70,14 +70,14 @@ if ($pwsh7) {
     Write-Host "Found PowerShell 7 at: $pwsh7" -ForegroundColor Green
     Write-Host "Launching AitherZero with PowerShell 7..." -ForegroundColor Cyan
     Write-Host ""
-    
+
     # Build arguments
     $args = @('-NoProfile', '-File', "$PSScriptRoot\Start-AitherZero.ps1")
     if ($Setup) { $args += '-Setup' }
     if ($Auto) { $args += '-Auto' }
     if ($Scripts) { $args += '-Scripts'; $args += $Scripts }
     if ($Help) { $args += '-Help' }
-    
+
     & $pwsh7 $args
     exit $LASTEXITCODE
 } else {
@@ -86,14 +86,14 @@ if ($pwsh7) {
     Write-Host ""
     Write-Host "Please install PowerShell 7:" -ForegroundColor Yellow
     Write-Host ""
-    
+
     if ($IsWindows -or $PSVersionTable.Platform -eq 'Win32NT' -or $env:OS -eq 'Windows_NT') {
         Write-Host "  Option 1: winget install Microsoft.PowerShell" -ForegroundColor Cyan
         Write-Host "  Option 2: Download from https://aka.ms/powershell-release" -ForegroundColor Cyan
     } else {
         Write-Host "  Visit: https://docs.microsoft.com/powershell/scripting/install/installing-powershell" -ForegroundColor Cyan
     }
-    
+
     Write-Host ""
     Write-Host "After installing, run this script again." -ForegroundColor Yellow
     exit 1

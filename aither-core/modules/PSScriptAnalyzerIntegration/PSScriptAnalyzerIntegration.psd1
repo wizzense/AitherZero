@@ -17,13 +17,13 @@
         'Get-AnalysisStatus',
         'Invoke-PSScriptAnalyzerScan',
         'Get-PSScriptAnalyzerResults',
-        
+
         # Status Management Functions
         'New-StatusFile',
         'Update-StatusFile',
         'Get-StatusSummary',
         'Export-StatusReport',
-        
+
         # Bug Tracking Functions
         'New-BugzFile',
         'Update-BugzFile',
@@ -32,38 +32,38 @@
         'Add-BugzEntry',
         'Remove-BugzEntry',
         'Set-BugzStatus',
-        
+
         # GitHub Integration Functions
         'New-GitHubIssueFromFinding',
         'Get-GitHubIssuesForFindings',
         'Update-GitHubIssueStatus',
         'Close-ResolvedGitHubIssues',
-        
+
         # Remediation Functions
         'Invoke-RemediationWorkflow',
         'Get-RemediationSuggestions',
         'Invoke-AutomaticFixes',
         'Test-RemediationSafety',
-        
+
         # Configuration Functions
         'Get-PSScriptAnalyzerConfiguration',
         'Set-PSScriptAnalyzerConfiguration',
         'New-IgnoredException',
         'Remove-IgnoredException',
         'Get-IgnoredRules',
-        
+
         # Reporting Functions
         'New-QualityReport',
         'Export-QualityDashboard',
         'Get-QualityMetrics',
         'Get-QualityTrends',
-        
+
         # Integration Functions
         'Initialize-PSScriptAnalyzerIntegration',
         'Register-QualityProvider',
         'Invoke-QualityGates',
         'Test-QualityThresholds',
-        
+
         # Utility Functions
         'Find-PowerShellFiles',
         'Get-DirectoryStructure',

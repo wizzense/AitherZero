@@ -46,23 +46,23 @@ function Add-WebhookSubscription {
             else { throw "URL must start with http:// or https://" }
         })]
         [string]$Url,
-        
+
         [Parameter(Mandatory)]
         [ValidateScript({
             if ($_.Count -eq 0) { throw "At least one event must be specified" }
             $true
         })]
         [string[]]$Events,
-        
+
         [Parameter()]
         [string]$Secret,
-        
+
         [Parameter()]
         [string]$Description = "",
-        
+
         [Parameter()]
         [switch]$Active = $true,
-        
+
         [Parameter()]
         [switch]$TestDelivery
     )
@@ -77,7 +77,7 @@ function Add-WebhookSubscription {
             if (-not $script:APIConfiguration.WebhookConfig.Enabled) {
                 throw "Webhooks are not enabled. Run Enable-APIWebhooks first."
             }
-            
+
             # Validate events against supported events
             $supportedEvents = $script:APIConfiguration.WebhookConfig.Events + @("*")
             foreach ($event in $Events) {
@@ -85,7 +85,7 @@ function Add-WebhookSubscription {
                     Write-CustomLog -Message "Warning: Event '$event' is not in supported events list" -Level "WARNING"
                 }
             }
-            
+
             # Check for duplicate subscription (same URL and events)
             $duplicateFound = $false
             foreach ($existingId in $script:WebhookSubscriptions.Keys) {
@@ -100,10 +100,10 @@ function Add-WebhookSubscription {
                     }
                 }
             }
-            
+
             # Generate unique subscription ID
             $subscriptionId = [System.Guid]::NewGuid().ToString()
-            
+
             # Create subscription object
             $subscription = @{
                 Url = $Url
@@ -127,11 +127,11 @@ function Add-WebhookSubscription {
                     Timeout = $script:APIConfiguration.WebhookConfig.Timeout
                 }
             }
-            
+
             # Validate URL accessibility if requested or if it's the first subscription
             if ($TestDelivery -or $script:WebhookSubscriptions.Count -eq 0) {
                 Write-CustomLog -Message "Testing webhook URL accessibility" -Level "DEBUG"
-                
+
                 try {
                     $testPayload = @{
                         event = "webhook.test"
@@ -143,13 +143,13 @@ function Add-WebhookSubscription {
                         source = "AitherZero-RestAPI"
                         version = "1.0.0"
                     } | ConvertTo-Json -Depth 3
-                    
+
                     $testRequest = [System.Net.WebRequest]::Create($Url)
                     $testRequest.Method = "POST"
                     $testRequest.ContentType = "application/json"
                     $testRequest.Timeout = 10000  # 10 second timeout for test
                     $testRequest.UserAgent = "AitherZero-Webhook-Test/1.0"
-                    
+
                     # Add signature if secret provided
                     if ($Secret) {
                         $hmac = New-Object System.Security.Cryptography.HMACSHA256
@@ -157,23 +157,23 @@ function Add-WebhookSubscription {
                         $signature = [System.Convert]::ToBase64String($hmac.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($testPayload)))
                         $testRequest.Headers.Add("X-Webhook-Signature", "sha256=$signature")
                     }
-                    
+
                     $testRequest.Headers.Add("X-Event-Type", "webhook.test")
                     $testRequest.Headers.Add("X-Webhook-Id", $subscriptionId)
-                    
+
                     $bytes = [System.Text.Encoding]::UTF8.GetBytes($testPayload)
                     $testRequest.ContentLength = $bytes.Length
-                    
+
                     $requestStream = $testRequest.GetRequestStream()
                     $requestStream.Write($bytes, 0, $bytes.Length)
                     $requestStream.Close()
-                    
+
                     $testResponse = $testRequest.GetResponse()
                     $testStatusCode = $testResponse.StatusCode
                     $testResponse.Close()
-                    
+
                     Write-CustomLog -Message "Webhook test successful: $testStatusCode" -Level "SUCCESS"
-                    
+
                 } catch {
                     Write-CustomLog -Message "Webhook test failed: $($_.Exception.Message)" -Level "WARNING"
                     if (-not $TestDelivery) {
@@ -182,16 +182,16 @@ function Add-WebhookSubscription {
                     }
                 }
             }
-            
+
             # Add subscription to registry
             $script:WebhookSubscriptions[$subscriptionId] = $subscription
-            
+
             # Log successful creation
             $eventText = if ($Events -contains "*") { "all events" } else { $Events -join ", " }
             $secretText = if ($Secret) { " (with secret)" } else { " (no secret)" }
-            
+
             Write-CustomLog -Message "Webhook subscription created: $subscriptionId for $eventText$secretText" -Level "SUCCESS"
-            
+
             # Send subscription created event
             if ($Active) {
                 Send-WebhookNotification -Event "webhook.subscription.created" -Data @{
@@ -202,7 +202,7 @@ function Add-WebhookSubscription {
                     description = $Description
                 }
             }
-            
+
             return @{
                 Success = $true
                 SubscriptionId = $subscriptionId
@@ -219,7 +219,7 @@ function Add-WebhookSubscription {
         } catch {
             $errorMessage = "Failed to add webhook subscription: $($_.Exception.Message)"
             Write-CustomLog -Message $errorMessage -Level "ERROR"
-            
+
             return @{
                 Success = $false
                 Error = $_.Exception.Message

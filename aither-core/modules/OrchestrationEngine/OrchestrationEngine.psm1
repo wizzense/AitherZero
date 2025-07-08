@@ -31,7 +31,7 @@ function Initialize-OrchestrationEngine {
         (Join-Path $projectRoot "orchestration/logs"),
         (Join-Path $projectRoot "orchestration/state")
     )
-    
+
     foreach ($path in $paths) {
         if (-not (Test-Path $path)) {
             New-Item -Path $path -ItemType Directory -Force | Out-Null
@@ -50,33 +50,33 @@ function Invoke-PlaybookWorkflow {
     param(
         [Parameter(ParameterSetName = 'PlaybookName', Mandatory)]
         [string]$PlaybookName,
-        
+
         [Parameter(ParameterSetName = 'PlaybookDefinition', Mandatory)]
         [hashtable]$PlaybookDefinition,
-        
+
         [hashtable]$Parameters = @{},
-        
+
         [ValidateSet('sequential', 'parallel', 'conditional')]
         [string]$ExecutionMode = 'sequential',
-        
+
         [ValidateSet('dev', 'staging', 'prod')]
         [string]$EnvironmentContext = 'dev',
-        
+
         [switch]$DryRun,
-        
+
         [switch]$ContinueOnError,
-        
+
         [string]$WorkflowId
     )
-    
+
     try {
         # Generate workflow ID if not provided
         if (-not $WorkflowId) {
             $WorkflowId = "workflow-$(Get-Date -Format 'yyyyMMdd-HHmmss')-$((Get-Random -Minimum 1000 -Maximum 9999))"
         }
-        
+
         Write-CustomLog -Level 'INFO' -Message "Starting playbook workflow: $WorkflowId"
-        
+
         # Load playbook definition
         if ($PlaybookName) {
             $playbook = Import-PlaybookDefinition -PlaybookName $PlaybookName
@@ -85,13 +85,13 @@ function Invoke-PlaybookWorkflow {
             }
             $PlaybookDefinition = $playbook.Definition
         }
-        
+
         # Validate playbook definition
         $validationResult = Validate-PlaybookDefinition -Definition $PlaybookDefinition
         if (-not $validationResult.IsValid) {
             throw "Playbook validation failed: $($validationResult.Errors -join '; ')"
         }
-        
+
         # Create workflow context
         $workflowContext = @{
             WorkflowId = $WorkflowId
@@ -108,24 +108,24 @@ function Invoke-PlaybookWorkflow {
             Results = @()
             Errors = @()
         }
-        
+
         # Register active workflow
         $Script:ActiveWorkflows[$WorkflowId] = $workflowContext
-        
+
         # Execute playbook steps
         $executionResult = Execute-PlaybookSteps -Definition $PlaybookDefinition -Context $workflowContext
-        
+
         # Update final status
         $workflowContext.Status = if ($executionResult.Success) { 'Completed' } else { 'Failed' }
         $workflowContext.EndTime = Get-Date
         $workflowContext.Duration = $workflowContext.EndTime - $workflowContext.StartTime
-        
+
         # Move to history
         $Script:WorkflowHistory += $workflowContext
         $Script:ActiveWorkflows.Remove($WorkflowId)
-        
+
         Write-CustomLog -Level $(if ($executionResult.Success) { 'SUCCESS' } else { 'ERROR' }) -Message "Workflow $WorkflowId completed with status: $($workflowContext.Status)"
-        
+
         return @{
             Success = $executionResult.Success
             WorkflowId = $WorkflowId
@@ -136,16 +136,16 @@ function Invoke-PlaybookWorkflow {
             StepsExecuted = $workflowContext.CurrentStep
             TotalSteps = $workflowContext.TotalSteps
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Workflow execution failed: $_"
-        
+
         # Update context if it exists
         if ($Script:ActiveWorkflows.ContainsKey($WorkflowId)) {
             $Script:ActiveWorkflows[$WorkflowId].Status = 'Failed'
             $Script:ActiveWorkflows[$WorkflowId].Errors += $_.Exception.Message
         }
-        
+
         return @{
             Success = $false
             WorkflowId = $WorkflowId
@@ -159,15 +159,15 @@ function Execute-PlaybookSteps {
         [hashtable]$Definition,
         [hashtable]$Context
     )
-    
+
     try {
         $allSuccess = $true
-        
+
         foreach ($step in $Definition.steps) {
             $Context.CurrentStep++
-            
+
             Write-CustomLog -Level 'INFO' -Message "Executing step $($Context.CurrentStep)/$($Context.TotalSteps): $($step.name)"
-            
+
             # Check if step should be executed based on conditions
             if ($step.condition) {
                 $conditionResult = Evaluate-StepCondition -Condition $step.condition -Context $Context
@@ -176,7 +176,7 @@ function Execute-PlaybookSteps {
                     continue
                 }
             }
-            
+
             # Execute step based on type
             $stepResult = switch ($step.type) {
                 'script' {
@@ -198,7 +198,7 @@ function Execute-PlaybookSteps {
                     }
                 }
             }
-            
+
             # Record step result
             $stepRecord = @{
                 StepNumber = $Context.CurrentStep
@@ -210,16 +210,16 @@ function Execute-PlaybookSteps {
                 Output = $stepResult.Output
                 Error = $stepResult.Error
             }
-            
+
             $Context.Results += $stepRecord
-            
+
             # Handle step failure
             if (-not $stepResult.Success) {
                 $allSuccess = $false
                 $Context.Errors += "Step '$($step.name)' failed: $($stepResult.Error)"
-                
+
                 Write-CustomLog -Level 'ERROR' -Message "Step failed: $($step.name) - $($stepResult.Error)"
-                
+
                 if (-not $Context.ContinueOnError) {
                     Write-CustomLog -Level 'ERROR' -Message "Stopping workflow due to step failure"
                     break
@@ -228,12 +228,12 @@ function Execute-PlaybookSteps {
                 Write-CustomLog -Level 'SUCCESS' -Message "Step completed: $($step.name)"
             }
         }
-        
+
         return @{
             Success = $allSuccess
             Message = if ($allSuccess) { "All steps completed successfully" } else { "Some steps failed" }
         }
-        
+
     } catch {
         return @{
             Success = $false
@@ -247,10 +247,10 @@ function Execute-ScriptStep {
         [hashtable]$Step,
         [hashtable]$Context
     )
-    
+
     try {
         $startTime = Get-Date
-        
+
         if ($Context.DryRun) {
             Write-CustomLog -Level 'INFO' -Message "DRY RUN: Would execute script: $($Step.command)"
             return @{
@@ -259,13 +259,13 @@ function Execute-ScriptStep {
                 Duration = (Get-Date) - $startTime
             }
         }
-        
+
         # Replace parameters in command
         $command = $Step.command
         foreach ($param in $Context.Parameters.Keys) {
             $command = $command -replace "\{\{$param\}\}", $Context.Parameters[$param]
         }
-        
+
         # Execute command
         if ($Step.shell -eq 'powershell' -or -not $Step.shell) {
             $result = Invoke-Expression $command 2>&1
@@ -275,14 +275,14 @@ function Execute-ScriptStep {
             $result = & $Step.shell -c $command 2>&1
             $success = $LASTEXITCODE -eq 0
         }
-        
+
         return @{
             Success = $success
             Output = $result
             Duration = (Get-Date) - $startTime
             Error = if (-not $success) { "Command failed with exit code: $LASTEXITCODE" } else { $null }
         }
-        
+
     } catch {
         return @{
             Success = $false
@@ -297,13 +297,13 @@ function Execute-ConditionalStep {
         [hashtable]$Step,
         [hashtable]$Context
     )
-    
+
     try {
         $startTime = Get-Date
-        
+
         # Evaluate condition
         $conditionResult = Evaluate-StepCondition -Condition $Step.condition -Context $Context
-        
+
         # Execute appropriate branch
         if ($conditionResult -and $Step.then) {
             $branchResult = Execute-PlaybookSteps -Definition @{ steps = $Step.then } -Context $Context
@@ -312,14 +312,14 @@ function Execute-ConditionalStep {
         } else {
             $branchResult = @{ Success = $true; Message = "No matching branch to execute" }
         }
-        
+
         return @{
             Success = $branchResult.Success
             Output = "Condition: $conditionResult, Branch executed: $(if ($conditionResult) { 'then' } else { 'else' })"
             Duration = (Get-Date) - $startTime
             Error = $branchResult.Error
         }
-        
+
     } catch {
         return @{
             Success = $false
@@ -334,10 +334,10 @@ function Execute-ParallelStep {
         [hashtable]$Step,
         [hashtable]$Context
     )
-    
+
     try {
         $startTime = Get-Date
-        
+
         if ($Context.DryRun) {
             Write-CustomLog -Level 'INFO' -Message "DRY RUN: Would execute $($Step.parallel.Count) parallel steps"
             return @{
@@ -346,7 +346,7 @@ function Execute-ParallelStep {
                 Duration = (Get-Date) - $startTime
             }
         }
-        
+
         # Check if ParallelExecution module is available
         if (Get-Command Start-ParallelExecution -ErrorAction SilentlyContinue) {
             # Use AitherZero's ParallelExecution module
@@ -403,10 +403,10 @@ function Execute-ParallelStep {
                     Arguments = @($parallelStep, $Context)
                 }
             }
-            
+
             # Execute all jobs in parallel
             $parallelResult = Start-ParallelExecution -Jobs $parallelJobs -MaxConcurrentJobs 4
-            
+
             return @{
                 Success = $parallelResult.Success
                 Output = "Parallel execution: $($parallelResult.CompletedJobs)/$($parallelResult.TotalJobs) jobs completed"
@@ -423,10 +423,10 @@ function Execute-ParallelStep {
                 } -ArgumentList $parallelStep
                 $jobs += $job
             }
-            
+
             # Wait for all jobs to complete
             $jobs | Wait-Job | Out-Null
-            
+
             # Collect results
             $allSuccess = $true
             $outputs = @()
@@ -438,7 +438,7 @@ function Execute-ParallelStep {
                 }
                 Remove-Job $job
             }
-            
+
             return @{
                 Success = $allSuccess
                 Output = $outputs -join "`n"
@@ -446,7 +446,7 @@ function Execute-ParallelStep {
                 Error = if (-not $allSuccess) { "Some parallel jobs failed" } else { $null }
             }
         }
-        
+
     } catch {
         return @{
             Success = $false
@@ -461,10 +461,10 @@ function Execute-ModuleStep {
         [hashtable]$Step,
         [hashtable]$Context
     )
-    
+
     try {
         $startTime = Get-Date
-        
+
         if ($Context.DryRun) {
             Write-CustomLog -Level 'INFO' -Message "DRY RUN: Would execute module: $($Step.module)"
             return @{
@@ -473,19 +473,19 @@ function Execute-ModuleStep {
                 Duration = (Get-Date) - $startTime
             }
         }
-        
+
         # Load and execute AitherZero module
         $modulePath = Join-Path $projectRoot "aither-core/modules/$($Step.module)"
         if (Test-Path $modulePath) {
             Import-Module $modulePath -Force
-            
+
             # Execute module function
             if ($Step.function) {
                 $result = & $Step.function @($Step.parameters ?? @{})
             } else {
                 $result = "Module $($Step.module) loaded successfully"
             }
-            
+
             return @{
                 Success = $true
                 Output = $result
@@ -494,7 +494,7 @@ function Execute-ModuleStep {
         } else {
             throw "Module not found: $($Step.module)"
         }
-        
+
     } catch {
         return @{
             Success = $false
@@ -509,23 +509,23 @@ function Evaluate-StepCondition {
         [string]$Condition,
         [hashtable]$Context
     )
-    
+
     try {
         # Replace variables in condition
         $evaluatedCondition = $Condition
-        
+
         # Replace environment context
         $evaluatedCondition = $evaluatedCondition -replace '\$env\.context', "'$($Context.EnvironmentContext)'"
-        
+
         # Replace parameters
         foreach ($param in $Context.Parameters.Keys) {
             $evaluatedCondition = $evaluatedCondition -replace "\`$params\.$param", "'$($Context.Parameters[$param])'"
         }
-        
+
         # Evaluate the condition
         $result = Invoke-Expression $evaluatedCondition
         return [bool]$result
-        
+
     } catch {
         Write-CustomLog -Level 'WARNING' -Message "Condition evaluation failed: $Condition - $_"
         return $false
@@ -541,18 +541,18 @@ function New-PlaybookDefinition {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [string]$Description,
-        
+
         [string]$Version = '1.0',
-        
+
         [hashtable[]]$Steps = @(),
-        
+
         [hashtable]$Parameters = @{},
-        
+
         [string[]]$RequiredModules = @()
     )
-    
+
     $playbook = @{
         name = $Name
         description = $Description ?? "Playbook: $Name"
@@ -562,7 +562,7 @@ function New-PlaybookDefinition {
         requiredModules = $RequiredModules
         steps = $Steps
     }
-    
+
     return $playbook
 }
 
@@ -576,14 +576,14 @@ function Import-PlaybookDefinition {
         [Parameter(Mandatory)]
         [string]$PlaybookName
     )
-    
+
     try {
         Initialize-OrchestrationEngine
-        
+
         # Look for playbook file
         $playbookFile = $null
         $extensions = @('.json', '.yaml', '.yml')
-        
+
         foreach ($ext in $extensions) {
             $testPath = Join-Path $Script:PlaybooksPath "$PlaybookName$ext"
             if (Test-Path $testPath) {
@@ -591,11 +591,11 @@ function Import-PlaybookDefinition {
                 break
             }
         }
-        
+
         if (-not $playbookFile) {
             throw "Playbook file not found: $PlaybookName"
         }
-        
+
         # Load based on file extension
         switch ((Get-Item $playbookFile).Extension) {
             '.json' {
@@ -606,13 +606,13 @@ function Import-PlaybookDefinition {
                 throw "YAML playbooks not yet supported. Use JSON format."
             }
         }
-        
+
         return @{
             Success = $true
             Definition = $definition
             SourceFile = $playbookFile
         }
-        
+
     } catch {
         return @{
             Success = $false
@@ -631,19 +631,19 @@ function Validate-PlaybookDefinition {
         [Parameter(Mandatory)]
         [hashtable]$Definition
     )
-    
+
     $errors = @()
     $warnings = @()
-    
+
     # Check required fields
     if (-not $Definition.name) {
         $errors += "Playbook name is required"
     }
-    
+
     if (-not $Definition.steps -or $Definition.steps.Count -eq 0) {
         $errors += "Playbook must have at least one step"
     }
-    
+
     # Validate each step
     if ($Definition.steps) {
         for ($i = 0; $i -lt $Definition.steps.Count; $i++) {
@@ -652,7 +652,7 @@ function Validate-PlaybookDefinition {
             $errors += $stepErrors
         }
     }
-    
+
     return @{
         IsValid = ($errors.Count -eq 0)
         Errors = $errors
@@ -662,19 +662,19 @@ function Validate-PlaybookDefinition {
 
 function Validate-PlaybookStep {
     param([hashtable]$Step, [int]$StepNumber)
-    
+
     $errors = @()
-    
+
     if (-not $Step.name) {
         $errors += "Step ${StepNumber}: name is required"
     }
-    
+
     if (-not $Step.type) {
         $errors += "Step ${StepNumber}: type is required"
     } elseif ($Step.type -notin @('script', 'condition', 'parallel', 'module')) {
         $errors += "Step ${StepNumber}: invalid type '$($Step.type)'"
     }
-    
+
     # Type-specific validation
     switch ($Step.type) {
         'script' {
@@ -698,7 +698,7 @@ function Validate-PlaybookStep {
             }
         }
     }
-    
+
     return $errors
 }
 
@@ -711,7 +711,7 @@ function Get-PlaybookStatus {
     param(
         [string]$WorkflowId
     )
-    
+
     if ($WorkflowId) {
         # Get specific workflow
         if ($Script:ActiveWorkflows.ContainsKey($WorkflowId)) {
@@ -741,17 +741,17 @@ function Stop-PlaybookWorkflow {
         [Parameter(Mandatory)]
         [string]$WorkflowId
     )
-    
+
     if ($Script:ActiveWorkflows.ContainsKey($WorkflowId)) {
         $workflow = $Script:ActiveWorkflows[$WorkflowId]
         $workflow.Status = 'Stopped'
         $workflow.EndTime = Get-Date
         $workflow.Duration = $workflow.EndTime - $workflow.StartTime
-        
+
         # Move to history
         $Script:WorkflowHistory += $workflow
         $Script:ActiveWorkflows.Remove($WorkflowId)
-        
+
         Write-CustomLog -Level 'INFO' -Message "Workflow $WorkflowId stopped"
         return @{ Success = $true; Message = "Workflow stopped" }
     } else {
@@ -767,18 +767,18 @@ function New-ScriptStep {
         [string]$Shell = 'powershell',
         [string]$Condition
     )
-    
+
     $step = @{
         name = $Name
         type = 'script'
         command = $Command
         shell = $Shell
     }
-    
+
     if ($Condition) {
         $step.condition = $Condition
     }
-    
+
     return $step
 }
 
@@ -789,7 +789,7 @@ function New-ConditionalStep {
         [hashtable[]]$ThenSteps = @(),
         [hashtable[]]$ElseSteps = @()
     )
-    
+
     return @{
         name = $Name
         type = 'condition'
@@ -804,7 +804,7 @@ function New-ParallelStep {
         [string]$Name,
         [hashtable[]]$ParallelSteps = @()
     )
-    
+
     return @{
         name = $Name
         type = 'parallel'

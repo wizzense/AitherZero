@@ -31,26 +31,26 @@ function Register-ModuleAPI {
     param(
         [Parameter(Mandatory)]
         [string]$ModuleName,
-        
+
         [Parameter(Mandatory)]
         [string]$APIName,
-        
+
         [Parameter(Mandatory)]
         [scriptblock]$Handler,
-        
+
         [Parameter()]
         [string]$Description = '',
-        
+
         [Parameter()]
         [hashtable]$Parameters = @{},
-        
+
         [Parameter()]
         [bool]$RequiresAuth = $false,
-        
+
         [Parameter()]
         [scriptblock[]]$Middleware = @()
     )
-    
+
     try {
         # Create API definition
         $api = @{
@@ -67,34 +67,34 @@ function Register-ModuleAPI {
             LastCalled = $null
             AverageExecutionTime = 0
         }
-        
+
         # Validate handler has proper parameters
         $handlerParams = $Handler.Ast.ParamBlock.Parameters.Name.VariablePath.UserPath
         $expectedParams = $Parameters.Keys
-        
+
         foreach ($param in $expectedParams) {
             if ($param -notin $handlerParams) {
                 Write-CustomLog -Level 'WARNING' -Message "Handler missing parameter: $param"
             }
         }
-        
+
         # Register API
         $apiKey = $api.FullName
         if ($script:APIRegistry.APIs.ContainsKey($apiKey)) {
             Write-CustomLog -Level 'WARNING' -Message "API already registered: $apiKey. Overwriting."
         }
-        
+
         $script:APIRegistry.APIs[$apiKey] = $api
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "API registered: $apiKey"
-        
+
         return @{
             ModuleName = $ModuleName
             APIName = $APIName
             FullName = $apiKey
             ParameterCount = $Parameters.Count
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to register API: $_"
         throw

@@ -21,14 +21,14 @@ function Get-ConfigurationEnvironment {
     param(
         [Parameter()]
         [string]$Name,
-        
+
         [Parameter()]
         [switch]$All,
-        
+
         [Parameter()]
         [switch]$IncludeSettings
     )
-    
+
     try {
         if ($All) {
             $environments = @{}
@@ -41,27 +41,27 @@ function Get-ConfigurationEnvironment {
             }
             return $environments
         }
-        
+
         # Get specific environment or current
         if (-not $Name) {
             $Name = $script:ConfigurationStore.CurrentEnvironment
         }
-        
+
         if (-not $script:ConfigurationStore.Environments.ContainsKey($Name)) {
             throw "Environment '$Name' not found"
         }
-        
+
         $environment = $script:ConfigurationStore.Environments[$Name].Clone()
-        
+
         # Add current environment indicator
         $environment.IsCurrent = ($Name -eq $script:ConfigurationStore.CurrentEnvironment)
-        
+
         if (-not $IncludeSettings) {
             $environment.Remove('Settings')
         }
-        
+
         return $environment
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to get configuration environment: $_"
         throw

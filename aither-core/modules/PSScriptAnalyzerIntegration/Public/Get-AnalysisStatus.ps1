@@ -2,90 +2,90 @@ function Get-AnalysisStatus {
     <#
     .SYNOPSIS
         Gets PSScriptAnalyzer analysis status for directories or modules
-    
+
     .DESCRIPTION
         Retrieves and displays PSScriptAnalyzer analysis status from .pssa-status files,
         with options for rollup reporting and filtering by status or quality thresholds.
-    
+
     .PARAMETER Path
         Directory path to get status for. Defaults to current directory.
-    
+
     .PARAMETER Rollup
         Whether to provide rollup summary across multiple directories (default: false)
-    
+
     .PARAMETER Recurse
         Whether to recursively search subdirectories for status files (default: true)
-    
+
     .PARAMETER StatusFilter
         Filter by status: 'good', 'warnings', 'needs-attention', 'critical' (optional)
-    
+
     .PARAMETER MinQualityScore
         Minimum quality score threshold for filtering results (0-100)
-    
+
     .PARAMETER ShowDetails
         Whether to show detailed findings breakdown (default: false)
-    
+
     .PARAMETER Format
         Output format: 'Table', 'JSON', 'Summary' (default: 'Table')
-    
+
     .PARAMETER ExportPath
         Path to export results (optional)
-    
+
     .EXAMPLE
         Get-AnalysisStatus -Path "./aither-core/modules" -Rollup
-        
+
         Gets rollup status for all modules
-    
+
     .EXAMPLE
         Get-AnalysisStatus -Path "." -StatusFilter "critical" -ShowDetails
-        
+
         Shows detailed status for directories with critical findings
-    
+
     .EXAMPLE
         Get-AnalysisStatus -Path "./aither-core" -MinQualityScore 80 -Format JSON -ExportPath "./quality-report.json"
-        
+
         Gets status for directories with quality score >= 80 and exports as JSON
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $false)]
         [string]$Path = ".",
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$Rollup,
-        
+
         [Parameter(Mandatory = $false)]
         [bool]$Recurse = $true,
-        
+
         [Parameter(Mandatory = $false)]
         [ValidateSet('good', 'warnings', 'needs-attention', 'critical')]
         [string]$StatusFilter,
-        
+
         [Parameter(Mandatory = $false)]
         [ValidateRange(0, 100)]
         [int]$MinQualityScore,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$ShowDetails,
-        
+
         [Parameter(Mandatory = $false)]
         [ValidateSet('Table', 'JSON', 'Summary')]
         [string]$Format = 'Table',
-        
+
         [Parameter(Mandatory = $false)]
         [string]$ExportPath
     )
-    
+
     try {
         $resolvedPath = Resolve-Path $Path -ErrorAction Stop
-        
+
         if ($script:UseCustomLogging) {
             Write-CustomLog -Level 'INFO' -Message "Getting analysis status for: $resolvedPath"
         }
-        
+
         # Find all .pssa-status files
         $statusFiles = Get-ChildItem -Path $resolvedPath -Name $script:DefaultSettings.StatusFileName -Recurse:$Recurse -ErrorAction SilentlyContinue
-        
+
         if ($statusFiles.Count -eq 0) {
             if ($script:UseCustomLogging) {
                 Write-CustomLog -Level 'WARNING' -Message "No .pssa-status files found in $resolvedPath"
@@ -94,19 +94,19 @@ function Get-AnalysisStatus {
             }
             return $null
         }
-        
+
         # Load status data
         $statusData = @()
         foreach ($statusFile in $statusFiles) {
             $statusFilePath = Join-Path $resolvedPath $statusFile.FullName
             try {
                 $content = Get-Content $statusFilePath | ConvertFrom-Json
-                
+
                 # Add computed properties
                 $content | Add-Member -NotePropertyName 'StatusFile' -NotePropertyValue $statusFilePath
                 $content | Add-Member -NotePropertyName 'DirectoryName' -NotePropertyValue (Split-Path $content.directory -Leaf)
                 $content | Add-Member -NotePropertyName 'RelativePath' -NotePropertyValue ($content.directory -replace [regex]::Escape($resolvedPath.Path), '' -replace '^[\\\/]', '')
-                
+
                 # Calculate age
                 if ($content.lastAnalysis) {
                     $lastAnalysis = [DateTime]::Parse($content.lastAnalysis)
@@ -125,25 +125,25 @@ function Get-AnalysisStatus {
                     $content | Add-Member -NotePropertyName 'AnalysisAge' -NotePropertyValue $null
                     $content | Add-Member -NotePropertyName 'AnalysisAgeDisplay' -NotePropertyValue 'Unknown'
                 }
-                
+
                 $statusData += $content
             }
             catch {
                 if ($script:UseCustomLogging) {
-                    Write-CustomLog -Level 'WARNING' -Message "Failed to load status file $statusFilePath: $($_.Exception.Message)"
+                    Write-CustomLog -Level 'WARNING' -Message "Failed to load status file ${statusFilePath}: $($_.Exception.Message)"
                 }
             }
         }
-        
+
         # Apply filters
         if ($StatusFilter) {
             $statusData = $statusData | Where-Object { $_.status -eq $StatusFilter }
         }
-        
+
         if ($PSBoundParameters.ContainsKey('MinQualityScore')) {
             $statusData = $statusData | Where-Object { $_.qualityScore -ge $MinQualityScore }
         }
-        
+
         if ($statusData.Count -eq 0) {
             if ($script:UseCustomLogging) {
                 Write-CustomLog -Level 'INFO' -Message "No status data matches the specified filters"
@@ -152,10 +152,10 @@ function Get-AnalysisStatus {
             }
             return $null
         }
-        
+
         # Sort by quality score (lowest first to highlight issues)
         $statusData = $statusData | Sort-Object qualityScore, @{Expression={$_.findings.errors}; Descending=$true}
-        
+
         # Prepare output based on format
         if ($Rollup) {
             # Calculate rollup statistics
@@ -177,7 +177,7 @@ function Get-AnalysisStatus {
                 OldestAnalysis = if ($statusData.AnalysisAge) { ($statusData | Sort-Object AnalysisAge -Descending | Select-Object -First 1).AnalysisAgeDisplay } else { 'Unknown' }
                 NewestAnalysis = if ($statusData.AnalysisAge) { ($statusData | Sort-Object AnalysisAge | Select-Object -First 1).AnalysisAgeDisplay } else { 'Unknown' }
             }
-            
+
             $rollupData.OverallStatus = if ($rollupData.TotalErrors -gt 0) {
                 'critical'
             } elseif ($rollupData.StatusBreakdown.Critical -gt 0) {
@@ -189,7 +189,7 @@ function Get-AnalysisStatus {
             } else {
                 'good'
             }
-            
+
             switch ($Format) {
                 'JSON' {
                     $output = $rollupData | ConvertTo-Json -Depth 5
@@ -252,13 +252,13 @@ Analysis Age:
                             'critical' { '🔴' }
                             default { '❓' }
                         }
-                        
+
                         $details = if ($ShowDetails -and $_.ruleBreakdown -and $_.ruleBreakdown.Count -gt 0) {
                             "`n    Top Issues: " + (($_.ruleBreakdown.GetEnumerator() | Sort-Object Value -Descending | Select-Object -First 3 | ForEach-Object { "$($_.Key)($($_.Value))" }) -join ', ')
                         } else {
                             ""
                         }
-                        
+
                         "$emoji $($_.DirectoryName) - Score: $($_.qualityScore)% | E:$($_.findings.errors) W:$($_.findings.warnings) I:$($_.findings.information) | Age: $($_.AnalysisAgeDisplay)$details"
                     }
                     $output = $output -join "`n"
@@ -266,7 +266,7 @@ Analysis Age:
                 default {
                     # Table format
                     if ($ShowDetails) {
-                        $output = $statusData | Select-Object DirectoryName, status, qualityScore, 
+                        $output = $statusData | Select-Object DirectoryName, status, qualityScore,
                             @{Name='Errors'; Expression={$_.findings.errors}},
                             @{Name='Warnings'; Expression={$_.findings.warnings}},
                             @{Name='Information'; Expression={$_.findings.information}},
@@ -280,7 +280,7 @@ Analysis Age:
                                 }
                             }}
                     } else {
-                        $output = $statusData | Select-Object DirectoryName, status, 
+                        $output = $statusData | Select-Object DirectoryName, status,
                             @{Name='Score'; Expression={"$($_.qualityScore)%"}},
                             @{Name='E'; Expression={$_.findings.errors}},
                             @{Name='W'; Expression={$_.findings.warnings}},
@@ -291,7 +291,7 @@ Analysis Age:
                 }
             }
         }
-        
+
         # Export if requested
         if ($ExportPath) {
             try {
@@ -300,7 +300,7 @@ Analysis Age:
                 } else {
                     $output | Out-String | Set-Content -Path $ExportPath -Encoding UTF8
                 }
-                
+
                 if ($script:UseCustomLogging) {
                     Write-CustomLog -Level 'INFO' -Message "Exported analysis status to: $ExportPath"
                 } else {
@@ -315,7 +315,7 @@ Analysis Age:
                 }
             }
         }
-        
+
         return $output
     }
     catch {

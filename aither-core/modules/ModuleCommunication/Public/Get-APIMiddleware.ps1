@@ -15,14 +15,14 @@ function Get-APIMiddleware {
     param(
         [Parameter()]
         [string]$Name,
-        
+
         [Parameter()]
         [switch]$IncludeHandler
     )
-    
+
     try {
         $middlewareList = @()
-        
+
         if ($Name) {
             # Get specific middleware
             $middleware = $script:APIRegistry.Middleware | Where-Object { $_.Name -eq $Name }
@@ -34,11 +34,11 @@ function Get-APIMiddleware {
                     Enabled = $middleware.Enabled
                     Position = $script:APIRegistry.Middleware.IndexOf($middleware)
                 }
-                
+
                 if ($IncludeHandler) {
                     $middlewareInfo.Handler = $middleware.Handler
                 }
-                
+
                 return $middlewareInfo
             } else {
                 Write-CustomLog -Level 'WARNING' -Message "Middleware '$Name' not found"
@@ -48,7 +48,7 @@ function Get-APIMiddleware {
             # Get all middleware
             for ($i = 0; $i -lt $script:APIRegistry.Middleware.Count; $i++) {
                 $middleware = $script:APIRegistry.Middleware[$i]
-                
+
                 $middlewareInfo = @{
                     Name = $middleware.Name
                     Priority = $middleware.Priority
@@ -56,17 +56,17 @@ function Get-APIMiddleware {
                     Enabled = $middleware.Enabled
                     Position = $i
                 }
-                
+
                 if ($IncludeHandler) {
                     $middlewareInfo.Handler = $middleware.Handler
                 }
-                
+
                 $middlewareList += $middlewareInfo
             }
-            
+
             return $middlewareList
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to get middleware: $_"
         throw

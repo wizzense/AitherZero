@@ -69,6 +69,56 @@ if (-not $loggingImported) {
     }
 }
 
+# Progress logging function for enhanced deployment tracking
+function Write-ProgressLog {
+    <#
+    .SYNOPSIS
+        Write progress log messages with formatting
+    
+    .DESCRIPTION
+        Provides consistent progress logging for long-running operations
+    
+    .PARAMETER Message
+        The message to log
+    
+    .PARAMETER Level
+        Log level (Info, Success, Error, Warning)
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Message,
+        
+        [ValidateSet('Info', 'Success', 'Error', 'Warning')]
+        [string]$Level = 'Info'
+    )
+    
+    try {
+        # Use Write-CustomLog if available, otherwise fallback
+        if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+            $logLevel = switch ($Level) {
+                'Info' { 'INFO' }
+                'Success' { 'SUCCESS' }
+                'Error' { 'ERROR' }
+                'Warning' { 'WARNING' }
+                default { 'INFO' }
+            }
+            Write-CustomLog -Message $Message -Level $logLevel
+        } else {
+            $color = switch ($Level) {
+                'Info' { 'Cyan' }
+                'Success' { 'Green' }
+                'Error' { 'Red' }
+                'Warning' { 'Yellow' }
+                default { 'White' }
+            }
+            Write-Host "[$Level] $Message" -ForegroundColor $color
+        }
+    } catch {
+        Write-Host "[$Level] $Message"
+    }
+}
+
 # Try to import ProgressTracking module (conditional - non-breaking)
 if (Get-Module -Name 'ProgressTracking' -ErrorAction SilentlyContinue) {
     $progressTrackingImported = $true
@@ -417,11 +467,11 @@ function Start-LabAutomation {
     )
 
     Write-CustomLog -Message "🚀 Starting lab automation workflow" -Level "INFO"
-    
+
     # Initialize progress tracking if available and requested
     $progressOperationId = $null
     $useProgressTracking = $ShowProgress -and $script:progressTrackingImported
-    
+
     if ($useProgressTracking) {
         try {
             $totalSteps = if ($Steps.Count -gt 0) { $Steps.Count } else { 5 }  # Default lab automation steps
@@ -438,16 +488,16 @@ function Start-LabAutomation {
             # Execute specific steps with progress tracking
             for ($i = 0; $i -lt $Steps.Count; $i++) {
                 $step = $Steps[$i]
-                
+
                 if ($useProgressTracking) {
                     Update-ProgressOperation -OperationId $progressOperationId -CurrentStep ($i + 1) -StepName "Executing: $step"
                 }
-                
+
                 Write-CustomLog -Message "📋 Executing lab step: $step" -Level "INFO"
-                
+
                 try {
                     Invoke-LabStep -StepName $step -Config $Configuration
-                    
+
                     if ($useProgressTracking) {
                         Write-ProgressLog -Message "Completed step: $step" -Level 'Success'
                     }
@@ -462,18 +512,18 @@ function Start-LabAutomation {
         } else {
             # Execute default lab configuration with progress tracking
             Write-CustomLog -Message "📋 Executing default lab configuration" -Level "INFO"
-            
+
             if ($useProgressTracking) {
                 # Update progress for different phases of default execution
                 Update-ProgressOperation -OperationId $progressOperationId -CurrentStep 1 -StepName "Loading lab configuration"
             }
-            
+
             $config = Get-LabConfig
-            
+
             if ($useProgressTracking) {
                 Update-ProgressOperation -OperationId $progressOperationId -CurrentStep 2 -StepName "Validating configuration"
             }
-            
+
             # Validate configuration
             if (-not $config) {
                 $errorMsg = "Lab configuration could not be loaded"
@@ -482,18 +532,18 @@ function Start-LabAutomation {
                 }
                 throw $errorMsg
             }
-            
+
             if ($useProgressTracking) {
                 Update-ProgressOperation -OperationId $progressOperationId -CurrentStep 3 -StepName "Preparing lab environment"
             }
-            
+
             # Execute parallel lab runner with enhanced progress tracking
             if ($useProgressTracking) {
                 Update-ProgressOperation -OperationId $progressOperationId -CurrentStep 4 -StepName "Starting parallel lab deployment"
             }
-            
+
             Invoke-ParallelLabRunner -Config $config -ShowProgress:$ShowProgress -ProgressStyle $ProgressStyle
-            
+
             if ($useProgressTracking) {
                 Update-ProgressOperation -OperationId $progressOperationId -CurrentStep 5 -StepName "Finalizing deployment"
             }
@@ -510,18 +560,18 @@ function Start-LabAutomation {
             ExecutedSteps = $Steps
             ProgressTrackingEnabled = $useProgressTracking
         }
-        
+
         Write-CustomLog -Message "✅ Lab automation completed successfully" -Level "SUCCESS"
-        
+
         return $result
-        
+
     } catch {
         # Handle errors and complete progress tracking
         if ($useProgressTracking -and $progressOperationId) {
             Add-ProgressError -OperationId $progressOperationId -Error $_.Exception.Message
             Complete-ProgressOperation -OperationId $progressOperationId -ShowSummary
         }
-        
+
         Write-CustomLog -Message "❌ Lab automation failed: $($_.Exception.Message)" -Level "ERROR"
         throw
     }
@@ -595,7 +645,7 @@ function Test-ParallelRunnerSupport {
             $testRunspace.AddScript({ 1 + 1 }) | Out-Null
             $testResult = $testRunspace.Invoke()
             $testRunspace.Dispose()
-            
+
             if ($testResult -eq 2) {
                 $result.RunspaceSupport = $true
                 $result.Details += "Runspace creation and execution successful"
@@ -733,29 +783,29 @@ function Start-EnhancedLabDeployment {
         [Parameter(Mandatory)]
         [ValidateScript({Test-Path $_})]
         [string]$ConfigurationPath,
-        
+
         [switch]$ShowProgress,
-        
+
         [ValidateSet('Bar', 'Spinner', 'Percentage', 'Detailed')]
         [string]$ProgressStyle = 'Detailed',
-        
+
         [switch]$DryRun,
-        
+
         [ValidateRange(0, 5)]
         [int]$MaxRetries = 2,
-        
+
         [switch]$Force,
-        
+
         [ValidateSet('Prepare', 'Validate', 'Plan', 'Apply', 'Verify')]
         [string]$Stage
     )
-    
+
     Write-CustomLog -Level 'INFO' -Message "Starting enhanced lab deployment from: $ConfigurationPath"
-    
+
     # Initialize progress tracking if available and requested
     $progressOperationId = $null
     $useProgressTracking = $ShowProgress -and $script:progressTrackingImported
-    
+
     if ($useProgressTracking) {
         try {
             $totalSteps = if ($Stage) { 1 } else { 7 }  # Prepare, Validate, Plan, Apply, Verify, Cleanup, Summary
@@ -766,7 +816,7 @@ function Start-EnhancedLabDeployment {
             $useProgressTracking = $false
         }
     }
-    
+
     try {
         $deploymentResult = @{
             Success = $false
@@ -782,15 +832,15 @@ function Start-EnhancedLabDeployment {
             Warnings = @()
             Errors = @()
         }
-        
+
         # Step 1: Load and validate configuration
         if ($useProgressTracking) {
             Update-ProgressOperation -OperationId $progressOperationId -CurrentStep 1 -StepName "Loading lab configuration"
         }
-        
+
         Write-CustomLog -Level 'INFO' -Message "Loading lab configuration from: $ConfigurationPath"
         $config = Get-LabConfig -Path $ConfigurationPath
-        
+
         if (-not $config) {
             $errorMsg = "Failed to load lab configuration from: $ConfigurationPath"
             if ($useProgressTracking) {
@@ -798,36 +848,36 @@ function Start-EnhancedLabDeployment {
             }
             throw $errorMsg
         }
-        
+
         # Step 2: Check for OpenTofu integration
         if ($useProgressTracking) {
             Update-ProgressOperation -OperationId $progressOperationId -CurrentStep 2 -StepName "Checking infrastructure deployment capabilities"
         }
-        
+
         $hasOpenTofuProvider = Get-Module -Name 'OpenTofuProvider' -ListAvailable -ErrorAction SilentlyContinue
         $hasInfrastructureConfig = $config.infrastructure -or $config.opentofu -or $config.terraform
-        
+
         if ($hasOpenTofuProvider -and $hasInfrastructureConfig) {
             Write-CustomLog -Level 'INFO' -Message "OpenTofu infrastructure deployment detected"
-            
+
             # Step 3: Use OpenTofu deployment with progress tracking
             if ($useProgressTracking) {
                 Update-ProgressOperation -OperationId $progressOperationId -CurrentStep 3 -StepName "Starting OpenTofu infrastructure deployment"
             }
-            
+
             # Import OpenTofu provider
             Import-Module (Join-Path $script:ProjectRoot "aither-core/modules/OpenTofuProvider") -Force
-            
+
             # Call OpenTofu deployment function
             $infraResult = Start-InfrastructureDeployment -ConfigurationPath $ConfigurationPath -DryRun:$DryRun -Stage $Stage -MaxRetries $MaxRetries -Force:$Force
-            
+
             if ($infraResult.Success) {
                 $deploymentResult.Success = $true
                 $deploymentResult.Stages = $infraResult.Stages
                 $deploymentResult.Resources = $infraResult.Resources
                 $deploymentResult.Warnings = $infraResult.Warnings
                 $deploymentResult.Errors = $infraResult.Errors
-                
+
                 if ($useProgressTracking) {
                     Update-ProgressOperation -OperationId $progressOperationId -CurrentStep 6 -StepName "Infrastructure deployment completed successfully"
                     Write-ProgressLog -Message "OpenTofu deployment completed successfully" -Level 'Success'
@@ -835,29 +885,29 @@ function Start-EnhancedLabDeployment {
             } else {
                 $deploymentResult.Errors = $infraResult.Errors
                 $deploymentResult.Warnings = $infraResult.Warnings
-                
+
                 if ($useProgressTracking) {
                     Add-ProgressError -OperationId $progressOperationId -Error "Infrastructure deployment failed"
                     Write-ProgressLog -Message "OpenTofu deployment failed" -Level 'Error'
                 }
-                
+
                 if (-not $Force) {
                     throw "Infrastructure deployment failed: $($infraResult.Errors -join '; ')"
                 }
             }
         } else {
             Write-CustomLog -Level 'INFO' -Message "Using standard lab automation workflow"
-            
+
             # Step 3-5: Use standard lab automation with progress tracking
             if ($useProgressTracking) {
                 Update-ProgressOperation -OperationId $progressOperationId -CurrentStep 3 -StepName "Starting standard lab automation"
             }
-            
+
             $labResult = Start-LabAutomation -Configuration $config -ShowProgress:$ShowProgress -ProgressStyle $ProgressStyle
-            
+
             if ($labResult.Status -eq 'Success') {
                 $deploymentResult.Success = $true
-                
+
                 if ($useProgressTracking) {
                     Update-ProgressOperation -OperationId $progressOperationId -CurrentStep 5 -StepName "Lab automation completed successfully"
                     Write-ProgressLog -Message "Standard lab automation completed successfully" -Level 'Success'
@@ -867,62 +917,62 @@ function Start-EnhancedLabDeployment {
                     Add-ProgressError -OperationId $progressOperationId -Error "Lab automation failed"
                     Write-ProgressLog -Message "Standard lab automation failed" -Level 'Error'
                 }
-                
+
                 if (-not $Force) {
                     throw "Lab automation failed"
                 }
             }
         }
-        
+
         # Step 6: Final validation and cleanup
         if ($useProgressTracking) {
             Update-ProgressOperation -OperationId $progressOperationId -CurrentStep 6 -StepName "Performing final validation"
         }
-        
+
         # Perform final health checks
         $healthCheck = Test-LabDeploymentHealth -Config $config
         if (-not $healthCheck.Success) {
             $deploymentResult.Warnings += "Health check warnings: $($healthCheck.Warnings -join '; ')"
-            
+
             if ($useProgressTracking) {
                 Add-ProgressWarning -OperationId $progressOperationId -Warning "Deployment health check warnings detected"
             }
         }
-        
+
         # Step 7: Generate summary
         if ($useProgressTracking) {
             Update-ProgressOperation -OperationId $progressOperationId -CurrentStep 7 -StepName "Generating deployment summary"
         }
-        
+
         $deploymentResult.EndTime = Get-Date
         $deploymentResult.Duration = $deploymentResult.EndTime - $deploymentResult.StartTime
-        
+
         # Complete progress tracking
         if ($useProgressTracking) {
             Complete-ProgressOperation -OperationId $progressOperationId -ShowSummary
         }
-        
+
         # Generate comprehensive summary
         Write-EnhancedDeploymentSummary -Result $deploymentResult
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "Enhanced lab deployment completed successfully"
-        
+
         return [PSCustomObject]$deploymentResult
-        
+
     } catch {
         # Handle errors and complete progress tracking
         if ($useProgressTracking -and $progressOperationId) {
             Add-ProgressError -OperationId $progressOperationId -Error $_.Exception.Message
             Complete-ProgressOperation -OperationId $progressOperationId -ShowSummary
         }
-        
+
         $deploymentResult.Success = $false
         $deploymentResult.EndTime = Get-Date
         $deploymentResult.Duration = $deploymentResult.EndTime - $deploymentResult.StartTime
         $deploymentResult.Errors += $_.Exception.Message
-        
+
         Write-CustomLog -Level 'ERROR' -Message "Enhanced lab deployment failed: $($_.Exception.Message)"
-        
+
         # Still return result for analysis
         return [PSCustomObject]$deploymentResult
     }
@@ -934,44 +984,44 @@ function Test-LabDeploymentHealth {
         Perform health checks on lab deployment
     #>
     param([object]$Config)
-    
+
     $result = @{
         Success = $true
         Warnings = @()
         Checks = @{}
     }
-    
+
     try {
         # Basic connectivity check
         if ($Config.network -and $Config.network.gateway) {
             $pingResult = Test-Connection -ComputerName $Config.network.gateway -Count 1 -Quiet -ErrorAction SilentlyContinue
             $result.Checks['NetworkConnectivity'] = $pingResult
-            
+
             if (-not $pingResult) {
                 $result.Warnings += "Network gateway not reachable: $($Config.network.gateway)"
             }
         }
-        
+
         # Check for required services
         if ($Config.services) {
             foreach ($service in $Config.services) {
                 $serviceStatus = Get-Service -Name $service -ErrorAction SilentlyContinue
                 $result.Checks["Service_$service"] = $serviceStatus -and $serviceStatus.Status -eq 'Running'
-                
+
                 if (-not $result.Checks["Service_$service"]) {
                     $result.Warnings += "Service not running: $service"
                 }
             }
         }
-        
+
         # Check disk space
         $diskSpace = Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Free -lt 1GB }
         if ($diskSpace) {
             $result.Warnings += "Low disk space detected on: $($diskSpace.Name -join ', ')"
         }
-        
+
         return $result
-        
+
     } catch {
         $result.Success = $false
         $result.Warnings += "Health check failed: $($_.Exception.Message)"
@@ -985,24 +1035,24 @@ function Write-EnhancedDeploymentSummary {
         Write comprehensive deployment summary
     #>
     param([PSCustomObject]$Result)
-    
+
     Write-Host "`n$('='*70)" -ForegroundColor Cyan
     Write-Host "ENHANCED LAB DEPLOYMENT SUMMARY" -ForegroundColor Cyan
     Write-Host "$('='*70)" -ForegroundColor Cyan
-    
+
     Write-Host "Configuration: $($Result.ConfigurationPath)"
     Write-Host "Duration: $([Math]::Round($Result.Duration.TotalMinutes, 2)) minutes"
     Write-Host "Status: $(if ($Result.Success) { 'SUCCESS' } else { 'FAILED' })" -ForegroundColor $(if ($Result.Success) { 'Green' } else { 'Red' })
     Write-Host "Progress Tracking: $(if ($Result.ProgressTracking) { 'ENABLED' } else { 'DISABLED' })"
-    
+
     if ($Result.DryRun) {
         Write-Host "Mode: DRY RUN" -ForegroundColor Yellow
     }
-    
+
     if ($Result.Stage) {
         Write-Host "Stage: $($Result.Stage)" -ForegroundColor Yellow
     }
-    
+
     if ($Result.Stages.Count -gt 0) {
         Write-Host "`nDeployment Stages:" -ForegroundColor Yellow
         foreach ($stage in $Result.Stages.Keys) {
@@ -1013,7 +1063,7 @@ function Write-EnhancedDeploymentSummary {
             Write-Host "  $status $stage$duration" -ForegroundColor $color
         }
     }
-    
+
     if ($Result.Resources.Count -gt 0) {
         Write-Host "`nDeployed Resources:" -ForegroundColor Green
         foreach ($resourceType in $Result.Resources.Keys) {
@@ -1021,21 +1071,21 @@ function Write-EnhancedDeploymentSummary {
             Write-Host "  ${resourceType}: $($resource.Count)" -ForegroundColor White
         }
     }
-    
+
     if ($Result.Warnings.Count -gt 0) {
         Write-Host "`nWarnings:" -ForegroundColor Yellow
         foreach ($warning in $Result.Warnings) {
             Write-Host "  ⚠️ $warning" -ForegroundColor Yellow
         }
     }
-    
+
     if ($Result.Errors.Count -gt 0) {
         Write-Host "`nErrors:" -ForegroundColor Red
         foreach ($error in $Result.Errors) {
             Write-Host "  ❌ $error" -ForegroundColor Red
         }
     }
-    
+
     Write-Host "`n$('='*70)`n" -ForegroundColor Cyan
 }
 

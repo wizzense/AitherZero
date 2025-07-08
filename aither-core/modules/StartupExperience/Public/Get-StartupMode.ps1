@@ -18,15 +18,15 @@ function Get-StartupMode {
     param(
         [Parameter()]
         [hashtable]$Parameters = @{},
-        
+
         [Parameter()]
         [switch]$IncludeAnalytics
     )
-    
+
     try {
         $startTime = Get-Date
         $analytics = @{}
-        
+
         # Check for explicit mode parameters
         if ($Parameters.ContainsKey('NonInteractive') -or $Parameters.ContainsKey('Auto')) {
             $result = [PSCustomObject]@{
@@ -35,27 +35,27 @@ function Get-StartupMode {
                 UseEnhancedUI = $false
                 UICapability = 'Disabled'
             }
-            
+
             if ($IncludeAnalytics) {
                 $result | Add-Member -MemberType NoteProperty -Name 'Analytics' -Value @{
                     DetectionTime = ((Get-Date) - $startTime).TotalMilliseconds
                     Method = 'Parameter'
                 }
             }
-            
+
             return $result
         }
-        
+
         if ($Parameters.ContainsKey('Interactive') -or $Parameters.ContainsKey('Quickstart')) {
             $uiCapability = Test-EnhancedUICapability
-            
+
             $result = [PSCustomObject]@{
                 Mode = 'Interactive'
                 Reason = 'Explicit interactive parameter'
                 UseEnhancedUI = $uiCapability
                 UICapability = if ($uiCapability) { 'Enhanced' } else { 'Classic' }
             }
-            
+
             if ($IncludeAnalytics) {
                 $result | Add-Member -MemberType NoteProperty -Name 'Analytics' -Value @{
                     DetectionTime = ((Get-Date) - $startTime).TotalMilliseconds
@@ -63,17 +63,17 @@ function Get-StartupMode {
                     UITest = $uiCapability
                 }
             }
-            
+
             return $result
         }
-        
+
         # Performance: Check environment variables
         $envCheckStart = Get-Date
         $ciVariables = @(
             'CI', 'TF_BUILD', 'GITHUB_ACTIONS', 'GITLAB_CI', 'JENKINS_URL',
             'TEAMCITY_VERSION', 'TRAVIS', 'CIRCLECI', 'APPVEYOR', 'CODEBUILD_BUILD_ID'
         )
-        
+
         foreach ($var in $ciVariables) {
             if (Get-Item "Env:$var" -ErrorAction SilentlyContinue) {
                 $result = [PSCustomObject]@{
@@ -82,7 +82,7 @@ function Get-StartupMode {
                     UseEnhancedUI = $false
                     UICapability = 'Unavailable'
                 }
-                
+
                 if ($IncludeAnalytics) {
                     $result | Add-Member -MemberType NoteProperty -Name 'Analytics' -Value @{
                         DetectionTime = ((Get-Date) - $startTime).TotalMilliseconds
@@ -91,14 +91,14 @@ function Get-StartupMode {
                         EnvCheckTime = ((Get-Date) - $envCheckStart).TotalMilliseconds
                     }
                 }
-                
+
                 return $result
             }
         }
-        
+
         # Performance: Check terminal capabilities
         $terminalCheckStart = Get-Date
-        
+
         # Check if running in non-interactive shell
         if (-not [Environment]::UserInteractive) {
             $result = [PSCustomObject]@{
@@ -107,7 +107,7 @@ function Get-StartupMode {
                 UseEnhancedUI = $false
                 UICapability = 'Unavailable'
             }
-            
+
             if ($IncludeAnalytics) {
                 $result | Add-Member -MemberType NoteProperty -Name 'Analytics' -Value @{
                     DetectionTime = ((Get-Date) - $startTime).TotalMilliseconds
@@ -115,14 +115,14 @@ function Get-StartupMode {
                     TerminalCheckTime = ((Get-Date) - $terminalCheckStart).TotalMilliseconds
                 }
             }
-            
+
             return $result
         }
-        
+
         # Check terminal capabilities
         $uiCapability = Test-EnhancedUICapability
         $isOutputRedirected = [Console]::IsOutputRedirected
-        
+
         if (-not $isOutputRedirected -and $uiCapability) {
             # Interactive terminal with enhanced capabilities
             $result = [PSCustomObject]@{
@@ -148,7 +148,7 @@ function Get-StartupMode {
                 UICapability = 'Unavailable'
             }
         }
-        
+
         if ($IncludeAnalytics) {
             $result | Add-Member -MemberType NoteProperty -Name 'Analytics' -Value @{
                 DetectionTime = ((Get-Date) - $startTime).TotalMilliseconds
@@ -158,9 +158,9 @@ function Get-StartupMode {
                 UICapabilityTest = $uiCapability
             }
         }
-        
+
         return $result
-        
+
     } catch {
         # If we can't determine, default to non-interactive
         $result = [PSCustomObject]@{
@@ -169,7 +169,7 @@ function Get-StartupMode {
             UseEnhancedUI = $false
             UICapability = 'Error'
         }
-        
+
         if ($IncludeAnalytics) {
             $result | Add-Member -MemberType NoteProperty -Name 'Analytics' -Value @{
                 DetectionTime = ((Get-Date) - $startTime).TotalMilliseconds
@@ -177,7 +177,7 @@ function Get-StartupMode {
                 Error = $_.Exception.Message
             }
         }
-        
+
         return $result
     }
 }
@@ -189,9 +189,9 @@ function Test-StartupPerformance {
     #>
     [CmdletBinding()]
     param()
-    
+
     $results = @{}
-    
+
     # Test mode detection performance
     $modeTestStart = Get-Date
     $mode = Get-StartupMode -IncludeAnalytics
@@ -199,7 +199,7 @@ function Test-StartupPerformance {
         Time = ((Get-Date) - $modeTestStart).TotalMilliseconds
         Result = $mode
     }
-    
+
     # Test module discovery performance
     $discoveryTestStart = Get-Date
     $modules = Get-ModuleDiscovery -UseCache:$false
@@ -207,7 +207,7 @@ function Test-StartupPerformance {
         Time = ((Get-Date) - $discoveryTestStart).TotalMilliseconds
         ModulesFound = $modules.Count
     }
-    
+
     # Test cached module discovery
     $cachedTestStart = Get-Date
     $cachedModules = Get-ModuleDiscovery -UseCache:$true
@@ -215,7 +215,7 @@ function Test-StartupPerformance {
         Time = ((Get-Date) - $cachedTestStart).TotalMilliseconds
         ModulesFound = $cachedModules.Count
     }
-    
+
     # Test UI capability
     $uiTestStart = Get-Date
     $uiCapability = Test-EnhancedUICapability
@@ -223,6 +223,6 @@ function Test-StartupPerformance {
         Time = ((Get-Date) - $uiTestStart).TotalMilliseconds
         Result = $uiCapability
     }
-    
+
     return [PSCustomObject]$results
 }

@@ -37,17 +37,17 @@
 
 .EXAMPLE
     Initialize-VSCodeWorkspace
-    
+
     Sets up complete VS Code workspace with all recommended configurations.
 
 .EXAMPLE
     Initialize-VSCodeWorkspace -InstallExtensions -CreateWorkspaceFile
-    
+
     Sets up workspace, installs extensions, and creates workspace file.
 
 .EXAMPLE
     Initialize-VSCodeWorkspace -VSCodeExecutable "code-insiders" -Force
-    
+
     Forces setup using VS Code Insiders, overwriting existing configs.
 
 .NOTES
@@ -60,20 +60,20 @@ function Initialize-VSCodeWorkspace {
     param(
         [Parameter()]
         [string]$WorkspacePath,
-        
+
         [Parameter()]
         [switch]$InstallExtensions,
-        
+
         [Parameter()]
         [switch]$UpdateSettings = $true,
-        
+
         [Parameter()]
         [switch]$CreateWorkspaceFile,
-        
+
         [Parameter()]
         [ValidateSet('code', 'code-insiders', 'codium')]
         [string]$VSCodeExecutable,
-        
+
         [Parameter()]
         [switch]$Force
     )
@@ -84,10 +84,10 @@ function Initialize-VSCodeWorkspace {
             . "$PSScriptRoot/../../../shared/Find-ProjectRoot.ps1"
             $WorkspacePath = Find-ProjectRoot
         }
-        
+
         Write-CustomLog -Message "=== Initializing VS Code Workspace ===" -Level "INFO"
         Write-CustomLog -Message "Workspace Path: $WorkspacePath" -Level "INFO"
-        
+
         # Detect VS Code executable if not specified
         if (-not $VSCodeExecutable) {
             $VSCodeExecutable = Find-VSCodeExecutable
@@ -97,7 +97,7 @@ function Initialize-VSCodeWorkspace {
                 Write-CustomLog -Message "Detected VS Code: $VSCodeExecutable" -Level "INFO"
             }
         }
-        
+
         # Ensure .vscode directory exists
         $vscodeDir = Join-Path $WorkspacePath ".vscode"
         if (-not (Test-Path $vscodeDir)) {
@@ -111,7 +111,7 @@ function Initialize-VSCodeWorkspace {
     process {
         try {
             $setupTasks = @()
-            
+
             # Task 1: Configure VS Code Settings
             if ($UpdateSettings) {
                 $setupTasks += @{
@@ -119,7 +119,7 @@ function Initialize-VSCodeWorkspace {
                     Action = {
                         $settingsPath = Join-Path $vscodeDir "settings.json"
                         $settings = Get-RecommendedVSCodeSettings
-                        
+
                         if ($Force -or -not (Test-Path $settingsPath)) {
                             if ($PSCmdlet.ShouldProcess($settingsPath, "Create settings.json")) {
                                 $settings | ConvertTo-Json -Depth 10 | Set-Content -Path $settingsPath -Encoding UTF8
@@ -130,7 +130,7 @@ function Initialize-VSCodeWorkspace {
                                 # Create a temporary file with the recommended settings for merging
                                 $tempSettingsFile = [System.IO.Path]::GetTempFileName() + ".json"
                                 $settings | ConvertTo-Json -Depth 10 | Set-Content -Path $tempSettingsFile -Encoding UTF8
-                                
+
                                 try {
                                     Update-VSCodeSettings -DefaultSettingsPath $tempSettingsFile -UserSettingsPath $settingsPath -BackupUserSettings
                                     Write-CustomLog -Message "Updated VS Code settings.json" -Level "SUCCESS"
@@ -142,32 +142,32 @@ function Initialize-VSCodeWorkspace {
                     }
                 }
             }
-            
+
             # Task 2: Configure Recommended Extensions
             $setupTasks += @{
                 Name = "Recommended Extensions"
                 Action = {
                     $extensionsPath = Join-Path $vscodeDir "extensions.json"
                     $extensions = Get-RecommendedVSCodeExtensions
-                    
+
                     if ($PSCmdlet.ShouldProcess($extensionsPath, "Create extensions.json")) {
                         $extensions | ConvertTo-Json -Depth 10 | Set-Content -Path $extensionsPath -Encoding UTF8
                         Write-CustomLog -Message "Created VS Code extensions.json" -Level "SUCCESS"
                     }
-                    
+
                     if ($InstallExtensions -and $VSCodeExecutable) {
                         Install-VSCodeExtensions -VSCodeExecutable $VSCodeExecutable -ExtensionsPath $extensionsPath -WhatIf:$WhatIfPreference
                     }
                 }
             }
-            
+
             # Task 3: Configure Debug Configurations
             $setupTasks += @{
                 Name = "Debug Configurations"
                 Action = {
                     $launchPath = Join-Path $vscodeDir "launch.json"
                     $launch = Get-VSCodeLaunchConfiguration
-                    
+
                     if ($Force -or -not (Test-Path $launchPath)) {
                         if ($PSCmdlet.ShouldProcess($launchPath, "Create launch.json")) {
                             $launch | ConvertTo-Json -Depth 10 | Set-Content -Path $launchPath -Encoding UTF8
@@ -176,7 +176,7 @@ function Initialize-VSCodeWorkspace {
                     }
                 }
             }
-            
+
             # Task 4: Update VS Code Tasks (merge with existing)
             $setupTasks += @{
                 Name = "Task Integration"
@@ -193,7 +193,7 @@ function Initialize-VSCodeWorkspace {
                     }
                 }
             }
-            
+
             # Task 5: Create Workspace File
             if ($CreateWorkspaceFile) {
                 $setupTasks += @{
@@ -207,7 +207,7 @@ function Initialize-VSCodeWorkspace {
                     }
                 }
             }
-            
+
             # Execute all setup tasks
             foreach ($task in $setupTasks) {
                 try {
@@ -218,7 +218,7 @@ function Initialize-VSCodeWorkspace {
                     if (-not $Force) { throw }
                 }
             }
-            
+
             # Validate setup
             if (-not $WhatIfPreference) {
                 $validation = Test-VSCodeIntegration -WorkspacePath $WorkspacePath
@@ -231,13 +231,13 @@ function Initialize-VSCodeWorkspace {
                     }
                 }
             }
-            
+
         } catch {
             Write-CustomLog -Message "Failed to initialize VS Code workspace: $($_.Exception.Message)" -Level "ERROR"
             throw
         }
     }
-    
+
     end {
         if (-not $WhatIfPreference) {
             Write-CustomLog -Message "" -Level "INFO"
@@ -245,7 +245,7 @@ function Initialize-VSCodeWorkspace {
             Write-CustomLog -Message "1. Open VS Code in the workspace: $VSCodeExecutable $WorkspacePath" -Level "INFO"
             Write-CustomLog -Message "2. Install recommended extensions when prompted" -Level "INFO"
             Write-CustomLog -Message "3. Reload window to apply all settings" -Level "INFO"
-            
+
             if ($CreateWorkspaceFile) {
                 Write-CustomLog -Message "4. Open the workspace file for multi-root support" -Level "INFO"
             }
@@ -257,15 +257,15 @@ function Initialize-VSCodeWorkspace {
 function Find-VSCodeExecutable {
     [CmdletBinding()]
     param()
-    
+
     $executables = @('code', 'code-insiders', 'codium')
-    
+
     foreach ($exe in $executables) {
         if (Get-Command $exe -ErrorAction SilentlyContinue) {
             return $exe
         }
     }
-    
+
     # Windows-specific paths
     if ($IsWindows) {
         $windowsPaths = @(
@@ -274,14 +274,14 @@ function Find-VSCodeExecutable {
             "${env:ProgramFiles}\Microsoft VS Code\bin\code.cmd",
             "${env:ProgramFiles}\Microsoft VS Code Insiders\bin\code-insiders.cmd"
         )
-        
+
         foreach ($path in $windowsPaths) {
             if (Test-Path $path) {
                 return $path
             }
         }
     }
-    
+
     return $null
 }
 
@@ -289,7 +289,7 @@ function Find-VSCodeExecutable {
 function Get-RecommendedVSCodeSettings {
     [CmdletBinding()]
     param()
-    
+
     return @{
         # PowerShell settings - Enhanced
         "powershell.powerShellDefaultVersion" = "PowerShell 7"
@@ -308,7 +308,7 @@ function Get-RecommendedVSCodeSettings {
         "powershell.scriptAnalysis.enable" = $true
         "powershell.scriptAnalysis.settingsPath" = "PSScriptAnalyzerSettings.psd1"
         "powershell.developer.featureFlags" = @("PSReadLinePrompt")
-        
+
         # Terminal settings - Enhanced with multiple profiles
         "terminal.integrated.defaultProfile.windows" = "PowerShell 7"
         "terminal.integrated.defaultProfile.linux" = "pwsh"
@@ -345,7 +345,7 @@ function Get-RecommendedVSCodeSettings {
         "terminal.integrated.fontFamily" = "'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Source Code Pro', monospace"
         "terminal.integrated.cursorBlinking" = $true
         "terminal.integrated.cursorStyle" = "line"
-        
+
         # Editor settings - Enhanced with modern features
         "editor.formatOnSave" = $true
         "editor.formatOnPaste" = $false
@@ -366,7 +366,7 @@ function Get-RecommendedVSCodeSettings {
         "editor.fontLigatures" = $true
         "editor.fontSize" = 14
         "editor.lineHeight" = 1.6
-        
+
         # File settings - Enhanced
         "files.trimTrailingWhitespace" = $true
         "files.insertFinalNewline" = $true
@@ -375,7 +375,7 @@ function Get-RecommendedVSCodeSettings {
         "files.autoSaveDelay" = 1000
         "files.encoding" = "utf8"
         "files.eol" = "\n"
-        
+
         # File associations - Enhanced
         "files.associations" = @{
             "*.ps1xml" = "xml"
@@ -391,7 +391,7 @@ function Get-RecommendedVSCodeSettings {
             ".gitignore" = "ignore"
             ".gitattributes" = "gitattributes"
         }
-        
+
         # Git settings - Enhanced
         "git.autofetch" = $true
         "git.confirmSync" = $false
@@ -406,7 +406,7 @@ function Get-RecommendedVSCodeSettings {
         "gitlens.currentLine.enabled" = $true
         "gitlens.blame.compact" = $false
         "gitlens.blame.heatmap.enabled" = $false
-        
+
         # Search and exclude settings - Enhanced
         "search.exclude" = @{
             "**/node_modules" = $true
@@ -420,7 +420,7 @@ function Get-RecommendedVSCodeSettings {
             "**/.terraform" = $true
             "**/.vscode-test" = $true
         }
-        
+
         # Project-specific settings - Enhanced
         "files.exclude" = @{
             "**/.git" = $true
@@ -428,7 +428,7 @@ function Get-RecommendedVSCodeSettings {
             "**/Thumbs.db" = $true
             "**/.vscode-test" = $true
         }
-        
+
         # Workbench settings - Enhanced UI
         "workbench.colorTheme" = "Dark+ (default dark)"
         "workbench.iconTheme" = "vs-seti"
@@ -438,14 +438,14 @@ function Get-RecommendedVSCodeSettings {
         "workbench.tips.enabled" = $false
         "workbench.tree.indent" = 20
         "workbench.tree.renderIndentGuides" = "always"
-        
+
         # Explorer settings
         "explorer.confirmDelete" = $true
         "explorer.confirmDragAndDrop" = $true
         "explorer.openEditors.visible" = 0
         "explorer.autoReveal" = $true
         "explorer.compactFolders" = $false
-        
+
         # Intellisense and suggestions
         "vsintellicode.modify.editor.suggestSelection" = "automaticallyOverrodeDefaultValue"
         "github.copilot.enable" = @{
@@ -455,23 +455,23 @@ function Get-RecommendedVSCodeSettings {
             "markdown" = $true
             "powershell" = $true
         }
-        
+
         # Testing settings
         "testExplorer.useNativeTesting" = $true
         "pester.useLegacyCodeLens" = $false
         "pester.outputVerbosity" = "FromPreference"
-        
+
         # Security settings
         "security.workspace.trust.untrustedFiles" = "prompt"
         "security.workspace.trust.banner" = "always"
         "security.workspace.trust.startupPrompt" = "always"
-        
+
         # Remote development settings
         "remote.SSH.remotePlatform" = @{}
         "remote.SSH.showLoginTerminal" = $true
         "remote.containers.copyGitConfig" = $true
         "remote.containers.gitCredentialHelperConfigLocation" = "system"
-        
+
         # AitherZero specific settings
         "AitherZero.autoDetectProjects" = $true
         "AitherZero.enableLogging" = $true
@@ -483,20 +483,20 @@ function Get-RecommendedVSCodeSettings {
 function Get-RecommendedVSCodeExtensions {
     [CmdletBinding()]
     param()
-    
+
     return @{
         recommendations = @(
             # PowerShell - Enhanced
             "ms-vscode.powershell",
             "ms-vscode.powershell-preview",
-            
+
             # Git - Enhanced with more tools
             "eamodio.gitlens",
             "mhutchie.git-graph",
             "donjayamanne.githistory",
             "github.vscode-pull-request-github",
             "ms-vscode.vscode-github-issue-notebooks",
-            
+
             # General development - Enhanced
             "editorconfig.editorconfig",
             "streetsidesoftware.code-spell-checker",
@@ -505,36 +505,36 @@ function Get-RecommendedVSCodeExtensions {
             "ms-vscode.hexeditor",
             "formulahendry.auto-rename-tag",
             "bradlc.vscode-tailwindcss",
-            
+
             # Testing - Enhanced with more frameworks
             "hbenl.vscode-test-explorer",
             "ms-vscode.test-adapter-converter",
             "pspester.pester-test",
-            
+
             # Remote development - Complete suite
             "ms-vscode-remote.remote-wsl",
             "ms-vscode-remote.remote-ssh",
             "ms-vscode-remote.remote-containers",
             "ms-vscode-remote.remote-ssh-edit",
             "ms-vscode.remote-explorer",
-            
+
             # AI assistance - Enhanced
             "github.copilot",
             "github.copilot-chat",
             "ms-toolsai.jupyter",
             "ms-toolsai.vscode-jupyter-cell-tags",
-            
+
             # Code quality and formatting
             "esbenp.prettier-vscode",
             "ms-vscode.vscode-json",
             "ms-vsliveshare.vsliveshare",
             "visualstudioexptteam.vscodeintellicode",
-            
+
             # Infrastructure and DevOps
             "hashicorp.terraform",
             "ms-vscode.vscode-docker",
             "ms-kubernetes-tools.vscode-kubernetes-tools",
-            
+
             # Productivity
             "aaron-bond.better-comments",
             "alefragnani.bookmarks",
@@ -553,7 +553,7 @@ function Get-RecommendedVSCodeExtensions {
 function Get-VSCodeLaunchConfiguration {
     [CmdletBinding()]
     param()
-    
+
     return @{
         version = "0.2.0"
         configurations = @(
@@ -704,7 +704,7 @@ function Get-VSCodeLaunchConfiguration {
 function Get-VSCodeTasksTemplate {
     [CmdletBinding()]
     param()
-    
+
     return @{
         version = "2.0.0"
         tasks = @(
@@ -751,7 +751,7 @@ function Get-VSCodeTasksTemplate {
                     clear = $true
                 }
             },
-            
+
             # AitherZero Operations
             @{
                 label = "🚀 Start AitherZero (Preview)"
@@ -790,7 +790,7 @@ function Get-VSCodeTasksTemplate {
                     panel = "new"
                 }
             },
-            
+
             # Development Environment
             @{
                 label = "🛠️ Initialize Dev Environment"
@@ -825,7 +825,7 @@ function Get-VSCodeTasksTemplate {
                     panel = "new"
                 }
             },
-            
+
             # Code Quality
             @{
                 label = "🔍 Run PSScriptAnalyzer"
@@ -851,7 +851,7 @@ function Get-VSCodeTasksTemplate {
                     panel = "shared"
                 }
             },
-            
+
             # Git Operations
             @{
                 label = "📋 Git Status"
@@ -875,7 +875,7 @@ function Get-VSCodeTasksTemplate {
                     panel = "new"
                 }
             },
-            
+
             # Release and Build
             @{
                 label = "🏗️ Build Package (All Platforms)"
@@ -899,7 +899,7 @@ function Get-VSCodeTasksTemplate {
                     panel = "new"
                 }
             },
-            
+
             # Module Development
             @{
                 label = "🔄 Reload All Modules"
@@ -923,7 +923,7 @@ function Get-VSCodeTasksTemplate {
                     panel = "shared"
                 }
             },
-            
+
             # Cleanup Operations
             @{
                 label = "🧹 Clean Workspace"

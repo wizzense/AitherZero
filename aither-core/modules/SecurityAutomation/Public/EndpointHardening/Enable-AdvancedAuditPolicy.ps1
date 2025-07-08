@@ -2,42 +2,42 @@ function Enable-AdvancedAuditPolicy {
     <#
     .SYNOPSIS
         Configures Windows advanced audit policies for security monitoring.
-        
+
     .DESCRIPTION
         Sets Windows advanced audit policies based on security best practices and compliance
         requirements. Supports predefined security baselines or custom audit configurations.
         Can backup existing policies before making changes.
-        
+
     .PARAMETER PolicySet
         Predefined policy set: 'SecurityBaseline', 'ComplianceBaseline', 'HighSecurity', 'Custom'
-        
+
     .PARAMETER Categories
         Specific audit categories to configure when using Custom policy set
-        
+
     .PARAMETER BackupPath
         Path to backup current audit policies before making changes
-        
+
     .PARAMETER ClearExisting
         Clear all existing audit policies before applying new ones
-        
+
     .PARAMETER ShowCurrent
         Display current audit policies without making changes
-        
+
     .PARAMETER CustomPolicies
         Hashtable of custom audit policies (PolicyName = 'Success', 'Failure', 'Success Failure', or '')
-        
+
     .PARAMETER TestMode
         Show what would be configured without making changes
-        
+
     .EXAMPLE
         Enable-AdvancedAuditPolicy -PolicySet SecurityBaseline -BackupPath "C:\Backup\audit-policies.csv"
-        
+
     .EXAMPLE
         Enable-AdvancedAuditPolicy -PolicySet Custom -Categories @('AccountLogon', 'AccountManagement', 'PrivilegeUse')
-        
+
     .EXAMPLE
         Enable-AdvancedAuditPolicy -ShowCurrent
-        
+
     .EXAMPLE
         $CustomPolicies = @{
             'Credential Validation' = 'Success Failure'
@@ -46,50 +46,50 @@ function Enable-AdvancedAuditPolicy {
         }
         Enable-AdvancedAuditPolicy -PolicySet Custom -CustomPolicies $CustomPolicies
     #>
-    
+
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory, ParameterSetName = 'PolicySet')]
         [ValidateSet('SecurityBaseline', 'ComplianceBaseline', 'HighSecurity', 'Custom')]
         [string]$PolicySet,
-        
+
         [Parameter(ParameterSetName = 'Categories')]
-        [ValidateSet('AccountLogon', 'AccountManagement', 'DetailedTracking', 'DSAccess', 
+        [ValidateSet('AccountLogon', 'AccountManagement', 'DetailedTracking', 'DSAccess',
                      'LogonLogoff', 'ObjectAccess', 'PolicyChange', 'PrivilegeUse', 'System')]
         [string[]]$Categories,
-        
+
         [Parameter()]
         [string]$BackupPath,
-        
+
         [Parameter()]
         [switch]$ClearExisting,
-        
+
         [Parameter(ParameterSetName = 'ShowCurrent')]
         [switch]$ShowCurrent,
-        
+
         [Parameter(ParameterSetName = 'PolicySet')]
         [hashtable]$CustomPolicies,
-        
+
         [Parameter()]
         [switch]$TestMode
     )
-    
+
     begin {
         Write-CustomLog -Level 'INFO' -Message "Configuring Windows advanced audit policies"
-        
+
         # Check if running as Administrator
         $CurrentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
         $Principal = New-Object Security.Principal.WindowsPrincipal($CurrentUser)
         if (-not $Principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
             throw "This function requires Administrator privileges"
         }
-        
+
         # Verify auditpol.exe exists
         $AuditPolPath = Join-Path $env:SystemRoot 'System32\auditpol.exe'
         if (-not (Test-Path $AuditPolPath)) {
             throw "auditpol.exe not found at: $AuditPolPath"
         }
-        
+
         # Define security baseline audit policies
         $SecurityBaselinePolicies = @{
             'Credential Validation' = 'Success Failure'
@@ -117,7 +117,7 @@ function Enable-AdvancedAuditPolicy {
             'Security System Extension' = 'Success Failure'
             'System Integrity' = 'Success Failure'
         }
-        
+
         # Define high security policies (more comprehensive)
         $HighSecurityPolicies = $SecurityBaselinePolicies.Clone()
         $HighSecurityPolicies += @{
@@ -134,7 +134,7 @@ function Enable-AdvancedAuditPolicy {
             'Other Object Access Events' = 'Success Failure'
             'Non Sensitive Privilege Use' = 'Success Failure'
         }
-        
+
         # Define compliance baseline (balanced approach)
         $ComplianceBaselinePolicies = $SecurityBaselinePolicies.Clone()
         $ComplianceBaselinePolicies += @{
@@ -142,7 +142,7 @@ function Enable-AdvancedAuditPolicy {
             'Registry' = 'Failure'
             'Other Object Access Events' = 'Failure'
         }
-        
+
         # Category mappings for targeted configuration
         $CategoryMappings = @{
             'AccountLogon' = @('Credential Validation', 'Kerberos Authentication Service', 'Kerberos Service Ticket Operations', 'Other Account Logon Events')
@@ -156,28 +156,28 @@ function Enable-AdvancedAuditPolicy {
             'System' = @('IPSec Driver', 'Other System Events', 'Security State Change', 'Security System Extension', 'System Integrity')
         }
     }
-    
+
     process {
         try {
             # Show current policies if requested
             if ($ShowCurrent) {
                 Write-CustomLog -Level 'INFO' -Message "Displaying current audit policies"
-                
+
                 $CurrentPolicies = & $AuditPolPath /get /category:* | Select-String -Pattern 'Success|Failure|No Auditing'
                 foreach ($Policy in $CurrentPolicies) {
                     Write-Host $Policy.Line.Trim()
                 }
                 return
             }
-            
+
             # Backup current policies if requested
             if ($BackupPath -and -not $TestMode) {
                 Write-CustomLog -Level 'INFO' -Message "Backing up current audit policies to: $BackupPath"
-                
+
                 if ($PSCmdlet.ShouldProcess($BackupPath, "Backup current audit policies")) {
                     $BackupArgs = "/backup /file:`"$BackupPath`""
                     $BackupResult = Start-Process -FilePath $AuditPolPath -ArgumentList $BackupArgs -Wait -PassThru -NoNewWindow
-                    
+
                     if ($BackupResult.ExitCode -eq 0) {
                         Write-CustomLog -Level 'SUCCESS' -Message "Audit policies backed up successfully"
                     } else {
@@ -185,17 +185,17 @@ function Enable-AdvancedAuditPolicy {
                     }
                 }
             }
-            
+
             # Clear existing policies if requested
             if ($ClearExisting) {
                 Write-CustomLog -Level 'INFO' -Message "Clearing existing audit policies"
-                
+
                 if ($TestMode) {
                     Write-CustomLog -Level 'INFO' -Message "[TEST MODE] Would clear all existing audit policies"
                 } else {
                     if ($PSCmdlet.ShouldProcess("All Audit Policies", "Clear existing policies")) {
                         $ClearResult = Start-Process -FilePath $AuditPolPath -ArgumentList '/clear /y' -Wait -PassThru -NoNewWindow
-                        
+
                         if ($ClearResult.ExitCode -eq 0) {
                             Write-CustomLog -Level 'SUCCESS' -Message "Existing audit policies cleared"
                         } else {
@@ -204,10 +204,10 @@ function Enable-AdvancedAuditPolicy {
                     }
                 }
             }
-            
+
             # Determine which policies to apply
             $PoliciesToApply = @{}
-            
+
             switch ($PolicySet) {
                 'SecurityBaseline' {
                     $PoliciesToApply = $SecurityBaselinePolicies
@@ -239,41 +239,41 @@ function Enable-AdvancedAuditPolicy {
                     }
                 }
             }
-            
+
             if ($PoliciesToApply.Count -eq 0) {
                 Write-CustomLog -Level 'WARNING' -Message "No audit policies to apply"
                 return
             }
-            
+
             # Apply audit policies
             $SuccessCount = 0
             $FailureCount = 0
-            
+
             foreach ($PolicyName in $PoliciesToApply.Keys) {
                 $PolicyValue = $PoliciesToApply[$PolicyName]
-                
+
                 if ([string]::IsNullOrWhiteSpace($PolicyValue)) {
                     continue  # Skip disabled policies
                 }
-                
+
                 try {
                     # Build auditpol arguments
                     $Arguments = "/set /subcategory:`"$PolicyName`""
-                    
+
                     if ($PolicyValue -like '*Success*') {
                         $Arguments += ' /success:enable'
                     }
                     if ($PolicyValue -like '*Failure*') {
                         $Arguments += ' /failure:enable'
                     }
-                    
+
                     if ($TestMode) {
                         Write-CustomLog -Level 'INFO' -Message "[TEST MODE] Would set '$PolicyName' to '$PolicyValue'"
                         $SuccessCount++
                     } else {
                         if ($PSCmdlet.ShouldProcess($PolicyName, "Set audit policy to '$PolicyValue'")) {
                             $Result = Start-Process -FilePath $AuditPolPath -ArgumentList $Arguments -Wait -PassThru -NoNewWindow
-                            
+
                             if ($Result.ExitCode -eq 0) {
                                 Write-CustomLog -Level 'SUCCESS' -Message "Set '$PolicyName' to '$PolicyValue'"
                                 $SuccessCount++
@@ -283,27 +283,27 @@ function Enable-AdvancedAuditPolicy {
                             }
                         }
                     }
-                    
+
                 } catch {
                     Write-CustomLog -Level 'ERROR' -Message "Error setting policy '$PolicyName': $($_.Exception.Message)"
                     $FailureCount++
                 }
             }
-            
+
         } catch {
             Write-CustomLog -Level 'ERROR' -Message "Error configuring audit policies: $($_.Exception.Message)"
             throw
         }
     }
-    
+
     end {
         Write-CustomLog -Level 'SUCCESS' -Message "Audit policy configuration completed"
         Write-CustomLog -Level 'INFO' -Message "Successfully configured: $SuccessCount policies"
-        
+
         if ($FailureCount -gt 0) {
             Write-CustomLog -Level 'WARNING' -Message "Failed to configure: $FailureCount policies"
         }
-        
+
         # Security recommendations
         if ($SuccessCount -gt 0 -and -not $TestMode) {
             $Recommendations = @()
@@ -313,12 +313,12 @@ function Enable-AdvancedAuditPolicy {
             $Recommendations += "Review audit policies quarterly and adjust as needed"
             $Recommendations += "Test log collection and alerting mechanisms"
             $Recommendations += "Consider enabling additional object access auditing for sensitive files"
-            
+
             foreach ($Recommendation in $Recommendations) {
                 Write-CustomLog -Level 'INFO' -Message "Recommendation: $Recommendation"
             }
         }
-        
+
         # Display summary of applied policies
         $Summary = @{
             PolicySet = $PolicySet
@@ -328,7 +328,7 @@ function Enable-AdvancedAuditPolicy {
             TestMode = $TestMode.IsPresent
             Timestamp = Get-Date
         }
-        
+
         return $Summary
     }
 }

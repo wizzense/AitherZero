@@ -31,22 +31,22 @@ Write-Host "Function braces: $openBraces opening, $closeBraces closing"
 
 if ($openBraces -ne $closeBraces) {
     Write-Host "❌ Function has brace mismatch!" -ForegroundColor Red
-    
+
     # Find the mismatched area
     $braceCount = 0
     $lineNum = $functionStart
-    
+
     foreach ($line in $lines[$functionStart..$functionEnd]) {
         $lineNum++
         $lineBraces = ($line.ToCharArray() | Where-Object { $_ -eq '{' }).Count - ($line.ToCharArray() | Where-Object { $_ -eq '}' }).Count
         $braceCount += $lineBraces
-        
+
         if ($braceCount -lt 0) {
             Write-Host "❌ Line $lineNum has too many closing braces: $line" -ForegroundColor Red
             break
         }
     }
-    
+
     if ($braceCount -gt 0) {
         Write-Host "❌ Function is missing $braceCount closing braces" -ForegroundColor Red
     }

@@ -5,22 +5,22 @@
 param(
     [Parameter(Mandatory = $false)]
     [string]$StateFilePath = ".github/documentation-state.json",
-    
+
     [Parameter(Mandatory = $false)]
     [string]$ProjectRoot = (Get-Location),
-    
+
     [Parameter(Mandatory = $false)]
     [switch]$CreateIssues,
-    
+
     [Parameter(Mandatory = $false)]
     [string]$GitHubToken = $env:GITHUB_TOKEN,
-    
+
     [Parameter(Mandatory = $false)]
     [string]$Repository = $env:GITHUB_REPOSITORY,
-    
+
     [Parameter(Mandatory = $false)]
     [switch]$DryRun,
-    
+
     [Parameter(Mandatory = $false)]
     [string]$OutputPath = "review-flags.json"
 )
@@ -49,7 +49,7 @@ function Get-DocumentationReviewFlags {
     <#
     .SYNOPSIS
     Analyzes documentation state and generates review flags
-    
+
     .DESCRIPTION
     Examines the current documentation state to identify directories that
     require human review based on various criteria and thresholds
@@ -59,7 +59,7 @@ function Get-DocumentationReviewFlags {
         [Parameter(Mandatory = $true)]
         [hashtable]$State
     )
-    
+
     $reviewFlags = @{
         flagTime = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
         totalDirectories = $State.directories.Count
@@ -78,19 +78,19 @@ function Get-DocumentationReviewFlags {
         }
         summary = @{}
     }
-    
+
     $config = $State.configuration
     $currentTime = Get-Date
-    
+
     Write-Log "Analyzing $($State.directories.Count) directories for review flags..." -Level "INFO"
-    
+
     foreach ($dirPath in $State.directories.Keys) {
         $dirState = $State.directories[$dirPath]
         $shouldFlag = $false
         $flagReasons = @()
         $flagCategory = ""
         $priority = "low"
-        
+
         # Check for missing README
         if (-not $dirState.readmeExists) {
             $shouldFlag = $true
@@ -99,13 +99,13 @@ function Get-DocumentationReviewFlags {
             $priority = "high"
             $reviewFlags.categories.missing += $dirPath
         }
-        
+
         # Check for stale documentation
         if ($dirState.readmeExists -and $dirState.readmeLastModified) {
             try {
                 $readmeDate = [DateTime]::Parse($dirState.readmeLastModified)
                 $daysSinceUpdate = ($currentTime - $readmeDate).Days
-                
+
                 if ($daysSinceUpdate -gt $config.changeThresholds.staleDays) {
                     $shouldFlag = $true
                     $flagReasons += "README is stale ($daysSinceUpdate days old, threshold: $($config.changeThresholds.staleDays))"
@@ -113,14 +113,14 @@ function Get-DocumentationReviewFlags {
                     $priority = if ($daysSinceUpdate -gt ($config.changeThresholds.staleDays * 2)) { "high" } else { "medium" }
                     $reviewFlags.categories.stale += $dirPath
                 }
-                
+
                 # Check for code changes since README update
                 if ($dirState.mostRecentFileChange) {
                     try {
                         $lastChangeDate = [DateTime]::Parse($dirState.mostRecentFileChange)
                         $changesSinceReadme = $lastChangeDate -gt $readmeDate
                         $daysSinceChange = ($readmeDate - $lastChangeDate).Days
-                        
+
                         if ($changesSinceReadme -and $daysSinceChange -gt $config.changeThresholds.codeChangeReviewDays) {
                             $shouldFlag = $true
                             $flagReasons += "Code changes detected since README last updated"
@@ -136,7 +136,7 @@ function Get-DocumentationReviewFlags {
                 Write-Log "Could not parse README date for $dirPath : $_" -Level "WARN"
             }
         }
-        
+
         # Check for significant content changes
         if ($dirState.changesSinceLastReadme -and $dirState.contentDeltaPercent -gt $config.changeThresholds.characterDeltaPercent) {
             $shouldFlag = $true
@@ -145,7 +145,7 @@ function Get-DocumentationReviewFlags {
             $priority = if ($dirState.contentDeltaPercent -gt 50) { "high" } elseif ($priority -eq "low") { "medium" } else { $priority }
             $reviewFlags.categories.significant_changes += $dirPath
         }
-        
+
         # Check for new directories (recently added to tracking)
         if ($dirState.directoryType -ne "unknown" -and -not $dirState.readmeExists -and $dirState.fileCount -gt 0) {
             $isNewDirectory = $true  # Could be enhanced with git history analysis
@@ -159,7 +159,7 @@ function Get-DocumentationReviewFlags {
                 }
             }
         }
-        
+
         # Update directory state with flag information
         if ($shouldFlag) {
             $State.directories[$dirPath].flaggedForReview = $true
@@ -167,23 +167,23 @@ function Get-DocumentationReviewFlags {
             $State.directories[$dirPath].reviewPriority = $priority
             $State.directories[$dirPath].reviewCategory = $flagCategory
             $State.directories[$dirPath].flaggedDate = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
-            
+
             $reviewFlags.flaggedCount++
-            
+
             # Add to priority lists
             switch ($priority) {
                 "high" { $reviewFlags.priorities.high += $dirPath }
                 "medium" { $reviewFlags.priorities.medium += $dirPath }
                 "low" { $reviewFlags.priorities.low += $dirPath }
             }
-            
+
             Write-Log "Flagged $dirPath for review: $($flagReasons -join '; ') [Priority: $priority]" -Level "WARN"
         } else {
             $State.directories[$dirPath].flaggedForReview = $false
             $State.directories[$dirPath].reviewReasons = @()
         }
     }
-    
+
     # Generate summary statistics
     $reviewFlags.summary = @{
         totalFlagged = $reviewFlags.flaggedCount
@@ -201,9 +201,9 @@ function Get-DocumentationReviewFlags {
             low = $reviewFlags.priorities.low.Count
         }
     }
-    
+
     Write-Log "Review flag analysis complete: $($reviewFlags.flaggedCount) directories flagged for review" -Level "SUCCESS"
-    
+
     return $reviewFlags
 }
 
@@ -216,11 +216,11 @@ function Format-ReviewIssueBody {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$ReviewFlags,
-        
+
         [Parameter(Mandatory = $true)]
         [hashtable]$State
     )
-    
+
     $body = @"
 # 📝 Documentation Review Required
 
@@ -349,14 +349,14 @@ function Export-ReviewFlags {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$ReviewFlags,
-        
+
         [Parameter(Mandatory = $true)]
         [hashtable]$State,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$OutputPath
     )
-    
+
     $exportData = @{
         metadata = @{
             generatedAt = $ReviewFlags.flagTime
@@ -370,7 +370,7 @@ function Export-ReviewFlags {
         priorities = $ReviewFlags.priorities
         detailedFlags = @{}
     }
-    
+
     # Add detailed information for each flagged directory
     foreach ($dirPath in $State.directories.Keys) {
         $dirState = $State.directories[$dirPath]
@@ -389,7 +389,7 @@ function Export-ReviewFlags {
             }
         }
     }
-    
+
     try {
         $exportData | ConvertTo-Json -Depth 10 | Set-Content -Path $OutputPath -Encoding UTF8
         Write-Log "Review flags exported to: $OutputPath" -Level "SUCCESS"
@@ -408,29 +408,29 @@ function Create-GitHubReviewIssue {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$ReviewFlags,
-        
+
         [Parameter(Mandatory = $true)]
         [hashtable]$State,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$Repository,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$GitHubToken,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$DryRun
     )
-    
+
     if ($ReviewFlags.flaggedCount -eq 0) {
         Write-Log "No directories flagged for review - no issue needed" -Level "INFO"
         return $null
     }
-    
+
     $title = "📝 Documentation Review Required - $(Get-Date -Format 'yyyy-MM-dd')"
     $body = Format-ReviewIssueBody -ReviewFlags $ReviewFlags -State $State
     $labels = @("documentation", "review-needed", "auto-flagged")
-    
+
     if ($DryRun) {
         Write-Log "DRY RUN: Would create/update GitHub issue with title: $title" -Level "INFO"
         Write-Log "Issue body length: $($body.Length) characters" -Level "INFO"
@@ -442,7 +442,7 @@ function Create-GitHubReviewIssue {
             action = "dry_run"
         }
     }
-    
+
     try {
         # This would integrate with GitHub API
         # For now, we'll prepare the issue data structure
@@ -454,10 +454,10 @@ function Create-GitHubReviewIssue {
             flaggedCount = $ReviewFlags.flaggedCount
             priorities = $ReviewFlags.summary.priorityBreakdown
         }
-        
+
         Write-Log "Prepared GitHub issue for documentation review: $($ReviewFlags.flaggedCount) directories flagged" -Level "SUCCESS"
         return $issueData
-        
+
     } catch {
         Write-Log "Error preparing GitHub issue: $($_.Exception.Message)" -Level "ERROR"
         throw
@@ -467,26 +467,26 @@ function Create-GitHubReviewIssue {
 # Main execution
 try {
     $stateFilePath = Join-Path $ProjectRoot $StateFilePath
-    
+
     # Load current state
     if (-not (Test-Path $stateFilePath)) {
         Write-Log "State file not found: $stateFilePath" -Level "ERROR"
         Write-Log "Run Track-DocumentationState.ps1 -Initialize first" -Level "ERROR"
         exit 1
     }
-    
+
     $content = Get-Content -Path $stateFilePath -Raw -Encoding UTF8
     $state = $content | ConvertFrom-Json -AsHashtable
-    
+
     Write-Log "Analyzing documentation state for review flags..." -Level "INFO"
-    
+
     # Generate review flags
     $reviewFlags = Get-DocumentationReviewFlags -State $state
-    
+
     # Export review flags
     $outputFilePath = Join-Path $ProjectRoot $OutputPath
     Export-ReviewFlags -ReviewFlags $reviewFlags -State $state -OutputPath $outputFilePath
-    
+
     # Create GitHub issue if requested and directories are flagged
     $issueResult = $null
     if ($CreateIssues -and $reviewFlags.flaggedCount -gt 0) {
@@ -496,22 +496,22 @@ try {
             $issueResult = Create-GitHubReviewIssue -ReviewFlags $reviewFlags -State $state -Repository $Repository -GitHubToken $GitHubToken -DryRun:$DryRun
         }
     }
-    
+
     # Save updated state
     $state | ConvertTo-Json -Depth 10 | Set-Content -Path $stateFilePath -Encoding UTF8
-    
+
     # Output summary
     Write-Host "`n📋 Documentation Review Flag Summary:" -ForegroundColor Cyan
     Write-Host "  Total Directories: $($reviewFlags.totalDirectories)" -ForegroundColor White
     Write-Host "  Flagged for Review: $($reviewFlags.flaggedCount)" -ForegroundColor $(if($reviewFlags.flaggedCount -gt 0){"Yellow"}else{"Green"})
     Write-Host "  Documentation Coverage: $($reviewFlags.summary.coveragePercent)%" -ForegroundColor $(if($reviewFlags.summary.coveragePercent -lt 80){"Red"}elseif($reviewFlags.summary.coveragePercent -lt 95){"Yellow"}else{"Green"})
-    
+
     if ($reviewFlags.flaggedCount -gt 0) {
         Write-Host "`n🚨 Priority Breakdown:" -ForegroundColor Red
         Write-Host "  High Priority: $($reviewFlags.summary.priorityBreakdown.high)" -ForegroundColor Red
         Write-Host "  Medium Priority: $($reviewFlags.summary.priorityBreakdown.medium)" -ForegroundColor Yellow
         Write-Host "  Low Priority: $($reviewFlags.summary.priorityBreakdown.low)" -ForegroundColor Gray
-        
+
         Write-Host "`n📂 Category Breakdown:" -ForegroundColor Yellow
         Write-Host "  Missing READMEs: $($reviewFlags.summary.categoryBreakdown.missing)" -ForegroundColor Red
         Write-Host "  Stale Documentation: $($reviewFlags.summary.categoryBreakdown.stale)" -ForegroundColor Yellow
@@ -519,15 +519,15 @@ try {
         Write-Host "  Significant Changes: $($reviewFlags.summary.categoryBreakdown.significant_changes)" -ForegroundColor Magenta
         Write-Host "  New Directories: $($reviewFlags.summary.categoryBreakdown.new_directories)" -ForegroundColor Blue
     }
-    
+
     if ($issueResult) {
         Write-Host "`n🎫 GitHub Issue:" -ForegroundColor Green
         Write-Host "  Action: $($issueResult.action ?? 'prepared')" -ForegroundColor White
         Write-Host "  Flagged Count: $($issueResult.flaggedCount)" -ForegroundColor White
     }
-    
+
     Write-Log "Documentation review flagging completed successfully" -Level "SUCCESS"
-    
+
 } catch {
     Write-Log "Documentation review flagging failed: $($_.Exception.Message)" -Level "ERROR"
     exit 1

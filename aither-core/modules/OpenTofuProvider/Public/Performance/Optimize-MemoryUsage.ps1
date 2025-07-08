@@ -47,53 +47,53 @@ function Optimize-MemoryUsage {
     param(
         [Parameter(ParameterSetName = 'ByDeployment')]
         [string]$DeploymentId,
-        
+
         [Parameter(ParameterSetName = 'ByConfiguration')]
         [string]$ConfigurationPath,
-        
+
         [Parameter()]
         [ValidateSet('Conservative', 'Balanced', 'Aggressive')]
         [string]$OptimizationMode = 'Balanced',
-        
+
         [Parameter()]
         [switch]$EnableGarbageCollection,
-        
+
         [Parameter()]
         [switch]$EnableResourcePooling,
-        
+
         [Parameter()]
         [switch]$EnableStreamingMode,
-        
+
         [Parameter()]
         [ValidateRange(10, 95)]
         [int]$MemoryThreshold = 80,
-        
+
         [Parameter()]
         [ValidateRange(5, 300)]
         [int]$MonitoringInterval = 30,
-        
+
         [Parameter()]
         [switch]$GenerateReport
     )
-    
+
     begin {
         Write-CustomLog -Level 'INFO' -Message "Starting memory usage optimization"
-        
+
         # Initialize memory monitoring
         $script:initialMemory = Get-MemoryUsage
         $script:optimizationStartTime = Get-Date
-        
+
         # Get optimization settings
         $optimizationSettings = Get-MemoryOptimizationSettings -Mode $OptimizationMode
-        
+
         # Override settings if explicitly specified
         if ($PSBoundParameters.ContainsKey('EnableGarbageCollection')) { $optimizationSettings.EnableGarbageCollection = $EnableGarbageCollection }
         if ($PSBoundParameters.ContainsKey('EnableResourcePooling')) { $optimizationSettings.EnableResourcePooling = $EnableResourcePooling }
         if ($PSBoundParameters.ContainsKey('EnableStreamingMode')) { $optimizationSettings.EnableStreamingMode = $EnableStreamingMode }
-        
+
         Write-CustomLog -Level 'INFO' -Message "Initial memory usage: $([Math]::Round($script:initialMemory.WorkingSetMB, 2)) MB"
     }
-    
+
     process {
         try {
             # Initialize optimization result
@@ -111,12 +111,12 @@ function Optimize-MemoryUsage {
                 StartTime = $script:optimizationStartTime
                 EndTime = $null
             }
-            
+
             # Determine configuration source
             if ($DeploymentId) {
                 $deploymentPath = Join-Path $env:PROJECT_ROOT "deployments" $DeploymentId
                 $configPath = Join-Path $deploymentPath "deployment-config.json"
-                
+
                 if (-not (Test-Path $configPath)) {
                     throw "Configuration not found for deployment: $DeploymentId"
                 }
@@ -126,14 +126,14 @@ function Optimize-MemoryUsage {
                     throw "Configuration file not found: $ConfigurationPath"
                 }
             }
-            
+
             # Apply garbage collection optimization
             if ($optimizationSettings.EnableGarbageCollection) {
                 Write-CustomLog -Level 'INFO' -Message "Applying garbage collection optimization"
-                
+
                 $gcResult = Optimize-GarbageCollection -MemoryThreshold $MemoryThreshold
                 $optimizationResult.OptimizationsApplied += $gcResult
-                
+
                 # Collect memory metrics after GC
                 $optimizationResult.MemoryMetrics += @{
                     Timestamp = Get-Date
@@ -141,97 +141,97 @@ function Optimize-MemoryUsage {
                     Memory = Get-MemoryUsage
                 }
             }
-            
+
             # Apply resource pooling optimization
             if ($optimizationSettings.EnableResourcePooling) {
                 Write-CustomLog -Level 'INFO' -Message "Initializing resource pooling"
-                
+
                 $poolResult = Initialize-ResourcePooling -ConfigurationPath $configPath
                 $optimizationResult.OptimizationsApplied += $poolResult
-                
+
                 $optimizationResult.MemoryMetrics += @{
                     Timestamp = Get-Date
                     Type = 'AfterPooling'
                     Memory = Get-MemoryUsage
                 }
             }
-            
+
             # Apply streaming mode optimization
             if ($optimizationSettings.EnableStreamingMode) {
                 Write-CustomLog -Level 'INFO' -Message "Enabling streaming mode for configuration processing"
-                
+
                 $streamResult = Enable-StreamingMode -ConfigurationPath $configPath
                 $optimizationResult.OptimizationsApplied += $streamResult
-                
+
                 $optimizationResult.MemoryMetrics += @{
                     Timestamp = Get-Date
                     Type = 'AfterStreaming'
                     Memory = Get-MemoryUsage
                 }
             }
-            
+
             # Apply memory monitoring optimization
             $monitorResult = Start-MemoryMonitoring -Interval $MonitoringInterval -Threshold $MemoryThreshold
             $optimizationResult.OptimizationsApplied += $monitorResult
-            
+
             # Apply configuration caching optimization
             if ($optimizationSettings.EnableConfigurationCaching) {
                 Write-CustomLog -Level 'INFO' -Message "Optimizing configuration caching"
-                
+
                 $cacheResult = Optimize-ConfigurationCaching -ConfigurationPath $configPath
                 $optimizationResult.OptimizationsApplied += $cacheResult
-                
+
                 $optimizationResult.MemoryMetrics += @{
                     Timestamp = Get-Date
                     Type = 'AfterCaching'
                     Memory = Get-MemoryUsage
                 }
             }
-            
+
             # Apply object lifecycle management
             if ($optimizationSettings.EnableObjectLifecycleManagement) {
                 Write-CustomLog -Level 'INFO' -Message "Implementing object lifecycle management"
-                
+
                 $lifecycleResult = Implement-ObjectLifecycleManagement
                 $optimizationResult.OptimizationsApplied += $lifecycleResult
-                
+
                 $optimizationResult.MemoryMetrics += @{
                     Timestamp = Get-Date
                     Type = 'AfterLifecycle'
                     Memory = Get-MemoryUsage
                 }
             }
-            
+
             # Apply memory leak detection and prevention
             $leakResult = Enable-MemoryLeakDetection
             $optimizationResult.OptimizationsApplied += $leakResult
-            
+
             # Final memory measurement
             $optimizationResult.FinalMemory = Get-MemoryUsage
             $optimizationResult.EndTime = Get-Date
-            
+
             # Calculate memory reduction
             $memoryReduction = $script:initialMemory.WorkingSetMB - $optimizationResult.FinalMemory.WorkingSetMB
             $memoryReductionPercent = if ($script:initialMemory.WorkingSetMB -gt 0) {
                 ($memoryReduction / $script:initialMemory.WorkingSetMB) * 100
             } else { 0 }
-            
+
             $optimizationResult.MemoryReduction = @{
                 AbsoluteMB = [Math]::Round($memoryReduction, 2)
                 PercentageReduction = [Math]::Round($memoryReductionPercent, 2)
             }
-            
+
             # Generate optimization report if requested
             if ($GenerateReport) {
                 $reportPath = Generate-MemoryOptimizationReport -OptimizationResult $optimizationResult
                 $optimizationResult.ReportPath = $reportPath
             }
-            
+
             Write-CustomLog -Level 'SUCCESS' -Message "Memory optimization completed"
             Write-CustomLog -Level 'INFO' -Message "Memory reduction: $($optimizationResult.MemoryReduction.AbsoluteMB) MB ($($optimizationResult.MemoryReduction.PercentageReduction)%)"
-            
+
             return [PSCustomObject]$optimizationResult
-            
+
         } catch {
             Write-CustomLog -Level 'ERROR' -Message "Failed to optimize memory usage: $($_.Exception.Message)"
             throw
@@ -241,7 +241,7 @@ function Optimize-MemoryUsage {
 
 function Get-MemoryOptimizationSettings {
     param([string]$Mode)
-    
+
     switch ($Mode) {
         'Conservative' {
             return @{
@@ -282,7 +282,7 @@ function Get-MemoryOptimizationSettings {
 function Get-MemoryUsage {
     try {
         $process = Get-Process -Id $PID
-        
+
         return @{
             WorkingSetMB = [Math]::Round($process.WorkingSet / 1MB, 2)
             PrivateMemoryMB = [Math]::Round($process.PrivateMemorySize64 / 1MB, 2)
@@ -309,7 +309,7 @@ function Get-MemoryUsage {
 
 function Optimize-GarbageCollection {
     param([int]$MemoryThreshold)
-    
+
     $optimization = @{
         Type = 'GarbageCollection'
         Applied = $false
@@ -317,22 +317,22 @@ function Optimize-GarbageCollection {
         Description = ''
         Details = @{}
     }
-    
+
     try {
         $beforeMemory = Get-MemoryUsage
-        
+
         # Force garbage collection
         [System.GC]::Collect()
         [System.GC]::WaitForPendingFinalizers()
         [System.GC]::Collect()
-        
+
         # Wait a moment for GC to complete
         Start-Sleep -Milliseconds 500
-        
+
         $afterMemory = Get-MemoryUsage
-        
+
         $memoryFreed = $beforeMemory.WorkingSetMB - $afterMemory.WorkingSetMB
-        
+
         $optimization.Applied = $true
         $optimization.MemoryFreed = [Math]::Round($memoryFreed, 2)
         $optimization.Description = "Garbage collection optimization applied"
@@ -344,21 +344,21 @@ function Optimize-GarbageCollection {
             GCGeneration1Collections = [System.GC]::CollectionCount(1)
             GCGeneration2Collections = [System.GC]::CollectionCount(2)
         }
-        
+
         Write-CustomLog -Level 'INFO' -Message "Garbage collection freed $([Math]::Round($memoryFreed, 2)) MB"
-        
+
     } catch {
         $optimization.Applied = $false
         $optimization.Description = "Failed to apply garbage collection optimization: $_"
         Write-CustomLog -Level 'WARN' -Message $optimization.Description
     }
-    
+
     return $optimization
 }
 
 function Initialize-ResourcePooling {
     param([string]$ConfigurationPath)
-    
+
     $optimization = @{
         Type = 'ResourcePooling'
         Applied = $false
@@ -366,7 +366,7 @@ function Initialize-ResourcePooling {
         Description = ''
         Details = @{}
     }
-    
+
     try {
         # Create global resource pools if they don't exist
         if (-not $global:OpenTofuResourcePools) {
@@ -379,10 +379,10 @@ function Initialize-ResourcePooling {
                 AccessCount = 0
             }
         }
-        
+
         # Initialize specific pools based on configuration
         $poolsCreated = 0
-        
+
         # Configuration object pool
         if (-not $global:OpenTofuResourcePools.ConfigurationCache.ContainsKey($ConfigurationPath)) {
             $global:OpenTofuResourcePools.ConfigurationCache[$ConfigurationPath] = @{
@@ -392,14 +392,14 @@ function Initialize-ResourcePooling {
             }
             $poolsCreated++
         }
-        
+
         # State object pool
         $global:OpenTofuResourcePools.StateCache['default'] = @{
             LastAccessed = Get-Date
             Objects = @{}
         }
         $poolsCreated++
-        
+
         # Provider connection pool
         $global:OpenTofuResourcePools.ProviderConnections['default'] = @{
             LastAccessed = Get-Date
@@ -407,7 +407,7 @@ function Initialize-ResourcePooling {
             MaxConnections = 10
         }
         $poolsCreated++
-        
+
         $optimization.Applied = $true
         $optimization.PoolsCreated = $poolsCreated
         $optimization.Description = "Resource pooling initialized with $poolsCreated pool(s)"
@@ -417,21 +417,21 @@ function Initialize-ResourcePooling {
             StatePoolEnabled = $true
             ProviderPoolEnabled = $true
         }
-        
+
         Write-CustomLog -Level 'INFO' -Message "Resource pooling initialized successfully"
-        
+
     } catch {
         $optimization.Applied = $false
         $optimization.Description = "Failed to initialize resource pooling: $_"
         Write-CustomLog -Level 'WARN' -Message $optimization.Description
     }
-    
+
     return $optimization
 }
 
 function Enable-StreamingMode {
     param([string]$ConfigurationPath)
-    
+
     $optimization = @{
         Type = 'StreamingMode'
         Applied = $false
@@ -439,12 +439,12 @@ function Enable-StreamingMode {
         Description = ''
         Details = @{}
     }
-    
+
     try {
         # Check if configuration is large enough to benefit from streaming
         $configSize = (Get-Item $ConfigurationPath).Length
         $configSizeMB = [Math]::Round($configSize / 1MB, 2)
-        
+
         if ($configSizeMB -gt 1) {  # Only apply streaming for files > 1MB
             # Enable streaming configuration reader
             $global:OpenTofuStreamingMode = @{
@@ -454,7 +454,7 @@ function Enable-StreamingMode {
                 ConfigurationPath = $ConfigurationPath
                 MemoryEstimateMB = $configSizeMB * 0.3  # Estimate 30% memory savings
             }
-            
+
             $optimization.Applied = $true
             $optimization.MemorySaved = $global:OpenTofuStreamingMode.MemoryEstimateMB
             $optimization.Description = "Streaming mode enabled for large configuration ($configSizeMB MB)"
@@ -464,19 +464,19 @@ function Enable-StreamingMode {
                 BufferSize = $global:OpenTofuStreamingMode.BufferSize
                 EstimatedMemorySavingsMB = $optimization.MemorySaved
             }
-            
+
             Write-CustomLog -Level 'INFO' -Message "Streaming mode enabled for $configSizeMB MB configuration"
         } else {
             $optimization.Applied = $false
             $optimization.Description = "Configuration too small for streaming mode ($configSizeMB MB)"
         }
-        
+
     } catch {
         $optimization.Applied = $false
         $optimization.Description = "Failed to enable streaming mode: $_"
         Write-CustomLog -Level 'WARN' -Message $optimization.Description
     }
-    
+
     return $optimization
 }
 
@@ -485,7 +485,7 @@ function Start-MemoryMonitoring {
         [int]$Interval,
         [int]$Threshold
     )
-    
+
     $optimization = @{
         Type = 'MemoryMonitoring'
         Applied = $false
@@ -493,7 +493,7 @@ function Start-MemoryMonitoring {
         Description = ''
         Details = @{}
     }
-    
+
     try {
         # Create memory monitoring job if not already running
         if (-not $global:OpenTofuMemoryMonitor) {
@@ -506,7 +506,7 @@ function Start-MemoryMonitoring {
                 Alerts = @()
             }
         }
-        
+
         $optimization.Applied = $true
         $optimization.MonitoringEnabled = $true
         $optimization.Description = "Memory monitoring started (threshold: $Threshold%, interval: $Interval seconds)"
@@ -515,21 +515,21 @@ function Start-MemoryMonitoring {
             MemoryThreshold = $Threshold
             MonitoringStartTime = $global:OpenTofuMemoryMonitor.StartTime
         }
-        
+
         Write-CustomLog -Level 'INFO' -Message "Memory monitoring enabled"
-        
+
     } catch {
         $optimization.Applied = $false
         $optimization.Description = "Failed to start memory monitoring: $_"
         Write-CustomLog -Level 'WARN' -Message $optimization.Description
     }
-    
+
     return $optimization
 }
 
 function Optimize-ConfigurationCaching {
     param([string]$ConfigurationPath)
-    
+
     $optimization = @{
         Type = 'ConfigurationCaching'
         Applied = $false
@@ -537,7 +537,7 @@ function Optimize-ConfigurationCaching {
         Description = ''
         Details = @{}
     }
-    
+
     try {
         # Initialize configuration cache if not exists
         if (-not $global:OpenTofuConfigurationCache) {
@@ -549,17 +549,17 @@ function Optimize-ConfigurationCaching {
                 CreatedAt = Get-Date
             }
         }
-        
+
         # Implement cache eviction policy (LRU)
         if ($global:OpenTofuConfigurationCache.Cache.Count -gt $global:OpenTofuConfigurationCache.MaxEntries) {
-            $oldestEntry = $global:OpenTofuConfigurationCache.Cache.GetEnumerator() | 
-                          Sort-Object { $_.Value.LastAccessed } | 
+            $oldestEntry = $global:OpenTofuConfigurationCache.Cache.GetEnumerator() |
+                          Sort-Object { $_.Value.LastAccessed } |
                           Select-Object -First 1
-            
+
             $global:OpenTofuConfigurationCache.Cache.Remove($oldestEntry.Key)
             Write-CustomLog -Level 'DEBUG' -Message "Evicted oldest cache entry: $($oldestEntry.Key)"
         }
-        
+
         $optimization.Applied = $true
         $optimization.CacheHits = $global:OpenTofuConfigurationCache.HitCount
         $optimization.Description = "Configuration caching optimized"
@@ -572,15 +572,15 @@ function Optimize-ConfigurationCaching {
                 [Math]::Round($global:OpenTofuConfigurationCache.HitCount / ($global:OpenTofuConfigurationCache.HitCount + $global:OpenTofuConfigurationCache.MissCount) * 100, 2)
             } else { 0 }
         }
-        
+
         Write-CustomLog -Level 'INFO' -Message "Configuration caching optimized"
-        
+
     } catch {
         $optimization.Applied = $false
         $optimization.Description = "Failed to optimize configuration caching: $_"
         Write-CustomLog -Level 'WARN' -Message $optimization.Description
     }
-    
+
     return $optimization
 }
 
@@ -592,7 +592,7 @@ function Implement-ObjectLifecycleManagement {
         Description = ''
         Details = @{}
     }
-    
+
     try {
         # Initialize object lifecycle manager
         if (-not $global:OpenTofuObjectLifecycleManager) {
@@ -604,14 +604,14 @@ function Implement-ObjectLifecycleManagement {
                 CleanupInterval = [TimeSpan]::FromMinutes(5)
             }
         }
-        
+
         # Register common object types for lifecycle management
         $managedObjectTypes = @(
             'System.IO.FileStream',
             'System.Net.Http.HttpClient',
             'System.Data.SqlClient.SqlConnection'
         )
-        
+
         foreach ($objectType in $managedObjectTypes) {
             if (-not $global:OpenTofuObjectLifecycleManager.ManagedObjects.ContainsKey($objectType)) {
                 $global:OpenTofuObjectLifecycleManager.ManagedObjects[$objectType] = @{
@@ -621,7 +621,7 @@ function Implement-ObjectLifecycleManagement {
                 }
             }
         }
-        
+
         $optimization.Applied = $true
         $optimization.ManagedObjects = $managedObjectTypes.Count
         $optimization.Description = "Object lifecycle management implemented for $($managedObjectTypes.Count) object types"
@@ -630,15 +630,15 @@ function Implement-ObjectLifecycleManagement {
             AutoCleanupEnabled = $true
             CleanupInterval = $global:OpenTofuObjectLifecycleManager.CleanupInterval
         }
-        
+
         Write-CustomLog -Level 'INFO' -Message "Object lifecycle management implemented"
-        
+
     } catch {
         $optimization.Applied = $false
         $optimization.Description = "Failed to implement object lifecycle management: $_"
         Write-CustomLog -Level 'WARN' -Message $optimization.Description
     }
-    
+
     return $optimization
 }
 
@@ -650,7 +650,7 @@ function Enable-MemoryLeakDetection {
         Description = ''
         Details = @{}
     }
-    
+
     try {
         # Initialize memory leak detection
         if (-not $global:OpenTofuMemoryLeakDetector) {
@@ -664,7 +664,7 @@ function Enable-MemoryLeakDetection {
                 Alerts = @()
             }
         }
-        
+
         $optimization.Applied = $true
         $optimization.DetectionEnabled = $true
         $optimization.Description = "Memory leak detection enabled"
@@ -673,23 +673,23 @@ function Enable-MemoryLeakDetection {
             CheckInterval = $global:OpenTofuMemoryLeakDetector.CheckInterval
             LeakThreshold = $global:OpenTofuMemoryLeakDetector.LeakThreshold
         }
-        
+
         Write-CustomLog -Level 'INFO' -Message "Memory leak detection enabled"
-        
+
     } catch {
         $optimization.Applied = $false
         $optimization.Description = "Failed to enable memory leak detection: $_"
         Write-CustomLog -Level 'WARN' -Message $optimization.Description
     }
-    
+
     return $optimization
 }
 
 function Generate-MemoryOptimizationReport {
     param([hashtable]$OptimizationResult)
-    
+
     $reportPath = Join-Path $env:PROJECT_ROOT "memory-optimization-report-$(Get-Date -Format 'yyyyMMdd-HHmmss').html"
-    
+
     $html = @"
 <!DOCTYPE html>
 <html>
@@ -714,7 +714,7 @@ function Generate-MemoryOptimizationReport {
         <p><strong>Start Time:</strong> $($OptimizationResult.StartTime.ToString('yyyy-MM-dd HH:mm:ss'))</p>
         <p><strong>Duration:</strong> $([Math]::Round(($OptimizationResult.EndTime - $OptimizationResult.StartTime).TotalSeconds, 2)) seconds</p>
     </div>
-    
+
     <div class="metrics">
         <div class="metric">
             <h3>Initial Memory</h3>
@@ -733,20 +733,20 @@ function Generate-MemoryOptimizationReport {
             <p style="font-size: 20px; margin: 10px 0; color: #28a745;">$($OptimizationResult.MemoryReduction.PercentageReduction)%</p>
         </div>
     </div>
-    
+
     <h2>Applied Optimizations</h2>
 "@
-    
+
     foreach ($optimization in $OptimizationResult.OptimizationsApplied) {
         $cssClass = if ($optimization.Applied) { 'optimization applied' } else { 'optimization not-applied' }
-        
+
         $html += @"
     <div class="$cssClass">
         <h3>$($optimization.Type)</h3>
         <p><strong>Status:</strong> $(if ($optimization.Applied) { 'Applied' } else { 'Not Applied' })</p>
         <p><strong>Description:</strong> $($optimization.Description)</p>
 "@
-        
+
         if ($optimization.Details) {
             $html += "<p><strong>Details:</strong></p><ul>"
             foreach ($detail in $optimization.Details.GetEnumerator()) {
@@ -754,10 +754,10 @@ function Generate-MemoryOptimizationReport {
             }
             $html += "</ul>"
         }
-        
+
         $html += "</div>"
     }
-    
+
     # Add memory usage timeline if metrics are available
     if ($OptimizationResult.MemoryMetrics.Count -gt 0) {
         $html += @"
@@ -771,7 +771,7 @@ function Generate-MemoryOptimizationReport {
                 <th style="border: 1px solid #ddd; padding: 8px;">Private Memory (MB)</th>
             </tr>
 "@
-        
+
         foreach ($metric in $OptimizationResult.MemoryMetrics) {
             $html += @"
             <tr>
@@ -782,13 +782,13 @@ function Generate-MemoryOptimizationReport {
             </tr>
 "@
         }
-        
+
         $html += "</table></div>"
     }
-    
+
     $html += "</body></html>"
-    
+
     $html | Set-Content -Path $reportPath
-    
+
     return $reportPath
 }

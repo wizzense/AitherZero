@@ -80,14 +80,14 @@ function New-BackupExclusion {
             "*backup*",
             "*-backup-*",
             "*.bak.*",
-            
+
             # Duplicate and problematic files
             "*mega-consolidated*.yml.bak",
             "*mega-consolidated-fixed-backup*",
             "*.ps1.bak.bak",
             "*.backup.backup",
             "*-backup-*-backup*",
-            
+
             # Temporary files
             "*.tmp.*",
             "*.cache.*",
@@ -95,27 +95,27 @@ function New-BackupExclusion {
             "*.partial",
             "*.corrupt",
             "*.incomplete",
-            
+
             # OS generated files
             "Thumbs.db",
             ".DS_Store",
             "desktop.ini",
-            
+
             # Legacy files
             "*-deprecated-*",
             "*-legacy-*",
             "*-old-*",
-            
+
             # Test artifacts
             "TestResults*.xml.bak",
             "coverage*.xml.old",
             "*.test.log",
-            
+
             # Configuration backups
             "*.config.backup",
             "*.json.orig",
             "*.yaml.bak",
-            
+
             # Consolidated backup directories
             "backups/",
             "archive/",
@@ -184,13 +184,13 @@ function New-BackupExclusion {
 
     } catch {
         $errorMessage = "Failed to create backup exclusions: $($_.Exception.Message)"
-        
+
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog $errorMessage -Level ERROR
         } else {
             Write-Error $errorMessage
         }
-        
+
         throw
     }
 }
@@ -207,7 +207,7 @@ function Update-GitignoreFile {
         $gitignorePath = Join-Path $ProjectRoot ".gitignore"
         $sectionHeader = "# Backup files (managed by BackupManager)"
         $sectionFooter = "# End backup files section"
-        
+
         # Read existing content or create new
         $content = if (Test-Path $gitignorePath) {
             Get-Content $gitignorePath -ErrorAction Stop
@@ -276,21 +276,21 @@ function Update-PSScriptAnalyzerSettings {
 
     try {
         $psaPath = Join-Path $ProjectRoot ".PSScriptAnalyzerSettings.psd1"
-        
+
         # Basic PSScriptAnalyzer settings with backup exclusions
         $psaContent = @"
 @{
     # Include default rules
     IncludeDefaultRules = `$true
-    
+
     # Exclude backup files from analysis
     ExcludeRules = @()
-    
+
     # Exclude backup file patterns
     ExcludePath = @(
 $(($Patterns | ForEach-Object { "        '$_'" }) -join ",`n")
     )
-    
+
     # Severity levels
     Severity = @('Error', 'Warning', 'Information')
 }
@@ -299,7 +299,7 @@ $(($Patterns | ForEach-Object { "        '$_'" }) -join ",`n")
         # Only create if doesn't exist or Force is specified
         if (-not (Test-Path $psaPath) -or $Force) {
             Set-Content -Path $psaPath -Value $psaContent -Encoding UTF8
-            
+
             return @{
                 Success = $true
                 FilePath = $psaPath
@@ -332,7 +332,7 @@ function Update-PesterConfig {
 
     try {
         $pesterPath = Join-Path $ProjectRoot "Pester.config.ps1"
-        
+
         # Basic Pester configuration with backup exclusions
         $pesterContent = @"
 @{
@@ -358,7 +358,7 @@ $(($Patterns | ForEach-Object { "            '$_'" }) -join ",`n")
         # Only create if doesn't exist or Force is specified
         if (-not (Test-Path $pesterPath) -or $Force) {
             Set-Content -Path $pesterPath -Value $pesterContent -Encoding UTF8
-            
+
             return @{
                 Success = $true
                 FilePath = $pesterPath

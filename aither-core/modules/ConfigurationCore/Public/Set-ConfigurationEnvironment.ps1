@@ -19,63 +19,63 @@ function Set-ConfigurationEnvironment {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [Parameter()]
         [switch]$Force,
-        
+
         [Parameter()]
         [switch]$NotifyModules
     )
-    
+
     try {
         # Validate environment exists
         if (-not $script:ConfigurationStore.Environments.ContainsKey($Name)) {
             throw "Environment '$Name' not found. Available environments: $($script:ConfigurationStore.Environments.Keys -join ', ')"
         }
-        
+
         # Check if already current
         if ($script:ConfigurationStore.CurrentEnvironment -eq $Name) {
             Write-CustomLog -Level 'INFO' -Message "Environment '$Name' is already active"
             return $true
         }
-        
+
         # Validate environment configuration if not forcing
         if (-not $Force) {
             $env = $script:ConfigurationStore.Environments[$Name]
             if (-not $env.Settings) {
-                Write-CustomLog -Level 'WARNING' -Message "Environment '$Name' has no settings configured"
+                Write-CustomLog -Level 'WARN' -Message "Environment '$Name' has no settings configured"
             }
         }
-        
+
         if ($PSCmdlet.ShouldProcess($Name, "Set active environment")) {
             $previousEnvironment = $script:ConfigurationStore.CurrentEnvironment
             $script:ConfigurationStore.CurrentEnvironment = $Name
-            
+
             # Save updated configuration
             Save-ConfigurationStore
-            
+
             Write-CustomLog -Level 'SUCCESS' -Message "Active environment changed from '$previousEnvironment' to '$Name'"
-            
+
             # Notify modules if requested
             if ($NotifyModules) {
                 Write-CustomLog -Level 'INFO' -Message "Notifying modules about environment change"
-                
+
                 # Get all modules that have configurations
                 $moduleNames = @()
                 foreach ($envName in $script:ConfigurationStore.Environments.Keys) {
                     $moduleNames += $script:ConfigurationStore.Environments[$envName].Settings.Keys
                 }
                 $moduleNames = $moduleNames | Select-Object -Unique
-                
+
                 # Trigger reload for each module
                 foreach ($moduleName in $moduleNames) {
                     try {
                         Invoke-ConfigurationReload -ModuleName $moduleName -Environment $Name
                     } catch {
-                        Write-CustomLog -Level 'WARNING' -Message "Failed to notify module '$moduleName': $_"
+                        Write-CustomLog -Level 'WARN' -Message "Failed to notify module '$moduleName': $_"
                     }
                 }
-                
+
                 # Publish environment change event
                 if (Get-Command 'Publish-TestEvent' -ErrorAction SilentlyContinue) {
                     Publish-TestEvent -EventName 'EnvironmentChanged' -EventData @{
@@ -85,10 +85,10 @@ function Set-ConfigurationEnvironment {
                     }
                 }
             }
-            
+
             return $true
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to set configuration environment: $_"
         throw

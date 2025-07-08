@@ -122,16 +122,16 @@ function Get-ISODownload {
                 # Enhanced download with retry logic and modern HTTP clients
                 $downloadSuccess = $false
                 $lastError = $null
-                
+
                 for ($retry = 0; $retry -lt $RetryCount; $retry++) {
                     try {
                         if ($retry -gt 0) {
                             Write-CustomLog -Level 'INFO' -Message "Retry attempt $retry of $($RetryCount - 1) for $ISOName"
                             Start-Sleep -Seconds $RetryDelaySeconds
                         }
-                        
+
                         $downloadInfo.Status = 'Downloading'
-                        
+
                         # Choose download method based on platform and preferences
                         if ($UseHttpClient -or (-not (Get-Command Start-BitsTransfer -ErrorAction SilentlyContinue))) {
                             # Use modern HttpClient approach
@@ -143,16 +143,16 @@ function Get-ISODownload {
                             # Fallback to Invoke-WebRequest with enhanced features
                             $downloadSuccess = Invoke-WebRequestDownload -Url $downloadUrl -FilePath $fullPath -TimeoutSeconds $TimeoutSeconds -ShowProgress:$ShowProgress -ISOName $ISOName
                         }
-                        
+
                         if ($downloadSuccess) {
                             $downloadInfo.Status = 'Completed'
                             break
                         }
-                        
+
                     } catch {
                         $lastError = $_.Exception.Message
                         Write-CustomLog -Level 'WARN' -Message "Download attempt $($retry + 1) failed: $lastError"
-                        
+
                         # Clean up partial download
                         if (Test-Path $fullPath) {
                             try {
@@ -161,13 +161,13 @@ function Get-ISODownload {
                                 Write-CustomLog -Level 'WARN' -Message "Failed to clean up partial download: $($_.Exception.Message)"
                             }
                         }
-                        
+
                         if ($retry -eq ($RetryCount - 1)) {
                             throw "Download failed after $RetryCount attempts. Last error: $lastError"
                         }
                     }
                 }
-                
+
                 if (-not $downloadSuccess) {
                     throw "Download failed after $RetryCount attempts. Last error: $lastError"
                 }

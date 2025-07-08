@@ -39,6 +39,24 @@ jobs:
             Write-Host "  - $($_.Name) ($('{0:N2}' -f ($_.Length / 1MB)) MB)"
         }
         
+    - name: Generate Comprehensive Report
+      shell: pwsh
+      run: |
+        Write-Host "📊 Generating comprehensive report for release..." -ForegroundColor Cyan
+        
+        # Generate the report
+        ./scripts/reporting/Generate-ComprehensiveReport.ps1 `
+          -ReportPath "./build/output/AitherZero-v${{ steps.get_version.outputs.version }}-report.html" `
+          -IncludeDetailedAnalysis `
+          -ReportTitle "AitherZero v${{ steps.get_version.outputs.version }} Release Report" `
+          -Version "${{ steps.get_version.outputs.version }}"
+          
+        if (Test-Path "./build/output/AitherZero-v${{ steps.get_version.outputs.version }}-report.html") {
+          Write-Host "✅ Comprehensive report generated successfully" -ForegroundColor Green
+        } else {
+          Write-Warning "Failed to generate comprehensive report"
+        }
+        
     - name: Read Changelog
       id: changelog
       shell: pwsh
@@ -84,6 +102,7 @@ jobs:
           | 🪟 **Windows** | `AitherZero-v${{ steps.get_version.outputs.version }}-windows.zip` | ~15-20 MB |
           | 🐧 **Linux** | `AitherZero-v${{ steps.get_version.outputs.version }}-linux.tar.gz` | ~15-20 MB |
           | 🍎 **macOS** | `AitherZero-v${{ steps.get_version.outputs.version }}-macos.tar.gz` | ~15-20 MB |
+          | 📊 **Report** | `AitherZero-v${{ steps.get_version.outputs.version }}-report.html` | Comprehensive project analysis |
           
           ### 🚀 Quick Installation
           

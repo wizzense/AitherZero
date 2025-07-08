@@ -7,15 +7,15 @@ function Initialize-VMwareProvider {
         Initializes the VMware vSphere provider with specified configuration.
     #>
     param([hashtable]$Configuration)
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Initializing VMware vSphere provider"
-        
+
         # Check if VMware PowerCLI is available
         if (-not (Get-Module -ListAvailable -Name VMware.PowerCLI)) {
             throw "VMware PowerCLI is not installed"
         }
-        
+
         # Import required modules
         $requiredModules = @('VMware.VimAutomation.Core', 'VMware.VimAutomation.Common')
         foreach ($module in $requiredModules) {
@@ -23,30 +23,30 @@ function Initialize-VMwareProvider {
                 Import-Module $module -Force -ErrorAction Stop
             }
         }
-        
+
         # Disable certificate warnings for development
         Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$false -ErrorAction SilentlyContinue
-        
+
         # Test vCenter connectivity
         if ($Configuration.vCenter) {
             Write-CustomLog -Level 'INFO' -Message "Testing connection to vCenter: $($Configuration.vCenter)"
-            
+
             # Use stored credentials if available
             $credential = $null
             if ($Configuration.CredentialName) {
                 $credential = Get-StoredCredential -Name $Configuration.CredentialName -ErrorAction SilentlyContinue
             }
-            
+
             if ($credential) {
                 $connection = Connect-VIServer -Server $Configuration.vCenter -Credential $credential -ErrorAction Stop
             } else {
                 Write-CustomLog -Level 'WARN' -Message "No credentials provided for vCenter connection"
                 return @{ Success = $false; Error = "vCenter credentials required" }
             }
-            
+
             Write-CustomLog -Level 'SUCCESS' -Message "Connected to vCenter: $($connection.Name)"
         }
-        
+
         # Validate datacenter
         if ($Configuration.Datacenter) {
             $datacenter = Get-Datacenter -Name $Configuration.Datacenter -ErrorAction SilentlyContinue
@@ -54,7 +54,7 @@ function Initialize-VMwareProvider {
                 throw "Datacenter not found: $($Configuration.Datacenter)"
             }
         }
-        
+
         # Validate cluster
         if ($Configuration.Cluster) {
             $cluster = Get-Cluster -Name $Configuration.Cluster -ErrorAction SilentlyContinue
@@ -62,7 +62,7 @@ function Initialize-VMwareProvider {
                 throw "Cluster not found: $($Configuration.Cluster)"
             }
         }
-        
+
         # Validate datastore
         if ($Configuration.Datastore) {
             $datastore = Get-Datastore -Name $Configuration.Datastore -ErrorAction SilentlyContinue
@@ -70,10 +70,10 @@ function Initialize-VMwareProvider {
                 Write-CustomLog -Level 'WARN' -Message "Datastore not found: $($Configuration.Datastore)"
             }
         }
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "VMware vSphere provider initialized successfully"
         return @{ Success = $true }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to initialize VMware provider: $($_.Exception.Message)"
         return @{ Success = $false; Error = $_.Exception.Message }
@@ -86,13 +86,13 @@ function Test-VMwareConfiguration {
         Validates VMware vSphere provider configuration.
     #>
     param([hashtable]$Configuration)
-    
+
     $result = @{
         IsValid = $true
         Errors = @()
         Warnings = @()
     }
-    
+
     try {
         # Validate required configuration
         $requiredFields = @('vCenter', 'Datacenter')
@@ -102,35 +102,35 @@ function Test-VMwareConfiguration {
                 $result.IsValid = $false
             }
         }
-        
+
         # Validate vCenter format
         if ($Configuration.vCenter) {
             if ($Configuration.vCenter -notmatch '^[a-zA-Z0-9\.\-]+$') {
                 $result.Warnings += "vCenter server name may contain invalid characters"
             }
         }
-        
+
         # Check for credentials
         if (-not $Configuration.CredentialName) {
             $result.Warnings += "No credential name specified for vCenter authentication"
         }
-        
+
         # Validate provider string
         if ($Configuration.Provider -and $Configuration.Provider -ne 'vsphere') {
             $result.Warnings += "Provider string '$($Configuration.Provider)' may not be compatible with VMware"
         }
-        
+
         # Check connection
         $viServers = $global:DefaultVIServers
         if (-not $viServers -or $viServers.Count -eq 0) {
             $result.Warnings += "Not connected to any vCenter servers"
         }
-        
+
     } catch {
         $result.IsValid = $false
         $result.Errors += "Configuration validation failed: $($_.Exception.Message)"
     }
-    
+
     return $result
 }
 
@@ -143,15 +143,15 @@ function ConvertTo-VMwareResource {
         [PSCustomObject]$Resource,
         [hashtable]$Configuration
     )
-    
+
     try {
         Write-CustomLog -Level 'DEBUG' -Message "Translating resource: $($Resource.Type)"
-        
+
         $vmwareResource = @{
             provider = 'vsphere'
             source = 'hashicorp/vsphere'
         }
-        
+
         switch ($Resource.Type) {
             'virtual_machine' {
                 $vmwareResource.type = 'vsphere_virtual_machine'
@@ -163,24 +163,24 @@ function ConvertTo-VMwareResource {
                     memory = $Resource.Properties.memory_mb -or 2048
                     guest_id = $Resource.Properties.guest_id -or 'ubuntu64Guest'
                 }
-                
+
                 # Network interface
                 $vmwareResource.config.network_interface = @{
                     network_id = "data.vsphere_network.$($Resource.Properties.network -or 'VM Network').id"
                 }
-                
+
                 # Disk configuration
                 $vmwareResource.config.disk = @{
                     label = 'disk0'
                     size = $Resource.Properties.disk_size_gb -or 20
                 }
-                
+
                 # Clone configuration if template specified
                 if ($Resource.Properties.template) {
                     $vmwareResource.config.clone = @{
                         template_uuid = "data.vsphere_virtual_machine.$($Resource.Properties.template).id"
                     }
-                    
+
                     # Customization
                     if ($Resource.Properties.customize) {
                         $vmwareResource.config.clone.customize = @{
@@ -198,7 +198,7 @@ function ConvertTo-VMwareResource {
                     }
                 }
             }
-            
+
             'network' {
                 $vmwareResource.type = 'vsphere_distributed_port_group'
                 $vmwareResource.config = @{
@@ -207,7 +207,7 @@ function ConvertTo-VMwareResource {
                     vlan_id = $Resource.Properties.vlan_id -or 0
                 }
             }
-            
+
             'folder' {
                 $vmwareResource.type = 'vsphere_folder'
                 $vmwareResource.config = @{
@@ -216,14 +216,14 @@ function ConvertTo-VMwareResource {
                     datacenter_id = "data.vsphere_datacenter.$($Configuration.Datacenter).id"
                 }
             }
-            
+
             'resource_pool' {
                 $vmwareResource.type = 'vsphere_resource_pool'
                 $vmwareResource.config = @{
                     name = $Resource.Properties.name
                     parent_resource_pool_id = "data.vsphere_compute_cluster.$($Configuration.Cluster).resource_pool_id"
                 }
-                
+
                 if ($Resource.Properties.cpu_reservation) {
                     $vmwareResource.config.cpu_reservation = $Resource.Properties.cpu_reservation
                 }
@@ -231,7 +231,7 @@ function ConvertTo-VMwareResource {
                     $vmwareResource.config.memory_reservation = $Resource.Properties.memory_reservation
                 }
             }
-            
+
             'datastore_cluster' {
                 $vmwareResource.type = 'vsphere_datastore_cluster'
                 $vmwareResource.config = @{
@@ -240,14 +240,14 @@ function ConvertTo-VMwareResource {
                     sdrs_enabled = $Resource.Properties.sdrs_enabled -or $true
                 }
             }
-            
+
             default {
                 throw "Unsupported resource type for VMware: $($Resource.Type)"
             }
         }
-        
+
         return $vmwareResource
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to translate resource: $($_.Exception.Message)"
         throw
@@ -264,21 +264,21 @@ function Test-VMwareReadiness {
         if (-not (Get-Module -ListAvailable -Name VMware.PowerCLI)) {
             return $false
         }
-        
+
         # Import core module
         Import-Module VMware.VimAutomation.Core -ErrorAction Stop
-        
+
         # Test vCenter connectivity
         $viServers = $global:DefaultVIServers
         if (-not $viServers -or $viServers.Count -eq 0) {
             return $false
         }
-        
+
         # Test basic vSphere operations
         Get-Datacenter -ErrorAction Stop | Out-Null
-        
+
         return $true
-        
+
     } catch {
         Write-CustomLog -Level 'DEBUG' -Message "VMware readiness check failed: $_"
         return $false
@@ -298,7 +298,7 @@ function Get-VMwareResourceTypes {
             OptionalProperties = @('cpu_count', 'memory_mb', 'disk_size_gb', 'template', 'network', 'ip_address', 'customize')
             VMwareType = 'vsphere_virtual_machine'
         }
-        
+
         'network' = @{
             Name = 'Distributed Port Group'
             Description = 'VMware distributed port group'
@@ -306,7 +306,7 @@ function Get-VMwareResourceTypes {
             OptionalProperties = @('vlan_id')
             VMwareType = 'vsphere_distributed_port_group'
         }
-        
+
         'folder' = @{
             Name = 'Folder'
             Description = 'VMware inventory folder'
@@ -314,7 +314,7 @@ function Get-VMwareResourceTypes {
             OptionalProperties = @('type')
             VMwareType = 'vsphere_folder'
         }
-        
+
         'resource_pool' = @{
             Name = 'Resource Pool'
             Description = 'VMware resource pool'
@@ -322,7 +322,7 @@ function Get-VMwareResourceTypes {
             OptionalProperties = @('cpu_reservation', 'memory_reservation')
             VMwareType = 'vsphere_resource_pool'
         }
-        
+
         'datastore_cluster' = @{
             Name = 'Datastore Cluster'
             Description = 'VMware datastore cluster'
@@ -339,35 +339,35 @@ function Test-VMwareCredentials {
         Tests VMware vSphere credentials.
     #>
     param([PSCredential]$Credential)
-    
+
     try {
         # Disconnect any existing connections
         Disconnect-VIServer -Server * -Confirm:$false -ErrorAction SilentlyContinue
-        
+
         # Test connection with provided credentials
         if (-not $Credential) {
-            return @{ 
+            return @{
                 IsValid = $false
                 Error = "No credentials provided for VMware authentication"
             }
         }
-        
+
         # This would require a vCenter server address to test against
         # For now, just validate credential format
         if (-not $Credential.UserName -or -not $Credential.Password) {
-            return @{ 
+            return @{
                 IsValid = $false
                 Error = "Invalid credential format"
             }
         }
-        
-        return @{ 
+
+        return @{
             IsValid = $true
             Note = "Credential format valid. Connection test requires vCenter server configuration."
         }
-        
+
     } catch {
-        return @{ 
+        return @{
             IsValid = $false
             Error = "VMware credential validation failed: $($_.Exception.Message)"
         }
@@ -384,12 +384,12 @@ function Get-VMwareProviderInfo {
         if (-not $viServers -or $viServers.Count -eq 0) {
             return @{ Error = "Not connected to any vCenter servers" }
         }
-        
+
         $info = @{
             Connections = @()
             Environment = @{}
         }
-        
+
         foreach ($server in $viServers) {
             $serverInfo = @{
                 Name = $server.Name
@@ -398,10 +398,10 @@ function Get-VMwareProviderInfo {
                 IsConnected = $server.IsConnected
                 User = $server.User
             }
-            
+
             $info.Connections += $serverInfo
         }
-        
+
         # Get datacenter information
         $datacenters = Get-Datacenter
         $info.Environment.Datacenters = @()
@@ -411,7 +411,7 @@ function Get-VMwareProviderInfo {
                 Id = $dc.Id
             }
         }
-        
+
         # Get cluster information
         $clusters = Get-Cluster
         $info.Environment.Clusters = @()
@@ -422,7 +422,7 @@ function Get-VMwareProviderInfo {
                 DrsEnabled = $cluster.DrsEnabled
             }
         }
-        
+
         # Get datastore information
         $datastores = Get-Datastore | Select-Object -First 10
         $info.Environment.Datastores = @()
@@ -434,9 +434,9 @@ function Get-VMwareProviderInfo {
                 FreeSpaceGB = [Math]::Round($ds.FreeSpaceGB, 2)
             }
         }
-        
+
         return $info
-        
+
     } catch {
         Write-CustomLog -Level 'WARN' -Message "Could not get VMware provider info: $_"
         return @{}

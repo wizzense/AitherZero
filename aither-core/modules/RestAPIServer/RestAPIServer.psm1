@@ -3,12 +3,12 @@
 <#
 .SYNOPSIS
     RestAPIServer module for AitherZero - External system integration via REST APIs
-    
+
 .DESCRIPTION
     This module provides a REST API server for external system integration,
     enabling third-party tools to interact with AitherZero automation capabilities
     through standardized HTTP endpoints.
-    
+
 .NOTES
     Author: AitherZero Development Team
     Version: 1.0.0
@@ -88,7 +88,13 @@ Export-ModuleMember -Function @(
     'Send-WebhookNotification',
     'Get-WebhookSubscriptions',
     'Add-WebhookSubscription',
-    'Remove-WebhookSubscription'
+    'Remove-WebhookSubscription',
+    'Start-RestAPIServerManagement',
+    'Get-RestAPIServerStatus',
+    'Set-RestAPIServerConfiguration',
+    'Invoke-RestAPIServerOperation',
+    'Export-RestAPIServerState',
+    'Test-RestAPIServerCoordination'
 )
 
 # Initialize module-level variables for API management

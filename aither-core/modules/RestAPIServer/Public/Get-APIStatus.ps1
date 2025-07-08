@@ -33,10 +33,10 @@ function Get-APIStatus {
     param(
         [Parameter()]
         [switch]$IncludeMetrics,
-        
+
         [Parameter()]
         [switch]$IncludeEndpoints,
-        
+
         [Parameter()]
         [switch]$IncludeConfiguration
     )
@@ -55,15 +55,15 @@ function Get-APIStatus {
                 Timestamp = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
                 Version = "1.0.0"
             }
-            
+
             # Check if server is running
             if ($script:APIServer -and $script:APIServerJob) {
                 $jobState = $script:APIServerJob.State
-                
+
                 if ($jobState -eq 'Running') {
                     $status.IsRunning = $true
                     $status.Status = "Running"
-                    
+
                     # Calculate uptime
                     if ($script:APIStartTime) {
                         $uptime = (Get-Date) - $script:APIStartTime
@@ -74,7 +74,7 @@ function Get-APIStatus {
                             Display = "{0:dd\.hh\:mm\:ss}" -f $uptime
                         }
                     }
-                    
+
                     # Add server information
                     $status.Server = @{
                         JobId = $script:APIServerJob.Id
@@ -83,20 +83,20 @@ function Get-APIStatus {
                         StartTime = $script:APIServer.StartTime
                         URL = "$($script:APIServer.Protocol.ToLower())://localhost:$($script:APIServer.Port)"
                     }
-                    
+
                 } else {
                     $status.Status = "Job $jobState"
                     $status.JobState = $jobState
                 }
             }
-            
+
             # Include performance metrics if requested
             if ($IncludeMetrics -and $status.IsRunning) {
                 # Update metrics
                 if ($script:APIStartTime) {
                     $script:APIMetrics.UpTime = ((Get-Date) - $script:APIStartTime).TotalSeconds
                 }
-                
+
                 $status.Metrics = @{
                     RequestCount = $script:APIMetrics.RequestCount
                     ErrorCount = $script:APIMetrics.ErrorCount
@@ -106,25 +106,25 @@ function Get-APIStatus {
                         [math]::Round(($script:APIMetrics.ErrorCount / $script:APIMetrics.RequestCount) * 100, 2)
                     } else { 0 }
                 }
-                
+
                 # Add performance indicators
                 $status.Health = @{
-                    Status = if ($status.Metrics.ErrorRate -lt 5) { "Healthy" } 
-                            elseif ($status.Metrics.ErrorRate -lt 15) { "Warning" } 
+                    Status = if ($status.Metrics.ErrorRate -lt 5) { "Healthy" }
+                            elseif ($status.Metrics.ErrorRate -lt 15) { "Warning" }
                             else { "Critical" }
                     RequestsPerMinute = if ($status.UpTime.TotalMinutes -gt 0) {
                         [math]::Round($script:APIMetrics.RequestCount / $status.UpTime.TotalMinutes, 2)
                     } else { 0 }
                 }
             }
-            
+
             # Include endpoint information if requested
             if ($IncludeEndpoints) {
                 $status.Endpoints = @{
                     Count = $script:RegisteredEndpoints.Count
                     Registered = $script:RegisteredEndpoints.Keys | Sort-Object
                 }
-                
+
                 if ($script:RegisteredEndpoints.Count -gt 0) {
                     $status.EndpointDetails = @{}
                     foreach ($path in $script:RegisteredEndpoints.Keys) {
@@ -138,7 +138,7 @@ function Get-APIStatus {
                     }
                 }
             }
-            
+
             # Include configuration if requested
             if ($IncludeConfiguration) {
                 $status.Configuration = @{
@@ -150,7 +150,7 @@ function Get-APIStatus {
                     RateLimiting = $script:APIConfiguration.RateLimiting
                     LoggingEnabled = $script:APIConfiguration.LoggingEnabled
                 }
-                
+
                 # Add webhook information
                 $status.Webhooks = @{
                     Enabled = $script:WebhookSubscriptions.Count -gt 0
@@ -158,13 +158,13 @@ function Get-APIStatus {
                     Subscriptions = $script:WebhookSubscriptions.Keys | Sort-Object
                 }
             }
-            
+
             return $status
 
         } catch {
             $errorMessage = "Failed to get API status: $($_.Exception.Message)"
             Write-CustomLog -Message $errorMessage -Level "ERROR"
-            
+
             return @{
                 Success = $false
                 Status = "Error"

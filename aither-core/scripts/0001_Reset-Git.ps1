@@ -66,4 +66,3 @@ Invoke-LabStep -Config $Config -Body {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-

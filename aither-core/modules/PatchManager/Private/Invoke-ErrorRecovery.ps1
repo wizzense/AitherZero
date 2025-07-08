@@ -227,7 +227,7 @@ function Invoke-RollbackRecovery {
         # Step 1: Restore git state if available
         if ($OperationState.InitialBranch -and $OperationState.InitialCommit) {
             Write-CustomLog "Restoring git state to initial branch: $($OperationState.InitialBranch)" -Level "INFO"
-            
+
             # Switch back to initial branch
             git checkout $OperationState.InitialBranch 2>&1 | Out-Null
             if ($LASTEXITCODE -eq 0) {
@@ -255,7 +255,7 @@ function Invoke-RollbackRecovery {
 
         $result.Success = $true
         $result.Recommendations += "Rollback completed - system restored to initial state"
-        
+
         Write-CustomLog "Rollback recovery completed successfully" -Level "SUCCESS"
 
     } catch {

@@ -23,14 +23,14 @@ function Add-APIMiddleware {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [Parameter(Mandatory)]
         [scriptblock]$Handler,
-        
+
         [Parameter()]
         [int]$Priority = 50
     )
-    
+
     try {
         $middleware = @{
             Name = $Name
@@ -39,7 +39,7 @@ function Add-APIMiddleware {
             AddedAt = Get-Date
             Enabled = $true
         }
-        
+
         # Check if middleware with same name exists
         $existingIndex = -1
         for ($i = 0; $i -lt $script:APIRegistry.Middleware.Count; $i++) {
@@ -48,7 +48,7 @@ function Add-APIMiddleware {
                 break
             }
         }
-        
+
         if ($existingIndex -ge 0) {
             # Replace existing
             $script:APIRegistry.Middleware[$existingIndex] = $middleware
@@ -58,18 +58,18 @@ function Add-APIMiddleware {
             $script:APIRegistry.Middleware.Add($middleware)
             Write-CustomLog -Level 'SUCCESS' -Message "Middleware added: $Name"
         }
-        
+
         # Sort by priority
         $script:APIRegistry.Middleware = [System.Collections.ArrayList]@(
             $script:APIRegistry.Middleware | Sort-Object Priority
         )
-        
+
         return @{
             Name = $Name
             Priority = $Priority
             Position = $script:APIRegistry.Middleware.IndexOf($middleware)
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to add middleware: $_"
         throw

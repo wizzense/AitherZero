@@ -6,18 +6,18 @@
 
 .DESCRIPTION
     This module provides atomic patch operations that eliminate git stashing issues:
-    
+
     Main Functions:
     - New-Patch: Smart, atomic patch creation (replaces Invoke-PatchWorkflow)
     - New-QuickFix: Simple fixes without branch overhead
     - New-Feature: Full feature development workflow
     - New-Hotfix: Emergency critical fixes
-    
+
     Modes:
     - Simple: Direct changes without branches (for minor fixes)
     - Standard: Full branch workflow (recommended)
     - Advanced: Cross-fork and enterprise features
-    
+
     Key Features:
     - Atomic operations with automatic rollback
     - Smart mode detection and recommendations
@@ -71,7 +71,7 @@ foreach ($function in $publicFunctions) {
     try {
         . $function.FullName
         Write-Verbose "Loaded public function: $($function.BaseName)"
-        
+
         # Debug: Check if Get-GitCommand was loaded
         if ($function.BaseName -eq 'Get-GitCommand') {
             Write-Verbose "DEBUG: Get-GitCommand file loaded, checking if function exists..."
@@ -169,15 +169,15 @@ try {
 Export-ModuleMember -Function @(
     # V3.0 Main Functions
     'New-Patch',
-    'New-QuickFix', 
+    'New-QuickFix',
     'New-Feature',
     'New-Hotfix',
-    
+
     # V3.0 Core Functions
     'Invoke-MultiModeOperation',
     'Invoke-AtomicOperation',
     'Get-SmartOperationMode',
-    
+
     # Legacy Functions (for backward compatibility)
     'Invoke-PatchWorkflow',
     'New-PatchIssue',

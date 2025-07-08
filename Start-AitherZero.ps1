@@ -1,5 +1,3 @@
-#Requires -Version 7
-
 <#
 .SYNOPSIS
     AitherZero Infrastructure Automation Framework Launcher
@@ -46,25 +44,48 @@
 param(
     [Parameter(HelpMessage = "Run in automatic mode without user interaction")]
     [switch]$Auto,
-    
+
     [Parameter(HelpMessage = "Scripts to run (comma-separated)")]
     [string]$Scripts,
-    
+
     [Parameter(HelpMessage = "Run first-time setup wizard")]
     [switch]$Setup,
-    
+
     [Parameter(HelpMessage = "Installation profile: minimal, developer, full, or interactive")]
     [ValidateSet("minimal", "developer", "full", "interactive")]
     [string]$InstallationProfile = "interactive",
-    
+
     [Parameter(HelpMessage = "Preview mode - show what would be done")]
     [switch]$WhatIf,
-    
+
     [Parameter(HelpMessage = "Show help information")]
     [switch]$Help,
-    
+
     [Parameter(HelpMessage = "Run in non-interactive mode (no prompts)")]
-    [switch]$NonInteractive
+    [switch]$NonInteractive,
+
+    [Parameter(HelpMessage = "Run in quiet mode with minimal output")]
+    [switch]$Quiet,
+
+    [Parameter(HelpMessage = "Set verbosity level: silent, normal, detailed")]
+    [ValidateSet('silent', 'normal', 'detailed')]
+    [string]$Verbosity = 'normal',
+
+    [Parameter(HelpMessage = "Path to configuration file")]
+    [string]$ConfigFile,
+
+    [Parameter(HelpMessage = "Force operations even if validations fail")]
+    [switch]$Force,
+
+    [Parameter(HelpMessage = "Force enhanced UI experience")]
+    [switch]$EnhancedUI,
+
+    [Parameter(HelpMessage = "Force classic menu experience")]
+    [switch]$ClassicUI,
+
+    [Parameter(HelpMessage = "UI preference mode: auto, enhanced, classic")]
+    [ValidateSet('auto', 'enhanced', 'classic')]
+    [string]$UIMode = 'auto'
 )
 
 # Import PowerShell version checking utility
@@ -80,10 +101,10 @@ if (Test-Path $versionCheckPath) {
 if (-not (Test-PowerShellVersion -MinimumVersion "7.0" -Quiet)) {
     # Display version requirements
     Test-PowerShellVersion -MinimumVersion "7.0"
-    
+
     # Attempt to relaunch with PowerShell 7
     Start-WithPowerShell7 -ScriptPath $MyInvocation.MyCommand.Path -Parameters $PSBoundParameters
-    
+
     # If we reach here, PowerShell 7 is not available
     exit 1
 }
@@ -135,6 +156,13 @@ if ($InstallationProfile) { $coreparams['InstallationProfile'] = $InstallationPr
 if ($WhatIf) { $coreparams['WhatIf'] = $true }
 if ($Help) { $coreparams['Help'] = $true }
 if ($NonInteractive) { $coreparams['NonInteractive'] = $true }
+if ($Quiet) { $coreparams['Quiet'] = $true }
+if ($Verbosity) { $coreparams['Verbosity'] = $Verbosity }
+if ($ConfigFile) { $coreparams['ConfigFile'] = $ConfigFile }
+if ($Force) { $coreparams['Force'] = $true }
+if ($EnhancedUI) { $coreparams['EnhancedUI'] = $true }
+if ($ClassicUI) { $coreparams['ClassicUI'] = $true }
+if ($UIMode) { $coreparams['UIMode'] = $UIMode }
 
 try {
     & $coreScript @coreparams

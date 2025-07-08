@@ -17,20 +17,20 @@ function Get-MessageSubscriptions {
     param(
         [Parameter()]
         [string]$Channel,
-        
+
         [Parameter()]
         [string]$SubscriberModule,
-        
+
         [Parameter()]
         [switch]$IncludeStatistics
     )
-    
+
     try {
         $subscriptions = @()
-        
+
         foreach ($key in $script:MessageBus.Subscriptions.Keys) {
             $subscription = $script:MessageBus.Subscriptions[$key]
-            
+
             # Apply filters
             if ($Channel -and $subscription.Channel -ne $Channel) {
                 continue
@@ -38,7 +38,7 @@ function Get-MessageSubscriptions {
             if ($SubscriberModule -and $subscription.SubscriberModule -ne $SubscriberModule) {
                 continue
             }
-            
+
             $subscriptionInfo = @{
                 Id = $subscription.Id
                 Channel = $subscription.Channel
@@ -48,25 +48,25 @@ function Get-MessageSubscriptions {
                 RunAsync = $subscription.RunAsync
                 HasFilter = $null -ne $subscription.Filter
             }
-            
+
             if ($IncludeStatistics) {
                 $subscriptionInfo.Statistics = @{
                     MessageCount = $subscription.MessageCount
                     LastMessage = $subscription.LastMessage
                     ErrorCount = $subscription.Errors.Count
-                    LastError = if ($subscription.Errors.Count -gt 0) { 
-                        $subscription.Errors[-1].Timestamp 
-                    } else { 
-                        $null 
+                    LastError = if ($subscription.Errors.Count -gt 0) {
+                        $subscription.Errors[-1].Timestamp
+                    } else {
+                        $null
                     }
                 }
             }
-            
+
             $subscriptions += $subscriptionInfo
         }
-        
+
         return $subscriptions
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to get subscriptions: $_"
         throw

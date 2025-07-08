@@ -20,34 +20,34 @@ function Import-ConfigurationProfile {
     param(
         [Parameter(Mandatory)]
         [string]$Path,
-        
+
         [Parameter()]
         [string]$Name,
-        
+
         [Parameter()]
         [switch]$Force,
-        
+
         [Parameter()]
         [string]$Source = 'File'
     )
-    
+
     try {
         if (-not (Test-Path $Path)) {
             throw "Import file not found: $Path"
         }
-        
+
         # Load profile data
         $profileData = Get-Content -Path $Path -Raw | ConvertFrom-Json
-        
+
         # Determine profile name
         if (-not $Name) {
-            $Name = if ($profileData.Name) { 
-                $profileData.Name 
-            } else { 
-                [System.IO.Path]::GetFileNameWithoutExtension($Path) 
+            $Name = if ($profileData.Name) {
+                $profileData.Name
+            } else {
+                [System.IO.Path]::GetFileNameWithoutExtension($Path)
             }
         }
-        
+
         # Check if profile already exists
         $existingProfile = Get-ConfigurationProfile -Name $Name -ErrorAction SilentlyContinue
         if ($existingProfile -and -not $Force) {
@@ -57,7 +57,7 @@ function Import-ConfigurationProfile {
                 return $null
             }
         }
-        
+
         # Prepare profile data
         $profileToImport = @{
             Name = $Name
@@ -69,11 +69,11 @@ function Import-ConfigurationProfile {
             ImportedAt = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
             ImportSource = $Source
         }
-        
+
         # Save imported profile
         $profilePath = Join-Path $script:ConfigProfilePath "$Name.json"
         $profileToImport | ConvertTo-Json -Depth 10 | Set-Content -Path $profilePath -Encoding UTF8
-        
+
         # Log operation
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Message "Configuration profile imported" -Level INFO -Context @{
@@ -84,11 +84,11 @@ function Import-ConfigurationProfile {
                 Overwritten = [bool]$existingProfile
             }
         }
-        
+
         Write-Host "Profile '$Name' imported successfully from: $Path" -ForegroundColor Green
-        
+
         return Get-ConfigurationProfile -Name $Name -IncludeSettings
-        
+
     } catch {
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Message "Error importing configuration profile" -Level ERROR -Exception $_.Exception -Context @{

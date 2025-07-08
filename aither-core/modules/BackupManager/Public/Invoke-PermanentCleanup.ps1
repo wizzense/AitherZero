@@ -30,45 +30,45 @@ function Invoke-PermanentCleanup {
     param(
         [Parameter(Mandatory = $true, ParameterSetName = 'ProjectCleanup')]
         [string]$ProjectRoot,
-        
+
         [Parameter(ParameterSetName = 'ProjectCleanup')]
         [string[]]$ProblematicPatterns = @(),
-        
+
         [Parameter(ParameterSetName = 'ProjectCleanup')]
         [switch]$CreatePreventionRules,
-        
+
         [Parameter(Mandatory = $true, ParameterSetName = 'BackupCleanup')]
         [string]$BackupPath,
-        
+
         [Parameter(ParameterSetName = 'BackupCleanup')]
         [int]$MaxAge = 30,
-        
+
         [Parameter(ParameterSetName = 'BackupCleanup')]
         [string]$ArchivePath,
-        
+
         [switch]$Force
     )
-    
+
     $ErrorActionPreference = "Stop"
-    
+
     try {
         # Handle different parameter sets
         if ($PSCmdlet.ParameterSetName -eq 'BackupCleanup') {
             # Backup cleanup mode - for test compatibility
             Write-CustomLog "Starting backup cleanup process in $BackupPath" "INFO"
-            
+
             if (-not (Test-Path $BackupPath)) {
                 throw "Backup path does not exist: $BackupPath"
             }
-            
+
             $CutoffDate = (Get-Date).AddDays(-$MaxAge)
-            $BackupFiles = Get-ChildItem -Path $BackupPath -File -Recurse | Where-Object { 
-                $_.LastWriteTime -lt $CutoffDate 
+            $BackupFiles = Get-ChildItem -Path $BackupPath -File -Recurse | Where-Object {
+                $_.LastWriteTime -lt $CutoffDate
             }
-            
+
             $RemovedCount = 0
             $Errors = @()
-            
+
             foreach ($File in $BackupFiles) {
                 try {
                     if ($ArchivePath) {
@@ -90,7 +90,7 @@ function Invoke-PermanentCleanup {
                     Write-Warning $Errors[-1]
                 }
             }
-            
+
             return @{
                 Success = ($Errors.Count -eq 0)
                 FilesRemoved = $RemovedCount
@@ -98,7 +98,7 @@ function Invoke-PermanentCleanup {
                 Timestamp = Get-Date
             }
         }
-        
+
         # Original project cleanup mode
         # Import LabRunner for logging
         if (Get-Module LabRunner -ErrorAction SilentlyContinue) {
@@ -106,62 +106,62 @@ function Invoke-PermanentCleanup {
         } else {
             Write-Host "INFO Starting permanent cleanup process" -ForegroundColor Green
         }
-        
+
         # Import shared utilities and project root detection
         . "$PSScriptRoot/../../../shared/Find-ProjectRoot.ps1"
         $projectRoot = Find-ProjectRoot
-        
+
         # Import logging if available
         $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
         if (Test-Path $loggingPath) {
             Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
         }
-        
+
         # Default problematic patterns based on common issues
         $DefaultProblematicPatterns = @(
             # Duplicate mega-consolidated files
             "*mega-consolidated*.yml.bak",
             "*mega-consolidated-fixed-backup*",
-            
+
             # Problematic backup files
             "*.ps1.bak.bak",
             "*.backup.backup",
             "*-backup-*-backup*",
-            
+
             # Temporary and cache files
             "*.tmp.*",
             "*.cache.*",
             "*.lock.*",
-            
+
             # Corrupted or partial files
             "*.partial",
             "*.corrupt",
             "*.incomplete",
-            
+
             # OS generated files
             "Thumbs.db",
             ".DS_Store",
             "desktop.ini",
-            
+
             # Legacy and deprecated files
             "*-deprecated-*",
             "*-legacy-*",
             "*-old-*",
-            
+
             # Test artifacts that shouldn't persist
             "TestResults*.xml.bak",
             "coverage*.xml.old",
             "*.test.log",
-            
+
             # Duplicate configuration files
             "*.config.backup",
             "*.json.orig",
             "*.yaml.bak"
         )
-        
+
         $AllPatterns = $DefaultProblematicPatterns + $ProblematicPatterns
         $ProjectRoot = Resolve-Path $ProjectRoot -ErrorAction Stop
-        
+
         # Find problematic files
         $ProblematicFiles = @()
         foreach ($Pattern in $AllPatterns) {
@@ -173,7 +173,7 @@ function Invoke-PermanentCleanup {
             }
             $ProblematicFiles += $FilteredFiles
         }
-        
+
         if ($ProblematicFiles.Count -eq 0) {
             Write-Host "INFO No problematic files found" -ForegroundColor Green
             return @{
@@ -182,25 +182,25 @@ function Invoke-PermanentCleanup {
                 Message = "No problematic files found"
             }
         }
-        
+
         # Show what will be removed
         Write-Host "WARNING Found $($ProblematicFiles.Count) problematic files:" -ForegroundColor Yellow
         $ProblematicFiles | ForEach-Object {
             $RelativePath = $_.FullName.Replace($ProjectRoot, "").TrimStart('\', '/')
             Write-Host "  - $RelativePath" -ForegroundColor Yellow
         }
-        
+
         # Confirm operation unless Force is specified or running in non-interactive mode
         if (-not $Force) {
             Write-Host ""
             Write-Host "WARNING This will PERMANENTLY DELETE these files!" -ForegroundColor Red
-            
+
             # Check if we're in non-interactive mode (test environment, etc.)
-            $IsNonInteractive = ($Host.Name -eq 'Default Host') -or 
+            $IsNonInteractive = ($Host.Name -eq 'Default Host') -or
                               ([Environment]::UserInteractive -eq $false) -or
                               ($env:PESTER_RUN -eq 'true') -or
                               ($PSCmdlet.WhatIf)
-            
+
             if ($IsNonInteractive) {
                 if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
                     Write-CustomLog "Non-interactive mode detected - skipping confirmation (defaulting to cancel)" -Level INFO
@@ -218,26 +218,26 @@ function Invoke-PermanentCleanup {
                 }
             }
         }
-        
+
         # Remove problematic files
         $RemovedCount = 0
         $Errors = @()
-        
+
         foreach ($File in $ProblematicFiles) {
             try {
                 Remove-Item -Path $File.FullName -Force
                 $RemovedCount++
-                
+
                 if (Get-Module LabRunner -ErrorAction SilentlyContinue) {
                     Write-CustomLog "Permanently removed: $($File.Name)" "INFO"
                 }
-                
+
             } catch {
                 $Errors += "Failed to remove $($File.FullName): $($_.Exception.Message)"
                 Write-Warning "Failed to remove $($File.FullName): $($_.Exception.Message)"
             }
         }
-        
+
         # Update prevention rules if specified
         if ($CreatePreventionRules) {
             try {
@@ -255,13 +255,13 @@ function Invoke-PermanentCleanup {
         }
 
         $SummaryMessage = "Permanent cleanup completed: $RemovedCount files removed"
-        
+
         if (Get-Module LabRunner -ErrorAction SilentlyContinue) {
             Write-CustomLog $SummaryMessage "INFO"
         } else {
             Write-Host "INFO $SummaryMessage" -ForegroundColor Green
         }
-        
+
         return @{
             Success = $Errors.Count -eq 0
             FilesRemoved = $RemovedCount
@@ -270,7 +270,7 @@ function Invoke-PermanentCleanup {
             PreventionRulesCreated = $CreatePreventionRules
             Timestamp = Get-Date
         }
-        
+
     } catch {
         $ErrorMessage = "Permanent cleanup failed: $($_.Exception.Message)"
         if (Get-Module LabRunner -ErrorAction SilentlyContinue) {

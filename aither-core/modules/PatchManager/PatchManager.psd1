@@ -73,22 +73,22 @@ FunctionsToExport = @(
     # V3.1 Main Functions - Primary interface
     'New-Patch',
     'New-QuickFix',
-    'New-Feature', 
+    'New-Feature',
     'New-Hotfix',
-    
+
     # V3.1 Workflow Management
     'Get-PatchStatus',
     'Invoke-PatchCleanup',
-    
+
     # V3.0 Core Functions
     'Invoke-MultiModeOperation',
     'Invoke-AtomicOperation',
     'Get-SmartOperationMode',
-    
+
     # V3.0 Cross-Platform Git Support
     'Get-GitCommand',
     'Invoke-GitCommand',
-    
+
     # Legacy Functions - Backward compatibility
     'Invoke-PatchWorkflow',
     'New-PatchIssue',

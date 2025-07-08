@@ -13,14 +13,14 @@ Get-Module LicenseManager | Remove-Module -Force
 try {
     Import-Module ./aither-core/modules/StartupExperience -Force
     Write-Host "✓ StartupExperience module imported" -ForegroundColor Green
-    
+
     # Check what Test-FeatureAccess function is available
     $featureAccessCmd = Get-Command Test-FeatureAccess -ErrorAction SilentlyContinue
     if ($featureAccessCmd) {
         Write-Host "✓ Test-FeatureAccess function found" -ForegroundColor Green
         Write-Host "  Source: $($featureAccessCmd.Source)" -ForegroundColor White
         Write-Host "  Module: $($featureAccessCmd.ModuleName)" -ForegroundColor White
-        
+
         # Check parameters
         $params = $featureAccessCmd.Parameters
         Write-Host "  Parameters:" -ForegroundColor White
@@ -29,7 +29,7 @@ try {
                 Write-Host "    - $_" -ForegroundColor Gray
             }
         }
-        
+
         # Test the function call that's failing
         Write-Host "`nTesting the exact call that's failing..." -ForegroundColor Cyan
         try {
@@ -38,11 +38,11 @@ try {
         } catch {
             Write-Host "❌ Test call failed: $_" -ForegroundColor Red
         }
-        
+
     } else {
         Write-Host "❌ Test-FeatureAccess function not found" -ForegroundColor Red
     }
-    
+
 } catch {
     Write-Host "❌ Error: $_" -ForegroundColor Red
 }

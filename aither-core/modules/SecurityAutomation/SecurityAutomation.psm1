@@ -26,7 +26,7 @@ Import-Module (Join-Path $projectRoot "aither-core/modules/Logging") -Force
 
 # Import all public functions
 $PublicFunctions = @()
-$PublicDirectories = @('ActiveDirectory', 'CertificateServices', 'EndpointHardening', 'NetworkSecurity', 'RemoteAdministration')
+$PublicDirectories = @('ActiveDirectory', 'CertificateServices', 'EndpointHardening', 'NetworkSecurity', 'RemoteAdministration', 'Monitoring', 'PrivilegedAccess', 'SystemHardening', 'SystemManagement')
 
 foreach ($Directory in $PublicDirectories) {
     $PublicPath = Join-Path $PSScriptRoot "Public/$Directory"

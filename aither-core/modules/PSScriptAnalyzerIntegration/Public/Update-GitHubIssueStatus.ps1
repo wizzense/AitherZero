@@ -2,68 +2,68 @@ function Update-GitHubIssueStatus {
     <#
     .SYNOPSIS
         Updates GitHub Issues status based on PSScriptAnalyzer findings and .bugz file changes
-    
+
     .DESCRIPTION
         This function synchronizes GitHub Issues with the current state of PSScriptAnalyzer findings,
         updating issue status, adding comments, and managing the issue lifecycle.
-    
+
     .PARAMETER Path
         Directory path to scan for .bugz files and current findings
-    
+
     .PARAMETER RepositoryOwner
         GitHub repository owner (defaults to current repository)
-    
+
     .PARAMETER RepositoryName
         GitHub repository name (defaults to current repository)
-    
+
     .PARAMETER DryRun
         If specified, shows what updates would be made without actually making them
-    
+
     .PARAMETER AutoClose
         Automatically close issues when findings are no longer detected
-    
+
     .PARAMETER GitHubToken
         GitHub personal access token (uses GITHUB_TOKEN environment variable if not specified)
-    
+
     .EXAMPLE
         Update-GitHubIssueStatus -Path "./aither-core/modules" -AutoClose
-        
+
         Updates all PSScriptAnalyzer-related GitHub Issues based on current findings
-    
+
     .EXAMPLE
         Update-GitHubIssueStatus -Path "./aither-core/modules/PatchManager" -DryRun
-        
+
         Shows what issue updates would be made without actually making them
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
         [string]$Path,
-        
+
         [Parameter(Mandatory = $false)]
         [string]$RepositoryOwner,
-        
+
         [Parameter(Mandatory = $false)]
         [string]$RepositoryName,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$DryRun,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$AutoClose,
-        
+
         [Parameter(Mandatory = $false)]
         [string]$GitHubToken
     )
-    
+
     try {
         $resolvedPath = Resolve-Path $Path -ErrorAction Stop
-        
+
         # Initialize GitHub CLI availability check
         if (-not (Get-Command 'gh' -ErrorAction SilentlyContinue)) {
             throw "GitHub CLI (gh) not available. Please install GitHub CLI to manage issues."
         }
-        
+
         # Get repository information
         if (-not $RepositoryOwner -or -not $RepositoryName) {
             try {
@@ -75,25 +75,25 @@ function Update-GitHubIssueStatus {
                 throw "Failed to determine repository information: $($_.Exception.Message)"
             }
         }
-        
+
         # Set up GitHub token if provided
         if ($GitHubToken) {
             $env:GITHUB_TOKEN = $GitHubToken
         }
-        
+
         if ($script:UseCustomLogging) {
             Write-CustomLog -Level 'INFO' -Message "Starting GitHub Issues status update for: $resolvedPath"
         } else {
             Write-Host "🔄 Updating GitHub Issues status for: $resolvedPath" -ForegroundColor Cyan
         }
-        
+
         # Get all existing PSScriptAnalyzer issues
         $existingIssues = @()
         try {
             $searchQuery = "repo:$RepositoryOwner/$RepositoryName is:issue label:psscriptanalyzer"
             $allIssues = & gh issue list --search $searchQuery --json number,title,labels,state,body,assignees --limit 100 | ConvertFrom-Json
             $existingIssues = $allIssues | Where-Object { $_.labels | Where-Object { $_.name -eq 'psscriptanalyzer' } }
-            
+
             if ($script:UseCustomLogging) {
                 Write-CustomLog -Level 'INFO' -Message "Found $($existingIssues.Count) existing PSScriptAnalyzer issues"
             } else {
@@ -107,7 +107,7 @@ function Update-GitHubIssueStatus {
                 Write-Warning "Failed to retrieve existing issues: $($_.Exception.Message)"
             }
         }
-        
+
         # Get current PSScriptAnalyzer findings
         $currentFindings = @()
         try {
@@ -123,11 +123,11 @@ function Update-GitHubIssueStatus {
                     Path = $resolvedPath
                     Recurse = $true
                 }
-                
+
                 if (Test-Path $settingsPath) {
                     $analyzerParams.Settings = $settingsPath
                 }
-                
+
                 $currentFindings = Invoke-ScriptAnalyzer @analyzerParams
             }
         }
@@ -139,7 +139,7 @@ function Update-GitHubIssueStatus {
             }
             throw
         }
-        
+
         # Load .bugz files for additional context
         $bugzData = @{}
         $bugzFiles = Get-ChildItem -Path $resolvedPath -Name ".bugz" -Recurse -ErrorAction SilentlyContinue
@@ -155,45 +155,45 @@ function Update-GitHubIssueStatus {
                 }
             }
         }
-        
+
         # Process each existing issue
         $updatedIssues = @()
         $closedIssues = @()
         $commentedIssues = @()
         $errors = @()
-        
+
         foreach ($issue in $existingIssues) {
             try {
                 # Extract issue metadata from title and body
                 $issueRuleName = $null
                 $issueFileName = $null
                 $issueLine = $null
-                
+
                 # Parse title: [SEVERITY] RuleName in FileName
                 if ($issue.title -match '\[(?:ERROR|WARNING|INFO)\]\s+(\w+)\s+in\s+(.+)') {
                     $issueRuleName = $matches[1]
                     $issueFileName = $matches[2]
                 }
-                
+
                 # Parse body for line number
                 if ($issue.body -match 'Line (\d+)') {
                     $issueLine = [int]$matches[1]
                 }
-                
+
                 if (-not $issueRuleName) {
                     if ($script:UseCustomLogging) {
                         Write-CustomLog -Level 'WARNING' -Message "Could not parse rule name from issue #$($issue.number): $($issue.title)"
                     }
                     continue
                 }
-                
+
                 # Find corresponding current finding
                 $correspondingFinding = $currentFindings | Where-Object {
                     $_.RuleName -eq $issueRuleName -and
                     (Split-Path $_.ScriptPath -Leaf) -eq $issueFileName -and
                     ($issueLine -eq $null -or $_.Line -eq $issueLine)
                 } | Select-Object -First 1
-                
+
                 # Check .bugz data for additional context
                 $bugzEntry = $null
                 foreach ($bugzDir in $bugzData.Keys) {
@@ -202,15 +202,15 @@ function Update-GitHubIssueStatus {
                         $_.file -eq $issueFileName -and
                         ($issueLine -eq $null -or $_.line -eq $issueLine)
                     } | Select-Object -First 1
-                    
+
                     if ($bugzEntry) { break }
                 }
-                
+
                 # Determine action based on current state
                 $actionNeeded = $null
                 $actionReason = $null
                 $newStatus = $issue.state
-                
+
                 if (-not $correspondingFinding) {
                     # Finding no longer exists
                     if ($bugzEntry -and $bugzEntry.status -eq 'resolved') {
@@ -253,7 +253,7 @@ function Update-GitHubIssueStatus {
                         $actionReason = 'This issue has been open for over a week without .bugz tracking'
                     }
                 }
-                
+
                 # Perform the action
                 if ($actionNeeded -and -not $DryRun) {
                     switch ($actionNeeded) {
@@ -318,16 +318,16 @@ function Update-GitHubIssueStatus {
                         Reason = $actionReason
                     }
                 }
-                
+
                 if ($script:UseCustomLogging) {
                     Write-CustomLog -Level 'DEBUG' -Message "Processed issue #$($issue.number): $actionNeeded"
                 }
-                
+
             }
             catch {
                 $error = "Failed to process issue #$($issue.number): $($_.Exception.Message)"
                 $errors += $error
-                
+
                 if ($script:UseCustomLogging) {
                     Write-CustomLog -Level 'ERROR' -Message $error
                 } else {
@@ -335,7 +335,7 @@ function Update-GitHubIssueStatus {
                 }
             }
         }
-        
+
         # Generate summary
         $summary = @{
             ExistingIssues = $existingIssues.Count
@@ -353,23 +353,23 @@ function Update-GitHubIssueStatus {
             DryRun = $DryRun.IsPresent
             AutoClose = $AutoClose.IsPresent
         }
-        
+
         # Display summary
         if ($script:UseCustomLogging) {
             Write-CustomLog -Level 'SUCCESS' -Message "GitHub Issues status update completed: $($closedIssues.Count) closed, $($commentedIssues.Count) commented, $($errors.Count) errors"
         } else {
             Write-Host "`n📊 GitHub Issues Update Summary:" -ForegroundColor Cyan
             Write-Host "  📋 Existing issues: $($summary.ExistingIssues)" -ForegroundColor White
-            
+
             if ($DryRun) {
                 Write-Host "  🔍 Would update: $($summary.UpdatedIssues)" -ForegroundColor Yellow
             } else {
                 Write-Host "  ✅ Closed: $($summary.ClosedIssues)" -ForegroundColor Green
                 Write-Host "  💬 Commented: $($summary.CommentedIssues)" -ForegroundColor Blue
             }
-            
+
             Write-Host "  ❌ Errors: $($summary.Errors)" -ForegroundColor Red
-            
+
             if ($DryRun -and $updatedIssues.Count -gt 0) {
                 Write-Host "`n🔍 Planned Updates:" -ForegroundColor Yellow
                 foreach ($update in $updatedIssues) {
@@ -377,7 +377,7 @@ function Update-GitHubIssueStatus {
                 }
             }
         }
-        
+
         return $summary
     }
     catch {

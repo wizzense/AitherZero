@@ -178,4 +178,3 @@ process {
 end {
     Write-CustomLog -Level 'INFO' -Message "Codex CLI installation script completed"
 }
-

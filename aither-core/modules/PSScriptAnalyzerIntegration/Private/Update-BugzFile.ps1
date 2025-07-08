@@ -2,23 +2,23 @@ function Update-BugzFile {
     <#
     .SYNOPSIS
         Creates or updates a .bugz file for tracking PSScriptAnalyzer findings
-    
+
     .DESCRIPTION
         Creates a YAML-based bug tracking file that maintains a record of
         PSScriptAnalyzer findings, their status, and remediation information
-    
+
     .PARAMETER Path
         Directory path to create/update .bugz file for
-    
+
     .PARAMETER AnalysisResults
         PSScriptAnalyzer results to add to bug tracking
-    
+
     .PARAMETER UpdateExisting
         Whether to update existing entries or create new ones
-    
+
     .PARAMETER AutoResolve
         Automatically resolve entries that no longer appear in results
-    
+
     .EXAMPLE
         Update-BugzFile -Path "./aither-core/modules/PatchManager" -AnalysisResults $results -UpdateExisting
     #>
@@ -26,21 +26,21 @@ function Update-BugzFile {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Path,
-        
+
         [Parameter(Mandatory = $false)]
         [array]$AnalysisResults = @(),
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$UpdateExisting,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$AutoResolve
     )
-    
+
     try {
         $resolvedPath = Resolve-Path $Path -ErrorAction Stop
         $bugzFilePath = Join-Path $resolvedPath $script:DefaultSettings.BugzFileName
-        
+
         # Load existing .bugz file if it exists
         $existingBugz = @{
             directory = $resolvedPath.Path
@@ -58,7 +58,7 @@ function Update-BugzFile {
                 format = 'bugz-1.0'
             }
         }
-        
+
         if (Test-Path $bugzFilePath) {
             try {
                 if ($bugzFilePath.EndsWith('.yaml') -or $bugzFilePath.EndsWith('.yml')) {
@@ -73,7 +73,7 @@ function Update-BugzFile {
                     # JSON format
                     $existingContent = Get-Content $bugzFilePath | ConvertFrom-Json -AsHashtable
                 }
-                
+
                 if ($existingContent) {
                     $existingBugz = $existingContent
                     $existingBugz.updated = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
@@ -85,18 +85,18 @@ function Update-BugzFile {
                 }
             }
         }
-        
+
         # Create a map of existing findings for quick lookup
         $existingFindings = @{}
         foreach ($finding in $existingBugz.findings) {
             $key = "$($finding.file):$($finding.line):$($finding.ruleName)"
             $existingFindings[$key] = $finding
         }
-        
+
         # Process new analysis results
         $newFindings = @()
         $currentKeys = @()
-        
+
         foreach ($result in $AnalysisResults) {
             $fileName = if ($result.ScriptPath) {
                 $relativePath = $result.ScriptPath -replace [regex]::Escape($resolvedPath.Path), ''
@@ -109,10 +109,10 @@ function Update-BugzFile {
             } else {
                 'Unknown'
             }
-            
-            $key = "$fileName:$($result.Line):$($result.RuleName)"
+
+            $key = "${fileName}:$($result.Line):$($result.RuleName)"
             $currentKeys += $key
-            
+
             if ($existingFindings.ContainsKey($key)) {
                 # Update existing finding
                 $existing = $existingFindings[$key]
@@ -154,7 +154,7 @@ function Update-BugzFile {
                 $newFindings += $newFinding
             }
         }
-        
+
         # Handle auto-resolve for missing findings
         if ($AutoResolve) {
             foreach ($existing in $existingBugz.findings) {
@@ -175,7 +175,7 @@ function Update-BugzFile {
                 }
             }
         }
-        
+
         # Update summary
         $summary = @{
             open = ($newFindings | Where-Object { $_.status -eq 'open' }).Count
@@ -183,7 +183,7 @@ function Update-BugzFile {
             ignored = ($newFindings | Where-Object { $_.ignored -eq $true }).Count
             total = $newFindings.Count
         }
-        
+
         # Create final .bugz object
         $bugzObject = @{
             directory = $resolvedPath.Path
@@ -198,20 +198,20 @@ function Update-BugzFile {
                 lastAnalysis = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
             }
         }
-        
+
         # Write .bugz file in JSON format (YAML would be better but requires additional module)
         $bugzJson = $bugzObject | ConvertTo-Json -Depth 10 -Compress:$false
         Set-Content -Path $bugzFilePath -Value $bugzJson -Encoding UTF8
-        
+
         if ($script:UseCustomLogging) {
             Write-CustomLog -Level 'INFO' -Message "Updated .bugz file: $bugzFilePath (Open: $($summary.open), Resolved: $($summary.resolved), Total: $($summary.total))"
         }
-        
+
         return $bugzObject
     }
     catch {
         if ($script:UseCustomLogging) {
-            Write-CustomLog -Level 'ERROR' -Message "Failed to update .bugz file for $Path: $($_.Exception.Message)"
+            Write-CustomLog -Level 'ERROR' -Message "Failed to update .bugz file for ${Path}: $($_.Exception.Message)"
         }
         throw
     }

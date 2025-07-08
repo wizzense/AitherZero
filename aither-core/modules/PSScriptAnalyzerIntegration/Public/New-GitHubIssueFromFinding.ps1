@@ -2,61 +2,61 @@ function New-GitHubIssueFromFinding {
     <#
     .SYNOPSIS
         Creates GitHub Issues from PSScriptAnalyzer findings with automated assignment and labeling
-    
+
     .DESCRIPTION
         This function automates the creation of GitHub Issues for PSScriptAnalyzer findings,
         including appropriate templates, labels, assignments, and metadata for tracking.
-    
+
     .PARAMETER Finding
         PSScriptAnalyzer finding object to create an issue for
-    
+
     .PARAMETER RepositoryOwner
         GitHub repository owner (defaults to current repository)
-    
+
     .PARAMETER RepositoryName
         GitHub repository name (defaults to current repository)
-    
+
     .PARAMETER DryRun
         If specified, shows what issues would be created without actually creating them
-    
+
     .PARAMETER ForceCreate
         Force creation even if similar issue already exists
-    
+
     .PARAMETER GitHubToken
         GitHub personal access token (uses GITHUB_TOKEN environment variable if not specified)
-    
+
     .EXAMPLE
         $findings = Invoke-ScriptAnalyzer -Path . -Recurse
         $findings | Where-Object Severity -eq 'Error' | New-GitHubIssueFromFinding
-        
+
         Creates GitHub Issues for all Error-level findings
-    
+
     .EXAMPLE
         New-GitHubIssueFromFinding -Finding $finding -DryRun
-        
+
         Shows what issue would be created without actually creating it
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
         [PSCustomObject]$Finding,
-        
+
         [Parameter(Mandatory = $false)]
         [string]$RepositoryOwner,
-        
+
         [Parameter(Mandatory = $false)]
         [string]$RepositoryName,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$DryRun,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$ForceCreate,
-        
+
         [Parameter(Mandatory = $false)]
         [string]$GitHubToken
     )
-    
+
     begin {
         # Initialize GitHub CLI availability check
         $ghAvailable = $false
@@ -72,7 +72,7 @@ function New-GitHubIssueFromFinding {
             }
             return
         }
-        
+
         # Get repository information
         if (-not $RepositoryOwner -or -not $RepositoryName) {
             try {
@@ -89,21 +89,21 @@ function New-GitHubIssueFromFinding {
                 return
             }
         }
-        
+
         # Set up GitHub token if provided
         if ($GitHubToken) {
             $env:GITHUB_TOKEN = $GitHubToken
         }
-        
+
         if ($script:UseCustomLogging) {
             Write-CustomLog -Level 'INFO' -Message "Initializing GitHub Issues creation for repository: $RepositoryOwner/$RepositoryName"
         }
-        
+
         $createdIssues = @()
         $skippedIssues = @()
         $errors = @()
     }
-    
+
     process {
         try {
             # Validate finding object
@@ -111,11 +111,11 @@ function New-GitHubIssueFromFinding {
                 Write-Warning "Invalid finding object provided - missing required properties"
                 return
             }
-            
+
             # Determine if this finding should become an issue
             $shouldCreateIssue = $false
             $issuePriority = 'low'
-            
+
             switch ($Finding.Severity) {
                 'Error' {
                     $shouldCreateIssue = $true
@@ -133,7 +133,7 @@ function New-GitHubIssueFromFinding {
                         'PSUseCompatibleCmdlets',
                         'PSUseCompatibleSyntax'
                     )
-                    
+
                     if ($Finding.RuleName -in $criticalWarningRules) {
                         $shouldCreateIssue = $true
                         $issuePriority = 'high'
@@ -148,15 +148,15 @@ function New-GitHubIssueFromFinding {
                     # unless they are in critical areas or accumulate significantly
                     $shouldCreateIssue = $false
                     $issuePriority = 'low'
-                    
+
                     # Exception: Create issues for documentation-related findings in critical modules
-                    if ($Finding.RuleName -eq 'PSProvideCommentHelp' -and 
+                    if ($Finding.RuleName -eq 'PSProvideCommentHelp' -and
                         $Finding.ScriptPath -match 'SecureCredentials|SecurityAutomation|LicenseManager') {
                         $shouldCreateIssue = $true
                     }
                 }
             }
-            
+
             if (-not $shouldCreateIssue) {
                 $skippedIssues += @{
                     Finding = $Finding
@@ -164,19 +164,19 @@ function New-GitHubIssueFromFinding {
                 }
                 return
             }
-            
+
             # Check for existing similar issues (unless ForceCreate is specified)
             if (-not $ForceCreate) {
                 $searchQuery = "repo:$RepositoryOwner/$RepositoryName is:issue is:open label:psscriptanalyzer $($Finding.RuleName)"
                 try {
                     $existingIssues = & gh issue list --search $searchQuery --json number,title,labels --limit 10 | ConvertFrom-Json
-                    
+
                     # Check if we already have an issue for this specific finding
-                    $duplicateIssue = $existingIssues | Where-Object { 
+                    $duplicateIssue = $existingIssues | Where-Object {
                         $_.title -match [regex]::Escape($Finding.RuleName) -and
                         $_.title -match [regex]::Escape((Split-Path $Finding.ScriptPath -Leaf))
                     }
-                    
+
                     if ($duplicateIssue) {
                         $skippedIssues += @{
                             Finding = $Finding
@@ -192,22 +192,22 @@ function New-GitHubIssueFromFinding {
                     }
                 }
             }
-            
+
             # Prepare issue data
             $fileName = Split-Path $Finding.ScriptPath -Leaf
             $relativePath = $Finding.ScriptPath -replace [regex]::Escape($script:ProjectRoot), '' -replace '^[\\\/]', ''
-            
+
             # Determine assignees based on CODEOWNERS
             $assignees = @()
             try {
                 $codeownersPath = Join-Path $script:ProjectRoot ".github/CODEOWNERS"
                 if (Test-Path $codeownersPath) {
                     $codeowners = Get-Content $codeownersPath
-                    $matchingRule = $codeowners | Where-Object { 
-                        $_ -notmatch '^#' -and $_ -match '\S' -and 
+                    $matchingRule = $codeowners | Where-Object {
+                        $_ -notmatch '^#' -and $_ -match '\S' -and
                         ($relativePath -like ($_ -split '\s+')[0])
                     } | Select-Object -First 1
-                    
+
                     if ($matchingRule) {
                         $owners = ($matchingRule -split '\s+')[1..100] | Where-Object { $_ -match '^@' }
                         $assignees = $owners -replace '^@', ''
@@ -219,13 +219,13 @@ function New-GitHubIssueFromFinding {
                     Write-CustomLog -Level 'WARNING' -Message "Failed to determine assignees from CODEOWNERS: $($_.Exception.Message)"
                 }
             }
-            
+
             # Generate issue title
             $issueTitle = "[$($Finding.Severity.ToUpper())] $($Finding.RuleName) in $fileName"
-            
+
             # Generate issue body based on severity
             $issueBody = Get-IssueBodyForFinding -Finding $Finding -Priority $issuePriority
-            
+
             # Determine structured labels
             $labels = @(
                 'code-quality',
@@ -233,11 +233,11 @@ function New-GitHubIssueFromFinding {
                 $Finding.Severity.ToLower(),
                 "priority:$(if ($issuePriority -eq 'critical') { 'critical' } elseif ($issuePriority -eq 'high') { 'high' } elseif ($issuePriority -eq 'medium') { 'medium' } else { 'low' })"
             )
-            
+
             # Add category-based labels
             $categoryLabels = Get-CategoryLabelsForRule -RuleName $Finding.RuleName
             $labels += $categoryLabels
-            
+
             # Add security label for security-related rules
             $securityRules = @(
                 'PSAvoidUsingPlainTextForPassword',
@@ -247,16 +247,16 @@ function New-GitHubIssueFromFinding {
                 'PSAvoidHardcodedCredentials',
                 'PSAvoidUsingInvokeExpression'
             )
-            
+
             if ($Finding.RuleName -in $securityRules) {
                 $labels += 'security'
             }
-            
+
             # Add module-specific label
             if ($relativePath -match 'aither-core[/\\]modules[/\\]([^/\\]+)') {
                 $labels += "module:$($matches[1].ToLower())"
             }
-            
+
             # Add automation capability label
             $autoFixableRules = @(
                 'PSAvoidUsingCmdletAliases',
@@ -267,16 +267,16 @@ function New-GitHubIssueFromFinding {
                 'PSUseCorrectCasing',
                 'PSAlignAssignmentStatement'
             )
-            
+
             if ($Finding.RuleName -in $autoFixableRules) {
                 $labels += 'auto-fixable'
             } else {
                 $labels += 'manual-review'
             }
-            
+
             # Determine milestone based on priority and module
             $milestone = Get-MilestoneForIssue -Priority $issuePriority -ModulePath $relativePath -Severity $Finding.Severity
-            
+
             if ($DryRun) {
                 $issuePreview = @{
                     Title = $issueTitle
@@ -287,7 +287,7 @@ function New-GitHubIssueFromFinding {
                     Finding = $Finding
                     Priority = $issuePriority
                 }
-                
+
                 if ($script:UseCustomLogging) {
                     Write-CustomLog -Level 'INFO' -Message "DRY RUN: Would create issue '$issueTitle' with labels: $($labels -join ', '), milestone: $milestone"
                 } else {
@@ -296,7 +296,7 @@ function New-GitHubIssueFromFinding {
                     Write-Host "  Assignees: $($assignees -join ', ')" -ForegroundColor Gray
                     Write-Host "  Milestone: $milestone" -ForegroundColor Gray
                 }
-                
+
                 $createdIssues += $issuePreview
             } else {
                 # Create the actual GitHub issue
@@ -306,21 +306,21 @@ function New-GitHubIssueFromFinding {
                     '--body', $issueBody,
                     '--label', ($labels -join ',')
                 )
-                
+
                 if ($assignees.Count -gt 0) {
                     $createArgs += '--assignee'
                     $createArgs += ($assignees -join ',')
                 }
-                
+
                 if ($milestone) {
                     $createArgs += '--milestone'
                     $createArgs += $milestone
                 }
-                
+
                 try {
                     $issueResult = & gh @createArgs
                     $issueNumber = if ($issueResult -match '#(\d+)') { $matches[1] } else { 'unknown' }
-                    
+
                     $createdIssue = @{
                         Number = $issueNumber
                         Title = $issueTitle
@@ -331,19 +331,19 @@ function New-GitHubIssueFromFinding {
                         Priority = $issuePriority
                         URL = "https://github.com/$RepositoryOwner/$RepositoryName/issues/$issueNumber"
                     }
-                    
+
                     $createdIssues += $createdIssue
-                    
+
                     if ($script:UseCustomLogging) {
                         Write-CustomLog -Level 'SUCCESS' -Message "Created GitHub issue #$issueNumber for $($Finding.RuleName) in $fileName"
                     } else {
-                        Write-Host "✅ Created issue #$issueNumber: $issueTitle" -ForegroundColor Green
+                        Write-Host "✅ Created issue #${issueNumber}: ${issueTitle}" -ForegroundColor Green
                     }
                 }
                 catch {
-                    $error = "Failed to create GitHub issue for $($Finding.RuleName) in $fileName: $($_.Exception.Message)"
+                    $error = "Failed to create GitHub issue for $($Finding.RuleName) in ${fileName}: $($_.Exception.Message)"
                     $errors += $error
-                    
+
                     if ($script:UseCustomLogging) {
                         Write-CustomLog -Level 'ERROR' -Message $error
                     } else {
@@ -355,7 +355,7 @@ function New-GitHubIssueFromFinding {
         catch {
             $error = "Error processing finding $($Finding.RuleName): $($_.Exception.Message)"
             $errors += $error
-            
+
             if ($script:UseCustomLogging) {
                 Write-CustomLog -Level 'ERROR' -Message $error
             } else {
@@ -363,7 +363,7 @@ function New-GitHubIssueFromFinding {
             }
         }
     }
-    
+
     end {
         # Return summary
         $summary = @{
@@ -374,7 +374,7 @@ function New-GitHubIssueFromFinding {
             Repository = "$RepositoryOwner/$RepositoryName"
             DryRun = $DryRun.IsPresent
         }
-        
+
         if ($script:UseCustomLogging) {
             Write-CustomLog -Level 'INFO' -Message "GitHub Issues creation completed: $($createdIssues.Count) created, $($skippedIssues.Count) skipped, $($errors.Count) errors"
         } else {
@@ -384,7 +384,7 @@ function New-GitHubIssueFromFinding {
             Write-Host "  Errors: $($errors.Count)" -ForegroundColor Red
             Write-Host "  Total Processed: $($summary.TotalProcessed)" -ForegroundColor White
         }
-        
+
         return $summary
     }
 }
@@ -398,15 +398,15 @@ function Get-IssueBodyForFinding {
     param(
         [Parameter(Mandatory = $true)]
         [PSCustomObject]$Finding,
-        
+
         [Parameter(Mandatory = $false)]
         [string]$Priority = 'medium'
     )
-    
+
     $relativePath = $Finding.ScriptPath -replace [regex]::Escape($script:ProjectRoot), '' -replace '^[\\\/]', ''
     $fileName = Split-Path $Finding.ScriptPath -Leaf
     $moduleContext = if ($relativePath -match 'aither-core[/\\]modules[/\\]([^/\\]+)') { $matches[1] } else { 'Unknown' }
-    
+
     # Read code snippet around the finding
     $codeSnippet = ""
     try {
@@ -421,7 +421,7 @@ function Get-IssueBodyForFinding {
     catch {
         $codeSnippet = "Unable to read code snippet"
     }
-    
+
     # Generate context information
     $analysisContext = @{
         analysisDate = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
@@ -433,7 +433,7 @@ function Get-IssueBodyForFinding {
         column = $Finding.Column
         priority = $Priority
     } | ConvertTo-Json -Compress
-    
+
     # Generate issue body
     $body = @"
 ## $($Finding.Severity) Level PSScriptAnalyzer Finding
@@ -472,7 +472,7 @@ $analysisContext
 ---
 *This issue was automatically created by PSScriptAnalyzerIntegration. It will be automatically updated when the finding status changes.*
 "@
-    
+
     return $body
 }
 
@@ -486,20 +486,20 @@ function Get-CategoryLabelsForRule {
         [Parameter(Mandatory = $true)]
         [string]$RuleName
     )
-    
+
     $categoryLabels = @()
-    
+
     # Style and formatting rules
     $styleRules = @(
         'PSUseConsistentWhitespace',
-        'PSUseConsistentIndentation', 
+        'PSUseConsistentIndentation',
         'PSAvoidTrailingWhitespace',
         'PSAlignAssignmentStatement',
         'PSAvoidSemicolonsAsLineTerminators',
         'PSUseCorrectCasing',
         'PSAvoidUsingCmdletAliases'
     )
-    
+
     # Best practices rules
     $bestPracticeRules = @(
         'PSProvideCommentHelp',
@@ -511,7 +511,7 @@ function Get-CategoryLabelsForRule {
         'PSUseSingularNouns',
         'PSUseApprovedVerbs'
     )
-    
+
     # Security rules
     $securityRules = @(
         'PSAvoidUsingPlainTextForPassword',
@@ -521,7 +521,7 @@ function Get-CategoryLabelsForRule {
         'PSAvoidHardcodedCredentials',
         'PSAvoidUsingInvokeExpression'
     )
-    
+
     # Performance rules
     $performanceRules = @(
         'PSUseShouldProcessForStateChangingFunctions',
@@ -529,34 +529,34 @@ function Get-CategoryLabelsForRule {
         'PSReservedCmdletChar',
         'PSReservedParams'
     )
-    
+
     # Compatibility rules
     $compatibilityRules = @(
         'PSUseCompatibleCmdlets',
         'PSUseCompatibleSyntax',
         'PSUseCompatibleCommands'
     )
-    
+
     if ($RuleName -in $styleRules) {
         $categoryLabels += 'style'
     }
-    
+
     if ($RuleName -in $bestPracticeRules) {
         $categoryLabels += 'best-practice'
     }
-    
+
     if ($RuleName -in $securityRules) {
         $categoryLabels += 'security-related'
     }
-    
+
     if ($RuleName -in $performanceRules) {
         $categoryLabels += 'performance'
     }
-    
+
     if ($RuleName -in $compatibilityRules) {
         $categoryLabels += 'compatibility'
     }
-    
+
     # Add rule pattern-based categories
     if ($RuleName -match '^PSAvoid') {
         $categoryLabels += 'avoidance'
@@ -565,12 +565,12 @@ function Get-CategoryLabelsForRule {
     } elseif ($RuleName -match '^PSProvide') {
         $categoryLabels += 'documentation'
     }
-    
+
     # Ensure we have at least one category
     if ($categoryLabels.Count -eq 0) {
         $categoryLabels += 'general'
     }
-    
+
     return $categoryLabels
 }
 
@@ -583,14 +583,14 @@ function Get-MilestoneForIssue {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Priority,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$ModulePath,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$Severity
     )
-    
+
     # Priority-based milestones
     switch ($Priority) {
         'critical' {
@@ -607,15 +607,15 @@ function Get-MilestoneForIssue {
             # Check if it's in a core module
             $coreModules = @(
                 'ModuleCommunication',
-                'TestingFramework', 
+                'TestingFramework',
                 'PatchManager',
                 'SecureCredentials',
                 'Logging',
                 'ParallelExecution'
             )
-            
+
             $isCore = $coreModules | Where-Object { $ModulePath -match $_ }
-            
+
             if ($isCore) {
                 return 'Code Quality - High Priority'
             } else {

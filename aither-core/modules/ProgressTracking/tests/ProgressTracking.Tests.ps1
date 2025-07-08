@@ -1,253 +1,179 @@
 #Requires -Version 7.0
 
-<#
-.SYNOPSIS
-    Comprehensive Pester tests for the ProgressTracking management module
-
-.DESCRIPTION
-    Tests management and orchestration functionality including:
-    - Resource management operations
-    - State tracking and persistence
-    - Event coordination and workflow execution
-    - Error recovery and rollback capabilities
-    
-.NOTES
-    Specialized template for *Manager modules - customize based on management functionality
-#>
-
 BeforeAll {
-    # Import the module under test
-    $ModulePath = Split-Path -Parent $PSScriptRoot
-    Import-Module $ModulePath -Force
-    
-    # Setup test environment for management operations
-    $script:TestStartTime = Get-Date
-    $script:TestWorkspace = if ($env:TEMP) {
-        Join-Path $env:TEMP "ProgressTracking-Test-$(Get-Random)"
-    } elseif (Test-Path '/tmp') {
-        "/tmp/ProgressTracking-Test-$(Get-Random)"
-    } else {
-        Join-Path (Get-Location) "ProgressTracking-Test-$(Get-Random)"
+    # Import the module being tested
+    $modulePath = Join-Path $PSScriptRoot ".." "ProgressTracking.psm1"
+    Import-Module $modulePath -Force -ErrorAction Stop
+}
+
+Describe "ProgressTracking Module Tests" {
+    Context "Module Loading" {
+        It "Should import module successfully" {
+            Get-Module ProgressTracking | Should -Not -BeNullOrEmpty
+        }
+
+        It "Should have valid manifest" {
+            $manifestPath = Join-Path $PSScriptRoot ".." "ProgressTracking.psd1"
+            Test-Path $manifestPath | Should -Be $true
+
+            { Test-ModuleManifest $manifestPath } | Should -Not -Throw
+        }
+
+        It "Should export expected functions" {
+            $expectedFunctions = @(
+                'Start-ProgressOperation',
+                'Update-ProgressOperation',
+                'Complete-ProgressOperation',
+                'Add-ProgressWarning',
+                'Add-ProgressError',
+                'Write-ProgressLog',
+                'Get-ActiveOperations',
+                'Start-MultiProgress',
+                'Show-SimpleProgress'
+            )
+
+            foreach ($function in $expectedFunctions) {
+                Get-Command $function -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+            }
+        }
     }
-    
-    # Create test workspace
-    New-Item -Path $script:TestWorkspace -ItemType Directory -Force | Out-Null
-    
-    # Mock dependencies if not available
-    if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-        function Write-CustomLog {
-            param([string]$Message, [string]$Level = "INFO")
-            Write-Host "[$Level] $Message"
+
+    Context "Show-SimpleProgress Function Tests" {
+        It "Should display Start progress correctly" {
+            { Show-SimpleProgress -Message "Starting test" -Type Start } | Should -Not -Throw
+        }
+
+        It "Should display Update progress correctly" {
+            { Show-SimpleProgress -Message "Updating test" -Type Update } | Should -Not -Throw
+        }
+
+        It "Should display Complete progress correctly" {
+            { Show-SimpleProgress -Message "Completing test" -Type Complete } | Should -Not -Throw
+        }
+
+        It "Should default to Update type when not specified" {
+            { Show-SimpleProgress -Message "Default test" } | Should -Not -Throw
+        }
+
+        It "Should validate Type parameter values" {
+            { Show-SimpleProgress -Message "Invalid test" -Type "Invalid" } | Should -Throw
+        }
+    }
+
+    Context "Progress Operation Tests" {
+        It "Should start a progress operation successfully" {
+            $operationId = Start-ProgressOperation -OperationName "Test Operation" -TotalSteps 5
+            $operationId | Should -Not -BeNullOrEmpty
+            $operationId | Should -BeOfType [string]
+        }
+
+        It "Should update progress operation successfully" {
+            $operationId = Start-ProgressOperation -OperationName "Update Test" -TotalSteps 3
+            { Update-ProgressOperation -OperationId $operationId -CurrentStep 1 -StepName "First step" } | Should -Not -Throw
+            { Update-ProgressOperation -OperationId $operationId -IncrementStep -StepName "Second step" } | Should -Not -Throw
+        }
+
+        It "Should complete progress operation successfully" {
+            $operationId = Start-ProgressOperation -OperationName "Complete Test" -TotalSteps 2
+            Update-ProgressOperation -OperationId $operationId -CurrentStep 2 -StepName "Final step"
+            { Complete-ProgressOperation -OperationId $operationId } | Should -Not -Throw
+        }
+
+        It "Should handle invalid operation ID gracefully" {
+            $invalidId = [guid]::NewGuid().ToString()
+            { Update-ProgressOperation -OperationId $invalidId -CurrentStep 1 } | Should -Not -Throw
+        }
+    }
+
+    Context "Multi-Progress Tests" {
+        It "Should start multiple progress operations" {
+            $operations = @(
+                @{ Name = "Operation 1"; Steps = 3 },
+                @{ Name = "Operation 2"; Steps = 5 }
+            )
+
+            $result = Start-MultiProgress -Title "Multi Test" -Operations $operations
+            $result | Should -Not -BeNullOrEmpty
+            $result.Count | Should -Be 2
+            $result["Operation 1"] | Should -Not -BeNullOrEmpty
+            $result["Operation 2"] | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context "Progress Logging Tests" {
+        It "Should add warnings to progress operation" {
+            $operationId = Start-ProgressOperation -OperationName "Warning Test" -TotalSteps 1
+            { Add-ProgressWarning -OperationId $operationId -Warning "Test warning" } | Should -Not -Throw
+        }
+
+        It "Should add errors to progress operation" {
+            $operationId = Start-ProgressOperation -OperationName "Error Test" -TotalSteps 1
+            { Add-ProgressError -OperationId $operationId -Error "Test error" } | Should -Not -Throw
+        }
+
+        It "Should write progress log messages" {
+            $operationId = Start-ProgressOperation -OperationName "Log Test" -TotalSteps 1
+            { Write-ProgressLog -OperationId $operationId -Message "Test log message" } | Should -Not -Throw
+        }
+    }
+
+    Context "Active Operations Management" {
+        It "Should track active operations" {
+            $operationId = Start-ProgressOperation -OperationName "Active Test" -TotalSteps 1
+            $activeOps = Get-ActiveOperations
+            $activeOps | Should -Not -BeNullOrEmpty
+            $activeOps.ContainsKey($operationId) | Should -Be $true
+        }
+
+        It "Should remove operations when completed" {
+            $operationId = Start-ProgressOperation -OperationName "Removal Test" -TotalSteps 1
+            Complete-ProgressOperation -OperationId $operationId
+            $activeOps = Get-ActiveOperations
+            $activeOps.ContainsKey($operationId) | Should -Be $false
+        }
+    }
+
+    Context "Integration Tests" {
+        It "Should work with Logging module if available" {
+            if (Get-Module Logging -ErrorAction SilentlyContinue) {
+                $operationId = Start-ProgressOperation -OperationName "Logging Integration" -TotalSteps 1
+                { Write-ProgressLog -OperationId $operationId -Message "Integration test" } | Should -Not -Throw
+            } else {
+                Set-ItResult -Skipped -Because "Logging module not available"
+            }
+        }
+    }
+
+    Context "Error Handling" {
+        It "Should handle missing operation ID gracefully" {
+            { Update-ProgressOperation -OperationId "nonexistent" -CurrentStep 1 } | Should -Not -Throw
+        }
+
+        It "Should handle invalid parameters gracefully" {
+            { Start-ProgressOperation -OperationName "" -TotalSteps 0 } | Should -Not -Throw
+        }
+    }
+
+    Context "Cross-Platform Compatibility" {
+        It "Should work on current platform" {
+            $platform = if ($IsWindows) { "Windows" } elseif ($IsLinux) { "Linux" } elseif ($IsMacOS) { "macOS" } else { "Unknown" }
+            $platform | Should -BeIn @("Windows", "Linux", "macOS")
+
+            # Test that basic functionality works regardless of platform
+            $operationId = Start-ProgressOperation -OperationName "Platform Test" -TotalSteps 1
+            $operationId | Should -Not -BeNullOrEmpty
+            Complete-ProgressOperation -OperationId $operationId
         }
     }
 }
 
 AfterAll {
-    # Cleanup test workspace
-    if ($script:TestWorkspace -and (Test-Path $script:TestWorkspace)) {
-        Remove-Item $script:TestWorkspace -Recurse -Force -ErrorAction SilentlyContinue
+    # Clean up any remaining active operations
+    $activeOps = Get-ActiveOperations
+    foreach ($opId in $activeOps.Keys) {
+        Complete-ProgressOperation -OperationId $opId -ErrorAction SilentlyContinue
     }
-    
-    # Calculate test execution time
-    $testDuration = (Get-Date) - $script:TestStartTime
-    Write-Host "Management module test execution completed in $($testDuration.TotalSeconds) seconds" -ForegroundColor Green
-}
 
-Describe "ProgressTracking Management Module - Core Functionality" {
-    Context "Module Import and Structure" {
-        It "Should import the management module successfully" {
-            Get-Module -Name "ProgressTracking" | Should -Not -BeNullOrEmpty
-        }
-        
-        It "Should export management functions" {
-            $expectedFunctions = @(
-                # Standard management functions - customize based on specific module
-                'Start-ProgressTrackingManagement',
-                'Stop-ProgressTrackingManagement',
-                'Get-ProgressTrackingStatus',
-                'Set-ProgressTrackingConfiguration',
-                'Invoke-ProgressTrackingOperation',
-                'Reset-ProgressTrackingState'
-            )
-            
-            $exportedFunctions = Get-Command -Module "ProgressTracking" | Select-Object -ExpandProperty Name
-            
-            # Check for any expected functions that exist
-            $foundFunctions = $expectedFunctions | Where-Object { $exportedFunctions -contains $_ }
-            $foundFunctions | Should -Not -BeNullOrEmpty -Because "Management module should export management-related functions"
-        }
-    }
-    
-    Context "Resource Management Operations" {
-        It "Should initialize management state properly" {
-            # Test management initialization
-            { Start-ProgressTrackingManagement -TestMode } | Should -Not -Throw
-        }
-        
-        It "Should track resource state accurately" {
-            # Test state tracking
-            $status = Get-ProgressTrackingStatus
-            $status | Should -Not -BeNullOrEmpty
-            $status.State | Should -BeIn @('Initialized', 'Running', 'Stopped', 'Error')
-        }
-        
-        It "Should handle configuration changes safely" {
-            # Test configuration management
-            $testConfig = @{ TestSetting = "TestValue" }
-            { Set-ProgressTrackingConfiguration -Configuration $testConfig } | Should -Not -Throw
-        }
-        
-        It "Should execute operations with proper validation" {
-            # Test operation execution
-            $result = Invoke-ProgressTrackingOperation -Operation "Test" -WhatIf
-            $result | Should -Not -BeNullOrEmpty
-        }
-    }
-    
-    Context "State Management and Persistence" {
-        It "Should maintain consistent state across operations" {
-            # Test state consistency
-            $initialState = Get-ProgressTrackingStatus
-            Invoke-ProgressTrackingOperation -Operation "Test" -TestMode
-            $afterState = Get-ProgressTrackingStatus
-            
-            $afterState.LastOperation | Should -Be "Test"
-        }
-        
-        It "Should persist state information properly" {
-            # Test state persistence
-            $stateFile = Join-Path $script:TestWorkspace "state.json"
-            $result = Export-ProgressTrackingState -Path $stateFile
-            
-            Test-Path $stateFile | Should -Be $true
-        }
-        
-        It "Should restore state from persistence" {
-            # Test state restoration
-            $stateFile = Join-Path $script:TestWorkspace "state.json"
-            if (Test-Path $stateFile) {
-                { Import-ProgressTrackingState -Path $stateFile } | Should -Not -Throw
-            }
-        }
-    }
-    
-    Context "Error Handling and Recovery" {
-        It "Should handle invalid operations gracefully" {
-            # Test error handling
-            { Invoke-ProgressTrackingOperation -Operation "NonExistentOperation" } | Should -Throw
-        }
-        
-        It "Should provide meaningful error messages" {
-            # Test error reporting
-            try {
-                Invoke-ProgressTrackingOperation -Operation "InvalidOperation"
-            } catch {
-                $_.Exception.Message | Should -Not -BeNullOrEmpty
-                $_.Exception.Message | Should -Not -Be "An error occurred"
-            }
-        }
-        
-        It "Should support rollback operations when possible" {
-            # Test rollback capability
-            if (Get-Command Reset-ProgressTrackingState -ErrorAction SilentlyContinue) {
-                { Reset-ProgressTrackingState -Reason "Test rollback" } | Should -Not -Throw
-            }
-        }
-    }
-    
-    Context "Event Coordination and Workflow" {
-        It "Should publish management events" {
-            # Test event publishing if module supports it
-            if (Get-Command Publish-ProgressTrackingEvent -ErrorAction SilentlyContinue) {
-                { Publish-ProgressTrackingEvent -EventType "Test" -Data @{} } | Should -Not -Throw
-            }
-        }
-        
-        It "Should coordinate with other management modules" {
-            # Test inter-module coordination
-            $coordination = Test-ProgressTrackingCoordination
-            $coordination | Should -Not -BeNullOrEmpty
-        }
-        
-        It "Should handle workflow execution properly" {
-            # Test workflow capabilities
-            if (Get-Command Start-ProgressTrackingWorkflow -ErrorAction SilentlyContinue) {
-                $workflow = Start-ProgressTrackingWorkflow -WorkflowName "Test" -DryRun
-                $workflow.Status | Should -Be "Simulated"
-            }
-        }
-    }
-}
-
-Describe "ProgressTracking Management Module - Advanced Scenarios" {
-    Context "Concurrent Operations" {
-        It "Should handle multiple concurrent management requests" {
-            # Test concurrency
-            $jobs = 1..3 | ForEach-Object {
-                Start-Job -ScriptBlock {
-                    param($TestWorkspace)
-                    Import-Module "ProgressTracking" -Force
-                    Get-ProgressTrackingStatus
-                } -ArgumentList $script:TestWorkspace
-            }
-            
-            $results = $jobs | Wait-Job | Receive-Job
-            $jobs | Remove-Job
-            
-            $results | Should -HaveCount 3
-        }
-        
-        It "Should maintain consistency under concurrent access" {
-            # Test consistency under load
-            $status1 = Get-ProgressTrackingStatus
-            $status2 = Get-ProgressTrackingStatus
-            
-            $status1.State | Should -Be $status2.State
-        }
-    }
-    
-    Context "Performance and Scalability" {
-        It "Should execute management operations within acceptable time limits" {
-            # Test performance
-            $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-            Get-ProgressTrackingStatus | Out-Null
-            $stopwatch.Stop()
-            
-            $stopwatch.ElapsedMilliseconds | Should -BeLessThan 5000
-        }
-        
-        It "Should handle large-scale operations efficiently" {
-            # Test scalability
-            if (Get-Command Invoke-ProgressTrackingBulkOperation -ErrorAction SilentlyContinue) {
-                $items = 1..10
-                $result = Invoke-ProgressTrackingBulkOperation -Items $items -TestMode
-                $result.ProcessedCount | Should -Be 10
-            }
-        }
-    }
-    
-    Context "Integration with AitherZero Framework" {
-        It "Should integrate with centralized logging" {
-            # Test logging integration
-            $logEvent = "Test management operation logged"
-            Write-CustomLog -Message $logEvent -Level "INFO"
-            # Additional logging validation can be added here
-        }
-        
-        It "Should respect framework configuration" {
-            # Test framework integration
-            if (Get-Command Get-AitherZeroConfiguration -ErrorAction SilentlyContinue) {
-                $config = Get-AitherZeroConfiguration
-                $config | Should -Not -BeNullOrEmpty
-            }
-        }
-        
-        It "Should support framework-wide operations" {
-            # Test framework operation support
-            if (Get-Command Test-AitherZeroConnectivity -ErrorAction SilentlyContinue) {
-                $connectivity = Test-AitherZeroConnectivity
-                $connectivity | Should -Not -BeNullOrEmpty
-            }
-        }
-    }
+    # Remove the module
+    Remove-Module ProgressTracking -Force -ErrorAction SilentlyContinue
 }

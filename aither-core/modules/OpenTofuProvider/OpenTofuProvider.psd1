@@ -20,36 +20,36 @@
         'Test-InfrastructureCompliance',
         'Export-LabTemplate',
         'Import-LabConfiguration',
-        
+
         # Repository Management
         'Register-InfrastructureRepository',
         'Sync-InfrastructureRepository',
         'Get-InfrastructureRepository',
         'Test-RepositoryCompatibility',
         'New-TemplateRepository',
-        
+
         # Template Management
         'New-VersionedTemplate',
         'Get-TemplateVersion',
         'Test-TemplateDependencies',
         'Update-TemplateVersion',
-        
+
         # Configuration Management
         'Read-DeploymentConfiguration',
         'New-DeploymentConfiguration',
-        
+
         # ISO Automation
         'Initialize-DeploymentISOs',
         'Test-ISORequirements',
         'Update-DeploymentISOs',
         'Get-ISOConfiguration',
-        
+
         # Deployment Orchestration
         'Start-InfrastructureDeployment',
         'New-DeploymentPlan',
         'Invoke-DeploymentStage',
         'Get-DeploymentStatus',
-        
+
         # Provider Abstraction
         'Get-InfrastructureProvider',
         'Register-InfrastructureProvider',
@@ -57,7 +57,7 @@
         'Test-ProviderCapability',
         'Test-ProviderConfiguration',
         'ConvertTo-ProviderResource',
-        
+
         # Advanced Features
         'Test-InfrastructureDrift',
         'Start-DeploymentRollback',
@@ -71,7 +71,7 @@
         'Start-DeploymentAutomation',
         'Stop-DeploymentAutomation',
         'Get-DeploymentAutomation',
-        
+
         # Performance Optimization
         'Optimize-DeploymentPerformance',
         'Test-ConcurrentDeployments',

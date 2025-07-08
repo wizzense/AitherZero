@@ -2,9 +2,10 @@
 
 ## Directory Structure
 
-The `configs` directory contains configuration files that control the behavior of the AitherCore platform and its modules. This centralized configuration approach ensures consistency and simplifies deployment management.
+The `configs` directory contains configuration files that control the behavior of the AitherCore platform and its
+modules. This centralized configuration approach ensures consistency and simplifies deployment management.
 
-```
+```text
 configs/
 └── default-config.json    # Default platform configuration
 ```

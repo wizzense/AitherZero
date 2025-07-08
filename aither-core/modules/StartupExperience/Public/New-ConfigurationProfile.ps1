@@ -19,29 +19,29 @@ function New-ConfigurationProfile {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [Parameter()]
         [string]$Description,
-        
+
         [Parameter()]
         [PSCustomObject]$Config,
-        
+
         [Parameter()]
         [switch]$SetAsCurrent
     )
-    
+
     try {
         # Validate profile name
         if ($Name -match '[^a-zA-Z0-9\-_]') {
             throw "Profile name can only contain letters, numbers, hyphens, and underscores"
         }
-        
+
         # Get config if not provided
         if (-not $Config) {
             $configPath = Get-CurrentConfigPath
             $Config = Get-Content $configPath -Raw | ConvertFrom-Json
         }
-        
+
         # Create profile metadata
         $profileMetadata = @{
             name = $Name
@@ -51,35 +51,35 @@ function New-ConfigurationProfile {
             gitRepo = $null
             checksum = Get-ConfigChecksum -Config $Config
         }
-        
+
         # Add profile metadata to config
         if (-not $Config.PSObject.Properties.Name -contains 'profile') {
             $Config | Add-Member -MemberType NoteProperty -Name 'profile' -Value $profileMetadata
         } else {
             $Config.profile = $profileMetadata
         }
-        
+
         # Save profile
         $profilePath = Join-Path $script:ConfigProfilePath "$Name.json"
         $Config | ConvertTo-Json -Depth 10 | Set-Content -Path $profilePath -Encoding UTF8
-        
+
         # Update profile index
         Update-ProfileIndex -Name $Name -Metadata $profileMetadata
-        
+
         # Set as current if requested
         if ($SetAsCurrent) {
             Set-ConfigurationProfile -Name $Name
         }
-        
+
         Write-Host "✅ Configuration profile '$Name' created successfully!" -ForegroundColor Green
         Write-Host "   Path: $profilePath" -ForegroundColor DarkGray
-        
+
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Level 'SUCCESS' -Message "Created configuration profile: $Name"
         }
-        
+
         return $profileMetadata
-        
+
     } catch {
         Write-Error "Failed to create configuration profile: $_"
         throw
@@ -105,18 +105,18 @@ function Get-ConfigurationProfile {
     param(
         [Parameter(Mandatory, ParameterSetName = 'Get')]
         [string]$Name,
-        
+
         [Parameter(Mandatory, ParameterSetName = 'List')]
         [switch]$ListAvailable
     )
-    
+
     try {
         if ($ListAvailable) {
             # Get profile index
             $indexPath = Join-Path $script:ConfigProfilePath '.profile-index.json'
             if (Test-Path $indexPath) {
                 $index = Get-Content $indexPath -Raw | ConvertFrom-Json
-                
+
                 # Verify profiles still exist
                 $validProfiles = @()
                 foreach ($profile in $index.profiles.PSObject.Properties) {
@@ -132,7 +132,7 @@ function Get-ConfigurationProfile {
                         }
                     }
                 }
-                
+
                 return $validProfiles | Sort-Object Name
             } else {
                 # Scan directory for profiles
@@ -150,21 +150,21 @@ function Get-ConfigurationProfile {
                         HasGitRepo = $false
                     }
                 }
-                
+
                 return $profiles | Sort-Object Name
             }
         } else {
             # Get specific profile
             $profilePath = Join-Path $script:ConfigProfilePath "$Name.json"
-            
+
             if (-not (Test-Path $profilePath)) {
                 throw "Profile '$Name' not found"
             }
-            
+
             $config = Get-Content $profilePath -Raw | ConvertFrom-Json
             return $config
         }
-        
+
     } catch {
         Write-Error "Failed to get configuration profile: $_"
         throw
@@ -187,29 +187,29 @@ function Set-ConfigurationProfile {
         [Parameter(Mandatory)]
         [string]$Name
     )
-    
+
     try {
         # Verify profile exists
         $profilePath = Join-Path $script:ConfigProfilePath "$Name.json"
         if (-not (Test-Path $profilePath)) {
             throw "Profile '$Name' not found"
         }
-        
+
         # Set as current
         $script:CurrentProfile = $Name
-        
+
         # Update current profile indicator
         $currentPath = Join-Path $script:ConfigProfilePath '.current'
         $Name | Set-Content -Path $currentPath -Encoding UTF8
-        
+
         Write-Host "✅ Switched to configuration profile: $Name" -ForegroundColor Green
-        
+
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Level 'INFO' -Message "Switched to configuration profile: $Name"
         }
-        
+
         return $true
-        
+
     } catch {
         Write-Error "Failed to set configuration profile: $_"
         throw
@@ -233,23 +233,23 @@ function Remove-ConfigurationProfile {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [Parameter()]
         [switch]$Force
     )
-    
+
     try {
         # Prevent removing current profile
         if ($Name -eq $script:CurrentProfile) {
             throw "Cannot remove the current active profile"
         }
-        
+
         # Verify profile exists
         $profilePath = Join-Path $script:ConfigProfilePath "$Name.json"
         if (-not (Test-Path $profilePath)) {
             throw "Profile '$Name' not found"
         }
-        
+
         # Confirm removal
         if (-not $Force) {
             if (-not (Confirm-Action "Remove configuration profile '$Name'?")) {
@@ -257,10 +257,10 @@ function Remove-ConfigurationProfile {
                 return
             }
         }
-        
+
         # Remove profile file
         Remove-Item -Path $profilePath -Force
-        
+
         # Update profile index
         $indexPath = Join-Path $script:ConfigProfilePath '.profile-index.json'
         if (Test-Path $indexPath) {
@@ -270,15 +270,15 @@ function Remove-ConfigurationProfile {
                 $index | ConvertTo-Json -Depth 10 | Set-Content -Path $indexPath -Encoding UTF8
             }
         }
-        
+
         Write-Host "✅ Configuration profile '$Name' removed" -ForegroundColor Green
-        
+
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Level 'INFO' -Message "Removed configuration profile: $Name"
         }
-        
+
         return $true
-        
+
     } catch {
         Write-Error "Failed to remove configuration profile: $_"
         throw
@@ -291,9 +291,9 @@ function Update-ProfileIndex {
         [string]$Name,
         [PSCustomObject]$Metadata
     )
-    
+
     $indexPath = Join-Path $script:ConfigProfilePath '.profile-index.json'
-    
+
     # Load or create index
     if (Test-Path $indexPath) {
         $index = Get-Content $indexPath -Raw | ConvertFrom-Json
@@ -303,14 +303,14 @@ function Update-ProfileIndex {
             profiles = [PSCustomObject]@{}
         }
     }
-    
+
     # Update profile entry
     if ($index.profiles.PSObject.Properties.Name -contains $Name) {
         $index.profiles.$Name = $Metadata
     } else {
         $index.profiles | Add-Member -MemberType NoteProperty -Name $Name -Value $Metadata
     }
-    
+
     # Save index
     $index | ConvertTo-Json -Depth 10 | Set-Content -Path $indexPath -Encoding UTF8
 }
@@ -319,7 +319,7 @@ function Get-ConfigChecksum {
     param(
         [PSCustomObject]$Config
     )
-    
+
     # Simple checksum for change detection
     $json = $Config | ConvertTo-Json -Depth 10 -Compress
     $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)

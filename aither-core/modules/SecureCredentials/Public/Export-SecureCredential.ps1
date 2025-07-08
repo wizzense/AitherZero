@@ -55,17 +55,17 @@ function Export-SecureCredential {
 
             # Get credential data using the retrieval function
             $credentialResult = Retrieve-CredentialSecurely -CredentialName $CredentialName -SkipIntegrityCheck
-            
+
             if (-not $credentialResult.Success) {
                 throw "Failed to retrieve credential: $CredentialName"
             }
-            
+
             $credentialData = $credentialResult.Credential
 
             # Create export data structure
             $exportData = @{
                 ExportInfo  = @{
-                    ExportedBy        = $env:USERNAME
+                    ExportedBy        = $env:USERNAME ?? $env:USER ?? 'unknown'
                     ExportedDate      = Get-Date
                     AitherZeroVersion = '1.0.0'
                     IncludesSecrets   = $IncludeSecrets.IsPresent

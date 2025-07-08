@@ -17,14 +17,14 @@ function Reset-CircuitBreaker {
     param(
         [Parameter(Mandatory, ParameterSetName = 'Single')]
         [string]$OperationName,
-        
+
         [Parameter(Mandatory, ParameterSetName = 'All')]
         [switch]$All,
-        
+
         [Parameter()]
         [switch]$Force
     )
-    
+
     try {
         if (-not $script:CircuitBreakers) {
             Write-CustomLog -Level 'WARNING' -Message "No circuit breakers exist"
@@ -33,9 +33,9 @@ function Reset-CircuitBreaker {
                 Reason = "No circuit breakers exist"
             }
         }
-        
+
         $resetOperations = @()
-        
+
         if ($All) {
             if (-not $Force) {
                 $choice = Read-Host "Reset all $($script:CircuitBreakers.Count) circuit breakers? (y/N)"
@@ -46,15 +46,15 @@ function Reset-CircuitBreaker {
                     }
                 }
             }
-            
+
             foreach ($opName in $script:CircuitBreakers.Keys) {
                 $cb = $script:CircuitBreakers[$opName]
                 $originalState = $cb.State
-                
+
                 $cb.State = 'Closed'
                 $cb.FailureCount = 0
                 $cb.LastFailure = $null
-                
+
                 $resetOperations += @{
                     Operation = $opName
                     PreviousState = $originalState
@@ -65,10 +65,10 @@ function Reset-CircuitBreaker {
             if (-not $script:CircuitBreakers.ContainsKey($OperationName)) {
                 throw "Circuit breaker not found for operation: $OperationName"
             }
-            
+
             $cb = $script:CircuitBreakers[$OperationName]
             $originalState = $cb.State
-            
+
             if (-not $Force -and $cb.State -eq 'Open') {
                 $choice = Read-Host "Reset circuit breaker for '$OperationName' (currently $originalState)? (y/N)"
                 if ($choice -ne 'y' -and $choice -ne 'Y') {
@@ -78,27 +78,27 @@ function Reset-CircuitBreaker {
                     }
                 }
             }
-            
+
             $cb.State = 'Closed'
             $cb.FailureCount = 0
             $cb.LastFailure = $null
-            
+
             $resetOperations += @{
                 Operation = $OperationName
                 PreviousState = $originalState
                 ResetAt = Get-Date
             }
         }
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "Reset $($resetOperations.Count) circuit breakers"
-        
+
         return @{
             Success = $true
             ResetCount = $resetOperations.Count
             ResetOperations = $resetOperations
             ResetAt = Get-Date
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to reset circuit breaker: $_"
         throw

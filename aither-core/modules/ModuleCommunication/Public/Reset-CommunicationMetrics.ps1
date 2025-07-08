@@ -16,16 +16,16 @@ function Reset-CommunicationMetrics {
         [Parameter()]
         [ValidateSet('All', 'MessageBus', 'API', 'Performance')]
         [string]$MetricType = 'All',
-        
+
         [Parameter()]
         [switch]$Force
     )
-    
+
     try {
         # Confirmation
         if (-not $Force -and -not $WhatIfPreference) {
             $message = "Reset $MetricType metrics? This will clear all performance counters."
-            
+
             $choice = Read-Host "$message (y/N)"
             if ($choice -ne 'y' -and $choice -ne 'Y') {
                 Write-CustomLog -Level 'INFO' -Message "Operation cancelled"
@@ -35,10 +35,10 @@ function Reset-CommunicationMetrics {
                 }
             }
         }
-        
+
         if ($PSCmdlet.ShouldProcess("Communication Metrics", "Reset $MetricType Metrics")) {
             $resetDetails = @{}
-            
+
             switch ($MetricType) {
                 'All' {
                     # Reset all metrics
@@ -56,9 +56,9 @@ function Reset-CommunicationMetrics {
                     $resetDetails.Performance = Reset-PerformanceMetrics
                 }
             }
-            
+
             Write-CustomLog -Level 'SUCCESS' -Message "$MetricType metrics reset successfully"
-            
+
             return @{
                 Success = $true
                 MetricType = $MetricType
@@ -66,7 +66,7 @@ function Reset-CommunicationMetrics {
                 Details = $resetDetails
             }
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to reset metrics: $_"
         throw
@@ -85,14 +85,14 @@ function Reset-MessageBusMetrics {
         }
         $channel.MessageCount = 0
     }
-    
+
     # Reset subscription error counts
     foreach ($key in $script:MessageBus.Subscriptions.Keys) {
         $subscription = $script:MessageBus.Subscriptions[$key]
         $subscription.MessageCount = 0
         $subscription.Errors = @()
     }
-    
+
     return @{
         ChannelsReset = $script:MessageBus.Channels.Count
         SubscriptionsReset = $script:MessageBus.Subscriptions.Count
@@ -104,13 +104,13 @@ function Reset-APIMetrics {
     $script:APIRegistry.Metrics.TotalCalls = 0
     $script:APIRegistry.Metrics.SuccessfulCalls = 0
     $script:APIRegistry.Metrics.FailedCalls = 0
-    
+
     # Clear call history
     while ($script:APIRegistry.Metrics.CallHistory.Count -gt 0) {
         $discard = $null
         $script:APIRegistry.Metrics.CallHistory.TryDequeue([ref]$discard) | Out-Null
     }
-    
+
     # Reset individual API metrics
     $apisReset = 0
     foreach ($apiKey in $script:APIRegistry.APIs.Keys) {
@@ -120,7 +120,7 @@ function Reset-APIMetrics {
         $api.AverageExecutionTime = 0
         $apisReset++
     }
-    
+
     return @{
         APIsReset = $apisReset
         CallHistoryCleared = $true

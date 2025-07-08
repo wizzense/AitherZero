@@ -14,11 +14,11 @@ function Show-ConfigurationManager {
         [Parameter()]
         [string]$Tier = 'free'
     )
-    
+
     try {
         $configPath = Get-CurrentConfigPath
         $config = Get-Content $configPath -Raw | ConvertFrom-Json
-        
+
         $exitManager = $false
         while (-not $exitManager) {
             Clear-Host
@@ -26,7 +26,7 @@ function Show-ConfigurationManager {
             Write-Host "│ Current Profile: " -NoNewline -ForegroundColor Cyan
             Write-Host "$($script:CurrentProfile ?? 'default')" -ForegroundColor Yellow
             Write-Host "│" -ForegroundColor Cyan
-            
+
             # Group configurations by category
             $categories = @{
                 'General' = @('ComputerName', 'DNSServers', 'TrustedHosts')
@@ -35,27 +35,27 @@ function Show-ConfigurationManager {
                 'AI Tools' = @('InstallClaudeCode', 'InstallGeminiCLI', 'InstallCodexCLI')
                 'Security' = @('InstallCA', 'InstallGPG', 'InstallCosign')
             }
-            
+
             $menuItems = @()
             $itemIndex = 1
-            
+
             foreach ($category in $categories.Keys) {
                 Write-Host "│" -ForegroundColor Cyan
                 Write-Host "│ [$category]" -ForegroundColor Green
-                
+
                 foreach ($key in $categories[$category]) {
                     if ($config.PSObject.Properties.Name -contains $key) {
                         $value = $config.$key
-                        $displayValue = if ($value -is [bool]) { 
+                        $displayValue = if ($value -is [bool]) {
                             if ($value) { "✓" } else { "☐" }
-                        } else { 
-                            $value 
+                        } else {
+                            $value
                         }
-                        
+
                         # Check if this feature requires a higher tier
                         $isLocked = -not (Test-ConfigFeatureAccess -Feature $key -Tier $Tier)
                         $lockIcon = if ($isLocked) { " 🔒" } else { "" }
-                        
+
                         Write-Host "│   $itemIndex. $key : $displayValue$lockIcon" -ForegroundColor White
                         $menuItems += @{
                             Index = $itemIndex
@@ -68,7 +68,7 @@ function Show-ConfigurationManager {
                     }
                 }
             }
-            
+
             Write-Host "│" -ForegroundColor Cyan
             Write-Host "│ [Actions]" -ForegroundColor Yellow
             Write-Host "│   S. Save Configuration" -ForegroundColor White
@@ -77,9 +77,9 @@ function Show-ConfigurationManager {
             Write-Host "│   R. Reset to Defaults" -ForegroundColor White
             Write-Host "│   B. Back to Main Menu" -ForegroundColor White
             Write-Host "└─────────────────────────────────────────────────────────────┘" -ForegroundColor Cyan
-            
+
             $selection = Read-Host "`nSelect item to edit (1-$($menuItems.Count)) or action (S/E/I/R/B)"
-            
+
             switch ($selection.ToUpper()) {
                 'S' {
                     Save-Configuration -Config $config -Path $configPath
@@ -109,7 +109,7 @@ function Show-ConfigurationManager {
                     if ($selection -match '^\d+$') {
                         $index = [int]$selection
                         $item = $menuItems | Where-Object { $_.Index -eq $index }
-                        
+
                         if ($item) {
                             if ($item.Locked) {
                                 Write-Host "This feature requires a higher tier license!" -ForegroundColor Red
@@ -125,7 +125,7 @@ function Show-ConfigurationManager {
                 }
             }
         }
-        
+
     } catch {
         Write-Error "Error in configuration manager: $_"
         throw
@@ -138,7 +138,7 @@ function Edit-ConfigValue {
         $CurrentValue,
         [string]$Category
     )
-    
+
     Clear-Host
     Write-Host "Edit Configuration Value" -ForegroundColor Cyan
     Write-Host "========================" -ForegroundColor Cyan
@@ -146,7 +146,7 @@ function Edit-ConfigValue {
     Write-Host "Setting: $Key" -ForegroundColor Yellow
     Write-Host "Current Value: $CurrentValue" -ForegroundColor White
     Write-Host ""
-    
+
     if ($CurrentValue -is [bool]) {
         Write-Host "Toggle value? (Y/N): " -NoNewline
         $response = Read-Host
@@ -160,7 +160,7 @@ function Edit-ConfigValue {
             return $newValue
         }
     }
-    
+
     return $null
 }
 
@@ -169,10 +169,10 @@ function Save-Configuration {
         $Config,
         [string]$Path
     )
-    
+
     try {
         $Config | ConvertTo-Json -Depth 10 | Set-Content -Path $Path -Encoding UTF8
-        
+
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Level 'SUCCESS' -Message "Configuration saved to $Path"
         }
@@ -190,7 +190,7 @@ function Get-CurrentConfigPath {
             return $profilePath
         }
     }
-    
+
     # Default to main config
     $projectRoot = Find-ProjectRoot
     return Join-Path $projectRoot "configs" "default-config.json"
@@ -201,17 +201,17 @@ function Test-ConfigFeatureAccess {
         [string]$Feature,
         [string]$Tier
     )
-    
+
     # Define features that require higher tiers
     $proFeatures = @('InstallOpenTofu', 'InstallClaudeCode', 'InstallGeminiCLI', 'InstallCodexCLI')
     $enterpriseFeatures = @('InstallCA', 'SecureCredentials')
-    
+
     if ($Feature -in $enterpriseFeatures) {
         return $Tier -eq 'enterprise'
     } elseif ($Feature -in $proFeatures) {
         return $Tier -in @('pro', 'enterprise')
     }
-    
+
     return $true
 }
 
@@ -219,7 +219,7 @@ function Show-UpgradePrompt {
     param(
         [string]$RequiredTier
     )
-    
+
     Write-Host "`nThis feature requires $RequiredTier tier or higher." -ForegroundColor Yellow
     Write-Host "Visit https://github.com/wizzense/AitherZero for licensing options." -ForegroundColor Cyan
     Write-Host "`nPress any key to continue..."

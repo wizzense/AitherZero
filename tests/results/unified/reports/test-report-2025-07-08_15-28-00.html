@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenTofu Lab Automation - Test Report</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        .header { background-color: #2c3e50; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .summary { background-color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .metric { display: inline-block; margin: 10px 20px 10px 0; }
+        .metric-value { font-size: 2em; font-weight: bold; color: red; }
+        .metric-label { font-size: 0.9em; color: #666; }
+        .results { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .module-result { margin: 10px 0; padding: 15px; border-left: 4px solid #ddd; background-color: #f9f9f9; }
+        .success { border-left-color: #27ae60; }
+        .failure { border-left-color: #e74c3c; }
+        .phase { margin: 5px 0; font-size: 0.9em; }
+        .details { margin-top: 10px; font-size: 0.8em; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧪 OpenTofu Lab Automation - Test Report</h1>
+        <p>Test Suite: Unit | Generated: 07/08/2025 15:28:00</p>
+    </div>
+
+    <div class="summary">
+        <h2>📊 Test Summary</h2>
+        <div class="metric">
+            <div class="metric-value">53.34%</div>
+            <div class="metric-label">Success Rate</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">551</div>
+            <div class="metric-label">Tests Passed</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">411</div>
+            <div class="metric-label">Tests Failed</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">9</div>
+            <div class="metric-label">Modules Passed</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">131.46s</div>
+            <div class="metric-label">Total Duration</div>
+        </div>
+    </div>
+
+    <div class="results">
+        <h2>📋 Detailed Results</h2>        <div class="module-result failure">
+            <h3>❌ AIToolsIntegration</h3><div class='phase'>❌ Unit: 11/22 passed (3.53s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/AIToolsIntegration/tests/AIToolsIntegration.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ BackupManager</h3><div class='phase'>❌ Unit: 47/57 passed (20.78s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ ConfigurationCarousel</h3><div class='phase'>❌ Unit: 12/38 passed (2.86s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ConfigurationCarousel/tests/ConfigurationCarousel.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ ConfigurationCore</h3><div class='phase'>❌ Unit: 16/34 passed (3.06s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ ConfigurationManager</h3><div class='phase'>❌ Unit: 38/40 passed (4.11s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ConfigurationManager/tests/ConfigurationManager.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ ConfigurationRepository</h3><div class='phase'>❌ Unit: 12/38 passed (1.48s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ConfigurationRepository/tests/ConfigurationRepository.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ DevEnvironment</h3><div class='phase'>❌ Unit: 26/77 passed (3.89s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ ISOManager</h3><div class='phase'>❌ Unit: 0/27 passed (0.5s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ISOManager/tests/ISOManager.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ LabRunner</h3><div class='phase'>❌ Unit: 0/35 passed (0.68s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/LabRunner/tests/LabRunner.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ LicenseManager</h3><div class='phase'>❌ Unit: 0/32 passed (0.47s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/LicenseManager/tests/LicenseManager.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ Logging</h3><div class='phase'>❌ Unit: 31/34 passed (3.44s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/Logging/tests/Logging.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ ModuleCommunication</h3><div class='phase'>❌ Unit: 6/33 passed (8.59s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ OpenTofuProvider</h3><div class='phase'>❌ Unit: 26/28 passed (3.2s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/OpenTofuProvider/tests/OpenTofuProvider.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ OrchestrationEngine</h3><div class='phase'>❌ Unit: 11/22 passed (2.05s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ ParallelExecution</h3><div class='phase'>❌ Unit: 29/37 passed (17.5s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ PatchManager</h3><div class='phase'>❌ Unit: 28/32 passed (5.83s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/PatchManager/tests/PatchManager.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ ProgressTracking</h3><div class='phase'>❌ Unit: 17/22 passed (0.82s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ProgressTracking/tests/ProgressTracking.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ PSScriptAnalyzerIntegration</h3><div class='phase'>❌ Unit: 11/24 passed (2.2s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ RemoteConnection</h3><div class='phase'>❌ Unit: 25/28 passed (3.23s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ RepoSync</h3><div class='phase'>❌ Unit: 11/22 passed (2.27s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ RestAPIServer</h3><div class='phase'>❌ Unit: 11/22 passed (2.1s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ ScriptManager</h3><div class='phase'>❌ Unit: 11/22 passed (1.89s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ScriptManager/tests/ScriptManager.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ SecureCredentials</h3><div class='phase'>❌ Unit: 8/15 passed (0.73s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SecureCredentials/tests/SecureCredentials.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ SecurityAutomation</h3><div class='phase'>❌ Unit: 12/38 passed (1.86s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SecurityAutomation/tests/SecurityAutomation.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ SemanticVersioning</h3><div class='phase'>❌ Unit: 44/60 passed (2.79s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ SetupWizard</h3><div class='phase'>❌ Unit: 58/71 passed (20.48s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SetupWizard/tests/SetupWizard.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ StartupExperience</h3><div class='phase'>❌ Unit: 11/22 passed (2.24s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ SystemMonitoring</h3><div class='phase'>❌ Unit: 11/22 passed (2.39s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SystemMonitoring/tests/SystemMonitoring.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ TestingFramework</h3><div class='phase'>✅ Unit: 13/13 passed (1.51s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/TestingFramework/tests/TestingFramework.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ UnifiedMaintenance</h3><div class='phase'>❌ Unit: 11/22 passed (2.03s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/UnifiedMaintenance/tests/UnifiedMaintenance.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>        <div class="module-result failure">
+            <h3>❌ UtilityServices</h3><div class='phase'>❌ Unit: 4/44 passed (2.94s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1</div><div>• Pester version: 7.5.1</div></div></div>    </div>
+</body>
+</html>

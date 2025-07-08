@@ -32,23 +32,23 @@ function Initialize-DeploymentISOs {
     param(
         [Parameter(Mandatory)]
         [object]$DeploymentConfig,
-        
+
         [Parameter()]
         [string]$ISORepository,
-        
+
         [Parameter()]
         [switch]$UpdateCheck,
-        
+
         [Parameter()]
         [switch]$Interactive,
-        
+
         [Parameter()]
         [switch]$SkipExistingCheck
     )
-    
+
     begin {
         Write-CustomLog -Level 'INFO' -Message "Initializing deployment ISO requirements"
-        
+
         # Import ISOManager module if available
         try {
             Import-Module (Join-Path $env:PWSH_MODULES_PATH "ISOManager") -Force -ErrorAction Stop
@@ -58,7 +58,7 @@ function Initialize-DeploymentISOs {
             $script:isoManagerAvailable = $false
         }
     }
-    
+
     process {
         try {
             # Load deployment configuration if path provided
@@ -66,7 +66,7 @@ function Initialize-DeploymentISOs {
                 if (-not (Test-Path $DeploymentConfig)) {
                     throw "Deployment configuration not found: $DeploymentConfig"
                 }
-                
+
                 # Use Read-DeploymentConfiguration if available
                 if (Get-Command -Name 'Read-DeploymentConfiguration' -ErrorAction SilentlyContinue) {
                     $config = Read-DeploymentConfiguration -Path $DeploymentConfig
@@ -77,7 +77,7 @@ function Initialize-DeploymentISOs {
             } else {
                 $config = $DeploymentConfig
             }
-            
+
             # Initialize result object
             $result = @{
                 Success = $true
@@ -90,7 +90,7 @@ function Initialize-DeploymentISOs {
                 ISORepository = $ISORepository
                 Timestamp = Get-Date
             }
-            
+
             # Determine ISO repository path
             if (-not $ISORepository) {
                 if ($config.iso_repository) {
@@ -100,28 +100,28 @@ function Initialize-DeploymentISOs {
                     $ISORepository = Join-Path $env:PROJECT_ROOT "iso-repository"
                 }
             }
-            
+
             $result.ISORepository = $ISORepository
-            
+
             # Ensure ISO repository exists
             if (-not (Test-Path $ISORepository)) {
                 Write-CustomLog -Level 'INFO' -Message "Creating ISO repository at: $ISORepository"
                 New-Item -Path $ISORepository -ItemType Directory -Force | Out-Null
             }
-            
+
             # Check if configuration has ISO requirements
             if (-not $config.iso_requirements -or $config.iso_requirements.Count -eq 0) {
                 Write-CustomLog -Level 'INFO' -Message "No ISO requirements found in deployment configuration"
                 return $result
             }
-            
+
             Write-CustomLog -Level 'INFO' -Message "Processing $($config.iso_requirements.Count) ISO requirement(s)"
-            
+
             # Process each ISO requirement
             foreach ($isoReq in $config.iso_requirements) {
                 $requirement = Process-ISORequirement -Requirement $isoReq -Repository $ISORepository -UpdateCheck:$UpdateCheck
                 $result.Requirements += $requirement
-                
+
                 if ($requirement.Exists -and -not $SkipExistingCheck) {
                     $result.ExistingISOs += $requirement
                     Write-CustomLog -Level 'INFO' -Message "ISO exists: $($requirement.Name) at $($requirement.Path)"
@@ -130,22 +130,22 @@ function Initialize-DeploymentISOs {
                     $result.TotalSizeRequired += $requirement.EstimatedSize
                     Write-CustomLog -Level 'WARN' -Message "ISO missing: $($requirement.Name)"
                 }
-                
+
                 if ($requirement.UpdateAvailable) {
                     $result.UpdatesAvailable += $requirement
                     Write-CustomLog -Level 'INFO' -Message "Update available for: $($requirement.Name) ($($requirement.CurrentVersion) -> $($requirement.AvailableVersion))"
                 }
             }
-            
+
             # Interactive mode handling
             if ($Interactive -and $result.MissingISOs.Count -gt 0) {
                 Write-Host "`nMissing ISOs detected. Would you like to:" -ForegroundColor Yellow
                 Write-Host "1. Download missing ISOs automatically"
                 Write-Host "2. Specify custom ISO paths"
                 Write-Host "3. Continue without ISOs (deployment may fail)"
-                
+
                 $choice = Read-Host "Select option (1-3)"
-                
+
                 switch ($choice) {
                     "1" {
                         $result.UserAction = "DownloadMissing"
@@ -166,7 +166,7 @@ function Initialize-DeploymentISOs {
                     }
                 }
             }
-            
+
             # Calculate summary
             $result.Summary = @{
                 TotalRequired = $result.Requirements.Count
@@ -176,16 +176,16 @@ function Initialize-DeploymentISOs {
                 EstimatedDownloadSize = "$([Math]::Round($result.TotalSizeRequired / 1GB, 2)) GB"
                 Ready = ($result.MissingISOs.Count -eq 0)
             }
-            
+
             # Log summary
             Write-CustomLog -Level 'INFO' -Message "ISO initialization complete: $($result.Summary.Existing)/$($result.Summary.TotalRequired) available"
-            
+
             if ($result.Summary.Missing -gt 0) {
                 Write-CustomLog -Level 'WARN' -Message "$($result.Summary.Missing) ISO(s) missing, estimated download: $($result.Summary.EstimatedDownloadSize)"
             }
-            
+
             return [PSCustomObject]$result
-            
+
         } catch {
             Write-CustomLog -Level 'ERROR' -Message "Failed to initialize deployment ISOs: $($_.Exception.Message)"
             throw
@@ -199,7 +199,7 @@ function Process-ISORequirement {
         [string]$Repository,
         [switch]$UpdateCheck
     )
-    
+
     $processed = @{
         Name = $Requirement.name
         Type = if ($Requirement.type) { $Requirement.type } else { $Requirement.name }
@@ -212,16 +212,16 @@ function Process-ISORequirement {
         AvailableVersion = $null
         EstimatedSize = 5GB  # Default estimate
     }
-    
+
     # Determine expected ISO filename
     $isoFileName = Get-ExpectedISOFileName -Name $processed.Type -Customization $processed.Customization
     $isoPath = Join-Path $Repository $isoFileName
-    
+
     # Check if ISO exists
     if (Test-Path $isoPath) {
         $processed.Exists = $true
         $processed.Path = $isoPath
-        
+
         # Get ISO info if ISOManager available
         if ($script:isoManagerAvailable -and (Get-Command -Name 'Get-ISOInventory' -ErrorAction SilentlyContinue)) {
             try {
@@ -239,7 +239,7 @@ function Process-ISORequirement {
             $processed.Size = $fileInfo.Length
         }
     }
-    
+
     # Check for updates if requested
     if ($UpdateCheck -and $processed.Exists) {
         if ($script:isoManagerAvailable -and (Get-Command -Name 'Test-ISOUpdate' -ErrorAction SilentlyContinue)) {
@@ -254,7 +254,7 @@ function Process-ISORequirement {
             }
         }
     }
-    
+
     # Set estimated size based on ISO type
     if (-not $processed.Exists) {
         $processed.EstimatedSize = switch -Regex ($processed.Type) {
@@ -268,7 +268,7 @@ function Process-ISORequirement {
             default { 5GB }
         }
     }
-    
+
     return $processed
 }
 
@@ -277,7 +277,7 @@ function Get-ExpectedISOFileName {
         [string]$Name,
         [string]$Customization
     )
-    
+
     # Generate expected ISO filename
     $baseFileName = switch -Regex ($Name) {
         'WindowsServer2025' { 'WindowsServer2025_x64' }
@@ -287,7 +287,7 @@ function Get-ExpectedISOFileName {
         'Windows10' { 'Windows10_x64' }
         default { $Name }
     }
-    
+
     if ($Customization) {
         return "${baseFileName}_${Customization}.iso"
     } else {

@@ -2,23 +2,23 @@ function New-StatusFile {
     <#
     .SYNOPSIS
         Creates or updates a PSScriptAnalyzer status file for a directory
-    
+
     .DESCRIPTION
         Creates a JSON status file that tracks PSScriptAnalyzer analysis results,
         configuration used, and metadata for a specific directory
-    
+
     .PARAMETER Path
         Directory path to create status file for
-    
+
     .PARAMETER AnalysisResults
         PSScriptAnalyzer results to include in status
-    
+
     .PARAMETER Configuration
         Configuration used for analysis
-    
+
     .PARAMETER Force
         Overwrite existing status file
-    
+
     .EXAMPLE
         New-StatusFile -Path "./aither-core/modules/PatchManager" -AnalysisResults $results -Configuration $config
     #>
@@ -26,21 +26,21 @@ function New-StatusFile {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Path,
-        
+
         [Parameter(Mandatory = $false)]
         [array]$AnalysisResults = @(),
-        
+
         [Parameter(Mandatory = $false)]
         [hashtable]$Configuration = @{},
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$Force
     )
-    
+
     try {
         $resolvedPath = Resolve-Path $Path -ErrorAction Stop
         $statusFilePath = Join-Path $resolvedPath $script:DefaultSettings.StatusFileName
-        
+
         # Check if file exists and Force not specified
         if ((Test-Path $statusFilePath) -and -not $Force) {
             if ($script:UseCustomLogging) {
@@ -48,7 +48,7 @@ function New-StatusFile {
             }
             return $false
         }
-        
+
         # Analyze results if provided
         $findings = @{
             errors = 0
@@ -56,34 +56,34 @@ function New-StatusFile {
             information = 0
             total = 0
         }
-        
+
         $ruleFindings = @{}
         $fileFindings = @{}
-        
+
         if ($AnalysisResults -and $AnalysisResults.Count -gt 0) {
             foreach ($result in $AnalysisResults) {
                 $findings.total++
-                
+
                 switch ($result.Severity) {
                     'Error' { $findings.errors++ }
                     'Warning' { $findings.warnings++ }
                     'Information' { $findings.information++ }
                 }
-                
+
                 # Track by rule
                 if ($ruleFindings.ContainsKey($result.RuleName)) {
                     $ruleFindings[$result.RuleName]++
                 } else {
                     $ruleFindings[$result.RuleName] = 1
                 }
-                
+
                 # Track by file
-                $fileName = if ($result.ScriptPath) { 
-                    Split-Path $result.ScriptPath -Leaf 
-                } else { 
-                    'Unknown' 
+                $fileName = if ($result.ScriptPath) {
+                    Split-Path $result.ScriptPath -Leaf
+                } else {
+                    'Unknown'
                 }
-                
+
                 if ($fileFindings.ContainsKey($fileName)) {
                     $fileFindings[$fileName]++
                 } else {
@@ -91,7 +91,7 @@ function New-StatusFile {
                 }
             }
         }
-        
+
         # Determine overall status
         $status = if ($findings.errors -gt 0) {
             'critical'
@@ -104,7 +104,7 @@ function New-StatusFile {
         } else {
             'good'
         }
-        
+
         # Get PowerShell files in directory
         $psFiles = Get-ChildItem -Path $resolvedPath -Include *.ps1,*.psm1,*.psd1 -Recurse -ErrorAction SilentlyContinue
         $totalFiles = $psFiles.Count
@@ -113,7 +113,7 @@ function New-StatusFile {
         } else {
             0
         }
-        
+
         # Create status object
         $statusObject = [PSCustomObject]@{
             directory = $resolvedPath.Path
@@ -138,20 +138,20 @@ function New-StatusFile {
                 analysisEngine = 'PSScriptAnalyzer'
             }
         }
-        
+
         # Write status file
         $statusJson = $statusObject | ConvertTo-Json -Depth 10 -Compress:$false
         Set-Content -Path $statusFilePath -Value $statusJson -Encoding UTF8
-        
+
         if ($script:UseCustomLogging) {
             Write-CustomLog -Level 'INFO' -Message "Created status file: $statusFilePath (Status: $status, Score: $($statusObject.qualityScore))"
         }
-        
+
         return $true
     }
     catch {
         if ($script:UseCustomLogging) {
-            Write-CustomLog -Level 'ERROR' -Message "Failed to create status file for $Path: $($_.Exception.Message)"
+            Write-CustomLog -Level 'ERROR' -Message "Failed to create status file for ${Path}: $($_.Exception.Message)"
         }
         throw
     }

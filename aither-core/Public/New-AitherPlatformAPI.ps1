@@ -25,11 +25,11 @@ function New-AitherPlatformAPI {
         [Parameter(Mandatory = $true)]
         [ValidateSet('Minimal', 'Standard', 'Full')]
         [string]$Profile,
-        
+
         [Parameter()]
         [string]$Environment = 'default'
     )
-    
+
     process {
         try {
             # Create the main platform API object
@@ -39,10 +39,10 @@ function New-AitherPlatformAPI {
                 Environment = $Environment
                 InitializedAt = Get-Date
                 Version = "2.0.0"
-                
+
                 # Lab automation and orchestration
                 Lab = [PSCustomObject]@{
-                    Execute = { 
+                    Execute = {
                         param($Operation, $Parameters = @{})
                         if (Get-Module LabRunner -ErrorAction SilentlyContinue) {
                             Invoke-LabOperation -Operation $Operation -Parameters $Parameters
@@ -50,21 +50,21 @@ function New-AitherPlatformAPI {
                             throw "LabRunner module not available. Initialize with Standard or Full profile."
                         }
                     }
-                    Status = { 
+                    Status = {
                         if (Get-Module LabRunner -ErrorAction SilentlyContinue) {
                             Get-LabStatus
                         } else {
                             @{ Status = "LabRunner not loaded"; Available = $false }
                         }
                     }
-                    Scripts = { 
+                    Scripts = {
                         if (Get-Module LabRunner -ErrorAction SilentlyContinue) {
                             Get-LabScripts
                         } else {
                             @()
                         }
                     }
-                    Deploy = { 
+                    Deploy = {
                         param($ConfigPath)
                         if (Get-Module LabRunner -ErrorAction SilentlyContinue) {
                             Start-LabAutomation -ConfigPath $ConfigPath
@@ -81,10 +81,10 @@ function New-AitherPlatformAPI {
                         }
                     }
                 }
-                
+
                 # Configuration management (unified)
                 Configuration = [PSCustomObject]@{
-                    Get = { 
+                    Get = {
                         param($ModuleName, $Key = $null)
                         if (Get-Module ConfigurationCore -ErrorAction SilentlyContinue) {
                             if ($Key) {
@@ -96,7 +96,7 @@ function New-AitherPlatformAPI {
                             throw "ConfigurationCore module not available"
                         }
                     }
-                    Set = { 
+                    Set = {
                         param($ModuleName, $Key, $Value)
                         if (Get-Module ConfigurationCore -ErrorAction SilentlyContinue) {
                             Set-ModuleConfiguration -ModuleName $ModuleName -Key $Key -Value $Value
@@ -104,7 +104,7 @@ function New-AitherPlatformAPI {
                             throw "ConfigurationCore module not available"
                         }
                     }
-                    Switch = { 
+                    Switch = {
                         param($Environment)
                         if (Get-Module ConfigurationCarousel -ErrorAction SilentlyContinue) {
                             Switch-ConfigurationSet -Environment $Environment
@@ -134,10 +134,10 @@ function New-AitherPlatformAPI {
                         }
                     }
                 }
-                
+
                 # Orchestration and workflows
                 Orchestration = [PSCustomObject]@{
-                    RunPlaybook = { 
+                    RunPlaybook = {
                         param($PlaybookName, $Parameters = @{})
                         if (Get-Module OrchestrationEngine -ErrorAction SilentlyContinue) {
                             Invoke-PlaybookWorkflow -PlaybookName $PlaybookName -Parameters $Parameters
@@ -145,14 +145,14 @@ function New-AitherPlatformAPI {
                             throw "OrchestrationEngine module not available"
                         }
                     }
-                    GetStatus = { 
+                    GetStatus = {
                         if (Get-Module OrchestrationEngine -ErrorAction SilentlyContinue) {
                             Get-PlaybookStatus
                         } else {
                             @{ Status = "OrchestrationEngine not loaded" }
                         }
                     }
-                    StopWorkflow = { 
+                    StopWorkflow = {
                         param($WorkflowId)
                         if (Get-Module OrchestrationEngine -ErrorAction SilentlyContinue) {
                             Stop-PlaybookWorkflow -WorkflowId $WorkflowId
@@ -160,7 +160,7 @@ function New-AitherPlatformAPI {
                             throw "OrchestrationEngine module not available"
                         }
                     }
-                    ListPlaybooks = { 
+                    ListPlaybooks = {
                         if (Get-Module OrchestrationEngine -ErrorAction SilentlyContinue) {
                             Get-AvailablePlaybooks
                         } else {
@@ -168,10 +168,10 @@ function New-AitherPlatformAPI {
                         }
                     }
                 }
-                
+
                 # Development and patch management
                 Patch = [PSCustomObject]@{
-                    Create = { 
+                    Create = {
                         param($Description, $Operation, [switch]$CreatePR)
                         if (Get-Module PatchManager -ErrorAction SilentlyContinue) {
                             Invoke-PatchWorkflow -PatchDescription $Description -PatchOperation $Operation -CreatePR:$CreatePR
@@ -179,7 +179,7 @@ function New-AitherPlatformAPI {
                             throw "PatchManager module not available. Use Full profile for development tools."
                         }
                     }
-                    Rollback = { 
+                    Rollback = {
                         param($Type = "LastCommit")
                         if (Get-Module PatchManager -ErrorAction SilentlyContinue) {
                             Invoke-PatchRollback -RollbackType $Type
@@ -195,7 +195,7 @@ function New-AitherPlatformAPI {
                             throw "PatchManager module not available"
                         }
                     }
-                    Status = { 
+                    Status = {
                         if (Get-Module PatchManager -ErrorAction SilentlyContinue) {
                             Get-PatchStatus
                         } else {
@@ -203,10 +203,10 @@ function New-AitherPlatformAPI {
                         }
                     }
                 }
-                
+
                 # Testing framework
                 Testing = [PSCustomObject]@{
-                    Run = { 
+                    Run = {
                         param($ValidationLevel = "Standard")
                         if (Get-Module TestingFramework -ErrorAction SilentlyContinue) {
                             ./tests/Run-BulletproofValidation.ps1 -ValidationLevel $ValidationLevel
@@ -214,7 +214,7 @@ function New-AitherPlatformAPI {
                             throw "TestingFramework module not available"
                         }
                     }
-                    Module = { 
+                    Module = {
                         param($ModuleName)
                         if (Get-Module TestingFramework -ErrorAction SilentlyContinue) {
                             ./tests/Invoke-DynamicTests.ps1 -ModuleName $ModuleName
@@ -222,14 +222,14 @@ function New-AitherPlatformAPI {
                             throw "TestingFramework module not available"
                         }
                     }
-                    Coverage = { 
+                    Coverage = {
                         if (Get-Module TestingFramework -ErrorAction SilentlyContinue) {
                             ./tests/Run-CodeCoverage.ps1
                         } else {
                             throw "TestingFramework module not available"
                         }
                     }
-                    Performance = { 
+                    Performance = {
                         ./Test-PerformanceMonitoring.ps1
                     }
                     Quick = {
@@ -240,10 +240,10 @@ function New-AitherPlatformAPI {
                         }
                     }
                 }
-                
+
                 # Infrastructure deployment
                 Infrastructure = [PSCustomObject]@{
-                    Deploy = { 
+                    Deploy = {
                         param($TemplatePath, $Parameters = @{})
                         if (Get-Module OpenTofuProvider -ErrorAction SilentlyContinue) {
                             Invoke-OpenTofuDeployment -TemplatePath $TemplatePath -Parameters $Parameters
@@ -251,7 +251,7 @@ function New-AitherPlatformAPI {
                             throw "OpenTofuProvider module not available"
                         }
                     }
-                    Plan = { 
+                    Plan = {
                         param($TemplatePath)
                         if (Get-Module OpenTofuProvider -ErrorAction SilentlyContinue) {
                             Get-OpenTofuPlan -TemplatePath $TemplatePath
@@ -259,7 +259,7 @@ function New-AitherPlatformAPI {
                             throw "OpenTofuProvider module not available"
                         }
                     }
-                    Destroy = { 
+                    Destroy = {
                         param($TemplatePath)
                         if (Get-Module OpenTofuProvider -ErrorAction SilentlyContinue) {
                             Remove-OpenTofuDeployment -TemplatePath $TemplatePath
@@ -267,7 +267,7 @@ function New-AitherPlatformAPI {
                             throw "OpenTofuProvider module not available"
                         }
                     }
-                    Status = { 
+                    Status = {
                         if (Get-Module OpenTofuProvider -ErrorAction SilentlyContinue) {
                             Get-InfrastructureStatus
                         } else {
@@ -275,10 +275,10 @@ function New-AitherPlatformAPI {
                         }
                     }
                 }
-                
+
                 # ISO management
                 ISO = [PSCustomObject]@{
-                    Download = { 
+                    Download = {
                         param($ISOName, $Destination = $null)
                         if (Get-Module ISOManager -ErrorAction SilentlyContinue) {
                             Get-ISODownload -ISOName $ISOName -Destination $Destination
@@ -286,22 +286,22 @@ function New-AitherPlatformAPI {
                             throw "ISOManager module not available"
                         }
                     }
-                    Customize = { 
+                    Customize = {
                         param($SourceISO, $CustomizationProfile)
-                        if (Get-Module ISOCustomizer -ErrorAction SilentlyContinue) {
+                        if (Get-Module ISOManager -ErrorAction SilentlyContinue) {
                             New-CustomISO -SourceISO $SourceISO -Profile $CustomizationProfile
                         } else {
-                            throw "ISOCustomizer module not available"
+                            throw "ISOManager module not available"
                         }
                     }
-                    Inventory = { 
+                    Inventory = {
                         if (Get-Module ISOManager -ErrorAction SilentlyContinue) {
                             Get-ISOInventory
                         } else {
                             @()
                         }
                     }
-                    Repository = { 
+                    Repository = {
                         param($Path)
                         if (Get-Module ISOManager -ErrorAction SilentlyContinue) {
                             New-ISORepository -RepositoryPath $Path
@@ -310,10 +310,10 @@ function New-AitherPlatformAPI {
                         }
                     }
                 }
-                
+
                 # Backup and maintenance
                 Maintenance = [PSCustomObject]@{
-                    Backup = { 
+                    Backup = {
                         param($Mode = "Standard")
                         if (Get-Module BackupManager -ErrorAction SilentlyContinue) {
                             Start-BackupOperation -Mode $Mode
@@ -321,7 +321,7 @@ function New-AitherPlatformAPI {
                             throw "BackupManager module not available"
                         }
                     }
-                    Clean = { 
+                    Clean = {
                         if (Get-Module BackupManager -ErrorAction SilentlyContinue) {
                             Remove-OldBackups
                         } else {
@@ -329,15 +329,15 @@ function New-AitherPlatformAPI {
                         }
                     }
                     Health = { Test-CoreApplicationHealth }
-                    Unified = { 
+                    Unified = {
                         param($Mode = "Quick")
                         Invoke-UnifiedMaintenance -Mode $Mode
                     }
                 }
-                
+
                 # Progress tracking
                 Progress = [PSCustomObject]@{
-                    Start = { 
+                    Start = {
                         param($OperationName, $TotalSteps)
                         if (Get-Module ProgressTracking -ErrorAction SilentlyContinue) {
                             Start-ProgressOperation -OperationName $OperationName -TotalSteps $TotalSteps
@@ -345,7 +345,7 @@ function New-AitherPlatformAPI {
                             throw "ProgressTracking module not available"
                         }
                     }
-                    Update = { 
+                    Update = {
                         param($OperationId, $StepName)
                         if (Get-Module ProgressTracking -ErrorAction SilentlyContinue) {
                             Update-ProgressOperation -OperationId $OperationId -StepName $StepName
@@ -353,7 +353,7 @@ function New-AitherPlatformAPI {
                             throw "ProgressTracking module not available"
                         }
                     }
-                    Complete = { 
+                    Complete = {
                         param($OperationId)
                         if (Get-Module ProgressTracking -ErrorAction SilentlyContinue) {
                             Complete-ProgressOperation -OperationId $OperationId
@@ -370,7 +370,7 @@ function New-AitherPlatformAPI {
                         }
                     }
                 }
-                
+
                 # Platform management and status
                 Platform = [PSCustomObject]@{
                     Status = { Get-PlatformStatus }
@@ -383,10 +383,10 @@ function New-AitherPlatformAPI {
                         Initialize-CoreApplication -Force:$Force
                     }
                 }
-                
+
                 # Communication and events
                 Communication = [PSCustomObject]@{
-                    Publish = { 
+                    Publish = {
                         param($Channel, $Event, $Data)
                         if (Get-Module ModuleCommunication -ErrorAction SilentlyContinue) {
                             Publish-ModuleEvent -Channel $Channel -Event $Event -Data $Data
@@ -395,7 +395,7 @@ function New-AitherPlatformAPI {
                             Publish-TestEvent -EventName $Event -EventData $Data
                         }
                     }
-                    Subscribe = { 
+                    Subscribe = {
                         param($Channel, $EventPattern, $Handler)
                         if (Get-Module ModuleCommunication -ErrorAction SilentlyContinue) {
                             Subscribe-ModuleEvent -Channel $Channel -EventPattern $EventPattern -Handler $Handler
@@ -404,7 +404,7 @@ function New-AitherPlatformAPI {
                             Subscribe-TestEvent -EventName $EventPattern -Action $Handler
                         }
                     }
-                    API = { 
+                    API = {
                         param($Module, $Operation, $Parameters)
                         if (Get-Module ModuleCommunication -ErrorAction SilentlyContinue) {
                             Invoke-ModuleAPI -Module $Module -Operation $Operation -Parameters $Parameters
@@ -413,45 +413,45 @@ function New-AitherPlatformAPI {
                         }
                     }
                 }
-                
+
                 # Quick actions for common tasks
                 Quick = [PSCustomObject]@{
-                    CreateISO = { 
+                    CreateISO = {
                         param($ISOName = "Windows11")
                         Start-QuickAction -Action "CreateISO" -Parameters @{ ISOName = $ISOName }
                     }
-                    RunTests = { 
+                    RunTests = {
                         param($Level = "Standard")
                         Start-QuickAction -Action "RunTests" -Parameters @{ ValidationLevel = $Level }
                     }
-                    LabSetup = { 
+                    LabSetup = {
                         param($Parameters = @{})
                         Start-QuickAction -Action "LabSetup" -Parameters $Parameters
                     }
                     SystemHealth = { Start-QuickAction -Action "SystemHealth" }
                     ModuleStatus = { Start-QuickAction -Action "ModuleStatus" }
                 }
-                
+
                 # Integrated workflows
                 Workflows = [PSCustomObject]@{
-                    ISO = { 
+                    ISO = {
                         param($Parameters = @{})
                         Invoke-IntegratedWorkflow -WorkflowType "ISOWorkflow" -Parameters $Parameters
                     }
-                    Development = { 
+                    Development = {
                         param($Parameters = @{})
                         Invoke-IntegratedWorkflow -WorkflowType "DevelopmentWorkflow" -Parameters $Parameters
                     }
-                    Lab = { 
+                    Lab = {
                         param($Parameters = @{})
                         Invoke-IntegratedWorkflow -WorkflowType "LabDeployment" -Parameters $Parameters
                     }
-                    Maintenance = { 
+                    Maintenance = {
                         param($Parameters = @{})
                         Invoke-IntegratedWorkflow -WorkflowType "MaintenanceOperations" -Parameters $Parameters
                     }
                 }
-                
+
                 # Security and credentials
                 Security = [PSCustomObject]@{
                     GetCredential = {
@@ -479,7 +479,7 @@ function New-AitherPlatformAPI {
                         }
                     }
                 }
-                
+
                 # Remote connections
                 Remote = [PSCustomObject]@{
                     Connect = {
@@ -508,14 +508,14 @@ function New-AitherPlatformAPI {
                     }
                 }
             }
-            
+
             # Add TypeName for better object identification
             $platform.PSObject.TypeNames.Insert(0, 'AitherZero.PlatformAPI')
-            
+
             Write-CustomLog -Message "✅ Platform API gateway created with $($platform.PSObject.Properties.Count) service categories" -Level "SUCCESS"
-            
+
             return $platform
-            
+
         } catch {
             Write-CustomLog -Message "❌ Failed to create platform API: $($_.Exception.Message)" -Level "ERROR"
             throw

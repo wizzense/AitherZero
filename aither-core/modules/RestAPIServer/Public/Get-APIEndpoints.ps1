@@ -35,14 +35,14 @@ function Get-APIEndpoints {
     param(
         [Parameter()]
         [string]$Path,
-        
+
         [Parameter()]
         [ValidateSet('GET', 'POST', 'PUT', 'DELETE', 'PATCH')]
         [string]$Method,
-        
+
         [Parameter()]
         [switch]$IncludeBuiltIn,
-        
+
         [Parameter()]
         [ValidateSet('Table', 'List', 'JSON')]
         [string]$Format = 'Table'
@@ -55,20 +55,20 @@ function Get-APIEndpoints {
     process {
         try {
             $endpoints = @()
-            
+
             # Get registered endpoints
             foreach ($endpointPath in $script:RegisteredEndpoints.Keys) {
                 $endpoint = $script:RegisteredEndpoints[$endpointPath]
-                
+
                 # Apply filters
                 if ($Path -and $endpointPath -notlike $Path) {
                     continue
                 }
-                
+
                 if ($Method -and $endpoint.Method -ne $Method) {
                     continue
                 }
-                
+
                 $endpoints += @{
                     Path = $endpointPath
                     Method = $endpoint.Method
@@ -84,7 +84,7 @@ function Get-APIEndpoints {
                     Type = 'Custom'
                 }
             }
-            
+
             # Add built-in endpoints if requested
             if ($IncludeBuiltIn) {
                 $builtInEndpoints = @(
@@ -131,24 +131,24 @@ function Get-APIEndpoints {
                         Type = 'Built-In'
                     }
                 )
-                
+
                 foreach ($builtIn in $builtInEndpoints) {
                     # Apply filters
                     if ($Path -and $builtIn.Path -notlike $Path) {
                         continue
                     }
-                    
+
                     if ($Method -and $builtIn.Method -ne $Method) {
                         continue
                     }
-                    
+
                     $endpoints += $builtIn
                 }
             }
-            
+
             # Sort endpoints by path
             $endpoints = $endpoints | Sort-Object Path
-            
+
             # Format output
             switch ($Format) {
                 'JSON' {
@@ -161,7 +161,7 @@ function Get-APIEndpoints {
                     return $endpoints | Format-Table -Property Path, Method, Description, Authentication, Type -AutoSize
                 }
             }
-            
+
         } catch {
             $errorMessage = "Failed to retrieve API endpoints: $($_.Exception.Message)"
             Write-CustomLog -Message $errorMessage -Level "ERROR"

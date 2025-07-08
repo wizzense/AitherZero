@@ -7,15 +7,15 @@ function Initialize-AWSProvider {
         Initializes the AWS provider with specified configuration.
     #>
     param([hashtable]$Configuration)
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Initializing AWS provider"
-        
+
         # Check if AWS Tools module is available
         if (-not (Get-Module -ListAvailable -Name AWS.Tools.Common)) {
             throw "AWS Tools for PowerShell is not installed"
         }
-        
+
         # Import required modules
         $requiredModules = @('AWS.Tools.Common', 'AWS.Tools.EC2', 'AWS.Tools.S3', 'AWS.Tools.IAM')
         foreach ($module in $requiredModules) {
@@ -23,7 +23,7 @@ function Initialize-AWSProvider {
                 Import-Module $module -Force -ErrorAction Stop
             }
         }
-        
+
         # Test AWS connectivity and credentials
         try {
             $identity = Get-STSCallerIdentity -ErrorAction Stop
@@ -32,13 +32,13 @@ function Initialize-AWSProvider {
             Write-CustomLog -Level 'WARN' -Message "AWS credentials not configured or invalid"
             return @{ Success = $false; Error = "AWS authentication required" }
         }
-        
+
         # Set default region if specified
         if ($Configuration.Region) {
             Set-DefaultAWSRegion -Region $Configuration.Region
             Write-CustomLog -Level 'INFO' -Message "Set default AWS region to: $($Configuration.Region)"
         }
-        
+
         # Validate region
         if ($Configuration.Region) {
             $regions = Get-EC2Region
@@ -46,10 +46,10 @@ function Initialize-AWSProvider {
                 throw "Invalid AWS region: $($Configuration.Region)"
             }
         }
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "AWS provider initialized successfully"
         return @{ Success = $true }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to initialize AWS provider: $($_.Exception.Message)"
         return @{ Success = $false; Error = $_.Exception.Message }
@@ -62,13 +62,13 @@ function Test-AWSConfiguration {
         Validates AWS provider configuration.
     #>
     param([hashtable]$Configuration)
-    
+
     $result = @{
         IsValid = $true
         Errors = @()
         Warnings = @()
     }
-    
+
     try {
         # Validate region
         if (-not $Configuration.Region) {
@@ -80,24 +80,24 @@ function Test-AWSConfiguration {
                 $result.Warnings += "Region '$($Configuration.Region)' may not be a standard AWS region"
             }
         }
-        
+
         # Check authentication
         try {
             Get-STSCallerIdentity -ErrorAction Stop | Out-Null
         } catch {
             $result.Warnings += "AWS credentials not configured or invalid"
         }
-        
+
         # Validate provider string
         if ($Configuration.Provider -and $Configuration.Provider -ne 'aws') {
             $result.Warnings += "Provider string '$($Configuration.Provider)' may not be compatible with AWS"
         }
-        
+
     } catch {
         $result.IsValid = $false
         $result.Errors += "Configuration validation failed: $($_.Exception.Message)"
     }
-    
+
     return $result
 }
 
@@ -110,15 +110,15 @@ function ConvertTo-AWSResource {
         [PSCustomObject]$Resource,
         [hashtable]$Configuration
     )
-    
+
     try {
         Write-CustomLog -Level 'DEBUG' -Message "Translating resource: $($Resource.Type)"
-        
+
         $awsResource = @{
             provider = 'aws'
             source = 'hashicorp/aws'
         }
-        
+
         switch ($Resource.Type) {
             'virtual_machine' {
                 $awsResource.type = 'aws_instance'
@@ -126,7 +126,7 @@ function ConvertTo-AWSResource {
                     ami = $Resource.Properties.ami -or 'ami-0c55b159cbfafe1d0'  # Default Amazon Linux 2
                     instance_type = $Resource.Properties.instance_type -or 't2.micro'
                 }
-                
+
                 # Add optional properties
                 if ($Resource.Properties.key_name) {
                     $awsResource.config.key_name = $Resource.Properties.key_name
@@ -140,7 +140,7 @@ function ConvertTo-AWSResource {
                 if ($Resource.Properties.user_data) {
                     $awsResource.config.user_data = $Resource.Properties.user_data
                 }
-                
+
                 # Tags
                 $awsResource.config.tags = @{
                     Name = $Resource.Properties.name
@@ -151,7 +151,7 @@ function ConvertTo-AWSResource {
                     }
                 }
             }
-            
+
             'network' {
                 $awsResource.type = 'aws_vpc'
                 $awsResource.config = @{
@@ -163,7 +163,7 @@ function ConvertTo-AWSResource {
                     }
                 }
             }
-            
+
             'subnet' {
                 $awsResource.type = 'aws_subnet'
                 $awsResource.config = @{
@@ -174,12 +174,12 @@ function ConvertTo-AWSResource {
                         Name = $Resource.Properties.name
                     }
                 }
-                
+
                 if ($Resource.Properties.public_subnet) {
                     $awsResource.config.map_public_ip_on_launch = $true
                 }
             }
-            
+
             'security_group' {
                 $awsResource.type = 'aws_security_group'
                 $awsResource.config = @{
@@ -187,7 +187,7 @@ function ConvertTo-AWSResource {
                     description = $Resource.Properties.description -or "Security group for $($Resource.Properties.name)"
                     vpc_id = $Resource.Properties.vpc_id
                 }
-                
+
                 # Ingress rules
                 if ($Resource.Properties.ingress_rules) {
                     $awsResource.config.ingress = $Resource.Properties.ingress_rules
@@ -202,7 +202,7 @@ function ConvertTo-AWSResource {
                         }
                     )
                 }
-                
+
                 # Egress rules
                 if ($Resource.Properties.egress_rules) {
                     $awsResource.config.egress = $Resource.Properties.egress_rules
@@ -218,20 +218,20 @@ function ConvertTo-AWSResource {
                     )
                 }
             }
-            
+
             'storage' {
                 $awsResource.type = 'aws_s3_bucket'
                 $awsResource.config = @{
                     bucket = $Resource.Properties.name
                 }
-                
+
                 if ($Resource.Properties.versioning) {
                     $awsResource.config.versioning = @{
                         enabled = $Resource.Properties.versioning
                     }
                 }
             }
-            
+
             'load_balancer' {
                 $awsResource.type = 'aws_lb'
                 $awsResource.config = @{
@@ -240,19 +240,19 @@ function ConvertTo-AWSResource {
                     subnets = $Resource.Properties.subnets
                     security_groups = $Resource.Properties.security_groups
                 }
-                
+
                 if ($Resource.Properties.internal) {
                     $awsResource.config.internal = $true
                 }
             }
-            
+
             default {
                 throw "Unsupported resource type for AWS: $($Resource.Type)"
             }
         }
-        
+
         return $awsResource
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to translate resource: $($_.Exception.Message)"
         throw
@@ -269,15 +269,15 @@ function Test-AWSReadiness {
         if (-not (Get-Module -ListAvailable -Name AWS.Tools.Common)) {
             return $false
         }
-        
+
         # Import core module
         Import-Module AWS.Tools.Common -ErrorAction Stop
-        
+
         # Test AWS connectivity
         Get-STSCallerIdentity -ErrorAction Stop | Out-Null
-        
+
         return $true
-        
+
     } catch {
         Write-CustomLog -Level 'DEBUG' -Message "AWS readiness check failed: $_"
         return $false
@@ -297,7 +297,7 @@ function Get-AWSResourceTypes {
             OptionalProperties = @('ami', 'instance_type', 'key_name', 'security_groups', 'subnet_id', 'user_data', 'tags')
             AWSType = 'aws_instance'
         }
-        
+
         'network' = @{
             Name = 'VPC'
             Description = 'Amazon Virtual Private Cloud'
@@ -305,7 +305,7 @@ function Get-AWSResourceTypes {
             OptionalProperties = @('cidr_block')
             AWSType = 'aws_vpc'
         }
-        
+
         'subnet' = @{
             Name = 'Subnet'
             Description = 'VPC subnet'
@@ -313,7 +313,7 @@ function Get-AWSResourceTypes {
             OptionalProperties = @('cidr_block', 'public_subnet')
             AWSType = 'aws_subnet'
         }
-        
+
         'security_group' = @{
             Name = 'Security Group'
             Description = 'Network security group'
@@ -321,7 +321,7 @@ function Get-AWSResourceTypes {
             OptionalProperties = @('description', 'ingress_rules', 'egress_rules')
             AWSType = 'aws_security_group'
         }
-        
+
         'storage' = @{
             Name = 'S3 Bucket'
             Description = 'Amazon S3 storage bucket'
@@ -329,7 +329,7 @@ function Get-AWSResourceTypes {
             OptionalProperties = @('versioning')
             AWSType = 'aws_s3_bucket'
         }
-        
+
         'load_balancer' = @{
             Name = 'Load Balancer'
             Description = 'Application/Network Load Balancer'
@@ -346,28 +346,28 @@ function Test-AWSCredentials {
         Tests AWS credentials.
     #>
     param([PSCredential]$Credential)
-    
+
     try {
         # Test with current AWS credentials
         $identity = Get-STSCallerIdentity -ErrorAction Stop
-        
+
         # Check basic permissions
         try {
             Get-EC2Region -ErrorAction Stop | Out-Null
         } catch {
-            return @{ 
+            return @{
                 IsValid = $false
                 Error = "AWS credentials lack required EC2 permissions"
             }
         }
-        
-        return @{ 
+
+        return @{
             IsValid = $true
             Identity = $identity.Arn
         }
-        
+
     } catch {
-        return @{ 
+        return @{
             IsValid = $false
             Error = "AWS credential validation failed: $($_.Exception.Message)"
         }
@@ -382,22 +382,22 @@ function Get-AWSProviderInfo {
     try {
         $identity = Get-STSCallerIdentity
         $region = Get-DefaultAWSRegion
-        
+
         $info = @{
             Authentication = @{
                 Account = $identity.Account
                 UserId = $identity.UserId
                 Arn = $identity.Arn
             }
-            
+
             Region = @{
                 Current = $region.Region
                 Available = @()
             }
-            
+
             Services = @{}
         }
-        
+
         # Get available regions
         $regions = Get-EC2Region | Select-Object -First 10
         foreach ($region in $regions) {
@@ -406,7 +406,7 @@ function Get-AWSProviderInfo {
                 Endpoint = $region.Endpoint
             }
         }
-        
+
         # Get VPCs in current region
         try {
             $vpcs = Get-EC2Vpc
@@ -417,7 +417,7 @@ function Get-AWSProviderInfo {
         } catch {
             $info.Services.VPCs = @{ Error = "Could not retrieve VPC information" }
         }
-        
+
         # Get availability zones
         try {
             $azs = Get-EC2AvailabilityZone
@@ -425,9 +425,9 @@ function Get-AWSProviderInfo {
         } catch {
             $info.Services.AvailabilityZones = @()
         }
-        
+
         return $info
-        
+
     } catch {
         Write-CustomLog -Level 'WARN' -Message "Could not get AWS provider info: $_"
         return @{}

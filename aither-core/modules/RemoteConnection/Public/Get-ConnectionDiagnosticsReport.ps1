@@ -61,7 +61,7 @@ function Get-ConnectionDiagnosticsReport {
             }
 
             $config = $connectionConfig.Configuration
-            
+
             # Create report structure
             $report = @{
                 ConnectionName = $ConnectionName
@@ -139,13 +139,13 @@ function Get-ConnectionDiagnosticsReport {
             if ($basicDiagnostics.Recommendations) { $allRecommendations += $basicDiagnostics.Recommendations }
             if ($networkTests -and $networkTests.Recommendations) { $allRecommendations += $networkTests.Recommendations }
             if ($securityTests -and $securityTests.Recommendations) { $allRecommendations += $securityTests.Recommendations }
-            
+
             $report.Recommendations = $allRecommendations | Sort-Object -Unique
 
             # Generate summary
             $totalTests = 0
             $passedTests = 0
-            
+
             foreach ($category in $report.DiagnosticsResults.GetEnumerator()) {
                 if ($category.Value.TestResults) {
                     foreach ($test in $category.Value.TestResults.GetEnumerator()) {
@@ -160,14 +160,14 @@ function Get-ConnectionDiagnosticsReport {
                 PassedTests = $passedTests
                 FailedTests = $totalTests - $passedTests
                 SuccessRate = if ($totalTests -gt 0) { [math]::Round(($passedTests / $totalTests) * 100, 2) } else { 0 }
-                OverallHealth = if ($passedTests -eq $totalTests) { 
-                    "Healthy" 
-                } elseif ($passedTests -gt ($totalTests * 0.7)) { 
-                    "Mostly Healthy" 
-                } elseif ($passedTests -gt ($totalTests * 0.4)) { 
-                    "Partially Healthy" 
-                } else { 
-                    "Unhealthy" 
+                OverallHealth = if ($passedTests -eq $totalTests) {
+                    "Healthy"
+                } elseif ($passedTests -gt ($totalTests * 0.7)) {
+                    "Mostly Healthy"
+                } elseif ($passedTests -gt ($totalTests * 0.4)) {
+                    "Partially Healthy"
+                } else {
+                    "Unhealthy"
                 }
                 RecommendationCount = $report.Recommendations.Count
             }
@@ -197,12 +197,12 @@ function Get-ConnectionDiagnosticsReport {
 
 function Get-DetailedNetworkDiagnostics {
     param($ConnectionConfig)
-    
+
     $networkDiag = @{
         TestResults = @{}
         Recommendations = @()
     }
-    
+
     try {
         # Ping test
         if (Get-Command Test-Connection -ErrorAction SilentlyContinue) {
@@ -217,7 +217,7 @@ function Get-DetailedNetworkDiagnostics {
                 $networkDiag.Recommendations += "Ping test error: $($_.Exception.Message)"
             }
         }
-        
+
         # Traceroute (if available)
         if (Get-Command tracert -ErrorAction SilentlyContinue) {
             try {
@@ -228,13 +228,13 @@ function Get-DetailedNetworkDiagnostics {
                 $networkDiag.TestResults.TracerouteAvailable = $false
             }
         }
-        
+
         # Multiple port tests
         $portsToTest = @($ConnectionConfig.Port)
         if ($ConnectionConfig.EndpointType -eq 'SSH' -and $ConnectionConfig.Port -ne 22) {
             $portsToTest += 22  # Test default SSH port too
         }
-        
+
         foreach ($port in $portsToTest) {
             $portTest = Test-EndpointConnectivity -HostName $ConnectionConfig.HostName -Port $port -TimeoutSeconds 5
             $networkDiag.TestResults."Port$port" = $portTest
@@ -242,7 +242,7 @@ function Get-DetailedNetworkDiagnostics {
                 $networkDiag.Recommendations += "Port $port is not accessible. Check firewall and service configuration."
             }
         }
-        
+
         return $networkDiag
     } catch {
         $networkDiag.TestResults.Error = $_.Exception.Message
@@ -252,12 +252,12 @@ function Get-DetailedNetworkDiagnostics {
 
 function Get-SecurityDiagnostics {
     param($ConnectionConfig)
-    
+
     $securityDiag = @{
         TestResults = @{}
         Recommendations = @()
     }
-    
+
     try {
         # SSL/TLS tests
         if ($ConnectionConfig.EnableSSL -or $ConnectionConfig.EndpointType -in @('VMware', 'Kubernetes')) {
@@ -266,11 +266,11 @@ function Get-SecurityDiagnostics {
                 $tcpClient.Connect($ConnectionConfig.HostName, $ConnectionConfig.Port)
                 $sslStream = New-Object System.Net.Security.SslStream($tcpClient.GetStream())
                 $sslStream.AuthenticateAsClient($ConnectionConfig.HostName)
-                
+
                 $securityDiag.TestResults.SSLHandshake = $true
                 $securityDiag.TestResults.SSLProtocol = $sslStream.SslProtocol
                 $securityDiag.TestResults.CipherAlgorithm = $sslStream.CipherAlgorithm
-                
+
                 $sslStream.Close()
                 $tcpClient.Close()
             } catch {
@@ -278,7 +278,7 @@ function Get-SecurityDiagnostics {
                 $securityDiag.Recommendations += "SSL/TLS connection failed: $($_.Exception.Message)"
             }
         }
-        
+
         # Certificate validation
         if ($ConnectionConfig.EnableSSL) {
             try {
@@ -293,7 +293,7 @@ function Get-SecurityDiagnostics {
                 $securityDiag.Recommendations += "Certificate validation failed: $($_.Exception.Message)"
             }
         }
-        
+
         # Credential validation
         if ($ConnectionConfig.CredentialName) {
             try {
@@ -307,7 +307,7 @@ function Get-SecurityDiagnostics {
                 $securityDiag.Recommendations += "Unable to validate credential: $($_.Exception.Message)"
             }
         }
-        
+
         return $securityDiag
     } catch {
         $securityDiag.TestResults.Error = $_.Exception.Message

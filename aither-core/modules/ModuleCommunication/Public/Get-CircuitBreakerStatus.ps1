@@ -15,11 +15,11 @@ function Get-CircuitBreakerStatus {
     param(
         [Parameter()]
         [string]$OperationName,
-        
+
         [Parameter()]
         [switch]$IncludeHistory
     )
-    
+
     try {
         if (-not $script:CircuitBreakers) {
             return @{
@@ -32,7 +32,7 @@ function Get-CircuitBreakerStatus {
                 }
             }
         }
-        
+
         $result = @{
             Timestamp = Get-Date
             CircuitBreakers = @{}
@@ -43,12 +43,12 @@ function Get-CircuitBreakerStatus {
                 HalfOpenCircuits = 0
             }
         }
-        
+
         if ($OperationName) {
             # Get specific circuit breaker
             if ($script:CircuitBreakers.ContainsKey($OperationName)) {
                 $cb = $script:CircuitBreakers[$OperationName]
-                
+
                 $cbInfo = @{
                     OperationName = $OperationName
                     State = $cb.State
@@ -64,7 +64,7 @@ function Get-CircuitBreakerStatus {
                         [math]::Round(((Get-Date) - $cb.LastFailure).TotalSeconds, 2)
                     } else { $null }
                 }
-                
+
                 return $cbInfo
             } else {
                 throw "Circuit breaker not found for operation: $OperationName"
@@ -73,7 +73,7 @@ function Get-CircuitBreakerStatus {
             # Get all circuit breakers
             foreach ($opName in $script:CircuitBreakers.Keys) {
                 $cb = $script:CircuitBreakers[$opName]
-                
+
                 $cbInfo = @{
                     OperationName = $opName
                     State = $cb.State
@@ -89,9 +89,9 @@ function Get-CircuitBreakerStatus {
                         [math]::Round(((Get-Date) - $cb.LastFailure).TotalSeconds, 2)
                     } else { $null }
                 }
-                
+
                 $result.CircuitBreakers[$opName] = $cbInfo
-                
+
                 # Update summary
                 $result.Summary.TotalOperations++
                 switch ($cb.State) {
@@ -100,10 +100,10 @@ function Get-CircuitBreakerStatus {
                     'HalfOpen' { $result.Summary.HalfOpenCircuits++ }
                 }
             }
-            
+
             return $result
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to get circuit breaker status: $_"
         throw

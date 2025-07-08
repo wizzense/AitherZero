@@ -19,7 +19,7 @@
 
 .EXAMPLE
     Initialize-PlatformErrorHandling -ErrorHandlingLevel Advanced
-    
+
 .EXAMPLE
     Initialize-PlatformErrorHandling -ErrorHandlingLevel Standard -EnableDiagnostics
 
@@ -33,19 +33,19 @@ function Initialize-PlatformErrorHandling {
         [Parameter()]
         [ValidateSet('Basic', 'Standard', 'Advanced')]
         [string]$ErrorHandlingLevel = 'Standard',
-        
+
         [Parameter()]
         [switch]$EnableDiagnostics,
-        
+
         [Parameter()]
         [switch]$ErrorRecovery
     )
-    
+
     begin {
         Write-CustomLog -Message "=== Platform Error Handling Initialization ===" -Level "INFO"
         Write-CustomLog -Message "Error Handling Level: $ErrorHandlingLevel" -Level "INFO"
     }
-    
+
     process {
         try {
             # Initialize error handling system
@@ -63,35 +63,35 @@ function Initialize-PlatformErrorHandling {
                     UnrecoveredErrors = 0
                 }
             }
-            
+
             # 1. Set up global error handlers
             Write-CustomLog -Message "🛡️ Setting up global error handlers..." -Level "INFO"
             Initialize-GlobalErrorHandlers -Level $ErrorHandlingLevel
-            
+
             # 2. Initialize structured logging
             Write-CustomLog -Message "📝 Initializing structured logging..." -Level "INFO"
             Initialize-StructuredLogging -EnableDiagnostics:$EnableDiagnostics
-            
+
             # 3. Set up error recovery mechanisms
             if ($ErrorRecovery) {
                 Write-CustomLog -Message "🔄 Setting up error recovery..." -Level "INFO"
                 Initialize-ErrorRecovery
             }
-            
+
             # 4. Initialize diagnostic tools
             if ($EnableDiagnostics) {
                 Write-CustomLog -Message "🔍 Initializing diagnostic tools..." -Level "INFO"
                 Initialize-DiagnosticTools
             }
-            
+
             # 5. Set up error reporting
             Write-CustomLog -Message "📊 Setting up error reporting..." -Level "INFO"
             Initialize-ErrorReporting -Level $ErrorHandlingLevel
-            
+
             Write-CustomLog -Message "✅ Platform error handling initialized successfully" -Level "SUCCESS"
-            
+
             return $script:PlatformErrorHandling
-            
+
         } catch {
             Write-CustomLog -Message "❌ Failed to initialize error handling: $($_.Exception.Message)" -Level "ERROR"
             throw
@@ -106,7 +106,7 @@ function Initialize-GlobalErrorHandlers {
         [Parameter(Mandatory = $true)]
         [string]$Level
     )
-    
+
     process {
         # Set up PowerShell error handling based on level
         switch ($Level) {
@@ -124,7 +124,7 @@ function Initialize-GlobalErrorHandlers {
                 $WarningPreference = 'Continue'
                 $VerbosePreference = 'Continue'
                 $DebugPreference = 'Continue'
-                
+
                 # Set up trap for unhandled errors
                 $global:PlatformErrorTrap = {
                     param($ErrorRecord)
@@ -132,7 +132,7 @@ function Initialize-GlobalErrorHandlers {
                 }
             }
         }
-        
+
         Write-CustomLog -Message "Global error handlers configured for $Level level" -Level "DEBUG"
     }
 }
@@ -144,7 +144,7 @@ function Initialize-StructuredLogging {
         [Parameter()]
         [switch]$EnableDiagnostics
     )
-    
+
     process {
         if (-not (Get-Variable -Name "PlatformStructuredLogging" -Scope Script -ErrorAction SilentlyContinue)) {
             $script:PlatformStructuredLogging = @{
@@ -159,7 +159,7 @@ function Initialize-StructuredLogging {
                     Structured = { param($Entry) "$($Entry.Timestamp)|$($Entry.Level)|$($Entry.Component)|$($Entry.Message)|$($Entry.Context)" }
                 }
             }
-            
+
             Write-CustomLog -Message "Structured logging system initialized" -Level "DEBUG"
         }
     }
@@ -169,7 +169,7 @@ function Initialize-StructuredLogging {
 function Initialize-ErrorRecovery {
     [CmdletBinding()]
     param()
-    
+
     process {
         if (-not (Get-Variable -Name "PlatformErrorRecovery" -Scope Script -ErrorAction SilentlyContinue)) {
             $script:PlatformErrorRecovery = @{
@@ -178,7 +178,7 @@ function Initialize-ErrorRecovery {
                     ModuleLoadFailure = {
                         param($ModuleName, $Error)
                         Write-CustomLog -Message "Attempting module recovery for $ModuleName..." -Level "WARN"
-                        
+
                         # Try reloading the module
                         try {
                             Import-Module $ModuleName -Force -ErrorAction Stop
@@ -191,7 +191,7 @@ function Initialize-ErrorRecovery {
                     ConfigurationError = {
                         param($ConfigName, $Error)
                         Write-CustomLog -Message "Attempting configuration recovery for $ConfigName..." -Level "WARN"
-                        
+
                         # Try fallback configuration
                         try {
                             if (Get-Module ConfigurationCore -ErrorAction SilentlyContinue) {
@@ -206,7 +206,7 @@ function Initialize-ErrorRecovery {
                     APICallFailure = {
                         param($APIName, $Error, $RetryCount = 3)
                         Write-CustomLog -Message "Attempting API recovery for $APIName (retry $RetryCount)..." -Level "WARN"
-                        
+
                         if ($RetryCount -gt 0) {
                             Start-Sleep -Milliseconds 1000
                             return $RetryCount - 1
@@ -217,7 +217,7 @@ function Initialize-ErrorRecovery {
                 MaxRetries = 3
                 RetryDelays = @(1000, 2000, 5000)  # milliseconds
             }
-            
+
             Write-CustomLog -Message "Error recovery system initialized" -Level "DEBUG"
         }
     }
@@ -227,7 +227,7 @@ function Initialize-ErrorRecovery {
 function Initialize-DiagnosticTools {
     [CmdletBinding()]
     param()
-    
+
     process {
         if (-not (Get-Variable -Name "PlatformDiagnostics" -Scope Script -ErrorAction SilentlyContinue)) {
             $script:PlatformDiagnostics = @{
@@ -241,7 +241,7 @@ function Initialize-DiagnosticTools {
                 Traces = [System.Collections.ArrayList]::new()
                 MaxTraces = 500
             }
-            
+
             Write-CustomLog -Message "Diagnostic tools initialized" -Level "DEBUG"
         }
     }
@@ -254,7 +254,7 @@ function Initialize-ErrorReporting {
         [Parameter(Mandatory = $true)]
         [string]$Level
     )
-    
+
     process {
         if (-not (Get-Variable -Name "PlatformErrorReporting" -Scope Script -ErrorAction SilentlyContinue)) {
             $script:PlatformErrorReporting = @{
@@ -268,7 +268,7 @@ function Initialize-ErrorReporting {
                 }
                 AlertCallbacks = @()
             }
-            
+
             Write-CustomLog -Message "Error reporting configured for $Level level" -Level "DEBUG"
         }
     }
@@ -280,20 +280,20 @@ function Write-PlatformError {
     param(
         [Parameter(Mandatory = $true)]
         [System.Management.Automation.ErrorRecord]$ErrorRecord,
-        
+
         [Parameter()]
         [string]$Category = "General",
-        
+
         [Parameter()]
         [string]$Component = "Platform",
-        
+
         [Parameter()]
         [hashtable]$Context = @{},
-        
+
         [Parameter()]
         [switch]$AttemptRecovery
     )
-    
+
     process {
         try {
             # Create structured error entry
@@ -311,27 +311,27 @@ function Write-PlatformError {
                 RecoveryAttempted = $AttemptRecovery.IsPresent
                 RecoverySuccessful = $false
             }
-            
+
             # Add to error log
             if ($script:PlatformErrorHandling) {
                 $script:PlatformErrorHandling.ErrorLog += $errorEntry
                 $script:PlatformErrorHandling.Statistics.TotalErrors++
-                
+
                 if ($Category -eq "Critical") {
                     $script:PlatformErrorHandling.Statistics.CriticalErrors++
                 }
             }
-            
+
             # Add to structured logging
             if ($script:PlatformStructuredLogging) {
                 Add-StructuredLogEntry -Entry $errorEntry
             }
-            
+
             # Attempt recovery if requested and enabled
             if ($AttemptRecovery -and $script:PlatformErrorRecovery -and $script:PlatformErrorRecovery.Enabled) {
                 $recoveryResult = Invoke-ErrorRecovery -ErrorEntry $errorEntry
                 $errorEntry.RecoverySuccessful = $recoveryResult
-                
+
                 if ($recoveryResult) {
                     $script:PlatformErrorHandling.Statistics.RecoveredErrors++
                     Write-CustomLog -Message "✅ Error recovery successful for $Category in $Component" -Level "SUCCESS"
@@ -340,19 +340,19 @@ function Write-PlatformError {
                     Write-CustomLog -Message "❌ Error recovery failed for $Category in $Component" -Level "ERROR"
                 }
             }
-            
+
             # Log the error with appropriate formatting
             $logMessage = "[$Category] $($ErrorRecord.Exception.Message)"
             if ($Context.Count -gt 0) {
                 $contextStr = ($Context.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ", "
                 $logMessage += " | Context: $contextStr"
             }
-            
+
             Write-CustomLog -Message $logMessage -Level "ERROR" -Component $Component
-            
+
             # Check error thresholds and trigger alerts if needed
             Test-ErrorThresholds
-            
+
         } catch {
             # Fallback error handling
             Write-Host "❌ Critical error in error handling system: $_" -ForegroundColor Red
@@ -367,12 +367,12 @@ function Add-StructuredLogEntry {
         [Parameter(Mandatory = $true)]
         [hashtable]$Entry
     )
-    
+
     process {
         if ($script:PlatformStructuredLogging) {
             # Add to buffer
             $script:PlatformStructuredLogging.LogBuffer.Add($Entry) | Out-Null
-            
+
             # Trim buffer if too large
             if ($script:PlatformStructuredLogging.LogBuffer.Count -gt $script:PlatformStructuredLogging.MaxBufferSize) {
                 $script:PlatformStructuredLogging.LogBuffer.RemoveAt(0)
@@ -387,15 +387,15 @@ function Invoke-ErrorRecovery {
         [Parameter(Mandatory = $true)]
         [hashtable]$ErrorEntry
     )
-    
+
     process {
         try {
             $category = $ErrorEntry.Category
-            
+
             if ($script:PlatformErrorRecovery.Strategies.ContainsKey($category)) {
                 $strategy = $script:PlatformErrorRecovery.Strategies[$category]
                 $result = & $strategy $ErrorEntry.Component $ErrorEntry.Message
-                
+
                 # Record recovery attempt
                 $script:PlatformErrorHandling.RecoveryAttempts += @{
                     Timestamp = Get-Date
@@ -403,12 +403,12 @@ function Invoke-ErrorRecovery {
                     Component = $ErrorEntry.Component
                     Successful = $result
                 }
-                
+
                 return $result
             }
-            
+
             return $false
-            
+
         } catch {
             Write-CustomLog -Message "Error recovery mechanism failed: $($_.Exception.Message)" -Level "ERROR"
             return $false
@@ -419,17 +419,17 @@ function Invoke-ErrorRecovery {
 function Test-ErrorThresholds {
     [CmdletBinding()]
     param()
-    
+
     process {
         try {
             if ($script:PlatformErrorReporting -and $script:PlatformErrorHandling) {
                 $stats = $script:PlatformErrorHandling.Statistics
                 $thresholds = $script:PlatformErrorReporting.Thresholds
-                
+
                 # Check critical error threshold
                 if ($stats.CriticalErrors -ge $thresholds.CriticalErrors) {
                     Write-CustomLog -Message "⚠️ Critical error threshold reached: $($stats.CriticalErrors) critical errors" -Level "WARN"
-                    
+
                     # Trigger alert callbacks
                     foreach ($callback in $script:PlatformErrorReporting.AlertCallbacks) {
                         try {
@@ -440,7 +440,7 @@ function Test-ErrorThresholds {
                     }
                 }
             }
-            
+
         } catch {
             Write-CustomLog -Message "Error threshold check failed: $($_.Exception.Message)" -Level "WARN"
         }
@@ -453,18 +453,18 @@ function Write-PlatformLog {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Message,
-        
+
         [Parameter()]
         [ValidateSet('DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL')]
         [string]$Level = 'INFO',
-        
+
         [Parameter()]
         [string]$Component = 'Platform',
-        
+
         [Parameter()]
         [hashtable]$Context = @{}
     )
-    
+
     process {
         $entry = @{
             Timestamp = Get-Date
@@ -473,12 +473,12 @@ function Write-PlatformLog {
             Message = $Message
             Context = $Context
         }
-        
+
         # Add to structured logging if available
         if ($script:PlatformStructuredLogging) {
             Add-StructuredLogEntry -Entry $entry
         }
-        
+
         # Use existing Write-CustomLog for display
         Write-CustomLog -Message $Message -Level $Level -Component $Component
     }

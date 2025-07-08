@@ -8,7 +8,10 @@ function Import-AitherCoreModules {
         [string[]]$RequiredModules = @(),
 
         [Parameter()]
-        [switch]$SuppressWarnings
+        [switch]$SuppressWarnings,
+
+        [Parameter()]
+        [switch]$Force
     )
 
     try {
@@ -25,65 +28,34 @@ function Import-AitherCoreModules {
 
         $WarningPreference = $oldWarningPreference
 
-        # Available modules in aither-core
-        $availableModules = @{
-            'BackupManager' = @{
-                Description = 'File backup, cleanup, and consolidation operations'
-                Functions = @('Start-BackupOperation', 'Remove-OldBackups', 'Invoke-BackupConsolidation')
-            }
-            'DevEnvironment' = @{
-                Description = 'Development environment preparation and validation'
-                Functions = @('Initialize-DevEnvironment', 'Test-DevEnvironmentReady', 'Install-DevTools')
-            }
-            'ISOCustomizer' = @{
-                Description = 'ISO customization and template management'
-                Functions = @('New-CustomISO', 'Add-ISOPackages', 'Set-ISOConfiguration')
-            }
-            'ISOManager' = @{
-                Description = 'ISO download, verification, and management'
-                Functions = @('Get-WindowsISO', 'Test-ISOIntegrity', 'Mount-ISOFile')
-            }
-            'LabRunner' = @{
-                Description = 'Lab automation orchestration and test execution coordination'
-                Functions = @('Invoke-LabStep', 'Get-LabConfig', 'Initialize-StandardParameters')
-            }
-            'Logging' = @{
-                Description = 'Centralized logging with levels (INFO, WARN, ERROR, SUCCESS)'
-                Functions = @('Write-CustomLog', 'Initialize-LoggingSystem', 'Get-LoggingConfiguration')
-            }
-            'OpenTofuProvider' = @{
-                Description = 'OpenTofu provider management and infrastructure automation'
-                Functions = @('Initialize-OpenTofuProvider', 'Deploy-Infrastructure', 'Test-ProviderConfiguration')
-            }
-            'ParallelExecution' = @{
-                Description = 'Runspace-based parallel task execution'
-                Functions = @('Invoke-ParallelTasks', 'Start-ParallelJob', 'Wait-ParallelJobs')
-            }
-            'PatchManager' = @{
-                Description = 'Patch management with git-controlled workflows'
-                Functions = @('Invoke-PatchWorkflow', 'New-PatchIssue', 'New-PatchPR', 'Invoke-PatchRollback')
-            }
-            'RemoteConnection' = @{
-                Description = 'Remote connection management and automation'
-                Functions = @('New-RemoteSession', 'Invoke-RemoteCommand', 'Test-RemoteConnection')
-            }
-            'ScriptManager' = @{
-                Description = 'Script repository management and template handling'
-                Functions = @('Get-ScriptTemplate', 'New-ScriptFromTemplate', 'Update-ScriptRepository')
-            }
-            'SecureCredentials' = @{
-                Description = 'Secure credential management and storage'
-                Functions = @('Get-SecureCredential', 'Set-SecureCredential', 'Test-CredentialStore')
-            }
-            'TestingFramework' = @{
-                Description = 'Pester test wrapper with project-specific configurations'
-                Functions = @('Invoke-ProjectTests', 'New-TestCase', 'Get-TestResults')
-            }
-            'UnifiedMaintenance' = @{
-                Description = 'Unified entry point for all maintenance operations'
-                Functions = @('Start-MaintenanceTask', 'Get-MaintenanceStatus', 'Stop-MaintenanceTask')
+        # Use standardized AitherCore orchestration approach
+        $aitherCorePath = Join-Path $ProjectRoot "aither-core/AitherCore.psm1"
+        if (Test-Path $aitherCorePath) {
+            try {
+                # Import AitherCore orchestration module
+                Import-Module $aitherCorePath -Force:$Force -Global -ErrorAction Stop
+
+                # Determine loading strategy based on requirements
+                $requireOnly = $RequiredModules.Count -eq 0
+
+                # Use AitherCore's sophisticated module loading
+                $result = Import-CoreModules -RequiredOnly:$requireOnly -Force:$Force
+
+                return @{
+                    ProjectRoot = $ProjectRoot
+                    ImportedModules = @{}
+                    LoadingResult = $result
+                    AvailableModules = @{}
+                    StandardizedApproach = $true
+                }
+            } catch {
+                Write-Warning "Failed to use AitherCore orchestration approach: $_"
+                # Fall back to legacy approach
             }
         }
+
+        # Legacy fallback approach (only used when AitherCore orchestration fails)
+        Write-Warning "Using legacy module import approach as fallback"
 
         # Import core modules (always needed)
         $coreModules = @('LabRunner', 'Logging')
@@ -95,12 +67,12 @@ function Import-AitherCoreModules {
             try {
                 $modulePath = Join-Path $ProjectRoot (Join-Path "aither-core" (Join-Path "modules" (Join-Path $moduleName "$moduleName.psm1")))
                 if (Test-Path $modulePath) {
-                    Import-Module $modulePath -Force -Global -ErrorAction Stop
+                    Import-Module $modulePath -Force:$Force -Global -ErrorAction Stop
                     $importedModules[$moduleName] = $true
                     Write-Verbose "Successfully imported $moduleName from aither-core/modules"
                 } else {
                     # Fallback to Import-ModuleSafe
-                    $result = Import-ModuleSafe -ModuleName $moduleName -ProjectRoot $ProjectRoot -Force -CreateMockOnFailure
+                    $result = Import-ModuleSafe -ModuleName $moduleName -ProjectRoot $ProjectRoot -Force:$Force -CreateMockOnFailure
                     $importedModules[$moduleName] = $result
                     if (-not $result) {
                         Write-Warning "$moduleName module import failed, using mock functions"
@@ -115,7 +87,8 @@ function Import-AitherCoreModules {
         return @{
             ProjectRoot = $ProjectRoot
             ImportedModules = $importedModules
-            AvailableModules = $availableModules
+            AvailableModules = @{}
+            StandardizedApproach = $false
         }
     } catch {
         Write-Error "Failed to import aither-core modules: $($_.Exception.Message)"

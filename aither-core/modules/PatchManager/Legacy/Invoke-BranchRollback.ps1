@@ -2,25 +2,25 @@
 <#
 .SYNOPSIS
     Branch rollback functionality for PatchManager
-    
+
 .DESCRIPTION
     Provides branch-specific rollback capabilities for Git branches
-    
+
 .PARAMETER BranchName
     Name of the branch to rollback
-    
+
 .PARAMETER RestoreDeleted
     Restore a deleted branch
-    
+
 .PARAMETER RollbackMerge
     Rollback a merge operation
-    
+
 .PARAMETER DryRun
     Show what would be done without actually doing it
-    
+
 .EXAMPLE
     Invoke-BranchRollback -BranchName "feature/test" -DryRun
-    
+
 .NOTES
     Branch-specific rollback operations
 #>
@@ -30,17 +30,17 @@ function Invoke-BranchRollback {
     param(
         [Parameter(Mandatory = $true)]
         [string]$BranchName,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$RestoreDeleted,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$RollbackMerge,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$DryRun
     )
-    
+
     try {
         if ($DryRun) {
             Write-Host "DRY RUN: Would rollback branch $BranchName" -ForegroundColor Yellow
@@ -56,9 +56,9 @@ function Invoke-BranchRollback {
                 BranchName = $BranchName
             }
         }
-        
+
         Write-Host "Rolling back branch: $BranchName" -ForegroundColor Cyan
-        
+
         if ($RestoreDeleted) {
             # Logic to restore deleted branch
             Write-Host "Restoring deleted branch: $BranchName" -ForegroundColor Yellow
@@ -72,7 +72,7 @@ function Invoke-BranchRollback {
             Write-Host "Performing standard rollback for branch: $BranchName" -ForegroundColor Yellow
             # Implementation would go here
         }
-        
+
         return @{
             Success = $true
             Message = "Branch rollback completed successfully"

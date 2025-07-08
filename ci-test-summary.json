@@ -1,0 +1,19 @@
+{
+  "TotalFailed": 0,
+  "TotalTests": 11,
+  "TotalPassed": 11,
+  "Success": true,
+  "TotalDuration": 1.4488451,
+  "TestSuites": [
+    {
+      "TestSuite": "Core",
+      "TotalCount": 11,
+      "PassedCount": 11,
+      "FailedCount": 0,
+      "SkippedCount": 0,
+      "Duration": 1.4202121,
+      "Result": "Passed"
+    }
+  ],
+  "Timestamp": "2025-07-08 02:49:25"
+}

@@ -62,19 +62,19 @@ function Invoke-BackupMaintenance {
     )
 
     $ErrorActionPreference = "Stop"
-    
+
     # Import required modules and utilities
     try {
         # Import shared utilities
         . "$PSScriptRoot/../../../shared/Find-ProjectRoot.ps1"
         $projectRoot = Find-ProjectRoot
-        
+
         # Import logging if available
         $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
         if (Test-Path $loggingPath) {
             Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
         }
-        
+
         # Try to import LabRunner if available
         $labRunnerPath = Join-Path $projectRoot "aither-core/modules/LabRunner"
         if (Test-Path $labRunnerPath) {

@@ -13,14 +13,14 @@ function Register-ConfigurationSchema {
     param(
         [Parameter(Mandatory)]
         [string]$ModuleName,
-        
+
         [Parameter(Mandatory)]
         [hashtable]$Schema
     )
-    
+
     # Create default configuration from schema
     $defaultConfig = @{}
-    
+
     if ($Schema.Properties) {
         foreach ($propName in $Schema.Properties.Keys) {
             $prop = $Schema.Properties[$propName]
@@ -29,7 +29,7 @@ function Register-ConfigurationSchema {
             }
         }
     }
-    
+
     # Register using the public function
     Register-ModuleConfiguration -ModuleName $ModuleName -Schema $Schema -DefaultConfiguration $defaultConfig
 }

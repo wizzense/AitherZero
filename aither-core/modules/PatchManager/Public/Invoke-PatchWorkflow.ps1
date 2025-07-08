@@ -220,7 +220,7 @@ function Invoke-PatchWorkflow {
 
             # Step 3: Ensure we're on main and sync with remote (CRITICAL for preventing merge conflicts)
             Write-PatchLog "Ensuring we're on main branch and syncing with remote..." -Level "INFO"
-            
+
             if (-not $DryRun) {
                 # Switch to main if not already there
                 $currentBranch = git branch --show-current 2>&1 | Out-String | ForEach-Object Trim
@@ -234,7 +234,7 @@ function Invoke-PatchWorkflow {
 
                 # Use Sync-GitBranch to ensure proper synchronization
                 Write-PatchLog "Using Sync-GitBranch to ensure proper synchronization with remote..." -Level "INFO"
-                
+
                 try {
                     # Check if Sync-GitBranch is available
                     if (Get-Command Sync-GitBranch -ErrorAction SilentlyContinue) {
@@ -247,7 +247,7 @@ function Invoke-PatchWorkflow {
                     } else {
                         # Fallback to manual sync if Sync-GitBranch is not available
                         Write-PatchLog "Sync-GitBranch not available, using manual sync..." -Level "INFO"
-                        
+
                         # Always sync with remote main to prevent merge conflicts
                         git fetch origin main 2>&1 | Out-Null
                         if ($LASTEXITCODE -ne 0) {

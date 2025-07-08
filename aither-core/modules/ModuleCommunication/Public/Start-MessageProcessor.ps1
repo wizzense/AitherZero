@@ -14,7 +14,7 @@ function Start-MessageProcessor {
         [Parameter()]
         [switch]$Force
     )
-    
+
     try {
         if ($script:MessageBus.Processor.Running -and -not $Force) {
             Write-CustomLog -Level 'WARNING' -Message "Message processor is already running"
@@ -24,26 +24,26 @@ function Start-MessageProcessor {
                 ProcessorId = $script:MessageBus.Processor.Thread.Id
             }
         }
-        
+
         # Stop existing processor if force restart
         if ($script:MessageBus.Processor.Running -and $Force) {
             Write-CustomLog -Level 'INFO' -Message "Force restarting message processor"
             Stop-MessageProcessor
             Start-Sleep -Milliseconds 500  # Give time for cleanup
         }
-        
+
         # Initialize the processor
         Initialize-MessageProcessor
-        
+
         # Verify it started
         $timeout = (Get-Date).AddSeconds(5)
         while ((Get-Date) -lt $timeout -and -not $script:MessageBus.Processor.Running) {
             Start-Sleep -Milliseconds 100
         }
-        
+
         if ($script:MessageBus.Processor.Running) {
             Write-CustomLog -Level 'SUCCESS' -Message "Message processor started successfully"
-            
+
             return @{
                 Success = $true
                 ProcessorId = $script:MessageBus.Processor.Thread.InstanceId
@@ -58,7 +58,7 @@ function Start-MessageProcessor {
         } else {
             throw "Message processor failed to start"
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to start message processor: $_"
         throw

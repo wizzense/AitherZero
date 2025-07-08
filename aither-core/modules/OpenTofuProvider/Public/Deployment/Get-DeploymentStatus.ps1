@@ -41,42 +41,42 @@ function Get-DeploymentStatus {
     param(
         [Parameter(Mandatory, ParameterSetName = 'ById')]
         [string]$DeploymentId,
-        
+
         [Parameter(Mandatory, ParameterSetName = 'Latest')]
         [switch]$Latest,
-        
+
         [Parameter(ParameterSetName = 'History')]
         [switch]$IncludeHistory,
-        
+
         [Parameter()]
         [ValidateSet('Object', 'Table', 'Json', 'Summary')]
         [string]$Format = 'Object',
-        
+
         [Parameter()]
         [switch]$Watch,
-        
+
         [Parameter()]
         [ValidateRange(1, 300)]
         [int]$RefreshInterval = 5
     )
-    
+
     begin {
         Write-CustomLog -Level 'INFO' -Message "Getting deployment status"
-        
+
         # Get deployments directory
         $deploymentsDir = Join-Path $env:PROJECT_ROOT "deployments"
-        
+
         if (-not (Test-Path $deploymentsDir)) {
             Write-CustomLog -Level 'WARN' -Message "No deployments found"
             return
         }
     }
-    
+
     process {
         try {
             # Determine which deployments to query
             $deploymentDirs = @()
-            
+
             switch ($PSCmdlet.ParameterSetName) {
                 'ById' {
                     $deploymentDir = Join-Path $deploymentsDir $DeploymentId
@@ -86,12 +86,12 @@ function Get-DeploymentStatus {
                         throw "Deployment not found: $DeploymentId"
                     }
                 }
-                
+
                 'Latest' {
-                    $latestDeployment = Get-ChildItem -Path $deploymentsDir -Directory | 
-                        Sort-Object CreationTime -Descending | 
+                    $latestDeployment = Get-ChildItem -Path $deploymentsDir -Directory |
+                        Sort-Object CreationTime -Descending |
                         Select-Object -First 1
-                    
+
                     if ($latestDeployment) {
                         $deploymentDirs += $latestDeployment
                     } else {
@@ -99,49 +99,49 @@ function Get-DeploymentStatus {
                         return
                     }
                 }
-                
+
                 'History' {
-                    $deploymentDirs = Get-ChildItem -Path $deploymentsDir -Directory | 
+                    $deploymentDirs = Get-ChildItem -Path $deploymentsDir -Directory |
                         Sort-Object CreationTime -Descending
                 }
             }
-            
+
             # Get status for each deployment
             $statuses = @()
-            
+
             foreach ($dir in $deploymentDirs) {
                 $status = Get-SingleDeploymentStatus -DeploymentPath $dir.FullName
                 if ($status) {
                     $statuses += $status
                 }
             }
-            
+
             # Handle watch mode
             if ($Watch -and $statuses.Count -eq 1) {
                 Watch-DeploymentStatus -DeploymentPath $deploymentDirs[0].FullName -RefreshInterval $RefreshInterval
                 return
             }
-            
+
             # Format output
             switch ($Format) {
                 'Table' {
-                    $statuses | Format-Table -Property DeploymentId, Status, StartTime, Duration, 
+                    $statuses | Format-Table -Property DeploymentId, Status, StartTime, Duration,
                         @{Name='Progress'; Expression={
                             "$($_.CompletedStages.Count)/$($_.TotalStages) stages"
                         }},
                         @{Name='Errors'; Expression={$_.Errors.Count}}
                 }
-                
+
                 'Json' {
                     $statuses | ConvertTo-Json -Depth 10
                 }
-                
+
                 'Summary' {
                     foreach ($status in $statuses) {
                         Write-DeploymentStatusSummary -Status $status
                     }
                 }
-                
+
                 default {
                     # Return objects
                     if ($statuses.Count -eq 1 -and -not $IncludeHistory) {
@@ -151,7 +151,7 @@ function Get-DeploymentStatus {
                     }
                 }
             }
-            
+
         } catch {
             Write-CustomLog -Level 'ERROR' -Message "Failed to get deployment status: $($_.Exception.Message)"
             throw
@@ -161,7 +161,7 @@ function Get-DeploymentStatus {
 
 function Get-SingleDeploymentStatus {
     param([string]$DeploymentPath)
-    
+
     try {
         # Load deployment state
         $statePath = Join-Path $DeploymentPath "state.json"
@@ -169,26 +169,26 @@ function Get-SingleDeploymentStatus {
             Write-CustomLog -Level 'WARN' -Message "State file not found for deployment"
             return $null
         }
-        
+
         $state = Get-Content $statePath | ConvertFrom-Json
-        
+
         # Load deployment plan if available
         $planPath = Join-Path $DeploymentPath "deployment-plan.json"
         $plan = $null
         if (Test-Path $planPath) {
             $plan = Get-Content $planPath | ConvertFrom-Json
         }
-        
+
         # Build status object
         $status = [PSCustomObject]@{
             DeploymentId = $state.Id
             Status = $state.Status
             StartTime = [DateTime]$state.StartTime
             EndTime = if ($state.EndTime) { [DateTime]$state.EndTime } else { $null }
-            Duration = if ($state.EndTime) { 
-                [DateTime]$state.EndTime - [DateTime]$state.StartTime 
-            } else { 
-                (Get-Date) - [DateTime]$state.StartTime 
+            Duration = if ($state.EndTime) {
+                [DateTime]$state.EndTime - [DateTime]$state.StartTime
+            } else {
+                (Get-Date) - [DateTime]$state.StartTime
             }
             CurrentStage = $state.CurrentStage
             CompletedStages = @($state.CompletedStages)
@@ -196,7 +196,7 @@ function Get-SingleDeploymentStatus {
             ConfigurationPath = $state.ConfigurationPath
             Errors = @($state.Errors)
             Warnings = @($state.Warnings)
-            IsRunning = $state.Status -in @('Initializing', 'Running:Prepare', 'Running:Validate', 
+            IsRunning = $state.Status -in @('Initializing', 'Running:Prepare', 'Running:Validate',
                                            'Running:Plan', 'Running:Apply', 'Running:Verify')
             Progress = @{
                 Percentage = 0
@@ -206,17 +206,17 @@ function Get-SingleDeploymentStatus {
             Resources = @{}
             Outputs = @{}
         }
-        
+
         # Calculate progress
         if ($status.TotalStages -gt 0) {
             $status.Progress.Percentage = [Math]::Round(($status.CompletedStages.Count / $status.TotalStages) * 100, 0)
         }
-        
+
         # Get current action if running
         if ($status.IsRunning -and $status.CurrentStage) {
             $status.Progress.CurrentAction = "Executing stage: $($status.CurrentStage)"
         }
-        
+
         # Load stage results if available
         $stageResults = @{}
         $stageFiles = Get-ChildItem -Path $DeploymentPath -Filter "stage-*.json" -File
@@ -229,12 +229,12 @@ function Get-SingleDeploymentStatus {
                 Write-CustomLog -Level 'DEBUG' -Message "Could not load stage result: $($stageFile.Name)"
             }
         }
-        
+
         # Extract resource information from Apply stage
         if ($stageResults.ContainsKey('Apply') -and $stageResults['Apply'].Outputs.DeployedResources) {
             $status.Resources = $stageResults['Apply'].Outputs.DeployedResources
         }
-        
+
         # Collect all outputs
         foreach ($stageName in $stageResults.Keys) {
             if ($stageResults[$stageName].Outputs) {
@@ -245,7 +245,7 @@ function Get-SingleDeploymentStatus {
                 }
             }
         }
-        
+
         # Load artifacts
         $status | Add-Member -NotePropertyName Artifacts -NotePropertyValue @{}
         $artifactsPath = Join-Path $DeploymentPath "artifacts.json"
@@ -257,12 +257,12 @@ function Get-SingleDeploymentStatus {
                 Write-CustomLog -Level 'DEBUG' -Message "Could not load artifacts"
             }
         }
-        
+
         # Add deployment path for reference
         $status | Add-Member -NotePropertyName DeploymentPath -NotePropertyValue $DeploymentPath
-        
+
         return $status
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Error loading deployment status from $DeploymentPath`: $($_.Exception.Message)"
         return $null
@@ -274,14 +274,14 @@ function Watch-DeploymentStatus {
         [string]$DeploymentPath,
         [int]$RefreshInterval
     )
-    
+
     Write-Host "`nWatching deployment status (Press Ctrl+C to stop)..." -ForegroundColor Yellow
     Write-Host "Refresh interval: $RefreshInterval seconds`n" -ForegroundColor Gray
-    
+
     $previousStatus = $null
     $spinnerChars = @('|', '/', '-', '\')
     $spinnerIndex = 0
-    
+
     try {
         while ($true) {
             # Clear previous output
@@ -308,10 +308,10 @@ function Watch-DeploymentStatus {
                     Write-Verbose "Could not set cursor position: $_"
                 }
             }
-            
+
             # Get current status
             $status = Get-SingleDeploymentStatus -DeploymentPath $DeploymentPath
-            
+
             if ($status) {
                 # Show spinner for running deployments
                 if ($status.IsRunning) {
@@ -321,23 +321,23 @@ function Watch-DeploymentStatus {
                 } else {
                     Write-Host "  " -NoNewline
                 }
-                
+
                 # Display status summary
                 Write-DeploymentStatusSummary -Status $status -Compact
-                
+
                 # Check if deployment completed
                 if ($previousStatus -and $previousStatus.IsRunning -and -not $status.IsRunning) {
                     Write-Host "`nDeployment completed!" -ForegroundColor Green
-                    
+
                     # Show final summary
                     Write-Host "`n$('='*60)" -ForegroundColor Cyan
                     Write-DeploymentStatusSummary -Status $status
                     break
                 }
-                
+
                 $previousStatus = $status
             }
-            
+
             Start-Sleep -Seconds $RefreshInterval
         }
     } catch {
@@ -350,16 +350,16 @@ function Write-DeploymentStatusSummary {
         [PSCustomObject]$Status,
         [switch]$Compact
     )
-    
+
     if (-not $Compact) {
         Write-Host "`nDEPLOYMENT STATUS" -ForegroundColor Cyan
         Write-Host "=================" -ForegroundColor Cyan
     }
-    
+
     # Basic info
     Write-Host "ID: $($Status.DeploymentId)"
     Write-Host "Status: " -NoNewline
-    
+
     $statusColor = switch ($Status.Status) {
         'Completed' { 'Green' }
         'CompletedWithWarnings' { 'Yellow' }
@@ -368,7 +368,7 @@ function Write-DeploymentStatusSummary {
         default { 'White' }
     }
     Write-Host $Status.Status -ForegroundColor $statusColor
-    
+
     # Timing
     Write-Host "Started: $($Status.StartTime.ToString('yyyy-MM-dd HH:mm:ss'))"
     if ($Status.EndTime) {
@@ -377,17 +377,17 @@ function Write-DeploymentStatusSummary {
     } else {
         Write-Host "Running for: $([Math]::Round($Status.Duration.TotalMinutes, 2)) minutes"
     }
-    
+
     # Progress
     Write-Host "`nProgress: " -NoNewline
     $progressBar = Create-ProgressBar -Percentage $Status.Progress.Percentage -Width 30
     Write-Host $progressBar -NoNewline
     Write-Host " $($Status.Progress.Percentage)% ($($Status.CompletedStages.Count)/$($Status.TotalStages) stages)"
-    
+
     if ($Status.Progress.CurrentAction) {
         Write-Host "Current: $($Status.Progress.CurrentAction)" -ForegroundColor Yellow
     }
-    
+
     # Stages
     if (-not $Compact -and $Status.CompletedStages.Count -gt 0) {
         Write-Host "`nCompleted Stages:" -ForegroundColor Green
@@ -395,7 +395,7 @@ function Write-DeploymentStatusSummary {
             Write-Host "  ✓ $stage" -ForegroundColor Green
         }
     }
-    
+
     # Resources
     if ($Status.Resources.Count -gt 0) {
         Write-Host "`nDeployed Resources:" -ForegroundColor Cyan
@@ -403,7 +403,7 @@ function Write-DeploymentStatusSummary {
             Write-Host "  - $($resource.Key): $($resource.Value.Count) instance(s)"
         }
     }
-    
+
     # Errors and Warnings
     if ($Status.Errors.Count -gt 0) {
         Write-Host "`nErrors:" -ForegroundColor Red
@@ -414,7 +414,7 @@ function Write-DeploymentStatusSummary {
             Write-Host "  ... and $($Status.Errors.Count - 3) more" -ForegroundColor Red
         }
     }
-    
+
     if ($Status.Warnings.Count -gt 0) {
         Write-Host "`nWarnings:" -ForegroundColor Yellow
         foreach ($warning in $Status.Warnings | Select-Object -First 3) {
@@ -424,7 +424,7 @@ function Write-DeploymentStatusSummary {
             Write-Host "  ... and $($Status.Warnings.Count - 3) more" -ForegroundColor Yellow
         }
     }
-    
+
     # Outputs
     if ($Status.Outputs.Count -gt 0 -and -not $Compact) {
         Write-Host "`nOutputs:" -ForegroundColor Green
@@ -440,7 +440,7 @@ function Write-DeploymentStatusSummary {
             Write-Host "  ... and $($Status.Outputs.Count - 5) more" -ForegroundColor Gray
         }
     }
-    
+
     if (-not $Compact) {
         Write-Host ""
     }
@@ -451,12 +451,12 @@ function Create-ProgressBar {
         [int]$Percentage,
         [int]$Width = 30
     )
-    
+
     $filled = [Math]::Round(($Percentage / 100) * $Width)
     $empty = $Width - $filled
-    
+
     $bar = "[" + ("█" * $filled) + ("░" * $empty) + "]"
-    
+
     return $bar
 }
 

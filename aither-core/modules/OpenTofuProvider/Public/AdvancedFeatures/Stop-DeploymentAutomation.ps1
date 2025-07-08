@@ -21,39 +21,39 @@ function Stop-DeploymentAutomation {
         [Parameter(Mandatory, ParameterSetName = 'ByDeployment')]
         [ValidateNotNullOrEmpty()]
         [string]$DeploymentId,
-        
+
         [Parameter(Mandatory, ParameterSetName = 'ByAutomation')]
         [ValidateNotNullOrEmpty()]
         [string]$AutomationId,
-        
+
         [Parameter()]
         [switch]$Force,
-        
+
         [Parameter()]
         [ValidateRange(1, 300)]
         [int]$Timeout = 30
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Processing automation stop request"
-        
+
         # Get automation state directory
         $automationPath = Join-Path $PSScriptRoot "../../automation"
         $statePath = Join-Path $automationPath "state"
-        
+
         if (-not (Test-Path $statePath)) {
             Write-CustomLog -Level 'WARNING' -Message "No automation state directory found"
             return
         }
-        
+
         # Find automation processes to stop
         $automationsToStop = @()
-        
+
         switch ($PSCmdlet.ParameterSetName) {
             'ByDeployment' {
                 # Find all automations for deployment
                 $stateFiles = Get-ChildItem -Path $statePath -Filter "*.json" -File
-                
+
                 foreach ($file in $stateFiles) {
                     $state = Get-Content $file.FullName -Raw | ConvertFrom-Json
                     if ($state.DeploymentId -eq $DeploymentId -and $state.Status -in @('Running', 'Scheduled', 'Pending')) {
@@ -64,11 +64,11 @@ function Stop-DeploymentAutomation {
                     }
                 }
             }
-            
+
             'ByAutomation' {
                 # Find specific automation
                 $stateFile = Join-Path $statePath "$AutomationId.json"
-                
+
                 if (Test-Path $stateFile) {
                     $state = Get-Content $stateFile -Raw | ConvertFrom-Json
                     if ($state.Status -in @('Running', 'Scheduled', 'Pending')) {
@@ -87,17 +87,17 @@ function Stop-DeploymentAutomation {
                 }
             }
         }
-        
+
         if ($automationsToStop.Count -eq 0) {
             Write-CustomLog -Level 'INFO' -Message "No running automations found"
             return
         }
-        
+
         # Confirm stop action
         $message = "Stop $($automationsToStop.Count) automation process(es)?"
         if ($PSCmdlet.ShouldProcess($message)) {
             $results = @()
-            
+
             foreach ($automation in $automationsToStop) {
                 try {
                     $result = Stop-AutomationProcess -Automation $automation -Force:$Force -Timeout $Timeout
@@ -107,7 +107,7 @@ function Stop-DeploymentAutomation {
                     Write-CustomLog -Level 'ERROR' -Message "Failed to stop automation $($automation.State.AutomationId): $_"
                 }
             }
-            
+
             Write-CustomLog -Level 'SUCCESS' -Message "Stopped $($results.Count) automation process(es)"
             return $results
         }
@@ -125,18 +125,18 @@ function Stop-AutomationProcess {
         [switch]$Force,
         [int]$Timeout
     )
-    
+
     $state = $Automation.State
     $stateFile = $Automation.File
-    
+
     Write-CustomLog -Level 'INFO' -Message "Stopping automation: $($state.AutomationId)"
-    
+
     # Create stop signal file
     $signalPath = Join-Path (Split-Path $stateFile.FullName -Parent) "signals"
     if (-not (Test-Path $signalPath)) {
         New-Item -ItemType Directory -Path $signalPath -Force | Out-Null
     }
-    
+
     $stopSignal = Join-Path $signalPath "$($state.AutomationId).stop"
     @{
         Timestamp = Get-Date -Format "yyyy-MM-dd'T'HH:mm:ss'Z'"
@@ -144,12 +144,12 @@ function Stop-AutomationProcess {
         Force = $Force.IsPresent
         Reason = "Manual stop request"
     } | ConvertTo-Json | Set-Content -Path $stopSignal -Encoding UTF8
-    
+
     # Update state to stopping
     $state.Status = 'Stopping'
     $state.StopRequested = Get-Date -Format "yyyy-MM-dd'T'HH:mm:ss'Z'"
     $state | ConvertTo-Json -Depth 5 | Set-Content -Path $stateFile.FullName -Encoding UTF8
-    
+
     if ($Force) {
         # Force termination
         if ($state.ProcessId) {
@@ -161,7 +161,7 @@ function Stop-AutomationProcess {
                 Write-CustomLog -Level 'WARNING' -Message "Process already terminated or not found: $($state.ProcessId)"
             }
         }
-        
+
         # Update final state
         $state.Status = 'Terminated'
         $state.EndTime = Get-Date -Format "yyyy-MM-dd'T'HH:mm:ss'Z'"
@@ -170,10 +170,10 @@ function Stop-AutomationProcess {
     else {
         # Wait for graceful shutdown
         $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-        
+
         while ($stopwatch.Elapsed.TotalSeconds -lt $Timeout) {
             Start-Sleep -Seconds 1
-            
+
             # Check if process stopped
             if ($state.ProcessId) {
                 $process = Get-Process -Id $state.ProcessId -ErrorAction SilentlyContinue
@@ -183,7 +183,7 @@ function Stop-AutomationProcess {
                     break
                 }
             }
-            
+
             # Check for completion signal
             $completeSignal = Join-Path $signalPath "$($state.AutomationId).complete"
             if (Test-Path $completeSignal) {
@@ -193,7 +193,7 @@ function Stop-AutomationProcess {
                 break
             }
         }
-        
+
         # Timeout reached
         if ($state.Status -eq 'Stopping') {
             Write-CustomLog -Level 'WARNING' -Message "Graceful shutdown timeout reached, forcing termination"
@@ -205,15 +205,15 @@ function Stop-AutomationProcess {
             $state.TerminationReason = "Timeout during graceful shutdown"
         }
     }
-    
+
     # Save final state
     $state | ConvertTo-Json -Depth 5 | Set-Content -Path $stateFile.FullName -Encoding UTF8
-    
+
     # Clean up signal file
     if (Test-Path $stopSignal) {
         Remove-Item $stopSignal -Force
     }
-    
+
     return [PSCustomObject]@{
         AutomationId = $state.AutomationId
         DeploymentId = $state.DeploymentId

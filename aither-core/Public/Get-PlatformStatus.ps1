@@ -13,7 +13,7 @@
 
 .EXAMPLE
     Get-PlatformStatus
-    
+
 .EXAMPLE
     Get-PlatformStatus -Detailed
 
@@ -27,7 +27,7 @@ function Get-PlatformStatus {
         [Parameter()]
         [switch]$Detailed
     )
-    
+
     process {
         try {
             $moduleStatus = Get-CoreModuleStatus
@@ -35,13 +35,13 @@ function Get-PlatformStatus {
             $availableCount = ($moduleStatus | Where-Object { $_.Available }).Count
             $requiredModules = $script:CoreModules | Where-Object { $_.Required }
             $requiredLoaded = 0
-            
+
             foreach ($required in $requiredModules) {
                 if ($script:LoadedModules.ContainsKey($required.Name)) {
                     $requiredLoaded++
                 }
             }
-            
+
             $status = @{
                 Platform = @{
                     Version = "2.0.0"
@@ -86,7 +86,7 @@ function Get-PlatformStatus {
                 }
                 LastCheck = Get-Date
             }
-            
+
             if ($Detailed) {
                 $status.DetailedModules = $moduleStatus
                 $status.LoadOrder = $script:CoreModules | ForEach-Object {
@@ -94,31 +94,30 @@ function Get-PlatformStatus {
                         Name = $_.Name
                         Required = $_.Required
                         Loaded = $script:LoadedModules.ContainsKey($_.Name)
-                        LoadTime = if ($script:LoadedModules.ContainsKey($_.Name)) { 
-                            $script:LoadedModules[$_.Name].ImportTime 
-                        } else { 
-                            $null 
+                        LoadTime = if ($script:LoadedModules.ContainsKey($_.Name)) {
+                            $script:LoadedModules[$_.Name].ImportTime
+                        } else {
+                            $null
                         }
                         Description = $_.Description
                     }
                 } | Sort-Object { if ($_.LoadTime) { $_.LoadTime } else { [DateTime]::MaxValue } }
-                
+
                 # Add integration analysis
                 $status.Integrations = @{
-                    ConfigurationIntegration = ($script:LoadedModules.ContainsKey('ConfigurationCore') -and 
+                    ConfigurationIntegration = ($script:LoadedModules.ContainsKey('ConfigurationCore') -and
                                               $script:LoadedModules.ContainsKey('ConfigurationCarousel'))
-                    OrchestrationIntegration = ($script:LoadedModules.ContainsKey('OrchestrationEngine') -and 
+                    OrchestrationIntegration = ($script:LoadedModules.ContainsKey('OrchestrationEngine') -and
                                               $script:LoadedModules.ContainsKey('LabRunner'))
-                    DevelopmentIntegration = ($script:LoadedModules.ContainsKey('PatchManager') -and 
+                    DevelopmentIntegration = ($script:LoadedModules.ContainsKey('PatchManager') -and
                                             $script:LoadedModules.ContainsKey('TestingFramework'))
-                    ISOWorkflowIntegration = ($script:LoadedModules.ContainsKey('ISOManager') -and 
-                                            $script:LoadedModules.ContainsKey('ISOCustomizer'))
+                    ISOWorkflowIntegration = $script:LoadedModules.ContainsKey('ISOManager')
                     CommunicationIntegration = $script:LoadedModules.ContainsKey('ModuleCommunication')
                 }
             }
-            
+
             return $status
-            
+
         } catch {
             Write-CustomLog -Message "Failed to get platform status: $($_.Exception.Message)" -Level "ERROR"
             throw

@@ -300,8 +300,8 @@ function Get-ModuleTestAudit {
         if ($moduleAudit.codeMetrics.publicFunctions -gt 20) { $complexityFactors++ }
         
         $moduleAudit.codeMetrics.complexity = switch ($complexityFactors) {
-            { $_ -gt 2 } { "Complex" }
-            { $_ -gt 0 } { "Moderate" }
+            { $_ -gt 2 } { "Complex"; break }
+            { $_ -gt 0 } { "Moderate"; break }
             default { "Simple" }
         }
         
@@ -486,10 +486,10 @@ function Get-QualityAssessment {
     
     # Convert score to grade
     $assessment.grade = switch ($assessment.score) {
-        { $_ -ge 90 } { "A" }
-        { $_ -ge 80 } { "B" }
-        { $_ -ge 70 } { "C" }
-        { $_ -ge 60 } { "D" }
+        { $_ -ge 90 } { "A"; break }
+        { $_ -ge 80 } { "B"; break }
+        { $_ -ge 70 } { "C"; break }
+        { $_ -ge 60 } { "D"; break }
         default { "F" }
     }
     
@@ -539,11 +539,14 @@ function Get-ModuleRiskLevel {
         "D" { $riskFactors += 1 }
     }
     
-    return switch ($riskFactors) {
-        { $_ -gt 6 } { "Critical" }
-        { $_ -gt 4 } { "High" }
-        { $_ -gt 2 } { "Medium" }
-        default { "Low" }
+    if ($riskFactors -gt 6) {
+        return "Critical"
+    } elseif ($riskFactors -gt 4) {
+        return "High"
+    } elseif ($riskFactors -gt 2) {
+        return "Medium"
+    } else {
+        return "Low"
     }
 }
 
@@ -643,18 +646,18 @@ function Get-OverallHealthScore {
     
     # Determine grade and status
     $health.grade = switch ($health.score) {
-        { $_ -ge 90 } { "A" }
-        { $_ -ge 80 } { "B" }
-        { $_ -ge 70 } { "C" }
-        { $_ -ge 60 } { "D" }
+        { $_ -ge 90 } { "A"; break }
+        { $_ -ge 80 } { "B"; break }
+        { $_ -ge 70 } { "C"; break }
+        { $_ -ge 60 } { "D"; break }
         default { "F" }
     }
     
     $health.status = switch ($health.score) {
-        { $_ -ge 80 } { "Excellent" }
-        { $_ -ge 70 } { "Good" }
-        { $_ -ge 60 } { "Needs Improvement" }
-        { $_ -ge 40 } { "Poor" }
+        { $_ -ge 80 } { "Excellent"; break }
+        { $_ -ge 70 } { "Good"; break }
+        { $_ -ge 60 } { "Needs Improvement"; break }
+        { $_ -ge 40 } { "Poor"; break }
         default { "Critical" }
     }
     

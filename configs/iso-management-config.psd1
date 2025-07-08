@@ -146,7 +146,7 @@
     # Integration with AitherCore Modules
     # =========================================
     AitherCoreIntegration = @{
-        # Use ISOManager and ISOCustomizer modules instead of standalone scripts
+        # Use ISOManager module instead of standalone scripts
         UseModules = $true
 
         # Bootstrap script integration
@@ -156,13 +156,13 @@
             Execute = $true
         }
 
-        # Autounattend templates (keep these as they're used by ISOCustomizer)
+        # Autounattend templates (keep these as they're used by ISOManager)
         AutounattendTemplates = @{
             Generic = "tools/iso/autounattend - generic.xml"
             Headless = "tools/iso/headlessunattend.xml"
         }
 
-        # Windows ADK Integration (used by ISOCustomizer module)
+        # Windows ADK Integration (used by ISOManager module)
         WindowsADK = @{
             Required = $true
             InstallPath = "C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit"

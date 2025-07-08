@@ -7,17 +7,17 @@ function Get-FeatureRegistry {
     #>
     [CmdletBinding()]
     param()
-    
+
     try {
         if ($script:FeatureRegistry) {
             return $script:FeatureRegistry
         }
-        
+
         if (Test-Path $script:FeatureRegistryPath) {
             $script:FeatureRegistry = Get-Content $script:FeatureRegistryPath -Raw | ConvertFrom-Json
             return $script:FeatureRegistry
         }
-        
+
         # Return default registry if file not found
         return @{
             tiers = @{
@@ -51,7 +51,7 @@ function Get-FeatureRegistry {
                 }
             }
         }
-        
+
     } catch {
         Write-Warning "Error loading feature registry: $_"
         throw

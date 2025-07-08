@@ -16,7 +16,7 @@
 
 .EXAMPLE
     Start-PlatformServices -Platform $aither
-    
+
 .EXAMPLE
     Start-PlatformServices -Platform $aither -Services @('Monitoring', 'Communication')
 
@@ -29,22 +29,22 @@ function Start-PlatformServices {
     param(
         [Parameter(Mandatory = $true)]
         [PSCustomObject]$Platform,
-        
+
         [Parameter()]
         [string[]]$Services = @('All')
     )
-    
+
     process {
         try {
             Write-CustomLog -Message "Starting platform services..." -Level "INFO"
-            
+
             $serviceResults = @{
                 Started = @()
                 Failed = @()
                 Skipped = @()
                 StartTime = Get-Date
             }
-            
+
             # Define available services based on loaded modules
             $availableServices = @{
                 'Communication' = @{
@@ -83,17 +83,17 @@ function Start-PlatformServices {
                     StartFunction = { Start-HealthMonitor }
                 }
             }
-            
+
             # Determine which services to start
             $servicesToStart = if ($Services -contains 'All') {
                 $availableServices.Keys
             } else {
                 $Services | Where-Object { $availableServices.ContainsKey($_) }
             }
-            
+
             foreach ($serviceName in $servicesToStart) {
                 $serviceConfig = $availableServices[$serviceName]
-                
+
                 try {
                     # Check if required module is loaded
                     if ($serviceConfig.Required -and -not (Get-Module $serviceConfig.Required -ErrorAction SilentlyContinue)) {
@@ -104,9 +104,9 @@ function Start-PlatformServices {
                         }
                         continue
                     }
-                    
+
                     Write-CustomLog -Message "🚀 Starting $serviceName service..." -Level "INFO"
-                    
+
                     # Start the service
                     switch ($serviceName) {
                         'Communication' {
@@ -117,7 +117,7 @@ function Start-PlatformServices {
                                 Write-CustomLog -Message "Communication service already initialized" -Level "DEBUG"
                             }
                         }
-                        
+
                         'Monitoring' {
                             if (Get-Command Start-SystemMonitoring -ErrorAction SilentlyContinue) {
                                 Start-SystemMonitoring -Background
@@ -125,7 +125,7 @@ function Start-PlatformServices {
                                 Write-CustomLog -Message "SystemMonitoring commands not available" -Level "WARN"
                             }
                         }
-                        
+
                         'RestAPI' {
                             if (Get-Command Start-RestAPIServer -ErrorAction SilentlyContinue) {
                                 Start-RestAPIServer -Background
@@ -133,7 +133,7 @@ function Start-PlatformServices {
                                 Write-CustomLog -Message "RestAPIServer commands not available" -Level "WARN"
                             }
                         }
-                        
+
                         'EventSystem' {
                             # Initialize basic event system if not already done
                             if (-not (Get-Variable -Name "PlatformEventSystem" -Scope Script -ErrorAction SilentlyContinue)) {
@@ -145,7 +145,7 @@ function Start-PlatformServices {
                                 Write-CustomLog -Message "Platform event system initialized" -Level "DEBUG"
                             }
                         }
-                        
+
                         'ConfigurationWatcher' {
                             if (Get-Command Start-ConfigurationWatcher -ErrorAction SilentlyContinue) {
                                 Start-ConfigurationWatcher
@@ -153,7 +153,7 @@ function Start-PlatformServices {
                                 Write-CustomLog -Message "Configuration watcher not available" -Level "DEBUG"
                             }
                         }
-                        
+
                         'BackgroundJobs' {
                             if (Get-Command Start-BackgroundJobProcessor -ErrorAction SilentlyContinue) {
                                 Start-BackgroundJobProcessor
@@ -169,20 +169,20 @@ function Start-PlatformServices {
                                 }
                             }
                         }
-                        
+
                         'HealthMonitor' {
                             # Start background health monitoring
                             Start-PlatformHealthMonitor
                         }
                     }
-                    
+
                     Write-CustomLog -Message "✅ $serviceName service started successfully" -Level "SUCCESS"
                     $serviceResults.Started += @{
                         Name = $serviceName
                         Description = $serviceConfig.Description
                         StartTime = Get-Date
                     }
-                    
+
                 } catch {
                     Write-CustomLog -Message "❌ Failed to start $serviceName service: $($_.Exception.Message)" -Level "ERROR"
                     $serviceResults.Failed += @{
@@ -192,19 +192,19 @@ function Start-PlatformServices {
                     }
                 }
             }
-            
+
             $serviceResults.EndTime = Get-Date
             $serviceResults.Duration = $serviceResults.EndTime - $serviceResults.StartTime
-            
+
             # Summary
             Write-CustomLog -Message "Platform services startup complete:" -Level "INFO"
             Write-CustomLog -Message "  ✅ Started: $($serviceResults.Started.Count)" -Level "SUCCESS"
             Write-CustomLog -Message "  ❌ Failed: $($serviceResults.Failed.Count)" -Level "$(if ($serviceResults.Failed.Count -gt 0) { 'WARN' } else { 'INFO' })"
             Write-CustomLog -Message "  ⏭️ Skipped: $($serviceResults.Skipped.Count)" -Level "DEBUG"
             Write-CustomLog -Message "  ⏱️ Duration: $($serviceResults.Duration.TotalSeconds) seconds" -Level "INFO"
-            
+
             return $serviceResults
-            
+
         } catch {
             Write-CustomLog -Message "❌ Failed to start platform services: $($_.Exception.Message)" -Level "ERROR"
             throw
@@ -216,7 +216,7 @@ function Start-PlatformServices {
 function Start-PlatformHealthMonitor {
     [CmdletBinding()]
     param()
-    
+
     process {
         try {
             if (-not (Get-Variable -Name "PlatformHealthMonitor" -Scope Script -ErrorAction SilentlyContinue)) {
@@ -228,35 +228,35 @@ function Start-PlatformHealthMonitor {
                     AlertThreshold = 60  # Alert if health score below 60
                     Enabled = $true
                 }
-                
+
                 # Start background monitoring job if ParallelExecution is available
                 if (Get-Module ParallelExecution -ErrorAction SilentlyContinue) {
                     $monitoringJob = Start-Job -ScriptBlock {
                         param($CheckInterval, $AlertThreshold)
-                        
+
                         while ($true) {
                             Start-Sleep -Seconds $CheckInterval
-                            
+
                             try {
                                 $health = Get-PlatformHealth -Quick
-                                
+
                                 if ($health.Score -lt $AlertThreshold) {
                                     Write-Warning "Platform health degraded: Score $($health.Score), Issues: $($health.Issues -join '; ')"
                                 }
-                                
+
                             } catch {
                                 Write-Warning "Health monitoring check failed: $_"
                             }
                         }
                     } -ArgumentList $script:PlatformHealthMonitor.CheckInterval, $script:PlatformHealthMonitor.AlertThreshold
-                    
+
                     $script:PlatformHealthMonitor.JobId = $monitoringJob.Id
                     Write-CustomLog -Message "Background health monitoring started (Job ID: $($monitoringJob.Id))" -Level "DEBUG"
                 } else {
                     Write-CustomLog -Message "Health monitor initialized (no background job - ParallelExecution not available)" -Level "DEBUG"
                 }
             }
-            
+
         } catch {
             Write-CustomLog -Message "Failed to start health monitor: $($_.Exception.Message)" -Level "WARN"
         }

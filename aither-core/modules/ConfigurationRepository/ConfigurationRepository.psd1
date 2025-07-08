@@ -6,11 +6,11 @@
     CompanyName = 'AitherZero'
     Copyright = '(c) 2025 AitherZero. All rights reserved.'
     Description = 'Configuration Repository Manager for AitherZero - handles Git-based configuration management'
-    
+
     PowerShellVersion = '7.0'
-    
+
     RequiredModules = @()
-    
+
     FunctionsToExport = @(
         'New-ConfigurationRepository',
         'Clone-ConfigurationRepository',
@@ -23,11 +23,11 @@
         'Backup-ConfigurationRepository',
         'Restore-ConfigurationRepository'
     )
-    
+
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()
-    
+
     PrivateData = @{
         PSData = @{
             Tags = @('AitherZero', 'Configuration', 'Git', 'Repository', 'Management')

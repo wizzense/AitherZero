@@ -164,7 +164,7 @@ function Invoke-StandardMode {
         $script:branchName = "patch/$timestamp-$safeName"
 
         Write-CustomLog "Creating branch: $script:branchName" -Level "INFO"
-        
+
         if (-not $DryRun) {
             $checkoutResult = Invoke-GitCommand "checkout -b $script:branchName" -AllowFailure
             if (-not $checkoutResult.Success) {
@@ -184,7 +184,7 @@ function Invoke-StandardMode {
                 Invoke-GitCommand "add ." -AllowFailure | Out-Null
                 Invoke-GitCommand "commit -m `"PatchManager v3.0: $PatchDescription`"" -AllowFailure | Out-Null
                 Write-CustomLog "Changes committed to branch $script:branchName" -Level "SUCCESS"
-                
+
                 # Push branch to remote (required for PR creation)
                 Write-CustomLog "Pushing branch to remote..." -Level "INFO"
                 $pushResult = Invoke-GitCommand "push -u origin $script:branchName" -AllowFailure
@@ -244,16 +244,16 @@ function Invoke-StandardMode {
         # Initialize tracking variables
         $issueNumber = $null
         $prUrl = $null
-        
+
         # Extract branch name from result
-        $branchName = if ($result.Result -and $result.Result.BranchCreated) { 
-            $result.Result.BranchCreated 
-        } elseif ($result.BranchCreated) { 
-            $result.BranchCreated 
-        } else { 
-            $null 
+        $branchName = if ($result.Result -and $result.Result.BranchCreated) {
+            $result.Result.BranchCreated
+        } elseif ($result.BranchCreated) {
+            $result.BranchCreated
+        } else {
+            $null
         }
-        
+
         if ($CreateIssue) {
             Write-CustomLog "Creating issue..." -Level "INFO"
             try {
@@ -280,19 +280,19 @@ function Invoke-StandardMode {
                     BranchName = $branchName
                     OperationType = $OperationType
                 }
-                
+
                 # Add issue number if we created one
                 if ($issueNumber) {
                     $prParams.IssueNumber = $issueNumber
                 }
-                
+
                 $prResult = New-PatchPR @prParams
                 if ($prResult.Success) {
                     Write-CustomLog "PR created: $($prResult.PullRequestUrl)" -Level "SUCCESS"
                     $prUrl = $prResult.PullRequestUrl
                     $result.PullRequestUrl = $prUrl
                     $result.PullRequestNumber = $prResult.PullRequestNumber
-                    
+
                     # Also add to Result hashtable for consistency
                     if ($result.Result) {
                         $result.Result.PullRequestUrl = $prUrl

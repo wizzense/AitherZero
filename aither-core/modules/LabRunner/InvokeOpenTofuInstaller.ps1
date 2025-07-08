@@ -3,7 +3,7 @@ function Invoke-OpenTofuInstaller {
         [string]$CosignPath,
         [string]$OpenTofuVersion
     )
-    
+
     $installer = (Resolve-Path (Join-Path $PSScriptRoot 'OpenTofuInstaller.ps1')).Path
     Write-CustomLog "Running OpenTofuInstaller.ps1 with version $OpenTofuVersion"
     & $installer -installMethod standalone -cosignPath $CosignPath -opentofuVersion $OpenTofuVersion

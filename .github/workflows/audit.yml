@@ -36,10 +36,15 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# Permissions for GITHUB_TOKEN
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
-  PSCORE_VERSION: '7.4.5'
 
 jobs:
   # Initialize audit state and determine what needs to be audited
@@ -198,7 +203,7 @@ jobs:
         Write-Host "🤖 Checking for auto-generation candidates..." -ForegroundColor Magenta
         
         if (Test-Path "change-analysis.json") {
-          $analysis = Get-Content "change-analysis.json" | ConvertFrom-Json
+          $analysis = Get-Content "change-analysis.json" | ConvertFrom-Json -AsHashTable
           $highConfidence = $analysis.autoGenerationCandidates | Where-Object { $_.confidence -gt 75 }
           
           if ($highConfidence.Count -gt 0 -and $highConfidence.Count -le 3) {
@@ -493,9 +498,9 @@ jobs:
             testing = @{
               status = $env:TEST_STATUS
               executed = $auditScope.testing
-              grade = $env:AUDIT_GRADE
-              score = $env:AUDIT_SCORE
-              coverage = $env:COVERAGE_PERCENT
+              grade = if ($env:AUDIT_GRADE) { $env:AUDIT_GRADE } else { "N/A" }
+              score = if ($env:AUDIT_SCORE) { $env:AUDIT_SCORE } else { "0" }
+              coverage = if ($env:COVERAGE_PERCENT) { $env:COVERAGE_PERCENT } else { "0" }
             }
             duplicates = @{
               status = $env:DUP_STATUS
@@ -541,68 +546,74 @@ jobs:
     - name: Comment on PR with audit results
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v7
+      continue-on-error: true  # PR commenting may fail for forks
       with:
         script: |
-          const fs = require('fs');
-          
-          let body = '## 🔍 AitherZero Audit Results\n\n';
-          
-          const results = {
-            'Documentation': '${{ needs.documentation-audit.result }}',
-            'Testing': '${{ needs.testing-audit.result }}',
-            'Duplicates': '${{ needs.duplicate-detection.result }}'
-          };
-          
-          body += '| Audit Type | Status | Details |\n';
-          body += '|------------|--------|---------|\n';
-          
-          for (const [audit, result] of Object.entries(results)) {
-            const emoji = result === 'success' ? '✅' : 
-                         result === 'failure' ? '❌' : 
-                         result === 'skipped' ? '⏭️' : '⚠️';
+          try {
+            const fs = require('fs');
             
-            let details = '';
-            if (audit === 'Testing' && result === 'success') {
-              details = `Grade ${{ env.AUDIT_GRADE }} (${{ env.AUDIT_SCORE }}%), Coverage: ${{ env.COVERAGE_PERCENT }}%`;
+            let body = '## 🔍 AitherZero Audit Results\n\n';
+            
+            const results = {
+              'Documentation': '${{ needs.documentation-audit.result }}',
+              'Testing': '${{ needs.testing-audit.result }}',
+              'Duplicates': '${{ needs.duplicate-detection.result }}'
+            };
+            
+            body += '| Audit Type | Status | Details |\n';
+            body += '|------------|--------|---------|\n';
+            
+            for (const [audit, result] of Object.entries(results)) {
+              const emoji = result === 'success' ? '✅' : 
+                           result === 'failure' ? '❌' : 
+                           result === 'skipped' ? '⏭️' : '⚠️';
+              
+              let details = '';
+              if (audit === 'Testing' && result === 'success') {
+                details = `Grade ${{ env.AUDIT_GRADE }} (${{ env.AUDIT_SCORE }}%), Coverage: ${{ env.COVERAGE_PERCENT }}%`;
+              }
+              
+              body += `| ${audit} | ${emoji} ${result} | ${details} |\n`;
             }
             
-            body += `| ${audit} | ${emoji} ${result} | ${details} |\n`;
-          }
-          
-          body += '\n### 📋 Actions Taken\n';
-          body += '- 🔍 Scanned for duplicate and AI-generated files\n';
-          body += '- 📊 Analyzed documentation coverage and staleness\n';
-          body += '- 🧪 Evaluated test coverage and quality\n';
-          body += '- 🤖 Generated missing documentation/tests where appropriate\n';
-          
-          body += `\n[View detailed audit logs](${context.payload.pull_request.html_url}/checks)`;
-          
-          // Find existing comment
-          const { data: comments } = await github.rest.issues.listComments({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
+            body += '\n### 📋 Actions Taken\n';
+            body += '- 🔍 Scanned for duplicate and AI-generated files\n';
+            body += '- 📊 Analyzed documentation coverage and staleness\n';
+            body += '- 🧪 Evaluated test coverage and quality\n';
+            body += '- 🤖 Generated missing documentation/tests where appropriate\n';
+            
+            body += `\n[View detailed audit logs](${context.payload.pull_request.html_url}/checks)`;
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
             issue_number: context.issue.number
-          });
-          
-          const botComment = comments.find(comment => 
-            comment.user.type === 'Bot' && 
-            comment.body.includes('🔍 AitherZero Audit Results')
-          );
-          
-          if (botComment) {
-            await github.rest.issues.updateComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: botComment.id,
-              body
             });
-          } else {
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body
-            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('🔍 AitherZero Audit Results')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }
+          } catch (error) {
+            console.log('Failed to post PR comment:', error.message);
+            console.log('This is expected for PRs from forks or with restricted permissions.');
           }
           
     - name: Upload unified audit summary

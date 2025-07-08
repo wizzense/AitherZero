@@ -81,7 +81,7 @@ $MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
     # Clear caches
     $script:ConfigurationCache.Clear()
     $script:StatusCache.Clear()
-    
+
     if ($script:UseCustomLogging) {
         Write-CustomLog -Level 'INFO' -Message "PSScriptAnalyzerIntegration module unloaded"
     } else {

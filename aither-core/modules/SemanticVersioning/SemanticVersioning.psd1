@@ -7,11 +7,11 @@
     CompanyName = 'AitherLabs'
     Copyright = '2025 AitherLabs. All rights reserved.'
     Description = 'Semantic versioning engine with conventional commit parsing and intelligent version management'
-    
+
     PowerShellVersion = '7.0'
-    
+
     RequiredModules = @()
-    
+
     FunctionsToExport = @(
         'Get-NextSemanticVersion',
         'Parse-ConventionalCommits',
@@ -24,11 +24,11 @@
         'Compare-SemanticVersions',
         'Get-VersionBump'
     )
-    
+
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()
-    
+
     PrivateData = @{
         PSData = @{
             Tags = @('SemanticVersioning', 'ConventionalCommits', 'Release', 'Automation', 'PowerShell')

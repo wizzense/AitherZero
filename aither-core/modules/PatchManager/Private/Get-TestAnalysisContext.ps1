@@ -5,9 +5,9 @@
     Intelligent test context analyzer for PatchManager.
 
 .DESCRIPTION
-    Analyzes test results, error messages, and system state to automatically 
+    Analyzes test results, error messages, and system state to automatically
     determine affected files, modules, capabilities, and detailed error context.
-    
+
     This function replaces manual analysis with automated detection to provide
     comprehensive context for patch tracking issues.
 
@@ -25,7 +25,7 @@
 
 .EXAMPLE
     $context = Get-TestAnalysisContext -TestOutput $testResults -ErrorDetails $errors
-    
+
 .NOTES
     Used internally by PatchManager to enhance issue tracking with automated context.
 #>
@@ -78,9 +78,9 @@ function Get-TestAnalysisContext {
 
             # 1. Analyze error patterns and extract file paths
             Write-AnalysisLog "Analyzing error patterns for file references..." -Level "INFO"
-            
+
             $allText = ($TestOutput + $ErrorDetails) -join "`n"
-            
+
             # Extract file paths from error messages using multiple patterns
             $filePatterns = @(
                 # PowerShell file paths
@@ -100,21 +100,21 @@ function Get-TestAnalysisContext {
                 $fileMatches = [regex]::Matches($allText, $pattern)
                 foreach ($match in $fileMatches) {
                     $filePath = $match.Groups[1].Value
-                    
+
                     # Clean up the path
                     $filePath = $filePath.Trim(@('"', "'", ' ', ':', ';', ','))
-                    
+
                     # Skip if it's just an extension or too short
                     if ($filePath.Length -lt 4 -or $filePath -match '^\.[a-z]+$') {
                         continue
                     }
-                    
+
                     # Convert to relative path if it's in the project
                     if ($filePath -match [regex]::Escape($WorkingDirectory)) {
                         $filePath = $filePath -replace [regex]::Escape($WorkingDirectory), '.'
                         $filePath = $filePath -replace '\\', '/'
                     }
-                    
+
                     # Add to affected files if it's not already there
                     if ($filePath -notin $analysisResult.AffectedFiles) {
                         $analysisResult.AffectedFiles += $filePath
@@ -124,7 +124,7 @@ function Get-TestAnalysisContext {
 
             # 2. Analyze module references
             Write-AnalysisLog "Analyzing module references..." -Level "INFO"
-            
+
             $modulePatterns = @(
                 'Import-Module\s+([^\s]+)',
                 'Module:\s+(\w+)',
@@ -139,16 +139,16 @@ function Get-TestAnalysisContext {
                 $moduleMatches = [regex]::Matches($allText, $pattern, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
                 foreach ($match in $moduleMatches) {
                     $moduleName = $match.Groups[1].Value
-                    
+
                     # Clean up module name
                     $moduleName = $moduleName.Trim(@('"', "'", ' ', '.', '/', '\'))
-                    
+
                     # Skip common false positives
-                    if ($moduleName -in @('Force', 'ErrorAction', 'Verbose', 'Version', 'Global', 'Local') -or 
+                    if ($moduleName -in @('Force', 'ErrorAction', 'Verbose', 'Version', 'Global', 'Local') -or
                         $moduleName.Length -lt 3) {
                         continue
                     }
-                    
+
                     if ($moduleName -notin $analysisResult.AffectedModules) {
                         $analysisResult.AffectedModules += $moduleName
                     }
@@ -157,7 +157,7 @@ function Get-TestAnalysisContext {
 
             # 3. Analyze error categories and classify failures
             Write-AnalysisLog "Classifying error categories..." -Level "INFO"
-            
+
             $errorClassifications = @{
                 'SyntaxError' = @('syntax error', 'parse error', 'unexpected token', 'missing closing')
                 'ModuleError' = @('module not found', 'import-module', 'module loading', 'could not load')
@@ -183,7 +183,7 @@ function Get-TestAnalysisContext {
 
             # 4. Extract capabilities and features affected
             Write-AnalysisLog "Identifying affected capabilities..." -Level "INFO"
-            
+
             $capabilityPatterns = @{
                 'Logging' = @('write-customlog', 'log', 'logging')
                 'Testing' = @('pester', 'test', 'should', 'describe', 'context', 'it ')
@@ -210,7 +210,7 @@ function Get-TestAnalysisContext {
 
             # 5. Generate specific failure reasons and recommendations
             Write-AnalysisLog "Generating failure analysis and recommendations..." -Level "INFO"
-            
+
             # Analyze specific failure patterns
             if ($analysisResult.ErrorCategories -contains 'SyntaxError') {
                 $analysisResult.FailureReasons += "PowerShell syntax errors detected in one or more files"
@@ -238,7 +238,7 @@ function Get-TestAnalysisContext {
 
             # 6. Calculate confidence level
             $confidenceScore = 0
-            
+
             if ($analysisResult.AffectedFiles.Count -gt 0) { $confidenceScore += 30 }
             if ($analysisResult.AffectedModules.Count -gt 0) { $confidenceScore += 25 }
             if ($analysisResult.ErrorCategories.Count -gt 0) { $confidenceScore += 25 }
@@ -263,10 +263,10 @@ function Get-TestAnalysisContext {
                     ErrorCategories = $errorClassifications.Keys.Count
                     CapabilityPatterns = $capabilityPatterns.Keys.Count
                 }
-                RawErrorSample = if ($ErrorDetails.Count -gt 0) { 
-                    ($ErrorDetails | Select-Object -First 3) -join "; " 
-                } else { 
-                    "No errors captured" 
+                RawErrorSample = if ($ErrorDetails.Count -gt 0) {
+                    ($ErrorDetails | Select-Object -First 3) -join "; "
+                } else {
+                    "No errors captured"
                 }
             }
 
@@ -276,7 +276,7 @@ function Get-TestAnalysisContext {
 
         } catch {
             Write-AnalysisLog "Test analysis failed: $($_.Exception.Message)" -Level "ERROR"
-            
+
             return @{
                 AffectedFiles = @()
                 AffectedModules = @()

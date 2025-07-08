@@ -40,13 +40,13 @@ function Stop-SystemMonitoring {
 
     begin {
         Write-CustomLog -Message "Stopping system monitoring" -Level "INFO"
-        
+
         # Check if monitoring is running
         if (-not $script:MonitoringJob) {
             Write-CustomLog -Message "No active monitoring session found" -Level "WARNING"
             return
         }
-        
+
         $jobState = $script:MonitoringJob.State
         if ($jobState -ne 'Running' -and -not $Force) {
             Write-CustomLog -Message "Monitoring job is not running (State: $jobState)" -Level "WARNING"
@@ -57,14 +57,14 @@ function Stop-SystemMonitoring {
     process {
         try {
             $summary = $null
-            
+
             if (-not $Force) {
                 # Wait for job to complete gracefully
                 Write-CustomLog -Message "Waiting for monitoring job to complete..." -Level "INFO"
-                
+
                 # Signal job to stop (would need inter-process communication in real implementation)
                 Stop-Job -Job $script:MonitoringJob
-                
+
                 # Collect job results
                 $summary = Receive-Job -Job $script:MonitoringJob -Wait
             } else {
@@ -72,10 +72,10 @@ function Stop-SystemMonitoring {
                 Stop-Job -Job $script:MonitoringJob -Force
                 Write-CustomLog -Message "Monitoring forcefully stopped" -Level "WARNING"
             }
-            
+
             # Remove job
             Remove-Job -Job $script:MonitoringJob -Force
-            
+
             # Generate report if we have summary data
             if ($summary) {
                 # Create comprehensive report
@@ -93,12 +93,12 @@ function Stop-SystemMonitoring {
                     FinalMetrics = $summary.FinalMetrics
                     PerformanceAnalysis = Analyze-MonitoringResults -Summary $summary
                 }
-                
+
                 # Display summary
                 Write-Host "`n=== System Monitoring Summary ===" -ForegroundColor Cyan
                 Write-Host "Duration: $($report.SessionInfo.Duration) minutes"
                 Write-Host "Total Alerts: $($report.AlertSummary.TotalAlerts)"
-                
+
                 if ($report.AlertSummary.ByLevel) {
                     Write-Host "`nAlerts by Level:"
                     $report.AlertSummary.ByLevel | ForEach-Object {
@@ -111,23 +111,23 @@ function Stop-SystemMonitoring {
                         )
                     }
                 }
-                
+
                 if ($report.PerformanceAnalysis.Issues) {
                     Write-Host "`nPerformance Issues Detected:" -ForegroundColor Yellow
                     $report.PerformanceAnalysis.Issues | ForEach-Object {
                         Write-Host "  - $_" -ForegroundColor Yellow
                     }
                 }
-                
+
                 # Export report if requested
                 if ($ExportReport) {
                     Export-MonitoringReport -Report $report -Format $Format
                 }
-                
+
                 # Return report object
                 return $report
             }
-            
+
             # Clear monitoring data
             $script:MonitoringJob = $null
             $script:MonitoringConfig = $null
@@ -144,98 +144,98 @@ function Stop-SystemMonitoring {
 # Helper function to analyze monitoring results
 function Analyze-MonitoringResults {
     param($Summary)
-    
+
     $analysis = @{
         Issues = @()
         Recommendations = @()
         Trends = @{}
     }
-    
+
     # Analyze alerts
     if ($Summary.TotalAlerts -gt 0) {
         $criticalCount = ($Summary.AlertsByLevel | Where-Object { $_.Name -eq 'CRITICAL' }).Count
         $warningCount = ($Summary.AlertsByLevel | Where-Object { $_.Name -eq 'WARNING' }).Count
-        
+
         if ($criticalCount -gt 0) {
             $analysis.Issues += "$criticalCount critical alerts detected"
             $analysis.Recommendations += "Investigate critical performance issues immediately"
         }
-        
+
         if ($warningCount -gt 5) {
             $analysis.Issues += "High number of warning alerts ($warningCount)"
             $analysis.Recommendations += "Review system capacity and resource allocation"
         }
     }
-    
+
     # Analyze final metrics
     if ($Summary.FinalMetrics) {
         # Check system metrics
         if ($Summary.FinalMetrics.System) {
             $cpu = $Summary.FinalMetrics.System.CPU.Average
             $memory = $Summary.FinalMetrics.System.Memory.Average
-            
+
             if ($cpu -gt 80) {
                 $analysis.Issues += "High CPU usage: $cpu%"
                 $analysis.Recommendations += "Consider scaling compute resources or optimizing workloads"
             }
-            
+
             if ($memory -gt 85) {
                 $analysis.Issues += "High memory usage: $memory%"
                 $analysis.Recommendations += "Review memory-intensive operations and consider increasing RAM"
             }
         }
-        
+
         # Check SLA compliance
         if ($Summary.FinalMetrics.SLACompliance -and $Summary.FinalMetrics.SLACompliance.Overall -eq "Fail") {
-            $failedSLAs = $Summary.FinalMetrics.SLACompliance.Details | 
-                Where-Object { $_.Value.Status -eq "Fail" } | 
+            $failedSLAs = $Summary.FinalMetrics.SLACompliance.Details |
+                Where-Object { $_.Value.Status -eq "Fail" } |
                 ForEach-Object { $_.Key }
-            
+
             $analysis.Issues += "SLA violations detected: $($failedSLAs -join ', ')"
             $analysis.Recommendations += "Review and optimize operations failing SLA targets"
         }
     }
-    
+
     # Performance trends (would analyze historical data in full implementation)
     $analysis.Trends = @{
         CPUTrend = "Stable"  # Placeholder
         MemoryTrend = "Stable"
         AlertTrend = if ($Summary.TotalAlerts -gt 10) { "Increasing" } else { "Normal" }
     }
-    
+
     return $analysis
 }
 
 # Helper function to export monitoring report
 function Export-MonitoringReport {
     param($Report, $Format)
-    
+
     try {
         $reportPath = Join-Path $script:ProjectRoot "reports/monitoring"
         if (-not (Test-Path $reportPath)) {
             New-Item -Path $reportPath -ItemType Directory -Force | Out-Null
         }
-        
+
         $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
         $filename = "monitoring-report-$timestamp"
-        
+
         switch ($Format) {
             'JSON' {
                 $filepath = Join-Path $reportPath "$filename.json"
                 $Report | ConvertTo-Json -Depth 10 | Out-File -FilePath $filepath -Encoding UTF8
             }
-            
+
             'HTML' {
                 $filepath = Join-Path $reportPath "$filename.html"
                 $html = ConvertTo-MonitoringHtml -Report $Report
                 $html | Out-File -FilePath $filepath -Encoding UTF8
             }
-            
+
             'CSV' {
                 $filepath = Join-Path $reportPath "$filename.csv"
                 # Flatten report structure for CSV
                 $csvData = @()
-                
+
                 # Session info
                 $csvData += [PSCustomObject]@{
                     Category = "Session"
@@ -247,7 +247,7 @@ function Export-MonitoringReport {
                     Metric = "TotalAlerts"
                     Value = $Report.AlertSummary.TotalAlerts
                 }
-                
+
                 # Alert breakdown
                 if ($Report.AlertSummary.ByLevel) {
                     $Report.AlertSummary.ByLevel | ForEach-Object {
@@ -258,14 +258,14 @@ function Export-MonitoringReport {
                         }
                     }
                 }
-                
+
                 $csvData | Export-Csv -Path $filepath -NoTypeInformation
             }
         }
-        
+
         Write-CustomLog -Message "Monitoring report exported to: $filepath" -Level "SUCCESS"
         Write-Host "Report saved to: $filepath" -ForegroundColor Green
-        
+
     } catch {
         Write-CustomLog -Message "Error exporting report: $($_.Exception.Message)" -Level "ERROR"
         throw
@@ -275,7 +275,7 @@ function Export-MonitoringReport {
 # Helper function to convert report to HTML
 function ConvertTo-MonitoringHtml {
     param($Report)
-    
+
     $html = @"
 <!DOCTYPE html>
 <html>
@@ -303,7 +303,7 @@ function ConvertTo-MonitoringHtml {
 <body>
     <div class="container">
         <h1>AitherZero System Monitoring Report</h1>
-        
+
         <div class="info-grid">
             <div class="info-card">
                 <div class="label">Monitoring Duration</div>
@@ -318,12 +318,12 @@ function ConvertTo-MonitoringHtml {
                 <div class="metric">$($Report.SessionInfo.Profile)</div>
             </div>
         </div>
-        
+
         <h2>Alert Summary</h2>
         <table>
             <tr><th>Alert Level</th><th>Count</th></tr>
 "@
-    
+
     if ($Report.AlertSummary.ByLevel) {
         $Report.AlertSummary.ByLevel | ForEach-Object {
             $cssClass = switch ($_.Name) {
@@ -334,9 +334,9 @@ function ConvertTo-MonitoringHtml {
             $html += "<tr><td class='$cssClass'>$($_.Name)</td><td>$($_.Count)</td></tr>"
         }
     }
-    
+
     $html += "</table>"
-    
+
     if ($Report.PerformanceAnalysis.Issues.Count -gt 0) {
         $html += @"
         <h2>Performance Issues</h2>
@@ -348,7 +348,7 @@ function ConvertTo-MonitoringHtml {
         }
         $html += "</ul></div>"
     }
-    
+
     if ($Report.PerformanceAnalysis.Recommendations.Count -gt 0) {
         $html += @"
         <h2>Recommendations</h2>
@@ -360,7 +360,7 @@ function ConvertTo-MonitoringHtml {
         }
         $html += "</ul></div>"
     }
-    
+
     $html += @"
         <p style="text-align: center; color: #666; margin-top: 40px;">
             Generated on $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
@@ -369,7 +369,7 @@ function ConvertTo-MonitoringHtml {
 </body>
 </html>
 "@
-    
+
     return $html
 }
 

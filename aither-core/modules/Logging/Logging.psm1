@@ -260,13 +260,13 @@ function Write-CustomLog {
             HelpLink = $Exception.HelpLink
             Source = $Exception.Source
             TargetSite = if ($Exception.TargetSite) { $Exception.TargetSite.Name } else { $null }
-            Data = if ($Exception.Data.Count -gt 0) { 
-                $Exception.Data | ConvertTo-Json -Compress -ErrorAction SilentlyContinue 
-            } else { 
-                $null 
+            Data = if ($Exception.Data.Count -gt 0) {
+                $Exception.Data | ConvertTo-Json -Compress -ErrorAction SilentlyContinue
+            } else {
+                $null
             }
         }
-        
+
         # Add inner exception chain for better debugging
         $innerExceptions = @()
         $currentException = $Exception.InnerException
@@ -309,7 +309,7 @@ function Write-CustomLog {
             if (-not (Test-Path $logDir)) {
                 New-Item -Path $logDir -ItemType Directory -Force | Out-Null
             }
-            
+
             # Thread-safe file writing
             $mutex = [System.Threading.Mutex]::new($false, "AitherZeroLogMutex")
             try {
@@ -700,7 +700,7 @@ function Write-BulkLog {
                 $entry = $_
                 $level = if ($entry.Level) { $entry.Level } else { $using:DefaultLevel }
                 $context = if ($entry.Context) { $entry.Context } else { $using:DefaultContext }
-                
+
                 # Import the logging module in the parallel runspace
                 Import-Module $using:modulePath -Force
                 Write-CustomLog -Message $entry.Message -Level $level -Context $context
@@ -740,13 +740,13 @@ function Test-LoggingPerformance {
     if ($ConsoleOnly) { $testParams.NoFile = $true }
 
     $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-    
+
     1..$MessageCount | ForEach-Object {
         Write-CustomLog -Message "Performance test message $_" -Level INFO @testParams
     }
-    
+
     $stopwatch.Stop()
-    
+
     $metrics = @{
         MessageCount = $MessageCount
         TotalTimeMs = $stopwatch.ElapsedMilliseconds

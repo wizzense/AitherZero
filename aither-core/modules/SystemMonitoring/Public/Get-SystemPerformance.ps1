@@ -27,7 +27,7 @@
 
 .EXAMPLE
     Get-SystemPerformance -MetricType All -Duration 10 -IncludeTrends
-    
+
     Collects all metrics over 10 seconds with trend analysis.
 #>
 function Get-SystemPerformance {
@@ -57,7 +57,7 @@ function Get-SystemPerformance {
     )
 
     Write-CustomLog -Message "Starting comprehensive performance metric collection for type: $MetricType (Duration: ${Duration}s)" -Level "INFO"
-    
+
     $performanceData = [PSCustomObject]@{
         Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         CollectionDuration = $Duration
@@ -134,15 +134,15 @@ function Get-RealSystemMetrics {
         [int]$Duration,
         [int]$SampleInterval
     )
-    
+
     $samples = [Math]::Floor($Duration / $SampleInterval)
     $cpuSamples = @()
     $memorySamples = @()
     $diskSamples = @()
     $networkSamples = @()
-    
+
     Write-CustomLog -Message "Collecting $samples samples over $Duration seconds..." -Level "DEBUG"
-    
+
     for ($i = 0; $i -lt $samples; $i++) {
         try {
             # CPU sampling
@@ -162,7 +162,7 @@ function Get-RealSystemMetrics {
                     Value = $cpuUsage
                 }
             }
-            
+
             # Memory sampling
             $memInfo = Get-MemoryInfo
             $memorySamples += [PSCustomObject]@{
@@ -172,21 +172,21 @@ function Get-RealSystemMetrics {
                 UsedGB = $memInfo.UsedGB
                 FreeGB = $memInfo.FreeGB
             }
-            
+
             # Disk sampling
             $diskInfo = Get-DiskInfo
             $diskSamples += [PSCustomObject]@{
                 Timestamp = Get-Date
                 Disks = $diskInfo
             }
-            
+
             # Network sampling
             $networkInfo = Get-NetworkInfo
             $networkSamples += [PSCustomObject]@{
                 Timestamp = Get-Date
                 Interfaces = $networkInfo
             }
-            
+
             if ($i -lt ($samples - 1)) {
                 Start-Sleep -Seconds $SampleInterval
             }
@@ -194,7 +194,7 @@ function Get-RealSystemMetrics {
             Write-CustomLog -Message "Error collecting sample $($i + 1): $($_.Exception.Message)" -Level "WARNING"
         }
     }
-    
+
     # Calculate aggregated metrics
     return @{
         CPU = @{
@@ -221,13 +221,13 @@ function Get-RealSystemMetrics {
 # Helper function for application metrics
 function Get-ApplicationMetrics {
     param([int]$Duration)
-    
+
     $currentProcess = Get-Process -Id $PID
     $startTime = Get-Date
-    
+
     # Calculate startup time from process start
     $startupTime = [Math]::Round(((Get-Date) - $currentProcess.StartTime).TotalSeconds, 2)
-    
+
     # Get PowerShell runspace information
     $runspaceCount = 1
     try {
@@ -236,10 +236,10 @@ function Get-ApplicationMetrics {
         # Fallback to single runspace
         $runspaceCount = 1
     }
-    
+
     # Get loaded modules
     $loadedModules = Get-Module | Where-Object { $_.Name -like "Aither*" } | Select-Object Name, Version, Path
-    
+
     return @{
         StartupTime = $startupTime
         ProcessInfo = @{
@@ -260,13 +260,13 @@ function Get-ApplicationMetrics {
 # Helper function for module metrics
 function Get-ModuleMetrics {
     $modules = Get-Module | Where-Object { $_.Name -like "Aither*" -or $_.Name -in @("Pester", "PSScriptAnalyzer") }
-    
+
     return @{
         TotalModules = $modules.Count
         AitherModules = ($modules | Where-Object { $_.Name -like "Aither*" }).Count
         ModuleDetails = $modules | Select-Object Name, Version, @{
             Name = "SizeMB"
-            Expression = { 
+            Expression = {
                 if ($_.Path) {
                     try {
                         [Math]::Round((Get-ChildItem $_.Path -Recurse -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum / 1MB, 2)
@@ -290,7 +290,7 @@ function Get-OperationMetrics {
 # Helper function for SLA compliance calculation
 function Calculate-SLACompliance {
     param($SystemMetrics, $ApplicationMetrics)
-    
+
     $slaChecks = @{
         StartupTime = @{
             Target = 3.0
@@ -308,10 +308,10 @@ function Calculate-SLACompliance {
             Status = if ($SystemMetrics.Memory.Average -lt 85.0) { "Pass" } else { "Fail" }
         }
     }
-    
+
     $passCount = ($slaChecks.Values | Where-Object { $_.Status -eq "Pass" }).Count
     $totalCount = $slaChecks.Count
-    
+
     return @{
         Overall = if ($passCount -eq $totalCount) { "Pass" } else { "Fail" }
         Score = [Math]::Round(($passCount / $totalCount) * 100, 2)
@@ -322,7 +322,7 @@ function Calculate-SLACompliance {
 # Helper function for trend analysis
 function Get-PerformanceTrends {
     param($CurrentMetrics, [switch]$IncludeHistory)
-    
+
     $trends = @{
         CPU = @{
             Direction = $CurrentMetrics.System.CPU.Trend
@@ -335,29 +335,29 @@ function Get-PerformanceTrends {
             Recommendation = "Normal operation"
         }
     }
-    
+
     # Add recommendations based on trends
     if ($CurrentMetrics.System.CPU.Average -gt 70) {
         $trends.CPU.Recommendation = "Consider optimizing CPU-intensive operations"
     }
-    
+
     if ($CurrentMetrics.System.Memory.Average -gt 80) {
         $trends.Memory.Recommendation = "Monitor memory usage and consider optimization"
     }
-    
+
     return $trends
 }
 
 # Helper function for trend direction calculation
 function Get-TrendDirection {
     param([array]$Values)
-    
+
     if ($Values.Count -lt 2) { return "Stable" }
-    
+
     $first = $Values[0]
     $last = $Values[-1]
     $difference = $last - $first
-    
+
     if ([Math]::Abs($difference) -lt 2) { return "Stable" }
     elseif ($difference -gt 0) { return "Increasing" }
     else { return "Decreasing" }
@@ -380,34 +380,34 @@ function Get-LinuxCpuUsage {
 # Helper function to store performance metrics
 function Store-PerformanceMetrics {
     param($Metrics)
-    
+
     try {
         $storageDir = Join-Path $script:ProjectRoot "data/monitoring/performance"
         if (-not (Test-Path $storageDir)) {
             New-Item -Path $storageDir -ItemType Directory -Force | Out-Null
         }
-        
+
         $fileName = "performance-$(Get-Date -Format 'yyyyMMdd').json"
         $filePath = Join-Path $storageDir $fileName
-        
+
         # Load existing data if file exists
         $existingData = @()
         if (Test-Path $filePath) {
             $existingData = Get-Content $filePath | ConvertFrom-Json
         }
-        
+
         # Add new metrics
         $existingData += $Metrics
-        
+
         # Keep only last 24 hours of data
         $cutoffTime = (Get-Date).AddHours(-24)
-        $filteredData = $existingData | Where-Object { 
-            [datetime]$_.Timestamp -gt $cutoffTime 
+        $filteredData = $existingData | Where-Object {
+            [datetime]$_.Timestamp -gt $cutoffTime
         }
-        
+
         # Save back to file
         $filteredData | ConvertTo-Json -Depth 6 | Set-Content -Path $filePath -Encoding UTF8
-        
+
         Write-CustomLog -Message "Performance metrics stored to: $filePath" -Level "DEBUG"
     } catch {
         Write-CustomLog -Message "Error storing performance metrics: $($_.Exception.Message)" -Level "WARNING"
@@ -417,7 +417,7 @@ function Store-PerformanceMetrics {
 # Helper function to convert metrics to CSV format
 function ConvertTo-PerformanceCSV {
     param($Metrics)
-    
+
     $csvData = @()
     $csvData += [PSCustomObject]@{
         Timestamp = $Metrics.Timestamp
@@ -430,7 +430,7 @@ function ConvertTo-PerformanceCSV {
         'SLA_Status' = $Metrics.SLACompliance.Overall
         'Platform' = $Metrics.Metadata.Platform
     }
-    
+
     return $csvData | ConvertTo-Csv -NoTypeInformation
 }
 

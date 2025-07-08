@@ -17,17 +17,17 @@ function Get-ConfigurationWatcher {
     param(
         [Parameter()]
         [string]$Name,
-        
+
         [Parameter()]
         [switch]$All
     )
-    
+
     try {
         if ($All) {
             $watcherInfo = @{}
             foreach ($watcherName in $script:ConfigurationStore.HotReload.Watchers.Keys) {
                 $watcher = $script:ConfigurationStore.HotReload.Watchers[$watcherName]
-                
+
                 $watcherInfo[$watcherName] = @{
                     Name = $watcherName
                     Enabled = $watcher.EnableRaisingEvents
@@ -40,7 +40,7 @@ function Get-ConfigurationWatcher {
             }
             return $watcherInfo
         }
-        
+
         if (-not $Name) {
             # Return summary information
             return @{
@@ -49,14 +49,14 @@ function Get-ConfigurationWatcher {
                 WatcherNames = @($script:ConfigurationStore.HotReload.Watchers.Keys)
             }
         }
-        
+
         if (-not $script:ConfigurationStore.HotReload.Watchers.ContainsKey($Name)) {
-            Write-CustomLog -Level 'WARNING' -Message "Watcher '$Name' not found"
+            Write-CustomLog -Level 'WARN' -Message "Watcher '$Name' not found"
             return $null
         }
-        
+
         $watcher = $script:ConfigurationStore.HotReload.Watchers[$Name]
-        
+
         return @{
             Name = $Name
             Enabled = $watcher.EnableRaisingEvents
@@ -66,7 +66,7 @@ function Get-ConfigurationWatcher {
             IncludeSubdirectories = $watcher.IncludeSubdirectories
             Type = $watcher.GetType().Name
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to get configuration watcher: $_"
         throw

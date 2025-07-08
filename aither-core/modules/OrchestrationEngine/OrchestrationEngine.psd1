@@ -6,11 +6,11 @@
     CompanyName = 'AitherZero'
     Copyright = '(c) 2025 AitherZero. All rights reserved.'
     Description = 'Orchestration Engine for AitherZero - advanced workflow and playbook execution with conditional logic'
-    
+
     PowerShellVersion = '7.0'
-    
+
     RequiredModules = @()
-    
+
     FunctionsToExport = @(
         'Invoke-PlaybookWorkflow',
         'New-PlaybookDefinition',
@@ -25,11 +25,11 @@
         'New-ParallelStep',
         'New-ScriptStep'
     )
-    
+
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()
-    
+
     PrivateData = @{
         PSData = @{
             Tags = @('AitherZero', 'Orchestration', 'Workflow', 'Playbook', 'Automation', 'Conditional')

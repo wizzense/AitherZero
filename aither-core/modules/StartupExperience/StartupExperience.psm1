@@ -37,7 +37,7 @@ if (-not $foundSharedUtil) {
     # Define Find-ProjectRoot locally if shared utility is not found
     function Find-ProjectRoot {
         param([string]$StartPath = $PWD.Path)
-        
+
         $currentPath = $StartPath
         while ($currentPath -and $currentPath -ne (Split-Path $currentPath -Parent)) {
             if (Test-Path (Join-Path $currentPath "Start-AitherZero.ps1")) {
@@ -45,7 +45,7 @@ if (-not $foundSharedUtil) {
             }
             $currentPath = Split-Path $currentPath -Parent
         }
-        
+
         # Fallback to module root's parent parent
         return Split-Path (Split-Path $moduleRoot -Parent) -Parent
     }
@@ -59,6 +59,7 @@ $projectRoot = Find-ProjectRoot -StartPath $moduleRoot
 $script:ConfigProfilePath = Join-Path ([Environment]::GetFolderPath('UserProfile')) '.aitherzero' 'profiles'
 $script:CurrentProfile = $null
 $script:TerminalUIEnabled = $false
+$script:ManagementState = $null
 
 # Create profile directory if it doesn't exist
 if (-not (Test-Path $script:ConfigProfilePath)) {
@@ -107,11 +108,11 @@ if (-not (Get-Command Test-FeatureAccess -ErrorAction SilentlyContinue)) {
             [string]$ModuleName,
             [switch]$ThrowOnDenied
         )
-        
+
         # Without license management, all features are accessible
         return $true
     }
-    
+
     Write-Verbose "Using fallback Test-FeatureAccess function"
 }
 

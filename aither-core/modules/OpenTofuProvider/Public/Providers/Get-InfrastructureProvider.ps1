@@ -37,14 +37,14 @@ function Get-InfrastructureProvider {
         [Parameter(Position = 0)]
         [SupportsWildcards()]
         [string]$Name = '*',
-        
+
         [Parameter(ParameterSetName = 'Available')]
         [switch]$ListAvailable,
-        
+
         [Parameter()]
         [ValidateSet(
             'SupportsVirtualMachines',
-            'SupportsNetworking', 
+            'SupportsNetworking',
             'SupportsStorage',
             'SupportsSnapshots',
             'SupportsTemplates',
@@ -54,29 +54,29 @@ function Get-InfrastructureProvider {
             'SupportsCustomization'
         )]
         [string[]]$Capability,
-        
+
         [Parameter(ParameterSetName = 'Registered')]
         [switch]$Registered
     )
-    
+
     begin {
         Write-CustomLog -Level 'INFO' -Message "Getting infrastructure providers"
-        
+
         # Get providers directory
         $providersPath = Join-Path $PSScriptRoot "../../Private/Providers"
-        
+
         # Get registered providers cache
         $script:registeredProviders = Get-RegisteredProviders
     }
-    
+
     process {
         try {
             $providers = @()
-            
+
             if ($ListAvailable) {
                 # Get all available provider definitions
                 Write-CustomLog -Level 'INFO' -Message "Listing all available providers"
-                
+
                 # Built-in providers
                 $builtInProviders = @(
                     Get-HyperVProviderDefinition
@@ -84,7 +84,7 @@ function Get-InfrastructureProvider {
                     Get-AWSProviderDefinition
                     Get-VMwareProviderDefinition
                 )
-                
+
                 # Custom providers from directory
                 if (Test-Path $providersPath) {
                     $customProviderFiles = Get-ChildItem -Path $providersPath -Filter "*Provider.ps1" -File
@@ -100,12 +100,12 @@ function Get-InfrastructureProvider {
                         }
                     }
                 }
-                
+
                 $providers = $builtInProviders
             } else {
                 # Get only registered providers
                 Write-CustomLog -Level 'INFO' -Message "Getting registered providers"
-                
+
                 foreach ($regProvider in $script:registeredProviders.Values) {
                     # Load provider definition
                     $providerDef = Get-ProviderDefinition -ProviderName $regProvider.Name
@@ -114,32 +114,32 @@ function Get-InfrastructureProvider {
                         $providerDef | Add-Member -NotePropertyName 'Registered' -NotePropertyValue $true
                         $providerDef | Add-Member -NotePropertyName 'RegisteredAt' -NotePropertyValue $regProvider.RegisteredAt
                         $providerDef | Add-Member -NotePropertyName 'Configuration' -NotePropertyValue $regProvider.Configuration
-                        
+
                         $providers += $providerDef
                     }
                 }
             }
-            
+
             # Filter by name
             if ($Name -ne '*') {
                 $providers = $providers | Where-Object { $_.Name -like $Name }
             }
-            
+
             # Filter by capabilities
             if ($Capability) {
                 foreach ($cap in $Capability) {
-                    $providers = $providers | Where-Object { 
-                        $_.Capabilities.$cap -eq $true 
+                    $providers = $providers | Where-Object {
+                        $_.Capabilities.$cap -eq $true
                     }
                 }
             }
-            
+
             # Add status information
             foreach ($provider in $providers) {
                 # Check if provider is ready
                 $isReady = Test-ProviderReadiness -Provider $provider
                 $provider | Add-Member -NotePropertyName 'IsReady' -NotePropertyValue $isReady -Force
-                
+
                 # Get provider status
                 $status = if ($provider.Registered) {
                     if ($isReady) { 'Ready' } else { 'NotReady' }
@@ -148,20 +148,20 @@ function Get-InfrastructureProvider {
                 }
                 $provider | Add-Member -NotePropertyName 'Status' -NotePropertyValue $status -Force
             }
-            
+
             # Sort by name
             $providers = $providers | Sort-Object Name
-            
+
             # Output
             foreach ($provider in $providers) {
                 Write-Output ([PSCustomObject]$provider)
             }
-            
+
             # Summary if multiple providers
             if ($providers.Count -gt 1) {
                 Write-CustomLog -Level 'INFO' -Message "Found $($providers.Count) provider(s)"
             }
-            
+
         } catch {
             Write-CustomLog -Level 'ERROR' -Message "Failed to get infrastructure providers: $($_.Exception.Message)"
             throw
@@ -173,7 +173,7 @@ function Get-RegisteredProviders {
     # Get registered providers from module state
     if (-not $script:infrastructureProviders) {
         $script:infrastructureProviders = @{}
-        
+
         # Load from persistent storage if available
         $statePath = Join-Path $env:PROJECT_ROOT "configs" "registered-providers.json"
         if (Test-Path $statePath) {
@@ -187,42 +187,42 @@ function Get-RegisteredProviders {
             }
         }
     }
-    
+
     return $script:infrastructureProviders
 }
 
 function Get-ProviderDefinition {
     param([string]$ProviderName)
-    
+
     # Try to get provider definition
     $definitionFunc = "Get-${ProviderName}ProviderDefinition"
-    
+
     if (Get-Command $definitionFunc -ErrorAction SilentlyContinue) {
         return & $definitionFunc
     }
-    
+
     # Check for custom provider file
     $providersPath = Join-Path $PSScriptRoot "../../Private/Providers"
     $providerFile = Join-Path $providersPath "${ProviderName}Provider.ps1"
-    
+
     if (Test-Path $providerFile) {
         . $providerFile
         if (Get-Command $definitionFunc -ErrorAction SilentlyContinue) {
             return & $definitionFunc
         }
     }
-    
+
     return $null
 }
 
 function Test-ProviderReadiness {
     param([PSCustomObject]$Provider)
-    
+
     # Basic readiness checks
     if (-not $Provider.Registered) {
         return $false
     }
-    
+
     # Check required modules
     if ($Provider.RequiredModules) {
         foreach ($module in $Provider.RequiredModules) {
@@ -231,7 +231,7 @@ function Test-ProviderReadiness {
             }
         }
     }
-    
+
     # Check provider-specific readiness
     if ($Provider.Methods.TestReadiness) {
         try {
@@ -241,7 +241,7 @@ function Test-ProviderReadiness {
             return $false
         }
     }
-    
+
     return $true
 }
 
@@ -253,7 +253,7 @@ function Get-HyperVProviderDefinition {
         Description = 'Microsoft Hyper-V virtualization provider for Windows Server'
         Version = '1.0.0'
         Author = 'AitherCore'
-        
+
         Capabilities = @{
             SupportsVirtualMachines = $true
             SupportsNetworking = $true
@@ -265,21 +265,21 @@ function Get-HyperVProviderDefinition {
             SupportsLinuxGuests = $true
             SupportsCustomization = $true
         }
-        
+
         Requirements = @{
             OperatingSystem = 'Windows'
             PowerShellVersion = '5.1'
             RequiredModules = @('Hyper-V')
             RequiredFeatures = @('Hyper-V-PowerShell')
         }
-        
+
         Configuration = @{
             DefaultVMPath = 'C:\VMs'
             DefaultVHDPath = 'C:\VMs\VHDs'
             DefaultSwitchName = 'Default Switch'
             Provider = 'taliesins/hyperv'
         }
-        
+
         Methods = @{
             Initialize = $null  # Will be loaded from provider adapter
             ValidateConfiguration = $null
@@ -296,7 +296,7 @@ function Get-AzureProviderDefinition {
         Description = 'Microsoft Azure cloud provider'
         Version = '0.1.0'
         Author = 'AitherCore'
-        
+
         Capabilities = @{
             SupportsVirtualMachines = $true
             SupportsNetworking = $true
@@ -308,18 +308,18 @@ function Get-AzureProviderDefinition {
             SupportsLinuxGuests = $true
             SupportsCustomization = $true
         }
-        
+
         Requirements = @{
             OperatingSystem = 'Any'
             PowerShellVersion = '7.0'
             RequiredModules = @('Az')
         }
-        
+
         Configuration = @{
             Provider = 'azurerm'
             RequiresAuthentication = $true
         }
-        
+
         Methods = @{}
     }
 }
@@ -331,7 +331,7 @@ function Get-AWSProviderDefinition {
         Description = 'Amazon Web Services cloud provider'
         Version = '0.1.0'
         Author = 'AitherCore'
-        
+
         Capabilities = @{
             SupportsVirtualMachines = $true
             SupportsNetworking = $true
@@ -343,18 +343,18 @@ function Get-AWSProviderDefinition {
             SupportsLinuxGuests = $true
             SupportsCustomization = $true
         }
-        
+
         Requirements = @{
             OperatingSystem = 'Any'
             PowerShellVersion = '7.0'
             RequiredModules = @('AWS.Tools')
         }
-        
+
         Configuration = @{
             Provider = 'aws'
             RequiresAuthentication = $true
         }
-        
+
         Methods = @{}
     }
 }
@@ -366,7 +366,7 @@ function Get-VMwareProviderDefinition {
         Description = 'VMware vSphere virtualization provider'
         Version = '0.1.0'
         Author = 'AitherCore'
-        
+
         Capabilities = @{
             SupportsVirtualMachines = $true
             SupportsNetworking = $true
@@ -378,18 +378,18 @@ function Get-VMwareProviderDefinition {
             SupportsLinuxGuests = $true
             SupportsCustomization = $true
         }
-        
+
         Requirements = @{
             OperatingSystem = 'Any'
             PowerShellVersion = '7.0'
             RequiredModules = @('VMware.PowerCLI')
         }
-        
+
         Configuration = @{
             Provider = 'vsphere'
             RequiresAuthentication = $true
         }
-        
+
         Methods = @{}
     }
 }

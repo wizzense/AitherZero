@@ -20,7 +20,7 @@ Invoke-LabStep -Config $Config -Body {
     # Initialize OpenTofu in the infrastructure directory
     $infraPath = if ($Config.InfraRepoPath) { $Config.InfraRepoPath } else { 'C:/Temp/base-infra' }
     $tofuPath = Join-Path $infraPath "opentofu"
-    
+
     if (-not (Test-Path $tofuPath)) {
         Write-CustomLog "OpenTofu directory not found at $tofuPath"
         return
@@ -45,4 +45,3 @@ Invoke-LabStep -Config $Config -Body {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-

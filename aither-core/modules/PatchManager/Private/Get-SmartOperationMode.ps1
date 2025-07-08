@@ -94,7 +94,7 @@ function Get-SmartOperationMode {
 
         } catch {
             Write-CustomLog "Smart operation analysis failed: $($_.Exception.Message)" -Level "ERROR"
-            
+
             # Return safe defaults
             return @{
                 RecommendedMode = "Standard"

@@ -45,54 +45,54 @@ function Register-InfrastructureProvider {
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$Name,
-        
+
         [Parameter()]
         [hashtable]$Configuration = @{},
-        
+
         [Parameter()]
         [PSCredential]$Credential,
-        
+
         [Parameter()]
         [switch]$SkipValidation,
-        
+
         [Parameter()]
         [switch]$Force,
-        
+
         [Parameter()]
         [switch]$PassThru
     )
-    
+
     begin {
         Write-CustomLog -Level 'INFO' -Message "Registering infrastructure provider: $Name"
-        
+
         # Initialize provider registry
         if (-not $script:infrastructureProviders) {
             $script:infrastructureProviders = @{}
         }
-        
+
         # Get state file path
         $script:providerStatePath = Join-Path $env:PROJECT_ROOT "configs" "registered-providers.json"
     }
-    
+
     process {
         try {
             # Check if already registered
             if ($script:infrastructureProviders.ContainsKey($Name) -and -not $Force) {
                 throw "Provider '$Name' is already registered. Use -Force to re-register."
             }
-            
+
             # Get provider definition
             Write-CustomLog -Level 'INFO' -Message "Loading provider definition for: $Name"
             $providerDef = Get-ProviderDefinition -ProviderName $Name
-            
+
             if (-not $providerDef) {
                 throw "Provider '$Name' not found. Use Get-InfrastructureProvider -ListAvailable to see available providers."
             }
-            
+
             # Validate requirements
             if (-not $SkipValidation) {
                 Write-CustomLog -Level 'INFO' -Message "Validating provider requirements"
-                
+
                 # Check OS requirements
                 if ($providerDef.Requirements.OperatingSystem -ne 'Any') {
                     $currentOS = if ($IsWindows) { 'Windows' } elseif ($IsLinux) { 'Linux' } else { 'MacOS' }
@@ -100,7 +100,7 @@ function Register-InfrastructureProvider {
                         throw "Provider '$Name' requires $($providerDef.Requirements.OperatingSystem) but current OS is $currentOS"
                     }
                 }
-                
+
                 # Check PowerShell version
                 if ($providerDef.Requirements.PowerShellVersion) {
                     $requiredVersion = [Version]$providerDef.Requirements.PowerShellVersion
@@ -108,13 +108,13 @@ function Register-InfrastructureProvider {
                         throw "Provider '$Name' requires PowerShell $requiredVersion or higher"
                     }
                 }
-                
+
                 # Check required modules
                 if ($providerDef.Requirements.RequiredModules) {
                     foreach ($module in $providerDef.Requirements.RequiredModules) {
                         if (-not (Get-Module -Name $module -ListAvailable)) {
                             Write-CustomLog -Level 'WARN' -Message "Required module '$module' not found"
-                            
+
                             if ($PSCmdlet.ShouldProcess($module, "Install required module")) {
                                 try {
                                     Install-Module -Name $module -Force -AllowClobber
@@ -128,7 +128,7 @@ function Register-InfrastructureProvider {
                         }
                     }
                 }
-                
+
                 # Check Windows features (if applicable)
                 if ($IsWindows -and $providerDef.Requirements.RequiredFeatures) {
                     foreach ($feature in $providerDef.Requirements.RequiredFeatures) {
@@ -139,39 +139,39 @@ function Register-InfrastructureProvider {
                     }
                 }
             }
-            
+
             # Load provider adapter if available
             $adapterPath = Join-Path $PSScriptRoot "../../Private/Providers" "${Name}Adapter.ps1"
             if (Test-Path $adapterPath) {
                 Write-CustomLog -Level 'INFO' -Message "Loading provider adapter"
                 . $adapterPath
-                
+
                 # Initialize provider methods
                 Initialize-ProviderMethods -Provider $providerDef
             }
-            
+
             # Merge configurations
             $mergedConfig = $providerDef.Configuration.Clone()
             foreach ($key in $Configuration.Keys) {
                 $mergedConfig[$key] = $Configuration[$key]
             }
-            
+
             # Validate configuration
             if ($providerDef.Methods.ValidateConfiguration -and -not $SkipValidation) {
                 Write-CustomLog -Level 'INFO' -Message "Validating provider configuration"
                 $validationResult = & $providerDef.Methods.ValidateConfiguration -Configuration $mergedConfig
-                
+
                 if (-not $validationResult.IsValid) {
                     throw "Provider configuration validation failed: $($validationResult.Errors -join '; ')"
                 }
             }
-            
+
             # Store credentials if provided
             if ($Credential) {
                 if ($providerDef.Configuration.RequiresAuthentication) {
                     Write-CustomLog -Level 'INFO' -Message "Storing provider credentials"
                     $credentialName = "InfraProvider_${Name}"
-                    
+
                     # Use SecureCredentials module if available
                     if (Get-Command Set-SecureCredential -ErrorAction SilentlyContinue) {
                         Set-SecureCredential -Name $credentialName -Credential $Credential
@@ -183,7 +183,7 @@ function Register-InfrastructureProvider {
                     Write-CustomLog -Level 'WARN' -Message "Provider '$Name' does not require authentication, ignoring credentials"
                 }
             }
-            
+
             # Create registration object
             $registration = @{
                 Name = $Name
@@ -193,16 +193,16 @@ function Register-InfrastructureProvider {
                 Configuration = $mergedConfig
                 Status = 'Registered'
             }
-            
+
             # Register provider
             if ($PSCmdlet.ShouldProcess($Name, "Register infrastructure provider")) {
                 $script:infrastructureProviders[$Name] = $registration
-                
+
                 # Save to persistent storage
                 Save-RegisteredProviders
-                
+
                 Write-CustomLog -Level 'SUCCESS' -Message "Successfully registered provider: $Name"
-                
+
                 # Initialize provider if it has an initialize method
                 if ($providerDef.Methods.Initialize) {
                     Write-CustomLog -Level 'INFO' -Message "Initializing provider"
@@ -213,14 +213,14 @@ function Register-InfrastructureProvider {
                         Write-CustomLog -Level 'WARN' -Message "Provider initialization failed: $_"
                     }
                 }
-                
+
                 # Return provider if requested
                 if ($PassThru) {
                     $result = Get-InfrastructureProvider -Name $Name
                     return $result
                 }
             }
-            
+
         } catch {
             Write-CustomLog -Level 'ERROR' -Message "Failed to register provider '$Name': $($_.Exception.Message)"
             throw
@@ -235,16 +235,16 @@ function Save-RegisteredProviders {
         if (-not (Test-Path $configDir)) {
             New-Item -Path $configDir -ItemType Directory -Force | Out-Null
         }
-        
+
         # Convert to array for JSON serialization
         $providerArray = @()
         foreach ($provider in $script:infrastructureProviders.Values) {
             $providerArray += $provider
         }
-        
+
         # Save to file
         $providerArray | ConvertTo-Json -Depth 10 | Set-Content -Path $script:providerStatePath
-        
+
         Write-CustomLog -Level 'DEBUG' -Message "Saved registered providers to: $script:providerStatePath"
     } catch {
         Write-CustomLog -Level 'WARN' -Message "Failed to save registered providers: $_"
@@ -253,7 +253,7 @@ function Save-RegisteredProviders {
 
 function Initialize-ProviderMethods {
     param([PSCustomObject]$Provider)
-    
+
     # Map adapter functions to provider methods
     $methodMappings = @{
         Initialize = "Initialize-${($Provider.Name)}Provider"
@@ -263,7 +263,7 @@ function Initialize-ProviderMethods {
         GetResourceTypes = "Get-${($Provider.Name)}ResourceTypes"
         ValidateCredentials = "Test-${($Provider.Name)}Credentials"
     }
-    
+
     foreach ($method in $methodMappings.GetEnumerator()) {
         if (Get-Command $method.Value -ErrorAction SilentlyContinue) {
             $Provider.Methods[$method.Key] = (Get-Command $method.Value).ScriptBlock

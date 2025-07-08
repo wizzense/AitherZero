@@ -1,0 +1,62 @@
+{
+  "metadata": {
+    "name": "developer",
+    "description": "Developer configuration with AI tools and development features",
+    "profile": "developer",
+    "extends": "../../default-config.json"
+  },
+  "tools": {
+    "InstallGit": true,
+    "InstallGitHubCLI": true,
+    "InstallPwsh": true,
+    "InstallOpenTofu": true,
+    "InstallHyperV": false,
+    "InstallGo": true,
+    "InstallPoetry": true,
+    "InstallPython": true,
+    "InstallDockerDesktop": true,
+    "Install7Zip": true,
+    "InstallVSCode": true,
+    "InstallVSBuildTools": true,
+    "InstallChocolatey": true
+  },
+  "aiTools": {
+    "InstallClaudeCode": true,
+    "InstallGeminiCLI": true,
+    "InstallCodexCLI": false,
+    "ClaudeCodeSkipWSL": false,
+    "GeminiCLISkipWSL": false,
+    "GeminiCLISkipNode": false
+  },
+  "ui": {
+    "Mode": "auto",
+    "DefaultUI": "enhanced",
+    "FallbackUI": "classic",
+    "ShowUISelector": true,
+    "RememberUIChoice": true
+  },
+  "infrastructure": {
+    "InitializeOpenTofu": true,
+    "PrepareHyperVHost": false
+  },
+  "logging": {
+    "level": "INFO",
+    "console": true,
+    "EnableConsoleLogging": true,
+    "EnableFileLogging": true,
+    "MaxLogFiles": 10,
+    "MaxLogSizeMB": 50
+  },
+  "security": {
+    "RequireEncryption": false,
+    "AllowUnsignedScripts": true,
+    "ValidateModules": true,
+    "SecureBootRequired": false
+  },
+  "versions": {
+    "PoetryVersion": "latest",
+    "OpenTofuVersion": "latest",
+    "PythonVersion": "3.11",
+    "NodeVersion": "18"
+  }
+}

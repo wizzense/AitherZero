@@ -17,14 +17,14 @@ function Get-ConfigurationStore {
     param(
         [Parameter()]
         [switch]$AsJson,
-        
+
         [Parameter()]
         [switch]$IncludeMetadata
     )
-    
+
     try {
         $store = $script:ConfigurationStore.Clone()
-        
+
         if ($IncludeMetadata) {
             $store.Metadata = @{
                 LastModified = (Get-Item $script:ConfigurationStore.StorePath -ErrorAction SilentlyContinue).LastWriteTime
@@ -33,13 +33,13 @@ function Get-ConfigurationStore {
                 Platform = if ($IsWindows) { 'Windows' } elseif ($IsLinux) { 'Linux' } else { 'macOS' }
             }
         }
-        
+
         if ($AsJson) {
             return ($store | ConvertTo-Json -Depth 10)
         } else {
             return $store
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to get configuration store: $_"
         throw

@@ -60,32 +60,32 @@ function Get-AllSecureCredentials {
 
             # Sort the results
             switch ($SortBy) {
-                'Name' { 
-                    $credentials = if ($Descending) { 
-                        $credentials | Sort-Object Name -Descending 
-                    } else { 
-                        $credentials | Sort-Object Name 
+                'Name' {
+                    $credentials = if ($Descending) {
+                        $credentials | Sort-Object Name -Descending
+                    } else {
+                        $credentials | Sort-Object Name
                     }
                 }
-                'Type' { 
-                    $credentials = if ($Descending) { 
-                        $credentials | Sort-Object Type -Descending 
-                    } else { 
-                        $credentials | Sort-Object Type 
+                'Type' {
+                    $credentials = if ($Descending) {
+                        $credentials | Sort-Object Type -Descending
+                    } else {
+                        $credentials | Sort-Object Type
                     }
                 }
-                'Created' { 
-                    $credentials = if ($Descending) { 
-                        $credentials | Sort-Object { [DateTime]$_.Created } -Descending 
-                    } else { 
-                        $credentials | Sort-Object { [DateTime]$_.Created } 
+                'Created' {
+                    $credentials = if ($Descending) {
+                        $credentials | Sort-Object { [DateTime]$_.Created } -Descending
+                    } else {
+                        $credentials | Sort-Object { [DateTime]$_.Created }
                     }
                 }
-                'LastModified' { 
-                    $credentials = if ($Descending) { 
-                        $credentials | Sort-Object { [DateTime]$_.LastModified } -Descending 
-                    } else { 
-                        $credentials | Sort-Object { [DateTime]$_.LastModified } 
+                'LastModified' {
+                    $credentials = if ($Descending) {
+                        $credentials | Sort-Object { [DateTime]$_.LastModified } -Descending
+                    } else {
+                        $credentials | Sort-Object { [DateTime]$_.LastModified }
                     }
                 }
             }

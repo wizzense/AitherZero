@@ -185,7 +185,7 @@ function Restore-BackupData {
                 $error = "Failed to restore $($file.Name): $($_.Exception.Message)"
                 $restoreContext.Errors += $error
                 $restoreContext.SkippedFiles++
-                
+
                 if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
                     Write-CustomLog $error -Level WARN
                 }
@@ -197,10 +197,10 @@ function Restore-BackupData {
             if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
                 Write-CustomLog "Verifying restored files..." -Level INFO
             }
-            
+
             $verificationResult = Test-RestoredFiles -RestorePath $RestorePath -BackupManifest $manifest
             $restoreContext.VerificationResult = $verificationResult
-            
+
             if (-not $verificationResult.Success) {
                 $restoreContext.Errors += $verificationResult.Errors
             }
@@ -213,13 +213,13 @@ function Restore-BackupData {
         # Log completion
         $encryptionInfo = if ($restoreContext.DecryptedFiles -gt 0) { ", $($restoreContext.DecryptedFiles) decrypted" } else { "" }
         $dedupInfo = if ($restoreContext.DeduplicatedFiles -gt 0) { ", $($restoreContext.DeduplicatedFiles) deduplicated" } else { "" }
-        
+
         $completionMessage = "Backup restoration completed: $($restoreContext.RestoredFiles) files restored$encryptionInfo$dedupInfo"
-        
+
         if ($restoreContext.Errors.Count -gt 0) {
             $completionMessage += " ($($restoreContext.Errors.Count) errors)"
         }
-        
+
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog $completionMessage -Level SUCCESS
         } else {
@@ -234,13 +234,13 @@ function Restore-BackupData {
 
     } catch {
         $errorMessage = "Backup restoration failed: $($_.Exception.Message)"
-        
+
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog $errorMessage -Level ERROR
         } else {
             Write-Error $errorMessage
         }
-        
+
         throw
     }
 }
@@ -252,11 +252,11 @@ function Restore-DeduplicatedFile {
         [hashtable]$Context,
         [hashtable]$DedupIndex
     )
-    
+
     try {
         # Read deduplication link
         $linkData = Get-Content $File.FullName | ConvertFrom-Json
-        
+
         # Find the target file
         $targetBackupFile = $linkData.DedupTarget
         if (-not (Test-Path $targetBackupFile)) {
@@ -265,24 +265,24 @@ function Restore-DeduplicatedFile {
                 Error = "Deduplication target not found: $targetBackupFile"
             }
         }
-        
+
         # Restore the target file to the current location
         $relativePath = $File.FullName.Replace($Context.BackupPath, "").TrimStart('\', '/').Replace('.dedup', '')
         $restoreFilePath = Join-Path $Context.RestorePath $relativePath
         $restoreDir = Split-Path $restoreFilePath -Parent
-        
+
         if (-not (Test-Path $restoreDir)) {
             New-Item -Path $restoreDir -ItemType Directory -Force | Out-Null
         }
-        
+
         # Copy the deduplicated content
         Copy-Item -Path $targetBackupFile -Destination $restoreFilePath -Force
-        
+
         return @{
             Success = $true
             RestoredPath = $restoreFilePath
         }
-        
+
     } catch {
         return @{
             Success = $false
@@ -299,13 +299,13 @@ function Restore-BackupFile {
         [SecureString]$EncryptionKey,
         [switch]$OverwriteExisting
     )
-    
+
     try {
         # Calculate restore path
         $relativePath = $File.FullName.Replace($Context.BackupPath, "").TrimStart('\', '/').Replace('.backup', '')
         $restoreFilePath = Join-Path $Context.RestorePath $relativePath
         $restoreDir = Split-Path $restoreFilePath -Parent
-        
+
         # Check if file already exists
         if ((Test-Path $restoreFilePath) -and -not $OverwriteExisting.IsPresent) {
             return @{
@@ -313,34 +313,34 @@ function Restore-BackupFile {
                 Error = "File already exists and OverwriteExisting not specified: $restoreFilePath"
             }
         }
-        
+
         if (-not (Test-Path $restoreDir)) {
             New-Item -Path $restoreDir -ItemType Directory -Force | Out-Null
         }
-        
+
         # Read backup file
         $backupContent = [System.IO.File]::ReadAllBytes($File.FullName)
         $wasDecrypted = $false
-        
+
         # Decrypt if needed
         if ($EncryptionKey) {
             $backupContent = Unprotect-Data -Data $backupContent -EncryptionKey $EncryptionKey
             $wasDecrypted = $true
         }
-        
+
         # Decompress
         $originalContent = Decompress-Data -Data $backupContent
-        
+
         # Write restored file
         [System.IO.File]::WriteAllBytes($restoreFilePath, $originalContent)
-        
+
         return @{
             Success = $true
             RestoredPath = $restoreFilePath
             RestoredSize = $originalContent.Length
             WasDecrypted = $wasDecrypted
         }
-        
+
     } catch {
         return @{
             Success = $false
@@ -352,18 +352,18 @@ function Restore-BackupFile {
 function Decompress-Data {
     [CmdletBinding()]
     param([byte[]]$Data)
-    
+
     $inputStream = [System.IO.MemoryStream]::new($Data)
     $outputStream = [System.IO.MemoryStream]::new()
-    
+
     $gzipStream = [System.IO.Compression.GZipStream]::new($inputStream, [System.IO.Compression.CompressionMode]::Decompress)
     $gzipStream.CopyTo($outputStream)
     $gzipStream.Close()
-    
+
     $decompressedData = $outputStream.ToArray()
     $inputStream.Dispose()
     $outputStream.Dispose()
-    
+
     return $decompressedData
 }
 
@@ -373,19 +373,19 @@ function Unprotect-Data {
         [byte[]]$Data,
         [SecureString]$EncryptionKey
     )
-    
+
     # Decrypt using the same XOR method as encryption
     $keyBytes = [System.Text.Encoding]::UTF8.GetBytes(
         [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
             [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($EncryptionKey)
         )
     )
-    
+
     $decryptedData = [byte[]]::new($Data.Length)
     for ($i = 0; $i -lt $Data.Length; $i++) {
         $decryptedData[$i] = $Data[$i] -bxor $keyBytes[$i % $keyBytes.Length]
     }
-    
+
     return $decryptedData
 }
 
@@ -395,17 +395,17 @@ function Test-RestoredFiles {
         [string]$RestorePath,
         [object]$BackupManifest
     )
-    
+
     $result = @{
         Success = $true
         Errors = @()
         VerifiedFiles = 0
         MismatchedFiles = 0
     }
-    
+
     try {
         $restoredFiles = Get-ChildItem -Path $RestorePath -Recurse -File
-        
+
         foreach ($file in $restoredFiles) {
             try {
                 # Basic existence and readability check
@@ -417,11 +417,11 @@ function Test-RestoredFiles {
                 $result.Success = $false
             }
         }
-        
+
     } catch {
         $result.Success = $false
         $result.Errors += "File verification failed: $($_.Exception.Message)"
     }
-    
+
     return $result
 }

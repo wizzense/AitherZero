@@ -21,9 +21,9 @@ Invoke-LabStep -Config $Config -Body {
             try {
                 $interface = Get-NetIPAddress -AddressFamily IPv4 | Select-Object -First 1
                 $interfaceIndex = $interface.InterfaceIndex
-                
+
                 Write-CustomLog "Setting DNS servers to $($Config.DNSServers -join ', ') on interface $interfaceIndex"
-                
+
                 if ($PSCmdlet.ShouldProcess($interfaceIndex, 'Configure DNS servers')) {
                     Set-DnsClientServerAddress -InterfaceIndex $interfaceIndex -ServerAddresses $Config.DNSServers
                 }
@@ -40,4 +40,3 @@ Invoke-LabStep -Config $Config -Body {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-

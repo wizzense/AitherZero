@@ -14,16 +14,16 @@ function Initialize-TerminalUI {
         [Parameter()]
         [ValidateSet('Dark', 'Light', 'HighContrast', 'Auto')]
         [string]$Theme = 'Auto',
-        
+
         [Parameter()]
         [switch]$ForceClassic
     )
-    
+
     try {
         # Detect UI capabilities
         $uiCapabilities = Get-TerminalCapabilities
         $script:UICapabilities = $uiCapabilities
-        
+
         # Determine UI mode
         if ($ForceClassic -or -not $uiCapabilities.SupportsEnhancedUI) {
             $script:UIMode = 'Classic'
@@ -32,35 +32,35 @@ function Initialize-TerminalUI {
             $script:UIMode = 'Enhanced'
             Write-Verbose "Using enhanced UI mode"
         }
-        
+
         # Save current state (with comprehensive error handling)
         $script:OriginalState = @{}
-        
+
         try {
             $script:OriginalState.WindowTitle = $Host.UI.RawUI.WindowTitle
         } catch {
             Write-Verbose "Could not access WindowTitle: $_"
             $script:OriginalState.WindowTitle = $null
         }
-        
+
         try {
             $script:OriginalState.BackgroundColor = $Host.UI.RawUI.BackgroundColor
             $script:OriginalState.ForegroundColor = $Host.UI.RawUI.ForegroundColor
         } catch {
             Write-Verbose "Could not access terminal colors: $_"
         }
-        
+
         try {
             $script:OriginalState.CursorSize = $Host.UI.RawUI.CursorSize
         } catch {
             Write-Verbose "Could not access cursor size: $_"
         }
-        
+
         # Apply theme if enhanced UI is supported
         if ($script:UIMode -eq 'Enhanced') {
             Apply-UITheme -Theme $Theme -Capabilities $uiCapabilities
         }
-        
+
         # Set window title
         try {
             if ($script:OriginalState.WindowTitle -ne $null) {
@@ -69,7 +69,7 @@ function Initialize-TerminalUI {
         } catch {
             Write-Verbose "Could not set WindowTitle: $_"
         }
-        
+
         # Configure console encoding for better character support
         if ($IsWindows -and $uiCapabilities.SupportsUTF8) {
             try {
@@ -80,7 +80,7 @@ function Initialize-TerminalUI {
                 Write-Verbose "Could not set console encoding: $_"
             }
         }
-        
+
         # Initialize cursor (hide in enhanced mode)
         if ($script:UIMode -eq 'Enhanced' -and $uiCapabilities.SupportsCursorControl) {
             try {
@@ -89,16 +89,16 @@ function Initialize-TerminalUI {
                 Write-Verbose "Could not hide cursor: $_"
             }
         }
-        
+
         # Clear screen for fresh start
         try {
             Clear-Host
         } catch {
             Write-Verbose "Could not clear host: $_"
         }
-        
+
         $script:TerminalUIEnabled = $true
-        
+
         # Store initialization info
         $script:UIInitInfo = @{
             Mode = $script:UIMode
@@ -106,9 +106,9 @@ function Initialize-TerminalUI {
             Capabilities = $uiCapabilities
             InitTime = Get-Date
         }
-        
+
         Write-Verbose "Terminal UI initialized successfully in $($script:UIMode) mode"
-        
+
     } catch {
         Write-Warning "Could not initialize terminal UI: $_"
         $script:TerminalUIEnabled = $false
@@ -123,7 +123,7 @@ function Get-TerminalCapabilities {
     #>
     [CmdletBinding()]
     param()
-    
+
     $capabilities = @{
         SupportsEnhancedUI = $false
         SupportsColors = $false
@@ -134,13 +134,13 @@ function Get-TerminalCapabilities {
         Height = 25
         Platform = 'Unknown'
     }
-    
+
     try {
         # Platform detection
         if ($IsWindows) { $capabilities.Platform = 'Windows' }
         elseif ($IsLinux) { $capabilities.Platform = 'Linux' }
         elseif ($IsMacOS) { $capabilities.Platform = 'macOS' }
-        
+
         # Test RawUI access
         try {
             $null = $Host.UI.RawUI.WindowTitle
@@ -148,7 +148,7 @@ function Get-TerminalCapabilities {
         } catch {
             Write-Verbose "RawUI not available: $_"
         }
-        
+
         # Test color support
         try {
             $null = $Host.UI.RawUI.BackgroundColor
@@ -157,7 +157,7 @@ function Get-TerminalCapabilities {
         } catch {
             Write-Verbose "Color support not available: $_"
         }
-        
+
         # Test cursor control
         try {
             $null = $Host.UI.RawUI.CursorSize
@@ -165,7 +165,7 @@ function Get-TerminalCapabilities {
         } catch {
             Write-Verbose "Cursor control not available: $_"
         }
-        
+
         # Test ReadKey capability
         try {
             $readKeyMethod = $Host.UI.RawUI.GetType().GetMethod('ReadKey')
@@ -173,7 +173,7 @@ function Get-TerminalCapabilities {
         } catch {
             Write-Verbose "ReadKey not available: $_"
         }
-        
+
         # Get terminal dimensions
         try {
             $capabilities.Width = $Host.UI.RawUI.WindowSize.Width
@@ -181,22 +181,22 @@ function Get-TerminalCapabilities {
         } catch {
             Write-Verbose "Could not get terminal dimensions: $_"
         }
-        
+
         # UTF-8 support check
-        $capabilities.SupportsUTF8 = $capabilities.Platform -in @('Linux', 'macOS') -or 
+        $capabilities.SupportsUTF8 = $capabilities.Platform -in @('Linux', 'macOS') -or
                                      ($capabilities.Platform -eq 'Windows' -and $PSVersionTable.PSVersion.Major -ge 6)
-        
+
         # Overall enhanced UI support requires multiple capabilities
-        $capabilities.SupportsEnhancedUI = $capabilities.SupportsEnhancedUI -and 
-                                          $capabilities.SupportsColors -and 
-                                          $capabilities.SupportsReadKey -and 
-                                          -not [Console]::IsInputRedirected -and 
+        $capabilities.SupportsEnhancedUI = $capabilities.SupportsEnhancedUI -and
+                                          $capabilities.SupportsColors -and
+                                          $capabilities.SupportsReadKey -and
+                                          -not [Console]::IsInputRedirected -and
                                           -not [Console]::IsOutputRedirected
-        
+
     } catch {
         Write-Verbose "Error detecting capabilities: $_"
     }
-    
+
     return $capabilities
 }
 
@@ -209,18 +209,18 @@ function Apply-UITheme {
         [string]$Theme,
         [hashtable]$Capabilities
     )
-    
+
     if (-not $Capabilities.SupportsColors) {
         Write-Verbose "Colors not supported, skipping theme application"
         return
     }
-    
+
     try {
         # Auto-detect theme based on system
         if ($Theme -eq 'Auto') {
             $Theme = if ($Capabilities.Platform -eq 'Windows') { 'Dark' } else { 'Dark' }
         }
-        
+
         switch ($Theme) {
             'Dark' {
                 # Dark theme is default for most terminals
@@ -245,9 +245,9 @@ function Apply-UITheme {
                 }
             }
         }
-        
+
         $script:CurrentTheme = $Theme
-        
+
     } catch {
         Write-Verbose "Error applying theme: $_"
     }
@@ -262,11 +262,11 @@ function Reset-TerminalUI {
     #>
     [CmdletBinding()]
     param()
-    
+
     try {
         if ($script:TerminalUIEnabled -and $script:OriginalState) {
             Write-Verbose "Resetting terminal UI to original state"
-            
+
             # Restore window title
             if ($script:OriginalState.WindowTitle) {
                 try {
@@ -276,7 +276,7 @@ function Reset-TerminalUI {
                     Write-Verbose "Could not restore WindowTitle: $_"
                 }
             }
-            
+
             # Restore colors
             if ($script:OriginalState.BackgroundColor) {
                 try {
@@ -286,7 +286,7 @@ function Reset-TerminalUI {
                     Write-Verbose "Could not restore BackgroundColor: $_"
                 }
             }
-            
+
             if ($script:OriginalState.ForegroundColor) {
                 try {
                     $Host.UI.RawUI.ForegroundColor = $script:OriginalState.ForegroundColor
@@ -295,7 +295,7 @@ function Reset-TerminalUI {
                     Write-Verbose "Could not restore ForegroundColor: $_"
                 }
             }
-            
+
             # Restore cursor
             if ($script:OriginalState.CursorSize) {
                 try {
@@ -305,7 +305,7 @@ function Reset-TerminalUI {
                     Write-Verbose "Could not restore CursorSize: $_"
                 }
             }
-            
+
             # Clear script variables
             $script:TerminalUIEnabled = $false
             $script:OriginalState = $null
@@ -313,7 +313,7 @@ function Reset-TerminalUI {
             $script:UIMode = $null
             $script:CurrentTheme = $null
             $script:UIInitInfo = $null
-            
+
             Write-Verbose "Terminal UI reset complete"
         }
     } catch {
@@ -328,7 +328,7 @@ function Get-UIStatus {
     #>
     [CmdletBinding()]
     param()
-    
+
     return [PSCustomObject]@{
         Enabled = $script:TerminalUIEnabled ?? $false
         Mode = $script:UIMode ?? 'Unknown'
@@ -345,29 +345,29 @@ function Show-UIDebugInfo {
     #>
     [CmdletBinding()]
     param()
-    
+
     $status = Get-UIStatus
-    
-    Write-Host "" 
+
+    Write-Host ""
     Write-Host "=== Terminal UI Debug Information ===" -ForegroundColor Cyan
     Write-Host "Enabled: $($status.Enabled)" -ForegroundColor White
     Write-Host "Mode: $($status.Mode)" -ForegroundColor White
     Write-Host "Theme: $($status.Theme)" -ForegroundColor White
     Write-Host ""
-    
+
     if ($status.Capabilities) {
         Write-Host "Capabilities:" -ForegroundColor Yellow
         $status.Capabilities.GetEnumerator() | Sort-Object Key | ForEach-Object {
             Write-Host "  $($_.Key): $($_.Value)" -ForegroundColor Gray
         }
     }
-    
+
     Write-Host ""
-    
+
     if ($status.InitInfo.InitTime) {
         $uptime = (Get-Date) - $status.InitInfo.InitTime
         Write-Host "UI Uptime: $($uptime.ToString('hh\:mm\:ss'))" -ForegroundColor Green
     }
-    
+
     Write-Host ""
 }

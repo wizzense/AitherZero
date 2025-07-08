@@ -19,24 +19,24 @@ function New-MessageChannel {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [Parameter()]
         [string]$Description = '',
-        
+
         [Parameter()]
         [int]$MaxMessages = 1000,
-        
+
         [Parameter()]
         [int]$MessageRetention = 3600
     )
-    
+
     try {
         # Check if channel already exists
         if ($script:MessageBus.Channels.ContainsKey($Name)) {
             Write-CustomLog -Level 'WARNING' -Message "Channel '$Name' already exists"
             return $script:MessageBus.Channels[$Name]
         }
-        
+
         # Create channel
         $channel = @{
             Name = $Name
@@ -54,11 +54,11 @@ function New-MessageChannel {
                 ExpiredMessages = 0
             }
         }
-        
+
         # Add to channels
         if ($script:MessageBus.Channels.TryAdd($Name, $channel)) {
             Write-CustomLog -Level 'SUCCESS' -Message "Channel created: $Name"
-            
+
             # Publish channel creation event
             if (Get-Command 'Publish-ModuleEvent' -ErrorAction SilentlyContinue) {
                 Publish-ModuleEvent -EventName 'ChannelCreated' -EventData @{
@@ -66,12 +66,12 @@ function New-MessageChannel {
                     Description = $Description
                 }
             }
-            
+
             return $channel
         } else {
             throw "Failed to create channel"
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to create channel: $_"
         throw

@@ -15,11 +15,11 @@ function Disable-MessageTracing {
     param(
         [Parameter()]
         [switch]$ArchiveLogs,
-        
+
         [Parameter()]
         [string]$ArchivePath = "archived-traces"
     )
-    
+
     try {
         $previousState = @{
             WasEnabled = $script:Configuration.EnableTracing
@@ -27,11 +27,11 @@ function Disable-MessageTracing {
             LoggingToFile = $script:Configuration.TracingToFile
             FilePath = $script:Configuration.TracingFilePath
         }
-        
+
         # Disable tracing
         $script:Configuration.EnableTracing = $false
         $script:Configuration.TracingLevel = $null
-        
+
         # Archive logs if requested
         if ($ArchiveLogs -and $previousState.LoggingToFile -and $previousState.FilePath) {
             if (Test-Path $previousState.FilePath) {
@@ -39,10 +39,10 @@ function Disable-MessageTracing {
                 if (-not (Test-Path $ArchivePath)) {
                     New-Item -Path $ArchivePath -ItemType Directory -Force | Out-Null
                 }
-                
+
                 $archiveFileName = "trace-$(Get-Date -Format 'yyyyMMdd-HHmmss').log"
                 $archiveFullPath = Join-Path $ArchivePath $archiveFileName
-                
+
                 # Add closure to trace file
                 $closure = @"
 
@@ -53,27 +53,27 @@ function Disable-MessageTracing {
 # ===============================================
 "@
                 $closure | Out-File -FilePath $previousState.FilePath -Append -Encoding UTF8
-                
+
                 # Archive the file
                 Move-Item -Path $previousState.FilePath -Destination $archiveFullPath -Force
-                
+
                 Write-CustomLog -Level 'INFO' -Message "Trace log archived to: $archiveFullPath"
             }
         }
-        
+
         # Reset file tracing configuration
         $script:Configuration.TracingToFile = $false
         $script:Configuration.TracingFilePath = $null
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "Message tracing disabled"
-        
+
         return @{
             Success = $true
             PreviousState = $previousState
             LogsArchived = $ArchiveLogs.IsPresent -and $previousState.LoggingToFile
             ArchivePath = if ($ArchiveLogs -and $previousState.LoggingToFile) { $ArchivePath } else { $null }
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to disable tracing: $_"
         throw

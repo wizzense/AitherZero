@@ -1,6 +1,7 @@
 # ISOManager Module v2.0
 
-Enterprise-grade ISO download, management, and organization module with advanced storage optimization, modern download capabilities, and comprehensive integrity validation for automated lab infrastructure deployment.
+Enterprise-grade ISO download, management, and organization module with advanced storage optimization, modern download capabilities, and
+comprehensive integrity validation for automated lab infrastructure deployment.
 
 ## Features
 
@@ -293,15 +294,15 @@ Invoke-InfrastructureDeployment -ISOPath $latestWindows.FilePath -DeploymentTemp
 # Daily maintenance script
 function Invoke-DailyISOMaintenace {
     param([string]$RepositoryPath)
-    
+
     # Sync repository
     $syncResult = Sync-ISORepository -RepositoryPath $RepositoryPath -UpdateMetadata -ValidateIntegrity
-    
+
     # Optimize storage if needed
     if ($syncResult.Statistics.TotalSizeGB -gt 800) {
         Optimize-ISOStorage -RepositoryPath $RepositoryPath -MaxSizeGB 700 -RemoveDuplicates -ArchiveOldFiles
     }
-    
+
     # Export inventory for backup
     Export-ISOInventory -RepositoryPath $RepositoryPath -ExportPath "daily-inventory-$(Get-Date -Format 'yyyy-MM-dd').json" -IncludeMetadata
 }
@@ -377,13 +378,13 @@ $customDistros = @{
 # Implement custom storage policy
 function Invoke-CustomStoragePolicy {
     param($RepositoryPath, $PolicyConfig)
-    
+
     $inventory = Get-ISOInventory -RepositoryPath $RepositoryPath
-    
+
     # Apply retention policy
     $cutoffDate = (Get-Date).AddDays(-$PolicyConfig.RetentionDays)
     $oldFiles = $inventory | Where-Object { $_.Modified -lt $cutoffDate }
-    
+
     foreach ($file in $oldFiles) {
         if ($PolicyConfig.ArchiveOldFiles) {
             # Move to archive
@@ -399,9 +400,9 @@ function Invoke-CustomStoragePolicy {
 # Set up repository monitoring
 function Test-RepositoryHealth {
     param($RepositoryPath)
-    
+
     $issues = @()
-    
+
     # Check repository structure
     $requiredDirs = @('Windows', 'Linux', 'Metadata', 'Logs')
     foreach ($dir in $requiredDirs) {
@@ -409,16 +410,16 @@ function Test-RepositoryHealth {
             $issues += "Missing directory: $dir"
         }
     }
-    
+
     # Check disk space
     $drive = Split-Path $RepositoryPath -Qualifier
     $disk = Get-WmiObject -Class Win32_LogicalDisk | Where-Object { $_.DeviceID -eq $drive }
     $freeSpaceGB = $disk.FreeSpace / 1GB
-    
+
     if ($freeSpaceGB -lt 50) {
         $issues += "Low disk space: $([math]::Round($freeSpaceGB, 2)) GB remaining"
     }
-    
+
     return $issues
 }
 ```
@@ -448,4 +449,5 @@ This module is part of the AitherZero project and follows the project's licensin
 
 ---
 
-**Note**: This module requires PowerShell 7.0+ and integrates with the AitherZero logging system. For production use, ensure proper network access and sufficient storage space for ISO repositories.
+**Note**: This module requires PowerShell 7.0+ and integrates with the AitherZero logging system. For production use, ensure proper network
+access and sufficient storage space for ISO repositories.

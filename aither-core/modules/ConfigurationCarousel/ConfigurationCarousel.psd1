@@ -6,11 +6,11 @@
     CompanyName = 'AitherZero'
     Copyright = '(c) 2025 AitherZero. All rights reserved.'
     Description = 'Configuration Carousel module for AitherZero - manages multiple configuration sets and environments'
-    
+
     PowerShellVersion = '7.0'
-    
+
     RequiredModules = @()
-    
+
     FunctionsToExport = @(
         'Switch-ConfigurationSet',
         'Get-AvailableConfigurations',
@@ -25,11 +25,11 @@
         'New-ConfigurationEnvironment',
         'Set-ConfigurationEnvironment'
     )
-    
+
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()
-    
+
     PrivateData = @{
         PSData = @{
             Tags = @('AitherZero', 'Configuration', 'Environment', 'Management', 'Carousel')

@@ -21,48 +21,48 @@ function Get-DeploymentVersion {
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$DeploymentId,
-        
+
         [Parameter(ParameterSetName = 'Specific')]
         [ValidatePattern('^\d+\.\d+\.\d+(-\w+)?$')]
         [string]$Version,
-        
+
         [Parameter(ParameterSetName = 'Latest')]
         [switch]$Latest,
-        
+
         [Parameter(ParameterSetName = 'Recent')]
         [ValidateRange(1, 100)]
         [int]$Count = 10
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Retrieving deployment version information for: $DeploymentId"
-        
+
         # Get deployment state
         $deploymentState = Get-DeploymentState -DeploymentId $DeploymentId
         if (-not $deploymentState) {
             throw "Deployment not found: $DeploymentId"
         }
-        
+
         # Get version history
         $versionPath = Join-Path $deploymentState.WorkingDirectory ".versions"
         $versionFile = Join-Path $versionPath "versions.json"
-        
+
         if (-not (Test-Path $versionFile)) {
             Write-CustomLog -Level 'WARNING' -Message "No version history found for deployment: $DeploymentId"
             return $null
         }
-        
+
         $versions = Get-Content $versionFile -Raw | ConvertFrom-Json
-        
+
         switch ($PSCmdlet.ParameterSetName) {
             'Specific' {
                 # Find specific version
                 $versionRecord = $versions.Versions | Where-Object { $_.Version -eq $Version }
-                
+
                 if (-not $versionRecord) {
                     throw "Version not found: $Version"
                 }
-                
+
                 # Enrich with additional details
                 $result = [PSCustomObject]@{
                     DeploymentId = $DeploymentId
@@ -76,7 +76,7 @@ function Get-DeploymentVersion {
                     StateChecksum = $versionRecord.State.Checksum
                     IsCurrent = $versionRecord.Version -eq $versions.CurrentVersion
                 }
-                
+
                 # Check if state file exists
                 if ($versionRecord.StatePath -and (Test-Path $versionRecord.StatePath)) {
                     $result | Add-Member -NotePropertyName StateFileExists -NotePropertyValue $true
@@ -85,7 +85,7 @@ function Get-DeploymentVersion {
                 else {
                     $result | Add-Member -NotePropertyName StateFileExists -NotePropertyValue $false
                 }
-                
+
                 # Check if snapshot exists
                 if ($versionRecord.SnapshotPath -and (Test-Path $versionRecord.SnapshotPath)) {
                     $result | Add-Member -NotePropertyName SnapshotExists -NotePropertyValue $true
@@ -94,14 +94,14 @@ function Get-DeploymentVersion {
                 else {
                     $result | Add-Member -NotePropertyName SnapshotExists -NotePropertyValue $false
                 }
-                
+
                 return $result
             }
-            
+
             'Latest' {
                 # Return current version details
                 $currentVersion = $versions.Versions | Where-Object { $_.Version -eq $versions.CurrentVersion }
-                
+
                 if ($currentVersion) {
                     return [PSCustomObject]@{
                         DeploymentId = $DeploymentId
@@ -120,11 +120,11 @@ function Get-DeploymentVersion {
                     return $null
                 }
             }
-            
+
             'Recent' {
                 # Return recent versions
                 $recentVersions = $versions.Versions | Select-Object -Last $Count
-                
+
                 $results = @()
                 foreach ($ver in $recentVersions) {
                     $results += [PSCustomObject]@{
@@ -136,10 +136,10 @@ function Get-DeploymentVersion {
                         IsCurrent = $ver.Version -eq $versions.CurrentVersion
                     }
                 }
-                
+
                 return $results | Sort-Object { [version]($_.Version -replace '-.*$', '') } -Descending
             }
-            
+
             'All' {
                 # Return version summary
                 $versionList = $versions.Versions | ForEach-Object {
@@ -150,7 +150,7 @@ function Get-DeploymentVersion {
                         IsCurrent = $_.Version -eq $versions.CurrentVersion
                     }
                 }
-                
+
                 $summary = [PSCustomObject]@{
                     DeploymentId = $DeploymentId
                     CurrentVersion = $versions.CurrentVersion
@@ -159,7 +159,7 @@ function Get-DeploymentVersion {
                     NewestVersion = $versions.CurrentVersion
                     Versions = $versionList | Sort-Object { [version]($_.Version -replace '-.*$', '') } -Descending
                 }
-                
+
                 return $summary
             }
         }

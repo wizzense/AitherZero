@@ -98,10 +98,10 @@ function Invoke-PostMergeCleanup {
                     try {
                         $repoInfo = Get-GitRepositoryInfo
                         $prStatus = gh pr view $PullRequestNumber --repo $repoInfo.GitHubRepo --json "state,merged" 2>&1
-                        
+
                         if ($LASTEXITCODE -eq 0) {
                             $prData = $prStatus | ConvertFrom-Json
-                            
+
                             if ($prData.merged) {
                                 Write-CleanupLog "✓ PR #$PullRequestNumber was successfully merged" -Level 'SUCCESS'
                             } elseif ($prData.state -eq 'CLOSED') {
@@ -140,7 +140,7 @@ function Invoke-PostMergeCleanup {
                 if ($PSCmdlet.ShouldProcess("main branch", "Switch to")) {
                     if (-not $DryRun) {
                         $switchResult = git checkout main 2>&1
-                        
+
                         if ($LASTEXITCODE -eq 0) {
                             Write-CleanupLog "✓ Successfully switched to main branch" -Level 'SUCCESS'
                         } else {
@@ -168,7 +168,7 @@ function Invoke-PostMergeCleanup {
                 if (-not $DryRun) {
                     # Fetch first to get latest refs
                     git fetch origin 2>&1 | Out-Null
-                    
+
                     # Determine the default branch name
                     $defaultBranch = git symbolic-ref refs/remotes/origin/HEAD 2>&1 | ForEach-Object { $_.Split('/')[-1] }
                     if (-not $defaultBranch) {
@@ -176,7 +176,7 @@ function Invoke-PostMergeCleanup {
                     }
 
                     $pullResult = git pull origin $defaultBranch 2>&1
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         Write-CleanupLog "✓ Successfully pulled latest changes" -Level 'SUCCESS'
                     } else {
@@ -199,14 +199,14 @@ function Invoke-PostMergeCleanup {
 
                     if ($PSCmdlet.ShouldProcess($BranchName, "Delete local branch")) {
                         git branch -d $BranchName 2>&1 | Out-Null
-                        
+
                         if ($LASTEXITCODE -eq 0) {
                             Write-CleanupLog "✓ Successfully deleted local branch: $BranchName" -Level 'SUCCESS'
                         } else {
                             # Try force delete if regular delete fails
                             Write-CleanupLog "Regular delete failed, trying force delete..." -Level 'WARN'
                             $forceDeleteResult = git branch -D $BranchName 2>&1
-                            
+
                             if ($LASTEXITCODE -eq 0) {
                                 Write-CleanupLog "✓ Force deleted local branch: $BranchName" -Level 'SUCCESS'
                             } else {
@@ -224,15 +224,15 @@ function Invoke-PostMergeCleanup {
             # Step 6: Cleanup summary and guidance
             Write-CleanupLog "Post-merge cleanup completed successfully" -Level 'SUCCESS'
             Write-CleanupLog "Repository state:" -Level 'INFO'
-            
+
             if (-not $DryRun) {
                 $finalBranch = git branch --show-current 2>&1
                 $status = git status --porcelain 2>&1
                 $statusCount = if ($status) { ($status | Measure-Object).Count } else { 0 }
-                
+
                 Write-CleanupLog "  Current branch: $finalBranch" -Level 'INFO'
                 Write-CleanupLog "  Working tree: $statusCount uncommitted changes" -Level 'INFO'
-                
+
                 # Show latest commits to confirm merge
                 Write-CleanupLog "Recent commits:" -Level 'INFO'
                 $recentCommits = git log --oneline -3 2>&1

@@ -3,12 +3,12 @@
 <#
 .SYNOPSIS
     Basic examples demonstrating ParallelExecution module capabilities
-    
+
 .DESCRIPTION
     This script provides practical examples of using the ParallelExecution module
     for common scenarios including file processing, data transformation, and
     performance optimization.
-    
+
 .EXAMPLE
     .\Basic-Examples.ps1
 #>
@@ -62,10 +62,10 @@ $mockFiles = 1..20 | ForEach-Object {
 
 $fileResults = Invoke-ParallelForEach -InputObject $mockFiles -ScriptBlock {
     param($file)
-    
+
     # Simulate file processing
     Start-Sleep -Milliseconds (Get-Random -Minimum 50 -Maximum 200)
-    
+
     return [PSCustomObject]@{
         FileName = $file.Name
         OriginalSize = $file.Size
@@ -145,13 +145,13 @@ Write-Host "Processing items with some failures..." -ForegroundColor Gray
 $items = 1..15
 $errorResults = Invoke-ParallelForEach -InputObject $items -ScriptBlock {
     param($item)
-    
+
     try {
         # Simulate random failures
         if ($item % 5 -eq 0) {
             throw "Simulated error for item $item"
         }
-        
+
         # Successful processing
         return @{
             Item = $item
@@ -187,7 +187,7 @@ Write-Host "Processing items with varying complexity..." -ForegroundColor Gray
 $variableItems = 1..30
 $adaptiveResults = Start-AdaptiveParallelExecution -InputObject $variableItems -ScriptBlock {
     param($item)
-    
+
     # Variable complexity based on item
     if ($item % 10 -eq 0) {
         # High complexity (10% of items)
@@ -202,7 +202,7 @@ $adaptiveResults = Start-AdaptiveParallelExecution -InputObject $variableItems -
         Start-Sleep -Milliseconds 50
         $complexity = "Low"
     }
-    
+
     return @{
         Item = $item
         Complexity = $complexity

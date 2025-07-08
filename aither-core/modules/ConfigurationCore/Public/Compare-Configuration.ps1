@@ -21,17 +21,17 @@ function Compare-Configuration {
     param(
         [Parameter(Mandatory)]
         [hashtable]$ReferenceConfiguration,
-        
+
         [Parameter(Mandatory)]
         [hashtable]$DifferenceConfiguration,
-        
+
         [Parameter()]
         [switch]$IncludeEqual,
-        
+
         [Parameter()]
         [string]$ModuleName
     )
-    
+
     try {
         $comparison = @{
             ModuleName = $ModuleName
@@ -47,28 +47,28 @@ function Compare-Configuration {
                 EqualCount = 0
             }
         }
-        
+
         # Get all unique keys from both configurations
         $allKeys = @()
         $allKeys += $ReferenceConfiguration.Keys
         $allKeys += $DifferenceConfiguration.Keys
         $allKeys = $allKeys | Select-Object -Unique
-        
+
         foreach ($key in $allKeys) {
             $refHasKey = $ReferenceConfiguration.ContainsKey($key)
             $diffHasKey = $DifferenceConfiguration.ContainsKey($key)
-            
+
             if ($refHasKey -and $diffHasKey) {
                 # Both have the key, check if values are different
                 $refValue = $ReferenceConfiguration[$key]
                 $diffValue = $DifferenceConfiguration[$key]
-                
+
                 if ($refValue -is [hashtable] -and $diffValue -is [hashtable]) {
                     # Recursively compare nested hashtables
                     $nestedComparison = Compare-Configuration -ReferenceConfiguration $refValue -DifferenceConfiguration $diffValue -IncludeEqual:$IncludeEqual
-                    
-                    if ($nestedComparison.Summary.AddedCount -gt 0 -or 
-                        $nestedComparison.Summary.RemovedCount -gt 0 -or 
+
+                    if ($nestedComparison.Summary.AddedCount -gt 0 -or
+                        $nestedComparison.Summary.RemovedCount -gt 0 -or
                         $nestedComparison.Summary.ModifiedCount -gt 0) {
                         $comparison.Modified[$key] = @{
                             Reference = $refValue
@@ -105,14 +105,14 @@ function Compare-Configuration {
                 $comparison.Summary.AddedCount++
             }
         }
-        
+
         # Add overall change indicator
-        $comparison.HasChanges = ($comparison.Summary.AddedCount -gt 0 -or 
-                                 $comparison.Summary.RemovedCount -gt 0 -or 
+        $comparison.HasChanges = ($comparison.Summary.AddedCount -gt 0 -or
+                                 $comparison.Summary.RemovedCount -gt 0 -or
                                  $comparison.Summary.ModifiedCount -gt 0)
-        
+
         return $comparison
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to compare configurations: $_"
         throw

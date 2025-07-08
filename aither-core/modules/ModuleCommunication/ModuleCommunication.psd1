@@ -38,56 +38,56 @@
         'Unsubscribe-ModuleMessage',
         'Get-MessageSubscriptions',
         'Clear-MessageQueue',
-        
+
         # Channel Management
         'New-MessageChannel',
         'Remove-MessageChannel',
         'Get-MessageChannels',
         'Test-MessageChannel',
-        
+
         # API Registry Functions
         'Register-ModuleAPI',
         'Unregister-ModuleAPI',
         'Invoke-ModuleAPI',
         'Get-ModuleAPIs',
         'Test-ModuleAPI',
-        
+
         # Middleware Functions
         'Add-APIMiddleware',
         'Remove-APIMiddleware',
         'Get-APIMiddleware',
-        
+
         # Event System (Enhanced)
         'Submit-ModuleEvent',
         'Register-ModuleEventHandler',
         'Unsubscribe-ModuleEvent',
         'Get-ModuleEvents',
         'Clear-EventHistory',
-        
+
         # Performance & Monitoring
         'Get-CommunicationMetrics',
         'Reset-CommunicationMetrics',
         'Enable-MessageTracing',
         'Disable-MessageTracing',
-        
+
         # Security Functions
         'Enable-CommunicationSecurity',
         'New-AuthenticationToken',
         'Revoke-AuthenticationToken',
-        
+
         # Circuit Breaker Functions
         'Get-CircuitBreakerStatus',
         'Reset-CircuitBreaker',
-        
+
         # Utilities
         'Test-ModuleCommunication',
         'Get-CommunicationStatus',
         'Start-MessageProcessor',
         'Stop-MessageProcessor',
-        
+
         # Backward Compatibility Aliases
         'Publish-ModuleMessage',
-        'Subscribe-ModuleMessage', 
+        'Subscribe-ModuleMessage',
         'Publish-ModuleEvent',
         'Subscribe-ModuleEvent'
     )

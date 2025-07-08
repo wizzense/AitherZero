@@ -12,21 +12,21 @@ function Sync-ToAitherLab {
     param(
         [Parameter(Mandatory)]
         [string]$CommitMessage,
-        
+
         [string]$BranchName = "sync/aitherzero-$(Get-Date -Format 'yyyyMMdd-HHmmss')",
-        
+
         [string[]]$FilesToSync = @(),
-        
+
         [switch]$CreatePR,
-        
+
         [switch]$Force
     )
-    
+
     begin {
         Import-Module "$PSScriptRoot/../Logging" -Force
         Write-CustomLog -Level 'INFO' -Message "Starting sync to aitherlab"
     }
-    
+
     process {
         try {
             # Ensure we're in a clean state
@@ -34,15 +34,15 @@ function Sync-ToAitherLab {
             if ($status -and -not $Force) {
                 throw "Working directory has uncommitted changes. Use -Force to override."
             }
-            
+
             # Fetch latest from aitherlab
             Write-CustomLog -Level 'INFO' -Message "Fetching latest from aitherlab"
             git fetch aitherlab
-            
+
             # Create sync branch
             Write-CustomLog -Level 'INFO' -Message "Creating sync branch: $BranchName"
             git checkout -b $BranchName
-            
+
             # Cherry-pick or merge specific changes
             if ($FilesToSync.Count -gt 0) {
                 Write-CustomLog -Level 'INFO' -Message "Syncing specific files: $($FilesToSync -join ', ')"
@@ -50,12 +50,12 @@ function Sync-ToAitherLab {
                     git checkout HEAD -- $file
                 }
             }
-            
+
             # Push to aitherlab
             if ($PSCmdlet.ShouldProcess("aitherlab", "Push branch $BranchName")) {
                 git push aitherlab $BranchName
                 Write-CustomLog -Level 'SUCCESS' -Message "Pushed branch to aitherlab"
-                
+
                 if ($CreatePR) {
                     Write-CustomLog -Level 'INFO' -Message "Creating PR on aitherlab"
                     # Use GitHub CLI if available
@@ -70,7 +70,7 @@ function Sync-ToAitherLab {
                     }
                 }
             }
-            
+
         } catch {
             Write-CustomLog -Level 'ERROR' -Message "Sync failed: $($_.Exception.Message)"
             throw
@@ -85,52 +85,52 @@ function Sync-FromAitherLab {
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [string]$Branch = "main",
-        
+
         [string[]]$ExcludeFiles = @(".github/workflows/*", "*.secret*", "*.env*"),
-        
+
         [switch]$DryRun
     )
-    
+
     begin {
         Import-Module "$PSScriptRoot/../Logging" -Force
         Write-CustomLog -Level 'INFO' -Message "Starting sync from aitherlab"
     }
-    
+
     process {
         try {
             # Fetch from aitherlab
             git fetch aitherlab
-            
+
             # Preview changes
             $changes = git diff aitherlab/$Branch..HEAD --name-only
             Write-CustomLog -Level 'INFO' -Message "Files that will be updated: $($changes -join ', ')"
-            
+
             if ($DryRun) {
                 Write-Host "DRY RUN - No changes will be applied" -ForegroundColor Yellow
                 return
             }
-            
+
             # Merge changes, excluding sensitive files
             if ($PSCmdlet.ShouldProcess("local", "Merge from aitherlab/$Branch")) {
                 # Create temp branch
                 git checkout -b temp-sync-branch aitherlab/$Branch
-                
+
                 # Remove excluded files
                 foreach ($pattern in $ExcludeFiles) {
                     git rm -rf $pattern 2>$null
                 }
-                
+
                 # Commit exclusions
                 git commit -m "Exclude sensitive files from sync" 2>$null
-                
+
                 # Merge back
                 git checkout -
                 git merge temp-sync-branch --no-ff -m "Sync from aitherlab (filtered)"
-                
+
                 # Cleanup
                 git branch -D temp-sync-branch
             }
-            
+
         } catch {
             Write-CustomLog -Level 'ERROR' -Message "Sync failed: $($_.Exception.Message)"
             throw
@@ -141,32 +141,32 @@ function Sync-FromAitherLab {
 function Get-SyncStatus {
     [CmdletBinding()]
     param()
-    
+
     begin {
         Import-Module "$PSScriptRoot/../Logging" -Force
     }
-    
+
     process {
         Write-Host "`nRepository Sync Status:" -ForegroundColor Cyan
         Write-Host "======================" -ForegroundColor Cyan
-        
+
         # Check remotes
         Write-Host "`nConfigured Remotes:" -ForegroundColor Yellow
         git remote -v
-        
+
         # Check divergence
         Write-Host "`nDivergence from aitherlab:" -ForegroundColor Yellow
         try {
             git fetch aitherlab --quiet
             $ahead = git rev-list --count aitherlab/main..HEAD
             $behind = git rev-list --count HEAD..aitherlab/main
-            
+
             Write-Host "  Ahead:  $ahead commits" -ForegroundColor $(if ($ahead -gt 0) { 'Green' } else { 'Gray' })
             Write-Host "  Behind: $behind commits" -ForegroundColor $(if ($behind -gt 0) { 'Yellow' } else { 'Gray' })
         } catch {
             Write-Host "  Unable to check divergence: $($_.Exception.Message)" -ForegroundColor Red
         }
-        
+
         # Show different files
         Write-Host "`nFiles different from aitherlab:" -ForegroundColor Yellow
         try {
@@ -177,8 +177,58 @@ function Get-SyncStatus {
     }
 }
 
+function Get-RepoSyncStatus {
+    <#
+    .SYNOPSIS
+        Gets the current repository synchronization status
+    .DESCRIPTION
+        Retrieves information about the current state of repository synchronization
+    #>
+    [CmdletBinding()]
+    param()
+
+    try {
+        Import-Module "$PSScriptRoot/../Logging" -Force -ErrorAction SilentlyContinue
+        
+        $status = @{
+            Status = 'Available'
+            LastSync = Get-Date
+            RemoteStatus = 'Connected'
+            PendingChanges = @()
+        }
+
+        # Check if git is available
+        if (Get-Command git -ErrorAction SilentlyContinue) {
+            try {
+                $gitStatus = git status --porcelain
+                $status.PendingChanges = $gitStatus -split "`n" | Where-Object { $_ }
+                $status.Status = if ($status.PendingChanges.Count -gt 0) { 'Pending' } else { 'Synchronized' }
+            } catch {
+                $status.Status = 'Error'
+                $status.RemoteStatus = 'Disconnected'
+            }
+        } else {
+            $status.Status = 'Git not available'
+            $status.RemoteStatus = 'Unknown'
+        }
+
+        return $status
+    } catch {
+        if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+            Write-CustomLog -Message "Failed to get repo sync status: $($_.Exception.Message)" -Level "ERROR"
+        }
+        return @{
+            Status = 'Error'
+            LastSync = $null
+            RemoteStatus = 'Error'
+            PendingChanges = @()
+        }
+    }
+}
+
 Export-ModuleMember -Function @(
     'Sync-ToAitherLab',
     'Sync-FromAitherLab',
-    'Get-SyncStatus'
+    'Get-SyncStatus',
+    'Get-RepoSyncStatus'
 )
