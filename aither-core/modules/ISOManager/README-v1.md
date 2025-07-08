@@ -2,8 +2,8 @@
 
 ## Module Overview
 
-The ISOManager module provides enterprise-grade ISO file management capabilities for the AitherZero infrastructure automation framework. It 
-handles downloading, organizing, validating, and maintaining an inventory of ISO files from various sources including Microsoft, Linux 
+The ISOManager module provides enterprise-grade ISO file management capabilities for the AitherZero infrastructure automation framework. It
+handles downloading, organizing, validating, and maintaining an inventory of ISO files from various sources including Microsoft, Linux
 distributions, and custom URLs.
 
 ### Core Functionality and Use Cases
@@ -304,27 +304,27 @@ function Update-ISOLibrary {
         [string]$RepositoryPath,
         [string[]]$ISONames
     )
-    
+
     # Get current inventory
     $current = Get-ISOInventory -Path $RepositoryPath
-    
+
     foreach ($isoName in $ISONames) {
         # Check if update needed
         $existing = $current | Where-Object Name -eq $isoName
-        
+
         # Get latest version info
         $latest = Get-ISOMetadata -ISOName $isoName -CheckLatest
-        
+
         if (-not $existing -or $existing.Version -lt $latest.Version) {
             Write-Host "Updating $isoName to version $($latest.Version)"
-            
+
             Get-ISODownload -ISOName $isoName `
                            -Version $latest.Version `
                            -DownloadPath $RepositoryPath `
                            -Force
         }
     }
-    
+
     # Update inventory
     Export-ISOInventory -Path "$RepositoryPath\inventory-$(Get-Date -Format 'yyyyMMdd').json"
 }
@@ -346,12 +346,12 @@ $primary = $sites | Where-Object Primary -eq $true
 
 foreach ($site in ($sites | Where-Object Primary -ne $true)) {
     Write-Host "Syncing to $($site.Name)..."
-    
+
     $result = Sync-ISORepository -SourcePath $primary.Path `
                                 -DestinationPath $site.Path `
                                 -SyncMode Mirror `
                                 -VerifyIntegrity
-    
+
     if ($result.Success) {
         Write-Host "✓ $($site.Name) synchronized: $($result.FilesCopied) files"
     } else {
@@ -372,17 +372,17 @@ $moduleConfig = @{
     # Repository settings
     DefaultRepository = Join-Path $env:USERPROFILE "AitherZero\ISOs"
     RepositoryStructure = "ByType"
-    
+
     # Download settings
     DefaultDownloadPath = Join-Path $env:TEMP "AitherZero-ISOs"
     EnableBITS = $true
     RetryCount = 3
     RetryDelay = 5
-    
+
     # Validation settings
     AlwaysVerifyIntegrity = $true
     DefaultHashAlgorithm = "SHA256"
-    
+
     # Inventory settings
     InventoryFormat = "JSON"
     AutoUpdateInventory = $true
@@ -511,15 +511,15 @@ https://access.redhat.com/downloads/content/rhel-{VERSION}-{ARCH}-{TYPE}.iso
    # Implement local caching
    function Get-LabISO {
        param($ISOName)
-       
+
        $cached = Get-ISOInventory -Filter @{Name = $ISOName}
-       
+
        if (-not $cached) {
            # Download if not cached
            Get-ISODownload -ISOName $ISOName `
                           -DownloadPath $script:CachePath
        }
-       
+
        return $cached.FilePath
    }
    ```
@@ -528,7 +528,7 @@ https://access.redhat.com/downloads/content/rhel-{VERSION}-{ARCH}-{TYPE}.iso
    ```powershell
    # Maintain multiple versions
    $versions = @('latest', 'stable', 'previous')
-   
+
    foreach ($version in $versions) {
        Get-ISODownload -ISOName "WindowsServer" `
                       -Version $version `
@@ -596,20 +596,20 @@ function Deploy-LabWithISO {
         [string]$ISOName,
         [string]$ISOVersion = "latest"
     )
-    
+
     # Ensure ISO is available
     $iso = Get-ISOInventory -Filter @{
         Name = $ISOName
         Version = $ISOVersion
     }
-    
+
     if (-not $iso) {
         # Download if not available
         $download = Get-ISODownload -ISOName $ISOName `
                                    -Version $ISOVersion
         $iso = Get-ISOInventory -Filter @{Name = $ISOName}
     }
-    
+
     # Deploy lab using ISO
     $labConfig = @{
         Name = $LabName
@@ -619,7 +619,7 @@ function Deploy-LabWithISO {
             @{Name='APP01'; Memory='8GB'; Disk='100GB'}
         )
     }
-    
+
     Start-LabDeployment @labConfig
 }
 ```
@@ -630,9 +630,9 @@ function Deploy-LabWithISO {
 # Generate comprehensive repository report
 function New-ISORepositoryReport {
     param([string]$RepositoryPath)
-    
+
     $inventory = Get-ISOInventory -Path $RepositoryPath -IncludeMetadata
-    
+
     $report = [PSCustomObject]@{
         Generated = Get-Date
         Repository = $RepositoryPath
@@ -646,15 +646,15 @@ function New-ISORepositoryReport {
             Test-ISOIntegrity -FilePath $_.FilePath -Quick
         } | Group-Object Valid
     }
-    
+
     # Export report
-    $report | ConvertTo-Json -Depth 10 | 
+    $report | ConvertTo-Json -Depth 10 |
         Set-Content -Path "$RepositoryPath\repository-report-$(Get-Date -Format 'yyyyMMdd').json"
-    
+
     # Generate HTML report
     ConvertTo-Html -InputObject $report |
         Set-Content -Path "$RepositoryPath\repository-report.html"
-    
+
     return $report
 }
 ```
@@ -668,10 +668,10 @@ function New-ISORepositoryReport {
    # Enable detailed logging
    $VerbosePreference = 'Continue'
    $DebugPreference = 'Continue'
-   
+
    # Test with direct download
    Invoke-WebRequest -Uri $url -OutFile $path -UseBasicParsing
-   
+
    # Check BITS service (Windows)
    Get-Service BITS | Start-Service
    ```
@@ -680,7 +680,7 @@ function New-ISORepositoryReport {
    ```powershell
    # Manually verify hash
    $hash = Get-FileHash -Path $isoPath -Algorithm SHA256
-   
+
    # Compare with expected
    $expected = "A1B2C3D4..."
    $hash.Hash -eq $expected
@@ -691,7 +691,7 @@ function New-ISORepositoryReport {
    # Test connectivity
    Test-Path "\\remote\share"
    Test-NetConnection -ComputerName "remote" -Port 445
-   
+
    # Check permissions
    Get-Acl "\\remote\share"
    ```
@@ -700,11 +700,11 @@ function New-ISORepositoryReport {
    ```powershell
    # Rebuild inventory
    $files = Get-ChildItem -Path $repoPath -Filter "*.iso" -Recurse
-   
+
    $newInventory = foreach ($file in $files) {
        Get-ISOMetadata -FilePath $file.FullName
    }
-   
+
    Export-ISOInventory -Data $newInventory -Path ".\rebuilt-inventory.json"
    ```
 

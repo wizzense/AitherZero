@@ -2,7 +2,9 @@
 
 ## Module Overview
 
-The LabRunner module is the core automation engine for the AitherZero infrastructure framework, providing orchestrated lab deployment, parallel execution capabilities, and standardized parameter handling across all automation scripts. It serves as the central coordinator for complex multi-step infrastructure deployments.
+The LabRunner module is the core automation engine for the AitherZero infrastructure framework, providing orchestrated lab deployment, 
+parallel execution capabilities, and standardized parameter handling across all automation scripts. It serves as the central coordinator 
+for complex multi-step infrastructure deployments.
 
 ### Core Functionality and Use Cases
 
@@ -306,7 +308,7 @@ $result = Start-AdvancedLabOrchestration -ConfigurationPath "./production-lab.ya
     -MaxConcurrency 8
 ```
 
-#### Test-ParallelRunnerSupport
+#### Test-ParallelRunnerSupport Function
 
 Tests whether the current environment supports parallel execution and provides detailed capability information.
 

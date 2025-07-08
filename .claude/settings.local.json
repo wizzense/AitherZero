@@ -15,7 +15,8 @@
       "Bash(git commit:*)",
       "Bash(gh run view:*)",
       "Bash(gh api:*)",
-      "Bash(gh pr checks:*)"
+      "Bash(gh pr checks:*)",
+      "Bash(git push:*)"
     ],
     "deny": []
   }

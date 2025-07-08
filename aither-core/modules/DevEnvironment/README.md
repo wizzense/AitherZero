@@ -2,8 +2,8 @@
 
 ## Module Overview
 
-The DevEnvironment module provides comprehensive development environment setup and management for AitherZero. It automates the installation 
-and configuration of development tools, VS Code extensions, Git hooks, and workspace settings to ensure a consistent and productive 
+The DevEnvironment module provides comprehensive development environment setup and management for AitherZero. It automates the installation
+and configuration of development tools, VS Code extensions, Git hooks, and workspace settings to ensure a consistent and productive
 development experience across all team members.
 
 ### Primary Purpose and Functionality
@@ -389,14 +389,14 @@ git commit -m "Test commit to trigger hooks"
 # Regular health check
 $status = Get-DevEnvironmentStatus
 switch ($status.Health) {
-    'Healthy' { 
-        Write-Host "✅ Development environment is healthy" -ForegroundColor Green 
+    'Healthy' {
+        Write-Host "✅ Development environment is healthy" -ForegroundColor Green
     }
-    'Warning' { 
-        Write-Host "⚠️ Development environment has warnings" -ForegroundColor Yellow 
+    'Warning' {
+        Write-Host "⚠️ Development environment has warnings" -ForegroundColor Yellow
     }
-    'Critical' { 
-        Write-Host "❌ Development environment has critical issues" -ForegroundColor Red 
+    'Critical' {
+        Write-Host "❌ Development environment has critical issues" -ForegroundColor Red
         # Trigger remediation
         Initialize-DevEnvironment -Force
     }
@@ -551,10 +551,10 @@ Install-ClaudeCode
    ```powershell
    # Check current policy
    Get-ExecutionPolicy
-   
+
    # Set for current user
    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-   
+
    # Or bypass for specific session
    powershell -ExecutionPolicy Bypass
    ```
@@ -563,10 +563,10 @@ Install-ClaudeCode
    ```powershell
    # Check VS Code installation
    code --version
-   
+
    # Add to PATH if needed (Windows)
    $env:PATH += ";C:\Users\$env:USERNAME\AppData\Local\Programs\Microsoft VS Code\bin"
-   
+
    # Install VS Code if missing
    # Windows: winget install Microsoft.VisualStudioCode
    # macOS: brew install --cask visual-studio-code
@@ -577,10 +577,10 @@ Install-ClaudeCode
    ```powershell
    # Check Git hooks directory
    ls .git/hooks/
-   
+
    # Verify hook permissions (Linux/macOS)
    chmod +x .git/hooks/pre-commit
-   
+
    # Test hook manually
    ./.git/hooks/pre-commit
    ```
@@ -590,7 +590,7 @@ Install-ClaudeCode
    # Check Node.js and npm
    node --version
    npm --version
-   
+
    # Install if missing
    # Windows: winget install OpenJS.NodeJS
    # macOS: brew install node
@@ -601,7 +601,7 @@ Install-ClaudeCode
    ```powershell
    # Use built-in resolver
    Resolve-ModuleImportIssues
-   
+
    # Manual checks
    $env:PSModulePath -split ';'
    Get-Module -ListAvailable
@@ -626,25 +626,25 @@ Get-DevEnvironmentStatus -IncludeMetrics -Verbose
 # Comprehensive environment check
 function Test-DevEnvironmentComplete {
     $results = @{}
-    
+
     # PowerShell version
     $results.PowerShell = $PSVersionTable.PSVersion -ge [Version]'7.0'
-    
+
     # Git availability
     $results.Git = $null -ne (Get-Command git -ErrorAction SilentlyContinue)
-    
+
     # VS Code availability
     $results.VSCode = $null -ne (Get-Command code -ErrorAction SilentlyContinue)
-    
+
     # Node.js availability
     $results.NodeJS = $null -ne (Get-Command node -ErrorAction SilentlyContinue)
-    
+
     # Pre-commit hook
     $results.PreCommitHook = Test-Path ".git/hooks/pre-commit"
-    
+
     # VS Code workspace
     $results.VSCodeWorkspace = Test-Path ".vscode"
-    
+
     return $results
 }
 

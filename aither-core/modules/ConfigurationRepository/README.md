@@ -2,7 +2,7 @@
 
 ## Module Overview
 
-The ConfigurationRepository module provides Git-based configuration management for AitherZero, enabling teams to version control, share, and 
+The ConfigurationRepository module provides Git-based configuration management for AitherZero, enabling teams to version control, share, and
 synchronize their infrastructure configurations. It transforms configuration management into a collaborative, auditable, and scalable process.
 
 ### Primary Purpose and Functionality
@@ -474,7 +474,7 @@ New-ConfigurationRepository -RepositoryName "logged-config" `
    ```powershell
    # Check Git installation
    git --version
-   
+
    # Add Git to PATH if needed
    $env:PATH += ";C:\Program Files\Git\bin"
    ```
@@ -483,10 +483,10 @@ New-ConfigurationRepository -RepositoryName "logged-config" `
    ```powershell
    # Check GitHub CLI status
    gh auth status
-   
+
    # Login if needed
    gh auth login
-   
+
    # Use personal access token
    gh auth login --with-token < token.txt
    ```
@@ -495,10 +495,10 @@ New-ConfigurationRepository -RepositoryName "logged-config" `
    ```powershell
    # Check if path exists
    Test-Path "./configs/myrepo"
-   
+
    # Remove if needed (careful!)
    Remove-Item "./configs/myrepo" -Recurse -Force
-   
+
    # Or use different path
    New-ConfigurationRepository -RepositoryName "myrepo" `
        -LocalPath "./configs/myrepo-v2"
@@ -510,14 +510,14 @@ New-ConfigurationRepository -RepositoryName "logged-config" `
    Push-Location "./configs/myrepo"
    git status
    git stash list
-   
+
    # Resolve conflicts manually
    git stash pop
    # Fix conflicts in files
    git add .
    git commit -m "Resolved conflicts"
    Pop-Location
-   
+
    # Then retry sync
    Sync-ConfigurationRepository -Path "./configs/myrepo"
    ```
@@ -526,9 +526,9 @@ New-ConfigurationRepository -RepositoryName "logged-config" `
    ```powershell
    # Get detailed validation
    $v = Validate-ConfigurationRepository -Path "./configs/myrepo"
-   
+
    # Check JSON files
-   Get-ChildItem "./configs/myrepo" -Filter "*.json" -Recurse | 
+   Get-ChildItem "./configs/myrepo" -Filter "*.json" -Recurse |
        ForEach-Object {
            try {
                $null = Get-Content $_.FullName | ConvertFrom-Json
