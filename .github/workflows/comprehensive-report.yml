@@ -316,48 +316,11 @@ jobs:
           ci-consumed-results/**/*
         retention-days: 30
 
-  # Generate dynamic feature map
-  generate-feature-map:
-    name: Generate Dynamic Feature Map
-    runs-on: ubuntu-latest
-    needs: initialize-reporting
-    if: fromJson(needs.initialize-reporting.outputs.report-scope).featureMap
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Generate feature map
-      shell: pwsh
-      run: |
-        Write-Host "🗺️ Generating dynamic feature map..." -ForegroundColor Cyan
-        
-        $params = @{
-          OutputPath = './feature-map.json'
-          HtmlOutput = $true
-          IncludeDependencyGraph = $true
-          AnalyzeIntegrations = $true
-          VerboseOutput = $true
-        }
-        
-        ./scripts/reporting/Generate-DynamicFeatureMap.ps1 @params
-        
-        Write-Host "✅ Feature map generation completed" -ForegroundColor Green
-        
-    - name: Upload feature map artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: feature-map
-        path: |
-          feature-map.json
-          feature-map.html
-        retention-days: 90
-
   # Generate comprehensive HTML report
   generate-comprehensive-report:
     name: Generate Comprehensive Report
     runs-on: ubuntu-latest
-    needs: [initialize-reporting, consume-ci-results-and-audit, generate-feature-map]
+    needs: [initialize-reporting, consume-ci-results-and-audit]
     if: always() && fromJson(needs.initialize-reporting.outputs.report-scope).generateHtml
     outputs:
       health-grade: ${{ steps.report.outputs.health-grade }}
@@ -375,12 +338,6 @@ jobs:
         name: audit-results
         path: audit-reports
         
-    - name: Download feature map
-      uses: actions/download-artifact@v4
-      with:
-        name: feature-map
-        path: feature-map
-        
     - name: Generate comprehensive report
       id: report
       shell: pwsh
@@ -390,7 +347,7 @@ jobs:
         $reportTitle = "AitherZero v${{ needs.initialize-reporting.outputs.version-number }} Comprehensive Report"
         
         $params = @{
-          ReportPath = './aitherZero-comprehensive-report.html'
+          ReportPath = './output/aitherZero-dashboard.html'
           ArtifactsPath = './audit-reports'
           IncludeDetailedAnalysis = '${{ fromJson(needs.initialize-reporting.outputs.report-scope).detailedAnalysis }}' -eq 'true'
           ReportTitle = $reportTitle
@@ -498,7 +455,7 @@ jobs:
       with:
         name: comprehensive-report
         path: |
-          aitherZero-comprehensive-report.html
+          output/aitherZero-dashboard.html
           report-summary.json
         retention-days: 90
 
@@ -655,12 +612,9 @@ jobs:
         # Create docs directory
         New-Item -ItemType Directory -Path "./docs" -Force
         
-        # Copy all generated reports
+        # Copy the single dashboard file
         $reports = @(
-          "comprehensive-report.html",
-          "feature-map.html",
-          "aitherZero-comprehensive-report.html",
-          "feature-dependency-map.html"
+          "output/aitherZero-dashboard.html"
         )
         
         foreach ($report in $reports) {
@@ -670,8 +624,8 @@ jobs:
           }
         }
         
-        # Create index.html with professional styling
-        $indexHtml = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AitherZero Reports Dashboard</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:40px;background-color:#f8f9fa}.container{max-width:1200px;margin:0 auto;background:white;padding:20px;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.1)}h1{color:#333;border-bottom:2px solid #007bff;padding-bottom:10px}.report-link{display:block;margin:15px 0;padding:15px;background:linear-gradient(135deg,#007bff,#0056b3);color:white;text-decoration:none;border-radius:5px;transition:all 0.3s ease;box-shadow:0 2px 4px rgba(0,0,0,0.1)}.report-link:hover{transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,0.15)}.description{color:#666;font-size:0.9em;margin-top:5px}.badge{background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:12px;font-size:0.8em;margin-left:10px}.footer{margin-top:30px;text-align:center;color:#666;font-size:0.9em}</style></head><body><div class="container"><h1>🚀 AitherZero Reports Dashboard</h1><p>Welcome to the AitherZero project reports dashboard. All reports are generated automatically by the CI/CD system.</p><h2>📊 Available Reports</h2><a href="aitherZero-comprehensive-report.html" class="report-link">📋 Comprehensive Project Report <span class="badge">Latest</span><div class="description">Complete project health analysis with interactive dashboard, module insights, and quality metrics</div></a><a href="feature-map.html" class="report-link">🗺️ Dynamic Feature Map <span class="badge">Interactive</span><div class="description">Module relationships, dependencies, and capabilities visualization</div></a><a href="comprehensive-report.html" class="report-link">📈 Legacy Comprehensive Report <span class="badge">Archive</span><div class="description">Previous format comprehensive analysis for historical reference</div></a><div class="footer"><p>Reports are generated automatically by the AitherZero CI/CD system.</p><p><a href="https://github.com/wizzense/AitherZero">← Back to GitHub Repository</a></p><p>Last updated: ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC') + '</p></div></div></body></html>'
+        # Create index.html that redirects to the single dashboard
+        $indexHtml = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AitherZero Dashboard</title><meta http-equiv="refresh" content="0; url=./aitherZero-dashboard.html"><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:40px;background-color:#f8f9fa;text-align:center}.container{max-width:600px;margin:0 auto;background:white;padding:40px;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.1)}h1{color:#333;margin-bottom:20px}.redirect-link{display:inline-block;margin:20px 0;padding:15px 30px;background:linear-gradient(135deg,#007bff,#0056b3);color:white;text-decoration:none;border-radius:5px;transition:all 0.3s ease}.redirect-link:hover{transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,0.15)}</style></head><body><div class="container"><h1>🚀 AitherZero Dashboard</h1><p>Redirecting to the comprehensive dashboard...</p><p>If you are not redirected automatically, <a href="./aitherZero-dashboard.html" class="redirect-link">click here to view the dashboard</a></p><p><small>Complete project health analysis with interactive features, module insights, quality metrics, and dynamic feature mapping - all in one unified dashboard.</small></p></div></body></html>'
         Set-Content -Path "./docs/index.html" -Value $indexHtml
         Write-Host "✅ Created index.html" -ForegroundColor Green
         
@@ -701,16 +655,13 @@ jobs:
         - **Workflow**: [View Details](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
         ## 📄 Available Downloads
-        - 📊 **Comprehensive HTML Report** - Complete analysis with interactive dashboard
-        - 🗺️ **Dynamic Feature Map** - Module relationships and capabilities  
-        - 📋 **Audit Results** - Detailed findings from all audit systems
-        - 🧪 **Test Results** - Cross-platform testing validation
+        - 📊 **AitherZero Dashboard** - Single comprehensive HTML dashboard with integrated feature map, health metrics, test results, and audit findings
 
         ## 🎯 Next Steps
-        1. Download and review the comprehensive HTML report
-        2. Check the dynamic feature map for module insights
-        3. Address any issues identified in the audit results
-        4. Use the reports for release planning and documentation
+        1. Download and review the unified AitherZero dashboard
+        2. Explore the integrated feature map and module insights
+        3. Review health scores and address any identified issues
+        4. Use the dashboard for release planning and project status reporting
 
         ---
         *Generated by AitherZero Comprehensive Reporting System v1.0*

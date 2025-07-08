@@ -1,2 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="AitherZero CI Tests" tests="49" failures="0" time="3.4607816">    <testsuite name="Entry" tests="6" failures="0" time="1.2308962">    </testsuite>    <testsuite name="Core" tests="11" failures="0" time="0.6876391">    </testsuite>    <testsuite name="PowerShell" tests="32" failures="0" time="1.4993659">    </testsuite></testsuites>
