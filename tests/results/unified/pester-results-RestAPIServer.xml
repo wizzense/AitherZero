@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="22" errors="0" failures="11" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="16:49:49">
-  <environment cwd="/workspaces/AitherZero" machine-name="codespaces-6c6eb1" user="codespace" user-domain="" os-version="6.8.0-1027-azure" platform="Linux" clr-version="9.0.4" nunit-version="2.5.8.0" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="22" errors="0" failures="11" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="17:42:23">
+  <environment user-domain="" platform="Linux" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" clr-version="9.0.4" nunit-version="2.5.8.0" user="codespace" machine-name="codespaces-6c6eb1" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="2.1395" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="1.9012" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1" executed="True" result="Failure" success="False" time="2.1395" asserts="0" description="/workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1" executed="True" result="Failure" success="False" time="1.9012" asserts="0" description="/workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="RestAPIServer Management Module - Core Functionality" executed="True" result="Failure" success="False" time="0.8663" asserts="0" description="RestAPIServer Management Module - Core Functionality">
+          <test-suite type="TestFixture" name="RestAPIServer Management Module - Core Functionality" executed="True" result="Failure" success="False" time="0.748" asserts="0" description="RestAPIServer Management Module - Core Functionality">
             <results>
-              <test-suite type="TestFixture" name="RestAPIServer Management Module - Core Functionality.Module Import and Structure" executed="True" result="Failure" success="False" time="0.0648" asserts="0" description="RestAPIServer Management Module - Core Functionality.Module Import and Structure">
+              <test-suite type="TestFixture" name="RestAPIServer Management Module - Core Functionality.Module Import and Structure" executed="True" result="Failure" success="False" time="0.0215" asserts="0" description="RestAPIServer Management Module - Core Functionality.Module Import and Structure">
                 <results>
-                  <test-case description="Should import the management module successfully" name="RestAPIServer Management Module - Core Functionality.Module Import and Structure.Should import the management module successfully" time="0.0259" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should export management functions" name="RestAPIServer Management Module - Core Functionality.Module Import and Structure.Should export management functions" time="0.0304" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should import the management module successfully" name="RestAPIServer Management Module - Core Functionality.Module Import and Structure.Should import the management module successfully" time="0.0053" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export management functions" name="RestAPIServer Management Module - Core Functionality.Module Import and Structure.Should export management functions" time="0.0111" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected a value, because Management module should export management-related functions, but got $null or empty.</message>
                       <stack-trace>at $foundFunctions | Should -Not -BeNullOrEmpty -Because "Management module should export management-related functions", /workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1:77
@@ -20,9 +20,9 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RestAPIServer
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RestAPIServer Management Module - Core Functionality.Resource Management Operations" executed="True" result="Failure" success="False" time="0.284" asserts="0" description="RestAPIServer Management Module - Core Functionality.Resource Management Operations">
+              <test-suite type="TestFixture" name="RestAPIServer Management Module - Core Functionality.Resource Management Operations" executed="True" result="Failure" success="False" time="0.1765" asserts="0" description="RestAPIServer Management Module - Core Functionality.Resource Management Operations">
                 <results>
-                  <test-case description="Should initialize management state properly" name="RestAPIServer Management Module - Core Functionality.Resource Management Operations.Should initialize management state properly" time="0.0736" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should initialize management state properly" name="RestAPIServer Management Module - Core Functionality.Resource Management Operations.Should initialize management state properly" time="0.0479" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected no exception to be thrown, but an exception "The term 'Start-RestAPIServerManagement' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1:84 char:15
@@ -32,14 +32,14 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1:84</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should track resource state accurately" name="RestAPIServer Management Module - Core Functionality.Resource Management Operations.Should track resource state accurately" time="0.0518" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should track resource state accurately" name="RestAPIServer Management Module - Core Functionality.Resource Management Operations.Should track resource state accurately" time="0.0284" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Get-RestAPIServerStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
                       <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1:89</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should handle configuration changes safely" name="RestAPIServer Management Module - Core Functionality.Resource Management Operations.Should handle configuration changes safely" time="0.0442" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should handle configuration changes safely" name="RestAPIServer Management Module - Core Functionality.Resource Management Operations.Should handle configuration changes safely" time="0.0441" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected no exception to be thrown, but an exception "The term 'Set-RestAPIServerConfiguration' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1:97 char:15
@@ -49,7 +49,7 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1:97</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should execute operations with proper validation" name="RestAPIServer Management Module - Core Functionality.Resource Management Operations.Should execute operations with proper validation" time="0.0429" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should execute operations with proper validation" name="RestAPIServer Management Module - Core Functionality.Resource Management Operations.Should execute operations with proper validation" time="0.0295" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Invoke-RestAPIServerOperation' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -58,59 +58,59 @@ Check the spelling of the name, or if a path was included, verify that the path 
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RestAPIServer Management Module - Core Functionality.State Management and Persistence" executed="True" result="Failure" success="False" time="0.4024" asserts="0" description="RestAPIServer Management Module - Core Functionality.State Management and Persistence">
+              <test-suite type="TestFixture" name="RestAPIServer Management Module - Core Functionality.State Management and Persistence" executed="True" result="Failure" success="False" time="0.2567" asserts="0" description="RestAPIServer Management Module - Core Functionality.State Management and Persistence">
                 <results>
-                  <test-case description="Should maintain consistent state across operations" name="RestAPIServer Management Module - Core Functionality.State Management and Persistence.Should maintain consistent state across operations" time="0.0424" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should maintain consistent state across operations" name="RestAPIServer Management Module - Core Functionality.State Management and Persistence.Should maintain consistent state across operations" time="0.029" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Get-RestAPIServerStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
                       <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1:110</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should persist state information properly" name="RestAPIServer Management Module - Core Functionality.State Management and Persistence.Should persist state information properly" time="0.0565" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should persist state information properly" name="RestAPIServer Management Module - Core Functionality.State Management and Persistence.Should persist state information properly" time="0.0424" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Export-RestAPIServerState' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
                       <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1:120</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should restore state from persistence" name="RestAPIServer Management Module - Core Functionality.State Management and Persistence.Should restore state from persistence" time="0.0047" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should restore state from persistence" name="RestAPIServer Management Module - Core Functionality.State Management and Persistence.Should restore state from persistence" time="0.0037" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RestAPIServer Management Module - Core Functionality.Error Handling and Recovery" executed="True" result="Success" success="True" time="0.5704" asserts="0" description="RestAPIServer Management Module - Core Functionality.Error Handling and Recovery">
+              <test-suite type="TestFixture" name="RestAPIServer Management Module - Core Functionality.Error Handling and Recovery" executed="True" result="Success" success="True" time="0.4275" asserts="0" description="RestAPIServer Management Module - Core Functionality.Error Handling and Recovery">
                 <results>
-                  <test-case description="Should handle invalid operations gracefully" name="RestAPIServer Management Module - Core Functionality.Error Handling and Recovery.Should handle invalid operations gracefully" time="0.0301" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle invalid operations gracefully" name="RestAPIServer Management Module - Core Functionality.Error Handling and Recovery.Should handle invalid operations gracefully" time="0.0424" asserts="0" success="True" result="Success" executed="True" />
                   <test-case description="Should provide meaningful error messages" name="RestAPIServer Management Module - Core Functionality.Error Handling and Recovery.Should provide meaningful error messages" time="0.0401" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should support rollback operations when possible" name="RestAPIServer Management Module - Core Functionality.Error Handling and Recovery.Should support rollback operations when possible" time="0.0923" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support rollback operations when possible" name="RestAPIServer Management Module - Core Functionality.Error Handling and Recovery.Should support rollback operations when possible" time="0.0832" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RestAPIServer Management Module - Core Functionality.Event Coordination and Workflow" executed="True" result="Failure" success="False" time="0.8601" asserts="0" description="RestAPIServer Management Module - Core Functionality.Event Coordination and Workflow">
+              <test-suite type="TestFixture" name="RestAPIServer Management Module - Core Functionality.Event Coordination and Workflow" executed="True" result="Failure" success="False" time="0.7431" asserts="0" description="RestAPIServer Management Module - Core Functionality.Event Coordination and Workflow">
                 <results>
-                  <test-case description="Should publish management events" name="RestAPIServer Management Module - Core Functionality.Event Coordination and Workflow.Should publish management events" time="0.1219" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should coordinate with other management modules" name="RestAPIServer Management Module - Core Functionality.Event Coordination and Workflow.Should coordinate with other management modules" time="0.0418" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should publish management events" name="RestAPIServer Management Module - Core Functionality.Event Coordination and Workflow.Should publish management events" time="0.1372" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should coordinate with other management modules" name="RestAPIServer Management Module - Core Functionality.Event Coordination and Workflow.Should coordinate with other management modules" time="0.0528" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Test-RestAPIServerCoordination' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
                       <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1:168</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should handle workflow execution properly" name="RestAPIServer Management Module - Core Functionality.Event Coordination and Workflow.Should handle workflow execution properly" time="0.1111" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle workflow execution properly" name="RestAPIServer Management Module - Core Functionality.Event Coordination and Workflow.Should handle workflow execution properly" time="0.1203" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>
           </test-suite>
-          <test-suite type="TestFixture" name="RestAPIServer Management Module - Advanced Scenarios" executed="True" result="Failure" success="False" time="1.7735" asserts="0" description="RestAPIServer Management Module - Advanced Scenarios">
+          <test-suite type="TestFixture" name="RestAPIServer Management Module - Advanced Scenarios" executed="True" result="Failure" success="False" time="1.6284" asserts="0" description="RestAPIServer Management Module - Advanced Scenarios">
             <results>
-              <test-suite type="TestFixture" name="RestAPIServer Management Module - Advanced Scenarios.Concurrent Operations" executed="True" result="Failure" success="False" time="0.4805" asserts="0" description="RestAPIServer Management Module - Advanced Scenarios.Concurrent Operations">
+              <test-suite type="TestFixture" name="RestAPIServer Management Module - Advanced Scenarios.Concurrent Operations" executed="True" result="Failure" success="False" time="0.4827" asserts="0" description="RestAPIServer Management Module - Advanced Scenarios.Concurrent Operations">
                 <results>
-                  <test-case description="Should handle multiple concurrent management requests" name="RestAPIServer Management Module - Advanced Scenarios.Concurrent Operations.Should handle multiple concurrent management requests" time="0.433" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should handle multiple concurrent management requests" name="RestAPIServer Management Module - Advanced Scenarios.Concurrent Operations.Should handle multiple concurrent management requests" time="0.4346" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected a collection with size 3, but got an empty collection.</message>
                       <stack-trace>at $results | Should -HaveCount 3, /workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1:197
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1:197</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should maintain consistency under concurrent access" name="RestAPIServer Management Module - Advanced Scenarios.Concurrent Operations.Should maintain consistency under concurrent access" time="0.0422" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should maintain consistency under concurrent access" name="RestAPIServer Management Module - Advanced Scenarios.Concurrent Operations.Should maintain consistency under concurrent access" time="0.0431" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Get-RestAPIServerStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -119,23 +119,23 @@ Check the spelling of the name, or if a path was included, verify that the path 
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RestAPIServer Management Module - Advanced Scenarios.Performance and Scalability" executed="True" result="Failure" success="False" time="0.6332" asserts="0" description="RestAPIServer Management Module - Advanced Scenarios.Performance and Scalability">
+              <test-suite type="TestFixture" name="RestAPIServer Management Module - Advanced Scenarios.Performance and Scalability" executed="True" result="Failure" success="False" time="0.642" asserts="0" description="RestAPIServer Management Module - Advanced Scenarios.Performance and Scalability">
                 <results>
-                  <test-case description="Should execute management operations within acceptable time limits" name="RestAPIServer Management Module - Advanced Scenarios.Performance and Scalability.Should execute management operations within acceptable time limits" time="0.0446" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should execute management operations within acceptable time limits" name="RestAPIServer Management Module - Advanced Scenarios.Performance and Scalability.Should execute management operations within acceptable time limits" time="0.042" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Get-RestAPIServerStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
                       <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1:213</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should handle large-scale operations efficiently" name="RestAPIServer Management Module - Advanced Scenarios.Performance and Scalability.Should handle large-scale operations efficiently" time="0.1027" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle large-scale operations efficiently" name="RestAPIServer Management Module - Advanced Scenarios.Performance and Scalability.Should handle large-scale operations efficiently" time="0.096" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RestAPIServer Management Module - Advanced Scenarios.Integration with AitherZero Framework" executed="True" result="Success" success="True" time="0.8877" asserts="0" description="RestAPIServer Management Module - Advanced Scenarios.Integration with AitherZero Framework">
+              <test-suite type="TestFixture" name="RestAPIServer Management Module - Advanced Scenarios.Integration with AitherZero Framework" executed="True" result="Success" success="True" time="0.8754" asserts="0" description="RestAPIServer Management Module - Advanced Scenarios.Integration with AitherZero Framework">
                 <results>
-                  <test-case description="Should integrate with centralized logging" name="RestAPIServer Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should integrate with centralized logging" time="0.0054" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should respect framework configuration" name="RestAPIServer Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should respect framework configuration" time="0.1038" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should support framework-wide operations" name="RestAPIServer Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should support framework-wide operations" time="0.1384" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should integrate with centralized logging" name="RestAPIServer Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should integrate with centralized logging" time="0.0049" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should respect framework configuration" name="RestAPIServer Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should respect framework configuration" time="0.0982" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support framework-wide operations" name="RestAPIServer Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should support framework-wide operations" time="0.1246" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>

@@ -1,52 +1,52 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="15" errors="0" failures="1" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="16:49:28">
-  <environment cwd="/workspaces/AitherZero" machine-name="codespaces-6c6eb1" user="codespace" user-domain="" os-version="6.8.0-1027-azure" platform="Linux" clr-version="9.0.4" nunit-version="2.5.8.0" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="15" errors="0" failures="1" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="17:42:02">
+  <environment user-domain="" platform="Linux" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" clr-version="9.0.4" nunit-version="2.5.8.0" user="codespace" machine-name="codespaces-6c6eb1" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="2.2224" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="2.3014" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/ConfigurationCarousel/tests/ConfigurationCarousel.Tests.ps1" executed="True" result="Failure" success="False" time="2.2224" asserts="0" description="/workspaces/AitherZero/aither-core/modules/ConfigurationCarousel/tests/ConfigurationCarousel.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/ConfigurationCarousel/tests/ConfigurationCarousel.Tests.ps1" executed="True" result="Failure" success="False" time="2.3014" asserts="0" description="/workspaces/AitherZero/aither-core/modules/ConfigurationCarousel/tests/ConfigurationCarousel.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="ConfigurationCarousel Module - Core Functionality" executed="True" result="Success" success="True" time="1.4884" asserts="0" description="ConfigurationCarousel Module - Core Functionality">
+          <test-suite type="TestFixture" name="ConfigurationCarousel Module - Core Functionality" executed="True" result="Success" success="True" time="1.5296" asserts="0" description="ConfigurationCarousel Module - Core Functionality">
             <results>
-              <test-suite type="TestFixture" name="ConfigurationCarousel Module - Core Functionality.Module Import and Structure" executed="True" result="Success" success="True" time="0.1703" asserts="0" description="ConfigurationCarousel Module - Core Functionality.Module Import and Structure">
+              <test-suite type="TestFixture" name="ConfigurationCarousel Module - Core Functionality.Module Import and Structure" executed="True" result="Success" success="True" time="0.1588" asserts="0" description="ConfigurationCarousel Module - Core Functionality.Module Import and Structure">
                 <results>
-                  <test-case description="Should import the module successfully" name="ConfigurationCarousel Module - Core Functionality.Module Import and Structure.Should import the module successfully" time="0.0816" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should export expected functions" name="ConfigurationCarousel Module - Core Functionality.Module Import and Structure.Should export expected functions" time="0.0507" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should require PowerShell 7.0 or higher" name="ConfigurationCarousel Module - Core Functionality.Module Import and Structure.Should require PowerShell 7.0 or higher" time="0.011" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should have proper module metadata" name="ConfigurationCarousel Module - Core Functionality.Module Import and Structure.Should have proper module metadata" time="0.0109" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should import the module successfully" name="ConfigurationCarousel Module - Core Functionality.Module Import and Structure.Should import the module successfully" time="0.0685" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export expected functions" name="ConfigurationCarousel Module - Core Functionality.Module Import and Structure.Should export expected functions" time="0.041" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should require PowerShell 7.0 or higher" name="ConfigurationCarousel Module - Core Functionality.Module Import and Structure.Should require PowerShell 7.0 or higher" time="0.0101" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should have proper module metadata" name="ConfigurationCarousel Module - Core Functionality.Module Import and Structure.Should have proper module metadata" time="0.0091" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationCarousel Module - Core Functionality.Core Functionality" executed="True" result="Success" success="True" time="0.7308" asserts="0" description="ConfigurationCarousel Module - Core Functionality.Core Functionality">
+              <test-suite type="TestFixture" name="ConfigurationCarousel Module - Core Functionality.Core Functionality" executed="True" result="Success" success="True" time="0.7396" asserts="0" description="ConfigurationCarousel Module - Core Functionality.Core Functionality">
                 <results>
-                  <test-case description="Should execute core functions without errors" name="ConfigurationCarousel Module - Core Functionality.Core Functionality.Should execute core functions without errors" time="0.5544" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should execute core functions without errors" name="ConfigurationCarousel Module - Core Functionality.Core Functionality.Should execute core functions without errors" time="0.5742" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationCarousel Module - Core Functionality.Error Handling" executed="True" result="Success" success="True" time="1.4305" asserts="0" description="ConfigurationCarousel Module - Core Functionality.Error Handling">
+              <test-suite type="TestFixture" name="ConfigurationCarousel Module - Core Functionality.Error Handling" executed="True" result="Success" success="True" time="1.4345" asserts="0" description="ConfigurationCarousel Module - Core Functionality.Error Handling">
                 <results>
-                  <test-case description="Should handle errors gracefully" name="ConfigurationCarousel Module - Core Functionality.Error Handling.Should handle errors gracefully" time="0.6941" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle errors gracefully" name="ConfigurationCarousel Module - Core Functionality.Error Handling.Should handle errors gracefully" time="0.6885" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationCarousel Module - Core Functionality.Integration with AitherZero Framework" executed="True" result="Success" success="True" time="1.4609" asserts="0" description="ConfigurationCarousel Module - Core Functionality.Integration with AitherZero Framework">
+              <test-suite type="TestFixture" name="ConfigurationCarousel Module - Core Functionality.Integration with AitherZero Framework" executed="True" result="Success" success="True" time="1.4812" asserts="0" description="ConfigurationCarousel Module - Core Functionality.Integration with AitherZero Framework">
                 <results>
-                  <test-case description="Should integrate with logging system" name="ConfigurationCarousel Module - Core Functionality.Integration with AitherZero Framework.Should integrate with logging system" time="0.0057" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle configuration properly" name="ConfigurationCarousel Module - Core Functionality.Integration with AitherZero Framework.Should handle configuration properly" time="0.0048" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should support cross-platform operation" name="ConfigurationCarousel Module - Core Functionality.Integration with AitherZero Framework.Should support cross-platform operation" time="0.014" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should integrate with logging system" name="ConfigurationCarousel Module - Core Functionality.Integration with AitherZero Framework.Should integrate with logging system" time="0.0071" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle configuration properly" name="ConfigurationCarousel Module - Core Functionality.Integration with AitherZero Framework.Should handle configuration properly" time="0.0057" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support cross-platform operation" name="ConfigurationCarousel Module - Core Functionality.Integration with AitherZero Framework.Should support cross-platform operation" time="0.0274" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationCarousel Module - Core Functionality.Performance and Reliability" executed="True" result="Success" success="True" time="1.4827" asserts="0" description="ConfigurationCarousel Module - Core Functionality.Performance and Reliability">
+              <test-suite type="TestFixture" name="ConfigurationCarousel Module - Core Functionality.Performance and Reliability" executed="True" result="Success" success="True" time="1.5233" asserts="0" description="ConfigurationCarousel Module - Core Functionality.Performance and Reliability">
                 <results>
-                  <test-case description="Should execute core functions within acceptable time limits" name="ConfigurationCarousel Module - Core Functionality.Performance and Reliability.Should execute core functions within acceptable time limits" time="0.0057" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle concurrent operations safely" name="ConfigurationCarousel Module - Core Functionality.Performance and Reliability.Should handle concurrent operations safely" time="0.005" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should gracefully handle resource constraints" name="ConfigurationCarousel Module - Core Functionality.Performance and Reliability.Should gracefully handle resource constraints" time="0.0054" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should execute core functions within acceptable time limits" name="ConfigurationCarousel Module - Core Functionality.Performance and Reliability.Should execute core functions within acceptable time limits" time="0.0062" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle concurrent operations safely" name="ConfigurationCarousel Module - Core Functionality.Performance and Reliability.Should handle concurrent operations safely" time="0.0055" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should gracefully handle resource constraints" name="ConfigurationCarousel Module - Core Functionality.Performance and Reliability.Should gracefully handle resource constraints" time="0.0239" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>
           </test-suite>
-          <test-suite type="TestFixture" name="ConfigurationCarousel Module - Advanced Scenarios" executed="True" result="Failure" success="False" time="1.6824" asserts="0" description="ConfigurationCarousel Module - Advanced Scenarios">
+          <test-suite type="TestFixture" name="ConfigurationCarousel Module - Advanced Scenarios" executed="True" result="Failure" success="False" time="1.7639" asserts="0" description="ConfigurationCarousel Module - Advanced Scenarios">
             <results>
-              <test-suite type="TestFixture" name="ConfigurationCarousel Module - Advanced Scenarios.Edge Cases and Boundary Conditions" executed="True" result="Failure" success="False" time="0.0842" asserts="0" description="ConfigurationCarousel Module - Advanced Scenarios.Edge Cases and Boundary Conditions">
+              <test-suite type="TestFixture" name="ConfigurationCarousel Module - Advanced Scenarios.Edge Cases and Boundary Conditions" executed="True" result="Failure" success="False" time="0.09" asserts="0" description="ConfigurationCarousel Module - Advanced Scenarios.Edge Cases and Boundary Conditions">
                 <results>
-                  <test-case description="Should handle edge cases properly" name="ConfigurationCarousel Module - Advanced Scenarios.Edge Cases and Boundary Conditions.Should handle edge cases properly" time="0.0776" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should handle edge cases properly" name="ConfigurationCarousel Module - Advanced Scenarios.Edge Cases and Boundary Conditions.Should handle edge cases properly" time="0.0819" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected no exception to be thrown, but an exception "Cannot bind argument to parameter 'Source' because it is an empty string." was thrown from /workspaces/AitherZero/aither-core/modules/ConfigurationCarousel/tests/ConfigurationCarousel.Tests.ps1:166 char:68
     + …                         { &amp; $function.Name -$($param.Name) "" -ErrorA …
@@ -57,12 +57,12 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/Configuration
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationCarousel Module - Advanced Scenarios.Integration Testing" executed="True" result="Success" success="True" time="0.1136" asserts="0" description="ConfigurationCarousel Module - Advanced Scenarios.Integration Testing">
+              <test-suite type="TestFixture" name="ConfigurationCarousel Module - Advanced Scenarios.Integration Testing" executed="True" result="Success" success="True" time="0.1451" asserts="0" description="ConfigurationCarousel Module - Advanced Scenarios.Integration Testing">
                 <results>
-                  <test-case description="Should integrate with other modules" name="ConfigurationCarousel Module - Advanced Scenarios.Integration Testing.Should integrate with other modules" time="0.0234" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should integrate with other modules" name="ConfigurationCarousel Module - Advanced Scenarios.Integration Testing.Should integrate with other modules" time="0.0447" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationCarousel Module - Advanced Scenarios.Regression Testing" executed="True" result="Success" success="True" time="0.1877" asserts="0" description="ConfigurationCarousel Module - Advanced Scenarios.Regression Testing">
+              <test-suite type="TestFixture" name="ConfigurationCarousel Module - Advanced Scenarios.Regression Testing" executed="True" result="Success" success="True" time="0.22" asserts="0" description="ConfigurationCarousel Module - Advanced Scenarios.Regression Testing">
                 <results>
                   <test-case description="Should not regress existing functionality" name="ConfigurationCarousel Module - Advanced Scenarios.Regression Testing.Should not regress existing functionality" time="0.0687" asserts="0" success="True" result="Success" executed="True" />
                 </results>

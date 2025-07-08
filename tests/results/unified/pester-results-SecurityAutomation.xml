@@ -1,37 +1,37 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="15" errors="0" failures="7" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="16:49:51">
-  <environment cwd="/workspaces/AitherZero" machine-name="codespaces-6c6eb1" user="codespace" user-domain="" os-version="6.8.0-1027-azure" platform="Linux" clr-version="9.0.4" nunit-version="2.5.8.0" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="15" errors="0" failures="7" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="17:42:26">
+  <environment user-domain="" platform="Linux" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" clr-version="9.0.4" nunit-version="2.5.8.0" user="codespace" machine-name="codespaces-6c6eb1" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="0.8776" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="0.9282" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/SecurityAutomation/tests/SecurityAutomation.Tests.ps1" executed="True" result="Failure" success="False" time="0.8776" asserts="0" description="/workspaces/AitherZero/aither-core/modules/SecurityAutomation/tests/SecurityAutomation.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/SecurityAutomation/tests/SecurityAutomation.Tests.ps1" executed="True" result="Failure" success="False" time="0.9282" asserts="0" description="/workspaces/AitherZero/aither-core/modules/SecurityAutomation/tests/SecurityAutomation.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="SecurityAutomation Module - Core Functionality" executed="True" result="Failure" success="False" time="0.2181" asserts="0" description="SecurityAutomation Module - Core Functionality">
+          <test-suite type="TestFixture" name="SecurityAutomation Module - Core Functionality" executed="True" result="Failure" success="False" time="0.1743" asserts="0" description="SecurityAutomation Module - Core Functionality">
             <results>
-              <test-suite type="TestFixture" name="SecurityAutomation Module - Core Functionality.Module Import and Structure" executed="True" result="Failure" success="False" time="0.1013" asserts="0" description="SecurityAutomation Module - Core Functionality.Module Import and Structure">
+              <test-suite type="TestFixture" name="SecurityAutomation Module - Core Functionality.Module Import and Structure" executed="True" result="Failure" success="False" time="0.0689" asserts="0" description="SecurityAutomation Module - Core Functionality.Module Import and Structure">
                 <results>
-                  <test-case description="Should import the module successfully" name="SecurityAutomation Module - Core Functionality.Module Import and Structure.Should import the module successfully" time="0.0238" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should import the module successfully" name="SecurityAutomation Module - Core Functionality.Module Import and Structure.Should import the module successfully" time="0.0243" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected a value, but got $null or empty.</message>
                       <stack-trace>at Get-Module -Name "SecurityAutomation" | Should -Not -BeNullOrEmpty, /workspaces/AitherZero/aither-core/modules/SecurityAutomation/tests/SecurityAutomation.Tests.ps1:48
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SecurityAutomation/tests/SecurityAutomation.Tests.ps1:48</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should export expected functions" name="SecurityAutomation Module - Core Functionality.Module Import and Structure.Should export expected functions" time="0.0188" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should export expected functions" name="SecurityAutomation Module - Core Functionality.Module Import and Structure.Should export expected functions" time="0.01" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected 'Get-ADSecurityAssessment' to be found in collection $null, but it was not found.</message>
                       <stack-trace>at $exportedFunctions | Should -Contain $function, /workspaces/AitherZero/aither-core/modules/SecurityAutomation/tests/SecurityAutomation.Tests.ps1:89
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SecurityAutomation/tests/SecurityAutomation.Tests.ps1:89</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should require PowerShell 7.0 or higher" name="SecurityAutomation Module - Core Functionality.Module Import and Structure.Should require PowerShell 7.0 or higher" time="0.0281" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should require PowerShell 7.0 or higher" name="SecurityAutomation Module - Core Functionality.Module Import and Structure.Should require PowerShell 7.0 or higher" time="0.0234" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected the actual value to be greater than or equal to 7.0, but got $null.</message>
                       <stack-trace>at $module.PowerShellVersion | Should -BeGreaterOrEqual ([Version]"7.0"), /workspaces/AitherZero/aither-core/modules/SecurityAutomation/tests/SecurityAutomation.Tests.ps1:95
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SecurityAutomation/tests/SecurityAutomation.Tests.ps1:95</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should have proper module metadata" name="SecurityAutomation Module - Core Functionality.Module Import and Structure.Should have proper module metadata" time="0.0238" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should have proper module metadata" name="SecurityAutomation Module - Core Functionality.Module Import and Structure.Should have proper module metadata" time="0.0068" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected a value, but got $null or empty.</message>
                       <stack-trace>at $module | Should -Not -BeNullOrEmpty, /workspaces/AitherZero/aither-core/modules/SecurityAutomation/tests/SecurityAutomation.Tests.ps1:100
@@ -40,9 +40,9 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SecurityAutom
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="SecurityAutomation Module - Core Functionality.Core Functionality" executed="True" result="Failure" success="False" time="0.1306" asserts="0" description="SecurityAutomation Module - Core Functionality.Core Functionality">
+              <test-suite type="TestFixture" name="SecurityAutomation Module - Core Functionality.Core Functionality" executed="True" result="Failure" success="False" time="0.096" asserts="0" description="SecurityAutomation Module - Core Functionality.Core Functionality">
                 <results>
-                  <test-case description="Should execute core functions without errors" name="SecurityAutomation Module - Core Functionality.Core Functionality.Should execute core functions without errors" time="0.0236" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should execute core functions without errors" name="SecurityAutomation Module - Core Functionality.Core Functionality.Should execute core functions without errors" time="0.0228" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected a value, but got $null or empty.</message>
                       <stack-trace>at $functions | Should -Not -BeNullOrEmpty, /workspaces/AitherZero/aither-core/modules/SecurityAutomation/tests/SecurityAutomation.Tests.ps1:108
@@ -51,37 +51,37 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SecurityAutom
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="SecurityAutomation Module - Core Functionality.Error Handling" executed="True" result="Success" success="True" time="0.1594" asserts="0" description="SecurityAutomation Module - Core Functionality.Error Handling">
+              <test-suite type="TestFixture" name="SecurityAutomation Module - Core Functionality.Error Handling" executed="True" result="Success" success="True" time="0.1269" asserts="0" description="SecurityAutomation Module - Core Functionality.Error Handling">
                 <results>
-                  <test-case description="Should handle errors gracefully" name="SecurityAutomation Module - Core Functionality.Error Handling.Should handle errors gracefully" time="0.0236" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle errors gracefully" name="SecurityAutomation Module - Core Functionality.Error Handling.Should handle errors gracefully" time="0.0265" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="SecurityAutomation Module - Core Functionality.Integration with AitherZero Framework" executed="True" result="Success" success="True" time="0.1868" asserts="0" description="SecurityAutomation Module - Core Functionality.Integration with AitherZero Framework">
+              <test-suite type="TestFixture" name="SecurityAutomation Module - Core Functionality.Integration with AitherZero Framework" executed="True" result="Success" success="True" time="0.1488" asserts="0" description="SecurityAutomation Module - Core Functionality.Integration with AitherZero Framework">
                 <results>
-                  <test-case description="Should integrate with logging system" name="SecurityAutomation Module - Core Functionality.Integration with AitherZero Framework.Should integrate with logging system" time="0.0047" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle configuration properly" name="SecurityAutomation Module - Core Functionality.Integration with AitherZero Framework.Should handle configuration properly" time="0.0041" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should support cross-platform operation" name="SecurityAutomation Module - Core Functionality.Integration with AitherZero Framework.Should support cross-platform operation" time="0.0138" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should integrate with logging system" name="SecurityAutomation Module - Core Functionality.Integration with AitherZero Framework.Should integrate with logging system" time="0.0037" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle configuration properly" name="SecurityAutomation Module - Core Functionality.Integration with AitherZero Framework.Should handle configuration properly" time="0.0032" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support cross-platform operation" name="SecurityAutomation Module - Core Functionality.Integration with AitherZero Framework.Should support cross-platform operation" time="0.0104" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="SecurityAutomation Module - Core Functionality.Performance and Reliability" executed="True" result="Success" success="True" time="0.2133" asserts="0" description="SecurityAutomation Module - Core Functionality.Performance and Reliability">
+              <test-suite type="TestFixture" name="SecurityAutomation Module - Core Functionality.Performance and Reliability" executed="True" result="Success" success="True" time="0.1702" asserts="0" description="SecurityAutomation Module - Core Functionality.Performance and Reliability">
                 <results>
-                  <test-case description="Should execute core functions within acceptable time limits" name="SecurityAutomation Module - Core Functionality.Performance and Reliability.Should execute core functions within acceptable time limits" time="0.0045" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle concurrent operations safely" name="SecurityAutomation Module - Core Functionality.Performance and Reliability.Should handle concurrent operations safely" time="0.0039" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should gracefully handle resource constraints" name="SecurityAutomation Module - Core Functionality.Performance and Reliability.Should gracefully handle resource constraints" time="0.0134" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should execute core functions within acceptable time limits" name="SecurityAutomation Module - Core Functionality.Performance and Reliability.Should execute core functions within acceptable time limits" time="0.0037" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle concurrent operations safely" name="SecurityAutomation Module - Core Functionality.Performance and Reliability.Should handle concurrent operations safely" time="0.0031" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should gracefully handle resource constraints" name="SecurityAutomation Module - Core Functionality.Performance and Reliability.Should gracefully handle resource constraints" time="0.0102" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>
           </test-suite>
-          <test-suite type="TestFixture" name="SecurityAutomation Module - Advanced Scenarios" executed="True" result="Failure" success="False" time="0.309" asserts="0" description="SecurityAutomation Module - Advanced Scenarios">
+          <test-suite type="TestFixture" name="SecurityAutomation Module - Advanced Scenarios" executed="True" result="Failure" success="False" time="0.2651" asserts="0" description="SecurityAutomation Module - Advanced Scenarios">
             <results>
-              <test-suite type="TestFixture" name="SecurityAutomation Module - Advanced Scenarios.Edge Cases and Boundary Conditions" executed="True" result="Success" success="True" time="0.0278" asserts="0" description="SecurityAutomation Module - Advanced Scenarios.Edge Cases and Boundary Conditions">
+              <test-suite type="TestFixture" name="SecurityAutomation Module - Advanced Scenarios.Edge Cases and Boundary Conditions" executed="True" result="Success" success="True" time="0.0262" asserts="0" description="SecurityAutomation Module - Advanced Scenarios.Edge Cases and Boundary Conditions">
                 <results>
-                  <test-case description="Should handle edge cases properly" name="SecurityAutomation Module - Advanced Scenarios.Edge Cases and Boundary Conditions.Should handle edge cases properly" time="0.0233" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle edge cases properly" name="SecurityAutomation Module - Advanced Scenarios.Edge Cases and Boundary Conditions.Should handle edge cases properly" time="0.0211" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="SecurityAutomation Module - Advanced Scenarios.Integration Testing" executed="True" result="Failure" success="False" time="0.0419" asserts="0" description="SecurityAutomation Module - Advanced Scenarios.Integration Testing">
+              <test-suite type="TestFixture" name="SecurityAutomation Module - Advanced Scenarios.Integration Testing" executed="True" result="Failure" success="False" time="0.0579" asserts="0" description="SecurityAutomation Module - Advanced Scenarios.Integration Testing">
                 <results>
-                  <test-case description="Should integrate with other modules" name="SecurityAutomation Module - Advanced Scenarios.Integration Testing.Should integrate with other modules" time="0.0094" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should integrate with other modules" name="SecurityAutomation Module - Advanced Scenarios.Integration Testing.Should integrate with other modules" time="0.0099" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected a value, but got $null or empty.</message>
                       <stack-trace>at $moduleInfo | Should -Not -BeNullOrEmpty, /workspaces/AitherZero/aither-core/modules/SecurityAutomation/tests/SecurityAutomation.Tests.ps1:1985
@@ -90,9 +90,9 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/SecurityAutom
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="SecurityAutomation Module - Advanced Scenarios.Regression Testing" executed="True" result="Failure" success="False" time="0.0867" asserts="0" description="SecurityAutomation Module - Advanced Scenarios.Regression Testing">
+              <test-suite type="TestFixture" name="SecurityAutomation Module - Advanced Scenarios.Regression Testing" executed="True" result="Failure" success="False" time="0.0862" asserts="0" description="SecurityAutomation Module - Advanced Scenarios.Regression Testing">
                 <results>
-                  <test-case description="Should not regress existing functionality" name="SecurityAutomation Module - Advanced Scenarios.Regression Testing.Should not regress existing functionality" time="0.0381" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should not regress existing functionality" name="SecurityAutomation Module - Advanced Scenarios.Regression Testing.Should not regress existing functionality" time="0.0233" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected the actual value to be greater than 0, but got 0.</message>
                       <stack-trace>at $exportedFunctions.Count | Should -BeGreaterThan 0, /workspaces/AitherZero/aither-core/modules/SecurityAutomation/tests/SecurityAutomation.Tests.ps1:2005

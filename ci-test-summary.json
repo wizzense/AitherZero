@@ -1,9 +1,12 @@
 {
-  "TotalFailed": 0,
   "TotalTests": 11,
-  "TotalPassed": 11,
-  "Success": true,
-  "TotalDuration": 1.4488451,
+  "TotalDuration": 0.4881656,
+  "Performance": {
+    "Mode": "Optimized",
+    "AverageTestDuration": 0.044,
+    "ParallelExecution": true,
+    "TestsPerSecond": 22.53
+  },
   "TestSuites": [
     {
       "TestSuite": "Core",
@@ -11,9 +14,12 @@
       "PassedCount": 11,
       "FailedCount": 0,
       "SkippedCount": 0,
-      "Duration": 1.4202121,
+      "Duration": 0.4842717,
       "Result": "Passed"
     }
   ],
-  "Timestamp": "2025-07-08 02:49:25"
+  "TotalFailed": 0,
+  "Success": true,
+  "TotalPassed": 11,
+  "Timestamp": "2025-07-08 17:29:35"
 }

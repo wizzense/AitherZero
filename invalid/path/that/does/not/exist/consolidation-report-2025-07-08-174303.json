@@ -1,0 +1,31 @@
+{
+  "BackupPatterns": [
+    "*.bak",
+    "*.backup",
+    "*.old",
+    "*.orig",
+    "*~",
+    "*.backup.*",
+    "*backup*",
+    "*-backup-*",
+    "*.bak.*"
+  ],
+  "BackupPath": "/workspaces/AitherZero/invalid/path/that/does/not/exist",
+  "Timestamp": "2025-07-08T17:43:03.0611205+00:00",
+  "TotalFilesFound": 4,
+  "Errors": [],
+  "DirectoriesProcessed": 0,
+  "ExclusionsApplied": [
+    "*.git*",
+    "*node_modules*",
+    "*\\.vscode*",
+    "*backups*",
+    "*packages*",
+    "*bin*",
+    "*obj*",
+    "*\\.vs*"
+  ],
+  "Success": true,
+  "SourcePath": "/tmp/2cae5ad9-3335-4b85-88c1-7cd59618dc21/backup-test-data",
+  "FilesProcessed": 4
+}

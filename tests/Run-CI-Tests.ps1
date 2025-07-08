@@ -123,7 +123,9 @@ try {
         $parallelResults = Invoke-ParallelForEach -InputObject $testsToRun -ThrottleLimit 3 -ScriptBlock {
             param($testName)
             
-            $test = $using:tests[$testName]
+            # Get test configuration from the global tests hashtable
+            $allTests = $using:tests
+            $test = $allTests[$testName]
             
             # Check if test file exists
             if (-not (Test-Path $test.Path)) {

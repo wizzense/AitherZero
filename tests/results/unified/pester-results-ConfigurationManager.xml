@@ -1,98 +1,98 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="40" errors="0" failures="2" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="16:49:31">
-  <environment cwd="/workspaces/AitherZero" machine-name="codespaces-6c6eb1" user="codespace" user-domain="" os-version="6.8.0-1027-azure" platform="Linux" clr-version="9.0.4" nunit-version="2.5.8.0" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="40" errors="0" failures="2" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="17:42:06">
+  <environment user-domain="" platform="Linux" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" clr-version="9.0.4" nunit-version="2.5.8.0" user="codespace" machine-name="codespaces-6c6eb1" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="3.6702" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="3.7029" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/ConfigurationManager/tests/ConfigurationManager.Tests.ps1" executed="True" result="Failure" success="False" time="3.6702" asserts="0" description="/workspaces/AitherZero/aither-core/modules/ConfigurationManager/tests/ConfigurationManager.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/ConfigurationManager/tests/ConfigurationManager.Tests.ps1" executed="True" result="Failure" success="False" time="3.7029" asserts="0" description="/workspaces/AitherZero/aither-core/modules/ConfigurationManager/tests/ConfigurationManager.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="ConfigurationManager Module Tests" executed="True" result="Failure" success="False" time="3.3585" asserts="0" description="ConfigurationManager Module Tests">
+          <test-suite type="TestFixture" name="ConfigurationManager Module Tests" executed="True" result="Failure" success="False" time="3.4407" asserts="0" description="ConfigurationManager Module Tests">
             <results>
-              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Module Loading and Initialization" executed="True" result="Success" success="True" time="0.152" asserts="0" description="ConfigurationManager Module Tests.Module Loading and Initialization">
+              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Module Loading and Initialization" executed="True" result="Success" success="True" time="0.1526" asserts="0" description="ConfigurationManager Module Tests.Module Loading and Initialization">
                 <results>
-                  <test-case description="Should import module successfully" name="ConfigurationManager Module Tests.Module Loading and Initialization.Should import module successfully" time="0.0067" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should have valid manifest" name="ConfigurationManager Module Tests.Module Loading and Initialization.Should have valid manifest" time="0.0287" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should export expected functions" name="ConfigurationManager Module Tests.Module Loading and Initialization.Should export expected functions" time="0.0057" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should initialize module variables" name="ConfigurationManager Module Tests.Module Loading and Initialization.Should initialize module variables" time="0.0792" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should create configuration storage directory" name="ConfigurationManager Module Tests.Module Loading and Initialization.Should create configuration storage directory" time="0.0252" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should import module successfully" name="ConfigurationManager Module Tests.Module Loading and Initialization.Should import module successfully" time="0.0392" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should have valid manifest" name="ConfigurationManager Module Tests.Module Loading and Initialization.Should have valid manifest" time="0.0135" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export expected functions" name="ConfigurationManager Module Tests.Module Loading and Initialization.Should export expected functions" time="0.0053" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should initialize module variables" name="ConfigurationManager Module Tests.Module Loading and Initialization.Should initialize module variables" time="0.0801" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create configuration storage directory" name="ConfigurationManager Module Tests.Module Loading and Initialization.Should create configuration storage directory" time="0.0079" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Test-ConfigurationManager Function Tests" executed="True" result="Success" success="True" time="0.6886" asserts="0" description="ConfigurationManager Module Tests.Test-ConfigurationManager Function Tests">
+              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Test-ConfigurationManager Function Tests" executed="True" result="Success" success="True" time="0.6914" asserts="0" description="ConfigurationManager Module Tests.Test-ConfigurationManager Function Tests">
                 <results>
-                  <test-case description="Should run basic test suite successfully" name="ConfigurationManager Module Tests.Test-ConfigurationManager Function Tests.Should run basic test suite successfully" time="0.0197" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should run extended test suite successfully" name="ConfigurationManager Module Tests.Test-ConfigurationManager Function Tests.Should run extended test suite successfully" time="0.185" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should run full test suite successfully" name="ConfigurationManager Module Tests.Test-ConfigurationManager Function Tests.Should run full test suite successfully" time="0.171" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should include performance tests when requested" name="ConfigurationManager Module Tests.Test-ConfigurationManager Function Tests.Should include performance tests when requested" time="0.0513" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should generate report when requested" name="ConfigurationManager Module Tests.Test-ConfigurationManager Function Tests.Should generate report when requested" time="0.0415" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should validate test result structure" name="ConfigurationManager Module Tests.Test-ConfigurationManager Function Tests.Should validate test result structure" time="0.0545" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle invalid test suite parameter" name="ConfigurationManager Module Tests.Test-ConfigurationManager Function Tests.Should handle invalid test suite parameter" time="0.0067" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should run basic test suite successfully" name="ConfigurationManager Module Tests.Test-ConfigurationManager Function Tests.Should run basic test suite successfully" time="0.051" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should run extended test suite successfully" name="ConfigurationManager Module Tests.Test-ConfigurationManager Function Tests.Should run extended test suite successfully" time="0.1554" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should run full test suite successfully" name="ConfigurationManager Module Tests.Test-ConfigurationManager Function Tests.Should run full test suite successfully" time="0.1694" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include performance tests when requested" name="ConfigurationManager Module Tests.Test-ConfigurationManager Function Tests.Should include performance tests when requested" time="0.0604" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should generate report when requested" name="ConfigurationManager Module Tests.Test-ConfigurationManager Function Tests.Should generate report when requested" time="0.0357" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate test result structure" name="ConfigurationManager Module Tests.Test-ConfigurationManager Function Tests.Should validate test result structure" time="0.0527" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle invalid test suite parameter" name="ConfigurationManager Module Tests.Test-ConfigurationManager Function Tests.Should handle invalid test suite parameter" time="0.0077" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Configuration Store Operations" executed="True" result="Success" success="True" time="0.8057" asserts="0" description="ConfigurationManager Module Tests.Configuration Store Operations">
+              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Configuration Store Operations" executed="True" result="Success" success="True" time="0.7975" asserts="0" description="ConfigurationManager Module Tests.Configuration Store Operations">
                 <results>
-                  <test-case description="Should handle configuration store access" name="ConfigurationManager Module Tests.Configuration Store Operations.Should handle configuration store access" time="0.0275" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should verify module initialization test" name="ConfigurationManager Module Tests.Configuration Store Operations.Should verify module initialization test" time="0.0354" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should test environment management" name="ConfigurationManager Module Tests.Configuration Store Operations.Should test environment management" time="0.0181" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should test configuration carousel operations" name="ConfigurationManager Module Tests.Configuration Store Operations.Should test configuration carousel operations" time="0.0297" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle configuration store access" name="ConfigurationManager Module Tests.Configuration Store Operations.Should handle configuration store access" time="0.031" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should verify module initialization test" name="ConfigurationManager Module Tests.Configuration Store Operations.Should verify module initialization test" time="0.0175" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should test environment management" name="ConfigurationManager Module Tests.Configuration Store Operations.Should test environment management" time="0.0345" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should test configuration carousel operations" name="ConfigurationManager Module Tests.Configuration Store Operations.Should test configuration carousel operations" time="0.0169" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Extended Test Suite Features" executed="True" result="Success" success="True" time="1.2481" asserts="0" description="ConfigurationManager Module Tests.Extended Test Suite Features">
+              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Extended Test Suite Features" executed="True" result="Success" success="True" time="1.2959" asserts="0" description="ConfigurationManager Module Tests.Extended Test Suite Features">
                 <results>
-                  <test-case description="Should include repository operations in extended tests" name="ConfigurationManager Module Tests.Extended Test Suite Features.Should include repository operations in extended tests" time="0.1344" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should include event system tests in extended tests" name="ConfigurationManager Module Tests.Extended Test Suite Features.Should include event system tests in extended tests" time="0.1301" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should include legacy compatibility tests in extended tests" name="ConfigurationManager Module Tests.Extended Test Suite Features.Should include legacy compatibility tests in extended tests" time="0.1716" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include repository operations in extended tests" name="ConfigurationManager Module Tests.Extended Test Suite Features.Should include repository operations in extended tests" time="0.1559" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include event system tests in extended tests" name="ConfigurationManager Module Tests.Extended Test Suite Features.Should include event system tests in extended tests" time="0.1541" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include legacy compatibility tests in extended tests" name="ConfigurationManager Module Tests.Extended Test Suite Features.Should include legacy compatibility tests in extended tests" time="0.1644" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Full Test Suite Features" executed="True" result="Success" success="True" time="1.7313" asserts="0" description="ConfigurationManager Module Tests.Full Test Suite Features">
+              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Full Test Suite Features" executed="True" result="Success" success="True" time="1.7891" asserts="0" description="ConfigurationManager Module Tests.Full Test Suite Features">
                 <results>
-                  <test-case description="Should include security tests in full suite" name="ConfigurationManager Module Tests.Full Test Suite Features.Should include security tests in full suite" time="0.1542" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should include data integrity tests in full suite" name="ConfigurationManager Module Tests.Full Test Suite Features.Should include data integrity tests in full suite" time="0.134" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should include cross-platform compatibility tests in full suite" name="ConfigurationManager Module Tests.Full Test Suite Features.Should include cross-platform compatibility tests in full suite" time="0.1679" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include security tests in full suite" name="ConfigurationManager Module Tests.Full Test Suite Features.Should include security tests in full suite" time="0.1787" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include data integrity tests in full suite" name="ConfigurationManager Module Tests.Full Test Suite Features.Should include data integrity tests in full suite" time="0.1527" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include cross-platform compatibility tests in full suite" name="ConfigurationManager Module Tests.Full Test Suite Features.Should include cross-platform compatibility tests in full suite" time="0.1561" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Performance Testing" executed="True" result="Success" success="True" time="1.9676" asserts="0" description="ConfigurationManager Module Tests.Performance Testing">
+              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Performance Testing" executed="True" result="Success" success="True" time="1.9646" asserts="0" description="ConfigurationManager Module Tests.Performance Testing">
                 <results>
-                  <test-case description="Should measure configuration access performance" name="ConfigurationManager Module Tests.Performance Testing.Should measure configuration access performance" time="0.062" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should measure JSON serialization performance" name="ConfigurationManager Module Tests.Performance Testing.Should measure JSON serialization performance" time="0.0452" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should measure file I/O performance" name="ConfigurationManager Module Tests.Performance Testing.Should measure file I/O performance" time="0.0512" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should report reasonable performance metrics" name="ConfigurationManager Module Tests.Performance Testing.Should report reasonable performance metrics" time="0.072" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should measure configuration access performance" name="ConfigurationManager Module Tests.Performance Testing.Should measure configuration access performance" time="0.0482" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should measure JSON serialization performance" name="ConfigurationManager Module Tests.Performance Testing.Should measure JSON serialization performance" time="0.0404" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should measure file I/O performance" name="ConfigurationManager Module Tests.Performance Testing.Should measure file I/O performance" time="0.0387" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should report reasonable performance metrics" name="ConfigurationManager Module Tests.Performance Testing.Should report reasonable performance metrics" time="0.0425" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Error Handling" executed="True" result="Success" success="True" time="2.0485" asserts="0" description="ConfigurationManager Module Tests.Error Handling">
+              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Error Handling" executed="True" result="Success" success="True" time="2.0445" asserts="0" description="ConfigurationManager Module Tests.Error Handling">
                 <results>
-                  <test-case description="Should handle missing configuration gracefully" name="ConfigurationManager Module Tests.Error Handling.Should handle missing configuration gracefully" time="0.0257" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should return error information in results when failures occur" name="ConfigurationManager Module Tests.Error Handling.Should return error information in results when failures occur" time="0.0345" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle invalid parameters gracefully" name="ConfigurationManager Module Tests.Error Handling.Should handle invalid parameters gracefully" time="0.015" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle missing configuration gracefully" name="ConfigurationManager Module Tests.Error Handling.Should handle missing configuration gracefully" time="0.0323" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return error information in results when failures occur" name="ConfigurationManager Module Tests.Error Handling.Should return error information in results when failures occur" time="0.0142" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle invalid parameters gracefully" name="ConfigurationManager Module Tests.Error Handling.Should handle invalid parameters gracefully" time="0.028" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Integration with Logging Module" executed="True" result="Success" success="True" time="2.0965" asserts="0" description="ConfigurationManager Module Tests.Integration with Logging Module">
+              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Integration with Logging Module" executed="True" result="Success" success="True" time="2.1142" asserts="0" description="ConfigurationManager Module Tests.Integration with Logging Module">
                 <results>
-                  <test-case description="Should work with or without Logging module" name="ConfigurationManager Module Tests.Integration with Logging Module.Should work with or without Logging module" time="0.0285" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should provide fallback logging when Logging module unavailable" name="ConfigurationManager Module Tests.Integration with Logging Module.Should provide fallback logging when Logging module unavailable" time="0.014" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should work with or without Logging module" name="ConfigurationManager Module Tests.Integration with Logging Module.Should work with or without Logging module" time="0.0402" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should provide fallback logging when Logging module unavailable" name="ConfigurationManager Module Tests.Integration with Logging Module.Should provide fallback logging when Logging module unavailable" time="0.02" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Configuration Storage and Persistence" executed="True" result="Success" success="True" time="2.1572" asserts="0" description="ConfigurationManager Module Tests.Configuration Storage and Persistence">
+              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Configuration Storage and Persistence" executed="True" result="Success" success="True" time="2.187" asserts="0" description="ConfigurationManager Module Tests.Configuration Storage and Persistence">
                 <results>
-                  <test-case description="Should create configuration store file" name="ConfigurationManager Module Tests.Configuration Storage and Persistence.Should create configuration store file" time="0.0257" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should persist configuration changes" name="ConfigurationManager Module Tests.Configuration Storage and Persistence.Should persist configuration changes" time="0.0156" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create configuration store file" name="ConfigurationManager Module Tests.Configuration Storage and Persistence.Should create configuration store file" time="0.0349" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should persist configuration changes" name="ConfigurationManager Module Tests.Configuration Storage and Persistence.Should persist configuration changes" time="0.0284" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Cross-Platform Compatibility" executed="True" result="Success" success="True" time="2.346" asserts="0" description="ConfigurationManager Module Tests.Cross-Platform Compatibility">
+              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Cross-Platform Compatibility" executed="True" result="Success" success="True" time="2.4021" asserts="0" description="ConfigurationManager Module Tests.Cross-Platform Compatibility">
                 <results>
-                  <test-case description="Should work on current platform" name="ConfigurationManager Module Tests.Cross-Platform Compatibility.Should work on current platform" time="0.0276" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle path operations cross-platform" name="ConfigurationManager Module Tests.Cross-Platform Compatibility.Should handle path operations cross-platform" time="0.1243" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should work with PowerShell 7+" name="ConfigurationManager Module Tests.Cross-Platform Compatibility.Should work with PowerShell 7+" time="0.0311" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should work on current platform" name="ConfigurationManager Module Tests.Cross-Platform Compatibility.Should work on current platform" time="0.031" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle path operations cross-platform" name="ConfigurationManager Module Tests.Cross-Platform Compatibility.Should handle path operations cross-platform" time="0.1428" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should work with PowerShell 7+" name="ConfigurationManager Module Tests.Cross-Platform Compatibility.Should work with PowerShell 7+" time="0.0356" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Report Generation" executed="True" result="Failure" success="False" time="2.5351" asserts="0" description="ConfigurationManager Module Tests.Report Generation">
+              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Report Generation" executed="True" result="Failure" success="False" time="2.6054" asserts="0" description="ConfigurationManager Module Tests.Report Generation">
                 <results>
-                  <test-case description="Should generate readable test reports" name="ConfigurationManager Module Tests.Report Generation.Should generate readable test reports" time="0.0448" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should include all test results in report" name="ConfigurationManager Module Tests.Report Generation.Should include all test results in report" time="0.1382" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should generate readable test reports" name="ConfigurationManager Module Tests.Report Generation.Should generate readable test reports" time="0.0204" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include all test results in report" name="ConfigurationManager Module Tests.Report Generation.Should include all test results in report" time="0.1774" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected regular expression 'ConfigurationStoreOperations' to match 'Configuration Manager Test Report
-Generated: 07/08/2025 16:49:34
+Generated: 07/08/2025 17:42:08
 Test Suite: Extended
-Duration: 00:00:00.0932237
+Duration: 00:00:00.1355559
 
 SUMMARY
 =======
@@ -104,48 +104,48 @@ Overall Result: Failed
 
 DETAILED RESULTS
 ===============
-ModuleInitialization
---------------------
-Result: Passed
-Details: {"ConfigurationPath":"/home/codespace/.aitherzero/unified-config.json","ModuleVersion":"1.0.0","InitializationStatus":"Successfully initialized"}
-LegacyCompatibility
--------------------
-Result: Warning
-Details: {"AvailableModules":[],"MissingModules":["ConfigurationCore","ConfigurationCarousel","ConfigurationRepository"],"CompatibilityLevel":"Partial"}
-Issues: Legacy modules not available: ConfigurationCore, ConfigurationCarousel, ConfigurationRepository
-Recommendations: Import legacy modules for full backward compatibility
-ConfigurationStore
-------------------
-Result: Passed
-Details: {"Status":"All operations successful","OperationsTested":["Set","Get","Save","Load"]}
 RepositoryOperations
 --------------------
 Result: Warning
-Details: {"Status":"Repository operations accessible","AvailableTemplates":[],"DefaultProvider":"filesystem"}
+Details: {"DefaultProvider":"filesystem","AvailableTemplates":[],"Status":"Repository operations accessible"}
 Issues: No repository templates available
+ConfigurationStore
+------------------
+Result: Passed
+Details: {"OperationsTested":["Set","Get","Save","Load"],"Status":"All operations successful"}
 EventSystem
 -----------
 Result: Warning
 Details: {"History":0,"Subscriptions":0,"EventSystem":"Available"}
 Issues: Event publishing function not available
-EnvironmentManagement
----------------------
+ModuleInitialization
+--------------------
 Result: Passed
-Details: {"Status":"All environment operations successful","OperationsTested":["Create","Switch","Remove"]}
+Details: {"InitializationStatus":"Successfully initialized","ModuleVersion":"1.0.0","ConfigurationPath":"/home/codespace/.aitherzero/unified-config.json"}
 ConfigurationCarousel
 ---------------------
 Result: Failed
 Details: {}
 Issues: No configurations available in carousel
+EnvironmentManagement
+---------------------
+Result: Passed
+Details: {"OperationsTested":["Create","Switch","Remove"],"Status":"All environment operations successful"}
+LegacyCompatibility
+-------------------
+Result: Warning
+Details: {"CompatibilityLevel":"Partial","AvailableModules":[],"MissingModules":["ConfigurationCore","ConfigurationCarousel","ConfigurationRepository"]}
+Issues: Legacy modules not available: ConfigurationCore, ConfigurationCarousel, ConfigurationRepository
+Recommendations: Import legacy modules for full backward compatibility
 PERFORMANCE RESULTS
 ==================
 {}
 ISSUES SUMMARY
 =============
-Legacy modules not available: ConfigurationCore, ConfigurationCarousel, ConfigurationRepository
 No repository templates available
 Event publishing function not available
 No configurations available in carousel
+Legacy modules not available: ConfigurationCore, ConfigurationCarousel, ConfigurationRepository
 RECOMMENDATIONS
 ==============
 Import legacy modules for full backward compatibility
@@ -156,16 +156,16 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/Configuration
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Module Configuration State" executed="True" result="Failure" success="False" time="3.3531" asserts="0" description="ConfigurationManager Module Tests.Module Configuration State">
+              <test-suite type="TestFixture" name="ConfigurationManager Module Tests.Module Configuration State" executed="True" result="Failure" success="False" time="3.4353" asserts="0" description="ConfigurationManager Module Tests.Module Configuration State">
                 <results>
-                  <test-case description="Should maintain configuration state across test runs" name="ConfigurationManager Module Tests.Module Configuration State.Should maintain configuration state across test runs" time="0.0426" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should maintain configuration state across test runs" name="ConfigurationManager Module Tests.Module Configuration State.Should maintain configuration state across test runs" time="0.047" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected collection @('Passed', 'Warning') to contain 'Failed', but it was not found.</message>
                       <stack-trace>at $result1.OverallResult | Should -BeIn @('Passed', 'Warning'), /workspaces/AitherZero/aither-core/modules/ConfigurationManager/tests/ConfigurationManager.Tests.ps1:345
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ConfigurationManager/tests/ConfigurationManager.Tests.ps1:345</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should handle concurrent access gracefully" name="ConfigurationManager Module Tests.Module Configuration State.Should handle concurrent access gracefully" time="0.7695" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle concurrent access gracefully" name="ConfigurationManager Module Tests.Module Configuration State.Should handle concurrent access gracefully" time="0.7774" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>
