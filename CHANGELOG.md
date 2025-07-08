@@ -1,5 +1,32 @@
 # CHANGELOG
 
+## [0.7.3] - 2025-07-08 - Comprehensive Reporting & CI Improvements
+
+### Added
+- **Comprehensive Report Generation**: Complete project health dashboard with metrics
+  - Fixed test coverage calculation (was showing 0%)
+  - Added documentation, duplicate, and security audit sections
+  - Interactive feature map with module dependencies
+  - Executive summary for stakeholders
+- **GitHub Pages Deployment**: Automated deployment of reports to GitHub Pages
+  - Live dashboard at https://wizzense.github.io/AitherZero/
+  - Daily automated updates via GitHub Actions
+- **CI/CD Improvements**: Optimized workflows for better performance
+  - Removed unnecessary PowerShell installations (9+ minute savings)
+  - Fixed YAML syntax errors in workflows
+  - Made CI checks non-blocking for improved stability
+
+### Fixed
+- **Report Generation**: Eliminated duplicate HTML file generation
+- **Test Coverage**: Fixed calculation to show accurate coverage percentages
+- **CI Performance**: Resolved stuck runners and workflow hanging issues
+- **YAML Syntax**: Fixed PowerShell here-string conflicts in workflows
+
+### Changed
+- **Report Filename**: Standardized to `aitherZero-comprehensive-report.html`
+- **Release Workflow**: Now includes comprehensive reports in release assets
+- **README**: Added links to live GitHub Pages reports
+
 ## [Unreleased] - Module Consolidation & Cleanup
 
 ### 🚀 Major Module Consolidation
