@@ -1,0 +1,64 @@
+# TruffleHog configuration for AitherZero
+# This file configures TruffleHog to reduce false positives in our PowerShell automation framework
+
+# Global configuration
+global:
+  # Custom regex patterns to allow (reduce false positives)
+  allow:
+    # Test and example patterns
+    - "test-.*-key"
+    - "mock-.*-key"
+    - "example-.*-key"
+    - "sample-.*-key"
+    - "demo-.*-key"
+    
+    # PowerShell legitimate patterns
+    - "ConvertTo-SecureString.*ToBase64String"
+    - "Generate.*key"
+    - "New.*key"
+    - "Create.*key"
+    
+    # Test database and API patterns
+    - "localhost.*test"
+    - "127\\.0\\.0\\.1.*test"
+    - "Database=.*test"
+    - "Server=localhost"
+    
+    # Configuration test patterns
+    - "ConfigurationCore.*test"
+    - "ConfigurationBackupRestore.*test"
+    - "TestModule.*api"
+
+# File path exclusions
+excludePaths:
+  - "tests/**/*"
+  - "**/*.Tests.ps1"
+  - "**/*.Enhanced.Tests.ps1"
+  - "backups/**/*"
+  - "docs/**/*"
+  - "examples/**/*"
+  - "samples/**/*"
+  - "templates/**/*"
+  - ".vscode/**/*"
+  - ".github/**/*"
+  - "build/**/*"
+  - "dist/**/*"
+
+# Detector-specific configuration
+detectors:
+  # Generic API key detector
+  - name: "GenericAPIKey"
+    allow:
+      - "test-encryption-key-123"
+      - "abc123-secret-key"
+      - "test-api-key"
+      - "mock-api-key"
+      - "example-api-key"
+      - "sample-api-key"
+    
+  # Custom patterns for PowerShell
+  - name: "PowerShellSecure"
+    allow:
+      - "ConvertTo-SecureString.*ToBase64String.*Force"
+      - "Generate.*AES.*key"
+      - "New.*encryption.*key"

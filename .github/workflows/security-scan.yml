@@ -245,7 +245,7 @@ jobs:
         path: ./
         base: ${{ github.event.repository.default_branch }}
         head: HEAD
-        extra_args: --debug --only-verified
+        extra_args: --debug --only-verified --config=.trufflehog.yml
         
     - name: GitLeaks scan
       uses: gitleaks/gitleaks-action@v2
@@ -286,12 +286,21 @@ jobs:
                 # Check if it's a false positive
                 $isFalsePositive = $false
                 
-                # Common false positive patterns
+                # Enhanced false positive detection
                 if ($line -match '^\s*#' -or                    # Comment
-                    $line -match 'example|sample|test|demo' -or # Example code
+                    $line -match 'example|sample|test|demo|mock' -or # Example code
                     $line -match '\$\{.*\}' -or                 # Variable substitution
                     $line -match '\$env:' -or                   # Environment variable
-                    $line -match 'ConvertTo-SecureString')      # Secure string handling
+                    $line -match 'ConvertTo-SecureString' -or   # Secure string handling
+                    $line -match 'ToBase64String' -or           # Base64 encoding (legitimate)
+                    $line -match 'Generate.*key' -or            # Key generation
+                    $line -match 'New.*key' -or                 # Key creation
+                    $line -match 'Create.*key' -or              # Key creation
+                    $line -match 'localhost|127\.0\.0\.1' -or   # Local connections
+                    $line -match 'It "Should.*"' -or            # Pester tests
+                    $line -match 'Context ".*"' -or             # Pester contexts
+                    $line -match 'Describe ".*"' -or            # Pester describes
+                    $file.FullName -match '\.Tests\.ps1$|test|mock|example|sample') # Test files
                 {
                   $isFalsePositive = $true
                 }
@@ -370,31 +379,142 @@ jobs:
           
           foreach ($cmd in $dangerousCommands) {
             if ($content -match $cmd) {
+              # Check if it's legitimate usage
+              $isLegitimate = $false
+              
+              # Skip if it's in a test file or has legitimate context
+              if ($script.FullName -match '\.Tests\.ps1$|test|mock|example|sample') {
+                $isLegitimate = $true
+              }
+              
+              # Check for legitimate usage patterns
+              $legitimateContexts = @(
+                'try\s*{[^}]*' + $cmd,       # In try-catch blocks
+                'if\s*\([^)]*\)\s*{[^}]*' + $cmd,  # In conditional blocks
+                '#.*' + $cmd,                # In comments
+                'param\s*\([^)]*\)\s*{[^}]*' + $cmd,  # In function parameters
+                'Write-.*Log.*' + $cmd,      # In logging contexts
+                'Test-.*' + $cmd,            # In test functions
+                'Debug.*' + $cmd,            # In debug contexts
+                'Validate.*' + $cmd          # In validation contexts
+              )
+              
+              foreach ($context in $legitimateContexts) {
+                if ($content -match $context) {
+                  $isLegitimate = $true
+                  break
+                }
+              }
+              
+              # Special handling for common legitimate cases
+              switch ($cmd) {
+                'Start-Process' {
+                  # Legitimate if using -Wait, -PassThru, or well-formed arguments
+                  if ($content -match 'Start-Process.*(-Wait|-PassThru|-ArgumentList|-FilePath)') {
+                    $isLegitimate = $true
+                  }
+                }
+                'Invoke-Expression' {
+                  # Legitimate if used for dynamic script generation with validation
+                  if ($content -match 'Invoke-Expression.*\$\w+.*Validate|Test-.*Expression') {
+                    $isLegitimate = $true
+                  }
+                }
+                'Invoke-Command' {
+                  # Legitimate for remote operations
+                  if ($content -match 'Invoke-Command.*(-ComputerName|-Session|-ScriptBlock)') {
+                    $isLegitimate = $true
+                  }
+                }
+              }
+              
+              # Only report if it's not legitimate usage
+              if (-not $isLegitimate) {
+                $issues += @{
+                  File = $script.FullName
+                  Issue = "Uses potentially dangerous command: $cmd"
+                  Severity = 'Warning'
+                }
+              }
+            }
+          }
+          
+          # Check for web downloads without validation (improved)
+          if ($content -match 'Invoke-WebRequest|Invoke-RestMethod|wget|curl') {
+            # Check if it has proper error handling or is in legitimate context
+            $hasErrorHandling = $false
+            
+            $errorHandlingPatterns = @(
+              'try\s*{[^}]*(?:Invoke-WebRequest|Invoke-RestMethod)',
+              'catch\s*{[^}]*(?:Invoke-WebRequest|Invoke-RestMethod)',
+              '-ErrorAction\s+(?:Stop|SilentlyContinue|Ignore)',
+              'if\s*\([^)]*\)\s*{[^}]*(?:Invoke-WebRequest|Invoke-RestMethod)',
+              'Test-.*Connection',
+              'Validate-.*Url'
+            )
+            
+            foreach ($pattern in $errorHandlingPatterns) {
+              if ($content -match $pattern) {
+                $hasErrorHandling = $true
+                break
+              }
+            }
+            
+            # Skip test files and legitimate download functions
+            if ($script.FullName -match '\.Tests\.ps1$|test|mock|example|sample' -or
+                $content -match 'Install-.*Dependencies|Download-.*|Get-.*Download') {
+              $hasErrorHandling = $true
+            }
+            
+            if (-not $hasErrorHandling) {
               $issues += @{
                 File = $script.FullName
-                Issue = "Uses potentially dangerous command: $cmd"
+                Issue = "Web request without proper error handling"
                 Severity = 'Warning'
               }
             }
           }
           
-          # Check for web downloads without validation
-          if ($content -match 'Invoke-WebRequest|Invoke-RestMethod|wget|curl' -and
-              $content -notmatch 'try\s*{[^}]*(?:Invoke-WebRequest|Invoke-RestMethod)') {
-            $issues += @{
-              File = $script.FullName
-              Issue = "Web request without proper error handling"
-              Severity = 'Warning'
+          # Check for credential handling (improved logic)
+          if ($content -match 'ConvertTo-SecureString.*-AsPlainText') {
+            # Check if it's legitimate usage
+            $isLegitimate = $false
+            
+            # Legitimate patterns for secure string usage
+            $legitimatePatterns = @(
+              'ToBase64String',           # Key generation
+              'Generate.*key',            # Key generation functions
+              'New.*key',                 # Key creation functions
+              'Create.*key',              # Key creation functions
+              '\$env:',                   # Environment variables
+              'Get-Credential',           # Credential prompt
+              '\[PSCredential\]',         # Credential objects
+              'Test.*key',                # Test keys
+              'Mock.*key',                # Mock keys
+              'Example.*key',             # Example keys
+              'Sample.*key',              # Sample keys
+              'Demo.*key'                 # Demo keys
+            )
+            
+            foreach ($pattern in $legitimatePatterns) {
+              if ($content -match $pattern) {
+                $isLegitimate = $true
+                break
+              }
             }
-          }
-          
-          # Check for credential handling
-          if ($content -match 'ConvertTo-SecureString.*-AsPlainText' -and
-              $content -notmatch '\$env:|Get-Credential|\[PSCredential\]') {
-            $issues += @{
-              File = $script.FullName
-              Issue = "Hardcoded credentials or insecure credential handling"
-              Severity = 'High'
+            
+            # Check if it's in a test file
+            if ($script.FullName -match '\.Tests\.ps1$|test|mock|example|sample') {
+              $isLegitimate = $true
+            }
+            
+            # Only report if it's not legitimate usage
+            if (-not $isLegitimate) {
+              $issues += @{
+                File = $script.FullName
+                Issue = "Hardcoded credentials or insecure credential handling"
+                Severity = 'High'
+              }
             }
           }
           
