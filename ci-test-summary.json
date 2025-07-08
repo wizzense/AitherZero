@@ -1,65 +1,83 @@
 {
+  "Timestamp": "2025-07-08 18:50:21",
+  "TotalDuration": 3.4607816,
+  "TotalTests": 49,
+  "Success": true,
   "TotalFailed": 0,
-  "StartTime": "2025-07-08 18:34:10",
   "QualityMetrics": {
     "TestCoverage": {
-      "PowerShellTests": null,
-      "CoreTests": 11,
-      "EntryTests": null
+      "PowerShellTests": 32,
+      "EntryTests": 6,
+      "CoreTests": 11
+    },
+    "Performance": {
+      "TestsPerSecond": 14.16,
+      "ParallelExecution": false,
+      "FastestTest": "Core",
+      "AverageTestDuration": 0.071,
+      "SlowestTest": "PowerShell",
+      "Mode": "Standard"
     },
     "FailureRate": 0.0,
-    "Performance": {
-      "SlowestTest": "Core",
-      "TestsPerSecond": 7.92,
-      "FastestTest": "Core",
-      "Mode": "Optimized",
-      "ParallelExecution": true,
-      "AverageTestDuration": 0.126
-    },
     "SuccessRate": 100.0
   },
+  "TotalPassed": 49,
   "TestSuites": [
+    {
+      "TestSuite": "Entry",
+      "TotalCount": 6,
+      "PassedCount": 6,
+      "FailedCount": 0,
+      "SkippedCount": 0,
+      "Duration": 1.2308962,
+      "Result": "Passed"
+    },
     {
       "TestSuite": "Core",
       "TotalCount": 11,
       "PassedCount": 11,
       "FailedCount": 0,
       "SkippedCount": 0,
-      "Duration": 1.3652123,
+      "Duration": 0.6876391,
+      "Result": "Passed"
+    },
+    {
+      "TestSuite": "PowerShell",
+      "TotalCount": 32,
+      "PassedCount": 32,
+      "FailedCount": 0,
+      "SkippedCount": 0,
+      "Duration": 1.4993659,
       "Result": "Passed"
     }
   ],
-  "Success": true,
-  "ErrorSummary": {
-    "ErrorsByType": {},
-    "FailedTestDetails": [],
-    "TotalErrors": 0
+  "CIInfo": {
+    "GITHUB_REPOSITORY": "wizzense/AitherZero",
+    "GITHUB_SHA": null,
+    "GITHUB_REF": null,
+    "GITHUB_RUN_NUMBER": null,
+    "GITHUB_RUN_ID": null,
+    "GITHUB_WORKFLOW": null,
+    "CI_PLATFORM": null
   },
-  "EndTime": "2025-07-08 18:34:12",
+  "StartTime": "2025-07-08 18:50:17",
   "Platform": {
-    "UserName": "codespace",
+    "MachineName": "codespaces-6c6eb1",
+    "PowerShellEdition": "Core",
     "OSVersion": "Unix 6.8.0.1027",
-    "GitCommit": "3b97d8d9",
-    "Architecture": "x64",
+    "WorkingDirectory": "/workspaces/AitherZero",
+    "OS": "Unix",
     "GitBranch": "release/v0.7.3",
     "ProcessorCount": 16,
-    "PowerShellEdition": "Core",
-    "MachineName": "codespaces-6c6eb1",
-    "OS": "Unix",
-    "WorkingDirectory": "/workspaces/AitherZero",
-    "PowerShellVersion": "7.5.1"
+    "GitCommit": "570dc1ee",
+    "PowerShellVersion": "7.5.1",
+    "UserName": "codespace",
+    "Architecture": "x64"
   },
-  "TotalDuration": 1.3891612,
-  "CIInfo": {
-    "CI_PLATFORM": null,
-    "GITHUB_REF": null,
-    "GITHUB_RUN_ID": null,
-    "GITHUB_SHA": null,
-    "GITHUB_REPOSITORY": "wizzense/AitherZero",
-    "GITHUB_WORKFLOW": null,
-    "GITHUB_RUN_NUMBER": null
+  "ErrorSummary": {
+    "ErrorsByType": {},
+    "TotalErrors": 0,
+    "FailedTestDetails": []
   },
-  "Timestamp": "2025-07-08 18:34:12",
-  "TotalTests": 11,
-  "TotalPassed": 11
+  "EndTime": "2025-07-08 18:50:21"
 }

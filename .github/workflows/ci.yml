@@ -1045,10 +1045,10 @@ jobs:
         
         if ($summary.TotalFailed -gt 0) {
           $markdownSummary += "`n`n### Failed Tests"
-          foreach ($error in $summary.ErrorSummary.FailedTestDetails) {
-            $markdownSummary += "`n- **$($error.TestSuite)**: $($error.FailedCount) failures"
-            if ($error.FailedTests) {
-              foreach ($test in $error.FailedTests) {
+          foreach ($errorItem in $summary.ErrorSummary.FailedTestDetails) {
+            $markdownSummary += "`n- **$($errorItem.TestSuite)**: $($errorItem.FailedCount) failures"
+            if ($errorItem.FailedTests) {
+              foreach ($test in $errorItem.FailedTests) {
                 $markdownSummary += "`n  - $test"
               }
             }
@@ -1718,3 +1718,42 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./docs
         force_orphan: true
+        
+  # Trigger comprehensive report after successful CI tests
+  trigger-comprehensive-report:
+    name: Trigger Comprehensive Report
+    runs-on: ubuntu-latest
+    needs: test
+    if: success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    
+    steps:
+    - name: Trigger comprehensive report workflow
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          github.rest.actions.createWorkflowDispatch({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            workflow_id: 'comprehensive-report.yml',
+            ref: context.ref,
+            inputs: {
+              report_type: 'comprehensive',
+              include_detailed_analysis: 'true',
+              generate_html: 'true'
+            }
+          })
+          
+          console.log('✅ Comprehensive report workflow triggered successfully')
+          
+    - name: Create workflow summary
+      run: |
+        echo "## 🚀 CI Tests Completed Successfully" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✅ All tests passed across all platforms" >> $GITHUB_STEP_SUMMARY
+        echo "📊 Comprehensive report generation triggered" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Next Steps:" >> $GITHUB_STEP_SUMMARY
+        echo "1. Wait for comprehensive report to complete" >> $GITHUB_STEP_SUMMARY
+        echo "2. Check GitHub Pages for updated dashboard" >> $GITHUB_STEP_SUMMARY
+        echo "3. Review test results in the comprehensive report" >> $GITHUB_STEP_SUMMARY
