@@ -351,7 +351,6 @@ function Get-EstimatedTestCases {
     param(
         [Parameter(Mandatory = $true)]
         [array]$TestFiles,
-        
         [Parameter(Mandatory = $true)]
         [string]$ProjectRoot
     )
@@ -365,7 +364,7 @@ function Get-EstimatedTestCases {
                 $content = Get-Content $fullPath -ErrorAction SilentlyContinue
                 if ($content) {
                     # Count "It" blocks (Pester test cases)
-                    $itMatches = $content | Select-String -Pattern '^\s*It\s+["\']' -AllMatches
+                    $itMatches = $content | Select-String -Pattern "^\s*It\s+[`"`']" -AllMatches
                     $totalTestCases += $itMatches.Count
                 }
             }
@@ -422,7 +421,7 @@ function Test-ModuleTestStaleness {
         $lastTestModified = [DateTime]::Parse($ModuleState.lastTestModified)
         $lastCodeModified = if ($ModuleState.lastCodeModified) { [DateTime]::Parse($ModuleState.lastCodeModified) } else { $now }
         
-        # Check if code was modified after tests (code changes but tests don't)
+        # Check if code was modified after tests - code changes but tests don't
         if ($lastCodeModified -gt $lastTestModified) {
             $daysSinceCodeChange = ($now - $lastCodeModified).TotalDays
             if ($daysSinceCodeChange -gt 7) {  # codeChangeReviewDays

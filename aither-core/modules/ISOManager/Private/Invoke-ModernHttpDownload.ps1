@@ -113,8 +113,8 @@ function Invoke-ModernHttpDownload {
                         0
                     }
                     
-                    $status = \"$percentComplete% Complete - $([math]::Round($totalBytesRead / 1MB, 2)) MB / $([math]::Round($totalSize / 1MB, 2)) MB - $speedMBps MB/s\"
-                    Write-Progress -Activity \"Downloading $ISOName\" -Status $status -PercentComplete $percentComplete
+                    $status = "$percentComplete% Complete - $([math]::Round($totalBytesRead / 1MB, 2)) MB / $([math]::Round($totalSize / 1MB, 2)) MB - $speedMBps MB/s"
+                    Write-Progress -Activity "Downloading $ISOName" -Status $status -PercentComplete $percentComplete
                 }
                 
                 $iteration++
@@ -124,8 +124,8 @@ function Invoke-ModernHttpDownload {
             
             # Final progress update
             if ($ShowProgress) {
-                Write-Progress -Activity \"Downloading $ISOName\" -Status \"Complete\" -PercentComplete 100
-                Write-Progress -Activity \"Downloading $ISOName\" -Completed
+                Write-Progress -Activity "Downloading $ISOName" -Status "Complete" -PercentComplete 100
+                Write-Progress -Activity "Downloading $ISOName" -Completed
             }
             
             $averageSpeed = if ($stopwatch.Elapsed.TotalSeconds -gt 0) {
@@ -134,7 +134,7 @@ function Invoke-ModernHttpDownload {
                 0
             }
             
-            Write-CustomLog -Level 'SUCCESS' -Message \"Download completed. Total size: $([math]::Round($totalBytesRead / 1MB, 2)) MB, Average speed: $averageSpeed MB/s, Duration: $($stopwatch.Elapsed.TotalMinutes.ToString('F2')) minutes\"
+            Write-CustomLog -Level 'SUCCESS' -Message "Download completed. Total size: $([math]::Round($totalBytesRead / 1MB, 2)) MB, Average speed: $averageSpeed MB/s, Duration: $($stopwatch.Elapsed.TotalMinutes.ToString('F2')) minutes"
             
             return $true
             
@@ -151,7 +151,7 @@ function Invoke-ModernHttpDownload {
         }
         
     } catch {
-        Write-CustomLog -Level 'ERROR' -Message \"Modern HTTP download failed: $($_.Exception.Message)\"
+        Write-CustomLog -Level 'ERROR' -Message "Modern HTTP download failed: $($_.Exception.Message)"
         return $false
         
     } finally {
