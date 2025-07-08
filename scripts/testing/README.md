@@ -1,6 +1,7 @@
 # AitherZero Testing Automation Scripts
 
-This directory contains automated testing scripts for comprehensive test coverage analysis, delta tracking, and AI-assisted test generation optimized for AI + human engineering teams.
+This directory contains automated testing scripts for comprehensive test coverage analysis, delta tracking,
+and AI-assisted test generation optimized for AI + human engineering teams.
 
 ## Directory Structure
 
@@ -19,7 +20,8 @@ scripts/testing/
 
 ## Overview
 
-The testing automation system implements **smart delta tracking** and **time-based gates** to automatically detect when tests need attention, similar to the documentation system but optimized for test-specific workflows.
+The testing automation system implements **smart delta tracking** and **time-based gates** to automatically
+detect when tests need attention, similar to the documentation system but optimized for test-specific workflows.
 
 ## Core Capabilities
 
@@ -399,7 +401,7 @@ Describe 'ModuleName Module' {
 The testing system is designed to work alongside the documentation automation:
 
 - **Unified State Files**: Both systems use `.github/` for state tracking
-- **Cross-Reference Analysis**: `Audit-TestCoverage.ps1 -CrossReference` 
+- **Cross-Reference Analysis**: `Audit-TestCoverage.ps1 -CrossReference`
 - **Consistent Time Gates**: Similar delta detection principles
 - **Combined Reporting**: Future unified audit reports
 

@@ -13,7 +13,9 @@ scripts/
 
 ## Overview
 
-The scripts directory provides essential utilities for setting up development environments across different platforms. The primary focus is on automating the installation of development tools required for working with AitherZero and modern infrastructure automation.
+The scripts directory provides essential utilities for setting up development environments across different platforms.
+The primary focus is on automating the installation of development tools required for working with AitherZero and
+modern infrastructure automation.
 
 ## Key Components
 

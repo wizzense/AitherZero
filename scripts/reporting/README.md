@@ -1,6 +1,8 @@
 # AitherZero Comprehensive Reporting System
 
-The AitherZero Comprehensive Reporting System provides automated auditing, analysis, and HTML report generation for the entire AitherZero project. This system delivers the visibility and control needed for confident releases and development.
+The AitherZero Comprehensive Reporting System provides automated auditing, analysis, and HTML report generation
+for the entire AitherZero project. This system delivers the visibility and control needed for confident
+releases and development.
 
 ## 🎯 Overview
 
