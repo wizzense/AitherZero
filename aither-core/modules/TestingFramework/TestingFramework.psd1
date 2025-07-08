@@ -1,11 +1,11 @@
 @{
     RootModule = 'TestingFramework.psm1'
-    ModuleVersion = '2.0.0'
+    ModuleVersion = '2.1.0'
     GUID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
     Author = 'AitherZero Contributors'
     CompanyName = 'Aitherium'
     Copyright = '(c) 2025 Aitherium. All rights reserved.'
-    Description = 'Enhanced unified testing framework serving as central orchestrator for all testing activities with module integration, parallel execution, and comprehensive reporting'
+    Description = 'Enhanced unified testing framework serving as central orchestrator for all testing activities with module integration, parallel execution, automated README.md updates, comprehensive reporting, and test generation capabilities'
 
     PowerShellVersion = '7.0'
 
@@ -35,11 +35,15 @@
         'Invoke-SyntaxValidation',
         'Invoke-ParallelTests',
         'Invoke-BulletproofTest',
+        'Update-ReadmeTestStatus',
         'Start-TestSuite',
         'Write-TestLog',
         'New-ModuleTest',
         'Invoke-BulkTestGeneration',
-        'Get-ModuleAnalysis'
+        'Get-ModuleAnalysis',
+        'Update-ReadmeTestStatus',
+        'Invoke-AutomatedTestGeneration',
+        'Start-TestExecutionMonitoring'
     )
 
     CmdletsToExport = @()
@@ -55,7 +59,7 @@
             LicenseUri = ''
             ProjectUri = ''
             IconUri = ''
-            ReleaseNotes = 'Version 2.0.0 - Enhanced unified testing framework with module integration, parallel execution, comprehensive reporting, event system, and VS Code/GitHub Actions integration'
+            ReleaseNotes = 'Version 2.1.0 - Enhanced unified testing framework with automated README.md status updates, comprehensive test generation, performance monitoring, integration testing, and advanced reporting capabilities'
         }
     }
 }

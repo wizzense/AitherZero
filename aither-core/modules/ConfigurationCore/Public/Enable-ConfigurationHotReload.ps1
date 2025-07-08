@@ -89,7 +89,7 @@ function Enable-ConfigurationHotReload {
 
             # Publish event
             if (Get-Command 'Publish-TestEvent' -ErrorAction SilentlyContinue) {
-                Publish-TestEvent -EventName 'HotReloadEnabled' -EventData @{
+                Publish-TestEvent -EventType 'HotReloadEnabled' -Data @{
                     WatchConfigFile = $WatchConfigFile.IsPresent
                     WatchInterval = $WatchInterval
                     ModuleNames = $ModuleNames

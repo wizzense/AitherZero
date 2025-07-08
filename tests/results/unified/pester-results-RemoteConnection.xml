@@ -1,18 +1,18 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="28" errors="0" failures="1" not-run="0" inconclusive="0" ignored="0" skipped="2" invalid="0" date="2025-07-08" time="15:27:34">
-  <environment machine-name="codespaces-6c6eb1" clr-version="9.0.4" user-domain="" nunit-version="2.5.8.0" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" user="codespace" platform="Linux" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="28" errors="0" failures="1" not-run="0" inconclusive="0" ignored="0" skipped="2" invalid="0" date="2025-07-08" time="16:49:46">
+  <environment cwd="/workspaces/AitherZero" machine-name="codespaces-6c6eb1" user="codespace" user-domain="" os-version="6.8.0-1027-azure" platform="Linux" clr-version="9.0.4" nunit-version="2.5.8.0" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="2.8915" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="2.9526" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1" executed="True" result="Failure" success="False" time="2.8915" asserts="0" description="/workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1" executed="True" result="Failure" success="False" time="2.9526" asserts="0" description="/workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="RemoteConnection Module Tests" executed="True" result="Failure" success="False" time="2.4904" asserts="0" description="RemoteConnection Module Tests">
+          <test-suite type="TestFixture" name="RemoteConnection Module Tests" executed="True" result="Failure" success="False" time="2.5469" asserts="0" description="RemoteConnection Module Tests">
             <results>
-              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Module Import and Structure" executed="True" result="Failure" success="False" time="0.0958" asserts="0" description="RemoteConnection Module Tests.Module Import and Structure">
+              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Module Import and Structure" executed="True" result="Failure" success="False" time="0.1181" asserts="0" description="RemoteConnection Module Tests.Module Import and Structure">
                 <results>
-                  <test-case description="Should import the RemoteConnection module successfully" name="RemoteConnection Module Tests.Module Import and Structure.Should import the RemoteConnection module successfully" time="0.0275" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should import the RemoteConnection module successfully" name="RemoteConnection Module Tests.Module Import and Structure.Should import the RemoteConnection module successfully" time="0.0306" asserts="0" success="True" result="Success" executed="True" />
                   <test-case description="Should export all required functions" name="RemoteConnection Module Tests.Module Import and Structure.Should export all required functions" time="0.0109" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should have proper help documentation for each function" name="RemoteConnection Module Tests.Module Import and Structure.Should have proper help documentation for each function" time="0.0531" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should have proper help documentation for each function" name="RemoteConnection Module Tests.Module Import and Structure.Should have proper help documentation for each function" time="0.0701" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected a value, but got $null or empty.</message>
                       <stack-trace>at $help.Description | Should -Not -BeNullOrEmpty, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:73
@@ -21,57 +21,57 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnect
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Connection Configuration Management" executed="True" result="Success" success="True" time="0.6102" asserts="0" description="RemoteConnection Module Tests.Connection Configuration Management">
+              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Connection Configuration Management" executed="True" result="Success" success="True" time="0.6706" asserts="0" description="RemoteConnection Module Tests.Connection Configuration Management">
                 <results>
-                  <test-case description="Should create a new SSH connection configuration" name="RemoteConnection Module Tests.Connection Configuration Management.Should create a new SSH connection configuration" time="0.0925" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should create a new WinRM connection configuration" name="RemoteConnection Module Tests.Connection Configuration Management.Should create a new WinRM connection configuration" time="0.0498" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should retrieve an existing connection configuration" name="RemoteConnection Module Tests.Connection Configuration Management.Should retrieve an existing connection configuration" time="0.0471" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should retrieve all connection configurations" name="RemoteConnection Module Tests.Connection Configuration Management.Should retrieve all connection configurations" time="0.1196" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should filter connections by endpoint type" name="RemoteConnection Module Tests.Connection Configuration Management.Should filter connections by endpoint type" time="0.1081" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should remove a connection configuration" name="RemoteConnection Module Tests.Connection Configuration Management.Should remove a connection configuration" time="0.0567" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle WhatIf parameter correctly" name="RemoteConnection Module Tests.Connection Configuration Management.Should handle WhatIf parameter correctly" time="0.0339" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create a new SSH connection configuration" name="RemoteConnection Module Tests.Connection Configuration Management.Should create a new SSH connection configuration" time="0.1176" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create a new WinRM connection configuration" name="RemoteConnection Module Tests.Connection Configuration Management.Should create a new WinRM connection configuration" time="0.068" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should retrieve an existing connection configuration" name="RemoteConnection Module Tests.Connection Configuration Management.Should retrieve an existing connection configuration" time="0.0552" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should retrieve all connection configurations" name="RemoteConnection Module Tests.Connection Configuration Management.Should retrieve all connection configurations" time="0.1067" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should filter connections by endpoint type" name="RemoteConnection Module Tests.Connection Configuration Management.Should filter connections by endpoint type" time="0.0946" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should remove a connection configuration" name="RemoteConnection Module Tests.Connection Configuration Management.Should remove a connection configuration" time="0.0523" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle WhatIf parameter correctly" name="RemoteConnection Module Tests.Connection Configuration Management.Should handle WhatIf parameter correctly" time="0.0338" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Connection Testing" executed="True" result="Success" success="True" time="1.1159" asserts="0" description="RemoteConnection Module Tests.Connection Testing">
+              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Connection Testing" executed="True" result="Success" success="True" time="1.3106" asserts="0" description="RemoteConnection Module Tests.Connection Testing">
                 <results>
-                  <test-case description="Should test connection by name" name="RemoteConnection Module Tests.Connection Testing.Should test connection by name" time="0.1983" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should test connection by hostname and port" name="RemoteConnection Module Tests.Connection Testing.Should test connection by hostname and port" time="0.1172" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should support quiet mode" name="RemoteConnection Module Tests.Connection Testing.Should support quiet mode" time="0.1413" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle invalid connection names" name="RemoteConnection Module Tests.Connection Testing.Should handle invalid connection names" time="0.0374" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should test connection by name" name="RemoteConnection Module Tests.Connection Testing.Should test connection by name" time="0.2094" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should test connection by hostname and port" name="RemoteConnection Module Tests.Connection Testing.Should test connection by hostname and port" time="0.2148" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support quiet mode" name="RemoteConnection Module Tests.Connection Testing.Should support quiet mode" time="0.1613" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle invalid connection names" name="RemoteConnection Module Tests.Connection Testing.Should handle invalid connection names" time="0.0474" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Protocol-Specific Features" executed="True" result="Success" success="True" time="1.5451" asserts="0" description="RemoteConnection Module Tests.Protocol-Specific Features">
+              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Protocol-Specific Features" executed="True" result="Success" success="True" time="1.7618" asserts="0" description="RemoteConnection Module Tests.Protocol-Specific Features">
                 <results>
-                  <test-case description="Should set correct default ports for each protocol" name="RemoteConnection Module Tests.Protocol-Specific Features.Should set correct default ports for each protocol" time="0.1465" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should support all endpoint types" name="RemoteConnection Module Tests.Protocol-Specific Features.Should support all endpoint types" time="0.2132" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should add protocol-specific options" name="RemoteConnection Module Tests.Protocol-Specific Features.Should add protocol-specific options" time="0.0653" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should set correct default ports for each protocol" name="RemoteConnection Module Tests.Protocol-Specific Features.Should set correct default ports for each protocol" time="0.1554" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support all endpoint types" name="RemoteConnection Module Tests.Protocol-Specific Features.Should support all endpoint types" time="0.2214" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should add protocol-specific options" name="RemoteConnection Module Tests.Protocol-Specific Features.Should add protocol-specific options" time="0.0689" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Error Handling" executed="True" result="Success" success="True" time="1.7483" asserts="0" description="RemoteConnection Module Tests.Error Handling">
+              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Error Handling" executed="True" result="Success" success="True" time="1.9024" asserts="0" description="RemoteConnection Module Tests.Error Handling">
                 <results>
-                  <test-case description="Should handle invalid endpoint types" name="RemoteConnection Module Tests.Error Handling.Should handle invalid endpoint types" time="0.029" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle invalid port ranges" name="RemoteConnection Module Tests.Error Handling.Should handle invalid port ranges" time="0.0087" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle invalid endpoint types" name="RemoteConnection Module Tests.Error Handling.Should handle invalid endpoint types" time="0.0187" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle invalid port ranges" name="RemoteConnection Module Tests.Error Handling.Should handle invalid port ranges" time="0.0086" asserts="0" success="True" result="Success" executed="True" />
                   <test-case description="Should handle empty or null parameters" name="RemoteConnection Module Tests.Error Handling.Should handle empty or null parameters" time="0.008" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle duplicate connection names" name="RemoteConnection Module Tests.Error Handling.Should handle duplicate connection names" time="0.0619" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should allow overwriting with Force parameter" name="RemoteConnection Module Tests.Error Handling.Should allow overwriting with Force parameter" time="0.0886" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle duplicate connection names" name="RemoteConnection Module Tests.Error Handling.Should handle duplicate connection names" time="0.0552" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should allow overwriting with Force parameter" name="RemoteConnection Module Tests.Error Handling.Should allow overwriting with Force parameter" time="0.0444" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Integration Tests" executed="True" result="Ignored" success="True" time="1.7651" asserts="0" description="RemoteConnection Module Tests.Integration Tests">
+              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Integration Tests" executed="True" result="Ignored" success="True" time="1.9237" asserts="0" description="RemoteConnection Module Tests.Integration Tests">
                 <results>
-                  <test-case description="Should integrate with SecureCredentials module" name="RemoteConnection Module Tests.Integration Tests.Should integrate with SecureCredentials module" time="0.0079" asserts="0" success="False" result="Ignored" executed="False" />
-                  <test-case description="Should validate credentials when specified" name="RemoteConnection Module Tests.Integration Tests.Should validate credentials when specified" time="0.0034" asserts="0" success="False" result="Ignored" executed="False" />
+                  <test-case description="Should integrate with SecureCredentials module" name="RemoteConnection Module Tests.Integration Tests.Should integrate with SecureCredentials module" time="0.0134" asserts="0" success="False" result="Ignored" executed="False" />
+                  <test-case description="Should validate credentials when specified" name="RemoteConnection Module Tests.Integration Tests.Should validate credentials when specified" time="0.0026" asserts="0" success="False" result="Ignored" executed="False" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Cross-Platform Compatibility" executed="True" result="Success" success="True" time="1.8822" asserts="0" description="RemoteConnection Module Tests.Cross-Platform Compatibility">
+              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Cross-Platform Compatibility" executed="True" result="Success" success="True" time="2.0138" asserts="0" description="RemoteConnection Module Tests.Cross-Platform Compatibility">
                 <results>
-                  <test-case description="Should handle different path separators" name="RemoteConnection Module Tests.Cross-Platform Compatibility.Should handle different path separators" time="0.0437" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should use correct storage locations for different platforms" name="RemoteConnection Module Tests.Cross-Platform Compatibility.Should use correct storage locations for different platforms" time="0.0651" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle different path separators" name="RemoteConnection Module Tests.Cross-Platform Compatibility.Should handle different path separators" time="0.0443" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should use correct storage locations for different platforms" name="RemoteConnection Module Tests.Cross-Platform Compatibility.Should use correct storage locations for different platforms" time="0.0404" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Performance Tests" executed="True" result="Success" success="True" time="2.4843" asserts="0" description="RemoteConnection Module Tests.Performance Tests">
+              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Performance Tests" executed="True" result="Success" success="True" time="2.5381" asserts="0" description="RemoteConnection Module Tests.Performance Tests">
                 <results>
-                  <test-case description="Should handle creating multiple connections efficiently" name="RemoteConnection Module Tests.Performance Tests.Should handle creating multiple connections efficiently" time="0.4806" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle retrieving many connections efficiently" name="RemoteConnection Module Tests.Performance Tests.Should handle retrieving many connections efficiently" time="0.1146" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle creating multiple connections efficiently" name="RemoteConnection Module Tests.Performance Tests.Should handle creating multiple connections efficiently" time="0.3694" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle retrieving many connections efficiently" name="RemoteConnection Module Tests.Performance Tests.Should handle retrieving many connections efficiently" time="0.1495" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>

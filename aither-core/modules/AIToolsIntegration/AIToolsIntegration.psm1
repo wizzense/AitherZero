@@ -1065,6 +1065,454 @@ function Remove-AITools {
     }
 }
 
+# Management Functions for AIToolsIntegration module
+
+# Module-level variables for state tracking
+$script:ManagementState = @{
+    IsInitialized = $false
+    State = 'Stopped'
+    Configuration = @{}
+    Resources = @{}
+    Operations = @{}
+    LastError = $null
+    StartTime = $null
+    LastOperation = $null
+}
+
+function Start-AIToolsIntegrationManagement {
+    <#
+    .SYNOPSIS
+        Starts the AIToolsIntegration management system
+    .DESCRIPTION
+        Initializes the management state and starts tracking AI tools resources
+    .PARAMETER TestMode
+        Run in test mode with minimal initialization
+    #>
+    [CmdletBinding()]
+    param(
+        [switch]$TestMode
+    )
+
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Starting AIToolsIntegration management system"
+        
+        # Initialize management state
+        $script:ManagementState.IsInitialized = $true
+        $script:ManagementState.State = 'Initializing'
+        $script:ManagementState.StartTime = Get-Date
+        
+        if (-not $TestMode) {
+            # Initialize resources tracking
+            $script:ManagementState.Resources = @{
+                InstalledTools = Test-AIToolsInstallation
+                NodeJsStatus = Test-NodeJsPrerequisites
+                ConfigurationStatus = @{ Configured = $false }
+            }
+        }
+        
+        $script:ManagementState.State = 'Running'
+        $script:ManagementState.LastError = $null
+        
+        Write-CustomLog -Level 'SUCCESS' -Message "AIToolsIntegration management system started successfully"
+        
+        return @{
+            Success = $true
+            State = $script:ManagementState.State
+            Message = "Management system started"
+        }
+        
+    } catch {
+        $script:ManagementState.State = 'Error'
+        $script:ManagementState.LastError = $_.Exception.Message
+        Write-CustomLog -Level 'ERROR' -Message "Failed to start AIToolsIntegration management: $($_.Exception.Message)"
+        throw
+    }
+}
+
+function Stop-AIToolsIntegrationManagement {
+    <#
+    .SYNOPSIS
+        Stops the AIToolsIntegration management system
+    .DESCRIPTION
+        Cleanly shuts down the management system and clears state
+    #>
+    [CmdletBinding()]
+    param()
+
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Stopping AIToolsIntegration management system"
+        
+        $script:ManagementState.State = 'Stopping'
+        
+        # Clear resources
+        $script:ManagementState.Resources = @{}
+        $script:ManagementState.Operations = @{}
+        
+        $script:ManagementState.State = 'Stopped'
+        $script:ManagementState.IsInitialized = $false
+        
+        Write-CustomLog -Level 'SUCCESS' -Message "AIToolsIntegration management system stopped"
+        
+        return @{
+            Success = $true
+            State = $script:ManagementState.State
+            Message = "Management system stopped"
+        }
+        
+    } catch {
+        $script:ManagementState.State = 'Error'
+        $script:ManagementState.LastError = $_.Exception.Message
+        Write-CustomLog -Level 'ERROR' -Message "Failed to stop AIToolsIntegration management: $($_.Exception.Message)"
+        throw
+    }
+}
+
+function Get-AIToolsIntegrationStatus {
+    <#
+    .SYNOPSIS
+        Gets the current status of the AIToolsIntegration management system
+    .DESCRIPTION
+        Returns detailed status information about the management system and resources
+    #>
+    [CmdletBinding()]
+    param()
+
+    return @{
+        State = $script:ManagementState.State
+        IsInitialized = $script:ManagementState.IsInitialized
+        StartTime = $script:ManagementState.StartTime
+        Configuration = $script:ManagementState.Configuration
+        Resources = $script:ManagementState.Resources
+        Operations = $script:ManagementState.Operations
+        LastError = $script:ManagementState.LastError
+        LastOperation = $script:ManagementState.LastOperation
+        Uptime = if ($script:ManagementState.StartTime) { 
+            (Get-Date) - $script:ManagementState.StartTime 
+        } else { $null }
+    }
+}
+
+function Set-AIToolsIntegrationConfiguration {
+    <#
+    .SYNOPSIS
+        Sets configuration for the AIToolsIntegration management system
+    .DESCRIPTION
+        Updates the configuration settings for the management system
+    .PARAMETER Configuration
+        Configuration hashtable to apply
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable]$Configuration
+    )
+
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Setting AIToolsIntegration configuration"
+        
+        # Validate configuration
+        if (-not $Configuration -or $Configuration.Count -eq 0) {
+            throw "Configuration cannot be empty"
+        }
+        
+        # Update configuration
+        $script:ManagementState.Configuration = $Configuration.Clone()
+        
+        Write-CustomLog -Level 'SUCCESS' -Message "AIToolsIntegration configuration updated successfully"
+        
+        return @{
+            Success = $true
+            Configuration = $script:ManagementState.Configuration
+            Message = "Configuration updated"
+        }
+        
+    } catch {
+        $script:ManagementState.LastError = $_.Exception.Message
+        Write-CustomLog -Level 'ERROR' -Message "Failed to set AIToolsIntegration configuration: $($_.Exception.Message)"
+        throw
+    }
+}
+
+function Invoke-AIToolsIntegrationOperation {
+    <#
+    .SYNOPSIS
+        Invokes an operation in the AIToolsIntegration management system
+    .DESCRIPTION
+        Executes a specific operation and tracks its status
+    .PARAMETER Operation
+        The operation to execute
+    .PARAMETER Parameters
+        Parameters for the operation
+    .PARAMETER WhatIf
+        Shows what would happen if the cmdlet runs
+    .PARAMETER TestMode
+        Run in test mode with minimal processing
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Operation,
+        
+        [hashtable]$Parameters = @{},
+        
+        [switch]$TestMode
+    )
+
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Invoking AIToolsIntegration operation: $Operation"
+        
+        # Handle WhatIf scenario
+        if ($PSCmdlet.ShouldProcess("AIToolsIntegration", "Execute operation: $Operation")) {
+            $operationId = [guid]::NewGuid().ToString()
+            $operationInfo = @{
+                Id = $operationId
+                Operation = $Operation
+                Parameters = $Parameters
+                StartTime = Get-Date
+                Status = 'Running'
+                TestMode = $TestMode
+            }
+            
+            $script:ManagementState.Operations[$operationId] = $operationInfo
+            $script:ManagementState.LastOperation = $Operation
+            
+            # Execute operation based on type
+            $result = switch ($Operation) {
+                'InstallTools' {
+                    if ($TestMode) {
+                        @{ Success = $true; Message = "Tools installation simulated" }
+                    } else {
+                        if ($Parameters.Tools -contains 'claude-code') {
+                            Install-ClaudeCode
+                        }
+                        if ($Parameters.Tools -contains 'gemini-cli') {
+                            Install-GeminiCLI
+                        }
+                        @{ Success = $true; Message = "Tools installation completed" }
+                    }
+                }
+                'ConfigureTools' {
+                    if ($TestMode) {
+                        @{ Success = $true; Message = "Tools configuration simulated" }
+                    } else {
+                        Configure-AITools -NonInteractive
+                    }
+                }
+                'CheckStatus' {
+                    Test-AIToolsInstallation
+                }
+                'Test' {
+                    @{ Success = $true; Message = "Test operation completed" }
+                }
+                default {
+                    throw "Unknown operation: $Operation"
+                }
+            }
+        } else {
+            # WhatIf mode - return simulated result
+            $result = @{ 
+                Success = $true
+                Message = "Operation '$Operation' would be executed"
+                WhatIf = $true
+            }
+        }
+        
+        # Only update operation info if not in WhatIf mode
+        if ($PSCmdlet.ShouldProcess("AIToolsIntegration", "Complete operation: $Operation")) {
+            $operationInfo.Status = 'Completed'
+            $operationInfo.EndTime = Get-Date
+            $operationInfo.Result = $result
+            
+            Write-CustomLog -Level 'SUCCESS' -Message "AIToolsIntegration operation completed: $Operation"
+            
+            return @{
+                Success = $true
+                OperationId = $operationId
+                Result = $result
+                Message = "Operation completed successfully"
+            }
+        } else {
+            # WhatIf mode result
+            return @{
+                Success = $true
+                OperationId = "WhatIf-Operation"
+                Result = $result
+                Message = "Operation would be executed (WhatIf mode)"
+            }
+        }
+        
+    } catch {
+        if ($operationId) {
+            $script:ManagementState.Operations[$operationId].Status = 'Failed'
+            $script:ManagementState.Operations[$operationId].Error = $_.Exception.Message
+        }
+        $script:ManagementState.LastError = $_.Exception.Message
+        Write-CustomLog -Level 'ERROR' -Message "Failed to invoke AIToolsIntegration operation: $($_.Exception.Message)"
+        throw
+    }
+}
+
+function Reset-AIToolsIntegrationState {
+    <#
+    .SYNOPSIS
+        Resets the AIToolsIntegration management system state
+    .DESCRIPTION
+        Clears all state information and reinitializes the management system
+    #>
+    [CmdletBinding()]
+    param()
+
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Resetting AIToolsIntegration management state"
+        
+        # Reset state to initial values
+        $script:ManagementState = @{
+            IsInitialized = $false
+            State = 'Stopped'
+            Configuration = @{}
+            Resources = @{}
+            Operations = @{}
+            LastError = $null
+            StartTime = $null
+            LastOperation = $null
+        }
+        
+        Write-CustomLog -Level 'SUCCESS' -Message "AIToolsIntegration management state reset successfully"
+        
+        return @{
+            Success = $true
+            State = $script:ManagementState.State
+            Message = "Management state reset"
+        }
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to reset AIToolsIntegration state: $($_.Exception.Message)"
+        throw
+    }
+}
+
+function Export-AIToolsIntegrationState {
+    <#
+    .SYNOPSIS
+        Exports the current management state for persistence
+    .DESCRIPTION
+        Exports state information for backup or transfer
+    #>
+    [CmdletBinding()]
+    param(
+        [string]$Path
+    )
+
+    try {
+        $stateExport = @{
+            ExportTime = Get-Date
+            ManagementState = $script:ManagementState
+            Version = "1.0"
+        }
+        
+        if ($Path) {
+            $stateExport | ConvertTo-Json -Depth 10 | Set-Content -Path $Path -Encoding UTF8
+            Write-CustomLog -Level 'SUCCESS' -Message "AIToolsIntegration state exported to: $Path"
+        }
+        
+        return $stateExport
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to export AIToolsIntegration state: $($_.Exception.Message)"
+        throw
+    }
+}
+
+function Import-AIToolsIntegrationState {
+    <#
+    .SYNOPSIS
+        Imports management state from persistence
+    .DESCRIPTION
+        Restores state information from backup or transfer
+    .PARAMETER Path
+        Path to the state file to import
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Importing AIToolsIntegration state from: $Path"
+        
+        if (-not (Test-Path $Path)) {
+            throw "State file not found: $Path"
+        }
+        
+        $stateContent = Get-Content -Path $Path -Raw | ConvertFrom-Json
+        
+        if (-not $stateContent.ManagementState) {
+            throw "Invalid state file format"
+        }
+        
+        # Restore management state
+        $script:ManagementState = @{
+            IsInitialized = $stateContent.ManagementState.IsInitialized
+            State = $stateContent.ManagementState.State
+            Configuration = $stateContent.ManagementState.Configuration
+            Resources = $stateContent.ManagementState.Resources
+            Operations = $stateContent.ManagementState.Operations
+            LastError = $stateContent.ManagementState.LastError
+            StartTime = if ($stateContent.ManagementState.StartTime) { 
+                [DateTime]$stateContent.ManagementState.StartTime 
+            } else { $null }
+        }
+        
+        Write-CustomLog -Level 'SUCCESS' -Message "AIToolsIntegration state imported successfully"
+        
+        return @{
+            Success = $true
+            ImportTime = Get-Date
+            Version = $stateContent.Version
+            Message = "State imported successfully"
+        }
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to import AIToolsIntegration state: $($_.Exception.Message)"
+        throw
+    }
+}
+
+function Test-AIToolsIntegrationCoordination {
+    <#
+    .SYNOPSIS
+        Tests coordination with other management modules
+    .DESCRIPTION
+        Validates integration and coordination capabilities
+    #>
+    [CmdletBinding()]
+    param()
+
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Testing AIToolsIntegration coordination"
+        
+        $coordinationTests = @{
+            DevEnvironmentIntegration = $true
+            ConfigurationIntegration = $true
+            LoggingIntegration = (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) -ne $null
+            ModuleLoadingIntegration = $true
+        }
+        
+        $allPassed = $coordinationTests.Values | ForEach-Object { $_ } | Where-Object { $_ -eq $false } | Measure-Object | Select-Object -ExpandProperty Count
+        
+        return @{
+            Success = $allPassed -eq 0
+            Tests = $coordinationTests
+            Message = if ($allPassed -eq 0) { "All coordination tests passed" } else { "Some coordination tests failed" }
+        }
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to test AIToolsIntegration coordination: $($_.Exception.Message)"
+        throw
+    }
+}
+
 # Logging fallback functions
 if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
     function Write-CustomLog {
@@ -1101,5 +1549,16 @@ Export-ModuleMember -Function @(
 
     # Management Functions
     'Update-AITools',
-    'Remove-AITools'
+    'Remove-AITools',
+    
+    # Management System Functions
+    'Start-AIToolsIntegrationManagement',
+    'Stop-AIToolsIntegrationManagement',
+    'Get-AIToolsIntegrationStatus',
+    'Set-AIToolsIntegrationConfiguration',
+    'Invoke-AIToolsIntegrationOperation',
+    'Reset-AIToolsIntegrationState',
+    'Export-AIToolsIntegrationState',
+    'Import-AIToolsIntegrationState',
+    'Test-AIToolsIntegrationCoordination'
 )

@@ -1,53 +1,53 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="32" errors="0" failures="4" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="15:28:06">
-  <environment clr-version="9.0.4" nunit-version="2.5.8.0" platform="Linux" user-domain="" os-version="6.8.0-1027-azure" cwd="/workspaces/AitherZero" machine-name="codespaces-6c6eb1" user="codespace" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="32" errors="0" failures="4" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="16:49:40">
+  <environment cwd="/workspaces/AitherZero" machine-name="codespaces-6c6eb1" user="codespace" user-domain="" os-version="6.8.0-1027-azure" platform="Linux" clr-version="9.0.4" nunit-version="2.5.8.0" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="5.5241" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="5.1777" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/PatchManager/tests/PatchManager.Tests.ps1" executed="True" result="Failure" success="False" time="5.5241" asserts="0" description="/workspaces/AitherZero/aither-core/modules/PatchManager/tests/PatchManager.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/PatchManager/tests/PatchManager.Tests.ps1" executed="True" result="Failure" success="False" time="5.1777" asserts="0" description="/workspaces/AitherZero/aither-core/modules/PatchManager/tests/PatchManager.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests" executed="True" result="Failure" success="False" time="5.1421" asserts="0" description="PatchManager v3.0 Module Tests">
+          <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests" executed="True" result="Failure" success="False" time="5.1146" asserts="0" description="PatchManager v3.0 Module Tests">
             <results>
-              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Module Loading and Initialization" executed="True" result="Success" success="True" time="0.4267" asserts="0" description="PatchManager v3.0 Module Tests.Module Loading and Initialization">
+              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Module Loading and Initialization" executed="True" result="Success" success="True" time="0.3606" asserts="0" description="PatchManager v3.0 Module Tests.Module Loading and Initialization">
                 <results>
-                  <test-case description="Should load the module successfully" name="PatchManager v3.0 Module Tests.Module Loading and Initialization.Should load the module successfully" time="0.0279" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should export all expected v3.0 functions" name="PatchManager v3.0 Module Tests.Module Loading and Initialization.Should export all expected v3.0 functions" time="0.2378" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should maintain backward compatibility with legacy functions" name="PatchManager v3.0 Module Tests.Module Loading and Initialization.Should maintain backward compatibility with legacy functions" time="0.1536" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should load the module successfully" name="PatchManager v3.0 Module Tests.Module Loading and Initialization.Should load the module successfully" time="0.017" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export all expected v3.0 functions" name="PatchManager v3.0 Module Tests.Module Loading and Initialization.Should export all expected v3.0 functions" time="0.1845" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should maintain backward compatibility with legacy functions" name="PatchManager v3.0 Module Tests.Module Loading and Initialization.Should maintain backward compatibility with legacy functions" time="0.1482" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Smart Operation Mode Detection" executed="True" result="Success" success="True" time="0.8908" asserts="0" description="PatchManager v3.0 Module Tests.Smart Operation Mode Detection">
+              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Smart Operation Mode Detection" executed="True" result="Success" success="True" time="0.6982" asserts="0" description="PatchManager v3.0 Module Tests.Smart Operation Mode Detection">
                 <results>
-                  <test-case description="Should detect Simple mode for low-risk operations" name="PatchManager v3.0 Module Tests.Smart Operation Mode Detection.Should detect Simple mode for low-risk operations" time="0.1514" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should detect Standard mode for normal operations" name="PatchManager v3.0 Module Tests.Smart Operation Mode Detection.Should detect Standard mode for normal operations" time="0.095" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should detect high-risk operations requiring PR review" name="PatchManager v3.0 Module Tests.Smart Operation Mode Detection.Should detect high-risk operations requiring PR review" time="0.1127" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should provide confidence scores and reasoning" name="PatchManager v3.0 Module Tests.Smart Operation Mode Detection.Should provide confidence scores and reasoning" time="0.0976" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should detect Simple mode for low-risk operations" name="PatchManager v3.0 Module Tests.Smart Operation Mode Detection.Should detect Simple mode for low-risk operations" time="0.1077" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should detect Standard mode for normal operations" name="PatchManager v3.0 Module Tests.Smart Operation Mode Detection.Should detect Standard mode for normal operations" time="0.0749" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should detect high-risk operations requiring PR review" name="PatchManager v3.0 Module Tests.Smart Operation Mode Detection.Should detect high-risk operations requiring PR review" time="0.0695" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should provide confidence scores and reasoning" name="PatchManager v3.0 Module Tests.Smart Operation Mode Detection.Should provide confidence scores and reasoning" time="0.0782" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Atomic Operations Framework" executed="True" result="Failure" success="False" time="1.3643" asserts="0" description="PatchManager v3.0 Module Tests.Atomic Operations Framework">
+              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Atomic Operations Framework" executed="True" result="Failure" success="False" time="1.0152" asserts="0" description="PatchManager v3.0 Module Tests.Atomic Operations Framework">
                 <results>
-                  <test-case description="Should execute simple operations atomically" name="PatchManager v3.0 Module Tests.Atomic Operations Framework.Should execute simple operations atomically" time="0.1578" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should validate pre-conditions before execution" name="PatchManager v3.0 Module Tests.Atomic Operations Framework.Should validate pre-conditions before execution" time="0.0984" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should detect merge conflicts and prevent execution" name="PatchManager v3.0 Module Tests.Atomic Operations Framework.Should detect merge conflicts and prevent execution" time="0.1077" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should execute simple operations atomically" name="PatchManager v3.0 Module Tests.Atomic Operations Framework.Should execute simple operations atomically" time="0.0904" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate pre-conditions before execution" name="PatchManager v3.0 Module Tests.Atomic Operations Framework.Should validate pre-conditions before execution" time="0.0652" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should detect merge conflicts and prevent execution" name="PatchManager v3.0 Module Tests.Atomic Operations Framework.Should detect merge conflicts and prevent execution" time="0.0794" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected $false, but got $true.</message>
                       <stack-trace>at $Result.Success | Should -Be $false, /workspaces/AitherZero/aither-core/modules/PatchManager/tests/PatchManager.Tests.ps1:141
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/PatchManager/tests/PatchManager.Tests.ps1:141</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should capture initial state and provide rollback context" name="PatchManager v3.0 Module Tests.Atomic Operations Framework.Should capture initial state and provide rollback context" time="0.1023" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should capture initial state and provide rollback context" name="PatchManager v3.0 Module Tests.Atomic Operations Framework.Should capture initial state and provide rollback context" time="0.0751" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Patch Creation Workflows" executed="True" result="Success" success="True" time="2.0875" asserts="0" description="PatchManager v3.0 Module Tests.Patch Creation Workflows">
+              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Patch Creation Workflows" executed="True" result="Success" success="True" time="1.7062" asserts="0" description="PatchManager v3.0 Module Tests.Patch Creation Workflows">
                 <results>
-                  <test-case description="Should create patches in dry-run mode without making changes" name="PatchManager v3.0 Module Tests.Patch Creation Workflows.Should create patches in dry-run mode without making changes" time="0.3688" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should respect user mode preferences" name="PatchManager v3.0 Module Tests.Patch Creation Workflows.Should respect user mode preferences" time="0.0471" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should apply smart recommendations when mode is Auto" name="PatchManager v3.0 Module Tests.Patch Creation Workflows.Should apply smart recommendations when mode is Auto" time="0.3001" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create patches in dry-run mode without making changes" name="PatchManager v3.0 Module Tests.Patch Creation Workflows.Should create patches in dry-run mode without making changes" time="0.3411" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should respect user mode preferences" name="PatchManager v3.0 Module Tests.Patch Creation Workflows.Should respect user mode preferences" time="0.0247" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should apply smart recommendations when mode is Auto" name="PatchManager v3.0 Module Tests.Patch Creation Workflows.Should apply smart recommendations when mode is Auto" time="0.3063" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Feature Development Workflow" executed="True" result="Failure" success="False" time="2.4516" asserts="0" description="PatchManager v3.0 Module Tests.Feature Development Workflow">
+              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Feature Development Workflow" executed="True" result="Failure" success="False" time="2.0208" asserts="0" description="PatchManager v3.0 Module Tests.Feature Development Workflow">
                 <results>
-                  <test-case description="Should create feature branches with proper naming" name="PatchManager v3.0 Module Tests.Feature Development Workflow.Should create feature branches with proper naming" time="0.1858" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should automatically enable PR creation for features" name="PatchManager v3.0 Module Tests.Feature Development Workflow.Should automatically enable PR creation for features" time="0.1704" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should create feature branches with proper naming" name="PatchManager v3.0 Module Tests.Feature Development Workflow.Should create feature branches with proper naming" time="0.1554" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should automatically enable PR creation for features" name="PatchManager v3.0 Module Tests.Feature Development Workflow.Should automatically enable PR creation for features" time="0.1526" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected $true, but got $null.</message>
                       <stack-trace>at $Result.Result.ShouldCreatePR | Should -Be $true, /workspaces/AitherZero/aither-core/modules/PatchManager/tests/PatchManager.Tests.ps1:201
@@ -56,60 +56,60 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/PatchManager/
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Quick Fix Workflow" executed="True" result="Success" success="True" time="2.7289" asserts="0" description="PatchManager v3.0 Module Tests.Quick Fix Workflow">
+              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Quick Fix Workflow" executed="True" result="Success" success="True" time="2.3159" asserts="0" description="PatchManager v3.0 Module Tests.Quick Fix Workflow">
                 <results>
-                  <test-case description="Should handle simple fixes efficiently" name="PatchManager v3.0 Module Tests.Quick Fix Workflow.Should handle simple fixes efficiently" time="0.1314" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should use appropriate mode for quick fixes" name="PatchManager v3.0 Module Tests.Quick Fix Workflow.Should use appropriate mode for quick fixes" time="0.1406" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle simple fixes efficiently" name="PatchManager v3.0 Module Tests.Quick Fix Workflow.Should handle simple fixes efficiently" time="0.1422" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should use appropriate mode for quick fixes" name="PatchManager v3.0 Module Tests.Quick Fix Workflow.Should use appropriate mode for quick fixes" time="0.1466" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Hotfix Workflow" executed="True" result="Failure" success="False" time="3.0277" asserts="0" description="PatchManager v3.0 Module Tests.Hotfix Workflow">
+              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Hotfix Workflow" executed="True" result="Failure" success="False" time="2.655" asserts="0" description="PatchManager v3.0 Module Tests.Hotfix Workflow">
                 <results>
-                  <test-case description="Should handle emergency fixes with high priority" name="PatchManager v3.0 Module Tests.Hotfix Workflow.Should handle emergency fixes with high priority" time="0.1494" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should handle emergency fixes with high priority" name="PatchManager v3.0 Module Tests.Hotfix Workflow.Should handle emergency fixes with high priority" time="0.154" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected $true, but got $null.</message>
                       <stack-trace>at $Result.Result.ShouldCreatePR | Should -Be $true, /workspaces/AitherZero/aither-core/modules/PatchManager/tests/PatchManager.Tests.ps1:238
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/PatchManager/tests/PatchManager.Tests.ps1:238</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should prioritize hotfixes appropriately" name="PatchManager v3.0 Module Tests.Hotfix Workflow.Should prioritize hotfixes appropriately" time="0.1438" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should prioritize hotfixes appropriately" name="PatchManager v3.0 Module Tests.Hotfix Workflow.Should prioritize hotfixes appropriately" time="0.1434" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Git Repository Integration" executed="True" result="Success" success="True" time="3.4245" asserts="0" description="PatchManager v3.0 Module Tests.Git Repository Integration">
+              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Git Repository Integration" executed="True" result="Success" success="True" time="3.1006" asserts="0" description="PatchManager v3.0 Module Tests.Git Repository Integration">
                 <results>
-                  <test-case description="Should detect git repository information correctly" name="PatchManager v3.0 Module Tests.Git Repository Integration.Should detect git repository information correctly" time="0.0888" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle branch operations safely" name="PatchManager v3.0 Module Tests.Git Repository Integration.Should handle branch operations safely" time="0.2332" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should detect uncommitted changes appropriately" name="PatchManager v3.0 Module Tests.Git Repository Integration.Should detect uncommitted changes appropriately" time="0.0691" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should detect git repository information correctly" name="PatchManager v3.0 Module Tests.Git Repository Integration.Should detect git repository information correctly" time="0.0822" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle branch operations safely" name="PatchManager v3.0 Module Tests.Git Repository Integration.Should handle branch operations safely" time="0.2697" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should detect uncommitted changes appropriately" name="PatchManager v3.0 Module Tests.Git Repository Integration.Should detect uncommitted changes appropriately" time="0.0818" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Error Handling and Recovery" executed="True" result="Failure" success="False" time="3.567" asserts="0" description="PatchManager v3.0 Module Tests.Error Handling and Recovery">
+              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Error Handling and Recovery" executed="True" result="Failure" success="False" time="3.2758" asserts="0" description="PatchManager v3.0 Module Tests.Error Handling and Recovery">
                 <results>
-                  <test-case description="Should handle invalid operations gracefully" name="PatchManager v3.0 Module Tests.Error Handling and Recovery.Should handle invalid operations gracefully" time="0.0578" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should provide meaningful error messages" name="PatchManager v3.0 Module Tests.Error Handling and Recovery.Should provide meaningful error messages" time="0.008" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should handle invalid operations gracefully" name="PatchManager v3.0 Module Tests.Error Handling and Recovery.Should handle invalid operations gracefully" time="0.0658" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should provide meaningful error messages" name="PatchManager v3.0 Module Tests.Error Handling and Recovery.Should provide meaningful error messages" time="0.0136" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>ValidationMetadataException: The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.
 ParameterBindingValidationException: Cannot validate argument on parameter 'Description'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</message>
                       <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/PatchManager/tests/PatchManager.Tests.ps1:297</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should maintain repository state on failure" name="PatchManager v3.0 Module Tests.Error Handling and Recovery.Should maintain repository state on failure" time="0.0695" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should maintain repository state on failure" name="PatchManager v3.0 Module Tests.Error Handling and Recovery.Should maintain repository state on failure" time="0.0897" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Performance and Efficiency" executed="True" result="Success" success="True" time="4.0009" asserts="0" description="PatchManager v3.0 Module Tests.Performance and Efficiency">
+              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Performance and Efficiency" executed="True" result="Success" success="True" time="3.8411" asserts="0" description="PatchManager v3.0 Module Tests.Performance and Efficiency">
                 <results>
-                  <test-case description="Should complete operations within reasonable time" name="PatchManager v3.0 Module Tests.Performance and Efficiency.Should complete operations within reasonable time" time="0.21" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should provide timing information" name="PatchManager v3.0 Module Tests.Performance and Efficiency.Should provide timing information" time="0.2174" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should complete operations within reasonable time" name="PatchManager v3.0 Module Tests.Performance and Efficiency.Should complete operations within reasonable time" time="0.271" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should provide timing information" name="PatchManager v3.0 Module Tests.Performance and Efficiency.Should provide timing information" time="0.2882" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Legacy Compatibility" executed="True" result="Success" success="True" time="4.394" asserts="0" description="PatchManager v3.0 Module Tests.Legacy Compatibility">
+              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Legacy Compatibility" executed="True" result="Success" success="True" time="4.3764" asserts="0" description="PatchManager v3.0 Module Tests.Legacy Compatibility">
                 <results>
-                  <test-case description="Should support legacy Invoke-PatchWorkflow syntax" name="PatchManager v3.0 Module Tests.Legacy Compatibility.Should support legacy Invoke-PatchWorkflow syntax" time="0.1965" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should translate legacy parameters correctly" name="PatchManager v3.0 Module Tests.Legacy Compatibility.Should translate legacy parameters correctly" time="0.1912" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support legacy Invoke-PatchWorkflow syntax" name="PatchManager v3.0 Module Tests.Legacy Compatibility.Should support legacy Invoke-PatchWorkflow syntax" time="0.2715" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should translate legacy parameters correctly" name="PatchManager v3.0 Module Tests.Legacy Compatibility.Should translate legacy parameters correctly" time="0.2573" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Integration with CI/CD" executed="True" result="Success" success="True" time="4.7782" asserts="0" description="PatchManager v3.0 Module Tests.Integration with CI/CD">
+              <test-suite type="TestFixture" name="PatchManager v3.0 Module Tests.Integration with CI/CD" executed="True" result="Success" success="True" time="4.9247" asserts="0" description="PatchManager v3.0 Module Tests.Integration with CI/CD">
                 <results>
-                  <test-case description="Should provide CI-friendly output format" name="PatchManager v3.0 Module Tests.Integration with CI/CD.Should provide CI-friendly output format" time="0.1959" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle CI environment detection" name="PatchManager v3.0 Module Tests.Integration with CI/CD.Should handle CI environment detection" time="0.1835" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should provide CI-friendly output format" name="PatchManager v3.0 Module Tests.Integration with CI/CD.Should provide CI-friendly output format" time="0.2501" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle CI environment detection" name="PatchManager v3.0 Module Tests.Integration with CI/CD.Should handle CI environment detection" time="0.2819" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>

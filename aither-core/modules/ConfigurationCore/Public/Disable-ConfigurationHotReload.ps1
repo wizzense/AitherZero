@@ -62,7 +62,7 @@ function Disable-ConfigurationHotReload {
 
             # Publish event
             if (Get-Command 'Publish-TestEvent' -ErrorAction SilentlyContinue) {
-                Publish-TestEvent -EventName 'HotReloadDisabled' -EventData @{
+                Publish-TestEvent -EventType 'HotReloadDisabled' -Data @{
                     RemoveWatchers = $RemoveWatchers.IsPresent
                     Timestamp = Get-Date
                 }

@@ -61,6 +61,12 @@
         'Disable-ConfigurationHotReload',
         'Get-ConfigurationWatcher',
 
+        # Event System
+        'Publish-ConfigurationEvent',
+        'Subscribe-ConfigurationEvent',
+        'Unsubscribe-ConfigurationEvent',
+        'Get-ConfigurationEventHistory',
+
         # Utilities
         'Merge-Configuration',
         'Compare-Configuration',

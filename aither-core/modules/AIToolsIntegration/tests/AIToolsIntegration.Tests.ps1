@@ -185,10 +185,10 @@ Describe "AIToolsIntegration Management Module - Advanced Scenarios" {
             # Test concurrency
             $jobs = 1..3 | ForEach-Object {
                 Start-Job -ScriptBlock {
-                    param($TestWorkspace)
-                    Import-Module "AIToolsIntegration" -Force
+                    param($TestWorkspace, $ModulePath)
+                    Import-Module $ModulePath -Force
                     Get-AIToolsIntegrationStatus
-                } -ArgumentList $script:TestWorkspace
+                } -ArgumentList $script:TestWorkspace, $ModulePath
             }
 
             $results = $jobs | Wait-Job | Receive-Job

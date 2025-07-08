@@ -63,7 +63,7 @@ function Subscribe-ConfigurationEvent {
 
         # Publish subscription event
         if (Get-Command 'Publish-TestEvent' -ErrorAction SilentlyContinue) {
-            Publish-TestEvent -EventName 'ConfigurationEventSubscribed' -EventData @{
+            Publish-TestEvent -EventType 'ConfigurationEventSubscribed' -Data @{
                 EventName = $EventName
                 ModuleName = $ModuleName
                 SubscriptionId = $subscription.Id

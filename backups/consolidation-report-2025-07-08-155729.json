@@ -1,0 +1,31 @@
+{
+  "FilesProcessed": 375,
+  "TotalFilesFound": 375,
+  "Timestamp": "2025-07-08T15:57:29.3381518+00:00",
+  "BackupPath": "/workspaces/AitherZero/./backups",
+  "ExclusionsApplied": [
+    "*.git*",
+    "*node_modules*",
+    "*\\.vscode*",
+    "*backups*",
+    "*packages*",
+    "*bin*",
+    "*obj*",
+    "*\\.vs*"
+  ],
+  "BackupPatterns": [
+    "*.bak",
+    "*.backup",
+    "*.old",
+    "*.orig",
+    "*~",
+    "*.backup.*",
+    "*backup*",
+    "*-backup-*",
+    "*.bak.*"
+  ],
+  "SourcePath": "/workspaces/AitherZero",
+  "Errors": [],
+  "Success": true,
+  "DirectoriesProcessed": 0
+}

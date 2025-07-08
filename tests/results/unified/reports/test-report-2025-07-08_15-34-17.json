@@ -1,0 +1,41 @@
+{
+  "Results": [
+    {
+      "TestsFailed": 27,
+      "Module": "ISOManager",
+      "Result": {
+        "TestsRun": 27,
+        "TestsPassed": 0,
+        "TestsFailed": 27,
+        "Details": [
+          "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ISOManager/tests/ISOManager.Tests.ps1",
+          "Pester version: 7.5.1"
+        ],
+        "ModuleName": "ISOManager",
+        "Duration": 1.6629971,
+        "Phase": "Unit"
+      },
+      "Duration": 1.6792242,
+      "Phase": "Unit",
+      "TestsPassed": 0,
+      "TestsRun": 27,
+      "Details": [
+        "Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ISOManager/tests/ISOManager.Tests.ps1",
+        "Pester version: 7.5.1"
+      ],
+      "Success": false
+    }
+  ],
+  "Summary": {
+    "FailedModules": 9,
+    "TotalPassed": 0.0,
+    "SuccessRate": 0.0,
+    "TotalDuration": 1.6792242,
+    "SuccessfulModules": 0,
+    "TestSuite": "Unit",
+    "TotalFailed": 27.0,
+    "TotalModules": 1,
+    "TotalTests": 27.0,
+    "Timestamp": "2025-07-08T15:34:17.2387392+00:00"
+  }
+}

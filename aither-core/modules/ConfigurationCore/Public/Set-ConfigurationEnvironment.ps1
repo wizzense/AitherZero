@@ -78,7 +78,7 @@ function Set-ConfigurationEnvironment {
 
                 # Publish environment change event
                 if (Get-Command 'Publish-TestEvent' -ErrorAction SilentlyContinue) {
-                    Publish-TestEvent -EventName 'EnvironmentChanged' -EventData @{
+                    Publish-TestEvent -EventType 'EnvironmentChanged' -Data @{
                         PreviousEnvironment = $previousEnvironment
                         NewEnvironment = $Name
                         Timestamp = Get-Date

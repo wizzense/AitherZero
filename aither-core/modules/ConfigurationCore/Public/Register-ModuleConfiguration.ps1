@@ -42,7 +42,11 @@ function Register-ModuleConfiguration {
         }
 
         # Extract default values from schema if no explicit defaults provided
-        $effectiveDefaults = $DefaultConfiguration.Clone()
+        $effectiveDefaults = @{}
+        foreach ($key in $DefaultConfiguration.Keys) {
+            $effectiveDefaults[$key] = $DefaultConfiguration[$key]
+        }
+        
         if ($Schema.Properties) {
             foreach ($propName in $Schema.Properties.Keys) {
                 $propSchema = $Schema.Properties[$propName]

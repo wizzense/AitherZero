@@ -95,7 +95,7 @@ function New-ConfigurationEnvironment {
 
             # Publish event
             if (Get-Command 'Publish-TestEvent' -ErrorAction SilentlyContinue) {
-                Publish-TestEvent -EventName 'EnvironmentCreated' -EventData @{
+                Publish-TestEvent -EventType 'EnvironmentCreated' -Data @{
                     EnvironmentName = $Name
                     Description = $Description
                     CopiedFrom = $CopyFrom
