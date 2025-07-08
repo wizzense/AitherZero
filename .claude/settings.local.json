@@ -11,7 +11,8 @@
       "Bash(git add:*)",
       "Bash(/mnt/c/Program Files/PowerShell/7/pwsh.exe -NoProfile -File \"./Test-AllModules.ps1\" -Detailed)",
       "Bash(gh run list:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }
