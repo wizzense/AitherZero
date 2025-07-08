@@ -43,7 +43,7 @@ function Set-ConfigurationEnvironment {
         if (-not $Force) {
             $env = $script:ConfigurationStore.Environments[$Name]
             if (-not $env.Settings) {
-                Write-CustomLog -Level 'WARNING' -Message "Environment '$Name' has no settings configured"
+                Write-CustomLog -Level 'WARN' -Message "Environment '$Name' has no settings configured"
             }
         }
 
@@ -72,7 +72,7 @@ function Set-ConfigurationEnvironment {
                     try {
                         Invoke-ConfigurationReload -ModuleName $moduleName -Environment $Name
                     } catch {
-                        Write-CustomLog -Level 'WARNING' -Message "Failed to notify module '$moduleName': $_"
+                        Write-CustomLog -Level 'WARN' -Message "Failed to notify module '$moduleName': $_"
                     }
                 }
 

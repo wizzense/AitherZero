@@ -748,6 +748,127 @@ function Backup-CurrentConfiguration {
     }
 }
 
+function Restore-ConfigurationBackup {
+    <#
+    .SYNOPSIS
+        Restores a configuration from a backup
+    .DESCRIPTION
+        Restores a previously backed up configuration, optionally setting it as the current configuration
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$BackupName,
+
+        [string]$RestoreAsName,
+
+        [switch]$SetAsCurrent,
+
+        [switch]$Force
+    )
+
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Restoring configuration from backup: $BackupName"
+
+        $backupPath = Join-Path $script:ConfigBackupPath $BackupName
+        
+        if (-not (Test-Path $backupPath)) {
+            throw "Backup '$BackupName' not found at path: $backupPath"
+        }
+
+        # Read backup metadata
+        $metadataPath = Join-Path $backupPath "backup-metadata.json"
+        if (-not (Test-Path $metadataPath)) {
+            throw "Backup metadata not found. This may not be a valid backup."
+        }
+
+        $metadata = Get-Content -Path $metadataPath | ConvertFrom-Json
+
+        # Determine restore name
+        if (-not $RestoreAsName) {
+            $RestoreAsName = $metadata.originalName
+        }
+
+        # Check if configuration name already exists
+        $registry = Get-ConfigurationRegistry
+        if ($registry.configurations.PSObject.Properties[$RestoreAsName] -and -not $Force) {
+            throw "Configuration '$RestoreAsName' already exists. Use -Force to overwrite."
+        }
+
+        # Determine restore path
+        $restorePath = Join-Path $script:ConfigCarouselPath $RestoreAsName
+        
+        # Remove existing configuration if forcing
+        if ($Force -and (Test-Path $restorePath)) {
+            Remove-Item -Path $restorePath -Recurse -Force
+        }
+
+        # Copy backup to restore location
+        Copy-Item -Path $backupPath -Destination $restorePath -Recurse -Force
+
+        # Remove backup metadata from restored configuration
+        $restoredMetadataPath = Join-Path $restorePath "backup-metadata.json"
+        if (Test-Path $restoredMetadataPath) {
+            Remove-Item -Path $restoredMetadataPath -Force
+        }
+
+        # Validate restored configuration
+        $validationResult = Validate-ConfigurationPath -Path $restorePath
+        if (-not $validationResult.IsValid) {
+            Remove-Item -Path $restorePath -Recurse -Force -ErrorAction SilentlyContinue
+            throw "Restored configuration validation failed: $($validationResult.Errors -join '; ')"
+        }
+
+        # Add/update configuration in registry
+        $restoredConfig = @{
+            name = $RestoreAsName
+            description = "Restored from backup: $BackupName"
+            path = $restorePath
+            type = 'restored'
+            originalName = $metadata.originalName
+            restoredFrom = $BackupName
+            restoredDate = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+            environments = @('dev', 'staging', 'prod')  # Default environments
+            lastValidated = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+        }
+
+        if ($registry.configurations.PSObject.Properties[$RestoreAsName]) {
+            $registry.configurations.$RestoreAsName = $restoredConfig
+        } else {
+            $registry.configurations | Add-Member -MemberType NoteProperty -Name $RestoreAsName -Value $restoredConfig
+        }
+
+        Set-ConfigurationRegistry -Registry $registry
+
+        Write-CustomLog -Level 'SUCCESS' -Message "Configuration restored successfully as '$RestoreAsName'"
+
+        $result = @{
+            Success = $true
+            BackupName = $BackupName
+            RestoredName = $RestoreAsName
+            RestorePath = $restorePath
+            OriginalName = $metadata.originalName
+            ValidationResult = $validationResult
+        }
+
+        # Set as current if requested
+        if ($SetAsCurrent) {
+            $switchResult = Switch-ConfigurationSet -ConfigurationName $RestoreAsName -Environment 'dev'
+            $result.SwitchResult = $switchResult
+        }
+
+        return $result
+
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to restore configuration from backup: $_"
+        return @{
+            Success = $false
+            Error = $_.Exception.Message
+            BackupName = $BackupName
+        }
+    }
+}
+
 function Validate-ConfigurationSet {
     <#
     .SYNOPSIS
@@ -967,5 +1088,6 @@ Export-ModuleMember -Function @(
     'Sync-ConfigurationRepository',
     'Get-CurrentConfiguration',
     'Backup-CurrentConfiguration',
+    'Restore-ConfigurationBackup',
     'Validate-ConfigurationSet'
 )

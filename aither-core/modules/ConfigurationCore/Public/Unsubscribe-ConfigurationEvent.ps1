@@ -30,7 +30,7 @@ function Unsubscribe-ConfigurationEvent {
     try {
         if (-not $script:ConfigurationStore.EventSystem -or
             -not $script:ConfigurationStore.EventSystem.Subscriptions) {
-            Write-CustomLog -Level 'WARNING' -Message "No event subscriptions found"
+            Write-CustomLog -Level 'WARN' -Message "No event subscriptions found"
             return $false
         }
 
@@ -98,7 +98,7 @@ function Unsubscribe-ConfigurationEvent {
 
             Write-CustomLog -Level 'SUCCESS' -Message "Successfully removed $($removedSubscriptions.Count) subscription(s)"
         } else {
-            Write-CustomLog -Level 'WARNING' -Message "No matching subscriptions found to remove"
+            Write-CustomLog -Level 'WARN' -Message "No matching subscriptions found to remove"
         }
 
         return $removed

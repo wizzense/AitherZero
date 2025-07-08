@@ -57,7 +57,7 @@ function Get-ConfigurationSchema {
         }
 
         if (-not $script:ConfigurationStore.Schemas.ContainsKey($ModuleName)) {
-            Write-CustomLog -Level 'WARNING' -Message "No schema found for module: $ModuleName"
+            Write-CustomLog -Level 'WARN' -Message "No schema found for module: $ModuleName"
             return $null
         }
 

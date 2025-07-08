@@ -26,7 +26,13 @@
         'Clear-ModuleDiscoveryCache',
         'Test-StartupPerformance',
         'Get-UIStatus',
-        'Show-UIDebugInfo'
+        'Show-UIDebugInfo',
+        'Start-StartupExperienceManagement',
+        'Get-StartupExperienceStatus',
+        'Set-StartupExperienceConfiguration',
+        'Invoke-StartupExperienceOperation',
+        'Export-StartupExperienceState',
+        'Test-StartupExperienceCoordination'
     )
 
     # Private data

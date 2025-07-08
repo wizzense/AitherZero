@@ -12,14 +12,40 @@
     RequiredModules = @()
 
     FunctionsToExport = @(
+        # Installation Functions
         'Install-ClaudeCode',
         'Install-GeminiCLI',
         'Install-CodexCLI',
+        
+        # Testing and Status Functions
         'Test-AIToolsInstallation',
+        'Test-NodeJsPrerequisites',
+        'Test-ClaudeCodeInstallation',
+        'Test-GeminiCLIInstallation',
+        'Test-CodexCLIInstallation',
+        'Test-ClaudeCodeConfiguration',
+        'Test-GeminiCLIConfiguration',
         'Get-AIToolsStatus',
+        
+        # Configuration Functions
         'Configure-AITools',
+        'Configure-ClaudeCodeIntegration',
+        'Configure-VSCodeAIIntegration',
+        
+        # Management Functions
         'Update-AITools',
-        'Remove-AITools'
+        'Remove-AITools',
+        
+        # Utility Functions
+        'Get-PlatformInfo',
+        
+        # Management Operations (for tests)
+        'Start-AIToolsIntegrationManagement',
+        'Get-AIToolsIntegrationStatus',
+        'Set-AIToolsIntegrationConfiguration',
+        'Invoke-AIToolsIntegrationOperation',
+        'Export-AIToolsIntegrationState',
+        'Test-AIToolsIntegrationCoordination'
     )
 
     CmdletsToExport = @()

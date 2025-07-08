@@ -1,0 +1,166 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="24" errors="0" failures="13" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="15:28:06">
+  <environment clr-version="9.0.4" nunit-version="2.5.8.0" platform="Linux" user-domain="" os-version="6.8.0-1027-azure" cwd="/workspaces/AitherZero" machine-name="codespaces-6c6eb1" user="codespace" />
+  <culture-info current-culture="" current-uiculture="" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="2.6655" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1" executed="True" result="Failure" success="False" time="2.6655" asserts="0" description="/workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="PSScriptAnalyzerIntegration Module" executed="True" result="Failure" success="False" time="2.1053" asserts="0" description="PSScriptAnalyzerIntegration Module">
+            <results>
+              <test-suite type="TestFixture" name="PSScriptAnalyzerIntegration Module.Module Loading" executed="True" result="Failure" success="False" time="0.3128" asserts="0" description="PSScriptAnalyzerIntegration Module.Module Loading">
+                <results>
+                  <test-case description="Should load the module successfully" name="PSScriptAnalyzerIntegration Module.Module Loading.Should load the module successfully" time="0.1576" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export expected functions" name="PSScriptAnalyzerIntegration Module.Module Loading.Should export expected functions" time="0.0374" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should have PSScriptAnalyzer as required module" name="PSScriptAnalyzerIntegration Module.Module Loading.Should have PSScriptAnalyzer as required module" time="0.0834" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected 'PSScriptAnalyzer' to be found in collection @(PSScriptAnalyzer), but it was not found.</message>
+                      <stack-trace>at $module.RequiredModules | Should -Contain 'PSScriptAnalyzer', /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1:88
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1:88</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="PSScriptAnalyzerIntegration Module.Configuration Management" executed="True" result="Failure" success="False" time="0.4123" asserts="0" description="PSScriptAnalyzerIntegration Module.Configuration Management">
+                <results>
+                  <test-case description="Should get default configuration" name="PSScriptAnalyzerIntegration Module.Configuration Management.Should get default configuration" time="0.0456" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>CommandNotFoundException: The term 'Get-AnalysisConfiguration' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1:94</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle missing configuration gracefully" name="PSScriptAnalyzerIntegration Module.Configuration Management.Should handle missing configuration gracefully" time="0.0478" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="PSScriptAnalyzerIntegration Module.Directory Analysis" executed="True" result="Failure" success="False" time="0.5353" asserts="0" description="PSScriptAnalyzerIntegration Module.Directory Analysis">
+                <results>
+                  <test-case description="Should analyze directory with PowerShell files" name="PSScriptAnalyzerIntegration Module.Directory Analysis.Should analyze directory with PowerShell files" time="0.0503" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>CommandNotFoundException: The term 'Invoke-DirectoryAnalysis' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1:108</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should detect known issues in test module" name="PSScriptAnalyzerIntegration Module.Directory Analysis.Should detect known issues in test module" time="0.0329" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>CommandNotFoundException: The term 'Invoke-DirectoryAnalysis' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1:117</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle clean modules with fewer issues" name="PSScriptAnalyzerIntegration Module.Directory Analysis.Should handle clean modules with fewer issues" time="0.0338" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>CommandNotFoundException: The term 'Invoke-DirectoryAnalysis' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1:128</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="PSScriptAnalyzerIntegration Module.Status File Management" executed="True" result="Failure" success="False" time="0.7393" asserts="0" description="PSScriptAnalyzerIntegration Module.Status File Management">
+                <results>
+                  <test-case description="Should create status file" name="PSScriptAnalyzerIntegration Module.Status File Management.Should create status file" time="0.147" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should not overwrite existing status file without Force" name="PSScriptAnalyzerIntegration Module.Status File Management.Should not overwrite existing status file without Force" time="0.0487" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ValidationMetadataException: The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.
+ParameterBindingValidationException: Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</message>
+                      <stack-trace>at New-StatusFile, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/Private/New-StatusFile.ps1:47
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1:163</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="PSScriptAnalyzerIntegration Module.Bug Tracking" executed="True" result="Success" success="True" time="0.8696" asserts="0" description="PSScriptAnalyzerIntegration Module.Bug Tracking">
+                <results>
+                  <test-case description="Should create .bugz file with findings" name="PSScriptAnalyzerIntegration Module.Bug Tracking.Should create .bugz file with findings" time="0.069" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle auto-resolve for missing findings" name="PSScriptAnalyzerIntegration Module.Bug Tracking.Should handle auto-resolve for missing findings" time="0.0551" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="PSScriptAnalyzerIntegration Module.Start-DirectoryAudit Function" executed="True" result="Failure" success="False" time="1.5368" asserts="0" description="PSScriptAnalyzerIntegration Module.Start-DirectoryAudit Function">
+                <results>
+                  <test-case description="Should audit single directory" name="PSScriptAnalyzerIntegration Module.Start-DirectoryAudit Function.Should audit single directory" time="0.4907" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should audit with documentation update" name="PSScriptAnalyzerIntegration Module.Start-DirectoryAudit Function.Should audit with documentation update" time="0.1537" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ParameterBindingValidationException: Cannot bind argument to parameter 'Path' because it is null.</message>
+                      <stack-trace>at Start-DirectoryAudit, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/Public/Start-DirectoryAudit.ps1:273
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1:226</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle non-existent directory gracefully" name="PSScriptAnalyzerIntegration Module.Start-DirectoryAudit Function.Should handle non-existent directory gracefully" time="0.0159" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="PSScriptAnalyzerIntegration Module.Get-AnalysisStatus Function" executed="True" result="Failure" success="False" time="1.849" asserts="0" description="PSScriptAnalyzerIntegration Module.Get-AnalysisStatus Function">
+                <results>
+                  <test-case description="Should get analysis status" name="PSScriptAnalyzerIntegration Module.Get-AnalysisStatus Function.Should get analysis status" time="0.062" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ValidationMetadataException: The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.
+ParameterBindingValidationException: Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</message>
+                      <stack-trace>at Get-AnalysisStatus, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/Public/Get-AnalysisStatus.ps1:91
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1:248</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should provide rollup summary" name="PSScriptAnalyzerIntegration Module.Get-AnalysisStatus Function.Should provide rollup summary" time="0.0359" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ValidationMetadataException: The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.
+ParameterBindingValidationException: Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</message>
+                      <stack-trace>at Get-AnalysisStatus, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/Public/Get-AnalysisStatus.ps1:91
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1:253</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should filter by status" name="PSScriptAnalyzerIntegration Module.Get-AnalysisStatus Function.Should filter by status" time="0.0341" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ValidationMetadataException: The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.
+ParameterBindingValidationException: Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</message>
+                      <stack-trace>at Get-AnalysisStatus, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/Public/Get-AnalysisStatus.ps1:91
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1:259</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should export status to file" name="PSScriptAnalyzerIntegration Module.Get-AnalysisStatus Function.Should export status to file" time="0.048" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ValidationMetadataException: The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.
+ParameterBindingValidationException: Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</message>
+                      <stack-trace>at Get-AnalysisStatus, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/Public/Get-AnalysisStatus.ps1:91
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1:266</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="PSScriptAnalyzerIntegration Module.Error Handling" executed="True" result="Failure" success="False" time="1.9075" asserts="0" description="PSScriptAnalyzerIntegration Module.Error Handling">
+                <results>
+                  <test-case description="Should handle missing PSScriptAnalyzer gracefully" name="PSScriptAnalyzerIntegration Module.Error Handling.Should handle missing PSScriptAnalyzer gracefully" time="0.016" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle corrupt status files" name="PSScriptAnalyzerIntegration Module.Error Handling.Should handle corrupt status files" time="0.0364" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, but an exception "Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again." was thrown from /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/Public/Get-AnalysisStatus.ps1:91 char:40
+    +                 Write-CustomLog -Level 'WARNING' -Message "No .pssa-s …
+    +                                        ~~~~~~~~~.</message>
+                      <stack-trace>at { Get-AnalysisStatus -Path $script:TestModuleDir } | Should -Not -Throw, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1:286
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1:286</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="PSScriptAnalyzerIntegration Module.Integration" executed="True" result="Failure" success="False" time="1.9692" asserts="0" description="PSScriptAnalyzerIntegration Module.Integration">
+                <results>
+                  <test-case description="Should integrate with logging if available" name="PSScriptAnalyzerIntegration Module.Integration.Should integrate with logging if available" time="0.0076" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should cache configuration appropriately" name="PSScriptAnalyzerIntegration Module.Integration.Should cache configuration appropriately" time="0.0487" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>CommandNotFoundException: The term 'Get-AnalysisConfiguration' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1:299</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="PSScriptAnalyzerIntegration Module.Performance" executed="True" result="Success" success="True" time="2.0958" asserts="0" description="PSScriptAnalyzerIntegration Module.Performance">
+                <results>
+                  <test-case description="Should complete analysis in reasonable time" name="PSScriptAnalyzerIntegration Module.Performance.Should complete analysis in reasonable time" time="0.1203" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>

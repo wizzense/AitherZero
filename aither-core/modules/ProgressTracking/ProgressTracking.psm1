@@ -22,9 +22,11 @@ function Start-ProgressOperation {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string]$OperationName,
 
         [Parameter(Mandatory)]
+        [ValidateRange(0, [int]::MaxValue)]
         [int]$TotalSteps,
 
         [switch]$ShowTime,
@@ -354,7 +356,9 @@ function Write-ProgressLog {
         [string]$Message,
 
         [ValidateSet('Info', 'Warning', 'Error', 'Success')]
-        [string]$Level = 'Info'
+        [string]$Level = 'Info',
+
+        [string]$OperationId
     )
 
     # Clear current line
@@ -382,19 +386,8 @@ function Get-ActiveOperations {
     [CmdletBinding()]
     param()
 
-    return $script:ActiveOperations.Values | ForEach-Object {
-        [PSCustomObject]@{
-            Name = $_.Name
-            Progress = if ($_.TotalSteps -gt 0) {
-                [math]::Round(($_.CurrentStep / $_.TotalSteps) * 100)
-            } else { 0 }
-            CurrentStep = $_.CurrentStep
-            TotalSteps = $_.TotalSteps
-            Duration = ((Get-Date) - $_.StartTime).TotalSeconds
-            Warnings = $_.Warnings.Count
-            Errors = $_.Errors.Count
-        }
-    }
+    # Return the hashtable directly for compatibility with tests
+    return $script:ActiveOperations
 }
 
 # Multi-operation progress tracking

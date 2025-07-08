@@ -499,6 +499,193 @@ function Sync-ConfigurationRepository {
     }
 }
 
+function Publish-ConfigurationRepository {
+    <#
+    .SYNOPSIS
+        Publishes a configuration repository to a registry or sharing platform
+    .DESCRIPTION
+        Makes a configuration repository available for others to use by publishing it to a registry or sharing platform
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$RepositoryPath,
+
+        [Parameter(Mandatory)]
+        [string]$RegistryUrl,
+
+        [ValidateSet('github', 'gitlab', 'artifactory', 'nexus', 'custom')]
+        [string]$RegistryType = 'github',
+
+        [string]$Version = '1.0.0',
+
+        [string]$Category = 'general',
+
+        [string[]]$Tags = @(),
+
+        [string]$Description,
+
+        [switch]$Public = $false,
+
+        [hashtable]$Metadata = @{},
+
+        [switch]$ValidateBeforePublish = $true,
+
+        [switch]$CreateRelease = $true
+    )
+
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Publishing configuration repository: $RepositoryPath"
+
+        # Validate repository path
+        if (-not (Test-Path $RepositoryPath)) {
+            throw "Repository path does not exist: $RepositoryPath"
+        }
+
+        # Validate repository structure if requested
+        if ($ValidateBeforePublish) {
+            $validationResult = Validate-ConfigurationRepository -Path $RepositoryPath
+            if (-not $validationResult.IsValid) {
+                Write-CustomLog -Level 'ERROR' -Message "Repository validation failed:"
+                foreach ($error in $validationResult.Errors) {
+                    Write-CustomLog -Level 'ERROR' -Message "  - $error"
+                }
+                throw "Repository validation failed. Fix errors before publishing."
+            }
+
+            if ($validationResult.Warnings.Count -gt 0) {
+                Write-CustomLog -Level 'WARNING' -Message "Repository validation warnings:"
+                foreach ($warning in $validationResult.Warnings) {
+                    Write-CustomLog -Level 'WARNING' -Message "  - $warning"
+                }
+            }
+        }
+
+        # Prepare publication metadata
+        $publicationMetadata = @{
+            name = Split-Path $RepositoryPath -Leaf
+            version = $Version
+            description = $Description ?? "AitherZero configuration repository"
+            category = $Category
+            tags = $Tags
+            publishedDate = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+            publishedBy = $env:USERNAME ?? 'unknown'
+            repository = @{
+                url = $RegistryUrl
+                type = $RegistryType
+                public = $Public
+            }
+            metadata = $Metadata
+        }
+
+        # Add additional metadata from repository
+        $configPath = Join-Path $RepositoryPath "configs/app-config.json"
+        if (Test-Path $configPath) {
+            try {
+                $appConfig = Get-Content $configPath | ConvertFrom-Json
+                $publicationMetadata.sourceVersion = $appConfig.version
+                $publicationMetadata.sourceEnvironments = $appConfig.environments
+                $publicationMetadata.sourceSettings = $appConfig.settings
+            } catch {
+                Write-CustomLog -Level 'WARNING' -Message "Could not read app-config.json: $_"
+            }
+        }
+
+        # Create publication package
+        $tempDir = Join-Path $env:TEMP "aitherzero-publish-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+        New-Item -Path $tempDir -ItemType Directory -Force | Out-Null
+
+        try {
+            # Copy repository content to temp directory
+            Copy-Item -Path $RepositoryPath -Destination $tempDir -Recurse -Force
+            $packagePath = Join-Path $tempDir (Split-Path $RepositoryPath -Leaf)
+
+            # Create publication metadata file
+            $metadataFile = Join-Path $packagePath "publication-metadata.json"
+            $publicationMetadata | ConvertTo-Json -Depth 8 | Set-Content -Path $metadataFile
+
+            # Create publication manifest
+            $manifestFile = Join-Path $packagePath "publication-manifest.json"
+            $manifest = @{
+                formatVersion = "1.0"
+                name = $publicationMetadata.name
+                version = $Version
+                type = "aitherzero-configuration"
+                publishedDate = $publicationMetadata.publishedDate
+                files = @()
+            }
+
+            # Catalog all files in the package
+            $files = Get-ChildItem -Path $packagePath -Recurse -File
+            foreach ($file in $files) {
+                $relativePath = $file.FullName.Replace("$packagePath\", "").Replace("$packagePath/", "")
+                $manifest.files += @{
+                    path = $relativePath
+                    size = $file.Length
+                    modified = $file.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss')
+                    checksum = (Get-FileHash $file.FullName -Algorithm SHA256).Hash
+                }
+            }
+
+            $manifest | ConvertTo-Json -Depth 8 | Set-Content -Path $manifestFile
+
+            # Publish based on registry type
+            switch ($RegistryType) {
+                'github' {
+                    $publishResult = Publish-ToGitHub -PackagePath $packagePath -RegistryUrl $RegistryUrl -Version $Version -CreateRelease $CreateRelease -Public $Public
+                }
+                'gitlab' {
+                    $publishResult = Publish-ToGitLab -PackagePath $packagePath -RegistryUrl $RegistryUrl -Version $Version -Public $Public
+                }
+                'artifactory' {
+                    $publishResult = Publish-ToArtifactory -PackagePath $packagePath -RegistryUrl $RegistryUrl -Version $Version -Metadata $publicationMetadata
+                }
+                'nexus' {
+                    $publishResult = Publish-ToNexus -PackagePath $packagePath -RegistryUrl $RegistryUrl -Version $Version -Metadata $publicationMetadata
+                }
+                'custom' {
+                    $publishResult = Publish-ToCustomRegistry -PackagePath $packagePath -RegistryUrl $RegistryUrl -Version $Version -Metadata $publicationMetadata
+                }
+                default {
+                    throw "Unsupported registry type: $RegistryType"
+                }
+            }
+
+            if ($publishResult.Success) {
+                Write-CustomLog -Level 'SUCCESS' -Message "Configuration repository published successfully"
+                Write-CustomLog -Level 'INFO' -Message "Published URL: $($publishResult.PublishedUrl)"
+            } else {
+                throw "Publication failed: $($publishResult.Error)"
+            }
+
+        } finally {
+            # Cleanup temp directory
+            if (Test-Path $tempDir) {
+                Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+
+        return @{
+            Success = $true
+            RepositoryPath = $RepositoryPath
+            Version = $Version
+            PublishedUrl = $publishResult.PublishedUrl
+            RegistryType = $RegistryType
+            ValidationResult = $validationResult
+            PublicationMetadata = $publicationMetadata
+        }
+
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to publish configuration repository: $_"
+        return @{
+            Success = $false
+            Error = $_.Exception.Message
+            RepositoryPath = $RepositoryPath
+            RegistryType = $RegistryType
+        }
+    }
+}
+
 function Validate-ConfigurationRepository {
     <#
     .SYNOPSIS
@@ -1084,6 +1271,127 @@ Environment-specific settings override global settings.
     return @{ Success = $true }
 }
 
+# Publishing helper functions
+function Publish-ToGitHub {
+    param(
+        [string]$PackagePath,
+        [string]$RegistryUrl,
+        [string]$Version,
+        [bool]$CreateRelease,
+        [bool]$Public
+    )
+
+    try {
+        # Basic GitHub publishing using git commands
+        # This is a simplified implementation
+        Push-Location $PackagePath
+        
+        try {
+            # Check if gh CLI is available
+            if (Get-Command gh -ErrorAction SilentlyContinue) {
+                if ($CreateRelease) {
+                    $releaseResult = gh release create "v$Version" --title "Configuration Repository v$Version" --notes "AitherZero configuration repository release" 2>&1
+                    if ($LASTEXITCODE -eq 0) {
+                        return @{
+                            Success = $true
+                            PublishedUrl = $RegistryUrl
+                        }
+                    } else {
+                        throw "GitHub release creation failed: $releaseResult"
+                    }
+                } else {
+                    # Just push the code
+                    git add . 2>&1 | Out-Null
+                    git commit -m "Publish configuration repository v$Version" 2>&1 | Out-Null
+                    git push 2>&1 | Out-Null
+                    
+                    return @{
+                        Success = $true
+                        PublishedUrl = $RegistryUrl
+                    }
+                }
+            } else {
+                # Fallback to basic git operations
+                git add . 2>&1 | Out-Null
+                git commit -m "Publish configuration repository v$Version" 2>&1 | Out-Null
+                git push 2>&1 | Out-Null
+                
+                return @{
+                    Success = $true
+                    PublishedUrl = $RegistryUrl
+                }
+            }
+        } finally {
+            Pop-Location
+        }
+    } catch {
+        return @{
+            Success = $false
+            Error = $_.Exception.Message
+        }
+    }
+}
+
+function Publish-ToGitLab {
+    param(
+        [string]$PackagePath,
+        [string]$RegistryUrl,
+        [string]$Version,
+        [bool]$Public
+    )
+
+    # Placeholder implementation for GitLab publishing
+    return @{
+        Success = $false
+        Error = "GitLab publishing not yet implemented"
+    }
+}
+
+function Publish-ToArtifactory {
+    param(
+        [string]$PackagePath,
+        [string]$RegistryUrl,
+        [string]$Version,
+        [hashtable]$Metadata
+    )
+
+    # Placeholder implementation for Artifactory publishing
+    return @{
+        Success = $false
+        Error = "Artifactory publishing not yet implemented"
+    }
+}
+
+function Publish-ToNexus {
+    param(
+        [string]$PackagePath,
+        [string]$RegistryUrl,
+        [string]$Version,
+        [hashtable]$Metadata
+    )
+
+    # Placeholder implementation for Nexus publishing
+    return @{
+        Success = $false
+        Error = "Nexus publishing not yet implemented"
+    }
+}
+
+function Publish-ToCustomRegistry {
+    param(
+        [string]$PackagePath,
+        [string]$RegistryUrl,
+        [string]$Version,
+        [hashtable]$Metadata
+    )
+
+    # Placeholder implementation for custom registry publishing
+    return @{
+        Success = $false
+        Error = "Custom registry publishing not yet implemented"
+    }
+}
+
 # Logging fallback functions
 if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
     function Write-CustomLog {
@@ -1107,5 +1415,6 @@ Export-ModuleMember -Function @(
     'New-ConfigurationRepository',
     'Clone-ConfigurationRepository',
     'Sync-ConfigurationRepository',
+    'Publish-ConfigurationRepository',
     'Validate-ConfigurationRepository'
 )

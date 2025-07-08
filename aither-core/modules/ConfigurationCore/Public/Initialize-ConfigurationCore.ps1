@@ -36,7 +36,7 @@ function Initialize-ConfigurationCore {
             $script:ConfigurationStore.CurrentEnvironment = $Environment
             Write-CustomLog -Level 'INFO' -Message "Set active environment: $Environment"
         } else {
-            Write-CustomLog -Level 'WARNING' -Message "Environment '$Environment' not found, using default"
+            Write-CustomLog -Level 'WARN' -Message "Environment '$Environment' not found, using default"
         }
 
         # Initialize default schemas for known modules

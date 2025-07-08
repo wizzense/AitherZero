@@ -34,7 +34,7 @@ function Disable-ConfigurationHotReload {
                             $watcherCount++
                         }
                     } catch {
-                        Write-CustomLog -Level 'WARNING' -Message "Failed to dispose watcher '$watcherName': $_"
+                        Write-CustomLog -Level 'WARN' -Message "Failed to dispose watcher '$watcherName': $_"
                     }
                 }
 
@@ -51,7 +51,7 @@ function Disable-ConfigurationHotReload {
                 try {
                     Unregister-Event -SourceIdentifier $_.SourceIdentifier -ErrorAction SilentlyContinue
                 } catch {
-                    Write-CustomLog -Level 'WARNING' -Message "Failed to unregister event: $_"
+                    Write-CustomLog -Level 'WARN' -Message "Failed to unregister event: $_"
                 }
             }
 

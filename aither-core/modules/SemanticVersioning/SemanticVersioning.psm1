@@ -677,6 +677,7 @@ function Test-SemanticVersion {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$Version
     )
 

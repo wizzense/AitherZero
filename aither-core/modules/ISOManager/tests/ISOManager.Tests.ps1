@@ -19,7 +19,7 @@ Describe "ISOManager Module Tests" {
 
     AfterAll {
         # Clean up test repository
-        if (Test-Path $script:TestRepository) {
+        if ($script:TestRepository -and (Test-Path $script:TestRepository)) {
             Remove-Item -Path $script:TestRepository -Recurse -Force
         }
     }

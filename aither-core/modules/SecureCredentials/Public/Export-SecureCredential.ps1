@@ -65,7 +65,7 @@ function Export-SecureCredential {
             # Create export data structure
             $exportData = @{
                 ExportInfo  = @{
-                    ExportedBy        = $env:USERNAME
+                    ExportedBy        = $env:USERNAME ?? $env:USER ?? 'unknown'
                     ExportedDate      = Get-Date
                     AitherZeroVersion = '1.0.0'
                     IncludesSecrets   = $IncludeSecrets.IsPresent

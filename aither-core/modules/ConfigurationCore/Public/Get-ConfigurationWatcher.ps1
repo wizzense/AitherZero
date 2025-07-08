@@ -51,7 +51,7 @@ function Get-ConfigurationWatcher {
         }
 
         if (-not $script:ConfigurationStore.HotReload.Watchers.ContainsKey($Name)) {
-            Write-CustomLog -Level 'WARNING' -Message "Watcher '$Name' not found"
+            Write-CustomLog -Level 'WARN' -Message "Watcher '$Name' not found"
             return $null
         }
 

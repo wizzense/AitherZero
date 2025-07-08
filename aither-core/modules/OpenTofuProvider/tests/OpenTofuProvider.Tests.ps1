@@ -293,7 +293,7 @@ Describe "OpenTofuProvider Provider Module - Advanced Scenarios" {
             # Test IaC validation
             if (Get-Command Test-OpenTofuTemplate -ErrorAction SilentlyContinue) {
                 $templatePath = Join-Path $script:TestWorkspace "test.tf"
-                "resource \"test\" \"example\" {}" | Out-File $templatePath
+                'resource "test" "example" {}' | Out-File $templatePath
 
                 $validation = Test-OpenTofuTemplate -TemplatePath $templatePath
                 $validation | Should -Not -BeNullOrEmpty

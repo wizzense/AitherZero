@@ -1,0 +1,146 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="37" errors="0" failures="8" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="15:27:27">
+  <environment machine-name="codespaces-6c6eb1" clr-version="9.0.4" user-domain="" nunit-version="2.5.8.0" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" user="codespace" platform="Linux" />
+  <culture-info current-culture="" current-uiculture="" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="17.1643" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1" executed="True" result="Failure" success="False" time="17.1643" asserts="0" description="/workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="ParallelExecution Module Tests" executed="True" result="Failure" success="False" time="16.8493" asserts="0" description="ParallelExecution Module Tests">
+            <results>
+              <test-suite type="TestFixture" name="ParallelExecution Module Tests.Module Import and Basic Functionality" executed="True" result="Success" success="True" time="0.0445" asserts="0" description="ParallelExecution Module Tests.Module Import and Basic Functionality">
+                <results>
+                  <test-case description="Should import the module successfully" name="ParallelExecution Module Tests.Module Import and Basic Functionality.Should import the module successfully" time="0.0209" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export all expected functions" name="ParallelExecution Module Tests.Module Import and Basic Functionality.Should export all expected functions" time="0.0178" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ParallelExecution Module Tests.Invoke-ParallelForEach Tests" executed="True" result="Failure" success="False" time="1.8697" asserts="0" description="ParallelExecution Module Tests.Invoke-ParallelForEach Tests">
+                <results>
+                  <test-case description="Should process items in parallel with parameter-based script block" name="ParallelExecution Module Tests.Invoke-ParallelForEach Tests.Should process items in parallel with parameter-based script block" time="0.0692" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should process items in parallel with pipeline-based script block" name="ParallelExecution Module Tests.Invoke-ParallelForEach Tests.Should process items in parallel with pipeline-based script block" time="0.0479" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle empty input gracefully" name="ParallelExecution Module Tests.Invoke-ParallelForEach Tests.Should handle empty input gracefully" time="0.0216" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should respect throttle limits" name="ParallelExecution Module Tests.Invoke-ParallelForEach Tests.Should respect throttle limits" time="0.5926" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle errors in parallel execution" name="ParallelExecution Module Tests.Invoke-ParallelForEach Tests.Should handle errors in parallel execution" time="0.0581" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle timeout correctly" name="ParallelExecution Module Tests.Invoke-ParallelForEach Tests.Should handle timeout correctly" time="1.0301" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected an exception to be thrown, but no exception was thrown.</message>
+                      <stack-trace>at } | Should -Throw, /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1:131
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1:126</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ParallelExecution Module Tests.Start-ParallelJob Tests" executed="True" result="Success" success="True" time="2.3495" asserts="0" description="ParallelExecution Module Tests.Start-ParallelJob Tests">
+                <results>
+                  <test-case description="Should start a background job successfully" name="ParallelExecution Module Tests.Start-ParallelJob Tests.Should start a background job successfully" time="0.1467" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should pass arguments to job script block" name="ParallelExecution Module Tests.Start-ParallelJob Tests.Should pass arguments to job script block" time="0.3122" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle job creation errors" name="ParallelExecution Module Tests.Start-ParallelJob Tests.Should handle job creation errors" time="0.0145" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ParallelExecution Module Tests.Wait-ParallelJobs Tests" executed="True" result="Failure" success="False" time="6.7653" asserts="0" description="ParallelExecution Module Tests.Wait-ParallelJobs Tests">
+                <results>
+                  <test-case description="Should wait for multiple jobs to complete" name="ParallelExecution Module Tests.Wait-ParallelJobs Tests.Should wait for multiple jobs to complete" time="1.1963" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle job timeouts" name="ParallelExecution Module Tests.Wait-ParallelJobs Tests.Should handle job timeouts" time="1.0669" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected 'Timeout', but got $null.</message>
+                      <stack-trace>at $results[0].State | Should -Be "Timeout", /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1:200
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1:200</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should collect errors from failed jobs" name="ParallelExecution Module Tests.Wait-ParallelJobs Tests.Should collect errors from failed jobs" time="1.0782" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $false.</message>
+                      <stack-trace>at $failedJob.HasErrors | Should -Be $true, /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1:214
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1:214</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should show progress when requested" name="ParallelExecution Module Tests.Wait-ParallelJobs Tests.Should show progress when requested" time="1.0675" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ParallelExecution Module Tests.Invoke-ParallelPesterTests Tests" executed="True" result="Failure" success="False" time="13.7601" asserts="0" description="ParallelExecution Module Tests.Invoke-ParallelPesterTests Tests">
+                <results>
+                  <test-case description="Should run Pester tests in parallel" name="ParallelExecution Module Tests.Invoke-ParallelPesterTests Tests.Should run Pester tests in parallel" time="1.8713" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle missing test files gracefully" name="ParallelExecution Module Tests.Invoke-ParallelPesterTests Tests.Should handle missing test files gracefully" time="1.2763" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected 'Failed', but got $null.</message>
+                      <stack-trace>at $results[0].State | Should -Be "Failed", /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1:293
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1:293</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should respect throttle limits for test execution" name="ParallelExecution Module Tests.Invoke-ParallelPesterTests Tests.Should respect throttle limits for test execution" time="3.832" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ParallelExecution Module Tests.Merge-ParallelTestResults Tests" executed="True" result="Failure" success="False" time="13.8541" asserts="0" description="ParallelExecution Module Tests.Merge-ParallelTestResults Tests">
+                <results>
+                  <test-case description="Should merge test results correctly" name="ParallelExecution Module Tests.Merge-ParallelTestResults Tests.Should merge test results correctly" time="0.0353" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected 7, but got 0.</message>
+                      <stack-trace>at $summary.TotalTests | Should -Be 7  # 3 + 2 + 1 + 1, /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1:346
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1:346</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle empty test results" name="ParallelExecution Module Tests.Merge-ParallelTestResults Tests.Should handle empty test results" time="0.0328" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should aggregate failures correctly" name="ParallelExecution Module Tests.Merge-ParallelTestResults Tests.Should aggregate failures correctly" time="0.0208" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected 1, but got 0.</message>
+                      <stack-trace>at $summary.Failed | Should -Be 1, /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1:385
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1:385</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ParallelExecution Module Tests.Performance and Resource Management Tests" executed="True" result="Success" success="True" time="15.5892" asserts="0" description="ParallelExecution Module Tests.Performance and Resource Management Tests">
+                <results>
+                  <test-case description="Should handle large parallel workloads efficiently" name="ParallelExecution Module Tests.Performance and Resource Management Tests.Should handle large parallel workloads efficiently" time="0.4479" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should clean up resources properly" name="ParallelExecution Module Tests.Performance and Resource Management Tests.Should clean up resources properly" time="1.0933" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle memory-intensive operations" name="ParallelExecution Module Tests.Performance and Resource Management Tests.Should handle memory-intensive operations" time="0.19" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ParallelExecution Module Tests.Error Handling and Edge Cases" executed="True" result="Failure" success="False" time="15.836" asserts="0" description="ParallelExecution Module Tests.Error Handling and Edge Cases">
+                <results>
+                  <test-case description="Should handle script block compilation errors" name="ParallelExecution Module Tests.Error Handling and Edge Cases.Should handle script block compilation errors" time="0.0503" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected an exception to be thrown, but no exception was thrown.</message>
+                      <stack-trace>at } | Should -Throw, /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1:449
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1:442</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle null input objects" name="ParallelExecution Module Tests.Error Handling and Edge Cases.Should handle null input objects" time="0.0407" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle mixed success and failure scenarios" name="ParallelExecution Module Tests.Error Handling and Edge Cases.Should handle mixed success and failure scenarios" time="0.0796" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle extremely high throttle limits gracefully" name="ParallelExecution Module Tests.Error Handling and Edge Cases.Should handle extremely high throttle limits gracefully" time="0.0703" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ParallelExecution Module Tests.Thread Safety and Concurrency Tests" executed="True" result="Success" success="True" time="16.2806" asserts="0" description="ParallelExecution Module Tests.Thread Safety and Concurrency Tests">
+                <results>
+                  <test-case description="Should handle concurrent access to shared resources safely" name="ParallelExecution Module Tests.Thread Safety and Concurrency Tests.Should handle concurrent access to shared resources safely" time="0.3" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should maintain data integrity across parallel operations" name="ParallelExecution Module Tests.Thread Safety and Concurrency Tests.Should maintain data integrity across parallel operations" time="0.1391" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ParallelExecution Module Tests.Advanced Features Tests" executed="True" result="Failure" success="False" time="16.7584" asserts="0" description="ParallelExecution Module Tests.Advanced Features Tests">
+                <results>
+                  <test-case description="Should calculate optimal throttle limits correctly" name="ParallelExecution Module Tests.Advanced Features Tests.Should calculate optimal throttle limits correctly" time="0.0306" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected 48, but got 32.</message>
+                      <stack-trace>at $networkOptimal | Should -Be ($cpuCount * 3), /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1:541
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1:541</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should respect maximum throttle limits" name="ParallelExecution Module Tests.Advanced Features Tests.Should respect maximum throttle limits" time="0.0152" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should apply system load factor correctly" name="ParallelExecution Module Tests.Advanced Features Tests.Should apply system load factor correctly" time="0.008" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should measure parallel performance correctly" name="ParallelExecution Module Tests.Advanced Features Tests.Should measure parallel performance correctly" time="0.121" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle adaptive parallel execution" name="ParallelExecution Module Tests.Advanced Features Tests.Should handle adaptive parallel execution" time="0.2971" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ParallelExecution Module Tests.Integration with Other Modules" executed="True" result="Success" success="True" time="16.8446" asserts="0" description="ParallelExecution Module Tests.Integration with Other Modules">
+                <results>
+                  <test-case description="Should work with custom logging" name="ParallelExecution Module Tests.Integration with Other Modules.Should work with custom logging" time="0.0396" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle module dependency failures gracefully" name="ParallelExecution Module Tests.Integration with Other Modules.Should handle module dependency failures gracefully" time="0.041" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>

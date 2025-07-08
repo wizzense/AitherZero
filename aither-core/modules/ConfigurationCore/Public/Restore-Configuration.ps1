@@ -100,7 +100,7 @@ function Restore-Configuration {
 
         # Validate current environment exists
         if (-not $configToRestore.Environments.ContainsKey($configToRestore.CurrentEnvironment)) {
-            Write-CustomLog -Level 'WARNING' -Message "Current environment '$($configToRestore.CurrentEnvironment)' not found in backup, setting to 'default'"
+            Write-CustomLog -Level 'WARN' -Message "Current environment '$($configToRestore.CurrentEnvironment)' not found in backup, setting to 'default'"
             $configToRestore.CurrentEnvironment = 'default'
         }
 
@@ -119,7 +119,7 @@ function Restore-Configuration {
                 try {
                     Invoke-ConfigurationReload -ModuleName $moduleName -Environment $script:ConfigurationStore.CurrentEnvironment
                 } catch {
-                    Write-CustomLog -Level 'WARNING' -Message "Failed to reload module '$moduleName': $_"
+                    Write-CustomLog -Level 'WARN' -Message "Failed to reload module '$moduleName': $_"
                 }
             }
         }

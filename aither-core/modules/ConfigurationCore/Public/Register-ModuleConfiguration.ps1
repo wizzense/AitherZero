@@ -67,7 +67,7 @@ function Register-ModuleConfiguration {
         # Validate the effective default configuration
         $validationResult = Validate-Configuration -ModuleName $ModuleName -Configuration $effectiveDefaults
         if (-not $validationResult.IsValid) {
-            Write-CustomLog -Level 'WARNING' -Message "Default configuration has validation warnings: $($validationResult.Errors -join ', ')"
+            Write-CustomLog -Level 'WARN' -Message "Default configuration has validation warnings: $($validationResult.Errors -join ', ')"
         }
 
         # Save updated store

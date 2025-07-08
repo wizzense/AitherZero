@@ -1,0 +1,729 @@
+{
+  "Results": [
+    {
+      "Success": false,
+      "Duration": 0.2197527,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "BackupManager",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.2197527
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "BackupManager",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.2197772,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "ConfigurationCarousel",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.2197772
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "ConfigurationCarousel",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.2197933,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "AIToolsIntegration",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.2197933
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "AIToolsIntegration",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.2121506,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "ConfigurationCore",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.2121506
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "ConfigurationCore",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1784496,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "ConfigurationRepository",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1784496
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "ConfigurationRepository",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1805317,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "ConfigurationManager",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1805317
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "ConfigurationManager",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1873958,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "DevEnvironment",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1873958
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "DevEnvironment",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1873266,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "ISOManager",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1873266
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "ISOManager",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1663068,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "LabRunner",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1663068
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "LabRunner",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1753484,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "LicenseManager",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1753484
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "LicenseManager",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1584778,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "Logging",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1584778
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "Logging",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1584544,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "ModuleCommunication",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1584544
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "ModuleCommunication",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1590811,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "OpenTofuProvider",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1590811
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "OpenTofuProvider",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1516137,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "PatchManager",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1516137
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "PatchManager",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1638074,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "OrchestrationEngine",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1638074
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "OrchestrationEngine",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1612789,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "ParallelExecution",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1612789
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "ParallelExecution",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1604137,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "ProgressTracking",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1604137
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "ProgressTracking",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1598569,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "PSScriptAnalyzerIntegration",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1598569
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "PSScriptAnalyzerIntegration",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.160785,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "RemoteConnection",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.160785
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "RemoteConnection",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1556602,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "RepoSync",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1556602
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "RepoSync",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1599509,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "RestAPIServer",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1599509
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "RestAPIServer",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1604158,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "ScriptManager",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1604158
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "ScriptManager",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1606742,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "SecureCredentials",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1606742
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "SecureCredentials",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1883144,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "SecurityAutomation",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1883144
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "SecurityAutomation",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1550186,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "SemanticVersioning",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1550186
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "SemanticVersioning",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1493819,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "StartupExperience",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1493819
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "StartupExperience",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1530339,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "SetupWizard",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1530339
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "SetupWizard",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1587296,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "SystemMonitoring",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1587296
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "SystemMonitoring",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1467645,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "TestingFramework",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1467645
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "TestingFramework",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1417113,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "UnifiedMaintenance",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1417113
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "UnifiedMaintenance",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    },
+    {
+      "Success": false,
+      "Duration": 0.1393468,
+      "Result": {
+        "Phase": "Unit",
+        "ModuleName": "UtilityServices",
+        "TestsFailed": 1,
+        "Details": [
+          "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+        ],
+        "TestsPassed": 0,
+        "TestsRun": 0,
+        "Duration": 0.1393468
+      },
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "UtilityServices",
+      "TestsFailed": 1,
+      "Details": [
+        "Pester execution failed: The property 'Timeout' cannot be found on this object. Verify that the property exists and can be set."
+      ],
+      "TestsPassed": 0
+    }
+  ],
+  "Summary": {
+    "FailedModules": 31,
+    "SuccessRate": 0,
+    "Timestamp": "2025-07-08T15:15:22.9109924+00:00",
+    "TotalPassed": 0.0,
+    "TotalModules": 31,
+    "TotalTests": 0.0,
+    "TotalDuration": 5.2496037,
+    "SuccessfulModules": 0,
+    "TestSuite": "Unit",
+    "TotalFailed": 31.0
+  }
+}

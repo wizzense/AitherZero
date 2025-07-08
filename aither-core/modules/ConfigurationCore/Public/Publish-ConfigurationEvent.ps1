@@ -108,7 +108,7 @@ function Publish-ConfigurationEvent {
                         DeliveredAt = Get-Date
                     }
 
-                    Write-CustomLog -Level 'WARNING' -Message "Failed to deliver event to module '$($subscription.ModuleName)': $_"
+                    Write-CustomLog -Level 'WARN' -Message "Failed to deliver event to module '$($subscription.ModuleName)': $_"
                 }
             }
         } else {

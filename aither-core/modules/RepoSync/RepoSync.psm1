@@ -177,8 +177,58 @@ function Get-SyncStatus {
     }
 }
 
+function Get-RepoSyncStatus {
+    <#
+    .SYNOPSIS
+        Gets the current repository synchronization status
+    .DESCRIPTION
+        Retrieves information about the current state of repository synchronization
+    #>
+    [CmdletBinding()]
+    param()
+
+    try {
+        Import-Module "$PSScriptRoot/../Logging" -Force -ErrorAction SilentlyContinue
+        
+        $status = @{
+            Status = 'Available'
+            LastSync = Get-Date
+            RemoteStatus = 'Connected'
+            PendingChanges = @()
+        }
+
+        # Check if git is available
+        if (Get-Command git -ErrorAction SilentlyContinue) {
+            try {
+                $gitStatus = git status --porcelain
+                $status.PendingChanges = $gitStatus -split "`n" | Where-Object { $_ }
+                $status.Status = if ($status.PendingChanges.Count -gt 0) { 'Pending' } else { 'Synchronized' }
+            } catch {
+                $status.Status = 'Error'
+                $status.RemoteStatus = 'Disconnected'
+            }
+        } else {
+            $status.Status = 'Git not available'
+            $status.RemoteStatus = 'Unknown'
+        }
+
+        return $status
+    } catch {
+        if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+            Write-CustomLog -Message "Failed to get repo sync status: $($_.Exception.Message)" -Level "ERROR"
+        }
+        return @{
+            Status = 'Error'
+            LastSync = $null
+            RemoteStatus = 'Error'
+            PendingChanges = @()
+        }
+    }
+}
+
 Export-ModuleMember -Function @(
     'Sync-ToAitherLab',
     'Sync-FromAitherLab',
-    'Get-SyncStatus'
+    'Get-SyncStatus',
+    'Get-RepoSyncStatus'
 )

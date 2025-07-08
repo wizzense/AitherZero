@@ -300,9 +300,9 @@ function Set-SystemHardening {
                             }
 
                         } catch {
-                            $Error = "Failed to process registry path $RegistryPath: $($_.Exception.Message)"
-                            $ComputerResult.Errors += $Error
-                            Write-CustomLog -Level 'ERROR' -Message $Error
+                            $ErrorMsg = "Failed to process registry path $RegistryPath: $($_.Exception.Message)"
+                            $ComputerResult.Errors += $ErrorMsg
+                            Write-CustomLog -Level 'ERROR' -Message $ErrorMsg
                         }
                     }
 
@@ -348,7 +348,7 @@ function Set-SystemHardening {
                             } catch {
                                 $Error = "Failed to process service $ServiceName: $($_.Exception.Message)"
                                 $ComputerResult.Errors += $Error
-                                Write-CustomLog -Level 'ERROR' -Message $Error
+                                Write-CustomLog -Level 'ERROR' -Message $ErrorMsg
                             }
                         }
                     }
@@ -393,7 +393,7 @@ function Set-SystemHardening {
                             } catch {
                                 $Error = "Failed to process feature $FeatureName: $($_.Exception.Message)"
                                 $ComputerResult.Errors += $Error
-                                Write-CustomLog -Level 'ERROR' -Message $Error
+                                Write-CustomLog -Level 'ERROR' -Message $ErrorMsg
                             }
                         }
                     }
@@ -420,7 +420,7 @@ function Set-SystemHardening {
                             } catch {
                                 $Error = "Failed to set audit policy $Policy: $($_.Exception.Message)"
                                 $ComputerResult.Errors += $Error
-                                Write-CustomLog -Level 'ERROR' -Message $Error
+                                Write-CustomLog -Level 'ERROR' -Message $ErrorMsg
                             }
                         }
                     }

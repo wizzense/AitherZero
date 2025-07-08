@@ -69,6 +69,56 @@ if (-not $loggingImported) {
     }
 }
 
+# Progress logging function for enhanced deployment tracking
+function Write-ProgressLog {
+    <#
+    .SYNOPSIS
+        Write progress log messages with formatting
+    
+    .DESCRIPTION
+        Provides consistent progress logging for long-running operations
+    
+    .PARAMETER Message
+        The message to log
+    
+    .PARAMETER Level
+        Log level (Info, Success, Error, Warning)
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Message,
+        
+        [ValidateSet('Info', 'Success', 'Error', 'Warning')]
+        [string]$Level = 'Info'
+    )
+    
+    try {
+        # Use Write-CustomLog if available, otherwise fallback
+        if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+            $logLevel = switch ($Level) {
+                'Info' { 'INFO' }
+                'Success' { 'SUCCESS' }
+                'Error' { 'ERROR' }
+                'Warning' { 'WARNING' }
+                default { 'INFO' }
+            }
+            Write-CustomLog -Message $Message -Level $logLevel
+        } else {
+            $color = switch ($Level) {
+                'Info' { 'Cyan' }
+                'Success' { 'Green' }
+                'Error' { 'Red' }
+                'Warning' { 'Yellow' }
+                default { 'White' }
+            }
+            Write-Host "[$Level] $Message" -ForegroundColor $color
+        }
+    } catch {
+        Write-Host "[$Level] $Message"
+    }
+}
+
 # Try to import ProgressTracking module (conditional - non-breaking)
 if (Get-Module -Name 'ProgressTracking' -ErrorAction SilentlyContinue) {
     $progressTrackingImported = $true

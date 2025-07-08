@@ -72,9 +72,9 @@ function Export-ConfigurationStore {
 
         # Log security issues if found
         if ($securityIssues.Count -gt 0) {
-            Write-CustomLog -Level 'WARNING' -Message "Security issues found in exported configuration:"
+            Write-CustomLog -Level 'WARN' -Message "Security issues found in exported configuration:"
             foreach ($issue in $securityIssues) {
-                Write-CustomLog -Level 'WARNING' -Message "  - $issue"
+                Write-CustomLog -Level 'WARN' -Message "  - $issue"
             }
         }
 
@@ -93,12 +93,12 @@ function Export-ConfigurationStore {
                 }
                 'YAML' {
                     # Basic YAML export (requires PowerShell-Yaml module for full support)
-                    Write-CustomLog -Level 'WARNING' -Message "YAML export is basic. Consider using JSON for full compatibility."
+                    Write-CustomLog -Level 'WARN' -Message "YAML export is basic. Consider using JSON for full compatibility."
                     $yaml = $store | ConvertTo-Json -Depth 10 | ConvertFrom-Json | ConvertTo-Yaml -ErrorAction SilentlyContinue
                     if ($yaml) {
                         Set-Content -Path $Path -Value $yaml -Encoding UTF8
                     } else {
-                        Write-CustomLog -Level 'WARNING' -Message "YAML conversion failed, falling back to JSON"
+                        Write-CustomLog -Level 'WARN' -Message "YAML conversion failed, falling back to JSON"
                         $json = $store | ConvertTo-Json -Depth 10
                         Set-Content -Path $Path -Value $json -Encoding UTF8
                     }

@@ -60,9 +60,9 @@ function Import-ConfigurationStore {
             # Check for potentially malicious content
             $securityIssues = Test-ConfigurationSecurity -Configuration $importedStore
             if ($securityIssues.Count -gt 0) {
-                Write-CustomLog -Level 'WARNING' -Message "Security issues detected in imported configuration:"
+                Write-CustomLog -Level 'WARN' -Message "Security issues detected in imported configuration:"
                 foreach ($issue in $securityIssues) {
-                    Write-CustomLog -Level 'WARNING' -Message "  - $issue"
+                    Write-CustomLog -Level 'WARN' -Message "  - $issue"
                 }
 
                 # Ask for confirmation if security issues found
@@ -78,7 +78,7 @@ function Import-ConfigurationStore {
                 if ($originalHash) {
                     $currentHash = Get-ConfigurationHash -Configuration $importedStore.Configuration
                     if ($currentHash -ne $originalHash) {
-                        Write-CustomLog -Level 'WARNING' -Message "Configuration hash mismatch - file may have been modified"
+                        Write-CustomLog -Level 'WARN' -Message "Configuration hash mismatch - file may have been modified"
                     } else {
                         Write-CustomLog -Level 'SUCCESS' -Message "Configuration integrity verified"
                     }

@@ -1525,6 +1525,7 @@ jobs:
         }
         
         # Create index.html that redirects to the latest report
+        $repoUrl = "https://github.com/${{ github.repository }}"
         $indexHtml = @"
 <!DOCTYPE html>
 <html>
@@ -1549,7 +1550,7 @@ jobs:
     <a href="executive-summary.md" class="report-link">📄 Executive Summary</a>
     <hr>
     <p>Reports are generated automatically by the AitherZero CI/CD system.</p>
-    <p><a href="https://github.com/${{ github.repository }}">← Back to GitHub</a></p>
+    <p><a href="$repoUrl">← Back to GitHub</a></p>
 </body>
 </html>
 "@

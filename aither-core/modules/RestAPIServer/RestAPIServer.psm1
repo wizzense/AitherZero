@@ -88,7 +88,13 @@ Export-ModuleMember -Function @(
     'Send-WebhookNotification',
     'Get-WebhookSubscriptions',
     'Add-WebhookSubscription',
-    'Remove-WebhookSubscription'
+    'Remove-WebhookSubscription',
+    'Start-RestAPIServerManagement',
+    'Get-RestAPIServerStatus',
+    'Set-RestAPIServerConfiguration',
+    'Invoke-RestAPIServerOperation',
+    'Export-RestAPIServerState',
+    'Test-RestAPIServerCoordination'
 )
 
 # Initialize module-level variables for API management

@@ -59,6 +59,7 @@ $projectRoot = Find-ProjectRoot -StartPath $moduleRoot
 $script:ConfigProfilePath = Join-Path ([Environment]::GetFolderPath('UserProfile')) '.aitherzero' 'profiles'
 $script:CurrentProfile = $null
 $script:TerminalUIEnabled = $false
+$script:ManagementState = $null
 
 # Create profile directory if it doesn't exist
 if (-not (Test-Path $script:ConfigProfilePath)) {

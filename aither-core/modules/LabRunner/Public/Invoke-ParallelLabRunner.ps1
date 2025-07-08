@@ -9,6 +9,9 @@ function Invoke-ParallelLabRunner {
     .PARAMETER Scripts
     Array of script objects to run in parallel
 
+    .PARAMETER Config
+    Configuration object for lab automation
+
     .PARAMETER MaxConcurrency
     Maximum number of concurrent threads (default: number of CPU cores)
 
@@ -17,12 +20,21 @@ function Invoke-ParallelLabRunner {
 
     .PARAMETER SafeMode
     Enable safe mode with dependency checking and resource locking
+
+    .PARAMETER ShowProgress
+    Show progress during execution
+
+    .PARAMETER ProgressStyle
+    Style of progress display
     #>
 
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory=$true)]
-        [array]$Scripts,
+        [Parameter(Mandatory=$false)]
+        [array]$Scripts = @(),
+
+        [Parameter(Mandatory=$false)]
+        [object]$Config = @{},
 
         [Parameter()]
         [int]$MaxConcurrency = [Environment]::ProcessorCount,
@@ -31,7 +43,14 @@ function Invoke-ParallelLabRunner {
         [int]$TimeoutMinutes = 30,
 
         [Parameter()]
-        [switch]$SafeMode
+        [switch]$SafeMode,
+
+        [Parameter()]
+        [switch]$ShowProgress,
+
+        [Parameter()]
+        [ValidateSet('Bar', 'Spinner', 'Percentage', 'Detailed')]
+        [string]$ProgressStyle = 'Bar'
     )
 
     # Import required modules
@@ -43,12 +62,27 @@ function Invoke-ParallelLabRunner {
         Import-Module ThreadJob -Force
     }
 
+    # Generate deployment scripts from configuration if no scripts provided
+    if ($Scripts.Count -eq 0 -and $Config) {
+        $Scripts = Generate-DeploymentScripts -Config $Config
+    }
+
     Write-Host "Starting parallel execution with $MaxConcurrency concurrent threads" -ForegroundColor Green
 
     $results = @()
     $activeJobs = @()
     $completed = 0
     $total = $Scripts.Count
+
+    if ($total -eq 0) {
+        Write-Host "No scripts to execute" -ForegroundColor Yellow
+        return @{
+            TotalScripts = 0
+            CompletedScripts = 0
+            FailedScripts = 0
+            Results = @()
+        }
+    }
 
     # Process scripts in batches
     for ($i = 0; $i -lt $total; $i++) {
@@ -156,6 +190,78 @@ function Invoke-ParallelLabRunner {
     Write-Progress -Activity "Parallel Script Execution" -Completed
     Write-Host "All jobs completed!" -ForegroundColor Green
 
-    # Return results
-    return $results
+    # Calculate summary statistics
+    $completedCount = ($results | Where-Object { $_.State -eq 'Completed' }).Count
+    $failedCount = ($results | Where-Object { $_.State -eq 'Failed' }).Count
+
+    # Return results in expected format
+    return @{
+        TotalScripts = $total
+        CompletedScripts = $completedCount
+        FailedScripts = $failedCount
+        Results = $results
+        Success = ($failedCount -eq 0)
+    }
+}
+
+# Helper function to generate deployment scripts from configuration
+function Generate-DeploymentScripts {
+    param([object]$Config)
+    
+    $scripts = @()
+    
+    try {
+        # Generate scripts based on configuration sections
+        if ($Config.infrastructure) {
+            $scripts += @{
+                Name = "Infrastructure-Setup"
+                Path = "Deploy-Infrastructure"
+                Config = $Config.infrastructure
+            }
+        }
+        
+        if ($Config.vms) {
+            foreach ($vm in $Config.vms) {
+                $scripts += @{
+                    Name = "VM-$($vm.name)"
+                    Path = "Deploy-VM"
+                    Config = $vm
+                }
+            }
+        }
+        
+        if ($Config.applications) {
+            foreach ($app in $Config.applications) {
+                $scripts += @{
+                    Name = "App-$($app.name)"
+                    Path = "Deploy-Application"
+                    Config = $app
+                }
+            }
+        }
+        
+        if ($Config.network) {
+            $scripts += @{
+                Name = "Network-Setup"
+                Path = "Deploy-Network"
+                Config = $Config.network
+            }
+        }
+        
+        # If no specific deployment scripts found, create a default one
+        if ($scripts.Count -eq 0) {
+            $scripts += @{
+                Name = "Default-Lab-Deployment"
+                Path = "Deploy-Lab"
+                Config = $Config
+            }
+        }
+        
+        Write-Host "Generated $($scripts.Count) deployment scripts from configuration" -ForegroundColor Green
+        return $scripts
+        
+    } catch {
+        Write-Warning "Failed to generate deployment scripts: $($_.Exception.Message)"
+        return @()
+    }
 }
