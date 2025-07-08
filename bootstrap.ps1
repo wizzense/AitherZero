@@ -105,7 +105,21 @@ function Install-PowerShell7-Portable {
             "$env:ProgramFiles\PowerShell\7.4.1\pwsh.exe"       # Version-specific
         )
         $portableDir = "$env:LOCALAPPDATA\Microsoft\PowerShell\7"
-        $zipUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/PowerShell-win-x64.zip"
+        # Get the actual download URL from GitHub API
+        try {
+            $ps7ApiUrl = "https://api.github.com/repos/PowerShell/PowerShell/releases/latest"
+            $ps7Release = Invoke-RestMethod -Uri $ps7ApiUrl -UseBasicParsing -TimeoutSec 30
+            $ps7Asset = $ps7Release.assets | Where-Object { $_.name -match "PowerShell-.*-win-x64\.zip$" } | Select-Object -First 1
+            if ($ps7Asset) {
+                $zipUrl = $ps7Asset.browser_download_url
+            } else {
+                # Fallback to manual construction if API fails
+                $zipUrl = "https://github.com/PowerShell/PowerShell/releases/download/v$($ps7Release.tag_name.TrimStart('v'))/PowerShell-$($ps7Release.tag_name.TrimStart('v'))-win-x64.zip"
+            }
+        } catch {
+            # Ultimate fallback - use a known working version
+            $zipUrl = "https://github.com/PowerShell/PowerShell/releases/download/v7.5.2/PowerShell-7.5.2-win-x64.zip"
+        }
     } elseif ($IsMacOS) {
         $possiblePaths = @(
             "$HOME/.local/share/powershell/pwsh",               # Portable (preferred)

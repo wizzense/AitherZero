@@ -39,6 +39,7 @@
 param(
     [string]$ReportPath = './output/aitherZero-dashboard.html',
     [string]$ArtifactsPath = './audit-reports',
+    [string]$ExternalArtifactsPath = './external-artifacts',
     [switch]$IncludeDetailedAnalysis,
     [string]$ReportTitle = 'AitherZero Comprehensive Dashboard',
     [string]$Version = $null,
@@ -99,9 +100,83 @@ function Get-AitherZeroVersion {
     return "Unknown"
 }
 
+# Load external artifacts from CI, security, and audit workflows
+function Import-ExternalArtifacts {
+    param([string]$ExternalArtifactsPath)
+    
+    Write-ReportLog "Loading external artifacts from: $ExternalArtifactsPath" -Level 'INFO'
+    
+    $externalData = @{
+        CIResults = $null
+        PSScriptAnalyzer = $null
+        SecurityScan = $null
+        TestCoverage = $null
+        BuildResults = $null
+    }
+    
+    if (-not (Test-Path $ExternalArtifactsPath)) {
+        Write-ReportLog "External artifacts path not found: $ExternalArtifactsPath" -Level 'WARNING'
+        return $externalData
+    }
+    
+    # Load CI test results
+    $ciResultsPath = Join-Path $ExternalArtifactsPath "ci-results-summary/ci-results-summary.json"
+    if (Test-Path $ciResultsPath) {
+        try {
+            $externalData.CIResults = Get-Content $ciResultsPath -Raw | ConvertFrom-Json
+            Write-ReportLog "Loaded CI results from external artifacts" -Level 'SUCCESS'
+        } catch {
+            Write-ReportLog "Failed to load CI results: $($_.Exception.Message)" -Level 'WARNING'
+        }
+    }
+    
+    # Load PSScriptAnalyzer results
+    $psaPath = Join-Path $ExternalArtifactsPath "code-quality-psscriptanalyzer"
+    if (Test-Path $psaPath) {
+        $psaFiles = Get-ChildItem -Path $psaPath -Filter "*.xml" -ErrorAction SilentlyContinue
+        if ($psaFiles) {
+            try {
+                $psaContent = Get-Content $psaFiles[0].FullName -Raw
+                $externalData.PSScriptAnalyzer = @{
+                    FilePath = $psaFiles[0].FullName
+                    Content = $psaContent
+                    LastModified = $psaFiles[0].LastWriteTime
+                }
+                Write-ReportLog "Loaded PSScriptAnalyzer results from external artifacts" -Level 'SUCCESS'
+            } catch {
+                Write-ReportLog "Failed to load PSScriptAnalyzer results: $($_.Exception.Message)" -Level 'WARNING'
+            }
+        }
+    }
+    
+    # Load comprehensive project dashboard data
+    $dashboardPath = Join-Path $ExternalArtifactsPath "comprehensive-project-dashboard"
+    if (Test-Path $dashboardPath) {
+        $dashboardFiles = Get-ChildItem -Path $dashboardPath -Filter "*.json" -ErrorAction SilentlyContinue
+        foreach ($file in $dashboardFiles) {
+            try {
+                $content = Get-Content $file.FullName -Raw | ConvertFrom-Json
+                if ($file.Name -match "ci-integration-summary") {
+                    $externalData.TestCoverage = $content
+                } elseif ($file.Name -match "feature.*map") {
+                    $externalData.FeatureMap = $content
+                }
+                Write-ReportLog "Loaded dashboard data: $($file.Name)" -Level 'SUCCESS'
+            } catch {
+                Write-ReportLog "Failed to load dashboard data $($file.Name): $($_.Exception.Message)" -Level 'WARNING'
+            }
+        }
+    }
+    
+    return $externalData
+}
+
 # Load audit data from artifacts
 function Import-AuditData {
-    param([string]$ArtifactsPath)
+    param(
+        [string]$ArtifactsPath,
+        [hashtable]$ExternalData = @{}
+    )
 
     Write-ReportLog "Loading audit data from: $ArtifactsPath" -Level 'INFO'
 
@@ -266,28 +341,53 @@ function Import-AuditData {
         }
     }
 
-    # Load code quality results
-    $qualityArtifacts = @(
-        'quality-analysis-results.json',
-        'remediation-report.json',
-        'psscriptanalyzer-results.sarif',
-        'complexity-analysis-summary.json'
-    )
+    # Load code quality results (prioritize external data)
+    if ($ExternalData.PSScriptAnalyzer) {
+        $auditData.CodeQuality = @{
+            Source = 'External CI Workflow'
+            Data = $ExternalData.PSScriptAnalyzer
+            'psscriptanalyzer-results.xml' = $ExternalData.PSScriptAnalyzer.Content
+            LastUpdated = $ExternalData.PSScriptAnalyzer.LastModified
+        }
+        Write-ReportLog "Using PSScriptAnalyzer data from external artifacts" -Level 'SUCCESS'
+    } else {
+        $qualityArtifacts = @(
+            'quality-analysis-results.json',
+            'remediation-report.json',
+            'psscriptanalyzer-results.sarif',
+            'complexity-analysis-summary.json'
+        )
 
-    foreach ($artifact in $qualityArtifacts) {
-        $path = Join-Path $ArtifactsPath $artifact
-        if (Test-Path $path) {
-            try {
-                $content = Get-Content $path -Raw | ConvertFrom-Json
-                if (-not $auditData.CodeQuality) {
-                    $auditData.CodeQuality = @{}
+        foreach ($artifact in $qualityArtifacts) {
+            $path = Join-Path $ArtifactsPath $artifact
+            if (Test-Path $path) {
+                try {
+                    $content = Get-Content $path -Raw | ConvertFrom-Json
+                    if (-not $auditData.CodeQuality) {
+                        $auditData.CodeQuality = @{}
+                    }
+                    $auditData.CodeQuality[$artifact] = $content
+                    Write-ReportLog "Loaded code quality data from $artifact" -Level 'SUCCESS'
+                } catch {
+                    Write-ReportLog "Failed to load $artifact : $($_.Exception.Message)" -Level 'WARNING'
                 }
-                $auditData.CodeQuality[$artifact] = $content
-                Write-ReportLog "Loaded code quality data from $artifact" -Level 'SUCCESS'
-            } catch {
-                Write-ReportLog "Failed to load $artifact : $($_.Exception.Message)" -Level 'WARNING'
             }
         }
+    }
+    
+    # Integrate CI test results if available
+    if ($ExternalData.CIResults) {
+        if (-not $auditData.Testing) {
+            $auditData.Testing = @{}
+        }
+        $auditData.Testing = @{
+            Source = 'External CI Workflow'
+            Data = $ExternalData.CIResults
+            TestResults = $ExternalData.CIResults.TestResults
+            CoverageData = $ExternalData.CIResults.Coverage
+            LastUpdated = $ExternalData.CIResults.Timestamp
+        }
+        Write-ReportLog "Using CI test results from external artifacts" -Level 'SUCCESS'
     }
     
     # Load duplicate detection results
@@ -1564,21 +1664,51 @@ function Get-FunctionsFromScript {
     param([string]$ScriptPath)
     
     try {
-        $content = Get-Content $ScriptPath -Raw
-        $tokens = [System.Management.Automation.PSParser]::Tokenize($content, [ref]$null)
+        if (-not (Test-Path $ScriptPath)) {
+            Write-ReportLog "Script not found: $ScriptPath" -Level 'DEBUG'
+            return @()
+        }
+        
+        $content = Get-Content $ScriptPath -Raw -ErrorAction SilentlyContinue
+        if ([string]::IsNullOrWhiteSpace($content)) {
+            Write-ReportLog "Script is empty: $ScriptPath" -Level 'DEBUG'
+            return @()
+        }
+        
+        # Use AST parsing for better function detection
         $functions = @()
         
-        for ($i = 0; $i -lt $tokens.Count; $i++) {
-            if ($tokens[$i].Type -eq 'Keyword' -and $tokens[$i].Content -eq 'function') {
-                if ($i + 1 -lt $tokens.Count -and $tokens[$i + 1].Type -eq 'CommandArgument') {
-                    $functions += $tokens[$i + 1].Content
+        try {
+            $ast = [System.Management.Automation.Language.Parser]::ParseInput($content, [ref]$null, [ref]$null)
+            
+            # Find all function definitions using AST
+            $functionAsts = $ast.FindAll({
+                param($node)
+                $node -is [System.Management.Automation.Language.FunctionDefinitionAst]
+            }, $true)
+            
+            foreach ($functionAst in $functionAsts) {
+                if ($functionAst.Name) {
+                    $functions += $functionAst.Name
+                }
+            }
+        } catch {
+            Write-ReportLog "AST parsing failed for $ScriptPath, using regex fallback: $($_.Exception.Message)" -Level 'DEBUG'
+        }
+        
+        # Regex fallback if AST fails
+        if ($functions.Count -eq 0) {
+            $functionMatches = [regex]::Matches($content, 'function\s+([A-Za-z0-9_-]+)', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+            foreach ($match in $functionMatches) {
+                if ($match.Groups.Count -gt 1) {
+                    $functions += $match.Groups[1].Value
                 }
             }
         }
         
-        return $functions
+        return $functions | Where-Object { $_ -and $_.Trim() } | Sort-Object -Unique
     } catch {
-        Write-ReportLog "Failed to extract functions from $ScriptPath: $($_.Exception.Message)" -Level 'DEBUG'
+        Write-ReportLog "Failed to extract functions from ${ScriptPath}: $($_.Exception.Message)" -Level 'DEBUG'
         return @()
     }
 }
@@ -1651,8 +1781,11 @@ try {
     $versionNumber = Get-AitherZeroVersion
     Write-ReportLog "AitherZero version: $versionNumber" -Level 'INFO'
 
-    # Load audit data
-    $auditData = Import-AuditData -ArtifactsPath $ArtifactsPath
+    # Load external artifacts first
+    $externalData = Import-ExternalArtifacts -ExternalArtifactsPath $ExternalArtifactsPath
+
+    # Load audit data with external data integration
+    $auditData = Import-AuditData -ArtifactsPath $ArtifactsPath -ExternalData $externalData
 
     # Generate feature map
     $featureMap = Get-DynamicFeatureMap
