@@ -45,12 +45,12 @@ function New-AdvancedAutounattendFile {
     .EXAMPLE
         $config = @{
             ComputerName = "DEV-WORKSTATION-01"
-            AdminPassword = "ComplexP@ssw0rd!"
+            AdminPassword = "placeholder"
             Domain = @{
                 JoinDomain = $true
                 DomainName = "corp.contoso.com"
                 DomainUser = "Administrator"
-                DomainPassword = "DomainP@ss123!"
+                DomainPassword = "placeholder"
             }
             Features = @{
                 EnableWSL = $true

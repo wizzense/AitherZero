@@ -57,7 +57,7 @@ function New-AutounattendFile {
             PrimaryPartitionSize = 20000
 
             # Administrator Account
-            AdminPassword = 'P@ssw0rd123!'
+            AdminPassword = 'placeholder'
             AdminPasswordPlainText = $false
 
             # Computer Settings
