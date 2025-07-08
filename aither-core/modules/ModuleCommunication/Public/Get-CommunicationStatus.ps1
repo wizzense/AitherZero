@@ -15,11 +15,11 @@ function Get-CommunicationStatus {
     param(
         [Parameter()]
         [switch]$IncludeDetails,
-        
+
         [Parameter()]
         [switch]$CheckHealth
     )
-    
+
     try {
         $status = @{
             Timestamp = Get-Date
@@ -51,11 +51,11 @@ function Get-CommunicationStatus {
             Issues = @()
             Recommendations = @()
         }
-        
+
         # Determine component health
         $healthyComponents = 0
         $totalComponents = 3
-        
+
         # MessageBus Health
         if ($script:MessageBus.Processor.Running) {
             $status.Components.MessageBus.Status = 'Healthy'
@@ -65,13 +65,13 @@ function Get-CommunicationStatus {
             $status.Issues += "Message processor is not running"
             $status.Recommendations += "Restart message processor with Start-MessageProcessor"
         }
-        
+
         # Check queue size
         if ($script:MessageBus.MessageQueue.Count -gt ($script:Configuration.MaxMessageQueueSize * 0.8)) {
             $status.Issues += "Message queue is nearly full ($($script:MessageBus.MessageQueue.Count)/$($script:Configuration.MaxMessageQueueSize))"
             $status.Recommendations += "Consider increasing queue size or clearing old messages"
         }
-        
+
         # APIRegistry Health
         if ($script:APIRegistry.APIs.Count -gt 0) {
             if ($script:APIRegistry.Metrics.TotalCalls -gt 0) {
@@ -97,17 +97,17 @@ function Get-CommunicationStatus {
             $status.Issues += "No APIs are registered"
             $status.Recommendations += "Register module APIs for inter-module communication"
         }
-        
+
         # Configuration Health
         $status.Components.Configuration.Status = 'Healthy'
         $healthyComponents++
-        
+
         # Check event history size
         if ($script:MessageBus.EventHistory.Count -gt ($script:Configuration.MaxEventHistory * 0.9)) {
             $status.Issues += "Event history is nearly full ($($script:MessageBus.EventHistory.Count)/$($script:Configuration.MaxEventHistory))"
             $status.Recommendations += "Consider clearing old events or increasing history size"
         }
-        
+
         # Overall health
         $healthPercentage = ($healthyComponents / $totalComponents) * 100
         if ($healthPercentage -eq 100) {
@@ -117,11 +117,11 @@ function Get-CommunicationStatus {
         } else {
             $status.OverallHealth = 'Unhealthy'
         }
-        
+
         # Perform health checks if requested
         if ($CheckHealth) {
             $status.HealthChecks = @{}
-            
+
             # Test basic messaging
             try {
                 $testResult = Test-MessageChannel -Name "Events" -Timeout 5
@@ -136,7 +136,7 @@ function Get-CommunicationStatus {
                     Error = $_.Exception.Message
                 }
             }
-            
+
             # Test metrics collection
             try {
                 $metrics = Get-CommunicationMetrics
@@ -151,7 +151,7 @@ function Get-CommunicationStatus {
                 }
             }
         }
-        
+
         # Add detailed information if requested
         if ($IncludeDetails) {
             $status.Details = @{
@@ -162,9 +162,9 @@ function Get-CommunicationStatus {
                 RecentEvents = Get-ModuleEvents -Last 10
             }
         }
-        
+
         return $status
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to get communication status: $_"
         throw

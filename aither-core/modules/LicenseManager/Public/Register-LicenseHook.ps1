@@ -23,29 +23,29 @@ function Register-LicenseHook {
     param(
         [Parameter(Mandatory)]
         [string]$ModuleName,
-        
+
         [Parameter()]
         [string[]]$RequiredFeatures = @(),
-        
+
         [Parameter()]
         [scriptblock]$OnLicenseInvalid,
-        
+
         [Parameter()]
         [scriptblock]$OnFeatureDenied,
-        
+
         [Parameter()]
         [switch]$CheckOnLoad,
-        
+
         [Parameter()]
         [hashtable]$ModuleMetadata = @{}
     )
-    
+
     try {
         # Initialize license hooks registry if needed
         if (-not $script:LicenseHooks) {
             $script:LicenseHooks = @{}
         }
-        
+
         # Create hook registration
         $hookInfo = @{
             ModuleName = $ModuleName
@@ -58,17 +58,17 @@ function Register-LicenseHook {
             LastCheck = $null
             LastCheckResult = $null
         }
-        
+
         # Register the hook
         $script:LicenseHooks[$ModuleName] = $hookInfo
-        
+
         # Perform immediate check if requested
         if ($CheckOnLoad) {
             $checkResult = Test-ModuleLicenseHook -ModuleName $ModuleName
             $hookInfo.LastCheck = Get-Date
             $hookInfo.LastCheckResult = $checkResult
         }
-        
+
         # Log registration
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Message "License hook registered for module" -Level DEBUG -Context @{
@@ -78,9 +78,9 @@ function Register-LicenseHook {
                 ImmediateCheckResult = if ($CheckOnLoad) { $checkResult.HasAccess } else { "Skipped" }
             }
         }
-        
+
         return $hookInfo
-        
+
     } catch {
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Message "Error registering license hook" -Level ERROR -Exception $_.Exception -Context @{
@@ -106,11 +106,11 @@ function Test-ModuleLicenseHook {
     param(
         [Parameter(Mandatory)]
         [string]$ModuleName,
-        
+
         [Parameter()]
         [switch]$ThrowOnDenied
     )
-    
+
     try {
         if (-not $script:LicenseHooks -or -not $script:LicenseHooks.ContainsKey($ModuleName)) {
             # Module not registered, assume it's free
@@ -123,14 +123,14 @@ function Test-ModuleLicenseHook {
                 LicenseStatus = $null
             }
         }
-        
+
         $hook = $script:LicenseHooks[$ModuleName]
         $licenseStatus = Get-LicenseStatus
-        
+
         # Check each required feature
         $deniedFeatures = @()
         $accessGranted = $true
-        
+
         foreach ($feature in $hook.RequiredFeatures) {
             $hasFeature = Test-FeatureAccess -FeatureName $feature
             if (-not $hasFeature) {
@@ -138,7 +138,7 @@ function Test-ModuleLicenseHook {
                 $accessGranted = $false
             }
         }
-        
+
         # Create result object
         $result = @{
             ModuleName = $ModuleName
@@ -147,18 +147,18 @@ function Test-ModuleLicenseHook {
             DeniedFeatures = $deniedFeatures
             AvailableFeatures = $licenseStatus.Features
             LicenseStatus = $licenseStatus
-            Message = if ($accessGranted) { 
-                "Access granted" 
-            } else { 
-                "Access denied - missing features: $($deniedFeatures -join ', ')" 
+            Message = if ($accessGranted) {
+                "Access granted"
+            } else {
+                "Access denied - missing features: $($deniedFeatures -join ', ')"
             }
             CheckedAt = Get-Date
         }
-        
+
         # Update hook with last check result
         $hook.LastCheck = Get-Date
         $hook.LastCheckResult = $result
-        
+
         # Execute appropriate callback
         if (-not $accessGranted) {
             if ($hook.OnFeatureDenied) {
@@ -168,7 +168,7 @@ function Test-ModuleLicenseHook {
                     Write-Warning "Error executing OnFeatureDenied callback for $ModuleName : $($_.Exception.Message)"
                 }
             }
-            
+
             if ($ThrowOnDenied) {
                 throw "Module '$ModuleName' requires features not available in current license: $($deniedFeatures -join ', ')"
             }
@@ -181,7 +181,7 @@ function Test-ModuleLicenseHook {
                 }
             }
         }
-        
+
         # Log check result
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Message "Module license check completed" -Level DEBUG -Context @{
@@ -193,20 +193,20 @@ function Test-ModuleLicenseHook {
                 LicenseValid = $licenseStatus.IsValid
             }
         }
-        
+
         return $result
-        
+
     } catch {
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Message "Error checking module license hook" -Level ERROR -Exception $_.Exception -Context @{
                 Module = $ModuleName
             }
         }
-        
+
         if ($ThrowOnDenied) {
             throw
         }
-        
+
         return @{
             ModuleName = $ModuleName
             HasAccess = $false
@@ -234,11 +234,11 @@ function Get-RegisteredLicenseHooks {
         [Parameter()]
         [string]$ModuleName
     )
-    
+
     if (-not $script:LicenseHooks) {
         return @()
     }
-    
+
     $hooks = if ($ModuleName) {
         if ($script:LicenseHooks.ContainsKey($ModuleName)) {
             @($script:LicenseHooks[$ModuleName])
@@ -248,7 +248,7 @@ function Get-RegisteredLicenseHooks {
     } else {
         $script:LicenseHooks.Values
     }
-    
+
     # Convert to output objects
     return $hooks | ForEach-Object {
         [PSCustomObject]@{
@@ -257,10 +257,10 @@ function Get-RegisteredLicenseHooks {
             CheckOnLoad = $_.CheckOnLoad
             RegisteredAt = $_.RegisteredAt
             LastCheck = $_.LastCheck
-            LastCheckResult = if ($_.LastCheckResult) { 
-                [PSCustomObject]$_.LastCheckResult 
-            } else { 
-                $null 
+            LastCheckResult = if ($_.LastCheckResult) {
+                [PSCustomObject]$_.LastCheckResult
+            } else {
+                $null
             }
             HasCallbacks = ($null -ne $_.OnLicenseInvalid -or $null -ne $_.OnFeatureDenied)
         }
@@ -279,19 +279,19 @@ function Unregister-LicenseHook {
         [Parameter(Mandatory)]
         [string]$ModuleName
     )
-    
+
     if ($script:LicenseHooks -and $script:LicenseHooks.ContainsKey($ModuleName)) {
         $script:LicenseHooks.Remove($ModuleName)
-        
+
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Message "License hook unregistered" -Level DEBUG -Context @{
                 Module = $ModuleName
             }
         }
-        
+
         return $true
     }
-    
+
     return $false
 }
 
@@ -309,30 +309,30 @@ function Test-AllRegisteredModules {
         [Parameter()]
         [switch]$ShowCompliant
     )
-    
+
     if (-not $script:LicenseHooks) {
         return @()
     }
-    
+
     $results = @()
-    
+
     foreach ($moduleName in $script:LicenseHooks.Keys) {
         $result = Test-ModuleLicenseHook -ModuleName $moduleName
-        
+
         if ($ShowCompliant -or -not $result.HasAccess) {
             $results += [PSCustomObject]$result
         }
     }
-    
+
     # Display summary
     $totalModules = $script:LicenseHooks.Count
     $compliantModules = ($results | Where-Object HasAccess).Count
     $nonCompliantModules = $totalModules - $compliantModules
-    
+
     Write-Host "`nLicense Compliance Summary:" -ForegroundColor Yellow
     Write-Host "  Total registered modules: $totalModules" -ForegroundColor White
     Write-Host "  Compliant modules: $compliantModules" -ForegroundColor Green
     Write-Host "  Non-compliant modules: $nonCompliantModules" -ForegroundColor $(if ($nonCompliantModules -gt 0) { 'Red' } else { 'Green' })
-    
+
     return $results
 }

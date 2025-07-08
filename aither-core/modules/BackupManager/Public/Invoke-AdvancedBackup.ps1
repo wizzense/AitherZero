@@ -175,7 +175,7 @@ function Invoke-AdvancedBackup {
         # Process files in batches for better performance
         $batchSize = [Math]::Max(1, [Math]::Floor($filesToBackup.Count / $MaxConcurrency))
         $batches = @()
-        
+
         for ($i = 0; $i -lt $filesToBackup.Count; $i += $batchSize) {
             $endIndex = [Math]::Min($i + $batchSize - 1, $filesToBackup.Count - 1)
             $batches += ,($filesToBackup[$i..$endIndex])
@@ -185,7 +185,7 @@ function Invoke-AdvancedBackup {
         if ($PSVersionTable.PSVersion.Major -ge 7 -and $batches.Count -gt 1) {
             $results = $batches | ForEach-Object -ThrottleLimit $MaxConcurrency -Parallel {
                 $batch = $_
-                
+
                 # Import required functions in parallel context
                 . "$using:PSScriptRoot/../../../shared/Find-ProjectRoot.ps1"
                 $projectRoot = Find-ProjectRoot
@@ -206,11 +206,11 @@ function Invoke-AdvancedBackup {
                     try {
                         # Full backup processing with compression/encryption in parallel context
                         $fileResult = Backup-SingleFile -File $file -Context $using:backupContext -EncryptionKey $using:EncryptionKey
-                        
+
                         $batchResult.ProcessedFiles += 1
                         $batchResult.CompressedSize += $fileResult.CompressedSize
                         $batchResult.OriginalSize += $fileResult.OriginalSize
-                        
+
                         if ($fileResult.WasDeduped) {
                             $batchResult.DeduplicatedFiles += 1
                         }
@@ -237,11 +237,11 @@ function Invoke-AdvancedBackup {
                     try {
                         # Full backup processing with compression/encryption
                         $fileResult = Backup-SingleFile -File $file -Context $using:backupContext -EncryptionKey $using:EncryptionKey
-                        
+
                         $batchResult.ProcessedFiles += 1
                         $batchResult.CompressedSize += $fileResult.CompressedSize
                         $batchResult.OriginalSize += $fileResult.OriginalSize
-                        
+
                         if ($fileResult.WasDeduped) {
                             $batchResult.DeduplicatedFiles += 1
                         }
@@ -281,10 +281,10 @@ function Invoke-AdvancedBackup {
         # Create backup manifest
         $backupContext.EndTime = Get-Date
         $backupContext.Duration = $backupContext.EndTime - $backupContext.StartTime
-        $backupContext.CompressionRatio = if ($backupContext.OriginalSize -gt 0) { 
-            [Math]::Round((1 - ($backupContext.CompressedSize / $backupContext.OriginalSize)) * 100, 2) 
-        } else { 
-            0 
+        $backupContext.CompressionRatio = if ($backupContext.OriginalSize -gt 0) {
+            [Math]::Round((1 - ($backupContext.CompressedSize / $backupContext.OriginalSize)) * 100, 2)
+        } else {
+            0
         }
 
         $manifestPath = Join-Path $metadataPath "backup-manifest-$(Get-Date -Format 'yyyyMMdd-HHmmss').json"
@@ -293,9 +293,9 @@ function Invoke-AdvancedBackup {
         # Log completion
         $compressionInfo = if ($backupContext.CompressionRatio -gt 0) { " (${$backupContext.CompressionRatio}% compression)" } else { "" }
         $deduplicationInfo = if ($backupContext.DeduplicatedFiles -gt 0) { ", $($backupContext.DeduplicatedFiles) deduplicated" } else { "" }
-        
+
         $completionMessage = "Advanced backup completed: $($backupContext.ProcessedFiles)/$($backupContext.TotalFiles) files$compressionInfo$deduplicationInfo"
-        
+
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog $completionMessage -Level SUCCESS
         } else {
@@ -312,13 +312,13 @@ function Invoke-AdvancedBackup {
 
     } catch {
         $errorMessage = "Advanced backup failed: $($_.Exception.Message)"
-        
+
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog $errorMessage -Level ERROR
         } else {
             Write-Error $errorMessage
         }
-        
+
         throw
     }
 }
@@ -326,9 +326,9 @@ function Invoke-AdvancedBackup {
 function Initialize-DeduplicationIndex {
     [CmdletBinding()]
     param([string]$MetadataPath)
-    
+
     $indexPath = Join-Path $MetadataPath "dedup-index.json"
-    
+
     if (Test-Path $indexPath) {
         return Get-Content $indexPath | ConvertFrom-Json -AsHashtable
     } else {
@@ -339,7 +339,7 @@ function Initialize-DeduplicationIndex {
 function New-EncryptionKey {
     [CmdletBinding()]
     param()
-    
+
     # Generate a 256-bit AES key
     $key = [byte[]]::new(32)
     [System.Security.Cryptography.RNGCryptoServiceProvider]::Create().GetBytes($key)
@@ -353,22 +353,22 @@ function Get-FilesToBackup {
         [bool]$IncrementalBackup,
         [string]$MetadataPath
     )
-    
+
     $allFiles = Get-ChildItem -Path $SourcePath -Recurse -File -ErrorAction SilentlyContinue
-    
+
     if (-not $IncrementalBackup) {
         return $allFiles
     }
-    
+
     # For incremental backup, only include files newer than last backup
     $lastBackupPath = Join-Path $MetadataPath "last-backup.json"
     if (-not (Test-Path $lastBackupPath)) {
         return $allFiles
     }
-    
+
     $lastBackup = Get-Content $lastBackupPath | ConvertFrom-Json
     $lastBackupTime = [DateTime]$lastBackup.EndTime
-    
+
     return $allFiles | Where-Object { $_.LastWriteTime -gt $lastBackupTime }
 }
 
@@ -379,13 +379,13 @@ function Backup-SingleFile {
         [hashtable]$Context,
         [SecureString]$EncryptionKey
     )
-    
+
     $result = @{
         OriginalSize = $File.Length
         CompressedSize = 0
         WasDeduped = $false
     }
-    
+
     # Calculate file hash for deduplication
     $fileHash = $null
     if ($Context.EnableDeduplication) {
@@ -395,43 +395,43 @@ function Backup-SingleFile {
             $existingPath = $Context.HashIndex[$fileHash.Hash]
             $relativePath = $File.FullName.Replace($Context.SourcePath, "").TrimStart('\', '/')
             $linkPath = Join-Path $Context.BackupPath "$relativePath.dedup"
-            
-            @{ OriginalFile = $File.FullName; DedupTarget = $existingPath } | 
+
+            @{ OriginalFile = $File.FullName; DedupTarget = $existingPath } |
                 ConvertTo-Json | Set-Content -Path $linkPath
-            
+
             $result.WasDeduped = $true
             $result.CompressedSize = $linkPath.Length
             return $result
         }
     }
-    
+
     # Create relative path structure
     $relativePath = $File.FullName.Replace($Context.SourcePath, "").TrimStart('\', '/')
     $backupFilePath = Join-Path $Context.BackupPath "$relativePath.backup"
     $backupDir = Split-Path $backupFilePath -Parent
-    
+
     if (-not (Test-Path $backupDir)) {
         New-Item -Path $backupDir -ItemType Directory -Force | Out-Null
     }
-    
+
     # Read and compress file
     $fileContent = [System.IO.File]::ReadAllBytes($File.FullName)
     $compressedContent = Compress-Data -Data $fileContent -CompressionLevel $Context.CompressionLevel
-    
+
     # Encrypt if enabled
     if ($Context.EnableEncryption) {
         $compressedContent = Protect-Data -Data $compressedContent -EncryptionKey $EncryptionKey
     }
-    
+
     # Write backup file
     [System.IO.File]::WriteAllBytes($backupFilePath, $compressedContent)
     $result.CompressedSize = $compressedContent.Length
-    
+
     # Update deduplication index
     if ($Context.EnableDeduplication -and $fileHash) {
         $Context.HashIndex[$fileHash.Hash] = $backupFilePath
     }
-    
+
     return $result
 }
 
@@ -441,7 +441,7 @@ function Compress-Data {
         [byte[]]$Data,
         [int]$CompressionLevel
     )
-    
+
     # Use .NET compression for cross-platform compatibility
     $memoryStream = [System.IO.MemoryStream]::new()
     $compressionLevel = switch ($CompressionLevel) {
@@ -450,14 +450,14 @@ function Compress-Data {
         4..6 { [System.IO.Compression.CompressionLevel]::Optimal }
         default { [System.IO.Compression.CompressionLevel]::SmallestSize }
     }
-    
+
     $gzipStream = [System.IO.Compression.GZipStream]::new($memoryStream, $compressionLevel)
     $gzipStream.Write($Data, 0, $Data.Length)
     $gzipStream.Close()
-    
+
     $compressedData = $memoryStream.ToArray()
     $memoryStream.Dispose()
-    
+
     return $compressedData
 }
 
@@ -467,20 +467,20 @@ function Protect-Data {
         [byte[]]$Data,
         [SecureString]$EncryptionKey
     )
-    
+
     # Simple AES encryption implementation
     $keyBytes = [System.Text.Encoding]::UTF8.GetBytes(
         [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
             [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($EncryptionKey)
         )
     )
-    
+
     # For simplicity, using a basic XOR encryption (in production, use proper AES)
     $encryptedData = [byte[]]::new($Data.Length)
     for ($i = 0; $i -lt $Data.Length; $i++) {
         $encryptedData[$i] = $Data[$i] -bxor $keyBytes[$i % $keyBytes.Length]
     }
-    
+
     return $encryptedData
 }
 
@@ -490,17 +490,17 @@ function Test-BackupIntegrity {
         [string]$BackupPath,
         [string]$MetadataPath
     )
-    
+
     $result = @{
         Success = $true
         Errors = @()
         TestedFiles = 0
         CorruptedFiles = 0
     }
-    
+
     try {
         $backupFiles = Get-ChildItem -Path $BackupPath -Recurse -File -Filter "*.backup"
-        
+
         foreach ($backupFile in $backupFiles) {
             try {
                 # Try to read the file to verify it's not corrupted
@@ -512,11 +512,11 @@ function Test-BackupIntegrity {
                 $result.Success = $false
             }
         }
-        
+
     } catch {
         $result.Success = $false
         $result.Errors += "Integrity verification failed: $($_.Exception.Message)"
     }
-    
+
     return $result
 }

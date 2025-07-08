@@ -2,7 +2,7 @@
 function Get-GhDownloadArgs {
     [CmdletBinding()]
     param()
-    
+
     if (Get-Command gh -ErrorAction SilentlyContinue) {
         try {
             gh auth status --hostname github.com *> $null

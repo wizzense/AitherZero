@@ -40,7 +40,7 @@
         'Invoke-IntegratedWorkflow',
         'Start-QuickAction',
         'Test-ConsolidationHealth',
-        
+
         # Unified Platform API Gateway (Phase 4)
         'Initialize-AitherPlatform',
         'New-AitherPlatformAPI',
@@ -48,7 +48,7 @@
         'Get-PlatformHealth',
         'Get-PlatformLifecycle',
         'Start-PlatformServices',
-        
+
         # Performance & Error Handling (Phase 5)
         'Optimize-PlatformPerformance',
         'Initialize-PlatformErrorHandling',

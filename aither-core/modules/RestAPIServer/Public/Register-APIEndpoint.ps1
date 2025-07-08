@@ -50,26 +50,26 @@ function Register-APIEndpoint {
         [Parameter(Mandatory)]
         [ValidatePattern('^/[a-zA-Z0-9/_-]+$')]
         [string]$Path,
-        
+
         [Parameter(Mandatory)]
         [ValidateSet('GET', 'POST', 'PUT', 'DELETE', 'PATCH')]
         [string]$Method,
-        
+
         [Parameter(Mandatory)]
         [object]$Handler,
-        
+
         [Parameter()]
         [string]$Description = "",
-        
+
         [Parameter()]
         [switch]$RequiresAuthentication = $true,
-        
+
         [Parameter()]
         [string[]]$Parameters = @(),
-        
+
         [Parameter()]
         [string[]]$AllowedRoles = @(),
-        
+
         [Parameter()]
         [switch]$RateLimitEnabled = $true
     )
@@ -85,12 +85,12 @@ function Register-APIEndpoint {
             if ($handlerType -notin @('String', 'ScriptBlock')) {
                 throw "Handler must be either a function name (string) or script block"
             }
-            
+
             # Check if endpoint already exists
             if ($script:RegisteredEndpoints.ContainsKey($Path)) {
                 $existing = $script:RegisteredEndpoints[$Path]
                 Write-CustomLog -Message "Endpoint $Path already exists with method $($existing.Method)" -Level "WARNING"
-                
+
                 # Allow update if same method, otherwise throw error
                 if ($existing.Method -eq $Method) {
                     Write-CustomLog -Message "Updating existing endpoint $Path" -Level "INFO"
@@ -98,7 +98,7 @@ function Register-APIEndpoint {
                     throw "Endpoint $Path already exists with different method: $($existing.Method)"
                 }
             }
-            
+
             # Validate handler function exists if string
             if ($handlerType -eq 'String') {
                 try {
@@ -110,7 +110,7 @@ function Register-APIEndpoint {
                     Write-CustomLog -Message "Warning: Handler function '$Handler' not found in current session" -Level "WARNING"
                 }
             }
-            
+
             # Create endpoint configuration
             $endpointConfig = @{
                 Method = $Method
@@ -124,7 +124,7 @@ function Register-APIEndpoint {
                 RegisteredAt = Get-Date
                 RegisteredBy = $env:USERNAME
             }
-            
+
             # Add validation for parameters if specified
             if ($Parameters.Count -gt 0) {
                 $endpointConfig.ParameterValidation = @{}
@@ -136,16 +136,16 @@ function Register-APIEndpoint {
                     }
                 }
             }
-            
+
             # Register the endpoint
             $script:RegisteredEndpoints[$Path] = $endpointConfig
-            
+
             # Log registration details
             $authText = if ($RequiresAuthentication) { "requires auth" } else { "public" }
             $roleText = if ($AllowedRoles.Count -gt 0) { " (roles: $($AllowedRoles -join ', '))" } else { "" }
-            
+
             Write-CustomLog -Message "Endpoint registered: $Method $Path ($authText)$roleText" -Level "SUCCESS"
-            
+
             # Return registration result
             return @{
                 Success = $true
@@ -163,7 +163,7 @@ function Register-APIEndpoint {
         } catch {
             $errorMessage = "Failed to register endpoint $Path : $($_.Exception.Message)"
             Write-CustomLog -Message $errorMessage -Level "ERROR"
-            
+
             return @{
                 Success = $false
                 Error = $_.Exception.Message

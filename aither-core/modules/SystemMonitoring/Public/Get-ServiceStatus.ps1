@@ -32,21 +32,21 @@ function Get-ServiceStatus {
 
     begin {
         Write-CustomLog -Message "Checking service status" -Level "DEBUG"
-        
+
         # Define critical services based on platform
         $criticalServices = if ($IsWindows) {
             @('WinRM', 'Hyper-V Virtual Machine Management', 'Docker Desktop Service')
         } else {
             @('ssh', 'docker')
         }
-        
+
         # Use provided services or default to critical
         $servicesToCheck = if ($ServiceName) { $ServiceName } else { $criticalServices }
     }
 
     process {
         $serviceStatus = @()
-        
+
         foreach ($service in $servicesToCheck) {
             try {
                 if ($IsWindows) {
@@ -59,12 +59,12 @@ function Get-ServiceStatus {
                             Running = $svc.Status -eq 'Running'
                             StartType = $svc.StartType.ToString()
                         }
-                        
+
                         if ($IncludeDetails) {
                             $status | Add-Member -NotePropertyName DependentServices -NotePropertyValue $svc.DependentServices.Name
                             $status | Add-Member -NotePropertyName RequiredServices -NotePropertyValue $svc.RequiredServices.Name
                         }
-                        
+
                         $serviceStatus += $status
                     }
                 } else {
@@ -86,7 +86,7 @@ function Get-ServiceStatus {
                 }
             }
         }
-        
+
         return $serviceStatus
     }
 }

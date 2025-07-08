@@ -15,12 +15,12 @@ Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
 
 Invoke-LabStep -Config $Config -Body {
     Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
-    
+
     if ($Config.InstallVSBuildTools -eq $true) {
         if (-not (Test-Path 'C:/BuildTools')) {
             Write-CustomLog "Installing Visual Studio Build Tools..."
             $url = 'https://aka.ms/vs/17/release/vs_BuildTools.exe'
-            
+
             Invoke-LabDownload -Uri $url -Prefix 'vs_buildtools' -Extension '.exe' -Action {
                 param($installer)
                 if ($PSCmdlet.ShouldProcess($installer, 'Install VS Build Tools')) {
@@ -37,4 +37,3 @@ Invoke-LabStep -Config $Config -Body {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-

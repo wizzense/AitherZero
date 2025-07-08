@@ -105,7 +105,7 @@ function New-CustomISOWithProgress {
         # Initialize progress tracking
         $operationSteps = @(
             "Validate prerequisites",
-            "Mount source ISO", 
+            "Mount source ISO",
             "Extract ISO contents",
             "Generate autounattend file",
             "Mount WIM image",
@@ -488,11 +488,11 @@ function Invoke-EnhancedWIMOperations {
         if ($AdditionalFiles.Count -gt 0) {
             Write-CustomLog -Level 'INFO' -Message "Adding additional files in parallel..."
             $fileJobs = @()
-            
+
             foreach ($fileSpec in $AdditionalFiles) {
                 $fileJobs += Start-Job -ScriptBlock {
                     param($FileSpec, $MountPath)
-                    
+
                     if ($FileSpec -match '^(.+)\|(.+)$') {
                         $sourcePath = $matches[1]
                         $targetPath = Join-Path $MountPath $matches[2]

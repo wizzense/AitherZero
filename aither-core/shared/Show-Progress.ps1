@@ -5,16 +5,16 @@ function Show-SimpleProgress {
     <#
     .SYNOPSIS
         Shows simple progress messages during startup
-    
+
     .DESCRIPTION
         Displays startup progress messages with consistent formatting
-    
+
     .PARAMETER Message
         The message to display
-    
+
     .PARAMETER Type
         The type of progress: Start, Update, Complete
-    
+
     .EXAMPLE
         Show-SimpleProgress -Message "Loading modules..." -Type Start
     #>
@@ -22,12 +22,12 @@ function Show-SimpleProgress {
     param(
         [Parameter(Mandatory)]
         [string]$Message,
-        
+
         [Parameter()]
         [ValidateSet('Start', 'Update', 'Complete')]
         [string]$Type = 'Update'
     )
-    
+
     switch ($Type) {
         'Start' {
             Write-Host ""
@@ -48,25 +48,25 @@ function Show-ModuleLoadingProgress {
     <#
     .SYNOPSIS
         Shows progress for individual module loading
-    
+
     .DESCRIPTION
         Displays module loading progress with statistics
-    
+
     .PARAMETER ModuleName
         Name of the module being loaded
-    
+
     .PARAMETER ModuleType
         Type of module (Core, Consolidated)
-    
+
     .PARAMETER CurrentIndex
         Current module index
-    
+
     .PARAMETER TotalCount
         Total number of modules to load
-    
+
     .PARAMETER Statistics
         Loading statistics object
-    
+
     .EXAMPLE
         Show-ModuleLoadingProgress -ModuleName "Logging" -ModuleType "Core" -CurrentIndex 1 -TotalCount 4
     #>
@@ -74,20 +74,20 @@ function Show-ModuleLoadingProgress {
     param(
         [Parameter(Mandatory)]
         [string]$ModuleName,
-        
+
         [Parameter(Mandatory)]
         [string]$ModuleType,
-        
+
         [Parameter(Mandatory)]
         [int]$CurrentIndex,
-        
+
         [Parameter(Mandatory)]
         [int]$TotalCount,
-        
+
         [Parameter()]
         [hashtable]$Statistics
     )
-    
+
     $progress = [math]::Round(($CurrentIndex / $TotalCount) * 100)
     Write-Host "   [$progress%] Loading $ModuleType module: $ModuleName" -ForegroundColor DarkGray
 }
@@ -96,13 +96,13 @@ function Complete-StartupProgress {
     <#
     .SYNOPSIS
         Completes the startup progress indicator
-    
+
     .DESCRIPTION
         Shows completion status for module loading
-    
+
     .PARAMETER Statistics
         Loading statistics object
-    
+
     .EXAMPLE
         Complete-StartupProgress -Statistics $moduleLoadingStats
     #>
@@ -111,14 +111,14 @@ function Complete-StartupProgress {
         [Parameter()]
         [hashtable]$Statistics
     )
-    
+
     if ($Statistics) {
         $totalLoaded = $Statistics.CoreModules.Loaded + $Statistics.ConsolidatedModules.Loaded
         $totalModules = $Statistics.CoreModules.Total + $Statistics.ConsolidatedModules.Total
-        
+
         Write-Host ""
         Write-Host "✅ Module loading completed: $totalLoaded/$totalModules modules loaded" -ForegroundColor Green
-        
+
         if ($Statistics.CoreModules.Failed -gt 0 -or $Statistics.ConsolidatedModules.Failed -gt 0) {
             $totalFailed = $Statistics.CoreModules.Failed + $Statistics.ConsolidatedModules.Failed
             Write-Host "⚠️  Some modules failed to load: $totalFailed" -ForegroundColor Yellow
@@ -126,7 +126,7 @@ function Complete-StartupProgress {
     } else {
         Write-Host "✅ Startup completed" -ForegroundColor Green
     }
-    
+
     Write-Host ""
 }
 
@@ -134,7 +134,7 @@ function Complete-StartupProgress {
 if ($ExecutionContext.SessionState.Module) {
     Export-ModuleMember -Function @(
         'Show-SimpleProgress',
-        'Show-ModuleLoadingProgress', 
+        'Show-ModuleLoadingProgress',
         'Complete-StartupProgress'
     )
 }

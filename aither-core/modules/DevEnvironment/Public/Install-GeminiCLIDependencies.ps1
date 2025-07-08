@@ -6,16 +6,16 @@
 
 .DESCRIPTION
     This function installs and configures all dependencies needed to download and run Gemini CLI:
-    
+
     On Windows:
     - Installs WSL2 with Ubuntu distribution (if needed)
     - Sets up Node.js via nvm inside WSL (if needed)
     - Installs Gemini CLI npm package
-    
+
     On Linux:
     - Installs Node.js via nvm (if needed)
     - Installs Gemini CLI npm package
-    
+
     All installations are done with proper error handling and progress feedback.
 
 .PARAMETER SkipWSL
@@ -41,33 +41,33 @@
 
 .EXAMPLE
     Install-GeminiCLIDependencies -WSLUsername "developer"
-    
+
     Sets up complete Gemini CLI environment on Windows with WSL.
 
 .EXAMPLE
     Install-GeminiCLIDependencies -SkipWSL -SkipNodeInstall
-    
+
     Installs only Gemini CLI on Windows assuming WSL and Node.js are already configured.
 
 .EXAMPLE
     Install-GeminiCLIDependencies
-    
+
     Sets up Gemini CLI on Linux with Node.js via nvm.
 
 .NOTES
     This function requires administrative privileges on Windows for WSL installation.
     On Linux, it can run as a regular user.
-    
+
     Windows Requirements:
     - Windows 10 version 2004+ or Windows 11
     - Administrator privileges for WSL installation (if WSL not already installed)
     - Internet connection for downloads
-    
+
     Linux Requirements:
     - curl or wget
     - bash shell
     - Internet connection for downloads
-    
+
     Authentication:
     - After installation, you'll need to authenticate with your Google account
     - For API usage, set GEMINI_API_KEY environment variable
@@ -78,19 +78,19 @@ function Install-GeminiCLIDependencies {
     param(
         [Parameter()]
         [switch]$SkipWSL,
-        
+
         [Parameter()]
         [string]$WSLUsername,
-        
+
         [Parameter()]
         [SecureString]$WSLPassword,
-        
+
         [Parameter()]
         [string]$NodeVersion = 'lts',
-        
+
         [Parameter()]
         [switch]$SkipNodeInstall,
-        
+
         [Parameter()]
         [switch]$Force
     )
@@ -99,13 +99,13 @@ function Install-GeminiCLIDependencies {
         # Use shared utility for project root detection
         . "$PSScriptRoot/../../../shared/Find-ProjectRoot.ps1"
         $projectRoot = Find-ProjectRoot
-        
+
         Write-CustomLog -Message "=== Gemini CLI Dependencies Installation ===" -Level "INFO"
         Write-CustomLog -Message "Platform: $($env:PLATFORM ?? $(if ($IsWindows) { 'Windows' } elseif ($IsLinux) { 'Linux' } else { 'macOS' }))" -Level "INFO"
-        
+
         # Detect current platform
         $platform = if ($IsWindows) { 'Windows' } elseif ($IsLinux) { 'Linux' } elseif ($IsMacOS) { 'macOS' } else { 'Unknown' }
-        
+
         $result = @{
             Success = $false
             Platform = $platform
@@ -138,7 +138,7 @@ function Install-GeminiCLIDependencies {
 
             if ($result.Success) {
                 Write-CustomLog -Message "✅ Gemini CLI dependencies installation completed successfully!" -Level "SUCCESS"
-                
+
                 # Add post-install instructions
                 $result.PostInstallInstructions += "To get started with Gemini CLI:"
                 $result.PostInstallInstructions += "1. Open a new terminal/shell session"
@@ -146,7 +146,7 @@ function Install-GeminiCLIDependencies {
                 $result.PostInstallInstructions += "3. Authenticate with your Google account when prompted"
                 $result.PostInstallInstructions += "4. Optional: Set GEMINI_API_KEY environment variable for API access"
                 $result.PostInstallInstructions += "5. Visit https://aistudio.google.com to generate an API key if needed"
-                
+
                 Write-CustomLog -Message "Post-installation setup required - see PostInstallInstructions" -Level "INFO"
             }
 
@@ -186,7 +186,7 @@ function Install-WindowsGeminiCLIDependencies {
         # Step 1: WSL Installation (if needed)
         if (-not $SkipWSL) {
             Write-CustomLog -Message "Checking WSL availability..." -Level "INFO"
-            
+
             if ($WhatIf) {
                 Write-CustomLog -Message "Would check and install WSL2 with Ubuntu if needed" -Level "INFO"
                 $result.Steps += @{ Name = "WSL Check"; Success = $true; Message = "Would verify WSL installation (DRY RUN)" }
@@ -194,7 +194,7 @@ function Install-WindowsGeminiCLIDependencies {
             else {
                 $wslResult = Install-WSLUbuntu -WSLUsername $WSLUsername -WSLPassword $WSLPassword -Force:$Force
                 $result.Steps += $wslResult
-                
+
                 if (-not $wslResult.Success) {
                     throw "WSL installation failed: $($wslResult.Message)"
                 }
@@ -208,7 +208,7 @@ function Install-WindowsGeminiCLIDependencies {
         # Step 2: Node.js Installation (if needed)
         if (-not $SkipNodeInstall) {
             Write-CustomLog -Message "Setting up Node.js via nvm in WSL..." -Level "INFO"
-            
+
             if ($WhatIf) {
                 Write-CustomLog -Message "Would install Node.js $NodeVersion via nvm in WSL" -Level "INFO"
                 $result.Steps += @{ Name = "Node.js Setup"; Success = $true; Message = "Would install Node.js via nvm (DRY RUN)" }
@@ -241,10 +241,10 @@ nvm alias default $NodeVersion
 node --version
 npm --version
 "@
-                
+
                 $tempScript = [System.IO.Path]::GetTempFileName() + ".sh"
                 $nodeScript | Out-File -FilePath $tempScript -Encoding UTF8
-                
+
                 try {
                     $nodeResult = wsl bash $tempScript
                     if ($LASTEXITCODE -eq 0) {
@@ -267,7 +267,7 @@ npm --version
 
         # Step 3: Gemini CLI Installation
         Write-CustomLog -Message "Installing Gemini CLI..." -Level "INFO"
-        
+
         if ($WhatIf) {
             Write-CustomLog -Message "Would install Gemini CLI via npm in WSL" -Level "INFO"
             $result.Steps += @{ Name = "Gemini CLI Installation"; Success = $true; Message = "Would install @google/gemini-cli globally (DRY RUN)" }
@@ -291,10 +291,10 @@ gemini --version
 
 echo "✅ Gemini CLI installed successfully!"
 "@
-            
+
             $tempScript = [System.IO.Path]::GetTempFileName() + ".sh"
             $geminiScript | Out-File -FilePath $tempScript -Encoding UTF8
-            
+
             try {
                 $geminiResult = wsl bash $tempScript
                 if ($LASTEXITCODE -eq 0) {
@@ -347,7 +347,7 @@ function Install-LinuxGeminiCLIDependencies {
         # Step 1: Node.js Installation (if needed)
         if (-not $SkipNodeInstall) {
             Write-CustomLog -Message "Setting up Node.js via nvm..." -Level "INFO"
-            
+
             if ($WhatIf) {
                 Write-CustomLog -Message "Would install Node.js $NodeVersion via nvm" -Level "INFO"
                 $result.Steps += @{ Name = "Node.js Setup"; Success = $true; Message = "Would install Node.js via nvm (DRY RUN)" }
@@ -380,10 +380,10 @@ nvm alias default $NodeVersion
 node --version
 npm --version
 "@
-                
+
                 $tempScript = [System.IO.Path]::GetTempFileName() + ".sh"
                 $nodeScript | Out-File -FilePath $tempScript -Encoding UTF8
-                
+
                 try {
                     chmod +x $tempScript
                     $nodeResult = bash $tempScript
@@ -407,7 +407,7 @@ npm --version
 
         # Step 2: Gemini CLI Installation
         Write-CustomLog -Message "Installing Gemini CLI..." -Level "INFO"
-        
+
         if ($WhatIf) {
             Write-CustomLog -Message "Would install Gemini CLI via npm" -Level "INFO"
             $result.Steps += @{ Name = "Gemini CLI Installation"; Success = $true; Message = "Would install @google/gemini-cli globally (DRY RUN)" }
@@ -431,10 +431,10 @@ gemini --version
 
 echo "✅ Gemini CLI installed successfully!"
 "@
-            
+
             $tempScript = [System.IO.Path]::GetTempFileName() + ".sh"
             $geminiScript | Out-File -FilePath $tempScript -Encoding UTF8
-            
+
             try {
                 chmod +x $tempScript
                 $geminiResult = bash $tempScript
@@ -504,7 +504,7 @@ function Install-WSLUbuntu {
         [SecureString]$WSLPassword,
         [switch]$Force
     )
-    
+
     # This function should be shared with Claude Code installation
     # For now, return a simple success result
     Write-CustomLog -Message "WSL Ubuntu installation/verification would happen here" -Level "INFO"

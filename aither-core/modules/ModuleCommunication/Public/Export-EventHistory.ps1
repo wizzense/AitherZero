@@ -23,28 +23,28 @@ function Export-EventHistory {
     param(
         [Parameter(Mandatory)]
         [string]$OutputPath,
-        
+
         [Parameter()]
         [ValidateSet('JSON', 'CSV', 'XML')]
         [string]$Format = 'JSON',
-        
+
         [Parameter()]
         [datetime]$StartDate,
-        
+
         [Parameter()]
         [datetime]$EndDate,
-        
+
         [Parameter()]
         [string[]]$EventTypes = @(),
-        
+
         [Parameter()]
         [switch]$IncludeData
     )
-    
+
     try {
         # Get event history
         $events = @($script:MessageBus.EventHistory.ToArray())
-        
+
         if ($events.Count -eq 0) {
             Write-CustomLog -Level 'WARNING' -Message "No events to export"
             return @{
@@ -53,22 +53,22 @@ function Export-EventHistory {
                 EventCount = 0
             }
         }
-        
+
         # Apply filters
         $filteredEvents = $events
-        
+
         if ($StartDate) {
             $filteredEvents = $filteredEvents | Where-Object { $_.Timestamp -ge $StartDate }
         }
-        
+
         if ($EndDate) {
             $filteredEvents = $filteredEvents | Where-Object { $_.Timestamp -le $EndDate }
         }
-        
+
         if ($EventTypes.Count -gt 0) {
             $filteredEvents = $filteredEvents | Where-Object { $_.Name -in $EventTypes }
         }
-        
+
         # Prepare export data
         $exportData = @()
         foreach ($event in $filteredEvents) {
@@ -79,7 +79,7 @@ function Export-EventHistory {
                 Channel = $event.Channel
                 Source = $event.Source
             }
-            
+
             if ($IncludeData) {
                 $exportItem.Data = $event.Data
             } else {
@@ -89,10 +89,10 @@ function Export-EventHistory {
                     $event.Data.GetType().Name
                 }
             }
-            
+
             $exportData += $exportItem
         }
-        
+
         # Export based on format
         switch ($Format) {
             'JSON' {
@@ -112,13 +112,13 @@ function Export-EventHistory {
                         SourceUser = $item.Source.User
                         SourceMachine = $item.Source.Machine
                     }
-                    
+
                     if ($IncludeData) {
                         $csvRow.DataJson = $item.Data | ConvertTo-Json -Compress
                     } else {
                         $csvRow.DataSummary = $item.DataSummary
                     }
-                    
+
                     $csvData += New-Object PSObject -Property $csvRow
                 }
                 $csvData | Export-Csv -Path $OutputPath -NoTypeInformation
@@ -127,11 +127,11 @@ function Export-EventHistory {
                 $exportData | ConvertTo-Xml -NoTypeInformation | Out-File -FilePath $OutputPath -Encoding UTF8
             }
         }
-        
+
         $fileSizeKB = [math]::Round((Get-Item $OutputPath).Length / 1KB, 2)
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "Event history exported: $OutputPath ($fileSizeKB KB, $($exportData.Count) events)"
-        
+
         return @{
             Success = $true
             OutputPath = $OutputPath
@@ -144,7 +144,7 @@ function Export-EventHistory {
                 End = if ($EndDate) { $EndDate } else { ($events | Measure-Object Timestamp -Maximum).Maximum }
             }
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to export event history: $_"
         throw

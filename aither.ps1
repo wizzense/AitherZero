@@ -21,7 +21,7 @@ param(
     [Parameter(Position = 0)]
     [ValidateSet('init', 'deploy', 'test', 'setup', 'config', 'status', 'help', 'version')]
     [string]$Command = 'help',
-    
+
     [Parameter(Position = 1, ValueFromRemainingArguments)]
     [string[]]$Arguments
 )
@@ -35,8 +35,8 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
 
 # Find project root
 $scriptPath = $PSScriptRoot
-if (-not $scriptPath) { 
-    $scriptPath = (Get-Location).Path 
+if (-not $scriptPath) {
+    $scriptPath = (Get-Location).Path
 }
 
 $mainScript = Join-Path $scriptPath "Start-AitherZero.ps1"
@@ -50,7 +50,7 @@ switch ($Command) {
     'init' {
         Write-Host "`n🚀 Initializing AitherZero..." -ForegroundColor Green
         Write-Host ""
-        
+
         # Check if already initialized
         $configPath = Join-Path $scriptPath "configs" "default-config.json"
         if (Test-Path $configPath) {
@@ -64,10 +64,10 @@ switch ($Command) {
             & $mainScript -Setup -InstallationProfile interactive
         }
     }
-    
+
     'deploy' {
         Write-Host "`n🚀 Starting deployment..." -ForegroundColor Green
-        
+
         # Parse environment from arguments
         $environment = "dev"
         if ($Arguments -contains "-Environment" -or $Arguments -contains "-env") {
@@ -77,16 +77,16 @@ switch ($Command) {
                 $environment = $Arguments[$envIndex + 1]
             }
         }
-        
+
         Write-Host "Environment: $environment" -ForegroundColor Cyan
         Write-Host ""
         Write-Host "Deployment functionality coming soon!" -ForegroundColor Yellow
         Write-Host "For now, use: $mainScript -Scripts OpenTofuProvider" -ForegroundColor Cyan
     }
-    
+
     'test' {
         Write-Host "`n🧪 Running tests..." -ForegroundColor Green
-        
+
         $testScript = Join-Path $scriptPath "tests" "Run-Tests.ps1"
         if (Test-Path $testScript) {
             & $testScript @Arguments
@@ -94,10 +94,10 @@ switch ($Command) {
             Write-Error "Test runner not found at: $testScript"
         }
     }
-    
+
     'setup' {
         Write-Host "`n⚙️  Running setup wizard..." -ForegroundColor Green
-        
+
         $profileType = "interactive"
         if ($Arguments -contains "-Profile") {
             $profileIndex = [array]::IndexOf($Arguments, "-Profile")
@@ -105,13 +105,13 @@ switch ($Command) {
                 $profileType = $Arguments[$profileIndex + 1]
             }
         }
-        
+
         & $mainScript -Setup -InstallationProfile $profileType
     }
-    
+
     'config' {
         Write-Host "`n⚙️  Configuration Management" -ForegroundColor Green
-        
+
         if ($Arguments.Count -eq 0) {
             # Show current configuration
             $configPath = Join-Path $scriptPath "configs" "default-config.json"
@@ -128,21 +128,21 @@ switch ($Command) {
             Write-Host "Usage: aither config [edit]" -ForegroundColor Yellow
         }
     }
-    
+
     'status' {
         Write-Host "`n📊 AitherZero Status" -ForegroundColor Green
         Write-Host "$('=' * 50)" -ForegroundColor Cyan
-        
+
         # Version
         $versionFile = Join-Path $scriptPath "VERSION"
         if (Test-Path $versionFile) {
             $version = Get-Content $versionFile -Raw -ErrorAction SilentlyContinue
             Write-Host "Version: $version" -ForegroundColor White
         }
-        
+
         # PowerShell version
         Write-Host "PowerShell: $($PSVersionTable.PSVersion)" -ForegroundColor White
-        
+
         # Check modules
         Write-Host "`nModules:" -ForegroundColor Yellow
         $modulesPath = Join-Path $scriptPath "aither-core" "modules"
@@ -159,7 +159,7 @@ switch ($Command) {
         } else {
             Write-Host "  Modules directory not found" -ForegroundColor Red
         }
-        
+
         # Check tools
         Write-Host "`nTools:" -ForegroundColor Yellow
         $tools = @(
@@ -168,7 +168,7 @@ switch ($Command) {
             @{Name = 'Terraform'; Command = 'terraform'},
             @{Name = 'Docker'; Command = 'docker'}
         )
-        
+
         foreach ($tool in $tools) {
             if (Get-Command $tool.Command -ErrorAction SilentlyContinue) {
                 Write-Host "  ✓ $($tool.Name)" -ForegroundColor Green
@@ -177,7 +177,7 @@ switch ($Command) {
             }
         }
     }
-    
+
     'version' {
         $versionFile = Join-Path $scriptPath "VERSION"
         if (Test-Path $versionFile) {
@@ -187,7 +187,7 @@ switch ($Command) {
             Write-Host "AitherZero (version unknown)" -ForegroundColor Yellow
         }
     }
-    
+
     'help' {
         Write-Host "`n🚀 Aither CLI" -ForegroundColor Green
         Write-Host "$('=' * 50)" -ForegroundColor Cyan
@@ -215,7 +215,7 @@ switch ($Command) {
         Write-Host "  $mainScript" -ForegroundColor White
         Write-Host ""
     }
-    
+
     default {
         Write-Error "Unknown command: $Command"
         Write-Host "Run 'aither help' for usage information." -ForegroundColor Yellow

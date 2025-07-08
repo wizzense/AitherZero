@@ -29,7 +29,7 @@
 .EXAMPLE
     Invoke-IntegratedWorkflow -WorkflowName "DeployLab" -Parameters @{Environment="dev"}
     Executes the DeployLab workflow with development environment parameters.
-    
+
 .EXAMPLE
     Invoke-IntegratedWorkflow -WorkflowType Infrastructure -DryRun -ShowProgress
     Previews infrastructure workflow steps with progress display.
@@ -47,38 +47,38 @@ function Invoke-IntegratedWorkflow {
     param(
         [Parameter(Mandatory = $true, ParameterSetName = 'ByName')]
         [string]$WorkflowName,
-        
+
         [Parameter(Mandatory = $true, ParameterSetName = 'ByType')]
         [ValidateSet('Infrastructure', 'Development', 'Maintenance', 'Security', 'Backup')]
         [string]$WorkflowType,
-        
+
         [Parameter()]
         [hashtable]$Parameters = @{},
-        
+
         [Parameter()]
         [switch]$DryRun,
-        
+
         [Parameter()]
         [switch]$EnableRollback,
-        
+
         [Parameter()]
         [switch]$ShowProgress
     )
-    
+
     begin {
         Write-CustomLog -Message "=== Integrated Workflow Execution ===" -Level "INFO"
-        
+
         if ($WorkflowName) {
             Write-CustomLog -Message "Workflow: $WorkflowName" -Level "INFO"
         } else {
             Write-CustomLog -Message "Workflow Type: $WorkflowType" -Level "INFO"
         }
-        
+
         if ($DryRun) {
             Write-CustomLog -Message "Mode: DRY RUN (no changes will be made)" -Level "WARN"
         }
     }
-    
+
     process {
         try {
             # Initialize workflow execution context
@@ -92,10 +92,10 @@ function Invoke-IntegratedWorkflow {
                 FailedSteps = @()
                 RollbackSteps = @()
             }
-            
+
             # Define available workflows
             $workflows = Get-AvailableWorkflows
-            
+
             # Determine workflow to execute
             $workflowToExecute = $null
             if ($WorkflowName) {
@@ -109,10 +109,10 @@ function Invoke-IntegratedWorkflow {
                     throw "No workflow found for type '$WorkflowType'. Available types: $($workflows.Type | Sort-Object -Unique -join ', ')"
                 }
             }
-            
+
             Write-CustomLog -Message "Executing workflow: $($workflowToExecute.Name)" -Level "INFO"
             Write-CustomLog -Message "Description: $($workflowToExecute.Description)" -Level "INFO"
-            
+
             # Initialize progress tracking if requested
             $progressId = $null
             if ($ShowProgress) {
@@ -120,7 +120,7 @@ function Invoke-IntegratedWorkflow {
                     $progressId = Start-ProgressOperation -OperationName "Workflow: $($workflowToExecute.Name)" -TotalSteps $workflowToExecute.Steps.Count -ShowTime -ShowETA
                 }
             }
-            
+
             # Execute workflow steps
             $stepIndex = 0
             $workflowResult = @{
@@ -130,18 +130,18 @@ function Invoke-IntegratedWorkflow {
                 ExecutionTime = $null
                 RollbackPerformed = $false
             }
-            
+
             foreach ($step in $workflowToExecute.Steps) {
                 $stepIndex++
-                
+
                 try {
                     Write-CustomLog -Message "Step $stepIndex/$($workflowToExecute.Steps.Count): $($step.Name)" -Level "INFO"
-                    
+
                     # Update progress
                     if ($progressId) {
                         Update-ProgressOperation -OperationId $progressId -IncrementStep -StepName $step.Name
                     }
-                    
+
                     # Execute step
                     if (-not $DryRun) {
                         $stepResult = Invoke-WorkflowStep -Step $step -Parameters $Parameters -Context $workflowContext
@@ -158,21 +158,21 @@ function Invoke-IntegratedWorkflow {
                             ExecutedAt = Get-Date
                         }
                     }
-                    
+
                     Write-CustomLog -Message "✅ Step completed: $($step.Name)" -Level "SUCCESS"
-                    
+
                 } catch {
                     $errorMessage = "Step failed: $($step.Name) - $($_.Exception.Message)"
                     Write-CustomLog -Message $errorMessage -Level "ERROR"
-                    
+
                     $workflowResult.FailedSteps += @{
                         Name = $step.Name
                         Error = $_.Exception.Message
                         FailedAt = Get-Date
                     }
-                    
+
                     $workflowResult.Success = $false
-                    
+
                     # Attempt rollback if enabled
                     if ($EnableRollback -and -not $DryRun) {
                         Write-CustomLog -Message "🔄 Attempting workflow rollback..." -Level "WARN"
@@ -185,11 +185,11 @@ function Invoke-IntegratedWorkflow {
                             $workflowResult.RollbackPerformed = $false
                         }
                     }
-                    
+
                     break
                 }
             }
-            
+
             # Complete progress tracking
             if ($progressId) {
                 if ($workflowResult.Success) {
@@ -198,19 +198,19 @@ function Invoke-IntegratedWorkflow {
                     Complete-ProgressOperation -OperationId $progressId -ShowSummary -Status "Failed"
                 }
             }
-            
+
             # Calculate execution time
             $workflowResult.ExecutionTime = (Get-Date) - $workflowContext.StartTime
-            
+
             # Log final result
             if ($workflowResult.Success) {
                 Write-CustomLog -Message "✅ Workflow completed successfully in $($workflowResult.ExecutionTime.TotalSeconds) seconds" -Level "SUCCESS"
             } else {
                 Write-CustomLog -Message "❌ Workflow failed after $($workflowResult.ExecutionTime.TotalSeconds) seconds" -Level "ERROR"
             }
-            
+
             return $workflowResult
-            
+
         } catch {
             Write-CustomLog -Message "Workflow execution failed: $($_.Exception.Message)" -Level "ERROR"
             throw
@@ -222,7 +222,7 @@ function Invoke-IntegratedWorkflow {
 function Get-AvailableWorkflows {
     [CmdletBinding()]
     param()
-    
+
     process {
         return @(
             @{
@@ -291,19 +291,19 @@ function Invoke-WorkflowStep {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$Step,
-        
+
         [Parameter()]
         [hashtable]$Parameters = @{},
-        
+
         [Parameter()]
         [hashtable]$Context = @{}
     )
-    
+
     process {
         try {
             $moduleName = $Step.Module
             $functionName = $Step.Function
-            
+
             # Import module if not already loaded
             if (-not (Get-Module -Name $moduleName -ErrorAction SilentlyContinue)) {
                 $modulePath = Join-Path $PSScriptRoot "../../modules/$moduleName"
@@ -311,16 +311,16 @@ function Invoke-WorkflowStep {
                     Import-Module $modulePath -Force
                 }
             }
-            
+
             # Check if function exists
             if (-not (Get-Command -Name $functionName -ErrorAction SilentlyContinue)) {
                 throw "Function '$functionName' not found in module '$moduleName'"
             }
-            
+
             # Execute function with parameters
             $result = & $functionName @Parameters
             return $result
-            
+
         } catch {
             throw "Step execution failed: $($_.Exception.Message)"
         }
@@ -333,34 +333,34 @@ function Invoke-WorkflowRollback {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$WorkflowContext,
-        
+
         [Parameter(Mandatory = $true)]
         [array]$CompletedSteps
     )
-    
+
     process {
         try {
             Write-CustomLog -Message "Performing workflow rollback..." -Level "WARN"
-            
+
             $rollbackResult = @{
                 Success = $true
                 RolledBackSteps = @()
                 Errors = @()
             }
-            
+
             # Reverse the completed steps for rollback
             $reversedSteps = $CompletedSteps | Sort-Object { $_.ExecutedAt } -Descending
-            
+
             foreach ($step in $reversedSteps) {
                 try {
                     Write-CustomLog -Message "Rolling back: $($step.Name)" -Level "INFO"
-                    
+
                     # Attempt rollback - this would be step-specific logic
                     # For now, we'll just log the rollback attempt
                     $rollbackResult.RolledBackSteps += $step.Name
-                    
+
                     Write-CustomLog -Message "✅ Rollback completed: $($step.Name)" -Level "SUCCESS"
-                    
+
                 } catch {
                     $rollbackResult.Errors += @{
                         Step = $step.Name
@@ -370,9 +370,9 @@ function Invoke-WorkflowRollback {
                     Write-CustomLog -Message "❌ Rollback failed: $($step.Name) - $($_.Exception.Message)" -Level "ERROR"
                 }
             }
-            
+
             return $rollbackResult
-            
+
         } catch {
             throw "Rollback operation failed: $($_.Exception.Message)"
         }

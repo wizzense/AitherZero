@@ -19,20 +19,20 @@ function Get-ConfigurationSchema {
     param(
         [Parameter()]
         [string]$ModuleName,
-        
+
         [Parameter()]
         [switch]$All,
-        
+
         [Parameter()]
         [switch]$IncludeDefaults
     )
-    
+
     try {
         if ($All) {
             $schemas = @{}
             foreach ($schemaName in $script:ConfigurationStore.Schemas.Keys) {
                 $schema = $script:ConfigurationStore.Schemas[$schemaName].Clone()
-                
+
                 if ($IncludeDefaults) {
                     # Add default values to schema
                     $defaults = @{}
@@ -46,23 +46,23 @@ function Get-ConfigurationSchema {
                     }
                     $schema.DefaultValues = $defaults
                 }
-                
+
                 $schemas[$schemaName] = $schema
             }
             return $schemas
         }
-        
+
         if (-not $ModuleName) {
             throw "ModuleName is required when not using -All"
         }
-        
+
         if (-not $script:ConfigurationStore.Schemas.ContainsKey($ModuleName)) {
             Write-CustomLog -Level 'WARNING' -Message "No schema found for module: $ModuleName"
             return $null
         }
-        
+
         $schema = $script:ConfigurationStore.Schemas[$ModuleName].Clone()
-        
+
         if ($IncludeDefaults) {
             # Add default values to schema
             $defaults = @{}
@@ -76,9 +76,9 @@ function Get-ConfigurationSchema {
             }
             $schema.DefaultValues = $defaults
         }
-        
+
         return $schema
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to get configuration schema: $_"
         throw

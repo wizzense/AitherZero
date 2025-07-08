@@ -7,14 +7,14 @@ function Get-RepositoryConfiguration {
     #>
     [CmdletBinding()]
     param()
-    
+
     $configPath = Join-Path $env:LOCALAPPDATA "AitherZero" "repository-config.json"
     $configDir = Split-Path $configPath -Parent
-    
+
     if (-not (Test-Path $configDir)) {
         New-Item -ItemType Directory -Path $configDir -Force | Out-Null
     }
-    
+
     if (Test-Path $configPath) {
         $config = Get-Content $configPath -Raw | ConvertFrom-Json -AsHashtable
     } else {
@@ -25,7 +25,7 @@ function Get-RepositoryConfiguration {
         }
         Save-RepositoryConfiguration -Configuration $config
     }
-    
+
     return $config
 }
 
@@ -39,7 +39,7 @@ function Save-RepositoryConfiguration {
         [Parameter(Mandatory)]
         [hashtable]$Configuration
     )
-    
+
     $configPath = Join-Path $env:LOCALAPPDATA "AitherZero" "repository-config.json"
     $Configuration | ConvertTo-Json -Depth 10 | Set-Content -Path $configPath -Encoding UTF8
 }
@@ -54,11 +54,11 @@ function Test-RepositoryAccess {
     param(
         [Parameter(Mandatory)]
         [string]$Url,
-        
+
         [Parameter()]
         [string]$CredentialName
     )
-    
+
     try {
         # Simple connectivity test
         if ($Url -match '^https?://') {
@@ -73,7 +73,7 @@ function Test-RepositoryAccess {
             $localPath = $Url -replace '^file://', ''
             return Test-Path $localPath
         }
-        
+
         return $false
     } catch {
         return $false
@@ -90,20 +90,20 @@ function Invoke-GitClone {
     param(
         [Parameter(Mandatory)]
         [string]$Url,
-        
+
         [Parameter(Mandatory)]
         [string]$Path,
-        
+
         [Parameter()]
         [string]$Branch = "main",
-        
+
         [Parameter()]
         [string]$CredentialName
     )
-    
+
     try {
         $cloneArgs = @("clone", "--branch", $Branch, $Url, $Path)
-        
+
         if ($CredentialName) {
             # Set up credential helper for this operation
             $env:GIT_ASKPASS = "echo"
@@ -113,10 +113,10 @@ function Invoke-GitClone {
                 $env:GIT_PASSWORD = $cred.GetNetworkCredential().Password
             }
         }
-        
+
         $result = git @cloneArgs 2>&1
         $success = $LASTEXITCODE -eq 0
-        
+
         @{
             Success = $success
             Output = $result
@@ -146,14 +146,14 @@ function Test-RepositoryStructure {
         [Parameter(Mandatory)]
         [string]$Path
     )
-    
+
     $result = @{
         IsValid = $true
         Errors = @()
         Warnings = @()
         Metadata = @{}
     }
-    
+
     # Check for required directories
     $requiredDirs = @("templates", "docs")
     foreach ($dir in $requiredDirs) {
@@ -162,11 +162,11 @@ function Test-RepositoryStructure {
             $result.Warnings += "Missing recommended directory: $dir"
         }
     }
-    
+
     # Check for repository metadata
     $metadataFiles = @("repository.json", "repository.yaml", "README.md")
     $foundMetadata = $false
-    
+
     foreach ($file in $metadataFiles) {
         $filePath = Join-Path $Path $file
         if (Test-Path $filePath) {
@@ -182,22 +182,22 @@ function Test-RepositoryStructure {
             break
         }
     }
-    
+
     if (-not $foundMetadata) {
         $result.Warnings += "No repository metadata file found"
     }
-    
+
     # Check for templates
     $templatesPath = Join-Path $Path "templates"
     if (Test-Path $templatesPath) {
         $templates = Get-ChildItem -Path $templatesPath -Directory
         $result.Metadata.TemplateCount = $templates.Count
-        
+
         if ($templates.Count -eq 0) {
             $result.Warnings += "No templates found in templates directory"
         }
     }
-    
+
     return $result
 }
 
@@ -211,7 +211,7 @@ function Get-GitCommit {
         [Parameter(Mandatory)]
         [string]$Path
     )
-    
+
     Push-Location $Path
     try {
         $commit = git rev-parse HEAD 2>$null
@@ -234,28 +234,28 @@ function Invoke-GitPull {
     param(
         [Parameter(Mandatory)]
         [string]$Path,
-        
+
         [Parameter()]
         [string]$Branch,
-        
+
         [Parameter()]
         [string]$CredentialName
     )
-    
+
     Push-Location $Path
     try {
         # Store current state
         $beforeCommit = git rev-parse HEAD 2>$null
-        
+
         # Pull changes
         $pullArgs = @("pull")
         if ($Branch) {
             $pullArgs += @("origin", $Branch)
         }
-        
+
         $result = git @pullArgs 2>&1
         $success = $LASTEXITCODE -eq 0
-        
+
         # Get changes if successful
         $changes = @()
         if ($success) {
@@ -264,7 +264,7 @@ function Invoke-GitPull {
                 $changes = git log "$beforeCommit..$afterCommit" --oneline 2>$null
             }
         }
-        
+
         @{
             Success = $success
             Output = $result
@@ -285,11 +285,11 @@ function Reset-GitRepository {
     param(
         [Parameter(Mandatory)]
         [string]$Path,
-        
+
         [Parameter(Mandatory)]
         [string]$Commit
     )
-    
+
     Push-Location $Path
     try {
         git reset --hard $Commit 2>&1 | Out-Null
@@ -309,9 +309,9 @@ function Get-DirectorySize {
         [Parameter(Mandatory)]
         [string]$Path
     )
-    
+
     $size = 0
-    Get-ChildItem -Path $Path -Recurse -File -ErrorAction SilentlyContinue | 
+    Get-ChildItem -Path $Path -Recurse -File -ErrorAction SilentlyContinue |
         ForEach-Object { $size += $_.Length }
     return $size
 }
@@ -326,7 +326,7 @@ function Test-StoredCredential {
         [Parameter(Mandatory)]
         [string]$Name
     )
-    
+
     try {
         $cred = Get-StoredCredential -Name $Name -ErrorAction SilentlyContinue
         return $null -ne $cred
@@ -342,7 +342,7 @@ function Get-TemplateConfiguration {
     #>
     [CmdletBinding()]
     param()
-    
+
     @{
         TemplatePath = Join-Path $env:LOCALAPPDATA "AitherZero" "templates"
         CachePath = Join-Path $env:TEMP "AitherZero" "template-cache"
@@ -358,16 +358,16 @@ function Update-TemplateIndex {
     param(
         [Parameter(Mandatory)]
         [string]$TemplatePath,
-        
+
         [Parameter(Mandatory)]
         [string]$Version,
-        
+
         [Parameter()]
         [switch]$SetAsLatest
     )
-    
+
     $indexPath = Join-Path $TemplatePath "versions.json"
-    
+
     $index = if (Test-Path $indexPath) {
         Get-Content $indexPath -Raw | ConvertFrom-Json -AsHashtable
     } else {
@@ -376,27 +376,27 @@ function Update-TemplateIndex {
             latest = $null
         }
     }
-    
+
     if ($Version -notin $index.versions) {
         $index.versions += $Version
     }
-    
+
     if ($SetAsLatest) {
         $index.latest = $Version
-        
+
         # Create/update latest symlink
         $latestPath = Join-Path $TemplatePath "latest"
         if (Test-Path $latestPath) {
             Remove-Item $latestPath -Force -Recurse
         }
-        
+
         # Copy instead of symlink for cross-platform compatibility
         $versionPath = Join-Path $TemplatePath $Version
         if (Test-Path $versionPath) {
             Copy-Item -Path $versionPath -Destination $latestPath -Recurse -Force
         }
     }
-    
+
     $index | ConvertTo-Json -Depth 10 | Set-Content -Path $indexPath -Encoding UTF8
 }
 
@@ -410,7 +410,7 @@ function ConvertTo-HashtableFromPSObject {
         [Parameter(Mandatory)]
         $InputObject
     )
-    
+
     if ($InputObject -is [System.Collections.IEnumerable] -and $InputObject -isnot [string]) {
         $collection = @()
         foreach ($item in $InputObject) {
@@ -437,13 +437,13 @@ function Merge-DeploymentConfigurations {
     param(
         [Parameter(Mandatory)]
         [hashtable]$Base,
-        
+
         [Parameter(Mandatory)]
         [hashtable]$Override
     )
-    
+
     $merged = $Base.Clone()
-    
+
     foreach ($key in $Override.Keys) {
         if ($merged.ContainsKey($key) -and $merged[$key] -is [hashtable] -and $Override[$key] -is [hashtable]) {
             # Recursive merge for nested hashtables
@@ -453,7 +453,7 @@ function Merge-DeploymentConfigurations {
             $merged[$key] = $Override[$key]
         }
     }
-    
+
     return $merged
 }
 
@@ -467,16 +467,16 @@ function Expand-ConfigurationVariables {
         [Parameter(Mandatory)]
         [hashtable]$Configuration
     )
-    
+
     $expanded = @{}
-    
+
     foreach ($key in $Configuration.Keys) {
         $value = $Configuration[$key]
-        
+
         if ($value -is [string]) {
             # Expand environment variables
             $expandedValue = [System.Environment]::ExpandEnvironmentVariables($value)
-            
+
             # Expand configuration references ${config.key}
             if ($expandedValue -match '\$\{config\.([^}]+)\}') {
                 $matches = [regex]::Matches($expandedValue, '\$\{config\.([^}]+)\}')
@@ -487,7 +487,7 @@ function Expand-ConfigurationVariables {
                     }
                 }
             }
-            
+
             $expanded[$key] = $expandedValue
         } elseif ($value -is [hashtable]) {
             $expanded[$key] = Expand-ConfigurationVariables -Configuration $value
@@ -495,7 +495,7 @@ function Expand-ConfigurationVariables {
             $expanded[$key] = $value
         }
     }
-    
+
     return $expanded
 }
 
@@ -508,20 +508,20 @@ function Test-ConfigurationSchema {
     param(
         [Parameter(Mandatory)]
         [hashtable]$Configuration,
-        
+
         [Parameter(Mandatory)]
         [string]$SchemaPath
     )
-    
+
     # Simple schema validation (can be extended with JSON Schema)
     $result = @{
         IsValid = $true
         Errors = @()
     }
-    
+
     # Load schema
     $schema = Get-Content $SchemaPath -Raw | ConvertFrom-Json -AsHashtable
-    
+
     # Validate required fields
     if ($schema.required) {
         foreach ($field in $schema.required) {
@@ -531,14 +531,14 @@ function Test-ConfigurationSchema {
             }
         }
     }
-    
+
     # Validate field types
     if ($schema.properties) {
         foreach ($prop in $schema.properties.Keys) {
             if ($Configuration.ContainsKey($prop)) {
                 $expectedType = $schema.properties[$prop].type
                 $actualValue = $Configuration[$prop]
-                
+
                 $isValid = switch ($expectedType) {
                     "string" { $actualValue -is [string] }
                     "number" { $actualValue -is [int] -or $actualValue -is [double] }
@@ -547,7 +547,7 @@ function Test-ConfigurationSchema {
                     "object" { $actualValue -is [hashtable] }
                     default { $true }
                 }
-                
+
                 if (-not $isValid) {
                     $result.IsValid = $false
                     $result.Errors += "Invalid type for field '$prop': expected $expectedType"
@@ -555,7 +555,7 @@ function Test-ConfigurationSchema {
             }
         }
     }
-    
+
     return $result
 }
 
@@ -568,22 +568,22 @@ function Resolve-TemplatePath {
     param(
         [Parameter(Mandatory)]
         [string]$Template,
-        
+
         [Parameter()]
         [string]$BasePath
     )
-    
+
     # Try different resolution strategies
     $possiblePaths = @()
-    
+
     if ($BasePath) {
         $possiblePaths += Join-Path $BasePath $Template
         $possiblePaths += Join-Path $BasePath "templates" $Template
     }
-    
+
     $templateConfig = Get-TemplateConfiguration
     $possiblePaths += Join-Path $templateConfig.TemplatePath $Template
-    
+
     foreach ($path in $possiblePaths) {
         if (Test-Path $path) {
             return @{
@@ -593,7 +593,7 @@ function Resolve-TemplatePath {
             }
         }
     }
-    
+
     return $null
 }
 
@@ -606,18 +606,18 @@ function Expand-TemplateParameters {
     param(
         [Parameter(Mandatory)]
         $Resources,
-        
+
         [Parameter(Mandatory)]
         [hashtable]$Parameters
     )
-    
+
     $json = $Resources | ConvertTo-Json -Depth 100
-    
+
     # Replace parameter placeholders
     foreach ($param in $Parameters.Keys) {
         $value = $Parameters[$param]
         $json = $json -replace "\{\{\s*$param\s*\}\}", $value
     }
-    
+
     $json | ConvertFrom-Json -AsHashtable
 }

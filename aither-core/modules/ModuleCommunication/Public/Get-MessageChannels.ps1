@@ -15,19 +15,19 @@ function Get-MessageChannels {
     param(
         [Parameter()]
         [string]$Name,
-        
+
         [Parameter()]
         [switch]$IncludeStatistics
     )
-    
+
     try {
         $channels = @()
-        
+
         if ($Name) {
             # Get specific channel
             if ($script:MessageBus.Channels.ContainsKey($Name)) {
                 $channel = $script:MessageBus.Channels[$Name]
-                
+
                 $channelInfo = @{
                     Name = $channel.Name
                     Description = $channel.Description
@@ -38,11 +38,11 @@ function Get-MessageChannels {
                     SubscriptionCount = $channel.SubscriptionCount
                     LastActivity = $channel.LastActivity
                 }
-                
+
                 if ($IncludeStatistics) {
                     $channelInfo.Statistics = $channel.Statistics
                 }
-                
+
                 return $channelInfo
             } else {
                 Write-CustomLog -Level 'WARNING' -Message "Channel '$Name' not found"
@@ -52,7 +52,7 @@ function Get-MessageChannels {
             # Get all channels
             foreach ($channelName in $script:MessageBus.Channels.Keys) {
                 $channel = $script:MessageBus.Channels[$channelName]
-                
+
                 $channelInfo = @{
                     Name = $channel.Name
                     Description = $channel.Description
@@ -61,19 +61,19 @@ function Get-MessageChannels {
                     SubscriptionCount = $channel.SubscriptionCount
                     LastActivity = $channel.LastActivity
                 }
-                
+
                 if ($IncludeStatistics) {
                     $channelInfo.Statistics = $channel.Statistics
                     $channelInfo.MaxMessages = $channel.MaxMessages
                     $channelInfo.MessageRetention = $channel.MessageRetention
                 }
-                
+
                 $channels += $channelInfo
             }
-            
+
             return $channels
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to get channels: $_"
         throw

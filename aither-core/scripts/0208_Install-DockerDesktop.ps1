@@ -15,12 +15,12 @@ Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
 
 Invoke-LabStep -Config $Config -Body {
     Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
-    
+
     if ($Config.InstallDockerDesktop -eq $true) {
         if (-not (Get-Command docker.exe -ErrorAction SilentlyContinue)) {
             Write-CustomLog "Installing Docker Desktop..."
             $url = 'https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe'
-            
+
             Invoke-LabDownload -Uri $url -Prefix 'docker-desktop-installer' -Extension '.exe' -Action {
                 param($installer)
                 if ($PSCmdlet.ShouldProcess($installer, 'Install Docker Desktop')) {
@@ -37,4 +37,3 @@ Invoke-LabStep -Config $Config -Body {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-

@@ -29,23 +29,23 @@ function Set-License {
     param(
         [Parameter(Mandatory, ParameterSetName = 'Key')]
         [string]$LicenseKey,
-        
+
         [Parameter(Mandatory, ParameterSetName = 'File')]
         [string]$LicensePath,
-        
+
         [Parameter(Mandatory, ParameterSetName = 'String')]
         [string]$LicenseString,
-        
+
         [Parameter()]
         [switch]$Force,
-        
+
         [Parameter()]
         [switch]$Validate,
-        
+
         [Parameter()]
         [switch]$StrictValidation
     )
-    
+
     try {
         # Log license installation attempt
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
@@ -56,7 +56,7 @@ function Set-License {
                 StrictValidation = $StrictValidation.IsPresent
             }
         }
-        
+
         # Check for existing license
         if ((Test-Path $script:LicensePath) -and -not $Force) {
             $existingLicense = Get-LicenseStatus
@@ -71,13 +71,13 @@ function Set-License {
                 }
             }
         }
-        
+
         Write-Host "Installing license..." -ForegroundColor Yellow
-        
+
         # Parse license from different sources
         $license = $null
         $sourceInfo = ""
-        
+
         switch ($PSCmdlet.ParameterSetName) {
             'Key' {
                 try {
@@ -109,7 +109,7 @@ function Set-License {
                 }
             }
         }
-        
+
         # Validate license structure
         $requiredProperties = @('licenseId', 'tier', 'features', 'issuedTo', 'expiryDate', 'signature')
         foreach ($prop in $requiredProperties) {
@@ -117,7 +117,7 @@ function Set-License {
                 throw "Invalid license format - missing required property: $prop"
             }
         }
-        
+
         # Validate expiry date
         try {
             $expiryDate = [DateTime]::Parse($license.expiryDate)
@@ -127,18 +127,18 @@ function Set-License {
         } catch [System.FormatException] {
             throw "Invalid expiry date format in license"
         }
-        
+
         # Validate signature with appropriate mode
         $signatureValid = if ($StrictValidation) {
             Validate-LicenseSignature -License $license -StrictMode
         } else {
             Validate-LicenseSignature -License $license
         }
-        
+
         if (-not $signatureValid) {
             throw "License signature validation failed"
         }
-        
+
         # Create backup of existing license if it exists
         if ((Test-Path $script:LicensePath) -and $Force) {
             $backupPath = "$($script:LicensePath).backup.$(Get-Date -Format 'yyyyMMddHHmmss')"
@@ -149,24 +149,24 @@ function Set-License {
                 Write-Warning "Could not create license backup: $($_.Exception.Message)"
             }
         }
-        
+
         # Ensure license directory exists
         $licenseDir = Split-Path -Parent $script:LicensePath
         if (-not (Test-Path $licenseDir)) {
             New-Item -Path $licenseDir -ItemType Directory -Force | Out-Null
         }
-        
+
         # Save license with proper formatting
         try {
             $license | ConvertTo-Json -Depth 10 | Set-Content -Path $script:LicensePath -Encoding UTF8
         } catch {
             throw "Failed to save license file: $($_.Exception.Message)"
         }
-        
+
         # Update current license cache and clear caches
         $script:CurrentLicense = $license
         Clear-LicenseCache -Type All
-        
+
         # Perform additional validation if requested
         if ($Validate) {
             $validationResult = Get-LicenseStatus
@@ -174,7 +174,7 @@ function Set-License {
                 throw "License validation failed after installation: $($validationResult.Message)"
             }
         }
-        
+
         # Display success information
         Write-Host "License installed successfully!" -ForegroundColor Green
         Write-Host "  Source: $sourceInfo" -ForegroundColor DarkGray
@@ -183,14 +183,14 @@ function Set-License {
         Write-Host "  Features: $($license.features -join ', ')" -ForegroundColor Cyan
         Write-Host "  Expires: $($expiryDate.ToString('yyyy-MM-dd'))" -ForegroundColor Cyan
         Write-Host "  Issued to: $($license.issuedTo)" -ForegroundColor Cyan
-        
+
         # Calculate days until expiry
         $daysUntilExpiry = ($expiryDate - (Get-Date)).Days
         if ($daysUntilExpiry -le 30) {
             $color = if ($daysUntilExpiry -le 7) { "Red" } else { "Yellow" }
             Write-Host "  Warning: License expires in $daysUntilExpiry days" -ForegroundColor $color
         }
-        
+
         # Log successful installation
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Level 'SUCCESS' -Message "License installed successfully" -Context @{
@@ -202,7 +202,7 @@ function Set-License {
                 ValidationMode = if ($StrictValidation) { "Strict" } else { "Standard" }
             }
         }
-        
+
         # Return detailed result
         return @{
             Success = $true
@@ -215,11 +215,11 @@ function Set-License {
             Source = $sourceInfo
             ValidationMode = if ($StrictValidation) { "Strict" } else { "Standard" }
         }
-        
+
     } catch {
         $errorMsg = "Failed to install license: $($_.Exception.Message)"
         Write-Error $errorMsg
-        
+
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Level 'ERROR' -Message $errorMsg -Exception $_.Exception -Context @{
                 ParameterSet = $PSCmdlet.ParameterSetName
@@ -227,7 +227,7 @@ function Set-License {
                 StrictValidation = $StrictValidation.IsPresent
             }
         }
-        
+
         return @{
             Success = $false
             Error = $_.Exception.Message

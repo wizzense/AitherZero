@@ -19,34 +19,34 @@ function New-AuthenticationToken {
     param(
         [Parameter(Mandatory)]
         [string]$ModuleName,
-        
+
         [Parameter()]
         [string]$User = $env:USERNAME,
-        
+
         [Parameter()]
         [string[]]$Scopes = @('api:call'),
-        
+
         [Parameter()]
         [int]$ExpirationMinutes
     )
-    
+
     try {
         # Check if security is enabled
         if (-not $script:SecurityContext -or -not $script:SecurityContext.SecurityEnabled) {
             throw "Security is not enabled. Call Enable-CommunicationSecurity first."
         }
-        
+
         # Use default expiration if not specified
         if (-not $ExpirationMinutes) {
             $ExpirationMinutes = $script:SecurityContext.DefaultTokenExpiration
         }
-        
+
         # Generate secure token
         $tokenBytes = New-Object byte[] 32
         $rng = [System.Security.Cryptography.RNGCryptoServiceProvider]::Create()
         $rng.GetBytes($tokenBytes)
         $token = [Convert]::ToBase64String($tokenBytes).Replace('+', '-').Replace('/', '_').Replace('=', '')
-        
+
         # Create token info
         $tokenInfo = @{
             Module = $ModuleName
@@ -57,13 +57,13 @@ function New-AuthenticationToken {
             LastUsed = $null
             Active = $true
         }
-        
+
         # Store token
         $script:SecurityContext.ValidTokens[$token] = $tokenInfo
         $script:SecurityContext.TokenExpiration[$token] = $tokenInfo.ExpiresAt
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "Authentication token created for module: $ModuleName"
-        
+
         return @{
             Token = $token
             ModuleName = $ModuleName
@@ -73,7 +73,7 @@ function New-AuthenticationToken {
             ExpiresAt = $tokenInfo.ExpiresAt
             ExpirationMinutes = $ExpirationMinutes
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to create authentication token: $_"
         throw

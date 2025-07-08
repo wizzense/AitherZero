@@ -17,17 +17,17 @@ function Unregister-ModuleAPI {
     param(
         [Parameter(Mandatory)]
         [string]$ModuleName,
-        
+
         [Parameter(Mandatory)]
         [string]$APIName,
-        
+
         [Parameter()]
         [switch]$Force
     )
-    
+
     try {
         $apiKey = "$ModuleName.$APIName"
-        
+
         # Check if API exists
         if (-not $script:APIRegistry.APIs.ContainsKey($apiKey)) {
             Write-CustomLog -Level 'WARNING' -Message "API '$apiKey' not found"
@@ -36,16 +36,16 @@ function Unregister-ModuleAPI {
                 Reason = "API not found"
             }
         }
-        
+
         $api = $script:APIRegistry.APIs[$apiKey]
-        
+
         # Confirmation
         if (-not $Force -and -not $WhatIfPreference) {
             $message = "Remove API '$apiKey'?"
             if ($api.CallCount -gt 0) {
                 $message += " This API has been called $($api.CallCount) times."
             }
-            
+
             $choice = Read-Host "$message (y/N)"
             if ($choice -ne 'y' -and $choice -ne 'Y') {
                 Write-CustomLog -Level 'INFO' -Message "Operation cancelled"
@@ -55,12 +55,12 @@ function Unregister-ModuleAPI {
                 }
             }
         }
-        
+
         if ($PSCmdlet.ShouldProcess("API: $apiKey", "Remove API")) {
             $removedAPI = $null
             if ($script:APIRegistry.APIs.TryRemove($apiKey, [ref]$removedAPI)) {
                 Write-CustomLog -Level 'SUCCESS' -Message "API removed: $apiKey"
-                
+
                 return @{
                     Success = $true
                     RemovedAPI = @{
@@ -75,7 +75,7 @@ function Unregister-ModuleAPI {
                 throw "Failed to remove API from registry"
             }
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to unregister API: $_"
         throw

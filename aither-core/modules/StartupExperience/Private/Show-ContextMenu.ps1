@@ -17,21 +17,21 @@ function Show-ContextMenu {
     param(
         [Parameter(Mandatory)]
         [string]$Title,
-        
+
         [Parameter(Mandatory)]
         [array]$Options,
-        
+
         [Parameter()]
         [switch]$ReturnAction,
-        
+
         [Parameter()]
         [switch]$ForceClassic
     )
-    
+
     # Handle simple array or object array
     $displayOptions = @()
     $actions = @()
-    
+
     foreach ($option in $Options) {
         if ($option -is [string]) {
             $displayOptions += $option
@@ -41,10 +41,10 @@ function Show-ContextMenu {
             $actions += $option.Action ?? $option.Text
         }
     }
-    
+
     # Determine UI mode - use classic if forced or if enhanced UI not available
     $useClassicUI = $ForceClassic -or -not (Test-EnhancedUICapability)
-    
+
     if ($useClassicUI) {
         return Show-ClassicMenu -Title $Title -DisplayOptions $displayOptions -Actions $actions -ReturnAction:$ReturnAction
     } else {
@@ -66,22 +66,22 @@ function Test-EnhancedUICapability {
         # Test if we can access RawUI
         $null = $Host.UI.RawUI.WindowTitle
         $null = $Host.UI.RawUI.BackgroundColor
-        
+
         # Test if ReadKey is available
         if (-not $Host.UI.RawUI.ReadKey) {
             return $false
         }
-        
+
         # Check if we're in a non-interactive environment
         if (-not [Environment]::UserInteractive) {
             return $false
         }
-        
+
         # Check for output redirection
         if ([Console]::IsOutputRedirected -or [Console]::IsInputRedirected) {
             return $false
         }
-        
+
         return $true
     } catch {
         return $false
@@ -99,16 +99,16 @@ function Show-EnhancedMenu {
         [array]$Actions,
         [switch]$ReturnAction
     )
-    
+
     $selectedIndex = 0
     $done = $false
-    
+
     while (-not $done) {
         Clear-Host
-        
+
         # Draw enhanced menu
         Write-Host "┌─ $Title ─────────────────────────────────────┐" -ForegroundColor Cyan
-        
+
         for ($i = 0; $i -lt $DisplayOptions.Count; $i++) {
             if ($i -eq $selectedIndex) {
                 Write-Host "│ " -NoNewline -ForegroundColor Cyan
@@ -121,14 +121,14 @@ function Show-EnhancedMenu {
                 Write-Host " │" -ForegroundColor Cyan
             }
         }
-        
+
         Write-Host "└─────────────────────────────────────────────┘" -ForegroundColor Cyan
         Write-Host ""
         Write-Host "[↑↓] Navigate  [Enter] Select  [Esc] Cancel" -ForegroundColor DarkGray
-        
+
         # Get user input
         $key = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-        
+
         switch ($key.VirtualKeyCode) {
             38 { # Up arrow
                 $selectedIndex = ($selectedIndex - 1 + $DisplayOptions.Count) % $DisplayOptions.Count
@@ -144,7 +144,7 @@ function Show-EnhancedMenu {
             }
         }
     }
-    
+
     if ($ReturnAction) {
         return $Actions[$selectedIndex]
     } else {
@@ -163,28 +163,28 @@ function Show-ClassicMenu {
         [array]$Actions,
         [switch]$ReturnAction
     )
-    
+
     do {
         Clear-Host
-        
+
         # Draw classic menu
-        Write-Host "" 
+        Write-Host ""
         Write-Host "=== $Title ===" -ForegroundColor Cyan
         Write-Host ""
-        
+
         for ($i = 0; $i -lt $DisplayOptions.Count; $i++) {
             Write-Host "$($i + 1). $($DisplayOptions[$i])" -ForegroundColor White
         }
-        
+
         Write-Host ""
         Write-Host "Enter your choice (1-$($DisplayOptions.Count), 0 to cancel): " -NoNewline -ForegroundColor Yellow
-        
+
         $input = Read-Host
-        
+
         if ($input -eq '0' -or $input -eq '') {
             return $null
         }
-        
+
         if ($input -match '^\d+$') {
             $selection = [int]$input - 1
             if ($selection -ge 0 -and $selection -lt $DisplayOptions.Count) {
@@ -195,10 +195,10 @@ function Show-ClassicMenu {
                 }
             }
         }
-        
+
         Write-Host "Invalid selection. Press any key to try again..." -ForegroundColor Red
         $null = Read-Host
-        
+
     } while ($true)
 }
 
@@ -216,11 +216,11 @@ function Confirm-Action {
         [Parameter(Mandatory)]
         [string]$Message
     )
-    
+
     Write-Host ""
     Write-Host $Message -ForegroundColor Yellow
     Write-Host "[Y]es  [N]o : " -NoNewline -ForegroundColor Cyan
-    
+
     $response = Read-Host
     return $response -match '^[Yy]'
 }

@@ -15,12 +15,12 @@ Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
 
 Invoke-LabStep -Config $Config -Body {
     Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
-    
+
     if ($Config.Install7Zip -eq $true) {
         if (-not (Get-Command 7z.exe -ErrorAction SilentlyContinue)) {
             Write-CustomLog "Installing 7-Zip..."
             $url = 'https://www.7-zip.org/a/7z2301-x64.exe'
-            
+
             Invoke-LabDownload -Uri $url -Prefix '7zip' -Extension '.exe' -Action {
                 param($installer)
                 if ($PSCmdlet.ShouldProcess($installer, 'Install 7-Zip')) {
@@ -37,4 +37,3 @@ Invoke-LabStep -Config $Config -Body {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-

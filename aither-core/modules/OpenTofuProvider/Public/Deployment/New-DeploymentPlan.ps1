@@ -37,24 +37,24 @@ function New-DeploymentPlan {
     param(
         [Parameter(Mandatory, ValueFromPipeline)]
         [PSCustomObject]$Configuration,
-        
+
         [Parameter()]
         [switch]$DryRun,
-        
+
         [Parameter()]
         [switch]$SkipPreChecks,
-        
+
         [Parameter()]
         [string[]]$CustomStages,
-        
+
         [Parameter()]
         [ValidateRange(1, 100)]
         [int]$ParallelThreshold = 5
     )
-    
+
     begin {
         Write-CustomLog -Level 'INFO' -Message "Creating deployment plan"
-        
+
         # Define default deployment stages
         $script:defaultStages = @(
             @{
@@ -94,7 +94,7 @@ function New-DeploymentPlan {
             }
         )
     }
-    
+
     process {
         try {
             # Initialize deployment plan
@@ -119,7 +119,7 @@ function New-DeploymentPlan {
                     TemplateVersion = $Configuration.template.version
                 }
             }
-            
+
             # Step 1: Determine stages to include
             $stagesToInclude = if ($CustomStages) {
                 Write-CustomLog -Level 'INFO' -Message "Using custom stages: $($CustomStages -join ', ')"
@@ -130,7 +130,7 @@ function New-DeploymentPlan {
             } else {
                 $script:defaultStages
             }
-            
+
             # Step 2: Build stage definitions
             foreach ($stageDefinition in $stagesToInclude) {
                 $stage = @{
@@ -147,7 +147,7 @@ function New-DeploymentPlan {
                         DelaySeconds = 30
                     }
                 }
-                
+
                 # Build actions for stage
                 foreach ($actionName in $stageDefinition.Actions) {
                     $action = Build-StageAction -ActionName $actionName -Configuration $Configuration -Stage $stageDefinition.Name
@@ -155,13 +155,13 @@ function New-DeploymentPlan {
                         $stage.Actions += $action
                     }
                 }
-                
+
                 # Set stage-specific properties
                 switch ($stage.Name) {
                     'Prepare' {
                         $stage.Prerequisites = @()
                         $stage.EstimatedDuration = [TimeSpan]::FromMinutes(10)
-                        
+
                         # Add ISO requirements
                         if ($Configuration.iso_requirements) {
                             foreach ($iso in $Configuration.iso_requirements) {
@@ -174,11 +174,11 @@ function New-DeploymentPlan {
                             }
                         }
                     }
-                    
+
                     'Validate' {
                         $stage.Prerequisites = @('Prepare')
                         $stage.EstimatedDuration = [TimeSpan]::FromMinutes(5)
-                        
+
                         # Check for required modules
                         if ($Configuration.dependencies) {
                             foreach ($dep in $Configuration.dependencies.PSObject.Properties) {
@@ -190,52 +190,52 @@ function New-DeploymentPlan {
                             }
                         }
                     }
-                    
+
                     'Plan' {
                         $stage.Prerequisites = @('Validate')
                         $stage.EstimatedDuration = [TimeSpan]::FromMinutes(15)
                         $stage.RetryPolicy.MaxAttempts = 1  # Don't retry planning
                     }
-                    
+
                     'Apply' {
                         $stage.Prerequisites = @('Plan')
                         $stage.EstimatedDuration = [TimeSpan]::FromMinutes(30)
-                        
+
                         # Check if parallel execution is beneficial
                         $resourceCount = 0
                         if ($Configuration.infrastructure) {
                             $resourceCount = ($Configuration.infrastructure.PSObject.Properties | Measure-Object).Count
                         }
-                        
+
                         if ($resourceCount -ge $ParallelThreshold) {
                             $stage.CanRunParallel = $true
                             $deploymentPlan.ParallelExecution = $true
                             Write-CustomLog -Level 'INFO' -Message "Enabling parallel execution for $resourceCount resources"
                         }
                     }
-                    
+
                     'Verify' {
                         $stage.Prerequisites = @('Apply')
                         $stage.EstimatedDuration = [TimeSpan]::FromMinutes(10)
                         $stage.Required = $false  # Optional verification
                     }
                 }
-                
+
                 $deploymentPlan.Stages[$stage.Name] = $stage
             }
-            
+
             # Step 3: Build dependency graph
             foreach ($stageName in $deploymentPlan.Stages.Keys) {
                 $stage = $deploymentPlan.Stages[$stageName]
                 $deploymentPlan.Dependencies[$stageName] = $stage.Prerequisites
             }
-            
+
             # Step 4: Analyze resources
             if ($Configuration.infrastructure) {
                 foreach ($resourceProp in $Configuration.infrastructure.PSObject.Properties) {
                     $resourceType = $resourceProp.Name
                     $resourceConfig = $resourceProp.Value
-                    
+
                     $resourceAnalysis = @{
                         Type = $resourceType
                         Count = 1
@@ -243,23 +243,23 @@ function New-DeploymentPlan {
                         EstimatedCost = 0
                         Dependencies = @()
                     }
-                    
+
                     # Handle arrays of resources
                     if ($resourceConfig -is [array]) {
                         $resourceAnalysis.Count = $resourceConfig.Count
                     } elseif ($resourceConfig.count) {
                         $resourceAnalysis.Count = $resourceConfig.count
                     }
-                    
+
                     # Analyze dependencies
                     if ($resourceConfig.depends_on) {
                         $resourceAnalysis.Dependencies = @($resourceConfig.depends_on)
                     }
-                    
+
                     $deploymentPlan.Resources[$resourceType] = $resourceAnalysis
                 }
             }
-            
+
             # Step 5: Calculate total estimated duration
             $totalMinutes = 0
             foreach ($stage in $deploymentPlan.Stages.Values) {
@@ -268,33 +268,33 @@ function New-DeploymentPlan {
                 }
             }
             $deploymentPlan.EstimatedDuration = [TimeSpan]::FromMinutes($totalMinutes)
-            
+
             # Step 6: Validate plan
             if (-not $SkipPreChecks) {
                 Write-CustomLog -Level 'INFO' -Message "Validating deployment plan"
-                
+
                 # Check for circular dependencies
                 $circularDeps = Test-CircularDependencies -Dependencies $deploymentPlan.Dependencies
                 if ($circularDeps) {
                     $deploymentPlan.ValidationErrors += "Circular dependency detected: $circularDeps"
                 }
-                
+
                 # Validate required fields
                 if (-not $Configuration.repository -or -not $Configuration.repository.name) {
                     $deploymentPlan.ValidationErrors += "Repository name is required"
                 }
-                
+
                 if (-not $Configuration.template -or -not $Configuration.template.name) {
                     $deploymentPlan.ValidationErrors += "Template name is required"
                 }
-                
+
                 # Validate ISO requirements
                 foreach ($iso in $deploymentPlan.RequiredISOs) {
                     if (-not $iso.Type) {
                         $deploymentPlan.ValidationErrors += "ISO type not specified for: $($iso.Name)"
                     }
                 }
-                
+
                 # Check deployment variables
                 if ($Configuration.variables) {
                     foreach ($varProp in $Configuration.variables.PSObject.Properties) {
@@ -304,10 +304,10 @@ function New-DeploymentPlan {
                     }
                 }
             }
-            
+
             # Set validation status
             $deploymentPlan.IsValid = $deploymentPlan.ValidationErrors.Count -eq 0
-            
+
             # Generate summary
             if ($deploymentPlan.IsValid) {
                 Write-CustomLog -Level 'SUCCESS' -Message "Deployment plan created successfully"
@@ -318,9 +318,9 @@ function New-DeploymentPlan {
                     Write-CustomLog -Level 'ERROR' -Message "  - $error"
                 }
             }
-            
+
             return [PSCustomObject]$deploymentPlan
-            
+
         } catch {
             Write-CustomLog -Level 'ERROR' -Message "Failed to create deployment plan: $($_.Exception.Message)"
             throw
@@ -334,7 +334,7 @@ function Build-StageAction {
         [PSCustomObject]$Configuration,
         [string]$Stage
     )
-    
+
     $action = @{
         Name = $ActionName
         Type = 'PowerShell'  # Default type
@@ -343,7 +343,7 @@ function Build-StageAction {
         Timeout = [TimeSpan]::FromMinutes(5)
         ContinueOnError = $false
     }
-    
+
     # Define action implementations
     switch ($ActionName) {
         'ValidateConfig' {
@@ -354,7 +354,7 @@ function Build-StageAction {
             }
             $action.Parameters.Config = $Configuration
         }
-        
+
         'SyncRepository' {
             $action.Script = {
                 param($RepoName, $RepoUrl)
@@ -364,7 +364,7 @@ function Build-StageAction {
             $action.Parameters.RepoUrl = $Configuration.repository.url
             $action.Timeout = [TimeSpan]::FromMinutes(10)
         }
-        
+
         'PrepareISOs' {
             $action.Script = {
                 param($ISORequirements)
@@ -375,7 +375,7 @@ function Build-StageAction {
             }
             $action.Parameters.ISORequirements = $Configuration.iso_requirements
         }
-        
+
         'ValidateTemplate' {
             $action.Script = {
                 param($Template, $Variables)
@@ -385,7 +385,7 @@ function Build-StageAction {
             $action.Parameters.Template = $Configuration.template
             $action.Parameters.Variables = $Configuration.variables
         }
-        
+
         'GeneratePlan' {
             $action.Type = 'OpenTofu'
             $action.Script = {
@@ -395,7 +395,7 @@ function Build-StageAction {
             }
             $action.Timeout = [TimeSpan]::FromMinutes(15)
         }
-        
+
         'ApplyInfrastructure' {
             $action.Type = 'OpenTofu'
             $action.Script = {
@@ -405,7 +405,7 @@ function Build-StageAction {
             }
             $action.Timeout = [TimeSpan]::FromMinutes(30)
         }
-        
+
         'TestFunctionality' {
             $action.Script = {
                 param($Resources)
@@ -414,41 +414,41 @@ function Build-StageAction {
             }
             $action.ContinueOnError = $true  # Don't fail deployment on test failures
         }
-        
+
         default {
             # Return null for unknown actions
             return $null
         }
     }
-    
+
     return $action
 }
 
 function Test-CircularDependencies {
     param([hashtable]$Dependencies)
-    
+
     # Simple circular dependency check
     foreach ($node in $Dependencies.Keys) {
         $visited = @($node)
         $queue = [System.Collections.Queue]::new()
-        
+
         foreach ($dep in $Dependencies[$node]) {
             $queue.Enqueue($dep)
         }
-        
+
         while ($queue.Count -gt 0) {
             $current = $queue.Dequeue()
-            
+
             if ($current -eq $node) {
                 return "$node -> ... -> $current"
             }
-            
+
             if ($visited -contains $current) {
                 continue
             }
-            
+
             $visited += $current
-            
+
             if ($Dependencies.ContainsKey($current)) {
                 foreach ($dep in $Dependencies[$current]) {
                     $queue.Enqueue($dep)
@@ -456,31 +456,31 @@ function Test-CircularDependencies {
             }
         }
     }
-    
+
     return $null
 }
 
 function Write-DeploymentPlanSummary {
     param([PSCustomObject]$Plan)
-    
+
     Write-Host "`n=== DEPLOYMENT PLAN SUMMARY ===" -ForegroundColor Cyan
     Write-Host "Plan ID: $($Plan.Id)"
     Write-Host "Repository: $($Plan.Metadata.RepositoryName) (v$($Plan.Metadata.RepositoryVersion))"
     Write-Host "Template: $($Plan.Metadata.TemplateName) (v$($Plan.Metadata.TemplateVersion))"
-    
+
     Write-Host "`nStages ($($Plan.Stages.Count)):" -ForegroundColor Yellow
     foreach ($stage in $Plan.Stages.Values | Sort-Object Order) {
         $req = if ($stage.Required) { "[Required]" } else { "[Optional]" }
         Write-Host "  $($stage.Order). $($stage.Name) $req - $($stage.Actions.Count) actions"
     }
-    
+
     if ($Plan.Resources.Count -gt 0) {
         Write-Host "`nResources:" -ForegroundColor Yellow
         foreach ($resource in $Plan.Resources.Values) {
             Write-Host "  - $($resource.Type): $($resource.Count) instance(s)"
         }
     }
-    
+
     if ($Plan.RequiredISOs.Count -gt 0) {
         Write-Host "`nRequired ISOs:" -ForegroundColor Yellow
         foreach ($iso in $Plan.RequiredISOs) {
@@ -488,30 +488,30 @@ function Write-DeploymentPlanSummary {
             Write-Host "  - $($iso.Name): $($iso.Type)$custom"
         }
     }
-    
+
     Write-Host "`nEstimated Duration: $([Math]::Round($Plan.EstimatedDuration.TotalMinutes, 0)) minutes" -ForegroundColor Green
-    
+
     if ($Plan.ParallelExecution) {
         Write-Host "Parallel Execution: Enabled" -ForegroundColor Green
     }
-    
+
     Write-Host "==============================`n" -ForegroundColor Cyan
 }
 
 function Test-DeploymentConfiguration {
     param([PSCustomObject]$Configuration)
-    
+
     # Basic configuration validation
     $isValid = $true
-    
+
     if (-not $Configuration) {
         throw "Configuration is null"
     }
-    
+
     if (-not $Configuration.version) {
         Write-CustomLog -Level 'WARN' -Message "Configuration version not specified"
     }
-    
+
     return $isValid
 }
 
@@ -520,14 +520,14 @@ function Test-TemplateSyntax {
         [PSCustomObject]$Template,
         [PSCustomObject]$Variables
     )
-    
+
     # Basic template syntax validation
     return $true
 }
 
 function Test-DeployedResources {
     param([PSCustomObject]$Resources)
-    
+
     # Basic resource validation
     return $true
 }

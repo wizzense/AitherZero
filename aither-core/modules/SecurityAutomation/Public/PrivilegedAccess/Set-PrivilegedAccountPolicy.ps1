@@ -2,154 +2,154 @@ function Set-PrivilegedAccountPolicy {
     <#
     .SYNOPSIS
         Configures Privileged Account Management (PAM) policies and security controls.
-        
+
     .DESCRIPTION
         Implements enterprise-grade privileged account security policies including
         password complexity, account lockout, audit settings, and access restrictions
         for administrative and service accounts.
-        
+
     .PARAMETER PolicyScope
         Scope of policy application: Domain, OU, or Local
-        
+
     .PARAMETER TargetOU
         Target Organizational Unit for OU-scoped policies
-        
+
     .PARAMETER PolicyType
         Type of privileged account policy to configure
-        
+
     .PARAMETER PasswordComplexity
         Password complexity requirements for privileged accounts
-        
+
     .PARAMETER PasswordLength
         Minimum password length for privileged accounts
-        
+
     .PARAMETER PasswordAge
         Maximum password age in days
-        
+
     .PARAMETER AccountLockout
         Account lockout policy settings
-        
+
     .PARAMETER LogonRestrictions
         Logon time and workstation restrictions
-        
+
     .PARAMETER AuditSettings
         Audit policy settings for privileged accounts
-        
+
     .PARAMETER RequireSmartCard
         Require smart card authentication for privileged accounts
-        
+
     .PARAMETER DenyNetworkLogon
         Deny network logon for privileged accounts
-        
+
     .PARAMETER DenyBatchLogon
         Deny batch logon for privileged accounts
-        
+
     .PARAMETER DenyServiceLogon
         Deny service logon for privileged accounts
-        
+
     .PARAMETER EnablePAW
         Enable Privileged Access Workstation restrictions
-        
+
     .PARAMETER PAWComputerGroup
         Active Directory group containing PAW computers
-        
+
     .PARAMETER TestMode
         Show what would be configured without making changes
-        
+
     .PARAMETER ReportPath
         Path to save policy configuration report
-        
+
     .PARAMETER BackupSettings
         Create backup of current settings before changes
-        
+
     .EXAMPLE
         Set-PrivilegedAccountPolicy -PolicyType 'DomainAdmins' -RequireSmartCard -EnablePAW
-        
+
     .EXAMPLE
         Set-PrivilegedAccountPolicy -PolicyScope 'OU' -TargetOU 'OU=Privileged,DC=domain,DC=com' -PasswordLength 15
-        
+
     .EXAMPLE
         Set-PrivilegedAccountPolicy -PolicyType 'ServiceAccounts' -DenyNetworkLogon -DenyBatchLogon
     #>
-    
+
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter()]
         [ValidateSet('Domain', 'OU', 'Local')]
         [string]$PolicyScope = 'Domain',
-        
+
         [Parameter()]
         [string]$TargetOU,
-        
+
         [Parameter()]
         [ValidateSet('DomainAdmins', 'EnterpriseAdmins', 'SchemaAdmins', 'ServiceAccounts', 'PAMAccounts', 'Custom')]
         [string]$PolicyType = 'DomainAdmins',
-        
+
         [Parameter()]
         [hashtable]$PasswordComplexity = @{},
-        
+
         [Parameter()]
         [ValidateRange(8, 127)]
         [int]$PasswordLength = 15,
-        
+
         [Parameter()]
         [ValidateRange(1, 999)]
         [int]$PasswordAge = 90,
-        
+
         [Parameter()]
         [hashtable]$AccountLockout = @{},
-        
+
         [Parameter()]
         [hashtable]$LogonRestrictions = @{},
-        
+
         [Parameter()]
         [hashtable]$AuditSettings = @{},
-        
+
         [Parameter()]
         [switch]$RequireSmartCard,
-        
+
         [Parameter()]
         [switch]$DenyNetworkLogon,
-        
+
         [Parameter()]
         [switch]$DenyBatchLogon,
-        
+
         [Parameter()]
         [switch]$DenyServiceLogon,
-        
+
         [Parameter()]
         [switch]$EnablePAW,
-        
+
         [Parameter()]
         [string]$PAWComputerGroup = 'PAW-Computers',
-        
+
         [Parameter()]
         [switch]$TestMode,
-        
+
         [Parameter()]
         [string]$ReportPath,
-        
+
         [Parameter()]
         [switch]$BackupSettings
     )
-    
+
     begin {
         Write-CustomLog -Level 'INFO' -Message "Configuring privileged account policy: $PolicyType"
-        
+
         # Check if running as Administrator and in domain environment
         $CurrentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
         $Principal = New-Object Security.Principal.WindowsPrincipal($CurrentUser)
         if (-not $Principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
             throw "This function requires Administrator privileges"
         }
-        
+
         # Import Active Directory module if available
         try {
             Import-Module ActiveDirectory -ErrorAction Stop
         } catch {
             Write-CustomLog -Level 'WARNING' -Message "Active Directory module not available - some features may be limited"
         }
-        
+
         # Define policy templates
         $PolicyTemplates = @{
             'DomainAdmins' = @{
@@ -201,7 +201,7 @@ function Set-PrivilegedAccountPolicy {
                 AuditLevel = 'Maximum'
             }
         }
-        
+
         $PAMResults = @{
             PolicyType = $PolicyType
             PolicyScope = $PolicyScope
@@ -213,13 +213,13 @@ function Set-PrivilegedAccountPolicy {
             Recommendations = @()
         }
     }
-    
+
     process {
         try {
             # Get policy template or use custom settings
             $PolicyConfig = if ($PolicyType -ne 'Custom') {
                 $PolicyTemplates[$PolicyType].Clone()
-                
+
                 # Override template with explicit parameters
                 if ($PSBoundParameters.ContainsKey('PasswordLength')) {
                     $PolicyConfig.PasswordLength = $PasswordLength
@@ -242,7 +242,7 @@ function Set-PrivilegedAccountPolicy {
                 if ($PSBoundParameters.ContainsKey('EnablePAW')) {
                     $PolicyConfig.EnablePAW = $EnablePAW.IsPresent
                 }
-                
+
                 $PolicyConfig
             } else {
                 # Custom policy from parameters
@@ -257,13 +257,13 @@ function Set-PrivilegedAccountPolicy {
                     EnablePAW = $EnablePAW.IsPresent
                 }
             }
-            
+
             Write-CustomLog -Level 'INFO' -Message "Applying policy: $($PolicyConfig.Description)"
-            
+
             # Backup current settings if requested
             if ($BackupSettings) {
                 Write-CustomLog -Level 'INFO' -Message "Creating backup of current policy settings"
-                
+
                 try {
                     $BackupData = @{
                         Timestamp = Get-Date
@@ -272,7 +272,7 @@ function Set-PrivilegedAccountPolicy {
                         GroupPolicies = @{}
                         LocalPolicies = @{}
                     }
-                    
+
                     # Backup domain policies
                     if ($PolicyScope -eq 'Domain') {
                         try {
@@ -281,19 +281,19 @@ function Set-PrivilegedAccountPolicy {
                             Write-CustomLog -Level 'WARNING' -Message "Could not backup domain password policy"
                         }
                     }
-                    
+
                     $BackupFile = "PAM-backup-$(Get-Date -Format 'yyyyMMdd-HHmmss').xml"
                     $BackupData | Export-Clixml -Path $BackupFile -Force
                     Write-CustomLog -Level 'SUCCESS' -Message "Backup saved to: $BackupFile"
-                    
+
                 } catch {
                     Write-CustomLog -Level 'WARNING' -Message "Failed to create complete backup: $($_.Exception.Message)"
                 }
             }
-            
+
             # Configure password policies
             Write-CustomLog -Level 'INFO' -Message "Configuring password policies"
-            
+
             try {
                 switch ($PolicyScope) {
                     'Domain' {
@@ -315,12 +315,12 @@ function Set-PrivilegedAccountPolicy {
                             Write-CustomLog -Level 'INFO' -Message "[TEST] Would update domain password policy"
                         }
                     }
-                    
+
                     'OU' {
                         # Create fine-grained password policy for OU
                         if ($TargetOU) {
                             $PolicyName = "PAM_Policy_$PolicyType"
-                            
+
                             if (-not $TestMode) {
                                 if ($PSCmdlet.ShouldProcess($PolicyName, "Create fine-grained password policy")) {
                                     try {
@@ -331,10 +331,10 @@ function Set-PrivilegedAccountPolicy {
                                             Precedence = 10
                                             ErrorAction = 'Stop'
                                         }
-                                        
+
                                         # Check if policy already exists
                                         $ExistingPolicy = Get-ADFineGrainedPasswordPolicy -Filter "Name -eq '$PolicyName'" -ErrorAction SilentlyContinue
-                                        
+
                                         if ($ExistingPolicy) {
                                             Set-ADFineGrainedPasswordPolicy -Identity $PolicyName @FGPPParams
                                             Write-CustomLog -Level 'SUCCESS' -Message "Updated fine-grained password policy: $PolicyName"
@@ -342,16 +342,16 @@ function Set-PrivilegedAccountPolicy {
                                             New-ADFineGrainedPasswordPolicy @FGPPParams
                                             Write-CustomLog -Level 'SUCCESS' -Message "Created fine-grained password policy: $PolicyName"
                                         }
-                                        
+
                                         # Apply to target OU
                                         $OUUsers = Get-ADUser -SearchBase $TargetOU -Filter * -ErrorAction SilentlyContinue
                                         foreach ($User in $OUUsers) {
                                             Add-ADFineGrainedPasswordPolicySubject -Identity $PolicyName -Subjects $User.SamAccountName -ErrorAction SilentlyContinue
                                         }
-                                        
+
                                         $PAMResults.SettingsChanged++
                                         $PAMResults.PoliciesApplied += "Fine-grained password policy applied to OU: $TargetOU"
-                                        
+
                                     } catch {
                                         $Error = "Failed to configure OU password policy: $($_.Exception.Message)"
                                         $PAMResults.Errors += $Error
@@ -365,7 +365,7 @@ function Set-PrivilegedAccountPolicy {
                             throw "TargetOU parameter required for OU-scoped policies"
                         }
                     }
-                    
+
                     'Local' {
                         # Configure local security policies
                         if (-not $TestMode) {
@@ -381,29 +381,29 @@ MaximumPasswordAge = $($PolicyConfig.PasswordAge)
 PasswordComplexity = 1
 [Privilege Rights]
 "@
-                                    
+
                                     if ($PolicyConfig.DenyNetworkLogon) {
                                         $SecEditConfig += "`r`nSeDenyNetworkLogonRight = *S-1-5-32-544"  # Administrators
                                     }
-                                    
+
                                     if ($PolicyConfig.DenyBatchLogon) {
                                         $SecEditConfig += "`r`nSeDenyBatchLogonRight = *S-1-5-32-544"
                                     }
-                                    
+
                                     if ($PolicyConfig.DenyServiceLogon) {
                                         $SecEditConfig += "`r`nSeDenyServiceLogonRight = *S-1-5-32-544"
                                     }
-                                    
+
                                     $TempFile = [System.IO.Path]::GetTempFileName() + '.inf'
                                     $SecEditConfig | Out-File -FilePath $TempFile -Encoding ASCII
-                                    
+
                                     & secedit /configure /db secedit.sdb /cfg $TempFile /quiet
                                     Remove-Item $TempFile -Force -ErrorAction SilentlyContinue
-                                    
+
                                     $PAMResults.SettingsChanged++
                                     $PAMResults.PoliciesApplied += "Local security policy updated"
                                     Write-CustomLog -Level 'SUCCESS' -Message "Local security policy updated"
-                                    
+
                                 } catch {
                                     $Error = "Failed to update local security policy: $($_.Exception.Message)"
                                     $PAMResults.Errors += $Error
@@ -420,18 +420,18 @@ PasswordComplexity = 1
                 $PAMResults.Errors += $Error
                 Write-CustomLog -Level 'ERROR' -Message $Error
             }
-            
+
             # Configure smart card requirements
             if ($PolicyConfig.RequireSmartCard -and $PolicyType -ne 'Custom' -and $PolicyConfig.Groups) {
                 Write-CustomLog -Level 'INFO' -Message "Configuring smart card requirements"
-                
+
                 foreach ($GroupName in $PolicyConfig.Groups) {
                     try {
                         $Group = Get-ADGroup -Filter "Name -eq '$GroupName'" -ErrorAction SilentlyContinue
-                        
+
                         if ($Group) {
                             $GroupMembers = Get-ADGroupMember -Identity $Group -ErrorAction SilentlyContinue
-                            
+
                             foreach ($Member in $GroupMembers) {
                                 if ($Member.objectClass -eq 'user') {
                                     if (-not $TestMode) {
@@ -449,13 +449,13 @@ PasswordComplexity = 1
                                     }
                                 }
                             }
-                            
+
                             $PAMResults.GroupsProcessed += $GroupName
-                            
+
                         } else {
                             Write-CustomLog -Level 'WARNING' -Message "Group not found: $GroupName"
                         }
-                        
+
                     } catch {
                         $Error = "Failed to process group $GroupName`: $($_.Exception.Message)"
                         $PAMResults.Errors += $Error
@@ -463,15 +463,15 @@ PasswordComplexity = 1
                     }
                 }
             }
-            
+
             # Configure PAW restrictions
             if ($PolicyConfig.EnablePAW) {
                 Write-CustomLog -Level 'INFO' -Message "Configuring Privileged Access Workstation restrictions"
-                
+
                 try {
                     # Check if PAW computer group exists
                     $PAWGroup = Get-ADGroup -Filter "Name -eq '$PAWComputerGroup'" -ErrorAction SilentlyContinue
-                    
+
                     if (-not $PAWGroup) {
                         if (-not $TestMode) {
                             if ($PSCmdlet.ShouldProcess($PAWComputerGroup, "Create PAW computer group")) {
@@ -489,23 +489,23 @@ PasswordComplexity = 1
                             Write-CustomLog -Level 'INFO' -Message "[TEST] Would create PAW computer group: $PAWComputerGroup"
                         }
                     }
-                    
+
                     $PAMResults.PoliciesApplied += "PAW restrictions configured"
-                    
+
                 } catch {
                     $Error = "Failed to configure PAW restrictions: $($_.Exception.Message)"
                     $PAMResults.Errors += $Error
                     Write-CustomLog -Level 'ERROR' -Message $Error
                 }
             }
-            
+
             # Configure audit settings
             if ($AuditSettings.Count -gt 0 -or ($PolicyConfig.AuditLevel -and $PolicyType -ne 'Custom')) {
                 Write-CustomLog -Level 'INFO' -Message "Configuring audit settings"
-                
+
                 try {
                     $AuditLevel = if ($AuditSettings.Count -gt 0) { 'Custom' } else { $PolicyConfig.AuditLevel }
-                    
+
                     $AuditCommands = switch ($AuditLevel) {
                         'High' {
                             @(
@@ -533,7 +533,7 @@ PasswordComplexity = 1
                             $AuditSettings.Values
                         }
                     }
-                    
+
                     if (-not $TestMode) {
                         foreach ($Command in $AuditCommands) {
                             if ($PSCmdlet.ShouldProcess("Audit Policy", $Command)) {
@@ -545,21 +545,21 @@ PasswordComplexity = 1
                                 }
                             }
                         }
-                        
+
                         $PAMResults.PoliciesApplied += "Audit policies configured"
                         Write-CustomLog -Level 'SUCCESS' -Message "Audit policies configured"
-                        
+
                     } else {
                         Write-CustomLog -Level 'INFO' -Message "[TEST] Would configure audit policies"
                     }
-                    
+
                 } catch {
                     $Error = "Failed to configure audit settings: $($_.Exception.Message)"
                     $PAMResults.Errors += $Error
                     Write-CustomLog -Level 'ERROR' -Message $Error
                 }
             }
-            
+
         } catch {
             $Error = "Error configuring privileged account policy: $($_.Exception.Message)"
             $PAMResults.Errors += $Error
@@ -567,27 +567,27 @@ PasswordComplexity = 1
             throw
         }
     }
-    
+
     end {
         Write-CustomLog -Level 'SUCCESS' -Message "Privileged account policy configuration completed"
-        
+
         # Generate recommendations
         $PAMResults.Recommendations += "Regularly review privileged account usage and access patterns"
         $PAMResults.Recommendations += "Implement privileged account discovery and inventory processes"
         $PAMResults.Recommendations += "Monitor for privileged account creation and modification events"
         $PAMResults.Recommendations += "Establish privileged account lifecycle management procedures"
         $PAMResults.Recommendations += "Consider implementing Privileged Identity Management (PIM) solutions"
-        
+
         if ($PolicyConfig.RequireSmartCard) {
             $PAMResults.Recommendations += "Ensure smart card infrastructure is highly available"
             $PAMResults.Recommendations += "Implement smart card backup and recovery procedures"
         }
-        
+
         if ($PolicyConfig.EnablePAW) {
             $PAMResults.Recommendations += "Deploy dedicated Privileged Access Workstations"
             $PAMResults.Recommendations += "Implement PAW network isolation and monitoring"
         }
-        
+
         # Generate report if requested
         if ($ReportPath) {
             try {
@@ -618,55 +618,55 @@ PasswordComplexity = 1
         <p><strong>Settings Changed:</strong> $($PAMResults.SettingsChanged)</p>
         <p><strong>Groups Processed:</strong> $($PAMResults.GroupsProcessed.Count)</p>
     </div>
-    
+
     <div class='section'>
         <h2>Policies Applied</h2>
         <ul>
 "@
-                
+
                 foreach ($Policy in $PAMResults.PoliciesApplied) {
                     $HtmlReport += "<li>$Policy</li>"
                 }
-                
+
                 $HtmlReport += @"
         </ul>
     </div>
-    
+
     <div class='section'>
         <h2>Groups Processed</h2>
         <ul>
 "@
-                
+
                 foreach ($Group in $PAMResults.GroupsProcessed) {
                     $HtmlReport += "<li>$Group</li>"
                 }
-                
+
                 $HtmlReport += @"
         </ul>
     </div>
-    
+
     <div class='section'>
         <h2>Recommendations</h2>
 "@
-                
+
                 foreach ($Rec in $PAMResults.Recommendations) {
                     $HtmlReport += "<div class='recommendation'>$Rec</div>"
                 }
-                
+
                 $HtmlReport += @"
     </div>
 </body>
 </html>
 "@
-                
+
                 $HtmlReport | Out-File -FilePath $ReportPath -Encoding UTF8
                 Write-CustomLog -Level 'SUCCESS' -Message "PAM policy report saved to: $ReportPath"
-                
+
             } catch {
                 Write-CustomLog -Level 'ERROR' -Message "Failed to generate report: $($_.Exception.Message)"
             }
         }
-        
+
         # Display summary
         Write-CustomLog -Level 'INFO' -Message "PAM Policy Summary:"
         Write-CustomLog -Level 'INFO' -Message "  Policy Type: $($PAMResults.PolicyType)"
@@ -674,11 +674,11 @@ PasswordComplexity = 1
         Write-CustomLog -Level 'INFO' -Message "  Settings Changed: $($PAMResults.SettingsChanged)"
         Write-CustomLog -Level 'INFO' -Message "  Groups Processed: $($PAMResults.GroupsProcessed.Count)"
         Write-CustomLog -Level 'INFO' -Message "  Policies Applied: $($PAMResults.PoliciesApplied.Count)"
-        
+
         if ($PAMResults.Errors.Count -gt 0) {
             Write-CustomLog -Level 'WARNING' -Message "  Errors: $($PAMResults.Errors.Count)"
         }
-        
+
         return $PAMResults
     }
 }

@@ -7,19 +7,19 @@
     Copyright = '(c) 2025 Aitherium. All rights reserved.'
     Description = 'Repository synchronization module for managing bidirectional sync between repositories'
     PowerShellVersion = '7.0'
-    
+
     FunctionsToExport = @(
         'Sync-ToAitherLab',
-        'Sync-FromAitherLab', 
+        'Sync-FromAitherLab',
         'Get-SyncStatus'
     )
-    
+
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()
-    
+
     RequiredModules = @()
-    
+
     PrivateData = @{
         PSData = @{
             Tags = @('Git', 'Sync', 'Repository', 'AitherZero')

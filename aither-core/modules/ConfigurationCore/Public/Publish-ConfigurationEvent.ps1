@@ -22,14 +22,14 @@ function Publish-ConfigurationEvent {
     param(
         [Parameter(Mandatory)]
         [string]$EventName,
-        
+
         [Parameter(Mandatory)]
         [hashtable]$EventData,
-        
+
         [Parameter()]
         [string]$SourceModule = "ConfigurationCore"
     )
-    
+
     try {
         # Initialize event system if not already done
         if (-not $script:ConfigurationStore.EventSystem) {
@@ -39,7 +39,7 @@ function Publish-ConfigurationEvent {
                 MaxHistorySize = 1000
             }
         }
-        
+
         # Create event record
         $eventRecord = @{
             EventName = $EventName
@@ -49,15 +49,15 @@ function Publish-ConfigurationEvent {
             Id = [System.Guid]::NewGuid().ToString()
             DeliveryResults = @()
         }
-        
+
         Write-CustomLog -Level 'INFO' -Message "Publishing configuration event '$EventName' from module '$SourceModule'"
-        
+
         # Get subscribers for this event
         $subscribers = $script:ConfigurationStore.EventSystem.Subscriptions[$EventName]
-        
+
         if ($subscribers -and $subscribers.Count -gt 0) {
             Write-CustomLog -Level 'INFO' -Message "Delivering event to $($subscribers.Count) subscribers"
-            
+
             foreach ($subscription in $subscribers) {
                 try {
                     # Check if event matches filter
@@ -70,14 +70,14 @@ function Publish-ConfigurationEvent {
                             }
                         }
                     }
-                    
+
                     if ($shouldDeliver) {
                         # Execute subscription action
                         $deliveryStart = Get-Date
                         & $subscription.Action $EventData
                         $deliveryEnd = Get-Date
                         $duration = ($deliveryEnd - $deliveryStart).TotalMilliseconds
-                        
+
                         $eventRecord.DeliveryResults += @{
                             SubscriptionId = $subscription.Id
                             ModuleName = $subscription.ModuleName
@@ -85,7 +85,7 @@ function Publish-ConfigurationEvent {
                             Duration = $duration
                             DeliveredAt = $deliveryEnd
                         }
-                        
+
                         Write-CustomLog -Level 'DEBUG' -Message "Event delivered to module '$($subscription.ModuleName)' in ${duration}ms"
                     } else {
                         $eventRecord.DeliveryResults += @{
@@ -95,10 +95,10 @@ function Publish-ConfigurationEvent {
                             Reason = "Filtered out"
                             DeliveredAt = Get-Date
                         }
-                        
+
                         Write-CustomLog -Level 'DEBUG' -Message "Event filtered out for module '$($subscription.ModuleName)'"
                     }
-                    
+
                 } catch {
                     $eventRecord.DeliveryResults += @{
                         SubscriptionId = $subscription.Id
@@ -107,27 +107,27 @@ function Publish-ConfigurationEvent {
                         Error = $_.Exception.Message
                         DeliveredAt = Get-Date
                     }
-                    
+
                     Write-CustomLog -Level 'WARNING' -Message "Failed to deliver event to module '$($subscription.ModuleName)': $_"
                 }
             }
         } else {
             Write-CustomLog -Level 'DEBUG' -Message "No subscribers found for event '$EventName'"
         }
-        
+
         # Add to event history
         $script:ConfigurationStore.EventSystem.EventHistory += $eventRecord
-        
+
         # Trim history if too large
         if ($script:ConfigurationStore.EventSystem.EventHistory.Count -gt $script:ConfigurationStore.EventSystem.MaxHistorySize) {
-            $script:ConfigurationStore.EventSystem.EventHistory = $script:ConfigurationStore.EventSystem.EventHistory | 
+            $script:ConfigurationStore.EventSystem.EventHistory = $script:ConfigurationStore.EventSystem.EventHistory |
                 Select-Object -Last $script:ConfigurationStore.EventSystem.MaxHistorySize
         }
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "Configuration event '$EventName' published successfully"
-        
+
         return $eventRecord.Id
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to publish configuration event: $_"
         throw

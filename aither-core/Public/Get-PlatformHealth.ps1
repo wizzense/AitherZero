@@ -13,7 +13,7 @@
 
 .EXAMPLE
     Get-PlatformHealth
-    
+
 .EXAMPLE
     Get-PlatformHealth -Quick
 
@@ -27,7 +27,7 @@ function Get-PlatformHealth {
         [Parameter()]
         [switch]$Quick
     )
-    
+
     process {
         try {
             $health = @{
@@ -46,13 +46,13 @@ function Get-PlatformHealth {
                     Integration = @{ Status = "Unknown"; Score = 0; Issues = @() }
                 }
             }
-            
+
             # 1. Core system health
             Write-CustomLog -Message "Checking core system health..." -Level "DEBUG"
             try {
                 $coreHealth = Test-CoreApplicationHealth
                 $health.Checks["CoreApplicationHealth"] = $coreHealth
-                
+
                 if ($coreHealth) {
                     $health.Categories.Core.Status = "Healthy"
                     $health.Categories.Core.Score = 100
@@ -70,17 +70,17 @@ function Get-PlatformHealth {
                 $health.Issues += "Core health check error: $($_.Exception.Message)"
                 $health.Score -= 40
             }
-            
+
             # 2. Required modules health
             Write-CustomLog -Message "Checking required modules..." -Level "DEBUG"
             $requiredModules = $script:CoreModules | Where-Object { $_.Required }
             $requiredLoaded = 0
             $moduleIssues = @()
-            
+
             foreach ($module in $requiredModules) {
                 $isLoaded = $script:LoadedModules.ContainsKey($module.Name)
                 $health.Checks["Module_$($module.Name)"] = $isLoaded
-                
+
                 if ($isLoaded) {
                     $requiredLoaded++
                 } else {
@@ -88,7 +88,7 @@ function Get-PlatformHealth {
                     $health.Issues += "Required module '$($module.Name)' is not loaded"
                 }
             }
-            
+
             if ($requiredLoaded -eq $requiredModules.Count) {
                 $health.Categories.Modules.Status = "Healthy"
                 $health.Categories.Modules.Score = 100
@@ -101,16 +101,16 @@ function Get-PlatformHealth {
                 $health.Categories.Modules.Score = 30
                 $health.Score -= 30
             }
-            
+
             $health.Categories.Modules.Issues = $moduleIssues
-            
+
             # 3. Configuration system health
             Write-CustomLog -Message "Checking configuration system..." -Level "DEBUG"
             try {
                 if (Get-Module ConfigurationCore -ErrorAction SilentlyContinue) {
                     $configHealth = Test-ConfigurationCore
                     $health.Checks["ConfigurationCore"] = $configHealth
-                    
+
                     if ($configHealth) {
                         $health.Categories.Configuration.Status = "Healthy"
                         $health.Categories.Configuration.Score = 100
@@ -135,14 +135,14 @@ function Get-PlatformHealth {
                 $health.Issues += "Configuration health check error: $($_.Exception.Message)"
                 $health.Score -= 15
             }
-            
+
             # 4. Communication system health
             Write-CustomLog -Message "Checking communication system..." -Level "DEBUG"
             try {
                 if (Get-Module ModuleCommunication -ErrorAction SilentlyContinue) {
                     $commHealth = Test-ModuleCommunication
                     $health.Checks["ModuleCommunication"] = $commHealth
-                    
+
                     if ($commHealth) {
                         $health.Categories.Communication.Status = "Healthy"
                         $health.Categories.Communication.Score = 100
@@ -167,13 +167,13 @@ function Get-PlatformHealth {
                 $health.Issues += "Communication health check error: $($_.Exception.Message)"
                 $health.Score -= 15
             }
-            
+
             # 5. Integration health (only if not Quick mode)
             if (-not $Quick) {
                 Write-CustomLog -Message "Checking integration health..." -Level "DEBUG"
                 $integrationScore = 0
                 $integrationChecks = 0
-                
+
                 # Check key integrations
                 $keyIntegrations = @{
                     "ConfigurationIntegration" = @('ConfigurationCore', 'ConfigurationCarousel')
@@ -181,24 +181,24 @@ function Get-PlatformHealth {
                     "DevelopmentIntegration" = @('PatchManager', 'TestingFramework')
                     "ISOWorkflowIntegration" = @('ISOManager')
                 }
-                
+
                 foreach ($integration in $keyIntegrations.GetEnumerator()) {
                     $integrationChecks++
                     $allModulesLoaded = $true
-                    
+
                     foreach ($moduleName in $integration.Value) {
                         if (-not $script:LoadedModules.ContainsKey($moduleName)) {
                             $allModulesLoaded = $false
                             break
                         }
                     }
-                    
+
                     $health.Checks[$integration.Key] = $allModulesLoaded
                     if ($allModulesLoaded) {
                         $integrationScore += 25
                     }
                 }
-                
+
                 $health.Categories.Integration.Score = $integrationScore
                 if ($integrationScore -eq 100) {
                     $health.Categories.Integration.Status = "Optimal"
@@ -212,7 +212,7 @@ function Get-PlatformHealth {
                     $health.Categories.Integration.Issues += "Most module integrations not available"
                 }
             }
-            
+
             # 6. Generate overall assessment
             if ($health.Score -ge 90) {
                 $health.Overall = "Excellent"
@@ -230,19 +230,19 @@ function Get-PlatformHealth {
                 $health.Recommendations += "Platform in critical state - immediate attention required"
                 $health.Recommendations += "Reinstall or repair AitherZero platform"
             }
-            
+
             # 7. General recommendations
             if ($health.Issues.Count -gt 0) {
                 $health.Recommendations += "Run 'Initialize-CoreApplication -Force' to reload failed modules"
                 $health.Recommendations += "Check logs for detailed error information"
             }
-            
+
             if ($health.Categories.Modules.Score -lt 100) {
                 $health.Recommendations += "Consider using 'Standard' or 'Full' profile for complete functionality"
             }
-            
+
             return $health
-            
+
         } catch {
             Write-CustomLog -Message "Failed to perform platform health check: $($_.Exception.Message)" -Level "ERROR"
             return @{

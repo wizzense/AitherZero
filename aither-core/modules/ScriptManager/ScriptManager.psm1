@@ -234,10 +234,10 @@ function Test-ModernScript {
     <#
     .SYNOPSIS
         Tests if a script follows modern PowerShell practices
-    
+
     .DESCRIPTION
         Validates that a script uses modern functions and follows best practices
-    
+
     .PARAMETER ScriptPath
         Path to the script to test
     #>
@@ -246,32 +246,32 @@ function Test-ModernScript {
         [Parameter(Mandatory)]
         [string]$ScriptPath
     )
-    
+
     try {
         if (-not (Test-Path $ScriptPath)) {
             return $false
         }
-        
+
         $content = Get-Content $ScriptPath -Raw -ErrorAction Stop
-        
+
         # Check for modern PowerShell version requirement
         $hasVersionRequirement = $content -match '#Requires -Version [7-9]'
-        
+
         # Check for proper module imports
         $hasModuleImports = $content -match 'Import-Module'
-        
+
         # Check for modern function usage (avoid deprecated patterns)
         $usesModernFunctions = $content -match 'Write-CustomLog|Invoke-ParallelForEach|Start-ParallelExecution'
-        
+
         # Check for deprecated function usage
         $usesDeprecatedFunctions = $content -match 'Invoke-BatchScriptAnalysis|Write-Host.*-NoNewline'
-        
+
         # Check for proper error handling
         $hasErrorHandling = $content -match 'try\s*\{|catch\s*\{'
-        
+
         # Check for parameter validation
         $hasParameterValidation = $content -match '\[Parameter\(|ValidateSet|ValidateRange'
-        
+
         # Calculate score
         $score = 0
         if ($hasVersionRequirement) { $score += 2 }
@@ -280,10 +280,10 @@ function Test-ModernScript {
         if (-not $usesDeprecatedFunctions) { $score += 1 }
         if ($hasErrorHandling) { $score += 1 }
         if ($hasParameterValidation) { $score += 1 }
-        
+
         # Consider modern if score >= 4 out of 8
         return $score -ge 4
-        
+
     } catch {
         Write-CustomLog -Message "Failed to test script: $($_.Exception.Message)" -Level "ERROR"
         return $false

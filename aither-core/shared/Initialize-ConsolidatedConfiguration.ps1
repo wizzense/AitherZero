@@ -24,46 +24,46 @@ function Initialize-ConsolidatedConfiguration {
     param(
         [Parameter()]
         [string]$ConfigFile,
-        
+
         [Parameter()]
         [ValidateSet('dev', 'staging', 'prod')]
         [string]$Environment = 'dev',
-        
+
         [Parameter()]
         [ValidateSet('minimal', 'developer', 'enterprise', 'full', '')]
         [string]$Profile = '',
-        
+
         [Parameter()]
         [switch]$AutoMigrate = $true
     )
-    
+
     # Find project root
     $projectRoot = $env:PROJECT_ROOT
     if (-not $projectRoot) {
         $projectRoot = Find-ProjectRoot -StartPath $PSScriptRoot
     }
-    
+
     Write-Verbose "Initializing consolidated configuration system"
     Write-Verbose "  Project Root: $projectRoot"
     Write-Verbose "  Environment: $Environment"
     Write-Verbose "  Profile: $Profile"
     Write-Verbose "  Auto Migrate: $AutoMigrate"
-    
+
     try {
         # Check if legacy migration is needed
         if ($AutoMigrate) {
             $migrationResult = Test-LegacyConfigurationMigration -ProjectRoot $projectRoot -ConfigFile $ConfigFile
-            
+
             if ($migrationResult.MigrationNeeded) {
                 Write-Host "🔄 Legacy configurations detected - performing automatic migration..." -ForegroundColor Yellow
-                
+
                 # Load migration script
                 $migrationScript = Join-Path $PSScriptRoot "Invoke-ConfigurationMigration.ps1"
                 . $migrationScript
-                
+
                 # Perform migration
                 $migration = Invoke-ConfigurationMigration -ProjectRoot $projectRoot -BackupLegacy:$true
-                
+
                 if ($migration.Success) {
                     Write-Host "✅ Configuration migration completed successfully" -ForegroundColor Green
                 } else {
@@ -71,19 +71,19 @@ function Initialize-ConsolidatedConfiguration {
                 }
             }
         }
-        
+
         # Load consolidated configuration script
         $configScript = Join-Path $PSScriptRoot "Get-ConsolidatedConfiguration.ps1"
         . $configScript
-        
+
         # Load the consolidated configuration
         $consolidatedConfig = Get-ConsolidatedConfiguration -ConfigPath $ConfigFile -Environment $Environment -Profile $Profile -ValidateSchema
-        
+
         # Convert to legacy-compatible format for backward compatibility
         $legacyConfig = Convert-ConsolidatedToLegacy -ConsolidatedConfig $consolidatedConfig
-        
+
         Write-Verbose "Configuration successfully initialized with consolidated system"
-        
+
         return @{
             # New consolidated format
             Consolidated = $consolidatedConfig
@@ -99,11 +99,11 @@ function Initialize-ConsolidatedConfiguration {
                 ProjectRoot = $projectRoot
             }
         }
-        
+
     } catch {
         Write-Warning "Failed to initialize consolidated configuration: $($_.Exception.Message)"
         Write-Verbose "Falling back to legacy configuration loading"
-        
+
         # Fallback to legacy configuration loading
         return Initialize-LegacyConfigurationFallback -ConfigFile $ConfigFile -ProjectRoot $projectRoot
     }
@@ -115,30 +115,30 @@ function Test-LegacyConfigurationMigration {
         [string]$ProjectRoot,
         [string]$ConfigFile
     )
-    
+
     $migrationNeeded = $false
     $reasons = @()
-    
+
     # Check for legacy core configurations
     $legacyCoreConfig = Join-Path $ProjectRoot "aither-core" "default-config.json"
     if (Test-Path $legacyCoreConfig) {
         $migrationNeeded = $true
         $reasons += "Legacy core configuration found"
     }
-    
+
     # Check for legacy core configs directory
     $legacyCoreConfigsDir = Join-Path $ProjectRoot "aither-core" "configs" "default-config.json"
     if (Test-Path $legacyCoreConfigsDir) {
         $migrationNeeded = $true
         $reasons += "Legacy core configs directory found"
     }
-    
+
     # Check if main config needs structure update
     $mainConfig = Join-Path $ProjectRoot "configs" "default-config.json"
     if (Test-Path $mainConfig) {
         try {
             $content = Get-Content $mainConfig -Raw | ConvertFrom-Json
-            
+
             # Check for flat structure (legacy format)
             if ($content.PSObject.Properties.Name -contains "ComputerName" -and
                 -not ($content.PSObject.Properties.Name -contains "system")) {
@@ -149,7 +149,7 @@ function Test-LegacyConfigurationMigration {
             Write-Verbose "Could not analyze main configuration structure: $_"
         }
     }
-    
+
     return @{
         MigrationNeeded = $migrationNeeded
         Reasons = $reasons
@@ -161,18 +161,18 @@ function Convert-ConsolidatedToLegacy {
     param(
         [hashtable]$ConsolidatedConfig
     )
-    
+
     # Create a flat legacy configuration for backward compatibility
     $legacyConfig = @{}
-    
+
     # Flatten the hierarchical structure to legacy format
     foreach ($section in $ConsolidatedConfig.Keys) {
         if ($section -eq '_metadata') {
             continue
         }
-        
+
         $sectionData = $ConsolidatedConfig[$section]
-        
+
         if ($sectionData -is [hashtable]) {
             foreach ($key in $sectionData.Keys) {
                 $legacyConfig[$key] = $sectionData[$key]
@@ -181,16 +181,16 @@ function Convert-ConsolidatedToLegacy {
             $legacyConfig[$section] = $sectionData
         }
     }
-    
+
     # Add legacy-specific mappings
     if ($ConsolidatedConfig.ContainsKey('certificates')) {
         $legacyConfig['CertificateAuthority'] = $ConsolidatedConfig.certificates
     }
-    
+
     if ($ConsolidatedConfig.ContainsKey('ui')) {
         $legacyConfig['UIPreferences'] = $ConsolidatedConfig.ui
     }
-    
+
     return $legacyConfig
 }
 
@@ -200,9 +200,9 @@ function Initialize-LegacyConfigurationFallback {
         [string]$ConfigFile,
         [string]$ProjectRoot
     )
-    
+
     Write-Verbose "Using legacy configuration fallback"
-    
+
     # Legacy configuration search paths
     $configPaths = @(
         $ConfigFile,
@@ -210,23 +210,23 @@ function Initialize-LegacyConfigurationFallback {
         (Join-Path $ProjectRoot "aither-core" "default-config.json"),
         (Join-Path $PSScriptRoot ".." "default-config.json")
     ) | Where-Object { $_ -and (Test-Path $_) }
-    
+
     if ($configPaths.Count -eq 0) {
         throw "No configuration file found in legacy fallback mode"
     }
-    
+
     $configPath = $configPaths[0]
     Write-Verbose "Loading legacy configuration from: $configPath"
-    
+
     try {
         $configContent = Get-Content $configPath -Raw | ConvertFrom-Json
-        
+
         # Convert to hashtable for compatibility
         $legacyConfig = @{}
         $configContent.PSObject.Properties | ForEach-Object {
             $legacyConfig[$_.Name] = $_.Value
         }
-        
+
         return @{
             Legacy = $legacyConfig
             Consolidated = $null
@@ -238,7 +238,7 @@ function Initialize-LegacyConfigurationFallback {
                 ProjectRoot = $ProjectRoot
             }
         }
-        
+
     } catch {
         throw "Failed to load legacy configuration: $($_.Exception.Message)"
     }
@@ -249,10 +249,10 @@ function Find-ProjectRoot {
     param(
         [string]$StartPath = $PSScriptRoot
     )
-    
+
     $currentPath = $StartPath
     $rootIndicators = @('.git', 'Start-AitherZero.ps1', 'aither-core')
-    
+
     while ($currentPath) {
         foreach ($indicator in $rootIndicators) {
             $testPath = Join-Path $currentPath $indicator
@@ -260,14 +260,14 @@ function Find-ProjectRoot {
                 return $currentPath
             }
         }
-        
+
         $parentPath = Split-Path $currentPath -Parent
         if ($parentPath -eq $currentPath) {
             break
         }
         $currentPath = $parentPath
     }
-    
+
     return $PWD.Path
 }
 
@@ -278,25 +278,25 @@ function Update-CoreScriptConfiguration {
         [string]$CoreScriptPath,
         [switch]$DryRun
     )
-    
+
     if (-not (Test-Path $CoreScriptPath)) {
         throw "Core script not found: $CoreScriptPath"
     }
-    
+
     Write-Host "🔧 Updating core script to use consolidated configuration system..." -ForegroundColor Cyan
-    
+
     if ($DryRun) {
         Write-Host "🔍 DRY RUN - Would update configuration loading in: $CoreScriptPath" -ForegroundColor Yellow
         return @{ Success = $true; DryRun = $true }
     }
-    
+
     # Backup original
     $backupPath = "$CoreScriptPath.config-backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
     Copy-Item $CoreScriptPath $backupPath
-    
+
     # Read current content
     $content = Get-Content $CoreScriptPath -Raw
-    
+
     # Replace legacy configuration loading with new system
     $newConfigLoadingCode = @"
 # Load consolidated configuration system
@@ -311,7 +311,7 @@ if (Test-Path `$consolidatedConfigScript) {
     if (Test-Path `$ConfigFile) {
         Write-CustomLog "Loading configuration from: `$ConfigFile" -Level DEBUG
         `$configObject = Get-Content `$ConfigFile -Raw | ConvertFrom-Json
-        
+
         if (`$configObject -is [PSCustomObject]) {
             `$config = @{}
             `$configObject.PSObject.Properties | ForEach-Object {
@@ -328,17 +328,17 @@ if (Test-Path `$consolidatedConfigScript) {
     }
 }
 "@
-    
+
     # Replace the legacy configuration loading block
     $legacyConfigPattern = '# Load configuration\s*try\s*\{.*?\} catch \{.*?exit 1\s*\}'
     $updatedContent = $content -replace $legacyConfigPattern, $newConfigLoadingCode
-    
+
     # Write updated content
     Set-Content $CoreScriptPath -Value $updatedContent -Encoding UTF8
-    
+
     Write-Host "✅ Core script updated successfully" -ForegroundColor Green
     Write-Host "📦 Backup created at: $backupPath" -ForegroundColor Gray
-    
+
     return @{
         Success = $true
         BackupPath = $backupPath
@@ -357,9 +357,9 @@ function Initialize-AitherZeroConfiguration {
         [switch]$AutoMigrate = $true,
         [switch]$UpdateCoreScript
     )
-    
+
     $result = Initialize-ConsolidatedConfiguration -ConfigFile $ConfigFile -Environment $Environment -Profile $Profile -AutoMigrate:$AutoMigrate
-    
+
     if ($UpdateCoreScript) {
         $coreScriptPath = Join-Path (Find-ProjectRoot) "aither-core" "aither-core.ps1"
         if (Test-Path $coreScriptPath) {
@@ -367,6 +367,6 @@ function Initialize-AitherZeroConfiguration {
             $result.CoreScriptUpdate = $updateResult
         }
     }
-    
+
     return $result
 }

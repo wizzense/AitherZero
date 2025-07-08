@@ -6,13 +6,13 @@ function Search-SystemLogs {
     param(
         [Parameter(Mandatory)]
         [string]$Pattern,
-        
+
         [Parameter()]
         [datetime]$StartTime = (Get-Date).AddHours(-1),
-        
+
         [Parameter()]
         [datetime]$EndTime = (Get-Date),
-        
+
         [Parameter()]
         [string[]]$LogType = @('Application', 'System', 'AitherZero'),
 
@@ -26,32 +26,32 @@ function Search-SystemLogs {
         [Parameter()]
         [switch]$IncludeContext
     )
-    
+
     Write-CustomLog -Message "Searching logs for pattern: $Pattern (MatchType: $MatchType)" -Level "INFO"
-    
+
     $results = @()
     $totalMatches = 0
-    
+
     try {
         # Search AitherZero logs
         if ('AitherZero' -in $LogType) {
             $logPath = Join-Path $script:ProjectRoot "logs"
             if (Test-Path $logPath) {
-                $logFiles = Get-ChildItem -Path $logPath -Filter "*.log" -Recurse | 
+                $logFiles = Get-ChildItem -Path $logPath -Filter "*.log" -Recurse |
                     Where-Object { $_.LastWriteTime -ge $StartTime -and $_.LastWriteTime -le $EndTime }
-                
+
                 foreach ($logFile in $logFiles) {
                     $logContent = Get-Content $logFile.FullName -ErrorAction SilentlyContinue
-                    
+
                     $matchingLines = switch ($MatchType) {
                         'Exact' { $logContent | Where-Object { $_ -eq $Pattern } }
                         'Regex' { $logContent | Where-Object { $_ -match $Pattern } }
                         'Fuzzy' { $logContent | Where-Object { $_ -like "*$Pattern*" } }
                     }
-                    
+
                     foreach ($line in $matchingLines) {
                         if ($totalMatches -ge $MaxResults) { break }
-                        
+
                         $result = @{
                             Timestamp = $logFile.LastWriteTime
                             Source = "AitherZero"
@@ -60,7 +60,7 @@ function Search-SystemLogs {
                             Pattern = $Pattern
                             MatchType = $MatchType
                         }
-                        
+
                         if ($IncludeContext) {
                             $lineNumber = ($logContent | Select-String -Pattern [regex]::Escape($line) | Select-Object -First 1).LineNumber
                             if ($lineNumber) {
@@ -69,14 +69,14 @@ function Search-SystemLogs {
                                 $result.Context = $logContent[$contextStart..$contextEnd]
                             }
                         }
-                        
+
                         $results += $result
                         $totalMatches++
                     }
                 }
             }
         }
-        
+
         # Search system logs (platform-specific)
         if ('System' -in $LogType -or 'Application' -in $LogType) {
             if ($IsWindows) {
@@ -85,9 +85,9 @@ function Search-SystemLogs {
                 $results += Search-LinuxSystemLogs -Pattern $Pattern -StartTime $StartTime -EndTime $EndTime -MatchType $MatchType
             }
         }
-        
+
         Write-CustomLog -Message "Log search completed. Found $totalMatches matches." -Level "INFO"
-        
+
         return @{
             Pattern = $Pattern
             MatchType = $MatchType
@@ -96,7 +96,7 @@ function Search-SystemLogs {
             Results = $results | Sort-Object Timestamp -Descending
             SearchCompleted = Get-Date
         }
-        
+
     } catch {
         Write-CustomLog -Message "Error searching logs: $($_.Exception.Message)" -Level "ERROR"
         throw
@@ -106,9 +106,9 @@ function Search-SystemLogs {
 function Get-MonitoringConfiguration {
     [CmdletBinding()]
     param()
-    
+
     Write-CustomLog -Message "Retrieving monitoring configuration" -Level "DEBUG"
-    
+
     # Return current configuration
     return @{
         AlertThresholds = $script:AlertThresholds
@@ -123,11 +123,11 @@ function Set-MonitoringConfiguration {
     param(
         [Parameter()]
         [hashtable]$AlertThresholds,
-        
+
         [Parameter()]
         [ValidateSet('Basic', 'Standard', 'Comprehensive', 'Custom')]
         [string]$DefaultProfile,
-        
+
         [Parameter()]
         [switch]$PersistConfiguration,
 
@@ -144,9 +144,9 @@ function Set-MonitoringConfiguration {
         [ValidateSet('Aggressive', 'Balanced', 'Conservative')]
         [string]$AlertSensitivity = 'Balanced'
     )
-    
+
     Write-CustomLog -Message "Updating monitoring configuration (Profile: $DefaultProfile, Sensitivity: $AlertSensitivity)" -Level "INFO"
-    
+
     # Update alert thresholds with intelligent adjustments
     if ($AlertThresholds) {
         if ($EnableIntelligentThresholds) {
@@ -155,26 +155,26 @@ function Set-MonitoringConfiguration {
             $script:AlertThresholds = $AlertThresholds
         }
     }
-    
+
     # Configure notification settings
     if ($NotificationSettings) {
         $script:NotificationConfig = $NotificationSettings
     }
-    
+
     # Set retention policy
     $script:RetentionPolicy = @{
         HistoryRetentionDays = $HistoryRetentionDays
         CleanupSchedule = "Daily"
         ArchiveOldData = $true
     }
-    
+
     if ($PersistConfiguration) {
         # Save comprehensive configuration to file
         $configDir = Join-Path $script:ProjectRoot "configs"
         if (-not (Test-Path $configDir)) {
             New-Item -Path $configDir -ItemType Directory -Force | Out-Null
         }
-        
+
         $configPath = Join-Path $configDir "monitoring-config.json"
         $configData = @{
             AlertThresholds = $script:AlertThresholds
@@ -186,11 +186,11 @@ function Set-MonitoringConfiguration {
             LastUpdated = Get-Date
             Version = "2.0"
         }
-        
+
         $configData | ConvertTo-Json -Depth 6 | Out-File -FilePath $configPath -Encoding UTF8
         Write-CustomLog -Message "Configuration saved to: $configPath" -Level "SUCCESS"
     }
-    
+
     return Get-MonitoringConfiguration
 }
 
@@ -199,20 +199,20 @@ function Export-MonitoringData {
     param(
         [Parameter(Mandatory)]
         [string]$OutputPath,
-        
+
         [Parameter()]
         [ValidateSet('JSON', 'CSV', 'XML')]
         [string]$Format = 'JSON',
-        
+
         [Parameter()]
         [datetime]$StartDate,
-        
+
         [Parameter()]
         [datetime]$EndDate
     )
-    
+
     Write-CustomLog -Message "Exporting monitoring data to $OutputPath" -Level "INFO"
-    
+
     # Gather monitoring data
     $exportData = @{
         ExportDate = Get-Date
@@ -220,7 +220,7 @@ function Export-MonitoringData {
         AlertThresholds = $script:AlertThresholds
         PerformanceBaselines = $script:PerformanceBaselines
     }
-    
+
     # Export based on format
     switch ($Format) {
         'JSON' {
@@ -234,7 +234,7 @@ function Export-MonitoringData {
             $exportData | Export-Clixml -Path $OutputPath
         }
     }
-    
+
     Write-CustomLog -Message "Monitoring data exported successfully" -Level "SUCCESS"
     return $true
 }
@@ -244,20 +244,20 @@ function Import-MonitoringData {
     param(
         [Parameter(Mandatory)]
         [string]$InputPath,
-        
+
         [Parameter()]
         [switch]$MergeWithExisting
     )
-    
+
     Write-CustomLog -Message "Importing monitoring data from $InputPath" -Level "INFO"
-    
+
     if (-not (Test-Path $InputPath)) {
         throw "Import file not found: $InputPath"
     }
-    
+
     try {
         $importedData = Get-Content $InputPath | ConvertFrom-Json
-        
+
         if ($MergeWithExisting) {
             # Merge with existing data
             Write-CustomLog -Message "Merging with existing monitoring data" -Level "DEBUG"
@@ -266,10 +266,10 @@ function Import-MonitoringData {
             $script:MonitoringData = $importedData.MonitoringData
             $script:AlertThresholds = $importedData.AlertThresholds
         }
-        
+
         Write-CustomLog -Message "Monitoring data imported successfully" -Level "SUCCESS"
         return $true
-        
+
     } catch {
         Write-CustomLog -Message "Error importing monitoring data: $($_.Exception.Message)" -Level "ERROR"
         throw
@@ -280,44 +280,44 @@ function Import-MonitoringData {
 
 function Optimize-AlertThresholds {
     param($BaseThresholds, $Sensitivity)
-    
+
     $optimizedThresholds = $BaseThresholds.Clone()
-    
+
     # Adjust thresholds based on sensitivity
     $adjustmentFactor = switch ($Sensitivity) {
         'Aggressive' { 0.8 }    # Lower thresholds for more alerts
         'Balanced' { 1.0 }      # Keep original thresholds
         'Conservative' { 1.2 }  # Higher thresholds for fewer alerts
     }
-    
+
     foreach ($metricType in $optimizedThresholds.Keys) {
         foreach ($level in $optimizedThresholds[$metricType].Keys) {
             $originalValue = $optimizedThresholds[$metricType][$level]
             $optimizedThresholds[$metricType][$level] = [Math]::Round($originalValue * $adjustmentFactor, 2)
         }
     }
-    
+
     Write-CustomLog -Message "Alert thresholds optimized for $Sensitivity sensitivity" -Level "DEBUG"
     return $optimizedThresholds
 }
 
 function Search-WindowsEventLogs {
     param($Pattern, $StartTime, $EndTime, $LogType, $MatchType)
-    
+
     $results = @()
-    
+
     try {
         $logNames = @()
         if ('System' -in $LogType) { $logNames += 'System' }
         if ('Application' -in $LogType) { $logNames += 'Application' }
-        
+
         foreach ($logName in $logNames) {
             $events = Get-WinEvent -FilterHashtable @{
                 LogName = $logName
                 StartTime = $StartTime
                 EndTime = $EndTime
             } -ErrorAction SilentlyContinue
-            
+
             foreach ($event in $events) {
                 $eventMessage = $event.Message
                 $match = switch ($MatchType) {
@@ -325,7 +325,7 @@ function Search-WindowsEventLogs {
                     'Regex' { $eventMessage -match $Pattern }
                     'Fuzzy' { $eventMessage -like "*$Pattern*" }
                 }
-                
+
                 if ($match) {
                     $results += @{
                         Timestamp = $event.TimeCreated
@@ -343,28 +343,28 @@ function Search-WindowsEventLogs {
     } catch {
         Write-CustomLog -Message "Error searching Windows event logs: $($_.Exception.Message)" -Level "WARNING"
     }
-    
+
     return $results
 }
 
 function Search-LinuxSystemLogs {
     param($Pattern, $StartTime, $EndTime, $MatchType)
-    
+
     $results = @()
-    
+
     try {
         $logPaths = @('/var/log/syslog', '/var/log/messages', '/var/log/kern.log')
-        
+
         foreach ($logPath in $logPaths) {
             if (Test-Path $logPath) {
                 $logContent = Get-Content $logPath -ErrorAction SilentlyContinue
-                
+
                 $matchingLines = switch ($MatchType) {
                     'Exact' { $logContent | Where-Object { $_ -eq $Pattern } }
                     'Regex' { $logContent | Where-Object { $_ -match $Pattern } }
                     'Fuzzy' { $logContent | Where-Object { $_ -like "*$Pattern*" } }
                 }
-                
+
                 foreach ($line in $matchingLines) {
                     # Extract timestamp from log line (basic parsing)
                     $timestamp = Get-Date  # Fallback to current time
@@ -376,7 +376,7 @@ function Search-LinuxSystemLogs {
                             $timestamp = Get-Date
                         }
                     }
-                    
+
                     if ($timestamp -ge $StartTime -and $timestamp -le $EndTime) {
                         $results += @{
                             Timestamp = $timestamp
@@ -393,7 +393,7 @@ function Search-LinuxSystemLogs {
     } catch {
         Write-CustomLog -Message "Error searching Linux system logs: $($_.Exception.Message)" -Level "WARNING"
     }
-    
+
     return $results
 }
 
@@ -402,16 +402,16 @@ function Enable-PredictiveAlerting {
     param(
         [Parameter()]
         [switch]$EnableMLPredictions,
-        
+
         [Parameter()]
         [int]$PredictionWindowMinutes = 30,
-        
+
         [Parameter()]
         [double]$PredictionConfidenceThreshold = 0.8
     )
-    
+
     Write-CustomLog -Message "Enabling predictive alerting (Window: $PredictionWindowMinutes min, Confidence: $PredictionConfidenceThreshold)" -Level "INFO"
-    
+
     $script:PredictiveConfig = @{
         Enabled = $true
         MLPredictions = $EnableMLPredictions.IsPresent
@@ -419,22 +419,22 @@ function Enable-PredictiveAlerting {
         ConfidenceThreshold = $PredictionConfidenceThreshold
         LastEnabled = Get-Date
     }
-    
+
     # Start predictive monitoring job if not already running
     if (-not $script:PredictiveJob -or $script:PredictiveJob.State -ne 'Running') {
         $script:PredictiveJob = Start-Job -Name "AitherZero-PredictiveMonitoring" -ScriptBlock {
             param($Config, $ModulePath, $ProjectRoot)
-            
+
             # Predictive monitoring logic would go here
             # This is a placeholder for advanced ML-based predictions
-            
+
             while ($true) {
                 try {
                     # Collect historical data
                     # Analyze trends
                     # Generate predictions
                     # Issue predictive alerts
-                    
+
                     Start-Sleep -Seconds 60  # Check every minute
                 } catch {
                     Write-Host "Error in predictive monitoring: $($_.Exception.Message)"
@@ -442,7 +442,7 @@ function Enable-PredictiveAlerting {
             }
         } -ArgumentList $script:PredictiveConfig, $script:ModuleRoot, $script:ProjectRoot
     }
-    
+
     return $script:PredictiveConfig
 }
 
@@ -452,13 +452,13 @@ function Get-MonitoringInsights {
         [Parameter()]
         [ValidateSet('Performance', 'Alerts', 'Trends', 'All')]
         [string]$InsightType = 'All',
-        
+
         [Parameter()]
         [int]$HistoryDays = 7
     )
-    
+
     Write-CustomLog -Message "Generating monitoring insights for: $InsightType" -Level "INFO"
-    
+
     $insights = @{
         GeneratedAt = Get-Date
         InsightType = $InsightType
@@ -468,7 +468,7 @@ function Get-MonitoringInsights {
         Trends = $null
         Recommendations = @()
     }
-    
+
     try {
         # Performance insights
         if ($InsightType -in @('Performance', 'All')) {
@@ -478,7 +478,7 @@ function Get-MonitoringInsights {
                 ResourceBottlenecks = Identify-ResourceBottlenecks -Days $HistoryDays
             }
         }
-        
+
         # Alert insights
         if ($InsightType -in @('Alerts', 'All')) {
             $insights.Alerts = @{
@@ -487,7 +487,7 @@ function Get-MonitoringInsights {
                 AlertResolutionTimes = Get-AlertResolutionAnalysis -Days $HistoryDays
             }
         }
-        
+
         # Trend insights
         if ($InsightType -in @('Trends', 'All')) {
             $insights.Trends = @{
@@ -496,13 +496,13 @@ function Get-MonitoringInsights {
                 SeasonalPatterns = Get-SeasonalPatterns -Days $HistoryDays
             }
         }
-        
+
         # Generate recommendations
         $insights.Recommendations = Generate-MonitoringRecommendations -Insights $insights
-        
+
         Write-CustomLog -Message "Monitoring insights generated successfully" -Level "SUCCESS"
         return $insights
-        
+
     } catch {
         Write-CustomLog -Message "Error generating insights: $($_.Exception.Message)" -Level "ERROR"
         throw
@@ -510,11 +510,11 @@ function Get-MonitoringInsights {
 }
 
 # Performance analytics functions
-function Get-AveragePerformanceMetrics { 
+function Get-AveragePerformanceMetrics {
     param($Days)
-    
+
     Write-CustomLog -Message "Analyzing average performance metrics for $Days days" -Level "DEBUG"
-    
+
     # Simulate historical analysis
     return @{
         CPU = @{
@@ -538,11 +538,11 @@ function Get-AveragePerformanceMetrics {
     }
 }
 
-function Get-PeakUsageAnalysis { 
+function Get-PeakUsageAnalysis {
     param($Days)
-    
+
     Write-CustomLog -Message "Analyzing peak usage patterns for $Days days" -Level "DEBUG"
-    
+
     # Generate realistic peak usage times
     $peakHours = @()
     for ($i = 0; $i -lt 7; $i++) {
@@ -558,7 +558,7 @@ function Get-PeakUsageAnalysis {
             }
         }
     }
-    
+
     return @{
         PeakHours = $peakHours
         CommonPeakTime = "14:30"
@@ -567,13 +567,13 @@ function Get-PeakUsageAnalysis {
     }
 }
 
-function Identify-ResourceBottlenecks { 
+function Identify-ResourceBottlenecks {
     param($Days)
-    
+
     Write-CustomLog -Message "Identifying resource bottlenecks over $Days days" -Level "DEBUG"
-    
+
     $bottlenecks = @()
-    
+
     # CPU bottlenecks
     if ((Get-Random -Minimum 1 -Maximum 100) -lt 30) {
         $bottlenecks += @{
@@ -584,7 +584,7 @@ function Identify-ResourceBottlenecks {
             Recommendation = "Consider CPU upgrade or workload optimization"
         }
     }
-    
+
     # Memory bottlenecks
     if ((Get-Random -Minimum 1 -Maximum 100) -lt 25) {
         $bottlenecks += @{
@@ -595,7 +595,7 @@ function Identify-ResourceBottlenecks {
             Recommendation = "Increase RAM or optimize memory-intensive processes"
         }
     }
-    
+
     # Disk I/O bottlenecks
     if ((Get-Random -Minimum 1 -Maximum 100) -lt 20) {
         $bottlenecks += @{
@@ -606,7 +606,7 @@ function Identify-ResourceBottlenecks {
             Recommendation = "Consider SSD upgrade or I/O optimization"
         }
     }
-    
+
     return @{
         Bottlenecks = $bottlenecks
         OverallHealth = if ($bottlenecks.Count -eq 0) { "Good" } elseif ($bottlenecks.Count -le 2) { "Fair" } else { "Poor" }
@@ -614,11 +614,11 @@ function Identify-ResourceBottlenecks {
     }
 }
 
-function Get-AlertFrequencyAnalysis { 
+function Get-AlertFrequencyAnalysis {
     param($Days)
-    
+
     Write-CustomLog -Message "Analyzing alert frequency for $Days days" -Level "DEBUG"
-    
+
     $alertsPerDay = @()
     for ($i = 0; $i -lt $Days; $i++) {
         $alertsPerDay += @{
@@ -629,9 +629,9 @@ function Get-AlertFrequencyAnalysis {
             Low = Get-Random -Minimum 5 -Maximum 25
         }
     }
-    
+
     $totalAlerts = ($alertsPerDay | ForEach-Object { $_.Critical + $_.High + $_.Medium + $_.Low } | Measure-Object -Sum).Sum
-    
+
     return @{
         AlertsPerDay = $alertsPerDay
         AveragePerDay = [Math]::Round($totalAlerts / $Days, 1)
@@ -641,11 +641,11 @@ function Get-AlertFrequencyAnalysis {
     }
 }
 
-function Get-CommonAlertTypes { 
+function Get-CommonAlertTypes {
     param($Days)
-    
+
     Write-CustomLog -Message "Analyzing common alert types for $Days days" -Level "DEBUG"
-    
+
     $alertTypes = @(
         @{ Type = "CPU"; Count = Get-Random -Minimum 10 -Maximum 50; Percentage = 0 }
         @{ Type = "Memory"; Count = Get-Random -Minimum 8 -Maximum 40; Percentage = 0 }
@@ -653,13 +653,13 @@ function Get-CommonAlertTypes {
         @{ Type = "Network"; Count = Get-Random -Minimum 2 -Maximum 15; Percentage = 0 }
         @{ Type = "Service"; Count = Get-Random -Minimum 3 -Maximum 20; Percentage = 0 }
     )
-    
+
     $total = ($alertTypes | ForEach-Object { $_.Count } | Measure-Object -Sum).Sum
-    
+
     foreach ($alert in $alertTypes) {
         $alert.Percentage = [Math]::Round(($alert.Count / $total) * 100, 1)
     }
-    
+
     return @{
         AlertTypes = $alertTypes | Sort-Object Count -Descending
         MostCommon = ($alertTypes | Sort-Object Count -Descending | Select-Object -First 1).Type
@@ -667,11 +667,11 @@ function Get-CommonAlertTypes {
     }
 }
 
-function Get-AlertResolutionAnalysis { 
+function Get-AlertResolutionAnalysis {
     param($Days)
-    
+
     Write-CustomLog -Message "Analyzing alert resolution times for $Days days" -Level "DEBUG"
-    
+
     return @{
         AverageResolutionTime = @{
             Critical = "$(Get-Random -Minimum 5 -Maximum 30) minutes"
@@ -686,11 +686,11 @@ function Get-AlertResolutionAnalysis {
     }
 }
 
-function Get-ResourceTrendAnalysis { 
+function Get-ResourceTrendAnalysis {
     param($Days)
-    
+
     Write-CustomLog -Message "Analyzing resource trends for $Days days" -Level "DEBUG"
-    
+
     return @{
         CPU = @{
             Trend = @("Stable", "Increasing", "Decreasing") | Get-Random
@@ -715,11 +715,11 @@ function Get-ResourceTrendAnalysis {
     }
 }
 
-function Get-PerformanceProjection { 
+function Get-PerformanceProjection {
     param($Days)
-    
+
     Write-CustomLog -Message "Generating performance projections based on $Days days of data" -Level "DEBUG"
-    
+
     return @{
         NextWeek = @{
             CPU = @{
@@ -754,11 +754,11 @@ function Get-PerformanceProjection {
     }
 }
 
-function Get-SeasonalPatterns { 
+function Get-SeasonalPatterns {
     param($Days)
-    
+
     Write-CustomLog -Message "Analyzing seasonal patterns for $Days days" -Level "DEBUG"
-    
+
     return @{
         DailyPatterns = @{
             PeakHours = @("14:00-16:00", "10:00-12:00") | Get-Random
@@ -788,15 +788,15 @@ function Get-SeasonalPatterns {
 
 function Generate-MonitoringRecommendations {
     param($Insights)
-    
+
     $recommendations = @()
-    
+
     # Example recommendations based on insights
     $recommendations += "Review alert thresholds based on historical performance patterns"
     $recommendations += "Consider scaling resources during identified peak usage times"
     $recommendations += "Implement predictive alerts for proactive monitoring"
     $recommendations += "Archive old monitoring data to optimize storage usage"
-    
+
     return $recommendations
 }
 

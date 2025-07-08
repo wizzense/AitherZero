@@ -12,14 +12,14 @@ function Get-ModuleCapabilities {
     param(
         [string]$ModulesPath = $env:PWSH_MODULES_PATH
     )
-    
+
     $moduleInfo = @()
-    
+
     if (-not $ModulesPath -or -not (Test-Path $ModulesPath)) {
         Write-Warning "Modules path not found: $ModulesPath"
         return $moduleInfo
     }
-    
+
     # Module metadata definitions
     $moduleDescriptions = @{
         'LabRunner' = @{
@@ -119,19 +119,19 @@ function Get-ModuleCapabilities {
             MenuPriority = 1
         }
     }
-    
+
     # Get all module directories
     $modules = Get-ChildItem -Path $ModulesPath -Directory | Sort-Object Name
-    
+
     foreach ($module in $modules) {
         $moduleManifest = Join-Path $module.FullName "$($module.Name).psd1"
         $moduleScript = Join-Path $module.FullName "$($module.Name).psm1"
-        
+
         if (Test-Path $moduleManifest) {
             try {
                 # Import module manifest to get metadata
                 $manifest = Import-PowerShellDataFile -Path $moduleManifest -ErrorAction SilentlyContinue
-                
+
                 # Get module info from our descriptions or manifest
                 $info = $moduleDescriptions[$module.Name]
                 if (-not $info) {
@@ -141,10 +141,10 @@ function Get-ModuleCapabilities {
                         MenuPriority = 999
                     }
                 }
-                
+
                 # Skip hidden modules
                 if ($info.Hidden) { continue }
-                
+
                 # Get exported functions
                 $exportedFunctions = @()
                 if ($manifest.FunctionsToExport -and $manifest.FunctionsToExport -ne '*') {
@@ -161,7 +161,7 @@ function Get-ModuleCapabilities {
                         Write-Verbose "Could not load module $($module.Name): $_"
                     }
                 }
-                
+
                 # Format display name with proper spacing
                 $displayName = switch ($module.Name) {
                     'OrchestrationEngine' { 'Orchestration Engine' }
@@ -181,13 +181,13 @@ function Get-ModuleCapabilities {
                     'ProgressTracking' { 'Progress Tracking' }
                     'StartupExperience' { 'Startup Experience' }
                     'LabRunner' { 'Lab Runner' }
-                    default { 
+                    default {
                         # Fallback to regex for unknown modules - add space between camelCase words
                         # Use lookahead to prevent multiple replacements
                         $module.Name -replace '(?<!^)(?=[A-Z])', ' '
                     }
                 }
-                
+
                 # Create module capability object
                 $moduleCapability = [PSCustomObject]@{
                     Name = $module.Name
@@ -201,15 +201,15 @@ function Get-ModuleCapabilities {
                     RequiredModules = $manifest.RequiredModules ?? @()
                     MinPowerShellVersion = $manifest.PowerShellVersion ?? '7.0'
                 }
-                
+
                 $moduleInfo += $moduleCapability
-                
+
             } catch {
                 Write-Verbose "Error processing module $($module.Name): $_"
             }
         }
     }
-    
+
     # Sort by category and priority
     return $moduleInfo | Sort-Object Category, MenuPriority, Name
 }
@@ -220,7 +220,7 @@ function Get-ModuleQuickActions {
     param(
         [string]$ModuleName
     )
-    
+
     $quickActions = @{
         'StartupExperience' = @(
             @{
@@ -354,7 +354,7 @@ function Get-ModuleQuickActions {
             }
         )
     }
-    
+
     return $quickActions[$ModuleName] ?? @()
 }
 

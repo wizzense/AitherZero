@@ -81,7 +81,7 @@ New-Alias -Name 'Send-ModuleMessage' -Value 'Submit-ModuleMessage' -Force
 New-Alias -Name 'Send-ModuleEvent' -Value 'Submit-ModuleEvent' -Force
 New-Alias -Name 'Publish-ModuleMessage' -Value 'Submit-ModuleMessage' -Force
 New-Alias -Name 'Subscribe-ModuleMessage' -Value 'Register-ModuleMessageHandler' -Force
-New-Alias -Name 'Publish-ModuleEvent' -Value 'Submit-ModuleEvent' -Force  
+New-Alias -Name 'Publish-ModuleEvent' -Value 'Submit-ModuleEvent' -Force
 New-Alias -Name 'Subscribe-ModuleEvent' -Value 'Register-ModuleEventHandler' -Force
 
 # Export public functions and aliases

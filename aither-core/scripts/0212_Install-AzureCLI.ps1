@@ -15,12 +15,12 @@ Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
 
 Invoke-LabStep -Config $Config -Body {
     Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
-    
+
     if ($Config.InstallAzureCLI -eq $true) {
         if (-not (Get-Command az.exe -ErrorAction SilentlyContinue)) {
             Write-CustomLog "Installing Azure CLI..."
             $url = 'https://aka.ms/installazurecliwindows'
-            
+
             Invoke-LabDownload -Uri $url -Prefix 'azure-cli' -Extension '.msi' -Action {
                 param($msi)
                 if ($PSCmdlet.ShouldProcess($msi, 'Install Azure CLI')) {
@@ -37,4 +37,3 @@ Invoke-LabStep -Config $Config -Body {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-

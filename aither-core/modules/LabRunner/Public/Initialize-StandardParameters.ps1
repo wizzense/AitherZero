@@ -26,16 +26,16 @@ function Initialize-StandardParameters {
     param(
         [Parameter()]
         [string]$ScriptName = (Split-Path -Leaf $MyInvocation.PSCommandPath),
-        
+
         [Parameter()]
         [object]$Config,
-        
+
         [Parameter()]
         [hashtable]$InputParameters = @{},
-        
+
         [Parameter()]
         [string[]]$RequiredParameters = @(),
-        
+
         [Parameter()]
         [hashtable]$DefaultConfig = @{}
     )
@@ -55,7 +55,7 @@ function Initialize-StandardParameters {
     # Set up logging first if the module is available
     Import-Module "$env:PWSH_MODULES_PATH/Logging" -ErrorAction SilentlyContinue
     $scriptParams.ModulesLoaded += 'Logging'
-    
+
     # Log script initialization
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog "Initializing script: $ScriptName" -Level INFO
@@ -66,7 +66,7 @@ function Initialize-StandardParameters {
 
     # Process standard parameters
     # ----------------------------
-    
+
     # Handle Verbosity parameter
     if ($InputParameters.ContainsKey('Verbosity')) {
         $scriptParams.Verbosity = $InputParameters.Verbosity
@@ -80,10 +80,10 @@ function Initialize-StandardParameters {
             default { 'normal' }
         }
     }
-    
+
     # Handle WhatIf parameter
     $scriptParams.IsWhatIfMode = $WhatIfPreference -or ($InputParameters.ContainsKey('WhatIf') -and $InputParameters.WhatIf)
-    
+
     # Handle NonInteractive
     $scriptParams.IsNonInteractive = $false
     if ($InputParameters.ContainsKey('NonInteractive')) {
@@ -91,12 +91,12 @@ function Initialize-StandardParameters {
     }
     else {
         # Auto-detect non-interactive mode if not explicitly set
-        $scriptParams.IsNonInteractive = ($Host.Name -eq 'Default Host') -or 
+        $scriptParams.IsNonInteractive = ($Host.Name -eq 'Default Host') -or
                                         ([Environment]::UserInteractive -eq $false) -or
                                         ($env:PESTER_RUN -eq 'true') -or
                                         $scriptParams.IsWhatIfMode
     }
-    
+
     # Handle Auto parameter
     if ($InputParameters.ContainsKey('Auto')) {
         $scriptParams.IsAutoMode = $InputParameters.Auto
@@ -104,12 +104,12 @@ function Initialize-StandardParameters {
             $scriptParams.IsNonInteractive = $true
         }
     }
-    
+
     # Handle Force parameter
     if ($InputParameters.ContainsKey('Force')) {
         $scriptParams.IsForceMode = $InputParameters.Force
     }
-    
+
     # Handle Config parameter
     if ($null -ne $Config) {
         $scriptParams.Config = $Config
@@ -120,12 +120,12 @@ function Initialize-StandardParameters {
     else {
         # Use default config if no config was provided
         $scriptParams.Config = $DefaultConfig
-        
+
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog "No configuration provided, using default configuration" -Level WARN
         }
     }
-    
+
     # Handle required parameters
     foreach ($param in $RequiredParameters) {
         if (-not $InputParameters.ContainsKey($param) -or $null -eq $InputParameters[$param]) {
@@ -136,10 +136,10 @@ function Initialize-StandardParameters {
             throw $errorMessage
         }
     }
-    
+
     # Configure environment based on parameters
     # -----------------------------------------
-    
+
     # Configure verbosity level
     if ($env:LAB_CONSOLE_LEVEL -ne $scriptParams.Verbosity) {
         $env:LAB_CONSOLE_LEVEL = switch ($scriptParams.Verbosity) {
@@ -149,11 +149,11 @@ function Initialize-StandardParameters {
             default { 1 }
         }
     }
-    
+
     # Summary output
     # --------------
     $logLevel = if ($scriptParams.Verbosity -eq 'detailed') { 'INFO' } else { 'DEBUG' }
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog "Script parameters initialized:" -Level $logLevel
         Write-CustomLog " - Verbosity: $($scriptParams.Verbosity)" -Level $logLevel
@@ -161,7 +161,7 @@ function Initialize-StandardParameters {
         Write-CustomLog " - NonInteractive mode: $($scriptParams.IsNonInteractive)" -Level $logLevel
         Write-CustomLog " - Auto mode: $($scriptParams.IsAutoMode)" -Level $logLevel
         Write-CustomLog " - Force mode: $($scriptParams.IsForceMode)" -Level $logLevel
-        
+
         # Output configuration summary in detailed mode
         if ($scriptParams.Verbosity -eq 'detailed') {
             Write-CustomLog "Configuration:" -Level DEBUG
@@ -169,7 +169,7 @@ function Initialize-StandardParameters {
             Write-CustomLog " - Type: $configType" -Level DEBUG
         }
     }
-    
+
     # Return the standardized parameters
     return $scriptParams
 }

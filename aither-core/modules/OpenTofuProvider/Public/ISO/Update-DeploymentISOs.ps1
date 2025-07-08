@@ -37,35 +37,35 @@ function Update-DeploymentISOs {
     param(
         [Parameter(Mandatory, ValueFromPipeline)]
         [PSCustomObject]$ISORequirements,
-        
+
         [Parameter()]
         [switch]$AutoApprove,
-        
+
         [Parameter()]
         [string]$CustomizationProfile,
-        
+
         [Parameter()]
         [ValidateRange(1, 10)]
         [int]$MaxParallel = 3,
-        
+
         [Parameter()]
         [switch]$Force,
-        
+
         [Parameter()]
         [switch]$DownloadOnly
     )
-    
+
     begin {
         Write-CustomLog -Level 'INFO' -Message "Starting ISO update process"
-        
+
         # Check for ISOManager module
         $script:hasISOManager = (Get-Module -Name 'ISOManager' -ListAvailable) -ne $null
-        
+
         if ($script:hasISOManager) {
             Import-Module ISOManager -Force
         }
     }
-    
+
     process {
         try {
             # Initialize update result
@@ -82,10 +82,10 @@ function Update-DeploymentISOs {
                 TotalBytesDownloaded = 0
                 Errors = @()
             }
-            
+
             # Determine which ISOs need action
             $isosToProcess = @()
-            
+
             # Add missing ISOs
             foreach ($missing in $ISORequirements.MissingISOs) {
                 $isosToProcess += @{
@@ -94,7 +94,7 @@ function Update-DeploymentISOs {
                     Priority = 1
                 }
             }
-            
+
             # Add ISOs needing updates
             if (-not $DownloadOnly) {
                 foreach ($update in $ISORequirements.UpdatesAvailable) {
@@ -107,7 +107,7 @@ function Update-DeploymentISOs {
                     }
                 }
             }
-            
+
             # Add ISOs needing customization
             if (-not $DownloadOnly -and $CustomizationProfile) {
                 foreach ($req in $ISORequirements.Requirements) {
@@ -120,28 +120,28 @@ function Update-DeploymentISOs {
                     }
                 }
             }
-            
+
             $updateResult.TotalISOs = $isosToProcess.Count
-            
+
             if ($isosToProcess.Count -eq 0) {
                 Write-CustomLog -Level 'INFO' -Message "No ISOs require updates"
                 $updateResult.EndTime = Get-Date
                 return [PSCustomObject]$updateResult
             }
-            
+
             Write-CustomLog -Level 'INFO' -Message "Processing $($isosToProcess.Count) ISO(s)"
-            
+
             # Sort by priority
             $isosToProcess = $isosToProcess | Sort-Object Priority
-            
+
             # Process ISOs (simplified - in production would use parallel processing)
             foreach ($item in $isosToProcess) {
                 $iso = $item.ISO
                 $action = $item.Action
-                
+
                 if ($PSCmdlet.ShouldProcess("$($iso.Name)", "Perform $action")) {
                     Write-CustomLog -Level 'INFO' -Message "Processing $($iso.Name): $action"
-                    
+
                     $isoResult = @{
                         Name = $iso.Name
                         Action = $action
@@ -152,7 +152,7 @@ function Update-DeploymentISOs {
                         EndTime = $null
                         BytesTransferred = 0
                     }
-                    
+
                     try {
                         switch ($action) {
                             'Download' {
@@ -160,7 +160,7 @@ function Update-DeploymentISOs {
                                 $isoResult.Success = $downloadResult.Success
                                 $isoResult.Path = $downloadResult.Path
                                 $isoResult.BytesTransferred = $downloadResult.BytesTransferred
-                                
+
                                 if ($downloadResult.Success) {
                                     $updateResult.Downloaded++
                                     $updateResult.TotalBytesDownloaded += $downloadResult.BytesTransferred
@@ -168,13 +168,13 @@ function Update-DeploymentISOs {
                                     $isoResult.Error = $downloadResult.Error
                                 }
                             }
-                            
+
                             'Update' {
                                 $updateISOResult = Update-SingleISO -ISO $iso -Repository $ISORequirements.ISORepository
                                 $isoResult.Success = $updateISOResult.Success
                                 $isoResult.Path = $updateISOResult.Path
                                 $isoResult.BytesTransferred = $updateISOResult.BytesTransferred
-                                
+
                                 if ($updateISOResult.Success) {
                                     $updateResult.Updated++
                                     $updateResult.TotalBytesDownloaded += $updateISOResult.BytesTransferred
@@ -182,12 +182,12 @@ function Update-DeploymentISOs {
                                     $isoResult.Error = $updateISOResult.Error
                                 }
                             }
-                            
+
                             'Customize' {
                                 $customizeResult = Customize-ISO -ISO $iso -Profile $CustomizationProfile
                                 $isoResult.Success = $customizeResult.Success
                                 $isoResult.Path = $customizeResult.Path
-                                
+
                                 if ($customizeResult.Success) {
                                     $updateResult.Customized++
                                 } else {
@@ -195,7 +195,7 @@ function Update-DeploymentISOs {
                                 }
                             }
                         }
-                        
+
                         if (-not $isoResult.Success) {
                             $updateResult.Failed++
                             $updateResult.Errors += "$($iso.Name): $($isoResult.Error)"
@@ -203,7 +203,7 @@ function Update-DeploymentISOs {
                         } else {
                             Write-CustomLog -Level 'SUCCESS' -Message "Successfully completed $action for $($iso.Name)"
                         }
-                        
+
                     } catch {
                         $isoResult.Success = $false
                         $isoResult.Error = $_.Exception.Message
@@ -211,17 +211,17 @@ function Update-DeploymentISOs {
                         $updateResult.Errors += "$($iso.Name): $($_.Exception.Message)"
                         Write-CustomLog -Level 'ERROR' -Message "Exception during $action for $($iso.Name): $($_.Exception.Message)"
                     }
-                    
+
                     $isoResult.EndTime = Get-Date
                     $updateResult.Results += [PSCustomObject]$isoResult
                 }
             }
-            
+
             # Calculate summary
             $updateResult.EndTime = Get-Date
             $updateResult.Duration = $updateResult.EndTime - $updateResult.StartTime
             $updateResult.Success = $updateResult.Failed -eq 0
-            
+
             # Generate summary message
             $summary = @(
                 "ISO update completed:",
@@ -232,19 +232,19 @@ function Update-DeploymentISOs {
                 "  Total data: $([Math]::Round($updateResult.TotalBytesDownloaded / 1GB, 2)) GB",
                 "  Duration: $([Math]::Round($updateResult.Duration.TotalMinutes, 2)) minutes"
             )
-            
+
             $updateResult.Summary = $summary -join "`n"
-            
+
             if ($updateResult.Success) {
                 Write-CustomLog -Level 'SUCCESS' -Message "ISO update completed successfully"
             } else {
                 Write-CustomLog -Level 'ERROR' -Message "ISO update completed with errors"
             }
-            
+
             Write-Host $updateResult.Summary -ForegroundColor $(if ($updateResult.Success) { 'Green' } else { 'Yellow' })
-            
+
             return [PSCustomObject]$updateResult
-            
+
         } catch {
             Write-CustomLog -Level 'ERROR' -Message "Failed to update ISOs: $($_.Exception.Message)"
             throw
@@ -254,11 +254,11 @@ function Update-DeploymentISOs {
 
 function Confirm-ISOUpdate {
     param([object]$ISO)
-    
+
     Write-Host "`nUpdate available for $($ISO.Name):" -ForegroundColor Yellow
     Write-Host "  Current version: $($ISO.CurrentVersion)"
     Write-Host "  Available version: $($ISO.AvailableVersion)"
-    
+
     $response = Read-Host "Update this ISO? (Y/N)"
     return $response -match '^[Yy]'
 }
@@ -268,29 +268,29 @@ function Download-ISO {
         [object]$ISO,
         [string]$Repository
     )
-    
+
     $result = @{
         Success = $false
         Path = $null
         BytesTransferred = 0
         Error = $null
     }
-    
+
     try {
         $targetPath = Join-Path $Repository (Get-ExpectedISOFileName -Name $ISO.Type -Customization $ISO.Customization)
-        
+
         # Use ISOManager if available
         if ($script:hasISOManager -and (Get-Command -Name 'Get-ISODownload' -ErrorAction SilentlyContinue)) {
             Write-CustomLog -Level 'INFO' -Message "Using ISOManager for download"
-            
+
             $downloadParams = @{
                 OSName = $ISO.Type
                 OutputPath = $Repository
                 ValidateChecksum = $true
             }
-            
+
             $downloadResult = Get-ISODownload @downloadParams
-            
+
             if ($downloadResult) {
                 $result.Success = $true
                 $result.Path = $downloadResult.Path
@@ -301,27 +301,27 @@ function Download-ISO {
         } else {
             # Simulate download for demonstration
             Write-CustomLog -Level 'WARN' -Message "ISOManager not available - simulating ISO download"
-            
+
             # Create placeholder ISO file
             $placeholderContent = "Placeholder ISO for $($ISO.Type)"
             $placeholderContent | Set-Content -Path $targetPath
-            
+
             # Create a larger file to simulate real ISO
             $stream = [System.IO.File]::OpenWrite($targetPath)
             $stream.SetLength(100MB)  # Minimum size for validation
             $stream.Close()
-            
+
             $result.Success = $true
             $result.Path = $targetPath
             $result.BytesTransferred = 100MB
-            
+
             Write-CustomLog -Level 'INFO' -Message "Created placeholder ISO at: $targetPath"
         }
-        
+
     } catch {
         $result.Error = $_.Exception.Message
     }
-    
+
     return $result
 }
 
@@ -330,7 +330,7 @@ function Update-SingleISO {
         [object]$ISO,
         [string]$Repository
     )
-    
+
     # For updates, we would download the new version and replace the old one
     # This reuses the download logic
     return Download-ISO -ISO $ISO -Repository $Repository
@@ -341,26 +341,26 @@ function Customize-ISO {
         [object]$ISO,
         [string]$Profile
     )
-    
+
     $result = @{
         Success = $false
         Path = $null
         Error = $null
     }
-    
+
     try {
         # Use ISOManager for customization if available
         if ($script:hasISOManager -and (Get-Command -Name 'New-CustomISO' -ErrorAction SilentlyContinue)) {
             Write-CustomLog -Level 'INFO' -Message "Using ISOManager for customization"
-            
+
             $customParams = @{
                 SourceISO = $ISO.Path
                 DestinationPath = [System.IO.Path]::GetDirectoryName($ISO.Path)
                 CustomizationProfile = $Profile
             }
-            
+
             $customResult = New-CustomISO @customParams
-            
+
             if ($customResult) {
                 $result.Success = $true
                 $result.Path = $customResult.Path
@@ -370,12 +370,12 @@ function Customize-ISO {
         } else {
             # Basic customization simulation
             Write-CustomLog -Level 'WARN' -Message "ISOManager not available - marking ISO as customized"
-            
+
             # Rename ISO to indicate customization
             $dir = [System.IO.Path]::GetDirectoryName($ISO.Path)
             $baseName = [System.IO.Path]::GetFileNameWithoutExtension($ISO.Path)
             $newPath = Join-Path $dir "${baseName}_${Profile}.iso"
-            
+
             if ($ISO.Path -ne $newPath) {
                 Copy-Item -Path $ISO.Path -Destination $newPath -Force
                 $result.Success = $true
@@ -385,10 +385,10 @@ function Customize-ISO {
                 $result.Path = $ISO.Path
             }
         }
-        
+
     } catch {
         $result.Error = $_.Exception.Message
     }
-    
+
     return $result
 }

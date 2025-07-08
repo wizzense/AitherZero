@@ -6,16 +6,16 @@
 
 .DESCRIPTION
     This function installs and configures all dependencies needed to download and run Codex CLI:
-    
+
     On Windows:
     - Installs WSL2 with Ubuntu distribution (optional)
     - Sets up Node.js via nvm inside WSL or on Windows
     - Installs Codex CLI npm package
-    
+
     On Linux:
     - Installs Node.js via nvm
     - Installs Codex CLI npm package
-    
+
     All installations are done with proper error handling and progress feedback.
 
 .PARAMETER SkipWSL
@@ -38,33 +38,33 @@
 
 .EXAMPLE
     Install-CodexCLIDependencies -WSLUsername "developer"
-    
+
     Sets up complete Codex CLI environment on Windows with WSL.
 
 .EXAMPLE
     Install-CodexCLIDependencies -SkipWSL
-    
+
     Sets up Codex CLI on Windows assuming WSL is already configured.
 
 .EXAMPLE
     Install-CodexCLIDependencies
-    
+
     Sets up Codex CLI on Linux with Node.js via nvm.
 
 .NOTES
     This function requires administrative privileges on Windows for WSL installation.
     On Linux, it can run as a regular user.
-    
+
     Windows Requirements:
     - Windows 10 version 2004+ or Windows 11
     - Administrator privileges for WSL installation
     - Internet connection for downloads
-    
+
     Linux Requirements:
     - curl or wget
     - bash shell
     - Internet connection for downloads
-    
+
     Authentication:
     - Requires OpenAI API key configuration after installation
     - Visit https://platform.openai.com/api-keys to get API key
@@ -75,16 +75,16 @@ function Install-CodexCLIDependencies {
     param(
         [Parameter()]
         [switch]$SkipWSL,
-        
+
         [Parameter()]
         [string]$WSLUsername,
-        
+
         [Parameter()]
         [SecureString]$WSLPassword,
-        
+
         [Parameter()]
         [string]$NodeVersion = 'lts',
-        
+
         [Parameter()]
         [switch]$Force
     )
@@ -93,26 +93,26 @@ function Install-CodexCLIDependencies {
         # Import shared utilities
         . "$PSScriptRoot/../../../shared/Find-ProjectRoot.ps1"
         $projectRoot = Find-ProjectRoot
-        
+
         # Import logging module
         Import-Module (Join-Path $env:PWSH_MODULES_PATH "Logging") -Force
-        
+
         Write-CustomLog -Level 'INFO' -Message "Starting Codex CLI dependencies installation"
-        
+
         $script:InstallationSteps = @()
         $script:CompletedSteps = @()
         $script:ErrorsEncountered = @()
-        
+
         # Platform detection
         $platformIsWindows = $PSVersionTable.PSVersion.Major -ge 6 -and $IsWindows
         $platformIsLinux = $PSVersionTable.PSVersion.Major -ge 6 -and $IsLinux
         $platformIsMacOS = $PSVersionTable.PSVersion.Major -ge 6 -and $IsMacOS
-        
+
         if (-not ($platformIsWindows -or $platformIsLinux -or $platformIsMacOS)) {
             # PowerShell 5.1 or other - assume Windows
             $platformIsWindows = $true
         }
-        
+
         Write-CustomLog -Level 'DEBUG' -Message "Platform detected: Windows=$platformIsWindows, Linux=$platformIsLinux, macOS=$platformIsMacOS"
     }
 
@@ -154,11 +154,11 @@ function Install-CodexCLIDependencies {
             }
 
             Write-CustomLog -Level 'INFO' -Message "Installation plan: $($script:InstallationSteps.Count) steps"
-            
+
             if ($WhatIfPreference) {
                 Write-CustomLog -Level 'INFO' -Message "WhatIf mode: Would perform the following steps:"
-                $script:InstallationSteps | ForEach-Object { 
-                    Write-CustomLog -Level 'INFO' -Message "  - $_" 
+                $script:InstallationSteps | ForEach-Object {
+                    Write-CustomLog -Level 'INFO' -Message "  - $_"
                 }
                 return
             }
@@ -167,7 +167,7 @@ function Install-CodexCLIDependencies {
             if ($platformIsWindows) {
                 Install-CodexCLI-Windows
             } elseif ($platformIsLinux) {
-                Install-CodexCLI-Linux  
+                Install-CodexCLI-Linux
             } elseif ($platformIsMacOS) {
                 Install-CodexCLI-macOS
             }
@@ -177,7 +177,7 @@ function Install-CodexCLIDependencies {
 
             Write-CustomLog -Level 'SUCCESS' -Message "Codex CLI dependencies installation completed successfully"
             Write-CustomLog -Level 'INFO' -Message "Completed steps: $($script:CompletedSteps.Count)/$($script:InstallationSteps.Count)"
-            
+
             if ($script:ErrorsEncountered.Count -gt 0) {
                 Write-CustomLog -Level 'WARN' -Message "Errors encountered during installation:"
                 $script:ErrorsEncountered | ForEach-Object {
@@ -194,7 +194,7 @@ function Install-CodexCLIDependencies {
 
     end {
         Write-CustomLog -Level 'INFO' -Message "Codex CLI dependencies installation process finished"
-        
+
         if ($script:CompletedSteps.Count -eq $script:InstallationSteps.Count -and $script:ErrorsEncountered.Count -eq 0) {
             Write-CustomLog -Level 'SUCCESS' -Message "All installation steps completed successfully!"
             Write-CustomLog -Level 'INFO' -Message "Next steps:"
@@ -210,12 +210,12 @@ function Install-CodexCLIDependencies {
 # Helper function for Windows installation
 function Install-CodexCLI-Windows {
     Write-CustomLog -Level 'INFO' -Message "Installing Codex CLI on Windows"
-    
+
     # Check if running as administrator for WSL installation
     if (-not $SkipWSL) {
         $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
         $isAdmin = $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-        
+
         if (-not $isAdmin) {
             throw "Administrator privileges required for WSL installation. Run PowerShell as Administrator or use -SkipWSL parameter."
         }
@@ -238,7 +238,7 @@ function Install-CodexCLI-Windows {
                 Write-CustomLog -Level 'INFO' -Message "Enabling WSL feature..."
                 Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -NoRestart
             }
-            
+
             $vmFeature = Get-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform
             if ($vmFeature.State -ne "Enabled") {
                 Write-CustomLog -Level 'INFO' -Message "Enabling Virtual Machine Platform..."
@@ -250,13 +250,13 @@ function Install-CodexCLI-Windows {
         Execute-InstallStep "Install WSL2 kernel update" {
             $kernelUpdateUrl = "https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi"
             $kernelUpdatePath = "$env:TEMP\wsl_update_x64.msi"
-            
+
             Write-CustomLog -Level 'INFO' -Message "Downloading WSL2 kernel update..."
             Invoke-WebRequest -Uri $kernelUpdateUrl -OutFile $kernelUpdatePath
-            
+
             Write-CustomLog -Level 'INFO' -Message "Installing WSL2 kernel update..."
             Start-Process -FilePath "msiexec.exe" -ArgumentList "/i", $kernelUpdatePath, "/quiet" -Wait
-            
+
             # Set WSL2 as default
             wsl --set-default-version 2
         }
@@ -277,9 +277,9 @@ function Install-CodexCLI-Windows {
             if (-not $WSLUsername) {
                 throw "WSLUsername parameter is required for new WSL installations"
             }
-            
+
             Write-CustomLog -Level 'INFO' -Message "Configuring WSL user account: $WSLUsername"
-            
+
             $password = if ($WSLPassword) {
                 [Runtime.InteropServices.Marshal]::PtrToStringAuto(
                     [Runtime.InteropServices.Marshal]::SecureStringToBSTR($WSLPassword)
@@ -290,7 +290,7 @@ function Install-CodexCLI-Windows {
                         [Runtime.InteropServices.Marshal]::SecureStringToBSTR($_)
                     )}
             }
-            
+
             # Create user in WSL
             $createUserScript = @"
 #!/bin/bash
@@ -299,7 +299,7 @@ echo '$WSLUsername`:$password' | sudo chpasswd
 sudo usermod -aG sudo $WSLUsername
 echo '$WSLUsername ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/$WSLUsername
 "@
-            
+
             $createUserScript | wsl bash
         }
     }
@@ -311,7 +311,7 @@ echo '$WSLUsername ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/$WSLUsernam
 # Helper function for Linux installation
 function Install-CodexCLI-Linux {
     Write-CustomLog -Level 'INFO' -Message "Installing Codex CLI on Linux"
-    
+
     # Step 1: Check Linux distribution
     Execute-InstallStep "Check Linux distribution" {
         if (Test-Path '/etc/os-release') {
@@ -327,7 +327,7 @@ function Install-CodexCLI-Linux {
         $hasCurl = Get-Command curl -ErrorAction SilentlyContinue
         if (-not $hasCurl) {
             Write-CustomLog -Level 'INFO' -Message "Installing curl..."
-            
+
             # Detect package manager and install curl
             if (Get-Command apt-get -ErrorAction SilentlyContinue) {
                 sudo apt-get update && sudo apt-get install -y curl
@@ -350,7 +350,7 @@ function Install-CodexCLI-Linux {
 # Helper function for macOS installation
 function Install-CodexCLI-macOS {
     Write-CustomLog -Level 'INFO' -Message "Installing Codex CLI on macOS"
-    
+
     # Step 1: Check macOS version
     Execute-InstallStep "Check macOS version" {
         $macOSVersion = sw_vers -productVersion
@@ -383,7 +383,7 @@ set -e
 if [ ! -d "\$HOME/.nvm" ]; then
     echo "Installing nvm..."
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash
-    
+
     # Source nvm
     export NVM_DIR="\$HOME/.nvm"
     [ -s "\$NVM_DIR/nvm.sh" ] && \. "\$NVM_DIR/nvm.sh"
@@ -404,7 +404,7 @@ nvm alias default $NodeVersion
 node --version
 npm --version
 "@
-        
+
         Write-CustomLog -Level 'INFO' -Message "Installing Node.js via nvm in WSL..."
         $nvmInstallScript | wsl bash
     }
@@ -426,7 +426,7 @@ npm install -g @openai/codex-cli
 # Verify installation
 codex --version || echo "Codex CLI installed but may need API key configuration"
 "@
-        
+
         Write-CustomLog -Level 'INFO' -Message "Installing Codex CLI in WSL..."
         $codexInstallScript | wsl bash
     }
@@ -440,7 +440,7 @@ function Install-NodeAndCodex-Native {
         $nvmDir = "$env:HOME/.nvm"
         if (-not (Test-Path $nvmDir)) {
             Write-CustomLog -Level 'INFO' -Message "Installing nvm..."
-            
+
             $nvmInstallScript = "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash"
             Invoke-Expression $nvmInstallScript
         } else {
@@ -467,7 +467,7 @@ nvm alias default $NodeVersion
 node --version
 npm --version
 "@
-        
+
         $nodeInstallScript | bash
     }
 
@@ -488,7 +488,7 @@ npm install -g @openai/codex-cli
 # Verify installation
 codex --version || echo "Codex CLI installed but may need API key configuration"
 "@
-        
+
         $codexInstallScript | bash
     }
 }
@@ -499,10 +499,10 @@ function Execute-InstallStep {
         [string]$StepName,
         [scriptblock]$ScriptBlock
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Executing step: $StepName"
-        
+
         if ($PSCmdlet.ShouldProcess($StepName, "Execute installation step")) {
             & $ScriptBlock
             $script:CompletedSteps += $StepName
@@ -519,7 +519,7 @@ function Execute-InstallStep {
 # Helper function to test Codex CLI installation
 function Test-CodexCLIInstallation {
     Write-CustomLog -Level 'INFO' -Message "Verifying Codex CLI installation..."
-    
+
     try {
         if ($platformIsWindows -and -not $SkipWSL) {
             # Test in WSL
@@ -528,7 +528,7 @@ function Test-CodexCLIInstallation {
             # Test natively
             $testResult = bash -c "source ~/.nvm/nvm.sh && codex --version" 2>&1
         }
-        
+
         if ($testResult) {
             Write-CustomLog -Level 'SUCCESS' -Message "Codex CLI installation verified: $testResult"
         } else {
@@ -542,4 +542,3 @@ function Test-CodexCLIInstallation {
 
 # Export the function
 Export-ModuleMember -Function Install-CodexCLIDependencies
-

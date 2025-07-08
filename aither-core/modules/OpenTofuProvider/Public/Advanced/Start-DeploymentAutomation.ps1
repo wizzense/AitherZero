@@ -50,56 +50,56 @@ function Start-DeploymentAutomation {
     param(
         [Parameter(Mandatory)]
         [string]$DeploymentId,
-        
+
         [Parameter(Mandatory)]
         [ValidateSet('Scheduled', 'ContinuousDeployment', 'Maintenance', 'Monitoring')]
         [string]$AutomationType,
-        
+
         [Parameter()]
         [ValidateSet('Hourly', 'Daily', 'Weekly', 'Monthly', 'Custom')]
         [string]$Schedule = 'Daily',
-        
+
         [Parameter()]
         [switch]$EnableDriftDetection,
-        
+
         [Parameter()]
         [ValidateRange(1, 168)]
         [int]$DriftCheckInterval = 24,
-        
+
         [Parameter()]
         [switch]$EnableAutoBackup,
-        
+
         [Parameter()]
         [ValidateRange(1, 50)]
         [int]$BackupRetention = 10,
-        
+
         [Parameter()]
         [switch]$EnableAutoRollback,
-        
+
         [Parameter()]
         [string]$NotificationEndpoint,
-        
+
         [Parameter()]
         [string]$ConfigurationPath
     )
-    
+
     begin {
         Write-CustomLog -Level 'INFO' -Message "Starting deployment automation setup for: $DeploymentId"
-        
+
         # Validate deployment exists
         $deployment = Get-DeploymentStatus -DeploymentId $DeploymentId
         if (-not $deployment) {
             throw "Deployment '$DeploymentId' not found"
         }
-        
+
         $deploymentPath = Join-Path $env:PROJECT_ROOT "deployments" $DeploymentId
         $automationDir = Join-Path $deploymentPath "automation"
-        
+
         if (-not (Test-Path $automationDir)) {
             New-Item -Path $automationDir -ItemType Directory -Force | Out-Null
         }
     }
-    
+
     process {
         try {
             # Initialize automation configuration
@@ -139,10 +139,10 @@ function Start-DeploymentAutomation {
                 History = @()
                 Status = 'Active'
             }
-            
+
             # Configure schedule
             $automationConfig.Schedule.NextRun = Get-NextScheduledRun -Schedule $Schedule
-            
+
             # Setup automation workflows based on type
             switch ($AutomationType) {
                 'Scheduled' {
@@ -158,25 +158,25 @@ function Start-DeploymentAutomation {
                     $automationConfig = Setup-MonitoringWorkflow -Config $automationConfig -DeploymentId $DeploymentId
                 }
             }
-            
+
             if ($PSCmdlet.ShouldProcess($DeploymentId, "Configure deployment automation")) {
                 # Save automation configuration
                 $configPath = Join-Path $automationDir "automation-config.json"
                 $automationConfig | ConvertTo-Json -Depth 10 | Set-Content -Path $configPath
-                
+
                 # Create automation scripts/tasks
                 New-AutomationTasks -Config $automationConfig -AutomationDir $automationDir
-                
+
                 # Register automation with task scheduler (if on Windows)
                 if ($IsWindows) {
                     Register-AutomationTasks -Config $automationConfig -DeploymentId $DeploymentId
                 }
-                
+
                 # Update deployment state
                 Update-DeploymentForAutomation -DeploymentId $DeploymentId -AutomationConfig $automationConfig
-                
+
                 Write-CustomLog -Level 'SUCCESS' -Message "Deployment automation configured successfully"
-                
+
                 return [PSCustomObject]@{
                     Success = $true
                     DeploymentId = $DeploymentId
@@ -191,7 +191,7 @@ function Start-DeploymentAutomation {
                     )
                 }
             }
-            
+
         } catch {
             Write-CustomLog -Level 'ERROR' -Message "Failed to configure deployment automation: $($_.Exception.Message)"
             throw
@@ -201,17 +201,17 @@ function Start-DeploymentAutomation {
 
 function Get-NextScheduledRun {
     param([string]$Schedule)
-    
+
     $now = Get-Date
-    
+
     switch ($Schedule) {
         'Hourly' { return $now.AddHours(1) }
         'Daily' { return $now.AddDays(1).Date.AddHours(2) }  # 2 AM
-        'Weekly' { 
+        'Weekly' {
             $daysUntilSunday = 7 - [int]$now.DayOfWeek
             return $now.AddDays($daysUntilSunday).Date.AddHours(2)
         }
-        'Monthly' { 
+        'Monthly' {
             $firstOfNextMonth = (Get-Date -Day 1).AddMonths(1)
             return $firstOfNextMonth.AddHours(2)
         }
@@ -224,9 +224,9 @@ function Setup-ScheduledDeployment {
         [hashtable]$Config,
         [string]$DeploymentId
     )
-    
+
     Write-CustomLog -Level 'INFO' -Message "Configuring scheduled deployment automation"
-    
+
     $Config.Tasks = @(
         @{
             Name = 'PreDeploymentBackup'
@@ -244,7 +244,7 @@ function Setup-ScheduledDeployment {
             Script = 'Test-InfrastructureDrift -DeploymentId $DeploymentId'
         }
     )
-    
+
     return $Config
 }
 
@@ -253,15 +253,15 @@ function Setup-ContinuousDeployment {
         [hashtable]$Config,
         [string]$DeploymentId
     )
-    
+
     Write-CustomLog -Level 'INFO' -Message "Configuring continuous deployment automation"
-    
+
     $Config.Features.RepositoryWatching = @{
         Enabled = $true
         CheckInterval = 15  # minutes
         AutoDeploy = $true
     }
-    
+
     $Config.Tasks = @(
         @{
             Name = 'RepositorySync'
@@ -279,7 +279,7 @@ function Setup-ContinuousDeployment {
             Script = 'Start-InfrastructureDeployment -ConfigurationPath $ConfigurationPath -AutoApprove'
         }
     )
-    
+
     return $Config
 }
 
@@ -288,9 +288,9 @@ function Setup-MaintenanceWorkflow {
         [hashtable]$Config,
         [string]$DeploymentId
     )
-    
+
     Write-CustomLog -Level 'INFO' -Message "Configuring maintenance workflow automation"
-    
+
     $Config.Tasks = @(
         @{
             Name = 'DriftDetection'
@@ -313,7 +313,7 @@ function Setup-MaintenanceWorkflow {
             Script = 'Test-DeploymentUpdates -DeploymentId $DeploymentId'
         }
     )
-    
+
     return $Config
 }
 
@@ -322,9 +322,9 @@ function Setup-MonitoringWorkflow {
         [hashtable]$Config,
         [string]$DeploymentId
     )
-    
+
     Write-CustomLog -Level 'INFO' -Message "Configuring monitoring workflow automation"
-    
+
     $Config.Features.Monitoring = @{
         Enabled = $true
         MetricsCollection = $true
@@ -334,7 +334,7 @@ function Setup-MonitoringWorkflow {
             ResponseTime = 30
         }
     }
-    
+
     $Config.Tasks = @(
         @{
             Name = 'ContinuousDriftMonitoring'
@@ -352,7 +352,7 @@ function Setup-MonitoringWorkflow {
             Script = 'Process-DeploymentAlerts -DeploymentId $DeploymentId'
         }
     )
-    
+
     return $Config
 }
 
@@ -361,12 +361,12 @@ function New-AutomationTasks {
         [hashtable]$Config,
         [string]$AutomationDir
     )
-    
+
     # Create PowerShell scripts for each task
     foreach ($task in $Config.Tasks) {
         if ($task.Enabled) {
             $scriptPath = Join-Path $AutomationDir "$($task.Name).ps1"
-            
+
             $scriptContent = @"
 # Automated task: $($task.Name)
 # Generated: $(Get-Date)
@@ -382,21 +382,21 @@ param(
 
 try {
     Write-Host "Starting automated task: $($task.Name)"
-    
+
     # Import required modules
     Import-Module (Join-Path `$env:PROJECT_ROOT "aither-core/modules/OpenTofuProvider") -Force
-    
+
     # Execute task script
     $($task.Script)
-    
+
     Write-Host "Completed automated task: $($task.Name)"
-    
+
 } catch {
     Write-Error "Automated task failed: `$(`$_.Exception.Message)"
     exit 1
 }
 "@
-            
+
             $scriptContent | Set-Content -Path $scriptPath
             Write-CustomLog -Level 'INFO' -Message "Created automation script: $($task.Name).ps1"
         }
@@ -408,19 +408,19 @@ function Register-AutomationTasks {
         [hashtable]$Config,
         [string]$DeploymentId
     )
-    
+
     if (-not $IsWindows) {
         Write-CustomLog -Level 'INFO' -Message "Task scheduling not implemented for this platform"
         return
     }
-    
+
     try {
         # Register scheduled tasks with Windows Task Scheduler
         $taskName = "AitherZero-Deployment-$DeploymentId"
-        
+
         # Create task action
         $action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-File `"$AutomationDir\MaintenanceTask.ps1`""
-        
+
         # Create task trigger based on schedule
         $trigger = switch ($Config.Schedule.Type) {
             'Hourly' { New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Hours 1) }
@@ -429,12 +429,12 @@ function Register-AutomationTasks {
             'Monthly' { New-ScheduledTaskTrigger -Once -At (Get-Date).AddMonths(1) -RepetitionInterval (New-TimeSpan -Days 30) }
             default { New-ScheduledTaskTrigger -Daily -At "02:00" }
         }
-        
+
         # Register the task
         Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Description "AitherZero automated deployment task for $DeploymentId"
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "Registered scheduled task: $taskName"
-        
+
     } catch {
         Write-CustomLog -Level 'WARN' -Message "Failed to register scheduled task: $_"
     }
@@ -445,23 +445,23 @@ function Update-DeploymentForAutomation {
         [string]$DeploymentId,
         [hashtable]$AutomationConfig
     )
-    
+
     $deploymentPath = Join-Path $env:PROJECT_ROOT "deployments" $DeploymentId
     $statePath = Join-Path $deploymentPath "state.json"
-    
+
     if (Test-Path $statePath) {
         try {
             $state = Get-Content $statePath | ConvertFrom-Json
-            
+
             $state | Add-Member -NotePropertyName 'Automation' -NotePropertyValue @{
                 Enabled = $true
                 Type = $AutomationConfig.AutomationType
                 ConfiguredAt = $AutomationConfig.CreatedAt
                 NextRun = $AutomationConfig.Schedule.NextRun
             } -Force
-            
+
             $state | ConvertTo-Json -Depth 10 | Set-Content -Path $statePath
-            
+
         } catch {
             Write-CustomLog -Level 'WARN' -Message "Failed to update deployment state with automation info: $_"
         }
@@ -495,23 +495,23 @@ function Stop-DeploymentAutomation {
     param(
         [Parameter(Mandatory)]
         [string]$DeploymentId,
-        
+
         [Parameter()]
         [switch]$RemoveConfiguration,
-        
+
         [Parameter()]
         [switch]$UnregisterTasks
     )
-    
+
     begin {
         Write-CustomLog -Level 'INFO' -Message "Stopping deployment automation for: $DeploymentId"
     }
-    
+
     process {
         try {
             $deploymentPath = Join-Path $env:PROJECT_ROOT "deployments" $DeploymentId
             $automationDir = Join-Path $deploymentPath "automation"
-            
+
             if ($PSCmdlet.ShouldProcess($DeploymentId, "Stop deployment automation")) {
                 # Unregister scheduled tasks
                 if ($UnregisterTasks -and $IsWindows) {
@@ -523,7 +523,7 @@ function Stop-DeploymentAutomation {
                         Write-CustomLog -Level 'WARN' -Message "Failed to unregister scheduled task: $_"
                     }
                 }
-                
+
                 # Remove configuration files
                 if ($RemoveConfiguration -and (Test-Path $automationDir)) {
                     Remove-Item -Path $automationDir -Recurse -Force
@@ -536,12 +536,12 @@ function Stop-DeploymentAutomation {
                         $config.Enabled = $false
                         $config.Status = 'Disabled'
                         $config.LastModified = Get-Date
-                        
+
                         $config | ConvertTo-Json -Depth 10 | Set-Content -Path $configPath
                         Write-CustomLog -Level 'SUCCESS' -Message "Disabled deployment automation"
                     }
                 }
-                
+
                 # Update deployment state
                 $statePath = Join-Path $deploymentPath "state.json"
                 if (Test-Path $statePath) {
@@ -551,14 +551,14 @@ function Stop-DeploymentAutomation {
                     }
                     $state | ConvertTo-Json -Depth 10 | Set-Content -Path $statePath
                 }
-                
+
                 return [PSCustomObject]@{
                     Success = $true
                     DeploymentId = $DeploymentId
                     Message = "Deployment automation stopped successfully"
                 }
             }
-            
+
         } catch {
             Write-CustomLog -Level 'ERROR' -Message "Failed to stop deployment automation: $($_.Exception.Message)"
             throw
@@ -590,47 +590,47 @@ function Get-DeploymentAutomation {
     param(
         [Parameter()]
         [string]$DeploymentId,
-        
+
         [Parameter()]
         [switch]$IncludeHistory
     )
-    
+
     begin {
         Write-CustomLog -Level 'INFO' -Message "Getting deployment automation information"
     }
-    
+
     process {
         try {
             $automationInfo = @()
-            
+
             if ($DeploymentId) {
                 $deploymentDirs = @(Get-Item (Join-Path $env:PROJECT_ROOT "deployments" $DeploymentId) -ErrorAction SilentlyContinue)
             } else {
                 $deploymentsDir = Join-Path $env:PROJECT_ROOT "deployments"
                 $deploymentDirs = Get-ChildItem -Path $deploymentsDir -Directory -ErrorAction SilentlyContinue
             }
-            
+
             foreach ($dir in $deploymentDirs) {
                 $automationDir = Join-Path $dir.FullName "automation"
                 $configPath = Join-Path $automationDir "automation-config.json"
-                
+
                 if (Test-Path $configPath) {
                     try {
                         $config = Get-Content $configPath | ConvertFrom-Json
-                        
+
                         if (-not $IncludeHistory) {
                             $config.PSObject.Properties.Remove('History')
                         }
-                        
+
                         $automationInfo += $config
                     } catch {
                         Write-CustomLog -Level 'WARN' -Message "Failed to load automation config for $($dir.Name): $_"
                     }
                 }
             }
-            
+
             return $automationInfo
-            
+
         } catch {
             Write-CustomLog -Level 'ERROR' -Message "Failed to get deployment automation: $($_.Exception.Message)"
             throw

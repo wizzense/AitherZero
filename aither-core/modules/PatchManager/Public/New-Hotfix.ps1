@@ -65,7 +65,7 @@ function New-Hotfix {
         } else {
             Write-Host "  - Apply changes directly (PR skipped)" -ForegroundColor Red
         }
-        
+
         # Brief pause for awareness
         Start-Sleep -Seconds 2
     }

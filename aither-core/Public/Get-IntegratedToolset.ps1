@@ -5,7 +5,7 @@
     Retrieves information about integrated tools and utilities available in the AitherZero platform.
 
 .DESCRIPTION
-    Provides a comprehensive inventory of integrated tools, modules, and utilities 
+    Provides a comprehensive inventory of integrated tools, modules, and utilities
     available in the AitherZero platform, including their status, capabilities, and configuration.
 
 .PARAMETER ToolCategory
@@ -20,7 +20,7 @@
 .EXAMPLE
     Get-IntegratedToolset
     Returns all integrated tools and utilities.
-    
+
 .EXAMPLE
     Get-IntegratedToolset -ToolCategory Development -IncludeStatus
     Returns development tools with their current status.
@@ -39,18 +39,18 @@ function Get-IntegratedToolset {
         [Parameter()]
         [ValidateSet('Development', 'Infrastructure', 'Automation', 'Security', 'Monitoring', 'AI', 'All')]
         [string]$ToolCategory = 'All',
-        
+
         [Parameter()]
         [switch]$IncludeStatus,
-        
+
         [Parameter()]
         [switch]$IncludeCapabilities
     )
-    
+
     begin {
         Write-CustomLog -Message "Retrieving integrated toolset information..." -Level "INFO"
     }
-    
+
     process {
         try {
             # Define integrated tools by category
@@ -85,7 +85,7 @@ function Get-IntegratedToolset {
                         Capabilities = @("AI tool installation", "Tool management", "Integration support")
                     }
                 )
-                
+
                 Infrastructure = @(
                     @{
                         Name = "OpenTofuProvider"
@@ -109,7 +109,7 @@ function Get-IntegratedToolset {
                         Capabilities = @("ISO download", "ISO customization", "Autounattend generation")
                     }
                 )
-                
+
                 Automation = @(
                     @{
                         Name = "OrchestrationEngine"
@@ -133,7 +133,7 @@ function Get-IntegratedToolset {
                         Capabilities = @("File backup", "Maintenance automation", "Cleanup operations")
                     }
                 )
-                
+
                 Security = @(
                     @{
                         Name = "SecureCredentials"
@@ -150,7 +150,7 @@ function Get-IntegratedToolset {
                         Capabilities = @("Security automation", "Compliance checking", "Vulnerability assessment")
                     }
                 )
-                
+
                 Monitoring = @(
                     @{
                         Name = "SystemMonitoring"
@@ -167,7 +167,7 @@ function Get-IntegratedToolset {
                         Capabilities = @("Progress visualization", "ETA calculation", "Multi-operation tracking")
                     }
                 )
-                
+
                 AI = @(
                     @{
                         Name = "Claude Code"
@@ -185,7 +185,7 @@ function Get-IntegratedToolset {
                     }
                 )
             }
-            
+
             # Filter by category
             $toolsToReturn = @()
             if ($ToolCategory -eq 'All') {
@@ -193,24 +193,24 @@ function Get-IntegratedToolset {
             } else {
                 $toolsToReturn = $integratedTools[$ToolCategory]
             }
-            
+
             # Enhance with status information if requested
             if ($IncludeStatus) {
                 foreach ($tool in $toolsToReturn) {
                     $tool.Status = Get-ToolStatus -ToolName $tool.Name -ModuleName $tool.Module
                 }
             }
-            
+
             # Filter capabilities if not requested
             if (-not $IncludeCapabilities) {
                 foreach ($tool in $toolsToReturn) {
                     $tool.Remove('Capabilities')
                 }
             }
-            
+
             Write-CustomLog -Message "Retrieved $($toolsToReturn.Count) integrated tools" -Level "SUCCESS"
             return $toolsToReturn
-            
+
         } catch {
             Write-CustomLog -Message "Failed to retrieve integrated toolset: $($_.Exception.Message)" -Level "ERROR"
             throw
@@ -224,11 +224,11 @@ function Get-ToolStatus {
     param(
         [Parameter(Mandatory = $true)]
         [string]$ToolName,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$ModuleName
     )
-    
+
     process {
         try {
             # Check if module is available
@@ -241,11 +241,11 @@ function Get-ToolStatus {
                     LastChecked = Get-Date
                 }
             }
-            
+
             # Check if module is loaded
             $loadedModule = Get-Module -Name $ModuleName -ErrorAction SilentlyContinue
             $isLoaded = $null -ne $loadedModule
-            
+
             return @{
                 Available = $true
                 Loaded = $isLoaded
@@ -253,7 +253,7 @@ function Get-ToolStatus {
                 Version = $module.Version.ToString()
                 LastChecked = Get-Date
             }
-            
+
         } catch {
             return @{
                 Available = $false

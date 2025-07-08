@@ -57,24 +57,24 @@ function Send-WebhookNotification {
     param(
         [Parameter(Mandatory)]
         [string]$Event,
-        
+
         [Parameter(Mandatory)]
         [object]$Data,
-        
+
         [Parameter()]
         [string]$Source = 'AitherZero-RestAPI',
-        
+
         [Parameter()]
         [ValidateSet('Low', 'Normal', 'High')]
         [string]$Priority = 'Normal',
-        
+
         [Parameter()]
         [hashtable]$CustomHeaders = @{},
-        
+
         [Parameter()]
         [ValidateRange(0, 10)]
         [int]$RetryAttempts = 3,
-        
+
         [Parameter()]
         [switch]$Force
     )
@@ -95,17 +95,17 @@ function Send-WebhookNotification {
                     DeliveryCount = 0
                 }
             }
-            
+
             # Get matching subscriptions
             $matchingSubscriptions = @()
             foreach ($subscriptionId in $script:WebhookSubscriptions.Keys) {
                 $subscription = $script:WebhookSubscriptions[$subscriptionId]
-                
+
                 # Check if subscription is active
                 if (-not $subscription.IsActive) {
                     continue
                 }
-                
+
                 # Check if event matches
                 if ($subscription.Events -contains "*" -or $subscription.Events -contains $Event) {
                     $matchingSubscriptions += @{
@@ -114,7 +114,7 @@ function Send-WebhookNotification {
                     }
                 }
             }
-            
+
             if ($matchingSubscriptions.Count -eq 0) {
                 Write-CustomLog -Message "No webhook subscriptions for event: $Event" -Level "DEBUG"
                 return @{
@@ -124,7 +124,7 @@ function Send-WebhookNotification {
                     DeliveryCount = 0
                 }
             }
-            
+
             # Create notification payload
             $payload = @{
                 event = $Event
@@ -135,22 +135,22 @@ function Send-WebhookNotification {
                 version = "1.0.0"
                 delivery_id = [System.Guid]::NewGuid().ToString()
             }
-            
+
             $payloadJson = $payload | ConvertTo-Json -Depth 10
             $deliveryResults = @()
-            
+
             # Deliver to each subscription
             foreach ($sub in $matchingSubscriptions) {
                 $subscription = $sub.Subscription
                 $subscriptionId = $sub.Id
-                
+
                 # Track delivery attempt
                 $subscription.DeliveryStats.Attempted++
                 $subscription.DeliveryStats.LastAttempt = Get-Date
-                
+
                 $deliverySuccess = $false
                 $lastError = $null
-                
+
                 # Retry logic
                 for ($attempt = 1; $attempt -le ($RetryAttempts + 1); $attempt++) {
                     try {
@@ -159,18 +159,18 @@ function Send-WebhookNotification {
                         $request.ContentType = "application/json"
                         $request.Timeout = $subscription.Configuration.Timeout * 1000
                         $request.UserAgent = "AitherZero-Webhook/1.0"
-                        
+
                         # Add custom headers
                         foreach ($header in $CustomHeaders.Keys) {
                             $request.Headers.Add($header, $CustomHeaders[$header])
                         }
-                        
+
                         # Add standard webhook headers
                         $request.Headers.Add("X-Event-Type", $Event)
                         $request.Headers.Add("X-Delivery-Id", $payload.delivery_id)
                         $request.Headers.Add("X-Webhook-Id", $subscriptionId)
                         $request.Headers.Add("X-Priority", $Priority)
-                        
+
                         # Add signature if secret is configured
                         if ($subscription.Secret) {
                             $hmac = New-Object System.Security.Cryptography.HMACSHA256
@@ -178,32 +178,32 @@ function Send-WebhookNotification {
                             $signature = [System.Convert]::ToBase64String($hmac.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($payloadJson)))
                             $request.Headers.Add("X-Webhook-Signature", "sha256=$signature")
                         }
-                        
+
                         # Write request body
                         $bytes = [System.Text.Encoding]::UTF8.GetBytes($payloadJson)
                         $request.ContentLength = $bytes.Length
-                        
+
                         $requestStream = $request.GetRequestStream()
                         $requestStream.Write($bytes, 0, $bytes.Length)
                         $requestStream.Close()
-                        
+
                         # Send request
                         $response = $request.GetResponse()
                         $statusCode = $response.StatusCode
                         $response.Close()
-                        
+
                         # Success
                         $deliverySuccess = $true
                         $subscription.DeliveryStats.Delivered++
                         $subscription.DeliveryStats.LastSuccess = Get-Date
-                        
+
                         Write-CustomLog -Message "Webhook delivered successfully: $Event to $($subscription.Url)" -Level "DEBUG"
                         break
-                        
+
                     } catch {
                         $lastError = $_.Exception.Message
                         Write-CustomLog -Message "Webhook delivery attempt $attempt failed: $lastError" -Level "WARNING"
-                        
+
                         # Exponential backoff before retry
                         if ($attempt -lt ($RetryAttempts + 1)) {
                             $backoffMs = [math]::Min(1000 * [math]::Pow(2, $attempt - 1), 30000)
@@ -211,7 +211,7 @@ function Send-WebhookNotification {
                         }
                     }
                 }
-                
+
                 # Record delivery result
                 $deliveryResult = @{
                     SubscriptionId = $subscriptionId
@@ -221,16 +221,16 @@ function Send-WebhookNotification {
                     Error = $lastError
                     DeliveredAt = if ($deliverySuccess) { Get-Date } else { $null }
                 }
-                
+
                 $deliveryResults += $deliveryResult
-                
+
                 # Update subscription stats
                 if (-not $deliverySuccess) {
                     $subscription.DeliveryStats.Failed++
                     $subscription.DeliveryStats.LastError = $lastError
                 }
             }
-            
+
             # Add to delivery history
             $historyEntry = @{
                 Event = $Event
@@ -241,25 +241,25 @@ function Send-WebhookNotification {
                 DeliveryResults = $deliveryResults
                 Payload = $payload
             }
-            
+
             $script:APIConfiguration.WebhookConfig.DeliveryHistory += $historyEntry
-            
+
             # Maintain history size limit
             if ($script:APIConfiguration.WebhookConfig.DeliveryHistory.Count -gt 100) {
                 $script:APIConfiguration.WebhookConfig.DeliveryHistory = $script:APIConfiguration.WebhookConfig.DeliveryHistory | Select-Object -Last 100
             }
-            
+
             $successCount = $historyEntry.SuccessfulDeliveries
             $totalCount = $historyEntry.SubscriptionCount
-            
+
             $resultMessage = if ($successCount -eq $totalCount) {
                 "Successfully delivered to all $totalCount subscriptions"
             } else {
                 "Delivered to $successCount out of $totalCount subscriptions"
             }
-            
+
             Write-CustomLog -Message "Webhook notification completed: $resultMessage" -Level $(if ($successCount -eq $totalCount) { "SUCCESS" } else { "WARNING" })
-            
+
             return @{
                 Success = $successCount -gt 0
                 Message = $resultMessage
@@ -270,11 +270,11 @@ function Send-WebhookNotification {
                 DeliveryResults = $deliveryResults
                 DeliveryId = $payload.delivery_id
             }
-            
+
         } catch {
             $errorMessage = "Failed to send webhook notification: $($_.Exception.Message)"
             Write-CustomLog -Message $errorMessage -Level "ERROR"
-            
+
             return @{
                 Success = $false
                 Error = $_.Exception.Message

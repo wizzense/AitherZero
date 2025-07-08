@@ -3,28 +3,28 @@
 <#
 .SYNOPSIS
     Performance benchmarking and demonstration script for ParallelExecution module
-    
+
 .DESCRIPTION
     This script demonstrates the capabilities of the ParallelExecution module through
     various benchmarking scenarios including CPU-intensive, I/O-intensive, and
     mixed workloads. It shows the performance benefits of parallel execution and
     adaptive throttling.
-    
+
 .PARAMETER WorkloadSize
     Size of the workload for benchmarking (Small, Medium, Large)
-    
+
 .PARAMETER IncludeAdaptive
     Include adaptive parallel execution benchmarks
-    
+
 .PARAMETER IncludeOptimalCalculation
     Include optimal throttle limit calculation tests
-    
+
 .PARAMETER OutputPath
     Path to save benchmark results (optional)
-    
+
 .EXAMPLE
     .\ParallelExecution-Benchmark.ps1 -WorkloadSize Medium -IncludeAdaptive
-    
+
 .EXAMPLE
     .\ParallelExecution-Benchmark.ps1 -WorkloadSize Large -OutputPath ".\benchmark-results.json"
 #>
@@ -34,13 +34,13 @@ param(
     [Parameter()]
     [ValidateSet('Small', 'Medium', 'Large')]
     [string]$WorkloadSize = 'Medium',
-    
+
     [Parameter()]
     [switch]$IncludeAdaptive,
-    
+
     [Parameter()]
     [switch]$IncludeOptimalCalculation,
-    
+
     [Parameter()]
     [string]$OutputPath
 )
@@ -78,12 +78,12 @@ $benchmarkResults = @{
 
 function Test-CPUIntensiveWorkload {
     param([int]$ItemCount, [int]$ThrottleLimit)
-    
+
     Write-Host "Running CPU-intensive workload (throttle: $ThrottleLimit)..." -ForegroundColor Green
-    
+
     $items = 1..$ItemCount
     $startTime = Get-Date
-    
+
     $results = Invoke-ParallelForEach -InputObject $items -ScriptBlock {
         param($item)
         # Simulate CPU-intensive work
@@ -97,10 +97,10 @@ function Test-CPUIntensiveWorkload {
             ProcessorId = $PID
         }
     } -ThrottleLimit $ThrottleLimit
-    
+
     $endTime = Get-Date
     $metrics = Measure-ParallelPerformance -OperationName "CPU-Intensive" -StartTime $startTime -EndTime $endTime -ItemCount $ItemCount -ThrottleLimit $ThrottleLimit
-    
+
     return @{
         TestType = "CPU-Intensive"
         ThrottleLimit = $ThrottleLimit
@@ -112,42 +112,42 @@ function Test-CPUIntensiveWorkload {
 
 function Test-IOIntensiveWorkload {
     param([int]$ItemCount, [int]$ThrottleLimit)
-    
+
     Write-Host "Running I/O-intensive workload (throttle: $ThrottleLimit)..." -ForegroundColor Green
-    
+
     # Create temporary files for I/O operations
     $tempDir = Join-Path $env:TEMP "ParallelBenchmark"
     if (-not (Test-Path $tempDir)) {
         New-Item -Path $tempDir -ItemType Directory | Out-Null
     }
-    
+
     $items = 1..$ItemCount
     $startTime = Get-Date
-    
+
     $results = Invoke-ParallelForEach -InputObject $items -ScriptBlock {
         param($item)
         # Simulate I/O-intensive work
         $tempFile = Join-Path $using:tempDir "temp_$item.txt"
         $content = "Item $item - " + ("x" * 1000)  # 1KB of data
-        
+
         # Write and read file
         Set-Content -Path $tempFile -Value $content
         $readContent = Get-Content -Path $tempFile -Raw
         Remove-Item -Path $tempFile -ErrorAction SilentlyContinue
-        
+
         return @{
             Item = $item
             ContentLength = $readContent.Length
             Success = $readContent.Contains("Item $item")
         }
     } -ThrottleLimit $ThrottleLimit
-    
+
     $endTime = Get-Date
     $metrics = Measure-ParallelPerformance -OperationName "IO-Intensive" -StartTime $startTime -EndTime $endTime -ItemCount $ItemCount -ThrottleLimit $ThrottleLimit
-    
+
     # Cleanup
     Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    
+
     return @{
         TestType = "IO-Intensive"
         ThrottleLimit = $ThrottleLimit
@@ -159,25 +159,25 @@ function Test-IOIntensiveWorkload {
 
 function Test-NetworkIntensiveWorkload {
     param([int]$ItemCount, [int]$ThrottleLimit)
-    
+
     Write-Host "Running Network-intensive workload (throttle: $ThrottleLimit)..." -ForegroundColor Green
-    
+
     # Use a reliable public API for testing
     $baseUrls = @(
         "https://httpbin.org/delay/0.1",
         "https://httpbin.org/delay/0.2",
         "https://httpbin.org/delay/0.1"
     )
-    
+
     $items = 1..$ItemCount
     $startTime = Get-Date
-    
+
     $results = Invoke-ParallelForEach -InputObject $items -ScriptBlock {
         param($item)
         try {
             $url = $using:baseUrls[($item % $using:baseUrls.Count)]
             $response = Invoke-RestMethod -Uri $url -TimeoutSec 10 -ErrorAction Stop
-            
+
             return @{
                 Item = $item
                 Success = $true
@@ -194,10 +194,10 @@ function Test-NetworkIntensiveWorkload {
             }
         }
     } -ThrottleLimit $ThrottleLimit
-    
+
     $endTime = Get-Date
     $metrics = Measure-ParallelPerformance -OperationName "Network-Intensive" -StartTime $startTime -EndTime $endTime -ItemCount $ItemCount -ThrottleLimit $ThrottleLimit
-    
+
     return @{
         TestType = "Network-Intensive"
         ThrottleLimit = $ThrottleLimit
@@ -209,12 +209,12 @@ function Test-NetworkIntensiveWorkload {
 
 function Test-AdaptiveExecution {
     param([int]$ItemCount)
-    
+
     Write-Host "Running Adaptive Parallel Execution test..." -ForegroundColor Green
-    
+
     $items = 1..$ItemCount
     $startTime = Get-Date
-    
+
     $results = Start-AdaptiveParallelExecution -InputObject $items -ScriptBlock {
         param($item)
         # Variable complexity based on item number
@@ -237,17 +237,17 @@ function Test-AdaptiveExecution {
             $sum = $item * 2
             Start-Sleep -Milliseconds 5
         }
-        
+
         return @{
             Item = $item
             Complexity = if ($item % 10 -eq 0) { "High" } elseif ($item % 5 -eq 0) { "Medium" } else { "Low" }
             Result = $sum
         }
     } -InitialThrottle 2 -MaxThrottle 8
-    
+
     $endTime = Get-Date
     $metrics = Measure-ParallelPerformance -OperationName "Adaptive-Execution" -StartTime $startTime -EndTime $endTime -ItemCount $ItemCount -ThrottleLimit 0
-    
+
     return @{
         TestType = "Adaptive-Execution"
         Results = $results
@@ -258,22 +258,22 @@ function Test-AdaptiveExecution {
 
 function Test-OptimalThrottleCalculation {
     Write-Host "Testing Optimal Throttle Limit Calculation..." -ForegroundColor Green
-    
+
     $workloadTypes = @('CPU', 'IO', 'Network', 'Mixed')
     $results = @{}
-    
+
     foreach ($workloadType in $workloadTypes) {
         $optimal = Get-OptimalThrottleLimit -WorkloadType $workloadType
         $optimalWithLimit = Get-OptimalThrottleLimit -WorkloadType $workloadType -MaxLimit 8
         $optimalWithLoad = Get-OptimalThrottleLimit -WorkloadType $workloadType -SystemLoadFactor 0.7
-        
+
         $results[$workloadType] = @{
             Standard = $optimal
             WithMaxLimit = $optimalWithLimit
             WithLoadFactor = $optimalWithLoad
         }
     }
-    
+
     return @{
         TestType = "Optimal-Throttle-Calculation"
         Results = $results
@@ -283,11 +283,11 @@ function Test-OptimalThrottleCalculation {
 
 function Compare-SequentialVsParallel {
     param([int]$ItemCount)
-    
+
     Write-Host "Comparing Sequential vs Parallel Execution..." -ForegroundColor Green
-    
+
     $items = 1..$ItemCount
-    
+
     # Sequential execution
     Write-Host "  Running sequential execution..." -ForegroundColor Gray
     $sequentialStart = Get-Date
@@ -301,7 +301,7 @@ function Compare-SequentialVsParallel {
     }
     $sequentialEnd = Get-Date
     $sequentialDuration = ($sequentialEnd - $sequentialStart).TotalSeconds
-    
+
     # Parallel execution
     Write-Host "  Running parallel execution..." -ForegroundColor Gray
     $parallelStart = Get-Date
@@ -315,9 +315,9 @@ function Compare-SequentialVsParallel {
     } -ThrottleLimit ([Environment]::ProcessorCount)
     $parallelEnd = Get-Date
     $parallelDuration = ($parallelEnd - $parallelStart).TotalSeconds
-    
+
     $speedup = $sequentialDuration / $parallelDuration
-    
+
     return @{
         TestType = "Sequential-vs-Parallel"
         Sequential = @{
@@ -353,7 +353,7 @@ $cpuThrottleLimits = @(1, 2, [Environment]::ProcessorCount, [Environment]::Proce
 foreach ($throttle in $cpuThrottleLimits) {
     $cpuResult = Test-CPUIntensiveWorkload -ItemCount $ItemCount -ThrottleLimit $throttle
     $benchmarkResults.Benchmarks += $cpuResult
-    
+
     Write-Host "CPU Test (Throttle $throttle): $([Math]::Round($cpuResult.Metrics.ThroughputPerSecond, 2)) items/sec" -ForegroundColor Yellow
 }
 Write-Host ""
@@ -371,7 +371,7 @@ try {
     $networkOptimal = Get-OptimalThrottleLimit -WorkloadType "Network" -MaxLimit 5  # Limit to be nice to test API
     $networkResult = Test-NetworkIntensiveWorkload -ItemCount ([Math]::Min($ItemCount, 20)) -ThrottleLimit $networkOptimal
     $benchmarkResults.Benchmarks += $networkResult
-    
+
     Write-Host "Network Test (Throttle $networkOptimal): $([Math]::Round($networkResult.Metrics.ThroughputPerSecond, 2)) items/sec, $([Math]::Round($networkResult.SuccessRate * 100, 1))% success" -ForegroundColor Yellow
 } catch {
     Write-Host "Network test skipped (no internet connection)" -ForegroundColor Gray
@@ -382,7 +382,7 @@ Write-Host ""
 if ($IncludeAdaptive) {
     $adaptiveResult = Test-AdaptiveExecution -ItemCount $ItemCount
     $benchmarkResults.Benchmarks += $adaptiveResult
-    
+
     Write-Host "Adaptive Execution: $([Math]::Round($adaptiveResult.Metrics.ThroughputPerSecond, 2)) items/sec" -ForegroundColor Yellow
     Write-Host ""
 }
@@ -391,7 +391,7 @@ if ($IncludeAdaptive) {
 if ($IncludeOptimalCalculation) {
     $optimalResult = Test-OptimalThrottleCalculation
     $benchmarkResults.Benchmarks += $optimalResult
-    
+
     Write-Host "Optimal Throttle Limits:" -ForegroundColor Yellow
     foreach ($workloadType in $optimalResult.Results.Keys) {
         $limits = $optimalResult.Results[$workloadType]

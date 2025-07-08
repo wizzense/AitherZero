@@ -29,17 +29,17 @@
 
 .EXAMPLE
     Optimize-PlatformEnvironment
-    
+
     Applies all optimizations for the current platform.
 
 .EXAMPLE
     Optimize-PlatformEnvironment -IncludePerformanceTuning -ConfigureDevelopmentTools
-    
+
     Applies performance and development tool optimizations.
 
 .EXAMPLE
     Optimize-PlatformEnvironment -Platform Windows -WhatIf
-    
+
     Shows what Windows optimizations would be applied.
 
 .NOTES
@@ -53,16 +53,16 @@ function Optimize-PlatformEnvironment {
         [Parameter()]
         [ValidateSet('Windows', 'Linux', 'macOS', 'Auto')]
         [string]$Platform = 'Auto',
-        
+
         [Parameter()]
         [switch]$IncludePerformanceTuning = $true,
-        
+
         [Parameter()]
         [switch]$IncludeSecurityHardening,
-        
+
         [Parameter()]
         [switch]$ConfigureDevelopmentTools = $true,
-        
+
         [Parameter()]
         [switch]$Force
     )
@@ -72,14 +72,14 @@ function Optimize-PlatformEnvironment {
         if ($Platform -eq 'Auto') {
             $Platform = if ($IsWindows) { 'Windows' } elseif ($IsLinux) { 'Linux' } elseif ($IsMacOS) { 'macOS' } else { 'Unknown' }
         }
-        
+
         if ($Platform -eq 'Unknown') {
             throw "Unable to detect platform for optimization"
         }
-        
+
         Write-CustomLog -Message "=== Platform Environment Optimization ===" -Level "INFO"
         Write-CustomLog -Message "Target Platform: $Platform" -Level "INFO"
-        
+
         $optimizationResults = @{
             Platform = $Platform
             OptimizationsApplied = @()
@@ -104,35 +104,35 @@ function Optimize-PlatformEnvironment {
                     Optimize-MacOSEnvironment -Results $optimizationResults -IncludePerformanceTuning:$IncludePerformanceTuning -IncludeSecurityHardening:$IncludeSecurityHardening -ConfigureDevelopmentTools:$ConfigureDevelopmentTools -Force:$Force -WhatIf:$WhatIfPreference
                 }
             }
-            
+
             # Display results
             Write-CustomLog -Message "" -Level "INFO"
             Write-CustomLog -Message "=== Optimization Summary ===" -Level "INFO"
             Write-CustomLog -Message "Applied $($optimizationResults.OptimizationsApplied.Count) optimizations" -Level "SUCCESS"
-            
+
             if ($optimizationResults.OptimizationsApplied.Count -gt 0) {
                 Write-CustomLog -Message "Optimizations applied:" -Level "INFO"
                 foreach ($optimization in $optimizationResults.OptimizationsApplied) {
                     Write-CustomLog -Message "  ✅ $optimization" -Level "SUCCESS"
                 }
             }
-            
+
             if ($optimizationResults.Issues.Count -gt 0) {
                 Write-CustomLog -Message "Issues encountered:" -Level "WARNING"
                 foreach ($issue in $optimizationResults.Issues) {
                     Write-CustomLog -Message "  ⚠️ $issue" -Level "WARNING"
                 }
             }
-            
+
             if ($optimizationResults.Recommendations.Count -gt 0) {
                 Write-CustomLog -Message "Recommendations:" -Level "INFO"
                 foreach ($recommendation in $optimizationResults.Recommendations) {
                     Write-CustomLog -Message "  💡 $recommendation" -Level "INFO"
                 }
             }
-            
+
             return $optimizationResults
-            
+
         } catch {
             Write-CustomLog -Message "Platform optimization failed: $($_.Exception.Message)" -Level "ERROR"
             throw
@@ -142,9 +142,9 @@ function Optimize-PlatformEnvironment {
 
 function Optimize-WindowsEnvironment {
     param($Results, [switch]$IncludePerformanceTuning, [switch]$IncludeSecurityHardening, [switch]$ConfigureDevelopmentTools, [switch]$Force, [switch]$WhatIf)
-    
+
     Write-CustomLog -Message "🪟 Optimizing Windows environment..." -Level "INFO"
-    
+
     # PowerShell execution policy optimization
     try {
         $currentPolicy = Get-ExecutionPolicy -Scope CurrentUser
@@ -159,7 +159,7 @@ function Optimize-WindowsEnvironment {
     } catch {
         $Results.Issues += "Failed to optimize PowerShell execution policy: $($_.Exception.Message)"
     }
-    
+
     # Windows Package Manager optimization
     if ($ConfigureDevelopmentTools) {
         try {
@@ -179,7 +179,7 @@ function Optimize-WindowsEnvironment {
             $Results.Issues += "Failed to configure winget: $($_.Exception.Message)"
         }
     }
-    
+
     # Windows Terminal optimization
     if ($ConfigureDevelopmentTools) {
         try {
@@ -190,16 +190,16 @@ function Optimize-WindowsEnvironment {
                 } else {
                     # Create backup
                     Copy-Item $wtConfigPath "$wtConfigPath.backup" -Force
-                    
+
                     # Read current settings
                     $settings = Get-Content $wtConfigPath -Raw | ConvertFrom-Json
-                    
+
                     # Set PowerShell 7 as default if available
                     $pwshPath = Get-Command pwsh -ErrorAction SilentlyContinue
                     if ($pwshPath) {
                         $settings.defaultProfile = "{574e775e-4f2a-5b96-ac1e-a2962a402336}"  # PowerShell 7 GUID
                     }
-                    
+
                     # Apply optimizations
                     $settings | ConvertTo-Json -Depth 10 | Set-Content $wtConfigPath -Encoding UTF8
                     $Results.DevelopmentToolsConfigured += "Optimized Windows Terminal settings"
@@ -211,7 +211,7 @@ function Optimize-WindowsEnvironment {
             $Results.Issues += "Failed to optimize Windows Terminal: $($_.Exception.Message)"
         }
     }
-    
+
     # Performance optimizations
     if ($IncludePerformanceTuning) {
         try {
@@ -221,7 +221,7 @@ function Optimize-WindowsEnvironment {
                 "C:\Program Files\PowerShell",
                 "C:\Program Files\Git"
             )
-            
+
             foreach ($path in $devPaths) {
                 if (Test-Path $path) {
                     if ($WhatIf) {
@@ -240,7 +240,7 @@ function Optimize-WindowsEnvironment {
             $Results.Issues += "Failed to apply performance optimizations: $($_.Exception.Message)"
         }
     }
-    
+
     # WSL optimization (if available)
     if ($ConfigureDevelopmentTools) {
         try {
@@ -274,14 +274,14 @@ appendWindowsPath=true
 
 function Optimize-LinuxEnvironment {
     param($Results, [switch]$IncludePerformanceTuning, [switch]$IncludeSecurityHardening, [switch]$ConfigureDevelopmentTools, [switch]$Force, [switch]$WhatIf)
-    
+
     Write-CustomLog -Message "🐧 Optimizing Linux environment..." -Level "INFO"
-    
+
     # Shell optimization
     if ($ConfigureDevelopmentTools) {
         try {
             $shellConfigFiles = @("$HOME/.bashrc", "$HOME/.zshrc", "$HOME/.profile")
-            
+
             foreach ($configFile in $shellConfigFiles) {
                 if (Test-Path $configFile) {
                     if ($WhatIf) {
@@ -319,7 +319,7 @@ alias gl='git pull'
             $Results.Issues += "Failed to optimize shell configuration: $($_.Exception.Message)"
         }
     }
-    
+
     # Package manager optimization
     if ($ConfigureDevelopmentTools) {
         try {
@@ -329,7 +329,7 @@ alias gl='git pull'
             elseif (Get-Command yum -ErrorAction SilentlyContinue) { $packageManager = 'yum' }
             elseif (Get-Command dnf -ErrorAction SilentlyContinue) { $packageManager = 'dnf' }
             elseif (Get-Command pacman -ErrorAction SilentlyContinue) { $packageManager = 'pacman' }
-            
+
             if ($packageManager) {
                 if ($WhatIf) {
                     Write-CustomLog -Message "[WHATIF] Would optimize $packageManager package manager" -Level "INFO"
@@ -355,7 +355,7 @@ alias gl='git pull'
             $Results.Issues += "Failed to optimize package manager: $($_.Exception.Message)"
         }
     }
-    
+
     # Performance optimizations
     if ($IncludePerformanceTuning) {
         try {
@@ -381,7 +381,7 @@ alias gl='git pull'
             $Results.Issues += "Failed to apply performance optimizations: $($_.Exception.Message)"
         }
     }
-    
+
     # Development environment variables
     if ($ConfigureDevelopmentTools) {
         try {
@@ -413,9 +413,9 @@ export TERM=xterm-256color
 
 function Optimize-MacOSEnvironment {
     param($Results, [switch]$IncludePerformanceTuning, [switch]$IncludeSecurityHardening, [switch]$ConfigureDevelopmentTools, [switch]$Force, [switch]$WhatIf)
-    
+
     Write-CustomLog -Message "🍎 Optimizing macOS environment..." -Level "INFO"
-    
+
     # Homebrew optimization
     if ($ConfigureDevelopmentTools) {
         try {
@@ -435,7 +435,7 @@ function Optimize-MacOSEnvironment {
             $Results.Issues += "Failed to optimize Homebrew: $($_.Exception.Message)"
         }
     }
-    
+
     # Shell optimization for macOS
     if ($ConfigureDevelopmentTools) {
         try {
@@ -477,7 +477,7 @@ alias code='code .'
             $Results.Issues += "Failed to optimize shell configuration: $($_.Exception.Message)"
         }
     }
-    
+
     # Performance optimizations for macOS
     if ($IncludePerformanceTuning) {
         try {
@@ -490,7 +490,7 @@ alias code='code .'
                     "$HOME/.npm",
                     "$HOME/.cache"
                 )
-                
+
                 foreach ($path in $devPaths) {
                     if (Test-Path $path) {
                         try {
@@ -506,7 +506,7 @@ alias code='code .'
             $Results.Issues += "Failed to apply performance optimizations: $($_.Exception.Message)"
         }
     }
-    
+
     # Xcode Command Line Tools check
     if ($ConfigureDevelopmentTools) {
         try {
@@ -520,7 +520,7 @@ alias code='code .'
             $Results.Recommendations += "Install Xcode Command Line Tools for development"
         }
     }
-    
+
     # Environment variables for macOS
     if ($ConfigureDevelopmentTools) {
         try {
@@ -531,7 +531,7 @@ alias code='code .'
                 if (-not (Test-Path $profile)) {
                     New-Item -ItemType File -Path $profile -Force | Out-Null
                 }
-                
+
                 $content = Get-Content $profile -Raw -ErrorAction SilentlyContinue
                 if (-not $content -or $content -notlike "*AITHERZERO_PLATFORM*") {
                     $envVars = @"

@@ -54,7 +54,7 @@ function Set-PerformanceBaseline {
 
     begin {
         Write-CustomLog -Message "Starting baseline collection for: $BaselineType" -Level "INFO"
-        
+
         # Check for existing baseline
         if ($script:PerformanceBaselines -and $script:PerformanceBaselines[$BaselineType] -and -not $Force) {
             if (-not $PSCmdlet.ShouldProcess("Existing baseline for $BaselineType", "Overwrite")) {
@@ -62,12 +62,12 @@ function Set-PerformanceBaseline {
                 return
             }
         }
-        
+
         # Initialize baseline storage
         if (-not $script:PerformanceBaselines) {
             $script:PerformanceBaselines = @{}
         }
-        
+
         $baseline = @{
             Type = $BaselineType
             StartTime = Get-Date
@@ -83,20 +83,20 @@ function Set-PerformanceBaseline {
     process {
         try {
             Write-CustomLog -Message "Collecting $($baseline.SampleCount) samples over $Duration seconds" -Level "INFO"
-            
+
             # Progress tracking
             $progress = @{
                 Activity = "Collecting Performance Baseline"
                 Status = "Sampling $BaselineType metrics"
                 PercentComplete = 0
             }
-            
+
             # Collect samples
             for ($i = 0; $i -lt $baseline.SampleCount; $i++) {
                 $progress.PercentComplete = [Math]::Round(($i / $baseline.SampleCount) * 100)
                 $progress.CurrentOperation = "Sample $($i + 1) of $($baseline.SampleCount)"
                 Write-Progress @progress
-                
+
                 # Collect metrics based on type
                 $sample = switch ($BaselineType) {
                     'System' { Get-SystemPerformance -MetricType System -Duration 1 }
@@ -104,30 +104,30 @@ function Set-PerformanceBaseline {
                     'Operation' { Get-SystemPerformance -MetricType Operation -Duration 1 }
                     'All' { Get-SystemPerformance -MetricType All -Duration 1 }
                 }
-                
+
                 $baseline.Samples += $sample
-                
+
                 # Wait for next sample (unless last)
                 if ($i -lt $baseline.SampleCount - 1) {
                     Start-Sleep -Seconds $SampleInterval
                 }
             }
-            
+
             Write-Progress -Activity "Collecting Performance Baseline" -Completed
-            
+
             # Calculate statistics
             $baseline.EndTime = Get-Date
             $baseline.Statistics = Calculate-BaselineStatistics -Samples $baseline.Samples -Type $BaselineType
             $baseline.Thresholds = Calculate-PerformanceThresholds -Statistics $baseline.Statistics
-            
+
             # Store baseline
             $script:PerformanceBaselines[$BaselineType] = $baseline
-            
+
             # Save to file if requested
             if ($SaveToFile) {
                 Save-PerformanceBaseline -Baseline $baseline
             }
-            
+
             # Create summary report
             $summary = @{
                 BaselineType = $BaselineType
@@ -137,7 +137,7 @@ function Set-PerformanceBaseline {
                 Key_Metrics = $baseline.Statistics.Summary
                 Thresholds = $baseline.Thresholds
             }
-            
+
             Write-CustomLog -Message "Performance baseline established successfully" -Level "SUCCESS"
             return $summary
 
@@ -151,14 +151,14 @@ function Set-PerformanceBaseline {
 # Helper function to calculate baseline statistics
 function Calculate-BaselineStatistics {
     param($Samples, $Type)
-    
+
     Write-CustomLog -Message "Calculating statistics for $($Samples.Count) samples" -Level "DEBUG"
-    
+
     $stats = @{
         Summary = @{}
         Details = @{}
     }
-    
+
     switch ($Type) {
         'System' {
             # CPU statistics
@@ -171,7 +171,7 @@ function Calculate-BaselineStatistics {
                     P99 = Calculate-Percentile -Values $cpuValues -Percentile 99
                 }
             }
-            
+
             # Memory statistics
             $memValues = $Samples | ForEach-Object { $_.System.Memory.Average } | Where-Object { $_ }
             if ($memValues) {
@@ -182,7 +182,7 @@ function Calculate-BaselineStatistics {
                     P99 = Calculate-Percentile -Values $memValues -Percentile 99
                 }
             }
-            
+
             # Network statistics
             $netValues = $Samples | ForEach-Object { $_.System.Network.ThroughputMbps } | Where-Object { $_ }
             if ($netValues) {
@@ -194,7 +194,7 @@ function Calculate-BaselineStatistics {
                 }
             }
         }
-        
+
         'Module' {
             # Module load time statistics
             $moduleData = @{}
@@ -210,7 +210,7 @@ function Calculate-BaselineStatistics {
                     }
                 }
             }
-            
+
             foreach ($moduleName in $moduleData.Keys) {
                 if ($moduleData[$moduleName].Count -gt 0) {
                     $stats.Details[$moduleName] = @{
@@ -220,7 +220,7 @@ function Calculate-BaselineStatistics {
                     }
                 }
             }
-            
+
             # Overall module statistics
             $allLoadTimes = $moduleData.Values | ForEach-Object { $_ } | Where-Object { $_ }
             if ($allLoadTimes) {
@@ -231,11 +231,11 @@ function Calculate-BaselineStatistics {
                 }
             }
         }
-        
+
         'Operation' {
             # Operation performance statistics
             $operationTypes = @('PatchWorkflows', 'InfrastructureDeployments', 'TestExecutions')
-            
+
             foreach ($opType in $operationTypes) {
                 $opTimes = @()
                 foreach ($sample in $Samples) {
@@ -243,7 +243,7 @@ function Calculate-BaselineStatistics {
                         $opTimes += $sample.Operations[$opType].AverageTime
                     }
                 }
-                
+
                 if ($opTimes.Count -gt 0) {
                     $stats.Summary[$opType] = @{
                         Mean = [Math]::Round(($opTimes | Measure-Object -Average).Average, 2)
@@ -253,14 +253,14 @@ function Calculate-BaselineStatistics {
                 }
             }
         }
-        
+
         'All' {
             # Recursive call for each type
             foreach ($subType in @('System', 'Module', 'Operation')) {
                 $subStats = Calculate-BaselineStatistics -Samples $Samples -Type $subType
                 $stats.Details[$subType] = $subStats
             }
-            
+
             # Overall application statistics
             if ($Samples[0].Application) {
                 $appMemory = $Samples | ForEach-Object { $_.Application.ProcessInfo.WorkingSetMB } | Where-Object { $_ }
@@ -274,20 +274,20 @@ function Calculate-BaselineStatistics {
             }
         }
     }
-    
+
     return $stats
 }
 
 # Helper function to calculate standard deviation
 function Calculate-StandardDeviation {
     param([array]$Values)
-    
+
     if ($Values.Count -lt 2) { return 0 }
-    
+
     $mean = ($Values | Measure-Object -Average).Average
     $squaredDiffs = $Values | ForEach-Object { [Math]::Pow($_ - $mean, 2) }
     $variance = ($squaredDiffs | Measure-Object -Sum).Sum / ($Values.Count - 1)
-    
+
     return [Math]::Round([Math]::Sqrt($variance), 2)
 }
 
@@ -297,70 +297,70 @@ function Calculate-Percentile {
         [array]$Values,
         [int]$Percentile
     )
-    
+
     $sorted = $Values | Sort-Object
     $index = [Math]::Ceiling($Percentile / 100 * $sorted.Count) - 1
     $index = [Math]::Max(0, [Math]::Min($index, $sorted.Count - 1))
-    
+
     return $sorted[$index]
 }
 
 # Helper function to calculate performance thresholds
 function Calculate-PerformanceThresholds {
     param($Statistics)
-    
+
     Write-CustomLog -Message "Calculating performance thresholds from statistics" -Level "DEBUG"
-    
+
     $thresholds = @{}
-    
+
     # CPU thresholds (based on mean + standard deviations)
     if ($Statistics.Summary.CPU) {
         $cpuMean = $Statistics.Summary.CPU.Mean
         $cpuStdDev = $Statistics.Summary.CPU.StdDev
-        
+
         $thresholds.CPU = @{
             Normal = [Math]::Round($cpuMean + $cpuStdDev, 2)
             Warning = [Math]::Round($cpuMean + (2 * $cpuStdDev), 2)
             Critical = [Math]::Min(95, [Math]::Round($cpuMean + (3 * $cpuStdDev), 2))
         }
     }
-    
+
     # Memory thresholds
     if ($Statistics.Summary.Memory) {
         $memMean = $Statistics.Summary.Memory.Mean
         $memStdDev = $Statistics.Summary.Memory.StdDev
-        
+
         $thresholds.Memory = @{
             Normal = [Math]::Round($memMean + $memStdDev, 2)
             Warning = [Math]::Round($memMean + (2 * $memStdDev), 2)
             Critical = [Math]::Min(95, [Math]::Round($memMean + (3 * $memStdDev), 2))
         }
     }
-    
+
     # Module loading thresholds (SLA: < 2 seconds)
     if ($Statistics.Summary.ModuleLoading) {
         $moduleMax = $Statistics.Summary.ModuleLoading.MaxTime
-        
+
         $thresholds.ModuleLoading = @{
             Normal = [Math]::Min(1.5, $moduleMax * 1.1)
             Warning = [Math]::Min(1.8, $moduleMax * 1.25)
             Critical = 2.0  # SLA limit
         }
     }
-    
+
     # Operation thresholds
     foreach ($opType in @('PatchWorkflows', 'InfrastructureDeployments', 'TestExecutions')) {
         if ($Statistics.Summary[$opType]) {
             $opMean = $Statistics.Summary[$opType].Mean
             $opMax = $Statistics.Summary[$opType].Max
-            
+
             # Define SLA-based thresholds
             $slaLimits = @{
                 PatchWorkflows = 10  # 10 seconds
                 InfrastructureDeployments = 120  # 2 minutes
                 TestExecutions = 300  # 5 minutes
             }
-            
+
             $thresholds[$opType] = @{
                 Normal = [Math]::Min($opMean * 1.2, $slaLimits[$opType] * 0.7)
                 Warning = [Math]::Min($opMax * 1.1, $slaLimits[$opType] * 0.9)
@@ -368,23 +368,23 @@ function Calculate-PerformanceThresholds {
             }
         }
     }
-    
+
     return $thresholds
 }
 
 # Helper function to save baseline to file
 function Save-PerformanceBaseline {
     param($Baseline)
-    
+
     try {
         $baselinePath = Join-Path $script:ProjectRoot "configs/performance"
         if (-not (Test-Path $baselinePath)) {
             New-Item -Path $baselinePath -ItemType Directory -Force | Out-Null
         }
-        
+
         $filename = "baseline-$($Baseline.Type.ToLower())-$(Get-Date -Format 'yyyyMMdd-HHmmss').json"
         $filepath = Join-Path $baselinePath $filename
-        
+
         # Create exportable baseline object
         $export = @{
             Type = $Baseline.Type
@@ -399,15 +399,15 @@ function Save-PerformanceBaseline {
                 OS = $PSVersionTable.OS
             }
         }
-        
+
         $export | ConvertTo-Json -Depth 10 | Out-File -FilePath $filepath -Encoding UTF8
-        
+
         Write-CustomLog -Message "Performance baseline saved to: $filepath" -Level "SUCCESS"
-        
+
         # Also update the current baseline file
         $currentFile = Join-Path $baselinePath "current-baseline-$($Baseline.Type.ToLower()).json"
         Copy-Item -Path $filepath -Destination $currentFile -Force
-        
+
     } catch {
         Write-CustomLog -Message "Error saving baseline: $($_.Exception.Message)" -Level "ERROR"
         throw

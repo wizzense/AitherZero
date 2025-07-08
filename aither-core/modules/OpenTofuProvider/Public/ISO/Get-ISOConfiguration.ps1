@@ -36,42 +36,42 @@ function Get-ISOConfiguration {
     param(
         [Parameter()]
         [string]$Name = "*",
-        
+
         [Parameter()]
         [string]$Repository,
-        
+
         [Parameter()]
         [switch]$IncludeMetadata,
-        
+
         [Parameter()]
         [switch]$CheckUpdates,
-        
+
         [Parameter()]
         [string]$DeploymentConfig
     )
-    
+
     begin {
         Write-CustomLog -Level 'INFO' -Message "Getting ISO configuration"
-        
+
         # Determine repository path
         if (-not $Repository) {
             $Repository = Join-Path $env:PROJECT_ROOT "iso-repository"
         }
-        
+
         # Check for ISOManager
         $script:hasISOManager = (Get-Command -Name 'Get-ISOInventory' -ErrorAction SilentlyContinue) -ne $null
     }
-    
+
     process {
         try {
             $isoConfigurations = @()
-            
+
             # If deployment config specified, get requirements first
             if ($DeploymentConfig) {
                 Write-CustomLog -Level 'INFO' -Message "Loading ISOs from deployment configuration"
-                
+
                 $isoReq = Initialize-DeploymentISOs -DeploymentConfig $DeploymentConfig -ISORepository $Repository -SkipExistingCheck
-                
+
                 foreach ($req in $isoReq.Requirements) {
                     $config = Get-SingleISOConfiguration -Requirement $req -Repository $Repository -IncludeMetadata:$IncludeMetadata -CheckUpdates:$CheckUpdates
                     if ($config) {
@@ -81,17 +81,17 @@ function Get-ISOConfiguration {
             } else {
                 # Get all ISOs from repository
                 Write-CustomLog -Level 'INFO' -Message "Scanning repository: $Repository"
-                
+
                 if (-not (Test-Path $Repository)) {
                     Write-CustomLog -Level 'WARN' -Message "ISO repository not found: $Repository"
                     return @()
                 }
-                
+
                 # Find all ISO files
                 $isoFiles = Get-ChildItem -Path $Repository -Filter "*.iso" -File | Where-Object { $_.Name -like $Name }
-                
+
                 Write-CustomLog -Level 'INFO' -Message "Found $($isoFiles.Count) ISO file(s)"
-                
+
                 foreach ($isoFile in $isoFiles) {
                     $config = Get-SingleISOConfiguration -ISOFile $isoFile -IncludeMetadata:$IncludeMetadata -CheckUpdates:$CheckUpdates
                     if ($config) {
@@ -99,10 +99,10 @@ function Get-ISOConfiguration {
                     }
                 }
             }
-            
+
             # Sort by name
             $isoConfigurations = $isoConfigurations | Sort-Object Name
-            
+
             # Add summary if multiple ISOs
             if ($isoConfigurations.Count -gt 1) {
                 $summary = @{
@@ -112,9 +112,9 @@ function Get-ISOConfiguration {
                     UpdatesAvailable = ($isoConfigurations | Where-Object { $_.UpdateAvailable }).Count
                     Customized = ($isoConfigurations | Where-Object { $_.IsCustomized }).Count
                 }
-                
+
                 Write-CustomLog -Level 'INFO' -Message "ISO Summary: $($summary.TotalISOs) ISOs, $($summary.TotalSizeGB) GB total"
-                
+
                 # Add summary as first item if returning array
                 if ($isoConfigurations -is [array]) {
                     $summaryObj = [PSCustomObject]@{
@@ -125,9 +125,9 @@ function Get-ISOConfiguration {
                     $isoConfigurations = @($summaryObj) + $isoConfigurations
                 }
             }
-            
+
             return $isoConfigurations
-            
+
         } catch {
             Write-CustomLog -Level 'ERROR' -Message "Failed to get ISO configuration: $($_.Exception.Message)"
             throw
@@ -143,7 +143,7 @@ function Get-SingleISOConfiguration {
         [switch]$IncludeMetadata,
         [switch]$CheckUpdates
     )
-    
+
     try {
         # Initialize configuration object
         $config = @{
@@ -164,7 +164,7 @@ function Get-SingleISOConfiguration {
             Ready = $false
             Metadata = @{}
         }
-        
+
         # Process based on input type
         if ($Requirement) {
             # From deployment requirement
@@ -173,7 +173,7 @@ function Get-SingleISOConfiguration {
             $config.Path = $Requirement.Path
             $config.Exists = $Requirement.Exists
             $config.CustomizationProfile = $Requirement.Customization
-            
+
             if ($Requirement.Path -and (Test-Path $Requirement.Path)) {
                 $ISOFile = Get-Item $Requirement.Path
             }
@@ -182,18 +182,18 @@ function Get-SingleISOConfiguration {
             $config.Name = $ISOFile.BaseName
             $config.Path = $ISOFile.FullName
             $config.Exists = $true
-            
+
             # Determine type from filename
             $config.Type = Get-ISOTypeFromFileName -FileName $ISOFile.Name
         }
-        
+
         # Get file details if exists
         if ($ISOFile) {
             $config.Size = $ISOFile.Length
             $config.SizeGB = [Math]::Round($ISOFile.Length / 1GB, 2)
             $config.Created = $ISOFile.CreationTime
             $config.Modified = $ISOFile.LastWriteTime
-            
+
             # Check for customization in filename
             if ($ISOFile.Name -match '_([^_]+)\.iso$') {
                 $possibleCustomization = $matches[1]
@@ -203,17 +203,17 @@ function Get-SingleISOConfiguration {
                 }
             }
         }
-        
+
         # Include metadata if requested
         if ($IncludeMetadata -and $config.Exists) {
             $config.Metadata = Get-ISOMetadata -Path $config.Path
-            
+
             # Update version from metadata if available
             if ($config.Metadata.Version) {
                 $config.Version = $config.Metadata.Version
             }
         }
-        
+
         # Check for updates if requested
         if ($CheckUpdates -and $config.Type) {
             $updateInfo = Check-ISOUpdate -Type $config.Type -CurrentVersion $config.Version
@@ -222,7 +222,7 @@ function Get-SingleISOConfiguration {
                 $config.LatestVersion = $updateInfo.LatestVersion
             }
         }
-        
+
         # Calculate checksum if not in metadata
         if ($config.Exists -and -not $config.Checksum) {
             try {
@@ -239,12 +239,12 @@ function Get-SingleISOConfiguration {
                 Write-CustomLog -Level 'DEBUG' -Message "Could not calculate checksum: $_"
             }
         }
-        
+
         # Determine readiness
         $config.Ready = $config.Exists -and $config.Size -gt 100MB
-        
+
         return [PSCustomObject]$config
-        
+
     } catch {
         Write-CustomLog -Level 'WARN' -Message "Error processing ISO configuration: $($_.Exception.Message)"
         return $null
@@ -253,7 +253,7 @@ function Get-SingleISOConfiguration {
 
 function Get-ISOTypeFromFileName {
     param([string]$FileName)
-    
+
     $type = switch -Regex ($FileName) {
         'Server.*2025' { 'WindowsServer2025' }
         'Server.*2022' { 'WindowsServer2022' }
@@ -269,18 +269,18 @@ function Get-ISOTypeFromFileName {
         'Debian' { 'Debian' }
         default { 'Unknown' }
     }
-    
+
     return $type
 }
 
 function Get-ISOMetadata {
     param([string]$Path)
-    
+
     $metadata = @{
         FileName = [System.IO.Path]::GetFileName($Path)
         Directory = [System.IO.Path]::GetDirectoryName($Path)
     }
-    
+
     try {
         # Use ISOManager if available
         if ($script:hasISOManager) {
@@ -292,7 +292,7 @@ function Get-ISOMetadata {
                 $metadata.Edition = $isoInfo.Edition
             }
         }
-        
+
         # Check for metadata files
         $metadataFile = "$Path.metadata"
         if (Test-Path $metadataFile) {
@@ -301,12 +301,12 @@ function Get-ISOMetadata {
                 $metadata[$prop.Name] = $prop.Value
             }
         }
-        
+
         # Try to extract info from filename if not available
         if (-not $metadata.Version -and $Path -match '(\d{5}\.\d+)') {
             $metadata.Version = $matches[1]
         }
-        
+
         if (-not $metadata.Architecture) {
             if ($Path -match 'x64|amd64') {
                 $metadata.Architecture = 'x64'
@@ -316,11 +316,11 @@ function Get-ISOMetadata {
                 $metadata.Architecture = 'arm64'
             }
         }
-        
+
     } catch {
         Write-CustomLog -Level 'DEBUG' -Message "Could not get ISO metadata: $_"
     }
-    
+
     return $metadata
 }
 
@@ -329,16 +329,16 @@ function Check-ISOUpdate {
         [string]$Type,
         [string]$CurrentVersion
     )
-    
+
     # This would normally check online sources or update catalog
     # For now, return mock data for demonstration
-    
+
     $updateInfo = @{
         UpdateAvailable = $false
         LatestVersion = $CurrentVersion
         DownloadUrl = $null
     }
-    
+
     # Simulate update check based on type
     $latestVersions = @{
         'WindowsServer2025' = '26100.1742'
@@ -347,16 +347,16 @@ function Check-ISOUpdate {
         'Windows11' = '23H2.3737'
         'Windows10' = '22H2.3693'
     }
-    
+
     if ($latestVersions.ContainsKey($Type)) {
         $latest = $latestVersions[$Type]
-        
+
         if ($CurrentVersion -and $CurrentVersion -ne $latest) {
             # Simple version comparison
             try {
                 $current = [version]($CurrentVersion -replace '[^\d.]', '')
                 $new = [version]($latest -replace '[^\d.]', '')
-                
+
                 if ($new -gt $current) {
                     $updateInfo.UpdateAvailable = $true
                     $updateInfo.LatestVersion = $latest
@@ -370,6 +370,6 @@ function Check-ISOUpdate {
             }
         }
     }
-    
+
     return $updateInfo
 }

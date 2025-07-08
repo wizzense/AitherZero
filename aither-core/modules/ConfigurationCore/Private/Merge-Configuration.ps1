@@ -13,14 +13,14 @@ function Merge-Configuration {
     param(
         [Parameter()]
         [hashtable]$Base = @{},
-        
+
         [Parameter()]
         [hashtable]$Override = @{}
     )
-    
+
     # Clone base to avoid modifying original
     $result = @{}
-    
+
     # Copy all base values
     foreach ($key in $Base.Keys) {
         if ($Base[$key] -is [hashtable]) {
@@ -31,7 +31,7 @@ function Merge-Configuration {
             $result[$key] = $Base[$key]
         }
     }
-    
+
     # Apply overrides
     foreach ($key in $Override.Keys) {
         if ($Override[$key] -is [hashtable] -and $result.ContainsKey($key) -and $result[$key] -is [hashtable]) {
@@ -42,6 +42,6 @@ function Merge-Configuration {
             $result[$key] = $Override[$key]
         }
     }
-    
+
     return $result
 }

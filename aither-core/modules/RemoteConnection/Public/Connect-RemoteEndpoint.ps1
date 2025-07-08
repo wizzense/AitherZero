@@ -58,7 +58,7 @@ function Connect-RemoteEndpoint {
 
                 # Try to get connection from pool first
                 $poolResult = Get-PooledConnection -ConnectionName $ConnectionName
-                
+
                 if ($poolResult.Success -and $poolResult.FromPool) {
                     Write-CustomLog -Level 'SUCCESS' -Message "Successfully connected to: $ConnectionName (from pool)"
                     return @{
@@ -80,9 +80,9 @@ function Connect-RemoteEndpoint {
                 } else {
                     # Pool connection failed, try with retry logic
                     Write-CustomLog -Level 'WARN' -Message "Pool connection failed, attempting with retry logic"
-                    
+
                     $retryResult = New-ConnectionWithRetry -ConnectionConfig $config -TimeoutSeconds $Timeout
-                    
+
                     if ($retryResult.Success) {
                         Write-CustomLog -Level 'SUCCESS' -Message "Successfully connected to: $ConnectionName (with retry)"
                         return @{
@@ -96,9 +96,9 @@ function Connect-RemoteEndpoint {
                         # Generate diagnostics for failed connection
                         $diagnostics = Get-ConnectionDiagnostics -ConnectionConfig $config -LastError $retryResult.Error
                         $formattedError = Format-ConnectionError -Error $retryResult.Error -ConnectionConfig $config -Diagnostics $diagnostics
-                        
+
                         Write-CustomLog -Level 'ERROR' -Message "Failed to connect to $ConnectionName after $($retryResult.Attempts) attempts: $($retryResult.Error.Exception.Message)"
-                        
+
                         return @{
                             Success = $false
                             Error = $retryResult.Error.Exception.Message

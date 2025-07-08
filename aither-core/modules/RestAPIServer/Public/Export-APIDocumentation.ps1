@@ -42,20 +42,20 @@ function Export-APIDocumentation {
     param(
         [Parameter(Mandatory)]
         [string]$OutputPath,
-        
+
         [Parameter()]
         [ValidateSet('Markdown', 'HTML', 'JSON', 'OpenAPI')]
         [string]$Format = 'Markdown',
-        
+
         [Parameter()]
         [switch]$IncludeExamples,
-        
+
         [Parameter()]
         [switch]$IncludeBuiltIn,
-        
+
         [Parameter()]
         [switch]$IncludeWebhooks,
-        
+
         [Parameter()]
         [string]$Template
     )
@@ -68,10 +68,10 @@ function Export-APIDocumentation {
         try {
             # Get all endpoints
             $endpoints = Get-APIEndpoints -IncludeBuiltIn:$IncludeBuiltIn -Format List
-            
+
             # Get API configuration
             $config = Get-APIConfiguration -Format List
-            
+
             # Get webhook information if requested
             $webhookInfo = $null
             if ($IncludeWebhooks) {
@@ -84,10 +84,10 @@ function Export-APIDocumentation {
                     } else { @() }
                 }
             }
-            
+
             # Generate documentation based on format
             $documentation = $null
-            
+
             switch ($Format) {
                 'Markdown' {
                     $documentation = @"
@@ -126,7 +126,7 @@ Authorization: Bearer YOUR_API_TOKEN
 ## Endpoints
 
 "@
-                    
+
                     foreach ($endpoint in $endpoints) {
                         $documentation += @"
 
@@ -157,7 +157,7 @@ $(if ($IncludeExamples) {
     if ($endpoint.Method -in @('POST', 'PUT', 'PATCH')) {
         $curlCommand += " -H 'Content-Type: application/json' -d '{`"parameter`": `"value`"}'"
     }
-    
+
 @"
 **Example Request**:
 
@@ -170,7 +170,7 @@ $curlCommand
 
 "@
                     }
-                    
+
                     if ($IncludeWebhooks -and $webhookInfo) {
                         $documentation += @"
 
@@ -212,7 +212,7 @@ Webhook payloads can be signed using HMAC-SHA256. The signature is included in t
 "@
                     }
                 }
-                
+
                 'HTML' {
                     $documentation = @"
 <!DOCTYPE html>
@@ -236,7 +236,7 @@ Webhook payloads can be signed using HMAC-SHA256. The signature is included in t
 <body>
     <h1>AitherZero REST API Documentation</h1>
     <p><strong>Generated on:</strong> $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")</p>
-    
+
     <h2>Overview</h2>
     <ul>
         <li><strong>Server Status:</strong> $(if (Test-APIServerRunning) { "Running" } else { "Stopped" })</li>
@@ -244,10 +244,10 @@ Webhook payloads can be signed using HMAC-SHA256. The signature is included in t
         <li><strong>Protocol:</strong> $($config.Protocol)</li>
         <li><strong>Authentication:</strong> $($config.Authentication)</li>
     </ul>
-    
+
     <h2>Endpoints</h2>
 "@
-                    
+
                     foreach ($endpoint in $endpoints) {
                         $methodClass = $endpoint.Method.ToLower()
                         $documentation += @"
@@ -261,10 +261,10 @@ Webhook payloads can be signed using HMAC-SHA256. The signature is included in t
     </div>
 "@
                     }
-                    
+
                     $documentation += "</body></html>"
                 }
-                
+
                 'JSON' {
                     $docData = @{
                         metadata = @{
@@ -276,14 +276,14 @@ Webhook payloads can be signed using HMAC-SHA256. The signature is included in t
                         configuration = $config
                         endpoints = $endpoints
                     }
-                    
+
                     if ($IncludeWebhooks) {
                         $docData.webhooks = $webhookInfo
                     }
-                    
+
                     $documentation = $docData | ConvertTo-Json -Depth 10
                 }
-                
+
                 'OpenAPI' {
                     $openApiSpec = @{
                         openapi = "3.0.0"
@@ -303,7 +303,7 @@ Webhook payloads can be signed using HMAC-SHA256. The signature is included in t
                             securitySchemes = @{}
                         }
                     }
-                    
+
                     # Add security schemes
                     if ($config.Authentication -eq 'Bearer') {
                         $openApiSpec.components.securitySchemes.bearerAuth = @{
@@ -311,13 +311,13 @@ Webhook payloads can be signed using HMAC-SHA256. The signature is included in t
                             scheme = "bearer"
                         }
                     }
-                    
+
                     # Add paths
                     foreach ($endpoint in $endpoints) {
                         if (-not $openApiSpec.paths.ContainsKey($endpoint.Path)) {
                             $openApiSpec.paths[$endpoint.Path] = @{}
                         }
-                        
+
                         $pathItem = @{
                             summary = $endpoint.Description
                             description = $endpoint.Description
@@ -334,27 +334,27 @@ Webhook payloads can be signed using HMAC-SHA256. The signature is included in t
                                 }
                             }
                         }
-                        
+
                         if ($endpoint.Authentication) {
                             $pathItem.security = @(
                                 @{ bearerAuth = @() }
                             )
                         }
-                        
+
                         $openApiSpec.paths[$endpoint.Path][$endpoint.Method.ToLower()] = $pathItem
                     }
-                    
+
                     $documentation = $openApiSpec | ConvertTo-Json -Depth 10
                 }
             }
-            
+
             # Save documentation to file
             $documentation | Out-File -FilePath $OutputPath -Encoding UTF8
-            
+
             $fileSizeKB = [math]::Round((Get-Item $OutputPath).Length / 1KB, 2)
-            
+
             Write-CustomLog -Message "API documentation exported successfully: $OutputPath ($fileSizeKB KB)" -Level "SUCCESS"
-            
+
             return @{
                 Success = $true
                 OutputPath = $OutputPath
@@ -366,11 +366,11 @@ Webhook payloads can be signed using HMAC-SHA256. The signature is included in t
                 IncludedExamples = $IncludeExamples.IsPresent
                 Message = "Documentation exported successfully"
             }
-            
+
         } catch {
             $errorMessage = "Failed to export API documentation: $($_.Exception.Message)"
             Write-CustomLog -Message $errorMessage -Level "ERROR"
-            
+
             return @{
                 Success = $false
                 Error = $_.Exception.Message

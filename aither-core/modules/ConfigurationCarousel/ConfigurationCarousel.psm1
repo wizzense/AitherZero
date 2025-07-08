@@ -19,13 +19,13 @@ $script:ConfigEnvironmentsPath = Join-Path $projectRoot "configs/environments"
 # Initialize carousel directory structure
 function Initialize-ConfigurationCarousel {
     $paths = @($script:ConfigCarouselPath, $script:ConfigBackupPath, $script:ConfigEnvironmentsPath)
-    
+
     foreach ($path in $paths) {
         if (-not (Test-Path $path)) {
             New-Item -Path $path -ItemType Directory -Force | Out-Null
         }
     }
-    
+
     # Create carousel registry if it doesn't exist
     $registryPath = Join-Path $script:ConfigCarouselPath "carousel-registry.json"
     if (-not (Test-Path $registryPath)) {
@@ -70,7 +70,7 @@ function Initialize-ConfigurationCarousel {
             }
             lastUpdated = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
         }
-        
+
         $defaultRegistry | ConvertTo-Json -Depth 10 | Set-Content -Path $registryPath
     }
 }
@@ -80,14 +80,14 @@ function Get-ConfigurationRegistry {
     .SYNOPSIS
         Gets the configuration carousel registry
     #>
-    
+
     Initialize-ConfigurationCarousel
-    
+
     $registryPath = Join-Path $script:ConfigCarouselPath "carousel-registry.json"
     if (Test-Path $registryPath) {
         return Get-Content -Path $registryPath | ConvertFrom-Json
     }
-    
+
     throw "Configuration registry not found"
 }
 
@@ -96,7 +96,7 @@ function Set-ConfigurationRegistry {
         [Parameter(Mandatory)]
         $Registry
     )
-    
+
     $registryPath = Join-Path $script:ConfigCarouselPath "carousel-registry.json"
     $Registry.lastUpdated = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
     $Registry | ConvertTo-Json -Depth 10 | Set-Content -Path $registryPath
@@ -113,26 +113,26 @@ function Switch-ConfigurationSet {
     param(
         [Parameter(Mandatory)]
         [string]$ConfigurationName,
-        
+
         [string]$Environment,
-        
+
         [switch]$BackupCurrent,
-        
+
         [switch]$Force
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Switching to configuration: $ConfigurationName"
-        
+
         $registry = Get-ConfigurationRegistry
-        
+
         # Validate configuration exists
         if (-not $registry.configurations.PSObject.Properties[$ConfigurationName]) {
             throw "Configuration '$ConfigurationName' not found. Available: $($registry.configurations.PSObject.Properties.Name -join ', ')"
         }
-        
+
         $targetConfig = $registry.configurations.$ConfigurationName
-        
+
         # Validate environment if specified
         if ($Environment) {
             if ($Environment -notin $targetConfig.environments) {
@@ -141,13 +141,13 @@ function Switch-ConfigurationSet {
         } else {
             $Environment = $targetConfig.environments[0]  # Use first available environment
         }
-        
+
         # Backup current configuration if requested
         if ($BackupCurrent) {
             $backupResult = Backup-CurrentConfiguration -Reason "Before switching to $ConfigurationName"
             Write-CustomLog -Level 'INFO' -Message "Current configuration backed up: $($backupResult.BackupPath)"
         }
-        
+
         # Enhanced validation for target configuration
         $validationResult = Validate-ConfigurationSet -ConfigurationName $ConfigurationName -Environment $Environment
         if (-not $validationResult.IsValid) {
@@ -161,7 +161,7 @@ function Switch-ConfigurationSet {
                 Write-CustomLog -Level 'WARNING' -Message "Validation failed but -Force specified, continuing anyway"
             }
         }
-        
+
         # Additional environment-specific validation
         $envValidation = Test-EnvironmentCompatibility -ConfigurationName $ConfigurationName -Environment $Environment
         if (-not $envValidation.IsCompatible) {
@@ -169,7 +169,7 @@ function Switch-ConfigurationSet {
             foreach ($warning in $envValidation.Warnings) {
                 Write-CustomLog -Level 'WARNING' -Message "  - $warning"
             }
-            
+
             if ($envValidation.BlockingIssues.Count -gt 0 -and -not $Force) {
                 Write-CustomLog -Level 'ERROR' -Message "Blocking issues found:"
                 foreach ($issue in $envValidation.BlockingIssues) {
@@ -178,17 +178,17 @@ function Switch-ConfigurationSet {
                 throw "Environment has blocking compatibility issues. Use -Force to override."
             }
         }
-        
+
         # Update registry
         $registry.currentConfiguration = $ConfigurationName
         $registry.currentEnvironment = $Environment
         Set-ConfigurationRegistry -Registry $registry
-        
+
         # Apply configuration
         $applyResult = Apply-ConfigurationSet -ConfigurationName $ConfigurationName -Environment $Environment
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "Successfully switched to configuration '$ConfigurationName' with environment '$Environment'"
-        
+
         return @{
             Success = $true
             PreviousConfiguration = $registry.currentConfiguration
@@ -197,7 +197,7 @@ function Switch-ConfigurationSet {
             ValidationResult = $validationResult
             ApplyResult = $applyResult
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to switch configuration: $_"
         return @{
@@ -218,15 +218,15 @@ function Get-AvailableConfigurations {
     param(
         [switch]$IncludeDetails
     )
-    
+
     try {
         $registry = Get-ConfigurationRegistry
-        
+
         $configurations = @()
-        
+
         foreach ($configName in $registry.configurations.PSObject.Properties.Name) {
             $config = $registry.configurations.$configName
-            
+
             $configInfo = @{
                 Name = $configName
                 Description = $config.description
@@ -234,26 +234,26 @@ function Get-AvailableConfigurations {
                 Environments = $config.environments
                 IsActive = ($configName -eq $registry.currentConfiguration)
             }
-            
+
             if ($IncludeDetails) {
                 $configInfo.Path = $config.path
                 $configInfo.Repository = $config.repository
                 $configInfo.LastValidated = $config.lastValidated
-                
+
                 # Check if configuration is accessible
                 $configInfo.IsAccessible = Test-ConfigurationAccessible -Configuration $config
             }
-            
+
             $configurations += $configInfo
         }
-        
+
         return @{
             CurrentConfiguration = $registry.currentConfiguration
             CurrentEnvironment = $registry.currentEnvironment
             TotalConfigurations = $configurations.Count
             Configurations = $configurations
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to get available configurations: $_"
         throw
@@ -271,32 +271,32 @@ function Add-ConfigurationRepository {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [Parameter(Mandatory)]
         [string]$Source,
-        
+
         [string]$Description,
-        
+
         [string[]]$Environments = @('dev', 'staging', 'prod'),
-        
+
         [ValidateSet('git', 'local', 'template')]
         [string]$SourceType = 'auto',
-        
+
         [string]$Branch = 'main',
-        
+
         [switch]$SetAsCurrent
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Adding configuration repository: $Name"
-        
+
         $registry = Get-ConfigurationRegistry
-        
+
         # Check if configuration already exists
         if ($registry.configurations.PSObject.Properties[$Name]) {
             throw "Configuration '$Name' already exists"
         }
-        
+
         # Determine source type if auto
         if ($SourceType -eq 'auto') {
             if ($Source -match '^https?://|\.git$|^git@') {
@@ -307,13 +307,13 @@ function Add-ConfigurationRepository {
                 $SourceType = 'template'
             }
         }
-        
+
         # Create configuration directory
         $configPath = Join-Path $script:ConfigCarouselPath $Name
         if (Test-Path $configPath) {
             Remove-Item -Path $configPath -Recurse -Force
         }
-        
+
         # Download/copy configuration based on source type
         switch ($SourceType) {
             'git' {
@@ -335,14 +335,14 @@ function Add-ConfigurationRepository {
                 }
             }
         }
-        
+
         # Validate the new configuration
         $validationResult = Validate-ConfigurationPath -Path $configPath
         if (-not $validationResult.IsValid) {
             Remove-Item -Path $configPath -Recurse -Force -ErrorAction SilentlyContinue
             throw "Configuration validation failed: $($validationResult.Errors -join '; ')"
         }
-        
+
         # Add to registry
         $newConfig = @{
             name = $Name
@@ -356,12 +356,12 @@ function Add-ConfigurationRepository {
             addedDate = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
             lastValidated = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
         }
-        
+
         $registry.configurations | Add-Member -MemberType NoteProperty -Name $Name -Value $newConfig
         Set-ConfigurationRegistry -Registry $registry
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "Configuration '$Name' added successfully"
-        
+
         # Set as current if requested
         if ($SetAsCurrent) {
             $switchResult = Switch-ConfigurationSet -ConfigurationName $Name -Environment $Environments[0]
@@ -372,14 +372,14 @@ function Add-ConfigurationRepository {
                 SwitchResult = $switchResult
             }
         }
-        
+
         return @{
             Success = $true
             Name = $Name
             Path = $configPath
             ValidationResult = $validationResult
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to add configuration repository: $_"
         return @{
@@ -400,71 +400,71 @@ function Sync-ConfigurationRepository {
     param(
         [Parameter(Mandatory)]
         [string]$ConfigurationName,
-        
+
         [ValidateSet('pull', 'push', 'sync')]
         [string]$Operation = 'pull',
-        
+
         [switch]$Force,
-        
+
         [switch]$BackupCurrent = $true
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Synchronizing configuration repository: $ConfigurationName"
-        
+
         $registry = Get-ConfigurationRegistry
-        
+
         # Validate configuration exists
         if (-not $registry.configurations.PSObject.Properties[$ConfigurationName]) {
             throw "Configuration '$ConfigurationName' not found"
         }
-        
+
         $config = $registry.configurations.$ConfigurationName
-        
+
         # Check if configuration has a remote source
         if (-not $config.source -or $config.sourceType -ne 'git') {
             throw "Configuration '$ConfigurationName' does not have a Git remote source"
         }
-        
+
         # Validate configuration path exists
         if (-not (Test-Path $config.path)) {
             throw "Configuration path does not exist: $($config.path)"
         }
-        
+
         # Backup current if requested
         $backupResult = $null
         if ($BackupCurrent) {
             $backupResult = Backup-CurrentConfiguration -Reason "Before sync of $ConfigurationName"
             Write-CustomLog -Level 'INFO' -Message "Configuration backed up: $($backupResult.BackupPath)"
         }
-        
+
         # Change to configuration directory
         Push-Location $config.path
-        
+
         try {
             # Verify it's a Git repository
             git status 2>&1 | Out-Null
             if ($LASTEXITCODE -ne 0) {
                 throw "Configuration directory is not a Git repository: $($config.path)"
             }
-            
+
             $syncResult = @{
                 Success = $true
                 Operation = $Operation
                 Changes = @()
                 ConflictsDetected = $false
             }
-            
+
             switch ($Operation) {
                 'pull' {
                     Write-CustomLog -Level 'INFO' -Message "Pulling latest changes from remote"
-                    
+
                     # Fetch latest changes
                     $fetchResult = git fetch origin 2>&1
                     if ($LASTEXITCODE -ne 0) {
                         throw "Git fetch failed: $fetchResult"
                     }
-                    
+
                     # Check for local changes
                     $status = git status --porcelain
                     if ($status -and -not $Force) {
@@ -472,7 +472,7 @@ function Sync-ConfigurationRepository {
                         $syncResult.Changes += "Local changes detected - sync aborted"
                         return $syncResult
                     }
-                    
+
                     # Pull changes
                     $pullResult = git pull origin $config.branch 2>&1
                     if ($LASTEXITCODE -ne 0) {
@@ -486,10 +486,10 @@ function Sync-ConfigurationRepository {
                         $syncResult.Changes += "Successfully pulled changes from remote"
                     }
                 }
-                
+
                 'push' {
                     Write-CustomLog -Level 'INFO' -Message "Pushing local changes to remote"
-                    
+
                     # Check for changes to commit
                     $status = git status --porcelain
                     if ($status) {
@@ -500,7 +500,7 @@ function Sync-ConfigurationRepository {
                         }
                         $syncResult.Changes += "Committed local changes"
                     }
-                    
+
                     # Push to remote
                     $pushResult = git push origin $config.branch 2>&1
                     if ($LASTEXITCODE -ne 0) {
@@ -508,11 +508,11 @@ function Sync-ConfigurationRepository {
                     }
                     $syncResult.Changes += "Successfully pushed changes to remote"
                 }
-                
+
                 'sync' {
                     # Full sync: pull then push
                     Write-CustomLog -Level 'INFO' -Message "Performing full synchronization"
-                    
+
                     # Stash local changes if any
                     $status = git status --porcelain
                     $hasLocalChanges = [bool]$status
@@ -520,24 +520,24 @@ function Sync-ConfigurationRepository {
                         git stash push -m "Auto-stash for sync $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" 2>&1 | Out-Null
                         $syncResult.Changes += "Stashed local changes"
                     }
-                    
+
                     # Pull latest
                     $pullResult = git pull origin $config.branch 2>&1
                     if ($LASTEXITCODE -ne 0) {
                         throw "Git pull failed: $pullResult"
                     }
                     $syncResult.Changes += "Pulled latest changes"
-                    
+
                     # Restore and merge local changes
                     if ($hasLocalChanges) {
                         $stashResult = git stash pop 2>&1
                         if ($LASTEXITCODE -eq 0) {
                             $syncResult.Changes += "Restored local changes"
-                            
+
                             # Commit merged changes
                             git add . 2>&1 | Out-Null
                             git commit -m "Sync: Merged local and remote changes $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" 2>&1 | Out-Null
-                            
+
                             # Push merged changes
                             $pushResult = git push origin $config.branch 2>&1
                             if ($LASTEXITCODE -eq 0) {
@@ -553,13 +553,13 @@ function Sync-ConfigurationRepository {
                     }
                 }
             }
-            
+
             # Update registry with last sync time
             $config.lastSync = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
             Set-ConfigurationRegistry -Registry $registry
-            
+
             Write-CustomLog -Level 'SUCCESS' -Message "Configuration repository synchronized successfully"
-            
+
             return @{
                 Success = $true
                 ConfigurationName = $ConfigurationName
@@ -569,11 +569,11 @@ function Sync-ConfigurationRepository {
                 BackupPath = $backupResult.BackupPath
                 LastSync = $config.lastSync
             }
-            
+
         } finally {
             Pop-Location
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to sync configuration repository: $_"
         return @{
@@ -594,58 +594,58 @@ function Remove-ConfigurationRepository {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
-        
+
         [switch]$DeleteFiles,
-        
+
         [switch]$Force
     )
-    
+
     try {
         $registry = Get-ConfigurationRegistry
-        
+
         # Check if configuration exists
         if (-not $registry.configurations.PSObject.Properties[$Name]) {
             throw "Configuration '$Name' not found"
         }
-        
+
         # Prevent removal of current configuration without force
         if ($registry.currentConfiguration -eq $Name -and -not $Force) {
             throw "Cannot remove current configuration '$Name' without -Force flag"
         }
-        
+
         # Prevent removal of default configuration
         if ($Name -eq 'default') {
             throw "Cannot remove default configuration"
         }
-        
+
         $config = $registry.configurations.$Name
-        
+
         # Remove files if requested
         if ($DeleteFiles -and $config.path -and (Test-Path $config.path)) {
             Remove-Item -Path $config.path -Recurse -Force
             Write-CustomLog -Level 'INFO' -Message "Deleted configuration files: $($config.path)"
         }
-        
+
         # Remove from registry
         $registry.configurations.PSObject.Properties.Remove($Name)
-        
+
         # Switch to default if this was the current configuration
         if ($registry.currentConfiguration -eq $Name) {
             $registry.currentConfiguration = 'default'
             $registry.currentEnvironment = 'dev'
             Write-CustomLog -Level 'INFO' -Message "Switched to default configuration"
         }
-        
+
         Set-ConfigurationRegistry -Registry $registry
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "Configuration '$Name' removed successfully"
-        
+
         return @{
             Success = $true
             RemovedConfiguration = $Name
             FilesDeleted = $DeleteFiles
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to remove configuration: $_"
         return @{
@@ -662,15 +662,15 @@ function Get-CurrentConfiguration {
     #>
     [CmdletBinding()]
     param()
-    
+
     try {
         $registry = Get-ConfigurationRegistry
         $currentName = $registry.currentConfiguration
         $currentEnv = $registry.currentEnvironment
-        
+
         if ($registry.configurations.PSObject.Properties[$currentName]) {
             $config = $registry.configurations.$currentName
-            
+
             return @{
                 Name = $currentName
                 Environment = $currentEnv
@@ -685,7 +685,7 @@ function Get-CurrentConfiguration {
         } else {
             throw "Current configuration '$currentName' not found in registry"
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to get current configuration: $_"
         throw
@@ -702,19 +702,19 @@ function Backup-CurrentConfiguration {
         [string]$Reason = "Manual backup",
         [string]$BackupName
     )
-    
+
     try {
         $current = Get-CurrentConfiguration
-        
+
         if (-not $BackupName) {
             $BackupName = "$($current.Name)-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
         }
-        
+
         $backupPath = Join-Path $script:ConfigBackupPath $BackupName
-        
+
         if ($current.IsAccessible -and (Test-Path $current.Path)) {
             Copy-Item -Path $current.Path -Destination $backupPath -Recurse -Force
-            
+
             # Create backup metadata
             $metadata = @{
                 originalName = $current.Name
@@ -723,12 +723,12 @@ function Backup-CurrentConfiguration {
                 reason = $Reason
                 originalPath = $current.Path
             }
-            
+
             $metadataPath = Join-Path $backupPath "backup-metadata.json"
             $metadata | ConvertTo-Json -Depth 5 | Set-Content -Path $metadataPath
-            
+
             Write-CustomLog -Level 'SUCCESS' -Message "Configuration backed up: $backupPath"
-            
+
             return @{
                 Success = $true
                 BackupName = $BackupName
@@ -738,7 +738,7 @@ function Backup-CurrentConfiguration {
         } else {
             throw "Current configuration path is not accessible: $($current.Path)"
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to backup configuration: $_"
         return @{
@@ -757,24 +757,24 @@ function Validate-ConfigurationSet {
     param(
         [Parameter(Mandatory)]
         [string]$ConfigurationName,
-        
+
         [string]$Environment = 'dev'
     )
-    
+
     try {
         $registry = Get-ConfigurationRegistry
-        
+
         if (-not $registry.configurations.PSObject.Properties[$ConfigurationName]) {
             return @{
                 IsValid = $false
                 Errors = @("Configuration '$ConfigurationName' not found")
             }
         }
-        
+
         $config = $registry.configurations.$ConfigurationName
         $errors = @()
         $warnings = @()
-        
+
         # Check if path exists and is accessible
         if (-not (Test-Path $config.path)) {
             $errors += "Configuration path does not exist: $($config.path)"
@@ -788,12 +788,12 @@ function Validate-ConfigurationSet {
                 }
             }
         }
-        
+
         # Environment-specific validation
         if ($Environment -and $Environment -notin $config.environments) {
             $errors += "Environment '$Environment' not supported by this configuration"
         }
-        
+
         return @{
             IsValid = ($errors.Count -eq 0)
             Errors = $errors
@@ -801,7 +801,7 @@ function Validate-ConfigurationSet {
             ConfigurationName = $ConfigurationName
             Environment = $Environment
         }
-        
+
     } catch {
         return @{
             IsValid = $false
@@ -813,7 +813,7 @@ function Validate-ConfigurationSet {
 # Helper functions
 function Test-ConfigurationAccessible {
     param($Configuration)
-    
+
     if ($Configuration.path) {
         return Test-Path $Configuration.path
     }
@@ -825,11 +825,11 @@ function Apply-ConfigurationSet {
         [string]$ConfigurationName,
         [string]$Environment
     )
-    
+
     # This would contain logic to actually apply the configuration
     # For now, it's a placeholder that returns success
     Write-CustomLog -Level 'INFO' -Message "Applying configuration '$ConfigurationName' for environment '$Environment'"
-    
+
     return @{
         Success = $true
         Message = "Configuration applied successfully"
@@ -838,13 +838,13 @@ function Apply-ConfigurationSet {
 
 function Validate-ConfigurationPath {
     param([string]$Path)
-    
+
     $errors = @()
-    
+
     if (-not (Test-Path $Path)) {
         $errors += "Path does not exist"
     }
-    
+
     return @{
         IsValid = ($errors.Count -eq 0)
         Errors = $errors
@@ -856,25 +856,25 @@ function Test-EnvironmentCompatibility {
         [string]$ConfigurationName,
         [string]$Environment
     )
-    
+
     $warnings = @()
     $blockingIssues = @()
-    
+
     try {
         $registry = Get-ConfigurationRegistry
         $config = $registry.configurations.$ConfigurationName
-        
+
         # Check if environment is supported by configuration
         if ($config.environments -and $Environment -notin $config.environments) {
             $blockingIssues += "Environment '$Environment' is not supported by configuration '$ConfigurationName'"
         }
-        
+
         # Check platform compatibility
         $currentPlatform = if ($IsWindows) { 'Windows' } elseif ($IsLinux) { 'Linux' } else { 'macOS' }
         if ($config.supportedPlatforms -and $currentPlatform -notin $config.supportedPlatforms) {
             $warnings += "Configuration may not be fully compatible with platform '$currentPlatform'"
         }
-        
+
         # Check version compatibility
         if ($config.requiredVersion) {
             $currentVersion = '1.0.0'  # This would be dynamic in real implementation
@@ -882,7 +882,7 @@ function Test-EnvironmentCompatibility {
                 $blockingIssues += "Configuration requires version $($config.requiredVersion) or higher, current version is $currentVersion"
             }
         }
-        
+
         # Check dependencies
         if ($config.dependencies) {
             foreach ($dependency in $config.dependencies) {
@@ -892,13 +892,13 @@ function Test-EnvironmentCompatibility {
                 }
             }
         }
-        
+
         return @{
             IsCompatible = ($blockingIssues.Count -eq 0)
             Warnings = $warnings
             BlockingIssues = $blockingIssues
         }
-        
+
     } catch {
         return @{
             IsCompatible = $false
@@ -910,7 +910,7 @@ function Test-EnvironmentCompatibility {
 
 function Test-ConfigurationDependency {
     param([string]$Dependency)
-    
+
     # Basic dependency checking - this could be expanded
     switch ($Dependency.ToLower()) {
         'git' { return (Get-Command git -ErrorAction SilentlyContinue) -ne $null }
@@ -927,10 +927,10 @@ function New-ConfigurationFromTemplate {
         [string]$TemplateName,
         [string]$Destination
     )
-    
+
     # Placeholder for template creation logic
     New-Item -Path $Destination -ItemType Directory -Force | Out-Null
-    
+
     return @{
         Success = $true
         Message = "Template configuration created"
@@ -961,7 +961,7 @@ Initialize-ConfigurationCarousel
 # Export functions
 Export-ModuleMember -Function @(
     'Switch-ConfigurationSet',
-    'Get-AvailableConfigurations', 
+    'Get-AvailableConfigurations',
     'Add-ConfigurationRepository',
     'Remove-ConfigurationRepository',
     'Sync-ConfigurationRepository',

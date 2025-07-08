@@ -14,20 +14,20 @@ function Show-ModuleExplorer {
         [Parameter()]
         [string]$Tier = 'free'
     )
-    
+
     try {
         $exitExplorer = $false
-        
+
         while (-not $exitExplorer) {
             # Get all available modules
             $allModules = Get-ModuleDiscovery -Tier $Tier
-            
+
             Clear-Host
             Write-Host "┌─ Module Explorer ───────────────────────────┐" -ForegroundColor Cyan
             Write-Host "│ Search: " -NoNewline -ForegroundColor Cyan
             $searchTerm = Read-Host
             Write-Host "│" -ForegroundColor Cyan
-            
+
             # Filter modules if search term provided
             if ($searchTerm) {
                 $filteredModules = $allModules | Where-Object {
@@ -39,22 +39,22 @@ function Show-ModuleExplorer {
             } else {
                 $filteredModules = $allModules
             }
-            
+
             # Group by category
             $categories = $filteredModules | Group-Object Category | Sort-Object Name
-            
+
             $menuItems = @()
             $itemIndex = 1
-            
+
             foreach ($category in $categories) {
                 Write-Host "│ ▼ $($category.Name) ($($category.Count) modules)" -ForegroundColor Green
-                
+
                 foreach ($module in $category.Group | Sort-Object Name) {
                     $lockIcon = if ($module.IsLocked) { " 🔒" } else { "" }
                     $tierBadge = if ($module.RequiredTier -ne 'free') { " [$($module.RequiredTier.ToUpper())]" } else { "" }
-                    
+
                     Write-Host "│   $itemIndex. $($module.Name)$tierBadge$lockIcon" -ForegroundColor White
-                    
+
                     $menuItems += @{
                         Index = $itemIndex
                         Module = $module
@@ -63,16 +63,16 @@ function Show-ModuleExplorer {
                 }
                 Write-Host "│" -ForegroundColor Cyan
             }
-            
+
             Write-Host "│ [Actions]" -ForegroundColor Yellow
             Write-Host "│   V. View Module Details" -ForegroundColor White
             Write-Host "│   R. Run Module Function" -ForegroundColor White
             Write-Host "│   S. Search Again" -ForegroundColor White
             Write-Host "│   B. Back to Main Menu" -ForegroundColor White
             Write-Host "└─────────────────────────────────────────────┘" -ForegroundColor Cyan
-            
+
             $selection = Read-Host "`nSelect module (1-$($menuItems.Count)) or action (V/R/S/B)"
-            
+
             switch ($selection.ToUpper()) {
                 'V' {
                     $moduleIndex = Read-Host "Enter module number to view"
@@ -113,7 +113,7 @@ function Show-ModuleExplorer {
                 }
             }
         }
-        
+
     } catch {
         Write-Error "Error in module explorer: $_"
         throw
@@ -125,7 +125,7 @@ function Show-ModuleDetails {
         [PSCustomObject]$Module,
         [string]$Tier
     )
-    
+
     Clear-Host
     Write-Host "┌─ Module Details ────────────────────────────┐" -ForegroundColor Cyan
     Write-Host "│ Name: $($Module.Name)" -ForegroundColor White
@@ -142,14 +142,14 @@ function Show-ModuleDetails {
     Write-Host "│ $($Module.Description)" -ForegroundColor White
     Write-Host "│" -ForegroundColor Cyan
     Write-Host "│ Functions ($($Module.Functions.Count)):" -ForegroundColor Yellow
-    
+
     foreach ($func in $Module.Functions | Sort-Object Name) {
         Write-Host "│   • $($func.Name)" -ForegroundColor White
         if ($func.Description) {
             Write-Host "│     $($func.Description)" -ForegroundColor DarkGray
         }
     }
-    
+
     Write-Host "└─────────────────────────────────────────────┘" -ForegroundColor Cyan
     Write-Host "`nPress any key to continue..."
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
@@ -159,13 +159,13 @@ function Show-ModuleFunctions {
     param(
         [PSCustomObject]$Module
     )
-    
+
     if ($Module.Functions.Count -eq 0) {
         Write-Host "No public functions found in this module." -ForegroundColor Yellow
         Start-Sleep -Seconds 2
         return
     }
-    
+
     $options = $Module.Functions | ForEach-Object {
         @{
             Text = "$($_.Name) - $($_.Description)"
@@ -173,24 +173,24 @@ function Show-ModuleFunctions {
             Function = $_
         }
     }
-    
+
     $selected = Show-ContextMenu -Title "Select Function to Run" -Options $options -ReturnAction
-    
+
     if ($selected) {
         $function = $options | Where-Object { $_.Action -eq $selected } | Select-Object -ExpandProperty Function
-        
+
         # Prompt for parameters if needed
         if ($function.Parameters.Count -gt 0) {
             Write-Host "`nFunction Parameters:" -ForegroundColor Cyan
             $params = @{}
-            
+
             foreach ($param in $function.Parameters) {
                 Write-Host "$($param.Name) [$($param.Type)]" -NoNewline
                 if ($param.Mandatory) {
                     Write-Host " (Required)" -NoNewline -ForegroundColor Yellow
                 }
                 Write-Host ": " -NoNewline
-                
+
                 $value = Read-Host
                 if ($value) {
                     # Convert to appropriate type
@@ -202,7 +202,7 @@ function Show-ModuleFunctions {
                     }
                 }
             }
-            
+
             Write-Host "`nExecuting: $($function.Name)" -ForegroundColor Green
             try {
                 & $function.Name @params
@@ -217,7 +217,7 @@ function Show-ModuleFunctions {
                 Write-Error "Error executing function: $_"
             }
         }
-        
+
         Write-Host "`nPress any key to continue..."
         $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     }

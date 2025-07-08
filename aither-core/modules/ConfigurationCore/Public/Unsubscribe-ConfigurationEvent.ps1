@@ -19,30 +19,30 @@ function Unsubscribe-ConfigurationEvent {
     param(
         [Parameter(Mandatory, ParameterSetName = 'ById')]
         [string]$SubscriptionId,
-        
+
         [Parameter(Mandatory, ParameterSetName = 'ByEventAndModule')]
         [string]$EventName,
-        
+
         [Parameter(Mandatory, ParameterSetName = 'ByEventAndModule')]
         [string]$ModuleName
     )
-    
+
     try {
-        if (-not $script:ConfigurationStore.EventSystem -or 
+        if (-not $script:ConfigurationStore.EventSystem -or
             -not $script:ConfigurationStore.EventSystem.Subscriptions) {
             Write-CustomLog -Level 'WARNING' -Message "No event subscriptions found"
             return $false
         }
-        
+
         $removed = $false
         $removedSubscriptions = @()
-        
+
         if ($PSCmdlet.ParameterSetName -eq 'ById') {
             # Remove by subscription ID
             foreach ($eventName in $script:ConfigurationStore.EventSystem.Subscriptions.Keys) {
                 $subscriptions = $script:ConfigurationStore.EventSystem.Subscriptions[$eventName]
                 $newSubscriptions = @()
-                
+
                 foreach ($subscription in $subscriptions) {
                     if ($subscription.Id -eq $SubscriptionId) {
                         $removedSubscriptions += @{
@@ -55,7 +55,7 @@ function Unsubscribe-ConfigurationEvent {
                         $newSubscriptions += $subscription
                     }
                 }
-                
+
                 $script:ConfigurationStore.EventSystem.Subscriptions[$eventName] = $newSubscriptions
             }
         } else {
@@ -63,7 +63,7 @@ function Unsubscribe-ConfigurationEvent {
             if ($script:ConfigurationStore.EventSystem.Subscriptions.ContainsKey($EventName)) {
                 $subscriptions = $script:ConfigurationStore.EventSystem.Subscriptions[$EventName]
                 $newSubscriptions = @()
-                
+
                 foreach ($subscription in $subscriptions) {
                     if ($subscription.ModuleName -eq $ModuleName) {
                         $removedSubscriptions += @{
@@ -76,15 +76,15 @@ function Unsubscribe-ConfigurationEvent {
                         $newSubscriptions += $subscription
                     }
                 }
-                
+
                 $script:ConfigurationStore.EventSystem.Subscriptions[$EventName] = $newSubscriptions
             }
         }
-        
+
         if ($removed) {
             foreach ($removedSub in $removedSubscriptions) {
                 Write-CustomLog -Level 'INFO' -Message "Unsubscribed module '$($removedSub.ModuleName)' from event '$($removedSub.EventName)'"
-                
+
                 # Publish unsubscription event
                 if (Get-Command 'Publish-TestEvent' -ErrorAction SilentlyContinue) {
                     Publish-TestEvent -EventName 'ConfigurationEventUnsubscribed' -EventData @{
@@ -95,14 +95,14 @@ function Unsubscribe-ConfigurationEvent {
                     }
                 }
             }
-            
+
             Write-CustomLog -Level 'SUCCESS' -Message "Successfully removed $($removedSubscriptions.Count) subscription(s)"
         } else {
             Write-CustomLog -Level 'WARNING' -Message "No matching subscriptions found to remove"
         }
-        
+
         return $removed
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to unsubscribe from configuration event: $_"
         throw

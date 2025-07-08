@@ -33,11 +33,11 @@ function Get-APIConfiguration {
         [Parameter()]
         [ValidateSet('WebhookConfig', 'RateLimit', 'Security', 'Authentication', 'CORS', 'Logging')]
         [string]$Section,
-        
+
         [Parameter()]
         [ValidateSet('Table', 'List', 'JSON')]
         [string]$Format = 'List',
-        
+
         [Parameter()]
         [switch]$IncludeSecrets
     )
@@ -50,10 +50,10 @@ function Get-APIConfiguration {
         try {
             # Initialize configuration if not present
             Initialize-APIConfiguration
-            
+
             # Get configuration copy
             $config = $script:APIConfiguration.Clone()
-            
+
             # Add runtime information
             $config.RuntimeInfo = @{
                 ServerRunning = Test-APIServerRunning
@@ -62,13 +62,13 @@ function Get-APIConfiguration {
                 TotalWebhooks = $script:WebhookSubscriptions.Count
                 RequestCount = $script:APIMetrics.RequestCount
                 ErrorCount = $script:APIMetrics.ErrorCount
-                UpTime = if ($script:APIStartTime) { 
-                    (Get-Date) - $script:APIStartTime 
-                } else { 
-                    $null 
+                UpTime = if ($script:APIStartTime) {
+                    (Get-Date) - $script:APIStartTime
+                } else {
+                    $null
                 }
             }
-            
+
             # Remove secrets if not requested
             if (-not $IncludeSecrets) {
                 if ($config.ContainsKey('ApiKey')) {
@@ -81,7 +81,7 @@ function Get-APIConfiguration {
                     $config.Security.Secrets = '[HIDDEN]'
                 }
             }
-            
+
             # Filter by section if requested
             if ($Section) {
                 if ($config.ContainsKey($Section)) {
@@ -92,7 +92,7 @@ function Get-APIConfiguration {
                     throw "Configuration section '$Section' not found"
                 }
             }
-            
+
             # Format output
             switch ($Format) {
                 'JSON' {
@@ -129,7 +129,7 @@ function Get-APIConfiguration {
                     return $config
                 }
             }
-            
+
         } catch {
             $errorMessage = "Failed to retrieve API configuration: $($_.Exception.Message)"
             Write-CustomLog -Message $errorMessage -Level "ERROR"

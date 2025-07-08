@@ -16,10 +16,10 @@ function Clear-ModuleDiscoveryCache {
         [ValidateSet('All', 'Modules', 'Performance')]
         [string]$CacheType = 'All'
     )
-    
+
     try {
         $cacheCleared = $false
-        
+
         # Clear module discovery cache
         if ($CacheType -in @('All', 'Modules')) {
             if ($script:ModuleDiscoveryCache) {
@@ -27,12 +27,12 @@ function Clear-ModuleDiscoveryCache {
                 $cacheCleared = $true
                 Write-Host "Module discovery cache cleared." -ForegroundColor Green
             }
-            
+
             if ($script:ModuleDiscoveryCacheTime) {
                 $script:ModuleDiscoveryCacheTime = $null
             }
         }
-        
+
         # Clear performance cache
         if ($CacheType -in @('All', 'Performance')) {
             if ($script:StartupPerformanceCache) {
@@ -41,7 +41,7 @@ function Clear-ModuleDiscoveryCache {
                 Write-Host "Performance cache cleared." -ForegroundColor Green
             }
         }
-        
+
         # Clear UI capabilities cache
         if ($CacheType -eq 'All') {
             if ($script:UICapabilities) {
@@ -50,11 +50,11 @@ function Clear-ModuleDiscoveryCache {
                 Write-Host "UI capabilities cache cleared." -ForegroundColor Green
             }
         }
-        
+
         if (-not $cacheCleared) {
             Write-Host "No cache data found to clear." -ForegroundColor Yellow
         }
-        
+
         # Log operation
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Message "Module discovery cache cleared" -Level DEBUG -Context @{
@@ -62,9 +62,9 @@ function Clear-ModuleDiscoveryCache {
                 CacheCleared = $cacheCleared
             }
         }
-        
+
         return $cacheCleared
-        
+
     } catch {
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Message "Error clearing module discovery cache" -Level ERROR -Exception $_.Exception

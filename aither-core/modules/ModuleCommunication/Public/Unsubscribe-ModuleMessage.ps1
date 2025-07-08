@@ -17,17 +17,17 @@ function Unsubscribe-ModuleMessage {
     param(
         [Parameter(Mandatory, ParameterSetName = 'ById')]
         [string]$SubscriptionId,
-        
+
         [Parameter(Mandatory, ParameterSetName = 'ByChannel')]
         [string]$Channel,
-        
+
         [Parameter(Mandatory, ParameterSetName = 'ByModule')]
         [string]$SubscriberModule
     )
-    
+
     try {
         $removedCount = 0
-        
+
         switch ($PSCmdlet.ParameterSetName) {
             'ById' {
                 # Find and remove specific subscription
@@ -37,22 +37,22 @@ function Unsubscribe-ModuleMessage {
                         $keysToRemove += $key
                     }
                 }
-                
+
                 foreach ($key in $keysToRemove) {
                     $subscription = $script:MessageBus.Subscriptions[$key]
                     if ($script:MessageBus.Subscriptions.TryRemove($key, [ref]$subscription)) {
                         $removedCount++
-                        
+
                         # Update channel subscription count
                         if ($script:MessageBus.Channels.ContainsKey($subscription.Channel)) {
                             $script:MessageBus.Channels[$subscription.Channel].SubscriptionCount--
                         }
-                        
+
                         Write-CustomLog -Level 'INFO' -Message "Subscription removed: $SubscriptionId"
                     }
                 }
             }
-            
+
             'ByChannel' {
                 # Remove all subscriptions for channel
                 $keysToRemove = @()
@@ -61,22 +61,22 @@ function Unsubscribe-ModuleMessage {
                         $keysToRemove += $key
                     }
                 }
-                
+
                 foreach ($key in $keysToRemove) {
                     $subscription = $script:MessageBus.Subscriptions[$key]
                     if ($script:MessageBus.Subscriptions.TryRemove($key, [ref]$subscription)) {
                         $removedCount++
                     }
                 }
-                
+
                 # Reset channel subscription count
                 if ($script:MessageBus.Channels.ContainsKey($Channel)) {
                     $script:MessageBus.Channels[$Channel].SubscriptionCount = 0
                 }
-                
+
                 Write-CustomLog -Level 'INFO' -Message "All subscriptions removed for channel: $Channel"
             }
-            
+
             'ByModule' {
                 # Remove all subscriptions for module
                 $keysToRemove = @()
@@ -86,28 +86,28 @@ function Unsubscribe-ModuleMessage {
                         $keysToRemove += $key
                     }
                 }
-                
+
                 foreach ($key in $keysToRemove) {
                     $subscription = $script:MessageBus.Subscriptions[$key]
                     if ($script:MessageBus.Subscriptions.TryRemove($key, [ref]$subscription)) {
                         $removedCount++
-                        
+
                         # Update channel subscription count
                         if ($script:MessageBus.Channels.ContainsKey($subscription.Channel)) {
                             $script:MessageBus.Channels[$subscription.Channel].SubscriptionCount--
                         }
                     }
                 }
-                
+
                 Write-CustomLog -Level 'INFO' -Message "All subscriptions removed for module: $SubscriberModule"
             }
         }
-        
+
         return @{
             RemovedCount = $removedCount
             Success = $removedCount -gt 0
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to unsubscribe: $_"
         throw

@@ -19,17 +19,17 @@ function Revoke-AuthenticationToken {
     param(
         [Parameter(Mandatory, ParameterSetName = 'Token')]
         [string]$Token,
-        
+
         [Parameter(Mandatory, ParameterSetName = 'Module')]
         [string]$ModuleName,
-        
+
         [Parameter(Mandatory, ParameterSetName = 'User')]
         [string]$User,
-        
+
         [Parameter()]
         [switch]$Force
     )
-    
+
     try {
         # Check if security is enabled
         if (-not $script:SecurityContext -or -not $script:SecurityContext.SecurityEnabled) {
@@ -39,9 +39,9 @@ function Revoke-AuthenticationToken {
                 Reason = "Security not enabled"
             }
         }
-        
+
         $revokedTokens = @()
-        
+
         switch ($PSCmdlet.ParameterSetName) {
             'Token' {
                 if ($script:SecurityContext.ValidTokens.ContainsKey($Token)) {
@@ -55,7 +55,7 @@ function Revoke-AuthenticationToken {
                             }
                         }
                     }
-                    
+
                     $tokenInfo = $script:SecurityContext.ValidTokens[$Token]
                     $script:SecurityContext.ValidTokens.Remove($Token)
                     $script:SecurityContext.TokenExpiration.Remove($Token)
@@ -68,7 +68,7 @@ function Revoke-AuthenticationToken {
                     throw "Token not found"
                 }
             }
-            
+
             'Module' {
                 $tokensToRevoke = @()
                 foreach ($tokenKey in $script:SecurityContext.ValidTokens.Keys) {
@@ -77,11 +77,11 @@ function Revoke-AuthenticationToken {
                         $tokensToRevoke += $tokenKey
                     }
                 }
-                
+
                 if ($tokensToRevoke.Count -eq 0) {
                     throw "No tokens found for module: $ModuleName"
                 }
-                
+
                 if (-not $Force) {
                     $choice = Read-Host "Revoke $($tokensToRevoke.Count) tokens for module '$ModuleName'? (y/N)"
                     if ($choice -ne 'y' -and $choice -ne 'Y') {
@@ -91,7 +91,7 @@ function Revoke-AuthenticationToken {
                         }
                     }
                 }
-                
+
                 foreach ($tokenKey in $tokensToRevoke) {
                     $tokenInfo = $script:SecurityContext.ValidTokens[$tokenKey]
                     $script:SecurityContext.ValidTokens.Remove($tokenKey)
@@ -103,7 +103,7 @@ function Revoke-AuthenticationToken {
                     }
                 }
             }
-            
+
             'User' {
                 $tokensToRevoke = @()
                 foreach ($tokenKey in $script:SecurityContext.ValidTokens.Keys) {
@@ -112,11 +112,11 @@ function Revoke-AuthenticationToken {
                         $tokensToRevoke += $tokenKey
                     }
                 }
-                
+
                 if ($tokensToRevoke.Count -eq 0) {
                     throw "No tokens found for user: $User"
                 }
-                
+
                 if (-not $Force) {
                     $choice = Read-Host "Revoke $($tokensToRevoke.Count) tokens for user '$User'? (y/N)"
                     if ($choice -ne 'y' -and $choice -ne 'Y') {
@@ -126,7 +126,7 @@ function Revoke-AuthenticationToken {
                         }
                     }
                 }
-                
+
                 foreach ($tokenKey in $tokensToRevoke) {
                     $tokenInfo = $script:SecurityContext.ValidTokens[$tokenKey]
                     $script:SecurityContext.ValidTokens.Remove($tokenKey)
@@ -139,16 +139,16 @@ function Revoke-AuthenticationToken {
                 }
             }
         }
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "Revoked $($revokedTokens.Count) authentication tokens"
-        
+
         return @{
             Success = $true
             RevokedCount = $revokedTokens.Count
             RevokedTokens = $revokedTokens
             RevokedAt = Get-Date
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to revoke token: $_"
         throw

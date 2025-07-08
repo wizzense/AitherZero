@@ -55,11 +55,11 @@ function Export-SecureCredential {
 
             # Get credential data using the retrieval function
             $credentialResult = Retrieve-CredentialSecurely -CredentialName $CredentialName -SkipIntegrityCheck
-            
+
             if (-not $credentialResult.Success) {
                 throw "Failed to retrieve credential: $CredentialName"
             }
-            
+
             $credentialData = $credentialResult.Credential
 
             # Create export data structure

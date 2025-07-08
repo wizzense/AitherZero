@@ -19,20 +19,20 @@ function Clear-EventHistory {
     param(
         [Parameter()]
         [string]$EventName,
-        
+
         [Parameter()]
         [string]$Channel,
-        
+
         [Parameter()]
         [datetime]$OlderThan,
-        
+
         [Parameter()]
         [switch]$Force
     )
-    
+
     try {
         $originalCount = $script:MessageBus.EventHistory.Count
-        
+
         if ($originalCount -eq 0) {
             Write-CustomLog -Level 'INFO' -Message "Event history is already empty"
             return @{
@@ -40,7 +40,7 @@ function Clear-EventHistory {
                 Success = $true
             }
         }
-        
+
         # Confirmation
         if (-not $Force -and -not $WhatIfPreference) {
             $message = "Clear event history?"
@@ -48,7 +48,7 @@ function Clear-EventHistory {
             if ($Channel) { $message += " (Channel: $Channel)" }
             if ($OlderThan) { $message += " (OlderThan: $OlderThan)" }
             $message += " ($originalCount events)"
-            
+
             $choice = Read-Host "$message (y/N)"
             if ($choice -ne 'y' -and $choice -ne 'Y') {
                 Write-CustomLog -Level 'INFO' -Message "Operation cancelled"
@@ -58,10 +58,10 @@ function Clear-EventHistory {
                 }
             }
         }
-        
+
         if ($PSCmdlet.ShouldProcess("Event History", "Clear Events")) {
             $clearedCount = 0
-            
+
             if (-not $EventName -and -not $Channel -and -not $OlderThan) {
                 # Clear all events
                 while ($script:MessageBus.EventHistory.Count -gt 0) {
@@ -73,12 +73,12 @@ function Clear-EventHistory {
             } else {
                 # Selective clearing - need to rebuild queue
                 $tempQueue = [System.Collections.Concurrent.ConcurrentQueue[object]]::new()
-                
+
                 while ($script:MessageBus.EventHistory.Count -gt 0) {
                     $event = $null
                     if ($script:MessageBus.EventHistory.TryDequeue([ref]$event)) {
                         $shouldClear = $false
-                        
+
                         # Apply filters
                         if ($EventName -and $event.Name -like $EventName) {
                             $shouldClear = $true
@@ -89,13 +89,13 @@ function Clear-EventHistory {
                         if ($OlderThan -and $event.Timestamp -lt $OlderThan) {
                             $shouldClear = $true
                         }
-                        
+
                         # If multiple filters, all must match
                         if (($EventName -or $Channel -or $OlderThan) -and -not $shouldClear) {
                             # Check if all specified filters match
                             $matches = 0
                             $totalFilters = 0
-                            
+
                             if ($EventName) {
                                 $totalFilters++
                                 if ($event.Name -like $EventName) { $matches++ }
@@ -108,10 +108,10 @@ function Clear-EventHistory {
                                 $totalFilters++
                                 if ($event.Timestamp -lt $OlderThan) { $matches++ }
                             }
-                            
+
                             $shouldClear = ($matches -eq $totalFilters)
                         }
-                        
+
                         if ($shouldClear) {
                             $clearedCount++
                         } else {
@@ -119,7 +119,7 @@ function Clear-EventHistory {
                         }
                     }
                 }
-                
+
                 # Restore non-cleared events
                 while ($tempQueue.Count -gt 0) {
                     $event = $null
@@ -128,9 +128,9 @@ function Clear-EventHistory {
                     }
                 }
             }
-            
+
             Write-CustomLog -Level 'SUCCESS' -Message "Cleared $clearedCount events from history (was $originalCount, now $($script:MessageBus.EventHistory.Count))"
-            
+
             return @{
                 ClearedCount = $clearedCount
                 OriginalCount = $originalCount
@@ -138,7 +138,7 @@ function Clear-EventHistory {
                 Success = $true
             }
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to clear event history: $_"
         throw

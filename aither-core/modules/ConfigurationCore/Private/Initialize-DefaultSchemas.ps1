@@ -7,7 +7,7 @@ function Initialize-DefaultSchemas {
     #>
     [CmdletBinding()]
     param()
-    
+
     # Logging module schema
     Register-ConfigurationSchema -ModuleName 'Logging' -Schema @{
         Properties = @{
@@ -36,7 +36,7 @@ function Initialize-DefaultSchemas {
             }
         }
     }
-    
+
     # LabRunner module schema
     Register-ConfigurationSchema -ModuleName 'LabRunner' -Schema @{
         Properties = @{
@@ -61,7 +61,7 @@ function Initialize-DefaultSchemas {
             }
         }
     }
-    
+
     # OpenTofuProvider module schema
     Register-ConfigurationSchema -ModuleName 'OpenTofuProvider' -Schema @{
         Properties = @{
@@ -87,7 +87,7 @@ function Initialize-DefaultSchemas {
             }
         }
     }
-    
+
     # ConfigurationCarousel module schema
     Register-ConfigurationSchema -ModuleName 'ConfigurationCarousel' -Schema @{
         Properties = @{
@@ -108,7 +108,7 @@ function Initialize-DefaultSchemas {
             }
         }
     }
-    
+
     # OrchestrationEngine module schema
     Register-ConfigurationSchema -ModuleName 'OrchestrationEngine' -Schema @{
         Properties = @{

@@ -15,7 +15,7 @@ Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
 
 Invoke-LabStep -Config $Config -Body {
     Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
-    
+
     if ($Config.InstallChocolatey -eq $true) {
         if (-not (Get-Command choco.exe -ErrorAction SilentlyContinue)) {
             Write-CustomLog "Installing Chocolatey..."
@@ -33,4 +33,3 @@ Invoke-LabStep -Config $Config -Body {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-

@@ -110,9 +110,9 @@ function Update-SecureCredential {
                 try {
                     $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
                     $backupName = "$CredentialName-backup-$timestamp"
-                    
+
                     $exportResult = Export-SecureCredential -CredentialName $CredentialName -ExportPath "$(Get-CredentialStoragePath)/$backupName.json" -IncludeSecrets
-                    
+
                     if ($exportResult.Success) {
                         $updateInfo.BackupCreated = $true
                         $updateInfo.BackupPath = $exportResult.ExportPath
@@ -215,14 +215,14 @@ function Update-SecureCredential {
             # Save metadata updates if any non-secret fields were changed
             if ($updateInfo.UpdatedFields -contains 'Username' -or $updateInfo.UpdatedFields -contains 'Description' -or $versionEntry.Changes.Count -gt 0) {
                 $updatedCredential.Metadata.VersionHistory += $versionEntry
-                
+
                 # Re-save the credential with updated metadata
                 $currentResult = Retrieve-CredentialSecurely -CredentialName $CredentialName
                 if ($currentResult.Success) {
                     $saveParams = @{
                         CredentialData = $updatedCredential
                     }
-                    
+
                     # Include current secrets in the save operation
                     switch ($currentCredential.Type) {
                         'UserPassword' {
@@ -246,7 +246,7 @@ function Update-SecureCredential {
                             }
                         }
                     }
-                    
+
                     $result = Save-CredentialSecurely @saveParams
                     if (-not $result.Success) {
                         throw "Failed to save updated metadata: $($result.Error)"

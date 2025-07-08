@@ -17,17 +17,17 @@ function Start-InteractiveMode {
     param(
         [Parameter()]
         [string]$Profile,
-        
+
         [Parameter()]
         [switch]$SkipLicenseCheck
     )
-    
+
     try {
         # Initialize logging
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Level 'INFO' -Message "Starting interactive mode"
         }
-        
+
         # Check license status unless skipped
         if (-not $SkipLicenseCheck) {
             # Try to load LicenseManager module if not already loaded
@@ -42,7 +42,7 @@ function Start-InteractiveMode {
                     Write-Warning "Could not load LicenseManager module: $_"
                 }
             }
-            
+
             # Get license status with fallback
             try {
                 $licenseStatus = Get-LicenseStatus
@@ -54,7 +54,7 @@ function Start-InteractiveMode {
         } else {
             $availableTier = 'enterprise' # Full access for testing
         }
-        
+
         # Load configuration profile if specified
         if ($Profile) {
             try {
@@ -68,16 +68,16 @@ function Start-InteractiveMode {
                 # Continue without the profile - the application will use default config
             }
         }
-        
+
         # Initialize terminal UI
         Initialize-TerminalUI
-        
+
         # Main menu loop
         $exitRequested = $false
         while (-not $exitRequested) {
             Clear-Host
             Show-Banner -Tier $availableTier
-            
+
             $menuOptions = @(
                 @{Text = "Configuration Manager"; Action = "ConfigManager"; Tier = "free"},
                 @{Text = "Module Explorer"; Action = "ModuleExplorer"; Tier = "free"},
@@ -87,9 +87,9 @@ function Start-InteractiveMode {
                 @{Text = "Settings"; Action = "Settings"; Tier = "free"},
                 @{Text = "Exit"; Action = "Exit"; Tier = "free"}
             )
-            
+
             # Filter menu options based on tier with fallback
-            $availableOptions = $menuOptions | Where-Object { 
+            $availableOptions = $menuOptions | Where-Object {
                 try {
                     # Check if LicenseManager functions are available
                     if (Get-Command Test-TierAccess -ErrorAction SilentlyContinue) {
@@ -106,9 +106,9 @@ function Start-InteractiveMode {
                     $true  # Default to allowing access if check fails
                 }
             }
-            
+
             $selectedOption = Show-ContextMenu -Title "Main Menu" -Options $availableOptions -ReturnAction
-            
+
             switch ($selectedOption) {
                 "ConfigManager" {
                     Show-ConfigurationManager -Tier $availableTier
@@ -133,9 +133,9 @@ function Start-InteractiveMode {
                 }
             }
         }
-        
+
         Write-Host "`nExiting interactive mode..." -ForegroundColor Green
-        
+
     } catch {
         Write-Error "Error in interactive mode: $_"
         throw
@@ -149,14 +149,14 @@ function Show-Banner {
     param(
         [string]$Tier = 'free'
     )
-    
+
     $version = "1.0.0"
     $tierDisplay = switch ($Tier) {
         'pro' { " [PRO]" }
         'enterprise' { " [ENTERPRISE]" }
         default { "" }
     }
-    
+
     Write-Host @"
 ╔══════════════════════════════════════════════════════════════╗
 ║                  AitherZero v$version$tierDisplay                  ║

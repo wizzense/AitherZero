@@ -7,13 +7,13 @@
     CompanyName = 'AitherZero'
     Copyright = '(c) 2024 AitherZero. All rights reserved.'
     Description = 'Advanced system monitoring with real-time analytics, intelligent alerting, and predictive capabilities for AitherZero infrastructure'
-    
+
     # PowerShell version compatibility
     PowerShellVersion = '7.0'
-    
+
     # Required modules (optional - handled with try/catch in psm1)
     RequiredModules = @()
-    
+
     # Functions to export
     FunctionsToExport = @(
         'Get-SystemDashboard',
@@ -32,19 +32,19 @@
         'Enable-PredictiveAlerting',
         'Get-MonitoringInsights'
     )
-    
+
     # Cmdlets to export
     CmdletsToExport = @()
-    
+
     # Variables to export
     VariablesToExport = @()
-    
+
     # Aliases to export
     AliasesToExport = @()
-    
+
     # File extensions
     FileList = @()
-    
+
     # Private data
     PrivateData = @{
         PSData = @{

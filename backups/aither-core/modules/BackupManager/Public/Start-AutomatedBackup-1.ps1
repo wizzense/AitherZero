@@ -201,7 +201,7 @@ function Start-AutomatedBackup {
         # Log completion
         $featureInfo = if ($statusReport.Features.Count -gt 0) { " (Features: $($statusReport.Features -join ', '))" } else { "" }
         $completionMessage = "Automated backup configured: $Schedule schedule$featureInfo"
-        
+
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog $completionMessage -Level SUCCESS
         } else {
@@ -212,13 +212,13 @@ function Start-AutomatedBackup {
 
     } catch {
         $errorMessage = "Automated backup configuration failed: $($_.Exception.Message)"
-        
+
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog $errorMessage -Level ERROR
         } else {
             Write-Error $errorMessage
         }
-        
+
         throw
     }
 }
@@ -229,23 +229,23 @@ function Get-NextRunTime {
         [string]$Schedule,
         [string]$CustomSchedule
     )
-    
+
     $now = Get-Date
-    
+
     switch ($Schedule) {
-        "Hourly" { 
+        "Hourly" {
             return $now.AddHours(1)
         }
-        "Daily" { 
+        "Daily" {
             $nextRun = $now.Date.AddDays(1).AddHours(2) # 2 AM next day
             return $nextRun
         }
-        "Weekly" { 
+        "Weekly" {
             $daysUntilSunday = (7 - [int]$now.DayOfWeek) % 7
             if ($daysUntilSunday -eq 0) { $daysUntilSunday = 7 }
             return $now.Date.AddDays($daysUntilSunday).AddHours(2)
         }
-        "Monthly" { 
+        "Monthly" {
             $nextMonth = $now.AddMonths(1)
             return [DateTime]::new($nextMonth.Year, $nextMonth.Month, 1, 2, 0, 0)
         }
@@ -268,7 +268,7 @@ function Create-AutomatedBackupScript {
         [hashtable]$Config,
         [string]$ProjectRoot
     )
-    
+
     $script = @"
 #Requires -Version 7.0
 
@@ -373,7 +373,7 @@ try {
 function Create-MonitoringScript {
     [CmdletBinding()]
     param([hashtable]$Config)
-    
+
     $script = @"
 #Requires -Version 7.0
 
@@ -442,7 +442,7 @@ try {
 function Create-RetentionScript {
     [CmdletBinding()]
     param([hashtable]$Config)
-    
+
     $script = @"
 #Requires -Version 7.0
 
@@ -454,7 +454,7 @@ param()
 try {
     `$retentionDays = $($Config.RetentionDays)
     `$cutoffDate = (Get-Date).AddDays(-`$retentionDays)
-    
+
     Write-Host "Running retention cleanup: removing backups older than `$retentionDays days" -ForegroundColor Cyan
 
     # Find old backup directories
@@ -505,10 +505,10 @@ function Register-WindowsScheduledTask {
         [hashtable]$Config,
         [string]$ScriptPath
     )
-    
+
     try {
         $taskName = "AitherZero-AutoBackup-$($Config.ConfigurationId.Substring(0,8))"
-        
+
         # Convert schedule to Windows task schedule
         $trigger = switch ($Config.Schedule) {
             "Hourly" { "HOURLY" }
@@ -517,14 +517,14 @@ function Register-WindowsScheduledTask {
             "Monthly" { "MONTHLY" }
             default { "DAILY" }
         }
-        
+
         return @{
             Platform = "Windows"
             TaskName = $taskName
             Status = "Configured (manual setup required)"
             Note = "Use Task Scheduler to create task with script: $ScriptPath"
         }
-        
+
     } catch {
         return @{
             Platform = "Windows"
@@ -540,7 +540,7 @@ function Register-CronJob {
         [hashtable]$Config,
         [string]$ScriptPath
     )
-    
+
     try {
         # Convert schedule to cron format
         $cronSchedule = switch ($Config.Schedule) {
@@ -550,14 +550,14 @@ function Register-CronJob {
             "Monthly" { "0 2 1 * *" } # 2 AM 1st of month
             default { "0 2 * * *" }
         }
-        
+
         return @{
             Platform = "Linux/macOS"
             CronSchedule = $cronSchedule
             Status = "Configured (manual setup required)"
             Note = "Add to crontab: $cronSchedule pwsh $ScriptPath"
         }
-        
+
     } catch {
         return @{
             Platform = "Linux/macOS"
@@ -573,16 +573,16 @@ function Start-BackupMonitoring {
         [string]$AutomationPath,
         [hashtable]$Config
     )
-    
+
     try {
         # Create initial health check
         $monitoringScript = Join-Path $AutomationPath "monitor-backup.ps1"
         & $monitoringScript
-        
+
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog "Backup monitoring started" -Level INFO
         }
-        
+
     } catch {
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog "Failed to start monitoring: $($_.Exception.Message)" -Level WARN

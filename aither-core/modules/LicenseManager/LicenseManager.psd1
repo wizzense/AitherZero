@@ -8,7 +8,7 @@
     Copyright = '(c) 2025 AitherZero. All rights reserved.'
     Description = 'License and feature management for AitherZero with tier-based access control'
     PowerShellVersion = '7.0'
-    
+
     # Functions to export
     FunctionsToExport = @(
         'Get-LicenseStatus',
@@ -29,7 +29,7 @@
         'Set-LicenseCacheEnabled',
         'Get-LicenseCacheStatistics'
     )
-    
+
     # Private data
     PrivateData = @{
         PSData = @{
@@ -44,7 +44,7 @@
             }
         }
     }
-    
+
     # Dependencies - Logging is optional and loaded dynamically
     RequiredModules = @()
 }

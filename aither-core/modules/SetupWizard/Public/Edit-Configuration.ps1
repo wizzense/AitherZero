@@ -12,18 +12,18 @@ function Edit-Configuration {
         [switch]$CreateIfMissing,
         [switch]$UseConfigurationCore
     )
-    
+
     # Try ConfigurationCore first if requested or available
     if ($UseConfigurationCore -or (-not $ConfigPath)) {
         try {
             $configCoreModule = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) "ConfigurationCore"
             if (Test-Path $configCoreModule) {
                 Import-Module $configCoreModule -Force -ErrorAction Stop
-                
+
                 Write-Host "`n⚙️  Configuration Editor (ConfigurationCore)" -ForegroundColor Green
                 Write-Host "Using unified configuration management" -ForegroundColor Yellow
                 Write-Host ""
-                
+
                 # Use ConfigurationCore-based editing
                 Edit-ConfigurationCore
                 return
@@ -32,7 +32,7 @@ function Edit-Configuration {
             Write-Verbose "ConfigurationCore not available, falling back to legacy: $_"
         }
     }
-    
+
     # Find config file for legacy mode
     if (-not $ConfigPath) {
         $possiblePaths = @(
@@ -40,7 +40,7 @@ function Edit-Configuration {
             "./configs/default-config.json",
             (Join-Path (Find-ProjectRoot) "configs/default-config.json")
         )
-        
+
         foreach ($path in $possiblePaths) {
             if (Test-Path $path) {
                 $ConfigPath = $path
@@ -48,17 +48,17 @@ function Edit-Configuration {
             }
         }
     }
-    
+
     if (-not $ConfigPath -or -not (Test-Path $ConfigPath)) {
         if ($CreateIfMissing) {
             # Create default config
             $ConfigPath = Join-Path (Find-ProjectRoot) "configs/default-config.json"
             $configDir = Split-Path $ConfigPath -Parent
-            
+
             if (-not (Test-Path $configDir)) {
                 New-Item -ItemType Directory -Path $configDir -Force | Out-Null
             }
-            
+
             $defaultConfig = @{
                 environment = "development"
                 modules = @{
@@ -74,7 +74,7 @@ function Edit-Configuration {
                     stateBackend = "local"
                 }
             }
-            
+
             $defaultConfig | ConvertTo-Json -Depth 10 | Set-Content $ConfigPath
             Write-Host "✓ Created default configuration at: $ConfigPath" -ForegroundColor Green
         } else {
@@ -82,11 +82,11 @@ function Edit-Configuration {
             return
         }
     }
-    
+
     Write-Host "`n⚙️  Configuration Editor" -ForegroundColor Green
     Write-Host "File: $ConfigPath" -ForegroundColor Yellow
     Write-Host ""
-    
+
     # Read current config
     try {
         $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
@@ -96,17 +96,17 @@ function Edit-Configuration {
         Write-Host "❌ Error reading configuration: $_" -ForegroundColor Red
         return
     }
-    
+
     $editing = $true
     while ($editing) {
         Clear-Host
         Write-Host "`n⚙️  Configuration Editor" -ForegroundColor Green
         Write-Host "=" * 50 -ForegroundColor Cyan
-        
+
         # Display current config
         Write-Host "`nCurrent Configuration:" -ForegroundColor Yellow
         $config | ConvertTo-Json -Depth 10 | Write-Host
-        
+
         Write-Host "`n" + "=" * 50 -ForegroundColor Cyan
         Write-Host "Options:" -ForegroundColor Yellow
         Write-Host "  [1] Edit Environment (current: $($config.environment ?? 'not set'))" -ForegroundColor White
@@ -120,9 +120,9 @@ function Edit-Configuration {
         Write-Host "  [S] Save Changes" -ForegroundColor Green
         Write-Host "  [Q] Quit Without Saving" -ForegroundColor Gray
         Write-Host ""
-        
+
         $choice = Read-Host "Select option"
-        
+
         switch ($choice.ToUpper()) {
             '1' {
                 Write-Host "`nAvailable environments:" -ForegroundColor Yellow
@@ -130,7 +130,7 @@ function Edit-Configuration {
                 Write-Host "  • staging" -ForegroundColor White
                 Write-Host "  • production" -ForegroundColor White
                 Write-Host "  • custom (enter your own)" -ForegroundColor White
-                
+
                 $env = Read-Host "`nEnter environment"
                 if ($env) {
                     $config.environment = $env
@@ -139,21 +139,21 @@ function Edit-Configuration {
             }
             '2' {
                 Write-Host "`nModule Management" -ForegroundColor Yellow
-                
+
                 # Get available modules
                 $availableModules = Get-ChildItem -Path $env:PWSH_MODULES_PATH -Directory | Select-Object -ExpandProperty Name | Sort-Object
                 $enabledModules = @($config.modules.enabled)
-                
+
                 Write-Host "`nAvailable Modules:" -ForegroundColor Cyan
                 for ($i = 0; $i -lt $availableModules.Count; $i++) {
                     $module = $availableModules[$i]
                     $status = if ($module -in $enabledModules) { "[✓]" } else { "[ ]" }
                     Write-Host "  $status $($i+1). $module" -ForegroundColor $(if ($module -in $enabledModules) { 'Green' } else { 'Gray' })
                 }
-                
+
                 Write-Host "`nEnter module numbers to toggle (comma-separated), or 'all' to enable all:" -ForegroundColor Yellow
                 $moduleChoice = Read-Host "Selection"
-                
+
                 if ($moduleChoice -eq 'all') {
                     $config.modules.enabled = $availableModules
                     Write-Host "✓ All modules enabled" -ForegroundColor Green
@@ -177,13 +177,13 @@ function Edit-Configuration {
                 Write-Host "`nLogging Configuration" -ForegroundColor Yellow
                 Write-Host "Current level: $($config.logging.level ?? 'INFO')" -ForegroundColor Gray
                 Write-Host "Current path: $($config.logging.path ?? './logs')" -ForegroundColor Gray
-                
+
                 Write-Host "`nLog Levels:" -ForegroundColor Cyan
                 Write-Host "  [1] DEBUG - All messages" -ForegroundColor White
                 Write-Host "  [2] INFO - Informational and above" -ForegroundColor White
                 Write-Host "  [3] WARN - Warnings and errors only" -ForegroundColor White
                 Write-Host "  [4] ERROR - Errors only" -ForegroundColor White
-                
+
                 $levelChoice = Read-Host "Select level (1-4)"
                 switch ($levelChoice) {
                     '1' { $config.logging.level = 'DEBUG' }
@@ -191,7 +191,7 @@ function Edit-Configuration {
                     '3' { $config.logging.level = 'WARN' }
                     '4' { $config.logging.level = 'ERROR' }
                 }
-                
+
                 $newPath = Read-Host "`nLog path (Enter to keep current)"
                 if ($newPath) {
                     $config.logging.path = $newPath
@@ -199,23 +199,23 @@ function Edit-Configuration {
             }
             '4' {
                 Write-Host "`nInfrastructure Settings" -ForegroundColor Yellow
-                
+
                 Write-Host "`nProvider:" -ForegroundColor Cyan
                 Write-Host "  [1] OpenTofu (recommended)" -ForegroundColor White
                 Write-Host "  [2] Terraform" -ForegroundColor White
-                
+
                 $provChoice = Read-Host "Select provider"
                 switch ($provChoice) {
                     '1' { $config.infrastructure.provider = 'opentofu' }
                     '2' { $config.infrastructure.provider = 'terraform' }
                 }
-                
+
                 Write-Host "`nState Backend:" -ForegroundColor Cyan
                 Write-Host "  [1] Local" -ForegroundColor White
                 Write-Host "  [2] S3" -ForegroundColor White
                 Write-Host "  [3] Azure Storage" -ForegroundColor White
                 Write-Host "  [4] GCS" -ForegroundColor White
-                
+
                 $backendChoice = Read-Host "Select backend"
                 switch ($backendChoice) {
                     '1' { $config.infrastructure.stateBackend = 'local' }
@@ -227,19 +227,19 @@ function Edit-Configuration {
             '5' {
                 $key = Read-Host "`nEnter setting key (e.g., 'myapp.feature.enabled')"
                 $value = Read-Host "Enter value"
-                
+
                 if ($key -and $value) {
                     # Convert dot notation to nested object
                     $parts = $key -split '\.'
                     $current = $config
-                    
+
                     for ($i = 0; $i -lt $parts.Count - 1; $i++) {
                         if (-not $current.PSObject.Properties[$parts[$i]]) {
                             $current | Add-Member -NotePropertyName $parts[$i] -NotePropertyValue ([PSCustomObject]@{})
                         }
                         $current = $current.($parts[$i])
                     }
-                    
+
                     $current | Add-Member -NotePropertyName $parts[-1] -NotePropertyValue $value -Force
                     Write-Host "✓ Added: $key = $value" -ForegroundColor Green
                 }
@@ -263,7 +263,7 @@ function Edit-Configuration {
                     $editor = $env:EDITOR ?? 'nano'
                     & $editor $ConfigPath
                 }
-                
+
                 # Reload config after external edit
                 try {
                     $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
@@ -316,7 +316,7 @@ function Edit-Configuration {
                 }
             }
         }
-        
+
         if ($editing) {
             Read-Host "`nPress Enter to continue"
         }
@@ -330,21 +330,21 @@ function Edit-ConfigurationCore {
     .DESCRIPTION
         Interactive editor using the ConfigurationCore unified configuration system
     #>
-    
+
     $editing = $true
     while ($editing) {
         Clear-Host
         Write-Host "`n⚙️  Configuration Editor (ConfigurationCore)" -ForegroundColor Green
         Write-Host "=" * 60 -ForegroundColor Cyan
-        
+
         # Get current configuration environments
         try {
             $environments = Get-ConfigurationEnvironment -All -ErrorAction SilentlyContinue
             $currentEnv = Get-ConfigurationEnvironment -ErrorAction SilentlyContinue
-            
+
             Write-Host "`nCurrent Environment: $($currentEnv.Name ?? 'default')" -ForegroundColor Yellow
             Write-Host "Description: $($currentEnv.Description ?? 'No description')" -ForegroundColor Gray
-            
+
             # Show available modules and their configurations
             $modules = @('SetupWizard', 'SetupWizard.State')
             foreach ($module in $modules) {
@@ -358,12 +358,12 @@ function Edit-ConfigurationCore {
                     Write-Verbose "No configuration found for module: $module"
                 }
             }
-            
+
         } catch {
             Write-Host "Error accessing ConfigurationCore: $_" -ForegroundColor Red
             return
         }
-        
+
         Write-Host "`n" + "=" * 60 -ForegroundColor Cyan
         Write-Host "Options:" -ForegroundColor Yellow
         Write-Host "  [1] Switch Environment" -ForegroundColor White
@@ -376,9 +376,9 @@ function Edit-ConfigurationCore {
         Write-Host "  [S] Save and Exit" -ForegroundColor Green
         Write-Host "  [Q] Quit Without Saving" -ForegroundColor Gray
         Write-Host ""
-        
+
         $choice = Read-Host "Select option"
-        
+
         switch ($choice.ToUpper()) {
             '1' {
                 Write-Host "`nAvailable Environments:" -ForegroundColor Yellow
@@ -392,13 +392,13 @@ function Edit-ConfigurationCore {
                             $env.Name = $envName  # Add the name property
                             $allEnvs += $env
                         }
-                        
+
                         for ($i = 0; $i -lt $allEnvs.Count; $i++) {
                             $env = $allEnvs[$i]
                             $current = if ($env.Name -eq $currentEnv.Name) { " (current)" } else { "" }
                             Write-Host "  $($i+1). $($env.Name) - $($env.Description)$current" -ForegroundColor White
                         }
-                        
+
                         $envChoice = Read-Host "`nSelect environment number"
                         if ($envChoice -match '\d+' -and [int]$envChoice -ge 1 -and [int]$envChoice -le $allEnvs.Count) {
                             $selectedEnv = $allEnvs[[int]$envChoice - 1]
@@ -432,31 +432,31 @@ function Edit-ConfigurationCore {
                             }
                         }
                     }
-                    
+
                     Write-Host "Current Settings:" -ForegroundColor Cyan
                     Write-Host "  Verbosity: $($setupConfig.Settings.Verbosity)" -ForegroundColor White
                     Write-Host "  Max Parallel Jobs: $($setupConfig.Settings.MaxParallelJobs)" -ForegroundColor White
                     Write-Host "  Auto Update: $($setupConfig.Settings.AutoUpdate)" -ForegroundColor White
                     Write-Host "  Telemetry: $($setupConfig.Settings.TelemetryEnabled)" -ForegroundColor White
-                    
+
                     $newVerbosity = Read-Host "`nVerbosity [normal/verbose/quiet] (current: $($setupConfig.Settings.Verbosity))"
                     if ($newVerbosity -and $newVerbosity -in @('normal', 'verbose', 'quiet')) {
                         $setupConfig.Settings.Verbosity = $newVerbosity
                     }
-                    
+
                     $newMaxJobs = Read-Host "Max parallel jobs [1-16] (current: $($setupConfig.Settings.MaxParallelJobs))"
                     if ($newMaxJobs -and $newMaxJobs -match '\d+' -and [int]$newMaxJobs -ge 1 -and [int]$newMaxJobs -le 16) {
                         $setupConfig.Settings.MaxParallelJobs = [int]$newMaxJobs
                     }
-                    
+
                     $newAutoUpdate = Read-Host "Auto update [true/false] (current: $($setupConfig.Settings.AutoUpdate))"
                     if ($newAutoUpdate -and $newAutoUpdate -in @('true', 'false')) {
                         $setupConfig.Settings.AutoUpdate = [bool]::Parse($newAutoUpdate)
                     }
-                    
+
                     Set-ModuleConfiguration -ModuleName 'SetupWizard' -Configuration $setupConfig
                     Write-Host "✓ Configuration updated" -ForegroundColor Green
-                    
+
                 } catch {
                     Write-Host "Error editing configuration: $_" -ForegroundColor Red
                 }
@@ -464,7 +464,7 @@ function Edit-ConfigurationCore {
             '3' {
                 $envName = Read-Host "`nNew environment name"
                 $envDesc = Read-Host "Environment description"
-                
+
                 if ($envName) {
                     try {
                         New-ConfigurationEnvironment -EnvironmentName $envName -Description $envDesc
@@ -534,7 +534,7 @@ function Edit-ConfigurationCore {
                 Write-Host "Invalid option. Please try again." -ForegroundColor Red
             }
         }
-        
+
         if ($editing) {
             Read-Host "`nPress Enter to continue"
         }

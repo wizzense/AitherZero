@@ -13,47 +13,47 @@
     FunctionsToExport = @(
         # Active Directory
         'Get-ADSecurityAssessment',
-        'Set-ADPasswordPolicy', 
+        'Set-ADPasswordPolicy',
         'Enable-ADSmartCardLogon',
         'Get-ADDelegationRisks',
-        
+
         # Certificate Services
         'Install-EnterpriseCA',
         'New-CertificateTemplate',
         'Enable-CertificateAutoEnrollment',
         'Test-PKIHealth',
-        
+
         # Endpoint Hardening
         'Set-WindowsFirewallProfile',
         'Enable-AdvancedAuditPolicy',
         'Set-AppLockerPolicy',
         'Enable-CredentialGuard',
-        
+
         # Network Security
         'Set-IPsecPolicy',
         'Enable-DNSSECValidation',
         'Disable-WeakProtocols',
         'Set-SMBSecurity',
         'Set-DNSSinkhole',
-        
+
         # Remote Administration
         'Enable-PowerShellRemotingSSL',
         'New-JEAEndpoint',
         'Set-WinRMSecurity',
         'Test-RemoteSecurityPosture',
-        
+
         # System Management
         'Get-SystemSecurityInventory',
-        
+
         # Monitoring and Analysis
         'Search-SecurityEvents',
-        
+
         # System Hardening
         'Set-SystemHardening',
         'Get-InsecureServices',
         'Enable-ExploitProtection',
         'Set-WindowsFeatureSecurity',
-        
+
         # Privileged Access Management
         'New-JEASessionConfiguration',
         'Set-PrivilegedAccountPolicy',

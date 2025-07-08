@@ -186,9 +186,9 @@ function Test-SecureCredentialCompliance {
                                     IsComplex = $false
                                 }
 
-                                $passwordTests.IsComplex = $passwordTests.HasUppercase -and 
-                                                         $passwordTests.HasLowercase -and 
-                                                         $passwordTests.HasNumbers -and 
+                                $passwordTests.IsComplex = $passwordTests.HasUppercase -and
+                                                         $passwordTests.HasLowercase -and
+                                                         $passwordTests.HasNumbers -and
                                                          $passwordTests.HasSpecialChars
 
                                 $credentialTest.Details.PasswordStrength = $passwordTests
@@ -223,7 +223,7 @@ function Test-SecureCredentialCompliance {
                                     if ([DateTime]::TryParse($credential.Metadata.$field, [ref]$expirationDate)) {
                                         $hasExpiration = $true
                                         $credentialTest.Details.ExpirationDate = $expirationDate
-                                        
+
                                         $daysUntilExpiration = ($expirationDate - (Get-Date)).Days
                                         $credentialTest.Details.DaysUntilExpiration = $daysUntilExpiration
 
@@ -247,7 +247,7 @@ function Test-SecureCredentialCompliance {
                     if ($credential.SecurityInfo) {
                         $credentialTest.Details.HasSecurityInfo = $true
                         $credentialTest.Details.SecurityVersion = $credential.SecurityInfo.Version
-                        
+
                         if ($credential.SecurityInfo.CreatedBy) {
                             $credentialTest.Details.CreatedBy = $credential.SecurityInfo.CreatedBy
                         }
@@ -373,7 +373,7 @@ function Test-SecureCredentialCompliance {
     <table>
         <tr><th>Credential</th><th>Type</th><th>Status</th><th>Score</th><th>Age (Days)</th><th>Issues</th></tr>
 "@
-                
+
                 foreach ($cred in $complianceResults.TestedCredentials) {
                     $statusClass = switch ($cred.ComplianceStatus) {
                         'Compliant' { 'compliant' }
@@ -382,10 +382,10 @@ function Test-SecureCredentialCompliance {
                         'Error' { 'error' }
                         default { '' }
                     }
-                    
+
                     $issues = ($cred.Violations + $cred.Warnings) -join '; '
                     $age = if ($cred.Details.AgeInDays) { $cred.Details.AgeInDays } else { 'Unknown' }
-                    
+
                     $htmlReport += @"
         <tr>
             <td>$($cred.Name)</td>

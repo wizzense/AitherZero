@@ -5,19 +5,19 @@
 param(
     [Parameter(Mandatory = $false)]
     [string]$StateFilePath = ".github/documentation-state.json",
-    
+
     [Parameter(Mandatory = $false)]
     [string]$ProjectRoot = (Get-Location),
-    
+
     [Parameter(Mandatory = $false)]
     [string]$ReadmePath = "README.md",
-    
+
     [Parameter(Mandatory = $false)]
     [switch]$DryRun,
-    
+
     [Parameter(Mandatory = $false)]
     [string]$SectionMarker = "<!-- DOCUMENTATION_INDEX -->",
-    
+
     [Parameter(Mandatory = $false)]
     [string]$EndMarker = "<!-- END_DOCUMENTATION_INDEX -->"
 )
@@ -52,7 +52,7 @@ function Get-DocumentationIndex {
         [Parameter(Mandatory = $true)]
         [hashtable]$State
     )
-    
+
     $index = @{
         lastUpdated = Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC"
         totalDirectories = $State.directories.Count
@@ -78,18 +78,18 @@ function Get-DocumentationIndex {
             }
         }
     }
-    
+
     Write-Log "Building documentation index from $($State.directories.Count) directories..." -Level "INFO"
-    
+
     foreach ($dirPath in ($State.directories.Keys | Sort-Object)) {
         $dirState = $State.directories[$dirPath]
         $relativePath = $dirPath.TrimStart('/')
-        
+
         # Count documented directories
         if ($dirState.readmeExists) {
             $index.documentedDirectories++
         }
-        
+
         # Categorize by type
         $category = switch ($dirState.directoryType) {
             "powershell-module" { "modules" }
@@ -101,7 +101,7 @@ function Get-DocumentationIndex {
             "tooling" { "tooling" }
             default { "other" }
         }
-        
+
         # Create directory entry
         $entry = @{
             path = $relativePath
@@ -113,39 +113,39 @@ function Get-DocumentationIndex {
             fileCount = $dirState.fileCount
             lastModified = $dirState.readmeLastModified
         }
-        
+
         $index.categories[$category] += $entry
-        
+
         # Update statistics
         if (-not $index.statistics.byType.ContainsKey($dirState.directoryType)) {
             $index.statistics.byType[$dirState.directoryType] = 0
         }
         $index.statistics.byType[$dirState.directoryType]++
-        
+
         $index.statistics.byStatus[$entry.status]++
     }
-    
+
     # Calculate coverage percentage
     $index.coveragePercent = if ($index.totalDirectories -gt 0) {
         [Math]::Round(($index.documentedDirectories / $index.totalDirectories) * 100, 1)
     } else { 0 }
-    
+
     Write-Log "Documentation index built: $($index.documentedDirectories)/$($index.totalDirectories) directories documented ($($index.coveragePercent)%)" -Level "SUCCESS"
-    
+
     return $index
 }
 
 function Get-DirectoryStatus {
     param([hashtable]$DirectoryState)
-    
+
     if (-not $DirectoryState.readmeExists) {
         return "missing"
     }
-    
+
     if ($DirectoryState.flaggedForReview) {
         return "stale"
     }
-    
+
     return "current"
 }
 
@@ -155,9 +155,9 @@ function Get-DirectoryDescription {
         [string]$DirectoryType,
         [hashtable]$DirectoryState
     )
-    
+
     $dirName = Split-Path $DirectoryPath -Leaf
-    
+
     # Try to extract description from existing README if available
     if ($DirectoryState.readmeExists) {
         try {
@@ -175,7 +175,7 @@ function Get-DirectoryDescription {
             # Continue with generated description
         }
     }
-    
+
     # Generate description based on directory type and name
     switch ($DirectoryType) {
         "powershell-module" {
@@ -236,13 +236,13 @@ function Generate-DocumentationTOC {
         [Parameter(Mandatory = $true)]
         [hashtable]$Index
     )
-    
+
     $toc = @"
 $SectionMarker
 
 ## 📚 Documentation Index
 
-**Last Updated:** $($Index.lastUpdated)  
+**Last Updated:** $($Index.lastUpdated)
 **Coverage:** $($Index.documentedDirectories)/$($Index.totalDirectories) directories ($($Index.coveragePercent)%)
 
 ### 📊 Documentation Statistics
@@ -259,7 +259,7 @@ $SectionMarker
     foreach ($categoryName in @('modules', 'infrastructure', 'configuration', 'scripts', 'tests', 'build', 'tooling', 'other')) {
         $categoryData = $Index.categories[$categoryName]
         if ($categoryData.Count -eq 0) { continue }
-        
+
         $categoryTitle = switch ($categoryName) {
             'modules' { '🧩 PowerShell Modules' }
             'infrastructure' { '🏗️ Infrastructure' }
@@ -270,12 +270,12 @@ $SectionMarker
             'tooling' { '🛠️ Tooling' }
             'other' { '📁 Other' }
         }
-        
+
         $toc += "`n### $categoryTitle`n`n"
-        
+
         # Sort by status (current first, then missing/stale)
         $sortedEntries = $categoryData | Sort-Object @{Expression = {if($_.status -eq 'current') {0} elseif($_.status -eq 'stale') {1} else {2}}}, name
-        
+
         foreach ($entry in $sortedEntries) {
             $statusIcon = switch ($entry.status) {
                 'current' { '✅' }
@@ -283,19 +283,19 @@ $SectionMarker
                 'missing' { '❌' }
                 default { '❓' }
             }
-            
+
             $linkText = if ($entry.hasReadme) {
                 "[$($entry.name)]($($entry.path)/README.md)"
             } else {
                 $entry.name
             }
-            
+
             $fileInfo = if ($entry.fileCount -gt 0) { " ($($entry.fileCount) files)" } else { "" }
-            
+
             $toc += "- $statusIcon **$linkText** - $($entry.description)$fileInfo`n"
         }
     }
-    
+
     # Add navigation links
     $toc += @"
 
@@ -332,27 +332,27 @@ function Update-ReadmeWithIndex {
     param(
         [Parameter(Mandatory = $true)]
         [string]$ReadmeFilePath,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$NewTOC,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$DryRun
     )
-    
+
     if (-not (Test-Path $ReadmeFilePath)) {
         Write-Log "README file not found: $ReadmeFilePath" -Level "ERROR"
         return $false
     }
-    
+
     try {
         $currentContent = Get-Content -Path $ReadmeFilePath -Raw -Encoding UTF8
-        
+
         # Find existing documentation index section
         $startPattern = [regex]::Escape($SectionMarker)
         $endPattern = [regex]::Escape($EndMarker)
         $sectionRegex = "(?s)$startPattern.*?$endPattern"
-        
+
         $updatedContent = if ($currentContent -match $sectionRegex) {
             # Replace existing section
             $currentContent -replace $sectionRegex, $NewTOC
@@ -360,23 +360,23 @@ function Update-ReadmeWithIndex {
             # Append at the end
             $currentContent.TrimEnd() + "`n`n" + $NewTOC
         }
-        
+
         if ($DryRun) {
             Write-Log "DRY RUN: Would update $ReadmeFilePath with documentation index" -Level "INFO"
             Write-Log "New section length: $($NewTOC.Length) characters" -Level "INFO"
             return $true
         }
-        
+
         # Create backup
         $backupPath = "$ReadmeFilePath.backup.$(Get-Date -Format 'yyyyMMdd-HHmmss')"
         Copy-Item -Path $ReadmeFilePath -Destination $backupPath
-        
+
         # Write updated content
         Set-Content -Path $ReadmeFilePath -Value $updatedContent -Encoding UTF8
-        
+
         Write-Log "Updated README with documentation index (backup: $backupPath)" -Level "SUCCESS"
         return $true
-        
+
     } catch {
         Write-Log "Error updating README: $($_.Exception.Message)" -Level "ERROR"
         return $false
@@ -387,28 +387,28 @@ function Update-ReadmeWithIndex {
 try {
     $stateFilePath = Join-Path $ProjectRoot $StateFilePath
     $readmeFilePath = Join-Path $ProjectRoot $ReadmePath
-    
+
     # Load current state
     if (-not (Test-Path $stateFilePath)) {
         Write-Log "State file not found: $stateFilePath" -Level "ERROR"
         Write-Log "Run Track-DocumentationState.ps1 -Initialize first" -Level "ERROR"
         exit 1
     }
-    
+
     $content = Get-Content -Path $stateFilePath -Raw -Encoding UTF8
     $state = $content | ConvertFrom-Json -AsHashtable
-    
+
     Write-Log "Generating documentation index for root README..." -Level "INFO"
-    
+
     # Generate documentation index
     $index = Get-DocumentationIndex -State $state
-    
+
     # Generate table of contents
     $tocContent = Generate-DocumentationTOC -Index $index
-    
+
     # Update README file
     $success = Update-ReadmeWithIndex -ReadmeFilePath $readmeFilePath -NewTOC $tocContent -DryRun:$DryRun
-    
+
     if ($success) {
         # Output summary
         Write-Host "`n📖 Documentation Index Update Summary:" -ForegroundColor Cyan
@@ -417,7 +417,7 @@ try {
         Write-Host "  Coverage: $($index.coveragePercent)%" -ForegroundColor $(if($index.coveragePercent -ge 80){"Green"}elseif($index.coveragePercent -ge 60){"Yellow"}else{"Red"})
         Write-Host "  Missing Documentation: $($index.statistics.byStatus.missing)" -ForegroundColor Red
         Write-Host "  Stale Documentation: $($index.statistics.byStatus.stale)" -ForegroundColor Yellow
-        
+
         Write-Host "`n📋 By Category:" -ForegroundColor Yellow
         foreach ($category in $index.categories.Keys) {
             $count = $index.categories[$category].Count
@@ -425,7 +425,7 @@ try {
                 Write-Host "  $category`: $count" -ForegroundColor Gray
             }
         }
-        
+
         if (-not $DryRun) {
             Write-Log "README updated successfully with documentation index" -Level "SUCCESS"
         }
@@ -433,7 +433,7 @@ try {
         Write-Log "Failed to update README with documentation index" -Level "ERROR"
         exit 1
     }
-    
+
 } catch {
     Write-Log "Documentation index update failed: $($_.Exception.Message)" -Level "ERROR"
     exit 1

@@ -5,10 +5,10 @@
 @{
     # Include all default rules by default
     IncludeDefaultRules = $true
-    
+
     # Severity levels to analyze
     Severity = @('Error', 'Warning', 'Information')
-    
+
     # Explicitly include high-priority rules
     IncludeRules = @(
         # Security Rules (Critical)
@@ -19,10 +19,10 @@
         'PSAvoidHardcodedCredentials',
         'PSAvoidUsingWriteHost',
         'PSAvoidUsingInvokeExpression',
-        
+
         # Cross-Platform Compatibility Rules (essential only)
         'PSUseCompatibleCmdlets',
-        
+
         # Code Quality Rules
         'PSUseDeclaredVarsMoreThanAssignments',
         'PSAvoidUsingCmdletAliases',
@@ -39,7 +39,7 @@
         'PSUseConsistentIndentation',
         'PSAlignAssignmentStatement',
         'PSUseCorrectCasing',
-        
+
         # Performance Rules
         'PSAvoidAssignmentToAutomaticVariable',
         'PSAvoidGlobalVars',
@@ -65,7 +65,7 @@
         'PSAvoidOverwritingBuiltInCmdlets',
         'PSAvoidUsingDeprecatedManifestFields',
         'PSAvoidExclaimOperator',
-        
+
         # Best Practices
         'PSUseSingularNouns',
         'PSUseApprovedVerbs',
@@ -79,7 +79,7 @@
         'PSUsePSCredentialType',
         'PSAvoidHardcodedCredentials'
     )
-    
+
     # Rules to exclude with business justification (CI-optimized)
     ExcludeRules = @(
         # Framework-specific exclusions (essential only for CI performance)
@@ -101,13 +101,13 @@
         'PSAvoidUsingPositionalParameters',   # Some utility functions benefit from positional params
         'PSAvoidUsingDoubleQuotesForConstantString' # Framework uses double quotes for consistency
     )
-    
+
     # Custom rules for AitherZero framework
     CustomRulePath = @(
         # Path to custom rules (to be implemented)
         # './PSScriptAnalyzerCustomRules'
     )
-    
+
     # Rules configuration for specific scenarios
     Rules = @{
         # Security rules - treat as errors
@@ -131,14 +131,14 @@
             Enable = $true
             Severity = 'Error'
         }
-        
+
         # Cross-platform compatibility (basic only)
         PSUseCompatibleCmdlets = @{
             Enable = $true
             Severity = 'Warning'
             PowerShellVersion = @('7.0', '7.1', '7.2', '7.3', '7.4', '7.5')
         }
-        
+
         # Code formatting and style
         PSUseConsistentWhitespace = @{
             Enable = $true
@@ -168,7 +168,7 @@
             Enable = $true
             Severity = 'Information'
         }
-        
+
         # Performance and best practices
         PSAvoidLongLines = @{
             Enable = $true
@@ -187,7 +187,7 @@
             Enable = $true
             Severity = 'Information'
         }
-        
+
         # Framework-specific rules
         PSUseApprovedVerbs = @{
             Enable = $true
@@ -206,6 +206,6 @@
             # Only for public functions
         }
     }
-    
+
     # CI-optimized configuration (no extra metadata for performance)
 }

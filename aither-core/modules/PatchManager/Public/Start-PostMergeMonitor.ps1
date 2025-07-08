@@ -123,7 +123,7 @@ function Start-PostMergeMonitor {
             # Create monitoring script block
             $monitoringScript = {
                 param($PRNumber, $BranchName, $RepoInfo, $CheckInterval, $TimeoutMinutes, $NotificationCallback)
-                
+
                 $startTime = Get-Date
                 $timeoutTime = $startTime.AddMinutes($TimeoutMinutes)
                 $cleanupCompleted = $false
@@ -132,24 +132,24 @@ function Start-PostMergeMonitor {
                     try {
                         # Check PR status
                         $prStatus = gh pr view $PRNumber --repo $RepoInfo.GitHubRepo --json "state,merged" 2>&1
-                        
+
                         if ($LASTEXITCODE -eq 0) {
                             $prData = $prStatus | ConvertFrom-Json
-                            
+
                             if ($prData.merged) {
                                 # PR has been merged! Run cleanup
                                 Write-Host "✓ PR #$PRNumber has been merged, starting cleanup..." -ForegroundColor Green
-                                
+
                                 # Import PatchManager module in the job context
                                 $moduleBase = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
                                 Import-Module (Join-Path $moduleBase 'PatchManager.psm1') -Force
-                                
+
                                 # Run cleanup
                                 $cleanupResult = Invoke-PostMergeCleanup -BranchName $BranchName -PullRequestNumber $PRNumber -ValidateMerge
-                                
+
                                 if ($cleanupResult.Success) {
                                     Write-Host "✓ Post-merge cleanup completed successfully" -ForegroundColor Green
-                                    
+
                                     # Run notification callback if provided
                                     if ($NotificationCallback) {
                                         try {
@@ -161,14 +161,14 @@ function Start-PostMergeMonitor {
                                 } else {
                                     Write-Host "✗ Post-merge cleanup failed: $($cleanupResult.Message)" -ForegroundColor Red
                                 }
-                                
+
                                 $cleanupCompleted = $true
                                 break
-                                
+
                             } elseif ($prData.state -eq 'CLOSED') {
                                 Write-Host "⚠ PR #$PRNumber was closed without merging, stopping monitor" -ForegroundColor Yellow
                                 break
-                                
+
                             } else {
                                 # Still open, continue monitoring
                                 Start-Sleep -Seconds $CheckInterval
@@ -177,7 +177,7 @@ function Start-PostMergeMonitor {
                             Write-Host "Warning: Could not check PR status: $prStatus" -ForegroundColor Yellow
                             Start-Sleep -Seconds $CheckInterval
                         }
-                        
+
                     } catch {
                         Write-Host "Error checking PR status: $($_.Exception.Message)" -ForegroundColor Red
                         Start-Sleep -Seconds $CheckInterval

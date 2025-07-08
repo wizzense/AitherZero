@@ -25,15 +25,15 @@ Invoke-LabStep -Config $Config -Body {
     try {
         # Check if Hyper-V is already enabled
         $hyperv = Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All
-        
+
         if ($hyperv.State -eq "Enabled") {
             Write-CustomLog "Hyper-V is already enabled"
         } else {
             Write-CustomLog "Enabling Hyper-V..."
-            
+
             # Enable Hyper-V feature
             Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All -All -NoRestart
-            
+
             Write-CustomLog "Hyper-V enabled successfully. Restart required."
         }
     } catch {
@@ -45,4 +45,3 @@ Invoke-LabStep -Config $Config -Body {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-

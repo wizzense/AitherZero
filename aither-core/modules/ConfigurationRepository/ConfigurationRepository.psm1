@@ -28,30 +28,30 @@ function New-ConfigurationRepository {
     param(
         [Parameter(Mandatory)]
         [string]$RepositoryName,
-        
+
         [Parameter(Mandatory)]
         [string]$LocalPath,
-        
+
         [ValidateSet('github', 'gitlab', 'local')]
         [string]$Provider = 'github',
-        
+
         [ValidateSet('default', 'minimal', 'enterprise', 'custom')]
         [string]$Template = 'default',
-        
+
         [switch]$Private = $true,
-        
+
         [string]$Description,
-        
+
         [string]$GitHubOrg,
-        
+
         [string[]]$Environments = @('dev', 'staging', 'prod'),
-        
+
         [hashtable]$CustomSettings = @{}
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Creating new configuration repository: $RepositoryName"
-        
+
         # Validate inputs
         if (Test-Path $LocalPath) {
             if ((Get-ChildItem $LocalPath | Measure-Object).Count -gt 0) {
@@ -60,38 +60,38 @@ function New-ConfigurationRepository {
         } else {
             New-Item -Path $LocalPath -ItemType Directory -Force | Out-Null
         }
-        
+
         # Initialize local repository
         Write-CustomLog -Level 'INFO' -Message "Initializing Git repository at: $LocalPath"
         Push-Location $LocalPath
-        
+
         try {
             # Initialize Git repository
             git init 2>&1 | Out-Null
             if ($LASTEXITCODE -ne 0) {
                 throw "Failed to initialize Git repository"
             }
-            
+
             # Create repository structure from template
             $templateResult = Create-ConfigurationTemplate -Template $Template -Path $LocalPath -Environments $Environments -CustomSettings $CustomSettings
             if (-not $templateResult.Success) {
                 throw "Failed to create configuration template: $($templateResult.Error)"
             }
-            
+
             # Initial commit
             git add . 2>&1 | Out-Null
             git commit -m "Initial commit: AitherZero configuration repository
-            
+
             Template: $Template
             Environments: $($Environments -join ', ')
             Created: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
-            
+
             🤖 Generated with AitherZero Configuration Repository Manager" 2>&1 | Out-Null
-            
+
             if ($LASTEXITCODE -ne 0) {
                 throw "Failed to create initial commit"
             }
-            
+
             # Create remote repository if not local
             if ($Provider -ne 'local') {
                 $remoteResult = Create-RemoteRepository -Provider $Provider -RepositoryName $RepositoryName -Description $Description -Private $Private -GitHubOrg $GitHubOrg
@@ -100,7 +100,7 @@ function New-ConfigurationRepository {
                     git remote add origin $remoteResult.RepositoryUrl 2>&1 | Out-Null
                     git branch -M main 2>&1 | Out-Null
                     git push -u origin main 2>&1 | Out-Null
-                    
+
                     if ($LASTEXITCODE -eq 0) {
                         Write-CustomLog -Level 'SUCCESS' -Message "Repository pushed to remote: $($remoteResult.RepositoryUrl)"
                     } else {
@@ -110,16 +110,16 @@ function New-ConfigurationRepository {
                     Write-CustomLog -Level 'WARNING' -Message "Failed to create remote repository: $($remoteResult.Error)"
                 }
             }
-            
+
         } finally {
             Pop-Location
         }
-        
+
         # Generate repository documentation
         $docResult = Generate-RepositoryDocumentation -Path $LocalPath -RepositoryName $RepositoryName -Template $Template
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "Configuration repository '$RepositoryName' created successfully"
-        
+
         return @{
             Success = $true
             RepositoryName = $RepositoryName
@@ -130,10 +130,10 @@ function New-ConfigurationRepository {
             RemoteUrl = $remoteResult.RepositoryUrl ?? 'local'
             TemplateResult = $templateResult
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to create configuration repository: $_"
-        
+
         # Cleanup on failure
         if (Test-Path $LocalPath) {
             try {
@@ -142,7 +142,7 @@ function New-ConfigurationRepository {
                 Write-CustomLog -Level 'WARNING' -Message "Could not cleanup failed repository at: $LocalPath"
             }
         }
-        
+
         return @{
             Success = $false
             Error = $_.Exception.Message
@@ -161,35 +161,35 @@ function Clone-ConfigurationRepository {
     param(
         [Parameter(Mandatory)]
         [string]$RepositoryUrl,
-        
+
         [Parameter(Mandatory)]
         [string]$LocalPath,
-        
+
         [string]$Branch = 'main',
-        
+
         [switch]$Validate = $true,
-        
+
         [switch]$SetupLocalSettings
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Cloning configuration repository: $RepositoryUrl"
-        
+
         # Validate local path
         if (Test-Path $LocalPath) {
             if ((Get-ChildItem $LocalPath | Measure-Object).Count -gt 0) {
                 throw "Local path '$LocalPath' already exists and is not empty"
             }
         }
-        
+
         # Clone repository
         $cloneResult = git clone --branch $Branch $RepositoryUrl $LocalPath 2>&1
         if ($LASTEXITCODE -ne 0) {
             throw "Git clone failed: $cloneResult"
         }
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "Repository cloned to: $LocalPath"
-        
+
         # Validate repository structure if requested
         if ($Validate) {
             $validationResult = Validate-ConfigurationRepository -Path $LocalPath
@@ -197,13 +197,13 @@ function Clone-ConfigurationRepository {
                 Write-CustomLog -Level 'WARNING' -Message "Repository validation warnings: $($validationResult.Warnings -join '; ')"
             }
         }
-        
+
         # Setup local settings if requested
         if ($SetupLocalSettings) {
             $settingsResult = Setup-LocalRepositorySettings -Path $LocalPath
             Write-CustomLog -Level 'INFO' -Message "Local repository settings configured"
         }
-        
+
         return @{
             Success = $true
             RepositoryUrl = $RepositoryUrl
@@ -211,10 +211,10 @@ function Clone-ConfigurationRepository {
             Branch = $Branch
             ValidationResult = $validationResult ?? @{ IsValid = $true }
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to clone configuration repository: $_"
-        
+
         # Cleanup on failure
         if (Test-Path $LocalPath) {
             try {
@@ -223,7 +223,7 @@ function Clone-ConfigurationRepository {
                 Write-CustomLog -Level 'WARNING' -Message "Could not cleanup failed clone at: $LocalPath"
             }
         }
-        
+
         return @{
             Success = $false
             Error = $_.Exception.Message
@@ -242,33 +242,33 @@ function Sync-ConfigurationRepository {
     param(
         [Parameter(Mandatory)]
         [string]$Path,
-        
+
         [ValidateSet('pull', 'push', 'sync')]
         [string]$Operation = 'sync',
-        
+
         [string]$Branch = 'main',
-        
+
         [switch]$Force,
-        
+
         [switch]$CreateBackup = $true
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Synchronizing configuration repository: $Path"
-        
+
         if (-not (Test-Path $Path)) {
             throw "Repository path does not exist: $Path"
         }
-        
+
         Push-Location $Path
-        
+
         try {
             # Verify it's a Git repository
             git status 2>&1 | Out-Null
             if ($LASTEXITCODE -ne 0) {
                 throw "Not a Git repository: $Path"
             }
-            
+
             # Create backup if requested
             $backupPath = $null
             if ($CreateBackup) {
@@ -276,18 +276,18 @@ function Sync-ConfigurationRepository {
                 Copy-Item -Path $Path -Destination $backupPath -Recurse -Force
                 Write-CustomLog -Level 'INFO' -Message "Backup created: $backupPath"
             }
-            
+
             $result = @{
                 Success = $true
                 Operation = $Operation
                 BackupPath = $backupPath
                 Changes = @()
             }
-            
+
             switch ($Operation) {
                 'pull' {
                     Write-CustomLog -Level 'INFO' -Message "Pulling latest changes from remote"
-                    
+
                     # Enhanced error handling for pull operations
                     try {
                         # First, fetch to check for conflicts
@@ -295,7 +295,7 @@ function Sync-ConfigurationRepository {
                         if ($LASTEXITCODE -ne 0) {
                             throw "Git fetch failed: $fetchResult"
                         }
-                        
+
                         # Check for local changes that might conflict
                         $status = git status --porcelain
                         if ($status) {
@@ -306,7 +306,7 @@ function Sync-ConfigurationRepository {
                             }
                             $result.Changes += "Stashed local changes before pull"
                         }
-                        
+
                         # Perform the pull
                         $pullResult = git pull origin $Branch 2>&1
                         if ($LASTEXITCODE -ne 0) {
@@ -314,7 +314,7 @@ function Sync-ConfigurationRepository {
                             if ($pullResult -match 'conflict|CONFLICT') {
                                 Write-CustomLog -Level 'ERROR' -Message "Merge conflicts detected during pull"
                                 $result.Changes += "Merge conflicts detected - manual resolution required"
-                                
+
                                 # Try to restore stashed changes if any
                                 if ($status) {
                                     git stash pop 2>&1 | Out-Null
@@ -333,7 +333,7 @@ function Sync-ConfigurationRepository {
                                 throw "Git pull failed: $pullResult"
                             }
                         }
-                        
+
                         # Restore stashed changes if any
                         if ($status) {
                             $popResult = git stash pop 2>&1
@@ -344,12 +344,12 @@ function Sync-ConfigurationRepository {
                                 $result.Changes += "Warning: Local changes remain stashed"
                             }
                         }
-                        
+
                         $result.Changes += "Successfully pulled from remote: $pullResult"
-                        
+
                     } catch {
                         Write-CustomLog -Level 'ERROR' -Message "Pull operation failed: $_"
-                        
+
                         # Attempt recovery if backup was created
                         if ($backupPath) {
                             Write-CustomLog -Level 'INFO' -Message "Attempting to restore from backup: $backupPath"
@@ -360,13 +360,13 @@ function Sync-ConfigurationRepository {
                                 Write-CustomLog -Level 'ERROR' -Message "Failed to restore from backup: $_"
                             }
                         }
-                        
+
                         throw
                     }
                 }
                 'push' {
                     Write-CustomLog -Level 'INFO' -Message "Pushing local changes to remote"
-                    
+
                     # Enhanced error handling for push operations
                     try {
                         # Check for local changes
@@ -377,7 +377,7 @@ function Sync-ConfigurationRepository {
                             if ($LASTEXITCODE -ne 0) {
                                 throw "Failed to stage changes: $addResult"
                             }
-                            
+
                             $commitResult = git commit -m "Sync: Local configuration changes $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" 2>&1
                             if ($LASTEXITCODE -ne 0) {
                                 throw "Failed to commit changes: $commitResult"
@@ -386,24 +386,24 @@ function Sync-ConfigurationRepository {
                         } else {
                             Write-CustomLog -Level 'INFO' -Message "No local changes to commit"
                         }
-                        
+
                         # Check if remote is up to date before pushing
                         $fetchResult = git fetch origin $Branch 2>&1
                         if ($LASTEXITCODE -ne 0) {
                             Write-CustomLog -Level 'WARNING' -Message "Failed to fetch before push: $fetchResult"
                         }
-                        
+
                         # Check for divergence
                         $localCommit = git rev-parse HEAD 2>&1
                         $remoteCommit = git rev-parse "origin/$Branch" 2>&1
-                        
+
                         if ($LASTEXITCODE -eq 0 -and $localCommit -ne $remoteCommit) {
                             $behindCount = git rev-list --count "HEAD..origin/$Branch" 2>&1
                             if ($behindCount -and $behindCount -gt 0) {
                                 Write-CustomLog -Level 'WARNING' -Message "Local branch is $behindCount commits behind remote. Consider pulling first."
                             }
                         }
-                        
+
                         # Attempt the push
                         $pushResult = git push origin $Branch 2>&1
                         if ($LASTEXITCODE -ne 0) {
@@ -424,26 +424,26 @@ function Sync-ConfigurationRepository {
                                 throw "Git push failed: $pushResult"
                             }
                         }
-                        
+
                         $result.Changes += "Successfully pushed to remote: $pushResult"
-                        
+
                     } catch {
                         Write-CustomLog -Level 'ERROR' -Message "Push operation failed: $_"
-                        
+
                         # Provide recovery suggestions
                         Write-CustomLog -Level 'INFO' -Message "Recovery suggestions:"
                         Write-CustomLog -Level 'INFO' -Message "  1. Check network connectivity"
                         Write-CustomLog -Level 'INFO' -Message "  2. Verify authentication credentials"
                         Write-CustomLog -Level 'INFO' -Message "  3. Pull latest changes before pushing"
                         Write-CustomLog -Level 'INFO' -Message "  4. Check for repository permissions"
-                        
+
                         throw
                     }
                 }
                 'sync' {
                     # Full synchronization: pull, merge, push
                     Write-CustomLog -Level 'INFO' -Message "Performing full synchronization"
-                    
+
                     # Stash local changes if any
                     $status = git status --porcelain
                     $hasLocalChanges = [bool]$status
@@ -451,20 +451,20 @@ function Sync-ConfigurationRepository {
                         git stash push -m "Auto-stash before sync $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" 2>&1 | Out-Null
                         $result.Changes += "Stashed local changes"
                     }
-                    
+
                     # Pull latest
                     $pullResult = git pull origin $Branch 2>&1
                     if ($LASTEXITCODE -ne 0) {
                         throw "Git pull failed: $pullResult"
                     }
                     $result.Changes += "Pulled from remote"
-                    
+
                     # Restore local changes if any
                     if ($hasLocalChanges) {
                         $stashResult = git stash pop 2>&1
                         if ($LASTEXITCODE -eq 0) {
                             $result.Changes += "Restored local changes"
-                            
+
                             # Commit and push merged changes
                             git add . 2>&1 | Out-Null
                             git commit -m "Sync: Merged local and remote changes $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" 2>&1 | Out-Null
@@ -481,14 +481,14 @@ function Sync-ConfigurationRepository {
                     }
                 }
             }
-            
+
             Write-CustomLog -Level 'SUCCESS' -Message "Repository synchronization completed"
             return $result
-            
+
         } finally {
             Pop-Location
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to synchronize repository: $_"
         return @{
@@ -509,11 +509,11 @@ function Validate-ConfigurationRepository {
         [Parameter(Mandatory)]
         [string]$Path
     )
-    
+
     $errors = @()
     $warnings = @()
     $info = @()
-    
+
     try {
         if (-not (Test-Path $Path)) {
             $errors += "Repository path does not exist: $Path"
@@ -524,12 +524,12 @@ function Validate-ConfigurationRepository {
                 Info = $info
             }
         }
-        
+
         # Check if it's a Git repository
         if (-not (Test-Path (Join-Path $Path ".git"))) {
             $warnings += "Not a Git repository (missing .git directory)"
         }
-        
+
         # Check for required structure
         $requiredDirs = @('configs', 'environments')
         foreach ($dir in $requiredDirs) {
@@ -540,7 +540,7 @@ function Validate-ConfigurationRepository {
                 $info += "Found directory: $dir"
             }
         }
-        
+
         # Check for configuration files
         $configFiles = @('README.md', '.gitignore', 'configs/app-config.json')
         foreach ($file in $configFiles) {
@@ -551,7 +551,7 @@ function Validate-ConfigurationRepository {
                 $warnings += "Missing recommended file: $file"
             }
         }
-        
+
         # Validate JSON configuration files
         $jsonFiles = Get-ChildItem -Path $Path -Filter "*.json" -Recurse
         foreach ($jsonFile in $jsonFiles) {
@@ -562,7 +562,7 @@ function Validate-ConfigurationRepository {
                 $errors += "Invalid JSON file: $($jsonFile.Name) - $_"
             }
         }
-        
+
         # Check environment configurations
         $envPath = Join-Path $Path "environments"
         if (Test-Path $envPath) {
@@ -573,7 +573,7 @@ function Validate-ConfigurationRepository {
                 $warnings += "No environment configurations found in environments directory"
             }
         }
-        
+
         return @{
             IsValid = ($errors.Count -eq 0)
             Errors = $errors
@@ -581,7 +581,7 @@ function Validate-ConfigurationRepository {
             Info = $info
             RepositoryPath = $Path
         }
-        
+
     } catch {
         $errors += "Validation error: $($_.Exception.Message)"
         return @{
@@ -601,7 +601,7 @@ function Create-ConfigurationTemplate {
         [string[]]$Environments,
         [hashtable]$CustomSettings
     )
-    
+
     try {
         # Create directory structure
         $directories = @(
@@ -610,16 +610,16 @@ function Create-ConfigurationTemplate {
             'templates',
             'scripts'
         )
-        
+
         foreach ($dir in $directories) {
             New-Item -Path (Join-Path $Path $dir) -ItemType Directory -Force | Out-Null
         }
-        
+
         # Create environment-specific directories
         foreach ($env in $Environments) {
             New-Item -Path (Join-Path $Path "environments/$env") -ItemType Directory -Force | Out-Null
         }
-        
+
         # Generate template files based on template type
         switch ($Template) {
             'minimal' {
@@ -635,15 +635,15 @@ function Create-ConfigurationTemplate {
                 Create-DefaultTemplate -Path $Path -Environments $Environments
             }
         }
-        
+
         # Create common files
         Create-CommonFiles -Path $Path
-        
+
         return @{
             Success = $true
             Template = $Template
         }
-        
+
     } catch {
         return @{
             Success = $false
@@ -654,7 +654,7 @@ function Create-ConfigurationTemplate {
 
 function Create-DefaultTemplate {
     param([string]$Path, [string[]]$Environments)
-    
+
     # Create default configuration
     $defaultConfig = @{
         version = "1.0"
@@ -672,14 +672,14 @@ function Create-DefaultTemplate {
             autoLoad = $true
         }
     }
-    
+
     $configPath = Join-Path $Path "configs/app-config.json"
     $defaultConfig | ConvertTo-Json -Depth 5 | Set-Content -Path $configPath
 }
 
 function Create-MinimalTemplate {
     param([string]$Path, [string[]]$Environments)
-    
+
     $minimalConfig = @{
         version = "1.0"
         name = "Minimal AitherZero Configuration"
@@ -688,14 +688,14 @@ function Create-MinimalTemplate {
             verbosity = "silent"
         }
     }
-    
+
     $configPath = Join-Path $Path "configs/app-config.json"
     $minimalConfig | ConvertTo-Json -Depth 3 | Set-Content -Path $configPath
 }
 
 function Create-EnterpriseTemplate {
     param([string]$Path, [string[]]$Environments)
-    
+
     $enterpriseConfig = @{
         version = "1.0"
         name = "Enterprise AitherZero Configuration"
@@ -741,34 +741,34 @@ function Create-EnterpriseTemplate {
             testingRequired = $true
         }
     }
-    
+
     $configPath = Join-Path $Path "configs/app-config.json"
     $enterpriseConfig | ConvertTo-Json -Depth 8 | Set-Content -Path $configPath
-    
+
     # Create enterprise-specific policies
     Create-EnterprisePolicies -Path $Path
-    
+
     # Create compliance documentation
     Create-ComplianceDocumentation -Path $Path
 }
 
 function Create-CustomTemplate {
     param([string]$Path, [string[]]$Environments, [hashtable]$Settings)
-    
+
     $customConfig = @{
         version = "1.0"
         name = "Custom AitherZero Configuration"
         environments = $Environments
         settings = $Settings
     }
-    
+
     $configPath = Join-Path $Path "configs/app-config.json"
     $customConfig | ConvertTo-Json -Depth 5 | Set-Content -Path $configPath
 }
 
 function Create-CommonFiles {
     param([string]$Path)
-    
+
     # Create README.md
     $readme = @"
 # AitherZero Configuration Repository
@@ -792,9 +792,9 @@ This repository contains custom configurations for AitherZero infrastructure aut
 
 This repository was generated by AitherZero Configuration Repository Manager on $(Get-Date -Format 'yyyy-MM-dd').
 "@
-    
+
     Set-Content -Path (Join-Path $Path "README.md") -Value $readme
-    
+
     # Create .gitignore
     $gitignore = @"
 # AitherZero specific
@@ -813,7 +813,7 @@ Thumbs.db
 *.swp
 *.swo
 "@
-    
+
     Set-Content -Path (Join-Path $Path ".gitignore") -Value $gitignore
 }
 
@@ -825,7 +825,7 @@ function Create-RemoteRepository {
         [bool]$Private,
         [string]$GitHubOrg
     )
-    
+
     switch ($Provider) {
         'github' {
             # Use GitHub CLI if available, otherwise return instructions
@@ -835,7 +835,7 @@ function Create-RemoteRepository {
                     if ($Private) { $ghArgs += '--private' }
                     if ($Description) { $ghArgs += '--description', $Description }
                     if ($GitHubOrg) { $ghArgs += '--org', $GitHubOrg }
-                    
+
                     $createResult = & gh @ghArgs 2>&1
                     if ($LASTEXITCODE -eq 0) {
                         $repoUrl = if ($GitHubOrg) {
@@ -845,7 +845,7 @@ function Create-RemoteRepository {
                             $user = gh api user --jq .login
                             "https://github.com/$user/$RepositoryName.git"
                         }
-                        
+
                         return @{
                             Success = $true
                             RepositoryUrl = $repoUrl
@@ -889,7 +889,7 @@ function Create-RemoteRepository {
 
 function Setup-LocalRepositorySettings {
     param([string]$Path)
-    
+
     # Create local settings file
     $localSettings = @{
         repositoryPath = $Path
@@ -897,17 +897,17 @@ function Setup-LocalRepositorySettings {
         autoSync = $false
         backupBeforeSync = $true
     }
-    
+
     $settingsPath = Join-Path $Path "local-settings.json"
     $localSettings | ConvertTo-Json -Depth 3 | Set-Content -Path $settingsPath
 }
 
 function Create-EnterprisePolicies {
     param([string]$Path)
-    
+
     $policiesDir = Join-Path $Path "policies"
     New-Item -Path $policiesDir -ItemType Directory -Force | Out-Null
-    
+
     # Security policy
     $securityPolicy = @"
 # Security Policy
@@ -932,9 +932,9 @@ function Create-EnterprisePolicies {
 - ISO 27001 standards followed
 - PCI-DSS requirements implemented where applicable
 "@
-    
+
     Set-Content -Path (Join-Path $policiesDir "security-policy.md") -Value $securityPolicy
-    
+
     # Deployment policy
     $deploymentPolicy = @"
 # Deployment Policy
@@ -956,16 +956,16 @@ function Create-EnterprisePolicies {
 - Recovery time objective: 15 minutes
 - Recovery point objective: 5 minutes
 "@
-    
+
     Set-Content -Path (Join-Path $policiesDir "deployment-policy.md") -Value $deploymentPolicy
 }
 
 function Create-ComplianceDocumentation {
     param([string]$Path)
-    
+
     $complianceDir = Join-Path $Path "compliance"
     New-Item -Path $complianceDir -ItemType Directory -Force | Out-Null
-    
+
     # Audit log configuration
     $auditConfig = @{
         enabled = $true
@@ -992,9 +992,9 @@ function Create-ComplianceDocumentation {
             }
         )
     }
-    
+
     $auditConfig | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $complianceDir "audit-config.json")
-    
+
     # Compliance checklist
     $checklist = @"
 # Compliance Checklist
@@ -1027,17 +1027,17 @@ function Create-ComplianceDocumentation {
 - [ ] Policy updates implemented
 - [ ] Training completions verified
 "@
-    
+
     Set-Content -Path (Join-Path $complianceDir "compliance-checklist.md") -Value $checklist
 }
 
 function Generate-RepositoryDocumentation {
     param([string]$Path, [string]$RepositoryName, [string]$Template)
-    
+
     # Generate comprehensive documentation based on template
     $docsDir = Join-Path $Path "docs"
     New-Item -Path $docsDir -ItemType Directory -Force | Out-Null
-    
+
     # Configuration guide
     $configGuide = @"
 # $RepositoryName Configuration Guide
@@ -1078,9 +1078,9 @@ Environment-specific settings override global settings.
 - Backup configurations before major changes
 - Test configuration changes in non-production environments first
 "@
-    
+
     Set-Content -Path (Join-Path $docsDir "configuration-guide.md") -Value $configGuide
-    
+
     return @{ Success = $true }
 }
 

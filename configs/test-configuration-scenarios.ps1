@@ -19,22 +19,22 @@ function Test-ConfigurationScenario {
         [string]$ScenarioName,
         [hashtable]$Parameters
     )
-    
+
     Write-Host "🧪 Testing: $ScenarioName" -ForegroundColor Cyan
-    
+
     try {
         $result = Initialize-AitherZeroConfiguration @Parameters
-        
+
         $tests = @(
             @{ Name = "Configuration Loaded"; Condition = $result -ne $null },
             @{ Name = "Has Legacy Format"; Condition = $result.Legacy -ne $null },
             @{ Name = "Has Metadata"; Condition = $result.Metadata -ne $null },
             @{ Name = "System Type Set"; Condition = $result.Metadata.System -ne $null }
         )
-        
+
         $passed = 0
         $total = $tests.Count
-        
+
         foreach ($test in $tests) {
             if ($test.Condition) {
                 Write-Host "  ✅ $($test.Name)" -ForegroundColor Green
@@ -43,13 +43,13 @@ function Test-ConfigurationScenario {
                 Write-Host "  ❌ $($test.Name)" -ForegroundColor Red
             }
         }
-        
+
         $success = ($passed -eq $total)
         $status = if ($success) { "PASS" } else { "FAIL" }
         $color = if ($success) { "Green" } else { "Red" }
-        
+
         Write-Host "  📊 Result: $status ($passed/$total tests passed)" -ForegroundColor $color
-        
+
         if ($Verbose -and $result) {
             Write-Host "  📋 Details:" -ForegroundColor Gray
             Write-Host "    System: $($result.Metadata.System)" -ForegroundColor Gray
@@ -57,14 +57,14 @@ function Test-ConfigurationScenario {
             Write-Host "    Profile: $($result.Metadata.Profile)" -ForegroundColor Gray
             Write-Host "    Config Keys: $($result.Legacy.Keys.Count)" -ForegroundColor Gray
         }
-        
+
         return @{ Success = $success; Passed = $passed; Total = $total; Result = $result }
-        
+
     } catch {
         Write-Host "  💥 ERROR: $($_.Exception.Message)" -ForegroundColor Red
         return @{ Success = $false; Passed = 0; Total = 0; Error = $_.Exception.Message }
     }
-    
+
     Write-Host ""
 }
 

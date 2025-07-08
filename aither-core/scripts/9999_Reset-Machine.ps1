@@ -17,7 +17,7 @@ Invoke-LabStep -Config $Config -Body {
     Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
     $platform = Get-Platform
     Write-CustomLog "Detected platform: $platform"
-    
+
     if ($platform -eq 'Windows') {
         $Config.AllowRemoteDesktop = $true
         if (-not $Config.FirewallPorts) { $Config.FirewallPorts = @() }
@@ -48,4 +48,3 @@ Invoke-LabStep -Config $Config -Body {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-

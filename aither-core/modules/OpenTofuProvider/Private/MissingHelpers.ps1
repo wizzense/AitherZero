@@ -10,17 +10,17 @@ function New-DeploymentPlan {
     param(
         [Parameter(Mandatory)]
         [PSCustomObject]$Configuration,
-        
+
         [Parameter()]
         [switch]$DryRun,
-        
+
         [Parameter()]
         [switch]$SkipPreChecks
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Creating deployment plan"
-        
+
         $plan = @{
             IsValid = $true
             ValidationErrors = @()
@@ -34,15 +34,15 @@ function New-DeploymentPlan {
             Configuration = $Configuration
             DryRun = $DryRun
         }
-        
+
         # Basic validation
         if (-not $Configuration.infrastructure -and -not $Configuration.repository) {
             $plan.IsValid = $false
             $plan.ValidationErrors += "Configuration must have either 'infrastructure' or 'repository' section"
         }
-        
+
         return $plan
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to create deployment plan: $($_.Exception.Message)"
         throw
@@ -58,28 +58,28 @@ function Read-DeploymentConfiguration {
     param(
         [Parameter(Mandatory)]
         [string]$Path,
-        
+
         [Parameter()]
         [switch]$ExpandVariables
     )
-    
+
     try {
         if (-not (Test-Path $Path)) {
             throw "Configuration file not found: $Path"
         }
-        
+
         $content = Get-Content $Path -Raw
-        
+
         # Expand environment variables if requested
         if ($ExpandVariables) {
             $content = [System.Environment]::ExpandEnvironmentVariables($content)
         }
-        
+
         $config = $content | ConvertFrom-Yaml
-        
+
         Write-CustomLog -Level 'INFO' -Message "Configuration loaded from: $Path"
         return $config
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to read configuration: $($_.Exception.Message)"
         throw
@@ -95,11 +95,11 @@ function Get-ActualInfrastructureState {
     param(
         [Parameter(Mandatory)]
         [string]$DeploymentId,
-        
+
         [Parameter()]
         [string]$Provider = "hyperv"
     )
-    
+
     try {
         # This would query the actual infrastructure provider
         # For now, return mock state
@@ -113,9 +113,9 @@ function Get-ActualInfrastructureState {
                 }
             }
         }
-        
+
         return $state
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to get infrastructure state: $($_.Exception.Message)"
         throw
@@ -131,19 +131,19 @@ function Compare-ResourceConfiguration {
     param(
         [Parameter(Mandatory)]
         [PSCustomObject]$Desired,
-        
+
         [Parameter(Mandatory)]
         [hashtable]$Actual
     )
-    
+
     $changes = @()
-    
+
     # Simple comparison logic
     foreach ($property in $Desired.PSObject.Properties) {
         $key = $property.Name
         $desiredValue = $property.Value
         $actualValue = $Actual[$key]
-        
+
         if ($desiredValue -ne $actualValue) {
             $changes += @{
                 Property = $key
@@ -152,7 +152,7 @@ function Compare-ResourceConfiguration {
             }
         }
     }
-    
+
     return $changes
 }
 
@@ -166,7 +166,7 @@ function Get-DeploymentProvider {
         [Parameter(Mandatory)]
         [string]$DeploymentId
     )
-    
+
     return "hyperv"  # Default provider
 }
 
@@ -179,20 +179,20 @@ function Invoke-DeploymentStage {
     param(
         [Parameter(Mandatory)]
         [hashtable]$Plan,
-        
+
         [Parameter(Mandatory)]
         [string]$StageName,
-        
+
         [Parameter()]
         [switch]$DryRun,
-        
+
         [Parameter()]
         [int]$MaxRetries = 2
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Executing stage: $StageName"
-        
+
         $stageResult = @{
             Success = $true
             StageName = $StageName
@@ -202,16 +202,16 @@ function Invoke-DeploymentStage {
             Outputs = @{}
             Error = $null
         }
-        
+
         # Simulate stage execution
         Start-Sleep -Milliseconds 100
-        
+
         $stageResult.EndTime = Get-Date
         $stageResult.Duration = $stageResult.EndTime - $stageResult.StartTime
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "Stage '$StageName' completed successfully"
         return $stageResult
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Stage '$StageName' failed: $($_.Exception.Message)"
         return @{
@@ -232,7 +232,7 @@ function Get-DeploymentHistory {
         [Parameter(Mandatory)]
         [string]$DeploymentId
     )
-    
+
     try {
         # Mock deployment history
         $history = @(
@@ -249,9 +249,9 @@ function Get-DeploymentHistory {
                 ConfigurationPath = "config-v1.1.yaml"
             }
         )
-        
+
         return $history
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to get deployment history: $($_.Exception.Message)"
         throw

@@ -12,7 +12,7 @@ $script:CoreModules = @(
     @{ Name = 'Logging'; Path = 'modules/Logging'; Description = 'Centralized logging system'; Required = $true },
     @{ Name = 'LabRunner'; Path = 'modules/LabRunner'; Description = 'Lab automation and script execution'; Required = $true },
     @{ Name = 'OpenTofuProvider'; Path = 'modules/OpenTofuProvider'; Description = 'OpenTofu/Terraform infrastructure deployment'; Required = $true },
-    
+
     # Platform Services
     @{ Name = 'ModuleCommunication'; Path = 'modules/ModuleCommunication'; Description = 'Scalable inter-module communication bus'; Required = $true },
     @{ Name = 'ConfigurationCore'; Path = 'modules/ConfigurationCore'; Description = 'Core configuration management with 25+ functions'; Required = $true },
@@ -22,20 +22,20 @@ $script:CoreModules = @(
     @{ Name = 'OrchestrationEngine'; Path = 'modules/OrchestrationEngine'; Description = 'Advanced workflow and playbook execution'; Required = $false },
     @{ Name = 'ParallelExecution'; Path = 'modules/ParallelExecution'; Description = 'Parallel task execution'; Required = $false },
     @{ Name = 'ProgressTracking'; Path = 'modules/ProgressTracking'; Description = 'Visual progress tracking for operations'; Required = $false },
-    
+
     # Feature Modules
     @{ Name = 'ISOManager'; Path = 'modules/ISOManager'; Description = 'Comprehensive ISO management: download, organization, customization, and autounattend generation'; Required = $false },
     @{ Name = 'SecureCredentials'; Path = 'modules/SecureCredentials'; Description = 'Enterprise-grade credential management'; Required = $false },
     @{ Name = 'RemoteConnection'; Path = 'modules/RemoteConnection'; Description = 'Multi-protocol remote connection management'; Required = $false },
     @{ Name = 'SystemMonitoring'; Path = 'modules/SystemMonitoring'; Description = 'System performance monitoring'; Required = $false },
     @{ Name = 'RestAPIServer'; Path = 'modules/RestAPIServer'; Description = 'REST API server and webhook support'; Required = $false },
-    
+
     # Development Tools
     @{ Name = 'DevEnvironment'; Path = 'modules/DevEnvironment'; Description = 'Development environment management'; Required = $false },
     @{ Name = 'PatchManager'; Path = 'modules/PatchManager'; Description = 'Git-controlled patch management'; Required = $false },
     @{ Name = 'TestingFramework'; Path = 'modules/TestingFramework'; Description = 'Unified testing framework'; Required = $false },
     @{ Name = 'AIToolsIntegration'; Path = 'modules/AIToolsIntegration'; Description = 'AI development tools management'; Required = $false },
-    
+
     # Maintenance & Operations
     @{ Name = 'BackupManager'; Path = 'modules/BackupManager'; Description = 'Backup and maintenance operations'; Required = $false },
     @{ Name = 'UnifiedMaintenance'; Path = 'modules/UnifiedMaintenance'; Description = 'Unified maintenance operations'; Required = $false },
@@ -923,15 +923,15 @@ if (-not (Get-Command Test-ConsolidationHealth -ErrorAction SilentlyContinue)) {
         param(
             [Parameter()]
             [switch]$Detailed,
-            
+
             [Parameter()]
             [switch]$TestIntegration
         )
-        
+
         process {
             try {
                 Write-CustomLog -Message "Starting consolidation health check..." -Level 'INFO'
-                
+
                 $healthReport = @{
                     ConsolidationStatus = @{
                         CoreModuleAvailable = Test-Path (Join-Path $PSScriptRoot "AitherCore.psd1")
@@ -948,13 +948,13 @@ if (-not (Get-Command Test-ConsolidationHealth -ErrorAction SilentlyContinue)) {
                     Recommendations = @()
                     Timestamp = Get-Date
                 }
-                
+
                 # Check for duplicate modules (like the ISOManagement we just removed)
                 $knownModules = $script:CoreModules | ForEach-Object { $_.Name }
                 $modulesPath = Join-Path $PSScriptRoot "modules"
                 if (Test-Path $modulesPath) {
                     $existingModuleDirs = Get-ChildItem -Path $modulesPath -Directory | Select-Object -ExpandProperty Name
-                    
+
                     foreach ($moduleDir in $existingModuleDirs) {
                         if ($moduleDir -notin $knownModules -and $moduleDir -ne "BUILD-TEST-RELEASE-AUTOMATION-2025.md") {
                             $healthReport.DuplicateCheck.Issues += "Unknown module directory found: $moduleDir"
@@ -962,7 +962,7 @@ if (-not (Get-Command Test-ConsolidationHealth -ErrorAction SilentlyContinue)) {
                         }
                     }
                 }
-                
+
                 # Validate each registered module
                 foreach ($moduleInfo in $script:CoreModules) {
                     $validation = @{
@@ -972,7 +972,7 @@ if (-not (Get-Command Test-ConsolidationHealth -ErrorAction SilentlyContinue)) {
                         Loaded = $script:LoadedModules.ContainsKey($moduleInfo.Name)
                         Status = "Unknown"
                     }
-                    
+
                     if (-not $validation.PathExists) {
                         $validation.Status = "Missing"
                         if ($moduleInfo.Required) {
@@ -984,14 +984,14 @@ if (-not (Get-Command Test-ConsolidationHealth -ErrorAction SilentlyContinue)) {
                     } else {
                         $validation.Status = "Available"
                     }
-                    
+
                     $healthReport.ModuleValidation[$moduleInfo.Name] = $validation
                 }
-                
+
                 # Test integration points if requested
                 if ($TestIntegration) {
                     Write-CustomLog -Message "Testing cross-module integration..." -Level 'INFO'
-                    
+
                     # Test ConfigurationCore + ConfigurationCarousel integration
                     if ($script:LoadedModules.ContainsKey('ConfigurationCore') -and $script:LoadedModules.ContainsKey('ConfigurationCarousel')) {
                         $healthReport.IntegrationTests.ConfigurationIntegration = @{
@@ -1004,7 +1004,7 @@ if (-not (Get-Command Test-ConsolidationHealth -ErrorAction SilentlyContinue)) {
                             Description = "Configuration modules not fully loaded"
                         }
                     }
-                    
+
                     # Test ISOManager integration (after consolidation)
                     if ($script:LoadedModules.ContainsKey('ISOManager')) {
                         $healthReport.IntegrationTests.ISOWorkflow = @{
@@ -1018,32 +1018,32 @@ if (-not (Get-Command Test-ConsolidationHealth -ErrorAction SilentlyContinue)) {
                         }
                     }
                 }
-                
+
                 # Calculate overall health score
                 $requiredModules = $script:CoreModules | Where-Object { $_.Required }
                 $requiredAvailable = ($healthReport.ModuleValidation.Values | Where-Object { $_.Required -and $_.PathExists }).Count
-                $healthScore = if ($requiredModules.Count -gt 0) { 
+                $healthScore = if ($requiredModules.Count -gt 0) {
                     [Math]::Round(($requiredAvailable / $requiredModules.Count) * 100, 1)
                 } else { 100 }
-                
+
                 $healthReport.OverallHealth = @{
                     Score = $healthScore
-                    Status = if ($healthScore -eq 100) { "Excellent" } 
+                    Status = if ($healthScore -eq 100) { "Excellent" }
                              elseif ($healthScore -ge 80) { "Good" }
                              elseif ($healthScore -ge 60) { "Fair" }
                              else { "Poor" }
                     RequiredModulesAvailable = "$requiredAvailable/$($requiredModules.Count)"
                 }
-                
+
                 # Log summary
                 Write-CustomLog -Message "Consolidation health check completed - Score: $healthScore% ($($healthReport.OverallHealth.Status))" -Level "SUCCESS"
-                
+
                 if ($healthReport.DuplicateCheck.Issues.Count -gt 0) {
                     Write-CustomLog -Message "Duplicate module issues found: $($healthReport.DuplicateCheck.Issues.Count)" -Level "WARN"
                 }
-                
+
                 return $healthReport
-                
+
             } catch {
                 Write-CustomLog -Message "Consolidation health check failed: $($_.Exception.Message)" -Level "ERROR"
                 throw
@@ -1137,7 +1137,7 @@ Export-ModuleMember -Function @(
     'Invoke-IntegratedWorkflow',
     'Start-QuickAction',
     'Test-ConsolidationHealth',
-    
+
     # Unified Platform API Gateway (Phase 4)
     'Initialize-AitherPlatform',
     'New-AitherPlatformAPI',
@@ -1145,7 +1145,7 @@ Export-ModuleMember -Function @(
     'Get-PlatformHealth',
     'Get-PlatformLifecycle',
     'Start-PlatformServices',
-    
+
     # Performance & Error Handling (Phase 5)
     'Optimize-PlatformPerformance',
     'Initialize-PlatformErrorHandling',

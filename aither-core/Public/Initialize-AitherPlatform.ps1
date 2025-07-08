@@ -27,7 +27,7 @@
 .EXAMPLE
     $aither = Initialize-AitherPlatform -Profile "Standard"
     $aither.Lab.Execute("DeployInfrastructure")
-    
+
 .EXAMPLE
     $aither = Initialize-AitherPlatform -Profile "Full"
     $aither.Configuration.Switch("Production")
@@ -44,52 +44,52 @@ function Initialize-AitherPlatform {
         [Parameter()]
         [ValidateSet('Minimal', 'Standard', 'Full')]
         [string]$Profile = 'Standard',
-        
+
         [Parameter()]
         [string]$Environment = 'default',
-        
+
         [Parameter()]
         [switch]$Force,
-        
+
         [Parameter()]
         [switch]$SkipHealthCheck,
-        
+
         [Parameter()]
         [switch]$AutoStart
     )
-    
+
     begin {
         Write-CustomLog -Message "=== AitherZero Platform Initialization ===" -Level "INFO"
         Write-CustomLog -Message "Profile: $Profile | Environment: $Environment" -Level "INFO"
     }
-    
+
     process {
         try {
             # Step 1: Initialize core application with profile-based module selection
             $requiredOnly = $Profile -eq 'Minimal'
             Initialize-CoreApplication -RequiredOnly:$requiredOnly -Force:$Force
-            
+
             # Step 2: Initialize configuration system
             if (Get-Module ConfigurationCore -ErrorAction SilentlyContinue) {
                 Initialize-ConfigurationCore -Environment $Environment
                 Write-CustomLog -Message "✅ Configuration system initialized" -Level "SUCCESS"
             }
-            
+
             # Step 3: Initialize communication system
             if (Get-Module ModuleCommunication -ErrorAction SilentlyContinue) {
                 # Communication is initialized automatically via module import
                 Write-CustomLog -Message "✅ Communication system ready" -Level "SUCCESS"
             }
-            
+
             # Step 4: Create platform API gateway object
             $platform = New-AitherPlatformAPI -Profile $Profile -Environment $Environment
-            
+
             # Step 5: Auto-start services if requested
             if ($AutoStart) {
                 Start-PlatformServices -Platform $platform
                 Write-CustomLog -Message "✅ Platform services started" -Level "SUCCESS"
             }
-            
+
             # Step 6: Health check unless skipped
             if (-not $SkipHealthCheck) {
                 $healthResult = Test-CoreApplicationHealth
@@ -99,14 +99,14 @@ function Initialize-AitherPlatform {
                     Write-CustomLog -Message "✅ Platform health check passed" -Level "SUCCESS"
                 }
             }
-            
+
             # Step 7: Log successful initialization
             $moduleCount = $script:LoadedModules.Count
             Write-CustomLog -Message "✅ AitherZero Platform initialized successfully" -Level "SUCCESS"
             Write-CustomLog -Message "Profile: $Profile | Modules: $moduleCount | API Gateway: Active" -Level "INFO"
-            
+
             return $platform
-            
+
         } catch {
             Write-CustomLog -Message "❌ Platform initialization failed: $($_.Exception.Message)" -Level "ERROR"
             throw

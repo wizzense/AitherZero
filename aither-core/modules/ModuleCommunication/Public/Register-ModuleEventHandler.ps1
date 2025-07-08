@@ -20,14 +20,14 @@ function Register-ModuleEventHandler {
     param(
         [Parameter(Mandatory)]
         [string]$EventName,
-        
+
         [Parameter(Mandatory)]
         [scriptblock]$Handler,
-        
+
         [Parameter()]
         [string]$Channel = 'Events'
     )
-    
+
     # Convert event handler to message handler
     $messageHandler = {
         param($Message)
@@ -35,13 +35,13 @@ function Register-ModuleEventHandler {
         $event = $Message.Data
         & $Handler $event
     }.GetNewClosure()
-    
+
     # Register handler for messages with event type
     $subscription = Register-ModuleMessageHandler `
         -Channel $Channel `
         -MessageType "Event:$EventName" `
         -Handler $messageHandler `
         -SubscriberModule $MyInvocation.MyCommand.Module.Name
-    
+
     return $subscription
 }

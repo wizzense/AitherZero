@@ -2,101 +2,101 @@ function Get-InsecureServices {
     <#
     .SYNOPSIS
         Identifies services with insecure configurations and binary paths.
-        
+
     .DESCRIPTION
-        Scans Windows services for security misconfigurations including non-standard 
+        Scans Windows services for security misconfigurations including non-standard
         binary paths, weak permissions, dangerous service identities, and unquoted
         service paths that could lead to privilege escalation vulnerabilities.
-        
+
     .PARAMETER ComputerName
         Target computer names for service analysis. Default: localhost
-        
+
     .PARAMETER Credential
         Credentials for remote computer access
-        
+
     .PARAMETER CheckTypes
         Types of insecurity checks to perform
-        
+
     .PARAMETER IncludeSystemServices
         Include analysis of built-in Windows services
-        
+
     .PARAMETER ScanUnquotedPaths
         Specifically scan for unquoted service paths vulnerability
-        
+
     .PARAMETER CheckPermissions
         Analyze NTFS permissions on service binaries
-        
+
     .PARAMETER OutputFormat
         Output format: Object, JSON, CSV, or SIEM
-        
+
     .PARAMETER ReportPath
         Path to save security report
-        
+
     .PARAMETER ExcludeServices
         Service names to exclude from analysis
-        
+
     .PARAMETER MinimumRiskLevel
         Minimum risk level to report: Low, Medium, High, Critical
-        
+
     .EXAMPLE
         Get-InsecureServices -CheckTypes @('UnquotedPaths', 'WeakPermissions') -ReportPath 'C:\Reports\services.html'
-        
+
     .EXAMPLE
         Get-InsecureServices -ComputerName @('Server1', 'Server2') -CheckPermissions -MinimumRiskLevel 'Medium'
-        
+
     .EXAMPLE
         Get-InsecureServices -ScanUnquotedPaths -OutputFormat JSON | ConvertFrom-Json
     #>
-    
+
     [CmdletBinding()]
     param(
         [Parameter()]
         [string[]]$ComputerName = @('localhost'),
-        
+
         [Parameter()]
         [pscredential]$Credential,
-        
+
         [Parameter()]
         [ValidateSet('UnquotedPaths', 'WeakPermissions', 'DangerousIdentity', 'NonStandardPaths', 'ModifiablePaths')]
         [string[]]$CheckTypes = @('UnquotedPaths', 'DangerousIdentity', 'NonStandardPaths'),
-        
+
         [Parameter()]
         [switch]$IncludeSystemServices,
-        
+
         [Parameter()]
         [switch]$ScanUnquotedPaths,
-        
+
         [Parameter()]
         [switch]$CheckPermissions,
-        
+
         [Parameter()]
         [ValidateSet('Object', 'JSON', 'CSV', 'SIEM')]
         [string]$OutputFormat = 'Object',
-        
+
         [Parameter()]
         [string]$ReportPath,
-        
+
         [Parameter()]
         [string[]]$ExcludeServices = @(),
-        
+
         [Parameter()]
         [ValidateSet('Low', 'Medium', 'High', 'Critical')]
         [string]$MinimumRiskLevel = 'Low'
     )
-    
+
     begin {
         Write-CustomLog -Level 'INFO' -Message "Starting insecure services analysis for $($ComputerName.Count) computer(s)"
-        
+
         # Add ScanUnquotedPaths to CheckTypes if specified
         if ($ScanUnquotedPaths -and $CheckTypes -notcontains 'UnquotedPaths') {
             $CheckTypes += 'UnquotedPaths'
         }
-        
+
         # Add CheckPermissions to CheckTypes if specified
         if ($CheckPermissions -and $CheckTypes -notcontains 'WeakPermissions') {
             $CheckTypes += 'WeakPermissions'
         }
-        
+
         $SecurityResults = @{
             CheckTypes = $CheckTypes
             ComputersAnalyzed = @()
@@ -107,7 +107,7 @@ function Get-InsecureServices {
             MediumRiskFindings = 0
             LowRiskFindings = 0
         }
-        
+
         # Risk level mapping
         $RiskLevels = @{
             'Low' = 1
@@ -115,15 +115,15 @@ function Get-InsecureServices {
             'High' = 3
             'Critical' = 4
         }
-        
+
         $MinRiskValue = $RiskLevels[$MinimumRiskLevel]
-        
+
         # Define dangerous service identities
         $DangerousIdentities = @(
             'LocalSystem',
             'NT AUTHORITY\SYSTEM'
         )
-        
+
         # Define standard Windows paths
         $StandardPaths = @(
             'C:\Windows\',
@@ -131,12 +131,12 @@ function Get-InsecureServices {
             'C:\Program Files (x86)\'
         )
     }
-    
+
     process {
         try {
             foreach ($Computer in $ComputerName) {
                 Write-CustomLog -Level 'INFO' -Message "Analyzing services on: $Computer"
-                
+
                 $ComputerResult = @{
                     ComputerName = $Computer
                     ScanTime = Get-Date
@@ -145,45 +145,45 @@ function Get-InsecureServices {
                     CriticalIssues = @()
                     Errors = @()
                 }
-                
+
                 try {
                     # Get services with detailed information
                     $SessionParams = @{
                         ErrorAction = 'Stop'
                     }
-                    
+
                     if ($Computer -ne 'localhost') {
                         $SessionParams['ComputerName'] = $Computer
                         if ($Credential) {
                             $SessionParams['Credential'] = $Credential
                         }
                     }
-                    
+
                     # Use Invoke-Command for consistent remote execution
                     $ServiceData = if ($Computer -ne 'localhost') {
                         Invoke-Command @SessionParams -ScriptBlock {
                             param($CheckTypes, $DangerousIdentities, $StandardPaths, $IncludeSystemServices, $ExcludeServices)
-                            
+
                             $Services = @()
-                            
+
                             # Get service information using WMI and Get-Service
                             $WmiServices = Get-CimInstance -ClassName Win32_Service
                             $ServiceObjects = Get-Service
-                            
+
                             foreach ($WmiService in $WmiServices) {
                                 try {
                                     $ServiceObj = $ServiceObjects | Where-Object {$_.Name -eq $WmiService.Name}
-                                    
+
                                     # Skip excluded services
                                     if ($ExcludeServices -contains $WmiService.Name) {
                                         continue
                                     }
-                                    
+
                                     # Skip system services unless explicitly included
                                     if (-not $IncludeSystemServices -and $WmiService.PathName -like "*C:\Windows\System32*") {
                                         continue
                                     }
-                                    
+
                                     $ServiceInfo = @{
                                         Name = $WmiService.Name
                                         DisplayName = $WmiService.DisplayName
@@ -196,14 +196,14 @@ function Get-InsecureServices {
                                         Status = $ServiceObj.Status
                                         StartType = $ServiceObj.StartType
                                     }
-                                    
+
                                     $Services += $ServiceInfo
-                                    
+
                                 } catch {
                                     Write-Warning "Failed to process service: $($WmiService.Name)"
                                 }
                             }
-                            
+
                             return $Services
                         } -ArgumentList $CheckTypes, $DangerousIdentities, $StandardPaths, $IncludeSystemServices, $ExcludeServices
                     } else {
@@ -211,21 +211,21 @@ function Get-InsecureServices {
                         $Services = @()
                         $WmiServices = Get-CimInstance -ClassName Win32_Service
                         $ServiceObjects = Get-Service
-                        
+
                         foreach ($WmiService in $WmiServices) {
                             try {
                                 $ServiceObj = $ServiceObjects | Where-Object {$_.Name -eq $WmiService.Name}
-                                
+
                                 # Skip excluded services
                                 if ($ExcludeServices -contains $WmiService.Name) {
                                     continue
                                 }
-                                
+
                                 # Skip system services unless explicitly included
                                 if (-not $IncludeSystemServices -and $WmiService.PathName -like "*C:\Windows\System32*") {
                                     continue
                                 }
-                                
+
                                 $ServiceInfo = @{
                                     Name = $WmiService.Name
                                     DisplayName = $WmiService.DisplayName
@@ -238,20 +238,20 @@ function Get-InsecureServices {
                                     Status = $ServiceObj.Status
                                     StartType = $ServiceObj.StartType
                                 }
-                                
+
                                 $Services += $ServiceInfo
-                                
+
                             } catch {
                                 Write-CustomLog -Level 'WARNING' -Message "Failed to process service: $($WmiService.Name)"
                             }
                         }
-                        
+
                         $Services
                     }
-                    
+
                     Write-CustomLog -Level 'INFO' -Message "Found $($ServiceData.Count) services to analyze on $Computer"
                     $SecurityResults.TotalServices += $ServiceData.Count
-                    
+
                     # Analyze each service for security issues
                     foreach ($Service in $ServiceData) {
                         $ServiceAnalysis = @{
@@ -266,13 +266,13 @@ function Get-InsecureServices {
                             RiskLevel = 'Low'
                             RiskScore = 0
                         }
-                        
+
                         # Check for unquoted service paths
                         if ($CheckTypes -contains 'UnquotedPaths') {
                             if ($Service.PathName -and $Service.PathName -notmatch '^".*"') {
                                 # Check if path contains spaces and is not quoted
                                 $CleanPath = ($Service.PathName -split ' -')[0] -split ' /'[0]
-                                
+
                                 if ($CleanPath -match '\s' -and $CleanPath -notmatch '^".*"$') {
                                     $Issue = @{
                                         Type = 'UnquotedPath'
@@ -281,17 +281,17 @@ function Get-InsecureServices {
                                         Recommendation = 'Quote the service path properly'
                                         RiskLevel = 'High'
                                     }
-                                    
+
                                     $ServiceAnalysis.SecurityIssues += $Issue
                                     $ServiceAnalysis.RiskScore += 3
-                                    
+
                                     if ($ServiceAnalysis.RiskLevel -ne 'Critical') {
                                         $ServiceAnalysis.RiskLevel = 'High'
                                     }
                                 }
                             }
                         }
-                        
+
                         # Check for dangerous service identities
                         if ($CheckTypes -contains 'DangerousIdentity') {
                             if ($Service.StartName -in $DangerousIdentities) {
@@ -303,7 +303,7 @@ function Get-InsecureServices {
                                         break
                                     }
                                 }
-                                
+
                                 if ($IsNonStandard) {
                                     $Issue = @{
                                         Type = 'DangerousIdentity'
@@ -312,17 +312,17 @@ function Get-InsecureServices {
                                         Recommendation = 'Review service necessity and relocate to standard directory'
                                         RiskLevel = 'Medium'
                                     }
-                                    
+
                                     $ServiceAnalysis.SecurityIssues += $Issue
                                     $ServiceAnalysis.RiskScore += 2
-                                    
+
                                     if ($ServiceAnalysis.RiskLevel -eq 'Low') {
                                         $ServiceAnalysis.RiskLevel = 'Medium'
                                     }
                                 }
                             }
                         }
-                        
+
                         # Check for non-standard binary paths
                         if ($CheckTypes -contains 'NonStandardPaths') {
                             if ($Service.PathName) {
@@ -333,7 +333,7 @@ function Get-InsecureServices {
                                         break
                                     }
                                 }
-                                
+
                                 if (-not $IsStandardPath) {
                                     $Issue = @{
                                         Type = 'NonStandardPath'
@@ -342,32 +342,32 @@ function Get-InsecureServices {
                                         Recommendation = 'Verify service legitimacy and relocate if necessary'
                                         RiskLevel = 'Low'
                                     }
-                                    
+
                                     $ServiceAnalysis.SecurityIssues += $Issue
                                     $ServiceAnalysis.RiskScore += 1
                                 }
                             }
                         }
-                        
+
                         # Check permissions on service binary (if local and permissions check enabled)
                         if ($CheckTypes -contains 'WeakPermissions' -and $Computer -eq 'localhost') {
                             try {
                                 # Extract actual executable path
                                 $ExecutablePath = ($Service.PathName -split ' -')[0] -split ' /'[0] -replace '"', ''
-                                
+
                                 if (Test-Path $ExecutablePath) {
                                     $Acl = Get-Acl $ExecutablePath
                                     $WeakPermissions = $false
-                                    
+
                                     foreach ($Access in $Acl.Access) {
                                         # Check for write permissions by non-admin users
-                                        if ($Access.FileSystemRights -match 'Write|FullControl|Modify' -and 
+                                        if ($Access.FileSystemRights -match 'Write|FullControl|Modify' -and
                                             $Access.IdentityReference -notmatch 'SYSTEM|Administrators|TrustedInstaller') {
                                             $WeakPermissions = $true
                                             break
                                         }
                                     }
-                                    
+
                                     if ($WeakPermissions) {
                                         $Issue = @{
                                             Type = 'WeakPermissions'
@@ -376,7 +376,7 @@ function Get-InsecureServices {
                                             Recommendation = 'Restrict write permissions to administrators only'
                                             RiskLevel = 'High'
                                         }
-                                        
+
                                         $ServiceAnalysis.SecurityIssues += $Issue
                                         $ServiceAnalysis.RiskScore += 3
                                         $ServiceAnalysis.RiskLevel = 'High'
@@ -386,25 +386,25 @@ function Get-InsecureServices {
                                 # Ignore permission check errors
                             }
                         }
-                        
+
                         # Check for modifiable paths
                         if ($CheckTypes -contains 'ModifiablePaths' -and $Computer -eq 'localhost') {
                             try {
                                 $ExecutablePath = ($Service.PathName -split ' -')[0] -split ' /'[0] -replace '"', ''
                                 $Directory = Split-Path $ExecutablePath -Parent
-                                
+
                                 if (Test-Path $Directory) {
                                     $DirAcl = Get-Acl $Directory
                                     $ModifiableDir = $false
-                                    
+
                                     foreach ($Access in $DirAcl.Access) {
-                                        if ($Access.FileSystemRights -match 'Write|FullControl|Modify' -and 
+                                        if ($Access.FileSystemRights -match 'Write|FullControl|Modify' -and
                                             $Access.IdentityReference -notmatch 'SYSTEM|Administrators|TrustedInstaller') {
                                             $ModifiableDir = $true
                                             break
                                         }
                                     }
-                                    
+
                                     if ($ModifiableDir) {
                                         $Issue = @{
                                             Type = 'ModifiableDirectory'
@@ -413,10 +413,10 @@ function Get-InsecureServices {
                                             Recommendation = 'Restrict directory permissions'
                                             RiskLevel = 'Medium'
                                         }
-                                        
+
                                         $ServiceAnalysis.SecurityIssues += $Issue
                                         $ServiceAnalysis.RiskScore += 2
-                                        
+
                                         if ($ServiceAnalysis.RiskLevel -eq 'Low') {
                                             $ServiceAnalysis.RiskLevel = 'Medium'
                                         }
@@ -426,7 +426,7 @@ function Get-InsecureServices {
                                 # Ignore permission check errors
                             }
                         }
-                        
+
                         # Determine final risk level based on score
                         if ($ServiceAnalysis.RiskScore -ge 6) {
                             $ServiceAnalysis.RiskLevel = 'Critical'
@@ -435,15 +435,15 @@ function Get-InsecureServices {
                         } elseif ($ServiceAnalysis.RiskScore -ge 2) {
                             $ServiceAnalysis.RiskLevel = 'Medium'
                         }
-                        
+
                         # Only include services that meet minimum risk level
                         $ServiceRiskValue = $RiskLevels[$ServiceAnalysis.RiskLevel]
-                        
+
                         if ($ServiceAnalysis.SecurityIssues.Count -gt 0 -and $ServiceRiskValue -ge $MinRiskValue) {
                             $ComputerResult.Services += $ServiceAnalysis
                             $ComputerResult.InsecureCount++
                             $SecurityResults.InsecureServices++
-                            
+
                             # Update risk counters
                             switch ($ServiceAnalysis.RiskLevel) {
                                 'Critical' { $SecurityResults.CriticalFindings++ }
@@ -451,36 +451,36 @@ function Get-InsecureServices {
                                 'Medium' { $SecurityResults.MediumRiskFindings++ }
                                 'Low' { $SecurityResults.LowRiskFindings++ }
                             }
-                            
+
                             # Add to critical issues if high risk
                             if ($ServiceAnalysis.RiskLevel -in @('Critical', 'High')) {
                                 $ComputerResult.CriticalIssues += $ServiceAnalysis
                             }
-                            
+
                             Write-CustomLog -Level 'WARNING' -Message "Found $($ServiceAnalysis.RiskLevel) risk service: $($Service.Name) on $Computer"
                         }
                     }
-                    
+
                     Write-CustomLog -Level 'SUCCESS' -Message "Service analysis completed for $Computer`: $($ComputerResult.InsecureCount) insecure services found"
-                    
+
                 } catch {
                     $Error = "Failed to analyze services on $Computer`: $($_.Exception.Message)"
                     $ComputerResult.Errors += $Error
                     Write-CustomLog -Level 'ERROR' -Message $Error
                 }
-                
+
                 $SecurityResults.ComputersAnalyzed += $ComputerResult
             }
-            
+
         } catch {
             Write-CustomLog -Level 'ERROR' -Message "Error during service security analysis: $($_.Exception.Message)"
             throw
         }
     }
-    
+
     end {
         Write-CustomLog -Level 'SUCCESS' -Message "Insecure services analysis completed"
-        
+
         # Format output based on requested format
         $FormattedResults = switch ($OutputFormat) {
             'JSON' {
@@ -522,7 +522,7 @@ function Get-InsecureServices {
                 $SecurityResults
             }
         }
-        
+
         # Export results if requested
         if ($ReportPath) {
             try {
@@ -558,19 +558,19 @@ function Get-InsecureServices {
         <p><strong>Medium Risk Findings:</strong> <span class='medium'>$($SecurityResults.MediumRiskFindings)</span></p>
     </div>
 "@
-                    
+
                     foreach ($Computer in $SecurityResults.ComputersAnalyzed) {
                         if ($Computer.Services.Count -gt 0) {
                             $HtmlReport += "<div class='computer'>"
                             $HtmlReport += "<h2>$($Computer.ComputerName)</h2>"
                             $HtmlReport += "<p><strong>Insecure Services:</strong> $($Computer.InsecureCount)</p>"
-                            
+
                             $HtmlReport += "<table><tr><th>Service</th><th>Risk Level</th><th>Issues</th><th>Path</th></tr>"
-                            
+
                             foreach ($Service in $Computer.Services) {
                                 $RiskClass = $Service.RiskLevel.ToLower()
                                 $Issues = ($Service.SecurityIssues | ForEach-Object { $_.Type }) -join ', '
-                                
+
                                 $HtmlReport += "<tr>"
                                 $HtmlReport += "<td>$($Service.ServiceName)</td>"
                                 $HtmlReport += "<td class='$RiskClass'>$($Service.RiskLevel)</td>"
@@ -578,25 +578,25 @@ function Get-InsecureServices {
                                 $HtmlReport += "<td>$($Service.PathName)</td>"
                                 $HtmlReport += "</tr>"
                             }
-                            
+
                             $HtmlReport += "</table></div>"
                         }
                     }
-                    
+
                     $HtmlReport += "</body></html>"
-                    
+
                     $HtmlReport | Out-File -FilePath $ReportPath -Encoding UTF8
                 } else {
                     $FormattedResults | Out-File -FilePath $ReportPath -Encoding UTF8
                 }
-                
+
                 Write-CustomLog -Level 'SUCCESS' -Message "Security report saved to: $ReportPath"
-                
+
             } catch {
                 Write-CustomLog -Level 'ERROR' -Message "Failed to save report: $($_.Exception.Message)"
             }
         }
-        
+
         # Display summary
         Write-CustomLog -Level 'INFO' -Message "Service Security Analysis Summary:"
         Write-CustomLog -Level 'INFO' -Message "  Total Services: $($SecurityResults.TotalServices)"
@@ -604,13 +604,13 @@ function Get-InsecureServices {
         Write-CustomLog -Level 'INFO' -Message "  Critical Findings: $($SecurityResults.CriticalFindings)"
         Write-CustomLog -Level 'INFO' -Message "  High Risk Findings: $($SecurityResults.HighRiskFindings)"
         Write-CustomLog -Level 'INFO' -Message "  Medium Risk Findings: $($SecurityResults.MediumRiskFindings)"
-        
+
         if ($SecurityResults.CriticalFindings -gt 0) {
             Write-CustomLog -Level 'ERROR' -Message "CRITICAL SECURITY ISSUES FOUND - Immediate attention required"
         } elseif ($SecurityResults.HighRiskFindings -gt 0) {
             Write-CustomLog -Level 'WARNING' -Message "High risk security issues found - Review and remediate promptly"
         }
-        
+
         return $FormattedResults
     }
 }

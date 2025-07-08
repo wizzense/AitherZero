@@ -9,23 +9,23 @@ function Get-LicenseCacheStatistics {
     #>
     [CmdletBinding()]
     param()
-    
+
     Initialize-LicenseCache
-    
+
     $now = Get-Date
     $statusCacheAge = if ($script:LicenseCache.LastCheck) {
         ($now - $script:LicenseCache.LastCheck).TotalMinutes
     } else { $null }
-    
+
     $featureCacheEntries = $script:LicenseCache.FeatureCache.Count
     $validFeatureEntries = 0
-    
+
     foreach ($entry in $script:LicenseCache.FeatureCache.Values) {
         if (($now - $entry.Timestamp) -lt $script:LicenseCache.FeatureCacheTimeout) {
             $validFeatureEntries++
         }
     }
-    
+
     return [PSCustomObject]@{
         Enabled = $script:LicenseCache.Enabled
         StatusCacheEnabled = $script:LicenseCache.LastStatus -ne $null
@@ -34,8 +34,8 @@ function Get-LicenseCacheStatistics {
         FeatureCacheEntries = $featureCacheEntries
         ValidFeatureCacheEntries = $validFeatureEntries
         FeatureCacheTimeout = $script:LicenseCache.FeatureCacheTimeout.TotalMinutes
-        CacheHitRatio = if ($featureCacheEntries -gt 0) { 
-            [Math]::Round(($validFeatureEntries / $featureCacheEntries) * 100, 2) 
+        CacheHitRatio = if ($featureCacheEntries -gt 0) {
+            [Math]::Round(($validFeatureEntries / $featureCacheEntries) * 100, 2)
         } else { 0 }
     }
 }
@@ -55,9 +55,9 @@ function Clear-LicenseCache {
         [ValidateSet('Status', 'Features', 'All')]
         [string]$Type = 'All'
     )
-    
+
     Initialize-LicenseCache
-    
+
     switch ($Type) {
         'Status' {
             $script:LicenseCache.LastCheck = $null
@@ -72,7 +72,7 @@ function Clear-LicenseCache {
             $script:LicenseCache.FeatureCache.Clear()
         }
     }
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Message "License cache cleared" -Level DEBUG -Context @{
             Type = $Type
@@ -92,15 +92,15 @@ function Set-LicenseCacheEnabled {
         [Parameter(Mandatory)]
         [bool]$Enabled
     )
-    
+
     Initialize-LicenseCache
-    
+
     $script:LicenseCache.Enabled = $Enabled
-    
+
     if (-not $Enabled) {
         Clear-LicenseCache -Type All
     }
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog -Message "License caching $($Enabled ? 'enabled' : 'disabled')" -Level INFO
     }

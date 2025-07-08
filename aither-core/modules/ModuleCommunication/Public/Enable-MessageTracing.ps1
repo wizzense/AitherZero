@@ -18,20 +18,20 @@ function Enable-MessageTracing {
         [Parameter()]
         [ValidateSet('Basic', 'Detailed', 'Verbose')]
         [string]$Level = 'Basic',
-        
+
         [Parameter()]
         [switch]$LogToFile,
-        
+
         [Parameter()]
         [string]$FilePath = "communication-trace-$(Get-Date -Format 'yyyyMMdd-HHmmss').log"
     )
-    
+
     try {
         $script:Configuration.EnableTracing = $true
         $script:Configuration.TracingLevel = $Level
         $script:Configuration.TracingToFile = $LogToFile.IsPresent
         $script:Configuration.TracingFilePath = $FilePath
-        
+
         # Initialize trace file if needed
         if ($LogToFile) {
             $traceHeader = @"
@@ -43,9 +43,9 @@ function Enable-MessageTracing {
 "@
             $traceHeader | Out-File -FilePath $FilePath -Encoding UTF8
         }
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "Message tracing enabled (Level: $Level)"
-        
+
         # Log initial state
         $initialState = @{
             EnabledAt = Get-Date
@@ -55,11 +55,11 @@ function Enable-MessageTracing {
             APIs = $script:APIRegistry.APIs.Count
             ProcessorRunning = $script:MessageBus.Processor.Running
         }
-        
+
         if ($LogToFile) {
             "Initial State: $($initialState | ConvertTo-Json -Compress)" | Out-File -FilePath $FilePath -Append -Encoding UTF8
         }
-        
+
         return @{
             Success = $true
             Level = $Level
@@ -67,7 +67,7 @@ function Enable-MessageTracing {
             FilePath = if ($LogToFile) { $FilePath } else { $null }
             InitialState = $initialState
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to enable tracing: $_"
         throw

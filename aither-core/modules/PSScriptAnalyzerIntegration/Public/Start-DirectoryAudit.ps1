@@ -2,94 +2,94 @@ function Start-DirectoryAudit {
     <#
     .SYNOPSIS
         Starts a comprehensive PSScriptAnalyzer audit of a directory or module
-    
+
     .DESCRIPTION
         Performs automated PSScriptAnalyzer analysis on PowerShell files within a directory,
         creates or updates status tracking files, and generates bug tracking files.
         Supports recursive analysis and parallel processing for large codebases.
-    
+
     .PARAMETER Path
         Directory path to audit. Defaults to current directory.
-    
+
     .PARAMETER ModuleName
         Optional module name for context-specific analysis rules
-    
+
     .PARAMETER Recurse
         Whether to recursively analyze subdirectories (default: true)
-    
+
     .PARAMETER IncludeTests
         Whether to include test files in analysis (default: false)
-    
+
     .PARAMETER UpdateDocumentation
         Whether to generate missing README.md files (default: false)
-    
+
     .PARAMETER Parallel
         Whether to use parallel processing for multiple directories (default: true)
-    
+
     .PARAMETER ReportFormat
         Output report format: JSON, HTML, XML (default: JSON)
-    
+
     .PARAMETER ExportPath
         Path to export consolidated report (optional)
-    
+
     .PARAMETER Force
         Force overwrite of existing status files
-    
+
     .EXAMPLE
         Start-DirectoryAudit -Path "./aither-core/modules" -Recurse -UpdateDocumentation
-        
+
         Audits all modules in the aither-core/modules directory recursively and generates missing documentation
-    
+
     .EXAMPLE
         Start-DirectoryAudit -Path "./aither-core/modules/PatchManager" -ModuleName "PatchManager" -IncludeTests
-        
+
         Audits the PatchManager module including test files
-    
+
     .EXAMPLE
         Start-DirectoryAudit -Path "." -ReportFormat HTML -ExportPath "./audit-report.html"
-        
+
         Audits current directory and exports HTML report
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $false)]
         [string]$Path = ".",
-        
+
         [Parameter(Mandatory = $false)]
         [string]$ModuleName,
-        
+
         [Parameter(Mandatory = $false)]
         [bool]$Recurse = $true,
-        
+
         [Parameter(Mandatory = $false)]
         [bool]$IncludeTests = $false,
-        
+
         [Parameter(Mandatory = $false)]
         [bool]$UpdateDocumentation = $false,
-        
+
         [Parameter(Mandatory = $false)]
         [bool]$Parallel = $true,
-        
+
         [Parameter(Mandatory = $false)]
         [ValidateSet('JSON', 'HTML', 'XML')]
         [string]$ReportFormat = 'JSON',
-        
+
         [Parameter(Mandatory = $false)]
         [string]$ExportPath,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$Force
     )
-    
+
     try {
         $resolvedPath = Resolve-Path $Path -ErrorAction Stop
-        
+
         if ($script:UseCustomLogging) {
             Write-CustomLog -Level 'INFO' -Message "Starting comprehensive directory audit for: $resolvedPath"
         } else {
             Write-Host "🔍 Starting PSScriptAnalyzer audit for: $resolvedPath" -ForegroundColor Cyan
         }
-        
+
         # Initialize audit results
         $auditResults = @{
             StartTime = Get-Date
@@ -114,15 +114,15 @@ function Start-DirectoryAudit {
             }
             Errors = @()
         }
-        
+
         # Discover directories to analyze
         $directoriesToAnalyze = @()
-        
+
         if ($Recurse) {
             # Find all directories containing PowerShell files
             $psFiles = Get-ChildItem -Path $resolvedPath -Include *.ps1,*.psm1,*.psd1 -Recurse -File -ErrorAction SilentlyContinue
             $uniqueDirectories = $psFiles | ForEach-Object { $_.Directory.FullName } | Select-Object -Unique | Sort-Object
-            
+
             foreach ($dir in $uniqueDirectories) {
                 $directoriesToAnalyze += @{
                     Path = $dir
@@ -140,7 +140,7 @@ function Start-DirectoryAudit {
                 ModuleName = $ModuleName
             }
         }
-        
+
         if ($directoriesToAnalyze.Count -eq 0) {
             if ($script:UseCustomLogging) {
                 Write-CustomLog -Level 'WARNING' -Message "No directories with PowerShell files found"
@@ -149,13 +149,13 @@ function Start-DirectoryAudit {
             }
             return $auditResults
         }
-        
+
         if ($script:UseCustomLogging) {
             Write-CustomLog -Level 'INFO' -Message "Found $($directoriesToAnalyze.Count) directories to analyze"
         } else {
             Write-Host "📁 Found $($directoriesToAnalyze.Count) directories to analyze" -ForegroundColor Green
         }
-        
+
         # Process directories
         if ($Parallel -and $directoriesToAnalyze.Count -gt 1) {
             # Parallel processing
@@ -164,21 +164,21 @@ function Start-DirectoryAudit {
             } else {
                 Write-Host "⚡ Using parallel processing..." -ForegroundColor Yellow
             }
-            
+
             $jobs = @()
             foreach ($directory in $directoriesToAnalyze) {
                 $job = Start-Job -ScriptBlock {
                     param($DirPath, $ModName, $IncTests, $ScriptRoot)
-                    
+
                     # Import module in job context
                     Import-Module "$ScriptRoot/PSScriptAnalyzerIntegration.psd1" -Force
-                    
+
                     return Invoke-DirectoryAnalysis -Path $DirPath -ModuleName $ModName -IncludeTests $IncTests
                 } -ArgumentList $directory.Path, $directory.ModuleName, $IncludeTests, $PSScriptRoot
-                
+
                 $jobs += $job
             }
-            
+
             # Wait for jobs and collect results
             $completed = 0
             while ($jobs | Where-Object { $_.State -eq 'Running' }) {
@@ -191,7 +191,7 @@ function Start-DirectoryAudit {
                 }
                 Start-Sleep -Milliseconds 500
             }
-            
+
             # Collect all results
             foreach ($job in $jobs) {
                 try {
@@ -217,7 +217,7 @@ function Start-DirectoryAudit {
                         $completed++
                         Write-Host "📊 Analyzing [$completed/$($directoriesToAnalyze.Count)]: $($directory.Path)" -ForegroundColor Cyan
                     }
-                    
+
                     $result = Invoke-DirectoryAnalysis -Path $directory.Path -ModuleName $directory.ModuleName -IncludeTests $IncludeTests
                     $auditResults.DirectoryResults += $result
                 }
@@ -229,7 +229,7 @@ function Start-DirectoryAudit {
                 }
             }
         }
-        
+
         # Calculate summary statistics
         foreach ($result in $auditResults.DirectoryResults) {
             $auditResults.Summary.DirectoriesAnalyzed++
@@ -239,7 +239,7 @@ function Start-DirectoryAudit {
             $auditResults.Summary.WarningCount += $result.Summary.Warnings
             $auditResults.Summary.InformationCount += $result.Summary.Information
         }
-        
+
         # Calculate overall status and quality score
         $auditResults.Summary.OverallStatus = if ($auditResults.Summary.ErrorCount -gt 0) {
             'critical'
@@ -252,15 +252,15 @@ function Start-DirectoryAudit {
         } else {
             'good'
         }
-        
-        $auditResults.Summary.QualityScore = [math]::Max(0, 100 - 
-            ($auditResults.Summary.ErrorCount * 10) - 
-            ($auditResults.Summary.WarningCount * 2) - 
+
+        $auditResults.Summary.QualityScore = [math]::Max(0, 100 -
+            ($auditResults.Summary.ErrorCount * 10) -
+            ($auditResults.Summary.WarningCount * 2) -
             ($auditResults.Summary.InformationCount * 0.5))
-        
+
         $auditResults.EndTime = Get-Date
         $auditResults.Duration = ($auditResults.EndTime - $auditResults.StartTime).TotalMilliseconds
-        
+
         # Update documentation if requested
         if ($UpdateDocumentation) {
             if ($script:UseCustomLogging) {
@@ -268,7 +268,7 @@ function Start-DirectoryAudit {
             } else {
                 Write-Host "📝 Updating documentation..." -ForegroundColor Yellow
             }
-            
+
             foreach ($result in $auditResults.DirectoryResults) {
                 $readmePath = Join-Path $result.Path "README.md"
                 if (-not (Test-Path $readmePath)) {
@@ -304,7 +304,7 @@ This directory contains PowerShell code that has been analyzed by PSScriptAnalyz
                 }
             }
         }
-        
+
         # Export report if requested
         if ($ExportPath) {
             try {
@@ -320,7 +320,7 @@ This directory contains PowerShell code that has been analyzed by PSScriptAnalyz
                         $auditResults | ConvertTo-Xml -Depth 10 -NoTypeInformation | Set-Content -Path $ExportPath -Encoding UTF8
                     }
                 }
-                
+
                 if ($script:UseCustomLogging) {
                     Write-CustomLog -Level 'INFO' -Message "Exported $ReportFormat report to: $ExportPath"
                 } else {
@@ -335,7 +335,7 @@ This directory contains PowerShell code that has been analyzed by PSScriptAnalyz
                 }
             }
         }
-        
+
         # Display summary
         if (-not $script:UseCustomLogging) {
             Write-Host "`n📊 Audit Summary:" -ForegroundColor Cyan
@@ -357,11 +357,11 @@ This directory contains PowerShell code that has been analyzed by PSScriptAnalyz
             Write-Host "  Quality Score: $([math]::Round($auditResults.Summary.QualityScore, 1))%" -ForegroundColor Magenta
             Write-Host "  Duration: $([math]::Round($auditResults.Duration / 1000, 2)) seconds" -ForegroundColor Gray
         }
-        
+
         if ($script:UseCustomLogging) {
             Write-CustomLog -Level 'SUCCESS' -Message "Directory audit completed successfully. Status: $($auditResults.Summary.OverallStatus), Score: $([math]::Round($auditResults.Summary.QualityScore, 1))%"
         }
-        
+
         return $auditResults
     }
     catch {

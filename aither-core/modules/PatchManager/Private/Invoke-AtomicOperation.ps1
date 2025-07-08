@@ -66,7 +66,7 @@ function Invoke-AtomicOperation {
         }
 
         Write-CustomLog "Starting atomic operation: $OperationName" -Level "INFO"
-        
+
         # Create operation context
         $operationContext = @{
             OperationName = $OperationName
@@ -83,22 +83,22 @@ function Invoke-AtomicOperation {
         try {
             # Step 1: Capture initial state
             Write-CustomLog "Capturing initial state..." -Level "INFO"
-            
+
             $operationContext.InitialBranch = git branch --show-current 2>&1 | Out-String | ForEach-Object Trim
             $operationContext.InitialCommit = git rev-parse HEAD 2>&1 | Out-String | ForEach-Object Trim
-            
+
             # Check workspace state
             $gitStatus = git status --porcelain 2>&1
             $hasUncommittedChanges = $gitStatus -and ($gitStatus | Where-Object { $_ -match '\S' })
-            
+
             if ($hasUncommittedChanges) {
                 $operationContext.WorkspaceSnapshot.HasChanges = $true
                 $operationContext.WorkspaceSnapshot.Changes = $gitStatus
-                
+
                 if ($RequiresCleanWorkspace -and -not $AllowWorkspaceChanges) {
                     throw "Operation '$OperationName' requires clean workspace but uncommitted changes detected. Use -AllowWorkspaceChanges to override."
                 }
-                
+
                 Write-CustomLog "Workspace has uncommitted changes (allowed by operation)" -Level "WARN"
             } else {
                 $operationContext.WorkspaceSnapshot.HasChanges = $false
@@ -139,7 +139,7 @@ function Invoke-AtomicOperation {
 
             # Step 6: Final validation
             Write-CustomLog "Performing final validation..." -Level "INFO"
-            
+
             # Check for new merge conflicts
             $newConflictMarkers = git grep -l "^<<<<<<< HEAD" 2>$null
             if ($newConflictMarkers) {

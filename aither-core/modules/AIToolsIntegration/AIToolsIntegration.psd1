@@ -6,11 +6,11 @@
     CompanyName = 'AitherZero'
     Copyright = '(c) 2025 AitherZero. All rights reserved.'
     Description = 'AI Tools Integration module for AitherZero - handles installation and configuration of AI development tools'
-    
+
     PowerShellVersion = '7.0'
-    
+
     RequiredModules = @()
-    
+
     FunctionsToExport = @(
         'Install-ClaudeCode',
         'Install-GeminiCLI',
@@ -21,11 +21,11 @@
         'Update-AITools',
         'Remove-AITools'
     )
-    
+
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()
-    
+
     PrivateData = @{
         PSData = @{
             Tags = @('AitherZero', 'AI', 'Tools', 'Claude', 'Gemini', 'Codex', 'Automation')

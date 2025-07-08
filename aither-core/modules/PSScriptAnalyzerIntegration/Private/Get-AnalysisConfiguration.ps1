@@ -2,22 +2,22 @@ function Get-AnalysisConfiguration {
     <#
     .SYNOPSIS
         Gets PSScriptAnalyzer configuration for a specific directory or module
-    
+
     .DESCRIPTION
         Implements hierarchical configuration loading:
         1. Directory-specific (.pssa-config.json)
         2. Module-specific (PSScriptAnalyzerSettings.psd1 in module root)
         3. Global (PSScriptAnalyzerSettings.psd1 in project root)
-    
+
     .PARAMETER Path
         Directory path to get configuration for
-    
+
     .PARAMETER ModuleName
         Optional module name for module-specific configuration
-    
+
     .PARAMETER UseCache
         Whether to use cached configuration (default: true)
-    
+
     .EXAMPLE
         $config = Get-AnalysisConfiguration -Path "./aither-core/modules/PatchManager"
     #>
@@ -25,18 +25,18 @@ function Get-AnalysisConfiguration {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Path,
-        
+
         [Parameter(Mandatory = $false)]
         [string]$ModuleName,
-        
+
         [Parameter(Mandatory = $false)]
         [bool]$UseCache = $true
     )
-    
+
     try {
         $resolvedPath = Resolve-Path $Path -ErrorAction Stop
         $cacheKey = "$resolvedPath|$ModuleName"
-        
+
         # Check cache first
         if ($UseCache -and $script:ConfigurationCache.ContainsKey($cacheKey)) {
             $cached = $script:ConfigurationCache[$cacheKey]
@@ -47,11 +47,11 @@ function Get-AnalysisConfiguration {
                 return $cached.Configuration
             }
         }
-        
+
         # Initialize with global configuration
         $globalConfigPath = $script:DefaultSettings.GlobalConfigPath
         $configuration = @{}
-        
+
         if (Test-Path $globalConfigPath) {
             try {
                 $globalConfig = Import-PowerShellDataFile -Path $globalConfigPath
@@ -66,7 +66,7 @@ function Get-AnalysisConfiguration {
                 }
             }
         }
-        
+
         # Load module-specific configuration if module name provided
         if ($ModuleName) {
             $moduleConfigPath = Join-Path $resolvedPath "PSScriptAnalyzerSettings.psd1"
@@ -88,7 +88,7 @@ function Get-AnalysisConfiguration {
                 }
             }
         }
-        
+
         # Load directory-specific configuration
         $dirConfigPath = Join-Path $resolvedPath $script:DefaultSettings.ConfigFileName
         if (Test-Path $dirConfigPath) {
@@ -108,20 +108,20 @@ function Get-AnalysisConfiguration {
                 }
             }
         }
-        
+
         # Apply default fallbacks if needed
         if (-not $configuration.ContainsKey('Severity')) {
             $configuration.Severity = @('Error', 'Warning', 'Information')
         }
-        
+
         if (-not $configuration.ContainsKey('IncludeDefaultRules')) {
             $configuration.IncludeDefaultRules = $true
         }
-        
+
         if (-not $configuration.ContainsKey('Recurse')) {
             $configuration.Recurse = $true
         }
-        
+
         # Cache the configuration
         if ($UseCache) {
             $script:ConfigurationCache[$cacheKey] = @{
@@ -129,7 +129,7 @@ function Get-AnalysisConfiguration {
                 Timestamp = Get-Date
             }
         }
-        
+
         return $configuration
     }
     catch {

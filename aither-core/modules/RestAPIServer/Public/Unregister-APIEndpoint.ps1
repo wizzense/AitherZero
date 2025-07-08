@@ -29,11 +29,11 @@ function Unregister-APIEndpoint {
         [Parameter(Mandatory)]
         [ValidatePattern('^/[a-zA-Z0-9/_-]+$')]
         [string]$Path,
-        
+
         [Parameter()]
         [ValidateSet('GET', 'POST', 'PUT', 'DELETE', 'PATCH')]
         [string]$Method,
-        
+
         [Parameter()]
         [switch]$Force
     )
@@ -53,9 +53,9 @@ function Unregister-APIEndpoint {
                     Path = $Path
                 }
             }
-            
+
             $endpoint = $script:RegisteredEndpoints[$Path]
-            
+
             # Check method match if specified
             if ($Method -and $endpoint.Method -ne $Method) {
                 Write-CustomLog -Message "Method mismatch: $Path has method $($endpoint.Method), not $Method" -Level "WARNING"
@@ -67,17 +67,17 @@ function Unregister-APIEndpoint {
                     ActualMethod = $endpoint.Method
                 }
             }
-            
+
             # Check if endpoint is in use (if not forcing)
             if (-not $Force -and (Test-APIServerRunning)) {
                 Write-CustomLog -Message "Warning: Removing endpoint while server is running" -Level "WARNING"
             }
-            
+
             # Remove the endpoint
             $script:RegisteredEndpoints.Remove($Path)
-            
+
             Write-CustomLog -Message "Endpoint unregistered: $($endpoint.Method) $Path" -Level "SUCCESS"
-            
+
             return @{
                 Success = $true
                 Path = $Path
@@ -90,7 +90,7 @@ function Unregister-APIEndpoint {
         } catch {
             $errorMessage = "Failed to unregister endpoint $Path : $($_.Exception.Message)"
             Write-CustomLog -Message $errorMessage -Level "ERROR"
-            
+
             return @{
                 Success = $false
                 Error = $_.Exception.Message

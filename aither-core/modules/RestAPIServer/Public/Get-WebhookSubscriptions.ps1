@@ -33,10 +33,10 @@ function Get-WebhookSubscriptions {
     param(
         [Parameter()]
         [string]$SubscriptionId,
-        
+
         [Parameter()]
         [switch]$IncludeStatistics,
-        
+
         [Parameter()]
         [switch]$IncludeInactive
     )
@@ -49,7 +49,7 @@ function Get-WebhookSubscriptions {
         try {
             # Check if webhooks are enabled
             $webhooksEnabled = $script:APIConfiguration.WebhookConfig.Enabled -eq $true
-            
+
             $result = @{
                 Success = $true
                 WebhooksEnabled = $webhooksEnabled
@@ -57,18 +57,18 @@ function Get-WebhookSubscriptions {
                 Subscriptions = @()
                 Timestamp = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
             }
-            
+
             # Return empty result if webhooks not enabled
             if (-not $webhooksEnabled) {
                 $result.Message = "Webhooks are not currently enabled"
                 return $result
             }
-            
+
             # Get specific subscription
             if ($SubscriptionId) {
                 if ($script:WebhookSubscriptions.ContainsKey($SubscriptionId)) {
                     $subscription = $script:WebhookSubscriptions[$SubscriptionId]
-                    
+
                     $subDetails = @{
                         Id = $SubscriptionId
                         Url = $subscription.Url
@@ -77,14 +77,14 @@ function Get-WebhookSubscriptions {
                         CreatedAt = $subscription.CreatedAt
                         HasSecret = -not [string]::IsNullOrEmpty($subscription.Secret)
                     }
-                    
+
                     if ($IncludeStatistics) {
                         $subDetails.DeliveryStats = $subscription.DeliveryStats
                         $subDetails.SuccessRate = if ($subscription.DeliveryStats.Attempted -gt 0) {
                             [math]::Round(($subscription.DeliveryStats.Delivered / $subscription.DeliveryStats.Attempted) * 100, 2)
                         } else { 0 }
                     }
-                    
+
                     $result.Subscriptions += $subDetails
                 } else {
                     $result.Success = $false
@@ -95,12 +95,12 @@ function Get-WebhookSubscriptions {
                 # Get all subscriptions
                 foreach ($subId in $script:WebhookSubscriptions.Keys) {
                     $subscription = $script:WebhookSubscriptions[$subId]
-                    
+
                     # Filter inactive if not requested
                     if (-not $IncludeInactive -and -not $subscription.IsActive) {
                         continue
                     }
-                    
+
                     $subDetails = @{
                         Id = $subId
                         Url = $subscription.Url
@@ -109,18 +109,18 @@ function Get-WebhookSubscriptions {
                         CreatedAt = $subscription.CreatedAt
                         HasSecret = -not [string]::IsNullOrEmpty($subscription.Secret)
                     }
-                    
+
                     if ($IncludeStatistics) {
                         $subDetails.DeliveryStats = $subscription.DeliveryStats
                         $subDetails.SuccessRate = if ($subscription.DeliveryStats.Attempted -gt 0) {
                             [math]::Round(($subscription.DeliveryStats.Delivered / $subscription.DeliveryStats.Attempted) * 100, 2)
                         } else { 0 }
                     }
-                    
+
                     $result.Subscriptions += $subDetails
                 }
             }
-            
+
             # Add webhook configuration if statistics requested
             if ($IncludeStatistics) {
                 $result.WebhookConfiguration = @{
@@ -129,20 +129,20 @@ function Get-WebhookSubscriptions {
                     Timeout = $script:APIConfiguration.WebhookConfig.Timeout
                     EnabledAt = $script:APIConfiguration.WebhookConfig.EnabledAt
                 }
-                
+
                 $result.GlobalStatistics = $script:APIConfiguration.WebhookConfig.DeliveryStats
             }
-            
+
             # Update counts
             $result.ActiveSubscriptions = ($result.Subscriptions | Where-Object { $_.IsActive }).Count
             $result.InactiveSubscriptions = ($result.Subscriptions | Where-Object { -not $_.IsActive }).Count
-            
+
             return $result
 
         } catch {
             $errorMessage = "Failed to get webhook subscriptions: $($_.Exception.Message)"
             Write-CustomLog -Message $errorMessage -Level "ERROR"
-            
+
             return @{
                 Success = $false
                 Error = $_.Exception.Message

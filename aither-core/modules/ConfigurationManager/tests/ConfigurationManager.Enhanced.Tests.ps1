@@ -28,28 +28,28 @@ BeforeAll {
         }
         $currentPath
     }
-    
+
     # Import TestingFramework for infrastructure
     $testingFrameworkPath = Join-Path $ProjectRoot "aither-core/modules/TestingFramework"
     if (Test-Path $testingFrameworkPath) {
         Import-Module $testingFrameworkPath -Force
     }
-    
+
     # Import the module under test
     $ModulePath = Split-Path $PSScriptRoot -Parent
     Import-Module $ModulePath -Force
-    
+
     # Import related configuration modules for integration testing
     $configCoreModulePath = Join-Path $ProjectRoot "aither-core/modules/ConfigurationCore"
     if (Test-Path $configCoreModulePath) {
         Import-Module $configCoreModulePath -Force -ErrorAction SilentlyContinue
     }
-    
+
     $configCarouselModulePath = Join-Path $ProjectRoot "aither-core/modules/ConfigurationCarousel"
     if (Test-Path $configCarouselModulePath) {
         Import-Module $configCarouselModulePath -Force -ErrorAction SilentlyContinue
     }
-    
+
     # Mock Write-CustomLog if not available
     if (-not (Get-Command 'Write-CustomLog' -ErrorAction SilentlyContinue)) {
         function Write-CustomLog {
@@ -57,23 +57,23 @@ BeforeAll {
             Write-Host "[$Level] $Message"
         }
     }
-    
+
     # Create test directory structure
     $TestManagerDir = Join-Path $TestDrive 'ConfigurationManager'
     $TestConfigsDir = Join-Path $TestManagerDir 'configs'
     $TestValidationDir = Join-Path $TestManagerDir 'validation'
     $TestReportsDir = Join-Path $TestManagerDir 'reports'
     $TestPoliciesDir = Join-Path $TestManagerDir 'policies'
-    
+
     @($TestManagerDir, $TestConfigsDir, $TestValidationDir, $TestReportsDir, $TestPoliciesDir) | ForEach-Object {
         New-Item -ItemType Directory -Path $_ -Force | Out-Null
     }
-    
+
     # Set up test environment
     $env:TEST_MANAGER_DIR = $TestManagerDir
     $env:TEST_CONFIGS_DIR = $TestConfigsDir
     $env:TEST_VALIDATION_DIR = $TestValidationDir
-    
+
     # Test data for comprehensive testing
     $script:TestData = @{
         ValidConfigurations = @{
@@ -132,7 +132,7 @@ BeforeAll {
                     required = @("settings.database.connectionString", "settings.features.security.encryption")
                     optional = @("settings.features.caching.provider")
                     constraints = @(
-                        @{ 
+                        @{
                             field = "settings.database.timeout"
                             type = "range"
                             min = 1
@@ -384,7 +384,7 @@ BeforeAll {
             }
         }
     }
-    
+
     # Generate large test data
     for ($i = 1; $i -le 1000; $i++) {
         $script:TestData.PerformanceTestData.LargeConfiguration.settings["setting$i"] = "value$i"
@@ -397,7 +397,7 @@ BeforeAll {
             }
         }
     }
-    
+
     for ($i = 1; $i -le 100; $i++) {
         $script:TestData.PerformanceTestData.ManyModules += @{
             name = "Module$i"
@@ -418,35 +418,35 @@ Describe "ConfigurationManager Module - Core Functionality" {
         It "Should import the module without errors" {
             { Import-Module $ModulePath -Force } | Should -Not -Throw
         }
-        
+
         It "Should export required functions" {
             $exportedFunctions = Get-Command -Module ConfigurationManager -CommandType Function
             $exportedFunctions.Count | Should -BeGreaterThan 0
-            
+
             # Verify key functions are exported
             $keyFunctions = @(
                 'Test-ConfigurationManager'
             )
-            
+
             foreach ($function in $keyFunctions) {
-                Get-Command $function -Module ConfigurationManager -ErrorAction SilentlyContinue | 
+                Get-Command $function -Module ConfigurationManager -ErrorAction SilentlyContinue |
                     Should -Not -BeNullOrEmpty -Because "Key function $function should be exported"
             }
         }
-        
+
         It "Should have proper module metadata" {
             $module = Get-Module ConfigurationManager
             $module | Should -Not -BeNullOrEmpty
             $module.Version | Should -Not -BeNullOrEmpty
             $module.Description | Should -Not -BeNullOrEmpty
         }
-        
+
         It "Should integrate with other configuration modules" {
             # Test integration with ConfigurationCore if available
             if (Get-Module ConfigurationCore -ErrorAction SilentlyContinue) {
                 $configCore = Get-Module ConfigurationCore
                 $configCore | Should -Not -BeNullOrEmpty
-                
+
                 # Should be able to work together
                 $true | Should -Be $true  # Placeholder for integration test
             }
@@ -458,10 +458,10 @@ Describe "ConfigurationManager Module - Configuration Integrity Testing" {
     Context "Basic Integrity Validation" {
         It "Should validate simple valid configuration" {
             $validConfig = $script:TestData.ValidConfigurations.SimpleValid
-            
+
             if (Get-Command Test-ConfigurationIntegrity -ErrorAction SilentlyContinue) {
                 $result = Test-ConfigurationIntegrity -Configuration $validConfig
-                
+
                 $result | Should -Not -BeNullOrEmpty
                 $result.IsValid | Should -Be $true
                 $result.Errors | Should -BeNullOrEmpty -Or { $result.Errors.Count | Should -Be 0 }
@@ -471,13 +471,13 @@ Describe "ConfigurationManager Module - Configuration Integrity Testing" {
                 $result | Should -Not -BeNullOrEmpty
             }
         }
-        
+
         It "Should detect missing required fields" {
             $invalidConfig = $script:TestData.InvalidConfigurations.MissingRequired
-            
+
             if (Get-Command Test-ConfigurationIntegrity -ErrorAction SilentlyContinue) {
                 $result = Test-ConfigurationIntegrity -Configuration $invalidConfig
-                
+
                 $result.IsValid | Should -Be $false
                 $result.Errors.Count | Should -BeGreaterThan 0
                 $result.Errors | Should -Match "required|missing"
@@ -487,13 +487,13 @@ Describe "ConfigurationManager Module - Configuration Integrity Testing" {
                 $result | Should -Not -BeNullOrEmpty
             }
         }
-        
+
         It "Should detect invalid data types" {
             $invalidConfig = $script:TestData.InvalidConfigurations.InvalidTypes
-            
+
             if (Get-Command Test-ConfigurationIntegrity -ErrorAction SilentlyContinue) {
                 $result = Test-ConfigurationIntegrity -Configuration $invalidConfig
-                
+
                 $result.IsValid | Should -Be $false
                 $result.Errors.Count | Should -BeGreaterThan 0
                 $result.Errors | Should -Match "type|invalid"
@@ -503,13 +503,13 @@ Describe "ConfigurationManager Module - Configuration Integrity Testing" {
                 $result | Should -Not -BeNullOrEmpty
             }
         }
-        
+
         It "Should detect out-of-range values" {
             $invalidConfig = $script:TestData.InvalidConfigurations.OutOfRange
-            
+
             if (Get-Command Test-ConfigurationIntegrity -ErrorAction SilentlyContinue) {
                 $result = Test-ConfigurationIntegrity -Configuration $invalidConfig
-                
+
                 $result.IsValid | Should -Be $false
                 $result.Errors.Count | Should -BeGreaterThan 0
                 $result.Errors | Should -Match "range|limit|value"
@@ -519,16 +519,16 @@ Describe "ConfigurationManager Module - Configuration Integrity Testing" {
                 $result | Should -Not -BeNullOrEmpty
             }
         }
-        
+
         It "Should validate complex nested configurations" {
             $complexConfig = $script:TestData.ValidConfigurations.ComplexValid
-            
+
             if (Get-Command Test-ConfigurationIntegrity -ErrorAction SilentlyContinue) {
                 $result = Test-ConfigurationIntegrity -Configuration $complexConfig
-                
+
                 $result | Should -Not -BeNullOrEmpty
                 $result.IsValid | Should -Be $true
-                
+
                 # Should validate nested structures
                 if ($result.Details) {
                     $result.Details | Should -Contain "database"
@@ -541,18 +541,18 @@ Describe "ConfigurationManager Module - Configuration Integrity Testing" {
                 $result | Should -Not -BeNullOrEmpty
             }
         }
-        
+
         It "Should handle null and empty configurations gracefully" {
             $testCases = @(
                 @{ Config = $null; Description = "null configuration" },
                 @{ Config = @{}; Description = "empty configuration" },
                 @{ Config = @{ version = "" }; Description = "configuration with empty values" }
             )
-            
+
             foreach ($testCase in $testCases) {
                 if (Get-Command Test-ConfigurationIntegrity -ErrorAction SilentlyContinue) {
                     $result = Test-ConfigurationIntegrity -Configuration $testCase.Config
-                    
+
                     $result | Should -Not -BeNullOrEmpty -Because $testCase.Description
                     $result.IsValid | Should -Be $false -Because $testCase.Description
                 } else {
@@ -562,14 +562,14 @@ Describe "ConfigurationManager Module - Configuration Integrity Testing" {
             }
         }
     }
-    
+
     Context "Advanced Integrity Validation" {
         It "Should validate configuration dependencies" {
             $configWithDeps = $script:TestData.ValidConfigurations.ComplexValid
-            
+
             if (Get-Command Test-ConfigurationIntegrity -ErrorAction SilentlyContinue) {
                 $result = Test-ConfigurationIntegrity -Configuration $configWithDeps -ValidateDependencies
-                
+
                 $result | Should -Not -BeNullOrEmpty
                 $result.DependencyValidation | Should -Not -BeNullOrEmpty
             } else {
@@ -577,13 +577,13 @@ Describe "ConfigurationManager Module - Configuration Integrity Testing" {
                 { Test-ConfigurationManager -Configuration $configWithDeps } | Should -Not -Throw
             }
         }
-        
+
         It "Should detect circular dependencies" {
             $circularConfig = $script:TestData.InvalidConfigurations.CircularDependency
-            
+
             if (Get-Command Test-ConfigurationIntegrity -ErrorAction SilentlyContinue) {
                 $result = Test-ConfigurationIntegrity -Configuration $circularConfig -ValidateDependencies
-                
+
                 $result.IsValid | Should -Be $false
                 $result.Errors | Should -Match "circular|dependency|cycle"
             } else {
@@ -592,16 +592,16 @@ Describe "ConfigurationManager Module - Configuration Integrity Testing" {
                 $result | Should -Not -BeNullOrEmpty
             }
         }
-        
+
         It "Should validate cross-module consistency" {
             $modules = @(
                 @{ name = "ModuleA"; config = $script:TestData.ValidConfigurations.SimpleValid }
                 @{ name = "ModuleB"; config = $script:TestData.ValidConfigurations.SimpleValid }
             )
-            
+
             if (Get-Command Test-ConfigurationIntegrity -ErrorAction SilentlyContinue) {
                 $result = Test-ConfigurationIntegrity -Modules $modules -ValidateConsistency
-                
+
                 $result | Should -Not -BeNullOrEmpty
                 $result.ConsistencyValidation | Should -Not -BeNullOrEmpty
             } else {
@@ -612,7 +612,7 @@ Describe "ConfigurationManager Module - Configuration Integrity Testing" {
                 }
             }
         }
-        
+
         It "Should validate configuration schema compliance" {
             $config = $script:TestData.ValidConfigurations.ComplexValid
             $schema = @{
@@ -624,10 +624,10 @@ Describe "ConfigurationManager Module - Configuration Integrity Testing" {
                     settings = @{ type = "object" }
                 }
             }
-            
+
             if (Get-Command Test-ConfigurationIntegrity -ErrorAction SilentlyContinue) {
                 $result = Test-ConfigurationIntegrity -Configuration $config -Schema $schema
-                
+
                 $result | Should -Not -BeNullOrEmpty
                 $result.SchemaValidation | Should -Not -BeNullOrEmpty
             } else {
@@ -636,13 +636,13 @@ Describe "ConfigurationManager Module - Configuration Integrity Testing" {
                 $result | Should -Not -BeNullOrEmpty
             }
         }
-        
+
         It "Should provide detailed validation reports" {
             $config = $script:TestData.ValidConfigurations.ComplexValid
-            
+
             if (Get-Command Test-ConfigurationIntegrity -ErrorAction SilentlyContinue) {
                 $result = Test-ConfigurationIntegrity -Configuration $config -Detailed
-                
+
                 $result | Should -Not -BeNullOrEmpty
                 $result.Summary | Should -Not -BeNullOrEmpty
                 $result.ValidationSteps | Should -Not -BeNullOrEmpty
@@ -654,11 +654,11 @@ Describe "ConfigurationManager Module - Configuration Integrity Testing" {
             }
         }
     }
-    
+
     Context "Performance Validation" {
         It "Should validate large configurations efficiently" {
             $largeConfig = $script:TestData.PerformanceTestData.LargeConfiguration
-            
+
             $validationTime = Measure-Command {
                 if (Get-Command Test-ConfigurationIntegrity -ErrorAction SilentlyContinue) {
                     $result = Test-ConfigurationIntegrity -Configuration $largeConfig
@@ -666,17 +666,17 @@ Describe "ConfigurationManager Module - Configuration Integrity Testing" {
                     $result = Test-ConfigurationManager -Configuration $largeConfig
                 }
             }
-            
+
             # Should complete validation in reasonable time
             $validationTime.TotalSeconds | Should -BeLessThan 30
         }
-        
+
         It "Should handle deeply nested configurations" {
             $deepConfig = $script:TestData.PerformanceTestData.DeepNesting
-            
+
             if (Get-Command Test-ConfigurationIntegrity -ErrorAction SilentlyContinue) {
                 $result = Test-ConfigurationIntegrity -Configuration $deepConfig
-                
+
                 $result | Should -Not -BeNullOrEmpty
                 $result.IsValid | Should -BeOfType [bool]
             } else {
@@ -684,10 +684,10 @@ Describe "ConfigurationManager Module - Configuration Integrity Testing" {
                 { Test-ConfigurationManager -Configuration $deepConfig } | Should -Not -Throw
             }
         }
-        
+
         It "Should validate many modules efficiently" {
             $manyModules = $script:TestData.PerformanceTestData.ManyModules
-            
+
             $validationTime = Measure-Command {
                 foreach ($module in $manyModules[0..9]) {  # Test first 10 modules
                     if (Get-Command Test-ConfigurationIntegrity -ErrorAction SilentlyContinue) {
@@ -697,14 +697,14 @@ Describe "ConfigurationManager Module - Configuration Integrity Testing" {
                     }
                 }
             }
-            
+
             # Should validate multiple modules efficiently
             $validationTime.TotalSeconds | Should -BeLessThan 10
         }
-        
+
         It "Should maintain reasonable memory usage during validation" {
             $initialMemory = [GC]::GetTotalMemory($false)
-            
+
             # Validate multiple large configurations
             for ($i = 1; $i -le 5; $i++) {
                 $config = $script:TestData.PerformanceTestData.LargeConfiguration
@@ -714,14 +714,14 @@ Describe "ConfigurationManager Module - Configuration Integrity Testing" {
                     Test-ConfigurationManager -Configuration $config | Out-Null
                 }
             }
-            
+
             # Force garbage collection
             [GC]::Collect()
             [GC]::WaitForPendingFinalizers()
-            
+
             $finalMemory = [GC]::GetTotalMemory($false)
             $memoryIncrease = $finalMemory - $initialMemory
-            
+
             # Memory increase should be reasonable
             $memoryIncrease | Should -BeLessThan (50 * 1024 * 1024) # Less than 50MB
         }
@@ -738,11 +738,11 @@ Describe "ConfigurationManager Module - Validation Rules and Policies" {
                 @{ Value = "a" * 101; ShouldPass = $false }  # Too long
                 @{ Value = "invalid string!"; ShouldPass = $false }  # Invalid characters
             )
-            
+
             foreach ($testCase in $testCases) {
                 if (Get-Command Test-ValidationRule -ErrorAction SilentlyContinue) {
                     $result = Test-ValidationRule -Rule $stringRule -Value $testCase.Value
-                    
+
                     if ($testCase.ShouldPass) {
                         $result.IsValid | Should -Be $true -Because "Valid string should pass validation"
                     } else {
@@ -754,7 +754,7 @@ Describe "ConfigurationManager Module - Validation Rules and Policies" {
                 }
             }
         }
-        
+
         It "Should apply number validation rules" {
             $numberRule = $script:TestData.ValidationRules.NumberValidation
             $testCases = @(
@@ -765,11 +765,11 @@ Describe "ConfigurationManager Module - Validation Rules and Policies" {
                 @{ Value = 1001; ShouldPass = $false } # Above maximum
                 @{ Value = 50.5; ShouldPass = $false } # Not multiple of 1
             )
-            
+
             foreach ($testCase in $testCases) {
                 if (Get-Command Test-ValidationRule -ErrorAction SilentlyContinue) {
                     $result = Test-ValidationRule -Rule $numberRule -Value $testCase.Value
-                    
+
                     if ($testCase.ShouldPass) {
                         $result.IsValid | Should -Be $true -Because "Valid number should pass validation"
                     } else {
@@ -781,7 +781,7 @@ Describe "ConfigurationManager Module - Validation Rules and Policies" {
                 }
             }
         }
-        
+
         It "Should apply boolean validation rules" {
             $booleanRule = $script:TestData.ValidationRules.BooleanValidation
             $testCases = @(
@@ -791,11 +791,11 @@ Describe "ConfigurationManager Module - Validation Rules and Policies" {
                 @{ Value = 1; ShouldPass = $false }      # Number, not boolean
                 @{ Value = $null; ShouldPass = $false }  # Null, not boolean
             )
-            
+
             foreach ($testCase in $testCases) {
                 if (Get-Command Test-ValidationRule -ErrorAction SilentlyContinue) {
                     $result = Test-ValidationRule -Rule $booleanRule -Value $testCase.Value
-                    
+
                     if ($testCase.ShouldPass) {
                         $result.IsValid | Should -Be $true -Because "Valid boolean should pass validation"
                     } else {
@@ -809,7 +809,7 @@ Describe "ConfigurationManager Module - Validation Rules and Policies" {
                 }
             }
         }
-        
+
         It "Should apply array validation rules" {
             $arrayRule = $script:TestData.ValidationRules.ArrayValidation
             $testCases = @(
@@ -819,11 +819,11 @@ Describe "ConfigurationManager Module - Validation Rules and Policies" {
                 @{ Value = @(1..11); ShouldPass = $false }  # Too many items
                 @{ Value = @(1, 1, 2); ShouldPass = $false }  # Not unique
             )
-            
+
             foreach ($testCase in $testCases) {
                 if (Get-Command Test-ValidationRule -ErrorAction SilentlyContinue) {
                     $result = Test-ValidationRule -Rule $arrayRule -Value $testCase.Value
-                    
+
                     if ($testCase.ShouldPass) {
                         $result.IsValid | Should -Be $true -Because "Valid array should pass validation"
                     } else {
@@ -835,7 +835,7 @@ Describe "ConfigurationManager Module - Validation Rules and Policies" {
                 }
             }
         }
-        
+
         It "Should apply object validation rules" {
             $objectRule = $script:TestData.ValidationRules.ObjectValidation
             $testCases = @(
@@ -844,11 +844,11 @@ Describe "ConfigurationManager Module - Validation Rules and Policies" {
                 @{ Value = @{ id = 1 }; ShouldPass = $false }  # Missing required field
                 @{ Value = @{ name = "test" }; ShouldPass = $false }  # Missing required field
             )
-            
+
             foreach ($testCase in $testCases) {
                 if (Get-Command Test-ValidationRule -ErrorAction SilentlyContinue) {
                     $result = Test-ValidationRule -Rule $objectRule -Value $testCase.Value
-                    
+
                     if ($testCase.ShouldPass) {
                         $result.IsValid | Should -Be $true -Because "Valid object should pass validation"
                     } else {
@@ -861,7 +861,7 @@ Describe "ConfigurationManager Module - Validation Rules and Policies" {
             }
         }
     }
-    
+
     Context "Compliance Policy Validation" {
         It "Should validate security policies" {
             $securityPolicy = $script:TestData.CompliancePolicies.Security
@@ -893,11 +893,11 @@ Describe "ConfigurationManager Module - Validation Rules and Policies" {
                     ShouldPass = $false
                 }
             )
-            
+
             foreach ($testConfig in $testConfigs) {
                 if (Get-Command Test-CompliancePolicy -ErrorAction SilentlyContinue) {
                     $result = Test-CompliancePolicy -Configuration $testConfig.Config -Policy $securityPolicy
-                    
+
                     if ($testConfig.ShouldPass) {
                         $result.IsCompliant | Should -Be $true -Because "Configuration should pass security policy"
                     } else {
@@ -910,7 +910,7 @@ Describe "ConfigurationManager Module - Validation Rules and Policies" {
                 }
             }
         }
-        
+
         It "Should validate performance policies" {
             $performancePolicy = $script:TestData.CompliancePolicies.Performance
             $testConfigs = @(
@@ -937,11 +937,11 @@ Describe "ConfigurationManager Module - Validation Rules and Policies" {
                     ShouldPass = $false
                 }
             )
-            
+
             foreach ($testConfig in $testConfigs) {
                 if (Get-Command Test-CompliancePolicy -ErrorAction SilentlyContinue) {
                     $result = Test-CompliancePolicy -Configuration $testConfig.Config -Policy $performancePolicy
-                    
+
                     if ($testConfig.ShouldPass) {
                         $result.Warnings.Count | Should -Be 0 -Because "Configuration should pass performance policy"
                     } else {
@@ -953,7 +953,7 @@ Describe "ConfigurationManager Module - Validation Rules and Policies" {
                 }
             }
         }
-        
+
         It "Should validate compatibility policies" {
             $compatibilityPolicy = $script:TestData.CompliancePolicies.Compatibility
             $testConfigs = @(
@@ -976,11 +976,11 @@ Describe "ConfigurationManager Module - Validation Rules and Policies" {
                     ShouldPass = $false
                 }
             )
-            
+
             foreach ($testConfig in $testConfigs) {
                 if (Get-Command Test-CompliancePolicy -ErrorAction SilentlyContinue) {
                     $result = Test-CompliancePolicy -Configuration $testConfig.Config -Policy $compatibilityPolicy
-                    
+
                     if ($testConfig.ShouldPass) {
                         $result.IsCompliant | Should -Be $true -Because "Configuration should pass compatibility policy"
                     } else {
@@ -992,7 +992,7 @@ Describe "ConfigurationManager Module - Validation Rules and Policies" {
                 }
             }
         }
-        
+
         It "Should support custom policy rules" {
             $customPolicy = @{
                 name = "Custom Test Policy"
@@ -1007,16 +1007,16 @@ Describe "ConfigurationManager Module - Validation Rules and Policies" {
                     }
                 )
             }
-            
+
             $testConfig = @{
                 settings = @{
                     customField = "custom value"
                 }
             }
-            
+
             if (Get-Command Test-CompliancePolicy -ErrorAction SilentlyContinue) {
                 $result = Test-CompliancePolicy -Configuration $testConfig -Policy $customPolicy
-                
+
                 $result | Should -Not -BeNullOrEmpty
                 $result.PolicyName | Should -Be "Custom Test Policy"
             } else {
@@ -1057,17 +1057,17 @@ Describe "ConfigurationManager Module - Cross-Module Validation" {
                     }
                 }
             )
-            
+
             if (Get-Command Test-CrossModuleConsistency -ErrorAction SilentlyContinue) {
                 $result = Test-CrossModuleConsistency -Modules $modules
-                
+
                 $result | Should -Not -BeNullOrEmpty
                 $result.ConsistencyResults | Should -Not -BeNullOrEmpty
-                
+
                 # Connection string should be consistent
                 $connectionStringResult = $result.ConsistencyResults | Where-Object { $_.Field -eq "settings.database.connectionString" }
                 $connectionStringResult.IsConsistent | Should -Be $true
-                
+
                 # Timeout values might be inconsistent
                 $timeoutResult = $result.ConsistencyResults | Where-Object { $_.Field -eq "settings.database.timeout" }
                 if ($timeoutResult) {
@@ -1080,7 +1080,7 @@ Describe "ConfigurationManager Module - Cross-Module Validation" {
                 }
             }
         }
-        
+
         It "Should detect conflicting module configurations" {
             $conflictingModules = @(
                 @{
@@ -1106,10 +1106,10 @@ Describe "ConfigurationManager Module - Cross-Module Validation" {
                     }
                 }
             )
-            
+
             if (Get-Command Test-CrossModuleConsistency -ErrorAction SilentlyContinue) {
                 $result = Test-CrossModuleConsistency -Modules $conflictingModules -DetectConflicts
-                
+
                 $result.HasConflicts | Should -Be $true
                 $result.Conflicts | Should -Not -BeNullOrEmpty
                 $result.Conflicts.Count | Should -BeGreaterThan 0
@@ -1120,7 +1120,7 @@ Describe "ConfigurationManager Module - Cross-Module Validation" {
                 $module1 | Should -Be $module2  # Both are "exclusive" - conflict
             }
         }
-        
+
         It "Should validate module dependency chains" {
             $modulesWithDependencies = @(
                 @{
@@ -1139,10 +1139,10 @@ Describe "ConfigurationManager Module - Cross-Module Validation" {
                     dependencies = @("MiddleModule")
                 }
             )
-            
+
             if (Get-Command Test-DependencyChain -ErrorAction SilentlyContinue) {
                 $result = Test-DependencyChain -Modules $modulesWithDependencies
-                
+
                 $result | Should -Not -BeNullOrEmpty
                 $result.IsValid | Should -Be $true
                 $result.DependencyOrder | Should -Be @("BaseModule", "MiddleModule", "TopModule")
@@ -1152,7 +1152,7 @@ Describe "ConfigurationManager Module - Cross-Module Validation" {
                 $modulesWithDependencies[2].dependencies | Should -Contain "MiddleModule"
             }
         }
-        
+
         It "Should detect circular dependencies in module chains" {
             $circularModules = @(
                 @{
@@ -1171,10 +1171,10 @@ Describe "ConfigurationManager Module - Cross-Module Validation" {
                     dependencies = @("ModuleB")
                 }
             )
-            
+
             if (Get-Command Test-DependencyChain -ErrorAction SilentlyContinue) {
                 $result = Test-DependencyChain -Modules $circularModules
-                
+
                 $result.IsValid | Should -Be $false
                 $result.CircularDependencies | Should -Not -BeNullOrEmpty
                 $result.CircularDependencies.Count | Should -BeGreaterThan 0
@@ -1183,22 +1183,22 @@ Describe "ConfigurationManager Module - Cross-Module Validation" {
                 $moduleA = $circularModules[0]
                 $moduleB = $circularModules[1]
                 $moduleC = $circularModules[2]
-                
+
                 $moduleA.dependencies | Should -Contain "ModuleC"
                 $moduleB.dependencies | Should -Contain "ModuleA"
                 $moduleC.dependencies | Should -Contain "ModuleB"
             }
         }
     }
-    
+
     Context "Dependency Validation" {
         It "Should validate version compatibility" {
             $dependencyScenarios = $script:TestData.IntegrityTestCases.DependencyValidation.scenarios
-            
+
             foreach ($scenario in $dependencyScenarios) {
                 if (Get-Command Test-DependencyCompatibility -ErrorAction SilentlyContinue) {
                     $result = Test-DependencyCompatibility -Dependencies $scenario.dependencies
-                    
+
                     if ($scenario.expectedResult -eq "valid") {
                         $result.IsValid | Should -Be $true -Because $scenario.description
                     } else {
@@ -1210,7 +1210,7 @@ Describe "ConfigurationManager Module - Cross-Module Validation" {
                 }
             }
         }
-        
+
         It "Should check semantic version compatibility" {
             $versionTestCases = @(
                 @{ Required = "1.0.0"; Available = "1.0.0"; ShouldMatch = $true }
@@ -1220,11 +1220,11 @@ Describe "ConfigurationManager Module - Cross-Module Validation" {
                 @{ Required = "~1.0.0"; Available = "1.0.5"; ShouldMatch = $true }
                 @{ Required = "~1.0.0"; Available = "1.1.0"; ShouldMatch = $false }
             )
-            
+
             foreach ($testCase in $versionTestCases) {
                 if (Get-Command Test-SemanticVersion -ErrorAction SilentlyContinue) {
                     $result = Test-SemanticVersion -RequiredVersion $testCase.Required -AvailableVersion $testCase.Available
-                    
+
                     $result.IsCompatible | Should -Be $testCase.ShouldMatch -Because "Version compatibility test: $($testCase.Required) vs $($testCase.Available)"
                 } else {
                     # Basic version string validation
@@ -1233,17 +1233,17 @@ Describe "ConfigurationManager Module - Cross-Module Validation" {
                 }
             }
         }
-        
+
         It "Should validate optional dependencies" {
             $dependenciesWithOptional = @(
                 @{ name = "required-module"; version = "1.0.0"; available = "1.0.0"; optional = $false }
                 @{ name = "optional-module"; version = "2.0.0"; available = $null; optional = $true }
                 @{ name = "another-required"; version = "1.5.0"; available = "1.5.0"; optional = $false }
             )
-            
+
             if (Get-Command Test-DependencyCompatibility -ErrorAction SilentlyContinue) {
                 $result = Test-DependencyCompatibility -Dependencies $dependenciesWithOptional
-                
+
                 $result.IsValid | Should -Be $true -Because "Missing optional dependencies should not cause failure"
                 $result.MissingOptional | Should -Contain "optional-module"
             } else {
@@ -1260,7 +1260,7 @@ Describe "ConfigurationManager Module - Integration Testing" {
         It "Should integrate with ConfigurationCore validation" {
             if (Get-Module ConfigurationCore -ErrorAction SilentlyContinue) {
                 $testConfig = $script:TestData.ValidConfigurations.SimpleValid
-                
+
                 # Should be able to use ConfigurationManager with ConfigurationCore
                 if (Get-Command Get-ModuleConfiguration -ErrorAction SilentlyContinue) {
                     # Test integration
@@ -1271,14 +1271,14 @@ Describe "ConfigurationManager Module - Integration Testing" {
                 Set-ItResult -Skipped -Because "ConfigurationCore module not available"
             }
         }
-        
+
         It "Should validate configurations from ConfigurationCore store" {
-            if ((Get-Module ConfigurationCore -ErrorAction SilentlyContinue) -and 
+            if ((Get-Module ConfigurationCore -ErrorAction SilentlyContinue) -and
                 (Get-Command Get-ConfigurationStore -ErrorAction SilentlyContinue)) {
-                
+
                 try {
                     $store = Get-ConfigurationStore
-                    
+
                     if ($store -and $store.Modules) {
                         foreach ($moduleName in $store.Modules.Keys) {
                             $moduleConfig = $store.Modules[$moduleName]
@@ -1295,15 +1295,15 @@ Describe "ConfigurationManager Module - Integration Testing" {
             }
         }
     }
-    
+
     Context "ConfigurationCarousel Integration" {
         It "Should validate configurations from carousel" {
-            if ((Get-Module ConfigurationCarousel -ErrorAction SilentlyContinue) -and 
+            if ((Get-Module ConfigurationCarousel -ErrorAction SilentlyContinue) -and
                 (Get-Command Get-AvailableConfigurations -ErrorAction SilentlyContinue)) {
-                
+
                 try {
                     $configurations = Get-AvailableConfigurations
-                    
+
                     if ($configurations -and $configurations.Configurations) {
                         # Test validation of carousel configurations
                         foreach ($config in $configurations.Configurations[0..2]) {  # Test first 3
@@ -1319,12 +1319,12 @@ Describe "ConfigurationManager Module - Integration Testing" {
                 Set-ItResult -Skipped -Because "ConfigurationCarousel integration not available"
             }
         }
-        
+
         It "Should validate environment-specific configurations" {
             if (Get-Command Get-CurrentConfiguration -ErrorAction SilentlyContinue) {
                 try {
                     $currentConfig = Get-CurrentConfiguration
-                    
+
                     if ($currentConfig) {
                         $result = Test-ConfigurationManager -Configuration $currentConfig
                         $result | Should -Not -BeNullOrEmpty
@@ -1337,7 +1337,7 @@ Describe "ConfigurationManager Module - Integration Testing" {
             }
         }
     }
-    
+
     Context "End-to-End Configuration Validation" {
         It "Should perform complete configuration system validation" {
             $systemValidationConfig = @{
@@ -1347,17 +1347,17 @@ Describe "ConfigurationManager Module - Integration Testing" {
                         configuration = $script:TestData.ValidConfigurations.SimpleValid
                     }
                     @{
-                        name = "TestModule2" 
+                        name = "TestModule2"
                         configuration = $script:TestData.ValidConfigurations.ComplexValid
                     }
                 )
                 policies = @($script:TestData.CompliancePolicies.Security)
                 environment = "test"
             }
-            
+
             if (Get-Command Test-ConfigurationSystem -ErrorAction SilentlyContinue) {
                 $result = Test-ConfigurationSystem -SystemConfiguration $systemValidationConfig
-                
+
                 $result | Should -Not -BeNullOrEmpty
                 $result.SystemValid | Should -BeOfType [bool]
                 $result.ModuleResults | Should -Not -BeNullOrEmpty
@@ -1368,7 +1368,7 @@ Describe "ConfigurationManager Module - Integration Testing" {
                 $systemValidationConfig.policies.Count | Should -Be 1
             }
         }
-        
+
         It "Should generate comprehensive validation reports" {
             $reportConfig = @{
                 configurations = @(
@@ -1381,10 +1381,10 @@ Describe "ConfigurationManager Module - Integration Testing" {
                     $script:TestData.CompliancePolicies.Performance
                 )
             }
-            
+
             if (Get-Command New-ValidationReport -ErrorAction SilentlyContinue) {
                 $report = New-ValidationReport -Configuration $reportConfig -OutputPath $TestReportsDir
-                
+
                 $report | Should -Not -BeNullOrEmpty
                 $report.ReportPath | Should -Not -BeNullOrEmpty
                 Test-Path $report.ReportPath | Should -Be $true
@@ -1406,12 +1406,12 @@ Describe "ConfigurationManager Module - Error Handling and Recovery" {
                 @{ Config = 12345; Description = "number instead of object" }
                 @{ Config = @(); Description = "array instead of object" }
             )
-            
+
             foreach ($malformedConfig in $malformedConfigs) {
                 { Test-ConfigurationManager -Configuration $malformedConfig.Config } | Should -Not -Throw -Because $malformedConfig.Description
             }
         }
-        
+
         It "Should handle circular reference in configurations" {
             # Create circular reference
             $circularConfig = @{
@@ -1419,18 +1419,18 @@ Describe "ConfigurationManager Module - Error Handling and Recovery" {
                 settings = @{}
             }
             $circularConfig.settings.self = $circularConfig  # Circular reference
-            
+
             # Should handle without infinite loops
             { Test-ConfigurationManager -Configuration $circularConfig } | Should -Not -Throw
         }
-        
+
         It "Should handle very large configuration objects" {
             $veryLargeConfig = @{
                 version = "1.0"
                 name = "Very Large Configuration"
                 data = @{}
             }
-            
+
             # Create very large nested structure
             for ($i = 1; $i -le 10000; $i++) {
                 $veryLargeConfig.data["item$i"] = @{
@@ -1442,21 +1442,21 @@ Describe "ConfigurationManager Module - Error Handling and Recovery" {
                     }
                 }
             }
-            
+
             $validationTime = Measure-Command {
                 $result = Test-ConfigurationManager -Configuration $veryLargeConfig
             }
-            
+
             # Should complete without timeout
             $validationTime.TotalSeconds | Should -BeLessThan 60
         }
-        
+
         It "Should provide meaningful error messages" {
             $invalidConfig = $script:TestData.InvalidConfigurations.InvalidTypes
-            
+
             try {
                 $result = Test-ConfigurationManager -Configuration $invalidConfig
-                
+
                 # Should provide some form of result or error information
                 $result | Should -Not -BeNullOrEmpty
             } catch {
@@ -1465,7 +1465,7 @@ Describe "ConfigurationManager Module - Error Handling and Recovery" {
                 $_.Exception.Message.Length | Should -BeGreaterThan 10
             }
         }
-        
+
         It "Should handle timeout scenarios gracefully" {
             # Mock long-running validation
             if (Get-Command Test-ConfigurationIntegrity -ErrorAction SilentlyContinue) {
@@ -1473,67 +1473,67 @@ Describe "ConfigurationManager Module - Error Handling and Recovery" {
                     Start-Sleep -Seconds 2  # Simulate slow validation
                     return @{ IsValid = $true; Errors = @() }
                 }
-                
+
                 $config = $script:TestData.ValidConfigurations.SimpleValid
-                
+
                 # Should handle timeout gracefully
                 $result = Test-ConfigurationManager -Configuration $config -Timeout 1
                 $result | Should -Not -BeNullOrEmpty
             }
         }
     }
-    
+
     Context "Resource Management" {
         It "Should clean up resources after validation" {
             $initialHandles = (Get-Process -Id $PID).HandleCount
-            
+
             # Perform multiple validations
             for ($i = 1; $i -le 10; $i++) {
                 Test-ConfigurationManager -Configuration $script:TestData.ValidConfigurations.SimpleValid | Out-Null
             }
-            
+
             # Force garbage collection
             [GC]::Collect()
             [GC]::WaitForPendingFinalizers()
             [GC]::Collect()
-            
+
             $finalHandles = (Get-Process -Id $PID).HandleCount
-            
+
             # Handle count should not increase significantly
             ($finalHandles - $initialHandles) | Should -BeLessThan 100
         }
-        
+
         It "Should handle memory pressure gracefully" {
             $initialMemory = [GC]::GetTotalMemory($false)
-            
+
             # Create many large configurations
             for ($i = 1; $i -le 20; $i++) {
                 $largeConfig = @{
                     version = "1.0"
                     data = @{}
                 }
-                
+
                 # Add large data
                 for ($j = 1; $j -le 500; $j++) {
                     $largeConfig.data["item$j"] = "data" * 100
                 }
-                
+
                 Test-ConfigurationManager -Configuration $largeConfig | Out-Null
             }
-            
+
             # Force cleanup
             [GC]::Collect()
             [GC]::WaitForPendingFinalizers()
             [GC]::Collect()
-            
+
             $finalMemory = [GC]::GetTotalMemory($false)
             $memoryIncrease = $finalMemory - $initialMemory
-            
+
             # Memory increase should be reasonable
             $memoryIncrease | Should -BeLessThan (100 * 1024 * 1024) # Less than 100MB
         }
     }
-    
+
     Context "Recovery and Remediation" {
         It "Should suggest fixes for common validation errors" {
             $configWithCommonErrors = @{
@@ -1544,10 +1544,10 @@ Describe "ConfigurationManager Module - Error Handling and Recovery" {
                     enabled = "true"  # String instead of boolean
                 }
             }
-            
+
             if (Get-Command Test-ConfigurationIntegrity -ErrorAction SilentlyContinue) {
                 $result = Test-ConfigurationIntegrity -Configuration $configWithCommonErrors -SuggestFixes
-                
+
                 if ($result.Suggestions) {
                     $result.Suggestions.Count | Should -BeGreaterThan 0
                     $result.Suggestions | Should -Match "version|name|timeout|enabled"
@@ -1558,7 +1558,7 @@ Describe "ConfigurationManager Module - Error Handling and Recovery" {
                 $configWithCommonErrors.settings.timeout | Should -BeLessThan 0
             }
         }
-        
+
         It "Should support configuration auto-correction" {
             $configNeedingCorrection = @{
                 version = "1.0"
@@ -1569,10 +1569,10 @@ Describe "ConfigurationManager Module - Error Handling and Recovery" {
                     items = "item1,item2,item3"  # String that should be array
                 }
             }
-            
+
             if (Get-Command Repair-Configuration -ErrorAction SilentlyContinue) {
                 $repairedConfig = Repair-Configuration -Configuration $configNeedingCorrection
-                
+
                 $repairedConfig.settings.timeout | Should -BeOfType [int]
                 $repairedConfig.settings.enabled | Should -BeOfType [bool]
                 $repairedConfig.settings.items | Should -BeOfType [array]
@@ -1592,17 +1592,17 @@ AfterAll {
         if (Get-Command Remove-ConfigurationTest -ErrorAction SilentlyContinue) {
             Remove-ConfigurationTest -TestId "ConfigurationManager" -Force -ErrorAction SilentlyContinue
         }
-        
+
         # Clean up environment variables
         Remove-Item Env:TEST_MANAGER_DIR -ErrorAction SilentlyContinue
         Remove-Item Env:TEST_CONFIGS_DIR -ErrorAction SilentlyContinue
         Remove-Item Env:TEST_VALIDATION_DIR -ErrorAction SilentlyContinue
-        
+
         # Force garbage collection to clean up any remaining resources
         [GC]::Collect()
         [GC]::WaitForPendingFinalizers()
         [GC]::Collect()
-        
+
     } catch {
         Write-Warning "Cleanup failed: $_"
     }

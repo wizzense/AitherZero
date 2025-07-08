@@ -95,12 +95,12 @@ function Invoke-BackupConsolidation {
         $backupFiles = @()
         foreach ($pattern in $BackupPatterns) {
             $files = Get-ChildItem -Path $SourcePath -Recurse -File -Filter $pattern -ErrorAction SilentlyContinue
-            
+
             # Apply exclusions
             $filteredFiles = $files | Where-Object {
                 $file = $_
                 $include = $true
-                
+
                 foreach ($exclusion in $allExclusions) {
                     if ($file.FullName -like "*$exclusion*") {
                         $include = $false
@@ -116,7 +116,7 @@ function Invoke-BackupConsolidation {
 
                 return $include
             }
-            
+
             $backupFiles += $filteredFiles
         }
 
@@ -127,13 +127,13 @@ function Invoke-BackupConsolidation {
                 DirectoriesProcessed = 0
                 Message = "No backup files found to consolidate"
             }
-            
+
             if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
                 Write-CustomLog $result.Message -Level INFO
             } else {
                 Write-Host "INFO $($result.Message)" -ForegroundColor Green
             }
-            
+
             return $result
         }
 
@@ -144,7 +144,7 @@ function Invoke-BackupConsolidation {
                 $relativePath = $_.FullName.Replace($SourcePath, "").TrimStart('\', '/')
                 Write-Host "  - $relativePath" -ForegroundColor Yellow
             }
-            
+
             $confirmation = Read-Host "Proceed with consolidation? (y/N)"
             if ($confirmation -notmatch '^[Yy]') {
                 return @{
@@ -191,7 +191,7 @@ function Invoke-BackupConsolidation {
                 if ($PSCmdlet.ShouldProcess($file.FullName, "Consolidate to $finalDestination")) {
                     Copy-Item -Path $file.FullName -Destination $finalDestination -Force
                     $processedFiles++
-                    
+
                     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
                         Write-CustomLog "Consolidated: $($file.Name) -> $finalDestination" -Level DEBUG
                     }
@@ -200,7 +200,7 @@ function Invoke-BackupConsolidation {
             } catch {
                 $errorMessage = "Failed to consolidate $($file.FullName): $($_.Exception.Message)"
                 $errors += $errorMessage
-                
+
                 if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
                     Write-CustomLog $errorMessage -Level WARN
                 } else {
@@ -212,7 +212,7 @@ function Invoke-BackupConsolidation {
         # Create consolidation report
         $timestamp = Get-Date -Format "yyyy-MM-dd-HHmmss"
         $reportPath = Join-Path $BackupPath "consolidation-report-$timestamp.json"
-        
+
         $report = @{
             Timestamp = Get-Date
             SourcePath = $SourcePath
@@ -248,13 +248,13 @@ function Invoke-BackupConsolidation {
 
     } catch {
         $errorMessage = "Backup consolidation failed: $($_.Exception.Message)"
-        
+
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog $errorMessage -Level ERROR
         } else {
             Write-Error $errorMessage
         }
-        
+
         throw
     }
 }

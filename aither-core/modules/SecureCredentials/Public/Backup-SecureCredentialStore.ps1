@@ -83,13 +83,13 @@ function Backup-SecureCredentialStore {
                 if ($EncryptionKey) {
                     try {
                         Write-CustomLog -Level 'INFO' -Message "Applying additional encryption to backup" -Category "Security"
-                        
+
                         $backupContent = Get-Content -Path $BackupPath -Raw
                         $plainKey = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
                             [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($EncryptionKey)
                         )
                         $encryptedBackup = Protect-String -PlainText $backupContent
-                        
+
                         # Create encrypted backup structure
                         $encryptedData = @{
                             BackupInfo = @{
@@ -101,19 +101,19 @@ function Backup-SecureCredentialStore {
                             EncryptedContent = $encryptedBackup
                             Metadata = $Metadata
                         }
-                        
+
                         $encryptedJson = if ($Compress) {
                             $encryptedData | ConvertTo-Json -Depth 10 -Compress
                         } else {
                             $encryptedData | ConvertTo-Json -Depth 10
                         }
-                        
+
                         Set-Content -Path $BackupPath -Value $encryptedJson -Encoding UTF8
-                        
+
                         # Clear sensitive data from memory
                         $plainKey = $null
                         $backupContent = $null
-                        
+
                         Write-CustomLog -Level 'SUCCESS' -Message "Additional encryption applied to backup" -Category "Security"
                     }
                     catch {

@@ -104,11 +104,11 @@ function Sync-GitBranch {
             # Step 3: Check for divergence
             $localCommitResult = Invoke-GitCommand "rev-parse $BranchName" -AllowFailure
             $remoteCommitResult = Invoke-GitCommand "rev-parse $remoteBranch" -AllowFailure
-            
+
             if (-not $localCommitResult.Success -or -not $remoteCommitResult.Success) {
                 throw "Failed to get commit hashes for comparison"
             }
-            
+
             $localCommit = $localCommitResult.Output | Out-String | ForEach-Object Trim
             $remoteCommit = $remoteCommitResult.Output | Out-String | ForEach-Object Trim
 
@@ -118,7 +118,7 @@ function Sync-GitBranch {
                 # Check if we're ahead, behind, or diverged
                 $aheadResult = Invoke-GitCommand "rev-list --count '$remoteBranch..$BranchName'" -AllowFailure
                 $behindResult = Invoke-GitCommand "rev-list --count '$BranchName..$remoteBranch'" -AllowFailure
-                
+
                 $ahead = if ($aheadResult.Success) { $aheadResult.Output } else { "0" }
                 $behind = if ($behindResult.Success) { $behindResult.Output } else { "0" }
 
@@ -159,7 +159,7 @@ function Sync-GitBranch {
                     Write-CustomLog "Run 'git push' to update remote" -Level "INFO"
                 } elseif ($behind -gt 0) {
                     Write-CustomLog "Branch '$BranchName' is $behind commits behind remote" -Level "INFO"
-                    
+
                     if ($PSCmdlet.ShouldProcess("Pull $behind commits from $remoteBranch", "Update local branch?")) {
                         Write-CustomLog "Pulling changes from remote..." -Level "INFO"
                         git pull --ff-only origin $BranchName 2>&1 | Out-Null
@@ -175,17 +175,17 @@ function Sync-GitBranch {
             # Step 4: Cleanup orphaned branches
             if ($CleanupOrphaned) {
                 Write-CustomLog "Checking for orphaned local branches..." -Level "INFO"
-                
+
                 # Get all local branches
                 $localBranches = git branch --format="%(refname:short)" 2>&1 | Where-Object { $_ -ne "main" -and $_ -ne "master" }
-                
+
                 # Get all remote branches
                 $remoteBranches = git branch -r --format="%(refname:short)" 2>&1 | ForEach-Object { $_ -replace "^origin/", "" }
-                
+
                 foreach ($branch in $localBranches) {
                     if ($branch -notin $remoteBranches) {
                         Write-CustomLog "Found orphaned branch: $branch" -Level "WARN"
-                        
+
                         if ($PSCmdlet.ShouldProcess("Delete orphaned branch $branch", "Delete orphaned branch?")) {
                             git branch -D $branch 2>&1 | Out-Null
                             if ($LASTEXITCODE -eq 0) {
@@ -199,19 +199,19 @@ function Sync-GitBranch {
             # Step 5: Validate tags
             if ($ValidateTags) {
                 Write-CustomLog "Validating tags..." -Level "INFO"
-                
+
                 # Check for tags not on remote
                 $localTags = git tag -l 2>&1
-                $remoteTags = git ls-remote --tags origin 2>&1 | ForEach-Object { 
+                $remoteTags = git ls-remote --tags origin 2>&1 | ForEach-Object {
                     if ($_ -match "refs/tags/(.+)$") { $matches[1] }
                 }
-                
+
                 foreach ($tag in $localTags) {
                     if ($tag -notin $remoteTags) {
                         Write-CustomLog "Local tag not on remote: $tag" -Level "WARN"
                     }
                 }
-                
+
                 # Check for duplicate tags pointing to different commits
                 $tagCommits = @{}
                 git show-ref --tags 2>&1 | ForEach-Object {

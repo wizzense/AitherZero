@@ -22,7 +22,7 @@
 
 .EXAMPLE
     Invoke-PatchRollback -RollbackType "LastCommit"
-    
+
 .EXAMPLE
     Invoke-PatchRollback -RollbackType "SpecificCommit" -CommitHash "abc123" -CreateBackup
 
@@ -36,54 +36,54 @@ function Invoke-PatchRollback {
     param(
         [Parameter(Mandatory = $false)]
         [ValidateSet("LastCommit", "PreviousBranch", "SpecificCommit")]
-        [string]$RollbackType = "LastCommit",        
+        [string]$RollbackType = "LastCommit",
         [Parameter(Mandatory = $false)]
         [string]$CommitHash,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$CreateBackup,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$Force,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$DryRun
     )
-    
+
     begin {
         Import-Module (Join-Path $PSScriptRoot '..' '..' 'Logging') -Force
-        
+
         # Import progress tracking functions if available
         $progressFunctionsPath = Join-Path $PSScriptRoot '../Private/Initialize-ProgressTracking.ps1'
         if (Test-Path $progressFunctionsPath) {
             . $progressFunctionsPath
         }
-        
+
         Write-CustomLog -Level 'INFO' -Message "Starting patch rollback: $RollbackType"
-        
+
         if ($RollbackType -eq "SpecificCommit" -and -not $CommitHash) {
             Write-CustomLog -Level 'ERROR' -Message "CommitHash is required for SpecificCommit rollback"
             throw "CommitHash parameter is required when RollbackType is 'SpecificCommit'"
         }
     }
-    
+
     process {
         try {
             # Calculate total steps for progress tracking
             $totalSteps = 3  # Validation, rollback operation, completion
             if ($CreateBackup) { $totalSteps++ }
-            
+
             # Start progress tracking if available
             $progressId = $null
             if (Get-Command Start-PatchProgress -ErrorAction SilentlyContinue) {
                 $progressId = Start-PatchProgress -OperationName "Rollback: $RollbackType" -TotalSteps $totalSteps -ShowETA
             }
-            
+
             # Validation checks
             if ($progressId -and (Get-Command Update-PatchProgress -ErrorAction SilentlyContinue)) {
                 Update-PatchProgress -OperationId $progressId -StepName "Validating environment" -IncrementStep
             }
-            
+
             if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
                 throw "Git is not available. Rollback operations require Git."
             }
@@ -92,13 +92,13 @@ function Invoke-PatchRollback {
             if ($LASTEXITCODE -ne 0) {
                 throw "Not in a Git repository. Cannot perform rollback."
             }
-            
+
             # Create backup if requested
             if ($CreateBackup) {
                 if ($progressId -and (Get-Command Update-PatchProgress -ErrorAction SilentlyContinue)) {
                     Update-PatchProgress -OperationId $progressId -StepName "Creating backup" -IncrementStep
                 }
-                
+
                 Write-CustomLog -Level 'INFO' -Message "Creating backup before rollback"
                 $backupBranch = "backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
                 git branch $backupBranch
@@ -111,12 +111,12 @@ function Invoke-PatchRollback {
                     }
                 }
             }
-            
+
             # Perform rollback based on type
             if ($progressId -and (Get-Command Update-PatchProgress -ErrorAction SilentlyContinue)) {
                 Update-PatchProgress -OperationId $progressId -StepName "Performing $RollbackType rollback" -IncrementStep
             }
-            
+
             switch ($RollbackType) {
                 "LastCommit" {
                     Write-CustomLog -Level 'INFO' -Message "Rolling back to previous commit"
@@ -133,7 +133,7 @@ function Invoke-PatchRollback {
                         }
                     }
                 }
-                
+
                 "PreviousBranch" {
                     Write-CustomLog -Level 'INFO' -Message "Switching to previous branch"
                     if ($PSCmdlet.ShouldProcess("Git repository", "Checkout previous branch")) {
@@ -149,7 +149,7 @@ function Invoke-PatchRollback {
                         }
                     }
                 }
-                
+
                 "SpecificCommit" {
                     Write-CustomLog -Level 'INFO' -Message "Rolling back to specific commit: $CommitHash"
                     if ($PSCmdlet.ShouldProcess("Git repository", "Reset to $CommitHash")) {
@@ -166,16 +166,16 @@ function Invoke-PatchRollback {
                     }
                 }
             }
-            
+
             # Complete progress tracking
             if ($progressId -and (Get-Command Update-PatchProgress -ErrorAction SilentlyContinue)) {
                 Update-PatchProgress -OperationId $progressId -StepName "Finalizing rollback" -IncrementStep
             }
-            
+
             if ($progressId -and (Get-Command Complete-PatchProgress -ErrorAction SilentlyContinue)) {
                 Complete-PatchProgress -OperationId $progressId -ShowSummary
             }
-            
+
             # Return success result
             return @{
                 Success = $true
@@ -185,10 +185,10 @@ function Invoke-PatchRollback {
                 Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
                 DryRun = $DryRun.IsPresent
             }
-            
+
         } catch {
             Write-CustomLog -Level 'ERROR' -Message "Rollback failed: $($_.Exception.Message)"
-            
+
             # Add error to progress tracking and complete
             if ($progressId) {
                 if (Get-Command Add-ProgressError -ErrorAction SilentlyContinue) {
@@ -198,7 +198,7 @@ function Invoke-PatchRollback {
                     Complete-PatchProgress -OperationId $progressId -ShowSummary
                 }
             }
-            
+
             return @{
                 Success = $false
                 Error = $_.Exception.Message

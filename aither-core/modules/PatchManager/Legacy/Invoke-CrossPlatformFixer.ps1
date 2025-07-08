@@ -2,24 +2,24 @@
 <#
 .SYNOPSIS
     Comprehensive cross-platform path and compatibility fixer for PatchManager
-    
+
 .DESCRIPTION
     This function fixes hardcoded Windows paths throughout the codebase to support
     cross-platform development. It standardizes paths, fixes imports, and ensures
     compatibility across Windows, Linux, and macOS.
-    
+
 .PARAMETER FixMode
     The fix mode: 'Standard', 'Comprehensive', or 'PathsOnly'
-    
+
 .PARAMETER DryRun
     Perform a dry run without actually modifying files
-    
+
 .EXAMPLE
     Invoke-CrossPlatformFixer -FixMode "Standard"
-    
+
 .EXAMPLE
     Invoke-CrossPlatformFixer -FixMode "Comprehensive" -DryRun
-    
+
 .NOTES
     - Fixes hardcoded Windows paths to use standard workspace paths
     - Updates module import statements to use proper syntax
@@ -33,18 +33,18 @@ function Invoke-CrossPlatformFixer {
         [Parameter(Mandatory = $false)]
         [ValidateSet("Standard", "Comprehensive", "PathsOnly")]
         [string]$FixMode = "Standard",
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$DryRun
     )
-    
+
     begin {
         Write-Host "Starting cross-platform compatibility fixes..." -ForegroundColor Cyan
         Write-Host "Mode: $FixMode | Dry Run: $DryRun" -ForegroundColor Yellow
-        
+
         # Get project root dynamically
         $script:ProjectRoot = (Get-Location).Path
-        
+
         # Create fix log
         $script:FixLog = @{
             StartTime = Get-Date
@@ -60,14 +60,14 @@ function Invoke-CrossPlatformFixer {
             # Hardcoded Windows paths
             'C:\\Users\\alexa\\OneDrive\\Documents\\0\. wizzense\\opentofu-lab-automation' = '/workspaces/opentofu-lab-automation/src'
             'C:/Users/alexa/OneDrive/Documents/0. wizzense/opentofu-lab-automation' = '/workspaces/opentofu-lab-automation/src'
-            
+
             # Fix escaped backslashes
             'C:\\\\Users\\\\alexa\\\\OneDrive\\\\Documents\\\\0\\. wizzense\\\\opentofu-lab-automation' = '/workspaces/opentofu-lab-automation/src'
-            
+
             # Fix mixed slash patterns
             'C:\\Users\\alexa\\OneDrive\\Documents\\0. wizzense/opentofu-lab-automation' = '/workspaces/opentofu-lab-automation/src'
         }
-        
+
         # Define import patterns to fix
         $script:ImportPatterns = @{
             # Old import patterns
@@ -76,62 +76,62 @@ function Invoke-CrossPlatformFixer {
             'Import-Module "./pwsh/modules/LabRunner"' = 'Import-Module "/pwsh/modules/LabRunner/" -Force'
             'Import-Module ".\pwsh\modules\LabRunner"' = 'Import-Module "/pwsh/modules/LabRunner/" -Force'
             'Import-Module "pwsh\modules\LabRunner"' = 'Import-Module "/pwsh/modules/LabRunner/" -Force'
-            
+
             # CodeFixer imports
             'Import-Module "pwsh/modules/CodeFixer"' = 'Import-Module "/pwsh/modules/CodeFixer/" -Force'
             'Import-Module "./pwsh/modules/CodeFixer"' = 'Import-Module "/pwsh/modules/CodeFixer/" -Force'
             'Import-Module ".\pwsh\modules\CodeFixer"' = 'Import-Module "/pwsh/modules/CodeFixer/" -Force'
             'Import-Module "pwsh\modules\CodeFixer"' = 'Import-Module "/pwsh/modules/CodeFixer/" -Force'
-            
+
             # PatchManager imports
             'Import-Module "pwsh/modules/PatchManager"' = 'Import-Module "/src/pwsh/modules/PatchManager/" -Force'
             'Import-Module "./pwsh/modules/PatchManager"' = 'Import-Module "/src/pwsh/modules/PatchManager/" -Force'
             'Import-Module ".\pwsh\modules\PatchManager"' = 'Import-Module "/src/pwsh/modules/PatchManager/" -Force'
             'Import-Module "pwsh\modules\PatchManager"' = 'Import-Module "/src/pwsh/modules/PatchManager/" -Force'
-            
+
             # BackupManager imports
             'Import-Module "pwsh/modules/BackupManager"' = 'Import-Module "/pwsh/modules/BackupManager/" -Force'
             'Import-Module "./pwsh/modules/BackupManager"' = 'Import-Module "/pwsh/modules/BackupManager/" -Force'
             'Import-Module ".\pwsh\modules\BackupManager"' = 'Import-Module "/pwsh/modules/BackupManager/" -Force'
             'Import-Module "pwsh\modules\BackupManager"' = 'Import-Module "/pwsh/modules/BackupManager/" -Force'
         }
-        
+
         Write-Host "Configured $($script:PathPatterns.Count) path patterns and $($script:ImportPatterns.Count) import patterns" -ForegroundColor Blue
     }
-    
+
     process {
         try {
             # Phase 1: Fix hardcoded paths
             Write-Host "Phase 1: Fixing hardcoded paths..." -ForegroundColor Green
             Invoke-PathStandardization
-            
+
             if ($FixMode -in @("Standard", "Comprehensive")) {
                 # Phase 2: Fix import statements
                 Write-Host "Phase 2: Fixing import statements..." -ForegroundColor Green
                 Invoke-ImportStandardization
-                
+
                 # Phase 3: Fix file path references
                 Write-Host "Phase 3: Fixing file path references..." -ForegroundColor Green
                 Invoke-FilePathFixes
             }
-            
+
             if ($FixMode -eq "Comprehensive") {
                 # Phase 4: Advanced compatibility fixes
                 Write-Host "Phase 4: Advanced compatibility fixes..." -ForegroundColor Green
                 Invoke-AdvancedCompatibilityFixes
-                
+
                 # Phase 5: Validate fixes
                 Write-Host "Phase 5: Validating fixes..." -ForegroundColor Green
                 Invoke-FixValidation
             }
-            
+
             # Generate report
             $script:FixLog.Duration = (Get-Date) - $script:FixLog.StartTime
             $report = New-CrossPlatformFixReport
-            
+
             Write-Host "Cross-platform fixes completed!" -ForegroundColor Green
             Write-Host "Files fixed: $($script:FixLog.FilesFixed.Count) | Paths fixed: $($script:FixLog.PathsFixed) | Imports fixed: $($script:FixLog.ImportsFixed)" -ForegroundColor Cyan
-            
+
             return @{
                 Success = $true
                 FilesFixed = $script:FixLog.FilesFixed.Count
@@ -140,11 +140,11 @@ function Invoke-CrossPlatformFixer {
                 Errors = $script:FixLog.Errors
                 Report = $report
             }
-            
+
         } catch {
             $script:FixLog.Errors += "Cross-platform fixer failed: $($_.Exception.Message)"
             Write-Error "Cross-platform fixer failed: $($_.Exception.Message)"
-            
+
             return @{
                 Success = $false
                 Message = $_.Exception.Message
@@ -157,21 +157,21 @@ function Invoke-CrossPlatformFixer {
 function Invoke-PathStandardization {
     # Fix hardcoded Windows paths throughout the codebase
     $files = Get-ChildItem -Path $script:ProjectRoot -Recurse -Include "*.ps1", "*.py", "*.json", "*.md", "*.yml", "*.yaml" -ErrorAction SilentlyContinue
-    
+
     foreach ($file in $files) {
         # Skip critical files and directories
         if (Test-CriticalPathExclusion $file.FullName) {
             continue
         }
-        
+
         try {
             $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
             if (-not $content) { continue }
               $modified = $false
-            
+
             foreach ($pattern in $script:PathPatterns.Keys) {
                 $replacement = $script:PathPatterns[$pattern]
-                
+
                 # Use literal string replacement to avoid regex issues
                 if ($content.Contains($pattern)) {
                     Write-Host "  Fixing hardcoded path in: $($file.Name)" -ForegroundColor Yellow
@@ -180,16 +180,16 @@ function Invoke-PathStandardization {
                     $script:FixLog.PathsFixed++
                 }
             }
-            
+
             if ($modified -and -not $DryRun) {
                 Set-Content -Path $file.FullName -Value $content -NoNewline -Encoding UTF8
-                $script:FixLog.FilesFixed += @{ 
+                $script:FixLog.FilesFixed += @{
                     File = $file.FullName
                     Action = "Path standardization"
                     Type = "HardcodedPaths"
                 }
             }
-            
+
         } catch {
             Write-Warning "Failed to process path fixes for $($file.FullName): $($_.Exception.Message)"
             $script:FixLog.Errors += "Path fix failed: $($file.FullName) - $($_.Exception.Message)"
@@ -200,21 +200,21 @@ function Invoke-PathStandardization {
 function Invoke-ImportStandardization {
     # Fix PowerShell import statements
     $files = Get-ChildItem -Path $script:ProjectRoot -Recurse -Include "*.ps1", "*.psm1" -ErrorAction SilentlyContinue
-    
+
     foreach ($file in $files) {
         if (Test-CriticalPathExclusion $file.FullName) {
             continue
         }
-        
+
         try {
             $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
             if (-not $content) { continue }
-            
+
             $modified = $false
-            
+
             foreach ($pattern in $script:ImportPatterns.Keys) {
                 $replacement = $script:ImportPatterns[$pattern]
-                
+
                 if ($content.Contains($pattern)) {
                     Write-Host "  Fixing import statement in: $($file.Name)" -ForegroundColor Yellow
                     $content = $content.Replace($pattern, $replacement)
@@ -222,16 +222,16 @@ function Invoke-ImportStandardization {
                     $script:FixLog.ImportsFixed++
                 }
             }
-            
+
             if ($modified -and -not $DryRun) {
                 Set-Content -Path $file.FullName -Value $content -NoNewline -Encoding UTF8
-                $script:FixLog.FilesFixed += @{ 
+                $script:FixLog.FilesFixed += @{
                     File = $file.FullName
                     Action = "Import standardization"
                     Type = "ImportStatements"
                 }
             }
-            
+
         } catch {
             Write-Warning "Failed to process import fixes for $($file.FullName): $($_.Exception.Message)"
             $script:FixLog.Errors += "Import fix failed: $($file.FullName) - $($_.Exception.Message)"
@@ -242,7 +242,7 @@ function Invoke-ImportStandardization {
 function Invoke-FilePathFixes {
     # Fix file path references in scripts
     $files = Get-ChildItem -Path $script:ProjectRoot -Recurse -Include "*.ps1", "*.py" -ErrorAction SilentlyContinue
-    
+
     $pathFixPatterns = @{
         # Fix relative path patterns
         '.\scripts\' = './scripts/'
@@ -250,48 +250,48 @@ function Invoke-FilePathFixes {
         '.\tests\' = './tests/'
         '.\configs\' = './configs/'
         '.\docs\' = './docs/'
-        
+
         # Fix backslash patterns
         'scripts\' = 'scripts/'
         'pwsh\modules\' = 'pwsh/modules/'
         'tests\' = 'tests/'
         'configs\' = 'configs/'
-        
+
         # Fix Windows-style paths
         '".\' = '"./'
         "'.\'" = "'./"
     }
-    
+
     foreach ($file in $files) {
         if (Test-CriticalPathExclusion $file.FullName) {
             continue
         }
-        
+
         try {
             $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
             if (-not $content) { continue }
-            
+
             $modified = $false
-            
+
             foreach ($pattern in $pathFixPatterns.Keys) {
                 $replacement = $pathFixPatterns[$pattern]
-                
+
                 if ($content.Contains($pattern)) {
                     Write-Host "  Fixing file path reference in: $($file.Name)" -ForegroundColor Yellow
                     $content = $content.Replace($pattern, $replacement)
                     $modified = $true
                 }
             }
-            
+
             if ($modified -and -not $DryRun) {
                 Set-Content -Path $file.FullName -Value $content -NoNewline -Encoding UTF8
-                $script:FixLog.FilesFixed += @{ 
+                $script:FixLog.FilesFixed += @{
                     File = $file.FullName
                     Action = "File path fixes"
                     Type = "FilePaths"
                 }
             }
-            
+
         } catch {
             Write-Warning "Failed to process file path fixes for $($file.FullName): $($_.Exception.Message)"
             $script:FixLog.Errors += "File path fix failed: $($file.FullName) - $($_.Exception.Message)"
@@ -302,17 +302,17 @@ function Invoke-FilePathFixes {
 function Invoke-AdvancedCompatibilityFixes {
     # Advanced fixes for cross-platform compatibility
     $files = Get-ChildItem -Path $script:ProjectRoot -Recurse -Include "*.ps1", "*.py", "*.json" -ErrorAction SilentlyContinue
-    
+
     foreach ($file in $files) {
         if (Test-CriticalPathExclusion $file.FullName) {
             continue
         }
-        
+
         try {
             $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
             if (-not $content) { continue }
               $modified = $false
-            
+
             # Fix PowerShell-specific issues
             if ($file.Extension -eq ".ps1") {
                 # Fix PowerShell version requirements
@@ -320,14 +320,14 @@ function Invoke-AdvancedCompatibilityFixes {
                     $content = $content -replace '#Requires -Version \d+\.\d+', '#Requires -Version 7.0'
                     $modified = $true
                 }
-                
+
                 # Fix path separator issues
                 if ($content -match '\$PSScriptRoot\\') {
                     $content = $content -replace '\$PSScriptRoot\\', '$PSScriptRoot/'
                     $modified = $true
                 }
             }
-            
+
             # Fix Python path issues
             if ($file.Extension -eq ".py") {
                 # Fix import path issues
@@ -336,7 +336,7 @@ function Invoke-AdvancedCompatibilityFixes {
                     $modified = $true
                 }
             }
-            
+
             # Fix JSON path issues
             if ($file.Extension -eq ".json") {
                 # Fix path references in JSON
@@ -345,16 +345,16 @@ function Invoke-AdvancedCompatibilityFixes {
                     $modified = $true
                 }
             }
-            
+
             if ($modified -and -not $DryRun) {
                 Set-Content -Path $file.FullName -Value $content -NoNewline -Encoding UTF8
-                $script:FixLog.FilesFixed += @{ 
+                $script:FixLog.FilesFixed += @{
                     File = $file.FullName
                     Action = "Advanced compatibility fixes"
                     Type = "AdvancedFixes"
                 }
             }
-            
+
         } catch {
             Write-Warning "Failed to process advanced fixes for $($file.FullName): $($_.Exception.Message)"
             $script:FixLog.Errors += "Advanced fix failed: $($file.FullName) - $($_.Exception.Message)"
@@ -365,10 +365,10 @@ function Invoke-AdvancedCompatibilityFixes {
 function Invoke-FixValidation {
     # Validate that fixes don't break syntax
     Write-Host "  Validating PowerShell syntax..." -ForegroundColor Blue
-    
+
     $powershellFiles = Get-ChildItem -Path $script:ProjectRoot -Recurse -Include "*.ps1", "*.psm1" -ErrorAction SilentlyContinue
     $syntaxErrors = 0
-    
+
     foreach ($file in $powershellFiles) {
         try {
             $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $file.FullName -Raw), [ref]$null)
@@ -378,7 +378,7 @@ function Invoke-FixValidation {
             $syntaxErrors++
         }
     }
-    
+
     if ($syntaxErrors -eq 0) {
         Write-Host "  All PowerShell files pass syntax validation" -ForegroundColor Green
     } else {
@@ -399,13 +399,13 @@ function Test-CriticalPathExclusion {
         'backups[/\\\\]',
         'logs[/\\\\]'
     )
-    
+
     foreach ($pattern in $criticalPatterns) {
         if ($FilePath -match $pattern) {
             return $true
         }
     }
-    
+
     return $false
 }
 
@@ -455,7 +455,7 @@ $($script:FixLog.FilesFixed | ForEach-Object{ "- $($_.File): $($_.Action)" } | O
 ## Path Patterns Fixed
 
 - **Windows absolute paths** → Standard workspace paths
-- **Backslash separators** → Forward slash separators  
+- **Backslash separators** → Forward slash separators
 - **Escaped path patterns** → Clean path references
 - **Relative path inconsistencies** → Standardized format
 

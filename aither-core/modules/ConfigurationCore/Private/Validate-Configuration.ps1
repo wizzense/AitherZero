@@ -13,57 +13,57 @@ function Validate-Configuration {
     param(
         [Parameter(Mandatory)]
         [string]$ModuleName,
-        
+
         [Parameter(Mandatory)]
         [hashtable]$Configuration
     )
-    
+
     $result = @{
         IsValid = $true
         Warnings = @()
         Errors = @()
     }
-    
+
     # Get schema
     if (-not $script:ConfigurationStore.Schemas.ContainsKey($ModuleName)) {
         $result.Warnings += "No schema defined for module: $ModuleName"
         return $result
     }
-    
+
     $schema = $script:ConfigurationStore.Schemas[$ModuleName]
-    
+
     # Validate each property
     if ($schema.Properties) {
         foreach ($propName in $schema.Properties.Keys) {
             $propSchema = $schema.Properties[$propName]
-            
+
             # Check if required property is missing
             if ($propSchema.Required -and -not $Configuration.ContainsKey($propName)) {
                 $result.IsValid = $false
                 $result.Errors += "Required property missing: $propName"
                 continue
             }
-            
+
             # Skip validation if property not present and not required
             if (-not $Configuration.ContainsKey($propName)) {
                 continue
             }
-            
+
             $value = $Configuration[$propName]
-            
+
             # Enhanced type validation with complex types
             if ($propSchema.Type) {
                 $typeValid = $true
                 $typeError = $null
-                
+
                 switch ($propSchema.Type) {
-                    'string' { 
+                    'string' {
                         if ($value -isnot [string]) {
                             $typeValid = $false
                             $typeError = "Expected string, got $($value.GetType().Name)"
                         }
                     }
-                    'int' { 
+                    'int' {
                         if ($value -isnot [int] -and $value -isnot [long]) {
                             # Try to convert to int
                             if ([int]::TryParse($value, [ref]$null)) {
@@ -74,7 +74,7 @@ function Validate-Configuration {
                             }
                         }
                     }
-                    'bool' { 
+                    'bool' {
                         if ($value -isnot [bool]) {
                             # Try to convert common boolean representations
                             if ($value -in @('true', 'false', '1', '0', 'yes', 'no')) {
@@ -85,7 +85,7 @@ function Validate-Configuration {
                             }
                         }
                     }
-                    'array' { 
+                    'array' {
                         if ($value -isnot [array] -and $value -isnot [System.Collections.IEnumerable]) {
                             $typeValid = $false
                             $typeError = "Expected array, got $($value.GetType().Name)"
@@ -101,7 +101,7 @@ function Validate-Configuration {
                             }
                         }
                     }
-                    'hashtable' { 
+                    'hashtable' {
                         if ($value -isnot [hashtable] -and $value -isnot [System.Collections.IDictionary]) {
                             $typeValid = $false
                             $typeError = "Expected hashtable, got $($value.GetType().Name)"
@@ -134,7 +134,7 @@ function Validate-Configuration {
                             $typeError = "Path does not exist: $value"
                         }
                     }
-                    default { 
+                    default {
                         # For unknown types, just check if it's an object
                         if ($null -eq $value) {
                             $typeValid = $false
@@ -142,19 +142,19 @@ function Validate-Configuration {
                         }
                     }
                 }
-                
+
                 if (-not $typeValid) {
                     $result.IsValid = $false
                     $result.Errors += "${propName}: $typeError"
                 }
             }
-            
+
             # Valid values validation
             if ($propSchema.ValidValues -and $value -notin $propSchema.ValidValues) {
                 $result.IsValid = $false
                 $result.Errors += "${propName}: Value '$value' not in valid values: $($propSchema.ValidValues -join ', ')"
             }
-            
+
             # Range validation for numbers
             if ($value -is [int] -or $value -is [double]) {
                 if ($propSchema.Min -and $value -lt $propSchema.Min) {
@@ -166,7 +166,7 @@ function Validate-Configuration {
                     $result.Errors += "${propName}: Value $value is greater than maximum $($propSchema.Max)"
                 }
             }
-            
+
             # Pattern validation for strings
             if ($value -is [string] -and $propSchema.Pattern) {
                 if ($value -notmatch $propSchema.Pattern) {
@@ -174,7 +174,7 @@ function Validate-Configuration {
                     $result.Errors += "${propName}: Value '$value' does not match pattern: $($propSchema.Pattern)"
                 }
             }
-            
+
             # Dependency validation
             if ($propSchema.DependsOn) {
                 foreach ($dependency in $propSchema.DependsOn) {
@@ -187,7 +187,7 @@ function Validate-Configuration {
                     }
                 }
             }
-            
+
             # Conditional validation
             if ($propSchema.ConditionalValidation) {
                 foreach ($condition in $propSchema.ConditionalValidation) {
@@ -200,7 +200,7 @@ function Validate-Configuration {
                             }
                         }
                     }
-                    
+
                     if ($conditionMet -and $condition.Then) {
                         # Apply conditional validation rules
                         if ($condition.Then.Required -and [string]::IsNullOrEmpty($value)) {
@@ -216,7 +216,7 @@ function Validate-Configuration {
             }
         }
     }
-    
+
     # Check for unknown properties
     if ($schema.AdditionalProperties -eq $false) {
         $schemaProps = $schema.Properties.Keys
@@ -226,6 +226,6 @@ function Validate-Configuration {
             }
         }
     }
-    
+
     return $result
 }

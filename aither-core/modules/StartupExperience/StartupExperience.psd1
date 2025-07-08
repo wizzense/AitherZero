@@ -8,7 +8,7 @@
     Copyright = '(c) 2025 AitherZero. All rights reserved.'
     Description = 'Enhanced startup experience with interactive configuration management, module discovery, and rich terminal UI'
     PowerShellVersion = '7.0'
-    
+
     # Functions to export
     FunctionsToExport = @(
         'Start-InteractiveMode',
@@ -28,7 +28,7 @@
         'Get-UIStatus',
         'Show-UIDebugInfo'
     )
-    
+
     # Private data
     PrivateData = @{
         PSData = @{
@@ -43,7 +43,7 @@
             }
         }
     }
-    
+
     # Dependencies
     # RequiredModules = @()
     # Note: Logging and LicenseManager are optional dependencies that will be loaded if available

@@ -22,9 +22,9 @@
 param(
     [ValidateSet('windows', 'linux', 'macos', 'all')]
     [string]$Platform = 'all',
-    
+
     [string]$Version,
-    
+
     [string]$OutputPath = (Join-Path (Split-Path -Parent $PSScriptRoot) "build" "output")
 )
 
@@ -84,13 +84,13 @@ $createdPackages = @()
 foreach ($plat in $platforms) {
     Write-Host "📦 Building $plat package..." -ForegroundColor Yellow
     $platStartTime = Get-Date
-    
+
     try {
         # Create temp directory
         $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) "aitherzero-build-$([guid]::NewGuid())"
         $packageDir = Join-Path $tempDir "AitherZero"
         $null = New-Item -ItemType Directory -Path $packageDir -Force
-        
+
         # Copy core files
         $filesCopied = 0
         foreach ($item in $includeItems) {
@@ -107,7 +107,7 @@ foreach ($plat in $platforms) {
                 }
             }
         }
-        
+
         # Copy platform-specific files
         if ($platformFiles.ContainsKey($plat)) {
             foreach ($file in $platformFiles[$plat]) {
@@ -119,9 +119,9 @@ foreach ($plat in $platforms) {
                 }
             }
         }
-        
+
         Write-Host "  └─ Total files/directories copied: $filesCopied" -ForegroundColor DarkGray
-        
+
         # Validate critical files exist in package
         Write-Host "  🔍 Validating package contents..." -ForegroundColor Yellow
         $criticalFiles = @(
@@ -132,7 +132,7 @@ foreach ($plat in $platforms) {
             "aither-core/modules/Logging/Logging.psm1",
             "configs/default-config.json"
         )
-        
+
         $validationPassed = $true
         foreach ($criticalFile in $criticalFiles) {
             $filePath = Join-Path $packageDir $criticalFile
@@ -141,37 +141,37 @@ foreach ($plat in $platforms) {
                 $validationPassed = $false
             }
         }
-        
+
         if (-not $validationPassed) {
             throw "Package validation failed - critical files missing"
         }
-        
+
         Write-Host "  ✅ Package validation passed" -ForegroundColor Green
-        
+
         # Create package
         $packageName = "AitherZero-v$Version-$plat"
-        
+
         if ($plat -eq 'windows') {
             # Create ZIP for Windows
             $packagePath = Join-Path $OutputPath "$packageName.zip"
             Write-Host "  📝 Creating ZIP archive..." -ForegroundColor Cyan
-            
+
             # Remove old package if exists
             if (Test-Path $packagePath) {
                 Remove-Item $packagePath -Force
             }
-            
+
             Compress-Archive -Path "$packageDir\*" -DestinationPath $packagePath -CompressionLevel Optimal
         } else {
             # Create tar.gz for Linux/macOS
             $packagePath = Join-Path $OutputPath "$packageName.tar.gz"
             Write-Host "  📝 Creating TAR.GZ archive..." -ForegroundColor Cyan
-            
+
             # Remove old package if exists
             if (Test-Path $packagePath) {
                 Remove-Item $packagePath -Force
             }
-            
+
             Push-Location $tempDir
             # Use cross-platform tar command
             if ($IsWindows) {
@@ -182,17 +182,17 @@ foreach ($plat in $platforms) {
             }
             Pop-Location
         }
-        
+
         # Get package size
         $packageInfo = Get-Item $packagePath
         $sizeMB = [Math]::Round($packageInfo.Length / 1MB, 2)
-        
+
         # Calculate build time
         $platEndTime = Get-Date
         $platDuration = [Math]::Round(($platEndTime - $platStartTime).TotalSeconds, 1)
-        
+
         Write-Host "  ✅ Success! Package: $(Split-Path -Leaf $packagePath) (${sizeMB}MB) [${platDuration}s]" -ForegroundColor Green
-        
+
         $createdPackages += [PSCustomObject]@{
             Platform = $plat
             FileName = Split-Path -Leaf $packagePath
@@ -200,7 +200,7 @@ foreach ($plat in $platforms) {
             Size = "${sizeMB}MB"
             Duration = "${platDuration}s"
         }
-        
+
     } catch {
         Write-Error "  ❌ Failed to build $plat package: $_"
     } finally {
@@ -209,7 +209,7 @@ foreach ($plat in $platforms) {
             Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
         }
     }
-    
+
     Write-Host ""
 }
 

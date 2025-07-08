@@ -3,23 +3,23 @@
 <#
 .SYNOPSIS
     Standardized project module import function
-    
+
 .DESCRIPTION
     This function provides a standardized way to import modules within the project,
     ensuring cross-platform compatibility and consistent import patterns.
-    
+
 .PARAMETER ModuleName
     Name of the module to import (e.g. 'PatchManager', 'Logging')
-    
+
 .PARAMETER Force
     Force reimport of the module even if already loaded
-    
+
 .PARAMETER Verbose
     Enable verbose output
-    
+
 .EXAMPLE
     Import-ProjectModule -ModuleName "PatchManager"
-    
+
 .EXAMPLE
     Import-ProjectModule -ModuleName "Logging" -Force -Verbose
 #>
@@ -28,7 +28,7 @@ function Import-ProjectModule {
     param(
         [Parameter(Mandatory = $true, Position = 0)]
         [string]$ModuleName,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$Force,
           [Parameter(Mandatory = $false)]
@@ -42,7 +42,7 @@ function Import-ProjectModule {
                 Write-Host "Setting PROJECT_ROOT to $(Get-Location)" -ForegroundColor Yellow
             }
         }
-        
+
         # Initialize PWSH_MODULES_PATH if not set (fallback behavior)
         if (-not $env:PWSH_MODULES_PATH) {
             $env:PWSH_MODULES_PATH = Join-Path $env:PROJECT_ROOT "aither-core" "modules"
@@ -50,10 +50,10 @@ function Import-ProjectModule {
                 Write-Host "Setting PWSH_MODULES_PATH to $env:PWSH_MODULES_PATH" -ForegroundColor Yellow
             }
         }
-        
+
         # Set standard module path with cross-platform compatibility
         $modulePath = Join-Path $env:PWSH_MODULES_PATH $ModuleName
-        
+
         # Create hashtable for splatting import parameters
         $importParams = @{
             Name = $modulePath
@@ -62,27 +62,27 @@ function Import-ProjectModule {
           if ($Force) {
             $importParams['Force'] = $true
         }
-        
+
         if ($ShowDetails) {
             $importParams['Verbose'] = $true
         }
     }
-    
+
     process {
         try {            # Import the module with specified parameters
             Import-Module @importParams
-            
+
             if ($ShowDetails) {
                 Write-Host "✅ Successfully imported module: $ModuleName" -ForegroundColor Green
             }
-            
+
             # Return true to indicate success
             return $true
         }
         catch {
             # Write an error message
             Write-Error "Failed to import module '$ModuleName': $_"
-            
+
             # Return false to indicate failure
             return $false
         }
@@ -90,4 +90,3 @@ function Import-ProjectModule {
 }
 
 Export-ModuleMember -Function Import-ProjectModule
-

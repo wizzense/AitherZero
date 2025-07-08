@@ -22,88 +22,88 @@ function Invoke-ConfigurationMigration {
     param(
         [Parameter()]
         [string]$ProjectRoot,
-        
+
         [Parameter()]
         [switch]$BackupLegacy = $true,
-        
+
         [Parameter()]
         [switch]$DryRun
     )
-    
+
     # Find project root if not provided
     if (-not $ProjectRoot) {
         $ProjectRoot = Find-ProjectRoot -StartPath $PSScriptRoot
     }
-    
+
     Write-Host "🔄 Starting Configuration Migration for AitherZero v0.8.0" -ForegroundColor Cyan
     Write-Host "Project Root: $ProjectRoot" -ForegroundColor Gray
-    
+
     if ($DryRun) {
         Write-Host "🔍 DRY RUN MODE - No changes will be made" -ForegroundColor Yellow
     }
-    
+
     try {
         # Detect legacy configurations
         $legacyConfigs = Find-LegacyConfigurations -ProjectRoot $ProjectRoot
-        
+
         if ($legacyConfigs.Count -eq 0) {
             Write-Host "✅ No legacy configurations found - system is already consolidated" -ForegroundColor Green
             return @{ Success = $true; MigratedConfigs = @(); Message = "No migration needed" }
         }
-        
+
         Write-Host "📋 Found $($legacyConfigs.Count) legacy configuration(s):" -ForegroundColor Yellow
         foreach ($config in $legacyConfigs) {
             Write-Host "  • $($config.Type): $($config.Path)" -ForegroundColor White
         }
-        
+
         # Backup legacy configurations if requested
         if ($BackupLegacy -and -not $DryRun) {
             $backupResult = Backup-LegacyConfigurations -LegacyConfigs $legacyConfigs -ProjectRoot $ProjectRoot
             Write-Host "💾 Legacy configurations backed up to: $($backupResult.BackupPath)" -ForegroundColor Green
         }
-        
+
         # Migrate configurations
         $migrationResults = @()
         foreach ($legacyConfig in $legacyConfigs) {
             $result = Migrate-LegacyConfiguration -LegacyConfig $legacyConfig -ProjectRoot $ProjectRoot -DryRun:$DryRun
             $migrationResults += $result
-            
+
             if ($result.Success) {
                 Write-Host "✅ Migrated: $($legacyConfig.Type) -> $($result.NewPath)" -ForegroundColor Green
             } else {
                 Write-Host "❌ Failed to migrate: $($legacyConfig.Type) - $($result.Error)" -ForegroundColor Red
             }
         }
-        
+
         # Create consolidated configuration
         if (-not $DryRun) {
             $consolidationResult = Create-ConsolidatedConfiguration -ProjectRoot $ProjectRoot -MigrationResults $migrationResults
-            
+
             if ($consolidationResult.Success) {
                 Write-Host "🎯 Consolidated configuration created at: $($consolidationResult.ConfigPath)" -ForegroundColor Green
             } else {
                 Write-Host "⚠️ Warning: Failed to create consolidated configuration - $($consolidationResult.Error)" -ForegroundColor Yellow
             }
         }
-        
+
         # Generate migration report
         $report = Generate-MigrationReport -LegacyConfigs $legacyConfigs -MigrationResults $migrationResults -ProjectRoot $ProjectRoot
-        
+
         if (-not $DryRun) {
             $reportPath = Join-Path $ProjectRoot "configs" "migration-report-$(Get-Date -Format 'yyyy-MM-dd-HHmmss').json"
             $report | ConvertTo-Json -Depth 10 | Set-Content $reportPath
             Write-Host "📊 Migration report saved to: $reportPath" -ForegroundColor Cyan
         }
-        
+
         Write-Host "🏁 Configuration migration completed successfully!" -ForegroundColor Green
-        
+
         return @{
             Success = $true
             MigratedConfigs = $migrationResults
             Report = $report
             Message = "Migration completed successfully"
         }
-        
+
     } catch {
         Write-Host "💥 Configuration migration failed: $($_.Exception.Message)" -ForegroundColor Red
         return @{
@@ -119,9 +119,9 @@ function Find-LegacyConfigurations {
     param(
         [string]$ProjectRoot
     )
-    
+
     $legacyConfigs = @()
-    
+
     # Legacy core configuration
     $legacyCoreConfig = Join-Path $ProjectRoot "aither-core" "default-config.json"
     if (Test-Path $legacyCoreConfig) {
@@ -131,7 +131,7 @@ function Find-LegacyConfigurations {
             Priority = 1
         }
     }
-    
+
     # Legacy core configs subdirectory
     $legacyCoreConfigsDir = Join-Path $ProjectRoot "aither-core" "configs" "default-config.json"
     if (Test-Path $legacyCoreConfigsDir) {
@@ -141,21 +141,21 @@ function Find-LegacyConfigurations {
             Priority = 2
         }
     }
-    
+
     # Check for inconsistent main config (needs normalization)
     $mainConfig = Join-Path $ProjectRoot "configs" "default-config.json"
     if (Test-Path $mainConfig) {
         $content = Get-Content $mainConfig -Raw | ConvertFrom-Json
-        
+
         # Check if it needs migration (has flat structure or missing sections)
         $needsMigration = $false
-        
+
         # Check for flat structure indicators
         if ($content.PSObject.Properties.Name -contains "ComputerName" -and
             -not ($content.PSObject.Properties.Name -contains "system")) {
             $needsMigration = $true
         }
-        
+
         if ($needsMigration) {
             $legacyConfigs += @{
                 Type = "Main Config (Needs Structure Update)"
@@ -164,7 +164,7 @@ function Find-LegacyConfigurations {
             }
         }
     }
-    
+
     return $legacyConfigs | Sort-Object Priority
 }
 
@@ -174,16 +174,16 @@ function Backup-LegacyConfigurations {
         [array]$LegacyConfigs,
         [string]$ProjectRoot
     )
-    
+
     $backupDir = Join-Path $ProjectRoot "configs" "legacy" "backup-$(Get-Date -Format 'yyyy-MM-dd-HHmmss')"
     New-Item -Path $backupDir -ItemType Directory -Force | Out-Null
-    
+
     foreach ($config in $LegacyConfigs) {
         $fileName = Split-Path $config.Path -Leaf
         $backupPath = Join-Path $backupDir "$($config.Type.Replace(' ', '-'))-$fileName"
         Copy-Item $config.Path $backupPath -Force
     }
-    
+
     return @{ BackupPath = $backupDir }
 }
 
@@ -194,35 +194,35 @@ function Migrate-LegacyConfiguration {
         [string]$ProjectRoot,
         [switch]$DryRun
     )
-    
+
     try {
         # Load legacy configuration
         $content = Get-Content $LegacyConfig.Path -Raw | ConvertFrom-Json
-        
+
         # Convert to standardized structure
         $migratedConfig = Convert-LegacyToStandardized -LegacyContent $content -LegacyType $LegacyConfig.Type
-        
+
         # Determine target path
         $targetPath = Get-MigrationTargetPath -LegacyConfig $LegacyConfig -ProjectRoot $ProjectRoot
-        
+
         if (-not $DryRun) {
             # Ensure target directory exists
             $targetDir = Split-Path $targetPath -Parent
             if (-not (Test-Path $targetDir)) {
                 New-Item -Path $targetDir -ItemType Directory -Force | Out-Null
             }
-            
+
             # Save migrated configuration
             $migratedConfig | ConvertTo-Json -Depth 10 | Set-Content $targetPath -Encoding UTF8
         }
-        
+
         return @{
             Success = $true
             OriginalPath = $LegacyConfig.Path
             NewPath = $targetPath
             Type = $LegacyConfig.Type
         }
-        
+
     } catch {
         return @{
             Success = $false
@@ -239,7 +239,7 @@ function Convert-LegacyToStandardized {
         [PSCustomObject]$LegacyContent,
         [string]$LegacyType
     )
-    
+
     # Create standardized structure
     $standardized = @{
         metadata = @{
@@ -262,28 +262,28 @@ function Convert-LegacyToStandardized {
         environment = @{}
         security = @{}
     }
-    
+
     # Map legacy properties to new structure
     foreach ($property in $LegacyContent.PSObject.Properties) {
         $name = $property.Name
         $value = $property.Value
-        
+
         switch ($name) {
             # System settings
             { $_ -in @('ComputerName', 'SetComputerName', 'DNSServers', 'SetDNSServers', 'TrustedHosts', 'SetTrustedHosts', 'DisableTCPIP6', 'AllowRemoteDesktop', 'ConfigureFirewall', 'FirewallPorts', 'ConfigPXE') } {
                 $standardized.system[$name] = $value
             }
-            
+
             # Tools
             { $_ -match '^Install[A-Z]' } {
                 $standardized.tools[$name] = $value
             }
-            
+
             # AI Tools
             { $_ -match 'Claude|Gemini|Codex' } {
                 $standardized.aiTools[$name] = $value
             }
-            
+
             # UI Preferences
             { $_ -in @('UIPreferences') } {
                 if ($value -is [PSCustomObject]) {
@@ -292,17 +292,17 @@ function Convert-LegacyToStandardized {
                     }
                 }
             }
-            
+
             # Versions
             { $_ -match 'Version$' } {
                 $standardized.versions[$name] = $value
             }
-            
+
             # Infrastructure
             { $_ -in @('InitializeOpenTofu', 'PrepareHyperVHost', 'RepoUrl', 'LocalPath', 'ConfigFile', 'RunnerScriptName', 'InfraRepoUrl', 'InfraRepoPath') } {
                 $standardized.infrastructure[$name] = $value
             }
-            
+
             # Certificate Authority
             { $_ -eq 'CertificateAuthority' } {
                 if ($value -is [PSCustomObject]) {
@@ -311,7 +311,7 @@ function Convert-LegacyToStandardized {
                     }
                 }
             }
-            
+
             # Hyper-V settings
             { $_ -eq 'HyperV' } {
                 if ($value -is [PSCustomObject]) {
@@ -320,7 +320,7 @@ function Convert-LegacyToStandardized {
                     }
                 }
             }
-            
+
             # Directories
             { $_ -eq 'Directories' } {
                 if ($value -is [PSCustomObject]) {
@@ -329,7 +329,7 @@ function Convert-LegacyToStandardized {
                     }
                 }
             }
-            
+
             # Logging
             { $_ -in @('logging', 'LogLevel', 'LogPath') } {
                 if ($name -eq 'logging' -and $value -is [PSCustomObject]) {
@@ -340,7 +340,7 @@ function Convert-LegacyToStandardized {
                     $standardized.logging[$name] = $value
                 }
             }
-            
+
             # Scripts
             { $_ -eq 'scripts' } {
                 if ($value -is [PSCustomObject]) {
@@ -349,7 +349,7 @@ function Convert-LegacyToStandardized {
                     }
                 }
             }
-            
+
             # Environment
             { $_ -eq 'environment' } {
                 if ($value -is [PSCustomObject]) {
@@ -358,7 +358,7 @@ function Convert-LegacyToStandardized {
                     }
                 }
             }
-            
+
             # Keep other properties as-is for compatibility
             default {
                 # Check if it's a complex object that should be preserved
@@ -371,7 +371,7 @@ function Convert-LegacyToStandardized {
             }
         }
     }
-    
+
     # Remove empty sections
     $sectionsToRemove = @()
     foreach ($section in $standardized.Keys) {
@@ -382,7 +382,7 @@ function Convert-LegacyToStandardized {
     foreach ($section in $sectionsToRemove) {
         $standardized.Remove($section)
     }
-    
+
     return $standardized
 }
 
@@ -392,7 +392,7 @@ function Get-MigrationTargetPath {
         [hashtable]$LegacyConfig,
         [string]$ProjectRoot
     )
-    
+
     switch ($LegacyConfig.Type) {
         "Main Config (Needs Structure Update)" {
             return Join-Path $ProjectRoot "configs" "default-config.json"
@@ -416,13 +416,13 @@ function Create-ConsolidatedConfiguration {
         [string]$ProjectRoot,
         [array]$MigrationResults
     )
-    
+
     try {
         $consolidatedConfigPath = Join-Path $ProjectRoot "configs" "default-config.json"
-        
+
         # If main config was migrated, it's already in place
         $mainConfigMigration = $MigrationResults | Where-Object { $_.Type -eq "Main Config (Needs Structure Update)" }
-        
+
         if ($mainConfigMigration -and $mainConfigMigration.Success) {
             return @{
                 Success = $true
@@ -430,11 +430,11 @@ function Create-ConsolidatedConfiguration {
                 Message = "Main configuration updated in place"
             }
         }
-        
+
         # If no main config exists, create a new one from the most complete legacy config
         if (-not (Test-Path $consolidatedConfigPath)) {
             $bestMigration = $MigrationResults | Where-Object { $_.Success } | Select-Object -First 1
-            
+
             if ($bestMigration) {
                 Copy-Item $bestMigration.NewPath $consolidatedConfigPath
                 return @{
@@ -444,13 +444,13 @@ function Create-ConsolidatedConfiguration {
                 }
             }
         }
-        
+
         return @{
             Success = $true
             ConfigPath = $consolidatedConfigPath
             Message = "Configuration already exists and is up to date"
         }
-        
+
     } catch {
         return @{
             Success = $false
@@ -466,7 +466,7 @@ function Generate-MigrationReport {
         [array]$MigrationResults,
         [string]$ProjectRoot
     )
-    
+
     return @{
         timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         projectRoot = $ProjectRoot
@@ -490,10 +490,10 @@ function Find-ProjectRoot {
     param(
         [string]$StartPath = $PSScriptRoot
     )
-    
+
     $currentPath = $StartPath
     $rootIndicators = @('.git', 'Start-AitherZero.ps1', 'aither-core')
-    
+
     while ($currentPath) {
         foreach ($indicator in $rootIndicators) {
             $testPath = Join-Path $currentPath $indicator
@@ -501,14 +501,14 @@ function Find-ProjectRoot {
                 return $currentPath
             }
         }
-        
+
         $parentPath = Split-Path $currentPath -Parent
         if ($parentPath -eq $currentPath) {
             break
         }
         $currentPath = $parentPath
     }
-    
+
     return $PWD.Path
 }
 

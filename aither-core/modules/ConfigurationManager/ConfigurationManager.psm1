@@ -135,13 +135,13 @@ try {
         }
         StorePath = Join-Path ([Environment]::GetFolderPath('UserProfile')) '.aitherzero' 'unified-config.json'
     }
-    
+
     # Create storage directory if it doesn't exist
     $storeDir = Split-Path $script:UnifiedConfigurationStore.StorePath -Parent
     if (-not (Test-Path $storeDir)) {
         New-Item -Path $storeDir -ItemType Directory -Force | Out-Null
     }
-    
+
     # Try to load existing configuration
     if (Test-Path $script:UnifiedConfigurationStore.StorePath) {
         try {
@@ -159,10 +159,10 @@ try {
             Write-Warning "Failed to load existing configuration: $_"
         }
     }
-    
+
     $script:ModuleInitialized = $true
     Write-Verbose "ConfigurationManager module initialized successfully"
-    
+
 } catch {
     Write-Warning "Failed to initialize ConfigurationManager: $_"
     $script:ModuleInitialized = $false

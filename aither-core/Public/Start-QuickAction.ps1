@@ -26,7 +26,7 @@
 .EXAMPLE
     Start-QuickAction -Action "RestartServices"
     Restarts all AitherZero platform services.
-    
+
 .EXAMPLE
     Start-QuickAction -Action "CleanupLogs" -Parameters @{DaysToKeep=7} -Force
     Cleans up log files older than 7 days without confirmation.
@@ -65,29 +65,29 @@ function Start-QuickAction {
             'OptimizePerformance'
         )]
         [string]$Action,
-        
+
         [Parameter()]
         [hashtable]$Parameters = @{},
-        
+
         [Parameter()]
         [switch]$Force,
-        
+
         [Parameter()]
         [switch]$ShowProgress,
-        
+
         [Parameter()]
         [switch]$DryRun
     )
-    
+
     begin {
         Write-CustomLog -Message "=== Quick Action Execution ===" -Level "INFO"
         Write-CustomLog -Message "Action: $Action" -Level "INFO"
-        
+
         if ($DryRun) {
             Write-CustomLog -Message "Mode: DRY RUN (preview only)" -Level "WARN"
         }
     }
-    
+
     process {
         try {
             # Get action definition
@@ -95,9 +95,9 @@ function Start-QuickAction {
             if (-not $actionDefinition) {
                 throw "Quick action '$Action' not found"
             }
-            
+
             Write-CustomLog -Message "Description: $($actionDefinition.Description)" -Level "INFO"
-            
+
             # Check prerequisites
             if ($actionDefinition.Prerequisites) {
                 Write-CustomLog -Message "Checking prerequisites..." -Level "INFO"
@@ -106,7 +106,7 @@ function Start-QuickAction {
                     throw "Prerequisites not met: $($prereqResult.Errors -join ', ')"
                 }
             }
-            
+
             # Confirm action if not forced
             if (-not $Force -and -not $DryRun) {
                 $confirmation = Read-Host "Execute '$Action'? (y/N)"
@@ -115,7 +115,7 @@ function Start-QuickAction {
                     return @{ Success = $false; Reason = "Cancelled by user" }
                 }
             }
-            
+
             # Initialize progress tracking
             $progressId = $null
             if ($ShowProgress -and $actionDefinition.Steps) {
@@ -123,10 +123,10 @@ function Start-QuickAction {
                     $progressId = Start-ProgressOperation -OperationName "Quick Action: $Action" -TotalSteps $actionDefinition.Steps.Count -ShowTime
                 }
             }
-            
+
             # Execute action
             $result = Invoke-QuickActionSteps -ActionDefinition $actionDefinition -Parameters $Parameters -DryRun:$DryRun -ProgressId $progressId
-            
+
             # Complete progress tracking
             if ($progressId) {
                 if ($result.Success) {
@@ -135,16 +135,16 @@ function Start-QuickAction {
                     Complete-ProgressOperation -OperationId $progressId -ShowSummary -Status "Failed"
                 }
             }
-            
+
             # Log result
             if ($result.Success) {
                 Write-CustomLog -Message "✅ Quick action '$Action' completed successfully" -Level "SUCCESS"
             } else {
                 Write-CustomLog -Message "❌ Quick action '$Action' failed: $($result.Error)" -Level "ERROR"
             }
-            
+
             return $result
-            
+
         } catch {
             Write-CustomLog -Message "Quick action execution failed: $($_.Exception.Message)" -Level "ERROR"
             throw
@@ -159,7 +159,7 @@ function Get-QuickActionDefinition {
         [Parameter(Mandatory = $true)]
         [string]$Action
     )
-    
+
     process {
         $definitions = @{
             'RestartServices' = @{
@@ -172,7 +172,7 @@ function Get-QuickActionDefinition {
                     @{ Name = "Verify Services"; Function = "Test-ServiceHealth" }
                 )
             }
-            
+
             'CleanupLogs' = @{
                 Description = "Clean up old log files and temporary data"
                 Prerequisites = @()
@@ -183,7 +183,7 @@ function Get-QuickActionDefinition {
                     @{ Name = "Compact Log Database"; Function = "Optimize-LogStorage" }
                 )
             }
-            
+
             'BackupConfig' = @{
                 Description = "Create backup of configuration files"
                 Prerequisites = @('CheckDiskSpace')
@@ -194,7 +194,7 @@ function Get-QuickActionDefinition {
                     @{ Name = "Update Backup Catalog"; Function = "Update-BackupCatalog" }
                 )
             }
-            
+
             'ValidateSetup' = @{
                 Description = "Validate AitherZero platform setup and configuration"
                 Prerequisites = @()
@@ -206,7 +206,7 @@ function Get-QuickActionDefinition {
                     @{ Name = "Generate Report"; Function = "New-ValidationReport" }
                 )
             }
-            
+
             'UpdateModules' = @{
                 Description = "Update all AitherZero modules to latest versions"
                 Prerequisites = @('CheckInternetConnection')
@@ -217,7 +217,7 @@ function Get-QuickActionDefinition {
                     @{ Name = "Verify Installation"; Function = "Test-ModuleInstallation" }
                 )
             }
-            
+
             'CheckHealth' = @{
                 Description = "Perform comprehensive health check of the platform"
                 Prerequisites = @()
@@ -229,7 +229,7 @@ function Get-QuickActionDefinition {
                     @{ Name = "Generate Health Report"; Function = "New-HealthReport" }
                 )
             }
-            
+
             'ReloadModules' = @{
                 Description = "Reload all AitherZero modules"
                 Prerequisites = @()
@@ -240,7 +240,7 @@ function Get-QuickActionDefinition {
                     @{ Name = "Verify Module Loading"; Function = "Test-ModuleLoading" }
                 )
             }
-            
+
             'ClearCache' = @{
                 Description = "Clear all temporary caches and data"
                 Prerequisites = @()
@@ -251,7 +251,7 @@ function Get-QuickActionDefinition {
                     @{ Name = "Clear Download Cache"; Function = "Clear-DownloadCache" }
                 )
             }
-            
+
             'SyncRepositories' = @{
                 Description = "Synchronize configuration repositories"
                 Prerequisites = @('CheckGitAccess')
@@ -262,7 +262,7 @@ function Get-QuickActionDefinition {
                     @{ Name = "Update Local Cache"; Function = "Update-LocalRepositoryCache" }
                 )
             }
-            
+
             'TestConnections' = @{
                 Description = "Test all configured connections and endpoints"
                 Prerequisites = @()
@@ -273,7 +273,7 @@ function Get-QuickActionDefinition {
                     @{ Name = "Generate Connectivity Report"; Function = "New-ConnectivityReport" }
                 )
             }
-            
+
             'GenerateReport' = @{
                 Description = "Generate comprehensive platform status report"
                 Prerequisites = @()
@@ -284,7 +284,7 @@ function Get-QuickActionDefinition {
                     @{ Name = "Generate HTML Report"; Function = "New-StatusReport" }
                 )
             }
-            
+
             'FixPermissions' = @{
                 Description = "Fix file and directory permissions"
                 Prerequisites = @('CheckAdminRights')
@@ -295,7 +295,7 @@ function Get-QuickActionDefinition {
                     @{ Name = "Verify Fixes"; Function = "Test-PermissionFixes" }
                 )
             }
-            
+
             'ValidateConfig' = @{
                 Description = "Validate all configuration files"
                 Prerequisites = @()
@@ -306,7 +306,7 @@ function Get-QuickActionDefinition {
                     @{ Name = "Generate Validation Report"; Function = "New-ConfigurationValidationReport" }
                 )
             }
-            
+
             'RestoreBackup' = @{
                 Description = "Restore configuration from backup"
                 Prerequisites = @('CheckBackupAvailability')
@@ -317,7 +317,7 @@ function Get-QuickActionDefinition {
                     @{ Name = "Verify Restoration"; Function = "Test-RestoredConfiguration" }
                 )
             }
-            
+
             'OptimizePerformance' = @{
                 Description = "Optimize platform performance settings"
                 Prerequisites = @()
@@ -329,7 +329,7 @@ function Get-QuickActionDefinition {
                 )
             }
         }
-        
+
         return $definitions[$Action]
     }
 }
@@ -340,17 +340,17 @@ function Test-QuickActionPrerequisites {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Action,
-        
+
         [Parameter(Mandatory = $true)]
         [array]$Prerequisites
     )
-    
+
     process {
         $result = @{
             Success = $true
             Errors = @()
         }
-        
+
         foreach ($prereq in $Prerequisites) {
             try {
                 switch ($prereq) {
@@ -409,7 +409,7 @@ function Test-QuickActionPrerequisites {
                 $result.Success = $false
             }
         }
-        
+
         return $result
     }
 }
@@ -420,36 +420,36 @@ function Invoke-QuickActionSteps {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$ActionDefinition,
-        
+
         [Parameter()]
         [hashtable]$Parameters = @{},
-        
+
         [Parameter()]
         [switch]$DryRun,
-        
+
         [Parameter()]
         [string]$ProgressId
     )
-    
+
     process {
         $result = @{
             Success = $true
             CompletedSteps = @()
             Error = $null
         }
-        
+
         $stepIndex = 0
         foreach ($step in $ActionDefinition.Steps) {
             $stepIndex++
-            
+
             try {
                 Write-CustomLog -Message "Step $stepIndex/$($ActionDefinition.Steps.Count): $($step.Name)" -Level "INFO"
-                
+
                 # Update progress
                 if ($ProgressId) {
                     Update-ProgressOperation -OperationId $ProgressId -IncrementStep -StepName $step.Name
                 }
-                
+
                 if ($DryRun) {
                     Write-CustomLog -Message "DRY RUN: Would execute $($step.Name)" -Level "WARN"
                 } else {
@@ -460,9 +460,9 @@ function Invoke-QuickActionSteps {
                         Result = $stepResult
                     }
                 }
-                
+
                 Write-CustomLog -Message "✅ Step completed: $($step.Name)" -Level "SUCCESS"
-                
+
             } catch {
                 $result.Success = $false
                 $result.Error = "Step '$($step.Name)' failed: $($_.Exception.Message)"
@@ -470,7 +470,7 @@ function Invoke-QuickActionSteps {
                 break
             }
         }
-        
+
         return $result
     }
 }
@@ -481,21 +481,21 @@ function Invoke-QuickActionStep {
     param(
         [Parameter(Mandatory = $true)]
         [hashtable]$Step,
-        
+
         [Parameter()]
         [hashtable]$Parameters = @{}
     )
-    
+
     process {
         $functionName = $Step.Function
-        
+
         # For now, we'll simulate the step execution
         # In a real implementation, these would call actual functions
         Write-CustomLog -Message "Executing $functionName..." -Level "DEBUG"
-        
+
         # Simulate step execution time
         Start-Sleep -Milliseconds 100
-        
+
         return @{
             Success = $true
             ExecutedAt = Get-Date

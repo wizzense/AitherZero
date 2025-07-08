@@ -2,75 +2,75 @@ function Close-ResolvedGitHubIssues {
     <#
     .SYNOPSIS
         Closes GitHub Issues for PSScriptAnalyzer findings that have been resolved
-    
+
     .DESCRIPTION
         This function identifies and closes GitHub Issues for PSScriptAnalyzer findings that are
         no longer present in the codebase or have been marked as resolved in .bugz files.
         It provides comprehensive lifecycle management for automated issue resolution.
-    
+
     .PARAMETER Path
         Directory path to scan for resolved findings
-    
+
     .PARAMETER RepositoryOwner
         GitHub repository owner (defaults to current repository)
-    
+
     .PARAMETER RepositoryName
         GitHub repository name (defaults to current repository)
-    
+
     .PARAMETER DryRun
         If specified, shows what issues would be closed without actually closing them
-    
+
     .PARAMETER Force
         Force closure of issues even if they have recent activity
-    
+
     .PARAMETER GitHubToken
         GitHub personal access token (uses GITHUB_TOKEN environment variable if not specified)
-    
+
     .PARAMETER MaxAge
         Maximum age in days for issues to be considered for auto-closure (default: 30)
-    
+
     .EXAMPLE
         Close-ResolvedGitHubIssues -Path "./aither-core/modules" -DryRun
-        
+
         Shows what PSScriptAnalyzer issues would be closed without actually closing them
-    
+
     .EXAMPLE
         Close-ResolvedGitHubIssues -Path "./aither-core/modules/PatchManager" -Force
-        
+
         Closes all resolved issues in the PatchManager module, even if they have recent activity
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
         [string]$Path,
-        
+
         [Parameter(Mandatory = $false)]
         [string]$RepositoryOwner,
-        
+
         [Parameter(Mandatory = $false)]
         [string]$RepositoryName,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$DryRun,
-        
+
         [Parameter(Mandatory = $false)]
         [switch]$Force,
-        
+
         [Parameter(Mandatory = $false)]
         [string]$GitHubToken,
-        
+
         [Parameter(Mandatory = $false)]
         [int]$MaxAge = 30
     )
-    
+
     try {
         $resolvedPath = Resolve-Path $Path -ErrorAction Stop
-        
+
         # Initialize GitHub CLI availability check
         if (-not (Get-Command 'gh' -ErrorAction SilentlyContinue)) {
             throw "GitHub CLI (gh) not available. Please install GitHub CLI to manage issues."
         }
-        
+
         # Get repository information
         if (-not $RepositoryOwner -or -not $RepositoryName) {
             try {
@@ -82,27 +82,27 @@ function Close-ResolvedGitHubIssues {
                 throw "Failed to determine repository information: $($_.Exception.Message)"
             }
         }
-        
+
         # Set up GitHub token if provided
         if ($GitHubToken) {
             $env:GITHUB_TOKEN = $GitHubToken
         }
-        
+
         if ($script:UseCustomLogging) {
             Write-CustomLog -Level 'INFO' -Message "Starting automated closure of resolved PSScriptAnalyzer issues for: $resolvedPath"
         } else {
             Write-Host "🔄 Closing resolved PSScriptAnalyzer issues for: $resolvedPath" -ForegroundColor Cyan
         }
-        
+
         # Get all open PSScriptAnalyzer issues
         $openIssues = @()
         try {
             $searchQuery = "repo:$RepositoryOwner/$RepositoryName is:issue is:open label:psscriptanalyzer"
             $allIssues = & gh issue list --search $searchQuery --json number,title,labels,state,body,createdAt,updatedAt --limit 200 | ConvertFrom-Json
-            $openIssues = $allIssues | Where-Object { 
-                $_.labels | Where-Object { $_.name -eq 'psscriptanalyzer' } 
+            $openIssues = $allIssues | Where-Object {
+                $_.labels | Where-Object { $_.name -eq 'psscriptanalyzer' }
             }
-            
+
             if ($script:UseCustomLogging) {
                 Write-CustomLog -Level 'INFO' -Message "Found $($openIssues.Count) open PSScriptAnalyzer issues to evaluate"
             } else {
@@ -117,7 +117,7 @@ function Close-ResolvedGitHubIssues {
             }
             throw
         }
-        
+
         if ($openIssues.Count -eq 0) {
             if ($script:UseCustomLogging) {
                 Write-CustomLog -Level 'INFO' -Message "No open PSScriptAnalyzer issues found to process"
@@ -136,7 +136,7 @@ function Close-ResolvedGitHubIssues {
                 }
             }
         }
-        
+
         # Get current PSScriptAnalyzer findings
         $currentFindings = @()
         try {
@@ -152,11 +152,11 @@ function Close-ResolvedGitHubIssues {
                     Path = $resolvedPath
                     Recurse = $true
                 }
-                
+
                 if (Test-Path $settingsPath) {
                     $analyzerParams.Settings = $settingsPath
                 }
-                
+
                 $currentFindings = Invoke-ScriptAnalyzer @analyzerParams
             }
         }
@@ -168,7 +168,7 @@ function Close-ResolvedGitHubIssues {
             }
             throw
         }
-        
+
         # Load .bugz files for resolved status
         $bugzData = @{}
         $bugzFiles = Get-ChildItem -Path $resolvedPath -Name ".bugz" -Recurse -ErrorAction SilentlyContinue
@@ -184,12 +184,12 @@ function Close-ResolvedGitHubIssues {
                 }
             }
         }
-        
+
         # Process each open issue
         $closedIssues = @()
         $skippedIssues = @()
         $errors = @()
-        
+
         foreach ($issue in $openIssues) {
             try {
                 # Extract issue metadata
@@ -197,22 +197,22 @@ function Close-ResolvedGitHubIssues {
                 $issueFileName = $null
                 $issueLine = $null
                 $issueModule = $null
-                
+
                 # Parse title: [SEVERITY] RuleName in FileName
                 if ($issue.title -match '\[(?:ERROR|WARNING|INFO)\]\s+(\w+)\s+in\s+(.+)') {
                     $issueRuleName = $matches[1]
                     $issueFileName = $matches[2]
                 }
-                
+
                 # Parse body for line number and module
                 if ($issue.body -match 'Line (\d+)') {
                     $issueLine = [int]$matches[1]
                 }
-                
+
                 if ($issue.body -match '\*\*Module:\*\*\s+(\w+)') {
                     $issueModule = $matches[1]
                 }
-                
+
                 if (-not $issueRuleName) {
                     $skippedIssues += @{
                         Number = $issue.number
@@ -222,7 +222,7 @@ function Close-ResolvedGitHubIssues {
                     }
                     continue
                 }
-                
+
                 # Check if issue is within scope of current path
                 $issueInScope = $false
                 if ($issueModule) {
@@ -230,11 +230,11 @@ function Close-ResolvedGitHubIssues {
                     $issueInScope = Test-Path $modulePath
                 } else {
                     # Check if any current findings match this issue's path pattern
-                    $issueInScope = $currentFindings | Where-Object { 
-                        (Split-Path $_.ScriptPath -Leaf) -eq $issueFileName 
+                    $issueInScope = $currentFindings | Where-Object {
+                        (Split-Path $_.ScriptPath -Leaf) -eq $issueFileName
                     }
                 }
-                
+
                 if (-not $issueInScope) {
                     $skippedIssues += @{
                         Number = $issue.number
@@ -244,14 +244,14 @@ function Close-ResolvedGitHubIssues {
                     }
                     continue
                 }
-                
+
                 # Check if corresponding finding still exists
                 $correspondingFinding = $currentFindings | Where-Object {
                     $_.RuleName -eq $issueRuleName -and
                     (Split-Path $_.ScriptPath -Leaf) -eq $issueFileName -and
                     ($issueLine -eq $null -or $_.Line -eq $issueLine)
                 } | Select-Object -First 1
-                
+
                 # Check .bugz data for resolution status
                 $bugzEntry = $null
                 $isMarkedResolved = $false
@@ -261,18 +261,18 @@ function Close-ResolvedGitHubIssues {
                         $_.file -eq $issueFileName -and
                         ($issueLine -eq $null -or $_.line -eq $issueLine)
                     } | Select-Object -First 1
-                    
+
                     if ($bugzEntry) {
                         $isMarkedResolved = $bugzEntry.status -eq 'resolved'
                         break
                     }
                 }
-                
+
                 # Determine if issue should be closed
                 $shouldClose = $false
                 $closeReason = ""
                 $closeType = ""
-                
+
                 if (-not $correspondingFinding -and -not $isMarkedResolved) {
                     # Finding no longer exists and not marked as resolved
                     $shouldClose = $true
@@ -309,7 +309,7 @@ function Close-ResolvedGitHubIssues {
                     }
                     continue
                 }
-                
+
                 # Close the issue
                 if ($shouldClose) {
                     if ($DryRun) {
@@ -320,7 +320,7 @@ function Close-ResolvedGitHubIssues {
                             Action = "dry-run-$closeType"
                             WouldClose = $true
                         }
-                        
+
                         if ($script:UseCustomLogging) {
                             Write-CustomLog -Level 'INFO' -Message "DRY RUN: Would close issue #$($issue.number) - $closeReason"
                         } else {
@@ -333,10 +333,10 @@ function Close-ResolvedGitHubIssues {
                             "aged-out" { "⏰ Auto-closing: $closeReason`n`n*This issue was automatically closed because the finding has been absent for an extended period.*" }
                             default { "✅ Closing: $closeReason" }
                         }
-                        
+
                         try {
                             & gh issue close $issue.number --comment $closeComment
-                            
+
                             $closedIssues += @{
                                 Number = $issue.number
                                 Title = $issue.title
@@ -344,7 +344,7 @@ function Close-ResolvedGitHubIssues {
                                 Action = $closeType
                                 ClosedAt = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
                             }
-                            
+
                             if ($script:UseCustomLogging) {
                                 Write-CustomLog -Level 'SUCCESS' -Message "Closed issue #$($issue.number): $($issue.title)"
                             } else {
@@ -354,7 +354,7 @@ function Close-ResolvedGitHubIssues {
                         catch {
                             $error = "Failed to close issue #$($issue.number): $($_.Exception.Message)"
                             $errors += $error
-                            
+
                             if ($script:UseCustomLogging) {
                                 Write-CustomLog -Level 'ERROR' -Message $error
                             } else {
@@ -367,7 +367,7 @@ function Close-ResolvedGitHubIssues {
             catch {
                 $error = "Error processing issue #$($issue.number): $($_.Exception.Message)"
                 $errors += $error
-                
+
                 if ($script:UseCustomLogging) {
                     Write-CustomLog -Level 'ERROR' -Message $error
                 } else {
@@ -375,7 +375,7 @@ function Close-ResolvedGitHubIssues {
                 }
             }
         }
-        
+
         # Generate summary
         $summary = @{
             ProcessedIssues = $openIssues.Count
@@ -392,23 +392,23 @@ function Close-ResolvedGitHubIssues {
             Force = $Force.IsPresent
             MaxAge = $MaxAge
         }
-        
+
         # Display summary
         if ($script:UseCustomLogging) {
             Write-CustomLog -Level 'SUCCESS' -Message "Issue closure completed: $($closedIssues.Count) closed, $($skippedIssues.Count) skipped, $($errors.Count) errors"
         } else {
             Write-Host "`n📊 Issue Closure Summary:" -ForegroundColor Cyan
             Write-Host "  📋 Issues processed: $($summary.ProcessedIssues)" -ForegroundColor White
-            
+
             if ($DryRun) {
                 Write-Host "  🔍 Would close: $($summary.ClosedIssues)" -ForegroundColor Yellow
             } else {
                 Write-Host "  ✅ Closed: $($summary.ClosedIssues)" -ForegroundColor Green
             }
-            
+
             Write-Host "  ⏭️  Skipped: $($summary.SkippedIssues)" -ForegroundColor Gray
             Write-Host "  ❌ Errors: $($summary.Errors)" -ForegroundColor Red
-            
+
             if ($closedIssues.Count -gt 0) {
                 Write-Host "`n🎯 Closed Issues:" -ForegroundColor Green
                 foreach ($closed in $closedIssues | Select-Object -First 10) {
@@ -419,7 +419,7 @@ function Close-ResolvedGitHubIssues {
                 }
             }
         }
-        
+
         return $summary
     }
     catch {

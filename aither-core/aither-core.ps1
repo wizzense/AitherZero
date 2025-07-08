@@ -49,20 +49,20 @@ param(
     [switch]$Force,
     [switch]$NonInteractive,
     [switch]$Help,
-    
+
     [Parameter(HelpMessage = 'Run first-time setup wizard')]
     [switch]$Setup,
-    
+
     [Parameter(HelpMessage = 'Installation profile: minimal, developer, full, or interactive')]
     [ValidateSet('minimal', 'developer', 'full', 'interactive')]
     [string]$InstallationProfile = 'interactive',
-    
+
     [Parameter(HelpMessage = 'Force enhanced UI experience with StartupExperience module')]
     [switch]$EnhancedUI,
-    
+
     [Parameter(HelpMessage = 'Force classic menu experience with Show-DynamicMenu')]
     [switch]$ClassicUI,
-    
+
     [Parameter(HelpMessage = 'UI preference mode')]
     [ValidateSet('auto', 'enhanced', 'classic')]
     [string]$UIMode = 'auto'
@@ -120,18 +120,18 @@ if ($Help) {
 function Initialize-BackwardCompatibilityLayer {
     [CmdletBinding()]
     param()
-    
+
     # Use Write-CustomLog only if available, otherwise use Write-Verbose
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog "Initializing backward compatibility layer..." -Level DEBUG
     } else {
         Write-Verbose "Initializing backward compatibility layer..."
     }
-    
+
     # Ensure legacy module aliases are available
     $legacyModuleAliases = @{
         'CoreApp' = 'LabRunner'
-        'CoreApplication' = 'LabRunner' 
+        'CoreApplication' = 'LabRunner'
         'InfrastructureProvider' = 'OpenTofuProvider'
         'CredentialManager' = 'SecureCredentials'
         'ConnectionManager' = 'RemoteConnection'
@@ -140,7 +140,7 @@ function Initialize-BackwardCompatibilityLayer {
         'ScriptExecutor' = 'ScriptManager'
         'TestRunner' = 'TestingFramework'
     }
-    
+
     # Create backward compatibility aliases
     foreach ($alias in $legacyModuleAliases.GetEnumerator()) {
         try {
@@ -162,10 +162,10 @@ function Initialize-BackwardCompatibilityLayer {
             }
         }
     }
-    
+
     # Initialize legacy function mappings
     Initialize-LegacyFunctionMappings
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog "Backward compatibility layer initialized successfully" -Level DEBUG
     } else {
@@ -176,7 +176,7 @@ function Initialize-BackwardCompatibilityLayer {
 function Initialize-LegacyFunctionMappings {
     [CmdletBinding()]
     param()
-    
+
     # Map legacy function names to new consolidated functions
     $legacyFunctionMappings = @{
         'Start-CoreApplication' = 'Start-LabRunner'
@@ -189,7 +189,7 @@ function Initialize-LegacyFunctionMappings {
         'Start-CredentialManagement' = 'Start-SecureCredentials'
         'Get-CredentialStatus' = 'Get-SecureCredentialStatus'
     }
-    
+
     foreach ($mapping in $legacyFunctionMappings.GetEnumerator()) {
         try {
             # Check if the new function exists
@@ -199,10 +199,10 @@ function Initialize-LegacyFunctionMappings {
 function $($mapping.Key) {
     [CmdletBinding()]
     param()
-    
+
     Write-CustomLog "Legacy function $($mapping.Key) called - redirecting to $($mapping.Value)" -Level WARN
     Write-Warning "Function $($mapping.Key) is deprecated. Use $($mapping.Value) instead."
-    
+
     # Forward all parameters to the new function
     & $($mapping.Value) @PSBoundParameters
 }
@@ -227,13 +227,13 @@ function $($mapping.Key) {
 function Initialize-ModuleStatusTracking {
     [CmdletBinding()]
     param()
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog "Initializing unified module status tracking..." -Level DEBUG
     } else {
         Write-Verbose "Initializing unified module status tracking..."
     }
-    
+
     # Initialize module status registry
     $script:ModuleStatusRegistry = @{
         CoreModules = @{}
@@ -241,7 +241,7 @@ function Initialize-ModuleStatusTracking {
         LoadingStats = $script:ModuleLoadingStats
         LastUpdate = Get-Date
     }
-    
+
     # Populate core module status
     foreach ($moduleName in $coreModules) {
         $moduleInfo = Get-Module -Name $moduleName -ErrorAction SilentlyContinue
@@ -255,7 +255,7 @@ function Initialize-ModuleStatusTracking {
             Category = 'Core'
         }
     }
-    
+
     # Populate consolidated module status
     foreach ($moduleName in $consolidatedModules) {
         $moduleInfo = Get-Module -Name $moduleName -ErrorAction SilentlyContinue
@@ -269,7 +269,7 @@ function Initialize-ModuleStatusTracking {
             Category = 'Consolidated'
         }
     }
-    
+
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         Write-CustomLog "Module status tracking initialized for $($script:ModuleStatusRegistry.CoreModules.Count + $script:ModuleStatusRegistry.ConsolidatedModules.Count) modules" -Level DEBUG
     } else {
@@ -283,20 +283,20 @@ function Get-ConsolidatedModuleStatus {
         [string]$ModuleName,
         [switch]$Detailed
     )
-    
+
     if (-not $script:ModuleStatusRegistry) {
         Write-Warning "Module status tracking not initialized"
         return
     }
-    
+
     # Update registry with current state
     $script:ModuleStatusRegistry.LastUpdate = Get-Date
-    
+
     if ($ModuleName) {
         # Return specific module status
-        $moduleStatus = $script:ModuleStatusRegistry.CoreModules[$ModuleName] ?? 
+        $moduleStatus = $script:ModuleStatusRegistry.CoreModules[$ModuleName] ??
                        $script:ModuleStatusRegistry.ConsolidatedModules[$ModuleName]
-        
+
         if ($moduleStatus) {
             if ($Detailed) {
                 return $moduleStatus
@@ -316,7 +316,7 @@ function Get-ConsolidatedModuleStatus {
     } else {
         # Return all module statuses
         $allModules = @()
-        
+
         foreach ($module in $script:ModuleStatusRegistry.CoreModules.Values) {
             $allModules += if ($Detailed) { $module } else {
                 [PSCustomObject]@{
@@ -328,7 +328,7 @@ function Get-ConsolidatedModuleStatus {
                 }
             }
         }
-        
+
         foreach ($module in $script:ModuleStatusRegistry.ConsolidatedModules.Values) {
             $allModules += if ($Detailed) { $module } else {
                 [PSCustomObject]@{
@@ -340,7 +340,7 @@ function Get-ConsolidatedModuleStatus {
                 }
             }
         }
-        
+
         return $allModules
     }
 }
@@ -348,47 +348,47 @@ function Get-ConsolidatedModuleStatus {
 function Show-ModuleLoadingSummary {
     [CmdletBinding()]
     param()
-    
+
     if (-not $script:ModuleLoadingStats) {
         Write-Warning "Module loading statistics not available"
         return
     }
-    
+
     $stats = $script:ModuleLoadingStats
     $totalModules = $stats.CoreModules.Total + $stats.ConsolidatedModules.Total
     $totalLoaded = $stats.CoreModules.Loaded + $stats.ConsolidatedModules.Loaded
     $totalFailed = $stats.CoreModules.Failed + $stats.ConsolidatedModules.Failed
-    
+
     Write-Host ""
     Write-Host "=" * 70 -ForegroundColor Cyan
     Write-Host " AitherZero Module Loading Summary" -ForegroundColor Cyan
     Write-Host "=" * 70 -ForegroundColor Cyan
     Write-Host ""
-    
+
     Write-Host "📊 Overall Statistics:" -ForegroundColor Yellow
     Write-Host "   Total Modules: $totalModules" -ForegroundColor White
     Write-Host "   Successfully Loaded: $totalLoaded" -ForegroundColor Green
     Write-Host "   Failed to Load: $totalFailed" -ForegroundColor Red
     Write-Host "   Success Rate: $([math]::Round(($totalLoaded / $totalModules) * 100, 1))%" -ForegroundColor Cyan
     Write-Host ""
-    
+
     Write-Host "🔧 Core Infrastructure Modules:" -ForegroundColor Yellow
     Write-Host "   Loaded: $($stats.CoreModules.Loaded)/$($stats.CoreModules.Total)" -ForegroundColor White
     Write-Host "   Status: $(if ($stats.CoreModules.Failed -eq 0) { 'All Critical Modules Loaded' } else { 'Some Core Modules Failed' })" -ForegroundColor $(if ($stats.CoreModules.Failed -eq 0) { 'Green' } else { 'Red' })
     Write-Host ""
-    
+
     Write-Host "🚀 Consolidated Feature Modules:" -ForegroundColor Yellow
     Write-Host "   Loaded: $($stats.ConsolidatedModules.Loaded)/$($stats.ConsolidatedModules.Total)" -ForegroundColor White
     Write-Host "   Status: $(if ($stats.ConsolidatedModules.Loaded -gt 0) { 'Feature Modules Available' } else { 'No Feature Modules Loaded' })" -ForegroundColor $(if ($stats.ConsolidatedModules.Loaded -gt 0) { 'Green' } else { 'Yellow' })
     Write-Host ""
-    
+
     if ($stats.CoreModules.Failed -gt 0 -or $stats.ConsolidatedModules.Failed -gt 0) {
         Write-Host "⚠️  Module Loading Issues:" -ForegroundColor Red
         Write-Host "   Some modules failed to load. Run with -Verbosity detailed for more information." -ForegroundColor Yellow
         Write-Host "   Use Get-ConsolidatedModuleStatus -Detailed to see specific module details." -ForegroundColor Yellow
         Write-Host ""
     }
-    
+
     Write-Host "=" * 70 -ForegroundColor Cyan
 }
 
@@ -559,7 +559,7 @@ if (Test-Path $releaseModulesPath) {
     Write-Verbose "Using release package modules path: $env:PWSH_MODULES_PATH"
 } elseif (Test-Path $devModulesPath) {
     # Development structure: modules are in aither-core/modules
-    $env:PWSH_MODULES_PATH = $devModulesPath  
+    $env:PWSH_MODULES_PATH = $devModulesPath
     Write-Verbose "Using development modules path: $env:PWSH_MODULES_PATH"
 } else {
     # Neither found - this is an error
@@ -589,7 +589,7 @@ if (-not $PSBoundParameters.ContainsKey('ConfigFile')) {
         (Join-Path $PSScriptRoot "configs" "default-config.json"),         # Alternative: relative to script
         (Join-Path $repoRoot "aither-core" "default-config.json")          # Dev fallback
     )
-    
+
     $ConfigFile = $null
     foreach ($configPath in $configPaths) {
         if (Test-Path $configPath) {
@@ -598,7 +598,7 @@ if (-not $PSBoundParameters.ContainsKey('ConfigFile')) {
             break
         }
     }
-    
+
     # If no config found, use the standard location (will be created or handled later)
     if (-not $ConfigFile) {
         $ConfigFile = Join-Path $repoRoot "configs" "default-config.json"
@@ -663,7 +663,7 @@ if (Test-Path $progressPath) {
 # Import required modules
 try {
     Write-Verbose 'Importing core modules...'
-    
+
     # Show startup progress if not in quiet mode
     if (-not $Quiet -and $Verbosity -ne 'silent') {
         Show-SimpleProgress -Message "Starting AitherZero Infrastructure Automation" -Type Start
@@ -671,20 +671,20 @@ try {
 
     # Standardized Module Loading Architecture
     # Uses AitherCore.psm1 orchestration approach for consistency and reliability
-    
+
     Write-Verbose "Initializing standardized module loading architecture..."
-    
+
     # Import AitherCore orchestration module
     $aitherCorePath = Join-Path $PSScriptRoot "AitherCore.psm1"
     if (Test-Path $aitherCorePath) {
         try {
             Write-Verbose "Loading AitherCore orchestration module..."
             Import-Module $aitherCorePath -Force -Global -ErrorAction Stop
-            
+
             # Initialize the complete CoreApp ecosystem
             Write-Verbose "Initializing CoreApp ecosystem..."
             $initResult = Initialize-CoreApplication -RequiredOnly:$false
-            
+
             if ($initResult) {
                 Write-Verbose "AitherCore ecosystem initialized successfully"
                 $moduleLoadingSuccess = $true
@@ -708,18 +708,18 @@ try {
             $moduleStatus = Get-CoreModuleStatus
             $loadedCount = ($moduleStatus | Where-Object { $_.Loaded }).Count
             $availableCount = ($moduleStatus | Where-Object { $_.Available }).Count
-            
+
             Write-Verbose "Standardized module loading completed successfully"
             Write-Verbose "Modules loaded: $loadedCount/$availableCount available"
-            
+
             # Store module loading statistics for later use (compatible format)
             $script:ModuleLoadingStats = @{
-                CoreModules = @{ 
+                CoreModules = @{
                     Total = ($moduleStatus | Where-Object { $_.Required }).Count
                     Loaded = ($moduleStatus | Where-Object { $_.Required -and $_.Loaded }).Count
                     Failed = ($moduleStatus | Where-Object { $_.Required -and (-not $_.Loaded) }).Count
                 }
-                ConsolidatedModules = @{ 
+                ConsolidatedModules = @{
                     Total = ($moduleStatus | Where-Object { -not $_.Required }).Count
                     Loaded = ($moduleStatus | Where-Object { -not $_.Required -and $_.Loaded }).Count
                     Failed = ($moduleStatus | Where-Object { -not $_.Required -and (-not $_.Loaded) }).Count
@@ -759,13 +759,13 @@ try {
     } else {
         Write-Host "✓ Core runner started with consolidated module architecture" -ForegroundColor Green
     }
-    
+
     # Initialize backward compatibility layer
     Initialize-BackwardCompatibilityLayer
-    
+
     # Initialize unified module status tracking
     Initialize-ModuleStatusTracking
-    
+
     # Show module loading summary if verbosity allows
     if ($Verbosity -in @('normal', 'detailed') -and -not $NonInteractive) {
         Show-ModuleLoadingSummary
@@ -791,14 +791,14 @@ try {
     Write-Host "  • Use individual module imports as fallback" -ForegroundColor White
     Write-Host "  • Check logs for specific module loading failures" -ForegroundColor White
     Write-Host "" -ForegroundColor White
-    
+
     # Try to show partial module loading statistics if available
     if ($script:ModuleLoadingStats) {
         Write-Host "📊 Partial Loading Statistics:" -ForegroundColor Cyan
         Write-Host "  Core Modules Loaded: $($script:ModuleLoadingStats.CoreModules.Loaded)" -ForegroundColor White
         Write-Host "  Consolidated Modules Loaded: $($script:ModuleLoadingStats.ConsolidatedModules.Loaded)" -ForegroundColor White
     }
-    
+
     exit 1
 }
 
@@ -810,7 +810,7 @@ try {
     if (Test-Path $ConfigFile) {
         Write-CustomLog "Loading configuration from: $ConfigFile" -Level DEBUG
         $configObject = Get-Content $ConfigFile -Raw | ConvertFrom-Json
-        
+
         # Convert PSCustomObject to Hashtable for proper parameter binding
         # This prevents "Cannot convert PSCustomObject to Hashtable" errors
         if ($configObject -is [PSCustomObject]) {
@@ -844,16 +844,16 @@ try {
     if (-not (Test-Path $dynamicMenuPath)) {
         $dynamicMenuPath = Join-Path $repoRoot 'aither-core' 'shared' 'Show-DynamicMenu.ps1'
     }
-    
+
     if (Test-Path $dynamicMenuPath) {
         Write-CustomLog "Loading dynamic menu system from: $dynamicMenuPath" -Level DEBUG
         . $dynamicMenuPath
     }
-    
+
     # Check for StartupExperience module availability
     $startupExperienceAvailable = $false
     $startupExperiencePath = Join-Path $env:PWSH_MODULES_PATH 'StartupExperience'
-    
+
     if (Test-Path $startupExperiencePath) {
         try {
             Import-Module $startupExperiencePath -Force -ErrorAction Stop
@@ -863,7 +863,7 @@ try {
             Write-CustomLog "Failed to load StartupExperience module: $_" -Level WARN
         }
     }
-    
+
     # Check config for UI preferences if not explicitly set
     if ($UIMode -eq 'auto' -and $config.UIPreferences) {
         $configUIMode = $config.UIPreferences.Mode
@@ -872,10 +872,10 @@ try {
             Write-CustomLog "Using UI mode from configuration: $UIMode" -Level DEBUG
         }
     }
-    
+
     # Determine which UI to use based on availability and preference
     $useEnhancedUI = $false
-    
+
     if ($UIMode -eq 'enhanced') {
         if ($startupExperienceAvailable) {
             $useEnhancedUI = $true
@@ -889,7 +889,7 @@ try {
     } elseif ($UIMode -eq 'auto') {
         # Auto mode - check config preference
         $defaultUI = if ($config.UIPreferences.DefaultUI) { $config.UIPreferences.DefaultUI } else { 'enhanced' }
-        
+
         # Use enhanced if available and we're in interactive mode
         if ($startupExperienceAvailable -and -not $NonInteractive -and -not $Auto -and -not $Scripts) {
             $useEnhancedUI = ($defaultUI -eq 'enhanced')
@@ -901,12 +901,12 @@ try {
     if ($Setup) {
         # Run setup wizard
         Write-CustomLog "Running setup wizard with profile: $InstallationProfile" -Level INFO
-        
+
         $setupWizardPath = Join-Path $env:PWSH_MODULES_PATH 'SetupWizard'
         if (Test-Path $setupWizardPath) {
             try {
                 Import-Module $setupWizardPath -Force
-                
+
                 # Build setup parameters
                 $setupParams = @{}
                 if ($InstallationProfile -ne 'interactive') {
@@ -917,10 +917,10 @@ try {
                     # Set environment variable for child processes
                     $env:NO_PROMPT = 'true'
                 }
-                
+
                 $result = Start-IntelligentSetup @setupParams
                 Write-Host "✓ Setup completed successfully" -ForegroundColor Green
-                
+
                 # Show clear next steps
                 Write-Host ""
                 Write-Host "🚀 SETUP COMPLETE! HERE'S HOW TO USE AITHERZERO:" -ForegroundColor Green
@@ -937,7 +937,7 @@ try {
                 Write-Host "  ./Start-AitherZero.ps1 -Auto" -ForegroundColor Yellow
                 Write-Host ""
                 Write-Host "=" * 60 -ForegroundColor Green
-                
+
                 # After setup, if non-interactive, launch into auto mode
                 if ($NonInteractive) {
                     Write-CustomLog "Non-interactive setup complete, launching application in auto mode" -Level INFO
@@ -965,7 +965,7 @@ try {
             Write-Error "SetupWizard module not found at: $setupWizardPath"
             exit 1
         }
-        
+
         # If we didn't return above, continue to launch the app
         if (-not $Auto -and -not $Scripts -and -not $NonInteractive) {
             # Fall through to interactive mode
@@ -975,11 +975,11 @@ try {
     } elseif ($Scripts) {
         # Run specific modules/scripts
         Write-CustomLog "Running specific components: $Scripts" -Level INFO
-        
+
         $componentList = $Scripts -split ','
         foreach ($componentName in $componentList) {
             $componentName = $componentName.Trim()
-            
+
             # Try to find and run as module first
             $modulePath = Join-Path $env:PWSH_MODULES_PATH $componentName
             if (Test-Path $modulePath) {
@@ -987,7 +987,7 @@ try {
                 try {
                     Import-Module $modulePath -Force
                     Write-Host "✓ Module loaded: $componentName" -ForegroundColor Green
-                    
+
                     # Try to run default function if exists
                     $defaultFunction = "Start-$componentName"
                     if (Get-Command $defaultFunction -ErrorAction SilentlyContinue) {
@@ -1006,7 +1006,7 @@ try {
                     (Join-Path $repoRoot "aither-core" "scripts"),
                     (Join-Path $repoRoot "scripts")
                 )
-                
+
                 $scriptFound = $false
                 foreach ($scriptsPath in $scriptsPaths) {
                     $scriptPath = Join-Path $scriptsPath "$componentName.ps1"
@@ -1019,7 +1019,7 @@ try {
                         break
                     }
                 }
-                
+
                 if (-not $scriptFound) {
                     Write-CustomLog "Component not found: $componentName" -Level WARN
                 }
@@ -1028,10 +1028,10 @@ try {
     } elseif ($Auto) {
         # Auto mode - run all default operations
         Write-CustomLog 'Running in automatic mode' -Level INFO
-        
+
         # Define default auto-mode modules
         $autoModules = @('SetupWizard', 'SystemMonitoring', 'BackupManager')
-        
+
         foreach ($moduleName in $autoModules) {
             $modulePath = Join-Path $env:PWSH_MODULES_PATH $moduleName
             if (Test-Path $modulePath) {
@@ -1058,20 +1058,20 @@ try {
             # Interactive mode - choose UI based on availability and preference
             if ($useEnhancedUI) {
                 Write-CustomLog 'Starting enhanced interactive mode with StartupExperience' -Level INFO
-                
+
                 try {
                     # Use enhanced startup experience
                     $startupParams = @{}
-                    
+
                     # Pass configuration if available
                     if ($ConfigFile -and (Test-Path $ConfigFile)) {
                         $profileName = [System.IO.Path]::GetFileNameWithoutExtension($ConfigFile)
                         $startupParams['Profile'] = $profileName
                     }
-                    
+
                     # Start enhanced interactive mode
                     Start-InteractiveMode @startupParams
-                    
+
                 } catch {
                     Write-CustomLog "Enhanced UI failed: $_. Falling back to classic menu." -Level WARN
                     Write-Host "⚠️  Enhanced UI encountered an error. Switching to classic menu..." -ForegroundColor Yellow
@@ -1082,15 +1082,15 @@ try {
                     $useEnhancedUI = $false
                 }
             }
-            
+
             # If not using enhanced UI or if it failed, use classic menu
             if (-not $useEnhancedUI) {
                 Write-CustomLog 'Starting interactive mode with classic dynamic menu' -Level INFO
-                
+
                 # Check if this is first run
                 $firstRunFile = Join-Path $env:APPDATA 'AitherZero' '.firstrun'
                 $isFirstRun = -not (Test-Path $firstRunFile)
-                
+
                 if ($isFirstRun) {
                     # Create first run marker
                     $firstRunDir = Split-Path $firstRunFile -Parent
@@ -1099,13 +1099,13 @@ try {
                     }
                     New-Item -ItemType File -Path $firstRunFile -Force | Out-Null
                 }
-                
+
                 # Show dynamic menu
                 if (Get-Command Show-DynamicMenu -ErrorAction SilentlyContinue) {
                     Show-DynamicMenu -Title "Infrastructure Automation Platform" -Config $config -FirstRun:$isFirstRun
                 } else {
                     Write-CustomLog 'Dynamic menu system not available, falling back to basic menu' -Level WARN
-                    
+
                     # Fallback basic menu
                     Write-Host "`n" + "=" * 60 -ForegroundColor Cyan
                     Write-Host " AitherZero - Infrastructure Automation" -ForegroundColor Cyan

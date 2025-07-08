@@ -21,31 +21,31 @@ function Backup-Configuration {
     param(
         [Parameter()]
         [string]$Path,
-        
+
         [Parameter()]
         [string]$Reason = "Manual backup",
-        
+
         [Parameter()]
         [switch]$IncludeSchemas,
-        
+
         [Parameter()]
         [switch]$Compress
     )
-    
+
     try {
         # Generate backup path if not provided
         if (-not $Path) {
             $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
             $configDir = Split-Path $script:ConfigurationStore.StorePath -Parent
             $backupDir = Join-Path $configDir 'backups'
-            
+
             if (-not (Test-Path $backupDir)) {
                 New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
             }
-            
+
             $Path = Join-Path $backupDir "config-backup-$timestamp.json"
         }
-        
+
         if ($PSCmdlet.ShouldProcess($Path, "Create configuration backup")) {
             # Prepare backup data
             $backupData = @{
@@ -60,29 +60,29 @@ function Backup-Configuration {
                 }
                 Configuration = $script:ConfigurationStore.Clone()
             }
-            
+
             # Remove schemas if not requested
             if (-not $IncludeSchemas) {
                 $backupData.Configuration.Remove('Schemas')
             }
-            
+
             # Ensure backup directory exists
             $backupDir = Split-Path $Path -Parent
             if ($backupDir -and -not (Test-Path $backupDir)) {
                 New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
             }
-            
+
             # Save backup
             if ($Compress) {
                 $json = $backupData | ConvertTo-Json -Depth 10 -Compress
             } else {
                 $json = $backupData | ConvertTo-Json -Depth 10
             }
-            
+
             Set-Content -Path $Path -Value $json -Encoding UTF8
-            
+
             Write-CustomLog -Level 'SUCCESS' -Message "Configuration backup created: $Path"
-            
+
             # Publish event
             if (Get-Command 'Publish-TestEvent' -ErrorAction SilentlyContinue) {
                 Publish-TestEvent -EventName 'ConfigurationBackup' -EventData @{
@@ -93,7 +93,7 @@ function Backup-Configuration {
                     Timestamp = Get-Date
                 }
             }
-            
+
             return @{
                 BackupPath = $Path
                 BackupSize = (Get-Item $Path).Length
@@ -101,7 +101,7 @@ function Backup-Configuration {
                 CreatedAt = Get-Date
             }
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to create configuration backup: $_"
         throw

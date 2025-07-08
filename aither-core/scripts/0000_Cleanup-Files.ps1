@@ -32,15 +32,15 @@ Invoke-LabStep -Config $Config -Body {
         } else {
             Get-CrossPlatformTempPath
         }
-        
+
         $localBase = [System.Environment]::ExpandEnvironmentVariables($localBase)
-        
+
         # Only proceed with repo cleanup if RepoUrl is provided
         if ($Config.RepoUrl) {
             $repoName = ($Config.RepoUrl -split '/')[-1] -replace '\.git$', ''
             if ($repoName) {
                 $repoPath = Join-Path $localBase $repoName
-                
+
                 if (Test-Path $repoPath) {
                     Write-CustomLog "Removing repo path '$repoPath'..."
                     Remove-Item -Recurse -Force -Path $repoPath -ErrorAction Stop
@@ -53,7 +53,7 @@ Invoke-LabStep -Config $Config -Body {
         } else {
             Write-CustomLog "No RepoUrl provided; skipping repo cleanup."
         }
-        
+
         $infraPath = if ($Config.InfraRepoPath) { $Config.InfraRepoPath } else { 'C:/Temp/base-infra' }
         if (Test-Path $infraPath) {
             Write-CustomLog "Removing infra path '$infraPath'..."
@@ -61,7 +61,7 @@ Invoke-LabStep -Config $Config -Body {
         } else {
             Write-CustomLog "Infra path '$infraPath' not found; skipping."
         }
-        
+
         Write-CustomLog 'Cleanup completed successfully.'
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Cleanup failed: $($_.Exception.Message)"
@@ -78,4 +78,3 @@ Invoke-LabStep -Config $Config -Body {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-

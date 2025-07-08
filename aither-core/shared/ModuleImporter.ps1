@@ -9,7 +9,7 @@ function Import-AitherCoreModules {
 
         [Parameter()]
         [switch]$SuppressWarnings,
-        
+
         [Parameter()]
         [switch]$Force
     )
@@ -27,20 +27,20 @@ function Import-AitherCoreModules {
         $ProjectRoot = Find-ProjectRoot -StartPath $PSScriptRoot
 
         $WarningPreference = $oldWarningPreference
-        
+
         # Use standardized AitherCore orchestration approach
         $aitherCorePath = Join-Path $ProjectRoot "aither-core/AitherCore.psm1"
         if (Test-Path $aitherCorePath) {
             try {
                 # Import AitherCore orchestration module
                 Import-Module $aitherCorePath -Force:$Force -Global -ErrorAction Stop
-                
+
                 # Determine loading strategy based on requirements
                 $requireOnly = $RequiredModules.Count -eq 0
-                
+
                 # Use AitherCore's sophisticated module loading
                 $result = Import-CoreModules -RequiredOnly:$requireOnly -Force:$Force
-                
+
                 return @{
                     ProjectRoot = $ProjectRoot
                     ImportedModules = @{}
@@ -56,7 +56,7 @@ function Import-AitherCoreModules {
 
         # Legacy fallback approach (only used when AitherCore orchestration fails)
         Write-Warning "Using legacy module import approach as fallback"
-        
+
         # Import core modules (always needed)
         $coreModules = @('LabRunner', 'Logging')
         $allModules = $coreModules + $RequiredModules | Sort-Object -Unique

@@ -11,23 +11,23 @@
 function Initialize-ProgressTracking {
     [CmdletBinding()]
     param()
-    
+
     # Check if ProgressTracking module is available
     $script:ProgressTrackingAvailable = $false
     $script:ProgressTrackingLoaded = $false
-    
+
     try {
         # Try to find the ProgressTracking module
         $progressModulePath = Join-Path $PSScriptRoot '../../ProgressTracking'
         if (Test-Path $progressModulePath) {
             # Attempt to import the module
             Import-Module $progressModulePath -Force -ErrorAction SilentlyContinue
-            
+
             # Verify it loaded successfully
             if (Get-Module -Name ProgressTracking) {
                 $script:ProgressTrackingAvailable = $true
                 $script:ProgressTrackingLoaded = $true
-                
+
                 if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
                     Write-CustomLog -Level 'INFO' -Message 'ProgressTracking module loaded successfully for PatchManager'
                 }
@@ -46,7 +46,7 @@ function Test-ProgressTrackingAvailable {
     #>
     [CmdletBinding()]
     param()
-    
+
     return $script:ProgressTrackingLoaded -eq $true
 }
 
@@ -65,13 +65,13 @@ function Start-PatchProgress {
     param(
         [Parameter(Mandatory)]
         [string]$OperationName,
-        
+
         [Parameter(Mandatory)]
         [int]$TotalSteps,
-        
+
         [switch]$ShowETA
     )
-    
+
     if (Test-ProgressTrackingAvailable) {
         try {
             $progressId = Start-ProgressOperation -OperationName $OperationName `
@@ -85,7 +85,7 @@ function Start-PatchProgress {
             return $null
         }
     }
-    
+
     return $null
 }
 
@@ -97,32 +97,32 @@ function Update-PatchProgress {
     [CmdletBinding()]
     param(
         [string]$OperationId,
-        
+
         [string]$StepName,
-        
+
         [int]$CurrentStep,
-        
+
         [switch]$IncrementStep
     )
-    
+
     if ($OperationId -and (Test-ProgressTrackingAvailable)) {
         try {
             $params = @{
                 OperationId = $OperationId
             }
-            
+
             if ($StepName) {
                 $params.StepName = $StepName
             }
-            
+
             if ($PSBoundParameters.ContainsKey('CurrentStep')) {
                 $params.CurrentStep = $CurrentStep
             }
-            
+
             if ($IncrementStep) {
                 $params.IncrementStep = $true
             }
-            
+
             Update-ProgressOperation @params
         } catch {
             Write-Verbose "Failed to update progress: $($_.Exception.Message)"
@@ -138,10 +138,10 @@ function Complete-PatchProgress {
     [CmdletBinding()]
     param(
         [string]$OperationId,
-        
+
         [switch]$ShowSummary
     )
-    
+
     if ($OperationId -and (Test-ProgressTrackingAvailable)) {
         try {
             Complete-ProgressOperation -OperationId $OperationId -ShowSummary:$ShowSummary
@@ -160,11 +160,11 @@ function Write-PatchProgressLog {
     param(
         [Parameter(Mandatory)]
         [string]$Message,
-        
+
         [ValidateSet('Info', 'Warning', 'Error', 'Success')]
         [string]$Level = 'Info'
     )
-    
+
     if ((Test-ProgressTrackingAvailable) -and (Get-Command Write-ProgressLog -ErrorAction SilentlyContinue)) {
         Write-ProgressLog -Message $Message -Level $Level
     } elseif (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {

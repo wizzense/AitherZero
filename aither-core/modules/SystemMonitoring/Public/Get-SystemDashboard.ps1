@@ -30,17 +30,17 @@
 
 .EXAMPLE
     Get-SystemDashboard
-    
+
     Shows basic system dashboard for the local system.
 
 .EXAMPLE
     Get-SystemDashboard -System all -Timeframe 4h -Detailed
-    
+
     Shows detailed dashboard for all systems with 4-hour historical data.
 
 .EXAMPLE
     Get-SystemDashboard -Export -Format JSON
-    
+
     Exports dashboard data in JSON format.
 
 .NOTES
@@ -54,17 +54,17 @@ function Get-SystemDashboard {
         [Parameter()]
         [ValidateSet('all', 'local')]
         [string]$System = 'local',
-        
+
         [Parameter()]
         [ValidateSet('1h', '4h', '24h', '7d')]
         [string]$Timeframe = '1h',
-        
+
         [Parameter()]
         [switch]$Detailed,
-        
+
         [Parameter()]
         [switch]$Export,
-        
+
         [Parameter()]
         [ValidateSet('Console', 'JSON', 'HTML')]
         [string]$Format = 'Console'
@@ -72,7 +72,7 @@ function Get-SystemDashboard {
 
     begin {
         Write-CustomLog -Message "Generating system dashboard for $System (timeframe: $Timeframe)" -Level "INFO"
-        
+
         $dashboardData = @{
             Timestamp = Get-Date
             System = $System
@@ -88,7 +88,7 @@ function Get-SystemDashboard {
         try {
             # Collect system performance metrics
             Write-CustomLog -Message "Collecting system performance metrics..." -Level "INFO"
-            
+
             # CPU Metrics - Platform specific
             if ($IsLinux -or (-not $IsWindows)) {
                 # Linux CPU information
@@ -97,7 +97,7 @@ function Get-SystemDashboard {
                 try {
                     $cpuModelName = (Get-Content /proc/cpuinfo | Select-String "model name" | Select-Object -First 1) -replace "model name\s*:\s*", ""
                 } catch { $cpuModelName = "Unknown CPU" }
-                
+
                 $cpuInfo = @{
                     Name = $cpuModelName
                     LoadPercentage = $cpuUsage
@@ -115,19 +115,19 @@ function Get-SystemDashboard {
                     }
                 }
             }
-            
+
             # Memory Metrics
             $memoryInfo = Get-MemoryInfo
-            
+
             # Disk Metrics
             $diskInfo = Get-DiskInfo
-            
+
             # Network Metrics
             $networkInfo = Get-NetworkInfo
-            
+
             # Service Status
             $serviceInfo = Get-CriticalServiceStatus
-            
+
             # Build metrics object
             $dashboardData.Metrics = @{
                 CPU = @{
@@ -146,13 +146,13 @@ function Get-SystemDashboard {
                 Disk = $diskInfo
                 Network = $networkInfo
             }
-            
+
             # Generate alerts based on thresholds
             $dashboardData.Alerts = Get-CurrentAlerts -Metrics $dashboardData.Metrics
-            
+
             # Service status
             $dashboardData.Services = $serviceInfo
-            
+
             # Generate summary
             $dashboardData.Summary = @{
                 OverallHealth = Get-OverallHealthStatus -Metrics $dashboardData.Metrics -Services $serviceInfo
@@ -161,7 +161,7 @@ function Get-SystemDashboard {
                 RunningServices = ($serviceInfo | Where-Object { $_.Status -eq 'Running' }).Count
                 SystemUptime = Get-SystemUptime
             }
-            
+
             # Output based on format
             switch ($Format) {
                 'Console' {
@@ -186,9 +186,9 @@ function Get-SystemDashboard {
                     return $htmlOutput
                 }
             }
-            
+
             return $dashboardData
-            
+
         } catch {
             Write-CustomLog -Message "Failed to generate system dashboard: $($_.Exception.Message)" -Level "ERROR"
             throw
@@ -224,11 +224,11 @@ function Get-MemoryInfo {
                     $memInfo[$matches[1]] = [int]$matches[2]
                 }
             }
-            
+
             $totalKB = $memInfo.MemTotal
             $freeKB = $memInfo.MemFree
             $availableKB = if ($memInfo.ContainsKey('MemAvailable')) { $memInfo.MemAvailable } else { $freeKB }
-            
+
             $totalGB = [math]::Round($totalKB / 1MB, 2)
             $freeGB = [math]::Round($availableKB / 1MB, 2)
             $usedGB = $totalGB - $freeGB
@@ -256,7 +256,7 @@ function Get-MemoryInfo {
             $usagePercent = 50.0
         }
     }
-    
+
     return @{
         TotalGB = $totalGB
         UsedGB = $usedGB
@@ -267,7 +267,7 @@ function Get-MemoryInfo {
 
 function Get-DiskInfo {
     $diskData = @()
-    
+
     if ($IsLinux -or (-not $IsWindows)) {
         # Linux disk info
         try {
@@ -308,7 +308,7 @@ function Get-DiskInfo {
                 $freeGB = [math]::Round($disk.FreeSpace / 1GB, 2)
                 $usedGB = $totalGB - $freeGB
                 $usagePercent = if ($totalGB -gt 0) { [math]::Round(($usedGB / $totalGB) * 100, 2) } else { 0 }
-                
+
                 $diskData += @{
                     Drive = $disk.DeviceID
                     TotalGB = $totalGB
@@ -330,13 +330,13 @@ function Get-DiskInfo {
             }
         }
     }
-    
+
     return $diskData
 }
 
 function Get-NetworkInfo {
     $networkData = @()
-    
+
     if ($IsWindows) {
         $adapters = Get-CimInstance -ClassName Win32_PerfRawData_Tcpip_NetworkInterface | Where-Object { $_.Name -notmatch "loopback|isatap" }
         foreach ($adapter in $adapters) {
@@ -358,13 +358,13 @@ function Get-NetworkInfo {
             BytesReceived = 0
         }
     }
-    
+
     return $networkData
 }
 
 function Get-CriticalServiceStatus {
     $services = @()
-    
+
     if ($IsWindows) {
         $criticalServices = @('Spooler', 'BITS', 'Themes', 'AudioSrv', 'Dhcp')
         foreach ($serviceName in $criticalServices) {
@@ -391,13 +391,13 @@ function Get-CriticalServiceStatus {
             }
         }
     }
-    
+
     return $services
 }
 
 function Get-AlertStatus {
     param($Value, $Type)
-    
+
     $thresholds = $script:AlertThresholds[$Type]
     if ($Value -ge $thresholds.Critical) { return 'Critical' }
     elseif ($Value -ge $thresholds.High) { return 'High' }
@@ -407,9 +407,9 @@ function Get-AlertStatus {
 
 function Get-CurrentAlerts {
     param($Metrics)
-    
+
     $alerts = @()
-    
+
     # CPU alerts
     if ($Metrics.CPU.Status -ne 'Normal') {
         $alerts += @{
@@ -419,7 +419,7 @@ function Get-CurrentAlerts {
             Timestamp = Get-Date
         }
     }
-    
+
     # Memory alerts
     if ($Metrics.Memory.Status -ne 'Normal') {
         $alerts += @{
@@ -429,7 +429,7 @@ function Get-CurrentAlerts {
             Timestamp = Get-Date
         }
     }
-    
+
     # Disk alerts
     foreach ($disk in $Metrics.Disk) {
         if ($disk.Status -ne 'Normal') {
@@ -441,25 +441,25 @@ function Get-CurrentAlerts {
             }
         }
     }
-    
+
     return $alerts
 }
 
 function Get-OverallHealthStatus {
     param($Metrics, $Services)
-    
+
     $criticalAlerts = Get-CurrentAlerts -Metrics $Metrics | Where-Object { $_.Severity -eq 'Critical' }
     $stoppedServices = $Services | Where-Object { $_.Status -ne 'Running' }
-    
+
     if ($criticalAlerts.Count -gt 0 -or $stoppedServices.Count -gt 0) {
         return 'Critical'
     }
-    
+
     $highAlerts = Get-CurrentAlerts -Metrics $Metrics | Where-Object { $_.Severity -eq 'High' }
     if ($highAlerts.Count -gt 0) {
         return 'Warning'
     }
-    
+
     return 'Healthy'
 }
 
@@ -498,13 +498,13 @@ function Get-SystemUptime {
 
 function Show-ConsoleDashboard {
     param($Data, [switch]$Detailed)
-    
+
     Write-Host "`n🖥️  SYSTEM DASHBOARD - $($Data.System.ToUpper())" -ForegroundColor Cyan
     Write-Host "=" * 60 -ForegroundColor Cyan
     Write-Host "📊 Generated: $($Data.Timestamp.ToString('yyyy-MM-dd HH:mm:ss'))" -ForegroundColor Gray
     Write-Host "⏱️  Timeframe: $($Data.Timeframe)" -ForegroundColor Gray
     Write-Host "🔺 Uptime: $($Data.Summary.SystemUptime)" -ForegroundColor Gray
-    
+
     # Overall Health
     $healthColor = switch ($Data.Summary.OverallHealth) {
         'Healthy' { 'Green' }
@@ -513,7 +513,7 @@ function Show-ConsoleDashboard {
         default { 'White' }
     }
     Write-Host "`n🏥 Overall Health: $($Data.Summary.OverallHealth)" -ForegroundColor $healthColor
-    
+
     # CPU Information
     Write-Host "`n💻 CPU Performance" -ForegroundColor Yellow
     Write-Host "   Processor: $($Data.Metrics.CPU.Name)" -ForegroundColor White
@@ -525,7 +525,7 @@ function Show-ConsoleDashboard {
         'Critical' { 'Red' }
     }
     Write-Host "   Usage: $($Data.Metrics.CPU.Usage)% [$($Data.Metrics.CPU.Status)]" -ForegroundColor $cpuColor
-    
+
     # Memory Information
     Write-Host "`n🧠 Memory Usage" -ForegroundColor Yellow
     Write-Host "   Total: $($Data.Metrics.Memory.TotalGB) GB" -ForegroundColor White
@@ -538,7 +538,7 @@ function Show-ConsoleDashboard {
         'Critical' { 'Red' }
     }
     Write-Host "   Usage: $($Data.Metrics.Memory.UsagePercent)% [$($Data.Metrics.Memory.Status)]" -ForegroundColor $memColor
-    
+
     # Disk Information
     Write-Host "`n💾 Disk Usage" -ForegroundColor Yellow
     foreach ($disk in $Data.Metrics.Disk) {
@@ -550,7 +550,7 @@ function Show-ConsoleDashboard {
         }
         Write-Host "   $($disk.Drive): $($disk.UsedGB)/$($disk.TotalGB) GB ($($disk.UsagePercent)%) [$($disk.Status)]" -ForegroundColor $diskColor
     }
-    
+
     # Alerts
     if ($Data.Alerts.Count -gt 0) {
         Write-Host "`n🚨 Active Alerts ($($Data.Alerts.Count))" -ForegroundColor Red
@@ -566,10 +566,10 @@ function Show-ConsoleDashboard {
     } else {
         Write-Host "`n✅ No Active Alerts" -ForegroundColor Green
     }
-    
+
     # Services Summary
     Write-Host "`n🔧 Services: $($Data.Summary.RunningServices)/$($Data.Summary.TotalServices) Running" -ForegroundColor Yellow
-    
+
     if ($Detailed) {
         Write-Host "`n📋 Service Details" -ForegroundColor Yellow
         foreach ($service in $Data.Services) {
@@ -577,17 +577,17 @@ function Show-ConsoleDashboard {
             Write-Host "   $($service.Name): $($service.Status)" -ForegroundColor $serviceColor
         }
     }
-    
+
     Write-Host "`n" + "=" * 60 -ForegroundColor Cyan
 }
 
 function Convert-SizeToGB {
     param($SizeString)
-    
+
     if ($SizeString -match '(\d+\.?\d*)([KMGT]?)') {
         $number = [double]$matches[1]
         $unit = $matches[2]
-        
+
         switch ($unit) {
             'K' { return [math]::Round($number / 1MB, 2) }
             'M' { return [math]::Round($number / 1KB, 2) }
@@ -601,7 +601,7 @@ function Convert-SizeToGB {
 
 function ConvertTo-HtmlDashboard {
     param($Data)
-    
+
     $html = @"
 <!DOCTYPE html>
 <html lang="en">
@@ -610,97 +610,97 @@ function ConvertTo-HtmlDashboard {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AitherZero System Dashboard</title>
     <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            margin: 0; 
-            padding: 20px; 
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #333;
         }
-        .container { 
-            max-width: 1200px; 
-            margin: 0 auto; 
-            background: white; 
-            border-radius: 12px; 
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             overflow: hidden;
         }
-        .header { 
+        .header {
             background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
-            color: white; 
-            padding: 24px; 
+            color: white;
+            padding: 24px;
             text-align: center;
         }
         .header h1 { margin: 0; font-size: 2.5em; font-weight: 300; }
         .header p { margin: 8px 0 0 0; opacity: 0.9; }
-        .metrics-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-            gap: 24px; 
-            padding: 24px; 
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            padding: 24px;
         }
-        .metric-card { 
-            background: #f8f9fa; 
-            padding: 20px; 
-            border-radius: 8px; 
+        .metric-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
             border-left: 4px solid #4a90e2;
             transition: transform 0.2s ease;
         }
         .metric-card:hover { transform: translateY(-2px); }
-        .metric-title { 
-            font-size: 1.1em; 
-            font-weight: 600; 
-            color: #333; 
+        .metric-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
             margin-bottom: 12px;
             display: flex;
             align-items: center;
         }
-        .metric-value { 
-            font-size: 2em; 
-            font-weight: bold; 
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
             margin-bottom: 8px;
         }
-        .metric-status { 
-            font-size: 0.9em; 
-            padding: 4px 8px; 
-            border-radius: 4px; 
+        .metric-status {
+            font-size: 0.9em;
+            padding: 4px 8px;
+            border-radius: 4px;
             font-weight: 500;
         }
         .status-normal { background: #d4edda; color: #155724; }
         .status-medium { background: #fff3cd; color: #856404; }
         .status-high { background: #f8d7da; color: #721c24; }
         .status-critical { background: #f5c6cb; color: #721c24; }
-        .health-badge { 
-            display: inline-block; 
-            padding: 8px 16px; 
-            border-radius: 20px; 
-            font-weight: 600; 
+        .health-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         .health-healthy { background: #d4edda; color: #155724; }
         .health-warning { background: #fff3cd; color: #856404; }
         .health-critical { background: #f8d7da; color: #721c24; }
-        .alerts-section { 
-            margin: 0 24px 24px 24px; 
-            padding: 20px; 
-            background: #fff; 
-            border-radius: 8px; 
+        .alerts-section {
+            margin: 0 24px 24px 24px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
             border: 1px solid #e9ecef;
         }
-        .alert-item { 
-            padding: 12px; 
-            margin: 8px 0; 
-            border-radius: 6px; 
+        .alert-item {
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 6px;
             border-left: 4px solid;
         }
         .alert-critical { background: #f8d7da; border-left-color: #dc3545; }
         .alert-high { background: #fff3cd; border-left-color: #ffc107; }
         .alert-medium { background: #d1ecf1; border-left-color: #17a2b8; }
-        .footer { 
-            text-align: center; 
-            padding: 20px; 
-            color: #6c757d; 
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
             font-size: 0.9em;
             background: #f8f9fa;
         }
@@ -712,11 +712,11 @@ function ConvertTo-HtmlDashboard {
         <div class="header">
             <h1>🖥️ System Dashboard</h1>
             <p>Generated on $($Data.Timestamp.ToString('yyyy-MM-dd HH:mm:ss')) | System: $($Data.System.ToUpper())</p>
-            <p>Uptime: $($Data.Summary.SystemUptime) | Overall Health: 
+            <p>Uptime: $($Data.Summary.SystemUptime) | Overall Health:
                 <span class="health-badge health-$(($Data.Summary.OverallHealth).ToLower())">$($Data.Summary.OverallHealth)</span>
             </p>
         </div>
-        
+
         <div class="metrics-grid">
             <div class="metric-card">
                 <div class="metric-title">💻 CPU Performance</div>
@@ -734,7 +734,7 @@ function ConvertTo-HtmlDashboard {
                     $($Data.Metrics.CPU.Name) | $($Data.Metrics.CPU.Cores) cores
                 </p>
             </div>
-            
+
             <div class="metric-card">
                 <div class="metric-title">🧠 Memory Usage</div>
                 <div class="metric-value" style="color: $(
@@ -751,7 +751,7 @@ function ConvertTo-HtmlDashboard {
                     $($Data.Metrics.Memory.UsedGB) GB / $($Data.Metrics.Memory.TotalGB) GB used
                 </p>
             </div>
-            
+
             <div class="metric-card">
                 <div class="metric-title">💾 Storage Overview</div>
                 <div style="margin-top: 8px;">
@@ -766,7 +766,7 @@ function ConvertTo-HtmlDashboard {
             'Critical' { '#dc3545' }
             default { '#6c757d' }
         }
-        
+
         $html += @"
                     <div style="margin-bottom: 12px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -784,7 +784,7 @@ function ConvertTo-HtmlDashboard {
     $html += @"
                 </div>
             </div>
-            
+
             <div class="metric-card">
                 <div class="metric-title">🔧 Services Status</div>
                 <div class="metric-value" style="color: $(
@@ -800,7 +800,7 @@ function ConvertTo-HtmlDashboard {
                 </p>
             </div>
         </div>
-        
+
         <div class="alerts-section">
             <h3 style="margin-top: 0; color: #333;">🚨 Active Alerts</h3>
 "@
@@ -813,7 +813,7 @@ function ConvertTo-HtmlDashboard {
                 'Medium' { 'alert-medium' }
                 default { 'alert-medium' }
             }
-            
+
             $html += @"
             <div class="alert-item $alertClass">
                 <strong>[$($alert.Severity.ToUpper())] $($alert.Type)</strong><br>
@@ -833,10 +833,10 @@ function ConvertTo-HtmlDashboard {
 
     $html += @"
         </div>
-        
+
         <div class="footer">
-            <p>Generated by AitherZero SystemMonitoring v2.0 | 
-               <span style="color: #007bff;">Timeframe: $($Data.Timeframe)</span> | 
+            <p>Generated by AitherZero SystemMonitoring v2.0 |
+               <span style="color: #007bff;">Timeframe: $($Data.Timeframe)</span> |
                Alerts: $($Data.Summary.CriticalAlerts) Critical
             </p>
         </div>

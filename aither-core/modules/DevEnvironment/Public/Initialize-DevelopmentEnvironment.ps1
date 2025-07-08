@@ -26,7 +26,7 @@
 
 .EXAMPLE
     Initialize-DevelopmentEnvironment -InstallModulesGlobally -SetupGitAliases -CleanupEmojis
-    
+
     Sets up the complete optimal development environment.
 
 .NOTES
@@ -38,7 +38,7 @@ function Initialize-DevelopmentEnvironment {
     <#
     .SYNOPSIS
         Completely sets up the development environment with all required components
-    
+
     .DESCRIPTION
         This function provides comprehensive development environment setup including:
         - Module import issue resolution
@@ -47,17 +47,17 @@ function Initialize-DevelopmentEnvironment {
         - PowerShell module installation to standard locations
         - Environment variable configuration
         - Development tooling setup
-        
+
     .PARAMETER Force
         Force reinstallation of modules and components
-        
+
     .PARAMETER SkipModuleImportFixes
         Skip the module import issue resolution (useful if already done)
-        
+
     .EXAMPLE
         Initialize-DevelopmentEnvironment
         Sets up complete development environment
-        
+
     .EXAMPLE
         Initialize-DevelopmentEnvironment -Force
         Force reinstalls all components
@@ -67,21 +67,21 @@ function Initialize-DevelopmentEnvironment {
         [switch]$Force,
         [switch]$SkipModuleImportFixes
     )
-    
+
     begin {
         Write-CustomLog "=== INITIALIZING DEVELOPMENT ENVIRONMENT ===" -Level INFO
         Write-CustomLog "This will set up all required development tools and resolve import issues" -Level INFO
-        
+
         $stepCount = 0
         $totalSteps = 8
-        
+
         function Write-Step {
             param($StepName)
             $script:stepCount++
             Write-CustomLog "Step $($script:stepCount)/$($totalSteps): $StepName" -Level INFO
         }
     }
-    
+
     process {
         try {
             # Step 1: Resolve all module import issues
@@ -91,7 +91,7 @@ function Initialize-DevelopmentEnvironment {
             } else {
                 Write-CustomLog "Skipping module import fixes as requested" -Level INFO
             }
-            
+
             # Step 2: Install pre-commit hook with emoji prevention
             Write-Step "Installing pre-commit hook with emoji prevention"
             try {
@@ -100,7 +100,7 @@ function Initialize-DevelopmentEnvironment {
             } catch {
                 Write-CustomLog "⚠ Pre-commit hook installation failed: $($_.Exception.Message)" -Level WARN
             }
-            
+
             # Step 3: Set up Git aliases for PatchManager integration
             Write-Step "Setting up Git aliases for PatchManager"
             try {
@@ -109,7 +109,7 @@ function Initialize-DevelopmentEnvironment {
             } catch {
                 Write-CustomLog "⚠ Git aliases setup failed: $($_.Exception.Message)" -Level WARN
             }
-            
+
             # Step 4: Remove any existing emojis from project
             Write-Step "Removing emojis from project"
             try {
@@ -118,35 +118,35 @@ function Initialize-DevelopmentEnvironment {
             } catch {
                 Write-CustomLog "⚠ Emoji removal failed: $($_.Exception.Message)" -Level WARN
             }
-            
+
             # Step 5: Install required PowerShell modules
             Write-Step "Installing required PowerShell modules"
             Install-RequiredPowerShellModules -Force:$Force
-            
+
             # Step 6: Set up testing framework
             Write-Step "Setting up testing framework"
             Setup-TestingFramework
-            
+
             # Step 7: Configure VS Code integration
             Write-Step "Configuring VS Code integration"
             Configure-VSCodeIntegration
-            
+
             # Step 8: Validate development environment
             Write-Step "Validating development environment"
             $validationResults = @(
                 @{ Test = "PowerShell Version"; Status = "PASS"; Message = "PowerShell $($PSVersionTable.PSVersion)" },
                 @{ Test = "Project Root"; Status = if ($env:PROJECT_ROOT) { "PASS" } else { "FAIL" }; Message = $env:PROJECT_ROOT }
             )
-            
+
             # Show summary
             Show-DevEnvironmentSummary -ValidationResults $validationResults
-            
+
         } catch {
             Write-CustomLog "Critical error during development environment setup: $($_.Exception.Message)" -Level ERROR
             throw
         }
     }
-    
+
     end {
         Write-CustomLog "=== DEVELOPMENT ENVIRONMENT INITIALIZATION COMPLETE ===" -Level SUCCESS
         Write-CustomLog "Please restart PowerShell to pick up all environment changes" -Level INFO
@@ -156,21 +156,21 @@ function Initialize-DevelopmentEnvironment {
 function Install-RequiredPowerShellModules {
     [CmdletBinding()]
     param([switch]$Force)
-    
+
     $requiredModules = @(
         @{ Name = "Pester"; Version = "5.7.1" },
         @{ Name = "powershell-yaml"; Version = $null },
         @{ Name = "ThreadJob"; Version = $null },
         @{ Name = "PSScriptAnalyzer"; Version = $null }
     )
-    
+
     foreach ($module in $requiredModules) {
         try {
             $installed = Get-Module -ListAvailable -Name $module.Name
             if ($module.Version) {
                 $installed = $installed | Where-Object { $_.Version -ge [version]$module.Version }
             }
-            
+
             if (-not $installed -or $Force) {
                 Write-CustomLog "Installing $($module.Name)..." -Level INFO
                 $installParams = @{
@@ -195,7 +195,7 @@ function Install-RequiredPowerShellModules {
 function Setup-TestingFramework {
     [CmdletBinding()]
     param()
-    
+
     try {
         # Ensure Pester 5.7.1+ is available
         $pester = Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge [version]"5.7.1" }
@@ -205,7 +205,7 @@ function Setup-TestingFramework {
         } else {
             Write-CustomLog "⚠ Pester 5.7.1+ not found" -Level WARN
         }
-        
+
         # Set up Python testing if available
         if (Get-Command python -ErrorAction SilentlyContinue) {
             $projectRoot = $env:PROJECT_ROOT
@@ -214,7 +214,7 @@ function Setup-TestingFramework {
                 Write-CustomLog "✓ Python testing framework configured" -Level SUCCESS
             }
         }
-        
+
     } catch {
         Write-CustomLog "⚠ Testing framework setup encountered issues: $($_.Exception.Message)" -Level WARN
     }
@@ -223,26 +223,26 @@ function Setup-TestingFramework {
 function Configure-VSCodeIntegration {
     [CmdletBinding()]
     param()
-    
+
     try {
         $projectRoot = $env:PROJECT_ROOT
-        if (-not $projectRoot) { 
+        if (-not $projectRoot) {
             Write-CustomLog "⚠ PROJECT_ROOT not set, skipping VS Code integration" -Level WARN
-            return 
+            return
         }
-        
+
         $vscodeSettingsPath = "$projectRoot/.vscode/settings.json"
         if (Test-Path $vscodeSettingsPath) {
             Write-CustomLog "✓ VS Code settings detected" -Level SUCCESS
         }
-        
-        $vscodeTasksPath = "$projectRoot/.vscode/tasks.json"  
+
+        $vscodeTasksPath = "$projectRoot/.vscode/tasks.json"
         if (Test-Path $vscodeTasksPath) {
             Write-CustomLog "✓ VS Code tasks configured" -Level SUCCESS
         }
-        
+
         Write-CustomLog "✓ VS Code integration verified" -Level SUCCESS
-        
+
     } catch {
         Write-CustomLog "⚠ VS Code integration check failed: $($_.Exception.Message)" -Level WARN
     }
@@ -251,9 +251,9 @@ function Configure-VSCodeIntegration {
 function Show-DevEnvironmentSummary {
     [CmdletBinding()]
     param($ValidationResults)
-    
+
     Write-CustomLog "`n=== DEVELOPMENT ENVIRONMENT SUMMARY ===" -Level INFO
-    
+
     # Show module status
     $modules = @("LabRunner", "PatchManager", "Logging", "DevEnvironment", "BackupManager")
     Write-CustomLog "`nModule Status:" -Level INFO
@@ -265,14 +265,14 @@ function Show-DevEnvironmentSummary {
             Write-CustomLog "  ✗ $module - Not available" -Level ERROR
         }
     }
-    
+
     # Show environment variables
     Write-CustomLog "`nEnvironment Variables:" -Level INFO
     $projectRootStatus = if ($env:PROJECT_ROOT) { $env:PROJECT_ROOT } else { 'NOT SET' }
     $modulesPathStatus = if ($env:PWSH_MODULES_PATH) { $env:PWSH_MODULES_PATH } else { 'NOT SET' }
     Write-CustomLog "  PROJECT_ROOT: $projectRootStatus" -Level INFO
     Write-CustomLog "  PWSH_MODULES_PATH: $modulesPathStatus" -Level INFO
-    
+
     # Show validation results if provided
     if ($ValidationResults) {
         Write-CustomLog "`nValidation Results:" -Level INFO
@@ -281,7 +281,7 @@ function Show-DevEnvironmentSummary {
             Write-CustomLog "  $status $($result.Test): $($result.Message)" -Level INFO
         }
     }
-    
+
     Write-CustomLog "`nNext Steps:" -Level INFO
     Write-CustomLog "  1. Restart PowerShell session" -Level INFO
     Write-CustomLog "  2. Test: Import-Module LabRunner -Force" -Level INFO

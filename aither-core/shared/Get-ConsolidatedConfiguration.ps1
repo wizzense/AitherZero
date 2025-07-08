@@ -26,76 +26,76 @@ function Get-ConsolidatedConfiguration {
     param(
         [Parameter()]
         [string]$ConfigPath,
-        
+
         [Parameter()]
         [ValidateSet('dev', 'staging', 'prod')]
         [string]$Environment = 'dev',
-        
+
         [Parameter()]
         [ValidateSet('minimal', 'developer', 'enterprise', 'full', '')]
         [string]$Profile = '',
-        
+
         [Parameter()]
         [switch]$ValidateSchema,
-        
+
         [Parameter()]
         [switch]$Force
     )
-    
+
     # Find project root
     $projectRoot = $env:PROJECT_ROOT
     if (-not $projectRoot) {
         $projectRoot = Find-ProjectRoot -StartPath $PSScriptRoot
     }
-    
+
     # Initialize configuration cache if not exists
     if (-not $script:ConfigurationCache) {
         $script:ConfigurationCache = @{}
     }
-    
+
     # Generate cache key
     $cacheKey = "$ConfigPath|$Environment|$Profile"
-    
+
     # Return cached configuration if available and not forced
     if (-not $Force -and $script:ConfigurationCache.ContainsKey($cacheKey)) {
         Write-Verbose "Returning cached configuration for: $cacheKey"
         return $script:ConfigurationCache[$cacheKey]
     }
-    
+
     try {
         # Determine configuration paths
         $configPaths = Get-ConfigurationPaths -ProjectRoot $projectRoot -ConfigPath $ConfigPath
-        
+
         Write-Verbose "Configuration loading hierarchy:"
         Write-Verbose "  Project Root: $projectRoot"
         Write-Verbose "  Environment: $Environment"
         Write-Verbose "  Profile: $Profile"
-        
+
         # Load base configuration
         $baseConfig = Get-BaseConfiguration -ConfigPaths $configPaths
         Write-Verbose "Base configuration loaded from: $($baseConfig._metadata.source)"
-        
+
         # Load environment overrides
         $envOverrides = Get-EnvironmentOverrides -ProjectRoot $projectRoot -Environment $Environment
         if ($envOverrides) {
             Write-Verbose "Environment overrides loaded for: $Environment"
         }
-        
+
         # Load profile configuration
         $profileConfig = Get-ProfileConfiguration -ProjectRoot $projectRoot -Profile $Profile
         if ($profileConfig) {
             Write-Verbose "Profile configuration loaded for: $Profile"
         }
-        
+
         # Load user overrides
         $userOverrides = Get-UserOverrides -ProjectRoot $projectRoot
         if ($userOverrides) {
             Write-Verbose "User overrides loaded"
         }
-        
+
         # Merge configurations in hierarchical order
         $mergedConfig = Merge-Configurations -BaseConfig $baseConfig -EnvironmentOverrides $envOverrides -ProfileConfig $profileConfig -UserOverrides $userOverrides
-        
+
         # Add metadata
         $mergedConfig._metadata = @{
             version = "1.0"
@@ -109,7 +109,7 @@ function Get-ConsolidatedConfiguration {
                 user = if ($userOverrides) { $userOverrides._metadata.source } else { $null }
             }
         }
-        
+
         # Validate configuration if requested
         if ($ValidateSchema) {
             $validationResult = Test-ConfigurationSchema -Configuration $mergedConfig -ProjectRoot $projectRoot
@@ -120,13 +120,13 @@ function Get-ConsolidatedConfiguration {
                 Write-Verbose "Configuration validation passed"
             }
         }
-        
+
         # Cache the configuration
         $script:ConfigurationCache[$cacheKey] = $mergedConfig
-        
+
         Write-Verbose "Configuration successfully loaded and cached"
         return $mergedConfig
-        
+
     } catch {
         Write-Error "Failed to load consolidated configuration: $($_.Exception.Message)"
         Write-Error "Stack trace: $($_.ScriptStackTrace)"
@@ -140,11 +140,11 @@ function Get-ConfigurationPaths {
         [string]$ProjectRoot,
         [string]$ConfigPath
     )
-    
+
     if ($ConfigPath -and (Test-Path $ConfigPath)) {
         return @($ConfigPath)
     }
-    
+
     # Configuration search paths (in order of preference)
     $searchPaths = @(
         (Join-Path $ProjectRoot "configs" "default-config.json"),          # Primary location
@@ -152,7 +152,7 @@ function Get-ConfigurationPaths {
         (Join-Path $ProjectRoot "aither-core" "default-config.json"),      # Legacy location
         (Join-Path $PSScriptRoot ".." "configs" "default-config.json")     # Alternative script-relative
     )
-    
+
     return $searchPaths
 }
 
@@ -161,17 +161,17 @@ function Get-BaseConfiguration {
     param(
         [string[]]$ConfigPaths
     )
-    
+
     foreach ($configPath in $ConfigPaths) {
         if (Test-Path $configPath) {
             Write-Verbose "Loading base configuration from: $configPath"
             try {
                 $content = Get-Content $configPath -Raw | ConvertFrom-Json
-                
+
                 # Convert to hashtable for easier manipulation
                 $config = ConvertTo-Hashtable -InputObject $content
                 $config._metadata = @{ source = $configPath }
-                
+
                 return $config
             } catch {
                 Write-Warning "Failed to load configuration from '$configPath': $($_.Exception.Message)"
@@ -179,7 +179,7 @@ function Get-BaseConfiguration {
             }
         }
     }
-    
+
     throw "No valid base configuration found in any of the search paths: $($ConfigPaths -join ', ')"
 }
 
@@ -189,9 +189,9 @@ function Get-EnvironmentOverrides {
         [string]$ProjectRoot,
         [string]$Environment
     )
-    
+
     $envConfigPath = Join-Path $ProjectRoot "configs" "environments" "$Environment-overrides.json"
-    
+
     if (Test-Path $envConfigPath) {
         Write-Verbose "Loading environment overrides from: $envConfigPath"
         try {
@@ -203,7 +203,7 @@ function Get-EnvironmentOverrides {
             Write-Warning "Failed to load environment overrides from '$envConfigPath': $($_.Exception.Message)"
         }
     }
-    
+
     return $null
 }
 
@@ -213,13 +213,13 @@ function Get-ProfileConfiguration {
         [string]$ProjectRoot,
         [string]$Profile
     )
-    
+
     if (-not $Profile) {
         return $null
     }
-    
+
     $profileConfigPath = Join-Path $ProjectRoot "configs" "profiles" $Profile "config.json"
-    
+
     if (Test-Path $profileConfigPath) {
         Write-Verbose "Loading profile configuration from: $profileConfigPath"
         try {
@@ -231,7 +231,7 @@ function Get-ProfileConfiguration {
             Write-Warning "Failed to load profile configuration from '$profileConfigPath': $($_.Exception.Message)"
         }
     }
-    
+
     return $null
 }
 
@@ -240,9 +240,9 @@ function Get-UserOverrides {
     param(
         [string]$ProjectRoot
     )
-    
+
     $userConfigPath = Join-Path $ProjectRoot "configs" "local-overrides.json"
-    
+
     if (Test-Path $userConfigPath) {
         Write-Verbose "Loading user overrides from: $userConfigPath"
         try {
@@ -254,7 +254,7 @@ function Get-UserOverrides {
             Write-Warning "Failed to load user overrides from '$userConfigPath': $($_.Exception.Message)"
         }
     }
-    
+
     return $null
 }
 
@@ -266,19 +266,19 @@ function Merge-Configurations {
         [hashtable]$ProfileConfig,
         [hashtable]$UserOverrides
     )
-    
+
     # Start with base configuration
     $result = $BaseConfig.Clone()
-    
+
     # Apply overrides in order
     $overrides = @($EnvironmentOverrides, $ProfileConfig, $UserOverrides)
-    
+
     foreach ($override in $overrides) {
         if ($override) {
             $result = Merge-HashTables -Target $result -Source $override
         }
     }
-    
+
     return $result
 }
 
@@ -288,14 +288,14 @@ function Merge-HashTables {
         [hashtable]$Target,
         [hashtable]$Source
     )
-    
+
     $result = $Target.Clone()
-    
+
     foreach ($key in $Source.Keys) {
         if ($key -eq '_metadata') {
             continue  # Skip metadata during merge
         }
-        
+
         if ($result.ContainsKey($key)) {
             if ($result[$key] -is [hashtable] -and $Source[$key] -is [hashtable]) {
                 # Recursively merge nested hashtables
@@ -309,7 +309,7 @@ function Merge-HashTables {
             $result[$key] = $Source[$key]
         }
     }
-    
+
     return $result
 }
 
@@ -319,11 +319,11 @@ function ConvertTo-Hashtable {
         [Parameter(ValueFromPipeline)]
         $InputObject
     )
-    
+
     if ($InputObject -is [hashtable]) {
         return $InputObject
     }
-    
+
     if ($InputObject -is [PSCustomObject]) {
         $hashtable = @{}
         $InputObject.PSObject.Properties | ForEach-Object {
@@ -335,7 +335,7 @@ function ConvertTo-Hashtable {
         }
         return $hashtable
     }
-    
+
     return $InputObject
 }
 
@@ -345,18 +345,18 @@ function Test-ConfigurationSchema {
         [hashtable]$Configuration,
         [string]$ProjectRoot
     )
-    
+
     $schemaPath = Join-Path $ProjectRoot "configs" "config-schema.json"
-    
+
     if (-not (Test-Path $schemaPath)) {
         Write-Warning "Configuration schema not found at: $schemaPath"
         return @{ IsValid = $true; Errors = @() }
     }
-    
+
     try {
         # Basic validation - check for required structure
         $errors = @()
-        
+
         # Check for basic structure
         $requiredSections = @('system', 'tools', 'logging')
         foreach ($section in $requiredSections) {
@@ -364,9 +364,9 @@ function Test-ConfigurationSchema {
                 $errors += "Missing required section: $section"
             }
         }
-        
+
         # More detailed validation could be added here using a JSON schema validator
-        
+
         return @{
             IsValid = ($errors.Count -eq 0)
             Errors = $errors
@@ -384,10 +384,10 @@ function Find-ProjectRoot {
     param(
         [string]$StartPath = $PSScriptRoot
     )
-    
+
     $currentPath = $StartPath
     $rootIndicators = @('.git', 'Start-AitherZero.ps1', 'aither-core')
-    
+
     while ($currentPath) {
         foreach ($indicator in $rootIndicators) {
             $testPath = Join-Path $currentPath $indicator
@@ -395,14 +395,14 @@ function Find-ProjectRoot {
                 return $currentPath
             }
         }
-        
+
         $parentPath = Split-Path $currentPath -Parent
         if ($parentPath -eq $currentPath) {
             break  # Reached root
         }
         $currentPath = $parentPath
     }
-    
+
     # Fallback to current directory
     return $PWD.Path
 }

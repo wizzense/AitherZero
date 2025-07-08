@@ -17,14 +17,14 @@ function Set-ConfigurationStore {
     param(
         [Parameter(Mandatory)]
         [hashtable]$Store,
-        
+
         [Parameter()]
         [switch]$Backup,
-        
+
         [Parameter()]
         [switch]$Validate
     )
-    
+
     try {
         if ($Validate) {
             # Validate store structure
@@ -34,22 +34,22 @@ function Set-ConfigurationStore {
                     throw "Invalid store structure: missing required key '$key'"
                 }
             }
-            
+
             # Validate environments structure
             if (-not $Store.Environments.ContainsKey($Store.CurrentEnvironment)) {
                 throw "Current environment '$($Store.CurrentEnvironment)' not found in environments"
             }
         }
-        
+
         if ($PSCmdlet.ShouldProcess("Configuration Store", "Replace")) {
             # Create backup if requested
             if ($Backup) {
                 Backup-Configuration -Reason "Store replacement"
             }
-            
+
             # Replace the store
             $script:ConfigurationStore = $Store
-            
+
             # Ensure StorePath is set
             if (-not $script:ConfigurationStore.StorePath) {
                 $script:ConfigurationStore.StorePath = Join-Path $env:APPDATA 'AitherZero' 'configuration.json'
@@ -57,14 +57,14 @@ function Set-ConfigurationStore {
                     $script:ConfigurationStore.StorePath = Join-Path $env:HOME '.aitherzero' 'configuration.json'
                 }
             }
-            
+
             # Save the new store
             Save-ConfigurationStore
-            
+
             Write-CustomLog -Level 'SUCCESS' -Message "Configuration store updated successfully"
             return $true
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to set configuration store: $_"
         throw

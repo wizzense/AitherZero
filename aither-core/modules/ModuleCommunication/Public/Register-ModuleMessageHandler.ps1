@@ -26,30 +26,30 @@ function Register-ModuleMessageHandler {
     param(
         [Parameter(Mandatory)]
         [string]$Channel,
-        
+
         [Parameter(Mandatory)]
         [scriptblock]$Handler,
-        
+
         [Parameter()]
         [string]$MessageType = '*',
-        
+
         [Parameter()]
         [string]$SubscriberModule = $MyInvocation.MyCommand.Module.Name,
-        
+
         [Parameter()]
         [scriptblock]$Filter,
-        
+
         [Parameter()]
         [switch]$RunAsync
     )
-    
+
     try {
         # Validate channel exists
         if (-not $script:MessageBus.Channels.ContainsKey($Channel)) {
             Write-CustomLog -Level 'WARNING' -Message "Channel '$Channel' does not exist. Creating it."
             New-MessageChannel -Name $Channel | Out-Null
         }
-        
+
         # Create handler registration
         $handlerRegistration = @{
             Id = [Guid]::NewGuid().ToString()
@@ -64,19 +64,19 @@ function Register-ModuleMessageHandler {
             LastMessage = $null
             Errors = @()
         }
-        
+
         # Add to handler registrations
         $handlerKey = "$Channel|$($handlerRegistration.Id)"
         if (-not $script:MessageBus.Subscriptions.TryAdd($handlerKey, $handlerRegistration)) {
             throw "Failed to add handler registration"
         }
-        
+
         # Update channel subscription count
         $channelInfo = $script:MessageBus.Channels[$Channel]
         $channelInfo.SubscriptionCount++
-        
+
         Write-CustomLog -Level 'INFO' -Message "Handler registered: Channel=$Channel, Type=$MessageType, ID=$($handlerRegistration.Id)"
-        
+
         # Return handler info for management
         return @{
             SubscriptionId = $handlerRegistration.Id
@@ -84,7 +84,7 @@ function Register-ModuleMessageHandler {
             MessageType = $MessageType
             SubscriberModule = $SubscriberModule
         }
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to register handler: $_"
         throw

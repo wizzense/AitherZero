@@ -19,9 +19,9 @@ function Invoke-UnifiedMaintenance {
         [ValidateSet("Quick", "Standard", "Full")]
         [string]$Mode = "Standard"
     )
-    
+
     Write-Host "Starting unified maintenance in $Mode mode..." -ForegroundColor Cyan
-    
+
     try {
         switch ($Mode) {
             "Quick" {
@@ -37,7 +37,7 @@ function Invoke-UnifiedMaintenance {
                 # Full maintenance logic
             }
         }
-        
+
         Write-Host "Unified maintenance completed successfully." -ForegroundColor Green
         return @{
             Success = $true

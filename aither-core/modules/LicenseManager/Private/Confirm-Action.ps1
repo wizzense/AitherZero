@@ -17,14 +17,14 @@ function Confirm-Action {
     param(
         [Parameter(Mandatory)]
         [string]$Message,
-        
+
         [Parameter()]
         [string]$Title = "Confirm Action",
-        
+
         [Parameter()]
         [int]$DefaultChoice = 1  # Default to No for safety
     )
-    
+
     try {
         # Use PowerShell's built-in confirmation if available
         if (Get-Command -Name 'Get-Host' -ErrorAction SilentlyContinue) {
@@ -32,25 +32,25 @@ function Confirm-Action {
                 (New-Object System.Management.Automation.Host.ChoiceDescription '&Yes', 'Confirm the action')
                 (New-Object System.Management.Automation.Host.ChoiceDescription '&No', 'Cancel the action')
             )
-            
+
             $result = $Host.UI.PromptForChoice($Title, $Message, $choices, $DefaultChoice)
             return $result -eq 0
         }
-        
+
         # Fallback to simple Read-Host
         Write-Host ""
         Write-Host $Title -ForegroundColor Yellow
         Write-Host $Message -ForegroundColor White
         Write-Host ""
-        
+
         do {
             $response = Read-Host "Continue? (y/N)"
             if ([string]::IsNullOrWhiteSpace($response)) {
                 return $DefaultChoice -eq 0
             }
-            
+
             $response = $response.ToLower().Trim()
-            
+
             if ($response -in @('y', 'yes', 'true', '1')) {
                 return $true
             } elseif ($response -in @('n', 'no', 'false', '0')) {
@@ -59,7 +59,7 @@ function Confirm-Action {
                 Write-Host "Please enter 'y' for Yes or 'n' for No" -ForegroundColor Yellow
             }
         } while ($true)
-        
+
     } catch {
         Write-Warning "Error in confirmation prompt: $($_.Exception.Message)"
         return $false

@@ -24,36 +24,36 @@ function New-License {
         [Parameter(Mandatory)]
         [ValidateSet('free', 'pro', 'enterprise')]
         [string]$Tier,
-        
+
         [Parameter(Mandatory)]
         [string]$Email,
-        
+
         [Parameter()]
         [int]$Days = 365,
-        
+
         [Parameter()]
         [string]$IssuedTo
     )
-    
+
     try {
         # Use Email as IssuedTo if not specified
         if (-not $IssuedTo) {
             $IssuedTo = $Email
         }
-        
+
         # Get features for tier
         $tierFeatures = switch ($Tier) {
-            'enterprise' { 
-                @('core', 'development', 'infrastructure', 'ai', 'automation', 'security', 'monitoring', 'enterprise') 
+            'enterprise' {
+                @('core', 'development', 'infrastructure', 'ai', 'automation', 'security', 'monitoring', 'enterprise')
             }
-            'pro' { 
-                @('core', 'development', 'infrastructure', 'ai', 'automation') 
+            'pro' {
+                @('core', 'development', 'infrastructure', 'ai', 'automation')
             }
-            default { 
-                @('core', 'development') 
+            default {
+                @('core', 'development')
             }
         }
-        
+
         # Create license object
         $license = @{
             licenseId = [Guid]::NewGuid().ToString()
@@ -70,22 +70,22 @@ function New-License {
                 email = $Email
             }
         }
-        
+
         # Generate canonical data for signing
         $canonicalData = "licenseId:$($license.licenseId)|tier:$($license.tier)|issuedTo:$($license.issuedTo)|expiryDate:$($license.expiryDate)|features:$($license.features -join ',')"
-        
+
         # Generate signature (simplified - in production use proper cryptographic signing)
         $signature = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($canonicalData))
         $license.signature = $signature
-        
+
         # Convert to base64 license key
         $licenseJson = $license | ConvertTo-Json -Compress -Depth 10
         $licenseKey = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($licenseJson))
-        
+
         # Display license information
         Write-Host "`nGenerated License Key:" -ForegroundColor Green
         Write-Host $licenseKey -ForegroundColor Yellow
-        
+
         Write-Host "`nLicense Details:" -ForegroundColor Cyan
         Write-Host "  License ID: $($license.licenseId)" -ForegroundColor White
         Write-Host "  Tier: $($license.tier)" -ForegroundColor White
@@ -95,7 +95,7 @@ function New-License {
         Write-Host "  Expiry Date: $($license.expiryDate)" -ForegroundColor White
         Write-Host "  Features: $($license.features -join ', ')" -ForegroundColor White
         Write-Host "  Days Valid: $Days" -ForegroundColor White
-        
+
         # Log license generation
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Message "License generated for development/testing" -Level INFO -Context @{
@@ -107,12 +107,12 @@ function New-License {
                 Features = $license.features -join ", "
             }
         }
-        
+
         return $licenseKey
-        
+
     } catch {
         Write-Error "Failed to generate license: $($_.Exception.Message)"
-        
+
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Message "License generation failed" -Level ERROR -Exception $_.Exception -Context @{
                 Tier = $Tier
@@ -120,7 +120,7 @@ function New-License {
                 Days = $Days
             }
         }
-        
+
         throw
     }
 }

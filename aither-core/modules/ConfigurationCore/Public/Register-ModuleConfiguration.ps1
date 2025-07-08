@@ -22,25 +22,25 @@ function Register-ModuleConfiguration {
     param(
         [Parameter(Mandatory)]
         [string]$ModuleName,
-        
+
         [Parameter(Mandatory)]
         [hashtable]$Schema,
-        
+
         [Parameter()]
         [hashtable]$DefaultConfiguration = @{}
     )
-    
+
     try {
         Write-CustomLog -Level 'INFO' -Message "Registering configuration for module: $ModuleName"
-        
+
         # Store schema
         $script:ConfigurationStore.Schemas[$ModuleName] = $Schema
-        
+
         # Initialize module configuration if not exists
         if (-not $script:ConfigurationStore.Modules.ContainsKey($ModuleName)) {
             $script:ConfigurationStore.Modules[$ModuleName] = @{}
         }
-        
+
         # Extract default values from schema if no explicit defaults provided
         $effectiveDefaults = $DefaultConfiguration.Clone()
         if ($Schema.Properties) {
@@ -51,31 +51,31 @@ function Register-ModuleConfiguration {
                 }
             }
         }
-        
+
         # Apply defaults to all environments
         foreach ($env in $script:ConfigurationStore.Environments.Keys) {
             if (-not $script:ConfigurationStore.Environments[$env].Settings.ContainsKey($ModuleName)) {
                 $script:ConfigurationStore.Environments[$env].Settings[$ModuleName] = @{}
             }
-            
+
             # Merge defaults with existing settings
             $currentSettings = $script:ConfigurationStore.Environments[$env].Settings[$ModuleName]
             $mergedSettings = Merge-Configuration -Base $effectiveDefaults -Override $currentSettings
             $script:ConfigurationStore.Environments[$env].Settings[$ModuleName] = $mergedSettings
         }
-        
+
         # Validate the effective default configuration
         $validationResult = Validate-Configuration -ModuleName $ModuleName -Configuration $effectiveDefaults
         if (-not $validationResult.IsValid) {
             Write-CustomLog -Level 'WARNING' -Message "Default configuration has validation warnings: $($validationResult.Errors -join ', ')"
         }
-        
+
         # Save updated store
         Save-ConfigurationStore
-        
+
         Write-CustomLog -Level 'SUCCESS' -Message "Module configuration registered: $ModuleName"
         return $true
-        
+
     } catch {
         Write-CustomLog -Level 'ERROR' -Message "Failed to register module configuration: $_"
         throw

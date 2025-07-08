@@ -14,7 +14,8 @@
       "Bash(python3:*)",
       "Bash(git commit:*)",
       "Bash(gh run view:*)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(gh pr checks:*)"
     ],
     "deny": []
   }

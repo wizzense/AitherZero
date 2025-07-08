@@ -236,7 +236,7 @@ function Export-UtilityReport {
             Generated = Get-Date
             Format = $Format
         } | ConvertTo-Json | Out-File -FilePath $OutputPath -Encoding UTF8
-        
+
         return @{
             Success = $true
             Path = $OutputPath

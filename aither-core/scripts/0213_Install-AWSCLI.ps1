@@ -15,12 +15,12 @@ Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
 
 Invoke-LabStep -Config $Config -Body {
     Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
-    
+
     if ($Config.InstallAWSCLI -eq $true) {
         if (-not (Get-Command aws.exe -ErrorAction SilentlyContinue)) {
             Write-CustomLog "Installing AWS CLI..."
             $url = 'https://awscli.amazonaws.com/AWSCLIV2.msi'
-            
+
             Invoke-LabDownload -Uri $url -Prefix 'awscli' -Extension '.msi' -Action {
                 param($msi)
                 if ($PSCmdlet.ShouldProcess($msi, 'Install AWS CLI')) {
@@ -37,4 +37,3 @@ Invoke-LabStep -Config $Config -Body {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-

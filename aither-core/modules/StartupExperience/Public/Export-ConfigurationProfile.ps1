@@ -23,21 +23,21 @@ function Export-ConfigurationProfile {
     param(
         [Parameter(Mandatory, ParameterSetName = 'ByName')]
         [string]$Name,
-        
+
         [Parameter(ParameterSetName = 'ByConfig')]
         [PSCustomObject]$Config,
-        
+
         [Parameter()]
         [string]$Path,
-        
+
         [Parameter()]
         [ValidateSet('JSON', 'YAML', 'EnvFile')]
         [string]$Format = 'JSON',
-        
+
         [Parameter()]
         [switch]$IncludeSecrets
     )
-    
+
     try {
         # Get configuration
         if ($PSCmdlet.ParameterSetName -eq 'ByName') {
@@ -46,7 +46,7 @@ function Export-ConfigurationProfile {
         } else {
             $profileName = $Config.profile.name ?? 'exported'
         }
-        
+
         # Set default path if not provided
         if (-not $Path) {
             $extension = switch ($Format) {
@@ -56,12 +56,12 @@ function Export-ConfigurationProfile {
             }
             $Path = Join-Path (Get-Location) "$profileName-export.$extension"
         }
-        
+
         # Remove sensitive data unless explicitly included
         if (-not $IncludeSecrets) {
             $Config = Remove-SensitiveData -Config $Config
         }
-        
+
         # Export based on format
         switch ($Format) {
             'JSON' {
@@ -76,19 +76,19 @@ function Export-ConfigurationProfile {
                 $envContent | Set-Content -Path $Path -Encoding UTF8
             }
         }
-        
+
         Write-Host "✅ Configuration exported to: $Path" -ForegroundColor Green
         Write-Host "   Format: $Format" -ForegroundColor DarkGray
         if (-not $IncludeSecrets) {
             Write-Host "   Note: Sensitive data was removed" -ForegroundColor Yellow
         }
-        
+
         if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
             Write-CustomLog -Level 'INFO' -Message "Exported configuration profile: $profileName to $Path"
         }
-        
+
         return Get-Item $Path
-        
+
     } catch {
         Write-Error "Failed to export configuration profile: $_"
         throw
@@ -116,24 +116,24 @@ function Import-ConfigurationProfile {
     param(
         [Parameter(Mandatory)]
         [string]$Path,
-        
+
         [Parameter()]
         [string]$Name,
-        
+
         [Parameter()]
         [ValidateSet('Auto', 'JSON', 'YAML', 'EnvFile')]
         [string]$Format = 'Auto',
-        
+
         [Parameter()]
         [switch]$SetAsCurrent
     )
-    
+
     try {
         # Verify file exists
         if (-not (Test-Path $Path)) {
             throw "Configuration file not found: $Path"
         }
-        
+
         # Auto-detect format if needed
         if ($Format -eq 'Auto') {
             $extension = [System.IO.Path]::GetExtension($Path).TrimStart('.')
@@ -144,7 +144,7 @@ function Import-ConfigurationProfile {
                 default { 'JSON' }
             }
         }
-        
+
         # Import based on format
         $config = switch ($Format) {
             'JSON' {
@@ -157,7 +157,7 @@ function Import-ConfigurationProfile {
                 ConvertFrom-EnvFile -Path $Path
             }
         }
-        
+
         # Set profile name
         if (-not $Name) {
             if ($config.profile.name) {
@@ -166,14 +166,14 @@ function Import-ConfigurationProfile {
                 $Name = [System.IO.Path]::GetFileNameWithoutExtension($Path)
             }
         }
-        
+
         # Create profile
         New-ConfigurationProfile -Name $Name -Config $config -SetAsCurrent:$SetAsCurrent
-        
+
         Write-Host "✅ Configuration imported successfully as profile: $Name" -ForegroundColor Green
-        
+
         return $config
-        
+
     } catch {
         Write-Error "Failed to import configuration profile: $_"
         throw
@@ -183,9 +183,9 @@ function Import-ConfigurationProfile {
 # Helper functions for format conversion
 function Remove-SensitiveData {
     param([PSCustomObject]$Config)
-    
+
     $cleaned = $Config | ConvertTo-Json -Depth 10 | ConvertFrom-Json
-    
+
     # List of sensitive properties to remove
     $sensitiveProps = @(
         'Password',
@@ -196,11 +196,11 @@ function Remove-SensitiveData {
         'PrivateKey',
         'ConnectionString'
     )
-    
+
     # Recursively clean object
     function Clean-Object {
         param($obj)
-        
+
         if ($obj -is [PSCustomObject]) {
             $obj.PSObject.Properties | ForEach-Object {
                 $propName = $_.Name
@@ -220,27 +220,27 @@ function Remove-SensitiveData {
             }
         }
     }
-    
+
     Clean-Object $cleaned
     return $cleaned
 }
 
 function ConvertTo-Yaml {
     param([PSCustomObject]$Object)
-    
+
     # Simple YAML converter (basic implementation)
     $yaml = @()
-    
+
     function Convert-ObjectToYaml {
         param($obj, $indent = 0)
-        
+
         $prefix = ' ' * $indent
-        
+
         if ($obj -is [PSCustomObject]) {
             $obj.PSObject.Properties | ForEach-Object {
                 $key = $_.Name
                 $value = $_.Value
-                
+
                 if ($null -eq $value) {
                     $yaml += "${prefix}${key}: null"
                 } elseif ($value -is [bool]) {
@@ -270,25 +270,25 @@ function ConvertTo-Yaml {
             }
         }
     }
-    
+
     Convert-ObjectToYaml $Object
     return $yaml -join "`n"
 }
 
 function ConvertTo-EnvFile {
     param([PSCustomObject]$Config)
-    
+
     $env = @()
-    
+
     function Flatten-Object {
         param($obj, $prefix = '')
-        
+
         if ($obj -is [PSCustomObject]) {
             $obj.PSObject.Properties | ForEach-Object {
                 $key = $_.Name
                 $value = $_.Value
                 $fullKey = if ($prefix) { "${prefix}_${key}" } else { $key }
-                
+
                 if ($value -is [PSCustomObject]) {
                     Flatten-Object $value $fullKey
                 } elseif ($value -is [array]) {
@@ -301,38 +301,38 @@ function ConvertTo-EnvFile {
             }
         }
     }
-    
+
     Flatten-Object $Config
     return $env -join "`n"
 }
 
 function ConvertFrom-Yaml {
     param([string]$Yaml)
-    
+
     # This is a very basic YAML parser - for production use a proper YAML module
     throw "YAML import requires the 'powershell-yaml' module. Install with: Install-Module powershell-yaml"
 }
 
 function ConvertFrom-EnvFile {
     param([string]$Path)
-    
+
     $config = [PSCustomObject]@{}
-    
+
     Get-Content $Path | Where-Object { $_ -match '^[^#].*=' } | ForEach-Object {
         $parts = $_ -split '=', 2
         $key = $parts[0].Trim()
         $value = $parts[1].Trim()
-        
+
         # Convert string values to appropriate types
         if ($value -eq 'true') { $value = $true }
         elseif ($value -eq 'false') { $value = $false }
         elseif ($value -match '^\d+$') { $value = [int]$value }
         elseif ($value -match '^\d+\.\d+$') { $value = [double]$value }
-        
+
         # Handle nested properties
         $keyParts = $key -split '_'
         $current = $config
-        
+
         for ($i = 0; $i -lt $keyParts.Count - 1; $i++) {
             $part = $keyParts[$i]
             if (-not $current.PSObject.Properties.Name -contains $part) {
@@ -340,10 +340,10 @@ function ConvertFrom-EnvFile {
             }
             $current = $current.$part
         }
-        
+
         $lastPart = $keyParts[-1]
         $current | Add-Member -MemberType NoteProperty -Name $lastPart -Value $value -Force
     }
-    
+
     return $config
 }

@@ -77,7 +77,7 @@ function Optimize-ISOStorage {
 
     begin {
         Write-CustomLog -Level 'INFO' -Message "Starting ISO storage optimization: $RepositoryPath"
-        
+
         # Initialize optimization results
         $optimizationResults = @{
             RepositoryPath = $RepositoryPath
@@ -94,7 +94,7 @@ function Optimize-ISOStorage {
             Warnings = @()
             DryRun = $DryRun.IsPresent
         }
-        
+
         # Set default archive path
         if (-not $ArchivePath) {
             $ArchivePath = Join-Path $RepositoryPath "Archive"
@@ -107,22 +107,22 @@ function Optimize-ISOStorage {
             $initialInventory = Get-ISOInventory -RepositoryPath $RepositoryPath
             $optimizationResults.InitialSizeGB = [math]::Round(($initialInventory | Measure-Object -Property Size -Sum).Sum / 1GB, 2)
             $optimizationResults.FilesProcessed = $initialInventory.Count
-            
+
             Write-CustomLog -Level 'INFO' -Message "Repository analysis: $($initialInventory.Count) files, $($optimizationResults.InitialSizeGB) GB"
-            
+
             # Check if optimization is needed
             if ($optimizationResults.InitialSizeGB -le $MaxSizeGB -and -not $RemoveDuplicates -and -not $CompressOldFiles -and -not $ArchiveOldFiles) {
                 Write-CustomLog -Level 'INFO' -Message "Repository size ($($optimizationResults.InitialSizeGB) GB) is within limit ($MaxSizeGB GB). No optimization needed."
                 return $optimizationResults
             }
-            
+
             if ($PSCmdlet.ShouldProcess($RepositoryPath, "Optimize ISO Storage")) {
-                
+
                 # 1. Remove duplicates if requested
                 if ($RemoveDuplicates) {
                     Write-CustomLog -Level 'INFO' -Message "Scanning for duplicate ISO files..."
                     $duplicates = Find-DuplicateISOs -Inventory $initialInventory
-                    
+
                     foreach ($duplicate in $duplicates) {
                         try {
                             if ($DryRun) {
@@ -138,17 +138,17 @@ function Optimize-ISOStorage {
                             $optimizationResults.Errors += "Failed to remove duplicate $($duplicate.FileName): $($_.Exception.Message)"
                         }
                     }
-                    
+
                     Write-CustomLog -Level 'INFO' -Message "Duplicate removal: $($optimizationResults.DuplicatesRemoved) files, $($optimizationResults.SpaceFreedGB) GB freed"
                 }
-                
+
                 # 2. Process old files
                 $cutoffDate = (Get-Date).AddDays(-$RetentionDays)
                 $oldFiles = $initialInventory | Where-Object { $_.Modified -lt $cutoffDate }
-                
+
                 if ($oldFiles.Count -gt 0) {
                     Write-CustomLog -Level 'INFO' -Message "Found $($oldFiles.Count) files older than $RetentionDays days"
-                    
+
                     foreach ($oldFile in $oldFiles) {
                         try {
                             if ($ArchiveOldFiles) {
@@ -156,7 +156,7 @@ function Optimize-ISOStorage {
                                 $relativePath = $oldFile.FilePath.Replace($RepositoryPath, "").TrimStart('\/', '\\')
                                 $archiveFilePath = Join-Path $ArchivePath $relativePath
                                 $archiveDir = Split-Path $archiveFilePath -Parent
-                                
+
                                 if ($DryRun) {
                                     Write-CustomLog -Level 'INFO' -Message "DRYRUN: Would archive $($oldFile.FileName) to $archiveFilePath"
                                 } else {
@@ -164,17 +164,17 @@ function Optimize-ISOStorage {
                                     if (-not (Test-Path $archiveDir)) {
                                         New-Item -ItemType Directory -Path $archiveDir -Force | Out-Null
                                     }
-                                    
+
                                     # Move file to archive
                                     Move-Item -Path $oldFile.FilePath -Destination $archiveFilePath -Force
                                     $optimizationResults.FilesArchived++
                                     Write-CustomLog -Level 'INFO' -Message "Archived: $($oldFile.FileName)"
                                 }
-                                
+
                             } elseif ($CompressOldFiles) {
                                 # Compress old files
                                 $compressedPath = $oldFile.FilePath + ".gz"
-                                
+
                                 if ($DryRun) {
                                     Write-CustomLog -Level 'INFO' -Message "DRYRUN: Would compress $($oldFile.FileName)"
                                 } else {
@@ -185,7 +185,7 @@ function Optimize-ISOStorage {
                                         Write-CustomLog -Level 'INFO' -Message "Compressed: $($oldFile.FileName) (saved $([math]::Round($compressionResult.SpaceSaved / 1MB, 2)) MB)"
                                     }
                                 }
-                                
+
                             } else {
                                 # Delete old files if over size limit
                                 if ($optimizationResults.InitialSizeGB -gt $MaxSizeGB) {
@@ -200,13 +200,13 @@ function Optimize-ISOStorage {
                                     }
                                 }
                             }
-                            
+
                         } catch {
                             $optimizationResults.Errors += "Failed to process old file $($oldFile.FileName): $($_.Exception.Message)"
                         }
                     }
                 }
-                
+
                 # 3. Clean up empty directories
                 if (-not $DryRun) {
                     try {
@@ -215,7 +215,7 @@ function Optimize-ISOStorage {
                         $optimizationResults.Warnings += "Failed to clean up empty directories: $($_.Exception.Message)"
                     }
                 }
-                
+
                 # 4. Update repository statistics
                 if (-not $DryRun) {
                     try {
@@ -223,7 +223,7 @@ function Optimize-ISOStorage {
                         $optimizationResults.FinalSizeGB = $syncResult.Statistics.TotalSizeGB
                     } catch {
                         $optimizationResults.Warnings += "Failed to update repository statistics: $($_.Exception.Message)"
-                        
+
                         # Calculate final size manually
                         $finalInventory = Get-ISOInventory -RepositoryPath $RepositoryPath
                         $optimizationResults.FinalSizeGB = [math]::Round(($finalInventory | Measure-Object -Property Size -Sum).Sum / 1GB, 2)
@@ -231,33 +231,33 @@ function Optimize-ISOStorage {
                 } else {
                     $optimizationResults.FinalSizeGB = $optimizationResults.InitialSizeGB - $optimizationResults.SpaceFreedGB
                 }
-                
+
                 # 5. Generate optimization report
                 $optimizationResults.EndTime = Get-Date
                 $optimizationResults.Duration = $optimizationResults.EndTime - $optimizationResults.StartTime
-                
+
                 # Save optimization report
                 $reportPath = Join-Path $RepositoryPath "Logs" "storage-optimization-$(Get-Date -Format 'yyyyMMdd-HHmmss').json"
                 $logsDir = Split-Path $reportPath -Parent
                 if (-not (Test-Path $logsDir)) {
                     New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
                 }
-                
+
                 $optimizationResults | ConvertTo-Json -Depth 10 | Set-Content $reportPath
-                
+
                 # Log summary
                 $totalSpaceFreed = $optimizationResults.InitialSizeGB - $optimizationResults.FinalSizeGB
                 $summary = "Storage optimization completed: $($optimizationResults.DuplicatesRemoved) duplicates removed, $($optimizationResults.FilesArchived) files archived, $($optimizationResults.FilesCompressed) files compressed, $($optimizationResults.FilesDeleted) files deleted, $totalSpaceFreed GB freed"
-                
+
                 if ($DryRun) {
                     Write-CustomLog -Level 'INFO' -Message "DRYRUN: $summary"
                 } else {
                     Write-CustomLog -Level 'SUCCESS' -Message $summary
                 }
-                
+
                 return $optimizationResults
             }
-            
+
         } catch {
             $optimizationResults.Errors += "Storage optimization failed: $($_.Exception.Message)"
             Write-CustomLog -Level 'ERROR' -Message "Storage optimization failed: $($_.Exception.Message)"

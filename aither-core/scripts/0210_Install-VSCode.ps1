@@ -15,12 +15,12 @@ Write-CustomLog "Starting $($MyInvocation.MyCommand.Name)"
 
 Invoke-LabStep -Config $Config -Body {
     Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
-    
+
     if ($Config.InstallVSCode -eq $true) {
         if (-not (Get-Command code.exe -ErrorAction SilentlyContinue)) {
             Write-CustomLog "Installing Visual Studio Code..."
             $url = 'https://update.code.visualstudio.com/latest/win32-x64-user/stable'
-            
+
             Invoke-LabDownload -Uri $url -Prefix 'vscode' -Extension '.exe' -Action {
                 param($installer)
                 if ($PSCmdlet.ShouldProcess($installer, 'Install VS Code')) {
@@ -37,4 +37,3 @@ Invoke-LabStep -Config $Config -Body {
 }
 
 Write-CustomLog "Completed $($MyInvocation.MyCommand.Name)"
-

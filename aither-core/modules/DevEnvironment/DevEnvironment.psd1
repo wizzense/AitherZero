@@ -21,26 +21,26 @@
         'Resolve-ModuleImportIssues',
         'Optimize-PlatformEnvironment',
         'Start-DeveloperSetup',
-        
+
         # VS Code Integration
         'Initialize-VSCodeWorkspace',
         'Update-VSCodeSettings',
         'Install-VSCodeExtensions',
         'New-VSCodeWorkspaceFile',
         'Test-VSCodeIntegration',
-        
+
         # AI Tools Dependencies
         'Install-ClaudeCodeDependencies',
         'Install-GeminiCLIDependencies',
         'Install-CodexCLIDependencies',
         'Install-ClaudeRequirementsSystem',
         'Test-ClaudeRequirementsSystem',
-        
+
         # Git Integration
         'Install-PreCommitHook',
         'Remove-PreCommitHook',
         'Test-PreCommitHook',
-        
+
         # Legacy Support
         'Set-DevelopmentEnvironment',
         'Test-DevelopmentSetup',

@@ -24,15 +24,15 @@ param(
     [Parameter(Mandatory, ParameterSetName = 'Explicit')]
     [ValidatePattern('^\d+\.\d+\.\d+$')]
     [string]$Version,
-    
+
     [Parameter(Mandatory, ParameterSetName = 'Auto')]
     [ValidateSet('patch', 'minor', 'major')]
     [string]$Type,
-    
+
     [Parameter(Mandatory)]
     [Alias('Description')]
     [string]$Message,
-    
+
     [switch]$DryRun
 )
 
@@ -43,22 +43,22 @@ if ($Type) {
     $versionFile = Join-Path $PSScriptRoot "VERSION"
     $currentVersion = if (Test-Path $versionFile) { (Get-Content $versionFile -Raw).Trim() } else { "0.0.0" }
     $parts = $currentVersion -split '\.'
-    
+
     switch ($Type) {
-        'patch' { 
-            $parts[2] = [int]$parts[2] + 1 
+        'patch' {
+            $parts[2] = [int]$parts[2] + 1
         }
-        'minor' { 
+        'minor' {
             $parts[1] = [int]$parts[1] + 1
             $parts[2] = "0"
         }
-        'major' { 
+        'major' {
             $parts[0] = [int]$parts[0] + 1
             $parts[1] = "0"
             $parts[2] = "0"
         }
     }
-    
+
     $Version = $parts -join '.'
 }
 

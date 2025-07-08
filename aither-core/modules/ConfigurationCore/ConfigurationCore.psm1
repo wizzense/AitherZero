@@ -50,9 +50,9 @@ $script:ConfigurationStore = @{
 # Security and validation functions
 function Test-ConfigurationSecurity {
     param([hashtable]$Configuration)
-    
+
     $securityIssues = @()
-    
+
     # Check for potentially sensitive data in plain text
     $sensitivePatterns = @(
         '(?i)(password|pwd|secret|key|token|credential)',
@@ -60,14 +60,14 @@ function Test-ConfigurationSecurity {
         '(?i)(connection[_-]?string)',
         '(?i)(private[_-]?key|certificate)'
     )
-    
+
     function Test-HashtableForSensitiveData {
         param([hashtable]$Data, [string]$Path = '')
-        
+
         foreach ($key in $Data.Keys) {
             $currentPath = if ($Path) { "$Path.$key" } else { $key }
             $value = $Data[$key]
-            
+
             if ($value -is [hashtable]) {
                 Test-HashtableForSensitiveData -Data $value -Path $currentPath
             } elseif ($value -is [string]) {
@@ -79,14 +79,14 @@ function Test-ConfigurationSecurity {
             }
         }
     }
-    
+
     Test-HashtableForSensitiveData -Data $Configuration
     return $securityIssues
 }
 
 function Get-ConfigurationHash {
     param([hashtable]$Configuration)
-    
+
     try {
         $json = $Configuration | ConvertTo-Json -Depth 20 -Compress
         $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
@@ -109,9 +109,9 @@ function Import-ConfigurationFunctions {
         # Get function files
         $publicFunctions = @(Get-ChildItem -Path "$PSScriptRoot/Public" -Filter '*.ps1' -ErrorAction SilentlyContinue)
         $privateFunctions = @(Get-ChildItem -Path "$PSScriptRoot/Private" -Filter '*.ps1' -ErrorAction SilentlyContinue)
-        
+
         Write-Verbose "ConfigurationCore: Loading $($privateFunctions.Count) private and $($publicFunctions.Count) public functions"
-        
+
         # Import private functions first
         foreach ($functionFile in $privateFunctions) {
             try {
@@ -120,7 +120,7 @@ function Import-ConfigurationFunctions {
                 Write-Warning "ConfigurationCore: Failed to load private function $($functionFile.Name): $_"
             }
         }
-        
+
         # Import public functions and collect for export
         $functionsToExport = @()
         foreach ($functionFile in $publicFunctions) {
@@ -134,7 +134,7 @@ function Import-ConfigurationFunctions {
                 Write-Warning "ConfigurationCore: Failed to load public function $($functionFile.Name): $_"
             }
         }
-        
+
         # Export successfully loaded functions
         if ($functionsToExport.Count -gt 0) {
             Export-ModuleMember -Function $functionsToExport
@@ -142,7 +142,7 @@ function Import-ConfigurationFunctions {
         } else {
             Write-Warning "ConfigurationCore: No functions available for export"
         }
-        
+
     } catch {
         Write-Error "ConfigurationCore: Critical error during function import: $_"
         throw
@@ -160,31 +160,31 @@ function Initialize-ConfigurationStorePath {
         } else {
             throw "Unsupported platform for configuration storage"
         }
-        
+
         $script:ConfigurationStore.StorePath = Join-Path $configDir 'configuration.json'
-        
+
         # Create directory with appropriate permissions
         if (-not (Test-Path $configDir)) {
             $directory = New-Item -ItemType Directory -Path $configDir -Force
-            
+
             # Set directory permissions (Unix-like systems)
             if ($IsLinux -or $IsMacOS) {
                 chmod 700 $configDir 2>/dev/null
             }
         }
-        
+
         # Set up backup directory
         $backupDir = Join-Path $configDir 'backups'
         if (-not (Test-Path $backupDir)) {
             New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
-            
+
             if ($IsLinux -or $IsMacOS) {
                 chmod 700 $backupDir 2>/dev/null
             }
         }
-        
+
         Write-Verbose "ConfigurationCore: Storage path initialized at $($script:ConfigurationStore.StorePath)"
-        
+
     } catch {
         Write-Error "ConfigurationCore: Failed to initialize storage path: $_"
         throw
@@ -194,21 +194,21 @@ function Initialize-ConfigurationStorePath {
 # Load existing configuration with validation and migration support
 function Import-ExistingConfiguration {
     $configPath = $script:ConfigurationStore.StorePath
-    
+
     if (-not (Test-Path $configPath)) {
         Write-Verbose "ConfigurationCore: No existing configuration found"
         return
     }
-    
+
     try {
         # Read configuration file
         $configContent = Get-Content $configPath -Raw -Encoding UTF8
-        
+
         if ([string]::IsNullOrWhiteSpace($configContent)) {
             Write-Warning "ConfigurationCore: Configuration file is empty"
             return
         }
-        
+
         # Parse JSON with enhanced error handling
         try {
             $storedConfig = $configContent | ConvertFrom-Json -AsHashtable -Depth 20
@@ -218,12 +218,12 @@ function Import-ExistingConfiguration {
             Copy-Item $configPath $backupPath
             return
         }
-        
+
         if (-not $storedConfig -or $storedConfig.Count -eq 0) {
             Write-Warning "ConfigurationCore: Configuration file contains no data"
             return
         }
-        
+
         # Validate configuration structure
         $requiredKeys = @('Modules', 'Environments', 'CurrentEnvironment')
         foreach ($key in $requiredKeys) {
@@ -232,24 +232,24 @@ function Import-ExistingConfiguration {
                 $storedConfig[$key] = $script:ConfigurationStore[$key]
             }
         }
-        
+
         # Ensure default environment exists
         if (-not $storedConfig.Environments.ContainsKey('default')) {
             $storedConfig.Environments['default'] = $script:ConfigurationStore.Environments['default']
         }
-        
+
         # Validate current environment
         if (-not $storedConfig.Environments.ContainsKey($storedConfig.CurrentEnvironment)) {
             Write-Warning "ConfigurationCore: Invalid current environment, resetting to default"
             $storedConfig.CurrentEnvironment = 'default'
         }
-        
+
         # Update metadata
         if (-not $storedConfig.Metadata) {
             $storedConfig.Metadata = $script:ConfigurationStore.Metadata
         }
         $storedConfig.Metadata.LastModified = Get-Date
-        
+
         # Security validation
         $securityIssues = Test-ConfigurationSecurity -Configuration $storedConfig
         if ($securityIssues.Count -gt 0) {
@@ -258,13 +258,13 @@ function Import-ExistingConfiguration {
                 Write-Warning "  - $issue"
             }
         }
-        
+
         # Apply loaded configuration
         $script:ConfigurationStore = $storedConfig
         $script:ConfigurationStore.StorePath = $configPath
-        
+
         Write-Verbose "ConfigurationCore: Successfully loaded existing configuration"
-        
+
         # Validate hash if available
         if ($storedConfig.Security -and $storedConfig.Security.HashValidation) {
             $currentHash = Get-ConfigurationHash -Configuration $storedConfig
@@ -272,11 +272,11 @@ function Import-ExistingConfiguration {
                 $script:ConfigurationStore.Security.LastHash = $currentHash
             }
         }
-        
+
     } catch {
         Write-Warning "ConfigurationCore: Failed to load existing configuration: $_"
         Write-Warning "ConfigurationCore: Starting with default configuration"
-        
+
         # Create backup of problematic file
         if (Test-Path $configPath) {
             $backupPath = "$configPath.error.$(Get-Date -Format 'yyyyMMdd-HHmmss')"
@@ -295,11 +295,11 @@ function Invoke-BackupCleanup {
     try {
         $configDir = Split-Path $script:ConfigurationStore.StorePath -Parent
         $backupDir = Join-Path $configDir 'backups'
-        
+
         if (Test-Path $backupDir) {
-            $backupFiles = Get-ChildItem $backupDir -Filter 'config-backup-*.json' | 
+            $backupFiles = Get-ChildItem $backupDir -Filter 'config-backup-*.json' |
                            Sort-Object LastWriteTime -Descending
-            
+
             if ($backupFiles.Count -gt $script:MAX_BACKUP_COUNT) {
                 $filesToRemove = $backupFiles | Select-Object -Skip $script:MAX_BACKUP_COUNT
                 foreach ($file in $filesToRemove) {
@@ -324,7 +324,7 @@ if (-not (Get-Command 'Write-CustomLog' -ErrorAction SilentlyContinue)) {
             [string]$Level = 'INFO',
             [string]$Message
         )
-        
+
         $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
         $color = switch ($Level) {
             'ERROR' { 'Red' }
@@ -333,7 +333,7 @@ if (-not (Get-Command 'Write-CustomLog' -ErrorAction SilentlyContinue)) {
             'DEBUG' { 'Gray' }
             default { 'White' }
         }
-        
+
         Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
     }
 }
@@ -387,7 +387,7 @@ try {
         $configDir = Join-Path $env:HOME '.aitherzero'
     }
     $script:ConfigurationStore.StorePath = Join-Path $configDir 'configuration.json'
-    
+
     Write-Verbose "ConfigurationCore: Module initialization completed"
 } catch {
     Write-Warning "ConfigurationCore: Non-critical initialization error: $_"

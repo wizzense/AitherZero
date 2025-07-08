@@ -25,12 +25,12 @@
 
 .EXAMPLE
     Install-ClaudeRequirementsSystem
-    
+
     Sets up the Claude Requirements System in the current project.
 
 .EXAMPLE
     Install-ClaudeRequirementsSystem -Force
-    
+
     Reinstalls the Claude Requirements System, overwriting existing files.
 
 .NOTES
@@ -43,10 +43,10 @@ function Install-ClaudeRequirementsSystem {
     param(
         [Parameter()]
         [string]$ProjectRoot,
-        
+
         [Parameter()]
         [string]$ClaudeCommandsPath,
-        
+
         [Parameter()]
         [switch]$Force
     )
@@ -57,15 +57,15 @@ function Install-ClaudeRequirementsSystem {
             . "$PSScriptRoot/../../../shared/Find-ProjectRoot.ps1"
             $ProjectRoot = Find-ProjectRoot
         }
-        
+
         Write-CustomLog -Message "=== Claude Requirements System Installation ===" -Level "INFO"
         Write-CustomLog -Message "Project Root: $ProjectRoot" -Level "INFO"
-        
+
         # Set default Claude commands path
         if (-not $ClaudeCommandsPath) {
             $ClaudeCommandsPath = Join-Path $ProjectRoot ".claude" "commands"
         }
-        
+
         # Define source and destination paths
         $sourcePath = Join-Path $ProjectRoot "claude-requirements"
         $commandsSource = Join-Path $sourcePath "commands"
@@ -79,7 +79,7 @@ function Install-ClaudeRequirementsSystem {
                 Write-CustomLog -Message "Please ensure claude-requirements directory exists in the project root" -Level "INFO"
                 throw "Claude Requirements source directory not found"
             }
-            
+
             # Check if already installed
             $isInstalled = Test-Path $ClaudeCommandsPath
             if ($isInstalled -and -not $Force) {
@@ -87,21 +87,21 @@ function Install-ClaudeRequirementsSystem {
                 Write-CustomLog -Message "Use -Force to reinstall" -Level "INFO"
                 return
             }
-            
+
             if ($PSCmdlet.ShouldProcess("Claude Requirements System", "Install")) {
                 # Create .claude/commands directory
                 Write-CustomLog -Message "📁 Creating Claude commands directory..." -Level "INFO"
                 if (-not (Test-Path $ClaudeCommandsPath)) {
                     New-Item -ItemType Directory -Path $ClaudeCommandsPath -Force | Out-Null
                 }
-                
+
                 # Copy command definitions
                 Write-CustomLog -Message "📋 Installing command definitions..." -Level "INFO"
                 $commandFiles = Get-ChildItem -Path $commandsSource -Filter "*.md" -File
-                
+
                 foreach ($file in $commandFiles) {
                     $destFile = Join-Path $ClaudeCommandsPath $file.Name
-                    
+
                     if ($WhatIf) {
                         Write-CustomLog -Message "[WHATIF] Would copy $($file.Name) to $destFile" -Level "INFO"
                     } else {
@@ -109,13 +109,13 @@ function Install-ClaudeRequirementsSystem {
                         Write-CustomLog -Message "✅ Installed: $($file.Name)" -Level "SUCCESS"
                     }
                 }
-                
+
                 # Create .claude directory structure if needed
                 $claudeDir = Join-Path $ProjectRoot ".claude"
                 if (-not (Test-Path $claudeDir)) {
                     New-Item -ItemType Directory -Path $claudeDir -Force | Out-Null
                 }
-                
+
                 # Create a requirements system configuration
                 $configPath = Join-Path $claudeDir "requirements-config.json"
                 $config = @{
@@ -131,12 +131,12 @@ function Install-ClaudeRequirementsSystem {
                         remind = "/remind"
                     }
                 }
-                
+
                 if (-not $WhatIf) {
                     $config | ConvertTo-Json -Depth 10 | Set-Content -Path $configPath -Encoding UTF8
                     Write-CustomLog -Message "✅ Created configuration file" -Level "SUCCESS"
                 }
-                
+
                 # Add to .gitignore if not already present
                 $gitignorePath = Join-Path $ProjectRoot ".gitignore"
                 if (Test-Path $gitignorePath) {
@@ -147,20 +147,20 @@ function Install-ClaudeRequirementsSystem {
                         "!claude-requirements/requirements/index.md",
                         "!claude-requirements/requirements/.current-requirement"
                     )
-                    
+
                     $entriesToAdd = @()
                     foreach ($entry in $requiredEntries) {
                         if ($gitignoreContent -notmatch [regex]::Escape($entry)) {
                             $entriesToAdd += $entry
                         }
                     }
-                    
+
                     if ($entriesToAdd.Count -gt 0 -and -not $WhatIf) {
                         Add-Content -Path $gitignorePath -Value "`n# Claude Requirements System`n$($entriesToAdd -join "`n")"
                         Write-CustomLog -Message "✅ Updated .gitignore" -Level "SUCCESS"
                     }
                 }
-                
+
                 Write-CustomLog -Message "✅ Claude Requirements System installed successfully!" -Level "SUCCESS"
                 Write-CustomLog -Message "" -Level "INFO"
                 Write-CustomLog -Message "Available commands:" -Level "INFO"
@@ -171,7 +171,7 @@ function Install-ClaudeRequirementsSystem {
                 Write-CustomLog -Message "  /requirements-list    - List all requirements" -Level "INFO"
                 Write-CustomLog -Message "  /remind              - Remind AI of rules" -Level "INFO"
             }
-            
+
         } catch {
             Write-CustomLog -Message "❌ Failed to install Claude Requirements System: $($_.Exception.Message)" -Level "ERROR"
             throw
@@ -186,42 +186,42 @@ function Test-ClaudeRequirementsSystem {
         [Parameter()]
         [string]$ProjectRoot
     )
-    
+
     if (-not $ProjectRoot) {
         . "$PSScriptRoot/../../../shared/Find-ProjectRoot.ps1"
         $ProjectRoot = Find-ProjectRoot
     }
-    
+
     $claudeCommandsPath = Join-Path $ProjectRoot ".claude" "commands"
     $configPath = Join-Path $ProjectRoot ".claude" "requirements-config.json"
-    
+
     $isInstalled = (Test-Path $claudeCommandsPath) -and (Test-Path $configPath)
-    
+
     if ($isInstalled) {
         Write-CustomLog -Message "✅ Claude Requirements System is installed" -Level "SUCCESS"
-        
+
         # Check command files
         $expectedCommands = @(
             "requirements-start.md",
-            "requirements-status.md", 
+            "requirements-status.md",
             "requirements-current.md",
             "requirements-end.md",
             "requirements-list.md",
             "requirements-remind.md"
         )
-        
+
         $missingCommands = @()
         foreach ($cmd in $expectedCommands) {
             if (-not (Test-Path (Join-Path $claudeCommandsPath $cmd))) {
                 $missingCommands += $cmd
             }
         }
-        
+
         if ($missingCommands.Count -gt 0) {
             Write-CustomLog -Message "⚠️ Missing command files: $($missingCommands -join ', ')" -Level "WARN"
             return $false
         }
-        
+
         return $true
     } else {
         Write-CustomLog -Message "❌ Claude Requirements System is not installed" -Level "WARN"

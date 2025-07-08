@@ -48,12 +48,12 @@ function Get-ConnectionPoolStatus {
                 LastCleanup = $poolStats.LastCleanup
                 Statistics = [PSCustomObject]$poolStats.Statistics
                 PoolUtilization = [math]::Round(($poolStats.CurrentConnections / $poolStats.MaxConnections) * 100, 2)
-                Health = if ($poolStats.CurrentConnections -eq 0) { 
-                    "Empty" 
-                } elseif ($poolStats.CurrentConnections -lt ($poolStats.MaxConnections * 0.8)) { 
-                    "Healthy" 
-                } else { 
-                    "Near Capacity" 
+                Health = if ($poolStats.CurrentConnections -eq 0) {
+                    "Empty"
+                } elseif ($poolStats.CurrentConnections -lt ($poolStats.MaxConnections * 0.8)) {
+                    "Healthy"
+                } else {
+                    "Near Capacity"
                 }
             }
 

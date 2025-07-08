@@ -13,26 +13,26 @@ function Invoke-ConfigurationReload {
     param(
         [Parameter(Mandatory)]
         [string]$ModuleName,
-        
+
         [Parameter(Mandatory)]
         [string]$Environment
     )
-    
+
     try {
         # Only proceed if hot reload is enabled
         if (-not $script:ConfigurationStore.HotReload.Enabled) {
             return
         }
-        
+
         Write-CustomLog -Level 'DEBUG' -Message "Triggering configuration reload for $ModuleName in $Environment"
-        
+
         # Check if module is loaded
         $module = Get-Module -Name $ModuleName -ErrorAction SilentlyContinue
         if (-not $module) {
             Write-CustomLog -Level 'DEBUG' -Message "Module $ModuleName not loaded, skipping reload"
             return
         }
-        
+
         # Look for module's reload function
         $reloadFunction = "$ModuleName\Update-ModuleConfiguration"
         if (Get-Command $reloadFunction -ErrorAction SilentlyContinue) {
@@ -43,7 +43,7 @@ function Invoke-ConfigurationReload {
         } else {
             Write-CustomLog -Level 'DEBUG' -Message "Module $ModuleName does not support hot reload"
         }
-        
+
         # Publish event for other modules to react
         if (Get-Command 'Publish-TestEvent' -ErrorAction SilentlyContinue) {
             Publish-TestEvent -EventName 'ConfigurationChanged' -EventData @{
@@ -52,7 +52,7 @@ function Invoke-ConfigurationReload {
                 Timestamp = Get-Date
             }
         }
-        
+
     } catch {
         Write-CustomLog -Level 'WARNING' -Message "Failed to reload configuration for ${ModuleName}: $_"
     }

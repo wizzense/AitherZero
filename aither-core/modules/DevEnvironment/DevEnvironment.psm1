@@ -23,7 +23,7 @@ if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
     $loggingPaths = @(
         'Logging'  # Try module name first (if in PSModulePath)
     )
-    
+
     # Add paths only if they have valid base paths
     if ($PSScriptRoot) {
         $loggingPaths += Join-Path (Split-Path $PSScriptRoot -Parent) "Logging"

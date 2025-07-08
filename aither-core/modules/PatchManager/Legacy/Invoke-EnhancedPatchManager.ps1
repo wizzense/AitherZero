@@ -649,4 +649,3 @@ Closes #$IssueNumber
         }
     }
 }
-

@@ -9,7 +9,7 @@ function Initialize-ConnectionPool {
     <#
     .SYNOPSIS
         Initializes the connection pool with default settings.
-    
+
     .DESCRIPTION
         Sets up the global connection pool with configuration options
         for maximum connections, timeout settings, and cleanup policies.
@@ -18,14 +18,14 @@ function Initialize-ConnectionPool {
     param(
         [Parameter()]
         [int]$MaxConnections = 50,
-        
+
         [Parameter()]
         [int]$ConnectionTimeoutMinutes = 30,
-        
+
         [Parameter()]
         [int]$CleanupIntervalMinutes = 5
     )
-    
+
     try {
         $Global:AitherZeroConnectionPool = @{
             MaxConnections = $MaxConnections
@@ -41,7 +41,7 @@ function Initialize-ConnectionPool {
                 ReusedConnections = 0
             }
         }
-        
+
         Write-CustomLog -Level 'INFO' -Message "Connection pool initialized with max $MaxConnections connections"
         return $true
     }
@@ -55,7 +55,7 @@ function Get-PooledConnection {
     <#
     .SYNOPSIS
         Retrieves a connection from the pool or creates a new one.
-    
+
     .DESCRIPTION
         Checks the connection pool for an existing, valid connection.
         If found, returns it. Otherwise, creates a new connection.
@@ -64,37 +64,37 @@ function Get-PooledConnection {
     param(
         [Parameter(Mandatory = $true)]
         [string]$ConnectionName,
-        
+
         [Parameter()]
         [switch]$ForceNew
     )
-    
+
     try {
         # Initialize pool if not already done
         if (-not $Global:AitherZeroConnectionPool -or -not $Global:AitherZeroConnectionPool.Connections) {
             Initialize-ConnectionPool
         }
-        
+
         # Clean up expired connections
         Invoke-ConnectionPoolCleanup
-        
+
         $poolKey = "Pool_$ConnectionName"
-        
+
         # Check if we should force a new connection
         if ($ForceNew) {
             Remove-PooledConnection -ConnectionName $ConnectionName
         }
-        
+
         # Check if connection exists in pool
         if ($Global:AitherZeroConnectionPool.Connections.ContainsKey($poolKey)) {
             $pooledConnection = $Global:AitherZeroConnectionPool.Connections[$poolKey]
-            
+
             # Validate connection is still active
             if (Test-PooledConnectionHealth -PooledConnection $pooledConnection) {
                 # Update last used time
                 $pooledConnection.LastUsed = Get-Date
                 $Global:AitherZeroConnectionPool.Statistics.ReusedConnections++
-                
+
                 Write-CustomLog -Level 'DEBUG' -Message "Reusing pooled connection: $ConnectionName"
                 return @{
                     Success = $true
@@ -107,10 +107,10 @@ function Get-PooledConnection {
                 Remove-PooledConnection -ConnectionName $ConnectionName
             }
         }
-        
+
         # Create new connection
         $connectionResult = New-PooledConnection -ConnectionName $ConnectionName
-        
+
         if ($connectionResult.Success) {
             return @{
                 Success = $true
@@ -146,29 +146,29 @@ function New-PooledConnection {
         [Parameter(Mandatory = $true)]
         [string]$ConnectionName
     )
-    
+
     try {
         # Check pool capacity
         if ($Global:AitherZeroConnectionPool.Connections.Count -ge $Global:AitherZeroConnectionPool.MaxConnections) {
             # Remove oldest connection
-            $oldestConnection = $Global:AitherZeroConnectionPool.Connections.GetEnumerator() | 
-                Sort-Object { $_.Value.LastUsed } | 
+            $oldestConnection = $Global:AitherZeroConnectionPool.Connections.GetEnumerator() |
+                Sort-Object { $_.Value.LastUsed } |
                 Select-Object -First 1
-            
+
             if ($oldestConnection) {
                 Remove-PooledConnection -PoolKey $oldestConnection.Key
                 Write-CustomLog -Level 'INFO' -Message "Removed oldest connection to make room in pool"
             }
         }
-        
+
         # Get connection configuration
         $configResult = Get-ConnectionConfiguration -ConnectionName $ConnectionName
         if (-not $configResult.Success) {
             throw "Connection configuration not found: $ConnectionName"
         }
-        
+
         $config = $configResult.Configuration
-        
+
         # Establish connection based on endpoint type
         $connectionResult = switch ($config.EndpointType) {
             'SSH' { Connect-SSHEndpoint -Config $config -TimeoutSeconds 30 }
@@ -179,7 +179,7 @@ function New-PooledConnection {
             'Kubernetes' { Connect-KubernetesEndpoint -Config $config -TimeoutSeconds 30 }
             default { @{ Success = $false; Error = "Unsupported endpoint type: $($config.EndpointType)" } }
         }
-        
+
         if ($connectionResult.Success) {
             # Add to pool
             $poolKey = "Pool_$ConnectionName"
@@ -192,14 +192,14 @@ function New-PooledConnection {
                 UsageCount = 1
                 EndpointType = $config.EndpointType
             }
-            
+
             $Global:AitherZeroConnectionPool.Connections[$poolKey] = $pooledConnection
             $Global:AitherZeroConnectionPool.Statistics.TotalConnections++
             $Global:AitherZeroConnectionPool.Statistics.ActiveConnections++
             $Global:AitherZeroConnectionPool.Statistics.SuccessfulConnections++
-            
+
             Write-CustomLog -Level 'SUCCESS' -Message "Created new pooled connection: $ConnectionName"
-            
+
             return @{
                 Success = $true
                 Connection = $connectionResult.Session
@@ -228,19 +228,19 @@ function Remove-PooledConnection {
     param(
         [Parameter(ParameterSetName = 'ByName')]
         [string]$ConnectionName,
-        
+
         [Parameter(ParameterSetName = 'ByKey')]
         [string]$PoolKey
     )
-    
+
     try {
         if ($PSCmdlet.ParameterSetName -eq 'ByName') {
             $PoolKey = "Pool_$ConnectionName"
         }
-        
+
         if ($Global:AitherZeroConnectionPool.Connections.ContainsKey($PoolKey)) {
             $pooledConnection = $Global:AitherZeroConnectionPool.Connections[$PoolKey]
-            
+
             # Close the connection based on type
             try {
                 switch ($pooledConnection.EndpointType) {
@@ -260,15 +260,15 @@ function Remove-PooledConnection {
             catch {
                 Write-CustomLog -Level 'WARN' -Message "Error closing connection: $($_.Exception.Message)"
             }
-            
+
             # Remove from pool
             $Global:AitherZeroConnectionPool.Connections.Remove($PoolKey)
             $Global:AitherZeroConnectionPool.Statistics.ActiveConnections--
-            
+
             Write-CustomLog -Level 'DEBUG' -Message "Removed connection from pool: $($pooledConnection.ConnectionName)"
             return $true
         }
-        
+
         return $false
     }
     catch {
@@ -287,7 +287,7 @@ function Test-PooledConnectionHealth {
         [Parameter(Mandatory = $true)]
         [hashtable]$PooledConnection
     )
-    
+
     try {
         # Check if connection has expired
         $age = (Get-Date) - $PooledConnection.LastUsed
@@ -295,7 +295,7 @@ function Test-PooledConnectionHealth {
             Write-CustomLog -Level 'DEBUG' -Message "Connection expired: $($PooledConnection.ConnectionName)"
             return $false
         }
-        
+
         # Perform basic connectivity test based on endpoint type
         switch ($PooledConnection.EndpointType) {
             'SSH' {
@@ -343,33 +343,33 @@ function Invoke-ConnectionPoolCleanup {
     #>
     [CmdletBinding()]
     param()
-    
+
     try {
         # Check if cleanup is needed
         $timeSinceLastCleanup = (Get-Date) - $Global:AitherZeroConnectionPool.LastCleanup
         if ($timeSinceLastCleanup -lt $Global:AitherZeroConnectionPool.CleanupInterval) {
             return
         }
-        
+
         Write-CustomLog -Level 'DEBUG' -Message "Starting connection pool cleanup"
-        
+
         $connectionsToRemove = @()
-        
+
         # Check each connection
         foreach ($poolEntry in $Global:AitherZeroConnectionPool.Connections.GetEnumerator()) {
             if (-not (Test-PooledConnectionHealth -PooledConnection $poolEntry.Value)) {
                 $connectionsToRemove += $poolEntry.Key
             }
         }
-        
+
         # Remove unhealthy connections
         foreach ($key in $connectionsToRemove) {
             Remove-PooledConnection -PoolKey $key
         }
-        
+
         # Update cleanup time
         $Global:AitherZeroConnectionPool.LastCleanup = Get-Date
-        
+
         if ($connectionsToRemove.Count -gt 0) {
             Write-CustomLog -Level 'INFO' -Message "Cleaned up $($connectionsToRemove.Count) stale connections from pool"
         }
@@ -386,13 +386,13 @@ function Get-ConnectionPoolStatistics {
     #>
     [CmdletBinding()]
     param()
-    
+
     if (-not $Global:AitherZeroConnectionPool) {
         return @{
             PoolInitialized = $false
         }
     }
-    
+
     return @{
         PoolInitialized = $true
         MaxConnections = $Global:AitherZeroConnectionPool.MaxConnections
@@ -425,19 +425,19 @@ function Clear-ConnectionPool {
         [Parameter()]
         [switch]$Force
     )
-    
+
     if ($Force -or $PSCmdlet.ShouldProcess("Connection Pool", "Clear all connections")) {
         try {
             if ($Global:AitherZeroConnectionPool -and $Global:AitherZeroConnectionPool.Connections) {
                 $connectionKeys = @($Global:AitherZeroConnectionPool.Connections.Keys)
-                
+
                 foreach ($key in $connectionKeys) {
                     Remove-PooledConnection -PoolKey $key
                 }
-                
+
                 # Reset statistics
                 $Global:AitherZeroConnectionPool.Statistics.ActiveConnections = 0
-                
+
                 Write-CustomLog -Level 'INFO' -Message "Cleared all connections from pool"
                 return $true
             }

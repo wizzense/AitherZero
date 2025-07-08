@@ -27,7 +27,7 @@ if (-not $foundSharedUtil) {
     # Define Find-ProjectRoot locally if shared utility is not found
     function Find-ProjectRoot {
         param([string]$StartPath = $PWD.Path)
-        
+
         $currentPath = $StartPath
         while ($currentPath -and $currentPath -ne (Split-Path $currentPath -Parent)) {
             if (Test-Path (Join-Path $currentPath "Start-AitherZero.ps1")) {
@@ -35,7 +35,7 @@ if (-not $foundSharedUtil) {
             }
             $currentPath = Split-Path $currentPath -Parent
         }
-        
+
         # Fallback to module root's parent parent
         return Split-Path (Split-Path $moduleRoot -Parent) -Parent
     }
@@ -63,7 +63,7 @@ function Start-IntelligentSetup {
         [ValidateSet('minimal', 'developer', 'full', 'interactive')]
         [string]$InstallationProfile = 'interactive'
     )
-    
+
     # Initialize setup state
     $setupState = @{
         StartTime = Get-Date
@@ -77,20 +77,20 @@ function Start-IntelligentSetup {
         Recommendations = @()
         AIToolsToInstall = @()
     }
-    
+
     # Determine installation profile if interactive
     if ($InstallationProfile -eq 'interactive') {
         $setupState.InstallationProfile = Get-InstallationProfile
     }
-    
+
     # Override for legacy parameter
     if ($MinimalSetup) {
         $setupState.InstallationProfile = 'minimal'
     }
-    
+
     # Display welcome
     Show-WelcomeMessage -SetupState $setupState
-    
+
     # Check if progress tracking is available
     $progressAvailable = Get-Module -Name 'ProgressTracking' -ListAvailable
     $useProgress = $false
@@ -105,7 +105,7 @@ function Start-IntelligentSetup {
             Write-Verbose "ProgressTracking module not available: $_"
         }
     }
-    
+
     # Create progress operation if available (skip in non-interactive mode)
     $progressId = $null
     if ($useProgress -and (Get-Command Start-ProgressOperation -ErrorAction SilentlyContinue)) {
@@ -121,42 +121,42 @@ function Start-IntelligentSetup {
         }
     }
     Show-SetupBanner
-    
+
     # Run setup steps based on profile
     $setupStepsInfo = Get-SetupSteps -Profile $setupState.InstallationProfile
     $setupSteps = $setupStepsInfo.Steps
     $profileInfo = $setupStepsInfo.Profile
-    
+
     # Show enhanced profile information
     Show-EnhancedInstallationProfile -Profile $setupState.InstallationProfile -ProfileInfo $profileInfo
-    
+
     $setupState.TotalSteps = $setupSteps.Count
     $setupState.ProfileInfo = $profileInfo
-    
+
     foreach ($step in $setupSteps) {
         $setupState.CurrentStep++
         Show-EnhancedProgress -State $setupState -StepName $step.Name -Status 'Running'
-        
+
         $stepAttempts = 0
         $maxAttempts = 2
         $stepCompleted = $false
-        
+
         while ($stepAttempts -lt $maxAttempts -and -not $stepCompleted) {
             $stepAttempts++
-            
+
             try {
                 # Validate function exists before calling
                 if (-not (Get-Command $step.Function -ErrorAction SilentlyContinue)) {
                     throw "Step function '$($step.Function)' not found"
                 }
-                
+
                 $result = & $step.Function -SetupState $setupState
-                
+
                 # Normalize status values
                 if ($result.Status -eq 'Success') { $result.Status = 'Passed' }
-                
+
                 $setupState.Steps += $result
-                
+
                 if ($result.Status -eq 'Passed' -or $result.Status -eq 'Success') {
                     Show-EnhancedProgress -State $setupState -StepName $step.Name -Status 'Success'
                     $stepCompleted = $true
@@ -166,14 +166,14 @@ function Start-IntelligentSetup {
                 } elseif ($result.Status -eq 'Failed') {
                     Show-EnhancedProgress -State $setupState -StepName $step.Name -Status 'Failed' `
                         -ErrorContext @{ LastError = $result.Details -join '; ' }
-                    
+
                     # Attempt recovery if this is the first attempt
                     if ($stepAttempts -eq 1) {
                         Write-Host "  🔧 Attempting automatic recovery..." -ForegroundColor Blue
                         Show-EnhancedProgress -State $setupState -StepName $step.Name -Status 'Recovering'
-                        
+
                         $recovery = Invoke-ErrorRecovery -StepResult $result -SetupState $setupState -StepName $step.Name
-                        
+
                         if ($recovery.Success) {
                             Write-Host "  ✓ Recovery successful, retrying step..." -ForegroundColor Green
                             Show-EnhancedProgress -State $setupState -StepName $step.Name -Status 'Retrying' `
@@ -184,15 +184,15 @@ function Start-IntelligentSetup {
                             $result.Details += $recovery.Details
                         }
                     }
-                    
+
                     # Prompt user for action if not in skip mode
                     if (-not $SkipOptional) {
                         Write-Host ""
                         Write-Host "Step Failed: $($step.Name)" -ForegroundColor Red
                         Write-Host "Details: $($result.Details -join '; ')" -ForegroundColor Gray
-                        
+
                         $choice = Show-SetupPrompt -Message "Continue anyway? (y=yes, n=abort setup, r=retry manually)" -DefaultYes:$false
-                        
+
                         if ($choice) {
                             Write-Host "  ⚠️ Continuing with failed step" -ForegroundColor Yellow
                             $stepCompleted = $true
@@ -205,16 +205,16 @@ function Start-IntelligentSetup {
                         $stepCompleted = $true
                     }
                 }
-                
+
             } catch {
                 $errorMessage = "Error in $($step.Name): $_"
                 $setupState.Errors += $errorMessage
-                
+
                 Show-EnhancedProgress -State $setupState -StepName $step.Name -Status 'Failed' `
                     -ErrorContext @{ LastError = $_.Exception.Message }
-                
+
                 Write-Host "  ❌ Exception: $_" -ForegroundColor Red
-                
+
                 if ($stepAttempts -eq 1) {
                     Write-Host "  🔄 Retrying step due to exception..." -ForegroundColor Magenta
                     Show-EnhancedProgress -State $setupState -StepName $step.Name -Status 'Retrying'
@@ -226,21 +226,21 @@ function Start-IntelligentSetup {
                 }
             }
         }
-        
+
         Start-Sleep -Milliseconds 500  # Brief pause for visual feedback
     }
-    
+
     # Show summary
     Show-SetupSummary -State $setupState
-    
+
     return $setupState
 }
 
 function Get-PlatformInfo {
     @{
         OS = if ($IsWindows) { 'Windows' } elseif ($IsLinux) { 'Linux' } elseif ($IsMacOS) { 'macOS' } else { 'Unknown' }
-        Version = if ($IsWindows) { 
-            [System.Environment]::OSVersion.Version.ToString() 
+        Version = if ($IsWindows) {
+            [System.Environment]::OSVersion.Version.ToString()
         } elseif ($IsLinux) {
             if (Test-Path /etc/os-release) {
                 (Get-Content /etc/os-release | Select-String '^VERSION=' | ForEach-Object { $_.ToString().Split('=')[1].Trim('"') })
@@ -255,7 +255,7 @@ function Get-PlatformInfo {
 
 function Show-WelcomeMessage {
     param($SetupState)
-    
+
     Write-Host ""
     Write-Host "Welcome to AitherZero Setup!" -ForegroundColor Cyan
     Write-Host "============================" -ForegroundColor Cyan
@@ -291,10 +291,10 @@ function Show-Progress {
         $State,
         [string]$StepName
     )
-    
+
     $percentage = [math]::Round(($State.CurrentStep / $State.TotalSteps) * 100)
     $progressBar = "[" + ("█" * [math]::Floor($percentage / 5)) + ("░" * (20 - [math]::Floor($percentage / 5))) + "]"
-    
+
     Write-Host ""
     Write-Host "  $progressBar $percentage% - Step $($State.CurrentStep)/$($State.TotalSteps)" -ForegroundColor Cyan
     Write-Host "  🔍 $StepName..." -ForegroundColor Yellow
@@ -302,21 +302,21 @@ function Show-Progress {
 
 function Test-PlatformRequirements {
     param($SetupState)
-    
+
     $result = @{
         Name = 'Platform Detection'
         Status = 'Unknown'
         Details = @()
         Data = @{}
     }
-    
+
     $platform = $SetupState.Platform
     $result.Data = $platform
-    
+
     $result.Details += "Operating System: $($platform.OS) $($platform.Version)"
     $result.Details += "Architecture: $($platform.Architecture)"
     $result.Details += "PowerShell: $($platform.PowerShell)"
-    
+
     # Platform-specific checks
     switch ($platform.OS) {
         'Windows' {
@@ -327,7 +327,7 @@ function Test-PlatformRequirements {
                 $result.Details += "⚠️ Older Windows version - some features may be limited"
                 $SetupState.Warnings += "Windows version is older than Windows 10"
             }
-            
+
             # Check execution policy
             $execPolicy = Get-ExecutionPolicy
             if ($execPolicy -in @('Restricted', 'AllSigned')) {
@@ -338,7 +338,7 @@ function Test-PlatformRequirements {
         'Linux' {
             # Check Linux-specific requirements
             $result.Details += "✓ Linux platform detected"
-            
+
             # Check for systemd
             if (Get-Command systemctl -ErrorAction SilentlyContinue) {
                 $result.Details += "✓ Systemd available"
@@ -347,7 +347,7 @@ function Test-PlatformRequirements {
         'macOS' {
             # Check macOS-specific requirements
             $result.Details += "✓ macOS platform detected"
-            
+
             # Check for Homebrew
             if (Get-Command brew -ErrorAction SilentlyContinue) {
                 $result.Details += "✓ Homebrew available"
@@ -356,22 +356,22 @@ function Test-PlatformRequirements {
             }
         }
     }
-    
+
     $result.Status = if ($SetupState.Warnings.Count -eq 0) { 'Passed' } else { 'Warning' }
     return $result
 }
 
 function Test-PowerShellVersion {
     param($SetupState)
-    
+
     $result = @{
         Name = 'PowerShell Version'
         Status = 'Unknown'
         Details = @()
     }
-    
+
     $psVersion = $PSVersionTable.PSVersion
-    
+
     if ($psVersion.Major -ge 7) {
         $result.Status = 'Passed'
         $result.Details += "✓ PowerShell $psVersion - Full compatibility"
@@ -385,36 +385,36 @@ function Test-PowerShellVersion {
         $result.Details += "❌ PowerShell $psVersion - Not supported"
         $result.Details += "  Minimum required: PowerShell 5.1"
     }
-    
+
     # Check for available PowerShell versions
     if ($SetupState.Platform.OS -eq 'Windows') {
         if (Test-Path "$env:ProgramFiles\PowerShell\7\pwsh.exe") {
             $result.Details += "ℹ️ PowerShell 7 is installed but not currently running"
         }
     }
-    
+
     return $result
 }
 
 function Test-GitInstallation {
     param($SetupState)
-    
+
     $result = @{
         Name = 'Git Installation'
         Status = 'Unknown'
         Details = @()
     }
-    
+
     try {
         $gitVersion = git --version 2>$null
         if ($gitVersion) {
             $result.Status = 'Passed'
             $result.Details += "✓ $gitVersion"
-            
+
             # Check Git configuration
             $userName = git config --global user.name 2>$null
             $userEmail = git config --global user.email 2>$null
-            
+
             if ($userName -and $userEmail) {
                 $result.Details += "✓ Git configured for: $userName <$userEmail>"
             } else {
@@ -426,7 +426,7 @@ function Test-GitInstallation {
     } catch {
         $result.Status = 'Warning'
         $result.Details += "⚠️ Git not found - PatchManager features will be limited"
-        
+
         # Platform-specific installation instructions
         switch ($SetupState.Platform.OS) {
             'Windows' {
@@ -440,23 +440,23 @@ function Test-GitInstallation {
             }
         }
     }
-    
+
     return $result
 }
 
 function Test-InfrastructureTools {
     param($SetupState)
-    
+
     $result = @{
         Name = 'Infrastructure Tools'
         Status = 'Unknown'
         Details = @()
     }
-    
+
     # Check for OpenTofu/Terraform
     $tofu = Get-Command tofu -ErrorAction SilentlyContinue
     $terraform = Get-Command terraform -ErrorAction SilentlyContinue
-    
+
     if ($tofu) {
         $result.Status = 'Passed'
         $version = tofu version 2>&1 | Select-String -Pattern 'OpenTofu v([\d.]+)' | ForEach-Object { $_.Matches[0].Groups[1].Value }
@@ -472,37 +472,37 @@ function Test-InfrastructureTools {
         $result.Details += "  Infrastructure automation features will be limited"
         $SetupState.Recommendations += "Install OpenTofu: https://opentofu.org/docs/intro/install/"
     }
-    
+
     # Check for Docker (optional)
     if (Get-Command docker -ErrorAction SilentlyContinue) {
         $result.Details += "✓ Docker available for container infrastructure"
     }
-    
+
     # Check for cloud CLIs (optional)
     $cloudCLIs = @{
         'az' = 'Azure CLI'
         'aws' = 'AWS CLI'
         'gcloud' = 'Google Cloud SDK'
     }
-    
+
     foreach ($cli in $cloudCLIs.GetEnumerator()) {
         if (Get-Command $cli.Key -ErrorAction SilentlyContinue) {
             $result.Details += "✓ $($cli.Value) available"
         }
     }
-    
+
     return $result
 }
 
 function Test-ModuleDependencies {
     param($SetupState)
-    
+
     $result = @{
         Name = 'Module Dependencies'
         Status = 'Unknown'
         Details = @()
     }
-    
+
     # Check AitherZero modules
     $modulePath = Join-Path (Split-Path $PSScriptRoot -Parent) "modules"
     $requiredModules = @(
@@ -512,10 +512,10 @@ function Test-ModuleDependencies {
         'LabRunner',
         'BackupManager'
     )
-    
+
     $foundModules = 0
     $missingModules = @()
-    
+
     foreach ($module in $requiredModules) {
         $modulePath = Join-Path (Split-Path $PSScriptRoot -Parent) "modules/$module"
         if (Test-Path $modulePath) {
@@ -524,7 +524,7 @@ function Test-ModuleDependencies {
             $missingModules += $module
         }
     }
-    
+
     if ($foundModules -eq $requiredModules.Count) {
         $result.Status = 'Passed'
         $result.Details += "✓ All $($requiredModules.Count) core modules found"
@@ -535,7 +535,7 @@ function Test-ModuleDependencies {
             $result.Details += "  Missing: $($missingModules -join ', ')"
         }
     }
-    
+
     # Check for optional PowerShell modules
     $optionalModules = @('Pester', 'PSScriptAnalyzer', 'platyPS')
     foreach ($module in $optionalModules) {
@@ -543,28 +543,28 @@ function Test-ModuleDependencies {
             $result.Details += "✓ Optional module available: $module"
         }
     }
-    
+
     return $result
 }
 
 function Test-NetworkConnectivity {
     param($SetupState)
-    
+
     $result = @{
         Name = 'Network Connectivity'
         Status = 'Unknown'
         Details = @()
     }
-    
+
     # Test connectivity to key services
     $endpoints = @(
         @{Name = 'GitHub'; Url = 'https://api.github.com'; Required = $true},
         @{Name = 'PowerShell Gallery'; Url = 'https://www.powershellgallery.com'; Required = $false},
         @{Name = 'OpenTofu Registry'; Url = 'https://registry.opentofu.org'; Required = $false}
     )
-    
+
     $failedRequired = $false
-    
+
     foreach ($endpoint in $endpoints) {
         try {
             $response = Invoke-WebRequest -Uri $endpoint.Url -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
@@ -580,25 +580,25 @@ function Test-NetworkConnectivity {
             }
         }
     }
-    
+
     # Check for proxy settings
     if ($env:HTTP_PROXY -or $env:HTTPS_PROXY) {
         $result.Details += "ℹ️ Proxy configuration detected"
     }
-    
+
     $result.Status = if ($failedRequired) { 'Failed' } else { 'Passed' }
     return $result
 }
 
 function Test-SecuritySettings {
     param($SetupState)
-    
+
     $result = @{
         Name = 'Security Settings'
         Status = 'Unknown'
         Details = @()
     }
-    
+
     # Platform-specific security checks
     switch ($SetupState.Platform.OS) {
         'Windows' {
@@ -607,7 +607,7 @@ function Test-SecuritySettings {
                 $defenderPrefs = Get-MpPreference -ErrorAction SilentlyContinue
                 if ($defenderPrefs) {
                     $result.Details += "✓ Windows Defender is active"
-                    
+
                     # Check if project path is excluded
                     $projectPath = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
                     if ($defenderPrefs.ExclusionPath -contains $projectPath) {
@@ -628,7 +628,7 @@ function Test-SecuritySettings {
                     $result.Details += "SELinux status: $selinuxStatus"
                 }
             }
-            
+
             # Check AppArmor status
             if (Get-Command aa-status -ErrorAction SilentlyContinue) {
                 $result.Details += "✓ AppArmor is available"
@@ -643,7 +643,7 @@ function Test-SecuritySettings {
             }
         }
     }
-    
+
     # Check for secure credential storage
     $credPath = Join-Path $env:USERPROFILE ".aitherzero/credentials" -ErrorAction SilentlyContinue
     if (Test-Path $credPath) {
@@ -651,30 +651,30 @@ function Test-SecuritySettings {
     } else {
         $result.Details += "ℹ️ Secure credential store will be created when needed"
     }
-    
+
     $result.Status = 'Passed'
     return $result
 }
 
 function Initialize-Configuration {
     param($SetupState)
-    
+
     $result = @{
         Name = 'Configuration Files'
         Status = 'Unknown'
         Details = @()
     }
-    
+
     try {
         # Import ConfigurationCore module for unified configuration management
         $configCoreModule = Join-Path (Split-Path $PSScriptRoot -Parent) "ConfigurationCore"
         if (Test-Path $configCoreModule) {
             Import-Module $configCoreModule -Force -ErrorAction Stop
             $result.Details += "✓ Loaded ConfigurationCore module"
-            
+
             # Initialize ConfigurationCore
             Initialize-ConfigurationCore
-            
+
             # Register SetupWizard module configuration
             Register-ModuleConfiguration -ModuleName 'SetupWizard' -Schema @{
                 Platform = @{ Type = 'string'; Required = $true }
@@ -696,7 +696,7 @@ function Initialize-Configuration {
                     }
                 }
             }
-            
+
             # Set initial configuration
             $initialConfig = @{
                 Platform = $SetupState.Platform.OS
@@ -712,43 +712,43 @@ function Initialize-Configuration {
                     AutoLoad = $true
                 }
             }
-            
+
             Set-ModuleConfiguration -ModuleName 'SetupWizard' -Configuration $initialConfig
             $result.Details += "✓ Initialized SetupWizard configuration with ConfigurationCore"
-            
+
             # Save setup state as module configuration
             Register-ModuleConfiguration -ModuleName 'SetupWizard.State' -Schema @{
                 SetupHistory = @{ Type = 'array'; Default = @() }
                 LastSetupDate = @{ Type = 'string'; Default = '' }
                 SetupVersion = @{ Type = 'string'; Default = '1.0.0' }
             }
-            
+
             $setupStateConfig = @{
                 SetupHistory = @($SetupState)
                 LastSetupDate = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
                 SetupVersion = '1.0.0'
             }
-            
+
             Set-ModuleConfiguration -ModuleName 'SetupWizard.State' -Configuration $setupStateConfig
             $result.Details += "✓ Saved setup state using ConfigurationCore"
-            
+
         } else {
             # Fallback to legacy configuration method
             $result.Details += "⚠️ ConfigurationCore not found, using legacy configuration"
-            
+
             # Determine config directory
             $configDir = if ($SetupState.Platform.OS -eq 'Windows') {
                 Join-Path $env:APPDATA "AitherZero"
             } else {
                 Join-Path $env:HOME ".config/aitherzero"
             }
-            
+
             # Create config directory if needed
             if (-not (Test-Path $configDir)) {
                 New-Item -Path $configDir -ItemType Directory -Force | Out-Null
                 $result.Details += "✓ Created configuration directory: $configDir"
             }
-            
+
             # Create default configuration
             $defaultConfig = @{
                 Version = '1.0'
@@ -765,34 +765,34 @@ function Initialize-Configuration {
                     AutoLoad = $true
                 }
             }
-            
+
             $configFile = Join-Path $configDir "config.json"
             if (-not (Test-Path $configFile)) {
                 $defaultConfig | ConvertTo-Json -Depth 5 | Set-Content -Path $configFile
                 $result.Details += "✓ Created legacy configuration file"
             }
         }
-        
+
         $result.Status = 'Passed'
-        
+
     } catch {
         $result.Status = 'Warning'
         $result.Details += "⚠️ Configuration initialization had issues: $_"
         $result.Details += "✓ Setup can continue, configuration can be set up later"
     }
-    
+
     return $result
 }
 
 function Generate-QuickStartGuide {
     param($SetupState)
-    
+
     $result = @{
         Name = 'Quick Start Guide'
         Status = 'Unknown'
         Details = @()
     }
-    
+
     # Generate platform-specific guide
     $guide = @"
 # AitherZero Quick Start Guide
@@ -845,25 +845,25 @@ Start-Backup -SourcePath ./important-data -DestinationPath ./backups
 
 ### ✅ What's Ready:
 "@
-    
+
     foreach ($step in $SetupState.Steps | Where-Object { $_.Status -eq 'Passed' }) {
         $guide += "`n- $($step.Name)"
     }
-    
+
     if ($SetupState.Warnings.Count -gt 0) {
         $guide += "`n`n### ⚠️ Things to Consider:"
         foreach ($warning in $SetupState.Warnings) {
             $guide += "`n- $warning"
         }
     }
-    
+
     if ($SetupState.Recommendations.Count -gt 0) {
         $guide += "`n`n### 💡 Recommendations:"
         foreach ($rec in $SetupState.Recommendations) {
             $guide += "`n- $rec"
         }
     }
-    
+
     $guide += @"
 
 ## 🔗 Resources
@@ -886,14 +886,14 @@ Start-Backup -SourcePath ./important-data -DestinationPath ./backups
 
 Happy automating! 🚀
 "@
-    
+
     # Save guide
     try {
         $guidePath = "QuickStart-$($SetupState.Platform.OS)-$(Get-Date -Format 'yyyyMMdd').md"
         Set-Content -Path $guidePath -Value $guide
         $result.Details += "✓ Generated quick start guide: $guidePath"
         $result.Status = 'Passed'
-        
+
         # Also display key info
         Write-Host ""
         Write-Host "  📖 Quick Start Commands:" -ForegroundColor Green
@@ -904,24 +904,24 @@ Happy automating! 🚀
         $result.Status = 'Warning'
         $result.Details += "⚠️ Could not save guide: $_"
     }
-    
+
     return $result
 }
 
 function Test-SetupCompletion {
     param($SetupState)
-    
+
     $result = @{
         Name = 'Final Validation'
         Status = 'Unknown'
         Details = @()
     }
-    
+
     # Count successes and failures
     $passed = ($SetupState.Steps | Where-Object { $_.Status -eq 'Passed' -or $_.Status -eq 'Success' }).Count
     $failed = ($SetupState.Steps | Where-Object { $_.Status -eq 'Failed' }).Count
     $warnings = ($SetupState.Steps | Where-Object { $_.Status -eq 'Warning' }).Count
-    
+
     $result.Details += "Setup completed with:"
     $result.Details += "  ✅ Passed: $passed"
     if ($failed -gt 0) {
@@ -930,7 +930,7 @@ function Test-SetupCompletion {
     if ($warnings -gt 0) {
         $result.Details += "  ⚠️ Warnings: $warnings"
     }
-    
+
     # Be more lenient with validation - setup is still usable even with some issues
     if ($passed -ge 3) {
         # If we have at least 3 passing steps, consider it successful
@@ -949,38 +949,38 @@ function Test-SetupCompletion {
         $result.Details += ""
         $result.Details += "⚠️ Setup completed with limited functionality"
     }
-    
+
     # Calculate setup time
     $duration = (Get-Date) - $SetupState.StartTime
     $result.Details += "Total time: $([math]::Round($duration.TotalSeconds, 1)) seconds"
-    
+
     return $result
 }
 
 function Show-SetupSummary {
     param($State)
-    
+
     Write-Host ""
     Write-Host "╔═══════════════════════════════════════════════════════╗" -ForegroundColor Cyan
     Write-Host "║                    Setup Summary                      ║" -ForegroundColor Cyan
     Write-Host "╚═══════════════════════════════════════════════════════╝" -ForegroundColor Cyan
     Write-Host ""
-    
+
     # Define critical vs optional steps
     $criticalSteps = @('Platform Detection', 'PowerShell Version', 'Configuration Files', 'Final Validation')
-    
+
     # Check status of critical vs optional steps
-    $criticalFailed = ($State.Steps | Where-Object { 
-        $_.Status -eq 'Failed' -and $_.Name -in $criticalSteps 
+    $criticalFailed = ($State.Steps | Where-Object {
+        $_.Status -eq 'Failed' -and $_.Name -in $criticalSteps
     }).Count
-    
-    $optionalWarnings = ($State.Steps | Where-Object { 
-        $_.Status -eq 'Warning' -and $_.Name -notin $criticalSteps 
+
+    $optionalWarnings = ($State.Steps | Where-Object {
+        $_.Status -eq 'Warning' -and $_.Name -notin $criticalSteps
     }).Count
-    
+
     $allPassed = ($State.Steps | Where-Object { $_.Status -eq 'Passed' -or $_.Status -eq 'Success' }).Count
     $totalSteps = $State.Steps.Count
-    
+
     # Overall status based on critical failures
     if ($criticalFailed -gt 0) {
         Write-Host "  ❌ Setup Status: CRITICAL FAILURE" -ForegroundColor Red
@@ -993,7 +993,7 @@ function Show-SetupSummary {
     } else {
         Write-Host "  ✅ Setup Status: READY TO USE" -ForegroundColor Green
     }
-    
+
     Write-Host ""
     Write-Host "  Setup Results:" -ForegroundColor White
     foreach ($step in $State.Steps) {
@@ -1004,7 +1004,7 @@ function Show-SetupSummary {
             'Warning' { '⚠️' }
             default { '❓' }
         }
-        
+
         Write-Host "    $icon $($step.Name)" -ForegroundColor $(
             switch ($step.Status) {
                 'Passed' { 'Green' }
@@ -1014,7 +1014,7 @@ function Show-SetupSummary {
             }
         )
     }
-    
+
     if ($State.Recommendations.Count -gt 0) {
         Write-Host ""
         Write-Host "  💡 Recommendations:" -ForegroundColor Yellow
@@ -1025,18 +1025,18 @@ function Show-SetupSummary {
             Write-Host "     • ... and $($State.Recommendations.Count - 3) more" -ForegroundColor Gray
         }
     }
-    
+
     Write-Host ""
     Write-Host ""
     Write-Host "  📁 Configuration saved to:" -ForegroundColor White
     Write-Host "     $(if ($State.Platform.OS -eq 'Windows') { "$env:APPDATA\AitherZero" } else { "~/.config/aitherzero" })" -ForegroundColor Gray
     Write-Host ""
-    
+
     # Show clear what to do next
     Write-Host "  🚀 WHAT TO DO NEXT:" -ForegroundColor Green
     Write-Host "  ═══════════════════" -ForegroundColor Green
     Write-Host ""
-    
+
     if ($criticalFailed -eq 0) {
         Write-Host "  Your setup is complete! AitherZero is ready to use." -ForegroundColor White
         Write-Host ""
@@ -1064,7 +1064,7 @@ function Show-SetupSummary {
             }
         }
     }
-    
+
     Write-Host ""
 }
 
@@ -1073,13 +1073,13 @@ function Show-SetupPrompt {
         [string]$Message,
         [switch]$DefaultYes
     )
-    
+
     # In non-interactive mode or when host doesn't support prompts, use default
     if ([System.Console]::IsInputRedirected -or $env:NO_PROMPT -or $global:WhatIfPreference) {
         Write-Host "$Message [$(if ($DefaultYes) { 'Y' } else { 'N' })]" -ForegroundColor Yellow
         return $DefaultYes
     }
-    
+
     try {
         $choices = '&Yes', '&No'
         $decision = $Host.UI.PromptForChoice('', $Message, $choices, $(if ($DefaultYes) { 0 } else { 1 }))
@@ -1096,7 +1096,7 @@ function Get-InstallationProfile {
     .SYNOPSIS
         Interactive profile selection for AitherZero installation
     #>
-    
+
     Write-Host ""
     Write-Host "  📦 Choose your installation profile:" -ForegroundColor Cyan
     Write-Host ""
@@ -1104,14 +1104,14 @@ function Get-InstallationProfile {
     Write-Host "    2. 👨‍💻 Developer   - Minimal + AI tools + Development utilities" -ForegroundColor Blue
     Write-Host "    3. 🚀 Full        - Everything including advanced integrations" -ForegroundColor Magenta
     Write-Host ""
-    
+
     do {
         $choice = Read-Host "  Enter your choice (1-3)"
         switch ($choice) {
             '1' { return 'minimal' }
             '2' { return 'developer' }
             '3' { return 'full' }
-            default { 
+            default {
                 Write-Host "  ❌ Invalid choice. Please enter 1, 2, or 3." -ForegroundColor Red
             }
         }
@@ -1122,10 +1122,10 @@ function Show-InstallationProfile {
     param(
         [string]$Profile
     )
-    
+
     Write-Host ""
     Write-Host "  🎯 Installation Profile: $($Profile.ToUpper())" -ForegroundColor Cyan
-    
+
     switch ($Profile) {
         'minimal' {
             Write-Host "     • Core AitherZero modules" -ForegroundColor White
@@ -1154,26 +1154,26 @@ function Show-EnhancedInstallationProfile {
         [string]$Profile,
         [hashtable]$ProfileInfo
     )
-    
+
     Write-Host ""
     Write-Host "  🎯 Installation Profile: $($ProfileInfo.Name.ToUpper())" -ForegroundColor Cyan
     Write-Host "  Description: $($ProfileInfo.Description)" -ForegroundColor Gray
     Write-Host "  Estimated Time: $($ProfileInfo.EstimatedTime)" -ForegroundColor Yellow
-    
+
     if ($ProfileInfo.TargetUse -and $ProfileInfo.TargetUse.Count -gt 0) {
         Write-Host "  Target Use Cases: $($ProfileInfo.TargetUse -join ', ')" -ForegroundColor Blue
     }
-    
+
     Write-Host ""
     Write-Host "  Setup Steps ($($ProfileInfo.Steps.Count + 5) total):" -ForegroundColor White
-    
+
     # Show required vs optional steps
     $requiredSteps = ($ProfileInfo.Steps | Where-Object { $_.Required -eq $true }).Count + 3  # Base required steps
     $optionalSteps = ($ProfileInfo.Steps | Where-Object { $_.Required -ne $true }).Count + 2  # Base optional steps
-    
+
     Write-Host "    ✓ Required Steps: $requiredSteps" -ForegroundColor Green
     Write-Host "    ⚠️ Optional Steps: $optionalSteps" -ForegroundColor Yellow
-    
+
     Write-Host ""
 }
 
@@ -1182,7 +1182,7 @@ function Get-SetupSteps {
         [string]$Profile,
         [hashtable]$CustomProfile = @{}
     )
-    
+
     # Define base steps that run for all profiles
     $baseSteps = @(
         @{Name = 'Platform Detection'; Function = 'Test-PlatformRequirements'; AllProfiles = $true; Required = $true},
@@ -1191,7 +1191,7 @@ function Get-SetupSteps {
         @{Name = 'Infrastructure Tools'; Function = 'Test-InfrastructureTools'; AllProfiles = $true; Required = $false},
         @{Name = 'Module Dependencies'; Function = 'Test-ModuleDependencies'; AllProfiles = $true; Required = $true}
     )
-    
+
     # Enhanced profile definitions with metadata
     $profileDefinitions = @{
         'minimal' = @{
@@ -1253,24 +1253,24 @@ function Get-SetupSteps {
             Steps = $CustomProfile.Steps ?? @()
         }
     }
-    
+
     # Handle custom profile
     if ($CustomProfile.Count -gt 0) {
         $Profile = 'custom'
         $profileDefinitions['custom'] = $CustomProfile
     }
-    
+
     # Get the profile definition
     $profileDef = $profileDefinitions[$Profile]
     if (-not $profileDef) {
         Write-Warning "Unknown profile '$Profile', falling back to minimal"
         $profileDef = $profileDefinitions['minimal']
     }
-    
+
     # Combine base steps with profile-specific steps and deduplicate by name
     $combinedSteps = $baseSteps + $profileDef.Steps
     $allSteps = @($combinedSteps | Group-Object Name | ForEach-Object { $_.Group[0] })
-    
+
     return @{
         Steps = $allSteps
         Profile = $profileDef
@@ -1280,13 +1280,13 @@ function Get-SetupSteps {
 
 function Test-DevEnvironment {
     param($SetupState)
-    
+
     $result = @{
         Name = 'Development Environment'
         Status = 'Unknown'
         Details = @()
     }
-    
+
     try {
         # Check for VS Code
         $vsCodeFound = $false
@@ -1296,7 +1296,7 @@ function Test-DevEnvironment {
             "/usr/bin/code",
             "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"
         )
-        
+
         foreach ($path in $vsCodePaths) {
             if (Test-Path $path) {
                 $vsCodeFound = $true
@@ -1304,23 +1304,23 @@ function Test-DevEnvironment {
                 break
             }
         }
-        
+
         if (-not $vsCodeFound -and (Get-Command code -ErrorAction SilentlyContinue)) {
             $vsCodeFound = $true
             $result.Details += "✓ VS Code available in PATH"
         }
-        
+
         if (-not $vsCodeFound) {
             $result.Details += "⚠️ VS Code not found"
             $SetupState.Recommendations += "Install VS Code for enhanced development experience"
         }
-        
+
         # Check for DevEnvironment module
         $devEnvModule = Join-Path (Split-Path $PSScriptRoot -Parent) "DevEnvironment"
         if (Test-Path $devEnvModule) {
             Import-Module $devEnvModule -Force -ErrorAction SilentlyContinue
             $result.Details += "✓ DevEnvironment module available"
-            
+
             # Test VS Code workspace setup
             if ($vsCodeFound -and (Get-Command Initialize-VSCodeWorkspace -ErrorAction SilentlyContinue)) {
                 $result.Details += "✓ VS Code workspace setup available"
@@ -1328,33 +1328,33 @@ function Test-DevEnvironment {
         } else {
             $result.Details += "⚠️ DevEnvironment module not found"
         }
-        
+
         $result.Status = if ($vsCodeFound) { 'Passed' } else { 'Warning' }
-        
+
     } catch {
         $result.Status = 'Warning'
         $result.Details += "⚠️ Development environment check failed: $_"
     }
-    
+
     return $result
 }
 
 function Test-LicenseIntegration {
     param($SetupState)
-    
+
     $result = @{
         Name = 'License Management'
         Status = 'Unknown'
         Details = @()
     }
-    
+
     try {
         # Check for LicenseManager module
         $licenseModule = Join-Path (Split-Path $PSScriptRoot -Parent) "LicenseManager"
         if (Test-Path $licenseModule) {
             Import-Module $licenseModule -Force -ErrorAction SilentlyContinue
             $result.Details += "✓ LicenseManager module available"
-            
+
             # Test basic license functionality
             if (Get-Command Get-LicenseStatus -ErrorAction SilentlyContinue) {
                 $result.Details += "✓ License management functions available"
@@ -1367,31 +1367,31 @@ function Test-LicenseIntegration {
             $result.Details += "ℹ️ LicenseManager module not found (optional)"
             $result.Status = 'Passed'
         }
-        
+
     } catch {
         $result.Status = 'Warning'
         $result.Details += "⚠️ License integration check failed: $_"
     }
-    
+
     return $result
 }
 
 function Test-ModuleCommunication {
     param($SetupState)
-    
+
     $result = @{
         Name = 'Module Communication'
         Status = 'Unknown'
         Details = @()
     }
-    
+
     try {
         # Check for ModuleCommunication module
         $commModule = Join-Path (Split-Path $PSScriptRoot -Parent) "ModuleCommunication"
         if (Test-Path $commModule) {
             Import-Module $commModule -Force -ErrorAction SilentlyContinue
             $result.Details += "✓ ModuleCommunication module available"
-            
+
             # Test basic communication functionality
             if (Get-Command Get-CommunicationStatus -ErrorAction SilentlyContinue) {
                 $result.Details += "✓ Module communication functions available"
@@ -1404,18 +1404,18 @@ function Test-ModuleCommunication {
             $result.Details += "ℹ️ ModuleCommunication module not found (optional)"
             $result.Status = 'Passed'
         }
-        
+
     } catch {
         $result.Status = 'Warning'
         $result.Details += "⚠️ Module communication check failed: $_"
     }
-    
+
     return $result
 }
 
 function Test-NodeJsInstallation {
     param($SetupState)
-    
+
     $result = @{
         Name = 'Node.js Detection'
         Status = 'Unknown'
@@ -1423,17 +1423,17 @@ function Test-NodeJsInstallation {
         ErrorDetails = @()
         RecoveryOptions = @()
     }
-    
+
     try {
         # Check if node command exists first
         $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
-        
+
         if ($nodeCmd) {
             $nodeVersion = & $nodeCmd --version 2>$null
             if ($nodeVersion) {
                 $result.Status = 'Passed'
                 $result.Details += "✓ Node.js $nodeVersion installed"
-                
+
                 # Check npm
                 $npmCmd = Get-Command npm -ErrorAction SilentlyContinue
                 if ($npmCmd) {
@@ -1450,7 +1450,7 @@ function Test-NodeJsInstallation {
     } catch {
         $result.Status = 'Warning'
         $result.Details += "⚠️ Node.js not found - AI tools installation will be limited"
-        
+
         # Platform-specific installation instructions
         switch ($SetupState.Platform.OS) {
             'Windows' {
@@ -1464,19 +1464,19 @@ function Test-NodeJsInstallation {
             }
         }
     }
-    
+
     return $result
 }
 
 function Install-AITools {
     param($SetupState)
-    
+
     $result = @{
         Name = 'AI Tools Setup'
         Status = 'Unknown'
         Details = @()
     }
-    
+
     # Import AIToolsIntegration module
     try {
         $aiToolsModule = Join-Path (Split-Path $PSScriptRoot -Parent) "AIToolsIntegration"
@@ -1490,7 +1490,7 @@ function Install-AITools {
         $result.Details += "⚠️ Could not load AIToolsIntegration module: $_"
         return $result
     }
-    
+
     # Determine which AI tools to install based on profile
     $aiTools = @()
     switch ($SetupState.InstallationProfile) {
@@ -1501,15 +1501,15 @@ function Install-AITools {
             $aiTools = @('claude-code', 'gemini-cli')
         }
     }
-    
+
     if ($aiTools.Count -eq 0) {
         $result.Status = 'Passed'
         $result.Details += "ℹ️ No AI tools installation required for this profile"
         return $result
     }
-    
+
     $successCount = 0
-    
+
     foreach ($tool in $aiTools) {
         switch ($tool) {
             'claude-code' {
@@ -1540,7 +1540,7 @@ function Install-AITools {
             }
         }
     }
-    
+
     # Determine overall status
     if ($successCount -eq $aiTools.Count) {
         $result.Status = 'Passed'
@@ -1552,19 +1552,19 @@ function Install-AITools {
         $result.Status = 'Warning'
         $result.Details += "⚠️ AI tools installation had issues - manual setup may be required"
     }
-    
+
     return $result
 }
 
 function Test-CloudCLIs {
     param($SetupState)
-    
+
     $result = @{
         Name = 'Cloud CLIs Detection'
         Status = 'Unknown'
         Details = @()
     }
-    
+
     # Extended cloud CLI checks for full profile
     $cloudCLIs = @{
         'az' = 'Azure CLI'
@@ -1574,9 +1574,9 @@ function Test-CloudCLIs {
         'helm' = 'Helm'
         'docker' = 'Docker'
     }
-    
+
     $foundCount = 0
-    
+
     foreach ($cli in $cloudCLIs.GetEnumerator()) {
         if (Get-Command $cli.Key -ErrorAction SilentlyContinue) {
             $result.Details += "✓ $($cli.Value) available"
@@ -1585,7 +1585,7 @@ function Test-CloudCLIs {
             $result.Details += "ℹ️ $($cli.Value) not found (optional)"
         }
     }
-    
+
     if ($foundCount -ge 2) {
         $result.Status = 'Passed'
         $result.Details += "✓ $foundCount cloud tools available - good coverage"
@@ -1597,7 +1597,7 @@ function Test-CloudCLIs {
         $result.Details += "⚠️ No cloud tools found - cloud features will be limited"
         $SetupState.Recommendations += "Consider installing cloud CLIs for enhanced cloud integration"
     }
-    
+
     return $result
 }
 
@@ -1616,26 +1616,26 @@ function Invoke-ErrorRecovery {
     param(
         [Parameter(Mandatory)]
         [hashtable]$StepResult,
-        
+
         [Parameter(Mandatory)]
         [hashtable]$SetupState,
-        
+
         [string]$StepName
     )
-    
+
     $recovery = @{
         Attempted = $false
         Success = $false
         Method = ''
         Details = @()
     }
-    
+
     # Determine recovery strategy based on step type and error
     switch ($StepName) {
         'Node.js Detection' {
             $recovery.Method = 'Package Manager Installation'
             $recovery.Details += "Attempting to install Node.js via package manager..."
-            
+
             try {
                 if ($IsWindows) {
                     if (Get-Command winget -ErrorAction SilentlyContinue) {
@@ -1664,19 +1664,19 @@ function Invoke-ErrorRecovery {
                         $recovery.Details += "✓ Node.js installed via Homebrew"
                     }
                 }
-                
+
                 $recovery.Attempted = $true
-                
+
             } catch {
                 $recovery.Details += "⚠️ Automatic installation failed: $_"
                 $recovery.Details += "Manual installation required: https://nodejs.org"
             }
         }
-        
+
         'Git Installation' {
             $recovery.Method = 'Package Manager Installation'
             $recovery.Details += "Attempting to install Git via package manager..."
-            
+
             try {
                 if ($IsWindows) {
                     if (Get-Command winget -ErrorAction SilentlyContinue) {
@@ -1697,19 +1697,19 @@ function Invoke-ErrorRecovery {
                         $recovery.Details += "✓ Git installed via Homebrew"
                     }
                 }
-                
+
                 $recovery.Attempted = $true
-                
+
             } catch {
                 $recovery.Details += "⚠️ Automatic installation failed: $_"
                 $recovery.Details += "Manual installation required"
             }
         }
-        
+
         'Configuration Files' {
             $recovery.Method = 'Directory Creation and Permissions Fix'
             $recovery.Details += "Attempting to create configuration directories with proper permissions..."
-            
+
             try {
                 # Create config directories
                 $configDir = if ($IsWindows) {
@@ -1717,29 +1717,29 @@ function Invoke-ErrorRecovery {
                 } else {
                     Join-Path $env:HOME ".config/aitherzero"
                 }
-                
+
                 New-Item -Path $configDir -ItemType Directory -Force | Out-Null
-                
+
                 # Set appropriate permissions
                 if (-not $IsWindows) {
                     & chmod 755 $configDir
                 }
-                
+
                 $recovery.Success = $true
                 $recovery.Attempted = $true
                 $recovery.Details += "✓ Configuration directory created: $configDir"
-                
+
             } catch {
                 $recovery.Details += "⚠️ Directory creation failed: $_"
             }
         }
-        
+
         default {
             $recovery.Method = 'Generic Retry'
             $recovery.Details += "No specific recovery method available for: $StepName"
         }
     }
-    
+
     return $recovery
 }
 
@@ -1754,10 +1754,10 @@ function Show-EnhancedProgress {
         [string]$Status = 'Running',
         [hashtable]$ErrorContext = @{}
     )
-    
+
     $percentage = [math]::Round(($State.CurrentStep / $State.TotalSteps) * 100)
     $progressBar = "[" + ("█" * [math]::Floor($percentage / 5)) + ("░" * (20 - [math]::Floor($percentage / 5))) + "]"
-    
+
     # Status emoji mapping
     $statusEmoji = @{
         'Running' = '🔍'
@@ -1767,12 +1767,12 @@ function Show-EnhancedProgress {
         'Retrying' = '🔄'
         'Recovering' = '🔧'
     }
-    
+
     $emoji = $statusEmoji[$Status] ?? '🔍'
-    
+
     Write-Host ""
     Write-Host "  $progressBar $percentage% - Step $($State.CurrentStep)/$($State.TotalSteps)" -ForegroundColor Cyan
-    
+
     # Show status with appropriate color
     $statusColor = switch ($Status) {
         'Success' { 'Green' }
@@ -1782,9 +1782,9 @@ function Show-EnhancedProgress {
         'Recovering' { 'Blue' }
         default { 'Yellow' }
     }
-    
+
     Write-Host "  $emoji $StepName - $Status" -ForegroundColor $statusColor
-    
+
     # Show error context if provided
     if ($ErrorContext.Count -gt 0) {
         if ($ErrorContext.LastError) {
@@ -1794,7 +1794,7 @@ function Show-EnhancedProgress {
             Write-Host "    Recovery: $($ErrorContext.RecoveryMethod)" -ForegroundColor Blue
         }
     }
-    
+
     # Update ProgressTracking if available
     if ($global:ProgressTrackingOperationId) {
         try {
@@ -1811,7 +1811,7 @@ function Get-DetailedSystemInfo {
     .SYNOPSIS
         Get detailed system information for troubleshooting
     #>
-    
+
     $sysInfo = @{
         OS = @{}
         PowerShell = @{}
@@ -1819,18 +1819,18 @@ function Get-DetailedSystemInfo {
         Network = @{}
         Security = @{}
     }
-    
+
     try {
         # OS Information
         $sysInfo.OS.Platform = if ($IsWindows) { 'Windows' } elseif ($IsLinux) { 'Linux' } else { 'macOS' }
         $sysInfo.OS.Version = [System.Environment]::OSVersion.Version.ToString()
         $sysInfo.OS.Architecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
-        
+
         # PowerShell Information
         $sysInfo.PowerShell.Version = $PSVersionTable.PSVersion.ToString()
         $sysInfo.PowerShell.Edition = $PSVersionTable.PSEdition
         $sysInfo.PowerShell.ExecutionPolicy = Get-ExecutionPolicy
-        
+
         # Hardware Information
         if ($IsWindows) {
             $sysInfo.Hardware.Memory = [math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB, 2)
@@ -1840,7 +1840,7 @@ function Get-DetailedSystemInfo {
             $sysInfo.Hardware.Memory = "N/A (non-Windows)"
             $sysInfo.Hardware.Processor = "N/A (non-Windows)"
         }
-        
+
         # Network Information
         $sysInfo.Network.InternetConnected = Test-Connection -ComputerName '8.8.8.8' -Count 1 -Quiet
         if ($env:HTTP_PROXY -or $env:HTTPS_PROXY) {
@@ -1852,7 +1852,7 @@ function Get-DetailedSystemInfo {
         } else {
             $sysInfo.Network.ProxyConfigured = $false
         }
-        
+
         # Security Information
         if ($IsWindows) {
             try {
@@ -1862,11 +1862,11 @@ function Get-DetailedSystemInfo {
                 $sysInfo.Security.DefenderEnabled = "Unknown"
             }
         }
-        
+
     } catch {
         Write-Verbose "Error gathering system info: $_"
     }
-    
+
     return $sysInfo
 }
 

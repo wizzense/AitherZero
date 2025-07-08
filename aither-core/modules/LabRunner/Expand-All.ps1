@@ -9,14 +9,14 @@ function Expand-All {
         $logger = Join-Path $PSScriptRoot '..\LabRunner\Logger.ps1'
         if (Test-Path $logger) { . $logger }
         if (-not (Get-Command Read-LoggedInput -ErrorAction SilentlyContinue)) {
-            function Read-LoggedInput { 
+            function Read-LoggedInput {
                 param($Prompt, [switch]$AsSecureString, [string]$DefaultValue = "")
-                
+
                 # Check if we're in non-interactive mode (test environment, etc.)
-                $IsNonInteractive = ($Host.Name -eq 'Default Host') -or 
+                $IsNonInteractive = ($Host.Name -eq 'Default Host') -or
                                   ([Environment]::UserInteractive -eq $false) -or
                                   ($env:PESTER_RUN -eq 'true')
-                
+
                 if ($IsNonInteractive) {
                     Write-Verbose "Non-interactive mode detected. Using default value for: $Prompt"
                     if ($AsSecureString -and -not [string]::IsNullOrEmpty($DefaultValue)) {
@@ -28,7 +28,7 @@ function Expand-All {
                     if ($AsSecureString) {
                         return Read-Host -Prompt $Prompt -AsSecureString
                     } else {
-                        return Read-Host $Prompt 
+                        return Read-Host $Prompt
                     }
                 }
             }

@@ -7,13 +7,13 @@
     CompanyName = 'AitherZero'
     Copyright = '(c) 2025 AitherZero. All rights reserved.'
     Description = 'REST API server for AitherZero external system integration and automation'
-    
+
     # PowerShell version compatibility
     PowerShellVersion = '7.0'
-    
+
     # Required modules
     RequiredModules = @()
-    
+
     # Functions to export
     FunctionsToExport = @(
         'Start-AitherZeroAPI',
@@ -33,19 +33,19 @@
         'Add-WebhookSubscription',
         'Remove-WebhookSubscription'
     )
-    
+
     # Cmdlets to export
     CmdletsToExport = @()
-    
+
     # Variables to export
     VariablesToExport = @()
-    
+
     # Aliases to export
     AliasesToExport = @()
-    
+
     # File extensions
     FileList = @()
-    
+
     # Private data
     PrivateData = @{
         PSData = @{
