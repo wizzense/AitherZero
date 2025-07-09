@@ -68,6 +68,12 @@ $script:ProjectRoot = if ($env:PROJECT_ROOT) {
     $currentPath
 }
 
+# Validate project root
+if ([string]::IsNullOrEmpty($script:ProjectRoot)) {
+    Write-TestLog "Warning: Project root could not be determined, using PSScriptRoot parent" -Level "WARN"
+    $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+}
+
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
