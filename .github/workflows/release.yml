@@ -75,6 +75,10 @@ jobs:
           # Check if VERSION file was changed in the CI run
           $headSha = '${{ github.event.workflow_run.head_sha }}'
           $changedFiles = git diff-tree --no-commit-id --name-only -r $headSha 2>$null
+          if (-not $changedFiles) {
+            # Fallback: check against previous commit
+            $changedFiles = git diff --name-only HEAD~1 HEAD 2>$null
+          }
           $versionChanged = $changedFiles -contains 'VERSION'
           
           if ($versionChanged) {
@@ -439,7 +443,12 @@ jobs:
           }
           
           try {
-            $result = ./scripts/reporting/Generate-ComprehensiveReport.ps1 @params
+            if (Test-Path "./scripts/reporting/Generate-ComprehensiveReport.ps1") {
+              $result = pwsh ./scripts/reporting/Generate-ComprehensiveReport.ps1 @params
+            } else {
+              Write-Warning "Comprehensive report generator not found"
+              $result = $null
+            }
             
             if ($result) {
               Write-Host "✅ Release dashboard generated with CI validation data" -ForegroundColor Green
@@ -449,11 +458,21 @@ jobs:
           } catch {
             Write-Warning "Failed to generate comprehensive report with CI data: $($_.Exception.Message)"
             # Fallback to basic report generation
-            ./scripts/reporting/Generate-ComprehensiveReport.ps1 -ReportPath "./output/AitherZero-v${{ steps.get_version.outputs.version }}-dashboard.html" -ReportTitle "AitherZero v${{ steps.get_version.outputs.version }} Release Dashboard" -Version "${{ steps.get_version.outputs.version }}"
+            if (Test-Path "./scripts/reporting/Generate-ComprehensiveReport.ps1") {
+              pwsh ./scripts/reporting/Generate-ComprehensiveReport.ps1 -ReportPath "./output/AitherZero-v${{ steps.get_version.outputs.version }}-dashboard.html" -ReportTitle "AitherZero v${{ steps.get_version.outputs.version }} Release Dashboard" -Version "${{ steps.get_version.outputs.version }}"
+            } else {
+              Write-Warning "Report generator not found - creating basic HTML"
+              "<html><body><h1>AitherZero v${{ steps.get_version.outputs.version }}</h1></body></html>" | Set-Content "./output/AitherZero-v${{ steps.get_version.outputs.version }}-dashboard.html"
+            }
           }
         } else {
           Write-Warning "No CI data available - generating basic report"
-          ./scripts/reporting/Generate-ComprehensiveReport.ps1 -ReportPath "./output/AitherZero-v${{ steps.get_version.outputs.version }}-dashboard.html" -ReportTitle "AitherZero v${{ steps.get_version.outputs.version }} Release Dashboard" -Version "${{ steps.get_version.outputs.version }}"
+          if (Test-Path "./scripts/reporting/Generate-ComprehensiveReport.ps1") {
+            pwsh ./scripts/reporting/Generate-ComprehensiveReport.ps1 -ReportPath "./output/AitherZero-v${{ steps.get_version.outputs.version }}-dashboard.html" -ReportTitle "AitherZero v${{ steps.get_version.outputs.version }} Release Dashboard" -Version "${{ steps.get_version.outputs.version }}"
+          } else {
+            Write-Warning "Report generator not found - creating basic HTML"
+            "<html><body><h1>AitherZero v${{ steps.get_version.outputs.version }}</h1></body></html>" | Set-Content "./output/AitherZero-v${{ steps.get_version.outputs.version }}-dashboard.html"
+          }
         }
         
         # Verify report was created
