@@ -99,7 +99,7 @@ if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
             [string]$Message,
 
             [Parameter()]
-            [ValidateSet('INFO', 'WARN', 'ERROR', 'SUCCESS', 'DEBUG')]
+            [ValidateSet('ERROR', 'WARN', 'INFO', 'SUCCESS', 'DEBUG', 'TRACE', 'VERBOSE')]
             [string]$Level = 'INFO',
 
             [Parameter()]
@@ -112,6 +112,8 @@ if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
             'INFO' { 'Green' }
             'SUCCESS' { 'Cyan' }
             'DEBUG' { 'Gray' }
+            'VERBOSE' { 'Magenta' }
+            'TRACE' { 'DarkGray' }
             default { 'White' }
         }
           Write-Host "[$Level] [$Component] $Message" -ForegroundColor $color
@@ -367,13 +369,21 @@ if (-not (Get-Command Import-CoreModules -ErrorAction SilentlyContinue)) {
     function Import-CoreModules {
         <#
         .SYNOPSIS
-            Imports all available CoreApp modules
+            Imports all available CoreApp modules with dependency resolution
         .DESCRIPTION
-            Dynamically discovers and imports modules with dependency resolution
+            Dynamically discovers and imports modules in the correct order based on
+            their dependencies. Uses topological sorting to ensure dependencies are
+            loaded before dependent modules. Logging module is always loaded first.
         .PARAMETER RequiredOnly
             Import only modules marked as required
         .PARAMETER Force
             Force reimport of modules
+        .PARAMETER UseDependencyResolution
+            Use the dependency resolution system to determine load order.
+            Defaults to $true. Set to $false to use legacy load order.
+        .PARAMETER UseParallelLoading
+            Use parallel loading for modules at the same dependency depth.
+            Defaults to $true for better performance.
         #>
         [CmdletBinding()]
         param(
@@ -381,31 +391,98 @@ if (-not (Get-Command Import-CoreModules -ErrorAction SilentlyContinue)) {
             [switch]$RequiredOnly,
 
             [Parameter()]
-            [switch]$Force
+            [switch]$Force,
+
+            [Parameter()]
+            [bool]$UseDependencyResolution = $true,
+
+            [Parameter()]
+            [bool]$UseParallelLoading = $true
         )
 
         process {
+            # Check if parallel loading is requested and available
+            if ($UseParallelLoading -and $UseDependencyResolution) {
+                # Try to use the parallel loading function if available
+                if (Get-Command Import-CoreModulesParallel -ErrorAction SilentlyContinue) {
+                    Write-CustomLog -Message "Using parallel module loading for improved performance..." -Level 'INFO'
+                    return Import-CoreModulesParallel -RequiredOnly:$RequiredOnly -Force:$Force
+                } else {
+                    Write-CustomLog -Message "Parallel loading function not available, falling back to sequential loading" -Level 'DEBUG'
+                }
+            }
+
             $importResults = @{
                 ImportedCount = 0
                 FailedCount = 0
                 SkippedCount = 0
                 Details = @()
+                LoadOrder = @()
+                DependencyInfo = $null
             }
 
-            $modulesToImport = if ($RequiredOnly) {
-                $script:CoreModules | Where-Object { $_.Required }
+            # Get modules to import based on RequiredOnly flag
+            $requestedModules = if ($RequiredOnly) {
+                $script:CoreModules | Where-Object { $_.Required } | Select-Object -ExpandProperty Name
             } else {
-                $script:CoreModules
+                $script:CoreModules | Select-Object -ExpandProperty Name
             }
 
-            Write-CustomLog -Message "Importing $($modulesToImport.Count) modules..." -Level 'INFO'
+            Write-CustomLog -Message "Preparing to import $($requestedModules.Count) modules..." -Level 'INFO'
 
+            # Determine load order
+            $modulesToImport = @()
+            
+            if ($UseDependencyResolution) {
+                try {
+                    # Get module dependencies
+                    $dependencyGraph = Get-ModuleDependencies -ModulePath (Join-Path $PSScriptRoot "modules")
+                    
+                    # Resolve load order
+                    $loadOrderResult = Resolve-ModuleLoadOrder -DependencyGraph $dependencyGraph -ModulesToLoad $requestedModules
+                    
+                    $importResults.LoadOrder = $loadOrderResult.LoadOrder
+                    $importResults.DependencyInfo = $loadOrderResult
+                    
+                    # Map load order to module info
+                    foreach ($moduleName in $loadOrderResult.LoadOrder) {
+                        $moduleInfo = $script:CoreModules | Where-Object { $_.Name -eq $moduleName } | Select-Object -First 1
+                        if ($moduleInfo) {
+                            $modulesToImport += $moduleInfo
+                        }
+                    }
+                    
+                    if ($loadOrderResult.CircularDependencies.Count -gt 0) {
+                        Write-CustomLog -Message "Circular dependencies detected: $($loadOrderResult.CircularDependencies -join ', ')" -Level 'WARNING'
+                    }
+                    
+                    Write-CustomLog -Message "Using dependency-resolved load order" -Level 'INFO'
+                    
+                } catch {
+                    Write-CustomLog -Message "Failed to resolve dependencies, falling back to legacy order: $($_.Exception.Message)" -Level 'WARNING'
+                    $UseDependencyResolution = $false
+                }
+            }
+            
+            # Fallback to legacy order if dependency resolution is disabled or failed
+            if (-not $UseDependencyResolution) {
+                $modulesToImport = if ($RequiredOnly) {
+                    $script:CoreModules | Where-Object { $_.Required }
+                } else {
+                    $script:CoreModules
+                }
+                $importResults.LoadOrder = $modulesToImport | Select-Object -ExpandProperty Name
+            }
+
+            Write-CustomLog -Message "Importing $($modulesToImport.Count) modules in resolved order..." -Level 'INFO'
+
+            # Import modules in the determined order
             foreach ($moduleInfo in $modulesToImport) {
                 try {
                     $modulePath = Join-Path $PSScriptRoot $moduleInfo.Path
 
                     if (-not (Test-Path $modulePath)) {
-                        Write-CustomLog -Message "Module path not found: $modulePath" -Level 'WARN'
+                        Write-CustomLog -Message "Module path not found: $modulePath" -Level 'WARNING'
                         $importResults.SkippedCount++
                         $importResults.Details += @{
                             Name = $moduleInfo.Name
@@ -1137,6 +1214,7 @@ Export-ModuleMember -Function @(
     'Get-PlatformInfo',
     'Initialize-CoreApplication',
     'Import-CoreModules',
+    'Import-CoreModulesParallel',
     'Get-CoreModuleStatus',
     'Invoke-UnifiedMaintenance',
     'Start-DevEnvironmentSetup',
@@ -1144,6 +1222,11 @@ Export-ModuleMember -Function @(
     'Invoke-IntegratedWorkflow',
     'Start-QuickAction',
     'Test-ConsolidationHealth',
+
+    # Module dependency resolution
+    'Get-ModuleDependencies',
+    'Resolve-ModuleLoadOrder',
+    'Get-ModuleDependencyReport',
 
     # Unified Platform API Gateway (Phase 4)
     'Initialize-AitherPlatform',

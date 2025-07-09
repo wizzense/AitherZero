@@ -72,20 +72,30 @@ jobs:
           Write-Host "✅ CI workflow completed successfully" -ForegroundColor Green
           $ciRunId = '${{ github.event.workflow_run.id }}'
           
-          # For CI-dependent releases, auto-approve since CI passed successfully
-          Write-Host "🚀 Auto-approving release based on successful CI completion" -ForegroundColor Green
-          $shouldRelease = $true
-          
-          # Check if there are any existing version tags on the head commit
+          # Check if VERSION file was changed in the CI run
           $headSha = '${{ github.event.workflow_run.head_sha }}'
-          $tags = git tag --points-at $headSha | Where-Object { $_ -match '^v\d+\.\d+\.\d+' }
+          $changedFiles = git diff-tree --no-commit-id --name-only -r $headSha 2>$null
+          $versionChanged = $changedFiles -contains 'VERSION'
           
-          if ($tags) {
-            Write-Host "🏷️ Found existing version tag: $($tags[0])" -ForegroundColor Green
-            $hasTag = $true
+          if ($versionChanged) {
+            Write-Host "📝 VERSION file was updated - this is a release!" -ForegroundColor Green
+            $shouldRelease = $true
           } else {
-            Write-Host "📝 No existing tag found - will create tag automatically" -ForegroundColor Yellow
-            $hasTag = $false
+            Write-Host "ℹ️ VERSION file not changed - not a release commit" -ForegroundColor Yellow
+            $shouldRelease = $false
+          }
+          
+          if ($shouldRelease) {
+            # Check if there are any existing version tags on the head commit
+            $tags = git tag --points-at $headSha | Where-Object { $_ -match '^v\d+\.\d+\.\d+' }
+            
+            if ($tags) {
+              Write-Host "🏷️ Found existing version tag: $($tags[0])" -ForegroundColor Green
+              $hasTag = $true
+            } else {
+              Write-Host "📝 No existing tag found - will create tag automatically" -ForegroundColor Yellow
+              $hasTag = $false
+            }
           }
         }
         

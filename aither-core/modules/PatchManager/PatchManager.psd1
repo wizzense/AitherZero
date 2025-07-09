@@ -76,6 +76,7 @@ FunctionsToExport = @(
     'New-Feature',
     'New-Hotfix',
     'New-MajorRelease',
+    'New-Release',
 
     # V3.1 Workflow Management
     'Get-PatchStatus',
