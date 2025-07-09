@@ -216,7 +216,7 @@ function Install-PowerShell7-Portable {
             "/tmp/powershell-portable.tar.gz" 
         }
 
-        Invoke-WebRequestWithRetry -Uri $zipUrl -OutFile $tempFile
+        $null = Invoke-WebRequestWithRetry -Uri $zipUrl -OutFile $tempFile
 
         # Extract based on platform
         Write-Host "[~] Extracting to user directory..." -ForegroundColor Yellow
@@ -499,7 +499,7 @@ try {
         if (Test-Path $zipFile) {
             Write-Host "[i] Using existing download: $zipFile" -ForegroundColor Cyan
         } else {
-            Invoke-WebRequestWithRetry -Uri $windowsAsset.browser_download_url -OutFile $zipFile
+            $null = Invoke-WebRequestWithRetry -Uri $windowsAsset.browser_download_url -OutFile $zipFile
         }
     } catch {
         Write-Host "[!] Download failed after multiple attempts" -ForegroundColor Red
