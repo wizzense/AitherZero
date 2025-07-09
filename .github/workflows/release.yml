@@ -1,12 +1,17 @@
 name: Release
 
 on:
-  # Remove immediate tag trigger - wait for CI completion instead
+  # Tag-based release (original flow)
+  push:
+    tags:
+      - 'v*'
+  # CI-dependent release (enhanced flow)
   workflow_run:
     workflows: ["CI - Continuous Integration"]
     types:
       - completed
     branches: [main]
+  # Manual release trigger
   workflow_dispatch:
     inputs:
       version:
@@ -42,7 +47,7 @@ jobs:
   validate-ci-completion:
     name: Validate CI Completion
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
     outputs:
       should-release: ${{ steps.check.outputs.should-release }}
       version-number: ${{ steps.version.outputs.version }}
@@ -67,6 +72,10 @@ jobs:
         
         if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
           Write-Host "📝 Manual release triggered" -ForegroundColor Yellow
+          $shouldRelease = $true
+        } elseif ('${{ github.event_name }}' -eq 'push' -and '${{ github.ref }}' -match '^refs/tags/v') {
+          Write-Host "🏷️ Tag-based release triggered" -ForegroundColor Green
+          $hasTag = $true
           $shouldRelease = $true
         } elseif ('${{ github.event.workflow_run.conclusion }}' -eq 'success') {
           Write-Host "✅ CI workflow completed successfully" -ForegroundColor Green
@@ -106,11 +115,16 @@ jobs:
         $version = '${{ github.event.inputs.version }}'
         
         if (-not $version) {
-          # Try to get version from tag
-          $headSha = '${{ github.event.workflow_run.head_sha || github.sha }}'
-          $tags = git tag --points-at $headSha | Where-Object { $_ -match '^v(\d+\.\d+\.\d+)' }
-          if ($tags) {
-            $version = $tags[0] -replace '^v', ''
+          # Try to get version from tag (tag-based release)
+          if ('${{ github.event_name }}' -eq 'push' -and '${{ github.ref }}' -match '^refs/tags/v') {
+            $version = '${{ github.ref }}' -replace '^refs/tags/v', ''
+          } else {
+            # Try to get version from CI workflow tag
+            $headSha = '${{ github.event.workflow_run.head_sha || github.sha }}'
+            $tags = git tag --points-at $headSha | Where-Object { $_ -match '^v(\d+\.\d+\.\d+)' }
+            if ($tags) {
+              $version = $tags[0] -replace '^v', ''
+            }
           }
         }
         
@@ -155,9 +169,33 @@ jobs:
                            '${{ github.event.workflow_run.id }}';
             
             if (!ciRunId) {
-              console.log('No CI run ID available');
-              core.setOutput('artifacts-available', 'false');
-              return;
+              console.log('No CI run ID available - trying to find recent CI run for tag-based release');
+              
+              // For tag-based releases, find the most recent successful CI run
+              if ('${{ github.event_name }}' === 'push' && '${{ github.ref }}'.startsWith('refs/tags/v')) {
+                const runs = await github.rest.actions.listWorkflowRuns({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  workflow_id: 'ci.yml',
+                  branch: 'main',
+                  status: 'success',
+                  per_page: 5
+                });
+                
+                if (runs.data.workflow_runs.length > 0) {
+                  const latestCIRun = runs.data.workflow_runs[0];
+                  console.log(`Found recent CI run: ${latestCIRun.id}`);
+                  ciRunId = latestCIRun.id;
+                } else {
+                  console.log('No recent successful CI runs found');
+                  core.setOutput('artifacts-available', 'false');
+                  return;
+                }
+              } else {
+                console.log('No CI run ID available for this workflow type');
+                core.setOutput('artifacts-available', 'false');
+                return;
+              }
             }
             
             console.log(`Downloading artifacts from CI run: ${ciRunId}`);
