@@ -3,7 +3,7 @@ name: Comprehensive Auditing & Reporting
 on:
   # Trigger on successful CI completion (for releases)
   workflow_run:
-    workflows: ["CI - Continuous Integration"]
+    workflows: ["CI - Simplified & Fast"]
     types: [completed]
     branches: [main]
   # Keep daily scheduled reports
