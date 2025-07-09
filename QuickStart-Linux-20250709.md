@@ -1,5 +1,5 @@
 # AitherZero Quick Start Guide
-Generated: 2025-07-09 00:06
+Generated: 2025-07-09 00:48
 Platform: Linux 24.04.2 LTS (Noble Numbat)
 
 ## 🚀 Getting Started

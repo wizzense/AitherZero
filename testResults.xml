@@ -1,189 +1,141 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="44" errors="0" failures="14" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-09" time="00:06:07">
-  <environment os-version="6.8.0-1027-azure" machine-name="codespaces-6c6eb1" user="codespace" nunit-version="2.5.8.0" user-domain="" platform="Linux" clr-version="9.0.4" cwd="/workspaces/AitherZero" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="44" errors="0" failures="6" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-09" time="00:48:47">
+  <environment os-version="6.8.0-1027-azure" clr-version="9.0.4" user-domain="" machine-name="codespaces-6c6eb1" platform="Linux" cwd="/workspaces/AitherZero" nunit-version="2.5.8.0" user="codespace" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="24.4943" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="24.416" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1" executed="True" result="Failure" success="False" time="24.4943" asserts="0" description="/workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1" executed="True" result="Failure" success="False" time="24.416" asserts="0" description="/workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="UtilityServices Module Tests" executed="True" result="Failure" success="False" time="24.3232" asserts="0" description="UtilityServices Module Tests">
+          <test-suite type="TestFixture" name="UtilityServices Module Tests" executed="True" result="Failure" success="False" time="24.2322" asserts="0" description="UtilityServices Module Tests">
             <results>
-              <test-suite type="TestFixture" name="UtilityServices Module Tests.Module Loading and Initialization" executed="True" result="Failure" success="False" time="0.1261" asserts="0" description="UtilityServices Module Tests.Module Loading and Initialization">
+              <test-suite type="TestFixture" name="UtilityServices Module Tests.Module Loading and Initialization" executed="True" result="Success" success="True" time="0.0249" asserts="0" description="UtilityServices Module Tests.Module Loading and Initialization">
                 <results>
-                  <test-case description="Should import module successfully" name="UtilityServices Module Tests.Module Loading and Initialization.Should import module successfully" time="0.0038" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should have valid manifest" name="UtilityServices Module Tests.Module Loading and Initialization.Should have valid manifest" time="0.004" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should export expected functions" name="UtilityServices Module Tests.Module Loading and Initialization.Should export expected functions" time="0.0268" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should load helper functions" name="UtilityServices Module Tests.Module Loading and Initialization.Should load helper functions" time="0.0862" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>Expected a value, because Helper function Initialize-SemanticVersioningService should be available, but got $null or empty.</message>
-                      <stack-trace>at Get-Command $function -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty -Because "Helper function $function should be available", /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:54
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:54</stack-trace>
-                    </failure>
-                  </test-case>
+                  <test-case description="Should import module successfully" name="UtilityServices Module Tests.Module Loading and Initialization.Should import module successfully" time="0.0048" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should have valid manifest" name="UtilityServices Module Tests.Module Loading and Initialization.Should have valid manifest" time="0.0044" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export expected functions" name="UtilityServices Module Tests.Module Loading and Initialization.Should export expected functions" time="0.0025" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should load helper functions" name="UtilityServices Module Tests.Module Loading and Initialization.Should load helper functions" time="0.0059" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="UtilityServices Module Tests.Test-UtilityIntegration Function Tests" executed="True" result="Success" success="True" time="5.0928" asserts="0" description="UtilityServices Module Tests.Test-UtilityIntegration Function Tests">
+              <test-suite type="TestFixture" name="UtilityServices Module Tests.Test-UtilityIntegration Function Tests" executed="True" result="Success" success="True" time="5.3516" asserts="0" description="UtilityServices Module Tests.Test-UtilityIntegration Function Tests">
                 <results>
-                  <test-case description="Should run basic integration test successfully" name="UtilityServices Module Tests.Test-UtilityIntegration Function Tests.Should run basic integration test successfully" time="0.9194" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should run standard integration test successfully" name="UtilityServices Module Tests.Test-UtilityIntegration Function Tests.Should run standard integration test successfully" time="0.9208" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should run comprehensive integration test successfully" name="UtilityServices Module Tests.Test-UtilityIntegration Function Tests.Should run comprehensive integration test successfully" time="0.8441" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should test specific services when requested" name="UtilityServices Module Tests.Test-UtilityIntegration Function Tests.Should test specific services when requested" time="0.7645" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should validate test result structure" name="UtilityServices Module Tests.Test-UtilityIntegration Function Tests.Should validate test result structure" time="0.7556" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle invalid test level parameter" name="UtilityServices Module Tests.Test-UtilityIntegration Function Tests.Should handle invalid test level parameter" time="0.0026" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should create output directory and files" name="UtilityServices Module Tests.Test-UtilityIntegration Function Tests.Should create output directory and files" time="0.7544" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should run basic integration test successfully" name="UtilityServices Module Tests.Test-UtilityIntegration Function Tests.Should run basic integration test successfully" time="1.0391" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should run standard integration test successfully" name="UtilityServices Module Tests.Test-UtilityIntegration Function Tests.Should run standard integration test successfully" time="0.9156" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should run comprehensive integration test successfully" name="UtilityServices Module Tests.Test-UtilityIntegration Function Tests.Should run comprehensive integration test successfully" time="0.8969" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should test specific services when requested" name="UtilityServices Module Tests.Test-UtilityIntegration Function Tests.Should test specific services when requested" time="0.8292" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate test result structure" name="UtilityServices Module Tests.Test-UtilityIntegration Function Tests.Should validate test result structure" time="0.8099" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle invalid test level parameter" name="UtilityServices Module Tests.Test-UtilityIntegration Function Tests.Should handle invalid test level parameter" time="0.0038" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create output directory and files" name="UtilityServices Module Tests.Test-UtilityIntegration Function Tests.Should create output directory and files" time="0.8269" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="UtilityServices Module Tests.Service Initialization Tests" executed="True" result="Failure" success="False" time="5.2588" asserts="0" description="UtilityServices Module Tests.Service Initialization Tests">
+              <test-suite type="TestFixture" name="UtilityServices Module Tests.Service Initialization Tests" executed="True" result="Failure" success="False" time="5.3941" asserts="0" description="UtilityServices Module Tests.Service Initialization Tests">
                 <results>
-                  <test-case description="Should test SemanticVersioning service initialization" name="UtilityServices Module Tests.Service Initialization Tests.Should test SemanticVersioning service initialization" time="0.0333" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should test SemanticVersioning service initialization" name="UtilityServices Module Tests.Service Initialization Tests.Should test SemanticVersioning service initialization" time="0.0078" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>CommandNotFoundException: The term 'Initialize-SemanticVersioningService' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:127</stack-trace>
+                      <message>Expected a value, but got $null or empty.</message>
+                      <stack-trace>at $result.Functions | Should -Not -BeNullOrEmpty, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:131
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:131</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should test ProgressTracking service initialization" name="UtilityServices Module Tests.Service Initialization Tests.Should test ProgressTracking service initialization" time="0.0321" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should test ProgressTracking service initialization" name="UtilityServices Module Tests.Service Initialization Tests.Should test ProgressTracking service initialization" time="0.0123" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>CommandNotFoundException: The term 'Initialize-ProgressTrackingService' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:135</stack-trace>
+                      <message>Expected a value, but got $null or empty.</message>
+                      <stack-trace>at $result.Functions | Should -Not -BeNullOrEmpty, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:139
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:139</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should test TestingFramework service initialization" name="UtilityServices Module Tests.Service Initialization Tests.Should test TestingFramework service initialization" time="0.0319" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should test TestingFramework service initialization" name="UtilityServices Module Tests.Service Initialization Tests.Should test TestingFramework service initialization" time="0.003" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should test ScriptManager service initialization" name="UtilityServices Module Tests.Service Initialization Tests.Should test ScriptManager service initialization" time="0.005" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>CommandNotFoundException: The term 'Initialize-TestingFrameworkService' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:143</stack-trace>
+                      <message>Expected a value, but got $null or empty.</message>
+                      <stack-trace>at $result.Functions | Should -Not -BeNullOrEmpty, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:155
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:155</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should test ScriptManager service initialization" name="UtilityServices Module Tests.Service Initialization Tests.Should test ScriptManager service initialization" time="0.0314" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Initialize-ScriptManagerService' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:151</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should handle service initialization failures gracefully" name="UtilityServices Module Tests.Service Initialization Tests.Should handle service initialization failures gracefully" time="0.0311" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Initialize-SemanticVersioningService' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:164</stack-trace>
-                    </failure>
-                  </test-case>
+                  <test-case description="Should handle service initialization failures gracefully" name="UtilityServices Module Tests.Service Initialization Tests.Should handle service initialization failures gracefully" time="0.0081" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="UtilityServices Module Tests.Integration Testing Features" executed="True" result="Success" success="True" time="8.239" asserts="0" description="UtilityServices Module Tests.Integration Testing Features">
+              <test-suite type="TestFixture" name="UtilityServices Module Tests.Integration Testing Features" executed="True" result="Success" success="True" time="8.585" asserts="0" description="UtilityServices Module Tests.Integration Testing Features">
                 <results>
-                  <test-case description="Should test service integration comprehensively" name="UtilityServices Module Tests.Integration Testing Features.Should test service integration comprehensively" time="0.7907" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should test cross-service integration" name="UtilityServices Module Tests.Integration Testing Features.Should test cross-service integration" time="0.7673" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should test workflow operations in standard mode" name="UtilityServices Module Tests.Integration Testing Features.Should test workflow operations in standard mode" time="0.5982" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should include comprehensive tests in comprehensive mode" name="UtilityServices Module Tests.Integration Testing Features.Should include comprehensive tests in comprehensive mode" time="0.8191" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should test service integration comprehensively" name="UtilityServices Module Tests.Integration Testing Features.Should test service integration comprehensively" time="0.8413" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should test cross-service integration" name="UtilityServices Module Tests.Integration Testing Features.Should test cross-service integration" time="0.8321" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should test workflow operations in standard mode" name="UtilityServices Module Tests.Integration Testing Features.Should test workflow operations in standard mode" time="0.7645" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include comprehensive tests in comprehensive mode" name="UtilityServices Module Tests.Integration Testing Features.Should include comprehensive tests in comprehensive mode" time="0.748" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="UtilityServices Module Tests.Utility Helper Functions" executed="True" result="Failure" success="False" time="8.4127" asserts="0" description="UtilityServices Module Tests.Utility Helper Functions">
+              <test-suite type="TestFixture" name="UtilityServices Module Tests.Utility Helper Functions" executed="True" result="Failure" success="False" time="8.6203" asserts="0" description="UtilityServices Module Tests.Utility Helper Functions">
                 <results>
-                  <test-case description="Should get utility service status" name="UtilityServices Module Tests.Utility Helper Functions.Should get utility service status" time="0.039" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should get utility service status" name="UtilityServices Module Tests.Utility Helper Functions.Should get utility service status" time="0.0029" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should get utility metrics" name="UtilityServices Module Tests.Utility Helper Functions.Should get utility metrics" time="0.0035" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export utility reports" name="UtilityServices Module Tests.Utility Helper Functions.Should export utility reports" time="0.0068" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle utility configuration operations" name="UtilityServices Module Tests.Utility Helper Functions.Should handle utility configuration operations" time="0.0136" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>CommandNotFoundException: The term 'Get-UtilityServiceStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:221</stack-trace>
+                      <message>Expected strings to be the same, but they were different.
+Expected length: 9
+Actual length:   12
+Strings differ at index 0.
+Expected: 'TestValue'
+But was:  'DefaultValue'
+           ^</message>
+                      <stack-trace>at $updatedConfig.TestSetting | Should -Be "TestValue", /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:259
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:259</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should get utility metrics" name="UtilityServices Module Tests.Utility Helper Functions.Should get utility metrics" time="0.0325" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Get-UtilityMetrics' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:230</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should export utility reports" name="UtilityServices Module Tests.Utility Helper Functions.Should export utility reports" time="0.0318" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Export-UtilityReport' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:240</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should handle utility configuration operations" name="UtilityServices Module Tests.Utility Helper Functions.Should handle utility configuration operations" time="0.0317" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Get-UtilityConfiguration' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:254</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should handle utility event operations" name="UtilityServices Module Tests.Utility Helper Functions.Should handle utility event operations" time="0.033" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>Expected no exception to be thrown, but an exception "The term 'Subscribe-UtilityEvent' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:264 char:15
-    +             { Subscribe-UtilityEvent -EventType "TestEvent" -Handler  …
-    +               ~~~~~~~~~~~~~~~~~~~~~~.</message>
-                      <stack-trace>at { Subscribe-UtilityEvent -EventType "TestEvent" -Handler { param($e) } } | Should -Not -Throw, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:264
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:264</stack-trace>
-                    </failure>
-                  </test-case>
+                  <test-case description="Should handle utility event operations" name="UtilityServices Module Tests.Utility Helper Functions.Should handle utility event operations" time="0.0025" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="UtilityServices Module Tests.Test Summary and Results" executed="True" result="Success" success="True" time="11.4592" asserts="0" description="UtilityServices Module Tests.Test Summary and Results">
+              <test-suite type="TestFixture" name="UtilityServices Module Tests.Test Summary and Results" executed="True" result="Success" success="True" time="11.565" asserts="0" description="UtilityServices Module Tests.Test Summary and Results">
                 <results>
-                  <test-case description="Should generate comprehensive summary" name="UtilityServices Module Tests.Test Summary and Results.Should generate comprehensive summary" time="0.7769" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should track test duration" name="UtilityServices Module Tests.Test Summary and Results.Should track test duration" time="0.7346" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should collect and report errors" name="UtilityServices Module Tests.Test Summary and Results.Should collect and report errors" time="0.7758" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should determine overall success correctly" name="UtilityServices Module Tests.Test Summary and Results.Should determine overall success correctly" time="0.7543" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should generate comprehensive summary" name="UtilityServices Module Tests.Test Summary and Results.Should generate comprehensive summary" time="0.7315" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should track test duration" name="UtilityServices Module Tests.Test Summary and Results.Should track test duration" time="0.7243" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should collect and report errors" name="UtilityServices Module Tests.Test Summary and Results.Should collect and report errors" time="0.7549" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should determine overall success correctly" name="UtilityServices Module Tests.Test Summary and Results.Should determine overall success correctly" time="0.7235" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="UtilityServices Module Tests.Error Handling and Edge Cases" executed="True" result="Failure" success="False" time="13.7746" asserts="0" description="UtilityServices Module Tests.Error Handling and Edge Cases">
+              <test-suite type="TestFixture" name="UtilityServices Module Tests.Error Handling and Edge Cases" executed="True" result="Failure" success="False" time="13.8232" asserts="0" description="UtilityServices Module Tests.Error Handling and Edge Cases">
                 <results>
-                  <test-case description="Should handle missing services gracefully" name="UtilityServices Module Tests.Error Handling and Edge Cases.Should handle missing services gracefully" time="0.7861" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should handle missing services gracefully" name="UtilityServices Module Tests.Error Handling and Edge Cases.Should handle missing services gracefully" time="0.8096" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected $false, but got $null.</message>
                       <stack-trace>at $result.ServiceTests.NonExistentService.InitializationTest | Should -Be $false, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:318
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:318</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should handle output path creation" name="UtilityServices Module Tests.Error Handling and Edge Cases.Should handle output path creation" time="0.7556" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle invalid output paths gracefully" name="UtilityServices Module Tests.Error Handling and Edge Cases.Should handle invalid output paths gracefully" time="0.7354" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle service initialization exceptions" name="UtilityServices Module Tests.Error Handling and Edge Cases.Should handle service initialization exceptions" time="0.0335" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>Expected no exception to be thrown, but an exception "The term 'Initialize-SemanticVersioningService' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:336 char:15
-    +             { Initialize-SemanticVersioningService } | Should -Not -T …
-    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</message>
-                      <stack-trace>at { Initialize-SemanticVersioningService } | Should -Not -Throw, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:336
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:336</stack-trace>
-                    </failure>
-                  </test-case>
+                  <test-case description="Should handle output path creation" name="UtilityServices Module Tests.Error Handling and Edge Cases.Should handle output path creation" time="0.7403" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle invalid output paths gracefully" name="UtilityServices Module Tests.Error Handling and Edge Cases.Should handle invalid output paths gracefully" time="0.6993" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle service initialization exceptions" name="UtilityServices Module Tests.Error Handling and Edge Cases.Should handle service initialization exceptions" time="0.0039" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="UtilityServices Module Tests.Performance and Resource Management" executed="True" result="Success" success="True" time="18.429" asserts="0" description="UtilityServices Module Tests.Performance and Resource Management">
+              <test-suite type="TestFixture" name="UtilityServices Module Tests.Performance and Resource Management" executed="True" result="Success" success="True" time="18.3842" asserts="0" description="UtilityServices Module Tests.Performance and Resource Management">
                 <results>
-                  <test-case description="Should complete basic tests efficiently" name="UtilityServices Module Tests.Performance and Resource Management.Should complete basic tests efficiently" time="0.7861" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle concurrent testing" name="UtilityServices Module Tests.Performance and Resource Management.Should handle concurrent testing" time="1.6873" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should clean up resources properly" name="UtilityServices Module Tests.Performance and Resource Management.Should clean up resources properly" time="2.1761" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should complete basic tests efficiently" name="UtilityServices Module Tests.Performance and Resource Management.Should complete basic tests efficiently" time="0.7306" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle concurrent testing" name="UtilityServices Module Tests.Performance and Resource Management.Should handle concurrent testing" time="1.6625" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should clean up resources properly" name="UtilityServices Module Tests.Performance and Resource Management.Should clean up resources properly" time="2.163" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="UtilityServices Module Tests.Integration with Logging Module" executed="True" result="Success" success="True" time="19.8878" asserts="0" description="UtilityServices Module Tests.Integration with Logging Module">
+              <test-suite type="TestFixture" name="UtilityServices Module Tests.Integration with Logging Module" executed="True" result="Success" success="True" time="19.827" asserts="0" description="UtilityServices Module Tests.Integration with Logging Module">
                 <results>
-                  <test-case description="Should work with or without Logging module" name="UtilityServices Module Tests.Integration with Logging Module.Should work with or without Logging module" time="0.7226" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should provide fallback logging when Logging module unavailable" name="UtilityServices Module Tests.Integration with Logging Module.Should provide fallback logging when Logging module unavailable" time="0.7314" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should work with or without Logging module" name="UtilityServices Module Tests.Integration with Logging Module.Should work with or without Logging module" time="0.7203" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should provide fallback logging when Logging module unavailable" name="UtilityServices Module Tests.Integration with Logging Module.Should provide fallback logging when Logging module unavailable" time="0.7176" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="UtilityServices Module Tests.Cross-Platform Compatibility" executed="True" result="Failure" success="False" time="22.0679" asserts="0" description="UtilityServices Module Tests.Cross-Platform Compatibility">
+              <test-suite type="TestFixture" name="UtilityServices Module Tests.Cross-Platform Compatibility" executed="True" result="Failure" success="False" time="21.991" asserts="0" description="UtilityServices Module Tests.Cross-Platform Compatibility">
                 <results>
                   <test-case description="Should work on current platform" name="UtilityServices Module Tests.Cross-Platform Compatibility.Should work on current platform" time="0.724" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle path operations cross-platform" name="UtilityServices Module Tests.Cross-Platform Compatibility.Should handle path operations cross-platform" time="0.7278" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should handle path operations cross-platform" name="UtilityServices Module Tests.Cross-Platform Compatibility.Should handle path operations cross-platform" time="0.7163" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected $true, but got $false.</message>
                       <stack-trace>at Test-Path $testPath | Should -Be $true, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:416
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1:416</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should work with PowerShell 7+" name="UtilityServices Module Tests.Cross-Platform Compatibility.Should work with PowerShell 7+" time="0.7233" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should work with PowerShell 7+" name="UtilityServices Module Tests.Cross-Platform Compatibility.Should work with PowerShell 7+" time="0.7187" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="UtilityServices Module Tests.Report Generation and Output" executed="True" result="Success" success="True" time="24.3161" asserts="0" description="UtilityServices Module Tests.Report Generation and Output">
+              <test-suite type="TestFixture" name="UtilityServices Module Tests.Report Generation and Output" executed="True" result="Success" success="True" time="24.2246" asserts="0" description="UtilityServices Module Tests.Report Generation and Output">
                 <results>
-                  <test-case description="Should generate detailed test results" name="UtilityServices Module Tests.Report Generation and Output.Should generate detailed test results" time="0.755" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should include workflow test reports" name="UtilityServices Module Tests.Report Generation and Output.Should include workflow test reports" time="0.7612" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should generate readable output format" name="UtilityServices Module Tests.Report Generation and Output.Should generate readable output format" time="0.7241" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should generate detailed test results" name="UtilityServices Module Tests.Report Generation and Output.Should generate detailed test results" time="0.7433" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include workflow test reports" name="UtilityServices Module Tests.Report Generation and Output.Should include workflow test reports" time="0.757" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should generate readable output format" name="UtilityServices Module Tests.Report Generation and Output.Should generate readable output format" time="0.7282" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>
