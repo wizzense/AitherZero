@@ -64,7 +64,7 @@ Describe "SemanticVersioning Module Tests" {
         It "Should export expected functions" {
             $expectedFunctions = @(
                 'Get-NextSemanticVersion',
-                'Parse-ConventionalCommits',
+                'ConvertFrom-ConventionalCommits',
                 'Get-CommitTypeImpact',
                 'New-VersionTag',
                 'Get-VersionHistory',
@@ -180,7 +180,7 @@ Describe "SemanticVersioning Module Tests" {
         }
     }
 
-    Context "Parse-ConventionalCommits Function Tests" {
+    Context "ConvertFrom-ConventionalCommits Function Tests" {
         It "Should parse valid conventional commits" {
             $commits = @(
                 "feat: add new feature",
@@ -190,7 +190,7 @@ Describe "SemanticVersioning Module Tests" {
                 "fix(core): memory leak BREAKING CHANGE: API changed"
             )
 
-            $result = Parse-ConventionalCommits -Commits $commits
+            $result = ConvertFrom-ConventionalCommits -Commits $commits
 
             $result.Count | Should -Be 5
             $result[0].Type | Should -Be "feat"
@@ -207,7 +207,7 @@ Describe "SemanticVersioning Module Tests" {
                 "Another non-conventional message"
             )
 
-            $result = Parse-ConventionalCommits -Commits $commits -IncludeNonConventional
+            $result = ConvertFrom-ConventionalCommits -Commits $commits -IncludeNonConventional
 
             $result.Count | Should -Be 3
             $result[0].IsConventional | Should -Be $true
@@ -221,7 +221,7 @@ Describe "SemanticVersioning Module Tests" {
                 "Random commit message"
             )
 
-            $result = Parse-ConventionalCommits -Commits $commits
+            $result = ConvertFrom-ConventionalCommits -Commits $commits
 
             $result.Count | Should -Be 1
             $result[0].IsConventional | Should -Be $true
@@ -233,7 +233,7 @@ Describe "SemanticVersioning Module Tests" {
                 @{ Hash = "def456"; Message = "fix: test fix" }
             )
 
-            $result = Parse-ConventionalCommits -Commits $commits
+            $result = ConvertFrom-ConventionalCommits -Commits $commits
 
             $result.Count | Should -Be 2
             $result[0].Hash | Should -Be "abc123"
@@ -536,7 +536,7 @@ Describe "SemanticVersioning Module Tests" {
                 ": no type"  # Missing type
             )
 
-            $result = Parse-ConventionalCommits -Commits $commits
+            $result = ConvertFrom-ConventionalCommits -Commits $commits
             # Should not crash, might return empty or minimal results
             $result | Should -Not -BeNullOrEmpty -Or $result.Count -eq 0
         }
@@ -602,7 +602,7 @@ Describe "SemanticVersioning Module Tests" {
             }
 
             $startTime = Get-Date
-            $result = Parse-ConventionalCommits -Commits $commits
+            $result = ConvertFrom-ConventionalCommits -Commits $commits
             $duration = (Get-Date) - $startTime
 
             $duration.TotalSeconds | Should -BeLessThan 2

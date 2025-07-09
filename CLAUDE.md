@@ -104,28 +104,35 @@ pwsh -NoProfile -File "./script.ps1"
 **DO NOT FORGET THIS PATH. EVER.**
 
 
-### Release Management - ULTRA SIMPLE! 🚀
+### Release Management - PAINLESS & AUTOMATED! 🚀
 
 ```powershell
-# Create a release with explicit version:
-./release.ps1 -Version 1.2.3 -Message "Bug fixes"
+# THE ONE AND ONLY RELEASE COMMAND:
+./AitherRelease.ps1 -Version 1.2.3 -Message "Bug fixes"
 
 # Or auto-increment version:
-./release.ps1 -Type patch -Message "Bug fixes"
-./release.ps1 -Type minor -Message "New features"
-./release.ps1 -Type major -Message "Breaking changes"
+./AitherRelease.ps1 -Type patch -Message "Bug fixes"
+./AitherRelease.ps1 -Type minor -Message "New features"
+./AitherRelease.ps1 -Type major -Message "Breaking changes"
 
 # Preview mode:
-./release.ps1 -Version 1.2.3 -Message "Test release" -DryRun
+./AitherRelease.ps1 -Version 1.2.3 -Message "Test release" -DryRun
 ```
 
-**What happens (simplified):**
-1. Updates VERSION file
-2. Commits the change
-3. Creates and pushes tag
-4. GitHub Actions automatically builds and publishes release
+**What happens (fully automated):**
+1. Creates a PR to update VERSION (respects branch protection)
+2. Waits for CI checks to pass
+3. Auto-merges the PR
+4. Monitors release workflow
+5. Reports when release is published
 
-**That's it! No PR workflow, no complexity.**
+**That's it! No manual steps, no confusion, works every time!**
+
+**Alternative: Use PatchManager's New-Release function:**
+```powershell
+Import-Module ./aither-core/modules/PatchManager -Force
+New-Release -Version 1.2.3 -Message "Bug fixes"
+```
 
 ### Build Commands - TRUE SIMPLICITY! 🎯
 
@@ -188,9 +195,9 @@ The project has 6 GitHub Actions workflows:
 # Enter version number and description
 
 # Or use the release script locally:
-./release.ps1
-./release.ps1 -Type minor -Description "New features"
-./release.ps1 -Type major -Description "Breaking changes"
+./AitherRelease.ps1 -Version 1.2.3 -Message "Bug fixes"
+./AitherRelease.ps1 -Type minor -Message "New features"
+./AitherRelease.ps1 -Type major -Message "Breaking changes"
 
 # Monitor CI status
 gh run list --workflow=CI

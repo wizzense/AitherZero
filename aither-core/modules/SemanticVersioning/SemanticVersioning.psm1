@@ -131,7 +131,7 @@ function Get-NextSemanticVersion {
                 Write-Verbose "Analyzing $($commitRange.Count) commits"
 
                 # Parse conventional commits
-                $commitAnalysis = Parse-ConventionalCommits -Commits $commitRange
+                $commitAnalysis = ConvertFrom-ConventionalCommits -Commits $commitRange
 
                 foreach ($commit in $commitAnalysis) {
                     $versionAnalysis.CommitCount++
@@ -231,7 +231,7 @@ function Get-NextSemanticVersion {
     }
 }
 
-function Parse-ConventionalCommits {
+function ConvertFrom-ConventionalCommits {
     <#
     .SYNOPSIS
         Parses git commits using conventional commit format
@@ -247,7 +247,7 @@ function Parse-ConventionalCommits {
         Whether to include commits that don't follow conventional format
 
     .EXAMPLE
-        Parse-ConventionalCommits -Commits $commitList
+        ConvertFrom-ConventionalCommits -Commits $commitList
 
         Parses the provided commits for conventional commit information
     #>
@@ -636,7 +636,7 @@ function Get-ReleaseNotes {
         $commitRange = Get-CommitRange -FromCommit $FromVersion -ToCommit $ToVersion
 
         # Parse commits
-        $commits = Parse-ConventionalCommits -Commits $commitRange -IncludeNonConventional
+        $commits = ConvertFrom-ConventionalCommits -Commits $commitRange -IncludeNonConventional
 
         # Group commits by type
         $groupedCommits = $commits | Group-Object -Property Type
@@ -1065,7 +1065,7 @@ function Format-ReleaseNotesText {
 # Export module members
 Export-ModuleMember -Function @(
     'Get-NextSemanticVersion',
-    'Parse-ConventionalCommits',
+    'ConvertFrom-ConventionalCommits',
     'Get-CommitTypeImpact',
     'New-VersionTag',
     'Get-VersionHistory',
