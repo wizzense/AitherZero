@@ -482,11 +482,7 @@ function Invoke-PesterWithIsolation {
         if ($env:PROJECT_ROOT) {
             $loggingPath = Join-Path $env:PROJECT_ROOT "aither-core/modules/Logging"
             if (Test-Path $loggingPath) {
-<<<<<<< HEAD
-                Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
-=======
                 Import-Module $loggingPath -Force -Global -ErrorAction SilentlyContinue
->>>>>>> 065b957828e961256e2d8086a9faa2f401d5db93
                 if (Get-Command Initialize-LoggingSystem -ErrorAction SilentlyContinue) {
                     Initialize-LoggingSystem -ErrorAction SilentlyContinue
                 }

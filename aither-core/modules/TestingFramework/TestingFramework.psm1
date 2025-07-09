@@ -46,32 +46,10 @@ if (Test-Path $fallbackPath) {
     }
 }
 
-<<<<<<< HEAD
-# Fallback logging function if centralized logging unavailable
-if (-not $loggingImported -or -not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-    function Write-TestLog {
-        param($Message, $Level = "INFO")
-        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-        $color = switch ($Level) {
-            "SUCCESS" { "Green" }
-            "WARN" { "Yellow" }
-            "ERROR" { "Red" }
-            default { "White" }
-        }
-        Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
-    }
-} else {
-    # Use centralized logging
-    function Write-TestLog {
-        param($Message, $Level = "INFO")
-        Write-CustomLog -Level $Level -Message $Message
-    }
-=======
 # Alias for backward compatibility
 function Write-TestLog {
     param($Message, $Level = "INFO")
     Write-CustomLog -Level $Level -Message $Message
->>>>>>> 065b957828e961256e2d8086a9faa2f401d5db93
 }
 
 # Module registry for tracking registered test providers
@@ -581,36 +559,38 @@ function Invoke-ParallelTestExecution {
                 $ErrorActionPreference = 'Stop'
                 
                 try {
-                    # Re-import required modules in job context
-                    if ($testJob.ProjectRoot) {
-                        $env:PROJECT_ROOT = $testJob.ProjectRoot
+                    # Validate critical paths before using them
+                    if ([string]::IsNullOrEmpty($testJob.ProjectRoot)) {
+                        throw "ProjectRoot is null or empty in test job"
                     }
+                    
+                    if ([string]::IsNullOrEmpty($testJob.TestingFrameworkPath)) {
+                        throw "TestingFrameworkPath is null or empty in test job"
+                    }
+                    
+                    # Re-import required modules in job context
+                    $env:PROJECT_ROOT = $testJob.ProjectRoot
                     
                     # Import TestingFramework module in the job context
-                    if ($testJob.TestingFrameworkPath -and (Test-Path $testJob.TestingFrameworkPath)) {
+                    if (Test-Path $testJob.TestingFrameworkPath) {
                         Import-Module $testJob.TestingFrameworkPath -Force -ErrorAction Stop
                     } else {
-                        throw "TestingFramework path is invalid or null: '$($testJob.TestingFrameworkPath)'"
+                        throw "TestingFramework path does not exist: '$($testJob.TestingFrameworkPath)'"
                     }
                     
                     # Initialize logging system in parallel context to prevent null path errors
-                    if ($testJob.ProjectRoot) {
-                        $loggingPath = Join-Path $testJob.ProjectRoot "aither-core/modules/Logging"
-                        if (Test-Path $loggingPath) {
-                            Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
-                            if (Get-Command Initialize-LoggingSystem -ErrorAction SilentlyContinue) {
-                                Initialize-LoggingSystem -ErrorAction SilentlyContinue
-                            }
-                        }
-                    }
-                    
-                    # Initialize logging system in parallel context to prevent null path errors
+                    # Only do this once, not twice
                     $loggingPath = Join-Path $testJob.ProjectRoot "aither-core/modules/Logging"
                     if (Test-Path $loggingPath) {
                         Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
                         if (Get-Command Initialize-LoggingSystem -ErrorAction SilentlyContinue) {
                             Initialize-LoggingSystem -ErrorAction SilentlyContinue
                         }
+                    }
+                    
+                    # Validate test path before proceeding
+                    if ([string]::IsNullOrEmpty($testJob.TestPath)) {
+                        throw "TestPath is null or empty for module: $($testJob.ModuleName)"
                     }
                     
                     # Execute the test phase
