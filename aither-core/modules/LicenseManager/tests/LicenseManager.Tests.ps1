@@ -15,9 +15,10 @@ BeforeAll {
     New-Item -Path $script:TestLicenseDir -ItemType Directory -Force | Out-Null
 
     # Mock the script license path for testing
+    $testPath = $script:TestLicensePath
     InModuleScope LicenseManager {
-        $script:LicensePath = $using:TestLicensePath
-    }
+        $script:LicensePath = $args[0]
+    } -ArgumentList $testPath
 
     # Create test license data
     $script:TestLicense = @{
@@ -348,17 +349,17 @@ Describe "LicenseManager Module" {
 
         It "Should validate license integrity" {
             InModuleScope LicenseManager {
-                $ValidLicense = $using:TestLicense
+                $ValidLicense = $script:TestLicense
                 Test-LicenseIntegrity -License ([PSCustomObject]$ValidLicense) | Should -Be $true
 
-                $InvalidLicense = $using:InvalidLicense
+                $InvalidLicense = $script:InvalidLicense
                 Test-LicenseIntegrity -License ([PSCustomObject]$InvalidLicense) | Should -Be $false
             }
         }
 
         It "Should validate canonical license data creation" {
             InModuleScope LicenseManager {
-                $TestLicense = $using:TestLicense
+                $TestLicense = $script:TestLicense
                 $CanonicalData = Get-CanonicalLicenseData -License ([PSCustomObject]$TestLicense)
 
                 $CanonicalData | Should -Match "licenseId:"

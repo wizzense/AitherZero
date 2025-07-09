@@ -1,6 +1,17 @@
 # AI Tools Integration Module for AitherZero
 # Handles installation and configuration of AI development tools
 
+# Write-CustomLog fallback for test isolation scenarios
+if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
+    function Global:Write-CustomLog {
+        param(
+            [string]$Message,
+            [string]$Level = 'INFO'
+        )
+        Write-Host "[$Level] $Message"
+    }
+}
+
 # Import required modules
 . "$PSScriptRoot/../../shared/Find-ProjectRoot.ps1"
 $projectRoot = Find-ProjectRoot

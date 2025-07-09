@@ -1,0 +1,409 @@
+{
+  "GeneratedBy": "AitherZero TestingFramework",
+  "FailureAnalysis": {
+    "ModulesWithFailures": [
+      {
+        "Module": "AIToolsIntegration",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "BackupManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "DevEnvironment",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "LicenseManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "Logging",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ModuleCommunication",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "OrchestrationEngine",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ParallelExecution",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "PatchManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ProgressTracking",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "PSScriptAnalyzerIntegration",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "RemoteConnection",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "RepoSync",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "RestAPIServer",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "SemanticVersioning",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "SetupWizard",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "StartupExperience",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "TestingFramework",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "UnifiedMaintenance",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "UtilityServices",
+        "TestsFailed": 1,
+        "FailureRate": null
+      }
+    ],
+    "CriticalFailures": [],
+    "CommonFailurePatterns": [
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+    ]
+  },
+  "Results": [
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "AIToolsIntegration",
+      "Duration": 0,
+      "Success": false
+    },
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "BackupManager",
+      "Duration": 0,
+      "Success": false
+    },
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "DevEnvironment",
+      "Duration": 0,
+      "Success": false
+    },
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "LicenseManager",
+      "Duration": 0,
+      "Success": false
+    },
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "Logging",
+      "Duration": 0,
+      "Success": false
+    },
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "ModuleCommunication",
+      "Duration": 0,
+      "Success": false
+    },
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "OrchestrationEngine",
+      "Duration": 0,
+      "Success": false
+    },
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "ParallelExecution",
+      "Duration": 0,
+      "Success": false
+    },
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "PatchManager",
+      "Duration": 0,
+      "Success": false
+    },
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "ProgressTracking",
+      "Duration": 0,
+      "Success": false
+    },
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "PSScriptAnalyzerIntegration",
+      "Duration": 0,
+      "Success": false
+    },
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "RemoteConnection",
+      "Duration": 0,
+      "Success": false
+    },
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "RepoSync",
+      "Duration": 0,
+      "Success": false
+    },
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "RestAPIServer",
+      "Duration": 0,
+      "Success": false
+    },
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "SemanticVersioning",
+      "Duration": 0,
+      "Success": false
+    },
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "SetupWizard",
+      "Duration": 0,
+      "Success": false
+    },
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "StartupExperience",
+      "Duration": 0,
+      "Success": false
+    },
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "TestingFramework",
+      "Duration": 0,
+      "Success": false
+    },
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "UnifiedMaintenance",
+      "Duration": 0,
+      "Success": false
+    },
+    {
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script."
+      ],
+      "TestsPassed": 0,
+      "Phase": "Unit",
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: The running command stopped because the preference variable \"ErrorActionPreference\" or common parameter is set to Stop: At /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:18 char:1\n+ using namespace System.Collections.Concurrent\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.\n\nAt /workspaces/AitherZero/aither-core/modules/ModuleCommunication/ModuleCommunication.psm1:19 char:1\n+ using namespace System.Threading\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nA 'using' statement must appear before any other statements in a script.",
+      "Module": "UtilityServices",
+      "Duration": 0,
+      "Success": false
+    }
+  ],
+  "Summary": {
+    "TotalPassed": 0.0,
+    "AverageDuration": 0.0,
+    "FailedModules": 20,
+    "TotalDuration": 0.0,
+    "TestSuite": "Unit",
+    "SuccessRate": 0,
+    "SuccessfulModules": 0,
+    "TotalSkipped": null,
+    "TotalModules": 20,
+    "Timestamp": "2025-07-09T16:45:05.407027+00:00",
+    "TotalFailed": 20.0,
+    "SlowestModule": "AIToolsIntegration",
+    "FastestModule": "AIToolsIntegration",
+    "TotalTests": 0.0
+  },
+  "Version": "1.0.0"
+}

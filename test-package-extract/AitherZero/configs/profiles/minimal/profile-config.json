@@ -1,0 +1,46 @@
+{
+  "name": "minimal",
+  "description": "Minimal configuration for core infrastructure deployment only",
+  "extends": "base-config.json",
+  "profile": {
+    "size": "5-8 MB",
+    "target": "CI/CD environments, core operations",
+    "features": ["Core infrastructure", "Basic Git operations", "OpenTofu deployment"]
+  },
+  
+  "overrides": {
+    "tools": {
+      "InstallOpenTofu": true,
+      "InstallHyperV": false,
+      "InstallGo": false,
+      "InstallPoetry": false,
+      "InstallPython": false,
+      "InstallNodeCore": false,
+      "InstallAzureCLI": false,
+      "InstallAWSCLI": false,
+      "InstallPacker": false,
+      "InstallDockerDesktop": false,
+      "Install7Zip": false,
+      "InstallVSCode": false,
+      "InstallVSBuildTools": false,
+      "InstallChocolatey": false,
+      "InstallSysinternals": false
+    },
+    
+    "infrastructure": {
+      "InitializeOpenTofu": true,
+      "PrepareHyperVHost": false
+    },
+    
+    "logging": {
+      "LogLevel": "WARN",
+      "EnableConsoleLogging": true,
+      "EnableFileLogging": false
+    },
+    
+    "security": {
+      "RequireEncryption": false,
+      "ValidateModules": false
+    }
+  }
+}

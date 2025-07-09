@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "description": "Staging environment overrides",
+    "environment": "staging"
+  },
+  "system": {
+    "ComputerName": "aither-staging",
+    "SetComputerName": true,
+    "AllowRemoteDesktop": false,
+    "ConfigureFirewall": true
+  },
+  "tools": {
+    "InstallGit": true,
+    "InstallGitHubCLI": false,
+    "InstallPwsh": true,
+    "InstallVSCode": false,
+    "InstallDockerDesktop": false
+  },
+  "aiTools": {
+    "InstallClaudeCode": false,
+    "InstallGeminiCLI": false,
+    "ClaudeCodeSkipWSL": true,
+    "GeminiCLISkipWSL": true
+  },
+  "logging": {
+    "level": "INFO",
+    "console": true,
+    "EnableConsoleLogging": true,
+    "EnableFileLogging": true,
+    "MaxLogFiles": 15,
+    "MaxLogSizeMB": 100
+  },
+  "security": {
+    "RequireEncryption": true,
+    "AllowUnsignedScripts": false,
+    "ValidateModules": true
+  },
+  "environment": {
+    "name": "staging",
+    "platform": "auto"
+  }
+}

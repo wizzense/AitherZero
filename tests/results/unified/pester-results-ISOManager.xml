@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="27" errors="0" failures="27" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="23:15:53">
-  <environment machine-name="codespaces-6c6eb1" user="codespace" nunit-version="2.5.8.0" platform="Linux" os-version="6.8.0-1027-azure" user-domain="" cwd="/workspaces/AitherZero" clr-version="9.0.4" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="27" errors="0" failures="27" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-09" time="15:19:12">
+  <environment nunit-version="2.5.8.0" machine-name="codespaces-6c6eb1" platform="Linux" clr-version="9.0.4" user-domain="" cwd="/workspaces/AitherZero" os-version="6.8.0-1027-azure" user="codespace" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="0.1775" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="0.6311" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/ISOManager/tests/ISOManager.Tests.ps1" executed="True" result="Failure" success="False" time="0.1775" asserts="0" description="/workspaces/AitherZero/aither-core/modules/ISOManager/tests/ISOManager.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/ISOManager/tests/ISOManager.Tests.ps1" executed="True" result="Failure" success="False" time="0.6311" asserts="0" description="/workspaces/AitherZero/aither-core/modules/ISOManager/tests/ISOManager.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="ISOManager Module Tests" executed="True" result="Failure" success="False" time="0.1177" asserts="0" description="ISOManager Module Tests">
+          <test-suite type="TestFixture" name="ISOManager Module Tests" executed="True" result="Failure" success="False" time="0.2533" asserts="0" description="ISOManager Module Tests">
             <results>
               <test-suite type="TestFixture" name="ISOManager Module Tests.Module Loading" executed="True" result="Failure" success="False" time="0" asserts="0" description="ISOManager Module Tests.Module Loading">
                 <results>

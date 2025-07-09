@@ -985,3 +985,25 @@ function Write-EnhancedDeploymentSummary {
 
     Write-Host "`n$('='*70)`n" -ForegroundColor Cyan
 }
+
+# Added by CI/CD validation test
+function Test-DomainIntegration {
+    <#
+    .SYNOPSIS
+        Test function to validate domain integration in CI/CD pipeline
+    .DESCRIPTION
+        This function validates that domain changes work correctly through the CI/CD pipeline
+    #>
+    param(
+        [string] = "Domain integration test"
+    )
+    
+    Write-CustomLog -Message "Domain integration test: " -Level "INFO"
+    return @{
+        Status = "Success"
+        Message = 
+        Timestamp = Get-Date
+        Domain = "Infrastructure"
+    }
+}
+

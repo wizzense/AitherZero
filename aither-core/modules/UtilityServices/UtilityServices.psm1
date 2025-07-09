@@ -1,6 +1,17 @@
 #Requires -Version 7.0
 
 <#
+# Write-CustomLog fallback for test isolation scenarios
+if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
+    function Global:Write-CustomLog {
+        param(
+            [string]$Message,
+            [string]$Level = 'INFO'
+        )
+        Write-Host "[$Level] $Message"
+    }
+}
+
 .SYNOPSIS
     Utility Services Integration Module for AitherZero Infrastructure Automation
 

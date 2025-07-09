@@ -1,141 +1,88 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="22" errors="0" failures="11" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-08" time="23:15:58">
-  <environment machine-name="codespaces-6c6eb1" user="codespace" nunit-version="2.5.8.0" platform="Linux" os-version="6.8.0-1027-azure" user-domain="" cwd="/workspaces/AitherZero" clr-version="9.0.4" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="21" errors="0" failures="3" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-09" time="16:27:25">
+  <environment platform="Linux" machine-name="codespaces-6c6eb1" user="codespace" clr-version="9.0.4" os-version="6.8.0-1027-azure" nunit-version="2.5.8.0" user-domain="" cwd="/workspaces/AitherZero" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="1.6588" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="1.231" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1" executed="True" result="Failure" success="False" time="1.6588" asserts="0" description="/workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1" executed="True" result="Failure" success="False" time="1.231" asserts="0" description="/workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="OrchestrationEngine Management Module - Core Functionality" executed="True" result="Failure" success="False" time="0.7174" asserts="0" description="OrchestrationEngine Management Module - Core Functionality">
+          <test-suite type="TestFixture" name="OrchestrationEngine Module Tests" executed="True" result="Failure" success="False" time="0.5722" asserts="0" description="OrchestrationEngine Module Tests">
             <results>
-              <test-suite type="TestFixture" name="OrchestrationEngine Management Module - Core Functionality.Module Import and Structure" executed="True" result="Failure" success="False" time="0.0256" asserts="0" description="OrchestrationEngine Management Module - Core Functionality.Module Import and Structure">
+              <test-suite type="TestFixture" name="OrchestrationEngine Module Tests.Module Import and Structure" executed="True" result="Success" success="True" time="0.1811" asserts="0" description="OrchestrationEngine Module Tests.Module Import and Structure">
                 <results>
-                  <test-case description="Should import the management module successfully" name="OrchestrationEngine Management Module - Core Functionality.Module Import and Structure.Should import the management module successfully" time="0.006" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should export management functions" name="OrchestrationEngine Management Module - Core Functionality.Module Import and Structure.Should export management functions" time="0.0123" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should import the module successfully" name="OrchestrationEngine Module Tests.Module Import and Structure.Should import the module successfully" time="0.1067" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export core playbook functions" name="OrchestrationEngine Module Tests.Module Import and Structure.Should export core playbook functions" time="0.0193" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export step creation functions" name="OrchestrationEngine Module Tests.Module Import and Structure.Should export step creation functions" time="0.0099" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="OrchestrationEngine Module Tests.Playbook Definition Operations" executed="True" result="Failure" success="False" time="0.3219" asserts="0" description="OrchestrationEngine Module Tests.Playbook Definition Operations">
+                <results>
+                  <test-case description="Should create a new playbook definition" name="OrchestrationEngine Module Tests.Playbook Definition Operations.Should create a new playbook definition" time="0.0524" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate a playbook definition" name="OrchestrationEngine Module Tests.Playbook Definition Operations.Should validate a playbook definition" time="0.0567" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>Expected a value, because Management module should export management-related functions, but got $null or empty.</message>
-                      <stack-trace>at $foundFunctions | Should -Not -BeNullOrEmpty -Because "Management module should export management-related functions", /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:77
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:77</stack-trace>
+                      <message>Expected no exception to be thrown, but an exception "A parameter cannot be found that matches parameter name 'PlaybookDefinition'." was thrown from /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:99 char:47
+    + …             { Validate-PlaybookDefinition -PlaybookDefinition $testPl …
+    +                                             ~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { Validate-PlaybookDefinition -PlaybookDefinition $testPlaybook } | Should -Not -Throw, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:99
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:99</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle playbook definition with steps" name="OrchestrationEngine Module Tests.Playbook Definition Operations.Should handle playbook definition with steps" time="0.0261" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="OrchestrationEngine Module Tests.Step Creation Functions" executed="True" result="Success" success="True" time="0.3531" asserts="0" description="OrchestrationEngine Module Tests.Step Creation Functions">
+                <results>
+                  <test-case description="Should create script steps" name="OrchestrationEngine Module Tests.Step Creation Functions.Should create script steps" time="0.0082" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create conditional steps" name="OrchestrationEngine Module Tests.Step Creation Functions.Should create conditional steps" time="0.0084" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create parallel steps" name="OrchestrationEngine Module Tests.Step Creation Functions.Should create parallel steps" time="0.0082" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="OrchestrationEngine Module Tests.Workflow Execution" executed="True" result="Failure" success="False" time="0.4321" asserts="0" description="OrchestrationEngine Module Tests.Workflow Execution">
+                <results>
+                  <test-case description="Should handle workflow execution gracefully" name="OrchestrationEngine Module Tests.Workflow Execution.Should handle workflow execution gracefully" time="0.0483" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should provide workflow status" name="OrchestrationEngine Module Tests.Workflow Execution.Should provide workflow status" time="0.0092" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle workflow stopping" name="OrchestrationEngine Module Tests.Workflow Execution.Should handle workflow stopping" time="0.0152" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected no exception to be thrown, but an exception "Cannot process command because of one or more missing mandatory parameters: WorkflowId." was thrown from /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:146 char:15
+    +             { Stop-PlaybookWorkflow } | Should -Not -Throw
+    +               ~~~~~~~~~~~~~~~~~~~~~.</message>
+                      <stack-trace>at { Stop-PlaybookWorkflow } | Should -Not -Throw, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:146
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:146</stack-trace>
                     </failure>
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="OrchestrationEngine Management Module - Core Functionality.Resource Management Operations" executed="True" result="Failure" success="False" time="0.2069" asserts="0" description="OrchestrationEngine Management Module - Core Functionality.Resource Management Operations">
+              <test-suite type="TestFixture" name="OrchestrationEngine Module Tests.Import/Export Operations" executed="True" result="Success" success="True" time="0.4644" asserts="0" description="OrchestrationEngine Module Tests.Import/Export Operations">
                 <results>
-                  <test-case description="Should initialize management state properly" name="OrchestrationEngine Management Module - Core Functionality.Resource Management Operations.Should initialize management state properly" time="0.0435" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>Expected no exception to be thrown, but an exception "The term 'Start-OrchestrationEngineManagement' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:84 char:15
-    +             { Start-OrchestrationEngineManagement -TestMode } | Shoul …
-    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</message>
-                      <stack-trace>at { Start-OrchestrationEngineManagement -TestMode } | Should -Not -Throw, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:84
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:84</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should track resource state accurately" name="OrchestrationEngine Management Module - Core Functionality.Resource Management Operations.Should track resource state accurately" time="0.0395" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Get-OrchestrationEngineStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:89</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should handle configuration changes safely" name="OrchestrationEngine Management Module - Core Functionality.Resource Management Operations.Should handle configuration changes safely" time="0.0424" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>Expected no exception to be thrown, but an exception "The term 'Set-OrchestrationEngineConfiguration' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:97 char:15
-    +             { Set-OrchestrationEngineConfiguration -Configuration $te …
-    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</message>
-                      <stack-trace>at { Set-OrchestrationEngineConfiguration -Configuration $testConfig } | Should -Not -Throw, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:97
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:97</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should execute operations with proper validation" name="OrchestrationEngine Management Module - Core Functionality.Resource Management Operations.Should execute operations with proper validation" time="0.0409" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Invoke-OrchestrationEngineOperation' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:102</stack-trace>
-                    </failure>
-                  </test-case>
+                  <test-case description="Should handle playbook import" name="OrchestrationEngine Module Tests.Import/Export Operations.Should handle playbook import" time="0.0145" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle missing playbook gracefully" name="OrchestrationEngine Module Tests.Import/Export Operations.Should handle missing playbook gracefully" time="0.0127" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="OrchestrationEngine Management Module - Core Functionality.State Management and Persistence" executed="True" result="Failure" success="False" time="0.3045" asserts="0" description="OrchestrationEngine Management Module - Core Functionality.State Management and Persistence">
+              <test-suite type="TestFixture" name="OrchestrationEngine Module Tests.Error Handling and Validation" executed="True" result="Failure" success="False" time="0.5033" asserts="0" description="OrchestrationEngine Module Tests.Error Handling and Validation">
                 <results>
-                  <test-case description="Should maintain consistent state across operations" name="OrchestrationEngine Management Module - Core Functionality.State Management and Persistence.Should maintain consistent state across operations" time="0.042" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should handle invalid playbook definitions gracefully" name="OrchestrationEngine Module Tests.Error Handling and Validation.Should handle invalid playbook definitions gracefully" time="0.0215" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>CommandNotFoundException: The term 'Get-OrchestrationEngineStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:110</stack-trace>
+                      <message>Expected no exception to be thrown, but an exception "Cannot bind argument to parameter 'Name' because it is an empty string." was thrown from /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:163 char:44
+    +             { New-PlaybookDefinition -Name "" -Description "Invalid e …
+    +                                            ~~.</message>
+                      <stack-trace>at { New-PlaybookDefinition -Name "" -Description "Invalid empty name" } | Should -Not -Throw, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:163
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:163</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should persist state information properly" name="OrchestrationEngine Management Module - Core Functionality.State Management and Persistence.Should persist state information properly" time="0.0444" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Export-OrchestrationEngineState' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:120</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should restore state from persistence" name="OrchestrationEngine Management Module - Core Functionality.State Management and Persistence.Should restore state from persistence" time="0.0044" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle invalid step definitions gracefully" name="OrchestrationEngine Module Tests.Error Handling and Validation.Should handle invalid step definitions gracefully" time="0.0061" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should provide meaningful error information" name="OrchestrationEngine Module Tests.Error Handling and Validation.Should provide meaningful error information" time="0.006" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="OrchestrationEngine Management Module - Core Functionality.Error Handling and Recovery" executed="True" result="Success" success="True" time="0.4763" asserts="0" description="OrchestrationEngine Management Module - Core Functionality.Error Handling and Recovery">
+              <test-suite type="TestFixture" name="OrchestrationEngine Module Tests.Module Integration" executed="True" result="Success" success="True" time="0.5203" asserts="0" description="OrchestrationEngine Module Tests.Module Integration">
                 <results>
-                  <test-case description="Should handle invalid operations gracefully" name="OrchestrationEngine Management Module - Core Functionality.Error Handling and Recovery.Should handle invalid operations gracefully" time="0.0384" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should provide meaningful error messages" name="OrchestrationEngine Management Module - Core Functionality.Error Handling and Recovery.Should provide meaningful error messages" time="0.0387" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should support rollback operations when possible" name="OrchestrationEngine Management Module - Core Functionality.Error Handling and Recovery.Should support rollback operations when possible" time="0.088" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should integrate with logging system" name="OrchestrationEngine Module Tests.Module Integration.Should integrate with logging system" time="0.0071" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle module dependencies gracefully" name="OrchestrationEngine Module Tests.Module Integration.Should handle module dependencies gracefully" time="0.0053" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="OrchestrationEngine Management Module - Core Functionality.Event Coordination and Workflow" executed="True" result="Failure" success="False" time="0.7113" asserts="0" description="OrchestrationEngine Management Module - Core Functionality.Event Coordination and Workflow">
+              <test-suite type="TestFixture" name="OrchestrationEngine Module Tests.Performance and Reliability" executed="True" result="Success" success="True" time="0.558" asserts="0" description="OrchestrationEngine Module Tests.Performance and Reliability">
                 <results>
-                  <test-case description="Should publish management events" name="OrchestrationEngine Management Module - Core Functionality.Event Coordination and Workflow.Should publish management events" time="0.0899" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should coordinate with other management modules" name="OrchestrationEngine Management Module - Core Functionality.Event Coordination and Workflow.Should coordinate with other management modules" time="0.0407" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Test-OrchestrationEngineCoordination' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:168</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should handle workflow execution properly" name="OrchestrationEngine Management Module - Core Functionality.Event Coordination and Workflow.Should handle workflow execution properly" time="0.0976" asserts="0" success="True" result="Success" executed="True" />
-                </results>
-              </test-suite>
-            </results>
-          </test-suite>
-          <test-suite type="TestFixture" name="OrchestrationEngine Management Module - Advanced Scenarios" executed="True" result="Failure" success="False" time="1.5342" asserts="0" description="OrchestrationEngine Management Module - Advanced Scenarios">
-            <results>
-              <test-suite type="TestFixture" name="OrchestrationEngine Management Module - Advanced Scenarios.Concurrent Operations" executed="True" result="Failure" success="False" time="0.4643" asserts="0" description="OrchestrationEngine Management Module - Advanced Scenarios.Concurrent Operations">
-                <results>
-                  <test-case description="Should handle multiple concurrent management requests" name="OrchestrationEngine Management Module - Advanced Scenarios.Concurrent Operations.Should handle multiple concurrent management requests" time="0.4067" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>Expected a collection with size 3, but got an empty collection.</message>
-                      <stack-trace>at $results | Should -HaveCount 3, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:197
-at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:197</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should maintain consistency under concurrent access" name="OrchestrationEngine Management Module - Advanced Scenarios.Concurrent Operations.Should maintain consistency under concurrent access" time="0.0444" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Get-OrchestrationEngineStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:202</stack-trace>
-                    </failure>
-                  </test-case>
-                </results>
-              </test-suite>
-              <test-suite type="TestFixture" name="OrchestrationEngine Management Module - Advanced Scenarios.Performance and Scalability" executed="True" result="Failure" success="False" time="0.5968" asserts="0" description="OrchestrationEngine Management Module - Advanced Scenarios.Performance and Scalability">
-                <results>
-                  <test-case description="Should execute management operations within acceptable time limits" name="OrchestrationEngine Management Module - Advanced Scenarios.Performance and Scalability.Should execute management operations within acceptable time limits" time="0.0404" asserts="0" success="False" result="Failure" executed="True">
-                    <failure>
-                      <message>CommandNotFoundException: The term 'Get-OrchestrationEngineStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:213</stack-trace>
-                    </failure>
-                  </test-case>
-                  <test-case description="Should handle large-scale operations efficiently" name="OrchestrationEngine Management Module - Advanced Scenarios.Performance and Scalability.Should handle large-scale operations efficiently" time="0.0856" asserts="0" success="True" result="Success" executed="True" />
-                </results>
-              </test-suite>
-              <test-suite type="TestFixture" name="OrchestrationEngine Management Module - Advanced Scenarios.Integration with AitherZero Framework" executed="True" result="Success" success="True" time="0.8108" asserts="0" description="OrchestrationEngine Management Module - Advanced Scenarios.Integration with AitherZero Framework">
-                <results>
-                  <test-case description="Should integrate with centralized logging" name="OrchestrationEngine Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should integrate with centralized logging" time="0.0077" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should respect framework configuration" name="OrchestrationEngine Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should respect framework configuration" time="0.0872" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should support framework-wide operations" name="OrchestrationEngine Management Module - Advanced Scenarios.Integration with AitherZero Framework.Should support framework-wide operations" time="0.0996" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should execute operations within reasonable time" name="OrchestrationEngine Module Tests.Performance and Reliability.Should execute operations within reasonable time" time="0.0222" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle multiple operations" name="OrchestrationEngine Module Tests.Performance and Reliability.Should handle multiple operations" time="0.0097" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>

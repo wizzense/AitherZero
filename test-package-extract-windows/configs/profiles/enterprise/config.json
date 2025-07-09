@@ -1,0 +1,71 @@
+{
+  "metadata": {
+    "name": "enterprise",
+    "description": "Enterprise configuration with all features and security enhancements",
+    "profile": "enterprise",
+    "extends": "../../default-config.json"
+  },
+  "tools": {
+    "InstallGit": true,
+    "InstallGitHubCLI": true,
+    "InstallPwsh": true,
+    "InstallOpenTofu": true,
+    "InstallHyperV": true,
+    "InstallWAC": true,
+    "InstallGo": true,
+    "InstallPoetry": true,
+    "InstallPython": true,
+    "InstallDockerDesktop": true,
+    "Install7Zip": true,
+    "InstallVSCode": true,
+    "InstallVSBuildTools": true,
+    "InstallAzureCLI": true,
+    "InstallAWSCLI": true,
+    "InstallPacker": true,
+    "InstallChocolatey": true
+  },
+  "aiTools": {
+    "InstallClaudeCode": true,
+    "InstallGeminiCLI": true,
+    "InstallCodexCLI": true,
+    "ClaudeCodeSkipWSL": false,
+    "GeminiCLISkipWSL": false,
+    "GeminiCLISkipNode": false
+  },
+  "ui": {
+    "Mode": "enhanced",
+    "DefaultUI": "enhanced",
+    "FallbackUI": "classic",
+    "ShowUISelector": true,
+    "RememberUIChoice": true
+  },
+  "infrastructure": {
+    "InitializeOpenTofu": true,
+    "PrepareHyperVHost": true
+  },
+  "logging": {
+    "level": "INFO",
+    "console": true,
+    "EnableConsoleLogging": true,
+    "EnableFileLogging": true,
+    "MaxLogFiles": 30,
+    "MaxLogSizeMB": 100
+  },
+  "security": {
+    "RequireEncryption": true,
+    "AllowUnsignedScripts": false,
+    "ValidateModules": true,
+    "SecureBootRequired": true
+  },
+  "versions": {
+    "PoetryVersion": "latest",
+    "OpenTofuVersion": "latest",
+    "PythonVersion": "3.11",
+    "NodeVersion": "18"
+  },
+  "system": {
+    "ConfigureFirewall": true,
+    "AllowRemoteDesktop": false,
+    "DisableTCPIP6": true
+  }
+}

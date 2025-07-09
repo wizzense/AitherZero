@@ -1,0 +1,55 @@
+{
+  "metadata": {
+    "name": "minimal",
+    "description": "Minimal configuration for core infrastructure deployment only",
+    "profile": "minimal",
+    "extends": "../../default-config.json"
+  },
+  "tools": {
+    "InstallGit": true,
+    "InstallGitHubCLI": false,
+    "InstallPwsh": true,
+    "InstallOpenTofu": true,
+    "InstallHyperV": false,
+    "InstallGo": false,
+    "InstallPoetry": false,
+    "InstallPython": false,
+    "InstallDockerDesktop": false,
+    "Install7Zip": false,
+    "InstallVSCode": false,
+    "InstallVSBuildTools": false,
+    "InstallChocolatey": false
+  },
+  "aiTools": {
+    "InstallClaudeCode": false,
+    "InstallGeminiCLI": false,
+    "InstallCodexCLI": false,
+    "ClaudeCodeSkipWSL": true,
+    "GeminiCLISkipWSL": true
+  },
+  "ui": {
+    "Mode": "classic",
+    "DefaultUI": "classic",
+    "FallbackUI": "classic",
+    "ShowUISelector": false,
+    "RememberUIChoice": false
+  },
+  "infrastructure": {
+    "InitializeOpenTofu": true,
+    "PrepareHyperVHost": false
+  },
+  "logging": {
+    "level": "WARN",
+    "console": true,
+    "EnableConsoleLogging": true,
+    "EnableFileLogging": false,
+    "MaxLogFiles": 5,
+    "MaxLogSizeMB": 10
+  },
+  "security": {
+    "RequireEncryption": false,
+    "AllowUnsignedScripts": false,
+    "ValidateModules": false,
+    "SecureBootRequired": false
+  }
+}

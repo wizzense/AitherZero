@@ -31,7 +31,7 @@ BeforeAll {
     # Import Logging for enhanced test logging
     $loggingPath = Join-Path $script:ProjectRoot "aither-core/modules/Logging"
     if (Test-Path $loggingPath) {
-        Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
+        Import-Module $loggingPath -Force -Global -ErrorAction SilentlyContinue
     }
 
     # Create test directories

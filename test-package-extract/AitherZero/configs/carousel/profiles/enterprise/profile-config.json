@@ -1,0 +1,113 @@
+{
+  "name": "enterprise", 
+  "description": "Enterprise configuration with all features and security enhancements",
+  "extends": "base-config.json",
+  "profile": {
+    "size": "35-50 MB",
+    "target": "Enterprise deployments, full lab environments",
+    "features": ["All standard features", "Enterprise security", "Full toolchain", "Advanced monitoring"]
+  },
+  
+  "overrides": {
+    "UIPreferences": {
+      "Mode": "auto",
+      "DefaultUI": "enhanced",
+      "FallbackUI": "classic",
+      "ShowUISelector": true,
+      "RememberUIChoice": true
+    },
+    
+    "tools": {
+      "InstallOpenTofu": true,
+      "InstallHyperV": true,
+      "InstallWAC": true,
+      "InstallGo": true,
+      "InstallPoetry": true,
+      "InstallPython": true,
+      "InstallNodeCore": true,
+      "InstallAzureCLI": true,
+      "InstallAWSCLI": true,
+      "InstallPacker": true,
+      "InstallDockerDesktop": true,
+      "Install7Zip": true,
+      "InstallVSCode": true,
+      "InstallVSBuildTools": true,
+      "InstallChocolatey": true,
+      "InstallSysinternals": true,
+      "InstallCA": true,
+      "InstallCosign": true,
+      "InstallGPG": true
+    },
+    
+    "aiTools": {
+      "InstallClaudeCode": true,
+      "InstallGeminiCLI": true,
+      "InstallCodexCLI": true,
+      "EnableAIIntegration": true,
+      "DefaultAIProvider": "claude",
+      "EnableAdvancedFeatures": true
+    },
+    
+    "nodePackages": {
+      "InstallAIPackages": true,
+      "InstallAdvancedPackages": true,
+      "Packages": [
+        "@anthropic-ai/sdk",
+        "@google/generative-ai", 
+        "openai",
+        "commander",
+        "chalk",
+        "inquirer",
+        "axios",
+        "lodash",
+        "moment",
+        "uuid"
+      ]
+    },
+    
+    "infrastructure": {
+      "InitializeOpenTofu": true,
+      "PrepareHyperVHost": true,
+      "EnableAdvancedNetworking": true,
+      "ConfigureFirewall": true
+    },
+    
+    "system": {
+      "AllowRemoteDesktop": true,
+      "ConfigureFirewall": true,
+      "SetDNSServers": true,
+      "SetTrustedHosts": true
+    },
+    
+    "hyperv": {
+      "Memory": 8192,
+      "ProcessorCount": 4,
+      "DiskSize": 100,
+      "EnableNesting": true
+    },
+    
+    "logging": {
+      "LogLevel": "DEBUG",
+      "EnableConsoleLogging": true,
+      "EnableFileLogging": true,
+      "EnableAuditLogging": true,
+      "MaxLogFiles": 30,
+      "MaxLogSizeMB": 100
+    },
+    
+    "security": {
+      "RequireEncryption": true,
+      "ValidateModules": true,
+      "SecureBootRequired": true,
+      "EnableAdvancedSecurity": true,
+      "AuditMode": true
+    },
+    
+    "monitoring": {
+      "EnableSystemMonitoring": true,
+      "EnablePerformanceTracking": true,
+      "EnableSecurityMonitoring": true,
+      "AlertingEnabled": true
+    }
+  }
+}

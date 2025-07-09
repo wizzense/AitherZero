@@ -1,0 +1,40 @@
+{
+  "metadata": {
+    "description": "Development environment overrides",
+    "environment": "dev"
+  },
+  "system": {
+    "ComputerName": "aither-dev",
+    "SetComputerName": false,
+    "AllowRemoteDesktop": true,
+    "ConfigureFirewall": false
+  },
+  "tools": {
+    "InstallGit": true,
+    "InstallGitHubCLI": true,
+    "InstallPwsh": true,
+    "InstallVSCode": true,
+    "InstallDockerDesktop": true
+  },
+  "aiTools": {
+    "InstallClaudeCode": true,
+    "InstallGeminiCLI": true,
+    "ClaudeCodeSkipWSL": false,
+    "GeminiCLISkipWSL": false
+  },
+  "logging": {
+    "level": "DEBUG",
+    "console": true,
+    "EnableConsoleLogging": true,
+    "EnableFileLogging": true
+  },
+  "security": {
+    "RequireEncryption": false,
+    "AllowUnsignedScripts": true,
+    "ValidateModules": false
+  },
+  "environment": {
+    "name": "development",
+    "platform": "auto"
+  }
+}

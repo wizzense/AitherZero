@@ -8,10 +8,10 @@ BeforeAll {
     # Import required modules
     $LoggingPath = Join-Path $PSScriptRoot ".." ".." "Logging" "Logging.psm1"
     if (Test-Path $LoggingPath) {
-        Import-Module $LoggingPath -Force
+        Import-Module $LoggingPath -Force -Global
     } else {
         # Mock Write-CustomLog if Logging module not available
-        function Write-CustomLog {
+        function Global:Write-CustomLog {
             param($Level, $Message)
             Write-Host "[$Level] $Message"
         }

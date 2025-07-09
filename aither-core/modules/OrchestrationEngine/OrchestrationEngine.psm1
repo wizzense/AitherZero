@@ -3,6 +3,17 @@
 
 # Import required modules
 . "$PSScriptRoot/../../shared/Find-ProjectRoot.ps1"
+# Write-CustomLog fallback for test isolation scenarios
+if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
+    function Global:Write-CustomLog {
+        param(
+            [string]$Message,
+            [string]$Level = 'INFO'
+        )
+        Write-Host "[$Level] $Message"
+    }
+}
+
 $projectRoot = Find-ProjectRoot
 
 # Import logging if available
