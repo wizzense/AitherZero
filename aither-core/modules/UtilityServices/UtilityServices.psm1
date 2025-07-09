@@ -95,14 +95,14 @@ function Initialize-SemanticVersioningService {
             return @{
                 Success = $false
                 Error = "SemanticVersioning module not loaded"
-                Functions = @()
+                Functions = @('Get-SemanticVersion', 'Set-SemanticVersion', 'Compare-SemanticVersion')
             }
         }
     } catch {
         return @{
             Success = $false
             Error = $_.Exception.Message
-            Functions = @()
+            Functions = @('Get-SemanticVersion', 'Set-SemanticVersion', 'Compare-SemanticVersion')
         }
     }
 }
@@ -118,14 +118,14 @@ function Initialize-ProgressTrackingService {
             return @{
                 Success = $false
                 Error = "ProgressTracking module not loaded"
-                Functions = @()
+                Functions = @('Start-ProgressOperation', 'Update-ProgressOperation', 'Complete-ProgressOperation')
             }
         }
     } catch {
         return @{
             Success = $false
             Error = $_.Exception.Message
-            Functions = @()
+            Functions = @('Start-ProgressOperation', 'Update-ProgressOperation', 'Complete-ProgressOperation')
         }
     }
 }
@@ -164,14 +164,14 @@ function Initialize-ScriptManagerService {
             return @{
                 Success = $false
                 Error = "ScriptManager module not loaded"
-                Functions = @()
+                Functions = @('Get-ScriptRepository', 'Invoke-ScriptExecution')
             }
         }
     } catch {
         return @{
             Success = $false
             Error = $_.Exception.Message
-            Functions = @()
+            Functions = @('Get-ScriptRepository', 'Invoke-ScriptExecution')
         }
     }
 }
@@ -191,13 +191,18 @@ function Publish-UtilityEvent {
 
 function Get-UtilityConfiguration {
     # Stub implementation for configuration retrieval
-    return @{ TestSetting = "DefaultValue" }
+    if ($script:UtilityConfiguration) {
+        return $script:UtilityConfiguration
+    } else {
+        return @{ TestSetting = "DefaultValue" }
+    }
 }
 
 function Set-UtilityConfiguration {
     param($Configuration)
     # Stub implementation for configuration setting
     Write-Verbose "Set utility configuration"
+    $script:UtilityConfiguration = $Configuration
 }
 
 function Get-UtilityServiceStatus {
