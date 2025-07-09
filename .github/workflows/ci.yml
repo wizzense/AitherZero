@@ -3,7 +3,7 @@ name: CI - Continuous Integration
 
 on:
   push:
-    branches: [main, develop, 'release/**']
+    branches: [main, develop, 'release/**', 'patch/**']
   pull_request:
     branches: [main, develop]
   merge_group:
