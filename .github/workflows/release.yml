@@ -154,11 +154,16 @@ jobs:
         VERSION=$(cat VERSION)
         TAG="v${VERSION}"
         
-        echo "Creating version tag: $TAG"
-        git tag -a "$TAG" -m "Release $TAG - Automated tag creation"
-        git push origin "$TAG"
-        
-        echo "Version tag $TAG created and pushed successfully"
+        # Check if tag already exists (PatchManager AutoTag may have created it)
+        if git tag -l "$TAG" | grep -q "$TAG"; then
+          echo "Tag $TAG already exists - skipping creation (likely created by PatchManager AutoTag)"
+          echo "This is expected behavior with PatchManager v3.1 --auto-tag feature"
+        else
+          echo "Creating version tag: $TAG"
+          git tag -a "$TAG" -m "Release $TAG - Automated tag creation"
+          git push origin "$TAG"
+          echo "Version tag $TAG created and pushed successfully"
+        fi
 
   # Parallel matrix builds for all platforms
   build-matrix:
