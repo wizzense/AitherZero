@@ -964,7 +964,7 @@ jobs:
         $env:CI_PLATFORM = "${{ runner.os }}"
         $env:ENABLE_PARALLEL_TESTS = "true"
         $env:PERFORMANCE_MODE = "optimized"
-        ./tests/Run-CI-Tests.ps1 -TestSuite All -OutputFormat Both -Timeout 300
+        pwsh ./tests/Run-CI-Tests.ps1 -TestSuite All -OutputFormat Both -Timeout 300
         
     - name: Run integration tests
       if: matrix.os == 'windows-latest'  # Only run integration tests on Windows (platform-specific)
