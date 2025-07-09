@@ -518,20 +518,9 @@ Export-ModuleMember -Function Start-EventListener
                 
                 $files = @()
                 
-                # Create main logging module
-                $loggingModule = Join-Path $loggingDir "Logging.psm1"
-                $loggingContent = @"
-function Write-CustomLog {
-    param([string]`$Level, [string]`$Message)
-    `$timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    `$logEntry = "[`$timestamp] [`$Level] `$Message"
-    Write-Host `$logEntry
-}
-
-Export-ModuleMember -Function Write-CustomLog
-"@
-                Set-Content -Path $loggingModule -Value $loggingContent
-                $files += $loggingModule
+                # Initialize logging system for tests
+                . "$PSScriptRoot/../../aither-core/shared/Initialize-Logging.ps1"
+                Initialize-Logging -NoImport
                 
                 # Create logging configuration
                 $loggingConfig = Join-Path $loggingDir "logging-config.json"

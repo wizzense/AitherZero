@@ -166,11 +166,11 @@ function New-BackupExclusion {
         }
 
         if ($results.Errors.Count -gt 0) {
-            foreach ($error in $results.Errors) {
+            foreach ($errorItem in $results.Errors) {
                 if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-                    Write-CustomLog $error -Level WARN
+                    Write-CustomLog $errorItem -Level WARN
                 } else {
-                    Write-Warning $error
+                    Write-Warning $errorItem
                 }
             }
         }

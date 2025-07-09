@@ -52,6 +52,8 @@ permissions:
   contents: write
   actions: read
   security-events: write
+  pages: write
+  id-token: write
 
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
@@ -347,6 +349,7 @@ jobs:
           tests/results/**/*
           ci-consumed-results/**/*
         retention-days: 30
+        if-no-files-found: warn
 
   # Generate comprehensive HTML report
   generate-comprehensive-report:
@@ -363,6 +366,19 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
+    - name: Cache PowerShell modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.local/share/powershell/Modules
+          ~/Documents/PowerShell/Modules
+          ~/.config/powershell
+          ~/.cache/powershell
+        key: ${{ runner.os }}-ps-modules-report-${{ hashFiles('**/requirements.psd1') }}-v2
+        restore-keys: |
+          ${{ runner.os }}-ps-modules-report-v2
+          ${{ runner.os }}-ps-modules-
 
     - name: Download audit results
       uses: actions/download-artifact@v4
@@ -620,6 +636,7 @@ jobs:
           output/executive-summary.md
           report-summary.json
         retention-days: 90
+        if-no-files-found: warn
 
   # Version-specific testing
   version-testing:
@@ -665,6 +682,7 @@ jobs:
         path: |
           tests/results/**/*
         retention-days: 30
+        if-no-files-found: warn
 
   # Create GitHub release if requested
   create-release:

@@ -62,8 +62,16 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        
-    # PowerShell is pre-installed on GitHub runners
+
+    - name: Cache audit state
+      uses: actions/cache@v4
+      with:
+        path: |
+          .github/documentation-state.json
+          .github/test-state.json
+        key: ${{ runner.os }}-audit-state-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-audit-state-
         
     - name: Check existing state files
       id: check
@@ -166,6 +174,7 @@ jobs:
         
     - name: Analyze documentation deltas
       shell: pwsh
+      timeout-minutes: 10
       run: |
         Write-Host "📊 Analyzing documentation changes..." -ForegroundColor Cyan
         
@@ -287,6 +296,7 @@ jobs:
         
     - name: Analyze test deltas
       shell: pwsh
+      timeout-minutes: 10
       run: |
         Write-Host "🧪 Analyzing test coverage and deltas..." -ForegroundColor Cyan
         
@@ -418,6 +428,7 @@ jobs:
         
     - name: Detect duplicate files
       shell: pwsh
+      timeout-minutes: 8
       run: |
         Write-Host "🔍 Scanning for duplicate and AI-generated files..." -ForegroundColor Cyan
         

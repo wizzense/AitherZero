@@ -21,6 +21,9 @@
     $config = Get-ConsolidatedConfiguration -Environment "dev" -Profile "developer"
 #>
 
+# Import shared Find-ProjectRoot utility
+. "$PSScriptRoot/Find-ProjectRoot.ps1"
+
 function Get-ConsolidatedConfiguration {
     [CmdletBinding()]
     param(
@@ -379,33 +382,7 @@ function Test-ConfigurationSchema {
     }
 }
 
-function Find-ProjectRoot {
-    [CmdletBinding()]
-    param(
-        [string]$StartPath = $PSScriptRoot
-    )
-
-    $currentPath = $StartPath
-    $rootIndicators = @('.git', 'Start-AitherZero.ps1', 'aither-core')
-
-    while ($currentPath) {
-        foreach ($indicator in $rootIndicators) {
-            $testPath = Join-Path $currentPath $indicator
-            if (Test-Path $testPath) {
-                return $currentPath
-            }
-        }
-
-        $parentPath = Split-Path $currentPath -Parent
-        if ($parentPath -eq $currentPath) {
-            break  # Reached root
-        }
-        $currentPath = $parentPath
-    }
-
-    # Fallback to current directory
-    return $PWD.Path
-}
+# Find-ProjectRoot function is now imported from shared utility
 
 # Export functions (remove for script usage)
 # Export-ModuleMember -Function Get-ConsolidatedConfiguration

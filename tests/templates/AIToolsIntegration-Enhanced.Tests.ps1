@@ -32,13 +32,9 @@ BeforeAll {
     # Create test workspace
     New-Item -Path $script:TestWorkspace -ItemType Directory -Force | Out-Null
 
-    # Mock dependencies
-    if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-        function Write-CustomLog {
-            param([string]$Message, [string]$Level = "INFO")
-            Write-Host "[$Level] $Message"
-        }
-    }
+    # Initialize logging system for tests
+    . "$PSScriptRoot/../../aither-core/shared/Initialize-Logging.ps1"
+    Initialize-Logging -NoImport
 
     # Mock npm for installation tests
     function Mock-NPM {

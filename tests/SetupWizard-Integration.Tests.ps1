@@ -105,14 +105,18 @@ Describe "SetupWizard Module Loading and Structure" -Tags @('SetupWizard', 'Modu
 
     Context "Module Availability and Loading" {
         It "Should have SetupWizard module available" {
-            Test-SetupWizardModule | Should -Be $true -Because "SetupWizard module should exist"
+            Test-Path $script:TestConfig.SetupWizardPath | Should -Be $true -Because "SetupWizard module should exist"
         }
 
         It "Should import SetupWizard module successfully" {
-            Import-SetupWizardModule | Should -Be $true -Because "SetupWizard module should import without errors"
+            if (Test-Path $script:TestConfig.SetupWizardPath) {
+                { Import-Module $script:TestConfig.SetupWizardPath -Force -ErrorAction Stop } | Should -Not -Throw -Because "SetupWizard module should import without errors"
+            } else {
+                Set-ItResult -Skipped -Because "SetupWizard module not found"
+            }
         }
 
-        It "Should have valid module manifest" -Skip:(-not (Test-SetupWizardModule)) {
+        It "Should have valid module manifest" -Skip:(-not ($script:TestConfig.SetupWizardPath -and (Test-Path $script:TestConfig.SetupWizardPath))) {
             $manifestPath = Join-Path $script:TestConfig.SetupWizardPath "SetupWizard.psd1"
 
             if (Test-Path $manifestPath) {
