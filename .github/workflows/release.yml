@@ -72,16 +72,20 @@ jobs:
           Write-Host "✅ CI workflow completed successfully" -ForegroundColor Green
           $ciRunId = '${{ github.event.workflow_run.id }}'
           
-          # Check if this CI run was triggered by a version tag
+          # For CI-dependent releases, auto-approve since CI passed successfully
+          Write-Host "🚀 Auto-approving release based on successful CI completion" -ForegroundColor Green
+          $shouldRelease = $true
+          
+          # Check if there are any existing version tags on the head commit
           $headSha = '${{ github.event.workflow_run.head_sha }}'
           $tags = git tag --points-at $headSha | Where-Object { $_ -match '^v\d+\.\d+\.\d+' }
           
           if ($tags) {
-            Write-Host "🏷️ Found version tag: $($tags[0])" -ForegroundColor Green
+            Write-Host "🏷️ Found existing version tag: $($tags[0])" -ForegroundColor Green
             $hasTag = $true
-            $shouldRelease = $true
           } else {
-            Write-Host "ℹ️ No version tag found - CI success but no release needed" -ForegroundColor Yellow
+            Write-Host "📝 No existing tag found - will create tag automatically" -ForegroundColor Yellow
+            $hasTag = $false
           }
         }
         
@@ -126,12 +130,80 @@ jobs:
         Write-Host "📦 Version: $version" -ForegroundColor Green
         echo "version=$version" >> $env:GITHUB_OUTPUT
 
+  # Create version tag automatically if needed
+  create-version-tag:
+    name: Create Version Tag
+    runs-on: ubuntu-latest
+    needs: validate-ci-completion
+    if: needs.validate-ci-completion.outputs.should-release == 'true' && needs.validate-ci-completion.outputs.has-tag == 'false'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Configure git
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        
+    - name: Create and push version tag
+      run: |
+        VERSION=$(cat VERSION)
+        TAG="v${VERSION}"
+        
+        echo "Creating version tag: $TAG"
+        git tag -a "$TAG" -m "Release $TAG - Automated tag creation"
+        git push origin "$TAG"
+        
+        echo "Version tag $TAG created and pushed successfully"
+
+  # Parallel matrix builds for all platforms
+  build-matrix:
+    name: Build ${{ matrix.platform }} Package
+    runs-on: ubuntu-latest
+    needs: [validate-ci-completion, create-version-tag]
+    if: always() && needs.validate-ci-completion.outputs.should-release == 'true' && (needs.create-version-tag.result == 'success' || needs.create-version-tag.result == 'skipped')
+    
+    strategy:
+      matrix:
+        platform: [windows, linux, macos]
+      fail-fast: false
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Build ${{ matrix.platform }} Package  
+      shell: pwsh
+      run: |
+        $platform = "${{ matrix.platform }}"
+        $version = "${{ needs.validate-ci-completion.outputs.version }}"
+        
+        Write-Host "🔨 Building $platform package for version $version" -ForegroundColor Cyan
+        ./build/Build-Package.ps1 -Platform $platform -Version $version
+        
+        # List created package
+        $packages = Get-ChildItem ./build/output -Filter "*$platform*"
+        foreach ($package in $packages) {
+          Write-Host "✅ Built: $($package.Name) - $([Math]::Round($package.Length / 1MB, 2)) MB" -ForegroundColor Green
+        }
+        
+    - name: Upload ${{ matrix.platform }} Package
+      uses: actions/upload-artifact@v4
+      with:
+        name: package-${{ matrix.platform }}
+        path: build/output/*${{ matrix.platform }}*
+        retention-days: 30
+
   # Download and consume CI results  
   consume-ci-results:
     name: Consume CI Results
     runs-on: ubuntu-latest
-    needs: validate-ci-completion
-    if: needs.validate-ci-completion.outputs.should-release == 'true'
+    needs: [validate-ci-completion, create-version-tag]
+    if: always() && needs.validate-ci-completion.outputs.should-release == 'true' && (needs.create-version-tag.result == 'success' || needs.create-version-tag.result == 'skipped')
     outputs:
       ci-artifacts-available: ${{ steps.download.outputs.artifacts-available }}
     
@@ -262,12 +334,12 @@ jobs:
         path: ci-artifacts/**/*
         retention-days: 30
 
-  # Build packages with validated CI data
+  # Collect parallel builds and create release
   build-and-release:
-    name: Build and Release with CI Data
+    name: Collect Builds and Create Release 
     runs-on: ubuntu-latest
-    needs: [validate-ci-completion, consume-ci-results]
-    if: needs.validate-ci-completion.outputs.should-release == 'true'
+    needs: [validate-ci-completion, create-version-tag, consume-ci-results, build-matrix]
+    if: always() && needs.validate-ci-completion.outputs.should-release == 'true' && (needs.create-version-tag.result == 'success' || needs.create-version-tag.result == 'skipped')
     
     steps:
     - name: Checkout code
@@ -297,16 +369,24 @@ jobs:
         git tag "v${{ steps.get_version.outputs.version }}"
         git push origin "v${{ steps.get_version.outputs.version }}"
         
-    - name: Build All Packages
+    - name: Download All Platform Packages
+      uses: actions/download-artifact@v4
+      with:
+        pattern: package-*
+        path: ./build/output/
+        merge-multiple: true
+        
+    - name: List Collected Packages
       shell: pwsh
       run: |
-        Write-Host "Building all packages for version ${{ steps.get_version.outputs.version }}"
-        ./build/Build-Package.ps1 -Platform all -Version "${{ steps.get_version.outputs.version }}"
+        Write-Host "📦 Collected packages from parallel builds:" -ForegroundColor Cyan
         
-        # List created packages
-        Write-Host "`nCreated packages:"
-        Get-ChildItem ./build/output -Filter "AitherZero-*" | ForEach-Object {
-            Write-Host "  - $($_.Name) ($('{0:N2}' -f ($_.Length / 1MB)) MB)"
+        if (Test-Path "./build/output") {
+          Get-ChildItem ./build/output -Filter "AitherZero-*" | ForEach-Object {
+            Write-Host "  ✅ $($_.Name) - $([Math]::Round($_.Length / 1MB, 2)) MB" -ForegroundColor Green
+          }
+        } else {
+          Write-Host "❌ No packages found in build output directory" -ForegroundColor Red
         }
         
     - name: Generate Release Report with CI Data

@@ -42,6 +42,12 @@
 .PARAMETER Force
     Override safety checks and recommendations
 
+.PARAMETER AutoTag
+    Automatically create version tag after successful operations (v3.1 feature)
+
+.PARAMETER FastTrack  
+    Skip PR creation and merge directly for critical fixes (v3.1 feature)
+
 .EXAMPLE
     New-Patch -Description "Fix typo in README" -Changes {
         $content = Get-Content "README.md"
@@ -103,7 +109,13 @@ function New-Patch {
 
         [Parameter(Mandatory = $false)]
         [ValidateSet('QuickFix', 'Feature', 'Hotfix', 'Patch', 'Release')]
-        [string]$OperationType = 'Patch'
+        [string]$OperationType = 'Patch',
+
+        [Parameter(Mandatory = $false)]
+        [switch]$AutoTag,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$FastTrack
     )
 
     begin {
@@ -158,6 +170,20 @@ function New-Patch {
                 }
             }
 
+            # Step 1.5: Apply v3.1 performance optimizations
+            if ($FastTrack) {
+                Write-CustomLog "FastTrack mode enabled - bypassing PR creation for direct merge" -Level "WARN"
+                $CreatePR = $false
+                $CreateIssue = $false
+                if ($Mode -eq "Simple") {
+                    Write-CustomLog "FastTrack optimized for Simple mode - maximum speed" -Level "INFO"
+                }
+            }
+
+            if ($AutoTag) {
+                Write-CustomLog "AutoTag enabled - version tag will be created automatically" -Level "INFO"
+            }
+
             Write-CustomLog "Using $Mode mode (CreatePR: $CreatePR, CreateIssue: $CreateIssue)" -Level "INFO"
 
             # Step 2: Execute multi-mode operation
@@ -169,6 +195,27 @@ function New-Patch {
                 # Provide user guidance based on what was created
                 if ($result.Result.BranchCreated) {
                     Write-CustomLog "Branch created: $($result.Result.BranchCreated)" -Level "INFO"
+                }
+
+                # Step 3: Apply AutoTag if requested (v3.1 feature)
+                if ($AutoTag -and -not $DryRun) {
+                    try {
+                        Write-CustomLog "Creating automatic version tag..." -Level "INFO"
+                        
+                        if (Test-Path "VERSION") {
+                            $version = (Get-Content "VERSION").Trim()
+                            $tagName = "v$version"
+                            
+                            git tag -a "$tagName" -m "Automatic tag: $Description"
+                            git push origin "$tagName"
+                            
+                            Write-CustomLog "Created and pushed tag: $tagName" -Level "SUCCESS"
+                        } else {
+                            Write-CustomLog "VERSION file not found - skipping AutoTag" -Level "WARN"
+                        }
+                    } catch {
+                        Write-CustomLog "AutoTag failed: $($_.Exception.Message)" -Level "ERROR"
+                    }
                 }
 
                 if ($CreatePR -and -not $DryRun) {
