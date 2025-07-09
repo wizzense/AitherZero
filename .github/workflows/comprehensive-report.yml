@@ -5,7 +5,7 @@ on:
   workflow_run:
     workflows: ["CI - Simplified & Fast"]
     types: [completed]
-    branches: [main]
+    branches: [main, 'patch/**']
   # Keep daily scheduled reports
   schedule:
     # Run daily at 6 AM UTC (comprehensive report)
