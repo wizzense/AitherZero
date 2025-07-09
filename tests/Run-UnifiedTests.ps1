@@ -173,7 +173,7 @@ param(
     [switch]$ShowProgress,
     
     [Parameter(HelpMessage = "Enable verbose logging")]
-    [switch]$Verbose,
+    [switch]$VerboseOutput,
     
     [Parameter(HelpMessage = "Show what would be run")]
     [switch]$WhatIf,
@@ -199,7 +199,7 @@ param(
 
 # Script configuration
 $ErrorActionPreference = 'Stop'
-$VerbosePreference = if ($Verbose) { 'Continue' } else { 'SilentlyContinue' }
+$VerbosePreference = if ($VerboseOutput) { 'Continue' } else { 'SilentlyContinue' }
 
 # Global test session tracking
 $script:TestSession = @{
