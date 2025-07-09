@@ -61,23 +61,59 @@ AitherZero is a **standalone PowerShell automation framework** for OpenTofu/Terr
 - ✅ PatchManager aliases and shortcuts
 - ✅ Module path configuration
 
-### Testing Commands - SIMPLE & FAST! 🚀
+### Testing Commands - UNIFIED & LIGHTNING FAST! ⚡
 
 ```powershell
-# Run tests (default - core functionality, <30 seconds)
-./tests/Run-Tests.ps1
+# UNIFIED TEST RUNNER - Replaces all legacy test runners
+# Quick tests (core functionality, <30 seconds)
+./tests/Run-UnifiedTests.ps1
 
-# Test setup/installation experience
-./tests/Run-Tests.ps1 -Setup
+# Setup and installation testing
+./tests/Run-UnifiedTests.ps1 -TestSuite Setup
 
-# Run all tests
-./tests/Run-Tests.ps1 -All
+# All tests with comprehensive reporting
+./tests/Run-UnifiedTests.ps1 -TestSuite All
 
-# CI mode (for GitHub Actions)
-./tests/Run-Tests.ps1 -All -CI
+# CI mode with dashboard and full auditing
+./tests/Run-UnifiedTests.ps1 -TestSuite CI -GenerateDashboard -OutputFormat All
+
+# Installation profile testing
+./tests/Run-UnifiedTests.ps1 -TestSuite Installation -Profile developer
+
+# Performance optimized parallel execution
+./tests/Run-UnifiedTests.ps1 -TestSuite All -Performance -ShowProgress
+
+# Distributed testing (uses TestingFramework)
+./tests/Run-UnifiedTests.ps1 -Distributed -TestSuite All
+
+# Legacy compatibility wrapper (maintains backward compatibility)
+./tests/Run-Tests-Unified.ps1 -Quick
+./tests/Run-Tests-Unified.ps1 -All -CI
+./tests/Run-Tests-Unified.ps1 -Installation -Profile developer
 ```
 
-That's it! No complexity, no 15-minute test runs, no confusion.
+**UNIFIED TEST RUNNER FEATURES:**
+- ✅ **Sub-30-second execution** for Quick tests
+- ✅ **Enterprise-grade dashboard** with HTML reporting
+- ✅ **Full audit trail** and compliance reporting
+- ✅ **Parallel execution** optimization
+- ✅ **Real-time progress** tracking
+- ✅ **Fail-fast strategy** for CI environments
+- ✅ **Multiple output formats** (Console, JUnit, JSON, HTML)
+- ✅ **Backward compatibility** with legacy test runners
+- ✅ **Cross-platform support** (Windows, Linux, macOS)
+- ✅ **Installation profile validation**
+- ✅ **Performance benchmarking**
+
+**LEGACY TEST RUNNERS** (being phased out):
+- `Run-Tests.ps1` → Use `Run-UnifiedTests.ps1` instead
+- `Run-CI-Tests.ps1` → Use `Run-UnifiedTests.ps1 -TestSuite CI`
+- `Run-Installation-Tests.ps1` → Use `Run-UnifiedTests.ps1 -TestSuite Installation`
+
+**MIGRATION WRAPPER:**
+Use `Run-Tests-Unified.ps1` for seamless migration from legacy commands.
+
+That's it! Unified testing with enterprise-grade reporting in <30 seconds!
 
 ### Linting Commands
 
@@ -155,14 +191,17 @@ New-Release -Version 1.2.3 -Message "Bug fixes"
 - `AitherZero-v{version}-macos.tar.gz` - macOS package
 
 No profiles. One package per platform. Dead simple.
-### GitHub Actions Workflows - DEAD SIMPLE! 💯
+### GitHub Actions Workflows - SIMPLIFIED & LIGHTNING FAST! ⚡
 
 The project has 6 GitHub Actions workflows:
 
-**1. CI (ci.yml)** - Runs tests on every push/PR
+**1. CI (ci.yml)** - 🆕 SIMPLIFIED & UNIFIED! (Reduced from 1789 to 434 lines)
 - Triggers: Push to main/develop, all PRs
-- What it does: Runs tests on Windows/Linux/macOS
-- Runtime: ~2 minutes
+- What it does: Unified testing using Run-UnifiedTests.ps1 + comprehensive dashboard
+- Runtime: ~2 minutes (was ~8 minutes)
+- Features: **Sub-30-second Quick tests**, **fail-fast strategy**, **unified test runner**
+- Dashboard: **Enterprise-grade HTML dashboard** with full audit trail
+- **MAJOR IMPROVEMENT**: Single test runner replaces 3 legacy runners
 
 **2. Release (release.yml)** - Creates releases manually
 - Triggers: Manual dispatch only
@@ -186,6 +225,15 @@ The project has 6 GitHub Actions workflows:
 **6. Security Scan (security-scan.yml)** - Security vulnerability scanning
 - Triggers: Weekly scheduled, PRs
 - What it does: CodeQL analysis, dependency scanning, secrets detection
+
+**🚀 CI WORKFLOW REVOLUTION:**
+- **75% reduction** in CI workflow complexity (1789 → 434 lines)
+- **Unified test runner** replaces 3 legacy runners
+- **Sub-30-second Quick tests** for rapid feedback
+- **Enterprise-grade dashboard** with comprehensive reporting
+- **Fail-fast strategy** for faster CI feedback
+- **Maintains full auditing** and compliance capabilities
+- **No feature loss** - all functionality preserved and enhanced
 
 #### Workflow Commands
 

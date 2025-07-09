@@ -3,6 +3,10 @@
 
 #Requires -Version 7.0
 
+# Import required types - MUST be at top of file
+using namespace System.Collections.Concurrent
+using namespace System.Threading
+
 # Write-CustomLog fallback for test isolation scenarios
 if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
     function Global:Write-CustomLog {
@@ -13,10 +17,6 @@ if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
         Write-Host "[$Level] $Message"
     }
 }
-
-# Import required types
-using namespace System.Collections.Concurrent
-using namespace System.Threading
 
 # Script-level variables
 $script:MessageBus = @{
