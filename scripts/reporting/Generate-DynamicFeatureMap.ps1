@@ -179,15 +179,15 @@ function Get-SingleModuleAnalysis {
         try {
             $manifest = Import-PowerShellDataFile $manifestPath
             $moduleInfo.Manifest = $manifest
-            $moduleInfo.Version = if ($manifest.ModuleVersion) { $manifest.ModuleVersion } else { '0.0.0' }
-            $moduleInfo.Description = if ($manifest.Description) { $manifest.Description } else { '' }
-            $moduleInfo.Author = if ($manifest.Author) { $manifest.Author } else { '' }
-            $moduleInfo.CompanyName = if ($manifest.CompanyName) { $manifest.CompanyName } else { '' }
-            $moduleInfo.PowerShellVersion = if ($manifest.PowerShellVersion) { $manifest.PowerShellVersion } else { '5.1' }
-            $moduleInfo.RequiredModules = if ($manifest.RequiredModules) { $manifest.RequiredModules } else { @() }
+            $moduleInfo.Version = if ($manifest.ContainsKey('ModuleVersion')) { $manifest.ModuleVersion } else { '0.0.0' }
+            $moduleInfo.Description = if ($manifest.ContainsKey('Description')) { $manifest.Description } else { '' }
+            $moduleInfo.Author = if ($manifest.ContainsKey('Author')) { $manifest.Author } else { '' }
+            $moduleInfo.CompanyName = if ($manifest.ContainsKey('CompanyName')) { $manifest.CompanyName } else { '' }
+            $moduleInfo.PowerShellVersion = if ($manifest.ContainsKey('PowerShellVersion')) { $manifest.PowerShellVersion } else { '5.1' }
+            $moduleInfo.RequiredModules = if ($manifest.ContainsKey('RequiredModules')) { $manifest.RequiredModules } else { @() }
 
             # Get exported functions
-            if ($manifest.FunctionsToExport -and $manifest.FunctionsToExport -ne '*') {
+            if ($manifest.ContainsKey('FunctionsToExport') -and $manifest.FunctionsToExport -and $manifest.FunctionsToExport -ne '*') {
                 $moduleInfo.Functions = if ($manifest.FunctionsToExport -is [array]) { $manifest.FunctionsToExport } else { @($manifest.FunctionsToExport) }
             }
         } catch {
@@ -201,7 +201,9 @@ function Get-SingleModuleAnalysis {
         $moduleInfo.HasModuleFile = $true
 
         # Analyze module script for additional functions if not in manifest
-        $currentFunctionCount = if ($moduleInfo.Functions -and $moduleInfo.Functions.Count) { $moduleInfo.Functions.Count } else { 0 }
+        $currentFunctionCount = if ($moduleInfo.Functions) { 
+            if ($moduleInfo.Functions -is [array]) { $moduleInfo.Functions.Count } else { 1 }
+        } else { 0 }
         if ($currentFunctionCount -eq 0) {
             $moduleInfo.Functions = Get-FunctionsFromScript -ScriptPath $moduleScriptPath
         }
@@ -235,7 +237,7 @@ function Get-ModuleCategory {
     param($ModuleInfo)
 
     $name = $ModuleInfo.Name
-    $description = $ModuleInfo.Description.ToLower()
+    $description = if ($ModuleInfo.Description) { $ModuleInfo.Description.ToLower() } else { '' }
 
     # Category mapping based on patterns
     $categories = @{
