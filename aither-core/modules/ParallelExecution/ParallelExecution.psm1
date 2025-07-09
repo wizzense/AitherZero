@@ -129,17 +129,23 @@ function Invoke-ParallelForEach {
 
     begin {
         Write-CustomLog "Starting parallel execution with throttle limit: $ThrottleLimit" -Level "INFO"
-        $items = @()
+        # If InputObject is provided directly (not via pipeline), use it
+        if ($PSBoundParameters.ContainsKey('InputObject') -and $InputObject) {
+            $items = @($InputObject)
+        } else {
+            $items = @()
+        }
     }
 
     process {
-        if ($InputObject) {
-            $items += $InputObject
+        # Only accumulate if coming from pipeline
+        if (-not $PSBoundParameters.ContainsKey('InputObject') -and $null -ne $_) {
+            $items += $_
         }
     }
 
     end {
-        if ($items.Count -eq 0) {
+        if ($null -eq $items -or $items.Count -eq 0) {
             Write-CustomLog "No items to process" -Level "INFO"
             return @()
         }
@@ -186,7 +192,14 @@ function Invoke-ParallelForEach {
 
             # Use timeout with a try-catch to handle timeout properly
             try {
-                $results = $items | ForEach-Object -Parallel $parallelScript -ThrottleLimit $ThrottleLimit -TimeoutSeconds $TimeoutSeconds
+                Write-CustomLog "Executing parallel foreach with $($items.Count) items" -Level "DEBUG"
+                # Ensure we have valid items before executing
+                if ($items.Count -gt 0) {
+                    $results = $items | ForEach-Object -Parallel $parallelScript -ThrottleLimit $ThrottleLimit -TimeoutSeconds $TimeoutSeconds
+                } else {
+                    Write-CustomLog "No items to process in parallel execution" -Level "WARN"
+                    $results = @()
+                }
             } catch [System.Management.Automation.RuntimeException] {
                 if ($_.Exception.Message -match "timeout") {
                     Write-CustomLog "Parallel execution timed out after $TimeoutSeconds seconds" -Level "ERROR"
@@ -194,6 +207,10 @@ function Invoke-ParallelForEach {
                 } elseif ($_.Exception.Message -match "using variable.*cannot be retrieved") {
                     Write-CustomLog "Variable scoping issue detected: $($_.Exception.Message)" -Level "ERROR"
                     throw "Parallel execution variable scoping error: $($_.Exception.Message)"
+                } elseif ($_.Exception.Message -match "provided Path argument was null") {
+                    Write-CustomLog "Path argument error detected: $($_.Exception.Message)" -Level "ERROR"
+                    Write-CustomLog "Items count: $($items.Count), ScriptBlock: $($parallelScript.ToString().Substring(0, [Math]::Min(100, $parallelScript.ToString().Length)))" -Level "DEBUG"
+                    throw "Parallel execution path error: $($_.Exception.Message)"
                 } else {
                     throw
                 }

@@ -43,21 +43,74 @@ $script:Configuration = @{
     }
 }
 
-# Logging fallback functions (if logging module not available)
+# Universal logging fallback - ensure Write-CustomLog is always available
 if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-    function Write-CustomLog {
+    function global:Write-CustomLog {
         param(
-            [string]$Level,
-            [string]$Message
+            [Parameter(Mandatory = $true)]
+            [string]$Message,
+            
+            [Parameter(Mandatory = $false)]
+            [ValidateSet('ERROR', 'WARN', 'WARNING', 'INFO', 'SUCCESS', 'DEBUG', 'TRACE', 'VERBOSE')]
+            [string]$Level = 'INFO',
+            
+            [Parameter(Mandatory = $false)]
+            [string]$Source = "ModuleCommunication",
+            
+            [Parameter(Mandatory = $false)]
+            [hashtable]$Context = @{},
+            
+            [Parameter(Mandatory = $false)]
+            [Exception]$Exception = $null
         )
+        
+        # Normalize level names
+        if ($Level -eq 'WARNING') { $Level = 'WARN' }
+        
+        # Determine color based on level
         $color = switch ($Level) {
-            'SUCCESS' { 'Green' }
             'ERROR' { 'Red' }
-            'WARNING' { 'Yellow' }
+            'WARN' { 'Yellow' }
+            'SUCCESS' { 'Green' }
             'INFO' { 'Cyan' }
+            'DEBUG' { 'Gray' }
+            'TRACE' { 'DarkGray' }
+            'VERBOSE' { 'DarkCyan' }
             default { 'White' }
         }
-        Write-Host "[$Level] $Message" -ForegroundColor $color
+        
+        # Build log message
+        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
+        $logMessage = "[$timestamp] [$Level] [$Source] $Message"
+        
+        # Add context if provided
+        if ($Context.Count -gt 0) {
+            $contextStr = ($Context.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ", "
+            $logMessage += " {$contextStr}"
+        }
+        
+        # Add exception if provided
+        if ($Exception) {
+            $logMessage += " Exception: $($Exception.Message)"
+        }
+        
+        # Output with color
+        Write-Host $logMessage -ForegroundColor $color
+        
+        # Also log to file if possible (fallback file logging)
+        try {
+            $logPath = if ($env:TEMP) { 
+                Join-Path $env:TEMP "AitherZero-Fallback.log" 
+            } elseif ($env:TMPDIR) { 
+                Join-Path $env:TMPDIR "AitherZero-Fallback.log" 
+            } else { 
+                "AitherZero-Fallback.log" 
+            }
+            
+            Add-Content -Path $logPath -Value $logMessage -Encoding UTF8 -ErrorAction SilentlyContinue
+        } catch {
+            # Fail silently for fallback logging
+        }
     }
 }
 

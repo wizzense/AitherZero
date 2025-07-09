@@ -23,6 +23,9 @@
 
 > 🎯 **Get AitherZero running with a single command** - compatible with PowerShell 5.1+ on Windows/Linux/macOS
 
+### 🏃 **New Users: 5-Minute Quick Start Guide**
+**👉 [**QUICK_START_5MIN.md**](QUICK_START_5MIN.md) - Complete beginner-friendly guide that gets you from zero to running AitherZero in 5 minutes!**
+
 ```powershell
 # Windows - One command downloads and runs AitherZero:
 iex (irm "https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1")
@@ -61,26 +64,27 @@ AITHER_PROFILE=standard curl -sSL https://raw.githubusercontent.com/wizzense/Ait
 
 ## 🎯 Quick Start After Installation
 
-### Windows Users
-```cmd
-# Option 1: Use the Windows launcher (works from cmd or PowerShell)
-Start-AitherZero.cmd
+### 🚀 **SINGLE ENTRY POINT** - Works on All Platforms
 
-# Option 2: Use PowerShell directly (auto-detects PS7)
-.\Start-AitherZero.ps1
+There is **only ONE way** to start AitherZero (no confusion!):
 
-# Option 3: Run setup again if needed
-.\Start-AitherZero.ps1 -Setup
-```
-
-### Linux/macOS Users
-```bash
-# Start AitherZero
+```powershell
+# ✅ THE ONLY WAY TO START AITHERZERO:
 ./Start-AitherZero.ps1
 
-# Or if PowerShell 7 is not in PATH
-pwsh ./Start-AitherZero.ps1
+# ✅ First time? Run setup:
+./Start-AitherZero.ps1 -Setup
+
+# ✅ Get help:
+./Start-AitherZero.ps1 -Help
 ```
+
+**💡 Smart Features:**
+- ✅ **Auto-detects PowerShell version** - works with PowerShell 5.1+ and 7+
+- ✅ **Cross-platform** - same command on Windows, Linux, macOS  
+- ✅ **Auto-launches PowerShell 7** if available
+- ✅ **Clear installation guidance** if PowerShell 7 is needed
+- ✅ **No wrappers or multiple scripts** - one entry point
 
 ### 🚀 First Time? Run Setup!
 ```powershell
