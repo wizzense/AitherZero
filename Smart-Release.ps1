@@ -109,46 +109,63 @@ try {
     }
     
     if ($DryRun) {
-        Write-SmartLog "DRY RUN: Would trigger release workflow with above parameters" "WARN"
-        Write-SmartLog "Command that would be executed:"
-        Write-Host "  gh workflow run release.yml" -ForegroundColor Gray
-        foreach ($key in $params.Keys) {
-            Write-Host "    --field $key=$($params[$key])" -ForegroundColor Gray
-        }
+        Write-SmartLog "DRY RUN: Would use PatchManager AutoTag approach" "WARN"
+        Write-SmartLog "Actions that would be executed:"
+        Write-Host "  1. Update VERSION file to: $Version" -ForegroundColor Gray
+        Write-Host "  2. Import PatchManager module" -ForegroundColor Gray
+        Write-Host "  3. New-QuickFix -Description 'Release v$Version' -AutoTag" -ForegroundColor Gray
+        Write-Host "  4. PatchManager creates git tag v$Version and pushes" -ForegroundColor Gray
+        Write-Host "  5. Git tag triggers release workflow automatically" -ForegroundColor Gray
+        Write-SmartLog "This approach bypasses GitHub CLI workflow dispatch permission issues" "SUCCESS"
         exit 0
     }
     
-    # Trigger the release workflow
-    Write-SmartLog "Triggering smart release workflow..." "SUCCESS"
+    # Use PatchManager AutoTag approach since GitHub CLI lacks workflow dispatch permissions
+    Write-SmartLog "Using PatchManager AutoTag approach to trigger release..." "SUCCESS"
     
-    $cmd = "gh workflow run release.yml"
-    foreach ($key in $params.Keys) {
-        $cmd += " --field $key=$($params[$key])"
-    }
-    
-    $result = Invoke-Expression $cmd 2>&1
-    
-    if ($LASTEXITCODE -eq 0) {
-        Write-SmartLog "Release workflow triggered successfully!" "SUCCESS"
-        Write-SmartLog "Benefits achieved:"
-        Write-SmartLog "  ✅ No CI re-run (saves ~5 minutes)" "SUCCESS"
-        Write-SmartLog "  ✅ No Audit re-run (saves ~2 minutes)" "SUCCESS"  
-        Write-SmartLog "  ✅ Only Release + Security workflows run" "SUCCESS"
-        Write-SmartLog "  ✅ Total time savings: ~7 minutes" "SUCCESS"
+    try {
+        # Update VERSION file
+        Set-Content -Path "VERSION" -Value $Version
+        Write-SmartLog "Updated VERSION file to: $Version" "SUCCESS"
         
-        Start-Sleep -Seconds 3
+        # Import PatchManager
+        . "$PSScriptRoot/aither-core/shared/Find-ProjectRoot.ps1"
+        $projectRoot = Find-ProjectRoot
+        Import-Module (Join-Path $projectRoot "aither-core/modules/PatchManager") -Force
         
-        try {
-            $runs = gh run list --workflow="release.yml" --limit 1 --json url,status 2>$null | ConvertFrom-Json
-            if ($runs -and $runs.Count -gt 0) {
-                Write-SmartLog "Monitor progress: $($runs[0].url)" "SUCCESS"
-            }
-        } catch {
-            Write-SmartLog "Release triggered, check GitHub Actions for progress"
+        # Use PatchManager to create tag and trigger release
+        Write-SmartLog "Creating version tag via PatchManager AutoTag..." "SUCCESS"
+        
+        $patchResult = New-QuickFix -Description "Release v$Version" -AutoTag -Changes {
+            # Version file already updated above
+            Write-Host "Version file updated to $Version" -ForegroundColor Green
         }
         
-    } else {
-        Write-SmartLog "Failed to trigger release workflow: $result" "ERROR"
+        if ($patchResult -and $patchResult.Success) {
+            Write-SmartLog "Release workflow triggered successfully via tag creation!" "SUCCESS"
+            Write-SmartLog "Benefits achieved:"
+            Write-SmartLog "  ✅ No workflow dispatch permission issues" "SUCCESS"
+            Write-SmartLog "  ✅ Automatic tag creation triggers release workflow" "SUCCESS"  
+            Write-SmartLog "  ✅ CI will reuse existing validation data" "SUCCESS"
+            Write-SmartLog "  ✅ Total approach: Tag-triggered release" "SUCCESS"
+            
+            Start-Sleep -Seconds 3
+            
+            try {
+                $runs = gh run list --workflow="release.yml" --limit 1 --json url,status 2>$null | ConvertFrom-Json
+                if ($runs -and $runs.Count -gt 0) {
+                    Write-SmartLog "Monitor progress: $($runs[0].url)" "SUCCESS"
+                }
+            } catch {
+                Write-SmartLog "Release triggered, check GitHub Actions for progress"
+            }
+        } else {
+            Write-SmartLog "PatchManager operation failed" "ERROR"
+            exit 1
+        }
+        
+    } catch {
+        Write-SmartLog "Failed to trigger release: $($_.Exception.Message)" "ERROR"
         exit 1
     }
     

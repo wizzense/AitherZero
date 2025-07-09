@@ -49,12 +49,18 @@ function New-QuickFix {
         [scriptblock]$Changes,
 
         [Parameter(Mandatory = $false)]
-        [switch]$DryRun
+        [switch]$DryRun,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$AutoTag,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$FastTrack
     )
 
     Write-Host "[QUICK FIX] $Description" -ForegroundColor Cyan
 
-    return New-Patch -Description $Description -Changes $Changes -Mode "Simple" -CreatePR:$false -CreateIssue $false -OperationType 'QuickFix' -DryRun:$DryRun
+    return New-Patch -Description $Description -Changes $Changes -Mode "Simple" -CreatePR:$false -CreateIssue $false -OperationType 'QuickFix' -DryRun:$DryRun -AutoTag:$AutoTag -FastTrack:$FastTrack
 }
 
 Export-ModuleMember -Function New-QuickFix
