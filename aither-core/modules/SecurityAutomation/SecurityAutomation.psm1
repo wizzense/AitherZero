@@ -22,7 +22,9 @@
 # Import required modules
 . "$PSScriptRoot/../../shared/Find-ProjectRoot.ps1"
 $projectRoot = Find-ProjectRoot
-Import-Module (Join-Path $projectRoot "aither-core/modules/Logging") -Force
+
+# Write-CustomLog is guaranteed to be available from AitherCore orchestration
+# No explicit Logging import needed - trust the orchestration system
 
 # Import all public functions
 $PublicFunctions = @()

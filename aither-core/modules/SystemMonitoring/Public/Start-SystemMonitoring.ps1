@@ -92,7 +92,9 @@ function Start-SystemMonitoring {
 
                 # Import required modules in job
                 Import-Module (Join-Path $ModulePath "SystemMonitoring") -Force
-                Import-Module (Join-Path $ProjectRoot "aither-core/modules/Logging") -Force
+                
+                # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+                # No explicit Logging import needed - trust the orchestration system
 
                 # Initialize monitoring
                 $startTime = Get-Date

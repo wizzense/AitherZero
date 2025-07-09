@@ -40,7 +40,9 @@ function Invoke-EnhancedGitOperations {
         Write-Host "=== Enhanced Git Operations with Validation ===" -ForegroundColor Cyan
           # Import required modules
         $projectRoot = if ($env:PROJECT_ROOT) { $env:PROJECT_ROOT } else { (Get-Location).Path }
-        Import-Module "$projectRoot/pwsh/modules/Logging" -Force -ErrorAction SilentlyContinue
+        
+        # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+        # No explicit Logging import needed - trust the orchestration system
 
         # Function to handle locked directories
         function Remove-LockedDirectories {

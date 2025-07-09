@@ -681,6 +681,13 @@ try {
             Write-Verbose "Loading AitherCore orchestration module..."
             Import-Module $aitherCorePath -Force -Global -ErrorAction Stop
 
+            # Verify Write-CustomLog is available after AitherCore import
+            if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+                Write-CustomLog -Message "AitherCore module loaded successfully - Write-CustomLog available" -Level SUCCESS
+            } else {
+                Write-Warning "Write-CustomLog not available after AitherCore import"
+            }
+
             # Initialize the complete CoreApp ecosystem with parallel loading
             Write-Verbose "Initializing CoreApp ecosystem with parallel module loading..."
             $initResult = Initialize-CoreApplication -RequiredOnly:$false

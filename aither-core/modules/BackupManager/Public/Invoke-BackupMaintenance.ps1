@@ -69,11 +69,8 @@ function Invoke-BackupMaintenance {
         . "$PSScriptRoot/../../../shared/Find-ProjectRoot.ps1"
         $projectRoot = Find-ProjectRoot
 
-        # Import logging if available
-        $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
-        if (Test-Path $loggingPath) {
-            Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
-        }
+        # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+        # No explicit Logging import needed - trust the orchestration system
 
         # Try to import LabRunner if available
         $labRunnerPath = Join-Path $projectRoot "aither-core/modules/LabRunner"

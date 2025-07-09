@@ -58,7 +58,9 @@ if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
 
         try {
             if ($loggingPath -eq 'Logging') {
-                Import-Module 'Logging' -Global -ErrorAction Stop
+                # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+                # No explicit Logging import needed - trust the orchestration system
+                $loggingImported = $true
             } elseif (Test-Path $loggingPath) {
                 Import-Module $loggingPath -Global -ErrorAction Stop
             } else {

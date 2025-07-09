@@ -16,8 +16,8 @@
     - Enterprise-grade security features
 #>
 
-# Import required modules
-Import-Module (Join-Path $PSScriptRoot '../Logging/Logging.psm1') -Force
+# Write-CustomLog is guaranteed to be available from AitherCore orchestration
+# No explicit Logging import needed - trust the orchestration system
 
 # Import all public functions
 $PublicFunctions = @()

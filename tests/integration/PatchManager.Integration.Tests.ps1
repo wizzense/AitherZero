@@ -48,13 +48,8 @@ BeforeAll {
     # Check for Git availability
     $script:GitAvailable = $null -ne (Get-Command git -ErrorAction SilentlyContinue)
     
-    # Mock Write-CustomLog if not available
-    if (-not (Get-Command 'Write-CustomLog' -ErrorAction SilentlyContinue)) {
-        function Write-CustomLog {
-            param([string]$Level, [string]$Message)
-            Write-Host "[$Level] $Message"
-        }
-    }
+    # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+    # No fallback needed - trust the orchestration system
     
     # Setup isolated test repository
     $TestRepoRoot = Join-Path $TestDrive "test-repo"
@@ -206,6 +201,8 @@ BeforeAll {
     # Event tracking for module communication tests
     $script:CapturedEvents = @()
     
+    # Publish-TestEvent is guaranteed to be available from AitherCore orchestration
+    # No fallback needed - trust the orchestration system
     if (-not (Get-Command 'Publish-TestEvent' -ErrorAction SilentlyContinue)) {
         function Publish-TestEvent {
             param([string]$EventName, [hashtable]$EventData)

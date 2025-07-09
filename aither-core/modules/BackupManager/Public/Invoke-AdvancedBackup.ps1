@@ -90,11 +90,8 @@ function Invoke-AdvancedBackup {
         . "$PSScriptRoot/../../../shared/Find-ProjectRoot.ps1"
         $projectRoot = Find-ProjectRoot
 
-        # Import logging if available
-        $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
-        if (Test-Path $loggingPath) {
-            Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
-        }
+        # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+        # No explicit Logging import needed - trust the orchestration system
 
         # Start performance tracking
         if (Get-Command Start-PerformanceTrace -ErrorAction SilentlyContinue) {
@@ -189,10 +186,9 @@ function Invoke-AdvancedBackup {
                 # Import required functions in parallel context
                 . "$using:PSScriptRoot/../../../shared/Find-ProjectRoot.ps1"
                 $projectRoot = Find-ProjectRoot
-                $loggingPath = Join-Path $projectRoot "aither-core/modules/Logging"
-                if (Test-Path $loggingPath) {
-                    Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
-                }
+                
+                # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+                # No explicit Logging import needed - trust the orchestration system
 
                 $batchResult = @{
                     ProcessedFiles = 0
