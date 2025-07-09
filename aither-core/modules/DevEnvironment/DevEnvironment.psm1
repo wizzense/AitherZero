@@ -12,60 +12,19 @@
     This module integrates development environment setup into the core project workflow.
 #>
 
-# Import the centralized Logging module
-$loggingImported = $false
-
-# Check if Logging module is already available
-if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
-    $loggingImported = $true
-    Write-Verbose "Logging module already available"
+# Initialize standardized logging fallback
+$fallbackPath = Join-Path (Split-Path $PSScriptRoot -Parent) "shared/Initialize-LoggingFallback.ps1"
+if (Test-Path $fallbackPath) {
+    . $fallbackPath
+    Initialize-LoggingFallback -ModuleName "DevEnvironment"
 } else {
-    $loggingPaths = @(
-        'Logging'  # Try module name first (if in PSModulePath)
-    )
-
-    # Add paths only if they have valid base paths
-    if ($PSScriptRoot) {
-        $loggingPaths += Join-Path (Split-Path $PSScriptRoot -Parent) "Logging"
-    }
-    if ($env:PWSH_MODULES_PATH) {
-        $loggingPaths += Join-Path $env:PWSH_MODULES_PATH "Logging"
-    }
-    if ($env:PROJECT_ROOT) {
-        $loggingPaths += Join-Path $env:PROJECT_ROOT "aither-core/modules/Logging"
-    }
-
-    foreach ($loggingPath in $loggingPaths) {
-        if ($loggingImported) { break }
-
-        try {
-            if ($loggingPath -eq 'Logging') {
-                Import-Module 'Logging' -Global -ErrorAction Stop
-            } elseif (Test-Path $loggingPath) {
-                Import-Module $loggingPath -Global -ErrorAction Stop
-            } else {
-                continue
-            }
-            Write-Verbose "Successfully imported Logging module from: $loggingPath"
-            $loggingImported = $true
-        } catch {
-            Write-Verbose "Failed to import Logging from $loggingPath : $_"
+    # Basic fallback if shared utility isn't available
+    if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
+        function Write-CustomLog {
+            param([string]$Message, [string]$Level = "INFO")
+            $color = switch ($Level) { 'SUCCESS' { 'Green' }; 'ERROR' { 'Red' }; 'WARNING' { 'Yellow' }; 'INFO' { 'Cyan' }; default { 'White' } }
+            Write-Host "[$Level] $Message" -ForegroundColor $color
         }
-    }
-}
-
-if (-not $loggingImported) {
-    Write-Warning "Could not import Logging module from any of the attempted paths"
-    # Fallback logging function
-    function Write-CustomLog {
-        param($Message, $Level = "INFO")
-        $color = switch ($Level) {
-            "SUCCESS" { "Green" }
-            "WARN" { "Yellow" }
-            "ERROR" { "Red" }
-            default { "White" }
-        }
-        Write-Host "[$Level] $Message" -ForegroundColor $color
     }
 }
 

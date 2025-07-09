@@ -1,0 +1,618 @@
+{
+  "Results": [
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "AIToolsIntegration",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "BackupManager",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "ConfigurationCarousel",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "ConfigurationCore",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "ConfigurationManager",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "ConfigurationRepository",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "DevEnvironment",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "ISOManager",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "LabRunner",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "LicenseManager",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "Logging",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "ModuleCommunication",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "OpenTofuProvider",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "OrchestrationEngine",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "ParallelExecution",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "PatchManager",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "ProgressTracking",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "PSScriptAnalyzerIntegration",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "RemoteConnection",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "RepoSync",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "RestAPIServer",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "ScriptManager",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "SecureCredentials",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "SecurityAutomation",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "SemanticVersioning",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "SetupWizard",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "StartupExperience",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "SystemMonitoring",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "TestingFramework",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "UnifiedMaintenance",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    },
+    {
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "UtilityServices",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ],
+      "TestsFailed": 1,
+      "Error": "Phase execution failed: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Success": false
+    }
+  ],
+  "Version": "1.0.0",
+  "FailureAnalysis": {
+    "ModulesWithFailures": [
+      {
+        "Module": "AIToolsIntegration",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "BackupManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ConfigurationCarousel",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ConfigurationCore",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ConfigurationManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ConfigurationRepository",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "DevEnvironment",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ISOManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "LabRunner",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "LicenseManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "Logging",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ModuleCommunication",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "OpenTofuProvider",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "OrchestrationEngine",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ParallelExecution",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "PatchManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ProgressTracking",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "PSScriptAnalyzerIntegration",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "RemoteConnection",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "RepoSync",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "RestAPIServer",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ScriptManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "SecureCredentials",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "SecurityAutomation",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "SemanticVersioning",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "SetupWizard",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "StartupExperience",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "SystemMonitoring",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "TestingFramework",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "UnifiedMaintenance",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "UtilityServices",
+        "TestsFailed": 1,
+        "FailureRate": null
+      }
+    ],
+    "CommonFailurePatterns": [
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Parallel execution path error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+    ],
+    "CriticalFailures": []
+  },
+  "Summary": {
+    "TotalModules": 31,
+    "SuccessfulModules": 0,
+    "TotalTests": 0.0,
+    "TotalSkipped": null,
+    "FastestModule": "AIToolsIntegration",
+    "TotalDuration": 0.0,
+    "Timestamp": "2025-07-09T05:31:13.9083812+00:00",
+    "SuccessRate": 0,
+    "TotalPassed": 0.0,
+    "TotalFailed": 31.0,
+    "AverageDuration": 0.0,
+    "TestSuite": "Unit",
+    "SlowestModule": "AIToolsIntegration",
+    "FailedModules": 31
+  },
+  "GeneratedBy": "AitherZero TestingFramework"
+}
