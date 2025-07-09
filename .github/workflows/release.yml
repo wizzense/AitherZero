@@ -171,14 +171,15 @@ jobs:
             
             console.log(`Found ${artifacts.data.artifacts.length} artifacts`);
             
-            // Download key artifacts
+            // Download key artifacts including documentation audit
             const targetArtifacts = [
               'ci-results-summary',
               'comprehensive-project-dashboard', 
               'test-results-ubuntu-latest',
               'test-results-windows-latest',
               'test-results-macos-latest',
-              'code-quality-psscriptanalyzer'
+              'code-quality-psscriptanalyzer',
+              'audit-results'
             ];
             
             let downloadedCount = 0;
@@ -218,6 +219,8 @@ jobs:
         $ciDataValid = $false
         $testResultsFound = $false
         $qualityDataFound = $false
+        $auditDataFound = $false
+        $documentationAuditFound = $false
         
         if (Test-Path "./ci-artifacts") {
           $artifacts = Get-ChildItem "./ci-artifacts" -Directory
@@ -231,6 +234,15 @@ jobs:
             }
             if ($artifact.Name -like "*code-quality*") {
               $qualityDataFound = $true
+            }
+            if ($artifact.Name -like "*audit-results*") {
+              $auditDataFound = $true
+              
+              # Check for documentation audit specifically
+              if (Test-Path "./ci-artifacts/$($artifact.Name)/audit-reports/documentation-audit-reports") {
+                $documentationAuditFound = $true
+                Write-Host "  [FOUND] Documentation audit results" -ForegroundColor Green
+              }
             }
           }
           
@@ -249,6 +261,8 @@ jobs:
         Write-Host "  CI Data Valid: $ciDataValid" -ForegroundColor White
         Write-Host "  Test Results: $testResultsFound" -ForegroundColor White
         Write-Host "  Quality Data: $qualityDataFound" -ForegroundColor White
+        Write-Host "  Audit Data: $auditDataFound" -ForegroundColor White
+        Write-Host "  Documentation Audit: $documentationAuditFound" -ForegroundColor White
         
         if (-not $ciDataValid -and '${{ github.event.inputs.force_release }}' -ne 'true') {
           Write-Warning "CI data validation failed and force_release not enabled"
@@ -381,23 +395,37 @@ jobs:
         # Enhance release notes with CI validation data
         if (Test-Path "./ci-data/ci-results-summary/ci-results-summary.json") {
           $ciResults = Get-Content "./ci-data/ci-results-summary/ci-results-summary.json" | ConvertFrom-Json
-          $enhancedNotes = @"
-## 🚀 CI-Validated Release
-
-### 📊 Validation Results
-- **Total Tests**: $($ciResults.TestResults.TotalTests)
-- **Passed**: $($ciResults.TestResults.TotalPassed) ✅
-- **Failed**: $($ciResults.TestResults.TotalFailed) $(if ($ciResults.TestResults.TotalFailed -eq 0) { '✅' } else { '❌' })
-- **Success Rate**: $([Math]::Round(($ciResults.TestResults.TotalPassed / $ciResults.TestResults.TotalTests) * 100, 1))%
-- **Test Duration**: $([Math]::Round($ciResults.TestResults.Duration, 2))s
-
-### 📋 Quality Assurance
-- ✅ Cross-platform testing (Windows, Linux, macOS)
-- ✅ Code quality analysis passed
-- ✅ Security scans completed
-- ✅ Build validation successful
-
-"@
+          
+          # Check for documentation audit results
+          $docAuditStatus = "[PASS]"
+          if (Test-Path "./ci-data/audit-results") {
+            $auditFiles = Get-ChildItem "./ci-data/audit-results" -Recurse -Filter "*audit*" -ErrorAction SilentlyContinue
+            if ($auditFiles.Count -gt 0) {
+              $docAuditStatus = "[PASS] Documentation audit completed"
+            } else {
+              $docAuditStatus = "[INFO] Documentation audit pending"
+            }
+          } else {
+            $docAuditStatus = "[INFO] Documentation audit not available"
+          }
+          
+          $testFailedStatus = if ($ciResults.TestResults.TotalFailed -eq 0) { '[PASS]' } else { '[FAIL]' }
+          $successRate = [Math]::Round(($ciResults.TestResults.TotalPassed / $ciResults.TestResults.TotalTests) * 100, 1)
+          $testDuration = [Math]::Round($ciResults.TestResults.Duration, 2)
+          
+          $enhancedNotes = "## CI-Validated Release`n`n"
+          $enhancedNotes += "### Validation Results`n"
+          $enhancedNotes += "- **Total Tests**: $($ciResults.TestResults.TotalTests)`n"
+          $enhancedNotes += "- **Passed**: $($ciResults.TestResults.TotalPassed) [PASS]`n"
+          $enhancedNotes += "- **Failed**: $($ciResults.TestResults.TotalFailed) $testFailedStatus`n"
+          $enhancedNotes += "- **Success Rate**: ${successRate}%`n"
+          $enhancedNotes += "- **Test Duration**: ${testDuration}s`n`n"
+          $enhancedNotes += "### Quality Assurance`n"
+          $enhancedNotes += "- [PASS] Cross-platform testing (Windows, Linux, macOS)`n"
+          $enhancedNotes += "- [PASS] Code quality analysis passed`n"
+          $enhancedNotes += "- [PASS] Security scans completed`n"
+          $enhancedNotes += "- [PASS] Build validation successful`n"
+          $enhancedNotes += "- $docAuditStatus`n"
           
           if ($releaseNotes -and $releaseNotes -ne "New release with improvements and bug fixes") {
             $releaseNotes = $enhancedNotes + "`n`n### 📝 Release Notes`n" + $releaseNotes
