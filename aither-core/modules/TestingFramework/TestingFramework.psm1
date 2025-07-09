@@ -68,6 +68,12 @@ $script:ProjectRoot = if ($env:PROJECT_ROOT) {
     $currentPath
 }
 
+# Validate project root
+if ([string]::IsNullOrEmpty($script:ProjectRoot)) {
+    Write-TestLog "Warning: Project root could not be determined, using PSScriptRoot parent" -Level "WARN"
+    $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+}
+
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
@@ -559,27 +565,38 @@ function Invoke-ParallelTestExecution {
                 $ErrorActionPreference = 'Stop'
                 
                 try {
-                    # Re-import required modules in job context
-                    if ($testJob.ProjectRoot) {
-                        $env:PROJECT_ROOT = $testJob.ProjectRoot
+                    # Validate critical paths before using them
+                    if ([string]::IsNullOrEmpty($testJob.ProjectRoot)) {
+                        throw "ProjectRoot is null or empty in test job"
                     }
                     
+                    if ([string]::IsNullOrEmpty($testJob.TestingFrameworkPath)) {
+                        throw "TestingFrameworkPath is null or empty in test job"
+                    }
+                    
+                    # Re-import required modules in job context
+                    $env:PROJECT_ROOT = $testJob.ProjectRoot
+                    
                     # Import TestingFramework module in the job context
-                    if ($testJob.TestingFrameworkPath -and (Test-Path $testJob.TestingFrameworkPath)) {
+                    if (Test-Path $testJob.TestingFrameworkPath) {
                         Import-Module $testJob.TestingFrameworkPath -Force -ErrorAction Stop
                     } else {
-                        throw "TestingFramework path is invalid or null: '$($testJob.TestingFrameworkPath)'"
+                        throw "TestingFramework path does not exist: '$($testJob.TestingFrameworkPath)'"
                     }
                     
                     # Initialize logging system in parallel context to prevent null path errors
-                    if ($testJob.ProjectRoot) {
-                        $loggingPath = Join-Path $testJob.ProjectRoot "aither-core/modules/Logging"
-                        if (Test-Path $loggingPath) {
-                            Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
-                            if (Get-Command Initialize-LoggingSystem -ErrorAction SilentlyContinue) {
-                                Initialize-LoggingSystem -ErrorAction SilentlyContinue
-                            }
+                    # Only do this once, not twice
+                    $loggingPath = Join-Path $testJob.ProjectRoot "aither-core/modules/Logging"
+                    if (Test-Path $loggingPath) {
+                        Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
+                        if (Get-Command Initialize-LoggingSystem -ErrorAction SilentlyContinue) {
+                            Initialize-LoggingSystem -ErrorAction SilentlyContinue
                         }
+                    }
+                    
+                    # Validate test path before proceeding
+                    if ([string]::IsNullOrEmpty($testJob.TestPath)) {
+                        throw "TestPath is null or empty for module: $($testJob.ModuleName)"
                     }
                     
                     # Execute the test phase
@@ -701,6 +718,15 @@ function Invoke-BuiltInParallelExecution {
                     
                     # Import required modules
                     Import-Module $FrameworkPath -Force
+                    
+                    # Initialize logging system in parallel context to prevent null path errors
+                    $loggingPath = Join-Path $ProjectRoot "aither-core/modules/Logging"
+                    if (Test-Path $loggingPath) {
+                        Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
+                        if (Get-Command Initialize-LoggingSystem -ErrorAction SilentlyContinue) {
+                            Initialize-LoggingSystem -ErrorAction SilentlyContinue
+                        }
+                    }
                     
                     # Execute the test phase
                     $result = Invoke-ModuleTestPhase -ModuleName $ModuleName -Phase $Phase -TestPath $TestPath -Configuration $Configuration
