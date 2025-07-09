@@ -1,0 +1,1719 @@
+[
+  {
+    "metadata": {
+      "version": "1.0.0",
+      "lastUpdate": "2025-06-25T23:50:00Z",
+      "description": "AitherZero One-Off Scripts Registry"
+    },
+    "scripts": []
+  },
+  {
+    "Purpose": "test",
+    "ScriptPath": "test.ps1",
+    "Author": "test",
+    "RegisteredDate": "2025-06-26 14:19:11",
+    "ExecutionResult": null,
+    "ExecutionDate": null,
+    "Executed": false
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\TestScript.ps1",
+    "ExecutionResult": null,
+    "Purpose": "",
+    "Executed": false,
+    "Author": "",
+    "RegisteredDate": "2025-06-26 15:18:18",
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\NonExistent.ps1",
+    "ExecutionResult": null,
+    "Purpose": "",
+    "Executed": false,
+    "Author": "",
+    "RegisteredDate": "2025-06-26 15:18:18",
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\SimpleScript.ps1",
+    "ExecutionResult": "Success",
+    "Purpose": "Auto-registered for testing",
+    "Executed": true,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:18:18",
+    "ExecutionDate": "2025-06-26 15:18:18"
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\ParameterScript.ps1",
+    "ExecutionResult": "Success",
+    "Purpose": "Auto-registered for testing",
+    "Executed": true,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:18:18",
+    "ExecutionDate": "2025-06-26 15:18:18"
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\ErrorScript.ps1",
+    "ExecutionResult": "Failed: This is a test error",
+    "Purpose": "Auto-registered for testing",
+    "Executed": false,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:18:18",
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\ScopeTest.ps1",
+    "ExecutionResult": "Success",
+    "Purpose": "Auto-registered for testing",
+    "Executed": true,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:18:18",
+    "ExecutionDate": "2025-06-26 15:18:18"
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\DoesNotExist.ps1",
+    "ExecutionResult": "Failed: The term 'C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\DoesNotExist.ps1' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+    "Purpose": "Auto-registered for testing",
+    "Executed": false,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:18:18",
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\LongRunningScript.ps1",
+    "ExecutionResult": "Success",
+    "Purpose": "Auto-registered for testing",
+    "Executed": true,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:18:18",
+    "ExecutionDate": "2025-06-26 15:18:20"
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\WorkflowTest.ps1",
+    "ExecutionResult": "Success",
+    "Purpose": "",
+    "Executed": true,
+    "Author": "",
+    "RegisteredDate": "2025-06-26 15:18:20",
+    "ExecutionDate": "2025-06-26 15:18:20"
+  },
+  {
+    "ScriptPath": "C:\\NonExistent\\Invalid\\Path\\Script.ps1",
+    "ExecutionResult": null,
+    "Purpose": "",
+    "Executed": false,
+    "Author": "",
+    "RegisteredDate": "2025-06-26 15:18:20",
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\RapidTest1.ps1",
+    "ExecutionResult": null,
+    "Purpose": "",
+    "Executed": false,
+    "Author": "",
+    "RegisteredDate": "2025-06-26 15:18:20",
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\RapidTest2.ps1",
+    "ExecutionResult": null,
+    "Purpose": "",
+    "Executed": false,
+    "Author": "",
+    "RegisteredDate": "2025-06-26 15:18:20",
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\RapidTest3.ps1",
+    "ExecutionResult": null,
+    "Purpose": "",
+    "Executed": false,
+    "Author": "",
+    "RegisteredDate": "2025-06-26 15:18:21",
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\RapidTest4.ps1",
+    "ExecutionResult": null,
+    "Purpose": "",
+    "Executed": false,
+    "Author": "",
+    "RegisteredDate": "2025-06-26 15:18:21",
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a8f3984-8a14-4ab1-99ac-8cde5b66114c\\Scripts\\RapidTest5.ps1",
+    "ExecutionResult": null,
+    "Purpose": "",
+    "Executed": false,
+    "Author": "",
+    "RegisteredDate": "2025-06-26 15:18:21",
+    "ExecutionDate": null
+  },
+  {
+    "Executed": true,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:19:51",
+    "Purpose": "Auto-registered for testing",
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a5a77b5-9418-4e76-8f72-0d112a5f7a06\\Scripts\\SimpleScript.ps1",
+    "ExecutionResult": "Success",
+    "ExecutionDate": "2025-06-26 15:19:51"
+  },
+  {
+    "Executed": true,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:19:51",
+    "Purpose": "Auto-registered for testing",
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a5a77b5-9418-4e76-8f72-0d112a5f7a06\\Scripts\\ParameterScript.ps1",
+    "ExecutionResult": "Success",
+    "ExecutionDate": "2025-06-26 15:19:51"
+  },
+  {
+    "Executed": false,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:19:51",
+    "Purpose": "Auto-registered for testing",
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a5a77b5-9418-4e76-8f72-0d112a5f7a06\\Scripts\\ErrorScript.ps1",
+    "ExecutionResult": "Failed: This is a test error",
+    "ExecutionDate": null
+  },
+  {
+    "Executed": true,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:19:51",
+    "Purpose": "Auto-registered for testing",
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a5a77b5-9418-4e76-8f72-0d112a5f7a06\\Scripts\\ScopeTest.ps1",
+    "ExecutionResult": "Success",
+    "ExecutionDate": "2025-06-26 15:19:51"
+  },
+  {
+    "Executed": true,
+    "Author": "System",
+    "RegisteredDate": "2025-06-26 15:19:51",
+    "Purpose": "Auto-registered for testing",
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\8a5a77b5-9418-4e76-8f72-0d112a5f7a06\\Scripts\\WorkflowTest.ps1",
+    "ExecutionResult": "Success",
+    "ExecutionDate": "2025-06-26 15:19:51"
+  },
+  {
+    "RegisteredDate": "2025-06-26 15:20:21",
+    "Parameters": {},
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\d668ba42-011a-4e68-b3e7-aed412b843a2\\Scripts\\TestScript.ps1",
+    "ExecutionDate": null,
+    "Executed": false,
+    "ExecutionResult": null,
+    "Description": "",
+    "Name": "TestScript"
+  },
+  {
+    "RegisteredDate": "2025-06-26 15:20:21",
+    "Parameters": {},
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\d668ba42-011a-4e68-b3e7-aed412b843a2\\Scripts\\NonExistent.ps1",
+    "ExecutionDate": null,
+    "Executed": false,
+    "ExecutionResult": null,
+    "Description": "",
+    "Name": "NonExistentScript"
+  },
+  {
+    "RegisteredDate": "2025-06-26 15:20:21",
+    "Parameters": {},
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\d668ba42-011a-4e68-b3e7-aed412b843a2\\Scripts\\WorkflowTest.ps1",
+    "ExecutionDate": "2025-06-26 15:20:21",
+    "Executed": true,
+    "ExecutionResult": "Success",
+    "Description": "Test workflow script",
+    "Name": "WorkflowScript"
+  },
+  {
+    "RegisteredDate": "2025-06-26 15:20:21",
+    "Parameters": {},
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\d668ba42-011a-4e68-b3e7-aed412b843a2\\Scripts\\RapidTest1.ps1",
+    "ExecutionDate": null,
+    "Executed": false,
+    "ExecutionResult": null,
+    "Description": "",
+    "Name": "RapidScript1"
+  },
+  {
+    "RegisteredDate": "2025-06-26 15:20:21",
+    "Parameters": {},
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\d668ba42-011a-4e68-b3e7-aed412b843a2\\Scripts\\RapidTest2.ps1",
+    "ExecutionDate": null,
+    "Executed": false,
+    "ExecutionResult": null,
+    "Description": "",
+    "Name": "RapidScript2"
+  },
+  {
+    "RegisteredDate": "2025-06-26 15:20:21",
+    "Parameters": {},
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\d668ba42-011a-4e68-b3e7-aed412b843a2\\Scripts\\RapidTest3.ps1",
+    "ExecutionDate": null,
+    "Executed": false,
+    "ExecutionResult": null,
+    "Description": "",
+    "Name": "RapidScript3"
+  },
+  {
+    "RegisteredDate": "2025-06-26 15:20:21",
+    "Parameters": {},
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\d668ba42-011a-4e68-b3e7-aed412b843a2\\Scripts\\RapidTest4.ps1",
+    "ExecutionDate": null,
+    "Executed": false,
+    "ExecutionResult": null,
+    "Description": "",
+    "Name": "RapidScript4"
+  },
+  {
+    "RegisteredDate": "2025-06-26 15:20:21",
+    "Parameters": {},
+    "ScriptPath": "C:\\Users\\alexa\\AppData\\Local\\Temp\\d668ba42-011a-4e68-b3e7-aed412b843a2\\Scripts\\RapidTest5.ps1",
+    "ExecutionDate": null,
+    "Executed": false,
+    "ExecutionResult": null,
+    "Description": "",
+    "Name": "RapidScript5"
+  },
+  {
+    "RegisteredDate": "2025-06-27 17:33:58",
+    "Parameters": {},
+    "ScriptPath": "/tmp/95fd6bb8-0434-4866-800d-76848ffcdba8/Scripts/TestScript.ps1",
+    "Name": "TestScript",
+    "ExecutionDate": null,
+    "Executed": false,
+    "Description": "",
+    "ExecutionResult": null
+  },
+  {
+    "RegisteredDate": "2025-06-27 17:33:58",
+    "Parameters": {},
+    "ScriptPath": "/tmp/95fd6bb8-0434-4866-800d-76848ffcdba8/Scripts/NonExistent.ps1",
+    "Name": "NonExistentScript",
+    "ExecutionDate": null,
+    "Executed": false,
+    "Description": "",
+    "ExecutionResult": null
+  },
+  {
+    "RegisteredDate": "2025-06-27 17:33:58",
+    "Parameters": {},
+    "ScriptPath": "/tmp/95fd6bb8-0434-4866-800d-76848ffcdba8/Scripts/SimpleScript.ps1",
+    "Name": "Auto-registered",
+    "ExecutionDate": "2025-06-27 17:33:58",
+    "Executed": true,
+    "Description": "Auto-registered for testing",
+    "ExecutionResult": "Success"
+  },
+  {
+    "RegisteredDate": "2025-06-27 17:33:58",
+    "Parameters": {},
+    "ScriptPath": "/tmp/95fd6bb8-0434-4866-800d-76848ffcdba8/Scripts/ParameterScript.ps1",
+    "Name": "Auto-registered",
+    "ExecutionDate": "2025-06-27 17:33:59",
+    "Executed": true,
+    "Description": "Auto-registered for testing",
+    "ExecutionResult": "Success"
+  },
+  {
+    "RegisteredDate": "2025-06-27 17:33:59",
+    "Parameters": {},
+    "ScriptPath": "/tmp/95fd6bb8-0434-4866-800d-76848ffcdba8/Scripts/ErrorScript.ps1",
+    "Name": "Auto-registered",
+    "ExecutionDate": null,
+    "Executed": false,
+    "Description": "Auto-registered for testing",
+    "ExecutionResult": "Failed: This is a test error"
+  },
+  {
+    "RegisteredDate": "2025-06-27 17:33:59",
+    "Parameters": {},
+    "ScriptPath": "/tmp/95fd6bb8-0434-4866-800d-76848ffcdba8/Scripts/ScopeTest.ps1",
+    "Name": "Auto-registered",
+    "ExecutionDate": "2025-06-27 17:33:59",
+    "Executed": true,
+    "Description": "Auto-registered for testing",
+    "ExecutionResult": "Success"
+  },
+  {
+    "RegisteredDate": "2025-06-27 17:33:59",
+    "Parameters": {},
+    "ScriptPath": "/tmp/95fd6bb8-0434-4866-800d-76848ffcdba8/Scripts/WorkflowTest.ps1",
+    "Name": "WorkflowScript",
+    "ExecutionDate": "2025-06-27 17:33:59",
+    "Executed": true,
+    "Description": "Test workflow script",
+    "ExecutionResult": "Success"
+  },
+  {
+    "RegisteredDate": "2025-06-27 17:33:59",
+    "Parameters": {},
+    "ScriptPath": "/tmp/95fd6bb8-0434-4866-800d-76848ffcdba8/Scripts/RapidTest1.ps1",
+    "Name": "RapidScript1",
+    "ExecutionDate": null,
+    "Executed": false,
+    "Description": "",
+    "ExecutionResult": null
+  },
+  {
+    "RegisteredDate": "2025-06-27 17:33:59",
+    "Parameters": {},
+    "ScriptPath": "/tmp/95fd6bb8-0434-4866-800d-76848ffcdba8/Scripts/RapidTest2.ps1",
+    "Name": "RapidScript2",
+    "ExecutionDate": null,
+    "Executed": false,
+    "Description": "",
+    "ExecutionResult": null
+  },
+  {
+    "RegisteredDate": "2025-06-27 17:33:59",
+    "Parameters": {},
+    "ScriptPath": "/tmp/95fd6bb8-0434-4866-800d-76848ffcdba8/Scripts/RapidTest3.ps1",
+    "Name": "RapidScript3",
+    "ExecutionDate": null,
+    "Executed": false,
+    "Description": "",
+    "ExecutionResult": null
+  },
+  {
+    "RegisteredDate": "2025-06-27 17:33:59",
+    "Parameters": {},
+    "ScriptPath": "/tmp/95fd6bb8-0434-4866-800d-76848ffcdba8/Scripts/RapidTest4.ps1",
+    "Name": "RapidScript4",
+    "ExecutionDate": null,
+    "Executed": false,
+    "Description": "",
+    "ExecutionResult": null
+  },
+  {
+    "RegisteredDate": "2025-06-27 17:33:59",
+    "Parameters": {},
+    "ScriptPath": "/tmp/95fd6bb8-0434-4866-800d-76848ffcdba8/Scripts/RapidTest5.ps1",
+    "Name": "RapidScript5",
+    "ExecutionDate": null,
+    "Executed": false,
+    "Description": "",
+    "ExecutionResult": null
+  },
+  {
+    "Parameters": {},
+    "Name": "TestScript",
+    "ScriptPath": "/tmp/2907ab74-0ea6-4a0e-8541-44d6048c6d16/Scripts/TestScript.ps1",
+    "Description": "",
+    "Executed": false,
+    "ExecutionResult": null,
+    "RegisteredDate": "2025-06-27 17:59:47",
+    "ExecutionDate": null
+  },
+  {
+    "Parameters": {},
+    "Name": "NonExistentScript",
+    "ScriptPath": "/tmp/2907ab74-0ea6-4a0e-8541-44d6048c6d16/Scripts/NonExistent.ps1",
+    "Description": "",
+    "Executed": false,
+    "ExecutionResult": null,
+    "RegisteredDate": "2025-06-27 17:59:47",
+    "ExecutionDate": null
+  },
+  {
+    "Parameters": {},
+    "Name": "Auto-registered",
+    "ScriptPath": "/tmp/2907ab74-0ea6-4a0e-8541-44d6048c6d16/Scripts/SimpleScript.ps1",
+    "Description": "Auto-registered for testing",
+    "Executed": true,
+    "ExecutionResult": "Success",
+    "RegisteredDate": "2025-06-27 17:59:47",
+    "ExecutionDate": "2025-06-27 17:59:47"
+  },
+  {
+    "Parameters": {},
+    "Name": "Auto-registered",
+    "ScriptPath": "/tmp/2907ab74-0ea6-4a0e-8541-44d6048c6d16/Scripts/ParameterScript.ps1",
+    "Description": "Auto-registered for testing",
+    "Executed": true,
+    "ExecutionResult": "Success",
+    "RegisteredDate": "2025-06-27 17:59:47",
+    "ExecutionDate": "2025-06-27 17:59:47"
+  },
+  {
+    "Parameters": {},
+    "Name": "Auto-registered",
+    "ScriptPath": "/tmp/2907ab74-0ea6-4a0e-8541-44d6048c6d16/Scripts/ErrorScript.ps1",
+    "Description": "Auto-registered for testing",
+    "Executed": false,
+    "ExecutionResult": "Failed: This is a test error",
+    "RegisteredDate": "2025-06-27 17:59:47",
+    "ExecutionDate": null
+  },
+  {
+    "Parameters": {},
+    "Name": "Auto-registered",
+    "ScriptPath": "/tmp/2907ab74-0ea6-4a0e-8541-44d6048c6d16/Scripts/ScopeTest.ps1",
+    "Description": "Auto-registered for testing",
+    "Executed": true,
+    "ExecutionResult": "Success",
+    "RegisteredDate": "2025-06-27 17:59:47",
+    "ExecutionDate": "2025-06-27 17:59:47"
+  },
+  {
+    "Parameters": {},
+    "Name": "WorkflowScript",
+    "ScriptPath": "/tmp/2907ab74-0ea6-4a0e-8541-44d6048c6d16/Scripts/WorkflowTest.ps1",
+    "Description": "Test workflow script",
+    "Executed": true,
+    "ExecutionResult": "Success",
+    "RegisteredDate": "2025-06-27 17:59:47",
+    "ExecutionDate": "2025-06-27 17:59:47"
+  },
+  {
+    "Parameters": {},
+    "Name": "RapidScript1",
+    "ScriptPath": "/tmp/2907ab74-0ea6-4a0e-8541-44d6048c6d16/Scripts/RapidTest1.ps1",
+    "Description": "",
+    "Executed": false,
+    "ExecutionResult": null,
+    "RegisteredDate": "2025-06-27 17:59:47",
+    "ExecutionDate": null
+  },
+  {
+    "Parameters": {},
+    "Name": "RapidScript2",
+    "ScriptPath": "/tmp/2907ab74-0ea6-4a0e-8541-44d6048c6d16/Scripts/RapidTest2.ps1",
+    "Description": "",
+    "Executed": false,
+    "ExecutionResult": null,
+    "RegisteredDate": "2025-06-27 17:59:47",
+    "ExecutionDate": null
+  },
+  {
+    "Parameters": {},
+    "Name": "RapidScript3",
+    "ScriptPath": "/tmp/2907ab74-0ea6-4a0e-8541-44d6048c6d16/Scripts/RapidTest3.ps1",
+    "Description": "",
+    "Executed": false,
+    "ExecutionResult": null,
+    "RegisteredDate": "2025-06-27 17:59:47",
+    "ExecutionDate": null
+  },
+  {
+    "Parameters": {},
+    "Name": "RapidScript4",
+    "ScriptPath": "/tmp/2907ab74-0ea6-4a0e-8541-44d6048c6d16/Scripts/RapidTest4.ps1",
+    "Description": "",
+    "Executed": false,
+    "ExecutionResult": null,
+    "RegisteredDate": "2025-06-27 17:59:47",
+    "ExecutionDate": null
+  },
+  {
+    "Parameters": {},
+    "Name": "RapidScript5",
+    "ScriptPath": "/tmp/2907ab74-0ea6-4a0e-8541-44d6048c6d16/Scripts/RapidTest5.ps1",
+    "Description": "",
+    "Executed": false,
+    "ExecutionResult": null,
+    "RegisteredDate": "2025-06-27 17:59:47",
+    "ExecutionDate": null
+  },
+  {
+    "Description": "",
+    "Executed": false,
+    "Parameters": {},
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 18:40:07",
+    "ExecutionResult": null,
+    "ScriptPath": "/tmp/56bbf78d-5e34-42e9-9dd9-acb2994f9531/Scripts/TestScript.ps1",
+    "Name": "TestScript"
+  },
+  {
+    "Description": "",
+    "Executed": false,
+    "Parameters": {},
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 18:40:07",
+    "ExecutionResult": null,
+    "ScriptPath": "/tmp/56bbf78d-5e34-42e9-9dd9-acb2994f9531/Scripts/NonExistent.ps1",
+    "Name": "NonExistentScript"
+  },
+  {
+    "Description": "Auto-registered for testing",
+    "Executed": true,
+    "Parameters": {},
+    "ExecutionDate": "2025-06-27 18:40:07",
+    "RegisteredDate": "2025-06-27 18:40:07",
+    "ExecutionResult": "Success",
+    "ScriptPath": "/tmp/56bbf78d-5e34-42e9-9dd9-acb2994f9531/Scripts/SimpleScript.ps1",
+    "Name": "Auto-registered"
+  },
+  {
+    "Description": "Auto-registered for testing",
+    "Executed": true,
+    "Parameters": {},
+    "ExecutionDate": "2025-06-27 18:40:07",
+    "RegisteredDate": "2025-06-27 18:40:07",
+    "ExecutionResult": "Success",
+    "ScriptPath": "/tmp/56bbf78d-5e34-42e9-9dd9-acb2994f9531/Scripts/ParameterScript.ps1",
+    "Name": "Auto-registered"
+  },
+  {
+    "Description": "Auto-registered for testing",
+    "Executed": false,
+    "Parameters": {},
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 18:40:07",
+    "ExecutionResult": "Failed: This is a test error",
+    "ScriptPath": "/tmp/56bbf78d-5e34-42e9-9dd9-acb2994f9531/Scripts/ErrorScript.ps1",
+    "Name": "Auto-registered"
+  },
+  {
+    "Description": "Auto-registered for testing",
+    "Executed": true,
+    "Parameters": {},
+    "ExecutionDate": "2025-06-27 18:40:07",
+    "RegisteredDate": "2025-06-27 18:40:07",
+    "ExecutionResult": "Success",
+    "ScriptPath": "/tmp/56bbf78d-5e34-42e9-9dd9-acb2994f9531/Scripts/ScopeTest.ps1",
+    "Name": "Auto-registered"
+  },
+  {
+    "Description": "Test workflow script",
+    "Executed": true,
+    "Parameters": {},
+    "ExecutionDate": "2025-06-27 18:40:07",
+    "RegisteredDate": "2025-06-27 18:40:07",
+    "ExecutionResult": "Success",
+    "ScriptPath": "/tmp/56bbf78d-5e34-42e9-9dd9-acb2994f9531/Scripts/WorkflowTest.ps1",
+    "Name": "WorkflowScript"
+  },
+  {
+    "Description": "",
+    "Executed": false,
+    "Parameters": {},
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 18:40:07",
+    "ExecutionResult": null,
+    "ScriptPath": "/tmp/56bbf78d-5e34-42e9-9dd9-acb2994f9531/Scripts/RapidTest1.ps1",
+    "Name": "RapidScript1"
+  },
+  {
+    "Description": "",
+    "Executed": false,
+    "Parameters": {},
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 18:40:07",
+    "ExecutionResult": null,
+    "ScriptPath": "/tmp/56bbf78d-5e34-42e9-9dd9-acb2994f9531/Scripts/RapidTest2.ps1",
+    "Name": "RapidScript2"
+  },
+  {
+    "Description": "",
+    "Executed": false,
+    "Parameters": {},
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 18:40:07",
+    "ExecutionResult": null,
+    "ScriptPath": "/tmp/56bbf78d-5e34-42e9-9dd9-acb2994f9531/Scripts/RapidTest3.ps1",
+    "Name": "RapidScript3"
+  },
+  {
+    "Description": "",
+    "Executed": false,
+    "Parameters": {},
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 18:40:07",
+    "ExecutionResult": null,
+    "ScriptPath": "/tmp/56bbf78d-5e34-42e9-9dd9-acb2994f9531/Scripts/RapidTest4.ps1",
+    "Name": "RapidScript4"
+  },
+  {
+    "Description": "",
+    "Executed": false,
+    "Parameters": {},
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 18:40:07",
+    "ExecutionResult": null,
+    "ScriptPath": "/tmp/56bbf78d-5e34-42e9-9dd9-acb2994f9531/Scripts/RapidTest5.ps1",
+    "Name": "RapidScript5"
+  },
+  {
+    "Name": "TestScript",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:05:13",
+    "Description": "",
+    "ScriptPath": "/tmp/e1a028fa-fee4-484f-ad64-862c6b8ec6a1/Scripts/TestScript.ps1",
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionResult": null
+  },
+  {
+    "Name": "NonExistentScript",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:05:14",
+    "Description": "",
+    "ScriptPath": "/tmp/e1a028fa-fee4-484f-ad64-862c6b8ec6a1/Scripts/NonExistent.ps1",
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionResult": null
+  },
+  {
+    "Name": "Auto-registered",
+    "ExecutionDate": "2025-06-27 19:05:16",
+    "RegisteredDate": "2025-06-27 19:05:16",
+    "Description": "Auto-registered for testing",
+    "ScriptPath": "/tmp/e1a028fa-fee4-484f-ad64-862c6b8ec6a1/Scripts/SimpleScript.ps1",
+    "Parameters": {},
+    "Executed": true,
+    "ExecutionResult": "Success"
+  },
+  {
+    "Name": "Auto-registered",
+    "ExecutionDate": "2025-06-27 19:05:16",
+    "RegisteredDate": "2025-06-27 19:05:16",
+    "Description": "Auto-registered for testing",
+    "ScriptPath": "/tmp/e1a028fa-fee4-484f-ad64-862c6b8ec6a1/Scripts/ParameterScript.ps1",
+    "Parameters": {},
+    "Executed": true,
+    "ExecutionResult": "Success"
+  },
+  {
+    "Name": "Auto-registered",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:05:17",
+    "Description": "Auto-registered for testing",
+    "ScriptPath": "/tmp/e1a028fa-fee4-484f-ad64-862c6b8ec6a1/Scripts/ErrorScript.ps1",
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionResult": "Failed: This is a test error"
+  },
+  {
+    "Name": "Auto-registered",
+    "ExecutionDate": "2025-06-27 19:05:17",
+    "RegisteredDate": "2025-06-27 19:05:17",
+    "Description": "Auto-registered for testing",
+    "ScriptPath": "/tmp/e1a028fa-fee4-484f-ad64-862c6b8ec6a1/Scripts/ScopeTest.ps1",
+    "Parameters": {},
+    "Executed": true,
+    "ExecutionResult": "Success"
+  },
+  {
+    "Name": "WorkflowScript",
+    "ExecutionDate": "2025-06-27 19:05:18",
+    "RegisteredDate": "2025-06-27 19:05:18",
+    "Description": "Test workflow script",
+    "ScriptPath": "/tmp/e1a028fa-fee4-484f-ad64-862c6b8ec6a1/Scripts/WorkflowTest.ps1",
+    "Parameters": {},
+    "Executed": true,
+    "ExecutionResult": "Success"
+  },
+  {
+    "Name": "RapidScript1",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:05:19",
+    "Description": "",
+    "ScriptPath": "/tmp/e1a028fa-fee4-484f-ad64-862c6b8ec6a1/Scripts/RapidTest1.ps1",
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionResult": null
+  },
+  {
+    "Name": "RapidScript2",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:05:19",
+    "Description": "",
+    "ScriptPath": "/tmp/e1a028fa-fee4-484f-ad64-862c6b8ec6a1/Scripts/RapidTest2.ps1",
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionResult": null
+  },
+  {
+    "Name": "RapidScript3",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:05:19",
+    "Description": "",
+    "ScriptPath": "/tmp/e1a028fa-fee4-484f-ad64-862c6b8ec6a1/Scripts/RapidTest3.ps1",
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionResult": null
+  },
+  {
+    "Name": "RapidScript4",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:05:19",
+    "Description": "",
+    "ScriptPath": "/tmp/e1a028fa-fee4-484f-ad64-862c6b8ec6a1/Scripts/RapidTest4.ps1",
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionResult": null
+  },
+  {
+    "Name": "RapidScript5",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:05:19",
+    "Description": "",
+    "ScriptPath": "/tmp/e1a028fa-fee4-484f-ad64-862c6b8ec6a1/Scripts/RapidTest5.ps1",
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionResult": null
+  },
+  {
+    "Parameters": {},
+    "Name": "TestScript",
+    "ExecutionResult": null,
+    "Description": "",
+    "Executed": false,
+    "ScriptPath": "/tmp/6424931e-2861-4058-92cd-ae79d96568f5/Scripts/TestScript.ps1",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:18:18"
+  },
+  {
+    "Parameters": {},
+    "Name": "NonExistentScript",
+    "ExecutionResult": null,
+    "Description": "",
+    "Executed": false,
+    "ScriptPath": "/tmp/6424931e-2861-4058-92cd-ae79d96568f5/Scripts/NonExistent.ps1",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:18:19"
+  },
+  {
+    "Parameters": {},
+    "Name": "Auto-registered",
+    "ExecutionResult": "Success",
+    "Description": "Auto-registered for testing",
+    "Executed": true,
+    "ScriptPath": "/tmp/6424931e-2861-4058-92cd-ae79d96568f5/Scripts/SimpleScript.ps1",
+    "ExecutionDate": "2025-06-27 19:18:19",
+    "RegisteredDate": "2025-06-27 19:18:19"
+  },
+  {
+    "Parameters": {},
+    "Name": "Auto-registered",
+    "ExecutionResult": "Success",
+    "Description": "Auto-registered for testing",
+    "Executed": true,
+    "ScriptPath": "/tmp/6424931e-2861-4058-92cd-ae79d96568f5/Scripts/ParameterScript.ps1",
+    "ExecutionDate": "2025-06-27 19:18:19",
+    "RegisteredDate": "2025-06-27 19:18:19"
+  },
+  {
+    "Parameters": {},
+    "Name": "Auto-registered",
+    "ExecutionResult": "Failed: This is a test error",
+    "Description": "Auto-registered for testing",
+    "Executed": false,
+    "ScriptPath": "/tmp/6424931e-2861-4058-92cd-ae79d96568f5/Scripts/ErrorScript.ps1",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:18:19"
+  },
+  {
+    "Parameters": {},
+    "Name": "Auto-registered",
+    "ExecutionResult": "Success",
+    "Description": "Auto-registered for testing",
+    "Executed": true,
+    "ScriptPath": "/tmp/6424931e-2861-4058-92cd-ae79d96568f5/Scripts/ScopeTest.ps1",
+    "ExecutionDate": "2025-06-27 19:18:19",
+    "RegisteredDate": "2025-06-27 19:18:19"
+  },
+  {
+    "Parameters": {},
+    "Name": "WorkflowScript",
+    "ExecutionResult": "Success",
+    "Description": "Test workflow script",
+    "Executed": true,
+    "ScriptPath": "/tmp/6424931e-2861-4058-92cd-ae79d96568f5/Scripts/WorkflowTest.ps1",
+    "ExecutionDate": "2025-06-27 19:18:19",
+    "RegisteredDate": "2025-06-27 19:18:19"
+  },
+  {
+    "Parameters": {},
+    "Name": "RapidScript1",
+    "ExecutionResult": null,
+    "Description": "",
+    "Executed": false,
+    "ScriptPath": "/tmp/6424931e-2861-4058-92cd-ae79d96568f5/Scripts/RapidTest1.ps1",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:18:19"
+  },
+  {
+    "Parameters": {},
+    "Name": "RapidScript2",
+    "ExecutionResult": null,
+    "Description": "",
+    "Executed": false,
+    "ScriptPath": "/tmp/6424931e-2861-4058-92cd-ae79d96568f5/Scripts/RapidTest2.ps1",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:18:19"
+  },
+  {
+    "Parameters": {},
+    "Name": "RapidScript3",
+    "ExecutionResult": null,
+    "Description": "",
+    "Executed": false,
+    "ScriptPath": "/tmp/6424931e-2861-4058-92cd-ae79d96568f5/Scripts/RapidTest3.ps1",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:18:19"
+  },
+  {
+    "Parameters": {},
+    "Name": "RapidScript4",
+    "ExecutionResult": null,
+    "Description": "",
+    "Executed": false,
+    "ScriptPath": "/tmp/6424931e-2861-4058-92cd-ae79d96568f5/Scripts/RapidTest4.ps1",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:18:19"
+  },
+  {
+    "Parameters": {},
+    "Name": "RapidScript5",
+    "ExecutionResult": null,
+    "Description": "",
+    "Executed": false,
+    "ScriptPath": "/tmp/6424931e-2861-4058-92cd-ae79d96568f5/Scripts/RapidTest5.ps1",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:18:19"
+  },
+  {
+    "ExecutionDate": null,
+    "Executed": false,
+    "Parameters": {},
+    "RegisteredDate": "2025-06-27 19:20:45",
+    "Name": "TestScript",
+    "ScriptPath": "/tmp/f862262a-9f56-4990-ab3d-718e894a3a26/Scripts/TestScript.ps1",
+    "Description": "",
+    "ExecutionResult": null
+  },
+  {
+    "ExecutionDate": null,
+    "Executed": false,
+    "Parameters": {},
+    "RegisteredDate": "2025-06-27 19:20:45",
+    "Name": "NonExistentScript",
+    "ScriptPath": "/tmp/f862262a-9f56-4990-ab3d-718e894a3a26/Scripts/NonExistent.ps1",
+    "Description": "",
+    "ExecutionResult": null
+  },
+  {
+    "ExecutionDate": "2025-06-27 19:20:45",
+    "Executed": true,
+    "Parameters": {},
+    "RegisteredDate": "2025-06-27 19:20:45",
+    "Name": "Auto-registered",
+    "ScriptPath": "/tmp/f862262a-9f56-4990-ab3d-718e894a3a26/Scripts/SimpleScript.ps1",
+    "Description": "Auto-registered for testing",
+    "ExecutionResult": "Success"
+  },
+  {
+    "ExecutionDate": "2025-06-27 19:20:45",
+    "Executed": true,
+    "Parameters": {},
+    "RegisteredDate": "2025-06-27 19:20:45",
+    "Name": "Auto-registered",
+    "ScriptPath": "/tmp/f862262a-9f56-4990-ab3d-718e894a3a26/Scripts/ParameterScript.ps1",
+    "Description": "Auto-registered for testing",
+    "ExecutionResult": "Success"
+  },
+  {
+    "ExecutionDate": null,
+    "Executed": false,
+    "Parameters": {},
+    "RegisteredDate": "2025-06-27 19:20:45",
+    "Name": "Auto-registered",
+    "ScriptPath": "/tmp/f862262a-9f56-4990-ab3d-718e894a3a26/Scripts/ErrorScript.ps1",
+    "Description": "Auto-registered for testing",
+    "ExecutionResult": "Failed: This is a test error"
+  },
+  {
+    "ExecutionDate": "2025-06-27 19:20:45",
+    "Executed": true,
+    "Parameters": {},
+    "RegisteredDate": "2025-06-27 19:20:45",
+    "Name": "Auto-registered",
+    "ScriptPath": "/tmp/f862262a-9f56-4990-ab3d-718e894a3a26/Scripts/ScopeTest.ps1",
+    "Description": "Auto-registered for testing",
+    "ExecutionResult": "Success"
+  },
+  {
+    "ExecutionDate": "2025-06-27 19:20:45",
+    "Executed": true,
+    "Parameters": {},
+    "RegisteredDate": "2025-06-27 19:20:45",
+    "Name": "WorkflowScript",
+    "ScriptPath": "/tmp/f862262a-9f56-4990-ab3d-718e894a3a26/Scripts/WorkflowTest.ps1",
+    "Description": "Test workflow script",
+    "ExecutionResult": "Success"
+  },
+  {
+    "ExecutionDate": null,
+    "Executed": false,
+    "Parameters": {},
+    "RegisteredDate": "2025-06-27 19:20:45",
+    "Name": "RapidScript1",
+    "ScriptPath": "/tmp/f862262a-9f56-4990-ab3d-718e894a3a26/Scripts/RapidTest1.ps1",
+    "Description": "",
+    "ExecutionResult": null
+  },
+  {
+    "ExecutionDate": null,
+    "Executed": false,
+    "Parameters": {},
+    "RegisteredDate": "2025-06-27 19:20:45",
+    "Name": "RapidScript2",
+    "ScriptPath": "/tmp/f862262a-9f56-4990-ab3d-718e894a3a26/Scripts/RapidTest2.ps1",
+    "Description": "",
+    "ExecutionResult": null
+  },
+  {
+    "ExecutionDate": null,
+    "Executed": false,
+    "Parameters": {},
+    "RegisteredDate": "2025-06-27 19:20:45",
+    "Name": "RapidScript3",
+    "ScriptPath": "/tmp/f862262a-9f56-4990-ab3d-718e894a3a26/Scripts/RapidTest3.ps1",
+    "Description": "",
+    "ExecutionResult": null
+  },
+  {
+    "ExecutionDate": null,
+    "Executed": false,
+    "Parameters": {},
+    "RegisteredDate": "2025-06-27 19:20:45",
+    "Name": "RapidScript4",
+    "ScriptPath": "/tmp/f862262a-9f56-4990-ab3d-718e894a3a26/Scripts/RapidTest4.ps1",
+    "Description": "",
+    "ExecutionResult": null
+  },
+  {
+    "ExecutionDate": null,
+    "Executed": false,
+    "Parameters": {},
+    "RegisteredDate": "2025-06-27 19:20:45",
+    "Name": "RapidScript5",
+    "ScriptPath": "/tmp/f862262a-9f56-4990-ab3d-718e894a3a26/Scripts/RapidTest5.ps1",
+    "Description": "",
+    "ExecutionResult": null
+  },
+  {
+    "Parameters": {},
+    "Executed": false,
+    "ScriptPath": "/tmp/042cbdca-20da-4f4b-8d2d-e60c6231d530/Scripts/TestScript.ps1",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:29:42",
+    "Description": "",
+    "ExecutionResult": null,
+    "Name": "TestScript"
+  },
+  {
+    "Parameters": {},
+    "Executed": false,
+    "ScriptPath": "/tmp/042cbdca-20da-4f4b-8d2d-e60c6231d530/Scripts/NonExistent.ps1",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:29:42",
+    "Description": "",
+    "ExecutionResult": null,
+    "Name": "NonExistentScript"
+  },
+  {
+    "Parameters": {},
+    "Executed": true,
+    "ScriptPath": "/tmp/042cbdca-20da-4f4b-8d2d-e60c6231d530/Scripts/SimpleScript.ps1",
+    "ExecutionDate": "2025-06-27 19:29:42",
+    "RegisteredDate": "2025-06-27 19:29:42",
+    "Description": "Auto-registered for testing",
+    "ExecutionResult": "Success",
+    "Name": "Auto-registered"
+  },
+  {
+    "Parameters": {},
+    "Executed": true,
+    "ScriptPath": "/tmp/042cbdca-20da-4f4b-8d2d-e60c6231d530/Scripts/ParameterScript.ps1",
+    "ExecutionDate": "2025-06-27 19:29:42",
+    "RegisteredDate": "2025-06-27 19:29:42",
+    "Description": "Auto-registered for testing",
+    "ExecutionResult": "Success",
+    "Name": "Auto-registered"
+  },
+  {
+    "Parameters": {},
+    "Executed": false,
+    "ScriptPath": "/tmp/042cbdca-20da-4f4b-8d2d-e60c6231d530/Scripts/ErrorScript.ps1",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:29:42",
+    "Description": "Auto-registered for testing",
+    "ExecutionResult": "Failed: This is a test error",
+    "Name": "Auto-registered"
+  },
+  {
+    "Parameters": {},
+    "Executed": true,
+    "ScriptPath": "/tmp/042cbdca-20da-4f4b-8d2d-e60c6231d530/Scripts/ScopeTest.ps1",
+    "ExecutionDate": "2025-06-27 19:29:42",
+    "RegisteredDate": "2025-06-27 19:29:42",
+    "Description": "Auto-registered for testing",
+    "ExecutionResult": "Success",
+    "Name": "Auto-registered"
+  },
+  {
+    "Parameters": {},
+    "Executed": true,
+    "ScriptPath": "/tmp/042cbdca-20da-4f4b-8d2d-e60c6231d530/Scripts/WorkflowTest.ps1",
+    "ExecutionDate": "2025-06-27 19:29:42",
+    "RegisteredDate": "2025-06-27 19:29:42",
+    "Description": "Test workflow script",
+    "ExecutionResult": "Success",
+    "Name": "WorkflowScript"
+  },
+  {
+    "Parameters": {},
+    "Executed": false,
+    "ScriptPath": "/tmp/042cbdca-20da-4f4b-8d2d-e60c6231d530/Scripts/RapidTest1.ps1",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:29:42",
+    "Description": "",
+    "ExecutionResult": null,
+    "Name": "RapidScript1"
+  },
+  {
+    "Parameters": {},
+    "Executed": false,
+    "ScriptPath": "/tmp/042cbdca-20da-4f4b-8d2d-e60c6231d530/Scripts/RapidTest2.ps1",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:29:42",
+    "Description": "",
+    "ExecutionResult": null,
+    "Name": "RapidScript2"
+  },
+  {
+    "Parameters": {},
+    "Executed": false,
+    "ScriptPath": "/tmp/042cbdca-20da-4f4b-8d2d-e60c6231d530/Scripts/RapidTest3.ps1",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:29:42",
+    "Description": "",
+    "ExecutionResult": null,
+    "Name": "RapidScript3"
+  },
+  {
+    "Parameters": {},
+    "Executed": false,
+    "ScriptPath": "/tmp/042cbdca-20da-4f4b-8d2d-e60c6231d530/Scripts/RapidTest4.ps1",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:29:42",
+    "Description": "",
+    "ExecutionResult": null,
+    "Name": "RapidScript4"
+  },
+  {
+    "Parameters": {},
+    "Executed": false,
+    "ScriptPath": "/tmp/042cbdca-20da-4f4b-8d2d-e60c6231d530/Scripts/RapidTest5.ps1",
+    "ExecutionDate": null,
+    "RegisteredDate": "2025-06-27 19:29:42",
+    "Description": "",
+    "ExecutionResult": null,
+    "Name": "RapidScript5"
+  },
+  {
+    "ScriptPath": "/tmp/a2393cab-fcba-4b2c-9b69-62003f0e8a9c/Scripts/TestScript.ps1",
+    "RegisteredDate": "2025-06-27 20:41:46",
+    "Executed": false,
+    "Name": "TestScript",
+    "Description": "",
+    "Parameters": {},
+    "ExecutionResult": null,
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "/tmp/a2393cab-fcba-4b2c-9b69-62003f0e8a9c/Scripts/NonExistent.ps1",
+    "RegisteredDate": "2025-06-27 20:41:46",
+    "Executed": false,
+    "Name": "NonExistentScript",
+    "Description": "",
+    "Parameters": {},
+    "ExecutionResult": null,
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "/tmp/a2393cab-fcba-4b2c-9b69-62003f0e8a9c/Scripts/SimpleScript.ps1",
+    "RegisteredDate": "2025-06-27 20:41:46",
+    "Executed": true,
+    "Name": "Auto-registered",
+    "Description": "Auto-registered for testing",
+    "Parameters": {},
+    "ExecutionResult": "Success",
+    "ExecutionDate": "2025-06-27 20:41:46"
+  },
+  {
+    "ScriptPath": "/tmp/a2393cab-fcba-4b2c-9b69-62003f0e8a9c/Scripts/ParameterScript.ps1",
+    "RegisteredDate": "2025-06-27 20:41:46",
+    "Executed": true,
+    "Name": "Auto-registered",
+    "Description": "Auto-registered for testing",
+    "Parameters": {},
+    "ExecutionResult": "Success",
+    "ExecutionDate": "2025-06-27 20:41:46"
+  },
+  {
+    "ScriptPath": "/tmp/a2393cab-fcba-4b2c-9b69-62003f0e8a9c/Scripts/ErrorScript.ps1",
+    "RegisteredDate": "2025-06-27 20:41:46",
+    "Executed": false,
+    "Name": "Auto-registered",
+    "Description": "Auto-registered for testing",
+    "Parameters": {},
+    "ExecutionResult": "Failed: This is a test error",
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "/tmp/a2393cab-fcba-4b2c-9b69-62003f0e8a9c/Scripts/ScopeTest.ps1",
+    "RegisteredDate": "2025-06-27 20:41:46",
+    "Executed": true,
+    "Name": "Auto-registered",
+    "Description": "Auto-registered for testing",
+    "Parameters": {},
+    "ExecutionResult": "Success",
+    "ExecutionDate": "2025-06-27 20:41:46"
+  },
+  {
+    "ScriptPath": "/tmp/a2393cab-fcba-4b2c-9b69-62003f0e8a9c/Scripts/WorkflowTest.ps1",
+    "RegisteredDate": "2025-06-27 20:41:46",
+    "Executed": true,
+    "Name": "WorkflowScript",
+    "Description": "Test workflow script",
+    "Parameters": {},
+    "ExecutionResult": "Success",
+    "ExecutionDate": "2025-06-27 20:41:46"
+  },
+  {
+    "ScriptPath": "/tmp/a2393cab-fcba-4b2c-9b69-62003f0e8a9c/Scripts/RapidTest1.ps1",
+    "RegisteredDate": "2025-06-27 20:41:46",
+    "Executed": false,
+    "Name": "RapidScript1",
+    "Description": "",
+    "Parameters": {},
+    "ExecutionResult": null,
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "/tmp/a2393cab-fcba-4b2c-9b69-62003f0e8a9c/Scripts/RapidTest2.ps1",
+    "RegisteredDate": "2025-06-27 20:41:46",
+    "Executed": false,
+    "Name": "RapidScript2",
+    "Description": "",
+    "Parameters": {},
+    "ExecutionResult": null,
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "/tmp/a2393cab-fcba-4b2c-9b69-62003f0e8a9c/Scripts/RapidTest3.ps1",
+    "RegisteredDate": "2025-06-27 20:41:46",
+    "Executed": false,
+    "Name": "RapidScript3",
+    "Description": "",
+    "Parameters": {},
+    "ExecutionResult": null,
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "/tmp/a2393cab-fcba-4b2c-9b69-62003f0e8a9c/Scripts/RapidTest4.ps1",
+    "RegisteredDate": "2025-06-27 20:41:46",
+    "Executed": false,
+    "Name": "RapidScript4",
+    "Description": "",
+    "Parameters": {},
+    "ExecutionResult": null,
+    "ExecutionDate": null
+  },
+  {
+    "ScriptPath": "/tmp/a2393cab-fcba-4b2c-9b69-62003f0e8a9c/Scripts/RapidTest5.ps1",
+    "RegisteredDate": "2025-06-27 20:41:46",
+    "Executed": false,
+    "Name": "RapidScript5",
+    "Description": "",
+    "Parameters": {},
+    "ExecutionResult": null,
+    "ExecutionDate": null
+  },
+  {
+    "Description": "",
+    "Executed": false,
+    "ExecutionDate": null,
+    "ScriptPath": "/tmp/56847453-053a-4612-a2fc-243391622f52/Scripts/TestScript.ps1",
+    "RegisteredDate": "2025-06-28 04:06:37",
+    "Parameters": {},
+    "ExecutionResult": null,
+    "Name": "TestScript"
+  },
+  {
+    "Description": "",
+    "Executed": false,
+    "ExecutionDate": null,
+    "ScriptPath": "/tmp/56847453-053a-4612-a2fc-243391622f52/Scripts/NonExistent.ps1",
+    "RegisteredDate": "2025-06-28 04:06:37",
+    "Parameters": {},
+    "ExecutionResult": null,
+    "Name": "NonExistentScript"
+  },
+  {
+    "Description": "Auto-registered for testing",
+    "Executed": true,
+    "ExecutionDate": "2025-06-28 04:06:37",
+    "ScriptPath": "/tmp/56847453-053a-4612-a2fc-243391622f52/Scripts/SimpleScript.ps1",
+    "RegisteredDate": "2025-06-28 04:06:37",
+    "Parameters": {},
+    "ExecutionResult": "Success",
+    "Name": "Auto-registered"
+  },
+  {
+    "Description": "Auto-registered for testing",
+    "Executed": true,
+    "ExecutionDate": "2025-06-28 04:06:37",
+    "ScriptPath": "/tmp/56847453-053a-4612-a2fc-243391622f52/Scripts/ParameterScript.ps1",
+    "RegisteredDate": "2025-06-28 04:06:37",
+    "Parameters": {},
+    "ExecutionResult": "Success",
+    "Name": "Auto-registered"
+  },
+  {
+    "Description": "Auto-registered for testing",
+    "Executed": false,
+    "ExecutionDate": null,
+    "ScriptPath": "/tmp/56847453-053a-4612-a2fc-243391622f52/Scripts/ErrorScript.ps1",
+    "RegisteredDate": "2025-06-28 04:06:37",
+    "Parameters": {},
+    "ExecutionResult": "Failed: This is a test error",
+    "Name": "Auto-registered"
+  },
+  {
+    "Description": "Auto-registered for testing",
+    "Executed": true,
+    "ExecutionDate": "2025-06-28 04:06:37",
+    "ScriptPath": "/tmp/56847453-053a-4612-a2fc-243391622f52/Scripts/ScopeTest.ps1",
+    "RegisteredDate": "2025-06-28 04:06:37",
+    "Parameters": {},
+    "ExecutionResult": "Success",
+    "Name": "Auto-registered"
+  },
+  {
+    "Description": "Test workflow script",
+    "Executed": true,
+    "ExecutionDate": "2025-06-28 04:06:37",
+    "ScriptPath": "/tmp/56847453-053a-4612-a2fc-243391622f52/Scripts/WorkflowTest.ps1",
+    "RegisteredDate": "2025-06-28 04:06:37",
+    "Parameters": {},
+    "ExecutionResult": "Success",
+    "Name": "WorkflowScript"
+  },
+  {
+    "Description": "",
+    "Executed": false,
+    "ExecutionDate": null,
+    "ScriptPath": "/tmp/56847453-053a-4612-a2fc-243391622f52/Scripts/RapidTest1.ps1",
+    "RegisteredDate": "2025-06-28 04:06:38",
+    "Parameters": {},
+    "ExecutionResult": null,
+    "Name": "RapidScript1"
+  },
+  {
+    "Description": "",
+    "Executed": false,
+    "ExecutionDate": null,
+    "ScriptPath": "/tmp/56847453-053a-4612-a2fc-243391622f52/Scripts/RapidTest2.ps1",
+    "RegisteredDate": "2025-06-28 04:06:38",
+    "Parameters": {},
+    "ExecutionResult": null,
+    "Name": "RapidScript2"
+  },
+  {
+    "Description": "",
+    "Executed": false,
+    "ExecutionDate": null,
+    "ScriptPath": "/tmp/56847453-053a-4612-a2fc-243391622f52/Scripts/RapidTest3.ps1",
+    "RegisteredDate": "2025-06-28 04:06:38",
+    "Parameters": {},
+    "ExecutionResult": null,
+    "Name": "RapidScript3"
+  },
+  {
+    "Description": "",
+    "Executed": false,
+    "ExecutionDate": null,
+    "ScriptPath": "/tmp/56847453-053a-4612-a2fc-243391622f52/Scripts/RapidTest4.ps1",
+    "RegisteredDate": "2025-06-28 04:06:38",
+    "Parameters": {},
+    "ExecutionResult": null,
+    "Name": "RapidScript4"
+  },
+  {
+    "Description": "",
+    "Executed": false,
+    "ExecutionDate": null,
+    "ScriptPath": "/tmp/56847453-053a-4612-a2fc-243391622f52/Scripts/RapidTest5.ps1",
+    "RegisteredDate": "2025-06-28 04:06:38",
+    "Parameters": {},
+    "ExecutionResult": null,
+    "Name": "RapidScript5"
+  },
+  {
+    "Parameters": {},
+    "ScriptPath": "/tmp/66ab96a0-5810-40b7-89e0-5a4fba25e701/Scripts/TestScript.ps1",
+    "Description": "",
+    "Executed": false,
+    "ExecutionResult": null,
+    "ExecutionDate": null,
+    "Name": "TestScript",
+    "RegisteredDate": "2025-06-28 19:37:07"
+  },
+  {
+    "Parameters": {},
+    "ScriptPath": "/tmp/66ab96a0-5810-40b7-89e0-5a4fba25e701/Scripts/NonExistent.ps1",
+    "Description": "",
+    "Executed": false,
+    "ExecutionResult": null,
+    "ExecutionDate": null,
+    "Name": "NonExistentScript",
+    "RegisteredDate": "2025-06-28 19:37:07"
+  },
+  {
+    "Parameters": {},
+    "ScriptPath": "/tmp/66ab96a0-5810-40b7-89e0-5a4fba25e701/Scripts/SimpleScript.ps1",
+    "Description": "Auto-registered for testing",
+    "Executed": true,
+    "ExecutionResult": "Success",
+    "ExecutionDate": "2025-06-28 19:37:07",
+    "Name": "Auto-registered",
+    "RegisteredDate": "2025-06-28 19:37:07"
+  },
+  {
+    "Parameters": {},
+    "ScriptPath": "/tmp/66ab96a0-5810-40b7-89e0-5a4fba25e701/Scripts/ParameterScript.ps1",
+    "Description": "Auto-registered for testing",
+    "Executed": true,
+    "ExecutionResult": "Success",
+    "ExecutionDate": "2025-06-28 19:37:07",
+    "Name": "Auto-registered",
+    "RegisteredDate": "2025-06-28 19:37:07"
+  },
+  {
+    "Parameters": {},
+    "ScriptPath": "/tmp/66ab96a0-5810-40b7-89e0-5a4fba25e701/Scripts/ErrorScript.ps1",
+    "Description": "Auto-registered for testing",
+    "Executed": false,
+    "ExecutionResult": "Failed: This is a test error",
+    "ExecutionDate": null,
+    "Name": "Auto-registered",
+    "RegisteredDate": "2025-06-28 19:37:07"
+  },
+  {
+    "Parameters": {},
+    "ScriptPath": "/tmp/66ab96a0-5810-40b7-89e0-5a4fba25e701/Scripts/ScopeTest.ps1",
+    "Description": "Auto-registered for testing",
+    "Executed": true,
+    "ExecutionResult": "Success",
+    "ExecutionDate": "2025-06-28 19:37:07",
+    "Name": "Auto-registered",
+    "RegisteredDate": "2025-06-28 19:37:07"
+  },
+  {
+    "Parameters": {},
+    "ScriptPath": "/tmp/66ab96a0-5810-40b7-89e0-5a4fba25e701/Scripts/WorkflowTest.ps1",
+    "Description": "Test workflow script",
+    "Executed": true,
+    "ExecutionResult": "Success",
+    "ExecutionDate": "2025-06-28 19:37:07",
+    "Name": "WorkflowScript",
+    "RegisteredDate": "2025-06-28 19:37:07"
+  },
+  {
+    "Parameters": {},
+    "ScriptPath": "/tmp/66ab96a0-5810-40b7-89e0-5a4fba25e701/Scripts/RapidTest1.ps1",
+    "Description": "",
+    "Executed": false,
+    "ExecutionResult": null,
+    "ExecutionDate": null,
+    "Name": "RapidScript1",
+    "RegisteredDate": "2025-06-28 19:37:07"
+  },
+  {
+    "Parameters": {},
+    "ScriptPath": "/tmp/66ab96a0-5810-40b7-89e0-5a4fba25e701/Scripts/RapidTest2.ps1",
+    "Description": "",
+    "Executed": false,
+    "ExecutionResult": null,
+    "ExecutionDate": null,
+    "Name": "RapidScript2",
+    "RegisteredDate": "2025-06-28 19:37:07"
+  },
+  {
+    "Parameters": {},
+    "ScriptPath": "/tmp/66ab96a0-5810-40b7-89e0-5a4fba25e701/Scripts/RapidTest3.ps1",
+    "Description": "",
+    "Executed": false,
+    "ExecutionResult": null,
+    "ExecutionDate": null,
+    "Name": "RapidScript3",
+    "RegisteredDate": "2025-06-28 19:37:07"
+  },
+  {
+    "Parameters": {},
+    "ScriptPath": "/tmp/66ab96a0-5810-40b7-89e0-5a4fba25e701/Scripts/RapidTest4.ps1",
+    "Description": "",
+    "Executed": false,
+    "ExecutionResult": null,
+    "ExecutionDate": null,
+    "Name": "RapidScript4",
+    "RegisteredDate": "2025-06-28 19:37:07"
+  },
+  {
+    "Parameters": {},
+    "ScriptPath": "/tmp/66ab96a0-5810-40b7-89e0-5a4fba25e701/Scripts/RapidTest5.ps1",
+    "Description": "",
+    "Executed": false,
+    "ExecutionResult": null,
+    "ExecutionDate": null,
+    "Name": "RapidScript5",
+    "RegisteredDate": "2025-06-28 19:37:07"
+  },
+  {
+    "ScriptPath": "/tmp/299f3dc0-f755-46b7-b543-e9294f5c9243/Scripts/TestScript.ps1",
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionDate": null,
+    "ExecutionResult": null,
+    "Name": "TestScript",
+    "RegisteredDate": "2025-06-28 22:05:26",
+    "Description": ""
+  },
+  {
+    "ScriptPath": "/tmp/299f3dc0-f755-46b7-b543-e9294f5c9243/Scripts/NonExistent.ps1",
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionDate": null,
+    "ExecutionResult": null,
+    "Name": "NonExistentScript",
+    "RegisteredDate": "2025-06-28 22:05:26",
+    "Description": ""
+  },
+  {
+    "ScriptPath": "/tmp/299f3dc0-f755-46b7-b543-e9294f5c9243/Scripts/SimpleScript.ps1",
+    "Parameters": {},
+    "Executed": true,
+    "ExecutionDate": "2025-06-28 22:05:26",
+    "ExecutionResult": "Success",
+    "Name": "Auto-registered",
+    "RegisteredDate": "2025-06-28 22:05:26",
+    "Description": "Auto-registered for testing"
+  },
+  {
+    "ScriptPath": "/tmp/299f3dc0-f755-46b7-b543-e9294f5c9243/Scripts/ParameterScript.ps1",
+    "Parameters": {},
+    "Executed": true,
+    "ExecutionDate": "2025-06-28 22:05:26",
+    "ExecutionResult": "Success",
+    "Name": "Auto-registered",
+    "RegisteredDate": "2025-06-28 22:05:26",
+    "Description": "Auto-registered for testing"
+  },
+  {
+    "ScriptPath": "/tmp/299f3dc0-f755-46b7-b543-e9294f5c9243/Scripts/ErrorScript.ps1",
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionDate": null,
+    "ExecutionResult": "Failed: This is a test error",
+    "Name": "Auto-registered",
+    "RegisteredDate": "2025-06-28 22:05:26",
+    "Description": "Auto-registered for testing"
+  },
+  {
+    "ScriptPath": "/tmp/299f3dc0-f755-46b7-b543-e9294f5c9243/Scripts/ScopeTest.ps1",
+    "Parameters": {},
+    "Executed": true,
+    "ExecutionDate": "2025-06-28 22:05:26",
+    "ExecutionResult": "Success",
+    "Name": "Auto-registered",
+    "RegisteredDate": "2025-06-28 22:05:26",
+    "Description": "Auto-registered for testing"
+  },
+  {
+    "ScriptPath": "/tmp/299f3dc0-f755-46b7-b543-e9294f5c9243/Scripts/WorkflowTest.ps1",
+    "Parameters": {},
+    "Executed": true,
+    "ExecutionDate": "2025-06-28 22:05:26",
+    "ExecutionResult": "Success",
+    "Name": "WorkflowScript",
+    "RegisteredDate": "2025-06-28 22:05:26",
+    "Description": "Test workflow script"
+  },
+  {
+    "ScriptPath": "/tmp/299f3dc0-f755-46b7-b543-e9294f5c9243/Scripts/RapidTest1.ps1",
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionDate": null,
+    "ExecutionResult": null,
+    "Name": "RapidScript1",
+    "RegisteredDate": "2025-06-28 22:05:26",
+    "Description": ""
+  },
+  {
+    "ScriptPath": "/tmp/299f3dc0-f755-46b7-b543-e9294f5c9243/Scripts/RapidTest2.ps1",
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionDate": null,
+    "ExecutionResult": null,
+    "Name": "RapidScript2",
+    "RegisteredDate": "2025-06-28 22:05:26",
+    "Description": ""
+  },
+  {
+    "ScriptPath": "/tmp/299f3dc0-f755-46b7-b543-e9294f5c9243/Scripts/RapidTest3.ps1",
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionDate": null,
+    "ExecutionResult": null,
+    "Name": "RapidScript3",
+    "RegisteredDate": "2025-06-28 22:05:26",
+    "Description": ""
+  },
+  {
+    "ScriptPath": "/tmp/299f3dc0-f755-46b7-b543-e9294f5c9243/Scripts/RapidTest4.ps1",
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionDate": null,
+    "ExecutionResult": null,
+    "Name": "RapidScript4",
+    "RegisteredDate": "2025-06-28 22:05:26",
+    "Description": ""
+  },
+  {
+    "ScriptPath": "/tmp/299f3dc0-f755-46b7-b543-e9294f5c9243/Scripts/RapidTest5.ps1",
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionDate": null,
+    "ExecutionResult": null,
+    "Name": "RapidScript5",
+    "RegisteredDate": "2025-06-28 22:05:27",
+    "Description": ""
+  },
+  {
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionDate": null,
+    "ScriptPath": "/tmp/2ad06c23-b440-4184-945a-4464f867297c/Scripts/TestScript.ps1",
+    "RegisteredDate": "2025-06-29 15:49:58",
+    "Description": "",
+    "ExecutionResult": null,
+    "Name": "TestScript"
+  },
+  {
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionDate": null,
+    "ScriptPath": "/tmp/2ad06c23-b440-4184-945a-4464f867297c/Scripts/NonExistent.ps1",
+    "RegisteredDate": "2025-06-29 15:49:58",
+    "Description": "",
+    "ExecutionResult": null,
+    "Name": "NonExistentScript"
+  },
+  {
+    "Parameters": {},
+    "Executed": true,
+    "ExecutionDate": "2025-06-29 15:49:59",
+    "ScriptPath": "/tmp/2ad06c23-b440-4184-945a-4464f867297c/Scripts/SimpleScript.ps1",
+    "RegisteredDate": "2025-06-29 15:49:59",
+    "Description": "Auto-registered for testing",
+    "ExecutionResult": "Success",
+    "Name": "Auto-registered"
+  },
+  {
+    "Parameters": {},
+    "Executed": true,
+    "ExecutionDate": "2025-06-29 15:49:59",
+    "ScriptPath": "/tmp/2ad06c23-b440-4184-945a-4464f867297c/Scripts/ParameterScript.ps1",
+    "RegisteredDate": "2025-06-29 15:49:59",
+    "Description": "Auto-registered for testing",
+    "ExecutionResult": "Success",
+    "Name": "Auto-registered"
+  },
+  {
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionDate": null,
+    "ScriptPath": "/tmp/2ad06c23-b440-4184-945a-4464f867297c/Scripts/ErrorScript.ps1",
+    "RegisteredDate": "2025-06-29 15:49:59",
+    "Description": "Auto-registered for testing",
+    "ExecutionResult": "Failed: This is a test error",
+    "Name": "Auto-registered"
+  },
+  {
+    "Parameters": {},
+    "Executed": true,
+    "ExecutionDate": "2025-06-29 15:49:59",
+    "ScriptPath": "/tmp/2ad06c23-b440-4184-945a-4464f867297c/Scripts/ScopeTest.ps1",
+    "RegisteredDate": "2025-06-29 15:49:59",
+    "Description": "Auto-registered for testing",
+    "ExecutionResult": "Success",
+    "Name": "Auto-registered"
+  },
+  {
+    "Parameters": {},
+    "Executed": true,
+    "ExecutionDate": "2025-06-29 15:49:59",
+    "ScriptPath": "/tmp/2ad06c23-b440-4184-945a-4464f867297c/Scripts/WorkflowTest.ps1",
+    "RegisteredDate": "2025-06-29 15:49:59",
+    "Description": "Test workflow script",
+    "ExecutionResult": "Success",
+    "Name": "WorkflowScript"
+  },
+  {
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionDate": null,
+    "ScriptPath": "/tmp/2ad06c23-b440-4184-945a-4464f867297c/Scripts/RapidTest1.ps1",
+    "RegisteredDate": "2025-06-29 15:49:59",
+    "Description": "",
+    "ExecutionResult": null,
+    "Name": "RapidScript1"
+  },
+  {
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionDate": null,
+    "ScriptPath": "/tmp/2ad06c23-b440-4184-945a-4464f867297c/Scripts/RapidTest2.ps1",
+    "RegisteredDate": "2025-06-29 15:49:59",
+    "Description": "",
+    "ExecutionResult": null,
+    "Name": "RapidScript2"
+  },
+  {
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionDate": null,
+    "ScriptPath": "/tmp/2ad06c23-b440-4184-945a-4464f867297c/Scripts/RapidTest3.ps1",
+    "RegisteredDate": "2025-06-29 15:49:59",
+    "Description": "",
+    "ExecutionResult": null,
+    "Name": "RapidScript3"
+  },
+  {
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionDate": null,
+    "ScriptPath": "/tmp/2ad06c23-b440-4184-945a-4464f867297c/Scripts/RapidTest4.ps1",
+    "RegisteredDate": "2025-06-29 15:49:59",
+    "Description": "",
+    "ExecutionResult": null,
+    "Name": "RapidScript4"
+  },
+  {
+    "Parameters": {},
+    "Executed": false,
+    "ExecutionDate": null,
+    "ScriptPath": "/tmp/2ad06c23-b440-4184-945a-4464f867297c/Scripts/RapidTest5.ps1",
+    "RegisteredDate": "2025-06-29 15:49:59",
+    "Description": "",
+    "ExecutionResult": null,
+    "Name": "RapidScript5"
+  }
+]

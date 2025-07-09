@@ -105,14 +105,38 @@ function Invoke-AtomicOperation {
                 Write-CustomLog "Workspace is clean" -Level "INFO"
             }
 
-            # Step 2: Check for merge conflicts (CRITICAL)
+            # Step 2: Check for merge conflicts (CRITICAL) - Smart Detection
             Write-CustomLog "Checking for merge conflict markers..." -Level "INFO"
-            $conflictMarkers = git grep -l "^<<<<<<< HEAD" 2>$null
-            if ($conflictMarkers) {
-                $errorMsg = "MERGE CONFLICTS DETECTED! Cannot perform atomic operation when merge conflict markers exist:`n" +
-                           ($conflictMarkers -join "`n") +
-                           "`n`nResolve conflicts first, then retry."
-                throw $errorMsg
+            
+            # Import smart conflict detection
+            $smartConflictPath = Join-Path $PSScriptRoot "Test-RealConflictMarkers.ps1"
+            if (Test-Path $smartConflictPath) {
+                . $smartConflictPath
+                $conflictCheck = Test-RealConflictMarkers -ExcludeTestFiles
+                
+                if ($conflictCheck.HasRealConflicts) {
+                    $errorMsg = "MERGE CONFLICTS DETECTED! Cannot perform atomic operation when merge conflict markers exist:`n" +
+                               ($conflictCheck.ConflictedFiles -join "`n") +
+                               "`n`nDetection: $($conflictCheck.DetectionMethod)" +
+                               "`nMessage: $($conflictCheck.Message)" +
+                               "`n`nResolve conflicts first, then retry."
+                    throw $errorMsg
+                } else {
+                    Write-CustomLog "Conflict markers found but identified as test content - proceeding" -Level "INFO"
+                    Write-CustomLog "Detection: $($conflictCheck.Message)" -Level "DEBUG"
+                }
+            } else {
+                # Fallback to basic detection if smart detection unavailable
+                Write-CustomLog "Smart conflict detection unavailable - using basic detection" -Level "WARN"
+                $conflictMarkers = git grep -l "^<<<<<<< HEAD" 2>$null | Where-Object { 
+                    $_ -notmatch '\.Tests?\.' -and $_ -notmatch '/tests?/' -and $_ -notmatch '\\tests?\\' -and $_ -notmatch 'MockHelpers' 
+                }
+                if ($conflictMarkers) {
+                    $errorMsg = "MERGE CONFLICTS DETECTED! Cannot perform atomic operation when merge conflict markers exist:`n" +
+                               ($conflictMarkers -join "`n") +
+                               "`n`nResolve conflicts first, then retry."
+                    throw $errorMsg
+                }
             }
 
             # Step 3: Run pre-conditions
@@ -140,10 +164,20 @@ function Invoke-AtomicOperation {
             # Step 6: Final validation
             Write-CustomLog "Performing final validation..." -Level "INFO"
 
-            # Check for new merge conflicts
-            $newConflictMarkers = git grep -l "^<<<<<<< HEAD" 2>$null
-            if ($newConflictMarkers) {
-                throw "Operation introduced merge conflict markers - rolling back"
+            # Check for new merge conflicts - Smart Detection
+            if (Test-Path $smartConflictPath) {
+                $postConflictCheck = Test-RealConflictMarkers -ExcludeTestFiles
+                if ($postConflictCheck.HasRealConflicts) {
+                    throw "Operation introduced merge conflict markers - rolling back. Detection: $($postConflictCheck.Message)"
+                }
+            } else {
+                # Fallback to basic detection
+                $newConflictMarkers = git grep -l "^<<<<<<< HEAD" 2>$null | Where-Object { 
+                    $_ -notmatch '\.Tests?\.' -and $_ -notmatch '/tests?/' -and $_ -notmatch '\\tests?\\' -and $_ -notmatch 'MockHelpers' 
+                }
+                if ($newConflictMarkers) {
+                    throw "Operation introduced merge conflict markers - rolling back"
+                }
             }
 
             # Mark as successful

@@ -2,11 +2,21 @@
 # Provides comprehensive code quality analysis, auditing, and remediation
 
 #Requires -Version 7.0
-#Requires -Modules PSScriptAnalyzer
 
 # Import shared utilities
 . "$PSScriptRoot/../../shared/Find-ProjectRoot.ps1"
 $script:ProjectRoot = Find-ProjectRoot
+
+# Check PSScriptAnalyzer availability
+$script:PSScriptAnalyzerAvailable = $false
+try {
+    Import-Module PSScriptAnalyzer -ErrorAction Stop
+    $script:PSScriptAnalyzerAvailable = $true
+    Write-Verbose "PSScriptAnalyzer module loaded successfully"
+} catch {
+    Write-Warning "PSScriptAnalyzer module not available. Code quality analysis features will be limited."
+    Write-Verbose "To enable full functionality, install PSScriptAnalyzer: Install-Module PSScriptAnalyzer"
+}
 
 # Import all private functions
 $privateFunctions = @(Get-ChildItem -Path "$PSScriptRoot/Private/*.ps1" -ErrorAction SilentlyContinue)
@@ -57,6 +67,22 @@ $script:QualityThresholds = @{
     WarningThreshold = 10   # Max 10 warnings per module
     InfoThreshold = 50      # Max 50 info messages per module
     CoverageThreshold = 80  # 80% rule coverage required
+}
+
+# Availability check function
+function Test-PSScriptAnalyzerAvailability {
+    <#
+    .SYNOPSIS
+        Tests if PSScriptAnalyzer is available for use
+    .DESCRIPTION
+        Checks if the PSScriptAnalyzer module is loaded and available
+    .EXAMPLE
+        Test-PSScriptAnalyzerAvailability
+    #>
+    [CmdletBinding()]
+    param()
+    
+    return $script:PSScriptAnalyzerAvailable
 }
 
 # Severity mapping

@@ -9,7 +9,7 @@
 
     PowerShellVersion = '7.0'
 
-    RequiredModules = @('PSScriptAnalyzer')
+    RequiredModules = @()
 
     FunctionsToExport = @(
         # Core Analysis Functions

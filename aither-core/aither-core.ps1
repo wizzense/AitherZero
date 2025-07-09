@@ -200,7 +200,11 @@ function $($mapping.Key) {
     [CmdletBinding()]
     param()
 
-    Write-CustomLog "Legacy function $($mapping.Key) called - redirecting to $($mapping.Value)" -Level WARN
+    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+        Write-CustomLog "Legacy function $($mapping.Key) called - redirecting to $($mapping.Value)" -Level WARN
+    } else {
+        Write-Warning "Legacy function $($mapping.Key) called - redirecting to $($mapping.Value)"
+    }
     Write-Warning "Function $($mapping.Key) is deprecated. Use $($mapping.Value) instead."
 
     # Forward all parameters to the new function
