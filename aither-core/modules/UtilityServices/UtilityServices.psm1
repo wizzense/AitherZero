@@ -253,5 +253,16 @@ Write-Verbose "UtilityServices module loaded successfully"
 
 # Export all public functions
 Export-ModuleMember -Function @(
-    'Test-UtilityIntegration'
+    'Test-UtilityIntegration',
+    'Initialize-SemanticVersioningService',
+    'Initialize-ProgressTrackingService', 
+    'Initialize-TestingFrameworkService',
+    'Initialize-ScriptManagerService',
+    'Subscribe-UtilityEvent',
+    'Publish-UtilityEvent',
+    'Get-UtilityConfiguration',
+    'Set-UtilityConfiguration',
+    'Get-UtilityServiceStatus',
+    'Get-UtilityMetrics',
+    'Export-UtilityReport'
 )
