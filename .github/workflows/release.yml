@@ -381,26 +381,25 @@ jobs:
         # Enhance release notes with CI validation data
         if (Test-Path "./ci-data/ci-results-summary/ci-results-summary.json") {
           $ciResults = Get-Content "./ci-data/ci-results-summary/ci-results-summary.json" | ConvertFrom-Json
-          $enhancedNotes = @"
-## 🚀 CI-Validated Release
-
-### 📊 Validation Results
-- **Total Tests**: $($ciResults.TestResults.TotalTests)
-- **Passed**: $($ciResults.TestResults.TotalPassed) ✅
-- **Failed**: $($ciResults.TestResults.TotalFailed) $(if ($ciResults.TestResults.TotalFailed -eq 0) { '✅' } else { '❌' })
-- **Success Rate**: $([Math]::Round(($ciResults.TestResults.TotalPassed / $ciResults.TestResults.TotalTests) * 100, 1))%
-- **Test Duration**: $([Math]::Round($ciResults.TestResults.Duration, 2))s
-
-### 📋 Quality Assurance
-- ✅ Cross-platform testing (Windows, Linux, macOS)
-- ✅ Code quality analysis passed
-- ✅ Security scans completed
-- ✅ Build validation successful
-
-"@
+          $testFailedStatus = if ($ciResults.TestResults.TotalFailed -eq 0) { '[PASS]' } else { '[FAIL]' }
+          $successRate = [Math]::Round(($ciResults.TestResults.TotalPassed / $ciResults.TestResults.TotalTests) * 100, 1)
+          $testDuration = [Math]::Round($ciResults.TestResults.Duration, 2)
+          
+          $enhancedNotes = "## CI-Validated Release`n`n"
+          $enhancedNotes += "### Validation Results`n"
+          $enhancedNotes += "- **Total Tests**: $($ciResults.TestResults.TotalTests)`n"
+          $enhancedNotes += "- **Passed**: $($ciResults.TestResults.TotalPassed) [PASS]`n"
+          $enhancedNotes += "- **Failed**: $($ciResults.TestResults.TotalFailed) $testFailedStatus`n"
+          $enhancedNotes += "- **Success Rate**: $successRate%`n"
+          $enhancedNotes += "- **Test Duration**: ${testDuration}s`n`n"
+          $enhancedNotes += "### Quality Assurance`n"
+          $enhancedNotes += "- [PASS] Cross-platform testing (Windows, Linux, macOS)`n"
+          $enhancedNotes += "- [PASS] Code quality analysis passed`n"
+          $enhancedNotes += "- [PASS] Security scans completed`n"
+          $enhancedNotes += "- [PASS] Build validation successful`n`n"
           
           if ($releaseNotes -and $releaseNotes -ne "New release with improvements and bug fixes") {
-            $releaseNotes = $enhancedNotes + "`n`n### 📝 Release Notes`n" + $releaseNotes
+            $releaseNotes = $enhancedNotes + "`n`n### Release Notes`n" + $releaseNotes
           } else {
             $releaseNotes = $enhancedNotes + "`n`nThis release has been fully validated through our automated CI pipeline."
           }
@@ -419,20 +418,20 @@ jobs:
       with:
         name: AitherZero v${{ steps.get_version.outputs.version }}
         body: |
-          ## 🚀 AitherZero v${{ steps.get_version.outputs.version }}
+          ## AitherZero v${{ steps.get_version.outputs.version }}
           
           ${{ steps.changelog.outputs.notes }}
           
-          ### 📦 Downloads
+          ### Downloads
           
           | Platform | Package | Size |
           |----------|---------|------|
-          | 🪟 **Windows** | `AitherZero-v${{ steps.get_version.outputs.version }}-windows.zip` | ~15-20 MB |
-          | 🐧 **Linux** | `AitherZero-v${{ steps.get_version.outputs.version }}-linux.tar.gz` | ~15-20 MB |
-          | 🍎 **macOS** | `AitherZero-v${{ steps.get_version.outputs.version }}-macos.tar.gz` | ~15-20 MB |
-          | 📊 **Dashboard** | `AitherZero-v${{ steps.get_version.outputs.version }}-dashboard.html` | Unified project dashboard with health metrics and feature map |
+          | **Windows** | `AitherZero-v${{ steps.get_version.outputs.version }}-windows.zip` | ~15-20 MB |
+          | **Linux** | `AitherZero-v${{ steps.get_version.outputs.version }}-linux.tar.gz` | ~15-20 MB |
+          | **macOS** | `AitherZero-v${{ steps.get_version.outputs.version }}-macos.tar.gz` | ~15-20 MB |
+          | **Dashboard** | `AitherZero-v${{ steps.get_version.outputs.version }}-dashboard.html` | Unified project dashboard with health metrics and feature map |
           
-          ### 🚀 Quick Installation
+          ### Quick Installation
           
           #### Windows (PowerShell)
           ```powershell
