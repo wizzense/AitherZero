@@ -6,7 +6,6 @@ on:
     workflows: ["CI - Continuous Integration"]
     types:
       - completed
-    branches: [main, 'patch/**']
   workflow_dispatch:
     inputs:
       version:
