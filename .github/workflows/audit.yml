@@ -3,6 +3,7 @@ name: Audit - Documentation, Tests & Duplicates
 on:
   push:
     branches: [ main, develop, 'release/**' ]
+    tags-ignore: ['v*']  # Ignore version tags to prevent audit re-runs during releases
   pull_request:
     branches: [ main, develop ]
   schedule:

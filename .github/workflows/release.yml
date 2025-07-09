@@ -20,6 +20,14 @@ on:
         description: 'Force release even if CI validation incomplete'
         type: boolean
         default: false
+      use_existing_ci:
+        description: 'Use existing CI data instead of waiting for new CI run'
+        type: boolean
+        default: true
+      skip_workflows:
+        description: 'Skip triggering other workflows (CI/Audit) for this release'
+        type: boolean
+        default: true
 
 # Ensure only one release runs at a time
 concurrency:
@@ -68,6 +76,10 @@ jobs:
         if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
           Write-Host "📝 Manual release triggered" -ForegroundColor Yellow
           $shouldRelease = $true
+          
+          if ('${{ github.event.inputs.use_existing_ci }}' -eq 'true') {
+            Write-Host "🔄 Using existing CI data (no new CI run required)" -ForegroundColor Green
+          }
         } elseif ('${{ github.event.workflow_run.conclusion }}' -eq 'success') {
           Write-Host "✅ CI workflow completed successfully" -ForegroundColor Green
           $ciRunId = '${{ github.event.workflow_run.id }}'

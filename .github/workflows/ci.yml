@@ -4,6 +4,7 @@ name: CI - Continuous Integration
 on:
   push:
     branches: [main, develop, 'release/**']
+    tags-ignore: ['v*']  # Ignore version tags to prevent CI re-runs during releases
   pull_request:
     branches: [main, develop]
   merge_group:
