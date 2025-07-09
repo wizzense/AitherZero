@@ -666,7 +666,7 @@ function Invoke-ParallelTestExecution {
         $config.Run.Path = $testFile.Path
         $config.Run.PassThru = $true
         $config.Output.Verbosity = 'Minimal'
-        $config.Run.Timeout = $using:TimeoutMinutes * 60
+        # Timeout not supported in this Pester version
         
         $testStartTime = Get-Date
         
@@ -728,7 +728,7 @@ function Invoke-SequentialTestExecution {
         $config.Run.Path = $testFile.Path
         $config.Run.PassThru = $true
         $config.Output.Verbosity = if ($CI) { 'Minimal' } else { 'Normal' }
-        $config.Run.Timeout = $TimeoutMinutes * 60
+        # Timeout not supported in this Pester version
         
         # Configure tags if specified
         if ($Tags.Count -gt 0) {
