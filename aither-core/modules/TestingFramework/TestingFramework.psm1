@@ -60,7 +60,7 @@ if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
 }
 
 # Fallback logging function if centralized logging unavailable
-if (-not $loggingImported) {
+if (-not $loggingImported -or -not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
     function Write-TestLog {
         param($Message, $Level = "INFO")
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
@@ -214,7 +214,7 @@ function Invoke-UnifiedTestExecution {
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter()]
-        [ValidateSet("All", "Unit", "Integration", "Performance", "Modules", "Quick", "NonInteractive")]
+        [ValidateSet("All", "Unit", "Integration", "Performance", "Modules", "Quick", "NonInteractive", "Environment")]
         [string]$TestSuite = "All",
 
         [Parameter()]
@@ -590,6 +590,15 @@ function Invoke-ParallelTestExecution {
                     # Import TestingFramework module in the job context
                     Import-Module $testJob.TestingFrameworkPath -Force -ErrorAction Stop
                     
+                    # Initialize logging system in parallel context to prevent null path errors
+                    $loggingPath = Join-Path $testJob.ProjectRoot "aither-core/modules/Logging"
+                    if (Test-Path $loggingPath) {
+                        Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
+                        if (Get-Command Initialize-LoggingSystem -ErrorAction SilentlyContinue) {
+                            Initialize-LoggingSystem -ErrorAction SilentlyContinue
+                        }
+                    }
+                    
                     # Execute the test phase
                     $result = Invoke-ModuleTestPhase -ModuleName $testJob.ModuleName -Phase $testJob.Phase -TestPath $testJob.TestPath -Configuration $testJob.Configuration
                     
@@ -700,6 +709,15 @@ function Invoke-BuiltInParallelExecution {
                     
                     # Import required modules
                     Import-Module $FrameworkPath -Force
+                    
+                    # Initialize logging system in parallel context to prevent null path errors
+                    $loggingPath = Join-Path $ProjectRoot "aither-core/modules/Logging"
+                    if (Test-Path $loggingPath) {
+                        Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
+                        if (Get-Command Initialize-LoggingSystem -ErrorAction SilentlyContinue) {
+                            Initialize-LoggingSystem -ErrorAction SilentlyContinue
+                        }
+                    }
                     
                     # Execute the test phase
                     $result = Invoke-ModuleTestPhase -ModuleName $ModuleName -Phase $Phase -TestPath $TestPath -Configuration $Configuration

@@ -315,17 +315,17 @@ if ($Distributed -or $useConsolidatedModule) {
             $testDuration = (Get-Date) - $testStartTime
             Write-TestOutput "Test execution completed in $($testDuration.TotalSeconds.ToString('F2')) seconds" -Level Success
 
-            # Calculate summary from distributed results
-            $totalPassed = ($results | Measure-Object -Property TestsPassed -Sum).Sum
-            $totalFailed = ($results | Measure-Object -Property TestsFailed -Sum).Sum
+            # Calculate summary from distributed results with safe aggregation
+            $totalPassed = if ($results) { ($results | Measure-Object -Property TestsPassed -Sum -ErrorAction SilentlyContinue).Sum ?? 0 } else { 0 }
+            $totalFailed = if ($results) { ($results | Measure-Object -Property TestsFailed -Sum -ErrorAction SilentlyContinue).Sum ?? 0 } else { 0 }
             $totalCount = $totalPassed + $totalFailed
-            $totalDuration = ($results | Measure-Object -Property Duration -Sum).Sum
+            $totalDuration = if ($results) { ($results | Measure-Object -Property Duration -Sum -ErrorAction SilentlyContinue).Sum ?? 0 } else { 0 }
 
-            # Update test session tracking
+            # Update test session tracking with safe aggregation
             $script:TestSession.TotalTests = $totalCount
             $script:TestSession.PassedTests = $totalPassed
             $script:TestSession.FailedTests = $totalFailed
-            $script:TestSession.TestResults = $results
+            if ($results) { $script:TestSession.TestResults = $results }
 
             # Test the consolidated module integration if available
             if ($useConsolidatedModule) {
@@ -416,8 +416,8 @@ if ($All) {
     if ($hasInstallationTests) {
         Write-TestOutput "Including installation & setup validation tests" -Level Info
         $installationTests = @(
-            Join-Path $testPath "Setup-Installation.Tests.ps1",
-            Join-Path $testPath "PowerShell-Version.Tests.ps1"
+            (Join-Path $testPath "Setup-Installation.Tests.ps1"),
+            (Join-Path $testPath "PowerShell-Version.Tests.ps1")
         ) | Where-Object { Test-Path $_ }
         $testsToRun += $installationTests
     }
@@ -480,10 +480,12 @@ try {
     $results = Invoke-Pester @config
     $centralizedDuration = (Get-Date) - $centralizedStartTime
 
-    # Update test session tracking
-    $script:TestSession.TotalTests += $results.TotalCount
-    $script:TestSession.PassedTests += $results.Passed
-    $script:TestSession.FailedTests += $results.Failed
+    # Update test session tracking with safe aggregation
+    if ($results) {
+        $script:TestSession.TotalTests += ($results.TotalCount ?? 0)
+        $script:TestSession.PassedTests += ($results.Passed ?? 0)
+        $script:TestSession.FailedTests += ($results.Failed ?? 0)
+    }
 
     # Enhanced result summary with consolidated module information
     Write-TestOutput "" -Level Info

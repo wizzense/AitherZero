@@ -107,27 +107,59 @@ function Get-ModuleAnalysis {
             Write-FeatureLog "Analyzing module: $($moduleDir.Name)" -Level 'DEBUG'
 
             $moduleInfo = Get-SingleModuleAnalysis -ModuleDirectory $moduleDir
+            
+            # Validate module info before processing
+            if (-not $moduleInfo -or -not $moduleInfo.Name) {
+                Write-FeatureLog "Invalid module info returned for $($moduleDir.Name)" -Level 'WARNING'
+                $moduleAnalysis.FailedModules++
+                continue
+            }
+            
             $moduleAnalysis.Modules[$moduleDir.Name] = $moduleInfo
             $moduleAnalysis.AnalyzedModules++
 
-            # Categorize module
-            $category = Get-ModuleCategory -ModuleInfo $moduleInfo
-            if (-not $moduleAnalysis.Categories[$category]) {
-                $moduleAnalysis.Categories[$category] = @()
+            # Categorize module with error handling
+            try {
+                $category = Get-ModuleCategory -ModuleInfo $moduleInfo
+                if (-not $moduleAnalysis.Categories[$category]) {
+                    $moduleAnalysis.Categories[$category] = @()
+                }
+                $moduleAnalysis.Categories[$category] += $moduleDir.Name
+            } catch {
+                Write-FeatureLog "Failed to categorize module $($moduleDir.Name): $($_.Exception.Message)" -Level 'DEBUG'
+                # Default to Utilities if categorization fails
+                if (-not $moduleAnalysis.Categories['Utilities']) {
+                    $moduleAnalysis.Categories['Utilities'] = @()
+                }
+                $moduleAnalysis.Categories['Utilities'] += $moduleDir.Name
             }
-            $moduleAnalysis.Categories[$category] += $moduleDir.Name
 
-            # Extract capabilities
-            $capabilities = Get-ModuleCapabilities -ModuleInfo $moduleInfo
-            $moduleAnalysis.Capabilities[$moduleDir.Name] = $capabilities
+            # Extract capabilities with error handling
+            try {
+                $capabilities = Get-ModuleCapabilities -ModuleInfo $moduleInfo
+                $moduleAnalysis.Capabilities[$moduleDir.Name] = $capabilities
+            } catch {
+                Write-FeatureLog "Failed to analyze capabilities for $($moduleDir.Name): $($_.Exception.Message)" -Level 'DEBUG'
+                # Set default capabilities
+                $moduleAnalysis.Capabilities[$moduleDir.Name] = @{
+                    FunctionCount = 0
+                    HasPublicAPI = $false
+                    Features = @()
+                }
+            }
 
-            # Analyze dependencies
-            if ($moduleInfo.RequiredModules) {
-                $moduleAnalysis.Dependencies[$moduleDir.Name] = $moduleInfo.RequiredModules
+            # Analyze dependencies with error handling
+            try {
+                if ($moduleInfo.RequiredModules -and @($moduleInfo.RequiredModules).Count -gt 0) {
+                    $moduleAnalysis.Dependencies[$moduleDir.Name] = $moduleInfo.RequiredModules
+                }
+            } catch {
+                Write-FeatureLog "Failed to analyze dependencies for $($moduleDir.Name): $($_.Exception.Message)" -Level 'DEBUG'
             }
 
         } catch {
             Write-FeatureLog "Failed to analyze module $($moduleDir.Name): $($_.Exception.Message)" -Level 'WARNING'
+            Write-FeatureLog "Stack trace: $($_.ScriptStackTrace)" -Level 'DEBUG'
             $moduleAnalysis.FailedModules++
         }
     }
@@ -179,15 +211,15 @@ function Get-SingleModuleAnalysis {
         try {
             $manifest = Import-PowerShellDataFile $manifestPath
             $moduleInfo.Manifest = $manifest
-            $moduleInfo.Version = if ($manifest.ContainsKey('ModuleVersion')) { $manifest.ModuleVersion } else { '0.0.0' }
-            $moduleInfo.Description = if ($manifest.ContainsKey('Description')) { $manifest.Description } else { '' }
-            $moduleInfo.Author = if ($manifest.ContainsKey('Author')) { $manifest.Author } else { '' }
-            $moduleInfo.CompanyName = if ($manifest.ContainsKey('CompanyName')) { $manifest.CompanyName } else { '' }
-            $moduleInfo.PowerShellVersion = if ($manifest.ContainsKey('PowerShellVersion')) { $manifest.PowerShellVersion } else { '5.1' }
-            $moduleInfo.RequiredModules = if ($manifest.ContainsKey('RequiredModules')) { $manifest.RequiredModules } else { @() }
+            $moduleInfo.Version = if ($manifest.PSObject.Properties['ModuleVersion']) { $manifest.ModuleVersion } else { '0.0.0' }
+            $moduleInfo.Description = if ($manifest.PSObject.Properties['Description']) { $manifest.Description } else { '' }
+            $moduleInfo.Author = if ($manifest.PSObject.Properties['Author']) { $manifest.Author } else { '' }
+            $moduleInfo.CompanyName = if ($manifest.PSObject.Properties['CompanyName']) { $manifest.CompanyName } else { '' }
+            $moduleInfo.PowerShellVersion = if ($manifest.PSObject.Properties['PowerShellVersion']) { $manifest.PowerShellVersion } else { '5.1' }
+            $moduleInfo.RequiredModules = if ($manifest.PSObject.Properties['RequiredModules']) { $manifest.RequiredModules } else { @() }
 
             # Get exported functions
-            if ($manifest.ContainsKey('FunctionsToExport') -and $manifest.FunctionsToExport -and $manifest.FunctionsToExport -ne '*') {
+            if ($manifest.PSObject.Properties['FunctionsToExport'] -and $manifest.FunctionsToExport -and $manifest.FunctionsToExport -ne '*') {
                 $moduleInfo.Functions = if ($manifest.FunctionsToExport -is [array]) { $manifest.FunctionsToExport } else { @($manifest.FunctionsToExport) }
             }
         } catch {
@@ -201,9 +233,7 @@ function Get-SingleModuleAnalysis {
         $moduleInfo.HasModuleFile = $true
 
         # Analyze module script for additional functions if not in manifest
-        $currentFunctionCount = if ($moduleInfo.Functions) { 
-            if ($moduleInfo.Functions -is [array]) { $moduleInfo.Functions.Count } else { 1 }
-        } else { 0 }
+        $currentFunctionCount = @($moduleInfo.Functions).Count
         if ($currentFunctionCount -eq 0) {
             $moduleInfo.Functions = Get-FunctionsFromScript -ScriptPath $moduleScriptPath
         }
@@ -212,12 +242,28 @@ function Get-SingleModuleAnalysis {
         $moduleInfo.ComplexityScore = Get-ModuleComplexity -ScriptPath $moduleScriptPath
     }
 
-    # Check for tests
+    # Check for tests with enhanced detection
     $testsPath = Join-Path $ModuleDirectory.FullName "tests"
     if (Test-Path $testsPath) {
         $moduleInfo.HasTests = $true
-        $testFiles = Get-ChildItem $testsPath -Filter "*.Tests.ps1" -Recurse
-        $moduleInfo.TestCoverage = if ($testFiles.Count -gt 0) { 85 } else { 0 } # Simplified calculation
+        try {
+            $testFiles = Get-ChildItem $testsPath -Filter "*.Tests.ps1" -Recurse -ErrorAction SilentlyContinue
+            $moduleInfo.TestCoverage = if (@($testFiles).Count -gt 0) { 85 } else { 0 } # Simplified calculation
+        } catch {
+            Write-FeatureLog "Failed to analyze tests for $($ModuleDirectory.Name): $($_.Exception.Message)" -Level 'DEBUG'
+            $moduleInfo.TestCoverage = 0
+        }
+    } else {
+        # Also check for test files in module directory root
+        try {
+            $rootTestFiles = Get-ChildItem $ModuleDirectory.FullName -Filter "*.Tests.ps1" -ErrorAction SilentlyContinue
+            if (@($rootTestFiles).Count -gt 0) {
+                $moduleInfo.HasTests = $true
+                $moduleInfo.TestCoverage = 85
+            }
+        } catch {
+            Write-FeatureLog "Failed to check for root test files in $($ModuleDirectory.Name): $($_.Exception.Message)" -Level 'DEBUG'
+        }
     }
 
     # Check for documentation
@@ -237,7 +283,7 @@ function Get-ModuleCategory {
     param($ModuleInfo)
 
     $name = $ModuleInfo.Name
-    $description = if ($ModuleInfo.Description) { $ModuleInfo.Description.ToLower() } else { '' }
+    $description = if ($ModuleInfo.Description -and $ModuleInfo.Description.ToString()) { $ModuleInfo.Description.ToString().ToLower() } else { '' }
 
     # Category mapping based on patterns
     $categories = @{
@@ -267,7 +313,7 @@ function Get-ModuleCategory {
 function Get-ModuleCapabilities {
     param($ModuleInfo)
 
-    $functionCount = if ($ModuleInfo.Functions -and $ModuleInfo.Functions.Count) { $ModuleInfo.Functions.Count } else { 0 }
+    $functionCount = @($ModuleInfo.Functions).Count
     $capabilities = @{
         FunctionCount = $functionCount
         HasPublicAPI = $functionCount -gt 0
@@ -283,7 +329,7 @@ function Get-ModuleCapabilities {
     }
 
     # Analyze function names for features (if functions exist)
-    if ($ModuleInfo.Functions -and $ModuleInfo.Functions.Count -gt 0) {
+    if ($ModuleInfo.Functions -and @($ModuleInfo.Functions).Count -gt 0) {
         foreach ($function in $ModuleInfo.Functions) {
         $functionName = $function.ToString().ToLower()
 
@@ -388,7 +434,7 @@ function Get-ModuleHealth {
         HasModuleFile = if ($ModuleInfo.HasModuleFile) { 15 } else { 0 }
         HasTests = if ($ModuleInfo.HasTests) { 25 } else { 0 }
         HasDocumentation = if ($ModuleInfo.HasDocumentation) { 15 } else { 0 }
-        HasFunctions = if ($ModuleInfo.Functions.Count -gt 0) { 15 } else { 0 }
+        HasFunctions = if ($ModuleInfo.Functions -and @($ModuleInfo.Functions).Count -gt 0) { 15 } else { 0 }
         RecentlyUpdated = if ($ModuleInfo.LastModified -gt (Get-Date).AddDays(-30)) { 10 } else { 5 }
     }
 
@@ -427,7 +473,7 @@ function Get-FeatureStatistics {
 
     foreach ($module in $ModuleAnalysis.Modules.Values) {
         # Function count
-        $functionCount = if ($module.Functions -and $module.Functions.Count) { $module.Functions.Count } else { 0 }
+        $functionCount = @($module.Functions).Count
         $stats.TotalFunctions += $functionCount
 
         # Test and documentation tracking
@@ -506,7 +552,7 @@ function Get-DependencyGraph {
             Label = $module.Key
             Category = (Get-ModuleCategory -ModuleInfo $module.Value)
             Health = $module.Value.Health
-            FunctionCount = $module.Value.Functions.Count
+            FunctionCount = @($module.Value.Functions).Count
             HasTests = $module.Value.HasTests
         }
     }
@@ -619,13 +665,13 @@ function New-FeatureMapHtml {
                     </div>
                     <div>
                         <strong>Version:</strong> $($module.Version)<br>
-                        <strong>Functions:</strong> $(if ($module.Functions -and $module.Functions.Count) { $module.Functions.Count } else { 0 })<br>
+                        <strong>Functions:</strong> $(@($module.Functions).Count)<br>
                         <strong>Tests:</strong> $(if ($module.HasTests) { '✅' } else { '❌' })<br>
                         <strong>Docs:</strong> $(if ($module.HasDocumentation) { '✅' } else { '❌' })
                     </div>
 "@
 
-            if ($capabilities.Features -and $capabilities.Features.Count -gt 0) {
+            if ($capabilities.Features -and @($capabilities.Features).Count -gt 0) {
                 $html += @"
                     <div class="features-list">
 "@

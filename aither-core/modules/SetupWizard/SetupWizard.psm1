@@ -222,6 +222,17 @@ function Start-IntelligentSetup {
                     continue
                 } else {
                     Write-Host "  ❌ Maximum retry attempts reached" -ForegroundColor Red
+                    
+                    # Create a failed result object for the step
+                    $failedResult = @{
+                        Name = $step.Name
+                        Status = 'Failed'
+                        Details = @("Exception occurred: $($_.Exception.Message)", "Maximum retry attempts reached")
+                        ErrorDetails = @($_.Exception.Message)
+                        RecoveryOptions = @()
+                    }
+                    
+                    $setupState.Steps += $failedResult
                     $stepCompleted = $true
                 }
             }
@@ -1495,16 +1506,20 @@ function Install-AITools {
     $aiTools = @()
     switch ($SetupState.InstallationProfile) {
         'developer' {
-            $aiTools = @('claude-code')
+            # Don't automatically install any AI tools - let user decide
+            $aiTools = @()
         }
         'full' {
-            $aiTools = @('claude-code', 'gemini-cli')
+            # Don't automatically install any AI tools - let user decide
+            $aiTools = @()
         }
     }
 
     if ($aiTools.Count -eq 0) {
         $result.Status = 'Passed'
         $result.Details += "ℹ️ No AI tools installation required for this profile"
+        $result.Details += "💡 AI tools can be installed later using the AIToolsIntegration module"
+        $result.Details += "   Run: Install-ClaudeCode or Install-GeminiCLI when needed"
         return $result
     }
 
@@ -1877,6 +1892,7 @@ Export-ModuleMember -Function @(
     'Generate-QuickStartGuide',
     'Get-InstallationProfile',
     'Install-AITools',
+    'Initialize-Configuration',
     'Edit-Configuration',
     'Review-Configuration',
     'Show-WelcomeMessage',

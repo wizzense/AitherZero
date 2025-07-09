@@ -29,9 +29,24 @@
     # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
     FunctionsToExport = @(
         'Start-IntelligentSetup',
+        'Get-PlatformInfo',
         'Generate-QuickStartGuide',
+        'Get-InstallationProfile',
+        'Install-AITools',
+        'Initialize-Configuration',
         'Edit-Configuration',
-        'Review-Configuration'
+        'Review-Configuration',
+        'Show-WelcomeMessage',
+        'Show-SetupBanner',
+        'Show-Progress',
+        'Show-EnhancedProgress',
+        'Show-SetupSummary',
+        'Show-SetupPrompt',
+        'Show-InstallationProfile',
+        'Get-SetupSteps',
+        'Invoke-ErrorRecovery',
+        'Get-DetailedSystemInfo',
+        'Test-*'
     )
 
     # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.

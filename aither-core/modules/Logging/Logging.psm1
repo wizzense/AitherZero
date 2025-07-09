@@ -299,6 +299,18 @@ function Write-CustomLog {
         try {
             # Check if log rotation is needed (optimized check)
             $logFile = $script:LoggingConfig.LogFilePath
+            
+            # Defensive check: If logFile is null/empty, initialize with default path
+            if (-not $logFile) {
+                $logFile = if ($env:TEMP) {
+                    (Join-Path $env:TEMP "AitherZero.log")
+                } else {
+                    "AitherZero.log"
+                }
+                $script:LoggingConfig.LogFilePath = $logFile
+                Write-Host "[LOG] Using default log file path: $logFile" -ForegroundColor Yellow
+            }
+            
             if ((Test-Path $logFile -PathType Leaf) -and
                 (Get-Item $logFile -ErrorAction SilentlyContinue)?.Length -gt ($script:LoggingConfig.MaxLogSizeMB * 1MB)) {
                 Invoke-LogRotation
