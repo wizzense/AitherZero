@@ -1,40 +1,95 @@
 # AitherCore Domains
 
-This directory contains the domain-based organization of AitherCore functionality after module consolidation.
+This directory contains the domain-based organization of AitherCore functionality after module consolidation. The domain architecture consolidates 30+ legacy modules into 6 logical domains with **196+ functions**.
+
+## Domain Architecture Overview
+
+### Domain Consolidation Statistics
+| Domain | Legacy Modules | Functions | Primary Purpose |
+|--------|---------------|-----------|------------------|
+| **infrastructure** | 4 modules | 57 functions | Infrastructure deployment and monitoring |
+| **security** | 2 modules | 41 functions | Security automation and credential management |
+| **configuration** | 4 modules | 36 functions | Configuration management and environment switching |
+| **utilities** | 6 modules | 24 functions | Utility services and maintenance |
+| **experience** | 2 modules | 22 functions | User experience and setup automation |
+| **automation** | 2 modules | 16 functions | Script management and workflow orchestration |
+| **TOTAL** | **20 modules** | **196 functions** | **Complete infrastructure automation** |
 
 ## Domain Structure
 
-### Infrastructure Domain (`infrastructure/`)
+### Infrastructure Domain (`infrastructure/`) - 57 Functions
 Handles all infrastructure-related operations:
-- **LabRunner**: Lab automation and script execution
-- **OpenTofuProvider**: Infrastructure deployment and management
-- **ISOManager**: ISO management and customization
-- **SystemMonitoring**: System performance monitoring
+- **LabRunner** (17 functions): Lab automation and script execution
+- **OpenTofuProvider** (11 functions): Infrastructure deployment and management
+- **ISOManager** (10 functions): ISO management and customization
+- **SystemMonitoring** (19 functions): System performance monitoring
 
-### Configuration Domain (`configuration/`)
-Unified configuration management:
-- **Core**: Central configuration store and management
-- **Carousel**: Environment switching and management
-- **Repository**: Git-based configuration repositories
-- **Manager**: Configuration validation and testing
+**Key Functions:**
+- `Start-LabAutomation` - Start lab automation workflows
+- `Start-InfrastructureDeployment` - Deploy infrastructure with OpenTofu
+- `Get-ISODownload` - Download and manage ISO files
+- `Get-SystemDashboard` - System monitoring dashboard
 
-### Security Domain (`security/`)
+### Security Domain (`security/`) - 41 Functions
 Security and credential management:
-- **SecureCredentials**: Enterprise credential management
-- **SecurityAutomation**: Security automation and compliance
+- **SecureCredentials** (10 functions): Enterprise credential management
+- **SecurityAutomation** (31 functions): Security automation and compliance
 
-### Automation Domain (`automation/`)
-Script and automation management:
-- **ScriptManager**: Script execution and template management
+**Key Functions:**
+- `Get-SecureCredential` - Retrieve secure credentials
+- `Get-ADSecurityAssessment` - Active Directory security assessment
+- `Enable-CredentialGuard` - Enable Windows Credential Guard
+- `Set-SystemHardening` - Apply system hardening configurations
 
-### Experience Domain (`experience/`)
-User experience and setup:
-- **SetupWizard**: Intelligent setup and onboarding
-- **StartupExperience**: Interactive startup management
+### Configuration Domain (`configuration/`) - 36 Functions
+Unified configuration management:
+- **ConfigurationCore** (11 functions): Central configuration store and management
+- **ConfigurationCarousel** (12 functions): Environment switching and management
+- **ConfigurationRepository** (5 functions): Git-based configuration repositories
+- **ConfigurationManager** (8 functions): Configuration validation and testing
 
-### Utilities Domain (`utilities/`)
+**Key Functions:**
+- `Get-ConfigurationStore` - Retrieve configuration store
+- `Switch-ConfigurationSet` - Switch between configuration environments
+- `Add-ConfigurationRepository` - Add Git-based configuration repositories
+- `Validate-Configuration` - Validate configuration structure
+
+### Utilities Domain (`utilities/`) - 24 Functions
 Shared utility services:
-- **UtilityServices**: Common utility functions and services
+- **SemanticVersioning** (8 functions): Semantic versioning utilities
+- **LicenseManager** (3 functions): License management and feature access
+- **RepoSync** (2 functions): Repository synchronization
+- **UnifiedMaintenance** (3 functions): Unified maintenance operations
+- **UtilityServices** (7 functions): Common utility functions
+- **PSScriptAnalyzerIntegration** (1 function): PowerShell code analysis
+
+**Key Functions:**
+- `Get-NextSemanticVersion` - Calculate next semantic version
+- `Test-FeatureAccess` - Test access to licensed features
+- `Sync-ToAitherLab` - Synchronize to AitherLab repository
+- `Invoke-UnifiedMaintenance` - Perform maintenance operations
+
+### Experience Domain (`experience/`) - 22 Functions
+User experience and setup:
+- **SetupWizard** (11 functions): Intelligent setup and onboarding
+- **StartupExperience** (11 functions): Interactive startup management
+
+**Key Functions:**
+- `Start-IntelligentSetup` - Intelligent setup with installation profiles
+- `Get-InstallationProfile` - Get installation profile configuration
+- `Start-InteractiveMode` - Interactive startup with menu system
+- `Generate-QuickStartGuide` - Generate platform-specific quick start guides
+
+### Automation Domain (`automation/`) - 16 Functions
+Script and automation management:
+- **ScriptManager** (14 functions): Script execution and template management
+- **OrchestrationEngine** (2 functions): Workflow orchestration
+
+**Key Functions:**
+- `Register-OneOffScript` - Register scripts for execution
+- `Invoke-OneOffScript` - Execute registered scripts
+- `Get-ScriptTemplate` - Retrieve script templates
+- `Start-ScriptExecution` - Advanced script execution with monitoring
 
 ## Consolidation Benefits
 

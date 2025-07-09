@@ -38,12 +38,12 @@ BeforeAll {
     # Import supporting modules
     $script:LoggingModulePath = Join-Path $script:ProjectRoot "aither-core/modules/Logging"
     if (Test-Path $script:LoggingModulePath) {
-        Import-Module $script:LoggingModulePath -Force -ErrorAction SilentlyContinue
+        Import-Module $script:LoggingModulePath -Force -Global -ErrorAction SilentlyContinue
     }
 
     $script:AIToolsModulePath = Join-Path $script:ProjectRoot "aither-core/modules/AIToolsIntegration"
     if (Test-Path $script:AIToolsModulePath) {
-        Import-Module $script:AIToolsModulePath -Force -ErrorAction SilentlyContinue
+        Import-Module $script:AIToolsModulePath -Force -Global -ErrorAction SilentlyContinue
     }
 }
 

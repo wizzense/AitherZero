@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "description": "Production environment overrides",
+    "environment": "prod"
+  },
+  "system": {
+    "ComputerName": "aither-prod",
+    "SetComputerName": true,
+    "AllowRemoteDesktop": false,
+    "ConfigureFirewall": true,
+    "DisableTCPIP6": true
+  },
+  "tools": {
+    "InstallGit": true,
+    "InstallGitHubCLI": false,
+    "InstallPwsh": true,
+    "InstallVSCode": false,
+    "InstallDockerDesktop": false,
+    "InstallChocolatey": false
+  },
+  "aiTools": {
+    "InstallClaudeCode": false,
+    "InstallGeminiCLI": false,
+    "InstallCodexCLI": false,
+    "ClaudeCodeSkipWSL": true,
+    "GeminiCLISkipWSL": true,
+    "CodexCLISkipWSL": true
+  },
+  "logging": {
+    "level": "WARN",
+    "console": false,
+    "EnableConsoleLogging": false,
+    "EnableFileLogging": true,
+    "MaxLogFiles": 30,
+    "MaxLogSizeMB": 500
+  },
+  "security": {
+    "RequireEncryption": true,
+    "AllowUnsignedScripts": false,
+    "ValidateModules": true,
+    "SecureBootRequired": true
+  },
+  "environment": {
+    "name": "production",
+    "platform": "auto"
+  }
+}

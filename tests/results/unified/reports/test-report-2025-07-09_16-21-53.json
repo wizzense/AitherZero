@@ -1,0 +1,409 @@
+{
+  "Results": [
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "AIToolsIntegration"
+    },
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "BackupManager"
+    },
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "DevEnvironment"
+    },
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "LicenseManager"
+    },
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "Logging"
+    },
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "ModuleCommunication"
+    },
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "OrchestrationEngine"
+    },
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "ParallelExecution"
+    },
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "PatchManager"
+    },
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "ProgressTracking"
+    },
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "PSScriptAnalyzerIntegration"
+    },
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "RemoteConnection"
+    },
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "RepoSync"
+    },
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "RestAPIServer"
+    },
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "SemanticVersioning"
+    },
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "SetupWizard"
+    },
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "StartupExperience"
+    },
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "TestingFramework"
+    },
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "UnifiedMaintenance"
+    },
+    {
+      "TestsFailed": 1,
+      "TestsRun": 0,
+      "Success": false,
+      "Phase": "Unit",
+      "Details": [
+        "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+      ],
+      "Error": "Phase execution failed: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Duration": 0,
+      "TestsPassed": 0,
+      "Module": "UtilityServices"
+    }
+  ],
+  "GeneratedBy": "AitherZero TestingFramework",
+  "Summary": {
+    "Timestamp": "2025-07-09T16:21:53.0979599+00:00",
+    "SlowestModule": "AIToolsIntegration",
+    "FastestModule": "AIToolsIntegration",
+    "TotalSkipped": null,
+    "TestSuite": "Unit",
+    "TotalPassed": 0.0,
+    "TotalModules": 20,
+    "SuccessRate": 0,
+    "SuccessfulModules": 0,
+    "TotalFailed": 20.0,
+    "AverageDuration": 0.0,
+    "TotalDuration": 0.0,
+    "TotalTests": 0.0,
+    "FailedModules": 20
+  },
+  "FailureAnalysis": {
+    "CommonFailurePatterns": [
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+      "Phase execution error: The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    ],
+    "ModulesWithFailures": [
+      {
+        "Module": "AIToolsIntegration",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "BackupManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "DevEnvironment",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "LicenseManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "Logging",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ModuleCommunication",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "OrchestrationEngine",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ParallelExecution",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "PatchManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ProgressTracking",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "PSScriptAnalyzerIntegration",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "RemoteConnection",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "RepoSync",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "RestAPIServer",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "SemanticVersioning",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "SetupWizard",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "StartupExperience",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "TestingFramework",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "UnifiedMaintenance",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "UtilityServices",
+        "TestsFailed": 1,
+        "FailureRate": null
+      }
+    ],
+    "CriticalFailures": []
+  },
+  "Version": "1.0.0"
+}

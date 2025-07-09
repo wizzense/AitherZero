@@ -53,7 +53,7 @@ Describe "Core Functionality Tests" {
             # Verify the launcher contains PowerShell version checking logic
             $content = Get-Content $launcher -Raw
             $content | Should -Match "Test-PowerShellVersion"
-            $content | Should -Match "Start-WithPowerShell7"
+            $content | Should -Match "PSVersionTable.PSVersion.Major"
         }
     }
 

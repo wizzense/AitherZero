@@ -12,8 +12,16 @@
     This module integrates development environment setup into the core project workflow.
 #>
 
-# Write-CustomLog is guaranteed to be available from AitherCore orchestration
-# No fallback needed - trust the orchestration system
+# Write-CustomLog fallback for test isolation scenarios
+if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
+    function Global:Write-CustomLog {
+        param(
+            [string]$Message,
+            [string]$Level = 'INFO'
+        )
+        Write-Host "[$Level] $Message"
+    }
+}
 
 # Import public functions
 $Public = @(Get-ChildItem -Path $PSScriptRoot\Public\*.ps1 -ErrorAction SilentlyContinue)

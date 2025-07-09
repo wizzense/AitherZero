@@ -1,18 +1,24 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="28" errors="0" failures="1" not-run="0" inconclusive="0" ignored="0" skipped="2" invalid="0" date="2025-07-08" time="23:16:06">
-  <environment machine-name="codespaces-6c6eb1" user="codespace" nunit-version="2.5.8.0" platform="Linux" os-version="6.8.0-1027-azure" user-domain="" cwd="/workspaces/AitherZero" clr-version="9.0.4" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="28" errors="0" failures="22" not-run="0" inconclusive="0" ignored="0" skipped="2" invalid="0" date="2025-07-09" time="15:19:45">
+  <environment platform="Linux" user-domain="" clr-version="9.0.4" nunit-version="2.5.8.0" cwd="/workspaces/AitherZero" machine-name="codespaces-6c6eb1" os-version="6.8.0-1027-azure" user="codespace" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="2.7076" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="3.2508" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1" executed="True" result="Failure" success="False" time="2.7076" asserts="0" description="/workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1" executed="True" result="Failure" success="False" time="3.2508" asserts="0" description="/workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="RemoteConnection Module Tests" executed="True" result="Failure" success="False" time="2.3201" asserts="0" description="RemoteConnection Module Tests">
+          <test-suite type="TestFixture" name="RemoteConnection Module Tests" executed="True" result="Failure" success="False" time="2.4394" asserts="0" description="RemoteConnection Module Tests">
             <results>
-              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Module Import and Structure" executed="True" result="Failure" success="False" time="0.1114" asserts="0" description="RemoteConnection Module Tests.Module Import and Structure">
+              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Module Import and Structure" executed="True" result="Failure" success="False" time="0.3144" asserts="0" description="RemoteConnection Module Tests.Module Import and Structure">
                 <results>
-                  <test-case description="Should import the RemoteConnection module successfully" name="RemoteConnection Module Tests.Module Import and Structure.Should import the RemoteConnection module successfully" time="0.0257" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should export all required functions" name="RemoteConnection Module Tests.Module Import and Structure.Should export all required functions" time="0.0109" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should have proper help documentation for each function" name="RemoteConnection Module Tests.Module Import and Structure.Should have proper help documentation for each function" time="0.0673" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should import the RemoteConnection module successfully" name="RemoteConnection Module Tests.Module Import and Structure.Should import the RemoteConnection module successfully" time="0.1089" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export all required functions" name="RemoteConnection Module Tests.Module Import and Structure.Should export all required functions" time="0.1209" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected 'Remove-RemoteConnection' to be found in collection @('Connect-RemoteEndpoint', 'Disconnect-RemoteEndpoint', 'Get-ConnectionDiagnosticsReport', 'Get-ConnectionPoolStatus', 'Get-RemoteConnection', 'Invoke-RemoteCommand', 'New-RemoteConnection', 'Reset-ConnectionPool'), but it was not found.</message>
+                      <stack-trace>at $exportedFunctions | Should -Contain $function, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:63
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:63</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should have proper help documentation for each function" name="RemoteConnection Module Tests.Module Import and Structure.Should have proper help documentation for each function" time="0.058" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected a value, but got $null or empty.</message>
                       <stack-trace>at $help.Description | Should -Not -BeNullOrEmpty, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:73
@@ -21,57 +27,207 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnect
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Connection Configuration Management" executed="True" result="Success" success="True" time="0.5695" asserts="0" description="RemoteConnection Module Tests.Connection Configuration Management">
+              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Connection Configuration Management" executed="True" result="Failure" success="False" time="1.0309" asserts="0" description="RemoteConnection Module Tests.Connection Configuration Management">
                 <results>
-                  <test-case description="Should create a new SSH connection configuration" name="RemoteConnection Module Tests.Connection Configuration Management.Should create a new SSH connection configuration" time="0.1049" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should create a new WinRM connection configuration" name="RemoteConnection Module Tests.Connection Configuration Management.Should create a new WinRM connection configuration" time="0.0513" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should retrieve an existing connection configuration" name="RemoteConnection Module Tests.Connection Configuration Management.Should retrieve an existing connection configuration" time="0.0468" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should retrieve all connection configurations" name="RemoteConnection Module Tests.Connection Configuration Management.Should retrieve all connection configurations" time="0.0826" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should filter connections by endpoint type" name="RemoteConnection Module Tests.Connection Configuration Management.Should filter connections by endpoint type" time="0.0922" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should remove a connection configuration" name="RemoteConnection Module Tests.Connection Configuration Management.Should remove a connection configuration" time="0.0541" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle WhatIf parameter correctly" name="RemoteConnection Module Tests.Connection Configuration Management.Should handle WhatIf parameter correctly" time="0.0193" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should create a new SSH connection configuration" name="RemoteConnection Module Tests.Connection Configuration Management.Should create a new SSH connection configuration" time="0.1868" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:92</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should create a new WinRM connection configuration" name="RemoteConnection Module Tests.Connection Configuration Management.Should create a new WinRM connection configuration" time="0.0775" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>[0] CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+[1] CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>[0] at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:84
+[1] at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:92</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should retrieve an existing connection configuration" name="RemoteConnection Module Tests.Connection Configuration Management.Should retrieve an existing connection configuration" time="0.0822" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>[0] CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+[1] CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>[0] at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:84
+[1] at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:92</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should retrieve all connection configurations" name="RemoteConnection Module Tests.Connection Configuration Management.Should retrieve all connection configurations" time="0.1144" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>[0] CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+[1] CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>[0] at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:84
+[1] at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:92</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should filter connections by endpoint type" name="RemoteConnection Module Tests.Connection Configuration Management.Should filter connections by endpoint type" time="0.0901" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>[0] CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+[1] CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>[0] at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:84
+[1] at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:92</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should remove a connection configuration" name="RemoteConnection Module Tests.Connection Configuration Management.Should remove a connection configuration" time="0.0779" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>[0] CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+[1] CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>[0] at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:84
+[1] at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:92</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle WhatIf parameter correctly" name="RemoteConnection Module Tests.Connection Configuration Management.Should handle WhatIf parameter correctly" time="0.0815" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>[0] CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+[1] CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>[0] at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:84
+[1] at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:92</stack-trace>
+                    </failure>
+                  </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Connection Testing" executed="True" result="Success" success="True" time="1.1362" asserts="0" description="RemoteConnection Module Tests.Connection Testing">
+              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Connection Testing" executed="True" result="Failure" success="False" time="1.2536" asserts="0" description="RemoteConnection Module Tests.Connection Testing">
                 <results>
-                  <test-case description="Should test connection by name" name="RemoteConnection Module Tests.Connection Testing.Should test connection by name" time="0.1939" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should test connection by hostname and port" name="RemoteConnection Module Tests.Connection Testing.Should test connection by hostname and port" time="0.1639" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should support quiet mode" name="RemoteConnection Module Tests.Connection Testing.Should support quiet mode" time="0.1542" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle invalid connection names" name="RemoteConnection Module Tests.Connection Testing.Should handle invalid connection names" time="0.0381" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should test connection by name" name="RemoteConnection Module Tests.Connection Testing.Should test connection by name" time="0.059" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>[0] RuntimeException: Connection 'Test-Connection-1505373104' already exists. Use -Force to overwrite.
+[1] CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>[0] at New-RemoteConnection&lt;Process&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/Public/New-RemoteConnection.ps1:116
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:194
+[1] at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:201</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should test connection by hostname and port" name="RemoteConnection Module Tests.Connection Testing.Should test connection by hostname and port" time="0.0498" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>[0] RuntimeException: Connection 'Test-Connection-1505373104' already exists. Use -Force to overwrite.
+[1] CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>[0] at New-RemoteConnection&lt;Process&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/Public/New-RemoteConnection.ps1:116
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:194
+[1] at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:201</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should support quiet mode" name="RemoteConnection Module Tests.Connection Testing.Should support quiet mode" time="0.0569" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>[0] RuntimeException: Connection 'Test-Connection-1505373104' already exists. Use -Force to overwrite.
+[1] CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>[0] at New-RemoteConnection&lt;Process&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/Public/New-RemoteConnection.ps1:116
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:194
+[1] at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:201</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle invalid connection names" name="RemoteConnection Module Tests.Connection Testing.Should handle invalid connection names" time="0.0497" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>[0] RuntimeException: Connection 'Test-Connection-1505373104' already exists. Use -Force to overwrite.
+[1] CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>[0] at New-RemoteConnection&lt;Process&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/Public/New-RemoteConnection.ps1:116
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:194
+[1] at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:201</stack-trace>
+                    </failure>
+                  </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Protocol-Specific Features" executed="True" result="Success" success="True" time="1.5749" asserts="0" description="RemoteConnection Module Tests.Protocol-Specific Features">
+              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Protocol-Specific Features" executed="True" result="Failure" success="False" time="1.4208" asserts="0" description="RemoteConnection Module Tests.Protocol-Specific Features">
                 <results>
-                  <test-case description="Should set correct default ports for each protocol" name="RemoteConnection Module Tests.Protocol-Specific Features.Should set correct default ports for each protocol" time="0.1593" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should support all endpoint types" name="RemoteConnection Module Tests.Protocol-Specific Features.Should support all endpoint types" time="0.2058" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should add protocol-specific options" name="RemoteConnection Module Tests.Protocol-Specific Features.Should add protocol-specific options" time="0.0658" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should set correct default ports for each protocol" name="RemoteConnection Module Tests.Protocol-Specific Features.Should set correct default ports for each protocol" time="0.0538" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:241</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should support all endpoint types" name="RemoteConnection Module Tests.Protocol-Specific Features.Should support all endpoint types" time="0.056" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:275</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should add protocol-specific options" name="RemoteConnection Module Tests.Protocol-Specific Features.Should add protocol-specific options" time="0.0524" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:285</stack-trace>
+                    </failure>
+                  </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Error Handling" executed="True" result="Success" success="True" time="1.7227" asserts="0" description="RemoteConnection Module Tests.Error Handling">
+              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Error Handling" executed="True" result="Failure" success="False" time="1.5186" asserts="0" description="RemoteConnection Module Tests.Error Handling">
                 <results>
-                  <test-case description="Should handle invalid endpoint types" name="RemoteConnection Module Tests.Error Handling.Should handle invalid endpoint types" time="0.0066" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle invalid port ranges" name="RemoteConnection Module Tests.Error Handling.Should handle invalid port ranges" time="0.0076" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle empty or null parameters" name="RemoteConnection Module Tests.Error Handling.Should handle empty or null parameters" time="0.0287" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle duplicate connection names" name="RemoteConnection Module Tests.Error Handling.Should handle duplicate connection names" time="0.0472" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should allow overwriting with Force parameter" name="RemoteConnection Module Tests.Error Handling.Should allow overwriting with Force parameter" time="0.0492" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle invalid endpoint types" name="RemoteConnection Module Tests.Error Handling.Should handle invalid endpoint types" time="0.0281" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle invalid port ranges" name="RemoteConnection Module Tests.Error Handling.Should handle invalid port ranges" time="0.0167" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle empty or null parameters" name="RemoteConnection Module Tests.Error Handling.Should handle empty or null parameters" time="0.0101" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle duplicate connection names" name="RemoteConnection Module Tests.Error Handling.Should handle duplicate connection names" time="0.018" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>RuntimeException: Connection 'Test-Connection-1505373104' already exists. Use -Force to overwrite.</message>
+                      <stack-trace>at New-RemoteConnection&lt;Process&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/Public/New-RemoteConnection.ps1:116
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:313</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should allow overwriting with Force parameter" name="RemoteConnection Module Tests.Error Handling.Should allow overwriting with Force parameter" time="0.0189" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>RuntimeException: Connection 'Test-Connection-1505373104' already exists. Use -Force to overwrite.</message>
+                      <stack-trace>at New-RemoteConnection&lt;Process&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/Public/New-RemoteConnection.ps1:116
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:324</stack-trace>
+                    </failure>
+                  </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Integration Tests" executed="True" result="Ignored" success="True" time="1.7456" asserts="0" description="RemoteConnection Module Tests.Integration Tests">
+              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Integration Tests" executed="True" result="Ignored" success="True" time="1.5333" asserts="0" description="RemoteConnection Module Tests.Integration Tests">
                 <results>
-                  <test-case description="Should integrate with SecureCredentials module" name="RemoteConnection Module Tests.Integration Tests.Should integrate with SecureCredentials module" time="0.0093" asserts="0" success="False" result="Ignored" executed="False" />
-                  <test-case description="Should validate credentials when specified" name="RemoteConnection Module Tests.Integration Tests.Should validate credentials when specified" time="0.0042" asserts="0" success="False" result="Ignored" executed="False" />
+                  <test-case description="Should integrate with SecureCredentials module" name="RemoteConnection Module Tests.Integration Tests.Should integrate with SecureCredentials module" time="0.0068" asserts="0" success="False" result="Ignored" executed="False" />
+                  <test-case description="Should validate credentials when specified" name="RemoteConnection Module Tests.Integration Tests.Should validate credentials when specified" time="0.0032" asserts="0" success="False" result="Ignored" executed="False" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Cross-Platform Compatibility" executed="True" result="Success" success="True" time="1.846" asserts="0" description="RemoteConnection Module Tests.Cross-Platform Compatibility">
+              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Cross-Platform Compatibility" executed="True" result="Failure" success="False" time="1.576" asserts="0" description="RemoteConnection Module Tests.Cross-Platform Compatibility">
                 <results>
-                  <test-case description="Should handle different path separators" name="RemoteConnection Module Tests.Cross-Platform Compatibility.Should handle different path separators" time="0.0529" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should use correct storage locations for different platforms" name="RemoteConnection Module Tests.Cross-Platform Compatibility.Should use correct storage locations for different platforms" time="0.0408" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle different path separators" name="RemoteConnection Module Tests.Cross-Platform Compatibility.Should handle different path separators" time="0.0214" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>RuntimeException: Connection 'Test-Connection-1505373104' already exists. Use -Force to overwrite.</message>
+                      <stack-trace>at New-RemoteConnection&lt;Process&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/Public/New-RemoteConnection.ps1:116
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:383</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should use correct storage locations for different platforms" name="RemoteConnection Module Tests.Cross-Platform Compatibility.Should use correct storage locations for different platforms" time="0.0169" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>RuntimeException: Connection 'Test-Connection-1505373104' already exists. Use -Force to overwrite.</message>
+                      <stack-trace>at New-RemoteConnection&lt;Process&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/Public/New-RemoteConnection.ps1:116
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:399</stack-trace>
+                    </failure>
+                  </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Performance Tests" executed="True" result="Success" success="True" time="2.3116" asserts="0" description="RemoteConnection Module Tests.Performance Tests">
+              <test-suite type="TestFixture" name="RemoteConnection Module Tests.Performance Tests" executed="True" result="Failure" success="False" time="2.4261" asserts="0" description="RemoteConnection Module Tests.Performance Tests">
                 <results>
-                  <test-case description="Should handle creating multiple connections efficiently" name="RemoteConnection Module Tests.Performance Tests.Should handle creating multiple connections efficiently" time="0.3086" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle retrieving many connections efficiently" name="RemoteConnection Module Tests.Performance Tests.Should handle retrieving many connections efficiently" time="0.1508" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle creating multiple connections efficiently" name="RemoteConnection Module Tests.Performance Tests.Should handle creating multiple connections efficiently" time="0.6259" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:436</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle retrieving many connections efficiently" name="RemoteConnection Module Tests.Performance Tests.Should handle retrieving many connections efficiently" time="0.2183" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>CommandNotFoundException: The term 'Remove-RemoteConnection' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1:462</stack-trace>
+                    </failure>
+                  </test-case>
                 </results>
               </test-suite>
             </results>

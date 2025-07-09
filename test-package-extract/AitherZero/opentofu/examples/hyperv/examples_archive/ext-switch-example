@@ -1,0 +1,7 @@
+# Declare the hyperv_network_switch resource
+resource "hyperv_network_switch" "WAN" {
+  name                = "WAN"
+  allow_management_os = true
+  switch_type         = "Internal"
+  net_adapter_names   = ["Ethernet"]
+}

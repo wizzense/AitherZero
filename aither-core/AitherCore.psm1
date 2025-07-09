@@ -6,55 +6,37 @@
 
 $ErrorActionPreference = 'Stop'
 
-# Module-level variables for orchestration
-$script:CoreModules = @(
+# Module-level variables for orchestration using consolidated domain structure
+$script:CoreDomains = @(
     # Core Infrastructure (Required)
     @{ Name = 'Logging'; Path = 'modules/Logging'; Description = 'Centralized logging system'; Required = $true },
-    @{ Name = 'LabRunner'; Path = 'modules/LabRunner'; Description = 'Lab automation and script execution'; Required = $true },
-    @{ Name = 'OpenTofuProvider'; Path = 'modules/OpenTofuProvider'; Description = 'OpenTofu/Terraform infrastructure deployment'; Required = $true },
-
+    @{ Name = 'Infrastructure'; Path = 'domains/infrastructure'; Description = 'Infrastructure management (LabRunner, OpenTofuProvider, ISOManager, SystemMonitoring)'; Required = $true },
+    
     # Platform Services
+    @{ Name = 'Configuration'; Path = 'domains/configuration'; Description = 'Configuration management (ConfigurationCore, Carousel, Manager, Repository)'; Required = $true },
     @{ Name = 'ModuleCommunication'; Path = 'modules/ModuleCommunication'; Description = 'Scalable inter-module communication bus'; Required = $true },
-    @{ Name = 'ConfigurationCore'; Path = 'modules/ConfigurationCore'; Description = 'Core configuration management with 25+ functions'; Required = $true },
-    @{ Name = 'ConfigurationCarousel'; Path = 'modules/ConfigurationCarousel'; Description = 'Environment switching and configuration sets'; Required = $false },
-    @{ Name = 'ConfigurationRepository'; Path = 'modules/ConfigurationRepository'; Description = 'Git-based configuration repository management'; Required = $false },
-    @{ Name = 'ConfigurationManager'; Path = 'modules/ConfigurationManager'; Description = 'Configuration testing and coordination'; Required = $false },
     @{ Name = 'OrchestrationEngine'; Path = 'modules/OrchestrationEngine'; Description = 'Advanced workflow and playbook execution'; Required = $false },
     @{ Name = 'ParallelExecution'; Path = 'modules/ParallelExecution'; Description = 'Parallel task execution'; Required = $false },
     @{ Name = 'ProgressTracking'; Path = 'modules/ProgressTracking'; Description = 'Visual progress tracking for operations'; Required = $false },
 
-    # Feature Modules
-    @{ Name = 'ISOManager'; Path = 'modules/ISOManager'; Description = 'Comprehensive ISO management: download, organization, customization, and autounattend generation'; Required = $false },
-    @{ Name = 'SecureCredentials'; Path = 'modules/SecureCredentials'; Description = 'Enterprise-grade credential management'; Required = $false },
-    @{ Name = 'RemoteConnection'; Path = 'modules/RemoteConnection'; Description = 'Multi-protocol remote connection management'; Required = $false },
-    @{ Name = 'SystemMonitoring'; Path = 'modules/SystemMonitoring'; Description = 'System performance monitoring'; Required = $false },
-    @{ Name = 'RestAPIServer'; Path = 'modules/RestAPIServer'; Description = 'REST API server and webhook support'; Required = $false },
+    # Domain Services
+    @{ Name = 'Security'; Path = 'domains/security'; Description = 'Security services (SecureCredentials, SecurityAutomation)'; Required = $false },
+    @{ Name = 'Automation'; Path = 'domains/automation'; Description = 'Automation services (ScriptManager and automation utilities)'; Required = $false },
+    @{ Name = 'Experience'; Path = 'domains/experience'; Description = 'User experience (SetupWizard, StartupExperience)'; Required = $false },
+    @{ Name = 'Utilities'; Path = 'domains/utilities'; Description = 'Utility services (UtilityServices, SemanticVersioning, LicenseManager, PSScriptAnalyzer, RepoSync, UnifiedMaintenance)'; Required = $false },
 
-    # Development Tools
+    # Individual Modules (Not yet consolidated)
+    @{ Name = 'RemoteConnection'; Path = 'modules/RemoteConnection'; Description = 'Multi-protocol remote connection management'; Required = $false },
+    @{ Name = 'RestAPIServer'; Path = 'modules/RestAPIServer'; Description = 'REST API server and webhook support'; Required = $false },
     @{ Name = 'DevEnvironment'; Path = 'modules/DevEnvironment'; Description = 'Development environment management'; Required = $false },
     @{ Name = 'PatchManager'; Path = 'modules/PatchManager'; Description = 'Git-controlled patch management'; Required = $false },
     @{ Name = 'TestingFramework'; Path = 'modules/TestingFramework'; Description = 'Unified testing framework'; Required = $false },
     @{ Name = 'AIToolsIntegration'; Path = 'modules/AIToolsIntegration'; Description = 'AI development tools management'; Required = $false },
-
-    # Maintenance & Operations
-    @{ Name = 'BackupManager'; Path = 'modules/BackupManager'; Description = 'Backup and maintenance operations'; Required = $false },
-    @{ Name = 'UnifiedMaintenance'; Path = 'modules/UnifiedMaintenance'; Description = 'Unified maintenance operations'; Required = $false },
-    @{ Name = 'ScriptManager'; Path = 'modules/ScriptManager'; Description = 'Script management and templates'; Required = $false },
-    @{ Name = 'RepoSync'; Path = 'modules/RepoSync'; Description = 'Repository synchronization and management'; Required = $false },
-    @{ Name = 'SecurityAutomation'; Path = 'modules/SecurityAutomation'; Description = 'Security automation and compliance'; Required = $false },
-    @{ Name = 'SetupWizard'; Path = 'modules/SetupWizard'; Description = 'Intelligent setup and onboarding wizard'; Required = $false },
-    
-    # Utility Services
-    @{ Name = 'UtilityServices'; Path = 'modules/UtilityServices'; Description = 'Utility services integration testing'; Required = $false },
-    @{ Name = 'SemanticVersioning'; Path = 'modules/SemanticVersioning'; Description = 'Semantic versioning utilities'; Required = $false },
-    @{ Name = 'LicenseManager'; Path = 'modules/LicenseManager'; Description = 'License management and feature access control'; Required = $false },
-    @{ Name = 'PSScriptAnalyzerIntegration'; Path = 'modules/PSScriptAnalyzerIntegration'; Description = 'PowerShell code analysis automation'; Required = $false },
-    @{ Name = 'StartupExperience'; Path = 'modules/StartupExperience'; Description = 'Interactive startup and configuration management'; Required = $false }
+    @{ Name = 'BackupManager'; Path = 'modules/BackupManager'; Description = 'Backup and maintenance operations'; Required = $false }
 )
 
-$script:LoadedModules = @{
-
-}
+$script:LoadedModules = @{}
+$script:LoadedDomains = @{}
 
 # Create Public and Private directories if they don't exist
 $publicFolder = Join-Path $PSScriptRoot 'Public'
@@ -346,7 +328,7 @@ if (-not (Get-Command Initialize-CoreApplication -ErrorAction SilentlyContinue))
 
                 # Step 1: Setup environment variables
                 if (-not $env:PROJECT_ROOT) {
-                    $env:PROJECT_ROOT = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+                    $env:PROJECT_ROOT = Split-Path $PSScriptRoot -Parent
                     Write-CustomLog -Message "Set PROJECT_ROOT: $env:PROJECT_ROOT" -Level 'INFO'
                 }
 
@@ -355,7 +337,7 @@ if (-not (Get-Command Initialize-CoreApplication -ErrorAction SilentlyContinue))
                     Write-CustomLog -Message "Set PWSH_MODULES_PATH: $env:PWSH_MODULES_PATH" -Level 'INFO'
                 }
 
-                # Step 2: Import core modules
+                # Step 2: Import core domains and modules
                 $result = Import-CoreModules -RequiredOnly:$RequiredOnly -Force:$Force
 
                 # Step 3: Validate system health
@@ -413,16 +395,9 @@ if (-not (Get-Command Import-CoreModules -ErrorAction SilentlyContinue)) {
         )
 
         process {
-            # Check if parallel loading is requested and available
-            if ($UseParallelLoading -and $UseDependencyResolution) {
-                # Try to use the parallel loading function if available
-                if (Get-Command Import-CoreModulesParallel -ErrorAction SilentlyContinue) {
-                    Write-CustomLog -Message "Using parallel module loading for improved performance..." -Level 'INFO'
-                    return Import-CoreModulesParallel -RequiredOnly:$RequiredOnly -Force:$Force
-                } else {
-                    Write-CustomLog -Message "Parallel loading function not available, falling back to sequential loading" -Level 'DEBUG'
-                }
-            }
+            # DISABLED: Parallel loading not compatible with domain structure
+            # Using sequential domain loading instead
+            Write-CustomLog -Message "Using sequential domain/module loading..." -Level 'INFO'
 
             $importResults = @{
                 ImportedCount = 0
@@ -433,120 +408,137 @@ if (-not (Get-Command Import-CoreModules -ErrorAction SilentlyContinue)) {
                 DependencyInfo = $null
             }
 
-            # Get modules to import based on RequiredOnly flag
-            $requestedModules = if ($RequiredOnly) {
-                $script:CoreModules | Where-Object { $_.Required } | Select-Object -ExpandProperty Name
+            # Get domains/modules to import based on RequiredOnly flag
+            $requestedComponents = if ($RequiredOnly) {
+                $script:CoreDomains | Where-Object { $_.Required }
             } else {
-                $script:CoreModules | Select-Object -ExpandProperty Name
+                $script:CoreDomains
             }
 
-            Write-CustomLog -Message "Preparing to import $($requestedModules.Count) modules..." -Level 'INFO'
+            Write-CustomLog -Message "Preparing to import $($requestedComponents.Count) domains/modules..." -Level 'INFO'
 
-            # Determine load order
-            $modulesToImport = @()
-            
-            if ($UseDependencyResolution) {
+            # Use simple sequential loading for domains (no dependency resolution needed)
+            $componentsToImport = $requestedComponents
+            $importResults.LoadOrder = $componentsToImport | Select-Object -ExpandProperty Name
+
+            Write-CustomLog -Message "Importing $($componentsToImport.Count) domains/modules in resolved order..." -Level 'INFO'
+
+            # Import domains/modules in the determined order
+            foreach ($componentInfo in $componentsToImport) {
                 try {
-                    # Get module dependencies
-                    $dependencyGraph = Get-ModuleDependencies -ModulePath (Join-Path $PSScriptRoot "modules")
+                    $componentPath = Join-Path $PSScriptRoot $componentInfo.Path
+
+                    # Check if this is a domain (has .ps1 files) or module (has .psm1 files)
+                    $isDomain = $componentInfo.Path -like "domains/*"
                     
-                    # Resolve load order
-                    $loadOrderResult = Resolve-ModuleLoadOrder -DependencyGraph $dependencyGraph -ModulesToLoad $requestedModules
-                    
-                    $importResults.LoadOrder = $loadOrderResult.LoadOrder
-                    $importResults.DependencyInfo = $loadOrderResult
-                    
-                    # Map load order to module info
-                    foreach ($moduleName in $loadOrderResult.LoadOrder) {
-                        $moduleInfo = $script:CoreModules | Where-Object { $_.Name -eq $moduleName } | Select-Object -First 1
-                        if ($moduleInfo) {
-                            $modulesToImport += $moduleInfo
+                    if ($isDomain) {
+                        # Domain loading - load all .ps1 files in the domain directory
+                        $domainFiles = Get-ChildItem -Path $componentPath -Filter "*.ps1" -ErrorAction SilentlyContinue
+                        
+                        if ($domainFiles.Count -eq 0) {
+                            Write-CustomLog -Message "No domain files found in: $componentPath" -Level 'WARNING'
+                            $importResults.SkippedCount++
+                            $importResults.Details += @{
+                                Name = $componentInfo.Name
+                                Status = 'No Domain Files'
+                                Reason = "No .ps1 files found in domain directory"
+                            }
+                            continue
                         }
-                    }
-                    
-                    if ($loadOrderResult.CircularDependencies.Count -gt 0) {
-                        Write-CustomLog -Message "Circular dependencies detected: $($loadOrderResult.CircularDependencies -join ', ')" -Level 'WARNING'
-                    }
-                    
-                    Write-CustomLog -Message "Using dependency-resolved load order" -Level 'INFO'
-                    
-                } catch {
-                    Write-CustomLog -Message "Failed to resolve dependencies, falling back to legacy order: $($_.Exception.Message)" -Level 'WARNING'
-                    $UseDependencyResolution = $false
-                }
-            }
-            
-            # Fallback to legacy order if dependency resolution is disabled or failed
-            if (-not $UseDependencyResolution) {
-                $modulesToImport = if ($RequiredOnly) {
-                    $script:CoreModules | Where-Object { $_.Required }
-                } else {
-                    $script:CoreModules
-                }
-                $importResults.LoadOrder = $modulesToImport | Select-Object -ExpandProperty Name
-            }
-
-            Write-CustomLog -Message "Importing $($modulesToImport.Count) modules in resolved order..." -Level 'INFO'
-
-            # Import modules in the determined order
-            foreach ($moduleInfo in $modulesToImport) {
-                try {
-                    $modulePath = Join-Path $PSScriptRoot $moduleInfo.Path
-
-                    if (-not (Test-Path $modulePath)) {
-                        Write-CustomLog -Message "Module path not found: $modulePath" -Level 'WARNING'
-                        $importResults.SkippedCount++
-                        $importResults.Details += @{
-                            Name = $moduleInfo.Name
-                            Status = 'Skipped'
-                            Reason = 'Path not found'
+                        
+                        # Check if domain is already loaded
+                        if ($script:LoadedDomains.ContainsKey($componentInfo.Name) -and -not $Force) {
+                            Write-CustomLog -Message "Domain already loaded: $($componentInfo.Name)" -Level 'DEBUG'
+                            $importResults.SkippedCount++
+                            $importResults.Details += @{
+                                Name = $componentInfo.Name
+                                Status = 'Already Loaded'
+                                Reason = 'Previously imported'
+                                LoadTime = $script:LoadedDomains[$componentInfo.Name].ImportTime
+                            }
+                            continue
                         }
-                        continue
-                    }
-
-                    # Check if already loaded (unless Force specified)
-                    if ($script:LoadedModules.ContainsKey($moduleInfo.Name) -and -not $Force) {
-                        Write-CustomLog -Message "Module already loaded: $($moduleInfo.Name)" -Level 'DEBUG'
-                        $importResults.SkippedCount++
-                        $importResults.Details += @{
-                            Name = $moduleInfo.Name
-                            Status = 'Already Loaded'
-                            Reason = 'Previously imported'
-                            LoadTime = $script:LoadedModules[$moduleInfo.Name].ImportTime
+                        
+                        # Load domain files
+                        $domainLoadedFiles = 0
+                        foreach ($domainFile in $domainFiles) {
+                            try {
+                                . $domainFile.FullName
+                                $domainLoadedFiles++
+                            } catch {
+                                Write-CustomLog -Message "Failed to load domain file $($domainFile.Name): $($_.Exception.Message)" -Level 'ERROR'
+                                throw
+                            }
                         }
-                        continue
+                        
+                        $script:LoadedDomains[$componentInfo.Name] = @{
+                            Path = $componentPath
+                            ImportTime = Get-Date
+                            Description = $componentInfo.Description
+                            FilesLoaded = $domainLoadedFiles
+                        }
+                        
+                        Write-CustomLog -Message "✓ Imported Domain: $($componentInfo.Name) ($domainLoadedFiles files)" -Level 'SUCCESS'
+                        
+                    } else {
+                        # Module loading - traditional PowerShell module
+                        if (-not (Test-Path $componentPath)) {
+                            Write-CustomLog -Message "Module path not found: $componentPath" -Level 'WARNING'
+                            $importResults.SkippedCount++
+                            $importResults.Details += @{
+                                Name = $componentInfo.Name
+                                Status = 'Path Not Found'
+                                Reason = "Path not found: $componentPath"
+                            }
+                            continue
+                        }
+
+                        # Check if module is already loaded
+                        if ($script:LoadedModules.ContainsKey($componentInfo.Name) -and -not $Force) {
+                            Write-CustomLog -Message "Module already loaded: $($componentInfo.Name)" -Level 'DEBUG'
+                            $importResults.SkippedCount++
+                            $importResults.Details += @{
+                                Name = $componentInfo.Name
+                                Status = 'Already Loaded'
+                                Reason = 'Previously imported'
+                                LoadTime = $script:LoadedModules[$componentInfo.Name].ImportTime
+                            }
+                            continue
+                        }
+
+                        # Import with Force only if explicitly requested or module not loaded
+                        $shouldForceImport = $Force -or -not (Get-Module -Name $componentInfo.Name -ErrorAction SilentlyContinue)
+
+                        Import-Module $componentPath -Force:$shouldForceImport -Global -ErrorAction Stop
+                        $script:LoadedModules[$componentInfo.Name] = @{
+                            Path = $componentPath
+                            ImportTime = Get-Date
+                            Description = $componentInfo.Description
+                        }
+
+                        Write-CustomLog -Message "✓ Imported Module: $($componentInfo.Name)" -Level 'SUCCESS'
                     }
-
-                    # Import with Force only if explicitly requested or module not loaded
-                    $shouldForceImport = $Force -or -not (Get-Module -Name $moduleInfo.Name -ErrorAction SilentlyContinue)
-
-                    Import-Module $modulePath -Force:$shouldForceImport -Global -ErrorAction Stop
-                    $script:LoadedModules[$moduleInfo.Name] = @{
-                        Path = $modulePath
-                        ImportTime = Get-Date
-                        Description = $moduleInfo.Description
-                    }
-
-                    Write-CustomLog -Message "✓ Imported: $($moduleInfo.Name)" -Level 'SUCCESS'
+                    
                     $importResults.ImportedCount++
                     $importResults.Details += @{
-                        Name = $moduleInfo.Name
+                        Name = $componentInfo.Name
                         Status = 'Imported'
-                        Reason = $moduleInfo.Description
+                        Reason = $componentInfo.Description
+                        Type = if ($isDomain) { 'Domain' } else { 'Module' }
                     }
 
                 } catch {
-                    Write-CustomLog -Message "✗ Failed to import $($moduleInfo.Name): $($_.Exception.Message)" -Level 'ERROR'
+                    Write-CustomLog -Message "✗ Failed to import $($componentInfo.Name): $($_.Exception.Message)" -Level 'ERROR'
                     $importResults.FailedCount++
                     $importResults.Details += @{
-                        Name = $moduleInfo.Name
+                        Name = $componentInfo.Name
                         Status = 'Failed'
                         Reason = $_.Exception.Message
                     }
                 }
             }
 
-            Write-CustomLog -Message "Module import complete: $($importResults.ImportedCount) imported, $($importResults.FailedCount) failed, $($importResults.SkippedCount) skipped" -Level 'INFO'
+            Write-CustomLog -Message "Domain/Module import complete: $($importResults.ImportedCount) imported, $($importResults.FailedCount) failed, $($importResults.SkippedCount) skipped" -Level 'INFO'
             return $importResults
         }
     }
@@ -556,38 +548,61 @@ if (-not (Get-Command Get-CoreModuleStatus -ErrorAction SilentlyContinue)) {
     function Get-CoreModuleStatus {
         <#
         .SYNOPSIS
-            Gets the status of all CoreApp modules
+            Gets the status of all CoreApp domains and modules
         .DESCRIPTION
-            Returns detailed information about module availability and load status
+            Returns detailed information about domain and module availability and load status
         #>
         [CmdletBinding()]
         param()
 
         process {
-            $moduleStatus = @()
+            $componentStatus = @()
 
-            foreach ($moduleInfo in $script:CoreModules) {
-                $modulePath = Join-Path $PSScriptRoot $moduleInfo.Path
-                $isLoaded = $script:LoadedModules.ContainsKey($moduleInfo.Name)
-                $isAvailable = Test-Path $modulePath
-
-                $status = @{
-                    Name = $moduleInfo.Name
-                    Description = $moduleInfo.Description
-                    Required = $moduleInfo.Required
-                    Available = $isAvailable
-                    Loaded = $isLoaded
-                    Path = $modulePath
+            foreach ($componentInfo in $script:CoreDomains) {
+                $componentPath = Join-Path $PSScriptRoot $componentInfo.Path
+                $isDomain = $componentInfo.Path -like "domains/*"
+                
+                if ($isDomain) {
+                    $isLoaded = $script:LoadedDomains.ContainsKey($componentInfo.Name)
+                    $isAvailable = Test-Path $componentPath
+                    
+                    $status = @{
+                        Name = $componentInfo.Name
+                        Description = $componentInfo.Description
+                        Required = $componentInfo.Required
+                        Available = $isAvailable
+                        Loaded = $isLoaded
+                        Path = $componentPath
+                        Type = 'Domain'
+                    }
+                    
+                    if ($isLoaded) {
+                        $status.LoadTime = $script:LoadedDomains[$componentInfo.Name].ImportTime
+                        $status.FilesLoaded = $script:LoadedDomains[$componentInfo.Name].FilesLoaded
+                    }
+                } else {
+                    $isLoaded = $script:LoadedModules.ContainsKey($componentInfo.Name)
+                    $isAvailable = Test-Path $componentPath
+                    
+                    $status = @{
+                        Name = $componentInfo.Name
+                        Description = $componentInfo.Description
+                        Required = $componentInfo.Required
+                        Available = $isAvailable
+                        Loaded = $isLoaded
+                        Path = $componentPath
+                        Type = 'Module'
+                    }
+                    
+                    if ($isLoaded) {
+                        $status.LoadTime = $script:LoadedModules[$componentInfo.Name].ImportTime
+                    }
                 }
 
-                if ($isLoaded) {
-                    $status.LoadTime = $script:LoadedModules[$moduleInfo.Name].ImportTime
-                }
-
-                $moduleStatus += $status
+                $componentStatus += $status
             }
 
-            return $moduleStatus
+            return $componentStatus
         }
     }
 }

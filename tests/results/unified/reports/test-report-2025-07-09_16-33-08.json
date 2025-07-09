@@ -1,0 +1,409 @@
+{
+  "Version": "1.0.0",
+  "Results": [
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "AIToolsIntegration",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    },
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "BackupManager",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    },
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "DevEnvironment",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    },
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "LicenseManager",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    },
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "Logging",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    },
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "ModuleCommunication",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    },
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "OrchestrationEngine",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    },
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "ParallelExecution",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    },
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "PatchManager",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    },
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "ProgressTracking",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    },
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "PSScriptAnalyzerIntegration",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    },
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "RemoteConnection",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    },
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "RepoSync",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    },
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "RestAPIServer",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    },
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "SemanticVersioning",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    },
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "SetupWizard",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    },
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "StartupExperience",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    },
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "TestingFramework",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    },
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "UnifiedMaintenance",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    },
+    {
+      "Duration": 0,
+      "Error": "Phase execution failed: The pipeline has been stopped.",
+      "Success": false,
+      "TestsFailed": 1,
+      "TestsPassed": 0,
+      "Module": "UtilityServices",
+      "Phase": "Unit",
+      "TestsRun": 0,
+      "Details": [
+        "Phase execution error: The pipeline has been stopped."
+      ]
+    }
+  ],
+  "GeneratedBy": "AitherZero TestingFramework",
+  "Summary": {
+    "SuccessfulModules": 0,
+    "FailedModules": 20,
+    "TotalSkipped": null,
+    "TotalTests": 0.0,
+    "TotalModules": 20,
+    "FastestModule": "AIToolsIntegration",
+    "TotalDuration": 0.0,
+    "AverageDuration": 0.0,
+    "TotalPassed": 0.0,
+    "TestSuite": "Unit",
+    "TotalFailed": 20.0,
+    "Timestamp": "2025-07-09T16:33:08.0866347+00:00",
+    "SlowestModule": "AIToolsIntegration",
+    "SuccessRate": 0
+  },
+  "FailureAnalysis": {
+    "ModulesWithFailures": [
+      {
+        "Module": "AIToolsIntegration",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "BackupManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "DevEnvironment",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "LicenseManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "Logging",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ModuleCommunication",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "OrchestrationEngine",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ParallelExecution",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "PatchManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ProgressTracking",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "PSScriptAnalyzerIntegration",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "RemoteConnection",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "RepoSync",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "RestAPIServer",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "SemanticVersioning",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "SetupWizard",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "StartupExperience",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "TestingFramework",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "UnifiedMaintenance",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "UtilityServices",
+        "TestsFailed": 1,
+        "FailureRate": null
+      }
+    ],
+    "CommonFailurePatterns": [
+      "Phase execution error: The pipeline has been stopped.",
+      "Phase execution error: The pipeline has been stopped.",
+      "Phase execution error: The pipeline has been stopped.",
+      "Phase execution error: The pipeline has been stopped.",
+      "Phase execution error: The pipeline has been stopped.",
+      "Phase execution error: The pipeline has been stopped.",
+      "Phase execution error: The pipeline has been stopped.",
+      "Phase execution error: The pipeline has been stopped.",
+      "Phase execution error: The pipeline has been stopped.",
+      "Phase execution error: The pipeline has been stopped.",
+      "Phase execution error: The pipeline has been stopped.",
+      "Phase execution error: The pipeline has been stopped.",
+      "Phase execution error: The pipeline has been stopped.",
+      "Phase execution error: The pipeline has been stopped.",
+      "Phase execution error: The pipeline has been stopped.",
+      "Phase execution error: The pipeline has been stopped.",
+      "Phase execution error: The pipeline has been stopped.",
+      "Phase execution error: The pipeline has been stopped.",
+      "Phase execution error: The pipeline has been stopped.",
+      "Phase execution error: The pipeline has been stopped."
+    ],
+    "CriticalFailures": []
+  }
+}
