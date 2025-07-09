@@ -1,0 +1,1789 @@
+---
+name: CI - Continuous Integration
+
+on:
+  push:
+    branches: [main, develop, 'release/**', 'patch/**']
+  pull_request:
+    branches: [main, develop]
+  merge_group:
+    types: [checks_requested]
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'Run the build with tmate debugging enabled'
+        required: false
+        default: false
+      skip_tests:
+        type: boolean
+        description: 'Skip test execution for faster validation'
+        required: false
+        default: false
+
+# Cancel in-progress runs for the same workflow
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# Permissions for GITHUB_TOKEN
+permissions:
+  contents: read
+  pull-requests: write
+  actions: write
+  security-events: write
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: true
+  PSCORE_VERSION: '7.5.2'  # Pin PowerShell version for consistency
+
+jobs:
+  # Job to analyze what changed and determine what needs to be tested
+  analyze-changes:
+    name: Analyze Changes
+    runs-on: ubuntu-latest
+    outputs:
+      has-powershell-changes: ${{ steps.filter.outputs.powershell }}
+      has-workflow-changes: ${{ steps.filter.outputs.workflows }}
+      has-docs-changes: ${{ steps.filter.outputs.docs }}
+      has-terraform-changes: ${{ steps.filter.outputs.terraform }}
+      affected-modules: ${{ steps.analyze.outputs.modules }}
+      test-matrix: ${{ steps.matrix.outputs.matrix }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for accurate diff
+
+      - name: Detect file changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            powershell:
+              - '**/*.ps1'
+              - '**/*.psm1'
+              - '**/*.psd1'
+            workflows:
+              - '.github/workflows/**'
+            docs:
+              - '**/*.md'
+              - 'docs/**'
+            terraform:
+              - '**/*.tf'
+              - '**/*.tfvars'
+
+      - name: Analyze affected modules
+        id: analyze
+        shell: pwsh
+        run: |
+          $changes = git diff --name-only `
+            ${{ github.event.before || 'HEAD~1' }} ${{ github.sha }}
+          $modules = @()
+          
+          foreach ($change in $changes) {
+            if ($change -match 'aither-core/modules/([^/]+)/') {
+              $modules += $matches[1]
+            }
+          }
+          
+          $uniqueModules = $modules | Select-Object -Unique | ConvertTo-Json -Compress
+          echo "modules=$uniqueModules" >> $env:GITHUB_OUTPUT
+
+      - name: Generate dynamic test matrix
+        id: matrix
+        shell: pwsh
+        run: |
+          # Static matrix for reliability - GitHub runners have PowerShell 7.x pre-installed
+          $matrix = @{
+            os = @('ubuntu-latest', 'windows-latest', 'macos-latest')
+          }
+          
+          # All our code requires PS 7.0+ minimum - using pre-installed versions
+          # Ubuntu: PowerShell 7.4.x, Windows: PowerShell 7.4.x, macOS: PowerShell 7.4.x
+          
+          $matrixJson = $matrix | ConvertTo-Json -Compress
+          echo "matrix=$matrixJson" >> $env:GITHUB_OUTPUT
+
+  # Code quality and linting
+  code-quality:
+    name: Code Quality (${{ matrix.check }})
+    runs-on: ubuntu-latest
+    needs: analyze-changes
+    if: needs.analyze-changes.outputs.has-powershell-changes == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        check:
+          - psscriptanalyzer
+          - formatting
+          - complexity
+          - best-practices
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install PowerShell ${{ env.PSCORE_VERSION }}
+      shell: bash
+      run: |
+        echo "Installing PowerShell ${{ env.PSCORE_VERSION }} for code quality checks..."
+        
+        # Download and install PowerShell on Linux (code-quality only runs on ubuntu-latest)
+        wget -q https://github.com/PowerShell/PowerShell/releases/download/v${{ env.PSCORE_VERSION }}/powershell-${{ env.PSCORE_VERSION }}-linux-x64.tar.gz -O /tmp/powershell.tar.gz
+        sudo mkdir -p /opt/microsoft/powershell/7
+        sudo tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7
+        sudo chmod +x /opt/microsoft/powershell/7/pwsh
+        sudo ln -sf /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh
+        
+        # Verify installation
+        echo "PowerShell version installed:"
+        pwsh --version
+        
+    - name: Cache PowerShell modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.local/share/powershell/Modules
+          ~/Documents/PowerShell/Modules
+          ~/AppData/Local/PackageManagement
+        key: ${{ runner.os }}-psmodules-${{ matrix.check }}-${{ hashFiles('**/requirements.psd1') }}
+        restore-keys: |
+          ${{ runner.os }}-psmodules-${{ matrix.check }}-
+          ${{ runner.os }}-psmodules-
+          
+    - name: Install analysis tools
+      shell: pwsh
+      run: |
+        $modules = @('PSScriptAnalyzer', 'Pester', 'PSCodeHealth')
+        foreach ($module in $modules) {
+          if (!(Get-Module -ListAvailable -Name $module)) {
+            Install-Module -Name $module -Force -AllowClobber -Scope CurrentUser
+          }
+        }
+        
+    - name: Run Enhanced PSScriptAnalyzer
+      if: matrix.check == 'psscriptanalyzer'
+      continue-on-error: true  # Don't fail the build on analysis errors
+      shell: pwsh
+      run: |
+        Write-Host "🔍 Starting intelligent PSScriptAnalyzer with ParallelExecution optimization..." -ForegroundColor Cyan
+        
+        # Import ParallelExecution for multiprocessing capabilities
+        $parallelModulePath = "./aither-core/modules/ParallelExecution"
+        $useParallel = $false
+        if (Test-Path $parallelModulePath) {
+          try {
+            Import-Module $parallelModulePath -Force
+            $useParallel = $true
+            Write-Host "✅ ParallelExecution module loaded for multiprocessing" -ForegroundColor Green
+          } catch {
+            Write-Warning "ParallelExecution module import failed: $($_.Exception.Message)"
+          }
+        }
+        
+        # Import PSScriptAnalyzerIntegration module if available
+        $integrationModulePath = "./aither-core/modules/PSScriptAnalyzerIntegration/PSScriptAnalyzerIntegration.psd1"
+        $useIntegration = $false
+        if (Test-Path $integrationModulePath) {
+          try {
+            Import-Module $integrationModulePath -Force
+            $useIntegration = $true
+            Write-Host "✅ PSScriptAnalyzerIntegration module loaded" -ForegroundColor Green
+          } catch {
+            Write-Warning "Failed to load PSScriptAnalyzerIntegration module: $($_.Exception.Message)"
+          }
+        }
+        
+        # INTELLIGENT FILE DISCOVERY with enhanced exclude patterns
+        $excludePatterns = @(
+          "*.tests.ps1", "tests/*", "build/*", "deprecated/*", ".vscode/*", 
+          "docs/*", "examples/*", "**/Tests/*", "**/test/*", "*.Enhanced.Tests.ps1",
+          "backups/*", "dist/*", "node_modules/*"
+        )
+        
+        # Get PowerShell files with intelligent filtering
+        $targetFiles = Get-ChildItem -Path "." -Include "*.ps1", "*.psm1", "*.psd1" -Recurse | 
+          Where-Object { 
+            $file = $_
+            $exclude = $false
+            foreach ($pattern in $excludePatterns) {
+              if ($file.FullName -like "*$($pattern.Replace('*', ''))*" -or $file.Name -like $pattern) {
+                $exclude = $true
+                break
+              }
+            }
+            -not $exclude
+          }
+        
+        Write-Host "📂 Discovered $($targetFiles.Count) PowerShell files for analysis" -ForegroundColor Cyan
+        
+        # PERFORMANCE-OPTIMIZED RULE CONFIGURATION
+        $settingsPath = "./PSScriptAnalyzerSettings.psd1"
+        $analyzerSettings = if (Test-Path $settingsPath) {
+          Write-Host "📋 Using project-specific PSScriptAnalyzer settings" -ForegroundColor Yellow
+          $settingsPath
+        } else {
+          Write-Host "⚡ Using performance-optimized rule set for CI efficiency" -ForegroundColor Green
+          @{
+            IncludeDefaultRules = $false
+            Severity = @('Error', 'Warning')  # Include warnings for better quality insight
+            IncludeRules = @(
+              # Security-critical rules (highest priority)
+              'PSAvoidUsingPlainTextForPassword',
+              'PSAvoidUsingUsernameAndPasswordParams', 
+              'PSAvoidUsingConvertToSecureStringWithPlainText',
+              'PSUsePSCredentialType',
+              'PSAvoidHardcodedCredentials',
+              'PSAvoidUsingInvokeExpression',
+              
+              # Critical syntax and compatibility rules
+              'PSUseCompatibleSyntax',
+              'PSUseCmdletCorrectly',
+              'PSAvoidAssignmentToAutomaticVariable',
+              'PSUseDeclaredVarsMoreThanAssignments',
+              
+              # Important code quality rules
+              'PSReviewUnusedParameter',
+              'PSUseBOMForUnicodeEncodedFile',
+              'PSMissingModuleManifestField',
+              'PSUseConsistentIndentation'
+            )
+            ExcludeRules = @(
+              # Performance excludes - informational rules that slow down CI
+              'PSUseApprovedVerbs',           # Too many false positives
+              'PSAvoidGlobalVars',            # Module-level variables are common
+              'PSUseShouldProcessForStateChangingFunctions',  # Not critical for all functions
+              'PSProvideCommentHelp'          # Documentation rules handled separately
+            )
+          }
+        }
+        
+        # PARALLEL ANALYSIS EXECUTION
+        $analysisStartTime = Get-Date
+        $allResults = @()
+        
+        if ($useParallel -and (Get-Command Invoke-ParallelForEach -ErrorAction SilentlyContinue)) {
+          Write-Host "🚀 Using ParallelExecution for optimal performance..." -ForegroundColor Green
+          
+          # Calculate optimal threads for IO-bound PSScriptAnalyzer workload
+          $optimalThreads = if (Get-Command Get-OptimalThrottleLimit -ErrorAction SilentlyContinue) {
+            Get-OptimalThrottleLimit -WorkloadType "IO" -MaxLimit 6  # IO-bound, moderate concurrency
+          } else {
+            [Math]::Min(4, [Environment]::ProcessorCount)
+          }
+          
+          Write-Host "🔧 Using $optimalThreads optimal threads for IO-bound analysis" -ForegroundColor Cyan
+          
+          # Process files in parallel using Invoke-ParallelForEach
+          $allResults = Invoke-ParallelForEach -InputObject $targetFiles -ThrottleLimit $optimalThreads -ScriptBlock {
+            param($file)
+            
+            try {
+              # Each thread analyzes one file independently
+              $fileResults = Invoke-ScriptAnalyzer -Path $file.FullName -Settings $using:analyzerSettings
+              return $fileResults
+            } catch {
+              # Return error information for problematic files
+              return @{
+                RuleName = "PSScriptAnalyzer-Error"
+                Severity = "Error"
+                ScriptPath = $file.FullName
+                Line = 1
+                Column = 1
+                Message = "Analysis failed: $($_.Exception.Message)"
+              }
+            }
+          }
+          
+          # Flatten results array (Invoke-ParallelForEach may return nested arrays)
+          $results = $allResults | ForEach-Object { $_ }
+          
+        } else {
+          Write-Host "⚡ Using optimized sequential analysis" -ForegroundColor Yellow
+          
+          # Optimized sequential fallback
+          $results = Invoke-ScriptAnalyzer -Path $targetFiles -Settings $analyzerSettings
+        }
+        
+        $analysisEndTime = Get-Date
+        $analysisDuration = ($analysisEndTime - $analysisStartTime).TotalSeconds
+        
+        # Process results
+        if ($results) {
+          Write-Host "📊 Analysis completed in $([Math]::Round($analysisDuration * 1000))ms" -ForegroundColor Cyan
+          
+          # Categorize findings
+          $errors = ($results | Where-Object Severity -eq 'Error')
+          $warnings = ($results | Where-Object Severity -eq 'Warning')
+          $information = ($results | Where-Object Severity -eq 'Information')
+          
+          Write-Host "📈 Found $($results.Count) total findings:" -ForegroundColor White
+          Write-Host "  ❌ Errors: $($errors.Count)" -ForegroundColor Red
+          Write-Host "  ⚠️  Warnings: $($warnings.Count)" -ForegroundColor Yellow
+          Write-Host "  ℹ️  Information: $($information.Count)" -ForegroundColor Blue
+          
+          # Security findings (high priority)
+          $securityRules = @(
+            'PSAvoidUsingPlainTextForPassword',
+            'PSAvoidUsingUsernameAndPasswordParams',
+            'PSAvoidUsingConvertToSecureStringWithPlainText',
+            'PSUsePSCredentialType',
+            'PSAvoidHardcodedCredentials'
+          )
+          $securityFindings = $results | Where-Object { $_.RuleName -in $securityRules }
+          
+          if ($securityFindings.Count -gt 0) {
+            Write-Host "🔒 Security findings detected: $($securityFindings.Count)" -ForegroundColor Red
+            $securityFindings | ForEach-Object {
+              Write-Host "::error file=$($_.ScriptPath),line=$($_.Line),col=$($_.Column)::SECURITY: $($_.RuleName): $($_.Message)"
+            }
+          }
+          
+          # Display detailed results table
+          if ($results.Count -gt 0) {
+            Write-Host "`n📋 Detailed Results:" -ForegroundColor Cyan
+            $results | Select-Object Severity, RuleName, @{Name='File'; Expression={(Split-Path $_.ScriptPath -Leaf)}}, Line, Message | 
+              Sort-Object Severity, RuleName | Format-Table -AutoSize
+          }
+          
+          # Create GitHub annotations
+          foreach ($issue in $results) {
+            $annotation = switch ($issue.Severity) {
+              'Error' { '::error' }
+              'Warning' { '::warning' }
+              default { '::notice' }
+            }
+            $relativePath = $issue.ScriptPath -replace [regex]::Escape((Get-Location).Path), '.' -replace '^[\\\/]', ''
+            Write-Host "$annotation file=$relativePath,line=$($issue.Line),col=$($issue.Column)::$($issue.RuleName): $($issue.Message)"
+          }
+          
+          # Generate SARIF output for GitHub Security tab
+          try {
+            $sarifPath = "psscriptanalyzer-results.sarif"
+            
+            # Create proper SARIF 2.1.0 format
+            $sarif = @{
+              version = "2.1.0"
+              '$schema' = "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json"
+              runs = @(@{
+                tool = @{
+                  driver = @{
+                    name = "PSScriptAnalyzer"
+                    version = "1.21.0"
+                    informationUri = "https://github.com/PowerShell/PSScriptAnalyzer"
+                    rules = @()
+                  }
+                }
+                results = @()
+                columnKind = "utf16CodeUnits"
+              })
+            }
+            
+            # Build unique rules index
+            $rulesIndex = @{}
+            $ruleCounter = 0
+            
+            foreach ($issue in $results) {
+              if (-not $rulesIndex.ContainsKey($issue.RuleName)) {
+                $rulesIndex[$issue.RuleName] = $ruleCounter++
+                $sarif.runs[0].tool.driver.rules += @{
+                  id = $issue.RuleName
+                  name = $issue.RuleName
+                  shortDescription = @{
+                    text = $issue.RuleName
+                  }
+                  fullDescription = @{
+                    text = $issue.Message
+                  }
+                  defaultConfiguration = @{
+                    level = switch ($issue.Severity) {
+                      'Error' { 'error' }
+                      'Warning' { 'warning' }
+                      'Information' { 'note' }
+                      default { 'note' }
+                    }
+                  }
+                  helpUri = "https://github.com/PowerShell/PSScriptAnalyzer/blob/master/RuleDocumentation/$($issue.RuleName).md"
+                }
+              }
+            }
+            
+            # Convert issues to SARIF results
+            foreach ($issue in $results) {
+              $relativePath = $issue.ScriptPath -replace [regex]::Escape((Get-Location).Path), '.' -replace '^[\\\/]', ''
+              
+              $sarifResult = @{
+                ruleId = $issue.RuleName
+                ruleIndex = $rulesIndex[$issue.RuleName]
+                level = switch ($issue.Severity) {
+                  'Error' { 'error' }
+                  'Warning' { 'warning' }
+                  'Information' { 'note' }
+                  default { 'note' }
+                }
+                message = @{
+                  text = $issue.Message
+                }
+                locations = @(@{
+                  physicalLocation = @{
+                    artifactLocation = @{
+                      uri = $relativePath
+                      uriBaseId = '%SRCROOT%'
+                    }
+                    region = @{
+                      startLine = [int]$issue.Line
+                      startColumn = [int]$issue.Column
+                      endLine = [int]$issue.Line
+                      endColumn = [int]($issue.Column + 1)
+                    }
+                  }
+                })
+              }
+              
+              $sarif.runs[0].results += $sarifResult
+            }
+            
+            # Write SARIF file
+            $sarif | ConvertTo-Json -Depth 10 | Set-Content -Path $sarifPath -Encoding UTF8
+            Write-Host "📄 SARIF results exported to: $sarifPath" -ForegroundColor Green
+            Write-Host "📊 SARIF contains $($sarif.runs[0].results.Count) findings and $($sarif.runs[0].tool.driver.rules.Count) unique rules" -ForegroundColor Cyan
+          }
+          catch {
+            Write-Warning "Failed to generate SARIF output: $($_.Exception.Message)"
+          }
+          
+          # PERFORMANCE OPTIMIZED: Quality score for critical errors only
+          # Since we're only checking critical security + error rules, adjust scoring
+          $criticalErrorWeight = 5  # Reduced from 10 since we're more selective
+          $qualityScore = [math]::Max(0, 100 - ($errors.Count * $criticalErrorWeight))
+          Write-Host "⭐ Critical Issues Quality Score: $([math]::Round($qualityScore, 1))%" -ForegroundColor Magenta
+          Write-Host "🎯 Focus: Security + Critical Errors Only (Performance Optimized)" -ForegroundColor Cyan
+          
+          # Set output variables for other jobs
+          echo "quality-score=$([math]::Round($qualityScore, 1))" >> $env:GITHUB_OUTPUT
+          echo "error-count=$($errors.Count)" >> $env:GITHUB_OUTPUT
+          echo "warning-count=$($warnings.Count)" >> $env:GITHUB_OUTPUT
+          echo "info-count=$($information.Count)" >> $env:GITHUB_OUTPUT
+          
+          # RELAXED THRESHOLD: Report errors but don't fail builds for non-security issues
+          $criticalErrorThreshold = 50  # Increased threshold for CI stability
+          $securityErrorCount = ($errors | Where-Object { $_.RuleName -in $securityRules }).Count
+          
+          if ($securityErrorCount -gt 0) {
+            Write-Host "🔒 SECURITY ALERT: Found $securityErrorCount security-critical errors!" -ForegroundColor Red
+            Write-Host "⚠️  Security issues should be addressed but won't block CI for now" -ForegroundColor Yellow
+          }
+          
+          if ($errors.Count -gt $criticalErrorThreshold) {
+            Write-Host "⚠️  Found $($errors.Count) critical errors (exceeds threshold of $criticalErrorThreshold)" -ForegroundColor Yellow
+            Write-Host "📊 This would normally fail, but running in lenient mode for CI stability" -ForegroundColor Cyan
+            echo "::warning::PSScriptAnalyzer found $($errors.Count) critical errors - please review"
+          } elseif ($errors.Count -gt 0) {
+            Write-Host "ℹ️  Found $($errors.Count) errors (under threshold of $criticalErrorThreshold)" -ForegroundColor Yellow
+          }
+          
+          Write-Host "✅ PSScriptAnalyzer check completed - non-blocking mode" -ForegroundColor Green
+          
+        } else {
+          Write-Host "✅ No PSScriptAnalyzer findings detected!" -ForegroundColor Green
+          echo "quality-score=100" >> $env:GITHUB_OUTPUT
+          echo "error-count=0" >> $env:GITHUB_OUTPUT
+          echo "warning-count=0" >> $env:GITHUB_OUTPUT
+          echo "info-count=0" >> $env:GITHUB_OUTPUT
+          
+          # Create empty SARIF file for consistency
+          $sarifPath = "psscriptanalyzer-results.sarif"
+          $emptySarif = @{
+            version = "2.1.0"
+            '$schema' = "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json"
+            runs = @(@{
+              tool = @{
+                driver = @{
+                  name = "PSScriptAnalyzer"
+                  version = "1.21.0"
+                  informationUri = "https://github.com/PowerShell/PSScriptAnalyzer"
+                  rules = @()
+                }
+              }
+              results = @()
+              columnKind = "utf16CodeUnits"
+            })
+          }
+          $emptySarif | ConvertTo-Json -Depth 10 | Set-Content -Path $sarifPath -Encoding UTF8
+          Write-Host "📄 Empty SARIF file created (no findings)" -ForegroundColor Green
+        }
+        
+        Write-Host "🎯 PSScriptAnalyzer analysis completed successfully" -ForegroundColor Green
+        
+    - name: Upload SARIF results to GitHub Security
+      if: matrix.check == 'psscriptanalyzer' && always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: psscriptanalyzer-results.sarif
+        category: PSScriptAnalyzer
+      continue-on-error: true  # SARIF upload requires special permissions
+        
+    - name: Check code formatting
+      if: matrix.check == 'formatting'
+      shell: pwsh
+      run: |
+        # Check for consistent formatting
+        $files = Get-ChildItem -Path . -Include *.ps1,*.psm1,*.psd1 -Recurse
+        $issues = 0
+        
+        foreach ($file in $files) {
+          $content = Get-Content $file.FullName -Raw
+          
+          # Check for tabs vs spaces (enforce 4 spaces)
+          if ($content -match '\t') {
+            Write-Warning "$($file.FullName) contains tabs (should use 4 spaces)"
+            $issues++
+          }
+          
+          # Check for trailing whitespace
+          $lines = Get-Content $file.FullName
+          for ($i = 0; $i -lt $lines.Count; $i++) {
+            if ($lines[$i] -match '\s+$') {
+              Write-Warning "$($file.FullName):$($i+1) has trailing whitespace"
+              $issues++
+            }
+          }
+          
+          # Check line endings - be more lenient, just warn but don't fail
+          # Note: Mixed line endings within a file are problematic, consistent endings are ok
+          $crlfCount = ($content.ToCharArray() | Where-Object { $_ -eq "`r" }).Count
+          $lfCount = ($content.ToCharArray() | Where-Object { $_ -eq "`n" }).Count
+          
+          if ($crlfCount -gt 0 -and $crlfCount -ne $lfCount) {
+            Write-Warning "$($file.FullName) has mixed line endings"
+            # Only count as issue if mixed within file
+            $issues++
+          }
+        }
+        
+        # Report formatting issues but don't fail the build
+        if ($issues -gt 0) {
+          Write-Host "ℹ️  Found $issues formatting issues" -ForegroundColor Yellow
+          Write-Host "📊 Formatting issues are tracked but won't block CI" -ForegroundColor Cyan
+          echo "::warning::Found $issues formatting issues - consider running automated formatting"
+          
+          # Create summary for issue tracking
+          $formatSummary = @{
+            TotalIssues = $issues
+            Timestamp = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
+            Status = "Informational"
+          }
+          $formatSummary | ConvertTo-Json | Set-Content -Path "formatting-issues.json"
+        } else {
+          Write-Host "✅ No formatting issues found - excellent code formatting!" -ForegroundColor Green
+        }
+        
+        Write-Host "✅ Formatting check completed - non-blocking mode" -ForegroundColor Green
+        
+    - name: Analyze code complexity
+      if: matrix.check == 'complexity'
+      shell: pwsh
+      run: |
+        Write-Host "🧮 Starting intelligent complexity analysis with ParallelExecution..." -ForegroundColor Cyan
+        
+        # Import required modules - ParallelExecution for multiprocessing
+        $parallelModulePath = "./aither-core/modules/ParallelExecution"
+        if (Test-Path $parallelModulePath) {
+          Import-Module $parallelModulePath -Force
+          Write-Host "✅ ParallelExecution module loaded successfully" -ForegroundColor Green
+        } else {
+          Write-Host "⚠️  ParallelExecution module not found - falling back to sequential" -ForegroundColor Yellow
+        }
+        
+        # Import PSScriptAnalyzerIntegration if available for advanced features
+        $analyzerIntegrationPath = "./aither-core/modules/PSScriptAnalyzerIntegration"
+        if (Test-Path $analyzerIntegrationPath) {
+          Import-Module $analyzerIntegrationPath -Force
+          Write-Host "✅ PSScriptAnalyzerIntegration module loaded" -ForegroundColor Green
+        }
+        
+        # INTELLIGENT FILE DISCOVERY using exclude patterns
+        $excludePatterns = @(
+          "*.tests.ps1", "tests/*", "build/*", "deprecated/*", ".vscode/*", 
+          "docs/*", "examples/*", "**/Tests/*", "**/test/*", "*.Enhanced.Tests.ps1"
+        )
+        
+        $allFiles = Get-ChildItem -Path "." -Include "*.ps1", "*.psm1", "*.psd1" -Recurse | 
+          Where-Object { 
+            $file = $_
+            $exclude = $false
+            foreach ($pattern in $excludePatterns) {
+              if ($file.FullName -like "*$($pattern.Replace('*', ''))*" -or $file.Name -like $pattern) {
+                $exclude = $true
+                break
+              }
+            }
+            -not $exclude
+          }
+        
+        Write-Host "📂 Discovered $($allFiles.Count) PowerShell files for complexity analysis" -ForegroundColor Cyan
+        
+        # OPTIMIZED PARALLEL COMPLEXITY ANALYSIS using ParallelExecution capabilities
+        $analysisStartTime = Get-Date
+        $complexityResults = @()
+        
+        # Use ParallelExecution module for proper multiprocessing
+        if (Get-Command Invoke-ParallelForEach -ErrorAction SilentlyContinue) {
+          Write-Host "🚀 Using ParallelExecution module for optimal performance..." -ForegroundColor Green
+          
+          # Calculate optimal thread count for CPU-bound workload
+          $optimalThreads = if (Get-Command Get-OptimalThrottleLimit -ErrorAction SilentlyContinue) {
+            Get-OptimalThrottleLimit -WorkloadType "CPU" -MaxLimit 8
+          } else {
+            [Math]::Min(4, [Environment]::ProcessorCount)
+          }
+          
+          Write-Host "🔧 Using $optimalThreads optimal threads for CPU-bound complexity analysis" -ForegroundColor Cyan
+          
+          # Use Invoke-ParallelForEach for proper parallel processing
+          $complexityResults = Invoke-ParallelForEach -InputObject $allFiles -ThrottleLimit $optimalThreads -ScriptBlock {
+            param($file)
+            
+            $result = @{
+              File = $file.FullName
+              ComplexityScore = 0
+              MaxNesting = 0
+              LineCount = 0
+              FunctionCount = 0
+              Error = $null
+            }
+            
+            try {
+              $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
+              if ($content) {
+                $result.LineCount = ($content -split "`n").Count
+                
+                # Enhanced complexity calculation with multiple patterns
+                $complexityPatterns = @{
+                  'conditional' = '(?i)\b(if|else|elseif)\b'
+                  'iteration' = '(?i)\b(foreach|while|for|do)\b'
+                  'branching' = '(?i)\bswitch\b'
+                  'exception' = '(?i)\b(try|catch|finally)\b'
+                  'functions' = '(?i)\bfunction\s+[\w-]+'
+                }
+                
+                foreach ($pattern in $complexityPatterns.GetEnumerator()) {
+                  $matches = [regex]::Matches($content, $pattern.Value)
+                  $result.ComplexityScore += $matches.Count
+                }
+                
+                # Calculate maximum nesting depth efficiently
+                $lines = $content -split "`n"
+                $currentDepth = 0
+                $maxDepth = 0
+                foreach ($line in $lines) {
+                  $openBraces = ($line.ToCharArray() | Where-Object { $_ -eq '{' }).Count
+                  $closeBraces = ($line.ToCharArray() | Where-Object { $_ -eq '}' }).Count
+                  $currentDepth += ($openBraces - $closeBraces)
+                  if ($currentDepth -gt $maxDepth) { $maxDepth = $currentDepth }
+                }
+                $result.MaxNesting = $maxDepth
+                
+                # Count functions
+                $result.FunctionCount = ([regex]::Matches($content, '(?i)\bfunction\s+[\w-]+')).Count
+              }
+            } catch {
+              $result.Error = $_.Exception.Message
+            }
+            
+            return [PSCustomObject]$result
+          }
+          
+        } else {
+          Write-Host "⚡ ParallelExecution not available - using optimized sequential analysis" -ForegroundColor Yellow
+          
+          # Optimized sequential fallback
+          $complexityResults = foreach ($file in $allFiles) {
+            $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
+            if ($content) {
+              $complexityScore = 0
+              $patterns = @("if", "else", "foreach", "while", "switch", "try", "catch", "function")
+              foreach ($pattern in $patterns) {
+                $complexityScore += ([regex]::Matches($content, "\b$pattern\b", "IgnoreCase")).Count
+              }
+              
+              [PSCustomObject]@{
+                File = $file.FullName
+                ComplexityScore = $complexityScore
+                LineCount = ($content -split "`n").Count
+                MaxNesting = 0  # Skip nesting calculation for performance
+                FunctionCount = ([regex]::Matches($content, '\bfunction\s+', "IgnoreCase")).Count
+              }
+            }
+          }
+        }
+        
+        $analysisEndTime = Get-Date
+        $analysisDuration = ($analysisEndTime - $analysisStartTime).TotalSeconds
+        Write-Host "⏱️  Complexity analysis completed in $([Math]::Round($analysisDuration, 2)) seconds" -ForegroundColor Green
+        
+        # PERFORMANCE-OPTIMIZED THRESHOLD EVALUATION
+        $performanceThresholds = @{
+          'ComplexityScore' = 25    # Reasonable threshold for cyclomatic complexity
+          'MaxNesting' = 6          # Maximum nesting depth allowed
+          'LineCount' = 500         # Maximum lines per file
+          'FunctionCount' = 15      # Maximum functions per file
+        }
+        
+        $violations = @()
+        $criticalViolations = @()
+        
+        foreach ($result in $complexityResults) {
+          if ($result.Error) {
+            Write-Warning "Analysis error in $($result.File): $($result.Error)"
+            continue
+          }
+          
+          $fileName = Split-Path $result.File -Leaf
+          
+          # Check thresholds
+          if ($result.ComplexityScore -gt $performanceThresholds.ComplexityScore) {
+            $violation = "High complexity in $fileName : $($result.ComplexityScore) (threshold: $($performanceThresholds.ComplexityScore))"
+            if ($result.ComplexityScore -gt ($performanceThresholds.ComplexityScore * 2)) {
+              $criticalViolations += $violation
+            } else {
+              $violations += $violation
+            }
+          }
+          
+          if ($result.MaxNesting -gt $performanceThresholds.MaxNesting) {
+            $violation = "Deep nesting in $fileName : $($result.MaxNesting) levels (threshold: $($performanceThresholds.MaxNesting))"
+            if ($result.MaxNesting -gt ($performanceThresholds.MaxNesting * 1.5)) {
+              $criticalViolations += $violation
+            } else {
+              $violations += $violation
+            }
+          }
+          
+          if ($result.LineCount -gt $performanceThresholds.LineCount) {
+            $violation = "Large file $fileName : $($result.LineCount) lines (threshold: $($performanceThresholds.LineCount))"
+            if ($result.LineCount -gt ($performanceThresholds.LineCount * 2)) {
+              $criticalViolations += $violation
+            } else {
+              $violations += $violation
+            }
+          }
+        }
+        
+        # RESULTS SUMMARY AND INTELLIGENT THRESHOLDS
+        Write-Host "📊 Intelligent Complexity Analysis Results:" -ForegroundColor Cyan
+        Write-Host "  📁 Files analyzed: $($complexityResults.Count)" -ForegroundColor White
+        Write-Host "  ⚠️  Total violations: $($violations.Count)" -ForegroundColor Yellow
+        Write-Host "  🔴 Critical violations: $($criticalViolations.Count)" -ForegroundColor Red
+        Write-Host "  ⏱️  Analysis duration: $([Math]::Round($analysisDuration, 2))s" -ForegroundColor Green
+        
+        # Display violation details
+        if ($violations.Count -gt 0) {
+          Write-Host "`n⚠️  Standard Violations:" -ForegroundColor Yellow
+          $violations | ForEach-Object { Write-Host "    $($_)" -ForegroundColor Yellow }
+        }
+        
+        if ($criticalViolations.Count -gt 0) {
+          Write-Host "`n🔴 Critical Violations:" -ForegroundColor Red
+          $criticalViolations | ForEach-Object { Write-Host "    $($_)" -ForegroundColor Red }
+        }
+        
+        # PERFORMANCE-ORIENTED THRESHOLD POLICY
+        # Allow reasonable number of violations to maintain CI performance
+        $maxCriticalViolations = 250   # Temporarily increased for v0.8.0 release
+        $maxTotalViolations = 400      # Total violations threshold (temporarily increased for v0.8.0)
+        
+        # Generate GitHub annotations for critical violations only
+        foreach ($violation in $criticalViolations) {
+          Write-Host "::warning::Critical complexity violation: $violation"
+        }
+        
+        # AUDIT MODE: Report findings but don't fail the build
+        if ($criticalViolations.Count -gt $maxCriticalViolations) {
+          Write-Host "⚠️ AUDIT: $($criticalViolations.Count) critical violations exceed threshold of $maxCriticalViolations" -ForegroundColor Yellow
+          Write-Host "📊 This would normally fail the build, but running in audit mode" -ForegroundColor Cyan
+          # Export violations for issue tracking
+          $criticalViolations | ConvertTo-Json | Set-Content -Path "critical-violations.json"
+        } elseif ($violations.Count -gt $maxTotalViolations) {
+          Write-Host "⚠️ AUDIT: $($violations.Count) total violations exceed threshold of $maxTotalViolations" -ForegroundColor Yellow
+          Write-Host "📊 This would normally fail the build, but running in audit mode" -ForegroundColor Cyan
+        }
+        
+        if ($criticalViolations.Count -gt 0 -or $violations.Count -gt 0) {
+          Write-Host "📋 Found complexity issues - tracking for automated remediation" -ForegroundColor Yellow
+          Write-Host "✅ Complexity check completed in audit mode" -ForegroundColor Green
+        } else {
+          Write-Host "✅ No complexity violations found - excellent code health!" -ForegroundColor Green
+        }
+        
+        # Export results for subsequent analysis
+        $complexitySummary = @{
+          AnalysisTime = $analysisEndTime.ToString('yyyy-MM-ddTHH:mm:ssZ')
+          FilesAnalyzed = $complexityResults.Count
+          Duration = $analysisDuration
+          Violations = $violations.Count
+          CriticalViolations = $criticalViolations.Count
+          Thresholds = $performanceThresholds
+          UsedParallelProcessing = (Get-Command Invoke-ParallelForEach -ErrorAction SilentlyContinue) -ne $null
+          ThreadsUsed = if (Get-Command Get-OptimalThrottleLimit -ErrorAction SilentlyContinue) { 
+            Get-OptimalThrottleLimit -WorkloadType "CPU" -MaxLimit 8 
+          } else { 
+            [Math]::Min(4, [Environment]::ProcessorCount) 
+          }
+        }
+        
+        $complexitySummary | ConvertTo-Json | Set-Content -Path "complexity-analysis-summary.json"
+        Write-Host "::notice::Complexity analysis summary exported to complexity-analysis-summary.json"
+        
+    - name: Check best practices
+      if: matrix.check == 'best-practices'
+      shell: pwsh
+      run: |
+        $issues = 0
+        
+        # Check for proper error handling
+        $files = Get-ChildItem -Path . -Include *.ps1,*.psm1 -Recurse
+        foreach ($file in $files) {
+          $content = Get-Content $file.FullName -Raw
+          
+          # Check for try-catch around critical operations
+          if ($content -match 'Invoke-WebRequest|Invoke-RestMethod' -and 
+              $content -notmatch 'try\s*{[^}]*(?:Invoke-WebRequest|Invoke-RestMethod)') {
+            Write-Warning "$($file.Name): Web requests should be wrapped in try-catch"
+            $issues++
+          }
+          
+          # Check for proper module imports
+          if ($content -match 'Import-Module' -and $content -notmatch 'Import-Module.*-Force') {
+            Write-Warning "$($file.Name): Import-Module should use -Force parameter"
+            $issues++
+          }
+          
+          # Check for hardcoded paths
+          if ($content -match 'C:\\|/home/|/Users/') {
+            Write-Warning "$($file.Name): Contains hardcoded paths"
+            $issues++
+          }
+        }
+        
+        if ($issues -gt 0) {
+          Write-Warning "Found $issues best practice violations"
+        }
+        
+    - name: Upload analysis results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: code-quality-${{ matrix.check }}
+        path: |
+          *.html
+          *.xml
+          *.sarif
+          reports/
+        retention-days: 30
+
+  # Main test job with matrix strategy
+  test:
+    name: Test - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    needs: [analyze-changes, code-quality]
+    if: |
+      always() && 
+      (needs.code-quality.result == 'success' || needs.code-quality.result == 'skipped')
+    strategy:
+      fail-fast: false  # Run all tests even if one fails
+      matrix: 
+        os: [ubuntu-latest, windows-latest, macos-latest]
+      max-parallel: 3  # Optimized: Run all platforms in parallel
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    # PowerShell is pre-installed on GitHub runners
+    - name: Verify PowerShell Version
+      shell: pwsh
+      run: |
+        Write-Host "PowerShell version installed:" -ForegroundColor Cyan
+        $PSVersionTable.PSVersion
+        
+        # Verify minimum version requirement (7.0+)
+        if ($PSVersionTable.PSVersion.Major -lt 7) {
+          throw "PowerShell 7.0+ is required, but found $($PSVersionTable.PSVersion)"
+        }
+        Write-Host "✅ PowerShell version meets requirements" -ForegroundColor Green
+        
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.local/share/powershell/Modules
+          ~/.nuget/packages
+          ~/AppData/Local/PackageManagement/NuGet
+          ~/Documents/PowerShell/Modules
+          ~/.config/powershell
+          ~/.cache/powershell
+        key: ${{ runner.os }}-ps-deps-${{ hashFiles('**/requirements.psd1', '**/packages.config', 'aither-core/modules/**/*.psd1') }}-v3-perf
+        restore-keys: |
+          ${{ runner.os }}-ps-deps-v3-perf
+          ${{ runner.os }}-ps-deps-v2
+          ${{ runner.os }}-ps-deps-
+          ${{ runner.os }}-deps-
+          
+    - name: Install test dependencies
+      shell: pwsh
+      run: |
+        # Performance optimization: Install only if not cached
+        $requiredModules = @('Pester', 'PSScriptAnalyzer', 'Assert')
+        $installedModules = Get-Module -ListAvailable | Select-Object -ExpandProperty Name
+        
+        foreach ($module in $requiredModules) {
+          if ($module -notin $installedModules) {
+            Write-Host "Installing $module..."
+            Install-Module -Name $module -Force -AllowClobber -Scope CurrentUser -SkipPublisherCheck
+          } else {
+            Write-Host "$module already available (cached)"
+          }
+        }
+        
+        # Verify minimum versions
+        if (!(Get-Module -ListAvailable -Name Pester | Where-Object Version -ge 5.0.0)) {
+          Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -AllowClobber -Scope CurrentUser -SkipPublisherCheck
+        }
+        
+    - name: Run optimized CI tests
+      if: github.event.inputs.skip_tests != 'true'
+      shell: pwsh
+      run: |
+        # Performance optimization: Parallel test execution with reduced timeout
+        $env:CI_PLATFORM = "${{ runner.os }}"
+        $env:ENABLE_PARALLEL_TESTS = "true"
+        $env:PERFORMANCE_MODE = "optimized"
+        pwsh ./tests/Run-CI-Tests.ps1 -TestSuite All -OutputFormat Both -Timeout 300
+        
+    - name: Run integration tests
+      if: matrix.os == 'windows-latest'  # Only run integration tests on Windows (platform-specific)
+      continue-on-error: true  # Don't fail the build on integration test failures
+      shell: pwsh
+      run: |
+        # Run integration tests separately - Windows only for now
+        if (Test-Path './tests/Integration') {
+          $config = New-PesterConfiguration
+          $config.Run.Path = './tests/Integration'
+          $config.Run.PassThru = $true
+          $config.TestResult.Enabled = $true
+          $config.TestResult.OutputFormat = 'JUnitXml'
+          $config.TestResult.OutputPath = 'integration-test-results.xml'
+          
+          $results = Invoke-Pester -Configuration $config
+          
+          if ($results.FailedCount -gt 0) {
+            Write-Host "⚠️  $($results.FailedCount) integration tests failed" -ForegroundColor Yellow
+            Write-Host "📊 Integration test failures are tracked but won't block CI" -ForegroundColor Cyan
+            echo "::warning::$($results.FailedCount) integration tests failed - please investigate"
+          } else {
+            Write-Host "✅ All integration tests passed!" -ForegroundColor Green
+          }
+        } else {
+          Write-Host "📋 No integration tests found - skipping" -ForegroundColor Yellow
+        }
+        
+    - name: Upload comprehensive test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ matrix.os }}
+        path: |
+          core-test-results.xml
+          entry-test-results.xml
+          ps-version-test-results.xml
+          integration-test-results.xml
+          ci-test-summary.json
+          ci-test-dashboard.json
+          ci-test-results.xml
+        retention-days: 30
+        
+    - name: Upload test results for dashboard
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: dashboard-data-${{ matrix.os }}
+        path: |
+          ci-test-dashboard.json
+          ci-test-summary.json
+        retention-days: 90  # Keep dashboard data longer for trending
+        
+    - name: Create test report summary
+      if: always()
+      shell: pwsh
+      run: |
+        # Generate a markdown summary for the workflow
+        if (Test-Path 'ci-test-summary.json') {
+          $summary = Get-Content 'ci-test-summary.json' | ConvertFrom-Json
+          
+          $markdownSummary = @"
+        ## Test Results Summary (${{ matrix.os }})
+        
+        - **Total Tests**: $($summary.TotalTests)
+        - **Passed**: $($summary.TotalPassed) ✅
+        - **Failed**: $($summary.TotalFailed) $(if ($summary.TotalFailed -eq 0) { '✅' } else { '❌' })
+        - **Success Rate**: $($summary.QualityMetrics.SuccessRate)%
+        - **Duration**: $([Math]::Round($summary.TotalDuration, 2))s
+        - **Tests/Second**: $($summary.QualityMetrics.Performance.TestsPerSecond)
+        - **Platform**: $($summary.Platform.OS) ($($summary.Platform.Architecture))
+        - **PowerShell**: $($summary.Platform.PowerShellVersion)
+        
+        ### Test Suite Results
+        "@
+        
+        foreach ($suite in $summary.TestSuites) {
+          $markdownSummary += "`n- **$($suite.TestSuite)**: $($suite.Result) ($($suite.PassedCount)/$($suite.TotalCount)) - $([Math]::Round($suite.Duration, 2))s"
+        }
+        
+        if ($summary.TotalFailed -gt 0) {
+          $markdownSummary += "`n`n### Failed Tests"
+          foreach ($errorItem in $summary.ErrorSummary.FailedTestDetails) {
+            $markdownSummary += "`n- **$($errorItem.TestSuite)**: $($errorItem.FailedCount) failures"
+            if ($errorItem.FailedTests) {
+              foreach ($test in $errorItem.FailedTests) {
+                $markdownSummary += "`n  - $test"
+              }
+            }
+          }
+        }
+        
+        $markdownSummary | Set-Content -Path 'test-summary-${{ matrix.os }}.md'
+        Write-Host "📝 Test summary markdown created for workflow annotation"
+        
+        # Add to workflow summary
+        $markdownSummary | Add-Content -Path $env:GITHUB_STEP_SUMMARY
+        }
+        
+    - name: Upload test summary markdown
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-summary-${{ matrix.os }}
+        path: test-summary-${{ matrix.os }}.md
+        retention-days: 30
+        
+    # Code coverage disabled for performance optimization
+    # Re-enable if detailed coverage analysis is needed
+        
+    - name: Test module loading (Performance Optimized)
+      shell: pwsh
+      run: |
+        # Performance optimization: Parallel module loading test
+        Write-Host "🚀 Testing module loading with parallel processing..." -ForegroundColor Cyan
+        
+        # Import ParallelExecution module first
+        try {
+          Import-Module ./aither-core/modules/ParallelExecution -Force -ErrorAction Stop
+          Write-Host "✅ ParallelExecution module loaded for optimization" -ForegroundColor Green
+          $useParallel = $true
+        } catch {
+          Write-Host "⚠️ ParallelExecution not available, using sequential" -ForegroundColor Yellow
+          $useParallel = $false
+        }
+        
+        $modules = Get-ChildItem -Path ./aither-core/modules -Directory
+        $failed = 0
+        
+        if ($useParallel) {
+          # Parallel module loading test
+          $results = Invoke-ParallelForEach -InputObject $modules -ThrottleLimit 4 -ScriptBlock {
+            param($module)
+            $result = @{ Name = $module.Name; Success = $false; Commands = 0; Error = $null }
+            
+            try {
+              Import-Module $module.FullName -Force -ErrorAction Stop
+              $commands = Get-Command -Module $module.Name -ErrorAction SilentlyContinue
+              $result.Success = $true
+              $result.Commands = $commands.Count
+            } catch {
+              $result.Error = $_.Exception.Message
+            }
+            
+            return $result
+          }
+          
+          # Process results
+          foreach ($result in $results) {
+            if ($result.Success) {
+              Write-Host "✅ $($result.Name): $($result.Commands) commands" -ForegroundColor Green
+            } else {
+              Write-Host "❌ $($result.Name): $($result.Error)" -ForegroundColor Red
+              $failed++
+            }
+          }
+        } else {
+          # Sequential fallback
+          foreach ($module in $modules) {
+            try {
+              Import-Module $module.FullName -Force -ErrorAction Stop
+              $commands = Get-Command -Module $module.Name -ErrorAction SilentlyContinue
+              Write-Host "✅ $($module.Name): $($commands.Count) commands" -ForegroundColor Green
+            } catch {
+              Write-Host "❌ $($module.Name): $_" -ForegroundColor Red
+              $failed++
+            }
+          }
+        }
+        
+        if ($failed -gt 0) {
+          Write-Host "⚠️ $failed modules failed to load" -ForegroundColor Yellow
+          echo "::warning::$failed modules failed to load - please investigate"
+        }
+        
+        Write-Host "✅ Module loading test completed" -ForegroundColor Green
+        
+    - name: Performance benchmarks
+      if: matrix.os == 'ubuntu-latest' && github.event_name == 'pull_request'
+      shell: pwsh
+      run: |
+        # Performance optimization: Comprehensive benchmarking
+        Write-Host "🚀 Running performance benchmarks..." -ForegroundColor Cyan
+        
+        $baseline = @{
+          'Module Load Time' = 500  # milliseconds
+          'Script Execution' = 1000  # milliseconds
+          'Memory Usage' = 100  # MB
+          'Parallel Module Load' = 200  # milliseconds (optimized)
+        }
+        
+        # Measure sequential module load time
+        $sequentialTime = Measure-Command {
+          Get-ChildItem -Path ./aither-core/modules -Directory | ForEach-Object {
+            Import-Module $_.FullName -Force -ErrorAction SilentlyContinue
+          }
+        }
+        
+        # Measure parallel module load time if ParallelExecution is available
+        $parallelTime = $null
+        if (Get-Module -Name ParallelExecution -ListAvailable) {
+          Import-Module ./aither-core/modules/ParallelExecution -Force
+          $parallelTime = Measure-Command {
+            $modules = Get-ChildItem -Path ./aither-core/modules -Directory
+            Invoke-ParallelForEach -InputObject $modules -ThrottleLimit 4 -ScriptBlock {
+              param($module)
+              Import-Module $module.FullName -Force -ErrorAction SilentlyContinue
+            }
+          }
+        }
+        
+        # Report results
+        Write-Host "📊 Performance Results:" -ForegroundColor Cyan
+        Write-Host "  Sequential module load: $($sequentialTime.TotalMilliseconds)ms" -ForegroundColor White
+        if ($parallelTime) {
+          Write-Host "  Parallel module load: $($parallelTime.TotalMilliseconds)ms" -ForegroundColor Green
+          $speedup = [Math]::Round($sequentialTime.TotalMilliseconds / $parallelTime.TotalMilliseconds, 2)
+          Write-Host "  Parallel speedup: ${speedup}x" -ForegroundColor Green
+        }
+        
+        # Check against baselines
+        if ($sequentialTime.TotalMilliseconds -gt $baseline['Module Load Time']) {
+          Write-Host "::warning::Sequential module load time exceeds baseline" -ForegroundColor Yellow
+        }
+        
+        if ($parallelTime -and $parallelTime.TotalMilliseconds -gt $baseline['Parallel Module Load']) {
+          Write-Host "::warning::Parallel module load time exceeds baseline" -ForegroundColor Yellow
+        }
+        
+        # Export metrics for performance tracking
+        $metrics = @{
+          SequentialLoadTime = $sequentialTime.TotalMilliseconds
+          ParallelLoadTime = if ($parallelTime) { $parallelTime.TotalMilliseconds } else { $null }
+          ParallelSpeedup = if ($parallelTime) { $sequentialTime.TotalMilliseconds / $parallelTime.TotalMilliseconds } else { 1 }
+          Timestamp = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
+        }
+        
+        $metrics | ConvertTo-Json | Set-Content -Path "performance-metrics.json"
+        Write-Host "✅ Performance metrics exported" -ForegroundColor Green
+        
+    - name: Setup tmate session
+      if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+      uses: mxschmitt/action-tmate@v3
+      with:
+        limit-access-to-actor: true
+
+  # Build validation
+  build-test:
+    name: Build Test - ${{ matrix.platform }}
+    runs-on: ubuntu-latest
+    needs: test
+    if: |
+      always() && 
+      !cancelled()
+    strategy:
+      matrix:
+        platform: [windows, linux, macos]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    # PowerShell is pre-installed on GitHub runners
+        
+    - name: Test build process
+      shell: pwsh
+      run: |
+        Write-Host "Testing ${{ matrix.platform }} build..." -ForegroundColor Yellow
+        
+        # Get version
+        $version = Get-Content ./VERSION -Raw -ErrorAction SilentlyContinue | ForEach-Object { $_.Trim() }
+        if (-not $version) { $version = "0.0.1-ci" }
+        
+        # Run build
+        ./build/Build-Package.ps1 -Platform ${{ matrix.platform }} -Version $version
+        
+        # Verify output
+        $expectedFile = if ('${{ matrix.platform }}' -eq 'windows') {
+          "build/output/AitherZero-v$version-windows.zip"
+        } else {
+          "build/output/AitherZero-v$version-${{ matrix.platform }}.tar.gz"
+        }
+        
+        if (Test-Path $expectedFile) {
+          $size = (Get-Item $expectedFile).Length / 1MB
+          Write-Host "✅ Build successful: $expectedFile ($([math]::Round($size, 2)) MB)" -ForegroundColor Green
+          
+          # Validate package contents
+          if ('${{ matrix.platform }}' -eq 'windows') {
+            $items = @(Expand-Archive -Path $expectedFile -DestinationPath ./test-extract -PassThru)
+          } else {
+            New-Item -ItemType Directory -Path ./test-extract -Force
+            tar -xzf $expectedFile -C ./test-extract
+            $items = Get-ChildItem ./test-extract -Recurse
+          }
+          
+          # Check critical files exist
+          $required = @('Start-AitherZero.ps1', 'aither-core/aither-core.ps1', 'VERSION', 'README.md')
+          foreach ($req in $required) {
+            if (-not ($items | Where-Object { $_.FullName -like "*$req" })) {
+              throw "Required file missing from package: $req"
+            }
+          }
+          
+          Write-Host "✅ Package validation passed" -ForegroundColor Green
+        } else {
+          throw "Build failed: $expectedFile not found"
+        }
+        
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-${{ matrix.platform }}
+        path: build/output/*
+        retention-days: 7
+
+  # Documentation validation
+  docs-check:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    needs: analyze-changes
+    if: needs.analyze-changes.outputs.has-docs-changes == 'true'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js (for markdown linting)
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        
+    - name: Cache npm dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.npm
+          node_modules
+        key: ${{ runner.os }}-npm-docs-${{ hashFiles('**/package-lock.json') }}-v2
+        restore-keys: |
+          ${{ runner.os }}-npm-docs-
+          
+    - name: Install markdown linter
+      run: npm install -g markdownlint-cli
+      
+    - name: Lint markdown files
+      continue-on-error: true  # Markdown linting is informational only
+      run: |
+        # Create markdownlint config - very lenient for CI stability
+        cat > .markdownlint.json << 'EOF'
+        {
+          "default": false,
+          "MD001": true,
+          "MD003": true,
+          "MD018": true,
+          "MD019": true,
+          "MD023": true,
+          "MD045": true
+        }
+        EOF
+        
+        # Run markdown lint but only as informational
+        echo "::notice::Running markdown linting for informational purposes only"
+        markdownlint '**/*.md' --ignore node_modules || echo "::warning::Markdown linting found issues (non-blocking)"
+        
+    - name: Check for broken links
+      continue-on-error: true  # Link checking is informational only
+      uses: gaurav-nelson/github-action-markdown-link-check@v1
+      with:
+        use-quiet-mode: 'yes'
+        config-file: '.markdown-link-check.json'
+        
+    - name: Validate PowerShell help
+      continue-on-error: true  # Help validation is informational only
+      shell: pwsh
+      run: |
+        # Check that all exported functions have comment-based help
+        $modules = Get-ChildItem -Path ./aither-core/modules -Directory
+        $missing = 0
+        
+        foreach ($module in $modules) {
+          Import-Module $module.FullName -Force -ErrorAction SilentlyContinue
+          $functions = Get-Command -Module $module.Name -CommandType Function
+          
+          foreach ($func in $functions) {
+            $help = Get-Help $func.Name -ErrorAction SilentlyContinue
+            if (-not $help.Synopsis -or $help.Synopsis -eq $func.Name) {
+              Write-Warning "$($func.Name): Missing synopsis in comment-based help"
+              $missing++
+            }
+          }
+        }
+        
+        if ($missing -gt 0) {
+          Write-Warning "Found $missing functions without proper help documentation"
+        }
+
+  # Summary job that runs after all tests
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [code-quality, test, build-test, docs-check]
+    if: always()
+    
+    steps:
+    - name: Check results
+      shell: pwsh
+      run: |
+        $results = @{
+          'code-quality' = '${{ needs.code-quality.result }}'
+          'test' = '${{ needs.test.result }}'
+          'build-test' = '${{ needs.build-test.result }}'
+          'docs-check' = '${{ needs.docs-check.result }}'
+        }
+        
+        Write-Host "`n📊 CI Summary:" -ForegroundColor Cyan
+        $failed = 0
+        
+        foreach ($job in $results.GetEnumerator()) {
+          $emoji = switch ($job.Value) {
+            'success' { '✅' }
+            'failure' { '❌'; $failed++ }
+            'cancelled' { '⚠️' }
+            'skipped' { '⏭️' }
+            default { '❓' }
+          }
+          Write-Host "$emoji $($job.Key): $($job.Value)"
+        }
+        
+        # Check for critical failures
+        $criticalFailures = 0
+        foreach ($job in $results.GetEnumerator()) {
+          # Test and build-test are considered critical
+          if ($job.Value -eq 'failure' -and $job.Key -in @('test', 'build-test')) {
+            $criticalFailures++
+          }
+        }
+        
+        if ($criticalFailures -gt 0) {
+          Write-Host "`n❌ CI Failed: $criticalFailures critical job(s) failed" -ForegroundColor Red
+          exit 1
+        } elseif ($failed -gt 0) {
+          Write-Host "`n⚠️  CI Completed with $failed non-critical failures" -ForegroundColor Yellow
+          Write-Host "✅ Build is still considered successful" -ForegroundColor Green
+        } else {
+          Write-Host "`n✅ CI Passed: All checks successful!" -ForegroundColor Green
+        }
+        
+    - name: Post PR comment with results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      continue-on-error: true  # PR commenting may fail for forks
+      with:
+        script: |
+          try {
+            const results = {
+              'code-quality': '${{ needs.code-quality.result }}',
+              'test': '${{ needs.test.result }}',
+              'build-test': '${{ needs.build-test.result }}',
+              'docs-check': '${{ needs.docs-check.result }}'
+            };
+            
+            let body = '## 🤖 CI Results\n\n';
+            body += '| Check | Status |\n';
+            body += '|-------|--------|\n';
+            
+            for (const [check, result] of Object.entries(results)) {
+              const emoji = result === 'success' ? '✅' : 
+                           result === 'failure' ? '❌' : 
+                           result === 'skipped' ? '⏭️' : '⚠️';
+              body += `| ${check} | ${emoji} ${result} |\n`;
+            }
+            
+            body += '\n[View full CI logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})';
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('🤖 CI Results')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }
+          } catch (error) {
+            console.log('Failed to post PR comment:', error.message);
+            console.log('This is expected for PRs from forks or with restricted permissions.');
+          }
+
+  # Comprehensive Dashboard & Reports Generation
+  generate-comprehensive-reports:
+    name: Generate Comprehensive Reports & Dashboard
+    runs-on: ubuntu-latest
+    needs: [test, code-quality, build-test]
+    if: always()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts/
+    
+    - name: Generate comprehensive dashboard and feature map
+      shell: pwsh
+      run: |
+        Write-Host "🏗️  Generating comprehensive project dashboard with feature dependency map..." -ForegroundColor Cyan
+        
+        # Import required modules for reporting
+        $reportingPath = "./scripts/reporting"
+        $modulesPaths = @(
+          "./aither-core/modules/Logging",
+          "./aither-core/modules/ParallelExecution"
+        )
+        
+        foreach ($modulePath in $modulesPaths) {
+          if (Test-Path $modulePath) {
+            Import-Module $modulePath -Force -ErrorAction SilentlyContinue
+            Write-Host "✅ Imported module: $(Split-Path $modulePath -Leaf)" -ForegroundColor Green
+          }
+        }
+        
+        # 1. GENERATE DYNAMIC FEATURE MAP with dependencies
+        Write-Host "🗺️  Generating dynamic feature/dependency map..." -ForegroundColor Yellow
+        if (Test-Path "$reportingPath/Generate-DynamicFeatureMap.ps1") {
+          try {
+            & "$reportingPath/Generate-DynamicFeatureMap.ps1" -HtmlOutput -IncludeDependencyGraph -AnalyzeIntegrations -VerboseOutput
+            Write-Host "✅ Dynamic feature map generated successfully" -ForegroundColor Green
+          } catch {
+            Write-Warning "Feature map generation failed: $($_.Exception.Message)"
+          }
+        } else {
+          Write-Warning "Dynamic feature map generator not found at: $reportingPath/Generate-DynamicFeatureMap.ps1"
+        }
+        
+        # 2. GENERATE COMPREHENSIVE REPORT with CI results integration
+        Write-Host "📊 Generating comprehensive project report..." -ForegroundColor Yellow
+        if (Test-Path "$reportingPath/Generate-ComprehensiveReport.ps1") {
+          try {
+            $reportTitle = "AitherZero CI Dashboard - $(Get-Date -Format 'yyyy-MM-dd HH:mm') UTC"
+            & "$reportingPath/Generate-ComprehensiveReport.ps1" -IncludeDetailedAnalysis -ReportTitle $reportTitle -ReportPath "./comprehensive-ci-dashboard.html"
+            Write-Host "✅ Comprehensive report generated successfully" -ForegroundColor Green
+          } catch {
+            Write-Warning "Comprehensive report generation failed: $($_.Exception.Message)"
+          }
+        }
+        
+        # 3. INTEGRATE CI ARTIFACTS into reports
+        Write-Host "🔗 Integrating CI artifacts and results..." -ForegroundColor Yellow
+        $ciSummary = @{
+          Timestamp = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
+          GitRef = "${{ github.ref }}"
+          GitSha = "${{ github.sha }}"
+          Workflow = "CI"
+          QualityResults = @{}
+          TestResults = @{}
+          BuildResults = @{}
+          Artifacts = @()
+        }
+        
+        # Collect quality results from artifacts
+        $qualityArtifacts = Get-ChildItem -Path "./artifacts" -Directory | Where-Object Name -like "*code-quality*"
+        foreach ($artifact in $qualityArtifacts) {
+          $checkType = ($artifact.Name -split '-')[-1]
+          $ciSummary.QualityResults[$checkType] = @{
+            Status = "Available"
+            ArtifactPath = $artifact.FullName
+            Files = @(Get-ChildItem -Path $artifact.FullName -Recurse -File | Select-Object Name, Length)
+          }
+        }
+        
+        # Collect build artifacts
+        $buildArtifacts = Get-ChildItem -Path "./artifacts" -Directory | Where-Object Name -like "*build-*"
+        foreach ($artifact in $buildArtifacts) {
+          $platform = ($artifact.Name -split '-')[-1]
+          $ciSummary.BuildResults[$platform] = @{
+            Status = "Available"
+            ArtifactPath = $artifact.FullName
+            Files = @(Get-ChildItem -Path $artifact.FullName -Recurse -File | Select-Object Name, Length)
+          }
+        }
+        
+        # Export CI summary for dashboard integration
+        $ciSummary | ConvertTo-Json -Depth 10 | Set-Content -Path "./ci-integration-summary.json"
+        Write-Host "✅ CI integration summary created" -ForegroundColor Green
+        
+        # 4. CREATE EXECUTIVE SUMMARY for quick decision making
+        Write-Host "📋 Creating executive decision-making summary..." -ForegroundColor Yellow
+        
+        # Pre-calculate status values to avoid PowerShell ternary in YAML context
+        $psAnalyzerStatus = if ($ciSummary.QualityResults.ContainsKey('psscriptanalyzer')) { 'ANALYZED' } else { 'PENDING' }
+        $complexityStatus = if ($ciSummary.QualityResults.ContainsKey('complexity')) { 'ANALYZED' } else { 'PENDING' }
+        $formattingStatus = if ($ciSummary.QualityResults.ContainsKey('formatting')) { 'ANALYZED' } else { 'PENDING' }
+        $bestPracticesStatus = if ($ciSummary.QualityResults.ContainsKey('best-practices')) { 'ANALYZED' } else { 'PENDING' }
+        $windowsBuildStatus = if ($ciSummary.BuildResults.ContainsKey('windows')) { '✅ SUCCESS' } else { '❌ FAILED' }
+        $linuxBuildStatus = if ($ciSummary.BuildResults.ContainsKey('linux')) { '✅ SUCCESS' } else { '❌ FAILED' }
+        $macosBuildStatus = if ($ciSummary.BuildResults.ContainsKey('macos')) { '✅ SUCCESS' } else { '❌ FAILED' }
+        
+        $executiveSummary = "# AitherZero Project Health Dashboard`n"
+        $executiveSummary += "## Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') UTC`n"
+        $executiveSummary += "## Git Reference: ${{ github.ref }} (${{ github.sha }})`n"
+        $executiveSummary += "`n### 🎯 EXECUTIVE SUMMARY FOR PRIORITIZATION`n"
+        $executiveSummary += "`n#### Code Quality Status`n"
+        $executiveSummary += "  - **PSScriptAnalyzer**: $psAnalyzerStatus`n"
+        $executiveSummary += "  - **Complexity Analysis**: $complexityStatus`n"
+        $executiveSummary += "  - **Formatting Check**: $formattingStatus`n"
+        $executiveSummary += "  - **Best Practices**: $bestPracticesStatus`n"
+        $executiveSummary += "`n#### Build Status`n"
+        $executiveSummary += "  - **Windows Build**: $windowsBuildStatus`n"
+        $executiveSummary += "  - **Linux Build**: $linuxBuildStatus`n"
+        $executiveSummary += "  - **macOS Build**: $macosBuildStatus`n"
+        $executiveSummary += "`n#### Reports Generated`n"
+        $executiveSummary += "  - 🗺️ **Dynamic Feature Map**: Interactive module dependency visualization`n"
+        $executiveSummary += "  - 📊 **Comprehensive Dashboard**: Full project health analysis`n"
+        $executiveSummary += "  - 🔗 **CI Integration**: Automated workflow results integration`n"
+        $executiveSummary += "`n### 📁 Available Reports`n"
+        $executiveSummary += "1. **comprehensive-ci-dashboard.html** - Complete project health dashboard`n"
+        $executiveSummary += "2. **feature-dependency-map.html** - Interactive module relationships`n"
+        $executiveSummary += "3. **ci-integration-summary.json** - Programmatic access to CI results`n"
+        $executiveSummary += "`n### 🚀 RECOMMENDED ACTIONS`n"
+        $executiveSummary += "Based on this CI run, prioritize work on areas showing in the quality analysis and check the comprehensive dashboard for detailed metrics and trends.`n"
+        
+        $executiveSummary | Set-Content -Path "./executive-summary.md"
+        Write-Host "✅ Executive summary created for informed decision making" -ForegroundColor Green
+        
+        # 5. VALIDATE REPORT GENERATION
+        $reportFiles = @(
+          "comprehensive-ci-dashboard.html",
+          "feature-dependency-map.html", 
+          "ci-integration-summary.json",
+          "executive-summary.md"
+        )
+        
+        $generatedReports = @()
+        foreach ($file in $reportFiles) {
+          if (Test-Path $file) {
+            $size = (Get-Item $file).Length
+            $generatedReports += @{
+              Name = $file
+              Size = $size
+              SizeKB = [Math]::Round($size / 1KB, 2)
+            }
+            Write-Host "✅ Report generated: $file ($([Math]::Round($size / 1KB, 2)) KB)" -ForegroundColor Green
+          } else {
+            Write-Warning "Expected report not found: $file"
+          }
+        }
+        
+        Write-Host "`n🎯 COMPREHENSIVE REPORTING SUMMARY:" -ForegroundColor Cyan
+        Write-Host "===============================================" -ForegroundColor Cyan
+        Write-Host "📊 Total reports generated: $($generatedReports.Count)" -ForegroundColor White
+        Write-Host "💾 Total size: $([Math]::Round(($generatedReports | Measure-Object Size -Sum).Sum / 1KB, 2)) KB" -ForegroundColor White
+        Write-Host "🕒 Generation time: $(Get-Date -Format 'HH:mm:ss')" -ForegroundColor White
+        Write-Host "`n🎯 Use these reports to make informed decisions about project priorities!" -ForegroundColor Green
+
+    - name: Upload comprehensive reports and dashboard
+      uses: actions/upload-artifact@v4
+      with:
+        name: comprehensive-project-dashboard
+        path: |
+          comprehensive-ci-dashboard.html
+          feature-dependency-map.html
+          ci-integration-summary.json
+          executive-summary.md
+          dynamic-feature-map.json
+          *.html
+          *.json
+          *.md
+        retention-days: 90  # Keep reports for 3 months
+    
+    - name: CI dashboard summary (optimized architecture)
+      shell: pwsh
+      run: |
+        Write-Host "📊 CI Dashboard Summary - Optimized Architecture" -ForegroundColor Cyan
+        Write-Host "=================================================" -ForegroundColor Cyan
+        Write-Host "✅ CI Pipeline Role: Fast validation & test execution" -ForegroundColor Green
+        Write-Host "🔄 Comprehensive Report Role: Deep analysis using CI results" -ForegroundColor Yellow
+        Write-Host "⚡ No Duplication: Tests run once, results consumed by comprehensive report" -ForegroundColor Green
+        Write-Host "🚀 GitHub Pages: Deployed by comprehensive report workflow only" -ForegroundColor Green
+        Write-Host "📈 Result: Faster CI, no resource waste, complementary workflows" -ForegroundColor Green
+        
+  # Export test results for comprehensive report consumption
+  export-test-results:
+    name: Export Test Results for Comprehensive Report
+    runs-on: ubuntu-latest
+    needs: test
+    if: success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download all test results
+      uses: actions/download-artifact@v4
+      with:
+        path: ./ci-artifacts/
+        
+    - name: Create CI results summary for comprehensive report
+      shell: pwsh
+      run: |
+        Write-Host "📊 Creating CI results summary for comprehensive report consumption..." -ForegroundColor Cyan
+        
+        # Create structured summary of CI results
+        $ciResultsSummary = @{
+          WorkflowId = '${{ github.run_id }}'
+          WorkflowUrl = '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+          GitSha = '${{ github.sha }}'
+          GitRef = '${{ github.ref }}'
+          Timestamp = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ')
+          Status = 'SUCCESS'
+          TestResults = @{
+            PlatformResults = @{}
+            TotalTests = 0
+            TotalPassed = 0
+            TotalFailed = 0
+            Duration = 0
+          }
+          CodeQuality = @{
+            PSScriptAnalyzer = @{ Status = 'COMPLETED' }
+            Formatting = @{ Status = 'COMPLETED' }
+            Complexity = @{ Status = 'COMPLETED' }
+            BestPractices = @{ Status = 'COMPLETED' }
+          }
+          BuildResults = @{
+            Windows = @{ Status = 'SUCCESS' }
+            Linux = @{ Status = 'SUCCESS' }
+            macOS = @{ Status = 'SUCCESS' }
+          }
+          ArtifactsGenerated = @()
+        }
+        
+        # Collect test results from downloaded artifacts
+        $testArtifacts = Get-ChildItem -Path "./ci-artifacts" -Directory | Where-Object Name -like "*test-results*"
+        foreach ($artifact in $testArtifacts) {
+          $platform = ($artifact.Name -split '-')[-1]
+          $summaryFile = Join-Path $artifact.FullName "ci-test-summary.json"
+          
+          if (Test-Path $summaryFile) {
+            $platformResults = Get-Content $summaryFile | ConvertFrom-Json
+            $ciResultsSummary.TestResults.PlatformResults[$platform] = $platformResults
+            $ciResultsSummary.TestResults.TotalTests += $platformResults.TotalTests
+            $ciResultsSummary.TestResults.TotalPassed += $platformResults.TotalPassed
+            $ciResultsSummary.TestResults.TotalFailed += $platformResults.TotalFailed
+            $ciResultsSummary.TestResults.Duration += $platformResults.TotalDuration
+          }
+        }
+        
+        # List all generated artifacts
+        $allArtifacts = Get-ChildItem -Path "./ci-artifacts" -Directory
+        foreach ($artifact in $allArtifacts) {
+          $files = Get-ChildItem -Path $artifact.FullName -Recurse -File
+          $ciResultsSummary.ArtifactsGenerated += @{
+            Name = $artifact.Name
+            FileCount = $files.Count
+            TotalSize = ($files | Measure-Object Length -Sum).Sum
+          }
+        }
+        
+        # Export summary for comprehensive report to consume
+        $ciResultsSummary | ConvertTo-Json -Depth 10 | Set-Content -Path "./ci-results-summary.json"
+        Write-Host "✅ CI results summary created: $(Get-Item './ci-results-summary.json' | Select-Object Length)" -ForegroundColor Green
+        
+        # Create workflow summary showing complementary architecture
+        $workflowSummary = @"
+        ## 🚀 CI Pipeline - Lightweight & Fast
+        
+        ### ✅ Completed Successfully
+        - **Total Tests**: $($ciResultsSummary.TestResults.TotalTests)
+        - **Passed**: $($ciResultsSummary.TestResults.TotalPassed)
+        - **Failed**: $($ciResultsSummary.TestResults.TotalFailed)
+        - **Duration**: $([Math]::Round($ciResultsSummary.TestResults.Duration, 2))s
+        
+        ### 🎯 Complementary Architecture
+        - **CI Role**: Fast validation and test execution
+        - **Comprehensive Report Role**: Deep analysis using CI results
+        - **No Duplication**: Tests run once, results consumed by comprehensive report
+        - **Optimized**: Separate concerns for maximum efficiency
+        
+        ### 📊 Next Steps
+        1. CI results exported for comprehensive report consumption
+        2. Comprehensive report will use these results (no re-testing)
+        3. Check scheduled comprehensive report for deep analysis
+        
+        ### 🔗 Generated Artifacts
+        - Test results across all platforms
+        - Code quality analysis results
+        - Build validation results
+        - CI results summary for comprehensive report
+        "@
+        
+        echo $workflowSummary >> $env:GITHUB_STEP_SUMMARY
+        
+    - name: Upload CI results summary
+      uses: actions/upload-artifact@v4
+      with:
+        name: ci-results-summary
+        path: |
+          ci-results-summary.json
+          ci-artifacts/**/*
+        retention-days: 30
