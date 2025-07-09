@@ -28,16 +28,8 @@ $script:AlertThresholds = @{
     Network = @{ Critical = 95; High = 85; Medium = 75 }
 }
 
-# Import Logging module
-try {
-    Import-Module (Join-Path $script:ProjectRoot "aither-core/modules/Logging") -Force
-} catch {
-    Write-Host "Warning: Could not import Logging module. Using Write-Host for output." -ForegroundColor Yellow
-    # Define fallback logging function
-    function Write-CustomLog {
-        param($Message, $Level = "INFO")
-        Write-Host "[$Level] $Message"
-    }
+# Write-CustomLog is guaranteed to be available from AitherCore orchestration
+# No explicit Logging import needed - trust the orchestration system
 }
 
 # Import public functions

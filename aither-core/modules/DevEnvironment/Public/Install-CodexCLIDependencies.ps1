@@ -94,8 +94,8 @@ function Install-CodexCLIDependencies {
         . "$PSScriptRoot/../../../shared/Find-ProjectRoot.ps1"
         $projectRoot = Find-ProjectRoot
 
-        # Import logging module
-        Import-Module (Join-Path $env:PWSH_MODULES_PATH "Logging") -Force
+        # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+        # No explicit Logging import needed - trust the orchestration system
 
         Write-CustomLog -Level 'INFO' -Message "Starting Codex CLI dependencies installation"
 

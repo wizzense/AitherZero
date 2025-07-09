@@ -125,7 +125,8 @@ function Start-AitherZeroAPI {
                     param($Config)
 
                     # Import required modules in job
-                    Import-Module (Join-Path $Config.ProjectRoot "aither-core/modules/Logging") -Force
+                    # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+                    # No explicit Logging import needed - trust the orchestration system
                     Import-Module (Join-Path $Config.ProjectRoot "aither-core/modules/RestAPIServer") -Force
 
                     # Initialize HTTP listener

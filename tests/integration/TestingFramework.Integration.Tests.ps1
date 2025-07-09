@@ -47,13 +47,8 @@ BeforeAll {
         }
     }
     
-    # Mock Write-CustomLog if not available
-    if (-not (Get-Command 'Write-CustomLog' -ErrorAction SilentlyContinue)) {
-        function Write-CustomLog {
-            param([string]$Level, [string]$Message)
-            Write-Host "[$Level] $Message"
-        }
-    }
+    # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+    # No fallback needed - trust the orchestration system
     
     # Setup test directory structure
     $TestFrameworkRoot = Join-Path $TestDrive "testing-framework"
@@ -267,6 +262,8 @@ Describe "$ModuleName Module Tests" {
     # Event tracking
     $script:TestEvents = @()
     
+    # Publish-TestEvent is guaranteed to be available from AitherCore orchestration
+    # No fallback needed - trust the orchestration system
     if (-not (Get-Command 'Publish-TestEvent' -ErrorAction SilentlyContinue)) {
         function Publish-TestEvent {
             param([string]$EventName, [hashtable]$EventData)

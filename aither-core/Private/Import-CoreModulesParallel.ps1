@@ -49,50 +49,74 @@ function Import-CoreModulesParallel {
         }
 
         try {
-            # CRITICAL: Always load Logging module first, synchronously
+            # CRITICAL: Ensure Logging module is loaded and Write-CustomLog is available
             $loggingModule = $script:CoreModules | Where-Object { $_.Name -eq 'Logging' } | Select-Object -First 1
-            if ($loggingModule) {
-                $loggingPath = Join-Path $PSScriptRoot "../$($loggingModule.Path)"
-                if (Test-Path $loggingPath) {
-                    try {
-                        Import-Module $loggingPath -Force -Global -ErrorAction Stop
-                        
-                        # Ensure the module is properly registered in the module table
-                        $loadedModule = Get-Module -Name 'Logging'
-                        if (-not $loadedModule) {
-                            throw "Logging module not properly registered after import"
+            
+            # Check if Logging module is already loaded and Write-CustomLog is available
+            $loggingAlreadyLoaded = $false
+            $writeCustomLogAvailable = Get-Command Write-CustomLog -ErrorAction SilentlyContinue
+            $existingLoggingModule = Get-Module -Name 'Logging' -ErrorAction SilentlyContinue
+            
+            if ($writeCustomLogAvailable -and $existingLoggingModule) {
+                Write-CustomLog -Message "✓ Logging module already loaded and Write-CustomLog available" -Level 'SUCCESS'
+                $loggingAlreadyLoaded = $true
+                
+                # Register in LoadedModules if not already registered
+                if (-not $script:LoadedModules.ContainsKey('Logging')) {
+                    $script:LoadedModules['Logging'] = @{
+                        Path = $existingLoggingModule.Path
+                        ImportTime = Get-Date
+                        Description = $loggingModule.Description
+                    }
+                }
+            }
+            
+            # If Logging module is not properly loaded, load it now
+            if (-not $loggingAlreadyLoaded) {
+                if ($loggingModule) {
+                    $loggingPath = Join-Path $PSScriptRoot "../$($loggingModule.Path)"
+                    if (Test-Path $loggingPath) {
+                        try {
+                            Write-Verbose "Loading Logging module from: $loggingPath"
+                            Import-Module $loggingPath -Force -Global -ErrorAction Stop
+                            
+                            # Ensure the module is properly registered in the module table
+                            $loadedModule = Get-Module -Name 'Logging'
+                            if (-not $loadedModule) {
+                                throw "Logging module not properly registered after import"
+                            }
+                            $script:LoadedModules['Logging'] = @{
+                                Path = $loggingPath
+                                ImportTime = Get-Date
+                                Description = $loggingModule.Description
+                            }
+                            $importResults.ImportedCount++
+                            $importResults.Details += @{
+                                Name = 'Logging'
+                                Status = 'Success'
+                                Message = $loggingModule.Description
+                                LoadTime = (Get-Date) - $importResults.StartTime
+                            }
+                            
+                            # Verify Write-CustomLog is available
+                            if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
+                                throw "Write-CustomLog command not found after loading Logging module"
+                            }
+                            
+                            Write-CustomLog -Message "✓ Logging module loaded successfully" -Level 'SUCCESS'
+                        } catch {
+                            # If Logging module fails, we can't use Write-CustomLog, so use Write-Host
+                            Write-Host "[ERROR] Failed to load Logging module: $_" -ForegroundColor Red
+                            throw "Critical: Unable to load Logging module - $_"
                         }
-                        $script:LoadedModules['Logging'] = @{
-                            Path = $loggingPath
-                            ImportTime = Get-Date
-                            Description = $loggingModule.Description
-                        }
-                        $importResults.ImportedCount++
-                        $importResults.Details += @{
-                            Name = 'Logging'
-                            Status = 'Success'
-                            Message = $loggingModule.Description
-                            LoadTime = (Get-Date) - $importResults.StartTime
-                        }
-                        
-                        # Verify Write-CustomLog is available
-                        if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-                            throw "Write-CustomLog command not found after loading Logging module"
-                        }
-                        
-                        Write-CustomLog -Message "✓ Logging module loaded successfully" -Level 'SUCCESS'
-                    } catch {
-                        # If Logging module fails, we can't use Write-CustomLog, so use Write-Host
-                        Write-Host "[ERROR] Failed to load Logging module: $_" -ForegroundColor Red
-                        throw "Critical: Unable to load Logging module - $_"
+                    } else {
+                        Write-Host "[ERROR] Logging module path not found: $loggingPath" -ForegroundColor Red
+                        throw "Critical: Logging module path not found"
                     }
                 } else {
-                    Write-Host "[ERROR] Logging module path not found: $loggingPath" -ForegroundColor Red
-                    throw "Critical: Logging module path not found"
+                    Write-Host "[ERROR] Logging module not found in module registry" -ForegroundColor Red
+                    throw "Critical: Logging module not found in registry"
                 }
-            } else {
-                Write-Host "[ERROR] Logging module not found in module registry" -ForegroundColor Red
-                throw "Critical: Logging module not found in registry"
             }
             
             # Get modules to import based on RequiredOnly flag (excluding Logging since it's already loaded)
@@ -192,9 +216,24 @@ function Import-CoreModulesParallel {
                         }
                         
                         if ($parallelAvailable -and (Get-Command Invoke-ParallelForEach -ErrorAction SilentlyContinue)) {
-                            # Use ParallelExecution module
+                            # Use ParallelExecution module with Logging module available in each runspace
+                            $loggingModulePath = $null
+                            $loggingLoadedModule = Get-Module -Name 'Logging'
+                            if ($loggingLoadedModule) {
+                                $loggingModulePath = $loggingLoadedModule.Path
+                            }
+                            
                             $parallelResults = Invoke-ParallelForEach -InputObject $moduleInfoList -ThrottleLimit $MaxParallel -ScriptBlock {
                                 param($moduleInfo)
+                                
+                                # Import Logging module in this runspace to make Write-CustomLog available
+                                if ($using:loggingModulePath -and (Test-Path $using:loggingModulePath)) {
+                                    try {
+                                        Import-Module $using:loggingModulePath -Force -Global -ErrorAction SilentlyContinue
+                                    } catch {
+                                        # If Logging import fails in runspace, continue without it
+                                    }
+                                }
                                 
                                 $result = @{
                                     Name = $moduleInfo.Name

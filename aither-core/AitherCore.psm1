@@ -90,34 +90,46 @@ foreach ($function in $allFunctions) {
     }
 }
 
-# Basic logging function if not already defined
-if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-    function Write-CustomLog {
-        [CmdletBinding()]
-        param(
-            [Parameter(Mandatory = $true)]
-            [string]$Message,
-
-            [Parameter()]
-            [ValidateSet('ERROR', 'WARN', 'INFO', 'SUCCESS', 'DEBUG', 'TRACE', 'VERBOSE')]
-            [string]$Level = 'INFO',
-
-            [Parameter()]
-            [string]$Component = 'CoreApp'
-        )
-
-        $color = switch ($Level) {
-            'ERROR' { 'Red' }
-            'WARN' { 'Yellow' }
-            'INFO' { 'Green' }
-            'SUCCESS' { 'Cyan' }
-            'DEBUG' { 'Gray' }
-            'VERBOSE' { 'Magenta' }
-            'TRACE' { 'DarkGray' }
-            default { 'White' }
+# CRITICAL: Load Logging module first to ensure Write-CustomLog is available
+# This replaces the fallback implementation and ensures proper logging is available
+$loggingModulePath = Join-Path $PSScriptRoot "modules/Logging"
+if (Test-Path $loggingModulePath) {
+    try {
+        Write-Verbose "Loading Logging module before other operations..."
+        Import-Module $loggingModulePath -Force -Global -ErrorAction Stop
+        
+        # Verify Write-CustomLog is available
+        if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
+            throw "Write-CustomLog not available after loading Logging module"
         }
-          Write-Host "[$Level] [$Component] $Message" -ForegroundColor $color
+        
+        # Initialize logging system
+        if (Get-Command Initialize-LoggingSystem -ErrorAction SilentlyContinue) {
+            Initialize-LoggingSystem -ErrorAction SilentlyContinue
+        }
+        
+        Write-CustomLog -Message "Logging module loaded successfully in AitherCore" -Level SUCCESS
+    } catch {
+        # If Logging module fails, create minimal fallback for this session only
+        Write-Warning "Failed to load Logging module: $_"
+        Write-Warning "Using minimal fallback logging for this session"
+        
+        function script:Write-CustomLog {
+            param(
+                [Parameter(Mandatory = $true)][string]$Message,
+                [Parameter()][string]$Level = 'INFO',
+                [Parameter()][string]$Component = 'CoreApp'
+            )
+            $color = switch ($Level) {
+                'ERROR' { 'Red' }; 'WARN' { 'Yellow' }; 'INFO' { 'Green' }; 'SUCCESS' { 'Cyan' }
+                'DEBUG' { 'Gray' }; 'VERBOSE' { 'Magenta' }; 'TRACE' { 'DarkGray' }; default { 'White' }
+            }
+            Write-Host "[$Level] [$Component] $Message" -ForegroundColor $color
+        }
     }
+} else {
+    Write-Warning "Logging module path not found: $loggingModulePath"
+    Write-Warning "Write-CustomLog will not be available until Logging module is loaded"
 }
 
 # Core functions if not defined in Public folder

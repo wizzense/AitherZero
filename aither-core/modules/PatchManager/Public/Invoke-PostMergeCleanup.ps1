@@ -61,10 +61,8 @@ function Invoke-PostMergeCleanup {
     )
 
     begin {
-        # Import required modules
-        if (-not (Get-Module -Name Logging -ListAvailable)) {
-            Import-Module (Join-Path $PSScriptRoot '../../../Logging') -Force -ErrorAction SilentlyContinue
-        }
+        # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+        # No explicit Logging import needed - trust the orchestration system
 
         function Write-CleanupLog {
             param($Message, $Level = 'INFO')

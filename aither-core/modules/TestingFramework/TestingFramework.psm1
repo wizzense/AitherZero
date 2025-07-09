@@ -30,21 +30,8 @@
     - Logging (centralized logging)
 #>
 
-# Initialize standardized logging fallback
-$fallbackPath = Join-Path (Split-Path $PSScriptRoot -Parent) "shared/Initialize-LoggingFallback.ps1"
-if (Test-Path $fallbackPath) {
-    . $fallbackPath
-    Initialize-LoggingFallback -ModuleName "TestingFramework"
-} else {
-    # Basic fallback if shared utility isn't available
-    if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-        function Write-CustomLog {
-            param([string]$Message, [string]$Level = "INFO")
-            $color = switch ($Level) { 'SUCCESS' { 'Green' }; 'ERROR' { 'Red' }; 'WARNING' { 'Yellow' }; 'INFO' { 'Cyan' }; default { 'White' } }
-            Write-Host "[$Level] $Message" -ForegroundColor $color
-        }
-    }
-}
+# Write-CustomLog is guaranteed to be available from AitherCore orchestration
+# No fallback needed - trust the orchestration system
 
 # Alias for backward compatibility
 function Write-TestLog {
@@ -66,6 +53,12 @@ $script:ProjectRoot = if ($env:PROJECT_ROOT) {
         $currentPath = Split-Path $currentPath -Parent
     }
     $currentPath
+}
+
+# Validate project root
+if ([string]::IsNullOrEmpty($script:ProjectRoot)) {
+    Write-TestLog "Warning: Project root could not be determined, using PSScriptRoot parent" -Level "WARN"
+    $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 }
 
 # ============================================================================
