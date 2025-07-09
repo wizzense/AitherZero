@@ -6,6 +6,7 @@ on:
     workflows: ["CI - Continuous Integration"]
     types: [completed]
     branches: [main, 'patch/**']
+
   # Keep daily scheduled reports
   schedule:
     # Run daily at 6 AM UTC (comprehensive report)
