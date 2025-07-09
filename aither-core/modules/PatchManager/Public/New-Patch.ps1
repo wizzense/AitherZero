@@ -172,9 +172,8 @@ function New-Patch {
 
             # Step 1.5: Apply v3.1 performance optimizations
             if ($FastTrack) {
-                Write-CustomLog "FastTrack mode enabled - bypassing PR creation for direct merge" -Level "WARN"
-                $CreatePR = $false
-                $CreateIssue = $false
+                Write-CustomLog "FastTrack mode enabled - expedited processing with PR creation" -Level "INFO"
+                # FastTrack speeds up processing but maintains PR creation
                 if ($Mode -eq "Simple") {
                     Write-CustomLog "FastTrack optimized for Simple mode - maximum speed" -Level "INFO"
                 }
