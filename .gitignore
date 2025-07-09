@@ -94,3 +94,18 @@ configuration-*-validation.ps1
 # Keep output directory but ignore contents (except in git)
 /output/*
 !/output/.gitkeep
+
+# Test result files in root
+/ci-test-summary.json
+/testResults.xml
+/comprehensive_code_analysis_report.json
+
+# Temporary/test directories
+/invalid/
+/test-download/
+/TEST-TEMPLATES/
+
+# Temporary release scripts
+Direct-Release.ps1
+Smart-Release.ps1
+Quick-Release.ps1
