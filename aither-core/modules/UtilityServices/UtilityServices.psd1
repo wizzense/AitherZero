@@ -8,7 +8,18 @@
     Description = 'Utility services integration and testing module that provides comprehensive validation and testing for utility modules including SemanticVersioning, ProgressTracking, TestingFramework, and ScriptManager'
     PowerShellVersion = '7.0'
     FunctionsToExport = @(
-        'Test-UtilityIntegration'
+        'Test-UtilityIntegration',
+        'Initialize-SemanticVersioningService',
+        'Initialize-ProgressTrackingService', 
+        'Initialize-TestingFrameworkService',
+        'Initialize-ScriptManagerService',
+        'Subscribe-UtilityEvent',
+        'Publish-UtilityEvent',
+        'Get-UtilityConfiguration',
+        'Set-UtilityConfiguration',
+        'Get-UtilityServiceStatus',
+        'Get-UtilityMetrics',
+        'Export-UtilityReport'
     )
     CmdletsToExport = @()
     VariablesToExport = @()
