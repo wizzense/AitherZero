@@ -1,6 +1,12 @@
 name: Comprehensive Auditing & Reporting
 
 on:
+  # Trigger on successful CI completion (for releases)
+  workflow_run:
+    workflows: ["CI - Continuous Integration"]
+    types: [completed]
+    branches: [main]
+  # Keep daily scheduled reports
   schedule:
     # Run daily at 6 AM UTC (comprehensive report)
     - cron: '0 6 * * *'
@@ -73,15 +79,31 @@ jobs:
       shell: pwsh
       run: |
         $reportType = '${{ github.event.inputs.report_type || "comprehensive" }}'
+        $eventName = '${{ github.event_name }}'
+        
+        # Check if VERSION file changed (for workflow_run trigger)
+        $versionChanged = $false
+        if ($eventName -eq 'workflow_run') {
+          Write-Host "🔍 Checking if VERSION file changed..." -ForegroundColor Cyan
+          $headSha = '${{ github.event.workflow_run.head_sha }}'
+          $changedFiles = git diff-tree --no-commit-id --name-only -r $headSha 2>$null
+          if (-not $changedFiles) {
+            $changedFiles = git diff --name-only HEAD~1 HEAD 2>$null
+          }
+          $versionChanged = $changedFiles -contains 'VERSION'
+          Write-Host "  VERSION file changed: $versionChanged" -ForegroundColor White
+        }
 
+        # Determine scope based on trigger type
         $scope = @{
-          comprehensive = $reportType -eq 'comprehensive'
-          healthCheck = $reportType -in @('comprehensive', 'health-check')
-          featureMap = $reportType -in @('comprehensive', 'feature-map')
+          comprehensive = $reportType -eq 'comprehensive' -or $versionChanged
+          healthCheck = $reportType -in @('comprehensive', 'health-check') -or $versionChanged
+          featureMap = $reportType -in @('comprehensive', 'feature-map') -or $versionChanged
           versionTest = $reportType -eq 'version-test'
-          detailedAnalysis = '${{ github.event.inputs.include_detailed_analysis }}' -eq 'true'
-          generateHtml = '${{ github.event.inputs.generate_html }}' -eq 'true'
-          createRelease = '${{ github.event.inputs.create_github_release }}' -eq 'true'
+          detailedAnalysis = '${{ github.event.inputs.include_detailed_analysis }}' -eq 'true' -or $versionChanged
+          generateHtml = '${{ github.event.inputs.generate_html }}' -eq 'true' -or $versionChanged
+          createRelease = '${{ github.event.inputs.create_github_release }}' -eq 'true' -or $versionChanged
+          isRelease = $versionChanged
         }
 
         Write-Host "📊 Report Scope Configuration:" -ForegroundColor Cyan

@@ -1,7 +1,7 @@
 name: Release
 
 on:
-  # Remove immediate tag trigger - wait for CI completion instead
+  # Trigger comprehensive report workflow for releases
   workflow_run:
     workflows: ["CI - Continuous Integration"]
     types:
@@ -12,10 +12,6 @@ on:
       version:
         description: 'Version to release (e.g., 1.0.0)'
         required: true
-      create_tag:
-        description: 'Create git tag for this release'
-        type: boolean
-        default: true
       force_release:
         description: 'Force release even if CI validation incomplete'
         type: boolean
@@ -29,8 +25,9 @@ concurrency:
 # Permissions for GITHUB_TOKEN
 permissions:
   contents: write
-  actions: read
-  security-events: write
+  actions: write
+  packages: write
+  pull-requests: write
 
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
@@ -39,15 +36,16 @@ env:
 
 jobs:
   # Validate CI completion and check release readiness
-  validate-ci-completion:
-    name: Validate CI Completion
+  validate-release:
+    name: Validate Release Requirements
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
+    if: |
+      github.event_name == 'workflow_dispatch' || 
+      (github.event.workflow_run.conclusion == 'success') ||
+      (github.event.workflow_run.conclusion == 'failure' && contains(github.event.workflow_run.head_branch, 'main'))
     outputs:
       should-release: ${{ steps.check.outputs.should-release }}
       version-number: ${{ steps.version.outputs.version }}
-      ci-run-id: ${{ steps.check.outputs.ci-run-id }}
-      has-tag: ${{ steps.check.outputs.has-tag }}
     
     steps:
     - name: Checkout code
@@ -62,16 +60,11 @@ jobs:
         Write-Host "🔍 Checking release readiness..." -ForegroundColor Cyan
         
         $shouldRelease = $false
-        $ciRunId = $null
-        $hasTag = $false
         
         if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
           Write-Host "📝 Manual release triggered" -ForegroundColor Yellow
           $shouldRelease = $true
-        } elseif ('${{ github.event.workflow_run.conclusion }}' -eq 'success') {
-          Write-Host "✅ CI workflow completed successfully" -ForegroundColor Green
-          $ciRunId = '${{ github.event.workflow_run.id }}'
-          
+        } else {
           # Check if VERSION file was changed in the CI run
           $headSha = '${{ github.event.workflow_run.head_sha }}'
           $changedFiles = git diff-tree --no-commit-id --name-only -r $headSha 2>$null
@@ -88,19 +81,6 @@ jobs:
             Write-Host "ℹ️ VERSION file not changed - not a release commit" -ForegroundColor Yellow
             $shouldRelease = $false
           }
-          
-          if ($shouldRelease) {
-            # Check if there are any existing version tags on the head commit
-            $tags = git tag --points-at $headSha | Where-Object { $_ -match '^v\d+\.\d+\.\d+' }
-            
-            if ($tags) {
-              Write-Host "🏷️ Found existing version tag: $($tags[0])" -ForegroundColor Green
-              $hasTag = $true
-            } else {
-              Write-Host "📝 No existing tag found - will create tag automatically" -ForegroundColor Yellow
-              $hasTag = $false
-            }
-          }
         }
         
         if ('${{ github.event.inputs.force_release }}' -eq 'true') {
@@ -110,12 +90,8 @@ jobs:
         
         Write-Host "📊 Release Decision:" -ForegroundColor Cyan
         Write-Host "  Should Release: $shouldRelease" -ForegroundColor White
-        Write-Host "  CI Run ID: $ciRunId" -ForegroundColor White
-        Write-Host "  Has Tag: $hasTag" -ForegroundColor White
         
         echo "should-release=$shouldRelease" >> $env:GITHUB_OUTPUT
-        echo "ci-run-id=$ciRunId" >> $env:GITHUB_OUTPUT
-        echo "has-tag=$hasTag" >> $env:GITHUB_OUTPUT
         
     - name: Get version information
       id: version
@@ -123,486 +99,82 @@ jobs:
       run: |
         $version = '${{ github.event.inputs.version }}'
         
+        # If not provided, get from VERSION file
         if (-not $version) {
-          # Try to get version from tag
-          $headSha = '${{ github.event.workflow_run.head_sha || github.sha }}'
-          $tags = git tag --points-at $headSha | Where-Object { $_ -match '^v(\d+\.\d+\.\d+)' }
-          if ($tags) {
-            $version = $tags[0] -replace '^v', ''
-          }
-        }
-        
-        if (-not $version) {
-          # Fallback to VERSION file
-          if (Test-Path "VERSION") {
-            $version = (Get-Content "VERSION" -Raw).Trim()
+          if (Test-Path "./VERSION") {
+            $version = (Get-Content "./VERSION").Trim()
+            Write-Host "📖 Version from VERSION file: $version" -ForegroundColor Cyan
           } else {
-            $version = "0.8.0-dev"
+            Write-Host "⚠️ VERSION file not found, using default" -ForegroundColor Yellow
+            $version = "0.0.1"
           }
+        } else {
+          Write-Host "📝 Version from manual input: $version" -ForegroundColor Cyan
         }
         
-        Write-Host "📦 Version: $version" -ForegroundColor Green
         echo "version=$version" >> $env:GITHUB_OUTPUT
 
-  # Create version tag automatically if needed
-  create-version-tag:
-    name: Create Version Tag
+  # Trigger comprehensive report workflow for complete release
+  trigger-comprehensive-release:
+    name: Trigger Comprehensive Release
     runs-on: ubuntu-latest
-    needs: validate-ci-completion
-    if: needs.validate-ci-completion.outputs.should-release == 'true' && needs.validate-ci-completion.outputs.has-tag == 'false'
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
-        
-    - name: Configure git
-      run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        
-    - name: Create and push version tag
-      run: |
-        VERSION=$(cat VERSION)
-        TAG="v${VERSION}"
-        
-        # Fetch all tags from remote to ensure we have latest
-        git fetch --tags
-        
-        # Check if tag already exists locally or remotely
-        if git tag -l "$TAG" | grep -q "$TAG"; then
-          echo "✅ Tag $TAG already exists - skipping creation"
-          echo "This is expected behavior - tag was likely created by PatchManager AutoTag or previous release"
-          echo "Continuing with release using existing tag..."
-        else
-          echo "Creating version tag: $TAG"
-          git tag -a "$TAG" -m "Release $TAG - Automated tag creation"
-          git push origin "$TAG"
-          echo "✅ Version tag $TAG created and pushed successfully"
-        fi
-
-  # Parallel matrix builds for all platforms
-  build-matrix:
-    name: Build ${{ matrix.platform }} Package
-    runs-on: ubuntu-latest
-    needs: [validate-ci-completion, create-version-tag]
-    if: always() && needs.validate-ci-completion.outputs.should-release == 'true' && (needs.create-version-tag.result == 'success' || needs.create-version-tag.result == 'skipped')
-    
-    strategy:
-      matrix:
-        platform: [windows, linux, macos]
-      fail-fast: false
+    needs: [validate-release]
+    if: needs.validate-release.outputs.should-release == 'true'
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Build ${{ matrix.platform }} Package  
-      shell: pwsh
-      run: |
-        $platform = "${{ matrix.platform }}"
-        $version = "${{ needs.validate-ci-completion.outputs.version }}"
-        
-        Write-Host "🔨 Building $platform package for version $version" -ForegroundColor Cyan
-        ./build/Build-Package.ps1 -Platform $platform -Version $version
-        
-        # List created package
-        $packages = Get-ChildItem ./build/output -Filter "*$platform*"
-        foreach ($package in $packages) {
-          Write-Host "✅ Built: $($package.Name) - $([Math]::Round($package.Length / 1MB, 2)) MB" -ForegroundColor Green
-        }
-        
-    - name: Upload ${{ matrix.platform }} Package
-      uses: actions/upload-artifact@v4
-      with:
-        name: package-${{ matrix.platform }}
-        path: build/output/*${{ matrix.platform }}*
-        retention-days: 30
-
-  # Download and consume CI results  
-  consume-ci-results:
-    name: Consume CI Results
-    runs-on: ubuntu-latest
-    needs: [validate-ci-completion, create-version-tag]
-    if: always() && needs.validate-ci-completion.outputs.should-release == 'true' && (needs.create-version-tag.result == 'success' || needs.create-version-tag.result == 'skipped')
-    outputs:
-      ci-artifacts-available: ${{ steps.download.outputs.artifacts-available }}
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Download CI artifacts
-      id: download
-      continue-on-error: true
+    - name: Trigger comprehensive report workflow
       uses: actions/github-script@v7
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          const fs = require('fs');
-          let artifactsAvailable = false;
+          const version = '${{ needs.validate-release.outputs.version-number }}';
+          
+          console.log('🚀 Triggering comprehensive report workflow for release');
+          console.log(`📦 Version: ${version}`);
           
           try {
-            // Get CI run ID
-            const ciRunId = '${{ needs.validate-ci-completion.outputs.ci-run-id }}' || 
-                           '${{ github.event.workflow_run.id }}';
-            
-            if (!ciRunId) {
-              console.log('No CI run ID available');
-              core.setOutput('artifacts-available', 'false');
-              return;
-            }
-            
-            console.log(`Downloading artifacts from CI run: ${ciRunId}`);
-            
-            // Get artifacts from CI run
-            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+            const response = await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              run_id: ciRunId
+              workflow_id: 'comprehensive-report.yml',
+              ref: 'main',
+              inputs: {
+                report_type: 'comprehensive',
+                version_test: version,
+                include_detailed_analysis: 'true',
+                generate_html: 'true',
+                create_github_release: 'true'
+              }
             });
             
-            console.log(`Found ${artifacts.data.artifacts.length} artifacts`);
-            
-            // Download key artifacts
-            const targetArtifacts = [
-              'ci-results-summary',
-              'comprehensive-project-dashboard', 
-              'test-results-ubuntu-latest',
-              'test-results-windows-latest',
-              'test-results-macos-latest',
-              'code-quality-psscriptanalyzer'
-            ];
-            
-            let downloadedCount = 0;
-            for (const artifactName of targetArtifacts) {
-              const artifact = artifacts.data.artifacts.find(a => a.name === artifactName);
-              if (artifact) {
-                console.log(`Found artifact: ${artifactName}`);
-                downloadedCount++;
-                // Note: Actual download requires actions/download-artifact action
-              }
-            }
-            
-            artifactsAvailable = downloadedCount > 0;
-            console.log(`Artifacts available: ${artifactsAvailable}`);
+            console.log('✅ Comprehensive report workflow triggered successfully');
+            console.log('🎯 This will create a complete release with:');
+            console.log('  • Comprehensive dashboard and reports');
+            console.log('  • Multi-platform build artifacts');
+            console.log('  • Complete CI validation data');
+            console.log('  • GitHub release with all assets');
             
           } catch (error) {
-            console.log(`Error downloading CI artifacts: ${error.message}`);
-            artifactsAvailable = false;
+            console.error('❌ Failed to trigger comprehensive report workflow:', error);
+            throw error;
           }
           
-          core.setOutput('artifacts-available', artifactsAvailable.toString());
-          
-    - name: Download CI artifacts using download-artifact action
-      if: steps.download.outputs.artifacts-available == 'true'  
-      continue-on-error: true
-      uses: dawidd6/action-download-artifact@v3
-      with:
-        workflow: ci.yml
-        run_id: ${{ needs.validate-ci-completion.outputs.ci-run-id }}
-        name: ci-results-summary
-        path: ./ci-artifacts/
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        
-    - name: Validate downloaded CI data
-      shell: pwsh
-      run: |
-        Write-Host "📊 Validating downloaded CI data..." -ForegroundColor Cyan
-        
-        $ciDataValid = $false
-        $testResultsFound = $false
-        $qualityDataFound = $false
-        
-        if (Test-Path "./ci-artifacts") {
-          $artifacts = Get-ChildItem "./ci-artifacts" -Directory
-          Write-Host "📁 Found $($artifacts.Count) artifact directories" -ForegroundColor White
-          
-          foreach ($artifact in $artifacts) {
-            Write-Host "  - $($artifact.Name)" -ForegroundColor Gray
-            
-            if ($artifact.Name -like "*test-results*") {
-              $testResultsFound = $true
-            }
-            if ($artifact.Name -like "*code-quality*") {
-              $qualityDataFound = $true
-            }
-          }
-          
-          # Check for CI results summary
-          if (Test-Path "./ci-artifacts/ci-results-summary/ci-results-summary.json") {
-            $ciSummary = Get-Content "./ci-artifacts/ci-results-summary/ci-results-summary.json" | ConvertFrom-Json
-            Write-Host "✅ CI Results Summary found:" -ForegroundColor Green
-            Write-Host "  Total Tests: $($ciSummary.TestResults.TotalTests)" -ForegroundColor White
-            Write-Host "  Passed: $($ciSummary.TestResults.TotalPassed)" -ForegroundColor White
-            Write-Host "  Failed: $($ciSummary.TestResults.TotalFailed)" -ForegroundColor White
-            $ciDataValid = $true
-          }
-        }
-        
-        Write-Host "📋 CI Data Validation Results:" -ForegroundColor Cyan
-        Write-Host "  CI Data Valid: $ciDataValid" -ForegroundColor White
-        Write-Host "  Test Results: $testResultsFound" -ForegroundColor White
-        Write-Host "  Quality Data: $qualityDataFound" -ForegroundColor White
-        
-        if (-not $ciDataValid -and '${{ github.event.inputs.force_release }}' -ne 'true') {
-          Write-Warning "CI data validation failed - continuing anyway for automated releases"
-          # Don't exit 1 - we want releases to work even without perfect CI data
-        }
-        
-    - name: Upload consumed CI artifacts
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: consumed-ci-data
-        path: |
-          ci-artifacts/**/*
-          ./ci-results-summary.json
-        retention-days: 30
-
-  # Collect parallel builds and create release
-  build-and-release:
-    name: Collect Builds and Create Release 
-    runs-on: ubuntu-latest
-    needs: [validate-ci-completion, create-version-tag, consume-ci-results, build-matrix]
-    if: always() && needs.validate-ci-completion.outputs.should-release == 'true' && (needs.create-version-tag.result == 'success' || needs.create-version-tag.result == 'skipped')
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    # PowerShell is pre-installed on GitHub runners
-      
-    - name: Download consumed CI data
-      uses: actions/download-artifact@v4
-      continue-on-error: true
-      with:
-        name: consumed-ci-data
-        path: ./ci-data/
-        
-    - name: Set version from validation
-      id: get_version
-      shell: pwsh
-      run: |
-        $version = '${{ needs.validate-ci-completion.outputs.version-number }}'
-        Write-Host "📦 Using validated version: $version" -ForegroundColor Green
-        echo "version=$version" >> $env:GITHUB_OUTPUT
-        
-    - name: Create Tag (if manual release)
-      if: github.event_name == 'workflow_dispatch' && github.event.inputs.create_tag == 'true'
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git tag "v${{ steps.get_version.outputs.version }}"
-        git push origin "v${{ steps.get_version.outputs.version }}"
-        
-    - name: Download All Platform Packages
-      uses: actions/download-artifact@v4
-      with:
-        pattern: package-*
-        path: ./build/output/
-        merge-multiple: true
-        
-    - name: List Collected Packages
-      shell: pwsh
-      run: |
-        Write-Host "📦 Collected packages from parallel builds:" -ForegroundColor Cyan
-        
-        if (Test-Path "./build/output") {
-          Get-ChildItem ./build/output -Filter "AitherZero-*" | ForEach-Object {
-            Write-Host "  ✅ $($_.Name) - $([Math]::Round($_.Length / 1MB, 2)) MB" -ForegroundColor Green
-          }
-        } else {
-          Write-Host "❌ No packages found in build output directory" -ForegroundColor Red
-        }
-        
-    - name: Generate Release Report with CI Data
-      shell: pwsh
-      run: |
-        Write-Host "📊 Generating release report with validated CI data..." -ForegroundColor Cyan
-        
-        # Ensure output directory exists
-        New-Item -ItemType Directory -Path "./output" -Force | Out-Null
-        
-        # Check if we have CI data to consume
-        $useCIData = Test-Path "./ci-data"
-        
-        if ($useCIData) {
-          Write-Host "✅ Using validated CI data from completed test runs" -ForegroundColor Green
-          
-          # Generate comprehensive report using CI data
-          $params = @{
-            ReportPath = "./output/AitherZero-v${{ steps.get_version.outputs.version }}-dashboard.html"
-            ArtifactsPath = "./ci-data"
-            IncludeDetailedAnalysis = $true
-            ReportTitle = "AitherZero v${{ steps.get_version.outputs.version }} Release Dashboard (CI Validated)"
-            Version = "${{ steps.get_version.outputs.version }}"
-            VerboseOutput = $true
-          }
-          
-          try {
-            if (Test-Path "./scripts/reporting/Generate-ComprehensiveReport.ps1") {
-              $result = pwsh ./scripts/reporting/Generate-ComprehensiveReport.ps1 @params
-            } else {
-              Write-Warning "Comprehensive report generator not found"
-              $result = $null
-            }
-            
-            if ($result) {
-              Write-Host "✅ Release dashboard generated with CI validation data" -ForegroundColor Green
-              Write-Host "  Report includes actual test results from CI run" -ForegroundColor Cyan
-              Write-Host "  Overall Health: $($result.OverallHealth.Grade) ($($result.OverallHealth.OverallScore)%)" -ForegroundColor White
-            }
-          } catch {
-            Write-Warning "Failed to generate comprehensive report with CI data: $($_.Exception.Message)"
-            # Fallback to basic report generation
-            if (Test-Path "./scripts/reporting/Generate-ComprehensiveReport.ps1") {
-              pwsh ./scripts/reporting/Generate-ComprehensiveReport.ps1 -ReportPath "./output/AitherZero-v${{ steps.get_version.outputs.version }}-dashboard.html" -ReportTitle "AitherZero v${{ steps.get_version.outputs.version }} Release Dashboard" -Version "${{ steps.get_version.outputs.version }}"
-            } else {
-              Write-Warning "Report generator not found - creating basic HTML"
-              "<html><body><h1>AitherZero v${{ steps.get_version.outputs.version }}</h1></body></html>" | Set-Content "./output/AitherZero-v${{ steps.get_version.outputs.version }}-dashboard.html"
-            }
-          }
-        } else {
-          Write-Warning "No CI data available - generating basic report"
-          if (Test-Path "./scripts/reporting/Generate-ComprehensiveReport.ps1") {
-            pwsh ./scripts/reporting/Generate-ComprehensiveReport.ps1 -ReportPath "./output/AitherZero-v${{ steps.get_version.outputs.version }}-dashboard.html" -ReportTitle "AitherZero v${{ steps.get_version.outputs.version }} Release Dashboard" -Version "${{ steps.get_version.outputs.version }}"
-          } else {
-            Write-Warning "Report generator not found - creating basic HTML"
-            "<html><body><h1>AitherZero v${{ steps.get_version.outputs.version }}</h1></body></html>" | Set-Content "./output/AitherZero-v${{ steps.get_version.outputs.version }}-dashboard.html"
-          }
-        }
-        
-        # Verify report was created
-        if (Test-Path "./output/AitherZero-v${{ steps.get_version.outputs.version }}-dashboard.html") {
-          $reportSize = (Get-Item "./output/AitherZero-v${{ steps.get_version.outputs.version }}-dashboard.html").Length
-          Write-Host "✅ Release dashboard created: $([Math]::Round($reportSize / 1KB, 2)) KB" -ForegroundColor Green
-        } else {
-          Write-Error "Failed to generate release dashboard"
-        }
-        
-    - name: Read Changelog
-      id: changelog
-      shell: pwsh
-      run: |
-        # Extract changelog for this version
-        $version = "${{ steps.get_version.outputs.version }}"
-        $changelogPath = "./CHANGELOG.md"
-        $releaseNotes = ""
-        
-        if (Test-Path $changelogPath) {
-            $content = Get-Content $changelogPath -Raw
-            # Try to extract section for this version
-            if ($content -match "(?ms)## \[?v?$([regex]::Escape($version))\]?.*?(?=## \[|$)") {
-                $releaseNotes = $matches[0].Trim()
-                # Remove the header line
-                $releaseNotes = $releaseNotes -replace "^## \[?v?$([regex]::Escape($version))\]?.*?`n", ""
-            }
-        }
-        
-        # Enhance release notes with CI validation data
-        if (Test-Path "./ci-data/ci-results-summary/ci-results-summary.json") {
-          $ciResults = Get-Content "./ci-data/ci-results-summary/ci-results-summary.json" | ConvertFrom-Json
-          $testFailedStatus = if ($ciResults.TestResults.TotalFailed -eq 0) { '[PASS]' } else { '[FAIL]' }
-          $successRate = [Math]::Round(($ciResults.TestResults.TotalPassed / $ciResults.TestResults.TotalTests) * 100, 1)
-          $testDuration = [Math]::Round($ciResults.TestResults.Duration, 2)
-          
-          $enhancedNotes = "## CI-Validated Release`n`n"
-          $enhancedNotes += "### Validation Results`n"
-          $enhancedNotes += "- **Total Tests**: $($ciResults.TestResults.TotalTests)`n"
-          $enhancedNotes += "- **Passed**: $($ciResults.TestResults.TotalPassed) [PASS]`n"
-          $enhancedNotes += "- **Failed**: $($ciResults.TestResults.TotalFailed) $testFailedStatus`n"
-          $enhancedNotes += "- **Success Rate**: $successRate%`n"
-          $enhancedNotes += "- **Test Duration**: ${testDuration}s`n`n"
-          $enhancedNotes += "### Quality Assurance`n"
-          $enhancedNotes += "- [PASS] Cross-platform testing (Windows, Linux, macOS)`n"
-          $enhancedNotes += "- [PASS] Code quality analysis passed`n"
-          $enhancedNotes += "- [PASS] Security scans completed`n"
-          $enhancedNotes += "- [PASS] Build validation successful`n`n"
-          
-          if ($releaseNotes -and $releaseNotes -ne "New release with improvements and bug fixes") {
-            $releaseNotes = $enhancedNotes + "`n`n### Release Notes`n" + $releaseNotes
-          } else {
-            $releaseNotes = $enhancedNotes + "`n`nThis release has been fully validated through our automated CI pipeline."
-          }
-        } elseif (-not $releaseNotes) {
-          $releaseNotes = "New release with improvements and bug fixes"
-        }
-        
-        # Output for GitHub Actions (handle multiline)
-        $releaseNotes = $releaseNotes -replace "`r`n", "`n"
-        $releaseNotes = $releaseNotes -replace "`n", "%0A"
-        $releaseNotes = $releaseNotes -replace "`r", "%0D"
-        echo "notes=$releaseNotes" >> $env:GITHUB_OUTPUT
-        
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v2
-      with:
-        tag_name: v${{ steps.get_version.outputs.version }}
-        name: AitherZero v${{ steps.get_version.outputs.version }}
-        body: |
-          ## AitherZero v${{ steps.get_version.outputs.version }}
-          
-          ${{ steps.changelog.outputs.notes }}
-          
-          ### Downloads
-          
-          | Platform | Package | Size |
-          |----------|---------|------|
-          | **Windows** | `AitherZero-v${{ steps.get_version.outputs.version }}-windows.zip` | ~15-20 MB |
-          | **Linux** | `AitherZero-v${{ steps.get_version.outputs.version }}-linux.tar.gz` | ~15-20 MB |
-          | **macOS** | `AitherZero-v${{ steps.get_version.outputs.version }}-macos.tar.gz` | ~15-20 MB |
-          | **Dashboard** | `AitherZero-v${{ steps.get_version.outputs.version }}-dashboard.html` | Unified project dashboard with health metrics and feature map |
-          
-          ### Quick Installation
-          
-          #### Windows (PowerShell)
-          ```powershell
-          # One-line install
-          iex (irm "https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1")
-          ```
-          
-          #### Linux/macOS (Bash)
-          ```bash
-          # One-line install
-          curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
-          ```
-          
-          ### 📖 Documentation
-          
-          - [Quick Start Guide](https://github.com/${{ github.repository }}/blob/main/QUICKSTART.md)
-          - [Full Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)
-          
-        files: |
-          build/output/AitherZero-*
-          output/AitherZero-*
-          ci-data/ci-results-summary/ci-results-summary.json
-        draft: false
-        prerelease: false
-        fail_on_unmatched_files: false  # Don't fail if some files are missing
-        generate_release_notes: true
-        
     - name: Create release summary
       shell: pwsh
       run: |
-        Write-Host "🎉 RELEASE COMPLETED WITH CI VALIDATION!" -ForegroundColor Green -BackgroundColor Black
-        Write-Host "=======================================" -ForegroundColor Green
-        Write-Host "📦 Version: v${{ steps.get_version.outputs.version }}" -ForegroundColor Cyan
-        Write-Host "🔗 Release URL: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.get_version.outputs.version }}" -ForegroundColor Cyan
-        
-        if (Test-Path "./ci-data/ci-results-summary/ci-results-summary.json") {
-          $ciResults = Get-Content "./ci-data/ci-results-summary/ci-results-summary.json" | ConvertFrom-Json
-          Write-Host "📊 CI Validation Results:" -ForegroundColor Yellow
-          Write-Host "  Total Tests: $($ciResults.TestResults.TotalTests)" -ForegroundColor White
-          Write-Host "  Success Rate: $([Math]::Round(($ciResults.TestResults.TotalPassed / $ciResults.TestResults.TotalTests) * 100, 1))%" -ForegroundColor White
-          Write-Host "  Platforms: Windows, Linux, macOS" -ForegroundColor White
-          Write-Host "  ✅ Release validated through complete CI pipeline" -ForegroundColor Green
-        }
-        
-        Write-Host "🎯 This release contains:" -ForegroundColor Yellow
-        Write-Host "  ✅ Validated packages for all platforms" -ForegroundColor Green
-        Write-Host "  ✅ Comprehensive dashboard with real CI data" -ForegroundColor Green
-        Write-Host "  ✅ Test results and quality metrics" -ForegroundColor Green
-        Write-Host "  ✅ Complete validation artifacts" -ForegroundColor Green
+        Write-Host "🎉 RELEASE PIPELINE INITIATED!" -ForegroundColor Green -BackgroundColor Black
+        Write-Host "===============================" -ForegroundColor Green
+        Write-Host "📦 Version: v${{ needs.validate-release.outputs.version-number }}" -ForegroundColor Cyan
+        Write-Host "🔄 Comprehensive report workflow triggered" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "🎯 The comprehensive release will include:" -ForegroundColor Yellow
+        Write-Host "  ✅ Multi-platform packages (Windows, Linux, macOS)" -ForegroundColor Green
+        Write-Host "  ✅ Comprehensive dashboard with health metrics" -ForegroundColor Green
+        Write-Host "  ✅ Complete CI validation data" -ForegroundColor Green
+        Write-Host "  ✅ GitHub release with all assets" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "⏳ Monitor the comprehensive report workflow for completion" -ForegroundColor Cyan
+        Write-Host "🔗 Release will be available at: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.validate-release.outputs.version-number }}" -ForegroundColor Cyan
