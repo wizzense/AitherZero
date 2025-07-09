@@ -681,8 +681,8 @@ try {
             Write-Verbose "Loading AitherCore orchestration module..."
             Import-Module $aitherCorePath -Force -Global -ErrorAction Stop
 
-            # Initialize the complete CoreApp ecosystem
-            Write-Verbose "Initializing CoreApp ecosystem..."
+            # Initialize the complete CoreApp ecosystem with parallel loading
+            Write-Verbose "Initializing CoreApp ecosystem with parallel module loading..."
             $initResult = Initialize-CoreApplication -RequiredOnly:$false
 
             if ($initResult) {
