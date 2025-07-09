@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AitherZero Test Report - Enhanced</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        .header { background-color: #2c3e50; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .summary { background-color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .metric { display: inline-block; margin: 10px 20px 10px 0; }
+        .metric-value { font-size: 2em; font-weight: bold; color: red; }
+        .metric-label { font-size: 0.9em; color: #666; }
+        .results { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .failure-analysis { background-color: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ffc107; }
+        .module-result { margin: 10px 0; padding: 15px; border-left: 4px solid #ddd; background-color: #f9f9f9; }
+        .success { border-left-color: #27ae60; }
+        .failure { border-left-color: #e74c3c; }
+        .phase { margin: 5px 0; font-size: 0.9em; }
+        .details { margin-top: 10px; font-size: 0.8em; color: #666; }
+        .performance-metrics { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .chart { display: flex; justify-content: space-around; margin: 20px 0; }
+        .chart-item { text-align: center; }
+        .progress-bar { width: 200px; height: 20px; background-color: #e0e0e0; border-radius: 10px; overflow: hidden; margin: 10px auto; }
+        .progress-fill { height: 100%; background-color: red; transition: width 0.3s ease; }
+        .critical-failure { background-color: #f8d7da; border-left-color: #dc3545; }
+        .expandable { cursor: pointer; }
+        .expandable:hover { background-color: #f0f0f0; }
+        .details-expanded { display: block; }
+        .details-collapsed { display: none; }
+    </style>
+    <script>
+        function toggleDetails(element) {
+            const details = element.nextElementSibling;
+            if (details.classList.contains('details-collapsed')) {
+                details.classList.remove('details-collapsed');
+                details.classList.add('details-expanded');
+                element.textContent = element.textContent.replace('▶', '▼');
+            } else {
+                details.classList.remove('details-expanded');
+                details.classList.add('details-collapsed');
+                element.textContent = element.textContent.replace('▼', '▶');
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="header">
+        <h1>🧪 AitherZero Test Report - Enhanced</h1>
+        <p>Test Suite: Unit | Generated: 07/09/2025 05:10:43</p>
+    </div>
+
+    <div class="summary">
+        <h2>📊 Test Summary</h2>
+        <div class="metric">
+            <div class="metric-value">59.2%</div>
+            <div class="metric-label">Success Rate</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">177</div>
+            <div class="metric-label">Tests Passed</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">147</div>
+            <div class="metric-label">Tests Failed</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value"></div>
+            <div class="metric-label">Tests Skipped</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">0</div>
+            <div class="metric-label">Modules Passed</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">254.46s</div>
+            <div class="metric-label">Total Duration</div>
+        </div>
+    </div>
+
+    <div class="performance-metrics">
+        <h2>⚡ Performance Metrics</h2>
+        <div class="chart">
+            <div class="chart-item">
+                <div class="metric-label">Average Duration</div>
+                <div class="metric-value">8.21s</div>
+            </div>
+            <div class="chart-item">
+                <div class="metric-label">Slowest Module</div>
+                <div class="metric-value">BackupManager</div>
+            </div>
+            <div class="chart-item">
+                <div class="metric-label">Fastest Module</div>
+                <div class="metric-value">LicenseManager</div>
+            </div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: 59.2%"></div>
+        </div>
+    </div>
+
+        <div class="failure-analysis">
+        <h2>🔍 Failure Analysis</h2>
+        <div class="critical-failures">
+            <h3>Critical Failures (>50% failure rate)</h3>
+            <ul><li>LabRunner</li><li>DevEnvironment</li></ul></div></div>
+
+    <div class="results">
+        <h2>📋 Detailed Results</h2>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ AIToolsIntegration  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (3.14s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/AIToolsIntegration/tests/AIToolsIntegration.Tests.ps1</div><div>• Module: AIToolsIntegration</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ BackupManager  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 49/57 passed (80.82s)</div><div class='details'><div>• Failed: Should create backup directory structure - Expected path '/tmp/2cf85850-f526-4225-bed1-58d2b39d28f2/backup-destination/structure-test' to exist, but it did not exist.</div><div>• Failed: Should handle custom patterns - Expected $true, but got $null.</div><div>• Failed: Should support prevention rules creation - Expected $true, but got $null.</div><div>• Failed: Should return proper backup context - Expected /tmp/2cf85850-f526-4225-bed1-58d2b39d28f2/backup-test-data, but got '/tmp/2cf85850-f526-4225-bed1-58d2b39d28f2/backup-test-data'.</div><div>• Failed: Should return proper restoration context - Expected /tmp/2cf85850-f526-4225-bed1-58d2b39d28f2/restore-destination/context-restore, but got '/tmp/2cf85850-f526-4225-bed1-58d2b39d28f2/restore-destination/context-restore'.</div><div>• Failed: Should support WhatIf parameter - Expected no exception to be thrown, but an exception "Cannot find path '/tmp/2cf85850-f526-4225-bed1-58d2b39d28f2/restore-destination/whatif-restore' because it does not exist." was thrown from /workspaces/AitherZero/aither-core/modules/BackupManager/Public/Restore-BackupData.ps1:85 char:24
+    +         $RestorePath = Resolve-Path $RestorePath
+    +                        ~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should support WhatIf parameter - Expected no exception to be thrown, but an exception "Cannot find path '/tmp/2cf85850-f526-4225-bed1-58d2b39d28f2/backup-destination/automated-whatif' because it does not exist." was thrown from /workspaces/AitherZero/aither-core/modules/BackupManager/Public/Start-AutomatedBackup.ps1:119 char:23
+    +         $BackupPath = Resolve-Path $BackupPath
+    +                       ~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should handle invalid backup paths gracefully - Expected an exception to be thrown, but no exception was thrown.</div><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:01:20.5289745</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ ConfigurationCarousel  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (2.93s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/ConfigurationCarousel/tests/ConfigurationCarousel.Tests.ps1</div><div>• Module: ConfigurationCarousel</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ ConfigurationCore  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (1.95s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/ConfigurationCore/tests/ConfigurationCore.Tests.ps1</div><div>• Module: ConfigurationCore</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ ConfigurationManager  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (3.64s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/ConfigurationManager/tests/ConfigurationManager.Tests.ps1</div><div>• Module: ConfigurationManager</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ ConfigurationRepository  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (19.69s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/ConfigurationRepository/tests/ConfigurationRepository.Tests.ps1</div><div>• Module: ConfigurationRepository</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure critical-failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ DevEnvironment 🚨 ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 26/77 passed (4.84s)</div><div class='details'><div>• Failed: Should export Test-DevEnvironment function - Expected a value, but got $null or empty.</div><div>• Failed: Should return a valid status object - The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should include PowerShell version information - The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should include module information - The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should support metrics inclusion - The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should perform basic environment testing - The term 'Test-DevEnvironment' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should test PowerShell environment - The term 'Test-DevEnvironment' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should test Git environment - The term 'Test-DevEnvironment' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should support AI tools testing when requested - The term 'Test-DevEnvironment' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should support performance metrics when requested - The term 'Test-DevEnvironment' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should export Test-VSCodeIntegration function - Expected a value, but got $null or empty.</div><div>• Failed: Should test VS Code integration without errors - Expected no exception to be thrown, but an exception "The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1:215 char:15
+    +             { Test-VSCodeIntegration } | Should -Not -Throw
+    +               ~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should return valid integration test results - The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should support detailed testing mode - Expected no exception to be thrown, but an exception "The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1:227 char:15
+    +             { Test-VSCodeIntegration -Detailed } | Should -Not -Throw
+    +               ~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should support extension checking - Expected no exception to be thrown, but an exception "The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1:231 char:15
+    +             { Test-VSCodeIntegration -RequiredExtensions @('ms-vscode …
+    +               ~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should support WhatIf mode - Expected no exception to be thrown, but an exception "The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1:237 char:15
+    +             { Initialize-VSCodeWorkspace -WhatIf } | Should -Not -Thr …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should support workspace creation - Expected no exception to be thrown, but an exception "The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1:241 char:15
+    + …           { Initialize-VSCodeWorkspace -CreateWorkspaceFile -WhatIf } …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should support extension installation - Expected no exception to be thrown, but an exception "The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1:245 char:15
+    + …           { Initialize-VSCodeWorkspace -InstallExtensions -WhatIf } | …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should support WhatIf mode for dependency installation - Expected no exception to be thrown, but an exception "The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1:263 char:15
+    +             { Install-ClaudeCodeDependencies -WhatIf } | Should -Not  …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should detect platform requirements - Expected no exception to be thrown, but an exception "The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1:268 char:15
+    +             { Install-ClaudeCodeDependencies -WhatIf } | Should -Not  …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should support WhatIf mode - Expected no exception to be thrown, but an exception "The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1:292 char:15
+    +             { Optimize-PlatformEnvironment -WhatIf } | Should -Not -T …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should support platform-specific optimization - Expected no exception to be thrown, but an exception "The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1:297 char:15
+    + …           { Optimize-PlatformEnvironment -Platform $platform -WhatIf  …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should support performance tuning options - Expected no exception to be thrown, but an exception "The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1:301 char:15
+    + …           { Optimize-PlatformEnvironment -IncludePerformanceTuning -W …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should support development tools configuration - Expected no exception to be thrown, but an exception "The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1:305 char:15
+    + …           { Optimize-PlatformEnvironment -ConfigureDevelopmentTools - …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should return optimization results - The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should validate parameters correctly in Initialize-DevEnvironment - Expected no exception to be thrown, but an exception "The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1:360 char:15
+    +             { Initialize-DevEnvironment -WhatIf } | Should -Not -Thro …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should validate parameters correctly in Test-DevEnvironment - Expected no exception to be thrown, but an exception "The term 'Test-DevEnvironment' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1:364 char:15
+    +             { Test-DevEnvironment -WhatIf } | Should -Not -Throw
+    +               ~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should handle missing VS Code gracefully - Expected no exception to be thrown, but an exception "The term 'Test-VSCodeIntegration' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1:375 char:15
+    +             { Test-VSCodeIntegration } | Should -Not -Throw
+    +               ~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should handle missing Node.js gracefully - Expected no exception to be thrown, but an exception "The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1:380 char:15
+    +             { Install-ClaudeCodeDependencies -WhatIf } | Should -Not  …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should handle missing Git gracefully - Expected no exception to be thrown, but an exception "The term 'Test-DevEnvironment' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1:385 char:15
+    +             { Test-DevEnvironment } | Should -Not -Throw
+    +               ~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should use Write-CustomLog function if available - Expected no exception to be thrown, but an exception "The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1:395 char:19
+    +                 { Get-DevEnvironmentStatus } | Should -Not -Throw
+    +                   ~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should have fallback logging if Logging module unavailable - Expected no exception to be thrown, but an exception "The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1:401 char:15
+    +             { Get-DevEnvironmentStatus } | Should -Not -Throw
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should not consume excessive memory - The term 'Test-DevEnvironment' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should have help documentation for Initialize-DevEnvironment - Cannot validate argument on parameter 'Name'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</div><div>• Failed: Should have parameter documentation for Initialize-DevEnvironment - Cannot validate argument on parameter 'Name'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</div><div>• Failed: Should have examples for Initialize-DevEnvironment - Cannot validate argument on parameter 'Name'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</div><div>• Failed: Should have help documentation for Get-DevEnvironmentStatus - Cannot validate argument on parameter 'Name'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</div><div>• Failed: Should have parameter documentation for Get-DevEnvironmentStatus - Cannot validate argument on parameter 'Name'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</div><div>• Failed: Should have examples for Get-DevEnvironmentStatus - Cannot validate argument on parameter 'Name'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</div><div>• Failed: Should have help documentation for Test-DevEnvironment - Cannot validate argument on parameter 'Name'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</div><div>• Failed: Should have parameter documentation for Test-DevEnvironment - Cannot validate argument on parameter 'Name'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</div><div>• Failed: Should have examples for Test-DevEnvironment - Cannot validate argument on parameter 'Name'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</div><div>• Failed: Should have help documentation for Initialize-VSCodeWorkspace - Cannot validate argument on parameter 'Name'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</div><div>• Failed: Should have parameter documentation for Initialize-VSCodeWorkspace - Cannot validate argument on parameter 'Name'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</div><div>• Failed: Should have examples for Initialize-VSCodeWorkspace - Cannot validate argument on parameter 'Name'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</div><div>• Failed: Should have help documentation for Test-VSCodeIntegration - Cannot validate argument on parameter 'Name'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</div><div>• Failed: Should have parameter documentation for Test-VSCodeIntegration - Cannot validate argument on parameter 'Name'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</div><div>• Failed: Should have examples for Test-VSCodeIntegration - Cannot validate argument on parameter 'Name'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</div><div>• Failed: Should have help documentation for Optimize-PlatformEnvironment - Cannot validate argument on parameter 'Name'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</div><div>• Failed: Should have parameter documentation for Optimize-PlatformEnvironment - Cannot validate argument on parameter 'Name'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</div><div>• Failed: Should have examples for Optimize-PlatformEnvironment - Cannot validate argument on parameter 'Name'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</div><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:04.6683659</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ ISOManager  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (0.88s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/ISOManager/tests/ISOManager.Tests.ps1</div><div>• Module: ISOManager</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure critical-failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ LabRunner 🚨 ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/35 passed (1.26s)</div><div class='details'><div>• Failed: Should load the LabRunner module successfully - </div><div>• Failed: Should export all required functions - </div><div>• Failed: Should have proper module manifest - </div><div>• Failed: Should detect platform correctly - </div><div>• Failed: Should return cross-platform temp path - </div><div>• Failed: Should test parallel runner support - </div><div>• Failed: Should provide detailed parallel support information - </div><div>• Failed: Should handle ThreadJob module availability - </div><div>• Failed: Should load lab configuration from file - </div><div>• Failed: Should handle missing configuration file gracefully - </div><div>• Failed: Should get lab status - </div><div>• Failed: Should get detailed lab status - </div><div>• Failed: Should start lab automation with default parameters - </div><div>• Failed: Should handle lab automation with specific steps - </div><div>• Failed: Should handle empty script list - </div><div>• Failed: Should generate deployment scripts from configuration - </div><div>• Failed: Should start enhanced lab deployment - </div><div>• Failed: Should handle enhanced deployment with dry run - </div><div>• Failed: Should execute available commands - </div><div>• Failed: Should handle unavailable commands with mock result - </div><div>• Failed: Should skip unavailable commands when requested - </div><div>• Failed: Should throw for unavailable commands by default - </div><div>• Failed: Should execute lab steps with configuration - </div><div>• Failed: Should handle lab step errors properly - </div><div>• Failed: Should handle non-interactive input - </div><div>• Failed: Should handle secure string input in non-interactive mode - </div><div>• Failed: Should execute web requests with error handling - </div><div>• Failed: Should handle web request failures - </div><div>• Failed: Should handle module import failures gracefully - </div><div>• Failed: Should provide meaningful error messages - </div><div>• Failed: Should integrate with Logging module when available - </div><div>• Failed: Should integrate with ProgressTracking module when available - </div><div>• Failed: Should handle a complete lab deployment workflow - </div><div>• Failed: Should complete parallel support test quickly - </div><div>• Failed: Should handle multiple concurrent operations efficiently - </div><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/LabRunner/tests/LabRunner.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:01.0544364</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ LicenseManager  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (0.85s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/LicenseManager/tests/LicenseManager.Tests.ps1</div><div>• Module: LicenseManager</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ Logging  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (4.39s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/Logging/tests/Logging.Tests.ps1</div><div>• Module: Logging</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ ModuleCommunication  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (15.7s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1</div><div>• Module: ModuleCommunication</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ OpenTofuProvider  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (4.18s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/OpenTofuProvider/tests/OpenTofuProvider.Tests.ps1</div><div>• Module: OpenTofuProvider</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ OrchestrationEngine  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 11/22 passed (2.53s)</div><div class='details'><div>• Failed: Should export management functions - Expected a value, because Management module should export management-related functions, but got $null or empty.</div><div>• Failed: Should initialize management state properly - Expected no exception to be thrown, but an exception "The term 'Start-OrchestrationEngineManagement' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:84 char:15
+    +             { Start-OrchestrationEngineManagement -TestMode } | Shoul …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should track resource state accurately - The term 'Get-OrchestrationEngineStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should handle configuration changes safely - Expected no exception to be thrown, but an exception "The term 'Set-OrchestrationEngineConfiguration' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:97 char:15
+    +             { Set-OrchestrationEngineConfiguration -Configuration $te …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should execute operations with proper validation - The term 'Invoke-OrchestrationEngineOperation' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should maintain consistent state across operations - The term 'Get-OrchestrationEngineStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should persist state information properly - The term 'Export-OrchestrationEngineState' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should coordinate with other management modules - The term 'Test-OrchestrationEngineCoordination' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should handle multiple concurrent management requests - Expected a collection with size 3, but got an empty collection.</div><div>• Failed: Should maintain consistency under concurrent access - The term 'Get-OrchestrationEngineStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should execute management operations within acceptable time limits - The term 'Get-OrchestrationEngineStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:02.2748781</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ ParallelExecution  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 28/37 passed (18.07s)</div><div class='details'><div>• Failed: Should handle timeout correctly - Expected an exception to be thrown, but no exception was thrown.</div><div>• Failed: Should handle job timeouts - Expected 'Timeout', but got $null.</div><div>• Failed: Should collect errors from failed jobs - Expected $true, but got $false.</div><div>• Failed: Should handle missing test files gracefully - Expected 'Failed', but got $null.</div><div>• Failed: Should merge test results correctly - Expected 7, but got 0.</div><div>• Failed: Should aggregate failures correctly - Expected 1, but got 0.</div><div>• Failed: Should handle script block compilation errors - Expected an exception to be thrown, but no exception was thrown.</div><div>• Failed: Should maintain data integrity across parallel operations - Expected 54, but got 60.</div><div>• Failed: Should calculate optimal throttle limits correctly - Expected 48, but got 32.</div><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:17.8407395</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ PatchManager  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (9.68s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/PatchManager/tests/PatchManager.Tests.ps1</div><div>• Module: PatchManager</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ ProgressTracking  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (0.86s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/ProgressTracking/tests/ProgressTracking.Tests.ps1</div><div>• Module: ProgressTracking</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ PSScriptAnalyzerIntegration  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (2.33s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1</div><div>• Module: PSScriptAnalyzerIntegration</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ RemoteConnection  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (2.63s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1</div><div>• Module: RemoteConnection</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ RepoSync  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (2.9s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1</div><div>• Module: RepoSync</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ RestAPIServer  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (2.73s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1</div><div>• Module: RestAPIServer</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ ScriptManager  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (3.06s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/ScriptManager/tests/ScriptManager.Tests.ps1</div><div>• Module: ScriptManager</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ SecureCredentials  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (14.88s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/SecureCredentials/tests/SecureCredentials.Tests.ps1</div><div>• Module: SecureCredentials</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ SecurityAutomation  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (10.56s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/SecurityAutomation/tests/SecurityAutomation.Tests.ps1</div><div>• Module: SecurityAutomation</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ SemanticVersioning  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (3.79s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1</div><div>• Module: SemanticVersioning</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ SetupWizard  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 63/71 passed (23.88s)</div><div class='details'><div>• Failed: Should test security settings - Cannot bind argument to parameter 'Path' because it is null.</div><div>• Failed: Should check platform-specific security features - Cannot bind argument to parameter 'Path' because it is null.</div><div>• Failed: Should count passed, failed, and warning steps - Expected regular expression 'Passed: 1' to match 'Setup completed with:   ✅ Passed: 2   ❌ Failed: 2   ⚠️ Warnings: 2  ⚠️ Setup completed with limited functionality Total time: 30 seconds', but it did not match.</div><div>• Failed: Should gather detailed system information - Expected a value, but got $null or empty.</div><div>• Failed: Should test network connectivity - Expected the value to have type [bool] or any of its subtypes, but got $null with type $null.</div><div>• Failed: Should handle configuration management workflow - Cannot find an overload for "op_Subtraction" and the argument count: "2".</div><div>• Failed: Should complete basic tests efficiently - Cannot bind argument to parameter 'Path' because it is null.</div><div>• Failed: Should handle large setup state objects - Expected no exception to be thrown, but an exception "Cannot find an overload for "op_Subtraction" and the argument count: "2"." was thrown from /workspaces/AitherZero/aither-core/modules/SetupWizard/SetupWizard.psm1:965 char:5
+    +     $duration = (Get-Date) - $SetupState.StartTime
+    +     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SetupWizard/tests/SetupWizard.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:23.6071431</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ StartupExperience  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (3.08s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1</div><div>• Module: StartupExperience</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ SystemMonitoring  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (2.41s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/SystemMonitoring/tests/SystemMonitoring.Tests.ps1</div><div>• Module: SystemMonitoring</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ TestingFramework  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (1.39s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/TestingFramework/tests/TestingFramework.Tests.ps1</div><div>• Module: TestingFramework</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ UnifiedMaintenance  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (2.35s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/UnifiedMaintenance/tests/UnifiedMaintenance.Tests.ps1</div><div>• Module: UnifiedMaintenance</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ UtilityServices  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 0/0 passed (3.09s)</div><div class='details'><div>• Pester execution failed: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Test path: /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1</div><div>• Module: UtilityServices</div><div>• Configuration: {"MockLevel":"High","TimeoutMinutes":15,"ParallelJobs":4,"Platform":"All","Verbosity":"Detailed","MaxMemoryUsageMB":1024,"EnableCoverage":true,"CoverageThreshold":70,"EnablePerformanceMetrics":true,"RetryCount":2}</div><div>• Stack trace: at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 79
+at Invoke-UnitTests, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 1099
+at Invoke-ModuleTestPhase, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1: line 911
+at <ScriptBlock>, <No file>: line 27
+at <ScriptBlock>, <No file>: line 2</div></div></div></div>    </div>
+
+    <div class="footer" style="text-align: center; margin-top: 20px; color: #666;">
+        <p>Generated by AitherZero TestingFramework v1.0.0 | 07/09/2025 05:10:44</p>
+    </div>
+</body>
+</html>

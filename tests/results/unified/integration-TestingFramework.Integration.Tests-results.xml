@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="12" errors="0" failures="12" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-09" time="04:52:28">
+  <environment cwd="/workspaces/AitherZero/build/output" os-version="6.8.0-1027-azure" clr-version="9.0.4" user="codespace" nunit-version="2.5.8.0" platform="Linux" machine-name="codespaces-6c6eb1" user-domain="" />
+  <culture-info current-culture="" current-uiculture="" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="2.1442" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/tests/integration/TestingFramework.Integration.Tests.ps1" executed="True" result="Failure" success="False" time="2.1442" asserts="0" description="/workspaces/AitherZero/tests/integration/TestingFramework.Integration.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="TestingFramework Integration Tests" executed="True" result="Failure" success="False" time="1.8812" asserts="0" description="TestingFramework Integration Tests">
+            <results>
+              <test-suite type="TestFixture" name="TestingFramework Integration Tests.TestingFramework + ParallelExecution Integration" executed="True" result="Failure" success="False" time="1.6429" asserts="0" description="TestingFramework Integration Tests.TestingFramework + ParallelExecution Integration">
+                <results>
+                  <test-case description="Should execute tests in parallel across multiple modules" name="TestingFramework Integration Tests.TestingFramework + ParallelExecution Integration.Should execute tests in parallel across multiple modules" time="0.0127" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ParameterBindingException: A parameter cannot be found that matches parameter name 'EventName'.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/TestingFramework.Integration.Tests.ps1:390</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle parallel test execution with resource management" name="TestingFramework Integration Tests.TestingFramework + ParallelExecution Integration.Should handle parallel test execution with resource management" time="1.6144" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ParameterBindingException: A parameter cannot be found that matches parameter name 'EventName'.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/TestingFramework.Integration.Tests.ps1:437</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should coordinate parallel test execution with result aggregation" name="TestingFramework Integration Tests.TestingFramework + ParallelExecution Integration.Should coordinate parallel test execution with result aggregation" time="0.013" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ValidationMetadataException: The argument "True" does not belong to the set "Development,CI,Production,Debug" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.
+ParameterBindingValidationException: Cannot validate argument on parameter 'TestProfile'. The argument "True" does not belong to the set "Development,CI,Production,Debug" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/TestingFramework.Integration.Tests.ps1:466</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="TestingFramework Integration Tests.TestingFramework + PatchManager Integration" executed="True" result="Failure" success="False" time="1.7121" asserts="0" description="TestingFramework Integration Tests.TestingFramework + PatchManager Integration">
+                <results>
+                  <test-case description="Should validate tests before patch creation" name="TestingFramework Integration Tests.TestingFramework + PatchManager Integration.Should validate tests before patch creation" time="0.0306" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:79
+at Invoke-UnifiedTestExecution&lt;Begin&gt;, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:241
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/TestingFramework.Integration.Tests.ps1:507</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle test failures preventing patch creation" name="TestingFramework Integration Tests.TestingFramework + PatchManager Integration.Should handle test failures preventing patch creation" time="0.0052" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ParameterBindingException: A parameter cannot be found that matches parameter name 'EventName'.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/TestingFramework.Integration.Tests.ps1:575</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should integrate with CI/CD pipeline for automated testing" name="TestingFramework Integration Tests.TestingFramework + PatchManager Integration.Should integrate with CI/CD pipeline for automated testing" time="0.0307" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:79
+at Invoke-UnifiedTestExecution&lt;Begin&gt;, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:241
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/TestingFramework.Integration.Tests.ps1:605</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="TestingFramework Integration Tests.TestingFramework + DevEnvironment Integration" executed="True" result="Failure" success="False" time="1.7709" asserts="0" description="TestingFramework Integration Tests.TestingFramework + DevEnvironment Integration">
+                <results>
+                  <test-case description="Should validate development environment before running tests" name="TestingFramework Integration Tests.TestingFramework + DevEnvironment Integration.Should validate development environment before running tests" time="0.0517" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:79
+at Invoke-UnifiedTestExecution&lt;Begin&gt;, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:241
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/TestingFramework.Integration.Tests.ps1:691</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle cross-platform testing scenarios" name="TestingFramework Integration Tests.TestingFramework + DevEnvironment Integration.Should handle cross-platform testing scenarios" time="0.0045" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ValidationMetadataException: The argument "CrossPlatform" does not belong to the set "Development,CI,Production,Debug" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.
+ParameterBindingValidationException: Cannot validate argument on parameter 'TestProfile'. The argument "CrossPlatform" does not belong to the set "Development,CI,Production,Debug" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/TestingFramework.Integration.Tests.ps1:729</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="TestingFramework Integration Tests.TestingFramework + ModuleCommunication Integration" executed="True" result="Failure" success="False" time="1.8106" asserts="0" description="TestingFramework Integration Tests.TestingFramework + ModuleCommunication Integration">
+                <results>
+                  <test-case description="Should handle event-driven test coordination" name="TestingFramework Integration Tests.TestingFramework + ModuleCommunication Integration.Should handle event-driven test coordination" time="0.0046" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>ParameterBindingException: A parameter cannot be found that matches parameter name 'EventName'.</message>
+                      <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/TestingFramework.Integration.Tests.ps1:776</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should coordinate inter-module test dependencies" name="TestingFramework Integration Tests.TestingFramework + ModuleCommunication Integration.Should coordinate inter-module test dependencies" time="0.0325" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:79
+at Invoke-UnifiedTestExecution&lt;Begin&gt;, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:241
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/TestingFramework.Integration.Tests.ps1:858</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="TestingFramework Integration Tests.TestingFramework + Logging Integration" executed="True" result="Failure" success="False" time="1.8767" asserts="0" description="TestingFramework Integration Tests.TestingFramework + Logging Integration">
+                <results>
+                  <test-case description="Should provide centralized logging for all test operations" name="TestingFramework Integration Tests.TestingFramework + Logging Integration.Should provide centralized logging for all test operations" time="0.0325" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:79
+at Invoke-UnifiedTestExecution&lt;Begin&gt;, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:241
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/TestingFramework.Integration.Tests.ps1:910</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle test result reporting with comprehensive logging" name="TestingFramework Integration Tests.TestingFramework + Logging Integration.Should handle test result reporting with comprehensive logging" time="0.031" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
+                      <stack-trace>at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:79
+at Invoke-UnifiedTestExecution&lt;Begin&gt;, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:241
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/TestingFramework.Integration.Tests.ps1:951</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>

@@ -34,8 +34,6 @@
 .PARAMETER WhatIf
     Show what would be done without making changes
 
-.PARAMETER Verbose
-    Show detailed progress information
 
 .EXAMPLE
     ./Start-DeveloperSetup.ps1
@@ -74,13 +72,7 @@ param(
     [switch]$SkipVSCode,
 
     [Parameter(HelpMessage = "Force reinstallation of existing tools")]
-    [switch]$Force,
-
-    [Parameter(HelpMessage = "Show what would be done without making changes")]
-    [switch]$WhatIf,
-
-    [Parameter(HelpMessage = "Show detailed progress information")]
-    [switch]$Verbose
+    [switch]$Force
 )
 
 # Script metadata
@@ -223,12 +215,12 @@ function Initialize-DevelopmentEnvironment {
             Write-SetupLog "DevEnvironment module imported" -Level SUCCESS
         }
 
-        # Initialize development environment
-        if (Get-Command Initialize-DevelopmentEnvironment -ErrorAction SilentlyContinue) {
+        # Initialize development environment using DevEnvironment module
+        if (Get-Command Initialize-DevelopmentEnvironment -Module DevEnvironment -ErrorAction SilentlyContinue) {
             $result = Initialize-DevelopmentEnvironment -ProjectRoot $ProjectRoot
             Write-SetupLog "Development environment initialized" -Level SUCCESS
         } else {
-            Write-SetupLog "Initialize-DevelopmentEnvironment command not found, using fallback" -Level WARNING
+            Write-SetupLog "DevEnvironment module function not found, using fallback" -Level WARNING
             Initialize-BasicDevEnvironment -ProjectRoot $ProjectRoot
         }
 

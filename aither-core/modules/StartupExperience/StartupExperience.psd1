@@ -32,7 +32,8 @@
         'Set-StartupExperienceConfiguration',
         'Invoke-StartupExperienceOperation',
         'Export-StartupExperienceState',
-        'Test-StartupExperienceCoordination'
+        'Test-StartupExperienceCoordination',
+        'Start-ScriptRunner'
     )
 
     # Private data

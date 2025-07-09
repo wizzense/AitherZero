@@ -1,12 +1,15 @@
-#Requires -Version 7.0
-
 <#
 .SYNOPSIS
-    AitherZero Infrastructure Automation Framework Launcher
+    AitherZero Infrastructure Automation Framework - Universal Launcher
 
 .DESCRIPTION
-    This is the main entry point for AitherZero infrastructure automation framework.
-    It delegates to the core application while providing a consistent interface.
+    This is the ONLY entry point for AitherZero infrastructure automation framework.
+    It automatically detects PowerShell version requirements and handles cross-platform compatibility.
+    
+    ✅ SIMPLE USAGE:
+    - First time: ./Start-AitherZero.ps1 -Setup
+    - Regular use: ./Start-AitherZero.ps1
+    - Quick deployment: ./Start-AitherZero.ps1 -Scripts "LabRunner"
 
 .PARAMETER Auto
     Run in automatic mode without user interaction
@@ -99,17 +102,97 @@ if (Test-Path $versionCheckPath) {
     exit 1
 }
 
-# Check PowerShell version and relaunch if needed
-if (-not (Test-PowerShellVersion -MinimumVersion "7.0" -Quiet)) {
-    # Display version requirements
-    Test-PowerShellVersion -MinimumVersion "7.0"
+# ══════════════════════════════════════════════════════════════════════════════
+#                          POWERSHELL VERSION CHECK
+# ══════════════════════════════════════════════════════════════════════════════
 
-    # Attempt to relaunch with PowerShell 7
-    Start-WithPowerShell7 -ScriptPath $MyInvocation.MyCommand.Path -Parameters $PSBoundParameters
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    Write-Host @"
+════════════════════════════════════════════════════════════════════════
+                     ⚡ AitherZero Requires PowerShell 7 ⚡
+════════════════════════════════════════════════════════════════════════
 
-    # If we reach here, PowerShell 7 is not available
+You are currently running PowerShell $($PSVersionTable.PSVersion)
+
+AitherZero requires PowerShell 7.0+ for:
+  ✅ Cross-platform compatibility (Windows/Linux/macOS)
+  ✅ Enhanced performance and security features
+  ✅ Modern automation capabilities
+
+"@ -ForegroundColor Yellow
+
+    # Check if PowerShell 7 is already installed
+    $pwsh7Path = $null
+    $pwshCmd = Get-Command pwsh -ErrorAction SilentlyContinue
+    if ($pwshCmd) {
+        $pwsh7Path = $pwshCmd.Source
+        Write-Host "✅ Great! PowerShell 7 is already installed at: $pwsh7Path" -ForegroundColor Green
+        Write-Host "🔄 Automatically switching to PowerShell 7..." -ForegroundColor Cyan
+        
+        # Prepare arguments for pwsh
+        $argList = @('-NoProfile', '-File', $MyInvocation.MyCommand.Path)
+        
+        # Add all bound parameters
+        foreach ($key in $PSBoundParameters.Keys) {
+            $value = $PSBoundParameters[$key]
+            if ($value -is [switch]) {
+                if ($value.IsPresent) { $argList += "-$key" }
+            } elseif ($null -ne $value) {
+                $argList += "-$key", $value
+            }
+        }
+        
+        # Launch with PowerShell 7
+        & $pwsh7Path @argList
+        exit $LASTEXITCODE
+    }
+    
+    # PowerShell 7 not found - show installation instructions
+    Write-Host @"
+
+📥 QUICK INSTALLATION:
+══════════════════════
+
+🪟 WINDOWS (choose one):
+  • Windows Package Manager: winget install Microsoft.PowerShell
+  • Chocolatey:              choco install powershell-core
+  • Direct download:          https://aka.ms/powershell-release
+
+🐧 LINUX:
+  • Ubuntu/Debian:  sudo snap install powershell --classic
+  • RHEL/CentOS:     sudo yum install powershell
+  • More options:    https://aka.ms/powershell-linux
+
+🍎 MACOS:
+  • Homebrew:       brew install --cask powershell
+  • Direct download: https://aka.ms/powershell-release
+
+💡 AFTER INSTALLATION:
+════════════════════════
+1. Close this window
+2. Open PowerShell 7 (search for 'pwsh' or 'PowerShell 7')
+3. Navigate to: $PSScriptRoot
+4. Run: ./Start-AitherZero.ps1
+
+🔍 Verify installation: pwsh --version
+
+════════════════════════════════════════════════════════════════════════
+"@ -ForegroundColor Yellow
+    
+    Write-Host "`n👆 Press any key to open PowerShell installation page..." -ForegroundColor Cyan
+    try {
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        if ($IsWindows -or $PSVersionTable.Platform -eq 'Win32NT' -or $PSVersionTable.PSEdition -eq 'Desktop') {
+            Start-Process "https://aka.ms/powershell-release"
+        }
+    } catch {
+        # Graceful fallback if ReadKey is not supported
+    }
+    
     exit 1
 }
+
+Write-Host "✅ PowerShell $($PSVersionTable.PSVersion) - Ready to launch AitherZero!" -ForegroundColor Green
 
 # Find the aither-core.ps1 script
 # Robust path resolution for various execution contexts
@@ -169,6 +252,26 @@ if ($UIMode) { $coreparams['UIMode'] = $UIMode }
 try {
     & $coreScript @coreparams
 } catch {
-    Write-Error "Failed to execute AitherZero: $_"
+    # Load user-friendly error system
+    $errorHelperPath = Join-Path (Join-Path $scriptPath "aither-core/shared") "Show-UserFriendlyError.ps1"
+    if (Test-Path $errorHelperPath) {
+        . $errorHelperPath
+        Show-UserFriendlyError -ErrorRecord $_ -Context "Starting AitherZero" -Module "Core"
+    } else {
+        # Fallback to basic user-friendly error
+        Write-Host "" -ForegroundColor Yellow
+        Write-Host "❌ AitherZero failed to start" -ForegroundColor Red
+        Write-Host "" -ForegroundColor Yellow
+        Write-Host "What happened:" -ForegroundColor Cyan
+        Write-Host "  $($_.Exception.Message)" -ForegroundColor White
+        Write-Host "" -ForegroundColor Yellow
+        Write-Host "How to fix it:" -ForegroundColor Green
+        Write-Host "  1. Try running setup: ./Start-AitherZero.ps1 -Setup" -ForegroundColor Green
+        Write-Host "  2. Check if all files were extracted properly" -ForegroundColor Green
+        Write-Host "  3. Make sure you have PowerShell 7.0 or newer" -ForegroundColor Green
+        Write-Host "" -ForegroundColor Yellow
+        Write-Host "For more help: https://github.com/wizzense/AitherZero/blob/main/README.md" -ForegroundColor Cyan
+        Write-Host "" -ForegroundColor Yellow
+    }
     exit 1
 }

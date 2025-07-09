@@ -16,7 +16,8 @@
       "Bash(gh run view:*)",
       "Bash(gh api:*)",
       "Bash(gh pr checks:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(timeout:*)"
     ],
     "deny": []
   }

@@ -472,12 +472,12 @@ function Get-OverallHealthScore {
     }
 
     # Test coverage score - prioritize actual CI test results over estimates
-    if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.QualityMetrics) {
+    if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.PSObject.Properties['QualityMetrics']) {
         # Use actual CI test results as primary measure
         $ciScore = $AuditData.CITests.QualityMetrics.SuccessRate
         $healthFactors.TestCoverage = $ciScore
         Write-ReportLog "Using CI test results for coverage: $ciScore%" -Level 'INFO'
-    } elseif ($AuditData.Testing -and $AuditData.Testing.coverage) {
+    } elseif ($AuditData.Testing -and $AuditData.Testing.PSObject.Properties['coverage']) {
         # Fallback to audit data estimates (but cap at reasonable levels)
         $estimatedCoverage = $AuditData.Testing.coverage.averageCoverage
         # Cap unrealistic estimates to more reasonable levels
@@ -530,7 +530,7 @@ function Get-OverallHealthScore {
         } else { 0 }
         
         # Adjust based on actual test performance if available
-        if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.Summary) {
+        if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.PSObject.Properties['Summary']) {
             $successfulModules = $AuditData.CITests.Summary.SuccessfulModules
             $totalModules = $AuditData.CITests.Summary.TotalModules
             $moduleSuccessRate = if ($totalModules -gt 0) {
@@ -841,7 +841,7 @@ function New-ComprehensiveHtmlReport {
                 </p>
             </div>
 
-            $(if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.QualityMetrics) { @"
+            $(if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.PSObject.Properties['QualityMetrics']) { @"
             <div class="card">
                 <h3><span class="icon">🚀</span>CI Test Results</h3>
                 <div style="text-align: center; font-size: 2em; margin: 20px 0;">
@@ -929,9 +929,13 @@ function New-ComprehensiveHtmlReport {
             # Check actual test results if available
             $actualTestStatus = 'unknown'
             if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.PSObject.Properties['TestResults']) {
-                $testResult = $AuditData.CITests.TestResults | Where-Object { $_.Module -eq $module }
-                if ($testResult) {
-                    $actualTestStatus = if ($testResult.Success) { 'healthy' } else { 'error' }
+                try {
+                    $testResult = $AuditData.CITests.TestResults | Where-Object { $_.Module -eq $module }
+                    if ($testResult) {
+                        $actualTestStatus = if ($testResult.Success) { 'healthy' } else { 'error' }
+                    }
+                } catch {
+                    Write-ReportLog "Error accessing test results for module $module : $($_.Exception.Message)" -Level 'DEBUG'
                 }
             }
             
@@ -1100,8 +1104,8 @@ function New-ComprehensiveHtmlReport {
                     </div>
                     <div style="padding: 15px; background: #f8f9fa; border-radius: 5px;">
                         <h4>🚀 CI Test Results</h4>
-                        <p>Status: $(if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.QualityMetrics) { '✅ Available' } else { '⚠️ No data' })</p>
-                        $(if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.QualityMetrics) {
+                        <p>Status: $(if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.PSObject.Properties['QualityMetrics']) { '✅ Available' } else { '⚠️ No data' })</p>
+                        $(if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.PSObject.Properties['QualityMetrics']) {
                             "<p>Total Tests: <strong>$($AuditData.CITests.Summary.TotalTests)</strong></p>"
                             "<p>Success Rate: <strong>$($AuditData.CITests.QualityMetrics.SuccessRate)%</strong></p>"
                             "<p>Duration: <strong>$([math]::Round($AuditData.CITests.Summary.TotalDuration, 2))s</strong></p>"
@@ -1207,7 +1211,7 @@ function New-ComprehensiveHtmlReport {
         }
         
         # CI Test Results Detailed Section
-        if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.QualityMetrics) {
+        if ($AuditData.ContainsKey('CITests') -and $AuditData.CITests -and $AuditData.CITests.PSObject.Properties['QualityMetrics']) {
             $html += @"
             
             <button class="collapsible">🚀 CI Test Results Details</button>
@@ -1603,7 +1607,7 @@ function Get-ModuleCategory {
     param($ModuleInfo)
     
     $name = $ModuleInfo.Name
-    $description = $ModuleInfo.Description.ToLower()
+    $description = if ($ModuleInfo.Description -and $ModuleInfo.Description.ToString()) { $ModuleInfo.Description.ToString().ToLower() } else { '' }
     
     # Category mapping based on patterns
     $categories = @{

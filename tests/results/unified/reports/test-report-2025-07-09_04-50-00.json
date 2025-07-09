@@ -1,0 +1,618 @@
+{
+  "FailureAnalysis": {
+    "CriticalFailures": [],
+    "CommonFailurePatterns": [
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+    ],
+    "ModulesWithFailures": [
+      {
+        "Module": "AIToolsIntegration",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "BackupManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ConfigurationCarousel",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ConfigurationCore",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ConfigurationManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ConfigurationRepository",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "DevEnvironment",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ISOManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "LabRunner",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "LicenseManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "Logging",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ModuleCommunication",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "OpenTofuProvider",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "OrchestrationEngine",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ParallelExecution",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "PatchManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ProgressTracking",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "PSScriptAnalyzerIntegration",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "RemoteConnection",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "RepoSync",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "RestAPIServer",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "ScriptManager",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "SecureCredentials",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "SecurityAutomation",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "SemanticVersioning",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "SetupWizard",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "StartupExperience",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "SystemMonitoring",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "TestingFramework",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "UnifiedMaintenance",
+        "TestsFailed": 1,
+        "FailureRate": null
+      },
+      {
+        "Module": "UtilityServices",
+        "TestsFailed": 1,
+        "FailureRate": null
+      }
+    ]
+  },
+  "Summary": {
+    "Timestamp": "2025-07-09T04:50:00.8392329+00:00",
+    "TotalSkipped": null,
+    "FailedModules": 31,
+    "TotalModules": 31,
+    "SlowestModule": "AIToolsIntegration",
+    "AverageDuration": 0.0,
+    "SuccessRate": 0,
+    "TotalTests": 0.0,
+    "SuccessfulModules": 0,
+    "FastestModule": "AIToolsIntegration",
+    "TestSuite": "Unit",
+    "TotalDuration": 0.0,
+    "TotalPassed": 0.0,
+    "TotalFailed": 31.0
+  },
+  "Results": [
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "AIToolsIntegration",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "BackupManager",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "ConfigurationCarousel",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "ConfigurationCore",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "ConfigurationManager",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "ConfigurationRepository",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "DevEnvironment",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "ISOManager",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "LabRunner",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "LicenseManager",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "Logging",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "ModuleCommunication",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "OpenTofuProvider",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "OrchestrationEngine",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "ParallelExecution",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "PatchManager",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "ProgressTracking",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "PSScriptAnalyzerIntegration",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "RemoteConnection",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "RepoSync",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "RestAPIServer",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "ScriptManager",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "SecureCredentials",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "SecurityAutomation",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "SemanticVersioning",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "SetupWizard",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "StartupExperience",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "SystemMonitoring",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "TestingFramework",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "UnifiedMaintenance",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    },
+    {
+      "Success": false,
+      "Error": "Phase execution failed: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')",
+      "TestsPassed": 0,
+      "TestsRun": 0,
+      "Phase": "Unit",
+      "Module": "UtilityServices",
+      "TestsFailed": 1,
+      "Duration": 0,
+      "Details": [
+        "Phase execution error: Value cannot be null. (Parameter 'The provided Path argument was null or an empty collection.')"
+      ]
+    }
+  ],
+  "Version": "1.0.0",
+  "GeneratedBy": "AitherZero TestingFramework"
+}

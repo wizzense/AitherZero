@@ -1,0 +1,147 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="14" errors="0" failures="13" not-run="0" inconclusive="0" ignored="0" skipped="1" invalid="0" date="2025-07-09" time="05:21:17">
+  <environment user-domain="" os-version="6.8.0-1027-azure" nunit-version="2.5.8.0" platform="Linux" machine-name="codespaces-6c6eb1" user="codespace" clr-version="9.0.4" cwd="/workspaces/AitherZero" />
+  <culture-info current-culture="" current-uiculture="" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="54.3979" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1" executed="True" result="Failure" success="False" time="54.3979" asserts="0" description="/workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="PatchManager Integration Tests" executed="True" result="Failure" success="False" time="54.0921" asserts="0" description="PatchManager Integration Tests">
+            <results>
+              <test-suite type="TestFixture" name="PatchManager Integration Tests.Git Workflow Operations" executed="True" result="Failure" success="False" time="26.8555" asserts="0" description="PatchManager Integration Tests.Git Workflow Operations">
+                <results>
+                  <test-case description="Should create a quick fix patch successfully" name="PatchManager Integration Tests.Git Workflow Operations.Should create a quick fix patch successfully" time="1.0963" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected '/tmp/44acca62-fb78-42d4-8cf0-b9bb8b25b035/test-repo/README.md' to be found in collection @($null), but it was not found.</message>
+                      <stack-trace>at $result.Changes.FilesModified | Should -Contain $testFile, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:249
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:249</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should create a feature branch and prepare PR" name="PatchManager Integration Tests.Git Workflow Operations.Should create a feature branch and prepare PR" time="8.2126" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $null.</message>
+                      <stack-trace>at $result.CreatePR | Should -Be $true, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:285
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:285</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle hotfix creation with priority" name="PatchManager Integration Tests.Git Workflow Operations.Should handle hotfix creation with priority" time="8.9971" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected strings to be the same, but they were different.
+Expected length: 35
+Actual length:   43
+Strings differ at index 0.
+Expected: 'Fix critical security vulnerability'
+But was:  'HOTFIX: Fix critical security vulnerability'
+           ^</message>
+                      <stack-trace>at $result.Description | Should -Be $hotfixDescription, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:323
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:323</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle smart patch mode detection" name="PatchManager Integration Tests.Git Workflow Operations.Should handle smart patch mode detection" time="8.52" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected strings to be the same, but they were different.
+Expected length: 4
+Actual length:   8
+Strings differ at index 0.
+Expected: 'Auto'
+But was:  'Standard'
+           ^</message>
+                      <stack-trace>at $result.Mode | Should -Be "Auto", /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:359
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:359</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="PatchManager Integration Tests.Module Integration" executed="True" result="Failure" success="False" time="37.0857" asserts="0" description="PatchManager Integration Tests.Module Integration">
+                <results>
+                  <test-case description="Should integrate with TestingFramework for validation" name="PatchManager Integration Tests.Module Integration.Should integrate with TestingFramework for validation" time="2.4758" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $null.</message>
+                      <stack-trace>at $result.Changes.ValidationResult.Success | Should -Be $true, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:398
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:398</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should integrate with ConfigurationCore for configuration changes" name="PatchManager Integration Tests.Module Integration.Should integrate with ConfigurationCore for configuration changes" time="7.3573" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $null.</message>
+                      <stack-trace>at $result.Changes.ConfigurationValidation.SchemaValid | Should -Be $true, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:449
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:449</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should integrate with ModuleCommunication for event handling" name="PatchManager Integration Tests.Module Integration.Should integrate with ModuleCommunication for event handling" time="0.373" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $false.</message>
+                      <stack-trace>at $result.Success | Should -Be $true, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:503
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:503</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="PatchManager Integration Tests.Real-World Scenarios" executed="True" result="Failure" success="False" time="46.4828" asserts="0" description="PatchManager Integration Tests.Real-World Scenarios">
+                <results>
+                  <test-case description="Should handle complex multi-file patch with dependencies" name="PatchManager Integration Tests.Real-World Scenarios.Should handle complex multi-file patch with dependencies" time="2.332" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected 3, but got 0.</message>
+                      <stack-trace>at $result.Changes.FilesCreated.Count | Should -Be 3, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:579
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:579</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle configuration migration patch" name="PatchManager Integration Tests.Real-World Scenarios.Should handle configuration migration patch" time="7.043" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected 'ConfigurationMigration', but got $null.</message>
+                      <stack-trace>at $result.Changes.Operation | Should -Be "ConfigurationMigration", /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:653
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:653</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="PatchManager Integration Tests.Error Handling and Recovery" executed="True" result="Failure" success="False" time="49.2324" asserts="0" description="PatchManager Integration Tests.Error Handling and Recovery">
+                <results>
+                  <test-case description="Should handle patch creation failure gracefully" name="PatchManager Integration Tests.Error Handling and Recovery.Should handle patch creation failure gracefully" time="0.4083" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected strings to be the same, but they were different.
+Expected length: 23
+Actual length:   41
+Strings differ at index 0.
+Expected: 'Simulated patch failure'
+But was:  'Operation failed: Simulated patch failure'
+           ^</message>
+                      <stack-trace>at $result.Error | Should -Be "Simulated patch failure", /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:673
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:673</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle invalid git repository" name="PatchManager Integration Tests.Error Handling and Recovery.Should handle invalid git repository" time="0.0035" asserts="0" success="False" result="Ignored" executed="False" />
+                  <test-case description="Should handle conflicting changes" name="PatchManager Integration Tests.Error Handling and Recovery.Should handle conflicting changes" time="2.3318" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $false, but got $null.</message>
+                      <stack-trace>at $result.Changes.ConflictAnalysis.HasConflicts | Should -Be $false, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:721
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:721</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="PatchManager Integration Tests.Cross-Platform Compatibility" executed="True" result="Failure" success="False" time="54.085" asserts="0" description="PatchManager Integration Tests.Cross-Platform Compatibility">
+                <results>
+                  <test-case description="Should handle different path separators" name="PatchManager Integration Tests.Cross-Platform Compatibility.Should handle different path separators" time="2.5091" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected collection @('Windows', 'Linux', 'macOS') to contain $null, but it was not found.</message>
+                      <stack-trace>at $result.Changes.Platform | Should -BeIn @("Windows", "Linux", "macOS"), /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:756
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:756</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should handle different line endings" name="PatchManager Integration Tests.Cross-Platform Compatibility.Should handle different line endings" time="2.331" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected a value, but got $null or empty.</message>
+                      <stack-trace>at $result.Changes.LineEnding | Should -Not -BeNullOrEmpty, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:786
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/integration/PatchManager.Integration.Tests.ps1:786</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>

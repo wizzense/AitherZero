@@ -45,7 +45,7 @@ function Start-TestIsolation {
         [switch]$IsolateEnvironment,
         [switch]$IsolateLocation,
         [switch]$IsolatePreferences,
-        [string[]]$PreserveModules = @(),
+        [string[]]$PreserveModules = @('Logging', 'Microsoft.PowerShell.Core', 'Microsoft.PowerShell.Utility', 'Microsoft.PowerShell.Management'),
         [string[]]$PreserveEnvironmentVariables = @()
     )
 
@@ -471,13 +471,24 @@ function Invoke-PesterWithIsolation {
         [switch]$IsolateLocation,
         [switch]$IsolatePreferences,
         
-        [string[]]$PreserveModules = @('Microsoft.PowerShell.Core', 'Microsoft.PowerShell.Utility', 'Microsoft.PowerShell.Management', 'Pester'),
+        [string[]]$PreserveModules = @('Microsoft.PowerShell.Core', 'Microsoft.PowerShell.Utility', 'Microsoft.PowerShell.Management', 'Pester', 'Logging'),
         [string[]]$PreserveEnvironmentVariables = @('PATH', 'HOME', 'USERPROFILE', 'TEMP', 'TMP')
     )
 
     $isolation = Start-TestIsolation -IsolationName "Pester-$(Split-Path $TestPath -Leaf)" -IsolateModules:$IsolateModules -IsolateEnvironment:$IsolateEnvironment -IsolateLocation:$IsolateLocation -IsolatePreferences:$IsolatePreferences -PreserveModules $PreserveModules -PreserveEnvironmentVariables $PreserveEnvironmentVariables
 
     try {
+        # Initialize logging system in isolated context to prevent null path errors
+        if ($env:PROJECT_ROOT) {
+            $loggingPath = Join-Path $env:PROJECT_ROOT "aither-core/modules/Logging"
+            if (Test-Path $loggingPath) {
+                Import-Module $loggingPath -Force -Global -ErrorAction SilentlyContinue
+                if (Get-Command Initialize-LoggingSystem -ErrorAction SilentlyContinue) {
+                    Initialize-LoggingSystem -ErrorAction SilentlyContinue
+                }
+            }
+        }
+        
         # Ensure Pester is available
         if (-not (Get-Module -Name Pester -ErrorAction SilentlyContinue)) {
             Import-Module Pester -Force

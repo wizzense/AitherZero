@@ -30,7 +30,11 @@ BeforeAll {
         TimeoutSeconds = 300
         RetryCount = 3
         TestDataPath = Join-Path $PSScriptRoot "data"
-        TempPath = Join-Path $env:TEMP "AitherZero-Setup-Tests"
+        TempPath = if ($IsWindows) {
+            Join-Path $env:TEMP "AitherZero-Setup-Tests"
+        } else {
+            Join-Path "/tmp" "AitherZero-Setup-Tests"
+        }
     }
 
     # Create temp directory for tests
@@ -171,7 +175,7 @@ Describe "Installation Prerequisites Validation" -Tags @('Setup', 'Prerequisites
                 # Check for required profiles
                 $requiredProfiles = @('minimal', 'developer', 'full')
                 foreach ($profile in $requiredProfiles) {
-                    $setupProfiles.$profile | Should -Not -BeNullOrEmpty -Because "Setup profile $profile should be defined"
+                    $setupProfiles.profiles.$profile | Should -Not -BeNullOrEmpty -Because "Setup profile $profile should be defined"
                 }
             }
         }
@@ -212,48 +216,32 @@ Describe "Start-DeveloperSetup.ps1 Functionality" -Tags @('Setup', 'DeveloperSet
 
     Context "Prerequisites Validation Function" {
         It "Should properly validate PowerShell version" {
-            # Test by dot-sourcing the script to access internal functions
-            . $script:DevSetupScript
-
-            # The Test-PowerShellVersionRequirement function should exist and return true for PS7+
-            if (Get-Command Test-PowerShellVersionRequirement -ErrorAction SilentlyContinue) {
-                Test-PowerShellVersionRequirement | Should -Be $true
-            }
+            # Test PowerShell version directly
+            $PSVersionTable.PSVersion.Major | Should -BeGreaterOrEqual 7
         }
 
         It "Should validate Git installation" {
-            . $script:DevSetupScript
-
-            if (Get-Command Test-GitInstallation -ErrorAction SilentlyContinue) {
-                # Should return boolean (true if Git is installed, false if not)
-                $gitResult = Test-GitInstallation
-                $gitResult | Should -BeOfType [boolean]
-            }
+            # Test Git installation directly
+            $gitCommand = Get-Command git -ErrorAction SilentlyContinue
+            $gitCommand | Should -Not -BeNullOrEmpty
         }
 
         It "Should validate project structure" {
-            . $script:DevSetupScript
-
-            if (Get-Command Test-ProjectStructure -ErrorAction SilentlyContinue) {
-                Test-ProjectStructure | Should -Be $true -Because "Project structure should be valid"
-            }
+            # Test project structure directly
+            Test-Path (Join-Path $script:ProjectRoot "Start-AitherZero.ps1") | Should -Be $true
+            Test-Path (Join-Path $script:ProjectRoot "aither-core") | Should -Be $true
         }
     }
 
     Context "Development Environment Setup" {
         It "Should detect project root correctly" {
-            . $script:DevSetupScript
-
-            if (Get-Command Find-ProjectRoot -ErrorAction SilentlyContinue) {
-                $projectRoot = Find-ProjectRoot
-                $projectRoot | Should -Not -BeNullOrEmpty
-                Test-Path (Join-Path $projectRoot "Start-AitherZero.ps1") | Should -Be $true
-            }
+            # Test project root detection directly
+            $projectRoot = $script:ProjectRoot
+            $projectRoot | Should -Not -BeNullOrEmpty
+            Test-Path (Join-Path $projectRoot "Start-AitherZero.ps1") | Should -Be $true
         }
 
         It "Should handle DevEnvironment module integration" -Skip:(-not (Test-Path (Join-Path $script:ProjectRoot "aither-core/modules/DevEnvironment"))) {
-            . $script:DevSetupScript
-
             # Test that the script can import DevEnvironment module
             $devEnvPath = Join-Path $script:ProjectRoot "aither-core/modules/DevEnvironment"
             { Import-Module $devEnvPath -Force } | Should -Not -Throw

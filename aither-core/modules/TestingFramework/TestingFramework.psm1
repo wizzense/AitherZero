@@ -30,54 +30,26 @@
     - Logging (centralized logging)
 #>
 
-# Import the centralized Logging module with fallback
-$loggingImported = $false
-if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
-    $loggingImported = $true
+# Initialize standardized logging fallback
+$fallbackPath = Join-Path (Split-Path $PSScriptRoot -Parent) "shared/Initialize-LoggingFallback.ps1"
+if (Test-Path $fallbackPath) {
+    . $fallbackPath
+    Initialize-LoggingFallback -ModuleName "TestingFramework"
 } else {
-    $loggingPaths = @(
-        'Logging',
-        (Join-Path (Split-Path $PSScriptRoot -Parent) "Logging"),
-        $(if ($env:PWSH_MODULES_PATH) { Join-Path $env:PWSH_MODULES_PATH "Logging" } else { $null }),
-        $(if ($env:PROJECT_ROOT) { Join-Path $env:PROJECT_ROOT "aither-core/modules/Logging" } else { $null })
-    )
-
-    foreach ($loggingPath in $loggingPaths) {
-        if ($loggingImported) { break }
-        try {
-            if ($loggingPath -eq 'Logging') {
-                Import-Module 'Logging' -Global -Force -ErrorAction Stop
-            } elseif (Test-Path $loggingPath) {
-                Import-Module $loggingPath -Global -Force -ErrorAction Stop
-            } else {
-                continue
-            }
-            $loggingImported = $true
-        } catch {
-            # Continue to next path
+    # Basic fallback if shared utility isn't available
+    if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
+        function Write-CustomLog {
+            param([string]$Message, [string]$Level = "INFO")
+            $color = switch ($Level) { 'SUCCESS' { 'Green' }; 'ERROR' { 'Red' }; 'WARNING' { 'Yellow' }; 'INFO' { 'Cyan' }; default { 'White' } }
+            Write-Host "[$Level] $Message" -ForegroundColor $color
         }
     }
 }
 
-# Fallback logging function if centralized logging unavailable
-if (-not $loggingImported) {
-    function Write-TestLog {
-        param($Message, $Level = "INFO")
-        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-        $color = switch ($Level) {
-            "SUCCESS" { "Green" }
-            "WARN" { "Yellow" }
-            "ERROR" { "Red" }
-            default { "White" }
-        }
-        Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
-    }
-} else {
-    # Use centralized logging
-    function Write-TestLog {
-        param($Message, $Level = "INFO")
-        Write-CustomLog -Level $Level -Message $Message
-    }
+# Alias for backward compatibility
+function Write-TestLog {
+    param($Message, $Level = "INFO")
+    Write-CustomLog -Level $Level -Message $Message
 }
 
 # Module registry for tracking registered test providers
@@ -214,7 +186,7 @@ function Invoke-UnifiedTestExecution {
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter()]
-        [ValidateSet("All", "Unit", "Integration", "Performance", "Modules", "Quick", "NonInteractive")]
+        [ValidateSet("All", "Unit", "Integration", "Performance", "Modules", "Quick", "NonInteractive", "Environment")]
         [string]$TestSuite = "All",
 
         [Parameter()]
@@ -574,6 +546,11 @@ function Invoke-ParallelTestExecution {
         }
 
         # Execute jobs in parallel with enhanced error handling
+        if ($testJobs.Count -eq 0) {
+            Write-TestLog "No test jobs for phase: $phase" -Level "WARN"
+            continue
+        }
+        
         try {
             $phaseResults = Invoke-ParallelForEach -InputObject $testJobs -ScriptBlock {
                 param($testJob)
@@ -588,7 +565,22 @@ function Invoke-ParallelTestExecution {
                     }
                     
                     # Import TestingFramework module in the job context
-                    Import-Module $testJob.TestingFrameworkPath -Force -ErrorAction Stop
+                    if ($testJob.TestingFrameworkPath -and (Test-Path $testJob.TestingFrameworkPath)) {
+                        Import-Module $testJob.TestingFrameworkPath -Force -ErrorAction Stop
+                    } else {
+                        throw "TestingFramework path is invalid or null: '$($testJob.TestingFrameworkPath)'"
+                    }
+                    
+                    # Initialize logging system in parallel context to prevent null path errors
+                    if ($testJob.ProjectRoot) {
+                        $loggingPath = Join-Path $testJob.ProjectRoot "aither-core/modules/Logging"
+                        if (Test-Path $loggingPath) {
+                            Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
+                            if (Get-Command Initialize-LoggingSystem -ErrorAction SilentlyContinue) {
+                                Initialize-LoggingSystem -ErrorAction SilentlyContinue
+                            }
+                        }
+                    }
                     
                     # Execute the test phase
                     $result = Invoke-ModuleTestPhase -ModuleName $testJob.ModuleName -Phase $testJob.Phase -TestPath $testJob.TestPath -Configuration $testJob.Configuration
@@ -696,6 +688,15 @@ function Invoke-BuiltInParallelExecution {
                     # Set up environment
                     if ($ProjectRoot) {
                         $env:PROJECT_ROOT = $ProjectRoot
+                    }
+                    
+                    # Import Logging module first - it's critical for all other modules
+                    $loggingPath = Join-Path $ProjectRoot "aither-core/modules/Logging"
+                    if (Test-Path $loggingPath) {
+                        Import-Module $loggingPath -Force -Global -ErrorAction Stop
+                        if (Get-Command Initialize-LoggingSystem -ErrorAction SilentlyContinue) {
+                            Initialize-LoggingSystem -ErrorAction SilentlyContinue
+                        }
                     }
                     
                     # Import required modules
@@ -925,6 +926,12 @@ function Invoke-EnvironmentTests {
     [CmdletBinding()]
     param($ModuleName, $Configuration)
 
+    # Ensure Logging module is available in test context
+    $loggingPath = Join-Path $script:ProjectRoot "aither-core/modules/Logging"
+    if (Test-Path $loggingPath) {
+        Import-Module $loggingPath -Force -Global -ErrorAction SilentlyContinue
+    }
+
     # Test module loading and basic functionality
     $module = Import-ProjectModule -ModuleName $ModuleName
     if (-not $module) {
@@ -1077,9 +1084,27 @@ function Invoke-UnitTests {
                 
                 Write-TestLog "Pester executed with isolation" -Level "INFO"
                 
+                # Re-import Logging module after isolation in case it was unloaded
+                $loggingPath = Join-Path $script:ProjectRoot "aither-core/modules/Logging"
+                if (Test-Path $loggingPath) {
+                    Import-Module $loggingPath -Force -Global -ErrorAction SilentlyContinue
+                }
+                
             } catch {
-                Write-TestLog "Isolated Pester execution failed: $($_.Exception.Message)" -Level "WARN"
-                Write-TestLog "Falling back to standard execution" -Level "INFO"
+                # Re-import Logging module if it was unloaded
+                $loggingPath = Join-Path $script:ProjectRoot "aither-core/modules/Logging"
+                if (Test-Path $loggingPath) {
+                    Import-Module $loggingPath -Force -Global -ErrorAction SilentlyContinue
+                }
+                
+                # Use fallback logging if Write-TestLog is not available
+                if (Get-Command Write-TestLog -ErrorAction SilentlyContinue) {
+                    Write-TestLog "Isolated Pester execution failed: $($_.Exception.Message)" -Level "WARN"
+                    Write-TestLog "Falling back to standard execution" -Level "INFO"
+                } else {
+                    Write-Warning "Isolated Pester execution failed: $($_.Exception.Message)"
+                    Write-Warning "Falling back to standard execution"
+                }
                 $isolationModule = $null
             }
         }
@@ -1151,7 +1176,18 @@ function Invoke-UnitTests {
                 $details += "Skipped tests: $skippedCount"
             }
         } else {
+            # Ensure Logging module is available before throwing
+            $loggingPath = Join-Path $script:ProjectRoot "aither-core/modules/Logging"
+            if (Test-Path $loggingPath) {
+                Import-Module $loggingPath -Force -Global -ErrorAction SilentlyContinue
+            }
             throw "No Pester results returned"
+        }
+        
+        # Ensure Logging module is available after test execution
+        $loggingPath = Join-Path $script:ProjectRoot "aither-core/modules/Logging"
+        if (Test-Path $loggingPath) {
+            Import-Module $loggingPath -Force -Global -ErrorAction SilentlyContinue
         }
 
         return @{
@@ -1167,6 +1203,12 @@ function Invoke-UnitTests {
         }
 
     } catch {
+        # Re-import Logging module in case it was unloaded by test isolation
+        $loggingPath = Join-Path $script:ProjectRoot "aither-core/modules/Logging"
+        if (Test-Path $loggingPath) {
+            Import-Module $loggingPath -Force -Global -ErrorAction SilentlyContinue
+        }
+        
         $errorDetails = @(
             "Pester execution failed: $($_.Exception.Message)",
             "Test path: $actualTestPath",
