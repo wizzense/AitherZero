@@ -179,12 +179,12 @@ function Restore-BackupData {
                 }
 
             } catch {
-                $error = "Failed to restore $($file.Name): $($_.Exception.Message)"
-                $restoreContext.Errors += $error
+                $errorMessage = "Failed to restore $($file.Name): $($_.Exception.Message)"
+                $restoreContext.Errors += $errorMessage
                 $restoreContext.SkippedFiles++
 
                 if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-                    Write-CustomLog $error -Level WARN
+                    Write-CustomLog $errorMessage -Level WARN
                 }
             }
         }

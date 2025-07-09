@@ -1,4 +1,4 @@
-# Experience Functions - Consolidated into AitherCore Experience Domain
+﻿# Experience Functions - Consolidated into AitherCore Experience Domain
 # Unified startup experience and setup wizard functionality
 # Write-CustomLog is guaranteed to be available from AitherCore orchestration
 
@@ -7,6 +7,9 @@
 using namespace System.IO
 using namespace System.Collections.Generic
 using namespace System.Management.Automation
+
+# Import shared Find-ProjectRoot utility
+. "$PSScriptRoot/../../shared/Find-ProjectRoot.ps1"
 
 # ============================================================================
 # MODULE CONSTANTS AND VARIABLES
@@ -357,7 +360,9 @@ function Show-SetupBanner {
             try {
                 Clear-Host
             } catch {
-                # Ignore Clear-Host errors in restricted environments
+                # Intentionally ignore Clear-Host errors in restricted environments
+                # This is expected behavior and doesn't require error handling
+                Write-Debug "Clear-Host failed in restricted environment: $($_.Exception.Message)"
             }
         }
 
@@ -653,7 +658,8 @@ function Show-EnhancedProgress {
                 Update-ProgressOperation -OperationId $global:ProgressTrackingOperationId `
                     -IncrementStep -StepName "$StepName ($Status)"
             } catch {
-                # Ignore ProgressTracking errors
+                # Intentionally ignore ProgressTracking errors - progress tracking is optional
+                Write-Debug "ProgressTracking update failed: $($_.Exception.Message)"
             }
         }
 
@@ -2148,34 +2154,7 @@ Happy automating! 🚀
 # HELPER FUNCTIONS
 # ============================================================================
 
-function Find-ProjectRoot {
-    <#
-    .SYNOPSIS
-        Find the project root directory
-    .DESCRIPTION
-        Searches for the project root by looking for Start-AitherZero.ps1
-    .PARAMETER StartPath
-        Starting path for search
-    #>
-    param([string]$StartPath = $PWD.Path)
-
-    try {
-        $currentPath = $StartPath
-        while ($currentPath -and $currentPath -ne (Split-Path $currentPath -Parent)) {
-            if (Test-Path (Join-Path $currentPath "Start-AitherZero.ps1")) {
-                return $currentPath
-            }
-            $currentPath = Split-Path $currentPath -Parent
-        }
-
-        # Fallback to current directory
-        return $PWD.Path
-
-    } catch {
-        Write-CustomLog -Level 'WARNING' -Message "Could not find project root: $($_.Exception.Message)"
-        return $PWD.Path
-    }
-}
+# Find-ProjectRoot function is now imported from shared utility
 
 # Provide fallback Test-FeatureAccess function if LicenseManager is not loaded
 if (-not (Get-Command Test-FeatureAccess -ErrorAction SilentlyContinue)) {

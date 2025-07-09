@@ -1,16 +1,9 @@
 #Requires -Version 7.0
 
 <#
-# Write-CustomLog fallback for test isolation scenarios
-if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-    function Global:Write-CustomLog {
-        param(
-            [string]$Message,
-            [string]$Level = 'INFO'
-        )
-        Write-Host "[$Level] $Message"
-    }
-}
+# Initialize logging system with fallback support
+. "$PSScriptRoot/../../shared/Initialize-Logging.ps1"
+Initialize-Logging
 
 .SYNOPSIS
     PatchManager Module v3.0 - Atomic, Reliable Patch Management
@@ -100,6 +93,7 @@ foreach ($function in $publicFunctions) {
 # Intelligence Functions - Enhanced PR creation logic
 function Test-ShouldCreatePR {
     [CmdletBinding()]
+    [OutputType([bool])]
     param(
         [string]$PatchDescription,
         [bool]$Force = $false
@@ -131,6 +125,7 @@ function Test-ShouldCreatePR {
 
 function Test-SimilarPRExists {
     [CmdletBinding()]
+    [OutputType([bool])]
     param(
         [string]$PatchDescription,
         [string]$Repository = ''

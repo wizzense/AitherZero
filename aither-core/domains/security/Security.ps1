@@ -133,10 +133,12 @@ function New-SecureCredential {
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingPlainTextForPassword', 'CredentialName')]
         [string]$CredentialName,
 
         [Parameter(Mandatory = $true)]
         [ValidateSet('UserPassword', 'ServiceAccount', 'APIKey', 'Certificate')]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingPlainTextForPassword', 'CredentialType')]
         [string]$CredentialType,
 
         [Parameter(Mandatory = $false)]
@@ -146,7 +148,7 @@ function New-SecureCredential {
         [SecureString]$Password,
 
         [Parameter(Mandatory = $false)]
-        [string]$APIKey,
+        [SecureString]$APIKey,
 
         [Parameter(Mandatory = $false)]
         [string]$CertificatePath,
@@ -216,7 +218,7 @@ function New-SecureCredential {
             $credentialData.PasswordEncrypted = ConvertFrom-SecureString $Password
         }
         if ($APIKey) {
-            $credentialData.APIKeyEncrypted = ConvertTo-SecureString $APIKey -AsPlainText -Force | ConvertFrom-SecureString
+            $credentialData.APIKeyEncrypted = ConvertFrom-SecureString $APIKey
         }
         if ($CertificatePath) {
             $credentialData.CertificatePath = $CertificatePath
@@ -263,6 +265,7 @@ function Get-SecureCredential {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingPlainTextForPassword', 'CredentialName')]
         [string]$CredentialName,
 
         [Parameter(Mandatory = $false)]
@@ -401,6 +404,7 @@ function Update-SecureCredential {
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory = $true)]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingPlainTextForPassword', 'CredentialName')]
         [string]$CredentialName,
 
         [Parameter(Mandatory = $false)]
@@ -473,6 +477,7 @@ function Remove-SecureCredential {
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory = $true)]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingPlainTextForPassword', 'CredentialName')]
         [string]$CredentialName
     )
 
@@ -648,6 +653,7 @@ function Export-SecureCredential {
     [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory = $true)]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingPlainTextForPassword', 'CredentialName')]
         [string]$CredentialName,
 
         [Parameter(Mandatory = $true)]

@@ -6,18 +6,11 @@
 
 # Import shared utilities
 . "$PSScriptRoot/../../shared/Find-ProjectRoot.ps1"
-# Write-CustomLog fallback for test isolation scenarios
-if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-    function Global:Write-CustomLog {
-        param(
-            [string]$Message,
-            [string]$Level = 'INFO'
-        )
-        Write-Host "[$Level] $Message"
-    }
-}
-
 $script:ProjectRoot = Find-ProjectRoot
+
+# Initialize logging system with fallback support
+. "$PSScriptRoot/../../shared/Initialize-Logging.ps1"
+Initialize-Logging
 
 # Import all private functions
 $privateFunctions = @(Get-ChildItem -Path "$PSScriptRoot/Private/*.ps1" -ErrorAction SilentlyContinue)

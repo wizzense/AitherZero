@@ -1,3 +1,6 @@
+﻿#!/usr/bin/env pwsh
+#Requires -Version 7.0
+
 <#
 .SYNOPSIS
     Core application runner for Aitherium Infrastructure Automation
@@ -925,8 +928,11 @@ try {
                     $env:NO_PROMPT = 'true'
                 }
 
-                $result = Start-IntelligentSetup @setupParams
+                $setupResult = Start-IntelligentSetup @setupParams
                 Write-Host "✓ Setup completed successfully" -ForegroundColor Green
+                
+                # Log setup result for debugging
+                Write-CustomLog -Level 'DEBUG' -Message "Setup result: $($setupResult.Status)"
 
                 # Show clear next steps
                 Write-Host ""

@@ -256,16 +256,16 @@ Describe "Installation Profiles Testing" -Tags @('Setup', 'Profiles', 'Integrati
             $script:SetupWizardPath = Join-Path $script:ProjectRoot "aither-core/modules/SetupWizard"
         }
 
-        It "Should import SetupWizard module successfully" -Skip:(-not (Test-Path $script:SetupWizardPath)) {
+        It "Should import SetupWizard module successfully" -Skip:(-not ($script:SetupWizardPath -and (Test-Path $script:SetupWizardPath))) {
             { Import-Module $script:SetupWizardPath -Force -ErrorAction Stop } | Should -Not -Throw
         }
 
-        It "Should have Start-IntelligentSetup function available" -Skip:(-not (Test-Path $script:SetupWizardPath)) {
+        It "Should have Start-IntelligentSetup function available" -Skip:(-not ($script:SetupWizardPath -and (Test-Path $script:SetupWizardPath))) {
             Import-Module $script:SetupWizardPath -Force
             Get-Command Start-IntelligentSetup -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
         }
 
-        It "Should support all installation profiles" -Skip:(-not (Test-Path $script:SetupWizardPath)) {
+        It "Should support all installation profiles" -Skip:(-not ($script:SetupWizardPath -and (Test-Path $script:SetupWizardPath))) {
             Import-Module $script:SetupWizardPath -Force
 
             $profiles = @('minimal', 'developer', 'full')

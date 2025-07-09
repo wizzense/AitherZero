@@ -214,7 +214,7 @@ Describe "Cross-Platform Path Handling" -Tags @('CrossPlatform', 'Paths', 'FileS
             )
 
             foreach ($pathComponents in $testPaths) {
-                $joinedPath = Join-Path @pathComponents
+                $joinedPath = [System.IO.Path]::Combine($pathComponents)
                 $joinedPath | Should -Not -BeNullOrEmpty
 
                 # Should not contain mixed separators
