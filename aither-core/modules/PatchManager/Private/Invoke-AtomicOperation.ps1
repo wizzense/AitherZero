@@ -105,14 +105,34 @@ function Invoke-AtomicOperation {
                 Write-CustomLog "Workspace is clean" -Level "INFO"
             }
 
-            # Step 2: Check for merge conflicts (CRITICAL)
+            # Step 2: Check for merge conflicts (CRITICAL) - Use smart detection
             Write-CustomLog "Checking for merge conflict markers..." -Level "INFO"
-            $conflictMarkers = git grep -l "^<<<<<<< HEAD" 2>$null
-            if ($conflictMarkers) {
-                $errorMsg = "MERGE CONFLICTS DETECTED! Cannot perform atomic operation when merge conflict markers exist:`n" +
-                           ($conflictMarkers -join "`n") +
-                           "`n`nResolve conflicts first, then retry."
-                throw $errorMsg
+            
+            # Import smart conflict detection if not already loaded
+            $smartConflictPath = Join-Path $PSScriptRoot "Test-RealConflictMarkers.ps1"
+            if (Test-Path $smartConflictPath) {
+                . $smartConflictPath
+            }
+            
+            # Use smart conflict detection if available, fallback to basic detection
+            if (Get-Command Test-RealConflictMarkers -ErrorAction SilentlyContinue) {
+                $conflictResult = Test-RealConflictMarkers -ExcludeTestFiles
+                if ($conflictResult.HasConflicts) {
+                    $errorMsg = "MERGE CONFLICTS DETECTED! Cannot perform atomic operation when merge conflict markers exist:`n" +
+                               ($conflictResult.ConflictFiles -join "`n") +
+                               "`n`nReason: $($conflictResult.Reason)" +
+                               "`n`nResolve conflicts first, then retry."
+                    throw $errorMsg
+                }
+            } else {
+                # Fallback to basic detection
+                $conflictMarkers = git grep -l "^<<<<<<< HEAD" 2>$null
+                if ($conflictMarkers) {
+                    $errorMsg = "MERGE CONFLICTS DETECTED! Cannot perform atomic operation when merge conflict markers exist:`n" +
+                               ($conflictMarkers -join "`n") +
+                               "`n`nResolve conflicts first, then retry."
+                    throw $errorMsg
+                }
             }
 
             # Step 3: Run pre-conditions
@@ -140,10 +160,18 @@ function Invoke-AtomicOperation {
             # Step 6: Final validation
             Write-CustomLog "Performing final validation..." -Level "INFO"
 
-            # Check for new merge conflicts
-            $newConflictMarkers = git grep -l "^<<<<<<< HEAD" 2>$null
-            if ($newConflictMarkers) {
-                throw "Operation introduced merge conflict markers - rolling back"
+            # Check for new merge conflicts using smart detection
+            if (Get-Command Test-RealConflictMarkers -ErrorAction SilentlyContinue) {
+                $newConflictResult = Test-RealConflictMarkers -ExcludeTestFiles
+                if ($newConflictResult.HasConflicts) {
+                    throw "Operation introduced merge conflict markers - rolling back"
+                }
+            } else {
+                # Fallback to basic detection
+                $newConflictMarkers = git grep -l "^<<<<<<< HEAD" 2>$null
+                if ($newConflictMarkers) {
+                    throw "Operation introduced merge conflict markers - rolling back"
+                }
             }
 
             # Mark as successful
