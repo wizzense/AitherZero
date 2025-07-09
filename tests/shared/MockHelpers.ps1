@@ -200,13 +200,18 @@ function Add-GitConflictMarkers {
         [string]$BranchContent = "branch content"
     )
 
+    # Use string concatenation to avoid false positive conflict detection
+    $conflictMarker1 = "<" + "<" + "<" + "<" + "<" + "<" + "< HEAD"
+    $conflictMarker2 = "=" + "=" + "=" + "=" + "=" + "=" + "="
+    $conflictMarker3 = ">" + ">" + ">" + ">" + ">" + ">" + "> branch-name"
+    
     return @"
 $Content
-<<<<<<< HEAD
+$conflictMarker1
 $HeadContent
-=======
+$conflictMarker2
 $BranchContent
->>>>>>> branch-name
+$conflictMarker3
 "@
 }
 

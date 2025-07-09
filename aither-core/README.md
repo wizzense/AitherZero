@@ -236,6 +236,81 @@ User → AitherZero Core → Consolidated Module System → Coordinated Operatio
 - **Centralized Configuration**: Shared configuration management across all modules
 - **Performance Optimization**: Optimized loading strategies and resource management
 
+## Module Dependency Resolution System
+
+### Overview
+AitherZero now includes an intelligent dependency resolution system that automatically determines the correct module load order based on module dependencies. This ensures that modules are loaded in the proper sequence, preventing dependency-related errors.
+
+### Key Features
+- **Automatic Dependency Detection**: Reads module manifest files to extract dependencies
+- **Topological Sorting**: Uses Kahn's algorithm to determine optimal load order
+- **Circular Dependency Handling**: Detects and gracefully handles circular dependencies
+- **Logging Module Priority**: Ensures the Logging module is always loaded first
+- **Visual Dependency Reporting**: Generate dependency graphs and reports
+
+### Usage
+
+#### Get Module Dependencies
+```powershell
+# Analyze all module dependencies
+$dependencies = Get-ModuleDependencies
+
+# Include optional dependencies
+$dependencies = Get-ModuleDependencies -IncludeOptional
+```
+
+#### Resolve Module Load Order
+```powershell
+# Get the optimal load order for all modules
+$loadOrder = Resolve-ModuleLoadOrder -DependencyGraph $dependencies
+
+# Get load order for specific modules (includes their dependencies)
+$loadOrder = Resolve-ModuleLoadOrder -DependencyGraph $dependencies -ModulesToLoad @('PatchManager', 'TestingFramework')
+```
+
+#### Generate Dependency Reports
+```powershell
+# Table view (default)
+Get-ModuleDependencyReport
+
+# Visual dependency graph
+Get-ModuleDependencyReport -OutputFormat Graph
+
+# Detailed list view
+Get-ModuleDependencyReport -OutputFormat List
+
+# Export as JSON
+Get-ModuleDependencyReport -OutputFormat Json | Out-File dependencies.json
+```
+
+### Example Dependency Report
+```
+=== Module Dependency Report ===
+Generated: 2025-01-09 10:30:00
+Total Modules: 30
+
+Load Order:
+  1. Logging                    (no dependencies)
+  2. ConfigurationCore          (no dependencies)
+  3. ModuleCommunication        → Logging
+  4. LicenseManager            → Logging
+  5. ConfigurationCarousel     → ConfigurationCore, Logging
+  ...
+
+Dependency Summary:
+Name                     DependencyCount DependencyDepth Status
+----                     --------------- --------------- ------
+TestingFramework                       3               2 OK
+PatchManager                          2               1 OK
+ConfigurationCarousel                 2               1 OK
+```
+
+### Testing Dependency Resolution
+```powershell
+# Run the dependency resolution test
+./aither-core/tests/Test-DependencyResolution.ps1 -Verbose
+```
+
 ## Version History
 
 - **1.0.0**: Original individual module system

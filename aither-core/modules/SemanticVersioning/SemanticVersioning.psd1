@@ -14,7 +14,7 @@
 
     FunctionsToExport = @(
         'Get-NextSemanticVersion',
-        'Parse-ConventionalCommits',
+        'ConvertFrom-ConventionalCommits',
         'Get-CommitTypeImpact',
         'New-VersionTag',
         'Get-VersionHistory',

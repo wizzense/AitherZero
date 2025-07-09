@@ -41,6 +41,11 @@
         'Start-QuickAction',
         'Test-ConsolidationHealth',
 
+        # Module dependency resolution
+        'Get-ModuleDependencies',
+        'Resolve-ModuleLoadOrder',
+        'Get-ModuleDependencyReport',
+
         # Unified Platform API Gateway (Phase 4)
         'Initialize-AitherPlatform',
         'New-AitherPlatformAPI',
