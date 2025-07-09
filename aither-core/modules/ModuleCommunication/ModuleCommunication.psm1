@@ -7,16 +7,9 @@
 using namespace System.Collections.Concurrent
 using namespace System.Threading
 
-# Write-CustomLog fallback for test isolation scenarios
-if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-    function Global:Write-CustomLog {
-        param(
-            [string]$Message,
-            [string]$Level = 'INFO'
-        )
-        Write-Host "[$Level] $Message"
-    }
-}
+# Initialize logging system with fallback support
+. "$PSScriptRoot/../../shared/Initialize-Logging.ps1"
+Initialize-Logging
 
 # Script-level variables
 $script:MessageBus = @{

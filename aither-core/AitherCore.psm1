@@ -1,4 +1,4 @@
-# CoreApp PowerShell Module
+﻿# CoreApp PowerShell Module
 # Consolidates lab utilities, runner scripts, and configuration files
 # NOW SERVES AS PARENT ORCHESTRATION MODULE FOR ALL OTHER MODULES
 

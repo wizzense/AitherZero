@@ -3,24 +3,11 @@
 
 # Import required modules
 . "$PSScriptRoot/../../shared/Find-ProjectRoot.ps1"
-# Write-CustomLog fallback for test isolation scenarios
-if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-    function Global:Write-CustomLog {
-        param(
-            [string]$Message,
-            [string]$Level = 'INFO'
-        )
-        Write-Host "[$Level] $Message"
-    }
-}
-
 $projectRoot = Find-ProjectRoot
 
-# Import logging if available
-$loggingModule = Join-Path $projectRoot "aither-core/modules/Logging"
-if (Test-Path $loggingModule) {
-    Import-Module $loggingModule -Force -ErrorAction SilentlyContinue
-}
+# Initialize logging system with fallback support
+. "$PSScriptRoot/../../shared/Initialize-Logging.ps1"
+Initialize-Logging
 
 # Import ParallelExecution if available
 $parallelModule = Join-Path $projectRoot "aither-core/modules/ParallelExecution"
