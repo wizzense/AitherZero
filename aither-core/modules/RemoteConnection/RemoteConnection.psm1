@@ -16,33 +16,8 @@
     - Enterprise-grade connection management
 #>
 
-# Initialize standardized logging fallback
-$fallbackPath = Join-Path (Split-Path $PSScriptRoot -Parent) "shared/Initialize-LoggingFallback.ps1"
-if (Test-Path $fallbackPath) {
-    . $fallbackPath
-    Initialize-LoggingFallback -ModuleName "RemoteConnection"
-} else {
-    # Basic fallback if shared utility isn't available
-    if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-        function Write-CustomLog {
-            param([string]$Message, [string]$Level = "INFO")
-            $color = switch ($Level) { 'SUCCESS' { 'Green' }; 'ERROR' { 'Red' }; 'WARNING' { 'Yellow' }; 'INFO' { 'Cyan' }; default { 'White' } }
-            Write-Host "[$Level] $Message" -ForegroundColor $color
-        }
-    }
-}
-
-# Try to import full Logging module if available
-try {
-    Import-Module (Join-Path $PSScriptRoot '../Logging/Logging.psm1') -Force -ErrorAction SilentlyContinue
-} catch {
-    # Fall back to our standardized logging fallback
-}
-
-# Import SecureCredentials if not already loaded
-if (-not (Get-Module SecureCredentials -ErrorAction SilentlyContinue)) {
-    Import-Module (Join-Path $PSScriptRoot '../SecureCredentials/SecureCredentials.psm1') -Force
-}
+# Write-CustomLog and dependent modules are guaranteed to be available from AitherCore orchestration
+# No explicit module dependency management needed - trust the orchestration system
 
 # Import all public functions
 $PublicFunctions = @()

@@ -58,12 +58,8 @@ function Invoke-ValidationFailureHandler {
     begin {
         Write-CustomLog "Starting comprehensive validation failure tracking..." -Level INFO
 
-        # Import required modules
-        try {
-            Import-Module "$env:PROJECT_ROO(Join-Path $env:PWSH_MODULES_PATH "Logging")" -Force -ErrorAction Stop
-        } catch {
-            Write-Warning "Could not import Logging module: $($_.Exception.Message)"
-        }
+        # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+        # No explicit Logging import needed - trust the orchestration system
           $trackingId = "VALIDATION-FAIL-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
 
         # Analyze validation failures

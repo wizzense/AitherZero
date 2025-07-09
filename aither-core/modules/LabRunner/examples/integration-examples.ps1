@@ -377,7 +377,9 @@ function Example-LoggingProgressIntegration {
 
     # Import modules with enhanced logging
     Import-Module ./aither-core/modules/LabRunner -Force
-    Import-Module ./aither-core/modules/Logging -Force -ErrorAction SilentlyContinue
+    
+    # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+    # No explicit Logging import needed - trust the orchestration system
     Import-Module ./aither-core/modules/ProgressTracking -Force -ErrorAction SilentlyContinue
 
     # Define operations with comprehensive logging

@@ -15,59 +15,8 @@ if (Test-Path $findProjectRootPath) {
     }
 }
 
-# Import the centralized Logging module
-$loggingImported = $false
-
-# Import ProgressTracking module for enhanced lab deployment tracking
-$progressTrackingImported = $false
-
-# Check if Logging module is already available
-if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
-    $loggingImported = $true
-    Write-Verbose "Logging module already available"
-} else {
-    # Robust path resolution using project root
-    $loggingPaths = @(
-        'Logging',  # Try module name first (if in PSModulePath)
-        (Join-Path (Split-Path $PSScriptRoot -Parent) "Logging"),  # Relative to modules directory
-        (Join-Path $script:ProjectRoot "aither-core/modules/Logging")  # Project root based path
-    )
-
-    # Add environment-based paths if available
-    if ($env:PWSH_MODULES_PATH) {
-        $loggingPaths += (Join-Path $env:PWSH_MODULES_PATH "Logging")
-    }
-    if ($env:PROJECT_ROOT) {
-        $loggingPaths += (Join-Path $env:PROJECT_ROOT "aither-core/modules/Logging")
-    }
-
-    foreach ($loggingPath in $loggingPaths) {
-        if ($loggingImported) { break }
-
-        try {
-            if ($loggingPath -eq 'Logging') {
-                Import-Module 'Logging' -Global -ErrorAction Stop
-            } elseif (Test-Path $loggingPath) {
-                Import-Module $loggingPath -Global -ErrorAction Stop
-            } else {
-                continue
-            }
-            Write-Verbose "Successfully imported Logging module from: $loggingPath"
-            $loggingImported = $true
-        } catch {
-            Write-Verbose "Failed to import Logging from $loggingPath : $_"
-        }
-    }
-}
-
-if (-not $loggingImported) {
-    Write-Warning "Could not import Logging module from any of the attempted paths"
-    # Fallback: dot-source local logger if centralized not available
-    $localLogger = Join-Path $PSScriptRoot "Logger.ps1"
-    if (Test-Path $localLogger) {
-        . $localLogger
-    }
-}
+# Write-CustomLog is guaranteed to be available from AitherCore orchestration
+# No explicit module dependency management needed - trust the orchestration system
 
 # Progress logging function for enhanced deployment tracking
 function Write-ProgressLog {

@@ -52,8 +52,8 @@ function Initialize-StandardParameters {
         ModulesLoaded = @()
     }
 
-    # Set up logging first if the module is available
-    Import-Module "$env:PWSH_MODULES_PATH/Logging" -ErrorAction SilentlyContinue
+    # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+    # No explicit Logging import needed - trust the orchestration system
     $scriptParams.ModulesLoaded += 'Logging'
 
     # Log script initialization

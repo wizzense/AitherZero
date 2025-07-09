@@ -23,7 +23,8 @@ function Sync-ToAitherLab {
     )
 
     begin {
-        Import-Module "$PSScriptRoot/../Logging" -Force
+        # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+        # No explicit Logging import needed - trust the orchestration system
         Write-CustomLog -Level 'INFO' -Message "Starting sync to aitherlab"
     }
 
@@ -92,7 +93,8 @@ function Sync-FromAitherLab {
     )
 
     begin {
-        Import-Module "$PSScriptRoot/../Logging" -Force
+        # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+        # No explicit Logging import needed - trust the orchestration system
         Write-CustomLog -Level 'INFO' -Message "Starting sync from aitherlab"
     }
 
@@ -143,7 +145,8 @@ function Get-SyncStatus {
     param()
 
     begin {
-        Import-Module "$PSScriptRoot/../Logging" -Force
+        # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+        # No explicit Logging import needed - trust the orchestration system
     }
 
     process {
@@ -188,7 +191,8 @@ function Get-RepoSyncStatus {
     param()
 
     try {
-        Import-Module "$PSScriptRoot/../Logging" -Force -ErrorAction SilentlyContinue
+        # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+        # No explicit Logging import needed - trust the orchestration system -ErrorAction SilentlyContinue
         
         $status = @{
             Status = 'Available'

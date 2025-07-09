@@ -30,16 +30,13 @@ function Get-BackupStatistics {
     $ErrorActionPreference = "Stop"
 
     try {
-        # Import shared utilities and logging only if not in test mode
+        # Import shared utilities only if not in test mode
         if (-not $env:PESTER_TEST) {
             . "$PSScriptRoot/../../../shared/Find-ProjectRoot.ps1"
             $fallbackProjectRoot = Find-ProjectRoot
             
-            # Import logging if available
-            $loggingPath = Join-Path $fallbackProjectRoot "aither-core/modules/Logging"
-            if (Test-Path $loggingPath) {
-                Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
-            }
+            # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+            # No explicit Logging import needed - trust the orchestration system
         }
 
         # Check for logging capability

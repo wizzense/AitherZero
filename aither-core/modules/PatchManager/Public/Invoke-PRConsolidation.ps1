@@ -56,10 +56,8 @@ function Invoke-PRConsolidation {
     )
 
     begin {
-        # Import required modules
-        if (-not (Get-Module -Name Logging -ListAvailable)) {
-            Import-Module (Join-Path $PSScriptRoot (Join-Path ".." (Join-Path ".." (Join-Path ".." "Logging")))) -Force -ErrorAction SilentlyContinue
-        }
+        # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+        # No explicit Logging import needed - trust the orchestration system
 
         function Write-ConsolidationLog {
             param($Message, $Level = "INFO")

@@ -51,7 +51,8 @@ function Invoke-PatchRollback {
     )
 
     begin {
-        Import-Module (Join-Path $PSScriptRoot '..' '..' 'Logging') -Force
+        # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+        # No explicit Logging import needed - trust the orchestration system
 
         # Import progress tracking functions if available
         $progressFunctionsPath = Join-Path $PSScriptRoot '../Private/Initialize-ProgressTracking.ps1'

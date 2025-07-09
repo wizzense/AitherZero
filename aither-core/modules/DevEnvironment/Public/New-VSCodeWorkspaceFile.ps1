@@ -69,7 +69,9 @@ function New-VSCodeWorkspaceFile {
     begin {
         # Import required modules
         $projectRoot = & "$PSScriptRoot/../../../shared/Find-ProjectRoot.ps1"
-        Import-Module (Join-Path $projectRoot "aither-core/modules/Logging") -Force
+        
+        # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+        # No explicit Logging import needed - trust the orchestration system
 
         Write-CustomLog -Level 'INFO' -Message "Creating VS Code workspace file: $WorkspaceName"
     }

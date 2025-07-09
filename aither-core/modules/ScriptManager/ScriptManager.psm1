@@ -442,7 +442,8 @@ Write-Host "Script completed" -ForegroundColor Green
                 Description = 'Script template for module functions'
                 Content = @'
 #Requires -Version 7.0
-Import-Module Logging -Force
+# Write-CustomLog is guaranteed to be available from AitherCore orchestration
+# No explicit Logging import needed - trust the orchestration system
 
 function Your-Function {
     param()

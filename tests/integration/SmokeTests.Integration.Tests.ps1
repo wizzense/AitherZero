@@ -54,13 +54,8 @@ BeforeAll {
         )
     }
     
-    # Mock Write-CustomLog if not available
-    if (-not (Get-Command 'Write-CustomLog' -ErrorAction SilentlyContinue)) {
-        function Write-CustomLog {
-            param([string]$Level, [string]$Message)
-            Write-Host "[$Level] $Message"
-        }
-    }
+    # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+    # No fallback needed - trust the orchestration system
     
     # Setup test directory structure
     $TestSmokeRoot = Join-Path $TestDrive "smoke-tests"

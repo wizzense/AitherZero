@@ -59,14 +59,9 @@ function New-BackupExclusion {
             $ProjectRoot = Resolve-Path $ProjectRoot -ErrorAction Stop
         }
 
-        # Import logging if available
-        $loggingPath = Join-Path $ProjectRoot "aither-core/modules/Logging"
-        if (Test-Path $loggingPath) {
-            Import-Module $loggingPath -Force -ErrorAction SilentlyContinue
-            Write-CustomLog "Creating backup exclusion rules" -Level INFO
-        } else {
-            Write-Host "INFO Creating backup exclusion rules" -ForegroundColor Green
-        }
+        # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+        # No explicit Logging import needed - trust the orchestration system
+        Write-CustomLog "Creating backup exclusion rules" -Level INFO
 
         # Define default backup exclusion patterns
         $defaultPatterns = @(

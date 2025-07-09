@@ -72,14 +72,9 @@ param(
 )
 
 begin {
-    # Import required modules
-    try {
-        Import-Module 'Logging' -Force -ErrorAction Stop
-    } catch {
-        Write-Warning "Failed to import Logging module: `$(`$_.Exception.Message)"
-        function Write-CustomLog { param(`$Level, `$Message) Write-Host "[`$Level] `$Message" }
-    }
-
+    # Write-CustomLog is guaranteed to be available from AitherCore orchestration
+    # No explicit Logging import needed - trust the orchestration system
+    
     Write-CustomLog -Level 'INFO' -Message "Script started"
 }
 

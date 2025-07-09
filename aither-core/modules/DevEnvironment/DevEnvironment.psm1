@@ -12,21 +12,8 @@
     This module integrates development environment setup into the core project workflow.
 #>
 
-# Initialize standardized logging fallback
-$fallbackPath = Join-Path (Split-Path $PSScriptRoot -Parent) "shared/Initialize-LoggingFallback.ps1"
-if (Test-Path $fallbackPath) {
-    . $fallbackPath
-    Initialize-LoggingFallback -ModuleName "DevEnvironment"
-} else {
-    # Basic fallback if shared utility isn't available
-    if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-        function Write-CustomLog {
-            param([string]$Message, [string]$Level = "INFO")
-            $color = switch ($Level) { 'SUCCESS' { 'Green' }; 'ERROR' { 'Red' }; 'WARNING' { 'Yellow' }; 'INFO' { 'Cyan' }; default { 'White' } }
-            Write-Host "[$Level] $Message" -ForegroundColor $color
-        }
-    }
-}
+# Write-CustomLog is guaranteed to be available from AitherCore orchestration
+# No fallback needed - trust the orchestration system
 
 # Import public functions
 $Public = @(Get-ChildItem -Path $PSScriptRoot\Public\*.ps1 -ErrorAction SilentlyContinue)

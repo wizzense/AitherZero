@@ -43,76 +43,8 @@ $script:Configuration = @{
     }
 }
 
-# Universal logging fallback - ensure Write-CustomLog is always available
-if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-    function global:Write-CustomLog {
-        param(
-            [Parameter(Mandatory = $true)]
-            [string]$Message,
-            
-            [Parameter(Mandatory = $false)]
-            [ValidateSet('ERROR', 'WARN', 'WARNING', 'INFO', 'SUCCESS', 'DEBUG', 'TRACE', 'VERBOSE')]
-            [string]$Level = 'INFO',
-            
-            [Parameter(Mandatory = $false)]
-            [string]$Source = "ModuleCommunication",
-            
-            [Parameter(Mandatory = $false)]
-            [hashtable]$Context = @{},
-            
-            [Parameter(Mandatory = $false)]
-            [Exception]$Exception = $null
-        )
-        
-        # Normalize level names
-        if ($Level -eq 'WARNING') { $Level = 'WARN' }
-        
-        # Determine color based on level
-        $color = switch ($Level) {
-            'ERROR' { 'Red' }
-            'WARN' { 'Yellow' }
-            'SUCCESS' { 'Green' }
-            'INFO' { 'Cyan' }
-            'DEBUG' { 'Gray' }
-            'TRACE' { 'DarkGray' }
-            'VERBOSE' { 'DarkCyan' }
-            default { 'White' }
-        }
-        
-        # Build log message
-        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
-        $logMessage = "[$timestamp] [$Level] [$Source] $Message"
-        
-        # Add context if provided
-        if ($Context.Count -gt 0) {
-            $contextStr = ($Context.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ", "
-            $logMessage += " {$contextStr}"
-        }
-        
-        # Add exception if provided
-        if ($Exception) {
-            $logMessage += " Exception: $($Exception.Message)"
-        }
-        
-        # Output with color
-        Write-Host $logMessage -ForegroundColor $color
-        
-        # Also log to file if possible (fallback file logging)
-        try {
-            $logPath = if ($env:TEMP) { 
-                Join-Path $env:TEMP "AitherZero-Fallback.log" 
-            } elseif ($env:TMPDIR) { 
-                Join-Path $env:TMPDIR "AitherZero-Fallback.log" 
-            } else { 
-                "AitherZero-Fallback.log" 
-            }
-            
-            Add-Content -Path $logPath -Value $logMessage -Encoding UTF8 -ErrorAction SilentlyContinue
-        } catch {
-            # Fail silently for fallback logging
-        }
-    }
-}
+# Write-CustomLog is guaranteed to be available from AitherCore orchestration
+# No fallback needed - trust the orchestration system
 
 # Import functions
 $Public = @(Get-ChildItem -Path "$PSScriptRoot/Public" -Filter '*.ps1' -Recurse -ErrorAction SilentlyContinue)
