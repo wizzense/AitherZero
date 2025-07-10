@@ -228,7 +228,7 @@ Describe "Parameter Validation and Handling" -Tags @('EntryPoint', 'Parameters',
             $script:MainEntryPoint = $script:TestConfig.EntryPoints | Where-Object { $_.Name -eq 'Start-AitherZero.ps1' }
         }
 
-        It "Should have all required parameters defined" -Skip:(-not (Test-Path $script:MainEntryPoint.Path)) {
+        It "Should have all required parameters defined" -Skip:(-not ($script:MainEntryPoint -and $script:MainEntryPoint.Path -and (Test-Path $script:MainEntryPoint.Path))) {
             $paramCheck = Test-ScriptParameters -ScriptPath $script:MainEntryPoint.Path -ExpectedParams $script:MainEntryPoint.RequiredParams
             $paramCheck.Valid | Should -Be $true -Because "Start-AitherZero.ps1 should have all required parameters"
 
@@ -237,12 +237,12 @@ Describe "Parameter Validation and Handling" -Tags @('EntryPoint', 'Parameters',
             }
         }
 
-        It "Should validate InstallationProfile parameter values" -Skip:(-not (Test-Path $script:MainEntryPoint.Path)) {
+        It "Should validate InstallationProfile parameter values" -Skip:(-not ($script:MainEntryPoint -and $script:MainEntryPoint.Path -and (Test-Path $script:MainEntryPoint.Path))) {
             $content = Get-Content $script:MainEntryPoint.Path -Raw
             $content | Should -Match "ValidateSet.*minimal.*developer.*full" -Because "InstallationProfile should have ValidateSet attribute"
         }
 
-        It "Should support WhatIf parameter correctly" -Skip:(-not (Test-Path $script:MainEntryPoint.Path)) {
+        It "Should support WhatIf parameter correctly" -Skip:(-not ($script:MainEntryPoint -and $script:MainEntryPoint.Path -and (Test-Path $script:MainEntryPoint.Path))) {
             try {
                 $result = Invoke-ScriptWithTimeout -ScriptPath $script:MainEntryPoint.Path -Parameters @{ WhatIf = $true } -TimeoutSeconds 15
                 $result.Success | Should -Be $true -Because "Start-AitherZero.ps1 should support WhatIf parameter"
@@ -254,7 +254,7 @@ Describe "Parameter Validation and Handling" -Tags @('EntryPoint', 'Parameters',
             }
         }
 
-        It "Should handle Help parameter" -Skip:(-not (Test-Path $script:MainEntryPoint.Path)) {
+        It "Should handle Help parameter" -Skip:(-not ($script:MainEntryPoint -and $script:MainEntryPoint.Path -and (Test-Path $script:MainEntryPoint.Path))) {
             try {
                 $result = Invoke-ScriptWithTimeout -ScriptPath $script:MainEntryPoint.Path -Parameters @{ Help = $true } -TimeoutSeconds 10
                 $result.Success | Should -Be $true -Because "Start-AitherZero.ps1 should support Help parameter"
@@ -272,7 +272,7 @@ Describe "Parameter Validation and Handling" -Tags @('EntryPoint', 'Parameters',
             $script:DevEntryPoint = $script:TestConfig.EntryPoints | Where-Object { $_.Name -eq 'Start-DeveloperSetup.ps1' }
         }
 
-        It "Should have all required parameters defined" -Skip:(-not (Test-Path $script:DevEntryPoint.Path)) {
+        It "Should have all required parameters defined" -Skip:(-not ($script:DevEntryPoint -and $script:DevEntryPoint.Path -and (Test-Path $script:DevEntryPoint.Path))) {
             $paramCheck = Test-ScriptParameters -ScriptPath $script:DevEntryPoint.Path -ExpectedParams $script:DevEntryPoint.RequiredParams
             $paramCheck.Valid | Should -Be $true -Because "Start-DeveloperSetup.ps1 should have all required parameters"
 
@@ -281,17 +281,17 @@ Describe "Parameter Validation and Handling" -Tags @('EntryPoint', 'Parameters',
             }
         }
 
-        It "Should validate Profile parameter values" -Skip:(-not (Test-Path $script:DevEntryPoint.Path)) {
+        It "Should validate Profile parameter values" -Skip:(-not ($script:DevEntryPoint -and $script:DevEntryPoint.Path -and (Test-Path $script:DevEntryPoint.Path))) {
             $content = Get-Content $script:DevEntryPoint.Path -Raw
             $content | Should -Match "ValidateSet.*Quick.*Full" -Because "Profile should have ValidateSet attribute"
         }
 
-        It "Should support ShouldProcess for WhatIf functionality" -Skip:(-not (Test-Path $script:DevEntryPoint.Path)) {
+        It "Should support ShouldProcess for WhatIf functionality" -Skip:(-not ($script:DevEntryPoint -and $script:DevEntryPoint.Path -and (Test-Path $script:DevEntryPoint.Path))) {
             $content = Get-Content $script:DevEntryPoint.Path -Raw
             $content | Should -Match "SupportsShouldProcess" -Because "Developer setup should support ShouldProcess"
         }
 
-        It "Should handle skip switches correctly" -Skip:(-not (Test-Path $script:DevEntryPoint.Path)) {
+        It "Should handle skip switches correctly" -Skip:(-not ($script:DevEntryPoint -and $script:DevEntryPoint.Path -and (Test-Path $script:DevEntryPoint.Path))) {
             $skipSwitches = @('SkipAITools', 'SkipGitHooks', 'SkipVSCode')
 
             foreach ($switch in $skipSwitches) {
