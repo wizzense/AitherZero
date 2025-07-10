@@ -640,23 +640,17 @@ jobs:
                 
                 if ($issueSeverity -ge $minSeverity) {
                   $issueTitle = "[$auditType] $($issue.Type): $($issue.Item)"
-                  $issueBody = @"
-## Audit Finding
-
-**Type**: $($issue.Type)
-**Severity**: $($issue.Severity)
-**Component**: $($issue.Item)
-
-### Description
-$($issue.Description)
-
-### Audit Details
-- **Audit Type**: $auditType
-- **Detected**: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
-- **Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-### Recommended Actions
-"@
+                  $issueBody = "## Audit Finding`n`n"
+                  $issueBody += "Type: $($issue.Type)`n"
+                  $issueBody += "Severity: $($issue.Severity)`n"
+                  $issueBody += "Component: $($issue.Item)`n`n"
+                  $issueBody += "### Description`n"
+                  $issueBody += "$($issue.Description)`n`n"
+                  $issueBody += "### Audit Details`n"
+                  $issueBody += "- Audit Type: $auditType`n"
+                  $issueBody += "- Detected: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')`n"
+                  $issueBody += "- Workflow Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`n`n"
+                  $issueBody += "### Recommended Actions`n"
                   
                   switch ($issue.Type) {
                     "Missing" { $issueBody += "`n- Create the missing file or directory`n- Follow project structure guidelines" }
@@ -666,11 +660,8 @@ $($issue.Description)
                     default { $issueBody += "`n- Review the finding and take appropriate action" }
                   }
                   
-                  $issueBody += @"
-
----
-*This issue was automatically created by the AitherZero Audit workflow.*
-"@
+                  $issueBody += "`n`n---`n"
+                  $issueBody += "This issue was automatically created by the AitherZero Audit workflow."
                   
                   # Create issue using GitHub CLI
                   $labels = @("audit", $auditType, $issue.Severity.ToLower())
@@ -709,45 +700,34 @@ $($issue.Description)
         run: |
           Write-Host "📊 Generating comprehensive audit report..."
           
-          $report = @"
-# 🔍 AitherZero Comprehensive Audit Report
-
-**Generated**: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
-**Audit Type**: ${{ github.event.inputs.audit_type || 'comprehensive' }}
-**Workflow Run**: ${{ github.run_id }}
-**Branch**: ${{ github.ref_name }}
-**Triggered By**: ${{ github.actor }}
-
-## 📊 Overall Scores
-
-| Audit Type | Score/Coverage | Status |
-|------------|----------------|--------|
-| Documentation | ${{ needs.documentation-audit.outputs.doc-coverage || 'N/A' }}% | ${{ needs.documentation-audit.result }} |
-| Test Coverage | ${{ needs.test-audit.outputs.test-coverage || 'N/A' }}% | ${{ needs.test-audit.result }} |
-| Project Structure | ${{ needs.structure-audit.outputs.structure-score || 'N/A' }}/100 | ${{ needs.structure-audit.result }} |
-| Dependencies | ${{ needs.dependency-audit.outputs.dependency-issues || 'N/A' }} issues | ${{ needs.dependency-audit.result }} |
-
-## 🎯 Quality Targets
-
-### Documentation
-- **Target**: 80% coverage
-- **Current**: ${{ needs.documentation-audit.outputs.doc-coverage || 'N/A' }}%
-- **Status**: ${{ needs.documentation-audit.outputs.doc-coverage >= 80 ? '✅ Met' : '❌ Below Target' }}
-
-### Testing
-- **Target**: 90% module coverage
-- **Current**: ${{ needs.test-audit.outputs.test-coverage || 'N/A' }}%
-- **Status**: ${{ needs.test-audit.outputs.test-coverage >= 90 ? '✅ Met' : '❌ Below Target' }}
-
-### Structure
-- **Target**: 85/100 score
-- **Current**: ${{ needs.structure-audit.outputs.structure-score || 'N/A' }}/100
-- **Status**: ${{ needs.structure-audit.outputs.structure-score >= 85 ? '✅ Met' : '❌ Below Target' }}
-
-## 📋 Action Items
-
-### High Priority
-"@
+          $report = "# 🔍 AitherZero Comprehensive Audit Report`n`n"
+          $report += "Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')`n"
+          $report += "Audit Type: ${{ github.event.inputs.audit_type || 'comprehensive' }}`n"
+          $report += "Workflow Run: ${{ github.run_id }}`n"
+          $report += "Branch: ${{ github.ref_name }}`n"
+          $report += "Triggered By: ${{ github.actor }}`n`n"
+          $report += "## 📊 Overall Scores`n`n"
+          $report += "| Audit Type | Score/Coverage | Status |`n"
+          $report += "|------------|----------------|--------|`n"
+          $report += "| Documentation | ${{ needs.documentation-audit.outputs.doc-coverage || 'N/A' }}% | ${{ needs.documentation-audit.result }} |`n"
+          $report += "| Test Coverage | ${{ needs.test-audit.outputs.test-coverage || 'N/A' }}% | ${{ needs.test-audit.result }} |`n"
+          $report += "| Project Structure | ${{ needs.structure-audit.outputs.structure-score || 'N/A' }}/100 | ${{ needs.structure-audit.result }} |`n"
+          $report += "| Dependencies | ${{ needs.dependency-audit.outputs.dependency-issues || 'N/A' }} issues | ${{ needs.dependency-audit.result }} |`n`n"
+          $report += "## 🎯 Quality Targets`n`n"
+          $report += "### Documentation`n"
+          $report += "- Target: 80% coverage`n"
+          $report += "- Current: ${{ needs.documentation-audit.outputs.doc-coverage || 'N/A' }}%`n"
+          $report += "- Status: ${{ needs.documentation-audit.outputs.doc-coverage >= 80 ? '✅ Met' : '❌ Below Target' }}`n`n"
+          $report += "### Testing`n"
+          $report += "- Target: 90% module coverage`n"
+          $report += "- Current: ${{ needs.test-audit.outputs.test-coverage || 'N/A' }}%`n"
+          $report += "- Status: ${{ needs.test-audit.outputs.test-coverage >= 90 ? '✅ Met' : '❌ Below Target' }}`n`n"
+          $report += "### Structure`n"
+          $report += "- Target: 85/100 score`n"
+          $report += "- Current: ${{ needs.structure-audit.outputs.structure-score || 'N/A' }}/100`n"
+          $report += "- Status: ${{ needs.structure-audit.outputs.structure-score >= 85 ? '✅ Met' : '❌ Below Target' }}`n`n"
+          $report += "## 📋 Action Items`n`n"
+          $report += "### High Priority`n"
 
           # Add specific recommendations based on results
           if ([int]"${{ needs.documentation-audit.outputs.missing-docs || 0 }}" -gt 0) {
@@ -766,24 +746,18 @@ $($issue.Description)
             $report += "`n- 📦 Resolve ${{ needs.dependency-audit.outputs.dependency-issues }} dependency issues"
           }
 
-          $report += @"
-
-### Recommendations
-1. **Documentation**: Ensure all modules have README files and functions have help documentation
-2. **Testing**: Implement comprehensive test suites for all modules
-3. **Structure**: Follow consistent project organization and naming conventions
-4. **Dependencies**: Keep module dependencies up to date and properly declared
-
-## 📈 Trend Analysis
-*Note: Historical trend analysis requires multiple audit runs*
-
-## 🔧 Automated Actions
-- **Issues Created**: ${{ github.event.inputs.create_issues == 'true' ? 'Yes' : 'No' }}
-- **Severity Threshold**: ${{ github.event.inputs.severity_threshold || 'medium' }}
-
----
-*Report generated by AitherZero Audit workflow*
-"@
+          $report += "`n`n### Recommendations`n"
+          $report += "1. Documentation: Ensure all modules have README files and functions have help documentation`n"
+          $report += "2. Testing: Implement comprehensive test suites for all modules`n"
+          $report += "3. Structure: Follow consistent project organization and naming conventions`n"
+          $report += "4. Dependencies: Keep module dependencies up to date and properly declared`n`n"
+          $report += "## 📈 Trend Analysis`n"
+          $report += "Note: Historical trend analysis requires multiple audit runs`n`n"
+          $report += "## 🔧 Automated Actions`n"
+          $report += "- Issues Created: ${{ github.event.inputs.create_issues == 'true' ? 'Yes' : 'No' }}`n"
+          $report += "- Severity Threshold: ${{ github.event.inputs.severity_threshold || 'medium' }}`n`n"
+          $report += "---`n"
+          $report += "Report generated by AitherZero Audit workflow"
 
           $report | Set-Content "comprehensive-audit-report.md"
           Write-Host $report
