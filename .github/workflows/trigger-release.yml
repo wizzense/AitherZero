@@ -1,6 +1,7 @@
 name: 🚀 Trigger Release
 
-on: workflow_dispatch: inputs: version: description: 'Version to release (e.g., 0.7.3)'
+on:
+  workflow_dispatch: inputs: version: description: 'Version to release (e.g., 0.7.3)'
         required: true
         type: string
       create_tag: description: 'Create Git tag'
@@ -8,11 +9,14 @@ on: workflow_dispatch: inputs: version: description: 'Version to release (e.g., 
         default: true
         type: boolean
 
-permissions: contents: write
+permissions:
+  contents: write
 
-jobs: validate-and-trigger-release: name: Validate and Trigger Release
+jobs:
+  validate-and-trigger-release: name: Validate and Trigger Release
     runs-on: ubuntu-latest
-     steps: - name: Checkout code
+     steps:
+       - name: Checkout code
       uses: actions/checkout@v4
 
       - name: Validate version format

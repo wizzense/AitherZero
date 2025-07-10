@@ -4,7 +4,8 @@
 name: Workflow Configuration
 
 # This workflow is not meant to run - it's a configuration reference
-on: workflow_dispatch: inputs: action: description: 'Configuration action'
+on:
+  workflow_dispatch: inputs: action: description: 'Configuration action'
         required: true
         default: 'validate'
         type: choice
@@ -13,13 +14,15 @@ on: workflow_dispatch: inputs: action: description: 'Configuration action'
           - cleanup
 
 # Shared environment variables across all workflows
-env: POWERSHELL_TELEMETRY_OPTOUT: 1
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   DOTNET_NOLOGO: true
   WORKFLOW_OPTIMIZATION_VERSION: 'v2'
 
 # Shared permissions template
-permissions: contents: read
+permissions:
+  contents: read
   pull-requests: write
   actions: read
   checks: write
@@ -55,10 +58,12 @@ permissions: contents: read
 #    - Conditional execution based on file changes
 #    - Shared caching strategies
 
-jobs: validate-configuration: name: Validate Workflow Configuration
+jobs:
+  validate-configuration: name: Validate Workflow Configuration
     runs-on: ubuntu-latest
     if: github.event.inputs.action == 'validate'
-     steps: - name: Checkout code
+     steps:
+       - name: Checkout code
       uses: actions/checkout@v4
 
       - name: Validate workflow syntax
@@ -100,7 +105,8 @@ jobs: validate-configuration: name: Validate Workflow Configuration
   optimize-workflows: name: Optimize Workflow Performance
     runs-on: ubuntu-latest
     if: github.event.inputs.action == 'optimize'
-     steps: - name: Checkout code
+     steps:
+       - name: Checkout code
       uses: actions/checkout@v4
 
       - name: Analyze workflow performance
@@ -128,9 +134,11 @@ jobs: validate-configuration: name: Validate Workflow Configuration
   cleanup-workflows: name: Cleanup Workflow Artifacts
     runs-on: ubuntu-latest
     if: github.event.inputs.action == 'cleanup'
-     steps: - name: Cleanup old artifacts
+     steps:
+       - name: Cleanup old artifacts
       uses: actions/github-script@v7
-      with: script: |
+      with:
+        script: |
           const owner = context.repo.owner; const repo = context.repo.repo;
            // Get all artifacts
           const artifacts = await github.rest.actions.listArtifactsForRepo({ owner,

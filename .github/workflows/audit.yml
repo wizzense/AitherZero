@@ -1,6 +1,7 @@
 name: Audit - Documentation, Tests & Duplicates
 
-on: push: branches: [ main, develop, 'release/**' ]
+on:
+  push: branches: [ main, develop, 'release/**' ]
   pull_request: branches: [ main, develop ]
   schedule: # Run weekly audits on Sundays at 2 AM UTC
     - cron: '0 2 * * 0'
@@ -22,30 +23,37 @@ on: push: branches: [ main, develop, 'release/**' ]
         type: boolean
 
 # Cancel in-progress runs for the same workflow
-concurrency: group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 # Permissions for GITHUB_TOKEN
-permissions: contents: read
+permissions:
+  contents: read
   pull-requests: write
   issues: write
 
-env: POWERSHELL_TELEMETRY_OPTOUT: 1
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
 
 jobs: # Initialize audit state and determine what needs to be audited audit-initialization: name: Initialize Audit State
     runs-on: ubuntu-latest
-    outputs: documentation-state-exists: ${{ steps.check.outputs.docs-state }}
+    outputs:
+      documentation-state-exists: ${{ steps.check.outputs.docs-state }}
       test-state-exists: ${{ steps.check.outputs.test-state }}
       audit-scope: ${{ steps.scope.outputs.scope }}
       changed-files: ${{ steps.files.outputs.changed }}
-     steps: - name: Checkout code
+     steps:
+       - name: Checkout code
       uses: actions/checkout@v4
-      with: fetch-depth: 0
+      with:
+        fetch-depth: 0
 
       - name: Cache audit state
       uses: actions/cache@v4
-      with: path: |
+      with:
+        path: |
           .github/documentation-state.json .github/test-state.json
         key: ${{ runner.os }}-audit-state-${{ github.sha }}
         restore-keys: |
@@ -103,14 +111,17 @@ jobs: # Initialize audit state and determine what needs to be audited audit-init
     runs-on: ubuntu-latest
     needs: audit-initialization
     if: fromJson(needs.audit-initialization.outputs.audit-scope).documentation
-     steps: - name: Checkout code
+     steps:
+       - name: Checkout code
       uses: actions/checkout@v4
-      with: token: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     # PowerShell is pre-installed on GitHub runners
       - name: Cache audit state
       uses: actions/cache@v4
-      with: path: .github/documentation-state.json
+      with:
+        path: .github/documentation-state.json
         key: ${{ runner.os }}-docs-state-${{ github.sha }}
         restore-keys: |
           ${{ runner.os }}-docs-state-
@@ -175,7 +186,8 @@ jobs: # Initialize audit state and determine what needs to be audited audit-init
 
       - name: Upload documentation reports
       uses: actions/upload-artifact@v4
-      with: name: documentation-audit-reports
+      with:
+        name: documentation-audit-reports
         path: |
           change-analysis.json documentation-report.md
           .github/documentation-state.json
@@ -185,13 +197,15 @@ jobs: # Initialize audit state and determine what needs to be audited audit-init
     runs-on: ubuntu-latest
     needs: audit-initialization
     if: fromJson(needs.audit-initialization.outputs.audit-scope).testing
-     steps: - name: Checkout code
+     steps:
+       - name: Checkout code
       uses: actions/checkout@v4
 
     # PowerShell is pre-installed on GitHub runners
       - name: Cache audit state
       uses: actions/cache@v4
-      with: path: .github/test-state.json
+      with:
+        path: .github/test-state.json
         key: ${{ runner.os }}-test-state-${{ github.sha }}
         restore-keys: |
           ${{ runner.os }}-test-state-
@@ -278,7 +292,8 @@ jobs: # Initialize audit state and determine what needs to be audited audit-init
 
       - name: Upload test reports
       uses: actions/upload-artifact@v4
-      with: name: testing-audit-reports
+      with:
+        name: testing-audit-reports
         path: |
           test-delta-analysis.json test-audit-report.json
           test-audit-report.html .github/test-state.json
@@ -288,7 +303,8 @@ jobs: # Initialize audit state and determine what needs to be audited audit-init
     runs-on: ubuntu-latest
     needs: audit-initialization
     if: fromJson(needs.audit-initialization.outputs.audit-scope).duplicates
-     steps: - name: Checkout code
+     steps:
+       - name: Checkout code
       uses: actions/checkout@v4
 
     # PowerShell is pre-installed on GitHub runners
@@ -320,7 +336,8 @@ jobs: # Initialize audit state and determine what needs to be audited audit-init
 
       - name: Upload duplicate detection reports
       uses: actions/upload-artifact@v4
-      with: name: duplicate-detection-reports
+      with:
+        name: duplicate-detection-reports
         path: |
           duplicate-files-simple.json
         retention-days: 30
@@ -329,12 +346,15 @@ jobs: # Initialize audit state and determine what needs to be audited audit-init
     runs-on: ubuntu-latest
     needs: [audit-initialization, documentation-audit, testing-audit, duplicate-detection]
     if: always()
-     steps: - name: Download all reports
+     steps:
+       - name: Download all reports
       uses: actions/download-artifact@v4
-      with: path: audit-reports
+      with:
+        path: audit-reports
 
       - name: Generate unified summary
-      env: AUDIT_SCOPE: ${{ needs.audit-initialization.outputs.audit-scope }}
+      env:
+        AUDIT_SCOPE: ${{ needs.audit-initialization.outputs.audit-scope }}
         DOC_STATUS: ${{ needs.documentation-audit.result }}
         TEST_STATUS: ${{ needs.testing-audit.result }}
         DUP_STATUS: ${{ needs.duplicate-detection.result }}
@@ -387,7 +407,8 @@ jobs: # Initialize audit state and determine what needs to be audited audit-init
       - name: Comment on PR with audit results
     if: github.event_name == 'pull_request' uses: actions/github-script@v7
     continue-on-error: true  # PR commenting may fail for forks
-      with: script: |
+      with:
+        script: |
           try { const fs = require('fs');
              let body = '## 🔍 AitherZero Audit Results\n\n';
              const results = {
@@ -436,6 +457,7 @@ jobs: # Initialize audit state and determine what needs to be audited audit-init
 
       - name: Upload unified audit summary
       uses: actions/upload-artifact@v4
-      with: name: audit-summary
+      with:
+        name: audit-summary
         path: audit-summary.json
         retention-days: 90

@@ -1,6 +1,7 @@
 name: Code Quality Remediation
 
-on: schedule: # Run weekly on Sundays at 02:00 UTC
+on:
+  schedule: # Run weekly on Sundays at 02:00 UTC
     - cron: '0 2 * * 0'
   workflow_dispatch: inputs: modules: description: 'Specific modules to remediate (comma-separated, or "all" for all modules)'
         required: false
@@ -20,28 +21,35 @@ on: schedule: # Run weekly on Sundays at 02:00 UTC
         type: boolean
 
 # Ensure only one remediation workflow runs at a time
-concurrency: group: code-quality-remediation
+concurrency:
+  group: code-quality-remediation
   cancel-in-progress: false
 
 # Permissions for GITHUB_TOKEN
-permissions: contents: write
+permissions:
+  contents: write
   pull-requests: write
   actions: write
   issues: write
 
-env: POWERSHELL_TELEMETRY_OPTOUT: 1
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   DOTNET_NOLOGO: true
 
-jobs: analyze-quality: name: Analyze Code Quality
+jobs:
+  analyze-quality: name: Analyze Code Quality
     runs-on: ubuntu-latest
-    outputs: has-issues: ${{ steps.analysis.outputs.has-issues }}
+    outputs:
+      has-issues: ${{ steps.analysis.outputs.has-issues }}
       critical-modules: ${{ steps.analysis.outputs.critical-modules }}
       remediation-needed: ${{ steps.analysis.outputs.remediation-needed }}
 
-    steps: - name: Checkout code
+    steps:
+      - name: Checkout code
       uses: actions/checkout@v4
-      with: fetch-depth: 0
+      with:
+        fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install PowerShell modules
@@ -148,7 +156,8 @@ jobs: analyze-quality: name: Analyze Code Quality
 
       - name: Upload analysis results
       uses: actions/upload-artifact@v4
-      with: name: quality-analysis-results
+      with:
+        name: quality-analysis-results
         path: quality-analysis-results.json
         retention-days: 30
 
@@ -157,9 +166,11 @@ jobs: analyze-quality: name: Analyze Code Quality
     needs: analyze-quality
     if: needs.analyze-quality.outputs.remediation-needed == 'true' && github.event.inputs.dry_run != 'true'
 
-    steps: - name: Checkout code
+    steps:
+      - name: Checkout code
       uses: actions/checkout@v4
-      with: fetch-depth: 0
+      with:
+        fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
@@ -176,7 +187,8 @@ jobs: analyze-quality: name: Analyze Code Quality
 
       - name: Download analysis results
       uses: actions/download-artifact@v4
-      with: name: quality-analysis-results
+      with:
+        name: quality-analysis-results
 
       - name: Perform automated remediation
       shell: pwsh
@@ -403,13 +415,15 @@ jobs: analyze-quality: name: Analyze Code Quality
 
       - name: Upload remediation report
       uses: actions/upload-artifact@v4
-      with: name: remediation-report
+      with:
+        name: remediation-report
         path: remediation-report.json
         retention-days: 30
 
       - name: Upload GitHub issues report
       uses: actions/upload-artifact@v4
-      with: name: github-issues-report
+      with:
+        name: github-issues-report
         path: github-issues-report.json
         retention-days: 30
 
@@ -429,7 +443,8 @@ jobs: analyze-quality: name: Analyze Code Quality
     needs: [analyze-quality, remediate-issues]
     if: always()
 
-    steps: - name: Create summary
+    steps:
+      - name: Create summary
       shell: pwsh
       run: |
         $hasIssues = '${{ needs.analyze-quality.outputs.has-issues }}' $remediationNeeded = '${{ needs.analyze-quality.outputs.remediation-needed }}'
