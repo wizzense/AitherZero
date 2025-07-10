@@ -144,6 +144,88 @@ jobs:
           path: tests/results/
           retention-days: 90
 
+  generate-comprehensive-report:
+    name: "Generate Comprehensive Report"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [validate-inputs, update-version, run-tests]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Install report dependencies
+        run: |
+          Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck
+          Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser -SkipPublisherCheck
+
+      - name: Generate comprehensive report
+        run: |
+          # Generate comprehensive HTML report and feature map
+          ./scripts/reporting/Generate-ComprehensiveReport.ps1 -Version "${{ needs.validate-inputs.outputs.version }}" -IncludeDetailedAnalysis -ReportTitle "AitherZero v${{ needs.validate-inputs.outputs.version }} Release Report"
+          
+          # Generate dynamic feature map
+          ./scripts/reporting/Generate-DynamicFeatureMap.ps1 -HtmlOutput -IncludeDependencyGraph
+
+      - name: Prepare dashboard artifact
+        run: |
+          # Create a combined dashboard package
+          $dashboardDir = "release-dashboard"
+          New-Item -ItemType Directory -Path $dashboardDir -Force
+          
+          # Copy all report files
+          Copy-Item "./reports/*.html" -Destination $dashboardDir -Force
+          Copy-Item "./reports/*.json" -Destination $dashboardDir -Force
+          Copy-Item "./reports/*.md" -Destination $dashboardDir -Force -ErrorAction SilentlyContinue
+          
+          # Copy test results dashboard
+          if (Test-Path "./tests/results/test-dashboard.html") {
+            Copy-Item "./tests/results/test-dashboard.html" -Destination "$dashboardDir/test-dashboard.html" -Force
+          }
+          
+          # Create dashboard index
+          @"
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>AitherZero v${{ needs.validate-inputs.outputs.version }} Release Dashboard</title>
+              <style>
+                  body { font-family: Arial, sans-serif; margin: 40px; }
+                  h1 { color: #333; }
+                  .dashboard-links { list-style-type: none; padding: 0; }
+                  .dashboard-links li { margin: 10px 0; }
+                  .dashboard-links a { color: #0066cc; text-decoration: none; font-size: 18px; }
+                  .dashboard-links a:hover { text-decoration: underline; }
+              </style>
+          </head>
+          <body>
+              <h1>AitherZero v${{ needs.validate-inputs.outputs.version }} Release Dashboard</h1>
+              <ul class="dashboard-links">
+                  <li><a href="comprehensive-report.html">📊 Comprehensive Project Report</a></li>
+                  <li><a href="dynamic-feature-map.html">🗺️ Dynamic Feature Map</a></li>
+                  <li><a href="test-dashboard.html">🧪 Test Results Dashboard</a></li>
+                  <li><a href="executive-summary.md">📋 Executive Summary</a></li>
+              </ul>
+          </body>
+          </html>
+"@ | Set-Content "$dashboardDir/index.html"
+          
+          # Create dashboard package
+          Compress-Archive -Path $dashboardDir/* -DestinationPath "AitherZero-v${{ needs.validate-inputs.outputs.version }}-dashboard.zip" -Force
+          
+          Write-Host "✅ Dashboard package created"
+
+      - name: Upload comprehensive report
+        uses: actions/upload-artifact@v4
+        with:
+          name: comprehensive-report
+          path: |
+            reports/
+            release-dashboard/
+            AitherZero-v${{ needs.validate-inputs.outputs.version }}-dashboard.zip
+          retention-days: 90
+
   build-packages:
     name: "Build Release Packages"
     runs-on: ubuntu-latest
@@ -263,7 +345,7 @@ jobs:
     name: "Create GitHub Release"
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [validate-inputs, run-tests, build-packages, generate-release-notes]
+    needs: [validate-inputs, run-tests, build-packages, generate-release-notes, generate-comprehensive-report]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -281,6 +363,12 @@ jobs:
           name: release-test-results
           path: test-results/
 
+      - name: Download comprehensive report
+        uses: actions/download-artifact@v4
+        with:
+          name: comprehensive-report
+          path: comprehensive-report/
+
       - name: List downloaded artifacts
         run: |
           Write-Host "📦 Downloaded packages:"
@@ -290,6 +378,11 @@ jobs:
 
           Write-Host "`n📋 Test results:"
           Get-ChildItem test-results/ -Recurse -File | ForEach-Object {
+            Write-Host "  - $($_.Name)"
+          }
+
+          Write-Host "`n📊 Comprehensive report:"
+          Get-ChildItem comprehensive-report/ -Recurse -File | ForEach-Object {
             Write-Host "  - $($_.Name)"
           }
 
@@ -308,6 +401,7 @@ jobs:
             packages/AitherZero-v${{ needs.validate-inputs.outputs.version }}-windows.zip
             packages/AitherZero-v${{ needs.validate-inputs.outputs.version }}-linux.tar.gz
             packages/AitherZero-v${{ needs.validate-inputs.outputs.version }}-macos.tar.gz
+            comprehensive-report/AitherZero-v${{ needs.validate-inputs.outputs.version }}-dashboard.zip
           generate_release_notes: true
           make_latest: ${{ github.event.inputs.prerelease == 'false' }}
 

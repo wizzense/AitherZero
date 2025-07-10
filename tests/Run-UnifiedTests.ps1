@@ -628,8 +628,8 @@ function Invoke-CentralizedTests {
         $totalFailed = 0
         $totalSkipped = 0
         
-        # Determine execution strategy
-        $useParallel = ($Performance -and $script:TestSession.Configuration.ParallelSupport -and $TestFiles.Count -gt 1 -and -not $FailFast)
+        # Determine execution strategy - disable parallel in CI mode due to PowerShell environment issues
+        $useParallel = ($Performance -and $script:TestSession.Configuration.ParallelSupport -and $TestFiles.Count -gt 1 -and -not $FailFast -and -not $CI)
         
         if ($useParallel) {
             Write-TestLog "Using parallel execution for performance optimization" -Level 'Info'
@@ -685,15 +685,45 @@ function Invoke-ParallelTestExecution {
     $parallelResults = Invoke-ParallelForEach -InputObject $TestFiles -ThrottleLimit $MaxParallelJobs -ScriptBlock {
         param($testFile)
         
-        # Defensive path validation
-        if (-not $testFile -or -not $testFile.Path -or -not (Test-Path $testFile.Path)) {
-            throw "Invalid test file path: $($testFile.Path ?? 'null')"
+        # Defensive validation - handle both hashtable and object formats
+        $testPath = $null
+        $testName = $null
+        $testCategory = $null
+        
+        try {
+            if ($testFile -is [hashtable]) {
+                $testPath = $testFile.Path
+                $testName = $testFile.Name
+                $testCategory = $testFile.Category
+            } elseif ($testFile -and $testFile.PSObject.Properties['Path']) {
+                $testPath = $testFile.Path
+                $testName = $testFile.Name
+                $testCategory = $testFile.Category
+            } elseif ($testFile -and $testFile.GetType().Name -eq 'String') {
+                # Handle string paths directly
+                $testPath = $testFile
+                $testName = Split-Path $testFile -Leaf
+                $testCategory = 'Other'
+            } else {
+                throw "Invalid test file object type: $($testFile.GetType().Name)"
+            }
+        } catch {
+            throw "Error processing test file object: $($_.Exception.Message). Object: $($testFile | ConvertTo-Json -Depth 2 -ErrorAction SilentlyContinue)"
+        }
+        
+        # Validate path
+        if (-not $testPath -or [string]::IsNullOrEmpty($testPath)) {
+            throw "Test file path is null or empty. Original object: $($testFile | ConvertTo-Json -Depth 2 -ErrorAction SilentlyContinue)"
+        }
+        
+        if (-not (Test-Path $testPath)) {
+            throw "Test file does not exist: '$testPath'"
         }
         
         Import-Module Pester -Force
         
         $config = New-PesterConfiguration
-        $config.Run.Path = $testFile.Path
+        $config.Run.Path = $testPath
         $config.Run.PassThru = $true
         $config.Output.Verbosity = 'Minimal'
         # Timeout not supported in this Pester version
@@ -705,8 +735,8 @@ function Invoke-ParallelTestExecution {
             $testDuration = (Get-Date) - $testStartTime
             
             return [PSCustomObject]@{
-                TestFile = $testFile.Name
-                Category = $testFile.Category
+                TestFile = $testName
+                Category = $testCategory
                 TotalCount = $results.TotalCount
                 PassedCount = $results.PassedCount
                 FailedCount = $results.FailedCount
@@ -720,8 +750,8 @@ function Invoke-ParallelTestExecution {
         } catch {
             $testDuration = (Get-Date) - $testStartTime
             return [PSCustomObject]@{
-                TestFile = $testFile.Name
-                Category = $testFile.Category
+                TestFile = $testName
+                Category = $testCategory
                 TotalCount = 0
                 PassedCount = 0
                 FailedCount = 1
@@ -754,14 +784,47 @@ function Invoke-SequentialTestExecution {
         
         Write-TestLog "Running test: $($testFile.Name)" -Level 'Info'
         
-        # Defensive path validation
-        if (-not $testFile -or -not $testFile.Path -or -not (Test-Path $testFile.Path)) {
-            Write-TestLog "Invalid test file path: $($testFile.Path ?? 'null')" -Level 'Error'
+        # Defensive validation - handle both hashtable and object formats
+        $testPath = $null
+        $testName = $null
+        $testCategory = $null
+        
+        try {
+            if ($testFile -is [hashtable]) {
+                $testPath = $testFile.Path
+                $testName = $testFile.Name
+                $testCategory = $testFile.Category
+            } elseif ($testFile -and $testFile.PSObject.Properties['Path']) {
+                $testPath = $testFile.Path
+                $testName = $testFile.Name
+                $testCategory = $testFile.Category
+            } elseif ($testFile -and $testFile.GetType().Name -eq 'String') {
+                # Handle string paths directly
+                $testPath = $testFile
+                $testName = Split-Path $testFile -Leaf
+                $testCategory = 'Other'
+            } else {
+                Write-TestLog "Invalid test file object type: $($testFile.GetType().Name)" -Level 'Error'
+                continue
+            }
+        } catch {
+            Write-TestLog "Error processing test file object: $($_.Exception.Message). Object: $($testFile | ConvertTo-Json -Depth 2 -ErrorAction SilentlyContinue)" -Level 'Error'
+            continue
+        }
+        
+        # Validate path
+        if (-not $testPath -or [string]::IsNullOrEmpty($testPath)) {
+            Write-TestLog "Test file path is null or empty. Original object: $($testFile | ConvertTo-Json -Depth 2 -ErrorAction SilentlyContinue)" -Level 'Error'
+            continue
+        }
+        
+        if (-not (Test-Path $testPath)) {
+            Write-TestLog "Test file does not exist: '$testPath'" -Level 'Error'
             continue
         }
         
         $config = New-PesterConfiguration
-        $config.Run.Path = $testFile.Path
+        $config.Run.Path = $testPath
         $config.Run.PassThru = $true
         $config.Output.Verbosity = if ($CI) { 'Minimal' } else { 'Normal' }
         # Timeout not supported in this Pester version
@@ -781,8 +844,8 @@ function Invoke-SequentialTestExecution {
             $testDuration = (Get-Date) - $testStartTime
             
             $result = [PSCustomObject]@{
-                TestFile = $testFile.Name
-                Category = $testFile.Category
+                TestFile = $testName
+                Category = $testCategory
                 TotalCount = $testResults.TotalCount
                 PassedCount = $testResults.PassedCount
                 FailedCount = $testResults.FailedCount
@@ -798,11 +861,11 @@ function Invoke-SequentialTestExecution {
             
             # Report individual test results
             $status = if ($testResults.FailedCount -eq 0) { "✅ PASSED" } else { "❌ FAILED" }
-            Write-TestLog "$($testFile.Name): $status - $($testResults.PassedCount)/$($testResults.TotalCount) tests in $([math]::Round($testDuration.TotalSeconds, 2))s" -Level $(if ($testResults.FailedCount -eq 0) { 'Success' } else { 'Error' })
+            Write-TestLog "${testName}: $status - $($testResults.PassedCount)/$($testResults.TotalCount) tests in $([math]::Round($testDuration.TotalSeconds, 2))s" -Level $(if ($testResults.FailedCount -eq 0) { 'Success' } else { 'Error' })
             
             # Show failed tests
             if ($testResults.FailedCount -gt 0) {
-                Write-TestLog "Failed tests in $($testFile.Name):" -Level 'Error'
+                Write-TestLog "Failed tests in ${testName}:" -Level 'Error'
                 foreach ($failure in $testResults.Failed) {
                     Write-TestLog "  - $($failure.ExpandedName)" -Level 'Error'
                 }
@@ -816,11 +879,11 @@ function Invoke-SequentialTestExecution {
             
         } catch {
             $testDuration = (Get-Date) - $testStartTime
-            Write-TestLog "Test execution failed for $($testFile.Name): $($_.Exception.Message)" -Level 'Error'
+            Write-TestLog "Test execution failed for ${testName}: $($_.Exception.Message)" -Level 'Error'
             
             $result = [PSCustomObject]@{
-                TestFile = $testFile.Name
-                Category = $testFile.Category
+                TestFile = $testName
+                Category = $testCategory
                 TotalCount = 0
                 PassedCount = 0
                 FailedCount = 1

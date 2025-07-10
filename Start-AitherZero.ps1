@@ -375,11 +375,12 @@ function Invoke-WithRetry {
 # ════════════════════════════════════════════════════════════════════════════════
 
 # Load enhanced PowerShell version utilities
-$versionUtilPath = Join-Path $PSScriptRoot "aither-core/shared/Test-PowerShellVersion.ps1"
-if (Test-Path $versionUtilPath) {
-    . $versionUtilPath
+$versionCheckPath = Join-Path $PSScriptRoot "aither-core/shared/Test-PowerShellVersion.ps1"
+if (Test-Path $versionCheckPath) {
+    . $versionCheckPath
 } else {
-    Write-BootstrapLog "PowerShell version utilities not found at: $versionUtilPath" -Level 'WARNING'
+    Write-BootstrapLog "PowerShell version utilities not found at: $versionCheckPath" -Level 'WARNING'
+    Write-BootstrapLog "Please ensure AitherZero is properly installed." -Level 'WARNING'
     Write-BootstrapLog "Using fallback PowerShell detection methods" -Level 'INFO'
     
     # Fallback function if shared utilities not available
@@ -826,6 +827,7 @@ then use the -Help parameter with the main application.
                 exit $exitCode
             }
         } else {
+            Write-Error "Core script not found at: $coreScript"
             Write-BootstrapLog "Core script not found at: $coreScript" -Level 'ERROR'
             Write-BootstrapLog "Please ensure AitherZero is properly installed." -Level 'ERROR'
             exit 1

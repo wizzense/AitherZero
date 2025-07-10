@@ -79,7 +79,7 @@ jobs:
         id: scope
         shell: pwsh
         run: |
-          $reportType = '${{ github.event.inputs.report_type || ''comprehensive'' }}'
+          $reportType = '${{ github.event.inputs.report_type || 'comprehensive' }}'
           $eventName = '${{ github.event_name }}'
 
           # Check if VERSION file changed (for workflow_run trigger)
