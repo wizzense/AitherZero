@@ -192,10 +192,16 @@ function Invoke-ParallelForEach {
                     $parallelScript = $ScriptBlock
                 }
             } elseif ($hasParameters) {
-                # Original parameter-based handling for scriptblocks without $using: variables
+                # For parameterized scriptblocks, create a new scriptblock with the original code embedded
+                # This preserves parameter structure without using $using: variables
                 $parallelScript = [scriptblock]::Create(@"
-                    `$___item = `$_
-                    & { $scriptText } `$___item
+                    `$currentItem = `$_
+                    if (`$null -eq `$currentItem) {
+                        Write-Warning "Parallel execution received null item"
+                        return `$null
+                    }
+                    # Embedded original script
+                    & { $scriptText } `$currentItem
 "@)
             } else {
                 # Use the original scriptblock as-is (it will use $_)

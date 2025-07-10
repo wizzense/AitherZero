@@ -685,6 +685,11 @@ function Invoke-ParallelTestExecution {
     $parallelResults = Invoke-ParallelForEach -InputObject $TestFiles -ThrottleLimit $MaxParallelJobs -ScriptBlock {
         param($testFile)
         
+        # Defensive path validation
+        if (-not $testFile -or -not $testFile.Path -or -not (Test-Path $testFile.Path)) {
+            throw "Invalid test file path: $($testFile.Path ?? 'null')"
+        }
+        
         Import-Module Pester -Force
         
         $config = New-PesterConfiguration
@@ -748,6 +753,12 @@ function Invoke-SequentialTestExecution {
         Write-ProgressUpdate -Activity "Execution" -Status "Running $($testFile.Name)" -PercentComplete $progress
         
         Write-TestLog "Running test: $($testFile.Name)" -Level 'Info'
+        
+        # Defensive path validation
+        if (-not $testFile -or -not $testFile.Path -or -not (Test-Path $testFile.Path)) {
+            Write-TestLog "Invalid test file path: $($testFile.Path ?? 'null')" -Level 'Error'
+            continue
+        }
         
         $config = New-PesterConfiguration
         $config.Run.Path = $testFile.Path
