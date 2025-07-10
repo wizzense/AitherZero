@@ -3,7 +3,7 @@ name: Comprehensive Auditing & Reporting
 on:
   # Trigger on successful CI completion (for releases)
   workflow_run:
-    workflows: ["CI - Continuous Integration"]
+    workflows: ["CI - Optimized & Reliable"]
     types: [completed]
     branches: [main, 'patch/**']
   # Keep daily scheduled reports
@@ -78,7 +78,7 @@ jobs:
       id: scope
       shell: pwsh
       run: |
-        $reportType = '${{ github.event.inputs.report_type || "comprehensive" }}'
+        $reportType = '${{ github.event.inputs.report_type || ''comprehensive'' }}'
         $eventName = '${{ github.event_name }}'
         
         # Check if VERSION file changed (for workflow_run trigger)
@@ -238,7 +238,7 @@ jobs:
         Write-Host "📊 Processing CI results for comprehensive analysis..." -ForegroundColor Cyan
 
         # Create audit artifacts directory
-        New-Item -Path "./audit-reports/testing-audit-reports" -ItemType Directory -Force
+        New-Item -Path "./audit-reports/testing-audit-reports" -ItemType Directory -Force | Out-Null
 
         # Check if CI results are available
         if (Test-Path "./ci-consumed-results/ci-results-summary.json") {
@@ -297,7 +297,7 @@ jobs:
         Write-Host "📝 Running documentation audit..." -ForegroundColor Cyan
 
         # Create audit artifacts directory
-        New-Item -Path "./audit-reports/documentation-audit-reports" -ItemType Directory -Force
+        New-Item -Path "./audit-reports/documentation-audit-reports" -ItemType Directory -Force | Out-Null
 
         # Run documentation analysis if scripts exist
         if (Test-Path "./scripts/documentation/Analyze-ContentDeltas.ps1") {
@@ -321,7 +321,7 @@ jobs:
         Write-Host "🔒 Running security analysis..." -ForegroundColor Cyan
 
         # Create security audit directory
-        New-Item -Path "./audit-reports/security-scan-results" -ItemType Directory -Force
+        New-Item -Path "./audit-reports/security-scan-results" -ItemType Directory -Force | Out-Null
 
         # Install PSScriptAnalyzer for security analysis
         if (!(Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
@@ -483,7 +483,10 @@ jobs:
 
         try {
           if (Test-Path "./scripts/reporting/Generate-ComprehensiveReport.ps1") {
-            $result = pwsh ./scripts/reporting/Generate-ComprehensiveReport.ps1 @params
+            # Ensure output directory exists
+            New-Item -ItemType Directory -Path "./output" -Force | Out-Null
+            
+            $result = & "./scripts/reporting/Generate-ComprehensiveReport.ps1" @params
           } else {
             Write-Warning "Comprehensive report generator not found"
             $result = $null
@@ -546,7 +549,7 @@ jobs:
               VerboseOutput = $true
             }
 
-            pwsh ./scripts/reporting/Generate-DynamicFeatureMap.ps1 @featureMapParams
+            & "./scripts/reporting/Generate-DynamicFeatureMap.ps1" @featureMapParams
           } catch {
             Write-Warning "Feature map generation failed: $($_.Exception.Message)"
           }
@@ -555,8 +558,8 @@ jobs:
         }
 
         # Copy the HTML output to the expected location
-        if (Test-Path "./feature-dependency-map.html") {
-          Copy-Item "./feature-dependency-map.html" -Destination "./output/feature-dependency-map.html" -Force
+        if (Test-Path "./feature-map.html") {
+          Copy-Item "./feature-map.html" -Destination "./output/feature-dependency-map.html" -Force
           Write-Host "✅ Feature dependency map generated" -ForegroundColor Green
         }
 
@@ -566,7 +569,7 @@ jobs:
         Write-Host "📊 Generating CI dashboard..." -ForegroundColor Cyan
 
         # Create a simple CI dashboard HTML
-        New-Item -ItemType Directory -Path "./output" -Force
+        New-Item -ItemType Directory -Path "./output" -Force | Out-Null
         $htmlContent = "<html><head><title>AitherZero CI/CD Dashboard</title></head><body><h1>AitherZero CI/CD Dashboard</h1><p>Generated: $(Get-Date)</p></body></html>"
         $htmlContent | Set-Content -Path "./output/comprehensive-ci-dashboard.html"
         
@@ -600,6 +603,9 @@ jobs:
       run: |
         Write-Host "📄 Creating report summary..." -ForegroundColor Cyan
 
+        $reportType = '${{ github.event.inputs.report_type }}'
+        if (-not $reportType) { $reportType = 'comprehensive' }
+        
         $summary = @{
           version = '${{ needs.initialize-reporting.outputs.version-number }}'
           timestamp = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ')
@@ -608,7 +614,7 @@ jobs:
           healthScore = $env:HEALTH_SCORE
           totalModules = $env:TOTAL_MODULES
           analyzedModules = $env:ANALYZED_MODULES
-          reportType = '${{ github.event.inputs.report_type || "comprehensive" }}'
+          reportType = $reportType
           gitSha = '${{ github.sha }}'
           gitRef = '${{ github.ref }}'
           workflowUrl = '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
@@ -793,7 +799,7 @@ jobs:
         Write-Host "📄 Preparing reports for GitHub Pages..." -ForegroundColor Cyan
 
         # Create docs directory
-        New-Item -ItemType Directory -Path "./docs" -Force
+        New-Item -ItemType Directory -Path "./docs" -Force | Out-Null
 
         # Copy all report files
         $reports = @(

@@ -23,7 +23,10 @@
       "Bash(/mnt/c/Program Files/PowerShell/7/pwsh.exe -NoProfile -File \"./Start-AitherZero.ps1\" -WhatIf)",
       "Bash(/mnt/c/Program Files/PowerShell/7/pwsh.exe -NoProfile -Command \"& ''./tests/Run-Tests.ps1'' -Quick -Verbose\")",
       "Bash(tar:*)",
-      "Bash(/mnt/c/Program Files/PowerShell/7/pwsh.exe -NoProfile -Command \"chmod +x tests/performance/Domain-Performance-Benchmark.ps1; ./tests/performance/Domain-Performance-Benchmark.ps1 -BenchmarkMode DomainVsModule -Iterations 3 -DetailedOutput\")"
+      "Bash(/mnt/c/Program Files/PowerShell/7/pwsh.exe -NoProfile -Command \"chmod +x tests/performance/Domain-Performance-Benchmark.ps1; ./tests/performance/Domain-Performance-Benchmark.ps1 -BenchmarkMode DomainVsModule -Iterations 3 -DetailedOutput\")",
+      "Bash(yamllint:*)",
+      "Bash(gh workflow run:*)",
+      "Bash(gh workflow:*)"
     ],
     "deny": []
   }

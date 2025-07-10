@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🚨 CURRENT STATUS: MVP RECOVERY MODE
+**Master Roadmap**: See `v1.0.0_roadmap.md` for complete execution plan
+**Sub-Agent Instructions**: See `SUB-AGENT-INSTRUCTIONS.md` for detailed task assignments
+**Current Phase**: PHASE 1 - IMMEDIATE CI/CD FIXES
+**Priority**: CRITICAL - CI workflow syntax error blocking all automation
+
 ## Project Overview
 
 AitherZero is a **standalone PowerShell automation framework** for OpenTofu/Terraform infrastructure management. It provides enterprise-grade infrastructure as code (IaC) automation with comprehensive testing and modular architecture.
@@ -866,7 +872,101 @@ When implementing features:
 - **New user onboarding**: Use setup wizard with installation profiles
 - **Environment validation**: Run setup tests with `./tests/Run-Tests.ps1 -Setup`
 
+## 🚨 MVP RECOVERY & WORKFLOW VALIDATION COMMANDS
+
+### **Critical Issue Resolution Commands**
+
+```bash
+# Check GitHub workflow status
+gh workflow list
+gh run list --limit 10
+
+# Validate YAML syntax in all workflows  
+find .github/workflows -name "*.yml" -exec yamllint {} \;
+
+# Test PowerShell syntax in CI workflow
+pwsh -NoProfile -Command "Get-Content .github/workflows/ci.yml | Test-Path"
+
+# Trigger specific workflows manually
+gh workflow run ci.yml
+gh workflow run comprehensive-report.yml
+gh workflow run audit.yml
+```
+
+### **Test Infrastructure Validation**
+
+```powershell
+# Test unified test runner (CRITICAL - must work)
+./tests/Run-UnifiedTests.ps1 -TestSuite Quick
+./tests/Run-UnifiedTests.ps1 -TestSuite All -CI
+./tests/Run-UnifiedTests.ps1 -WhatIf
+
+# Validate PatchManager integration (CRITICAL)
+Import-Module ./aither-core/modules/PatchManager -Force
+New-Patch -Description "Test PatchManager integration" -WhatIf
+
+# Test build script
+./build/Build-Package.ps1 -Platform all -WhatIf
+
+# Test comprehensive reporting
+./scripts/reporting/Generate-ComprehensiveReport.ps1 -WhatIf
+```
+
+### **CI/CD Pipeline Validation**
+
+```bash
+# Full pipeline test (after fixes)
+gh workflow run ci.yml
+gh run watch
+
+# Validate artifacts are generated
+gh run list --workflow=ci.yml
+gh run download [RUN_ID]
+
+# Check release workflow
+gh workflow run release.yml
+gh workflow run trigger-release.yml
+```
+
+### **Sub-Agent Deployment Commands**
+
+```powershell
+# Deploy specific sub-agents for MVP recovery
+# Agent 1: Fix CI syntax error
+New-Patch -Description "Fix CI workflow PowerShell syntax error blocking all CI runs"
+
+# Agent 2: Validate YAML syntax
+New-Patch -Description "Validate and fix YAML syntax across all workflows"
+
+# Agent 3: Test infrastructure validation
+New-Patch -Description "Validate and fix unified test runner infrastructure"
+
+# Monitor progress
+gh run list --limit 5
+gh workflow list
+```
+
+### **Quality Gate Validation**
+
+```powershell
+# Syntax validation
+Invoke-ScriptAnalyzer -Path . -Recurse -Severity Error
+Get-ChildItem .github/workflows/*.yml | ForEach-Object { yamllint $_.FullName }
+
+# Test execution validation
+./tests/Run-UnifiedTests.ps1 -TestSuite Quick -CI
+
+# Workflow validation
+gh workflow run ci.yml --ref main
+gh run watch
+```
+
 ## Important Reminders
+
+- **🚨 CURRENT PRIORITY: MVP RECOVERY**
+  - Master roadmap: `v1.0.0_roadmap.md`
+  - Sub-agent instructions: `SUB-AGENT-INSTRUCTIONS.md`
+  - Focus: Fix CI workflow PowerShell syntax error FIRST
 
 - **IMPORTANT: ALWAYS USE PATCHMANAGER**
   - For ALL Git operations, no exceptions

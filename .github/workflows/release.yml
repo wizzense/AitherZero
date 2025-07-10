@@ -1,189 +1,363 @@
-name: Release
+---
+name: "Release"
 
-on:
-  # Trigger comprehensive report workflow for releases
-  workflow_run:
-    workflows: ["CI - Continuous Integration"]
-    types:
-      - completed
-    branches: [main, 'patch/**']
+"on":
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g., 1.0.0)'
+        description: 'Release version (e.g., 1.2.3)'
         required: true
-      force_release:
-        description: 'Force release even if CI validation incomplete'
+        type: string
+      description:
+        description: 'Release description'
+        required: false
+        type: string
+        default: 'Release notes for this version'
+      draft:
+        description: 'Create as draft release'
+        required: false
         type: boolean
         default: false
-
-# Ensure only one release runs at a time
-concurrency:
-  group: release-workflow
-  cancel-in-progress: false
-
-# Permissions for GITHUB_TOKEN
-permissions:
-  contents: write
-  actions: write
-  packages: write
-  pull-requests: write
+      prerelease:
+        description: 'Mark as pre-release'
+        required: false
+        type: boolean
+        default: false
 
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   DOTNET_NOLOGO: true
 
+defaults:
+  run:
+    shell: pwsh
+
 jobs:
-  # Validate CI completion and check release readiness
-  validate-release:
-    name: Validate Release Requirements
+  validate-inputs:
+    name: "Validate Release Inputs"
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'workflow_dispatch' || 
-      (github.event.workflow_run.conclusion == 'success') ||
-      (github.event.workflow_run.conclusion == 'failure' && contains(github.event.workflow_run.head_branch, 'main'))
+    timeout-minutes: 5
     outputs:
-      should-release: ${{ steps.check.outputs.should-release }}
-      version-number: ${{ steps.version.outputs.version }}
-    
+      version: ${{ steps.validate.outputs.version }}
+      tag: ${{ steps.validate.outputs.tag }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Cache git metadata
-      uses: actions/cache@v4
-      with:
-        path: .git
-        key: ${{ runner.os }}-git-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-git-
-        
-    - name: Check release readiness
-      id: check
-      shell: pwsh
-      run: |
-        Write-Host "🔍 Checking release readiness..." -ForegroundColor Cyan
-        
-        $shouldRelease = $false
-        
-        if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
-          Write-Host "📝 Manual release triggered" -ForegroundColor Yellow
-          $shouldRelease = $true
-        } else {
-          # Check if VERSION file was changed in the CI run
-          $headSha = '${{ github.event.workflow_run.head_sha }}'
-          $changedFiles = git diff-tree --no-commit-id --name-only -r $headSha 2>$null
-          if (-not $changedFiles) {
-            # Fallback: check against previous commit
-            $changedFiles = git diff --name-only HEAD~1 HEAD 2>$null
-          }
-          $versionChanged = $changedFiles -contains 'VERSION'
-          
-          if ($versionChanged) {
-            Write-Host "📝 VERSION file was updated - this is a release!" -ForegroundColor Green
-            $shouldRelease = $true
-          } else {
-            Write-Host "ℹ️ VERSION file not changed - not a release commit" -ForegroundColor Yellow
-            $shouldRelease = $false
-          }
-        }
-        
-        if ('${{ github.event.inputs.force_release }}' -eq 'true') {
-          Write-Host "⚠️ Force release enabled" -ForegroundColor Yellow
-          $shouldRelease = $true
-        }
-        
-        Write-Host "📊 Release Decision:" -ForegroundColor Cyan
-        Write-Host "  Should Release: $shouldRelease" -ForegroundColor White
-        
-        echo "should-release=$shouldRelease" >> $env:GITHUB_OUTPUT
-        
-    - name: Get version information
-      id: version
-      shell: pwsh
-      run: |
-        $version = '${{ github.event.inputs.version }}'
-        
-        # If not provided, get from VERSION file
-        if (-not $version) {
-          if (Test-Path "./VERSION") {
-            $version = (Get-Content "./VERSION").Trim()
-            Write-Host "📖 Version from VERSION file: $version" -ForegroundColor Cyan
-          } else {
-            Write-Host "⚠️ VERSION file not found, using default" -ForegroundColor Yellow
-            $version = "0.0.1"
-          }
-        } else {
-          Write-Host "📝 Version from manual input: $version" -ForegroundColor Cyan
-        }
-        
-        echo "version=$version" >> $env:GITHUB_OUTPUT
+      - name: Validate version and inputs
+        id: validate
+        run: |
+          $version = "${{ github.event.inputs.version }}"
 
-  # Trigger comprehensive report workflow for complete release
-  trigger-comprehensive-release:
-    name: Trigger Comprehensive Release
+          # Validate semantic version format
+          if ($version -notmatch '^\d+\.\d+\.\d+(-[a-zA-Z0-9\-\.]+)?$') {
+            Write-Host "::error::Invalid version format. Use semantic versioning (e.g., 1.2.3 or 1.2.3-beta.1)"
+            exit 1
+          }
+
+          $tag = "v$version"
+
+          # Check if tag already exists
+          $existingTags = git tag -l $tag
+          if ($existingTags) {
+            Write-Host "::error::Tag $tag already exists"
+            exit 1
+          }
+
+          # Validate we're on main branch for non-prerelease
+          $currentBranch = git branch --show-current
+          if ($currentBranch -ne "main" -and "${{ github.event.inputs.prerelease }}" -eq "false") {
+            Write-Host "::error::Production releases must be created from main branch. Current: $currentBranch"
+            exit 1
+          }
+
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "tag=$tag" >> $env:GITHUB_OUTPUT
+
+          Write-Host "✅ Version validation passed"
+          Write-Host "Version: $version"
+          Write-Host "Tag: $tag"
+          Write-Host "Branch: $currentBranch"
+
+  update-version:
+    name: "Update Version File"
     runs-on: ubuntu-latest
-    needs: [validate-release]
-    if: needs.validate-release.outputs.should-release == 'true'
-    
+    timeout-minutes: 5
+    needs: validate-inputs
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Trigger comprehensive report workflow
-      uses: actions/github-script@v7
-      timeout-minutes: 5
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const version = '${{ needs.validate-release.outputs.version-number }}';
-          
-          console.log('🚀 Triggering comprehensive report workflow for release');
-          console.log(`📦 Version: ${version}`);
-          
-          try {
-            const response = await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'comprehensive-report.yml',
-              ref: 'main',
-              inputs: {
-                report_type: 'comprehensive',
-                version_test: version,
-                include_detailed_analysis: 'true',
-                generate_html: 'true',
-                create_github_release: 'true'
-              }
-            });
-            
-            console.log('✅ Comprehensive report workflow triggered successfully');
-            console.log('🎯 This will create a complete release with:');
-            console.log('  • Comprehensive dashboard and reports');
-            console.log('  • Multi-platform build artifacts');
-            console.log('  • Complete CI validation data');
-            console.log('  • GitHub release with all assets');
-            
-          } catch (error) {
-            console.error('❌ Failed to trigger comprehensive report workflow:', error);
-            throw error;
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update VERSION file
+        run: |
+          $version = "${{ needs.validate-inputs.outputs.version }}"
+
+          # Update VERSION file
+          $version | Set-Content "VERSION"
+
+          # Verify the update
+          $updatedVersion = Get-Content "VERSION" -Raw | ForEach-Object { $_.Trim() }
+          if ($updatedVersion -ne $version) {
+            Write-Host "::error::Failed to update VERSION file"
+            exit 1
           }
-          
-    - name: Create release summary
-      shell: pwsh
-      run: |
-        Write-Host "🎉 RELEASE PIPELINE INITIATED!" -ForegroundColor Green -BackgroundColor Black
-        Write-Host "===============================" -ForegroundColor Green
-        Write-Host "📦 Version: v${{ needs.validate-release.outputs.version-number }}" -ForegroundColor Cyan
-        Write-Host "🔄 Comprehensive report workflow triggered" -ForegroundColor Cyan
-        Write-Host ""
-        Write-Host "🎯 The comprehensive release will include:" -ForegroundColor Yellow
-        Write-Host "  ✅ Multi-platform packages (Windows, Linux, macOS)" -ForegroundColor Green
-        Write-Host "  ✅ Comprehensive dashboard with health metrics" -ForegroundColor Green
-        Write-Host "  ✅ Complete CI validation data" -ForegroundColor Green
-        Write-Host "  ✅ GitHub release with all assets" -ForegroundColor Green
-        Write-Host ""
-        Write-Host "⏳ Monitor the comprehensive report workflow for completion" -ForegroundColor Cyan
-        Write-Host "🔗 Release will be available at: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.validate-release.outputs.version-number }}" -ForegroundColor Cyan
+
+          Write-Host "✅ VERSION file updated to: $updatedVersion"
+
+      - name: Commit version update
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          git add VERSION
+          git commit -m "Release: Update version to ${{ needs.validate-inputs.outputs.version }}"
+          git push
+
+  run-tests:
+    name: "Pre-Release Testing"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [validate-inputs, update-version]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Install test dependencies
+        run: |
+          Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser -SkipPublisherCheck
+
+      - name: Run comprehensive tests
+        run: |
+          # Run full test suite for release validation
+          ./tests/Run-UnifiedTests.ps1 -TestSuite All -CI -OutputFormat All -GenerateDashboard
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-test-results
+          path: tests/results/
+          retention-days: 90
+
+  build-packages:
+    name: "Build Release Packages"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [validate-inputs, update-version]
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [windows, linux, macos]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Build package for ${{ matrix.platform }}
+        run: |
+          ./build/Build-Package.ps1 -Platform ${{ matrix.platform }} -Version "${{ needs.validate-inputs.outputs.version }}"
+
+      - name: Verify package
+        run: |
+          $packageDir = "build/output"
+          $packages = Get-ChildItem $packageDir -File | Where-Object { $_.Name -like "*${{ matrix.platform }}*" }
+
+          if ($packages.Count -eq 0) {
+            Write-Host "::error::No package found for ${{ matrix.platform }}"
+            exit 1
+          }
+
+          foreach ($package in $packages) {
+            Write-Host "✅ Package created: $($package.Name) ($([math]::Round($package.Length / 1MB, 2)) MB)"
+          }
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-${{ matrix.platform }}
+          path: build/output/
+          retention-days: 90
+
+  generate-release-notes:
+    name: "Generate Release Notes"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: validate-inputs
+    outputs:
+      release-notes: ${{ steps.notes.outputs.content }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          $version = "${{ needs.validate-inputs.outputs.version }}"
+          $description = "${{ github.event.inputs.description }}"
+          $date = Get-Date -Format "yyyy-MM-dd"
+
+          # Get recent commits since last tag
+          $lastTag = git describe --tags --abbrev=0 2>$null
+          $commits = if ($lastTag) {
+            git log --oneline "$lastTag..HEAD" --no-merges
+          } else {
+            git log --oneline -10 --no-merges
+          }
+
+          # Build release notes content
+          $releaseNotesContent = "# AitherZero $version`n`n"
+          $releaseNotesContent += "Released on $date`n`n"
+          $releaseNotesContent += "## Description`n"
+          $releaseNotesContent += "$description`n`n"
+          $releaseNotesContent += "## What's New`n"
+
+          if ($commits) {
+            foreach ($commit in $commits) {
+              $releaseNotesContent += "- $commit`n"
+            }
+          } else {
+            $releaseNotesContent += "- Initial release or no new commits since last tag`n"
+          }
+
+          $releaseNotesContent += "`n## 📦 Downloads`n"
+          $releaseNotesContent += "- **Windows**: AitherZero-v$version-windows.zip`n"
+          $releaseNotesContent += "- **Linux**: AitherZero-v$version-linux.tar.gz`n"
+          $releaseNotesContent += "- **macOS**: AitherZero-v$version-macos.tar.gz`n`n"
+          $releaseNotesContent += "## 🚀 Quick Start`n"
+          $releaseNotesContent += "1. Download the appropriate package for your platform`n"
+          $releaseNotesContent += "2. Extract the archive`n"
+          $releaseNotesContent += "3. Run \`./Start-AitherZero.ps1\` (or \`Start-AitherZero.cmd\` on Windows)`n"
+          $releaseNotesContent += "4. Follow the setup wizard`n`n"
+          $releaseNotesContent += "## 📋 System Requirements`n"
+          $releaseNotesContent += "- PowerShell 7.0 or later`n"
+          $releaseNotesContent += "- 4GB RAM (8GB recommended)`n"
+          $releaseNotesContent += "- 10GB disk space`n`n"
+          $releaseNotesContent += "## 📚 Documentation`n"
+          $releaseNotesContent += "- [Quick Start Guide](https://github.com/${{ github.repository }}/blob/main/QUICKSTART.md)`n"
+          $releaseNotesContent += "- [Full Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)`n`n"
+          $releaseNotesContent += "---`n"
+          $releaseNotesContent += "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$lastTag...${{ needs.validate-inputs.outputs.tag }}`n"
+
+          # Output for use in create-release job
+          $releaseNotesContent | Set-Content "release-notes.md"
+
+          # For GitHub Actions output, we need to handle multiline content
+          $delimiter = "EOF"
+          echo "content<<$delimiter" >> $env:GITHUB_OUTPUT
+          echo $releaseNotesContent >> $env:GITHUB_OUTPUT
+          echo $delimiter >> $env:GITHUB_OUTPUT
+
+      - name: Upload release notes
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: release-notes.md
+
+  create-release:
+    name: "Create GitHub Release"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [validate-inputs, run-tests, build-packages, generate-release-notes]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: package-*
+          path: packages/
+          merge-multiple: true
+
+      - name: Download test results
+        uses: actions/download-artifact@v4
+        with:
+          name: release-test-results
+          path: test-results/
+
+      - name: List downloaded artifacts
+        run: |
+          Write-Host "📦 Downloaded packages:"
+          Get-ChildItem packages/ -Recurse -File | ForEach-Object {
+            Write-Host "  - $($_.Name) ($([math]::Round($_.Length / 1MB, 2)) MB)"
+          }
+
+          Write-Host "`n📋 Test results:"
+          Get-ChildItem test-results/ -Recurse -File | ForEach-Object {
+            Write-Host "  - $($_.Name)"
+          }
+
+      - name: Create release
+        id: create-release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.validate-inputs.outputs.tag }}
+          name: "AitherZero ${{ needs.validate-inputs.outputs.version }}"
+          body: ${{ needs.generate-release-notes.outputs.release-notes }}
+          draft: ${{ github.event.inputs.draft }}
+          prerelease: ${{ github.event.inputs.prerelease }}
+          files: |
+            packages/AitherZero-v${{ needs.validate-inputs.outputs.version }}-windows.zip
+            packages/AitherZero-v${{ needs.validate-inputs.outputs.version }}-linux.tar.gz
+            packages/AitherZero-v${{ needs.validate-inputs.outputs.version }}-macos.tar.gz
+          generate_release_notes: true
+          make_latest: ${{ github.event.inputs.prerelease == 'false' }}
+
+  post-release:
+    name: "Post-Release Tasks"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [validate-inputs, create-release]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create post-release summary
+        run: |
+          $version = "${{ needs.validate-inputs.outputs.version }}"
+          $tag = "${{ needs.validate-inputs.outputs.tag }}"
+
+          Write-Host "🎉 Release $version completed successfully!"
+          Write-Host ""
+          Write-Host "📊 Release Summary:"
+          Write-Host "  - Version: $version"
+          Write-Host "  - Tag: $tag"
+          Write-Host "  - Draft: ${{ github.event.inputs.draft }}"
+          Write-Host "  - Pre-release: ${{ github.event.inputs.prerelease }}"
+          Write-Host "  - Branch: ${{ github.ref_name }}"
+          Write-Host "  - Commit: ${{ github.sha }}"
+          Write-Host ""
+          Write-Host "🔗 Release URL: ${{ github.server_url }}/${{ github.repository }}/releases/tag/$tag"
+          Write-Host ""
+          Write-Host "✅ All packages built and uploaded successfully"
+          Write-Host "✅ Tests passed"
+          Write-Host "✅ Release notes generated"
+
+          # Create a success indicator file
+          @{
+            success = $true
+            version = $version
+            tag = $tag
+            releaseUrl = "${{ github.server_url }}/${{ github.repository }}/releases/tag/$tag"
+            timestamp = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+          } | ConvertTo-Json | Set-Content "release-success.json"
+
+      - name: Upload release summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-summary
+          path: release-success.json
+          retention-days: 90
+
+      - name: Notify success
+        run: |
+          Write-Host "::notice::Release ${{ needs.validate-inputs.outputs.version }} created successfully"
+          Write-Host "::notice::View release at: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ needs.validate-inputs.outputs.tag }}"
