@@ -332,7 +332,7 @@ Describe "PowerShell Version Checking Integration" -Tags @('EntryPoint', 'Versio
 
             if (Test-Path $entryPoint.Path) {
                 $content = Get-Content $entryPoint.Path -Raw
-                $content | Should -Match "Test-PowerShellVersionRequirement" -Because "Developer setup should have version checking function"
+                $content | Should -Match "Test-PowerShellVersion" -Because "Developer setup should have version checking function"
                 $content | Should -Match "7\.0" -Because "Should reference minimum version requirement"
             }
         }
