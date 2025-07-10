@@ -1,109 +1,82 @@
 name: Code Quality Remediation
 
-on:
-  schedule:
-    # Run weekly on Sundays at 02:00 UTC
+on: schedule: # Run weekly on Sundays at 02:00 UTC
     - cron: '0 2 * * 0'
-  workflow_dispatch:
-    inputs:
-      modules:
-        description: 'Specific modules to remediate (comma-separated, or "all" for all modules)'
+  workflow_dispatch: inputs: modules: description: 'Specific modules to remediate (comma-separated, or "all" for all modules)'
         required: false
         default: 'all'
         type: string
-      create_pr:
-        description: 'Create pull request with fixes'
+      create_pr: description: 'Create pull request with fixes'
         required: false
         default: true
         type: boolean
-      dry_run:
-        description: 'Dry run mode (analyze only, no changes)'
+      dry_run: description: 'Dry run mode (analyze only, no changes)'
         required: false
         default: false
         type: boolean
-      auto_fix:
-        description: 'Automatically fix issues (safe fixes only)'
+      auto_fix: description: 'Automatically fix issues (safe fixes only)'
         required: false
         default: true
         type: boolean
 
 # Ensure only one remediation workflow runs at a time
-concurrency:
-  group: code-quality-remediation
+concurrency: group: code-quality-remediation
   cancel-in-progress: false
 
-# Permissions for GITHUB_TOKEN  
-permissions:
-  contents: write
+# Permissions for GITHUB_TOKEN
+permissions: contents: write
   pull-requests: write
   actions: write
   issues: write
 
-env:
-  POWERSHELL_TELEMETRY_OPTOUT: 1
+env: POWERSHELL_TELEMETRY_OPTOUT: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   DOTNET_NOLOGO: true
 
-jobs:
-  analyze-quality:
-    name: Analyze Code Quality
+jobs: analyze-quality: name: Analyze Code Quality
     runs-on: ubuntu-latest
-    outputs:
-      has-issues: ${{ steps.analysis.outputs.has-issues }}
+    outputs: has-issues: ${{ steps.analysis.outputs.has-issues }}
       critical-modules: ${{ steps.analysis.outputs.critical-modules }}
       remediation-needed: ${{ steps.analysis.outputs.remediation-needed }}
 
-    steps:
-    - name: Checkout code
+    steps: - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      with: fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Install PowerShell modules
+      - name: Install PowerShell modules
       shell: pwsh
       run: |
-        $modules = @('PSScriptAnalyzer', 'Pester')
-        foreach ($module in $modules) {
-          if (!(Get-Module -ListAvailable -Name $module)) {
-            Install-Module -Name $module -Force -AllowClobber -Scope CurrentUser
+        $modules = @('PSScriptAnalyzer', 'Pester') foreach ($module in $modules) {
+          if (!(Get-Module -ListAvailable -Name $module)) { Install-Module -Name $module -Force -AllowClobber -Scope CurrentUser
           }
         }
 
-    - name: Comprehensive quality analysis
+      - name: Comprehensive quality analysis
       id: analysis
       shell: pwsh
       run: |
         Write-Host "🔍 Starting comprehensive code quality analysis..." -ForegroundColor Cyan
 
-        # Import PSScriptAnalyzerIntegration if available
-        $integrationPath = "./aither-core/modules/PSScriptAnalyzerIntegration/PSScriptAnalyzerIntegration.psd1"
-        if (Test-Path $integrationPath) {
-          Import-Module $integrationPath -Force
+        # Import PSScriptAnalyzerIntegration if available $integrationPath = "./aither-core/modules/PSScriptAnalyzerIntegration/PSScriptAnalyzerIntegration.psd1"
+        if (Test-Path $integrationPath) { Import-Module $integrationPath -Force
           Write-Host "✅ PSScriptAnalyzerIntegration module loaded" -ForegroundColor Green
         }
 
-        # Determine modules to analyze
-        $modulesToAnalyze = @()
+        # Determine modules to analyze $modulesToAnalyze = @()
         $inputModules = '${{ github.event.inputs.modules || "all" }}'
 
-        if ($inputModules -eq 'all' -or [string]::IsNullOrEmpty($inputModules)) {
-          $modulesDirs = Get-ChildItem -Path "./aither-core/modules" -Directory -ErrorAction SilentlyContinue
-          $modulesToAnalyze = $modulesDirs.FullName
-        } else {
-          $specifiedModules = $inputModules -split ',' | ForEach-Object { $_.Trim() }
-          foreach ($module in $specifiedModules) {
-            $modulePath = "./aither-core/modules/$module"
-            if (Test-Path $modulePath) {
-              $modulesToAnalyze += (Resolve-Path $modulePath).Path
-            } else {
-              Write-Warning "Module not found: $module"
+        if ($inputModules -eq 'all' -or [string]: IsNullOrEmpty($inputModules)) {
+          $modulesDirs = Get-ChildItem -Path "./aither-core/modules" -Directory -ErrorAction SilentlyContinue $modulesToAnalyze = $modulesDirs.FullName
+        } else { $specifiedModules = $inputModules -split ',' | ForEach-Object { $_.Trim() }
+          foreach ($module in $specifiedModules) { $modulePath = "./aither-core/modules/$module"
+            if (Test-Path $modulePath) { $modulesToAnalyze += (Resolve-Path $modulePath).Path
+            } else { Write-Warning "Module not found: $module"
             }
           }
         }
 
-        if ($modulesToAnalyze.Count -eq 0) {
-          Write-Host "⚠️  No modules found to analyze" -ForegroundColor Yellow
+        if ($modulesToAnalyze.Count -eq 0) { Write-Host "⚠️  No modules found to analyze" -ForegroundColor Yellow
           echo "has-issues=false" >> $env:GITHUB_OUTPUT
           echo "remediation-needed=false" >> $env:GITHUB_OUTPUT
           exit 0
@@ -111,332 +84,232 @@ jobs:
 
         Write-Host "📁 Analyzing $($modulesToAnalyze.Count) modules..." -ForegroundColor White
 
-        # Perform analysis
-        $allResults = @()
-        $criticalModules = @()
-        $totalFindings = 0
-        $totalErrors = 0
-        $totalWarnings = 0
+        # Perform analysis $allResults = @()
+        $criticalModules = @() $totalFindings = 0
+        $totalErrors = 0 $totalWarnings = 0
 
-        foreach ($modulePath in $modulesToAnalyze) {
-          $moduleName = Split-Path $modulePath -Leaf
+        foreach ($modulePath in $modulesToAnalyze) { $moduleName = Split-Path $modulePath -Leaf
           Write-Host "  🔍 Analyzing module: $moduleName" -ForegroundColor Cyan
 
-          try {
-            if (Get-Command 'Start-DirectoryAudit' -ErrorAction SilentlyContinue) {
-              # Use integrated audit function
-              $result = Start-DirectoryAudit -Path $modulePath -ModuleName $moduleName -UpdateDocumentation $false
-              $moduleFindings = $result.Summary.TotalFindings
-              $moduleErrors = $result.Summary.ErrorCount
+          try { if (Get-Command 'Start-DirectoryAudit' -ErrorAction SilentlyContinue) {
+              # Use integrated audit function $result = Start-DirectoryAudit -Path $modulePath -ModuleName $moduleName -UpdateDocumentation $false
+              $moduleFindings = $result.Summary.TotalFindings $moduleErrors = $result.Summary.ErrorCount
               $moduleWarnings = $result.Summary.WarningCount
-            } else {
-              # Fallback to direct PSScriptAnalyzer
-              $settingsPath = "./PSScriptAnalyzerSettings.psd1"
-              $analyzerParams = @{
-                Path = $modulePath
-                Recurse = $true
+            } else { # Fallback to direct PSScriptAnalyzer
+              $settingsPath = "./PSScriptAnalyzerSettings.psd1" $analyzerParams = @{
+                Path = $modulePath Recurse = $true
               }
 
-              if (Test-Path $settingsPath) {
-                $analyzerParams.Settings = $settingsPath
+              if (Test-Path $settingsPath) { $analyzerParams.Settings = $settingsPath
               }
 
-              $findings = Invoke-ScriptAnalyzer @analyzerParams
-              $moduleFindings = $findings.Count
-              $moduleErrors = ($findings | Where-Object Severity -eq 'Error').Count
-              $moduleWarnings = ($findings | Where-Object Severity -eq 'Warning').Count
+              $findings = Invoke-ScriptAnalyzer @analyzerParams $moduleFindings = $findings.Count
+              $moduleErrors = ($findings | Where-Object Severity -eq 'Error').Count $moduleWarnings = ($findings | Where-Object Severity -eq 'Warning').Count
 
-              $result = @{
-                Path = $modulePath
-                ModuleName = $moduleName
-                Summary = @{
-                  TotalFindings = $moduleFindings
-                  ErrorCount = $moduleErrors
+              $result = @{ Path = $modulePath
+                ModuleName = $moduleName Summary = @{
+                  TotalFindings = $moduleFindings ErrorCount = $moduleErrors
                   WarningCount = $moduleWarnings
-                }
-                Results = $findings
+                } Results = $findings
               }
             }
 
-            $allResults += $result
-            $totalFindings += $moduleFindings
-            $totalErrors += $moduleErrors
-            $totalWarnings += $moduleWarnings
+            $allResults += $result $totalFindings += $moduleFindings
+            $totalErrors += $moduleErrors $totalWarnings += $moduleWarnings
 
-            # Track critical modules (with errors or high warning count)
-            if ($moduleErrors -gt 0 -or $moduleWarnings -gt 15) {
-              $criticalModules += $moduleName
-              Write-Host "    🔴 Critical: $moduleErrors errors, $moduleWarnings warnings" -ForegroundColor Red
-            } elseif ($moduleWarnings -gt 5) {
-              Write-Host "    🟡 Needs attention: $moduleWarnings warnings" -ForegroundColor Yellow
-            } else {
-              Write-Host "    ✅ Good quality: $moduleFindings total findings" -ForegroundColor Green
+            # Track critical modules (with errors or high warning count) if ($moduleErrors -gt 0 -or $moduleWarnings -gt 15) {
+              $criticalModules += $moduleName Write-Host "    🔴 Critical: $moduleErrors errors, $moduleWarnings warnings" -ForegroundColor Red
+            } elseif ($moduleWarnings -gt 5) { Write-Host "    🟡 Needs attention: $moduleWarnings warnings" -ForegroundColor Yellow
+            } else { Write-Host "    ✅ Good quality: $moduleFindings total findings" -ForegroundColor Green
             }
-          }
-          catch {
+          } catch {
             Write-Host "    ❌ Analysis failed: $($_.Exception.Message)" -ForegroundColor Red
             $criticalModules += $moduleName
           }
         }
 
-        # Summary
-        Write-Host "`n📊 Analysis Summary:" -ForegroundColor Cyan
+        # Summary Write-Host "`n📊 Analysis Summary:" -ForegroundColor Cyan
         Write-Host "  📁 Modules analyzed: $($modulesToAnalyze.Count)" -ForegroundColor White
         Write-Host "  🔍 Total findings: $totalFindings" -ForegroundColor White
         Write-Host "  ❌ Total errors: $totalErrors" -ForegroundColor Red
         Write-Host "  ⚠️  Total warnings: $totalWarnings" -ForegroundColor Yellow
         Write-Host "  🔴 Critical modules: $($criticalModules.Count)" -ForegroundColor Red
 
-        # Set outputs
-        $hasIssues = $totalFindings -gt 0
-        $remediationNeeded = $totalErrors -gt 0 -or $totalWarnings -gt 50
-        $criticalModulesJson = $criticalModules | ConvertTo-Json -Compress
+        # Set outputs $hasIssues = $totalFindings -gt 0
+        $remediationNeeded = $totalErrors -gt 0 -or $totalWarnings -gt 50 $criticalModulesJson = $criticalModules | ConvertTo-Json -Compress
 
         echo "has-issues=$hasIssues" >> $env:GITHUB_OUTPUT
         echo "critical-modules=$criticalModulesJson" >> $env:GITHUB_OUTPUT
         echo "remediation-needed=$remediationNeeded" >> $env:GITHUB_OUTPUT
 
-        # Export detailed results
-        $allResults | ConvertTo-Json -Depth 10 | Set-Content -Path "quality-analysis-results.json"
+        # Export detailed results $allResults | ConvertTo-Json -Depth 10 | Set-Content -Path "quality-analysis-results.json"
 
         Write-Host "🎯 Quality analysis completed" -ForegroundColor Green
 
-    - name: Upload analysis results
+      - name: Upload analysis results
       uses: actions/upload-artifact@v4
-      with:
-        name: quality-analysis-results
+      with: name: quality-analysis-results
         path: quality-analysis-results.json
         retention-days: 30
 
-  remediate-issues:
-    name: Automated Remediation
+  remediate-issues: name: Automated Remediation
     runs-on: ubuntu-latest
     needs: analyze-quality
     if: needs.analyze-quality.outputs.remediation-needed == 'true' && github.event.inputs.dry_run != 'true'
 
-    steps:
-    - name: Checkout code
+    steps: - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      with: fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Configure Git
+      - name: Configure Git
       run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]" git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-    - name: Install PowerShell modules
+      - name: Install PowerShell modules
       shell: pwsh
       run: |
-        $modules = @('PSScriptAnalyzer', 'Pester')
-        foreach ($module in $modules) {
-          if (!(Get-Module -ListAvailable -Name $module)) {
-            Install-Module -Name $module -Force -AllowClobber -Scope CurrentUser
+        $modules = @('PSScriptAnalyzer', 'Pester') foreach ($module in $modules) {
+          if (!(Get-Module -ListAvailable -Name $module)) { Install-Module -Name $module -Force -AllowClobber -Scope CurrentUser
           }
         }
 
-    - name: Download analysis results
+      - name: Download analysis results
       uses: actions/download-artifact@v4
-      with:
-        name: quality-analysis-results
+      with: name: quality-analysis-results
 
-    - name: Perform automated remediation
+      - name: Perform automated remediation
       shell: pwsh
       run: |
         Write-Host "🔧 Starting automated code quality remediation..." -ForegroundColor Cyan
 
-        # Import modules
-        $integrationPath = "./aither-core/modules/PSScriptAnalyzerIntegration/PSScriptAnalyzerIntegration.psd1"
-        if (Test-Path $integrationPath) {
-          Import-Module $integrationPath -Force
+        # Import modules $integrationPath = "./aither-core/modules/PSScriptAnalyzerIntegration/PSScriptAnalyzerIntegration.psd1"
+        if (Test-Path $integrationPath) { Import-Module $integrationPath -Force
         }
 
-        # Load analysis results
-        $results = Get-Content "quality-analysis-results.json" | ConvertFrom-Json
-        $autoFix = '${{ github.event.inputs.auto_fix }}' -eq 'true'
-        $fixedFiles = @()
+        # Load analysis results $results = Get-Content "quality-analysis-results.json" | ConvertFrom-Json
+        $autoFix = '${{ github.event.inputs.auto_fix }}' -eq 'true' $fixedFiles = @()
         $remediationLog = @()
 
-        # Safe rules that can be auto-fixed
-        $safeAutoFixRules = @(
-          'PSAvoidUsingCmdletAliases',
-          'PSUseConsistentWhitespace',
-          'PSUseConsistentIndentation',
-          'PSAvoidTrailingWhitespace',
-          'PSAvoidSemicolonsAsLineTerminators',
-          'PSUseCorrectCasing',
+        # Safe rules that can be auto-fixed $safeAutoFixRules = @(
+          'PSAvoidUsingCmdletAliases', 'PSUseConsistentWhitespace',
+          'PSUseConsistentIndentation', 'PSAvoidTrailingWhitespace',
+          'PSAvoidSemicolonsAsLineTerminators', 'PSUseCorrectCasing',
           'PSAlignAssignmentStatement'
         )
 
-        foreach ($result in $results) {
-          if (-not $result.Results -or $result.Results.Count -eq 0) {
+        foreach ($result in $results) { if (-not $result.Results -or $result.Results.Count -eq 0) {
             continue
           }
 
           Write-Host "🔧 Processing module: $($result.ModuleName)" -ForegroundColor Yellow
 
-          # Group findings by file
-          $fileGroups = $result.Results | Group-Object ScriptPath
+          # Group findings by file $fileGroups = $result.Results | Group-Object ScriptPath
 
-          foreach ($fileGroup in $fileGroups) {
-            $filePath = $fileGroup.Name
-            if (-not (Test-Path $filePath)) {
-              continue
+          foreach ($fileGroup in $fileGroups) { $filePath = $fileGroup.Name
+            if (-not (Test-Path $filePath)) { continue
             }
 
             Write-Host "  📝 Processing file: $(Split-Path $filePath -Leaf)" -ForegroundColor White
 
-            $fileContent = Get-Content $filePath -Raw
-            $originalContent = $fileContent
+            $fileContent = Get-Content $filePath -Raw $originalContent = $fileContent
             $fileModified = $false
 
-            # Process each finding
-            foreach ($finding in $fileGroup.Group) {
-              $ruleName = $finding.RuleName
-              $remediationEntry = @{
-                File = $filePath
-                Rule = $ruleName
-                Severity = $finding.Severity
-                Line = $finding.Line
-                Message = $finding.Message
-                Action = 'None'
+            # Process each finding foreach ($finding in $fileGroup.Group) {
+              $ruleName = $finding.RuleName $remediationEntry = @{
+                File = $filePath Rule = $ruleName
+                Severity = $finding.Severity Line = $finding.Line
+                Message = $finding.Message Action = 'None'
                 Success = $false
               }
 
-              # Apply safe automatic fixes
-              if ($autoFix -and $ruleName -in $safeAutoFixRules) {
-                try {
-                  switch ($ruleName) {
-                    'PSAvoidUsingCmdletAliases' {
-                      # Replace common aliases
-                      $aliases = @{
-                        'gci' = 'Get-ChildItem'
-                        'dir' = 'Get-ChildItem'
-                        'ls' = 'Get-ChildItem'
-                        'cat' = 'Get-Content'
-                        'type' = 'Get-Content'
-                        'echo' = 'Write-Output'
-                        'write' = 'Write-Output'
-                        'cls' = 'Clear-Host'
-                        'clear' = 'Clear-Host'
-                        'cd' = 'Set-Location'
-                        'chdir' = 'Set-Location'
-                        'copy' = 'Copy-Item'
-                        'cp' = 'Copy-Item'
-                        'move' = 'Move-Item'
-                        'mv' = 'Move-Item'
-                        'del' = 'Remove-Item'
-                        'rm' = 'Remove-Item'
-                        'md' = 'New-Item'
-                        'mkdir' = 'New-Item'
+              # Apply safe automatic fixes if ($autoFix -and $ruleName -in $safeAutoFixRules) {
+                try { switch ($ruleName) {
+                    'PSAvoidUsingCmdletAliases' { # Replace common aliases
+                      $aliases = @{ 'gci' = 'Get-ChildItem'
+                        'dir' = 'Get-ChildItem' 'ls' = 'Get-ChildItem'
+                        'cat' = 'Get-Content' 'type' = 'Get-Content'
+                        'echo' = 'Write-Output' 'write' = 'Write-Output'
+                        'cls' = 'Clear-Host' 'clear' = 'Clear-Host'
+                        'cd' = 'Set-Location' 'chdir' = 'Set-Location'
+                        'copy' = 'Copy-Item' 'cp' = 'Copy-Item'
+                        'move' = 'Move-Item' 'mv' = 'Move-Item'
+                        'del' = 'Remove-Item' 'rm' = 'Remove-Item'
+                        'md' = 'New-Item' 'mkdir' = 'New-Item'
                       }
 
-                      foreach ($alias in $aliases.GetEnumerator()) {
-                        $pattern = "\b$($alias.Key)\b"
-                        if ($fileContent -match $pattern) {
-                          $fileContent = $fileContent -replace $pattern, $alias.Value
-                          $fileModified = $true
-                          $remediationEntry.Action = "Replaced alias '$($alias.Key)' with '$($alias.Value)'"
+                      foreach ($alias in $aliases.GetEnumerator()) { $pattern = "\b$($alias.Key)\b"
+                        if ($fileContent -match $pattern) { $fileContent = $fileContent -replace $pattern, $alias.Value
+                          $fileModified = $true $remediationEntry.Action = "Replaced alias '$($alias.Key)' with '$($alias.Value)'"
                           $remediationEntry.Success = $true
                         }
                       }
                     }
 
-                    'PSAvoidTrailingWhitespace' {
-                      # Remove trailing whitespace
-                      $lines = $fileContent -split "`r?`n"
-                      $cleanedLines = $lines | ForEach-Object { $_.TrimEnd() }
+                    'PSAvoidTrailingWhitespace' { # Remove trailing whitespace
+                      $lines = $fileContent -split "`r?`n" $cleanedLines = $lines | ForEach-Object { $_.TrimEnd() }
                       $newContent = $cleanedLines -join "`n"
 
-                      if ($newContent -ne $fileContent) {
-                        $fileContent = $newContent
-                        $fileModified = $true
-                        $remediationEntry.Action = 'Removed trailing whitespace'
+                      if ($newContent -ne $fileContent) { $fileContent = $newContent
+                        $fileModified = $true $remediationEntry.Action = 'Removed trailing whitespace'
                         $remediationEntry.Success = $true
                       }
                     }
 
-                    'PSAvoidSemicolonsAsLineTerminators' {
-                      # Remove unnecessary semicolons at end of lines
-                      $pattern = ';(\s*)$'
-                      if ($fileContent -match $pattern) {
-                        $fileContent = $fileContent -replace $pattern, '$1'
-                        $fileModified = $true
-                        $remediationEntry.Action = 'Removed unnecessary semicolons'
-                        $remediationEntry.Success = $true
+                    'PSAvoidSemicolonsAsLineTerminators' { # Remove unnecessary semicolons at end of lines
+                      $pattern = ';(\s*)$' if ($fileContent -match $pattern) {
+                        $fileContent = $fileContent -replace $pattern, '$1' $fileModified = $true
+                        $remediationEntry.Action = 'Removed unnecessary semicolons' $remediationEntry.Success = $true
                       }
                     }
 
-                    'PSUseCorrectCasing' {
-                      # Fix common casing issues for PowerShell keywords
-                      $keywords = @{
-                        'param' = 'param'
-                        'function' = 'function'
-                        'if' = 'if'
-                        'else' = 'else'
-                        'elseif' = 'elseif'
-                        'switch' = 'switch'
-                        'foreach' = 'foreach'
-                        'while' = 'while'
-                        'do' = 'do'
-                        'try' = 'try'
-                        'catch' = 'catch'
-                        'finally' = 'finally'
-                        'return' = 'return'
-                        'break' = 'break'
-                        'continue' = 'continue'
+                    'PSUseCorrectCasing' { # Fix common casing issues for PowerShell keywords
+                      $keywords = @{ 'param' = 'param'
+                        'function' = 'function' 'if' = 'if'
+                        'else' = 'else' 'elseif' = 'elseif'
+                        'switch' = 'switch' 'foreach' = 'foreach'
+                        'while' = 'while' 'do' = 'do'
+                        'try' = 'try' 'catch' = 'catch'
+                        'finally' = 'finally' 'return' = 'return'
+                        'break' = 'break' 'continue' = 'continue'
                       }
 
-                      foreach ($keyword in $keywords.GetEnumerator()) {
-                        $pattern = "\b(?i)$($keyword.Key)\b"
-                        if ($fileContent -match $pattern) {
-                          $fileContent = $fileContent -replace $pattern, $keyword.Value
-                          $fileModified = $true
-                          $remediationEntry.Action = "Fixed casing for keyword '$($keyword.Key)'"
+                      foreach ($keyword in $keywords.GetEnumerator()) { $pattern = "\b(?i)$($keyword.Key)\b"
+                        if ($fileContent -match $pattern) { $fileContent = $fileContent -replace $pattern, $keyword.Value
+                          $fileModified = $true $remediationEntry.Action = "Fixed casing for keyword '$($keyword.Key)'"
                           $remediationEntry.Success = $true
                         }
                       }
                     }
                   }
-                }
-                catch {
+                } catch {
                   $remediationEntry.Action = "Failed to apply fix: $($_.Exception.Message)"
                   Write-Warning "Failed to apply fix for $ruleName in $filePath: $($_.Exception.Message)"
                 }
-              } else {
-                $remediationEntry.Action = 'Manual review required'
+              } else { $remediationEntry.Action = 'Manual review required'
               }
 
               $remediationLog += $remediationEntry
             }
 
-            # Save modified file
-            if ($fileModified) {
-              Set-Content -Path $filePath -Value $fileContent -Encoding UTF8 -NoNewline
-              $fixedFiles += $filePath
+            # Save modified file if ($fileModified) {
+              Set-Content -Path $filePath -Value $fileContent -Encoding UTF8 -NoNewline $fixedFiles += $filePath
               Write-Host "    ✅ Fixed issues in $(Split-Path $filePath -Leaf)" -ForegroundColor Green
             }
           }
         }
 
-        # Close resolved GitHub Issues first
-        Write-Host "`n🔄 Closing resolved GitHub Issues..." -ForegroundColor Cyan
+        # Close resolved GitHub Issues first Write-Host "`n🔄 Closing resolved GitHub Issues..." -ForegroundColor Cyan
 
-        $closedIssuesReport = @{
-          ProcessedIssues = 0
-          ClosedIssues = 0
-          SkippedIssues = 0
-          Errors = 0
-          Details = @{
-            Closed = @()
-            Skipped = @()
+        $closedIssuesReport = @{ ProcessedIssues = 0
+          ClosedIssues = 0 SkippedIssues = 0
+          Errors = 0 Details = @{
+            Closed = @() Skipped = @()
             Errors = @()
           }
         }
 
-        try {
-          if (Get-Command 'Close-ResolvedGitHubIssues' -ErrorAction SilentlyContinue) {
+        try { if (Get-Command 'Close-ResolvedGitHubIssues' -ErrorAction SilentlyContinue) {
             $closedIssuesReport = Close-ResolvedGitHubIssues -Path "./aither-core/modules" -DryRun:$false
 
             Write-Host "  🎯 Closed Issues Summary:" -ForegroundColor Cyan
@@ -444,59 +317,41 @@ jobs:
             Write-Host "  ✅ Issues closed: $($closedIssuesReport.ClosedIssues)" -ForegroundColor Green
             Write-Host "  ⏭️  Issues skipped: $($closedIssuesReport.SkippedIssues)" -ForegroundColor Yellow
             Write-Host "  ❌ Errors: $($closedIssuesReport.Errors)" -ForegroundColor Red
-          } else {
-            Write-Host "  ⚠️  Close-ResolvedGitHubIssues function not available, skipping issue closure" -ForegroundColor Yellow
+          } else { Write-Host "  ⚠️  Close-ResolvedGitHubIssues function not available, skipping issue closure" -ForegroundColor Yellow
           }
-        }
-        catch {
+        } catch {
           Write-Warning "GitHub Issues closure failed: $($_.Exception.Message)"
           $closedIssuesReport.Errors += "GitHub Issues closure failed: $($_.Exception.Message)"
         }
 
-        # Create GitHub Issues for unresolved findings
-        Write-Host "`n🎫 Creating GitHub Issues for unresolved findings..." -ForegroundColor Cyan
+        # Create GitHub Issues for unresolved findings Write-Host "`n🎫 Creating GitHub Issues for unresolved findings..." -ForegroundColor Cyan
 
-        $issuesCreated = @()
-        $issuesSkipped = @()
+        $issuesCreated = @() $issuesSkipped = @()
         $issueErrors = @()
 
-        try {
-          foreach ($result in $results) {
-            if ($result.Results -and $result.Results.Count -gt 0) {
-              # Filter findings that should become issues
-              $criticalFindings = $result.Results | Where-Object {
-                $_.Severity -eq 'Error' -or
-                ($_.Severity -eq 'Warning' -and $_.RuleName -in @(
-                  'PSAvoidUsingPlainTextForPassword',
-                  'PSAvoidUsingUsernameAndPasswordParams',
-                  'PSAvoidUsingConvertToSecureStringWithPlainText',
-                  'PSUsePSCredentialType',
-                  'PSAvoidHardcodedCredentials',
-                  'PSAvoidUsingInvokeExpression',
-                  'PSUseCompatibleCmdlets',
+        try { foreach ($result in $results) {
+            if ($result.Results -and $result.Results.Count -gt 0) { # Filter findings that should become issues
+              $criticalFindings = $result.Results | Where-Object { $_.Severity -eq 'Error' -or
+                ($_.Severity -eq 'Warning' -and $_.RuleName -in @( 'PSAvoidUsingPlainTextForPassword',
+                  'PSAvoidUsingUsernameAndPasswordParams', 'PSAvoidUsingConvertToSecureStringWithPlainText',
+                  'PSUsePSCredentialType', 'PSAvoidHardcodedCredentials',
+                  'PSAvoidUsingInvokeExpression', 'PSUseCompatibleCmdlets',
                   'PSUseCompatibleSyntax'
                 ))
               }
 
-              if ($criticalFindings.Count -gt 0) {
-                Write-Host "  📁 Processing $($criticalFindings.Count) critical findings from $($result.ModuleName)" -ForegroundColor White
+              if ($criticalFindings.Count -gt 0) { Write-Host "  📁 Processing $($criticalFindings.Count) critical findings from $($result.ModuleName)" -ForegroundColor White
 
-                foreach ($finding in $criticalFindings) {
-                  try {
-                    # Check if the function exists before calling it
-                    if (Get-Command 'New-GitHubIssueFromFinding' -ErrorAction SilentlyContinue) {
+                foreach ($finding in $criticalFindings) { try {
+                    # Check if the function exists before calling it if (Get-Command 'New-GitHubIssueFromFinding' -ErrorAction SilentlyContinue) {
                       $issueResult = $finding | New-GitHubIssueFromFinding -DryRun:$false
-                      if ($issueResult) {
-                        if ($issueResult.CreatedIssues) { $issuesCreated += $issueResult.CreatedIssues }
-                        if ($issueResult.SkippedIssues) { $issuesSkipped += $issueResult.SkippedIssues }
-                        if ($issueResult.Errors) { $issueErrors += $issueResult.Errors }
+                      if ($issueResult) { if ($issueResult.CreatedIssues) { $issuesCreated += $issueResult.CreatedIssues }
+                        if ($issueResult.SkippedIssues) { $issuesSkipped += $issueResult.SkippedIssues } if ($issueResult.Errors) { $issueErrors += $issueResult.Errors }
                       }
-                    } else {
-                      Write-Warning "New-GitHubIssueFromFinding function not available, skipping issue creation for $($finding.RuleName)"
+                    } else { Write-Warning "New-GitHubIssueFromFinding function not available, skipping issue creation for $($finding.RuleName)"
                       $issuesSkipped += @{Rule = $finding.RuleName; Reason = "Function not available"}
                     }
-                  }
-                  catch {
+                  } catch {
                     $issueErrors += "Failed to process finding $($finding.RuleName): $($_.Exception.Message)"
                     Write-Warning "Failed to create issue for $($finding.RuleName): $($_.Exception.Message)"
                   }
@@ -510,40 +365,28 @@ jobs:
           Write-Host "  ⏭️  Issues skipped: $($issuesSkipped.Count)" -ForegroundColor Yellow
           Write-Host "  ❌ Errors: $($issueErrors.Count)" -ForegroundColor Red
 
-          # Export issues report
-          $issuesReport = @{
-            Created = $issuesCreated
-            Skipped = $issuesSkipped
-            Errors = $issueErrors
-            ClosedIssues = $closedIssuesReport
-            Summary = @{
-              CreatedCount = $issuesCreated.Count
-              SkippedCount = $issuesSkipped.Count
-              ErrorCount = $issueErrors.Count
+          # Export issues report $issuesReport = @{
+            Created = $issuesCreated Skipped = $issuesSkipped
+            Errors = $issueErrors ClosedIssues = $closedIssuesReport
+            Summary = @{ CreatedCount = $issuesCreated.Count
+              SkippedCount = $issuesSkipped.Count ErrorCount = $issueErrors.Count
               ClosedCount = $closedIssuesReport.ClosedIssues
             }
           }
 
           $issuesReport | ConvertTo-Json -Depth 10 | Set-Content -Path "github-issues-report.json"
-        }
-        catch {
+        } catch {
           Write-Warning "GitHub Issues creation failed: $($_.Exception.Message)"
           $issueErrors += "GitHub Issues creation failed: $($_.Exception.Message)"
         }
 
-        # Generate comprehensive remediation report
-        $report = @{
+        # Generate comprehensive remediation report $report = @{
           Timestamp = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
-          FilesModified = $fixedFiles.Count
-          TotalRemediation = $remediationLog.Count
-          SuccessfulFixes = ($remediationLog | Where-Object Success -eq $true).Count
-          ManualReviewNeeded = ($remediationLog | Where-Object Action -eq 'Manual review required').Count
-          GitHubIssues = @{
-            Created = $issuesCreated.Count
-            Skipped = $issuesSkipped.Count
-            Errors = $issueErrors.Count
-          }
-          Details = $remediationLog
+          FilesModified = $fixedFiles.Count TotalRemediation = $remediationLog.Count
+          SuccessfulFixes = ($remediationLog | Where-Object Success -eq $true).Count ManualReviewNeeded = ($remediationLog | Where-Object Action -eq 'Manual review required').Count
+          GitHubIssues = @{ Created = $issuesCreated.Count
+            Skipped = $issuesSkipped.Count Errors = $issueErrors.Count
+          } Details = $remediationLog
         }
 
         $report | ConvertTo-Json -Depth 10 | Set-Content -Path "remediation-report.json"
@@ -555,87 +398,57 @@ jobs:
         Write-Host "  🎫 GitHub Issues created: $($report.GitHubIssues.Created)" -ForegroundColor Blue
         Write-Host "  ⏭️  GitHub Issues skipped: $($report.GitHubIssues.Skipped)" -ForegroundColor Gray
 
-        # Set output for PR creation
-        echo "files-modified=$($report.FilesModified)" >> $env:GITHUB_OUTPUT
+        # Set output for PR creation echo "files-modified=$($report.FilesModified)" >> $env:GITHUB_OUTPUT
         echo "successful-fixes=$($report.SuccessfulFixes)" >> $env:GITHUB_OUTPUT
 
-    - name: Upload remediation report
+      - name: Upload remediation report
       uses: actions/upload-artifact@v4
-      with:
-        name: remediation-report
+      with: name: remediation-report
         path: remediation-report.json
         retention-days: 30
 
-    - name: Upload GitHub issues report
+      - name: Upload GitHub issues report
       uses: actions/upload-artifact@v4
-      with:
-        name: github-issues-report
+      with: name: github-issues-report
         path: github-issues-report.json
         retention-days: 30
 
-    - name: Check for changes
+      - name: Check for changes
       id: check-changes
-      if: github.event.inputs.create_pr == 'true'
-      shell: pwsh
-      run: |
-        $changes = git status --porcelain
-        if (-not $changes) {
-          Write-Host "📝 No changes to commit" -ForegroundColor Yellow
-          echo "has-changes=false" >> $env:GITHUB_OUTPUT
-        } else {
-          Write-Host "🔧 Changes detected, preparing for PR creation..." -ForegroundColor Cyan
-          echo "has-changes=true" >> $env:GITHUB_OUTPUT
-        }
+    if: github.event.inputs.create_pr == 'true' shell: pwsh run: | $changes = git status --porcelain if (-not $changes) { Write-Host "📝 No changes to commit" -ForegroundColor Yellow echo "has-changes=false" >> $env:GITHUB_OUTPUT } else { Write-Host "🔧 Changes detected, preparing for PR creation..." -ForegroundColor Cyan echo "has-changes=true" >> $env:GITHUB_OUTPUT }
 
-    - name: Create Pull Request
-      if: github.event.inputs.create_pr == 'true' && steps.check-changes.outputs.has-changes == 'true'
-      shell: pwsh
-      run: |
-        $branchName = "automated-code-quality-fixes-$(Get-Date -Format 'yyyy-MM-dd-HHmm')"
-        git checkout -b $branchName
-        git add .
-        git commit -m "Automated code quality fixes - Applied safe automatic fixes for PSScriptAnalyzer findings"
-        git push origin $branchName
+      - name: Create Pull Request
+    if: github.event.inputs.create_pr == 'true' && steps.check-changes.outputs.has-changes == 'true' shell: pwsh run: | $branchName = "automated-code-quality-fixes-$(Get-Date -Format 'yyyy-MM-dd-HHmm')" git checkout -b $branchName git add . git commit -m "Automated code quality fixes - Applied safe automatic fixes for PSScriptAnalyzer findings" git push origin $branchName
 
         $prBody = "This PR contains automated fixes for PSScriptAnalyzer findings applied by the code quality remediation workflow."
 
         gh pr create --title "Automated Code Quality Fixes" --body $prBody --head $branchName --base main
 
-  notify-results:
-    name: Notify Results
+  notify-results: name: Notify Results
     runs-on: ubuntu-latest
     needs: [analyze-quality, remediate-issues]
     if: always()
 
-    steps:
-    - name: Create summary
+    steps: - name: Create summary
       shell: pwsh
       run: |
-        $hasIssues = '${{ needs.analyze-quality.outputs.has-issues }}'
-        $remediationNeeded = '${{ needs.analyze-quality.outputs.remediation-needed }}'
+        $hasIssues = '${{ needs.analyze-quality.outputs.has-issues }}' $remediationNeeded = '${{ needs.analyze-quality.outputs.remediation-needed }}'
         $criticalModules = '${{ needs.analyze-quality.outputs.critical-modules }}'
 
-        Write-Host "📊 Code Quality Remediation Results" -ForegroundColor Cyan
-        Write-Host "=================================" -ForegroundColor Cyan
+        Write-Host "📊 Code Quality Remediation Results" -ForegroundColor Cyan Write-Host "=================================" -ForegroundColor Cyan
 
-        if ($hasIssues -eq 'true') {
-          Write-Host "🔍 Issues detected: Yes" -ForegroundColor Yellow
+        if ($hasIssues -eq 'true') { Write-Host "🔍 Issues detected: Yes" -ForegroundColor Yellow
           Write-Host "🔧 Remediation needed: $remediationNeeded" -ForegroundColor $(if ($remediationNeeded -eq 'true') { 'Red' } else { 'Green' })
 
-          if ($criticalModules -and $criticalModules -ne '[]') {
-            $modules = $criticalModules | ConvertFrom-Json
+          if ($criticalModules -and $criticalModules -ne '[]') { $modules = $criticalModules | ConvertFrom-Json
             Write-Host "🔴 Critical modules: $($modules -join ', ')" -ForegroundColor Red
           }
 
-          if ('${{ needs.remediate-issues.result }}' -eq 'success') {
-            Write-Host "✅ Automated remediation completed successfully" -ForegroundColor Green
-          } elseif ('${{ needs.remediate-issues.result }}' -eq 'skipped') {
-            Write-Host "⏭️  Remediation skipped (dry run or no issues)" -ForegroundColor Yellow
-          } else {
-            Write-Host "❌ Remediation failed or was cancelled" -ForegroundColor Red
+          if ('${{ needs.remediate-issues.result }}' -eq 'success') { Write-Host "✅ Automated remediation completed successfully" -ForegroundColor Green
+          } elseif ('${{ needs.remediate-issues.result }}' -eq 'skipped') { Write-Host "⏭️  Remediation skipped (dry run or no issues)" -ForegroundColor Yellow
+          } else { Write-Host "❌ Remediation failed or was cancelled" -ForegroundColor Red
           }
-        } else {
-          Write-Host "✅ No code quality issues detected!" -ForegroundColor Green
+        } else { Write-Host "✅ No code quality issues detected!" -ForegroundColor Green
         }
 
         Write-Host "`n🎯 Workflow completed at $(Get-Date)" -ForegroundColor White

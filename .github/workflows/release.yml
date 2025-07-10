@@ -1,197 +1,131 @@
 name: Release
 
-on:
-  # PRIMARY: Tag-based release trigger (AUTOMATIC)
-  push:
-    tags:
-      - 'v*'
+on: # PRIMARY: Tag-based release trigger (AUTOMATIC)
+  push: tags: - 'v*'
   # SECONDARY: CI completion trigger (VERSION file change detection)
-  workflow_run:
-    workflows: ["CI - Optimized & Reliable"]
-    types:
-      - completed
+  workflow_run: workflows: ["CI - Optimized & Reliable"]
+    types: - completed
     branches: [main, 'patch/**']
   # MANUAL: Emergency manual release
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to release (e.g., 1.0.0)'
+  workflow_dispatch: inputs: version: description: 'Version to release (e.g., 1.0.0)'
         required: true
-      force_release:
-        description: 'Force release even if CI validation incomplete'
+      force_release: description: 'Force release even if CI validation incomplete'
         type: boolean
         default: false
 
 # Ensure only one release runs at a time
-concurrency:
-  group: release-workflow
+concurrency: group: release-workflow
   cancel-in-progress: false
 
 # Permissions for GITHUB_TOKEN
-permissions:
-  contents: write
+permissions: contents: write
   actions: write
   packages: write
   pull-requests: write
 
-env:
-  POWERSHELL_TELEMETRY_OPTOUT: 1
+env: POWERSHELL_TELEMETRY_OPTOUT: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   DOTNET_NOLOGO: true
 
-jobs:
-  # Validate CI completion and check release readiness
-  validate-release:
-    name: Validate Release Requirements
+jobs: # Validate CI completion and check release readiness validate-release: name: Validate Release Requirements
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'push' ||
-      github.event_name == 'workflow_dispatch' || 
-      (github.event.workflow_run.conclusion == 'success') ||
-      (github.event.workflow_run.conclusion == 'failure' && contains(github.event.workflow_run.head_branch, 'main'))
-    outputs:
-      should-release: ${{ steps.check.outputs.should-release }}
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success') || (github.event.workflow_run.conclusion == 'failure' && contains(github.event.workflow_run.head_branch, 'main'))
+    outputs: should-release: ${{ steps.check.outputs.should-release }}
       version-number: ${{ steps.version.outputs.version }}
       is-tag-release: ${{ steps.check.outputs.is-tag-release }}
-    
-    steps:
-    - name: Checkout code
+     steps: - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      with: fetch-depth: 0
 
-    - name: Cache git metadata
+      - name: Cache git metadata
       uses: actions/cache@v4
-      with:
-        path: .git
+      with: path: .git
         key: ${{ runner.os }}-git-${{ github.sha }}
         restore-keys: |
           ${{ runner.os }}-git-
-        
-    - name: Check release readiness
+
+      - name: Check release readiness
       id: check
       shell: pwsh
       run: |
-        Write-Host "🔍 Checking release readiness..." -ForegroundColor Cyan
-        Write-Host "  Event Name: ${{ github.event_name }}" -ForegroundColor Gray
+        Write-Host "🔍 Checking release readiness..." -ForegroundColor Cyan Write-Host "  Event Name: ${{ github.event_name }}" -ForegroundColor Gray
         Write-Host "  Ref: ${{ github.ref }}" -ForegroundColor Gray
-        
-        $shouldRelease = $false
+         $shouldRelease = $false
         $isTagRelease = $false
-        
-        # Check the trigger type
-        if ('${{ github.event_name }}' -eq 'push' -and '${{ github.ref }}' -like 'refs/tags/v*') {
-          Write-Host "🏷️ Tag-based release triggered: ${{ github.ref }}" -ForegroundColor Green
+         # Check the trigger type
+        if ('${{ github.event_name }}' -eq 'push' -and '${{ github.ref }}' -like 'refs/tags/v*') { Write-Host "🏷️ Tag-based release triggered: ${{ github.ref }}" -ForegroundColor Green
+          $shouldRelease = $true $isTagRelease = $true
+        } elseif ('${{ github.event_name }}' -eq 'workflow_dispatch') { Write-Host "📝 Manual release triggered" -ForegroundColor Yellow
           $shouldRelease = $true
-          $isTagRelease = $true
-        } elseif ('${{ github.event_name }}' -eq 'workflow_dispatch') {
-          Write-Host "📝 Manual release triggered" -ForegroundColor Yellow
-          $shouldRelease = $true
-        } elseif ('${{ github.event_name }}' -eq 'workflow_run') {
-          Write-Host "🔄 Workflow run triggered release check" -ForegroundColor Cyan
-          # Check if VERSION file was changed in the CI run
-          $headSha = '${{ github.event.workflow_run.head_sha }}'
-          if ($headSha) {
-            $changedFiles = git diff-tree --no-commit-id --name-only -r $headSha 2>$null
-          }
-          if (-not $changedFiles) {
+        } elseif ('${{ github.event_name }}' -eq 'workflow_run') { Write-Host "🔄 Workflow run triggered release check" -ForegroundColor Cyan
+          # Check if VERSION file was changed in the CI run $headSha = '${{ github.event.workflow_run.head_sha }}'
+          if ($headSha) { $changedFiles = git diff-tree --no-commit-id --name-only -r $headSha 2>$null
+          } if (-not $changedFiles) {
             # Fallback: check against previous commit
             $changedFiles = git diff --name-only HEAD~1 HEAD 2>$null
-          }
-          $versionChanged = $changedFiles -contains 'VERSION'
-          
-          if ($versionChanged) {
-            Write-Host "📝 VERSION file was updated - this is a release!" -ForegroundColor Green
-            $shouldRelease = $true
-          } else {
-            Write-Host "ℹ️ VERSION file not changed - not a release commit" -ForegroundColor Yellow
+          } $versionChanged = $changedFiles -contains 'VERSION'
+           if ($versionChanged) {
+            Write-Host "📝 VERSION file was updated - this is a release!" -ForegroundColor Green $shouldRelease = $true
+          } else { Write-Host "ℹ️ VERSION file not changed - not a release commit" -ForegroundColor Yellow
             $shouldRelease = $false
           }
         }
-        
-        if ('${{ github.event.inputs.force_release }}' -eq 'true') {
-          Write-Host "⚠️ Force release enabled" -ForegroundColor Yellow
-          $shouldRelease = $true
+         if ('${{ github.event.inputs.force_release }}' -eq 'true') {
+          Write-Host "⚠️ Force release enabled" -ForegroundColor Yellow $shouldRelease = $true
         }
-        
-        Write-Host "📊 Release Decision:" -ForegroundColor Cyan
+         Write-Host "📊 Release Decision:" -ForegroundColor Cyan
         Write-Host "  Should Release: $shouldRelease" -ForegroundColor White
         Write-Host "  Is Tag Release: $isTagRelease" -ForegroundColor White
-        
-        echo "should-release=$shouldRelease" >> $env:GITHUB_OUTPUT
+         echo "should-release=$shouldRelease" >> $env:GITHUB_OUTPUT
         echo "is-tag-release=$isTagRelease" >> $env:GITHUB_OUTPUT
-        
-    - name: Get version information
+
+      - name: Get version information
       id: version
       shell: pwsh
       run: |
         $version = '${{ github.event.inputs.version }}'
-        
-        # Handle tag-based releases
-        if ('${{ steps.check.outputs.is-tag-release }}' -eq 'true') {
-          $tagRef = '${{ github.ref }}'
-          if ($tagRef -match 'refs/tags/v(.+)') {
-            $version = $matches[1]
+         # Handle tag-based releases
+        if ('${{ steps.check.outputs.is-tag-release }}' -eq 'true') { $tagRef = '${{ github.ref }}'
+          if ($tagRef -match 'refs/tags/v(.+)') { $version = $matches[1]
             Write-Host "🏷️ Version from tag: $version" -ForegroundColor Green
-          } else {
-            Write-Host "⚠️ Could not extract version from tag: $tagRef" -ForegroundColor Yellow
+          } else { Write-Host "⚠️ Could not extract version from tag: $tagRef" -ForegroundColor Yellow
           }
         }
-        
-        # If not provided, get from VERSION file
-        if (-not $version) {
-          if (Test-Path "./VERSION") {
-            $version = (Get-Content "./VERSION").Trim()
-            Write-Host "📖 Version from VERSION file: $version" -ForegroundColor Cyan
-          } else {
-            Write-Host "⚠️ VERSION file not found, using default" -ForegroundColor Yellow
+         # If not provided, get from VERSION file
+        if (-not $version) { if (Test-Path "./VERSION") {
+            $version = (Get-Content "./VERSION").Trim() Write-Host "📖 Version from VERSION file: $version" -ForegroundColor Cyan
+          } else { Write-Host "⚠️ VERSION file not found, using default" -ForegroundColor Yellow
             $version = "0.0.1"
           }
-        } elseif ('${{ github.event.inputs.version }}') {
-          Write-Host "📝 Version from manual input: $version" -ForegroundColor Cyan
+        } elseif ('${{ github.event.inputs.version }}') { Write-Host "📝 Version from manual input: $version" -ForegroundColor Cyan
         }
-        
-        # Validate version format
-        if ($version -notmatch '^\d+\.\d+\.\d+$') {
-          Write-Host "⚠️ Invalid version format: $version, attempting to fix..." -ForegroundColor Yellow
-          # Try to extract just the version number
-          if ($version -match '(\d+\.\d+\.\d+)') {
-            $version = $matches[1]
-            Write-Host "✅ Fixed version format: $version" -ForegroundColor Green
-          } else {
-            Write-Host "❌ Could not fix version format, using default" -ForegroundColor Red
+         # Validate version format
+        if ($version -notmatch '^\d+\.\d+\.\d+$') { Write-Host "⚠️ Invalid version format: $version, attempting to fix..." -ForegroundColor Yellow
+          # Try to extract just the version number if ($version -match '(\d+\.\d+\.\d+)') {
+            $version = $matches[1] Write-Host "✅ Fixed version format: $version" -ForegroundColor Green
+          } else { Write-Host "❌ Could not fix version format, using default" -ForegroundColor Red
             $version = "0.0.1"
           }
         }
-        
-        Write-Host "📦 Final version: $version" -ForegroundColor White
+         Write-Host "📦 Final version: $version" -ForegroundColor White
         echo "version=$version" >> $env:GITHUB_OUTPUT
 
-  # Trigger comprehensive report workflow for complete release
-  trigger-comprehensive-release:
-    name: Trigger Comprehensive Release
+  # Trigger comprehensive report workflow for complete release trigger-comprehensive-release: name: Trigger Comprehensive Release
     runs-on: ubuntu-latest
     needs: [validate-release]
     if: needs.validate-release.outputs.should-release == 'true'
-    
-    steps:
-    - name: Checkout code
+     steps: - name: Checkout code
       uses: actions/checkout@v4
-      
-    - name: Trigger comprehensive report workflow
+       - name: Trigger comprehensive report workflow
       uses: actions/github-script@v7
-      timeout-minutes: 5
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+    timeout-minutes: 5
+      with: github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const version = '${{ needs.validate-release.outputs.version-number }}';
-          
-          console.log('🚀 Triggering comprehensive report workflow for release');
+           console.log('🚀 Triggering comprehensive report workflow for release');
           console.log(`📦 Version: ${version}`);
-          
-          try {
-            const response = await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
+           try {
+            const response = await github.rest.actions.createWorkflowDispatch({ owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'comprehensive-report.yml',
               ref: 'main',
@@ -203,32 +137,23 @@ jobs:
                 create_github_release: 'true'
               }
             });
-            
-            console.log('✅ Comprehensive report workflow triggered successfully');
+             console.log('✅ Comprehensive report workflow triggered successfully');
             console.log('🎯 This will create a complete release with:');
-            console.log('  • Comprehensive dashboard and reports');
-            console.log('  • Multi-platform build artifacts');
-            console.log('  • Complete CI validation data');
-            console.log('  • GitHub release with all assets');
-            
-          } catch (error) {
-            console.error('❌ Failed to trigger comprehensive report workflow:', error);
+            console.log('  • Comprehensive dashboard and reports'); console.log('  • Multi-platform build artifacts');
+            console.log('  • Complete CI validation data'); console.log('  • GitHub release with all assets');
+
+          } catch (error) { console.error('❌ Failed to trigger comprehensive report workflow:', error);
             throw error;
           }
-          
-    - name: Create release summary
+
+      - name: Create release summary
       shell: pwsh
       run: |
-        Write-Host "🎉 RELEASE PIPELINE INITIATED!" -ForegroundColor Green -BackgroundColor Black
-        Write-Host "===============================" -ForegroundColor Green
+        Write-Host "🎉 RELEASE PIPELINE INITIATED!" -ForegroundColor Green -BackgroundColor Black Write-Host "===============================" -ForegroundColor Green
         Write-Host "📦 Version: v${{ needs.validate-release.outputs.version-number }}" -ForegroundColor Cyan
-        Write-Host "🔄 Comprehensive report workflow triggered" -ForegroundColor Cyan
-        Write-Host ""
+        Write-Host "🔄 Comprehensive report workflow triggered" -ForegroundColor Cyan Write-Host ""
         Write-Host "🎯 The comprehensive release will include:" -ForegroundColor Yellow
-        Write-Host "  ✅ Multi-platform packages (Windows, Linux, macOS)" -ForegroundColor Green
-        Write-Host "  ✅ Comprehensive dashboard with health metrics" -ForegroundColor Green
-        Write-Host "  ✅ Complete CI validation data" -ForegroundColor Green
-        Write-Host "  ✅ GitHub release with all assets" -ForegroundColor Green
-        Write-Host ""
-        Write-Host "⏳ Monitor the comprehensive report workflow for completion" -ForegroundColor Cyan
+        Write-Host "  ✅ Multi-platform packages (Windows, Linux, macOS)" -ForegroundColor Green Write-Host "  ✅ Comprehensive dashboard with health metrics" -ForegroundColor Green
+        Write-Host "  ✅ Complete CI validation data" -ForegroundColor Green Write-Host "  ✅ GitHub release with all assets" -ForegroundColor Green
+        Write-Host "" Write-Host "⏳ Monitor the comprehensive report workflow for completion" -ForegroundColor Cyan
         Write-Host "🔗 Release will be available at: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.validate-release.outputs.version-number }}" -ForegroundColor Cyan

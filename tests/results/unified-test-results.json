@@ -1,0 +1,94 @@
+{
+  "FailedTests": 0,
+  "SkippedTests": 0,
+  "StartTime": "2025-07-10 15:14:35",
+  "Success": true,
+  "CIInfo": {
+    "GITHUB_RUN_ID": null,
+    "GITHUB_SHA": null,
+    "GITHUB_REPOSITORY": "wizzense/AitherZero",
+    "GITHUB_ACTIONS": null,
+    "GITHUB_REF": null,
+    "GITHUB_WORKFLOW": null,
+    "GITHUB_RUN_NUMBER": null,
+    "CI_PLATFORM": null
+  },
+  "TotalTests": 11,
+  "Platform": {
+    "WorkingDirectory": "/workspaces/AitherZero",
+    "MachineName": "codespaces-6c6eb1",
+    "ProcessorCount": 16,
+    "PowerShellEdition": "Core",
+    "GitBranch": "patch/20250710-150348-Fix-CI-workflow-PowerShell-syntax-error-blocking-all-CI-runs",
+    "GitCommit": "16886cd5",
+    "PowerShellVersion": "7.5.1",
+    "OSVersion": "Unix 6.8.0.1027",
+    "OS": "Linux",
+    "Architecture": "x64"
+  },
+  "ErrorSummary": {
+    "TotalWarnings": 0,
+    "Errors": [],
+    "Warnings": [],
+    "FailedTests": null,
+    "TotalErrors": 0
+  },
+  "Duration": 0.443667,
+  "PassedTests": 11,
+  "EndTime": "2025-07-10 15:14:36",
+  "QualityMetrics": {
+    "SuccessRate": 100.0,
+    "TestCoverage": {
+      "SetupTests": 0,
+      "CoreTests": 1,
+      "InstallationTests": 0,
+      "PlatformTests": 0,
+      "ValidationTests": 0
+    },
+    "FailureRate": 0.0,
+    "Performance": {
+      "AverageTestDuration": 0.04,
+      "TestsPerSecond": 24.79,
+      "ParallelEfficiency": 0,
+      "SetupTime": 0.4435134,
+      "ExecutionTime": 0.443667
+    }
+  },
+  "Configuration": {
+    "Profile": "all",
+    "TestSuite": "Quick",
+    "Performance": false,
+    "TimeoutMinutes": 30,
+    "OutputFormat": "JSON",
+    "ConsolidatedModule": true,
+    "Platform": "Current",
+    "MaxParallelJobs": 4,
+    "FailFast": false,
+    "CI": false,
+    "Distributed": false,
+    "ParallelSupport": true
+  },
+  "TestResults": [
+    {
+      "TestFile": "Core.Tests.ps1",
+      "Category": "Core",
+      "TotalCount": 11,
+      "PassedCount": 11,
+      "FailedCount": 0,
+      "SkippedCount": 0,
+      "Duration": 0.4367628,
+      "Result": "Passed",
+      "FailedTests": null,
+      "StartTime": "2025-07-10T15:14:36.0646545+00:00",
+      "EndTime": "2025-07-10T15:14:36.5024927+00:00"
+    }
+  ],
+  "Metrics": {
+    "ParallelEfficiency": 0,
+    "TestsPerSecond": 24.79,
+    "ExecutionTime": 0.443667,
+    "AverageTestDuration": 0.04,
+    "ReportingTime": 0,
+    "SetupTime": 0.4435134
+  }
+}

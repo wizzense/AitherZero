@@ -101,25 +101,25 @@ jobs:
         shell: pwsh
         run: |
           # Fast quality check using PSScriptAnalyzer
-          $files = Get-ChildItem -Include "*.ps1","*.psm1","*.psd1" -Recurse | 
+          $files = Get-ChildItem -Include "*.ps1","*.psm1","*.psd1" -Recurse |
                    Where-Object { $_.FullName -notlike "*test*" -and $_.FullName -notlike "*build*" }
-          
-          $results = Invoke-ScriptAnalyzer -Path $files -Severity Error,Warning
-          
+
+          $results = Invoke-ScriptAnalyzer -Path $files.FullName -Severity Error,Warning
+
           if ($results) {
             Write-Host "Quality issues found: $($results.Count)"
             $results | Format-Table -AutoSize
             # Create annotations but don't fail (unless severe)
             foreach ($result in $results) {
               if ($result.Severity -eq 'Error') {
-                Write-Host "::error file=$($result.ScriptPath),line=$($result.Line)::$($result.Message)"
+                Write-Host ": error file=$($result.ScriptPath),line=$($result.Line)::$($result.Message)"
               } else {
-                Write-Host "::warning file=$($result.ScriptPath),line=$($result.Line)::$($result.Message)"
+                Write-Host ": warning file=$($result.ScriptPath),line=$($result.Line)::$($result.Message)"
               }
             }
             $errorCount = ($results | Where-Object Severity -eq 'Error').Count
             if ($errorCount -gt 10) {
-              Write-Host "::error::Too many errors ($errorCount) - quality threshold exceeded"
+              Write-Host ": error: Too many errors ($errorCount) - quality threshold exceeded"
               exit 1
             }
           }
@@ -159,7 +159,7 @@ jobs:
         run: |
           $testSuite = "${{ needs.analyze-changes.outputs.test-strategy }}"
           $generateDashboard = "${{ github.event.inputs.generate_dashboard || 'true' }}"
-          
+
           # Use the new unified test runner
           $params = @{
             TestSuite = $testSuite
@@ -170,30 +170,30 @@ jobs:
             MaxParallelJobs = if ($env:GITHUB_ACTIONS) { 6 } else { 4 }
             TimeoutMinutes = if ($env:GITHUB_ACTIONS) { 10 } else { 15 }
           }
-          
+
           if ($generateDashboard -eq 'true') {
             $params['GenerateDashboard'] = $true
             $params['UpdateReadme'] = $true
           }
-          
+
           Write-Host "🚀 Running unified tests with parameters:"
           $params | Format-Table -AutoSize
-          
+
           # Execute unified test runner
           ./tests/Run-UnifiedTests.ps1 @params
-          
+
           # Verify test results and set outputs
           if (Test-Path "tests/results/unified-test-results.json") {
             $results = Get-Content "tests/results/unified-test-results.json" | ConvertFrom-Json
             Write-Host "✅ Tests completed: $($results.TotalTests) total, $($results.PassedTests) passed, $($results.FailedTests) failed"
-            
+
             # Set outputs for summary
             echo "total-tests=$($results.TotalTests)" >> $env:GITHUB_OUTPUT
             echo "passed-tests=$($results.PassedTests)" >> $env:GITHUB_OUTPUT
             echo "failed-tests=$($results.FailedTests)" >> $env:GITHUB_OUTPUT
             echo "success-rate=$($results.QualityMetrics.SuccessRate)" >> $env:GITHUB_OUTPUT
             echo "duration=$($results.Duration)" >> $env:GITHUB_OUTPUT
-            
+
             # Fail if tests failed
             if ($results.FailedTests -gt 0) {
               Write-Host "❌ $($results.FailedTests) tests failed" -ForegroundColor Red
@@ -233,20 +233,20 @@ jobs:
         run: |
           $version = Get-Content ./VERSION -Raw -ErrorAction SilentlyContinue | ForEach-Object { $_.Trim() }
           if (-not $version) { $version = "0.0.1-ci" }
-          
+
           Write-Host "🔨 Building ${{ matrix.platform }} package (version: $version)"
           ./build/Build-Package.ps1 -Platform ${{ matrix.platform }} -Version $version
-          
+
           # Verify build output
           $expectedFile = if ('${{ matrix.platform }}' -eq 'windows') {
             "build/output/AitherZero-v$version-windows.zip"
           } else {
             "build/output/AitherZero-v$version-${{ matrix.platform }}.tar.gz"
           }
-          
+
           if (Test-Path $expectedFile) {
             $size = (Get-Item $expectedFile).Length / 1MB
-            Write-Host "✅ Build successful: $([math]::Round($size, 2)) MB"
+            Write-Host "✅ Build successful: $([math]: Round($size, 2)) MB"
           } else {
             Write-Host "❌ Build failed: $expectedFile not found"
             exit 1
@@ -277,33 +277,33 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "🏗️  Generating comprehensive dashboard..."
-          
+
           # Import required modules
           $modules = @(
             "./aither-core/modules/Logging",
             "./aither-core/modules/ParallelExecution"
           )
-          
+
           foreach ($module in $modules) {
             if (Test-Path $module) {
               Import-Module $module -Force -ErrorAction SilentlyContinue
             }
           }
-          
+
           # Generate comprehensive reports
           $reportingPath = "./scripts/reporting"
-          
+
           if (Test-Path "$reportingPath/Generate-ComprehensiveReport.ps1") {
             $reportTitle = "AitherZero CI Dashboard - $(Get-Date -Format 'yyyy-MM-dd HH:mm') UTC"
             & "$reportingPath/Generate-ComprehensiveReport.ps1" -IncludeDetailedAnalysis -ReportTitle $reportTitle
             Write-Host "✅ Comprehensive report generated"
           }
-          
+
           if (Test-Path "$reportingPath/Generate-DynamicFeatureMap.ps1") {
             & "$reportingPath/Generate-DynamicFeatureMap.ps1" -HtmlOutput -IncludeDependencyGraph
             Write-Host "✅ Dynamic feature map generated"
           }
-          
+
           # Create CI integration summary
           $ciSummary = @{
             Timestamp = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
@@ -314,7 +314,7 @@ jobs:
             QualityResults = @{}
             BuildResults = @{}
           }
-          
+
           # Collect test results from artifacts
           Get-ChildItem -Path "./artifacts" -Directory | Where-Object Name -like "*test-results*" | ForEach-Object {
             $platform = ($_.Name -split '-')[-1]
@@ -323,35 +323,35 @@ jobs:
               $ciSummary.TestResults[$platform] = Get-Content $summaryFile | ConvertFrom-Json
             }
           }
-          
+
           # Export CI summary
           $ciSummary | ConvertTo-Json -Depth 10 | Set-Content -Path "./ci-dashboard-summary.json"
-          
+
           # Create executive summary
           $executiveSummary = @"
           # AitherZero CI Dashboard
-          
+
           ## Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') UTC
           ## Git Reference: ${{ github.ref }} (${{ github.sha }})
-          
+
           ### 🎯 Executive Summary
-          
+
           This dashboard provides comprehensive insights into code quality, test results, and build status.
-          
+
           ### 📊 Key Reports
           - **comprehensive-report.html**: Complete project health analysis
           - **feature-dependency-map.html**: Interactive module relationships
           - **ci-dashboard-summary.json**: Programmatic access to results
-          
+
           ### 🚀 Architecture Benefits
           - **Unified Testing**: Single test runner for all scenarios
           - **Comprehensive Reporting**: Full audit trail and compliance
           - **Fast Execution**: Sub-30-second core tests
           - **Dashboard Integration**: Real-time CI results
           "@
-          
+
           $executiveSummary | Set-Content -Path "./executive-summary.md"
-          
+
           Write-Host "✅ Dashboard generation completed"
       - name: Upload dashboard
         uses: actions/upload-artifact@v4
@@ -380,11 +380,11 @@ jobs:
             'build' = '${{ needs.build.result }}'
             'dashboard' = '${{ needs.dashboard.result }}'
           }
-          
+
           Write-Host "🎯 CI Summary:"
           $failCount = 0
           $criticalFailCount = 0
-          
+
           foreach ($job in $results.GetEnumerator()) {
             $status = switch ($job.Value) {
               'success' { '✅' }
@@ -395,7 +395,7 @@ jobs:
             }
             Write-Host "  $status $($job.Key): $($job.Value)"
           }
-          
+
           Write-Host ""
           if ($criticalFailCount -gt 0) {
             Write-Host "❌ CI Failed: $criticalFailCount critical failures"
@@ -417,33 +417,33 @@ jobs:
               'build': '${{ needs.build.result }}',
               'dashboard': '${{ needs.dashboard.result }}'
             };
-            
+
             let body = '## 🚀 CI Results (Simplified)\n\n';
             body += '| Check | Status |\n|-------|--------|\n';
-            
+
             for (const [check, result] of Object.entries(results)) {
-              const emoji = result === 'success' ? '✅' : 
-                           result === 'failure' ? '❌' : 
+              const emoji = result === 'success' ? '✅' :
+                           result === 'failure' ? '❌' :
                            result === 'skipped' ? '⏭️' : '⚠️';
               body += `| ${check} | ${emoji} ${result} |\n`;
             }
-            
+
             body += `\n**Simplified CI**: Fast validation with comprehensive reporting\n`;
             body += `**Dashboard**: Available in artifacts after completion\n`;
             body += `\n[View full logs](${context.payload.pull_request.html_url}/checks)\n`;
-            
+
             // Find and update existing comment
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number
             });
-            
-            const botComment = comments.find(comment => 
-              comment.user.type === 'Bot' && 
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
               comment.body.includes('🚀 CI Results')
             );
-            
+
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
@@ -493,7 +493,7 @@ jobs:
               vulnerabilities = 0
             }
           }
-          
+
           $ciResults | ConvertTo-Json -Depth 5 | Out-File -FilePath "./ci-results-summary.json" -Encoding UTF8
           Write-Host "✅ CI results summary created"
 
