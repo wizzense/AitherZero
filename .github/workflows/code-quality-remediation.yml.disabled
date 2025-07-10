@@ -44,7 +44,8 @@ env:
   DOTNET_NOLOGO: true
 
 jobs:
-  analyze-quality: name: Analyze Code Quality
+  analyze-quality:
+    name: Analyze Code Quality
     runs-on: ubuntu-latest
     outputs:
       has-issues: ${{ steps.analysis.outputs.has-issues }}
@@ -53,14 +54,14 @@ jobs:
 
     steps:
       - name: Checkout code
-      uses: actions/checkout@v4
+        uses: actions/checkout@v4
       with:
         fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install PowerShell modules
-      shell: pwsh
-      run: |
+        shell: pwsh
+        run: |
         $modules = @('PSScriptAnalyzer', 'Pester') foreach ($module in $modules) {
           if (!(Get-Module -ListAvailable -Name $module)) { Install-Module -Name $module -Force -AllowClobber -Scope CurrentUser
           }
@@ -174,26 +175,26 @@ jobs:
 
     steps:
       - name: Checkout code
-      uses: actions/checkout@v4
+        uses: actions/checkout@v4
       with:
         fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
-      run: |
+        run: |
         git config --global user.name "github-actions[bot]" git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Install PowerShell modules
-      shell: pwsh
-      run: |
+        shell: pwsh
+        run: |
         $modules = @('PSScriptAnalyzer', 'Pester') foreach ($module in $modules) {
           if (!(Get-Module -ListAvailable -Name $module)) { Install-Module -Name $module -Force -AllowClobber -Scope CurrentUser
           }
         }
 
       - name: Download analysis results
-      uses: actions/download-artifact@v4
-      with:
+        uses: actions/download-artifact@v4
+        with:
         name: quality-analysis-results
 
       - name: Perform automated remediation

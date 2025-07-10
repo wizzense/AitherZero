@@ -1,0 +1,67 @@
+name: CI - Working
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install PowerShell modules
+        shell: pwsh
+        run: |
+          Install-Module -Name PSScriptAnalyzer -Force -AllowClobber -Scope CurrentUser
+          Install-Module -Name Pester -Force -AllowClobber -Scope CurrentUser
+
+      - name: Run tests
+        shell: pwsh
+        run: |
+          ./tests/Run-UnifiedTests.ps1 -TestSuite Quick
+
+      - name: Code quality check
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem -Include "*.ps1","*.psm1","*.psd1" -Recurse | Where-Object { $_.FullName -notlike "*test*" -and $_.FullName -notlike "*build*" }
+          $results = @()
+          foreach ($file in $files) {
+            $results += Invoke-ScriptAnalyzer -Path $file.FullName -Severity Error,Warning
+          }
+          if ($results) {
+            Write-Host "Quality issues found: $($results.Count)"
+            $results | Format-Table -AutoSize
+          } else {
+            Write-Host "No quality issues found"
+          }
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build package
+        shell: pwsh
+        run: |
+          ./build/Build-Package.ps1 -Platform linux
+          $size = (Get-Item "build/output/AitherZero-v*-linux.tar.gz").Length / 1MB
+          Write-Host "✅ Build successful: $([math]::Round($size, 2)) MB"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-linux
+          path: build/output/
+          retention-days: 7

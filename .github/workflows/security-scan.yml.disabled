@@ -40,10 +40,10 @@ jobs: # CodeQL Analysis for PowerShell code codeql: name: CodeQL Analysis
 
     steps:
       - name: Checkout code
-      uses: actions/checkout@v4
-       - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
+        uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
         languages: 'javascript'  # PowerShell is analyzed as JavaScript
         queries: security-and-quality
 

@@ -38,18 +38,21 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   DOTNET_NOLOGO: true
 
-jobs: # Validate CI completion and check release readiness validate-release: name: Validate Release Requirements
+jobs:
+  # Validate CI completion and check release readiness
+  validate-release:
+    name: Validate Release Requirements
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success') || (github.event.workflow_run.conclusion == 'failure' && contains(github.event.workflow_run.head_branch, 'main'))
     outputs:
       should-release: ${{ steps.check.outputs.should-release }}
       version-number: ${{ steps.version.outputs.version }}
       is-tag-release: ${{ steps.check.outputs.is-tag-release }}
-     steps:
-       - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Cache git metadata
       uses: actions/cache@v4

@@ -63,7 +63,8 @@ permissions:
 #    - Shared caching strategies
 
 jobs:
-  validate-configuration: name: Validate Workflow Configuration
+  validate-configuration:
+    name: Validate Workflow Configuration
     runs-on: ubuntu-latest
     if: github.event.inputs.action == 'validate'
      steps:
