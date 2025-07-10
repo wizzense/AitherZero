@@ -3,7 +3,7 @@ name: Release
 on:
   # Trigger comprehensive report workflow for releases
   workflow_run:
-    workflows: ["CI - Continuous Integration"]
+    workflows: ["CI - Optimized & Reliable"]
     types:
       - completed
     branches: [main, 'patch/**']
