@@ -69,102 +69,102 @@ jobs:
       baseline-hash: ${{ steps.baseline.outputs.hash }}
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Determine report scope
-      id: scope
-      shell: pwsh
-      run: |
-        $reportType = '${{ github.event.inputs.report_type || ''comprehensive'' }}'
-        $eventName = '${{ github.event_name }}'
-        
-        # Check if VERSION file changed (for workflow_run trigger)
-        $versionChanged = $false
-        if ($eventName -eq 'workflow_run') {
-          Write-Host "🔍 Checking if VERSION file changed..." -ForegroundColor Cyan
-          $headSha = '${{ github.event.workflow_run.head_sha }}'
-          $changedFiles = git diff-tree --no-commit-id --name-only -r $headSha 2>$null
-          if (-not $changedFiles) {
-            $changedFiles = git diff --name-only HEAD~1 HEAD 2>$null
+      - name: Determine report scope
+        id: scope
+        shell: pwsh
+        run: |
+          $reportType = '${{ github.event.inputs.report_type || ''comprehensive'' }}'
+          $eventName = '${{ github.event_name }}'
+          
+          # Check if VERSION file changed (for workflow_run trigger)
+          $versionChanged = $false
+          if ($eventName -eq 'workflow_run') {
+            Write-Host "🔍 Checking if VERSION file changed..." -ForegroundColor Cyan
+            $headSha = '${{ github.event.workflow_run.head_sha }}'
+            $changedFiles = git diff-tree --no-commit-id --name-only -r $headSha 2>$null
+            if (-not $changedFiles) {
+              $changedFiles = git diff --name-only HEAD~1 HEAD 2>$null
+            }
+            $versionChanged = $changedFiles -contains 'VERSION'
+            Write-Host "  VERSION file changed: $versionChanged" -ForegroundColor White
           }
-          $versionChanged = $changedFiles -contains 'VERSION'
-          Write-Host "  VERSION file changed: $versionChanged" -ForegroundColor White
-        }
 
-        # Determine scope based on trigger type
-        $scope = @{
-          comprehensive = $reportType -eq 'comprehensive' -or $versionChanged
-          healthCheck = $reportType -in @('comprehensive', 'health-check') -or $versionChanged
-          featureMap = $reportType -in @('comprehensive', 'feature-map') -or $versionChanged
-          versionTest = $reportType -eq 'version-test'
-          detailedAnalysis = '${{ github.event.inputs.include_detailed_analysis }}' -eq 'true' -or $versionChanged
-          generateHtml = '${{ github.event.inputs.generate_html }}' -eq 'true' -or $versionChanged
-          createRelease = '${{ github.event.inputs.create_github_release }}' -eq 'true' -or $versionChanged
-          isRelease = $versionChanged
-        }
-
-        Write-Host "📊 Report Scope Configuration:" -ForegroundColor Cyan
-        $scope.GetEnumerator() | ForEach-Object {
-          Write-Host "  $($_.Key): $($_.Value)" -ForegroundColor White
-        }
-
-        $scopeJson = $scope | ConvertTo-Json -Compress
-        echo "scope=$scopeJson" >> $env:GITHUB_OUTPUT
-
-    - name: Get version information
-      id: version
-      shell: pwsh
-      run: |
-        # Try multiple sources for version
-        $version = '${{ github.event.inputs.version_test }}'
-
-        if (-not $version) {
-          # Try VERSION file
-          if (Test-Path "VERSION") {
-            $version = (Get-Content "VERSION" -Raw).Trim()
+          # Determine scope based on trigger type
+          $scope = @{
+            comprehensive = $reportType -eq 'comprehensive' -or $versionChanged
+            healthCheck = $reportType -in @('comprehensive', 'health-check') -or $versionChanged
+            featureMap = $reportType -in @('comprehensive', 'feature-map') -or $versionChanged
+            versionTest = $reportType -eq 'version-test'
+            detailedAnalysis = '${{ github.event.inputs.include_detailed_analysis }}' -eq 'true' -or $versionChanged
+            generateHtml = '${{ github.event.inputs.generate_html }}' -eq 'true' -or $versionChanged
+            createRelease = '${{ github.event.inputs.create_github_release }}' -eq 'true' -or $versionChanged
+            isRelease = $versionChanged
           }
-        }
 
-        if (-not $version) {
-          # Try git tag
-          try {
-            $version = git describe --tags --abbrev=0 2>$null
-          } catch {
-            $version = "0.8.0-dev"
+          Write-Host "📊 Report Scope Configuration:" -ForegroundColor Cyan
+          $scope.GetEnumerator() | ForEach-Object {
+            Write-Host "  $($_.Key): $($_.Value)" -ForegroundColor White
           }
-        }
 
-        Write-Host "📦 Version detected: $version" -ForegroundColor Green
-        echo "version=$version" >> $env:GITHUB_OUTPUT
+          $scopeJson = $scope | ConvertTo-Json -Compress
+          echo "scope=$scopeJson" >> $env:GITHUB_OUTPUT
 
-    - name: Create baseline hash
-      id: baseline
-      shell: pwsh
-      run: |
-        # Create hash of current state for change detection
-        $files = @(
-          'aither-core/**/*.ps1',
-          'aither-core/**/*.psm1',
-          'aither-core/**/*.psd1',
-          'configs/**/*.json',
-          'tests/**/*.ps1'
-        )
+      - name: Get version information
+        id: version
+        shell: pwsh
+        run: |
+          # Try multiple sources for version
+          $version = '${{ github.event.inputs.version_test }}'
 
-        $hashInput = ""
-        foreach ($pattern in $files) {
-          Get-ChildItem -Path $pattern -Recurse -ErrorAction SilentlyContinue |
-            ForEach-Object { $hashInput += $_.LastWriteTime.Ticks }
-        }
+          if (-not $version) {
+            # Try VERSION file
+            if (Test-Path "VERSION") {
+              $version = (Get-Content "VERSION" -Raw).Trim()
+            }
+          }
 
-        $hash = [System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($hashInput))
-        $hashString = [System.BitConverter]::ToString($hash) -replace '-', ''
-        $shortHash = $hashString.Substring(0, 8)
+          if (-not $version) {
+            # Try git tag
+            try {
+              $version = git describe --tags --abbrev=0 2>$null
+            } catch {
+              $version = "0.8.0-dev"
+            }
+          }
 
-        Write-Host "🔍 Baseline hash: $shortHash" -ForegroundColor Gray
-        echo "hash=$shortHash" >> $env:GITHUB_OUTPUT
+          Write-Host "📦 Version detected: $version" -ForegroundColor Green
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Create baseline hash
+        id: baseline
+        shell: pwsh
+        run: |
+          # Create hash of current state for change detection
+          $files = @(
+            'aither-core/**/*.ps1',
+            'aither-core/**/*.psm1',
+            'aither-core/**/*.psd1',
+            'configs/**/*.json',
+            'tests/**/*.ps1'
+          )
+
+          $hashInput = ""
+          foreach ($pattern in $files) {
+            Get-ChildItem -Path $pattern -Recurse -ErrorAction SilentlyContinue |
+              ForEach-Object { $hashInput += $_.LastWriteTime.Ticks }
+          }
+
+          $hash = [System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($hashInput))
+          $hashString = [System.BitConverter]::ToString($hash) -replace '-', ''
+          $shortHash = $hashString.Substring(0, 8)
+
+          Write-Host "🔍 Baseline hash: $shortHash" -ForegroundColor Gray
+          echo "hash=$shortHash" >> $env:GITHUB_OUTPUT
 
   # Consume CI results and run complementary audits
   consume-ci-results-and-audit:
@@ -174,180 +174,180 @@ jobs:
     if: fromJson(needs.initialize-reporting.outputs.report-scope).comprehensive || fromJson(needs.initialize-reporting.outputs.report-scope).healthCheck
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Attempt to download CI results from recent runs
-      id: download-ci-results
-      continue-on-error: true
-      uses: actions/github-script@v7
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          // Try to find recent CI run and download its results
-          const runs = await github.rest.actions.listWorkflowRuns({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            workflow_id: 'ci.yml',
-            status: 'success',
-            per_page: 5
-          });
-
-          if (runs.data.workflow_runs.length > 0) {
-            const latestRun = runs.data.workflow_runs[0];
-            console.log(`Found latest CI run: ${latestRun.id}`);
-
-            // Try to download artifacts from the CI run
-            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+      - name: Attempt to download CI results from recent runs
+        id: download-ci-results
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Try to find recent CI run and download its results
+            const runs = await github.rest.actions.listWorkflowRuns({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              run_id: latestRun.id
+              workflow_id: 'ci.yml',
+              status: 'success',
+              per_page: 5
             });
 
-            console.log(`Found ${artifacts.data.artifacts.length} artifacts in CI run`);
+            if (runs.data.workflow_runs.length > 0) {
+              const latestRun = runs.data.workflow_runs[0];
+              console.log(`Found latest CI run: ${latestRun.id}`);
 
-            // Look for ci-results-summary artifact
-            const ciResultsArtifact = artifacts.data.artifacts.find(a => a.name === 'ci-results-summary');
-            if (ciResultsArtifact) {
-              console.log(`Found ci-results-summary artifact: ${ciResultsArtifact.id}`);
-              core.setOutput('ci-results-available', 'true');
-              core.setOutput('ci-run-id', latestRun.id);
-              core.setOutput('ci-artifact-id', ciResultsArtifact.id);
+              // Try to download artifacts from the CI run
+              const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: latestRun.id
+              });
+
+              console.log(`Found ${artifacts.data.artifacts.length} artifacts in CI run`);
+
+              // Look for ci-results-summary artifact
+              const ciResultsArtifact = artifacts.data.artifacts.find(a => a.name === 'ci-results-summary');
+              if (ciResultsArtifact) {
+                console.log(`Found ci-results-summary artifact: ${ciResultsArtifact.id}`);
+                core.setOutput('ci-results-available', 'true');
+                core.setOutput('ci-run-id', latestRun.id);
+                core.setOutput('ci-artifact-id', ciResultsArtifact.id);
+              } else {
+                console.log('No ci-results-summary artifact found');
+                core.setOutput('ci-results-available', 'false');
+              }
             } else {
-              console.log('No ci-results-summary artifact found');
+              console.log('No recent successful CI runs found');
               core.setOutput('ci-results-available', 'false');
             }
-          } else {
-            console.log('No recent successful CI runs found');
-            core.setOutput('ci-results-available', 'false');
-          }
 
-    - name: Download CI results artifact if available
-      if: steps.download-ci-results.outputs.ci-results-available == 'true'
-      continue-on-error: true
-      uses: actions/download-artifact@v4
-      with:
-        name: ci-results-summary
-        path: ./ci-consumed-results/
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ steps.download-ci-results.outputs.ci-run-id }}
+      - name: Download CI results artifact if available
+        if: steps.download-ci-results.outputs.ci-results-available == 'true'
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-results-summary
+          path: ./ci-consumed-results/
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ steps.download-ci-results.outputs.ci-run-id }}
 
-    - name: Process CI results or run minimal tests
-      shell: pwsh
-      run: |
-        Write-Host "📊 Processing CI results for comprehensive analysis..." -ForegroundColor Cyan
+      - name: Process CI results or run minimal tests
+        shell: pwsh
+        run: |
+          Write-Host "📊 Processing CI results for comprehensive analysis..." -ForegroundColor Cyan
 
-        # Create audit artifacts directory
-        New-Item -Path "./audit-reports/testing-audit-reports" -ItemType Directory -Force | Out-Null
+          # Create audit artifacts directory
+          New-Item -Path "./audit-reports/testing-audit-reports" -ItemType Directory -Force | Out-Null
 
-        # Check if CI results are available
-        if (Test-Path "./ci-consumed-results/ci-results-summary.json") {
-          Write-Host "✅ CI results found - consuming existing test data" -ForegroundColor Green
+          # Check if CI results are available
+          if (Test-Path "./ci-consumed-results/ci-results-summary.json") {
+            Write-Host "✅ CI results found - consuming existing test data" -ForegroundColor Green
 
-          $ciResults = Get-Content "./ci-consumed-results/ci-results-summary.json" | ConvertFrom-Json
-          Write-Host "📋 CI Results Summary:" -ForegroundColor Cyan
-          Write-Host "  - Workflow ID: $($ciResults.WorkflowId)" -ForegroundColor White
-          Write-Host "  - Total Tests: $($ciResults.TestResults.TotalTests)" -ForegroundColor White
-          Write-Host "  - Passed: $($ciResults.TestResults.TotalPassed)" -ForegroundColor White
-          Write-Host "  - Failed: $($ciResults.TestResults.TotalFailed)" -ForegroundColor White
-          Write-Host "  - Duration: $([Math]::Round($ciResults.TestResults.Duration, 2))s" -ForegroundColor White
+            $ciResults = Get-Content "./ci-consumed-results/ci-results-summary.json" | ConvertFrom-Json
+            Write-Host "📋 CI Results Summary:" -ForegroundColor Cyan
+            Write-Host "  - Workflow ID: $($ciResults.WorkflowId)" -ForegroundColor White
+            Write-Host "  - Total Tests: $($ciResults.TestResults.TotalTests)" -ForegroundColor White
+            Write-Host "  - Passed: $($ciResults.TestResults.TotalPassed)" -ForegroundColor White
+            Write-Host "  - Failed: $($ciResults.TestResults.TotalFailed)" -ForegroundColor White
+            Write-Host "  - Duration: $([Math]::Round($ciResults.TestResults.Duration, 2))s" -ForegroundColor White
 
-          # Copy CI results to audit reports
-          Copy-Item "./ci-consumed-results/ci-results-summary.json" "./audit-reports/testing-audit-reports/"
+            # Copy CI results to audit reports
+            Copy-Item "./ci-consumed-results/ci-results-summary.json" "./audit-reports/testing-audit-reports/"
 
-          # Create test coverage analysis based on CI results
-          $testCoverage = @{
-            SourceResults = "CI Pipeline ($($ciResults.WorkflowId))"
-            TestResults = $ciResults.TestResults
-            CoverageAnalysis = @{
-              TotalModules = 31
-              TestedModules = 31
-              CoveragePercentage = 100
-              QualityScore = if ($ciResults.TestResults.TotalFailed -eq 0) { 100 } else {
-                [Math]::Max(0, 100 - ($ciResults.TestResults.TotalFailed * 2))
+            # Create test coverage analysis based on CI results
+            $testCoverage = @{
+              SourceResults = "CI Pipeline ($($ciResults.WorkflowId))"
+              TestResults = $ciResults.TestResults
+              CoverageAnalysis = @{
+                TotalModules = 31
+                TestedModules = 31
+                CoveragePercentage = 100
+                QualityScore = if ($ciResults.TestResults.TotalFailed -eq 0) { 100 } else {
+                  [Math]::Max(0, 100 - ($ciResults.TestResults.TotalFailed * 2))
+                }
               }
+              GeneratedBy = "Comprehensive Report (consuming CI results)"
+              Timestamp = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
             }
-            GeneratedBy = "Comprehensive Report (consuming CI results)"
-            Timestamp = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
+
+            $testCoverage | ConvertTo-Json -Depth 10 | Set-Content "./audit-reports/testing-audit-reports/test-coverage-from-ci.json"
+
+            Write-Host "✅ CI test results processed and integrated" -ForegroundColor Green
+
+          } else {
+            Write-Host "⚠️ No CI results available - running minimal test validation" -ForegroundColor Yellow
+
+            # Run minimal tests only (not full CI suite)
+            try {
+              if (Test-Path "./tests/Run-Tests.ps1") {
+                pwsh ./tests/Run-Tests.ps1 -Quick -CI
+                Write-Host "✅ Minimal test validation completed" -ForegroundColor Green
+              } else {
+                Write-Host "⚠️ Test runner not found - skipping minimal tests" -ForegroundColor Yellow
+              }
+            } catch {
+              Write-Warning "Minimal test validation failed: $($_.Exception.Message)"
+            }
           }
 
-          $testCoverage | ConvertTo-Json -Depth 10 | Set-Content "./audit-reports/testing-audit-reports/test-coverage-from-ci.json"
+      - name: Run documentation audit (complementary analysis)
+        shell: pwsh
+        run: |
+          Write-Host "📝 Running documentation audit..." -ForegroundColor Cyan
 
-          Write-Host "✅ CI test results processed and integrated" -ForegroundColor Green
+          # Create audit artifacts directory
+          New-Item -Path "./audit-reports/documentation-audit-reports" -ItemType Directory -Force | Out-Null
 
-        } else {
-          Write-Host "⚠️ No CI results available - running minimal test validation" -ForegroundColor Yellow
-
-          # Run minimal tests only (not full CI suite)
-          try {
-            if (Test-Path "./tests/Run-Tests.ps1") {
-              pwsh ./tests/Run-Tests.ps1 -Quick -CI
-              Write-Host "✅ Minimal test validation completed" -ForegroundColor Green
-            } else {
-              Write-Host "⚠️ Test runner not found - skipping minimal tests" -ForegroundColor Yellow
+          # Run documentation analysis if scripts exist
+          if (Test-Path "./scripts/documentation/Analyze-ContentDeltas.ps1") {
+            try {
+              pwsh ./scripts/documentation/Analyze-ContentDeltas.ps1 -ExportChanges
+              if (Test-Path "change-analysis.json") {
+                Move-Item "change-analysis.json" "./audit-reports/documentation-audit-reports/"
+              }
+            } catch {
+              Write-Warning "Documentation analysis failed: $($_.Exception.Message)"
             }
-          } catch {
-            Write-Warning "Minimal test validation failed: $($_.Exception.Message)"
+          } else {
+            Write-Host "📄 No documentation analysis script found - skipping" -ForegroundColor Yellow
           }
-        }
 
-    - name: Run documentation audit (complementary analysis)
-      shell: pwsh
-      run: |
-        Write-Host "📝 Running documentation audit..." -ForegroundColor Cyan
+          Write-Host "✅ Documentation audit completed" -ForegroundColor Green
 
-        # Create audit artifacts directory
-        New-Item -Path "./audit-reports/documentation-audit-reports" -ItemType Directory -Force | Out-Null
+      - name: Run security analysis (complementary analysis)
+        shell: pwsh
+        run: |
+          Write-Host "🔒 Running security analysis..." -ForegroundColor Cyan
 
-        # Run documentation analysis if scripts exist
-        if (Test-Path "./scripts/documentation/Analyze-ContentDeltas.ps1") {
-          try {
-            pwsh ./scripts/documentation/Analyze-ContentDeltas.ps1 -ExportChanges
-            if (Test-Path "change-analysis.json") {
-              Move-Item "change-analysis.json" "./audit-reports/documentation-audit-reports/"
-            }
-          } catch {
-            Write-Warning "Documentation analysis failed: $($_.Exception.Message)"
+          # Create security audit directory
+          New-Item -Path "./audit-reports/security-scan-results" -ItemType Directory -Force | Out-Null
+
+          # Install PSScriptAnalyzer for security analysis
+          if (!(Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
+            Install-Module -Name PSScriptAnalyzer -Force -AllowClobber -Scope CurrentUser
           }
-        } else {
-          Write-Host "📄 No documentation analysis script found - skipping" -ForegroundColor Yellow
-        }
 
-        Write-Host "✅ Documentation audit completed" -ForegroundColor Green
+          # Run PSScriptAnalyzer security rules
+          $securityRules = @('PSAvoidUsingPlainTextForPassword', 'PSAvoidUsingUsernameAndPasswordParams', 'PSAvoidUsingConvertToSecureStringWithPlainText')
+          $results = Invoke-ScriptAnalyzer -Path "./aither-core" -Recurse -IncludeRule $securityRules
 
-    - name: Run security analysis (complementary analysis)
-      shell: pwsh
-      run: |
-        Write-Host "🔒 Running security analysis..." -ForegroundColor Cyan
+          if ($results) {
+            $results | ConvertTo-Json -Depth 5 | Set-Content "./audit-reports/security-scan-results/security-analysis.json"
+          }
 
-        # Create security audit directory
-        New-Item -Path "./audit-reports/security-scan-results" -ItemType Directory -Force | Out-Null
+          Write-Host "✅ Security analysis completed" -ForegroundColor Green
 
-        # Install PSScriptAnalyzer for security analysis
-        if (!(Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
-          Install-Module -Name PSScriptAnalyzer -Force -AllowClobber -Scope CurrentUser
-        }
-
-        # Run PSScriptAnalyzer security rules
-        $securityRules = @('PSAvoidUsingPlainTextForPassword', 'PSAvoidUsingUsernameAndPasswordParams', 'PSAvoidUsingConvertToSecureStringWithPlainText')
-        $results = Invoke-ScriptAnalyzer -Path "./aither-core" -Recurse -IncludeRule $securityRules
-
-        if ($results) {
-          $results | ConvertTo-Json -Depth 5 | Set-Content "./audit-reports/security-scan-results/security-analysis.json"
-        }
-
-        Write-Host "✅ Security analysis completed" -ForegroundColor Green
-
-    - name: Upload audit artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: audit-results
-        path: |
-          audit-reports/**/*
-          tests/results/**/*
-          ci-consumed-results/**/*
-        retention-days: 30
-        if-no-files-found: warn
+      - name: Upload audit artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-results
+          path: |
+            audit-reports/**/*
+            tests/results/**/*
+            ci-consumed-results/**/*
+          retention-days: 30
+          if-no-files-found: warn
 
   # Generate comprehensive HTML report
   generate-comprehensive-report:
@@ -362,285 +362,285 @@ jobs:
       analyzed-modules: ${{ steps.report.outputs.analyzed-modules }}
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Cache PowerShell modules
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.local/share/powershell/Modules
-          ~/Documents/PowerShell/Modules
-          ~/.config/powershell
-          ~/.cache/powershell
-        key: ${{ runner.os }}-ps-modules-report-${{ hashFiles('**/requirements.psd1') }}-v2
-        restore-keys: |
-          ${{ runner.os }}-ps-modules-report-v2
-          ${{ runner.os }}-ps-modules-
+      - name: Cache PowerShell modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/powershell/Modules
+            ~/Documents/PowerShell/Modules
+            ~/.config/powershell
+            ~/.cache/powershell
+          key: ${{ runner.os }}-ps-modules-report-${{ hashFiles('**/requirements.psd1') }}-v2
+          restore-keys: |
+            ${{ runner.os }}-ps-modules-report-v2
+            ${{ runner.os }}-ps-modules-
 
-    - name: Download audit results
-      uses: actions/download-artifact@v4
-      with:
-        name: audit-results
-        path: audit-reports
+      - name: Download audit results
+        uses: actions/download-artifact@v4
+        with:
+          name: audit-results
+          path: audit-reports
 
-    - name: Download CI results from recent runs
-      continue-on-error: true
-      uses: actions/github-script@v7
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const fs = require('fs');
+      - name: Download CI results from recent runs
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
 
-          // Try to find recent successful CI run
-          const runs = await github.rest.actions.listWorkflowRuns({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            workflow_id: 'ci.yml',
-            status: 'success',
-            per_page: 5
-          });
-
-          if (runs.data.workflow_runs.length > 0) {
-            const latestRun = runs.data.workflow_runs[0];
-            console.log(`Found CI run: ${latestRun.id}`);
-
-            // Get artifacts from CI run
-            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+            // Try to find recent successful CI run
+            const runs = await github.rest.actions.listWorkflowRuns({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              run_id: latestRun.id
+              workflow_id: 'ci.yml',
+              status: 'success',
+              per_page: 5
             });
 
-            // Download specific artifacts we need
-            const targetArtifacts = [
-              'ci-results-summary',
-              'comprehensive-project-dashboard',
-              'test-results-ubuntu-latest',
-              'code-quality-psscriptanalyzer',
-              'code-quality-best-practices'
-            ];
+            if (runs.data.workflow_runs.length > 0) {
+              const latestRun = runs.data.workflow_runs[0];
+              console.log(`Found CI run: ${latestRun.id}`);
 
-            for (const artifactName of targetArtifacts) {
-              const artifact = artifacts.data.artifacts.find(a => a.name === artifactName);
-              if (artifact) {
-                console.log(`Downloading artifact: ${artifactName}`);
-                fs.mkdirSync(`./external-artifacts/${artifactName}`, { recursive: true });
-                // Note: Actual download requires additional API call - simplified for workflow
+              // Get artifacts from CI run
+              const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: latestRun.id
+              });
+
+              // Download specific artifacts we need
+              const targetArtifacts = [
+                'ci-results-summary',
+                'comprehensive-project-dashboard',
+                'test-results-ubuntu-latest',
+                'code-quality-psscriptanalyzer',
+                'code-quality-best-practices'
+              ];
+
+              for (const artifactName of targetArtifacts) {
+                const artifact = artifacts.data.artifacts.find(a => a.name === artifactName);
+                if (artifact) {
+                  console.log(`Downloading artifact: ${artifactName}`);
+                  fs.mkdirSync(`./external-artifacts/${artifactName}`, { recursive: true });
+                  // Note: Actual download requires additional API call - simplified for workflow
+                }
               }
             }
+
+      - name: Download additional workflow artifacts
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Download from audit workflow
+            const auditRuns = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'audit.yml',
+              status: 'success',
+              per_page: 3
+            });
+
+            if (auditRuns.data.workflow_runs.length > 0) {
+              console.log(`Found audit run: ${auditRuns.data.workflow_runs[0].id}`);
+            }
+
+            // Download from security workflow
+            const securityRuns = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'security-scan.yml',
+              status: 'success',
+              per_page: 3
+            });
+
+            if (securityRuns.data.workflow_runs.length > 0) {
+              console.log(`Found security run: ${securityRuns.data.workflow_runs[0].id}`);
+            }
+
+      - name: Generate comprehensive report
+        id: report
+        shell: pwsh
+        run: |
+          Write-Host "📊 Generating comprehensive HTML report..." -ForegroundColor Cyan
+
+          $reportTitle = "AitherZero v${{ needs.initialize-reporting.outputs.version-number }} Comprehensive Report"
+
+          $params = @{
+            ReportPath = './output/aitherZero-dashboard.html'
+            ArtifactsPath = './audit-reports'
+            ExternalArtifactsPath = './external-artifacts'
+            IncludeDetailedAnalysis = '${{ fromJson(needs.initialize-reporting.outputs.report-scope).detailedAnalysis }}' -eq 'true'
+            ReportTitle = $reportTitle
+            Version = '${{ needs.initialize-reporting.outputs.version-number }}'
+            VerboseOutput = $true
           }
 
-    - name: Download additional workflow artifacts
-      continue-on-error: true
-      uses: actions/github-script@v7
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          // Download from audit workflow
-          const auditRuns = await github.rest.actions.listWorkflowRuns({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            workflow_id: 'audit.yml',
-            status: 'success',
-            per_page: 3
-          });
+          try {
+            if (Test-Path "./scripts/reporting/Generate-ComprehensiveReport.ps1") {
+              # Ensure output directory exists
+              New-Item -ItemType Directory -Path "./output" -Force | Out-Null
+              
+              $result = & "./scripts/reporting/Generate-ComprehensiveReport.ps1" @params
+            } else {
+              Write-Warning "Comprehensive report generator not found"
+              $result = $null
+            }
 
-          if (auditRuns.data.workflow_runs.length > 0) {
-            console.log(`Found audit run: ${auditRuns.data.workflow_runs[0].id}`);
-          }
+            if ($result) {
+              Write-Host "📋 Report Summary:" -ForegroundColor Cyan
+              Write-Host "  Report Path: $($result.ReportPath)" -ForegroundColor White
+              Write-Host "  Version: $($result.Version)" -ForegroundColor White
+              Write-Host "  Overall Health: $($result.OverallHealth.Grade) ($($result.OverallHealth.OverallScore)%)" -ForegroundColor White
+              Write-Host "  Total Modules: $($result.FeatureMap.TotalModules)" -ForegroundColor White
+              Write-Host "  Analyzed Modules: $($result.FeatureMap.AnalyzedModules)" -ForegroundColor White
 
-          // Download from security workflow
-          const securityRuns = await github.rest.actions.listWorkflowRuns({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            workflow_id: 'security-scan.yml',
-            status: 'success',
-            per_page: 3
-          });
-
-          if (securityRuns.data.workflow_runs.length > 0) {
-            console.log(`Found security run: ${securityRuns.data.workflow_runs[0].id}`);
-          }
-
-    - name: Generate comprehensive report
-      id: report
-      shell: pwsh
-      run: |
-        Write-Host "📊 Generating comprehensive HTML report..." -ForegroundColor Cyan
-
-        $reportTitle = "AitherZero v${{ needs.initialize-reporting.outputs.version-number }} Comprehensive Report"
-
-        $params = @{
-          ReportPath = './output/aitherZero-dashboard.html'
-          ArtifactsPath = './audit-reports'
-          ExternalArtifactsPath = './external-artifacts'
-          IncludeDetailedAnalysis = '${{ fromJson(needs.initialize-reporting.outputs.report-scope).detailedAnalysis }}' -eq 'true'
-          ReportTitle = $reportTitle
-          Version = '${{ needs.initialize-reporting.outputs.version-number }}'
-          VerboseOutput = $true
-        }
-
-        try {
-          if (Test-Path "./scripts/reporting/Generate-ComprehensiveReport.ps1") {
-            # Ensure output directory exists
-            New-Item -ItemType Directory -Path "./output" -Force | Out-Null
-            
-            $result = & "./scripts/reporting/Generate-ComprehensiveReport.ps1" @params
-          } else {
-            Write-Warning "Comprehensive report generator not found"
-            $result = $null
-          }
-
-          if ($result) {
-            Write-Host "📋 Report Summary:" -ForegroundColor Cyan
-            Write-Host "  Report Path: $($result.ReportPath)" -ForegroundColor White
-            Write-Host "  Version: $($result.Version)" -ForegroundColor White
-            Write-Host "  Overall Health: $($result.OverallHealth.Grade) ($($result.OverallHealth.OverallScore)%)" -ForegroundColor White
-            Write-Host "  Total Modules: $($result.FeatureMap.TotalModules)" -ForegroundColor White
-            Write-Host "  Analyzed Modules: $($result.FeatureMap.AnalyzedModules)" -ForegroundColor White
-
-            # Set outputs for summary
-            echo "HEALTH_GRADE=$($result.OverallHealth.Grade)" >> $env:GITHUB_ENV
-            echo "HEALTH_SCORE=$($result.OverallHealth.OverallScore)" >> $env:GITHUB_ENV
-            echo "TOTAL_MODULES=$($result.FeatureMap.TotalModules)" >> $env:GITHUB_ENV
-            echo "ANALYZED_MODULES=$($result.FeatureMap.AnalyzedModules)" >> $env:GITHUB_ENV
-            # Also set as job outputs
-            echo "health-grade=$($result.OverallHealth.Grade)" >> $env:GITHUB_OUTPUT
-            echo "health-score=$($result.OverallHealth.OverallScore)" >> $env:GITHUB_OUTPUT
-            echo "total-modules=$($result.FeatureMap.TotalModules)" >> $env:GITHUB_OUTPUT
-            echo "analyzed-modules=$($result.FeatureMap.AnalyzedModules)" >> $env:GITHUB_OUTPUT
-          } else {
-            Write-Warning "Report generation returned no result"
+              # Set outputs for summary
+              echo "HEALTH_GRADE=$($result.OverallHealth.Grade)" >> $env:GITHUB_ENV
+              echo "HEALTH_SCORE=$($result.OverallHealth.OverallScore)" >> $env:GITHUB_ENV
+              echo "TOTAL_MODULES=$($result.FeatureMap.TotalModules)" >> $env:GITHUB_ENV
+              echo "ANALYZED_MODULES=$($result.FeatureMap.AnalyzedModules)" >> $env:GITHUB_ENV
+              # Also set as job outputs
+              echo "health-grade=$($result.OverallHealth.Grade)" >> $env:GITHUB_OUTPUT
+              echo "health-score=$($result.OverallHealth.OverallScore)" >> $env:GITHUB_OUTPUT
+              echo "total-modules=$($result.FeatureMap.TotalModules)" >> $env:GITHUB_OUTPUT
+              echo "analyzed-modules=$($result.FeatureMap.AnalyzedModules)" >> $env:GITHUB_OUTPUT
+            } else {
+              Write-Warning "Report generation returned no result"
+              # Set default values
+              echo "HEALTH_GRADE=Unknown" >> $env:GITHUB_ENV
+              echo "HEALTH_SCORE=0" >> $env:GITHUB_ENV
+              echo "TOTAL_MODULES=0" >> $env:GITHUB_ENV
+              echo "ANALYZED_MODULES=0" >> $env:GITHUB_ENV
+              # Also set as job outputs
+              echo "health-grade=Unknown" >> $env:GITHUB_OUTPUT
+              echo "health-score=0" >> $env:GITHUB_OUTPUT
+              echo "total-modules=0" >> $env:GITHUB_OUTPUT
+              echo "analyzed-modules=0" >> $env:GITHUB_OUTPUT
+            }
+          } catch {
+            Write-Warning "Report generation failed: $($_.Exception.Message)"
             # Set default values
             echo "HEALTH_GRADE=Unknown" >> $env:GITHUB_ENV
             echo "HEALTH_SCORE=0" >> $env:GITHUB_ENV
             echo "TOTAL_MODULES=0" >> $env:GITHUB_ENV
             echo "ANALYZED_MODULES=0" >> $env:GITHUB_ENV
-            # Also set as job outputs
-            echo "health-grade=Unknown" >> $env:GITHUB_OUTPUT
-            echo "health-score=0" >> $env:GITHUB_OUTPUT
-            echo "total-modules=0" >> $env:GITHUB_OUTPUT
-            echo "analyzed-modules=0" >> $env:GITHUB_OUTPUT
           }
-        } catch {
-          Write-Warning "Report generation failed: $($_.Exception.Message)"
-          # Set default values
-          echo "HEALTH_GRADE=Unknown" >> $env:GITHUB_ENV
-          echo "HEALTH_SCORE=0" >> $env:GITHUB_ENV
-          echo "TOTAL_MODULES=0" >> $env:GITHUB_ENV
-          echo "ANALYZED_MODULES=0" >> $env:GITHUB_ENV
-        }
 
-        Write-Host "✅ Comprehensive report generation completed" -ForegroundColor Green
+          Write-Host "✅ Comprehensive report generation completed" -ForegroundColor Green
 
-    - name: Generate feature map visualization
-      shell: pwsh
-      run: |
-        Write-Host "📊 Generating dynamic feature map..." -ForegroundColor Cyan
+      - name: Generate feature map visualization
+        shell: pwsh
+        run: |
+          Write-Host "📊 Generating dynamic feature map..." -ForegroundColor Cyan
 
-        # Generate feature map with HTML output
-        if (Test-Path "./scripts/reporting/Generate-DynamicFeatureMap.ps1") {
-          try {
-            $featureMapParams = @{
-              OutputPath = './output/feature-map.json'
-              HtmlOutput = $true
-              IncludeDependencyGraph = $true
-              VerboseOutput = $true
+          # Generate feature map with HTML output
+          if (Test-Path "./scripts/reporting/Generate-DynamicFeatureMap.ps1") {
+            try {
+              $featureMapParams = @{
+                OutputPath = './output/feature-map.json'
+                HtmlOutput = $true
+                IncludeDependencyGraph = $true
+                VerboseOutput = $true
+              }
+
+              & "./scripts/reporting/Generate-DynamicFeatureMap.ps1" @featureMapParams
+            } catch {
+              Write-Warning "Feature map generation failed: $($_.Exception.Message)"
             }
-
-            & "./scripts/reporting/Generate-DynamicFeatureMap.ps1" @featureMapParams
-          } catch {
-            Write-Warning "Feature map generation failed: $($_.Exception.Message)"
+          } else {
+            Write-Host "⚠️ Feature map generator not found - skipping" -ForegroundColor Yellow
           }
-        } else {
-          Write-Host "⚠️ Feature map generator not found - skipping" -ForegroundColor Yellow
-        }
 
-        # Copy the HTML output to the expected location
-        if (Test-Path "./feature-map.html") {
-          Copy-Item "./feature-map.html" -Destination "./output/feature-dependency-map.html" -Force
-          Write-Host "✅ Feature dependency map generated" -ForegroundColor Green
-        }
+          # Copy the HTML output to the expected location
+          if (Test-Path "./feature-map.html") {
+            Copy-Item "./feature-map.html" -Destination "./output/feature-dependency-map.html" -Force
+            Write-Host "✅ Feature dependency map generated" -ForegroundColor Green
+          }
 
-    - name: Generate CI dashboard
-      shell: pwsh
-      run: |
-        Write-Host "📊 Generating CI dashboard..." -ForegroundColor Cyan
+      - name: Generate CI dashboard
+        shell: pwsh
+        run: |
+          Write-Host "📊 Generating CI dashboard..." -ForegroundColor Cyan
 
-        # Create a simple CI dashboard HTML
-        New-Item -ItemType Directory -Path "./output" -Force | Out-Null
-        $htmlContent = "<html><head><title>AitherZero CI/CD Dashboard</title></head><body><h1>AitherZero CI/CD Dashboard</h1><p>Generated: $(Get-Date)</p></body></html>"
-        $htmlContent | Set-Content -Path "./output/comprehensive-ci-dashboard.html"
-        
-        Write-Host "✅ CI dashboard generated" -ForegroundColor Green
+          # Create a simple CI dashboard HTML
+          New-Item -ItemType Directory -Path "./output" -Force | Out-Null
+          $htmlContent = "<html><head><title>AitherZero CI/CD Dashboard</title></head><body><h1>AitherZero CI/CD Dashboard</h1><p>Generated: $(Get-Date)</p></body></html>"
+          $htmlContent | Set-Content -Path "./output/comprehensive-ci-dashboard.html"
+          
+          Write-Host "✅ CI dashboard generated" -ForegroundColor Green
 
-    - name: Copy comprehensive report with correct filename
-      shell: pwsh
-      run: |
-        Write-Host "📄 Ensuring comprehensive report has correct filename..." -ForegroundColor Cyan
+      - name: Copy comprehensive report with correct filename
+        shell: pwsh
+        run: |
+          Write-Host "📄 Ensuring comprehensive report has correct filename..." -ForegroundColor Cyan
 
-        # The comprehensive report script generates aitherZero-dashboard.html
-        # but README references aitherZero-comprehensive-report.html
-        if (Test-Path "./output/aitherZero-dashboard.html") {
-          Copy-Item "./output/aitherZero-dashboard.html" -Destination "./output/aitherZero-comprehensive-report.html" -Force
-          Write-Host "✅ Copied dashboard as comprehensive report" -ForegroundColor Green
-        }
+          # The comprehensive report script generates aitherZero-dashboard.html
+          # but README references aitherZero-comprehensive-report.html
+          if (Test-Path "./output/aitherZero-dashboard.html") {
+            Copy-Item "./output/aitherZero-dashboard.html" -Destination "./output/aitherZero-comprehensive-report.html" -Force
+            Write-Host "✅ Copied dashboard as comprehensive report" -ForegroundColor Green
+          }
 
-    - name: Generate executive summary
-      shell: pwsh
-      run: |
-        Write-Host "📝 Generating executive summary..." -ForegroundColor Cyan
+      - name: Generate executive summary
+        shell: pwsh
+        run: |
+          Write-Host "📝 Generating executive summary..." -ForegroundColor Cyan
 
-        # Create executive summary markdown
-        $executiveSummary = "# AitherZero Executive Summary`n`nGenerated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')"
+          # Create executive summary markdown
+          $executiveSummary = "# AitherZero Executive Summary`n`nGenerated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')"
 
-        $executiveSummary | Set-Content -Path "./output/executive-summary.md"
-        Write-Host "✅ Executive summary generated" -ForegroundColor Green
+          $executiveSummary | Set-Content -Path "./output/executive-summary.md"
+          Write-Host "✅ Executive summary generated" -ForegroundColor Green
 
-    - name: Create report summary
-      shell: pwsh
-      run: |
-        Write-Host "📄 Creating report summary..." -ForegroundColor Cyan
+      - name: Create report summary
+        shell: pwsh
+        run: |
+          Write-Host "📄 Creating report summary..." -ForegroundColor Cyan
 
-        $reportType = '${{ github.event.inputs.report_type }}'
-        if (-not $reportType) { $reportType = 'comprehensive' }
-        
-        $summary = @{
-          version = '${{ needs.initialize-reporting.outputs.version-number }}'
-          timestamp = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ')
-          baselineHash = '${{ needs.initialize-reporting.outputs.baseline-hash }}'
-          healthGrade = $env:HEALTH_GRADE
-          healthScore = $env:HEALTH_SCORE
-          totalModules = $env:TOTAL_MODULES
-          analyzedModules = $env:ANALYZED_MODULES
-          reportType = $reportType
-          gitSha = '${{ github.sha }}'
-          gitRef = '${{ github.ref }}'
-          workflowUrl = '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
-        }
+          $reportType = '${{ github.event.inputs.report_type }}'
+          if (-not $reportType) { $reportType = 'comprehensive' }
+          
+          $summary = @{
+            version = '${{ needs.initialize-reporting.outputs.version-number }}'
+            timestamp = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ')
+            baselineHash = '${{ needs.initialize-reporting.outputs.baseline-hash }}'
+            healthGrade = $env:HEALTH_GRADE
+            healthScore = $env:HEALTH_SCORE
+            totalModules = $env:TOTAL_MODULES
+            analyzedModules = $env:ANALYZED_MODULES
+            reportType = $reportType
+            gitSha = '${{ github.sha }}'
+            gitRef = '${{ github.ref }}'
+            workflowUrl = '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+          }
 
-        $summary | ConvertTo-Json -Depth 5 | Set-Content -Path './report-summary.json'
+          $summary | ConvertTo-Json -Depth 5 | Set-Content -Path './report-summary.json'
 
-        # Create GitHub summary
-        $markdownSummary = "## AitherZero Report Summary`n`nGenerated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')"
+          # Create GitHub summary
+          $markdownSummary = "## AitherZero Report Summary`n`nGenerated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')"
 
-        echo $markdownSummary >> $env:GITHUB_STEP_SUMMARY
+          echo $markdownSummary >> $env:GITHUB_STEP_SUMMARY
 
-    - name: Upload comprehensive report
-      uses: actions/upload-artifact@v4
-      with:
-        name: comprehensive-report
-        path: |
-          output/aitherZero-dashboard.html
-          output/aitherZero-comprehensive-report.html
-          output/feature-dependency-map.html
-          output/comprehensive-ci-dashboard.html
-          output/feature-map.json
-          output/executive-summary.md
-          report-summary.json
-        retention-days: 90
-        if-no-files-found: warn
+      - name: Upload comprehensive report
+        uses: actions/upload-artifact@v4
+        with:
+          name: comprehensive-report
+          path: |
+            output/aitherZero-dashboard.html
+            output/aitherZero-comprehensive-report.html
+            output/feature-dependency-map.html
+            output/comprehensive-ci-dashboard.html
+            output/feature-map.json
+            output/executive-summary.md
+            report-summary.json
+          retention-days: 90
+          if-no-files-found: warn
 
   # Version-specific testing
   version-testing:
@@ -654,39 +654,39 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Run comprehensive testing
-      shell: pwsh
-      run: |
-        Write-Host "🧪 Running version-specific testing for v${{ needs.initialize-reporting.outputs.version-number }}..." -ForegroundColor Cyan
+      - name: Run comprehensive testing
+        shell: pwsh
+        run: |
+          Write-Host "🧪 Running version-specific testing for v${{ needs.initialize-reporting.outputs.version-number }}..." -ForegroundColor Cyan
 
-        # Run all test suites
-        if (Test-Path "./tests/Run-Tests.ps1") {
-          pwsh ./tests/Run-Tests.ps1 -All -CI
-          pwsh ./tests/Run-Tests.ps1 -Setup -CI
-        } else {
-          Write-Host "⚠️ Test runner not found - skipping tests" -ForegroundColor Yellow
-        }
+          # Run all test suites
+          if (Test-Path "./tests/Run-Tests.ps1") {
+            pwsh ./tests/Run-Tests.ps1 -All -CI
+            pwsh ./tests/Run-Tests.ps1 -Setup -CI
+          } else {
+            Write-Host "⚠️ Test runner not found - skipping tests" -ForegroundColor Yellow
+          }
 
-        # Performance benchmarking
-        if (Test-Path "./Start-AitherZero.ps1") {
-          Measure-Command { pwsh ./Start-AitherZero.ps1 -WhatIf -NonInteractive } | Out-Host
-        } else {
-          Write-Host "⚠️ Start-AitherZero.ps1 not found - skipping benchmark" -ForegroundColor Yellow
-        }
+          # Performance benchmarking
+          if (Test-Path "./Start-AitherZero.ps1") {
+            Measure-Command { pwsh ./Start-AitherZero.ps1 -WhatIf -NonInteractive } | Out-Host
+          } else {
+            Write-Host "⚠️ Start-AitherZero.ps1 not found - skipping benchmark" -ForegroundColor Yellow
+          }
 
-        Write-Host "✅ Version testing completed for ${{ matrix.os }}" -ForegroundColor Green
+          Write-Host "✅ Version testing completed for ${{ matrix.os }}" -ForegroundColor Green
 
-    - name: Upload test results
-      uses: actions/upload-artifact@v4
-      with:
-        name: version-test-results-${{ matrix.os }}
-        path: |
-          tests/results/**/*
-        retention-days: 30
-        if-no-files-found: warn
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: version-test-results-${{ matrix.os }}
+          path: |
+            tests/results/**/*
+          retention-days: 30
+          if-no-files-found: warn
 
   # Create GitHub release if requested
   create-release:
@@ -699,47 +699,47 @@ jobs:
       contents: write
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Download comprehensive report
-      uses: actions/download-artifact@v4
-      with:
-        name: comprehensive-report
+      - name: Download comprehensive report
+        uses: actions/download-artifact@v4
+        with:
+          name: comprehensive-report
 
-    - name: Create release
-      uses: softprops/action-gh-release@v2
-      with:
-        tag_name: v${{ needs.initialize-reporting.outputs.version-number }}
-        name: AitherZero v${{ needs.initialize-reporting.outputs.version-number }}
-        body: |
-          ## 🚀 AitherZero v${{ needs.initialize-reporting.outputs.version-number }}
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.initialize-reporting.outputs.version-number }}
+          name: AitherZero v${{ needs.initialize-reporting.outputs.version-number }}
+          body: |
+            ## 🚀 AitherZero v${{ needs.initialize-reporting.outputs.version-number }}
 
-          ### 📊 Release Health Score
-          - **Overall Grade**: ${{ needs.generate-comprehensive-report.outputs.health-grade }}
-          - **Health Score**: ${{ needs.generate-comprehensive-report.outputs.health-score }}%
-          - **Module Coverage**: ${{ needs.generate-comprehensive-report.outputs.analyzed-modules }}/${{ needs.generate-comprehensive-report.outputs.total-modules }}
+            ### 📊 Release Health Score
+            - **Overall Grade**: ${{ needs.generate-comprehensive-report.outputs.health-grade }}
+            - **Health Score**: ${{ needs.generate-comprehensive-report.outputs.health-score }}%
+            - **Module Coverage**: ${{ needs.generate-comprehensive-report.outputs.analyzed-modules }}/${{ needs.generate-comprehensive-report.outputs.total-modules }}
 
-          ### 📋 Release Validation
-          - ✅ Comprehensive testing passed on all platforms
-          - ✅ Security scans passed
-          - ✅ Code quality checks passed
-          - ✅ Documentation coverage validated
+            ### 📋 Release Validation
+            - ✅ Comprehensive testing passed on all platforms
+            - ✅ Security scans passed
+            - ✅ Code quality checks passed
+            - ✅ Documentation coverage validated
 
-          ### 📄 Reports
-          - Download the comprehensive HTML report for detailed analysis
-          - Review the dynamic feature map for module relationships
+            ### 📄 Reports
+            - Download the comprehensive HTML report for detailed analysis
+            - Review the dynamic feature map for module relationships
 
-          ### 🔗 Links
-          - [Full Report Workflow](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          - [Documentation](https://github.com/${{ github.repository }}/blob/main/CLAUDE.md)
+            ### 🔗 Links
+            - [Full Report Workflow](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - [Documentation](https://github.com/${{ github.repository }}/blob/main/CLAUDE.md)
 
-          ---
-          🤖 This release was validated and created automatically by the AitherZero CI/CD system.
-        files: ./aitherZero-comprehensive-report.html
-        draft: false
-        prerelease: false
-        generate_release_notes: true
+            ---
+            🤖 This release was validated and created automatically by the AitherZero CI/CD system.
+          files: ./aitherZero-comprehensive-report.html
+          draft: false
+          prerelease: false
+          generate_release_notes: true
 
   # Final summary and notifications
   report-summary:
@@ -749,98 +749,98 @@ jobs:
     if: always()
 
     steps:
-    - name: Generate final summary
-      shell: pwsh
-      run: |
-        Write-Host "📋 Final Comprehensive Report Summary" -ForegroundColor Cyan
-        Write-Host "====================================" -ForegroundColor Cyan
+      - name: Generate final summary
+        shell: pwsh
+        run: |
+          Write-Host "📋 Final Comprehensive Report Summary" -ForegroundColor Cyan
+          Write-Host "====================================" -ForegroundColor Cyan
 
-        $results = @{
-          'Initialize Reporting' = '${{ needs.initialize-reporting.result }}'
-          'Consume CI & Audit' = '${{ needs.consume-ci-results-and-audit.result }}'
-          'Generate Report' = '${{ needs.generate-comprehensive-report.result }}'
-          'Version Testing' = '${{ needs.version-testing.result }}'
-          'Create Release' = '${{ needs.create-release.result }}'
-        }
-
-        $success = 0
-        $failed = 0
-        $skipped = 0
-
-        foreach ($job in $results.GetEnumerator()) {
-          $emoji = switch ($job.Value) {
-            'success' { '✅'; $success++ }
-            'failure' { '❌'; $failed++ }
-            'cancelled' { '⚠️'; $failed++ }
-            'skipped' { '⏭️'; $skipped++ }
-            default { '❓' }
+          $results = @{
+            'Initialize Reporting' = '${{ needs.initialize-reporting.result }}'
+            'Consume CI & Audit' = '${{ needs.consume-ci-results-and-audit.result }}'
+            'Generate Report' = '${{ needs.generate-comprehensive-report.result }}'
+            'Version Testing' = '${{ needs.version-testing.result }}'
+            'Create Release' = '${{ needs.create-release.result }}'
           }
-          Write-Host "$emoji $($job.Key): $($job.Value)"
-        }
 
-        Write-Host "`n📊 Summary Statistics:" -ForegroundColor Cyan
-        Write-Host "  ✅ Successful: $success"
-        Write-Host "  ❌ Failed: $failed"
-        Write-Host "  ⏭️ Skipped: $skipped"
+          $success = 0
+          $failed = 0
+          $skipped = 0
 
-        if ($failed -eq 0) {
-          Write-Host "`n🎉 All comprehensive reporting completed successfully!" -ForegroundColor Green
-        } else {
-          Write-Host "`n⚠️ Some jobs failed - please review the workflow" -ForegroundColor Yellow
-        }
+          foreach ($job in $results.GetEnumerator()) {
+            $emoji = switch ($job.Value) {
+              'success' { '✅'; $success++ }
+              'failure' { '❌'; $failed++ }
+              'cancelled' { '⚠️'; $failed++ }
+              'skipped' { '⏭️'; $skipped++ }
+              default { '❓' }
+            }
+            Write-Host "$emoji $($job.Key): $($job.Value)"
+          }
 
-        # Set workflow status
-        echo "WORKFLOW_SUCCESS=$(if ($failed -eq 0) { 'true' } else { 'false' })" >> $env:GITHUB_ENV
+          Write-Host "`n📊 Summary Statistics:" -ForegroundColor Cyan
+          Write-Host "  ✅ Successful: $success"
+          Write-Host "  ❌ Failed: $failed"
+          Write-Host "  ⏭️ Skipped: $skipped"
 
-    - name: Prepare GitHub Pages deployment
-      if: always()
-      shell: pwsh
-      run: |
-        Write-Host "📄 Preparing reports for GitHub Pages..." -ForegroundColor Cyan
-
-        # Create docs directory
-        New-Item -ItemType Directory -Path "./docs" -Force | Out-Null
-
-        # Copy all report files
-        $reports = @(
-          "output/aitherZero-dashboard.html",
-          "output/aitherZero-comprehensive-report.html",
-          "output/feature-dependency-map.html",
-          "output/comprehensive-ci-dashboard.html",
-          "output/executive-summary.md"
-        )
-
-        foreach ($report in $reports) {
-          if (Test-Path $report) {
-            $fileName = Split-Path $report -Leaf
-            Copy-Item $report -Destination "./docs/$fileName" -Force
-            Write-Host "✅ Copied $fileName" -ForegroundColor Green
+          if ($failed -eq 0) {
+            Write-Host "`n🎉 All comprehensive reporting completed successfully!" -ForegroundColor Green
           } else {
-            Write-Warning "Report file not found: $report"
+            Write-Host "`n⚠️ Some jobs failed - please review the workflow" -ForegroundColor Yellow
           }
-        }
 
-        # Create index.html with links to all reports
-        $indexHtml = "<html><head><title>AitherZero Reports</title></head><body><h1>AitherZero Reports</h1><p>Generated: $(Get-Date)</p></body></html>"
-        Set-Content -Path "./docs/index.html" -Value $indexHtml
-        Write-Host "✅ Created index.html" -ForegroundColor Green
+          # Set workflow status
+          echo "WORKFLOW_SUCCESS=$(if ($failed -eq 0) { 'true' } else { 'false' })" >> $env:GITHUB_ENV
 
-    - name: Deploy to GitHub Pages (comprehensive reports only)
-      if: always()
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./docs
-        force_orphan: true
-        commit_message: "Deploy comprehensive reports to GitHub Pages - Optimized Architecture"
+      - name: Prepare GitHub Pages deployment
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host "📄 Preparing reports for GitHub Pages..." -ForegroundColor Cyan
 
-    - name: Create workflow summary
-      shell: pwsh
-      run: |
-        $isSuccess = $env:WORKFLOW_SUCCESS -eq 'true'
-        $emoji = if ($isSuccess) { '🎉' } else { '⚠️' }
-        $status = if ($isSuccess) { 'SUCCESS' } else { 'PARTIAL SUCCESS' }
+          # Create docs directory
+          New-Item -ItemType Directory -Path "./docs" -Force | Out-Null
 
-        $workflowSummary = "# AitherZero Comprehensive Report - $status`n`nGenerated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')"
+          # Copy all report files
+          $reports = @(
+            "output/aitherZero-dashboard.html",
+            "output/aitherZero-comprehensive-report.html",
+            "output/feature-dependency-map.html",
+            "output/comprehensive-ci-dashboard.html",
+            "output/executive-summary.md"
+          )
 
-        echo $workflowSummary >> $env:GITHUB_STEP_SUMMARY
+          foreach ($report in $reports) {
+            if (Test-Path $report) {
+              $fileName = Split-Path $report -Leaf
+              Copy-Item $report -Destination "./docs/$fileName" -Force
+              Write-Host "✅ Copied $fileName" -ForegroundColor Green
+            } else {
+              Write-Warning "Report file not found: $report"
+            }
+          }
+
+          # Create index.html with links to all reports
+          $indexHtml = "<html><head><title>AitherZero Reports</title></head><body><h1>AitherZero Reports</h1><p>Generated: $(Get-Date)</p></body></html>"
+          Set-Content -Path "./docs/index.html" -Value $indexHtml
+          Write-Host "✅ Created index.html" -ForegroundColor Green
+
+      - name: Deploy to GitHub Pages (comprehensive reports only)
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          force_orphan: true
+          commit_message: "Deploy comprehensive reports to GitHub Pages - Optimized Architecture"
+
+      - name: Create workflow summary
+        shell: pwsh
+        run: |
+          $isSuccess = $env:WORKFLOW_SUCCESS -eq 'true'
+          $emoji = if ($isSuccess) { '🎉' } else { '⚠️' }
+          $status = if ($isSuccess) { 'SUCCESS' } else { 'PARTIAL SUCCESS' }
+
+          $workflowSummary = "# AitherZero Comprehensive Report - $status`n`nGenerated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')"
+
+          echo $workflowSummary >> $env:GITHUB_STEP_SUMMARY
