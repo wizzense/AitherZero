@@ -5,11 +5,15 @@ name: Workflow Configuration
 
 # This workflow is not meant to run - it's a configuration reference
 on:
-  workflow_dispatch: inputs: action: description: 'Configuration action'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Configuration action'
         required: true
         default: 'validate'
         type: choice
-        options: - validate
+        options:
+          - validate
           - optimize
           - cleanup
 

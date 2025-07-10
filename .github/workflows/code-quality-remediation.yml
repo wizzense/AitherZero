@@ -3,19 +3,25 @@ name: Code Quality Remediation
 on:
   schedule: # Run weekly on Sundays at 02:00 UTC
     - cron: '0 2 * * 0'
-  workflow_dispatch: inputs: modules: description: 'Specific modules to remediate (comma-separated, or "all" for all modules)'
+  workflow_dispatch:
+    inputs:
+      modules:
+        description: 'Specific modules to remediate (comma-separated, or "all" for all modules)'
         required: false
         default: 'all'
         type: string
-      create_pr: description: 'Create pull request with fixes'
+      create_pr:
+        description: 'Create pull request with fixes'
         required: false
         default: true
         type: boolean
-      dry_run: description: 'Dry run mode (analyze only, no changes)'
+      dry_run:
+        description: 'Dry run mode (analyze only, no changes)'
         required: false
         default: false
         type: boolean
-      auto_fix: description: 'Automatically fix issues (safe fixes only)'
+      auto_fix:
+        description: 'Automatically fix issues (safe fixes only)'
         required: false
         default: true
         type: boolean

@@ -1,15 +1,23 @@
 name: Release
 
 on: # PRIMARY: Tag-based release trigger (AUTOMATIC)
-  push: tags: - 'v*'
+  push:
+    tags:
+      - 'v*'
   # SECONDARY: CI completion trigger (VERSION file change detection)
-  workflow_run: workflows: ["CI - Optimized & Reliable"]
-    types: - completed
+  workflow_run:
+    workflows: ["CI - Optimized & Reliable"]
+    types:
+      - completed
     branches: [main, 'patch/**']
   # MANUAL: Emergency manual release
-  workflow_dispatch: inputs: version: description: 'Version to release (e.g., 1.0.0)'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
         required: true
-      force_release: description: 'Force release even if CI validation incomplete'
+      force_release:
+        description: 'Force release even if CI validation incomplete'
         type: boolean
         default: false
 

@@ -434,14 +434,39 @@ function Get-TestFiles {
     $testFiles = @()
     
     # Define test file mappings based on test suite
-    $testSuiteMapping = @{
-        'Quick' = @('Core.Tests.ps1')
-        'Core' = @('Core.Tests.ps1')
-        'Setup' = @('Setup.Tests.ps1', 'Setup-Installation.Tests.ps1')
-        'Installation' = @('Setup-Installation.Tests.ps1', 'PowerShell-Version.Tests.ps1', 'EntryPoint-Validation.Tests.ps1')
-        'Platform' = @('PowerShell-Version.Tests.ps1', 'CrossPlatform-Bootstrap.Tests.ps1')
-        'CI' = @('Core.Tests.ps1', 'EntryPoint-Validation.Tests.ps1', 'PowerShell-Version.Tests.ps1')
-        'All' = @('Core.Tests.ps1', 'Setup.Tests.ps1', 'Setup-Installation.Tests.ps1', 'PowerShell-Version.Tests.ps1', 'EntryPoint-Validation.Tests.ps1', 'CrossPlatform-Bootstrap.Tests.ps1', 'SetupWizard-Integration.Tests.ps1')
+    if ($TestSuite -eq 'All' -or $TestSuite -eq 'Comprehensive') {
+        # Discover ALL test files - centralized and distributed
+        Write-ProgressUpdate -Activity "Discovery" -Status "Discovering all test files (centralized + distributed)" -PercentComplete 25
+        
+        # Get centralized tests
+        $centralizedTests = Get-ChildItem -Path $script:TestPath -Filter "*.Tests.ps1" -Recurse | ForEach-Object { $_.Name }
+        
+        # Get distributed module tests
+        $moduleTestsPath = Join-Path $script:ProjectRoot "aither-core/modules"
+        $distributedTests = @()
+        if (Test-Path $moduleTestsPath) {
+            $distributedTests = Get-ChildItem -Path $moduleTestsPath -Filter "*.Tests.ps1" -Recurse | ForEach-Object { $_.FullName }
+        }
+        
+        Write-Host "📊 Test Discovery Results:" -ForegroundColor Cyan
+        Write-Host "  Centralized tests: $($centralizedTests.Count)" -ForegroundColor White
+        Write-Host "  Distributed tests: $($distributedTests.Count)" -ForegroundColor White
+        Write-Host "  Total tests: $($centralizedTests.Count + $distributedTests.Count)" -ForegroundColor White
+        
+        $testSuiteMapping = @{
+            'All' = $centralizedTests
+            'Comprehensive' = $centralizedTests
+        }
+    } else {
+        # Legacy hardcoded mappings for specific test suites
+        $testSuiteMapping = @{
+            'Quick' = @('Core.Tests.ps1')
+            'Core' = @('Core.Tests.ps1')
+            'Setup' = @('Setup.Tests.ps1', 'Setup-Installation.Tests.ps1')
+            'Installation' = @('Setup-Installation.Tests.ps1', 'PowerShell-Version.Tests.ps1', 'EntryPoint-Validation.Tests.ps1')
+            'Platform' = @('PowerShell-Version.Tests.ps1', 'CrossPlatform-Bootstrap.Tests.ps1')
+            'CI' = @('Core.Tests.ps1', 'EntryPoint-Validation.Tests.ps1', 'PowerShell-Version.Tests.ps1')
+        }
     }
     
     $targetFiles = $testSuiteMapping[$TestSuite]

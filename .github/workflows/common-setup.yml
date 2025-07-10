@@ -4,15 +4,20 @@
 name: Common Setup Operations
 
 on:
-  workflow_call: inputs: setup-type: description: 'Type of setup to perform'
+  workflow_call:
+    inputs:
+      setup-type:
+        description: 'Type of setup to perform'
         required: true
         type: string
         default: 'basic'
-      cache-key-suffix: description: 'Additional suffix for cache keys'
+      cache-key-suffix:
+        description: 'Additional suffix for cache keys'
         required: false
         type: string
         default: ''
-      powershell-modules: description: 'PowerShell modules to install'
+      powershell-modules:
+        description: 'PowerShell modules to install'
         required: false
         type: string
         default: 'Pester,PSScriptAnalyzer'

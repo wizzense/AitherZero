@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="32" errors="0" failures="18" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-09" time="16:34:27">
-  <environment nunit-version="2.5.8.0" cwd="/workspaces/AitherZero" user="codespace" os-version="6.8.0-1027-azure" platform="Linux" machine-name="codespaces-6c6eb1" user-domain="" clr-version="9.0.4" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="32" errors="0" failures="18" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-10" time="15:52:07">
+  <environment user-domain="" clr-version="9.0.4" nunit-version="2.5.8.0" os-version="6.8.0-1027-azure" platform="Linux" cwd="/workspaces/AitherZero" machine-name="codespaces-6c6eb1" user="codespace" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="10.6567" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="2.6002" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/LicenseManager/tests/LicenseManager.Tests.ps1" executed="True" result="Failure" success="False" time="10.6567" asserts="0" description="/workspaces/AitherZero/aither-core/modules/LicenseManager/tests/LicenseManager.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/LicenseManager/tests/LicenseManager.Tests.ps1" executed="True" result="Failure" success="False" time="2.6002" asserts="0" description="/workspaces/AitherZero/aither-core/modules/LicenseManager/tests/LicenseManager.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="LicenseManager Module" executed="True" result="Failure" success="False" time="10.1754" asserts="0" description="LicenseManager Module">
+          <test-suite type="TestFixture" name="LicenseManager Module" executed="True" result="Failure" success="False" time="1.8758" asserts="0" description="LicenseManager Module">
             <results>
-              <test-suite type="TestFixture" name="LicenseManager Module.Module Import" executed="True" result="Failure" success="False" time="0.2282" asserts="0" description="LicenseManager Module.Module Import">
+              <test-suite type="TestFixture" name="LicenseManager Module.Module Import" executed="True" result="Failure" success="False" time="0.2664" asserts="0" description="LicenseManager Module.Module Import">
                 <results>
-                  <test-case description="Should import successfully" name="LicenseManager Module.Module Import.Should import successfully" time="0.1165" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should export all required functions" name="LicenseManager Module.Module Import.Should export all required functions" time="0.0856" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should import successfully" name="LicenseManager Module.Module Import.Should import successfully" time="0.1181" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export all required functions" name="LicenseManager Module.Module Import.Should export all required functions" time="0.1182" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected 'Test-FeatureAccess' to be found in collection @('Get-AvailableFeatures', 'Get-LicenseCacheStatistics', 'Get-LicenseStatus', 'New-License', 'Register-LicenseHook', 'Set-License'), but it was not found.</message>
                       <stack-trace>at $ExportedFunctions | Should -Contain $Function, /workspaces/AitherZero/aither-core/modules/LicenseManager/tests/LicenseManager.Tests.ps1:77
@@ -20,31 +20,31 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/LicenseManage
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="LicenseManager Module.License Status - No License" executed="True" result="Success" success="True" time="0.4742" asserts="0" description="LicenseManager Module.License Status - No License">
+              <test-suite type="TestFixture" name="LicenseManager Module.License Status - No License" executed="True" result="Success" success="True" time="0.3267" asserts="0" description="LicenseManager Module.License Status - No License">
                 <results>
-                  <test-case description="Should return free tier when no license exists" name="LicenseManager Module.License Status - No License.Should return free tier when no license exists" time="0.2403" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return free tier when no license exists" name="LicenseManager Module.License Status - No License.Should return free tier when no license exists" time="0.0555" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="LicenseManager Module.License Installation" executed="True" result="Failure" success="False" time="2.2769" asserts="0" description="LicenseManager Module.License Installation">
+              <test-suite type="TestFixture" name="LicenseManager Module.License Installation" executed="True" result="Failure" success="False" time="0.5978" asserts="0" description="LicenseManager Module.License Installation">
                 <results>
-                  <test-case description="Should install license from JSON string" name="LicenseManager Module.License Installation.Should install license from JSON string" time="0.4772" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should install license from file" name="LicenseManager Module.License Installation.Should install license from file" time="0.5108" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should install license from base64 key" name="LicenseManager Module.License Installation.Should install license from base64 key" time="0.4134" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should reject expired license" name="LicenseManager Module.License Installation.Should reject expired license" time="0.0966" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should install license from JSON string" name="LicenseManager Module.License Installation.Should install license from JSON string" time="0.1149" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should install license from file" name="LicenseManager Module.License Installation.Should install license from file" time="0.0268" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should install license from base64 key" name="LicenseManager Module.License Installation.Should install license from base64 key" time="0.028" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should reject expired license" name="LicenseManager Module.License Installation.Should reject expired license" time="0.0506" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
-                      <message>WriteErrorException: Failed to install license: License has expired on 2025-06-09</message>
+                      <message>WriteErrorException: Failed to install license: License has expired on 2025-06-10</message>
                       <stack-trace>at Set-License, /workspaces/AitherZero/aither-core/modules/LicenseManager/Public/Set-License.ps1:221
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/LicenseManager/tests/LicenseManager.Tests.ps1:147</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should reject invalid license format" name="LicenseManager Module.License Installation.Should reject invalid license format" time="0.1073" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should reject invalid license format" name="LicenseManager Module.License Installation.Should reject invalid license format" time="0.0206" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>WriteErrorException: Failed to install license: Invalid license string format: Conversion from JSON failed with error: Unexpected character encountered while parsing value: i. Path '', line 0, position 0.</message>
                       <stack-trace>at Set-License, /workspaces/AitherZero/aither-core/modules/LicenseManager/Public/Set-License.ps1:221
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/LicenseManager/tests/LicenseManager.Tests.ps1:154</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should validate signature in strict mode" name="LicenseManager Module.License Installation.Should validate signature in strict mode" time="0.1902" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should validate signature in strict mode" name="LicenseManager Module.License Installation.Should validate signature in strict mode" time="0.0234" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>WriteErrorException: Failed to install license: License signature validation failed</message>
                       <stack-trace>at Set-License, /workspaces/AitherZero/aither-core/modules/LicenseManager/Public/Set-License.ps1:221
@@ -53,30 +53,30 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/LicenseManage
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="LicenseManager Module.License Validation" executed="True" result="Success" success="True" time="3.6054" asserts="0" description="LicenseManager Module.License Validation">
+              <test-suite type="TestFixture" name="LicenseManager Module.License Validation" executed="True" result="Success" success="True" time="0.7373" asserts="0" description="LicenseManager Module.License Validation">
                 <results>
-                  <test-case description="Should return valid status for good license" name="LicenseManager Module.License Validation.Should return valid status for good license" time="0.7637" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should detect license corruption" name="LicenseManager Module.License Validation.Should detect license corruption" time="0.555" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return valid status for good license" name="LicenseManager Module.License Validation.Should return valid status for good license" time="0.0577" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should detect license corruption" name="LicenseManager Module.License Validation.Should detect license corruption" time="0.0753" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="LicenseManager Module.Feature Access Testing" executed="True" result="Failure" success="False" time="5.4447" asserts="0" description="LicenseManager Module.Feature Access Testing">
+              <test-suite type="TestFixture" name="LicenseManager Module.Feature Access Testing" executed="True" result="Failure" success="False" time="0.9852" asserts="0" description="LicenseManager Module.Feature Access Testing">
                 <results>
-                  <test-case description="Should grant access to pro tier features" name="LicenseManager Module.Feature Access Testing.Should grant access to pro tier features" time="0.4815" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should grant access to pro tier features" name="LicenseManager Module.Feature Access Testing.Should grant access to pro tier features" time="0.0704" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Test-FeatureAccess' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
                       <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/LicenseManager/tests/LicenseManager.Tests.ps1:206</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should deny access to enterprise features" name="LicenseManager Module.Feature Access Testing.Should deny access to enterprise features" time="0.4512" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should deny access to enterprise features" name="LicenseManager Module.Feature Access Testing.Should deny access to enterprise features" time="0.0493" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Test-FeatureAccess' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
                       <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/LicenseManager/tests/LicenseManager.Tests.ps1:212</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should throw on denied access when requested" name="LicenseManager Module.Feature Access Testing.Should throw on denied access when requested" time="0.4729" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should test module access" name="LicenseManager Module.Feature Access Testing.Should test module access" time="0.4281" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should throw on denied access when requested" name="LicenseManager Module.Feature Access Testing.Should throw on denied access when requested" time="0.0664" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should test module access" name="LicenseManager Module.Feature Access Testing.Should test module access" time="0.0567" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Test-ModuleAccess' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -85,10 +85,10 @@ Check the spelling of the name, or if a path was included, verify that the path 
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="LicenseManager Module.Feature Registry" executed="True" result="Failure" success="False" time="5.4972" asserts="0" description="LicenseManager Module.Feature Registry">
+              <test-suite type="TestFixture" name="LicenseManager Module.Feature Registry" executed="True" result="Failure" success="False" time="1.0417" asserts="0" description="LicenseManager Module.Feature Registry">
                 <results>
-                  <test-case description="Should load feature registry" name="LicenseManager Module.Feature Registry.Should load feature registry" time="0.0141" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should get feature tier requirements" name="LicenseManager Module.Feature Registry.Should get feature tier requirements" time="0.0337" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should load feature registry" name="LicenseManager Module.Feature Registry.Should load feature registry" time="0.0146" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should get feature tier requirements" name="LicenseManager Module.Feature Registry.Should get feature tier requirements" time="0.0377" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Get-FeatureTier' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -97,9 +97,9 @@ Check the spelling of the name, or if a path was included, verify that the path 
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="LicenseManager Module.Available Features" executed="True" result="Failure" success="False" time="7.0517" asserts="0" description="LicenseManager Module.Available Features">
+              <test-suite type="TestFixture" name="LicenseManager Module.Available Features" executed="True" result="Failure" success="False" time="1.2353" asserts="0" description="LicenseManager Module.Available Features">
                 <results>
-                  <test-case description="Should list available features" name="LicenseManager Module.Available Features.Should list available features" time="0.787" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should list available features" name="LicenseManager Module.Available Features.Should list available features" time="0.083" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>WriteErrorException: Failed to get available features: The term 'Test-TierAccess' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -107,7 +107,7 @@ Check the spelling of the name, or if a path was included, verify that the path 
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/LicenseManager/tests/LicenseManager.Tests.ps1:252</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should include locked features when requested" name="LicenseManager Module.Available Features.Should include locked features when requested" time="0.7629" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should include locked features when requested" name="LicenseManager Module.Available Features.Should include locked features when requested" time="0.1049" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>WriteErrorException: Failed to get available features: The term 'Test-TierAccess' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -117,9 +117,9 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/LicenseManage
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="LicenseManager Module.License Information" executed="True" result="Failure" success="False" time="7.5034" asserts="0" description="LicenseManager Module.License Information">
+              <test-suite type="TestFixture" name="LicenseManager Module.License Information" executed="True" result="Failure" success="False" time="1.3193" asserts="0" description="LicenseManager Module.License Information">
                 <results>
-                  <test-case description="Should provide detailed license information" name="LicenseManager Module.License Information.Should provide detailed license information" time="0.4482" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should provide detailed license information" name="LicenseManager Module.License Information.Should provide detailed license information" time="0.0773" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Get-LicenseInfo' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -128,9 +128,9 @@ Check the spelling of the name, or if a path was included, verify that the path 
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="LicenseManager Module.License Clearing" executed="True" result="Failure" success="False" time="7.9235" asserts="0" description="LicenseManager Module.License Clearing">
+              <test-suite type="TestFixture" name="LicenseManager Module.License Clearing" executed="True" result="Failure" success="False" time="1.4024" asserts="0" description="LicenseManager Module.License Clearing">
                 <results>
-                  <test-case description="Should clear license and revert to free tier" name="LicenseManager Module.License Clearing.Should clear license and revert to free tier" time="0.4168" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should clear license and revert to free tier" name="LicenseManager Module.License Clearing.Should clear license and revert to free tier" time="0.0777" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Clear-License' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -139,22 +139,22 @@ Check the spelling of the name, or if a path was included, verify that the path 
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="LicenseManager Module.License Generation" executed="True" result="Success" success="True" time="8.9314" asserts="0" description="LicenseManager Module.License Generation">
+              <test-suite type="TestFixture" name="LicenseManager Module.License Generation" executed="True" result="Success" success="True" time="1.5381" asserts="0" description="LicenseManager Module.License Generation">
                 <results>
-                  <test-case description="Should generate valid test licenses" name="LicenseManager Module.License Generation.Should generate valid test licenses" time="0.5156" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should generate enterprise licenses with all features" name="LicenseManager Module.License Generation.Should generate enterprise licenses with all features" time="0.489" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should generate valid test licenses" name="LicenseManager Module.License Generation.Should generate valid test licenses" time="0.0862" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should generate enterprise licenses with all features" name="LicenseManager Module.License Generation.Should generate enterprise licenses with all features" time="0.044" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="LicenseManager Module.Tier Access Logic" executed="True" result="Failure" success="False" time="9.0052" asserts="0" description="LicenseManager Module.Tier Access Logic">
+              <test-suite type="TestFixture" name="LicenseManager Module.Tier Access Logic" executed="True" result="Failure" success="False" time="1.6294" asserts="0" description="LicenseManager Module.Tier Access Logic">
                 <results>
-                  <test-case description="Should correctly compare tier levels" name="LicenseManager Module.Tier Access Logic.Should correctly compare tier levels" time="0.0327" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should correctly compare tier levels" name="LicenseManager Module.Tier Access Logic.Should correctly compare tier levels" time="0.043" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Test-TierAccess' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
                       <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/LicenseManager/tests/LicenseManager.Tests.ps1:326</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should handle unknown tiers gracefully" name="LicenseManager Module.Tier Access Logic.Should handle unknown tiers gracefully" time="0.0379" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should handle unknown tiers gracefully" name="LicenseManager Module.Tier Access Logic.Should handle unknown tiers gracefully" time="0.0423" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Test-TierAccess' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
@@ -163,16 +163,16 @@ Check the spelling of the name, or if a path was included, verify that the path 
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="LicenseManager Module.Security Validation" executed="True" result="Failure" success="False" time="9.0374" asserts="0" description="LicenseManager Module.Security Validation">
+              <test-suite type="TestFixture" name="LicenseManager Module.Security Validation" executed="True" result="Failure" success="False" time="1.7112" asserts="0" description="LicenseManager Module.Security Validation">
                 <results>
-                  <test-case description="Should detect signatures with insufficient entropy" name="LicenseManager Module.Security Validation.Should detect signatures with insufficient entropy" time="0.0063" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should validate license integrity" name="LicenseManager Module.Security Validation.Should validate license integrity" time="0.0134" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should detect signatures with insufficient entropy" name="LicenseManager Module.Security Validation.Should detect signatures with insufficient entropy" time="0.0268" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should validate license integrity" name="LicenseManager Module.Security Validation.Should validate license integrity" time="0.0298" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>ParameterBindingValidationException: Cannot bind argument to parameter 'License' because it is null.</message>
                       <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/LicenseManager/tests/LicenseManager.Tests.ps1:353</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should validate canonical license data creation" name="LicenseManager Module.Security Validation.Should validate canonical license data creation" time="0.0087" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should validate canonical license data creation" name="LicenseManager Module.Security Validation.Should validate canonical license data creation" time="0.0189" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>ParameterBindingValidationException: Cannot bind argument to parameter 'License' because it is null.</message>
                       <stack-trace>at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/LicenseManager/tests/LicenseManager.Tests.ps1:363</stack-trace>
@@ -180,11 +180,11 @@ Check the spelling of the name, or if a path was included, verify that the path 
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="LicenseManager Module.Error Handling" executed="True" result="Failure" success="False" time="9.4205" asserts="0" description="LicenseManager Module.Error Handling">
+              <test-suite type="TestFixture" name="LicenseManager Module.Error Handling" executed="True" result="Failure" success="False" time="1.7911" asserts="0" description="LicenseManager Module.Error Handling">
                 <results>
-                  <test-case description="Should handle missing license file gracefully" name="LicenseManager Module.Error Handling.Should handle missing license file gracefully" time="0.1515" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle corrupted license files" name="LicenseManager Module.Error Handling.Should handle corrupted license files" time="0.1789" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle feature access with invalid license" name="LicenseManager Module.Error Handling.Should handle feature access with invalid license" time="0.0492" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should handle missing license file gracefully" name="LicenseManager Module.Error Handling.Should handle missing license file gracefully" time="0.0174" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle corrupted license files" name="LicenseManager Module.Error Handling.Should handle corrupted license files" time="0.0122" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle feature access with invalid license" name="LicenseManager Module.Error Handling.Should handle feature access with invalid license" time="0.0443" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected no exception to be thrown, but an exception "The term 'Test-FeatureAccess' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/LicenseManager/tests/LicenseManager.Tests.ps1:400 char:15
@@ -196,9 +196,9 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/LicenseManage
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="LicenseManager Module.Performance" executed="True" result="Failure" success="False" time="10.1635" asserts="0" description="LicenseManager Module.Performance">
+              <test-suite type="TestFixture" name="LicenseManager Module.Performance" executed="True" result="Failure" success="False" time="1.8614" asserts="0" description="LicenseManager Module.Performance">
                 <results>
-                  <test-case description="Should complete license operations within reasonable time" name="LicenseManager Module.Performance.Should complete license operations within reasonable time" time="0.7387" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should complete license operations within reasonable time" name="LicenseManager Module.Performance.Should complete license operations within reasonable time" time="0.0641" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Test-FeatureAccess' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>

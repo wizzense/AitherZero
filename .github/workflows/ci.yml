@@ -104,7 +104,10 @@ jobs:
           $files = Get-ChildItem -Include "*.ps1","*.psm1","*.psd1" -Recurse |
                    Where-Object { $_.FullName -notlike "*test*" -and $_.FullName -notlike "*build*" }
 
-          $results = Invoke-ScriptAnalyzer -Path $files.FullName -Severity Error,Warning
+          $results = @()
+          foreach ($file in $files) {
+            $results += Invoke-ScriptAnalyzer -Path $file.FullName -Severity Error,Warning
+          }
 
           if ($results) {
             Write-Host "Quality issues found: $($results.Count)"
@@ -246,7 +249,7 @@ jobs:
 
           if (Test-Path $expectedFile) {
             $size = (Get-Item $expectedFile).Length / 1MB
-            Write-Host "✅ Build successful: $([math]: Round($size, 2)) MB"
+            Write-Host "✅ Build successful: $([math]::Round($size, 2)) MB"
           } else {
             Write-Host "❌ Build failed: $expectedFile not found"
             exit 1

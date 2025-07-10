@@ -3,18 +3,24 @@ name: Security Scan
 on:
   schedule: # Run every Monday at 3:00 AM UTC
     - cron: '0 3 * * 1'
-  pull_request: branches: [ main, develop ]
-    paths: - '**/*.ps1'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - '**/*.ps1'
       - '**/*.psm1'
       - '**/*.psd1'
       - '**/requirements.psd1'
       - '**/packages.config'
       - '.github/workflows/security-scan.yml'
-  workflow_dispatch: inputs: scan_type: description: 'Type of scan to run'
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Type of scan to run'
         required: false
         default: 'all'
         type: choice
-        options: - all
+        options:
+          - all
           - codeql
           - dependencies
 

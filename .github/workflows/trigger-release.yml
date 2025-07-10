@@ -1,10 +1,14 @@
 name: 🚀 Trigger Release
 
 on:
-  workflow_dispatch: inputs: version: description: 'Version to release (e.g., 0.7.3)'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.7.3)'
         required: true
         type: string
-      create_tag: description: 'Create Git tag'
+      create_tag:
+        description: 'Create Git tag'
         required: false
         default: true
         type: boolean
