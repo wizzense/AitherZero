@@ -246,8 +246,14 @@ function Read-LoggedInput {
     if ($IsNonInteractive) {
         Write-CustomLog "Non-interactive mode detected. Using default value for: $Prompt" 'INFO'
         if ($AsSecureString -and -not [string]::IsNullOrEmpty($DefaultValue)) {
-            # This is a legitimate use case for test environments - PSScriptAnalyzer suppressed: PSAvoidUsingConvertToSecureStringWithPlainText
-            return ConvertTo-SecureString -String $DefaultValue -AsPlainText -Force
+            # This is a legitimate use case for test environments where secure input is not available
+            # SuppressMessage for PSScriptAnalyzer as this is needed for automation scenarios
+            [System.Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingConvertToSecureStringWithPlainText', 'ConvertTo-SecureString')]
+            return & {
+                [System.Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingConvertToSecureStringWithPlainText', 'ConvertTo-SecureString')]
+                param()
+                ConvertTo-SecureString -String $DefaultValue -AsPlainText -Force
+            }
         }
         return $DefaultValue
     }
@@ -978,8 +984,8 @@ function Write-EnhancedDeploymentSummary {
 
     if ($Result.Errors.Count -gt 0) {
         Write-Host "`nErrors:" -ForegroundColor Red
-        foreach ($error in $Result.Errors) {
-            Write-Host "  ❌ $error" -ForegroundColor Red
+        foreach ($errorItem in $Result.Errors) {
+            Write-Host "  ❌ $errorItem" -ForegroundColor Red
         }
     }
 
@@ -995,13 +1001,13 @@ function Test-DomainIntegration {
         This function validates that domain changes work correctly through the CI/CD pipeline
     #>
     param(
-        [string] = "Domain integration test"
+        [string]$Message = "Domain integration test"
     )
     
     Write-CustomLog -Message "Domain integration test: " -Level "INFO"
     return @{
         Status = "Success"
-        Message = 
+        Message = $Message
         Timestamp = Get-Date
         Domain = "Infrastructure"
     }

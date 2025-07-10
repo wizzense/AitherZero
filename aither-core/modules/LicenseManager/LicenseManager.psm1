@@ -7,16 +7,9 @@
     Provides tier-based feature access control and license validation
 #>
 
-# Write-CustomLog fallback for test isolation scenarios
-if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-    function Global:Write-CustomLog {
-        param(
-            [string]$Message,
-            [string]$Level = 'INFO'
-        )
-        Write-Host "[$Level] $Message"
-    }
-}
+# Initialize logging system with fallback support
+. "$PSScriptRoot/../../shared/Initialize-Logging.ps1"
+Initialize-Logging
 
 # Import required modules
 $ErrorActionPreference = 'Stop'

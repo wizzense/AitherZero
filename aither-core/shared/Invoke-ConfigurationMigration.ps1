@@ -17,6 +17,9 @@
     Invoke-ConfigurationMigration -DryRun
 #>
 
+# Import shared Find-ProjectRoot utility
+. "$PSScriptRoot/Find-ProjectRoot.ps1"
+
 function Invoke-ConfigurationMigration {
     [CmdletBinding()]
     param(
@@ -485,32 +488,7 @@ function Generate-MigrationReport {
     }
 }
 
-function Find-ProjectRoot {
-    [CmdletBinding()]
-    param(
-        [string]$StartPath = $PSScriptRoot
-    )
-
-    $currentPath = $StartPath
-    $rootIndicators = @('.git', 'Start-AitherZero.ps1', 'aither-core')
-
-    while ($currentPath) {
-        foreach ($indicator in $rootIndicators) {
-            $testPath = Join-Path $currentPath $indicator
-            if (Test-Path $testPath) {
-                return $currentPath
-            }
-        }
-
-        $parentPath = Split-Path $currentPath -Parent
-        if ($parentPath -eq $currentPath) {
-            break
-        }
-        $currentPath = $parentPath
-    }
-
-    return $PWD.Path
-}
+# Find-ProjectRoot function is now imported from shared utility
 
 # Export functions (remove for script usage)
 # Export-ModuleMember -Function Invoke-ConfigurationMigration
