@@ -40,6 +40,7 @@ env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   DOTNET_NOLOGO: true
+  SCAN_TYPE: ${{ github.event.inputs.scan_type || 'comprehensive' }}
 
 defaults:
   run:
@@ -57,7 +58,7 @@ jobs:
           fetch-depth: 0  # Full history for better analysis
 
       - name: Check for JavaScript files
-        if: github.event.inputs.scan_type != 'secrets-only' && github.event.inputs.scan_type != 'dependency-only'
+        if: env.SCAN_TYPE != 'secrets-only' && env.SCAN_TYPE != 'dependency-only'
         id: check-js
         run: |
           $jsFiles = Get-ChildItem -Include "*.js", "*.jsx", "*.ts", "*.tsx" -Recurse -ErrorAction SilentlyContinue
@@ -70,20 +71,20 @@ jobs:
           }
 
       - name: Initialize CodeQL
-        if: github.event.inputs.scan_type != 'secrets-only' && github.event.inputs.scan_type != 'dependency-only' && steps.check-js.outputs.codeql_needed == 'true'
+        if: env.SCAN_TYPE != 'secrets-only' && env.SCAN_TYPE != 'dependency-only' && steps.check-js.outputs.codeql_needed == 'true'
         uses: github/codeql-action/init@v3
         with:
           languages: javascript
           queries: security-and-quality
 
       - name: Perform CodeQL Analysis
-        if: github.event.inputs.scan_type != 'secrets-only' && github.event.inputs.scan_type != 'dependency-only' && steps.check-js.outputs.codeql_needed == 'true'
+        if: env.SCAN_TYPE != 'secrets-only' && env.SCAN_TYPE != 'dependency-only' && steps.check-js.outputs.codeql_needed == 'true'
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:javascript"
 
       - name: CodeQL Analysis Skipped
-        if: github.event.inputs.scan_type != 'secrets-only' && github.event.inputs.scan_type != 'dependency-only' && (steps.check-js.outputs.codeql_needed == 'false' || steps.check-js.conclusion == 'skipped')
+        if: env.SCAN_TYPE != 'secrets-only' && env.SCAN_TYPE != 'dependency-only' && (steps.check-js.outputs.codeql_needed == 'false' || steps.check-js.conclusion == 'skipped')
         run: |
           Write-Host "::notice::CodeQL analysis skipped - no JavaScript/TypeScript files found"
 
@@ -91,7 +92,7 @@ jobs:
     name: "Secrets Detection"
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event.inputs.scan_type != 'codeql-only' && github.event.inputs.scan_type != 'dependency-only'
+    if: env.SCAN_TYPE != 'codeql-only' && env.SCAN_TYPE != 'dependency-only'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -159,7 +160,7 @@ jobs:
     name: "Dependency Scan"
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: github.event.inputs.scan_type != 'codeql-only' && github.event.inputs.scan_type != 'secrets-only'
+    if: env.SCAN_TYPE != 'codeql-only' && env.SCAN_TYPE != 'secrets-only'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
