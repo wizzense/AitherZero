@@ -199,18 +199,35 @@ function New-Patch {
                 # Step 3: Apply AutoTag if requested (v3.1 feature)
                 if ($AutoTag -and -not $DryRun) {
                     try {
-                        Write-CustomLog "Creating automatic version tag..." -Level "INFO"
+                        Write-CustomLog "Checking for automatic version tagging..." -Level "INFO"
                         
-                        if (Test-Path "VERSION") {
-                            $version = (Get-Content "VERSION").Trim()
-                            $tagName = "v$version"
+                        # Use the new comprehensive automatic version tagging function
+                        if (Get-Command Invoke-AutomaticVersionTagging -ErrorAction SilentlyContinue) {
+                            $taggingResult = Invoke-AutomaticVersionTagging
                             
-                            git tag -a "$tagName" -m "Automatic tag: $Description"
-                            git push origin "$tagName"
-                            
-                            Write-CustomLog "Created and pushed tag: $tagName" -Level "SUCCESS"
+                            if ($taggingResult.Success -and $taggingResult.TagCreated) {
+                                Write-CustomLog "✅ Automatic version tag created: $($taggingResult.TagName)" -Level "SUCCESS"
+                                Write-CustomLog "🚀 Release workflow should now trigger automatically" -Level "INFO"
+                            } elseif ($taggingResult.Success) {
+                                Write-CustomLog "ℹ️  Automatic tagging: $($taggingResult.Message)" -Level "INFO"
+                            } else {
+                                Write-CustomLog "⚠️  Automatic tagging failed: $($taggingResult.Message)" -Level "WARN"
+                            }
                         } else {
-                            Write-CustomLog "VERSION file not found - skipping AutoTag" -Level "WARN"
+                            # Fallback to original simple tagging logic
+                            Write-CustomLog "Using fallback automatic tagging..." -Level "INFO"
+                            
+                            if (Test-Path "VERSION") {
+                                $version = (Get-Content "VERSION").Trim()
+                                $tagName = "v$version"
+                                
+                                git tag -a "$tagName" -m "Automatic tag: $Description"
+                                git push origin "$tagName"
+                                
+                                Write-CustomLog "Created and pushed tag: $tagName" -Level "SUCCESS"
+                            } else {
+                                Write-CustomLog "VERSION file not found - skipping AutoTag" -Level "WARN"
+                            }
                         }
                     } catch {
                         Write-CustomLog "AutoTag failed: $($_.Exception.Message)" -Level "ERROR"

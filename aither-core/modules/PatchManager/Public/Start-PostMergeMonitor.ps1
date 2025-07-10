@@ -142,11 +142,24 @@ function Start-PostMergeMonitor {
                                 $moduleBase = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
                                 Import-Module (Join-Path $moduleBase 'PatchManager.psm1') -Force
 
-                                # Run cleanup
+                                # Run cleanup (includes automatic version tagging)
                                 $cleanupResult = Invoke-PostMergeCleanup -BranchName $BranchName -PullRequestNumber $PRNumber -ValidateMerge
 
                                 if ($cleanupResult.Success) {
                                     Write-Host "✓ Post-merge cleanup completed successfully" -ForegroundColor Green
+                                    
+                                    # Additional automatic version tagging check (fallback)
+                                    try {
+                                        if (Get-Command Invoke-AutomaticVersionTagging -ErrorAction SilentlyContinue) {
+                                            $taggingResult = Invoke-AutomaticVersionTagging -Silent
+                                            if ($taggingResult.Success -and $taggingResult.TagCreated) {
+                                                Write-Host "✅ Automatic version tag created: $($taggingResult.TagName)" -ForegroundColor Green
+                                                Write-Host "🚀 Release workflow should now trigger automatically" -ForegroundColor Cyan
+                                            }
+                                        }
+                                    } catch {
+                                        Write-Host "Warning: Automatic version tagging check failed: $($_.Exception.Message)" -ForegroundColor Yellow
+                                    }
 
                                     # Run notification callback if provided
                                     if ($NotificationCallback) {

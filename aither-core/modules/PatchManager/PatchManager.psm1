@@ -6,16 +6,22 @@
 Initialize-Logging
 
 .SYNOPSIS
-    PatchManager Module v3.0 - Atomic, Reliable Patch Management
+    PatchManager Module v3.1 - Atomic Operations + Automatic Version Tagging
 
 .DESCRIPTION
-    This module provides atomic patch operations that eliminate git stashing issues:
+    This module provides atomic patch operations that eliminate git stashing issues,
+    plus automatic version tagging for seamless release automation:
 
     Main Functions:
     - New-Patch: Smart, atomic patch creation (replaces Invoke-PatchWorkflow)
     - New-QuickFix: Simple fixes without branch overhead
     - New-Feature: Full feature development workflow
     - New-Hotfix: Emergency critical fixes
+
+    Automatic Version Tagging:
+    - Start-AutomaticVersionTagging: Convenience function for manual triggering
+    - Invoke-AutomaticVersionTagging: Comprehensive automatic tagging
+    - Automatic integration with post-merge workflows
 
     Modes:
     - Simple: Direct changes without branches (for minor fixes)
@@ -27,12 +33,14 @@ Initialize-Logging
     - Smart mode detection and recommendations
     - No more git stashing conflicts
     - Multi-mode operation system
+    - Automatic VERSION file change detection and tagging
+    - Seamless integration with release workflows
     - Backward compatibility with legacy functions
 
 .NOTES
-    Version: 3.0.0 (Atomic Operations)
+    Version: 3.1.0 (Atomic Operations + Automatic Version Tagging)
     Author: Aitherium Contributors
-    Breaking Changes: Eliminates git stashing to prevent merge conflicts
+    New in v3.1: Automatic VERSION-based tag creation for release automation
 #>
 
 # Initialize cross-platform environment
@@ -198,18 +206,24 @@ Export-ModuleMember -Function @(
     'Invoke-ReleaseWorkflow',
     'Watch-ReleasePR',
     'Invoke-PostMergeTagging',
+    'Invoke-AutomaticVersionTagging',
+    'Start-AutomaticVersionTagging',
     'Find-MissingReleaseTags'
 ) -Alias @(
-    'Invoke-PatchWorkflow'  # Alias for New-Patch for backward compatibility
+    'Invoke-PatchWorkflow',  # Alias for New-Patch for backward compatibility
+    'New-VersionTag',        # Alias for Start-AutomaticVersionTagging
+    'Create-VersionTag'      # Alias for Start-AutomaticVersionTagging
 )
 
 # Module initialization message
 if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-    Write-CustomLog -Level 'INFO' -Message 'PatchManager v3.0 loaded - Atomic Operations Ready'
+    Write-CustomLog -Level 'INFO' -Message 'PatchManager v3.1 loaded - Atomic Operations + Automatic Version Tagging'
     Write-CustomLog -Level 'INFO' -Message 'New functions: New-Patch, New-QuickFix, New-Feature, New-Hotfix'
+    Write-CustomLog -Level 'INFO' -Message 'Version tagging: Start-AutomaticVersionTagging, Invoke-AutomaticVersionTagging'
     Write-CustomLog -Level 'INFO' -Message 'Legacy functions available for backward compatibility'
 } else {
-    Write-Host '[INFO] PatchManager v3.0 loaded - Atomic Operations Ready'
+    Write-Host '[INFO] PatchManager v3.1 loaded - Atomic Operations + Automatic Version Tagging'
     Write-Host '[INFO] New functions: New-Patch, New-QuickFix, New-Feature, New-Hotfix'
+    Write-Host '[INFO] Version tagging: Start-AutomaticVersionTagging, Invoke-AutomaticVersionTagging'
     Write-Host '[INFO] Legacy functions available for backward compatibility'
 }

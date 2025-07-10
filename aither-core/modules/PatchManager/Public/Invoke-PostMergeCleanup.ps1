@@ -219,7 +219,35 @@ function Invoke-PostMergeCleanup {
                 Write-CleanupLog "DRY RUN: Would check for and delete local branch: $BranchName" -Level 'INFO'
             }
 
-            # Step 6: Cleanup summary and guidance
+            # Step 6: Automatic version tagging (NEW v3.1 feature)
+            Write-CleanupLog "Checking for VERSION file changes to create automatic tags..." -Level 'INFO'
+            
+            if (-not $DryRun) {
+                try {
+                    # Import the automatic version tagging function
+                    if (Get-Command Invoke-AutomaticVersionTagging -ErrorAction SilentlyContinue) {
+                        $taggingResult = Invoke-AutomaticVersionTagging -Silent
+                        
+                        if ($taggingResult.Success -and $taggingResult.TagCreated) {
+                            Write-CleanupLog "✅ Automatic version tag created: $($taggingResult.TagName)" -Level 'SUCCESS'
+                            Write-CleanupLog "🚀 Release workflow should now trigger automatically" -Level 'INFO'
+                        } elseif ($taggingResult.Success) {
+                            Write-CleanupLog "ℹ️  Automatic tagging: $($taggingResult.Message)" -Level 'INFO'
+                        } else {
+                            Write-CleanupLog "⚠️  Automatic tagging failed: $($taggingResult.Message)" -Level 'WARN'
+                        }
+                    } else {
+                        Write-CleanupLog "Automatic version tagging function not available" -Level 'INFO'
+                    }
+                } catch {
+                    Write-CleanupLog "Automatic version tagging error: $($_.Exception.Message)" -Level 'WARN'
+                    # Don't fail the cleanup for tagging issues
+                }
+            } else {
+                Write-CleanupLog "DRY RUN: Would check for VERSION file changes and create tags" -Level 'INFO'
+            }
+
+            # Step 7: Cleanup summary and guidance
             Write-CleanupLog "Post-merge cleanup completed successfully" -Level 'SUCCESS'
             Write-CleanupLog "Repository state:" -Level 'INFO'
 
