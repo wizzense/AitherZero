@@ -56,24 +56,42 @@ jobs:
         with:
           fetch-depth: 0  # Full history for better analysis
 
-      - name: Initialize CodeQL
+      - name: Check for JavaScript files
         if: github.event.inputs.scan_type != 'secrets-only' && github.event.inputs.scan_type != 'dependency-only'
+        id: check-js
+        run: |
+          $jsFiles = Get-ChildItem -Include "*.js", "*.jsx", "*.ts", "*.tsx" -Recurse -ErrorAction SilentlyContinue
+          if ($jsFiles.Count -gt 0) {
+            Write-Host "Found $($jsFiles.Count) JavaScript/TypeScript files"
+            Write-Host "codeql_needed=true" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "No JavaScript/TypeScript files found - skipping CodeQL analysis"
+            Write-Host "codeql_needed=false" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Initialize CodeQL
+        if: github.event.inputs.scan_type != 'secrets-only' && github.event.inputs.scan_type != 'dependency-only' && steps.check-js.outputs.codeql_needed == 'true'
         uses: github/codeql-action/init@v3
         with:
           languages: javascript
           queries: security-and-quality
 
       - name: Perform CodeQL Analysis
-        if: github.event.inputs.scan_type != 'secrets-only' && github.event.inputs.scan_type != 'dependency-only'
+        if: github.event.inputs.scan_type != 'secrets-only' && github.event.inputs.scan_type != 'dependency-only' && steps.check-js.outputs.codeql_needed == 'true'
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:javascript"
+
+      - name: CodeQL Analysis Skipped
+        if: github.event.inputs.scan_type != 'secrets-only' && github.event.inputs.scan_type != 'dependency-only' && (steps.check-js.outputs.codeql_needed == 'false' || steps.check-js.conclusion == 'skipped')
+        run: |
+          Write-Host "::notice::CodeQL analysis skipped - no JavaScript/TypeScript files found"
 
   secrets-scan:
     name: "Secrets Detection"
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event.inputs.scan_type != 'codeql-only'
+    if: github.event.inputs.scan_type != 'codeql-only' && github.event.inputs.scan_type != 'dependency-only'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -297,6 +315,11 @@ jobs:
           $secretsStatus = '${{ needs.secrets-scan.result }}'
           $dependencyStatus = '${{ needs.dependency-scan.result }}'
 
+          # Handle skipped jobs
+          if ($codeqlStatus -eq '') { $codeqlStatus = 'skipped' }
+          if ($secretsStatus -eq '') { $secretsStatus = 'skipped' }
+          if ($dependencyStatus -eq '') { $dependencyStatus = 'skipped' }
+
           $summary = "# 🔒 AitherZero Security Scan Report`n`n"
           $summary += "**Scan Date**: $scanDate`n"
           $summary += "**Trigger**: $trigger`n"
@@ -353,20 +376,36 @@ jobs:
       - name: Security scan summary
         run: |
           $overallStatus = "PASSED"
+          $codeqlResult = '${{ needs.security-analysis.result }}'
+          $secretsResult = '${{ needs.secrets-scan.result }}'
+          $dependencyResult = '${{ needs.dependency-scan.result }}'
 
-          if ("${{ needs.security-analysis.result }}" -eq "failure") {
+          # Check each job result
+          if ($codeqlResult -eq "failure") {
             $overallStatus = "FAILED"
             Write-Host "::error::CodeQL analysis failed"
+          } elseif ($codeqlResult -eq "success") {
+            Write-Host "::notice::CodeQL analysis completed successfully"
+          } elseif ($codeqlResult -eq "skipped" -or $codeqlResult -eq "") {
+            Write-Host "::notice::CodeQL analysis skipped (no JavaScript files found)"
           }
 
-          if ("${{ needs.secrets-scan.result }}" -eq "failure") {
+          if ($secretsResult -eq "failure") {
             $overallStatus = "FAILED"
             Write-Host "::error::Secrets scan failed"
+          } elseif ($secretsResult -eq "success") {
+            Write-Host "::notice::Secrets scan completed successfully"
+          } elseif ($secretsResult -eq "skipped" -or $secretsResult -eq "") {
+            Write-Host "::notice::Secrets scan skipped"
           }
 
-          if ("${{ needs.dependency-scan.result }}" -eq "failure") {
+          if ($dependencyResult -eq "failure") {
             $overallStatus = "FAILED"
             Write-Host "::error::Dependency scan failed"
+          } elseif ($dependencyResult -eq "success") {
+            Write-Host "::notice::Dependency scan completed successfully"
+          } elseif ($dependencyResult -eq "skipped" -or $dependencyResult -eq "") {
+            Write-Host "::notice::Dependency scan skipped"
           }
 
           if ($overallStatus -eq "PASSED") {
