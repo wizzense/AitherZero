@@ -1,166 +1,0 @@
-# Common workflow configuration and optimization settings
-# This file serves as a reference for consistent workflow optimization
-
-name: Workflow Configuration
-
-# This workflow is not meant to run - it's a configuration reference
-on:
-  workflow_dispatch:
-    inputs:
-      action:
-        description: 'Configuration action'
-        required: true
-        default: 'validate'
-        type: choice
-        options:
-          - validate
-          - optimize
-          - cleanup
-
-# Shared environment variables across all workflows
-env:
-  POWERSHELL_TELEMETRY_OPTOUT: 1
-  DOTNET_CLI_TELEMETRY_OPTOUT: 1
-  DOTNET_NOLOGO: true
-  WORKFLOW_OPTIMIZATION_VERSION: 'v2'
-
-# Shared permissions template
-permissions:
-  contents: read
-  pull-requests: write
-  actions: read
-  checks: write
-
-# Optimization strategies implemented:
-# 1. Caching Strategy:
-#    - PowerShell modules cached with versioned keys
-#    - Git metadata cached for faster operations
-#    - Audit state cached to avoid redundant analysis
-#    - Dependencies cached with composite keys
-#
-# 2. Artifact Management:
-#    - Reduced retention days for CI artifacts (14 days)
-#    - Longer retention for reports (90 days)
-#    - Added if-no-files-found handling
-#    - Consolidated artifact uploads
-#
-# 3. Performance Optimizations:
-#    - Parallel execution limits optimized for GitHub Actions
-#    - Reduced timeouts for faster feedback
-#    - Fail-fast strategies for CI
-#    - Conditional job execution based on changes
-#
-# 4. Error Handling:
-#    - Timeout limits on all long-running steps
-#    - Proper error propagation
-#    - Graceful degradation for non-critical operations
-#    - Comprehensive logging and annotations
-#
-# 5. Dependency Optimization:
-#    - Workflow triggers optimized to reduce redundant runs
-#    - Artifact sharing between workflows
-#    - Conditional execution based on file changes
-#    - Shared caching strategies
-
-jobs:
-  validate-configuration:
-    name: Validate Workflow Configuration
-    runs-on: ubuntu-latest
-    if: github.event.inputs.action == 'validate'
-     steps:
-       - name: Checkout code
-      uses: actions/checkout@v4
-
-      - name: Validate workflow syntax
-      run: |
-        echo "🔍 Validating workflow configurations..."
-        # Check all workflow files for syntax for workflow in .github/workflows/*.yml; do
-          if [[ "$workflow" != *"workflow-config.yml" ]]; then echo "Validating $workflow"
-            # Basic YAML syntax check python3 -c "import yaml; yaml.safe_load(open('$workflow'))" || exit 1
-          fi
-        done
-        echo "✅ All workflow files have valid YAML syntax"
-      - name: Check optimization compliance
-      shell: pwsh
-      run: |
-        Write-Host "🔧 Checking workflow optimization compliance..." -ForegroundColor Cyan
-        $workflows = Get-ChildItem -Path ".github/workflows" -Filter "*.yml" |  Where-Object { $_.Name -ne "workflow-config.yml" }
-         $complianceReport = @()
-         foreach ($workflow in $workflows) {
-          $content = Get-Content $workflow.FullName -Raw $compliance = @{
-            File = $workflow.Name HasCaching = $content -match "uses: actions/cache@v4"
-            HasTimeouts = $content -match "timeout-minutes:"
-            HasArtifactSettings = $content -match "if-no-files-found:"
-            HasPermissions = $content -match "permissions:"
-            HasConcurrency = $content -match "concurrency:"
-          }
-          $complianceReport += New-Object PSObject -Property $compliance
-        }
-        Write-Host "📊 Optimization Compliance Report:" -ForegroundColor Green
-        $complianceReport | Format-Table -AutoSize
-        # Check for optimization opportunities $needsOptimization = $complianceReport | Where-Object {
-          -not $_.HasCaching -or -not $_.HasTimeouts -or -not $_.HasArtifactSettings
-        }
-        if ($needsOptimization) { Write-Host "⚠️ Some workflows need optimization:" -ForegroundColor Yellow
-          $needsOptimization | ForEach-Object { Write-Host "  - $($_.File): Missing optimizations" -ForegroundColor Yellow
-          }
-        } else { Write-Host "✅ All workflows are optimized" -ForegroundColor Green
-        }
-
-  optimize-workflows: name: Optimize Workflow Performance
-    runs-on: ubuntu-latest
-    if: github.event.inputs.action == 'optimize'
-     steps:
-       - name: Checkout code
-      uses: actions/checkout@v4
-
-      - name: Analyze workflow performance
-      shell: pwsh
-      run: |
-        Write-Host "📈 Analyzing workflow performance patterns..." -ForegroundColor Cyan
-        # Analyze common patterns that can be optimized $optimizationSuggestions = @(
-          "Use composite actions for repeated steps", "Implement matrix strategies for parallel execution",
-          "Use conditional execution to skip unnecessary jobs", "Optimize artifact sizes and retention",
-          "Use workflow_run triggers to reduce redundant executions", "Implement proper caching for dependencies",
-          "Use fail-fast strategies for faster feedback", "Optimize checkout depth for performance"
-        )
-        Write-Host "🎯 Optimization Strategies Implemented:" -ForegroundColor Green
-        $optimizationSuggestions | ForEach-Object { Write-Host "  ✅ $_" -ForegroundColor Green
-        }
-        # Performance metrics $metrics = @{
-          "CI Workflow Runtime" = "~5-8 minutes (optimized from 15+ minutes)" "Comprehensive Report" = "~10-15 minutes (optimized scheduling)"
-          "Audit Workflow" = "~8-12 minutes (parallel execution)" "Release Workflow" = "~3-5 minutes (streamlined process)"
-          "Cache Hit Rate" = "~85-95% (versioned cache keys)" "Artifact Storage" = "Reduced by 40% (optimized retention)"
-        }
-        Write-Host "`n📊 Performance Improvements:" -ForegroundColor Cyan
-        $metrics.GetEnumerator() | ForEach-Object { Write-Host "  $($_.Key): $($_.Value)" -ForegroundColor White
-        }
-
-  cleanup-workflows: name: Cleanup Workflow Artifacts
-    runs-on: ubuntu-latest
-    if: github.event.inputs.action == 'cleanup'
-     steps:
-       - name: Cleanup old artifacts
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const owner = context.repo.owner; const repo = context.repo.repo;
-           // Get all artifacts
-          const artifacts = await github.rest.actions.listArtifactsForRepo({ owner,
-            repo, per_page: 100
-          });
-          const now = new Date(); const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-           let deletedCount = 0;
-           for (const artifact of artifacts.data.artifacts) {
-            const createdAt = new Date(artifact.created_at);
-            // Delete artifacts older than 30 days if (createdAt < thirtyDaysAgo) {
-              try { await github.rest.actions.deleteArtifact({
-                  owner, repo,
-                  artifact_id: artifact.id
-                }); deletedCount++;
-                console.log(`Deleted artifact: ${artifact.name} (${artifact.created_at})`);
-              } catch (error) { console.log(`Failed to delete artifact ${artifact.name}: ${error.message}`);
-              }
-            }
-          }
-          console.log(`✅ Cleaned up ${deletedCount} old artifacts`);

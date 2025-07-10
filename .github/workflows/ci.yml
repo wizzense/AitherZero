@@ -1,0 +1,488 @@
+name: "CI - Optimized & Reliable"
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths-ignore:
+      - '*.md'
+      - 'docs/**'
+      - '.vscode/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths-ignore:
+      - '*.md'
+      - 'docs/**'
+      - '.vscode/**'
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: true
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  analyze-changes:
+    name: "Analyze Changes"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      has-code-changes: ${{ steps.changes.outputs.code }}
+      has-workflow-changes: ${{ steps.changes.outputs.workflows }}
+      has-test-changes: ${{ steps.changes.outputs.tests }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for changes
+        id: changes
+        run: |
+          $codeFiles = git diff --name-only HEAD~1 HEAD | Where-Object { 
+            $_ -match '\.(ps1|psm1|psd1)$' -and $_ -notmatch '^(docs|\.vscode)/' 
+          }
+          $workflowFiles = git diff --name-only HEAD~1 HEAD | Where-Object { 
+            $_ -match '^\.github/workflows/'
+          }
+          $testFiles = git diff --name-only HEAD~1 HEAD | Where-Object { 
+            $_ -match '^tests/'
+          }
+          
+          echo "code=$($codeFiles.Count -gt 0 ? 'true' : 'false')" >> $env:GITHUB_OUTPUT
+          echo "workflows=$($workflowFiles.Count -gt 0 ? 'true' : 'false')" >> $env:GITHUB_OUTPUT
+          echo "tests=$($testFiles.Count -gt 0 ? 'true' : 'false')" >> $env:GITHUB_OUTPUT
+          
+          Write-Host "Code changes: $($codeFiles.Count) files"
+          Write-Host "Workflow changes: $($workflowFiles.Count) files"
+          Write-Host "Test changes: $($testFiles.Count) files"
+
+  quality-check:
+    name: "Quality Check"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: analyze-changes
+    if: needs.analyze-changes.outputs.has-code-changes == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache PowerShell modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/powershell/Modules
+            ~/Documents/PowerShell/Modules
+            ~/.config/powershell
+            ~/.cache/powershell
+          key: ${{ runner.os }}-ps-modules-${{ hashFiles('**/*.psd1', '**/*.psm1') }}-v2
+          restore-keys: |
+            ${{ runner.os }}-ps-modules-v2
+            ${{ runner.os }}-ps-modules-
+
+      - name: Install analysis tools
+        run: |
+          Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+          Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser
+
+      - name: Run quality analysis
+        run: |
+          # Get PowerShell files (not in test or build directories)
+          $files = Get-ChildItem -Include "*.ps1","*.psm1","*.psd1" -Recurse |
+                   Where-Object { $_.FullName -notlike "*test*" -and $_.FullName -notlike "*build*" }
+
+          Write-Host "Found $($files.Count) PowerShell files to analyze"
+          
+          $results = @()
+          foreach ($file in $files) {
+            Write-Host "Analyzing: $($file.Name)"
+            $fileResults = Invoke-ScriptAnalyzer -Path $file.FullName -Severity Error,Warning
+            if ($fileResults) {
+              $results += $fileResults
+            }
+          }
+
+          if ($results) {
+            Write-Host "Quality issues found: $($results.Count)"
+            $results | Format-Table -AutoSize
+            
+            # Create annotations for GitHub
+            foreach ($result in $results) {
+              if ($result.Severity -eq 'Error') {
+                Write-Host "::error file=$($result.ScriptPath),line=$($result.Line)::$($result.Message)"
+              } else {
+                Write-Host "::warning file=$($result.ScriptPath),line=$($result.Line)::$($result.Message)"
+              }
+            }
+            
+            # Fail if too many errors (threshold: 10)
+            $errorCount = ($results | Where-Object Severity -eq 'Error').Count
+            if ($errorCount -gt 10) {
+              Write-Host "::error::Too many errors ($errorCount) - quality threshold exceeded"
+              exit 1
+            }
+          }
+          Write-Host "✅ Quality check completed"
+
+  test:
+    name: "Test (${{ matrix.os }})"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    needs: analyze-changes
+    if: always() && !cancelled() && !failure()
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/powershell/Modules
+            ~/Documents/PowerShell/Modules
+            ~/.config/powershell
+            ~/.cache/powershell
+            /Users/*/.local/share/powershell/Modules
+          key: ${{ runner.os }}-test-deps-${{ hashFiles('tests/**/*.ps1') }}-v2
+          restore-keys: |
+            ${{ runner.os }}-test-deps-v2
+            ${{ runner.os }}-test-deps-
+
+      - name: Install test dependencies
+        run: |
+          Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser -SkipPublisherCheck
+          Write-Host "✅ Test dependencies installed"
+
+      - name: Run unified tests
+        run: |
+          # Ensure we're in the right directory
+          Set-Location $env:GITHUB_WORKSPACE
+          
+          # Run tests with CI optimizations
+          ./tests/Run-UnifiedTests.ps1 -TestSuite CI -CI -OutputFormat All -Performance -ShowProgress
+        continue-on-error: false
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ runner.os }}
+          path: tests/results/
+          retention-days: 30
+
+  build:
+    name: "Build (${{ matrix.platform }})"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: analyze-changes
+    if: always() && !cancelled() && !failure()
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [windows, linux, macos]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build package
+        run: |
+          ./build/Build-Package.ps1 -Platform ${{ matrix.platform }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.platform }}
+          path: build/output/
+          retention-days: 30
+
+  generate-dashboard:
+    name: "Generate Dashboard"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [quality-check, test, build]
+    if: always() && !cancelled()
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Generate comprehensive dashboard
+        run: |
+          # Create dashboard directory
+          $dashboardDir = "dashboard"
+          New-Item -ItemType Directory -Path $dashboardDir -Force
+
+          # Collect test results
+          $testResults = @()
+          $testArtifacts = Get-ChildItem "artifacts/test-results-*" -Directory -ErrorAction SilentlyContinue
+          foreach ($artifact in $testArtifacts) {
+            $resultFile = Get-ChildItem "$($artifact.FullName)/*.json" -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($resultFile) {
+              $testResults += Get-Content $resultFile.FullName | ConvertFrom-Json
+            }
+          }
+
+          # Collect build results
+          $buildResults = @()
+          $buildArtifacts = Get-ChildItem "artifacts/build-*" -Directory -ErrorAction SilentlyContinue
+          foreach ($artifact in $buildArtifacts) {
+            $platform = $artifact.Name -replace "build-", ""
+            $buildFiles = Get-ChildItem $artifact.FullName -File
+            $buildResults += [PSCustomObject]@{
+              Platform = $platform
+              Files = $buildFiles.Count
+              Size = ($buildFiles | Measure-Object Length -Sum).Sum
+            }
+          }
+
+          # Generate HTML dashboard
+          $html = @"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AitherZero CI Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 20px 0; }
+        .metric { background: #ecf0f1; padding: 20px; border-radius: 8px; text-align: center; }
+        .metric h3 { margin: 0 0 10px 0; color: #2c3e50; }
+        .metric .value { font-size: 2em; font-weight: bold; }
+        .success { color: #27ae60; }
+        .failure { color: #e74c3c; }
+        .info { color: #3498db; }
+        .section { margin: 30px 0; }
+        .build-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .build-item { background: #ecf0f1; padding: 15px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 AitherZero CI Dashboard</h1>
+            <p>Build #${{ github.run_number }} | $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')</p>
+            <p>Branch: ${{ github.ref_name }} | Commit: ${{ github.sha }}</p>
+        </div>
+
+        <div class="metrics">
+            <div class="metric">
+                <h3>Overall Status</h3>
+                <div class="value $($testResults.Count -gt 0 -and ($testResults | Where-Object { $_.failed -eq 0 }).Count -eq $testResults.Count ? 'success' : 'failure')">
+                    $($testResults.Count -gt 0 -and ($testResults | Where-Object { $_.failed -eq 0 }).Count -eq $testResults.Count ? '✅ PASSED' : '❌ FAILED')
+                </div>
+            </div>
+            <div class="metric">
+                <h3>Test Platforms</h3>
+                <div class="value info">${testResults.Count}</div>
+            </div>
+            <div class="metric">
+                <h3>Build Platforms</h3>
+                <div class="value info">${buildResults.Count}</div>
+            </div>
+            <div class="metric">
+                <h3>Build Number</h3>
+                <div class="value info">${{ github.run_number }}</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Build Results</h2>
+            <div class="build-grid">
+"@
+          foreach ($build in $buildResults) {
+            $html += @"
+                <div class="build-item">
+                    <h4>$($build.Platform)</h4>
+                    <p>Files: $($build.Files)</p>
+                    <p>Size: $([math]::Round($build.Size / 1MB, 2)) MB</p>
+                </div>
+"@
+          }
+
+          $html += @"
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Test Results Summary</h2>
+            <p>Comprehensive test results across all platforms</p>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; color: #7f8c8d;">
+            <p>Generated by AitherZero CI Pipeline</p>
+            <p>Commit: ${{ github.sha }} | Run: ${{ github.run_id }}</p>
+        </div>
+    </div>
+</body>
+</html>
+"@
+
+          $html | Set-Content "$dashboardDir/index.html"
+          Write-Host "✅ Dashboard generated successfully"
+
+      - name: Upload dashboard
+        uses: actions/upload-artifact@v4
+        with:
+          name: comprehensive-dashboard
+          path: dashboard/
+          retention-days: 90
+
+  ci-summary:
+    name: "CI Summary"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [analyze-changes, quality-check, test, build, generate-dashboard]
+    if: always() && !cancelled()
+    steps:
+      - name: Evaluate results
+        run: |
+          $success = $true
+          $summary = @"
+# AitherZero CI Summary
+
+## 📊 Results Overview
+"@
+
+          # Check quality results
+          if ('${{ needs.quality-check.result }}' -eq 'failure') {
+            $success = $false
+            $summary += "`n❌ **Quality Check**: FAILED"
+          } elseif ('${{ needs.quality-check.result }}' -eq 'success') {
+            $summary += "`n✅ **Quality Check**: PASSED"
+          } else {
+            $summary += "`n⚪ **Quality Check**: SKIPPED"
+          }
+
+          # Check test results
+          if ('${{ needs.test.result }}' -eq 'failure') {
+            $success = $false
+            $summary += "`n❌ **Tests**: FAILED"
+          } elseif ('${{ needs.test.result }}' -eq 'success') {
+            $summary += "`n✅ **Tests**: PASSED"
+          } else {
+            $summary += "`n⚪ **Tests**: SKIPPED"
+          }
+
+          # Check build results
+          if ('${{ needs.build.result }}' -eq 'failure') {
+            $success = $false
+            $summary += "`n❌ **Build**: FAILED"
+          } elseif ('${{ needs.build.result }}' -eq 'success') {
+            $summary += "`n✅ **Build**: PASSED"
+          } else {
+            $summary += "`n⚪ **Build**: SKIPPED"
+          }
+
+          # Add dashboard status
+          if ('${{ needs.generate-dashboard.result }}' -eq 'success') {
+            $summary += "`n✅ **Dashboard**: Generated"
+          } else {
+            $summary += "`n❌ **Dashboard**: Failed"
+          }
+
+          $summary += @"
+
+## 🔧 Build Information
+- **Branch**: ${{ github.ref_name }}
+- **Commit**: ${{ github.sha }}
+- **Run Number**: ${{ github.run_number }}
+- **Triggered by**: ${{ github.event_name }}
+
+## 📁 Artifacts
+- Test results for all platforms
+- Build packages for Windows, Linux, macOS
+- Comprehensive dashboard
+"@
+
+          Write-Host $summary
+          
+          if (-not $success) {
+            Write-Host "::error::CI pipeline failed"
+            exit 1
+          } else {
+            Write-Host "::notice::CI pipeline completed successfully"
+          }
+
+      - name: Update PR comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const summary = `# 🚀 AitherZero CI Results
+            
+            **Status**: ${{ needs.test.result == 'success' && needs.build.result == 'success' && (needs.quality-check.result == 'success' || needs.quality-check.result == 'skipped') ? '✅ PASSED' : '❌ FAILED' }}
+            **Build**: #${{ github.run_number }}
+            **Commit**: ${{ github.sha }}
+            
+            ## Results
+            - **Quality**: ${{ needs.quality-check.result == 'success' ? '✅' : needs.quality-check.result == 'skipped' ? '⚪' : '❌' }} ${{ needs.quality-check.result }}
+            - **Tests**: ${{ needs.test.result == 'success' ? '✅' : needs.test.result == 'skipped' ? '⚪' : '❌' }} ${{ needs.test.result }}
+            - **Build**: ${{ needs.build.result == 'success' ? '✅' : needs.build.result == 'skipped' ? '⚪' : '❌' }} ${{ needs.build.result }}
+            - **Dashboard**: ${{ needs.generate-dashboard.result == 'success' ? '✅' : '❌' }} ${{ needs.generate-dashboard.result }}
+            
+            [View full details →](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && comment.body.includes('AitherZero CI Results')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: summary
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: summary
+              });
+            }
+
+      - name: Create CI results summary
+        run: |
+          $summary = @{
+            success = '${{ needs.test.result == 'success' && needs.build.result == 'success' && (needs.quality-check.result == 'success' || needs.quality-check.result == 'skipped') }}'
+            quality = '${{ needs.quality-check.result }}'
+            tests = '${{ needs.test.result }}'
+            build = '${{ needs.build.result }}'
+            dashboard = '${{ needs.generate-dashboard.result }}'
+            runNumber = '${{ github.run_number }}'
+            branch = '${{ github.ref_name }}'
+            commit = '${{ github.sha }}'
+            timestamp = '$(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")'
+          }
+          
+          $summary | ConvertTo-Json | Set-Content "ci-summary.json"
+          Get-Content "ci-summary.json"
+
+      - name: Upload CI results summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-results-summary
+          path: ci-summary.json
+          retention-days: 90

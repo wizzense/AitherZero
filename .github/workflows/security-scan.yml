@@ -1,0 +1,381 @@
+name: "Security Scan"
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - '**/*.ps1'
+      - '**/*.psm1'
+      - '**/*.psd1'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - '**/*.ps1'
+      - '**/*.psm1'
+      - '**/*.psd1'
+      - '.github/workflows/**'
+  schedule:
+    # Run weekly security scans on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Type of security scan'
+        required: true
+        default: 'comprehensive'
+        type: choice
+        options:
+          - comprehensive
+          - codeql-only
+          - secrets-only
+          - dependency-only
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: true
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  security-analysis:
+    name: "Security Analysis"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better analysis
+
+      - name: Initialize CodeQL
+        if: github.event.inputs.scan_type != 'secrets-only' && github.event.inputs.scan_type != 'dependency-only'
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+          queries: security-and-quality
+
+      - name: Perform CodeQL Analysis
+        if: github.event.inputs.scan_type != 'secrets-only' && github.event.inputs.scan_type != 'dependency-only'
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript"
+
+  secrets-scan:
+    name: "Secrets Detection"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event.inputs.scan_type != 'codeql-only'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: PowerShell secrets scan
+        run: |
+          Write-Host "🔍 Scanning PowerShell files for potential secrets..."
+          
+          # Define patterns for common secrets
+          $secretPatterns = @(
+            @{ Name = "API Key"; Pattern = "api[_-]?key\s*[=:]\s*['\"]?[a-zA-Z0-9]{20,}['\"]?" },
+            @{ Name = "Password"; Pattern = "password\s*[=:]\s*['\"][^'\"]{8,}['\"]" },
+            @{ Name = "Connection String"; Pattern = "server\s*=.*password\s*=" },
+            @{ Name = "Private Key"; Pattern = "-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----" },
+            @{ Name = "GitHub Token"; Pattern = "gh[ps]_[a-zA-Z0-9]{36}" },
+            @{ Name = "Azure Key"; Pattern = "[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}" }
+          )
+          
+          $findings = @()
+          $psFiles = Get-ChildItem -Include "*.ps1", "*.psm1", "*.psd1" -Recurse
+          
+          foreach ($file in $psFiles) {
+            $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
+            if (-not $content) { continue }
+            
+            foreach ($pattern in $secretPatterns) {
+              if ($content -match $pattern.Pattern) {
+                # Skip obvious test/example patterns
+                if ($content -match "(test|example|sample|placeholder|dummy)" -and $content -match $pattern.Pattern) {
+                  continue
+                }
+                
+                $findings += [PSCustomObject]@{
+                  File = $file.FullName.Replace((Get-Location).Path, "")
+                  Type = $pattern.Name
+                  Pattern = $pattern.Pattern
+                }
+              }
+            }
+          }
+          
+          if ($findings.Count -gt 0) {
+            Write-Host "⚠️ Potential secrets found:"
+            $findings | Format-Table -AutoSize
+            
+            foreach ($finding in $findings) {
+              Write-Host "::warning file=$($finding.File)::Potential $($finding.Type) detected"
+            }
+            
+            # Don't fail the build for now, just warn
+            Write-Host "::notice::Manual review required for potential secrets"
+          } else {
+            Write-Host "✅ No obvious secrets detected in PowerShell files"
+          }
+
+  dependency-scan:
+    name: "Dependency Scan"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event.inputs.scan_type != 'codeql-only' && github.event.inputs.scan_type != 'secrets-only'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Scan PowerShell module dependencies
+        run: |
+          Write-Host "🔍 Scanning PowerShell module dependencies..."
+          
+          # Find all module manifests
+          $manifests = Get-ChildItem -Filter "*.psd1" -Recurse
+          $allDependencies = @()
+          
+          foreach ($manifest in $manifests) {
+            Write-Host "Analyzing: $($manifest.Name)"
+            
+            try {
+              $manifestData = Import-PowerShellDataFile $manifest.FullName
+              
+              if ($manifestData.RequiredModules) {
+                foreach ($module in $manifestData.RequiredModules) {
+                  $moduleName = if ($module -is [string]) { $module } else { $module.ModuleName }
+                  $moduleVersion = if ($module -is [hashtable]) { $module.ModuleVersion } else { "Any" }
+                  
+                  $allDependencies += [PSCustomObject]@{
+                    Manifest = $manifest.Name
+                    Module = $moduleName
+                    Version = $moduleVersion
+                    Required = $true
+                  }
+                }
+              }
+              
+              if ($manifestData.ExternalModuleDependencies) {
+                foreach ($module in $manifestData.ExternalModuleDependencies) {
+                  $allDependencies += [PSCustomObject]@{
+                    Manifest = $manifest.Name
+                    Module = $module
+                    Version = "External"
+                    Required = $false
+                  }
+                }
+              }
+            } catch {
+              Write-Host "::warning file=$($manifest.FullName)::Could not parse manifest: $($_.Exception.Message)"
+            }
+          }
+          
+          if ($allDependencies.Count -gt 0) {
+            Write-Host "📦 Found dependencies:"
+            $allDependencies | Format-Table -AutoSize
+            
+            # Check for known vulnerable modules (basic list)
+            $knownVulnerable = @('PSFramework') # Example - update with actual vulnerable modules
+            foreach ($vuln in $knownVulnerable) {
+              $found = $allDependencies | Where-Object { $_.Module -eq $vuln }
+              if ($found) {
+                Write-Host "::error::Known vulnerable module detected: $vuln"
+              }
+            }
+            
+            # Check for outdated core modules
+            $coreModules = $allDependencies | Where-Object { $_.Module -in @('Pester', 'PSScriptAnalyzer') }
+            foreach ($core in $coreModules) {
+              Write-Host "Core module: $($core.Module) - Version: $($core.Version)"
+            }
+          } else {
+            Write-Host "✅ No module dependencies found"
+          }
+
+      - name: Scan for hardcoded paths and credentials
+        run: |
+          Write-Host "🔍 Scanning for hardcoded paths and potential security issues..."
+          
+          $securityIssues = @()
+          $psFiles = Get-ChildItem -Include "*.ps1", "*.psm1", "*.psd1" -Recurse
+          
+          foreach ($file in $psFiles) {
+            $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
+            if (-not $content) { continue }
+            
+            # Check for hardcoded Windows paths
+            if ($content -match 'C:\\[^\\]*\\') {
+              $securityIssues += [PSCustomObject]@{
+                File = $file.FullName.Replace((Get-Location).Path, "")
+                Issue = "Hardcoded Windows path"
+                Severity = "Medium"
+              }
+            }
+            
+            # Check for Invoke-Expression with variables
+            if ($content -match 'Invoke-Expression.*\$') {
+              $securityIssues += [PSCustomObject]@{
+                File = $file.FullName.Replace((Get-Location).Path, "")
+                Issue = "Invoke-Expression with variable (potential code injection)"
+                Severity = "High"
+              }
+            }
+            
+            # Check for Start-Process with user input
+            if ($content -match 'Start-Process.*\$') {
+              $securityIssues += [PSCustomObject]@{
+                File = $file.FullName.Replace((Get-Location).Path, "")
+                Issue = "Start-Process with variable (potential command injection)"
+                Severity = "High"
+              }
+            }
+            
+            # Check for disabled execution policy
+            if ($content -match 'Set-ExecutionPolicy.*Unrestricted') {
+              $securityIssues += [PSCustomObject]@{
+                File = $file.FullName.Replace((Get-Location).Path, "")
+                Issue = "Execution policy set to Unrestricted"
+                Severity = "Medium"
+              }
+            }
+          }
+          
+          if ($securityIssues.Count -gt 0) {
+            Write-Host "⚠️ Security issues found:"
+            $securityIssues | Format-Table -AutoSize
+            
+            foreach ($issue in $securityIssues) {
+              $level = if ($issue.Severity -eq "High") { "error" } else { "warning" }
+              Write-Host "::$level file=$($issue.File)::$($issue.Issue)"
+            }
+            
+            $highSeverity = ($securityIssues | Where-Object { $_.Severity -eq "High" }).Count
+            if ($highSeverity -gt 0) {
+              Write-Host "::error::Found $highSeverity high-severity security issues"
+              exit 1
+            }
+          } else {
+            Write-Host "✅ No obvious security issues detected"
+          }
+
+  vulnerability-report:
+    name: "Generate Vulnerability Report"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [security-analysis, secrets-scan, dependency-scan]
+    if: always() && !cancelled()
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate security summary
+        run: |
+          $summary = @"
+# 🔒 AitherZero Security Scan Report
+
+**Scan Date**: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+**Trigger**: ${{ github.event_name }}
+**Branch**: ${{ github.ref_name }}
+**Commit**: ${{ github.sha }}
+
+## 📊 Scan Results
+
+### CodeQL Analysis
+- **Status**: ${{ needs.security-analysis.result }}
+- **Language**: JavaScript (for any embedded JS)
+
+### Secrets Detection
+- **Status**: ${{ needs.secrets-scan.result }}
+- **Tool**: Gitleaks + Custom PowerShell scan
+
+### Dependency Scan
+- **Status**: ${{ needs.dependency-scan.result }}
+- **Focus**: PowerShell modules and external dependencies
+
+## 🛡️ Security Recommendations
+
+1. **Regular Updates**: Keep all PowerShell modules updated
+2. **Code Review**: Manual review for any flagged potential secrets
+3. **Access Control**: Ensure proper permissions on sensitive scripts
+4. **Monitoring**: Regular security scans on schedule
+
+## 📋 Next Actions
+
+- Review any warnings or errors above
+- Update dependencies if vulnerabilities found
+- Remove or secure any flagged secrets
+- Consider implementing additional security measures
+
+---
+*Generated by AitherZero Security Workflow*
+"@
+
+          $summary | Set-Content "security-report.md"
+          Write-Host $summary
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: security-report.md
+          retention-days: 90
+
+      - name: Comment on PR (if applicable)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('security-report.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🔒 Security Scan Results\n\n${report}`
+            });
+
+      - name: Security scan summary
+        run: |
+          $overallStatus = "PASSED"
+          
+          if ("${{ needs.security-analysis.result }}" -eq "failure") {
+            $overallStatus = "FAILED"
+            Write-Host "::error::CodeQL analysis failed"
+          }
+          
+          if ("${{ needs.secrets-scan.result }}" -eq "failure") {
+            $overallStatus = "FAILED"
+            Write-Host "::error::Secrets scan failed"
+          }
+          
+          if ("${{ needs.dependency-scan.result }}" -eq "failure") {
+            $overallStatus = "FAILED"
+            Write-Host "::error::Dependency scan failed"
+          }
+          
+          if ($overallStatus -eq "PASSED") {
+            Write-Host "::notice::All security scans completed successfully"
+          } else {
+            Write-Host "::error::Security scan failed - review results above"
+            exit 1
+          }

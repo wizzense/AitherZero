@@ -1,0 +1,398 @@
+name: "Release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.2.3)'
+        required: true
+        type: string
+      description:
+        description: 'Release description'
+        required: false
+        type: string
+        default: 'Release notes for this version'
+      draft:
+        description: 'Create as draft release'
+        required: false
+        type: boolean
+        default: false
+      prerelease:
+        description: 'Mark as pre-release'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: true
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  validate-inputs:
+    name: "Validate Release Inputs"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.validate.outputs.version }}
+      tag: ${{ steps.validate.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate version and inputs
+        id: validate
+        run: |
+          $version = "${{ github.event.inputs.version }}"
+          
+          # Validate semantic version format
+          if ($version -notmatch '^\d+\.\d+\.\d+(-[a-zA-Z0-9\-\.]+)?$') {
+            Write-Host "::error::Invalid version format. Use semantic versioning (e.g., 1.2.3 or 1.2.3-beta.1)"
+            exit 1
+          }
+          
+          $tag = "v$version"
+          
+          # Check if tag already exists
+          $existingTags = git tag -l $tag
+          if ($existingTags) {
+            Write-Host "::error::Tag $tag already exists"
+            exit 1
+          }
+          
+          # Validate we're on main branch for non-prerelease
+          $currentBranch = git branch --show-current
+          if ($currentBranch -ne "main" -and "${{ github.event.inputs.prerelease }}" -eq "false") {
+            Write-Host "::error::Production releases must be created from main branch. Current: $currentBranch"
+            exit 1
+          }
+          
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "tag=$tag" >> $env:GITHUB_OUTPUT
+          
+          Write-Host "✅ Version validation passed"
+          Write-Host "Version: $version"
+          Write-Host "Tag: $tag"
+          Write-Host "Branch: $currentBranch"
+
+  update-version:
+    name: "Update Version File"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: validate-inputs
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update VERSION file
+        run: |
+          $version = "${{ needs.validate-inputs.outputs.version }}"
+          
+          # Update VERSION file
+          $version | Set-Content "VERSION"
+          
+          # Verify the update
+          $updatedVersion = Get-Content "VERSION" -Raw | ForEach-Object { $_.Trim() }
+          if ($updatedVersion -ne $version) {
+            Write-Host "::error::Failed to update VERSION file"
+            exit 1
+          }
+          
+          Write-Host "✅ VERSION file updated to: $updatedVersion"
+
+      - name: Commit version update
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          git add VERSION
+          git commit -m "Release: Update version to ${{ needs.validate-inputs.outputs.version }}"
+          git push
+
+  run-tests:
+    name: "Pre-Release Testing"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [validate-inputs, update-version]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Install test dependencies
+        run: |
+          Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser -SkipPublisherCheck
+
+      - name: Run comprehensive tests
+        run: |
+          # Run full test suite for release validation
+          ./tests/Run-UnifiedTests.ps1 -TestSuite All -CI -OutputFormat All -GenerateDashboard
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-test-results
+          path: tests/results/
+          retention-days: 90
+
+  build-packages:
+    name: "Build Release Packages"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [validate-inputs, update-version]
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [windows, linux, macos]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Build package for ${{ matrix.platform }}
+        run: |
+          ./build/Build-Package.ps1 -Platform ${{ matrix.platform }} -Version "${{ needs.validate-inputs.outputs.version }}"
+
+      - name: Verify package
+        run: |
+          $packageDir = "build/output"
+          $packages = Get-ChildItem $packageDir -File | Where-Object { $_.Name -like "*${{ matrix.platform }}*" }
+          
+          if ($packages.Count -eq 0) {
+            Write-Host "::error::No package found for ${{ matrix.platform }}"
+            exit 1
+          }
+          
+          foreach ($package in $packages) {
+            Write-Host "✅ Package created: $($package.Name) ($([math]::Round($package.Length / 1MB, 2)) MB)"
+          }
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-${{ matrix.platform }}
+          path: build/output/
+          retention-days: 90
+
+  generate-release-notes:
+    name: "Generate Release Notes"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: validate-inputs
+    outputs:
+      release-notes: ${{ steps.notes.outputs.content }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          $version = "${{ needs.validate-inputs.outputs.version }}"
+          $description = "${{ github.event.inputs.description }}"
+          $date = Get-Date -Format "yyyy-MM-dd"
+          
+          # Get recent commits since last tag
+          $lastTag = git describe --tags --abbrev=0 2>$null
+          $commits = if ($lastTag) {
+            git log --oneline "$lastTag..HEAD" --no-merges
+          } else {
+            git log --oneline -10 --no-merges
+          }
+          
+          $releaseNotes = @"
+# AitherZero $version
+
+Released on $date
+
+## Description
+$description
+
+## What's New
+"@
+          
+          if ($commits) {
+            $releaseNotes += "`n"
+            foreach ($commit in $commits) {
+              $releaseNotes += "- $commit`n"
+            }
+          } else {
+            $releaseNotes += "`n- Initial release or no new commits since last tag"
+          }
+          
+          $releaseNotes += @"
+
+## 📦 Downloads
+- **Windows**: AitherZero-v$version-windows.zip
+- **Linux**: AitherZero-v$version-linux.tar.gz
+- **macOS**: AitherZero-v$version-macos.tar.gz
+
+## 🚀 Quick Start
+1. Download the appropriate package for your platform
+2. Extract the archive
+3. Run `./Start-AitherZero.ps1` (or `Start-AitherZero.cmd` on Windows)
+4. Follow the setup wizard
+
+## 📋 System Requirements
+- PowerShell 7.0 or later
+- 4GB RAM (8GB recommended)
+- 10GB disk space
+
+## 📚 Documentation
+- [Quick Start Guide](https://github.com/${{ github.repository }}/blob/main/QUICKSTART.md)
+- [Full Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)
+
+---
+**Full Changelog**: https://github.com/${{ github.repository }}/compare/$lastTag...${{ needs.validate-inputs.outputs.tag }}
+"@
+          
+          # Output for use in create-release job
+          $releaseNotes | Set-Content "release-notes.md"
+          
+          # For GitHub Actions output, we need to handle multiline content
+          $delimiter = "EOF"
+          echo "content<<$delimiter" >> $env:GITHUB_OUTPUT
+          echo $releaseNotes >> $env:GITHUB_OUTPUT
+          echo $delimiter >> $env:GITHUB_OUTPUT
+
+      - name: Upload release notes
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: release-notes.md
+
+  create-release:
+    name: "Create GitHub Release"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [validate-inputs, run-tests, build-packages, generate-release-notes]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: package-*
+          path: packages/
+          merge-multiple: true
+
+      - name: Download test results
+        uses: actions/download-artifact@v4
+        with:
+          name: release-test-results
+          path: test-results/
+
+      - name: List downloaded artifacts
+        run: |
+          Write-Host "📦 Downloaded packages:"
+          Get-ChildItem packages/ -Recurse -File | ForEach-Object {
+            Write-Host "  - $($_.Name) ($([math]::Round($_.Length / 1MB, 2)) MB)"
+          }
+          
+          Write-Host "`n📋 Test results:"
+          Get-ChildItem test-results/ -Recurse -File | ForEach-Object {
+            Write-Host "  - $($_.Name)"
+          }
+
+      - name: Create release
+        id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.validate-inputs.outputs.tag }}
+          release_name: "AitherZero ${{ needs.validate-inputs.outputs.version }}"
+          body: ${{ needs.generate-release-notes.outputs.release-notes }}
+          draft: ${{ github.event.inputs.draft }}
+          prerelease: ${{ github.event.inputs.prerelease }}
+
+      - name: Upload Windows package
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: packages/AitherZero-v${{ needs.validate-inputs.outputs.version }}-windows.zip
+          asset_name: AitherZero-v${{ needs.validate-inputs.outputs.version }}-windows.zip
+          asset_content_type: application/zip
+
+      - name: Upload Linux package
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: packages/AitherZero-v${{ needs.validate-inputs.outputs.version }}-linux.tar.gz
+          asset_name: AitherZero-v${{ needs.validate-inputs.outputs.version }}-linux.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload macOS package
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: packages/AitherZero-v${{ needs.validate-inputs.outputs.version }}-macos.tar.gz
+          asset_name: AitherZero-v${{ needs.validate-inputs.outputs.version }}-macos.tar.gz
+          asset_content_type: application/gzip
+
+  post-release:
+    name: "Post-Release Tasks"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [validate-inputs, create-release]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create post-release summary
+        run: |
+          $version = "${{ needs.validate-inputs.outputs.version }}"
+          $tag = "${{ needs.validate-inputs.outputs.tag }}"
+          
+          Write-Host "🎉 Release $version completed successfully!"
+          Write-Host ""
+          Write-Host "📊 Release Summary:"
+          Write-Host "  - Version: $version"
+          Write-Host "  - Tag: $tag"
+          Write-Host "  - Draft: ${{ github.event.inputs.draft }}"
+          Write-Host "  - Pre-release: ${{ github.event.inputs.prerelease }}"
+          Write-Host "  - Branch: ${{ github.ref_name }}"
+          Write-Host "  - Commit: ${{ github.sha }}"
+          Write-Host ""
+          Write-Host "🔗 Release URL: ${{ github.server_url }}/${{ github.repository }}/releases/tag/$tag"
+          Write-Host ""
+          Write-Host "✅ All packages built and uploaded successfully"
+          Write-Host "✅ Tests passed"
+          Write-Host "✅ Release notes generated"
+          
+          # Create a success indicator file
+          @{
+            success = $true
+            version = $version
+            tag = $tag
+            releaseUrl = "${{ github.server_url }}/${{ github.repository }}/releases/tag/$tag"
+            timestamp = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+          } | ConvertTo-Json | Set-Content "release-success.json"
+
+      - name: Upload release summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-summary
+          path: release-success.json
+          retention-days: 90
+
+      - name: Notify success
+        run: |
+          Write-Host "::notice::Release ${{ needs.validate-inputs.outputs.version }} created successfully"
+          Write-Host "::notice::View release at: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ needs.validate-inputs.outputs.tag }}"

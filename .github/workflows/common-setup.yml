@@ -1,130 +1,0 @@
-# Common setup and shared workflow operations
-# This workflow provides reusable components for other workflows
-
-name: Common Setup Operations
-
-on:
-  workflow_call:
-    inputs:
-      setup-type:
-        description: 'Type of setup to perform'
-        required: true
-        type: string
-        default: 'basic'
-      cache-key-suffix:
-        description: 'Additional suffix for cache keys'
-        required: false
-        type: string
-        default: ''
-      powershell-modules:
-        description: 'PowerShell modules to install'
-        required: false
-        type: string
-        default: 'Pester,PSScriptAnalyzer'
-    outputs:
-      cache-hit: description: 'Whether cache was hit'
-        value: ${{ jobs.setup.outputs.cache-hit }}
-      setup-duration: description: 'Setup duration in seconds'
-        value: ${{ jobs.setup.outputs.duration }}
-
-env:
-  POWERSHELL_TELEMETRY_OPTOUT: 1
-  DOTNET_CLI_TELEMETRY_OPTOUT: 1
-  DOTNET_NOLOGO: true
-
-jobs:
-  setup: name: Common Setup
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix: os: [ubuntu-latest, windows-latest, macos-latest]
-    outputs:
-      cache-hit: ${{ steps.cache.outputs.cache-hit }}
-      duration: ${{ steps.timer.outputs.duration }}
-     steps:
-       - name: Start timer
-      id: timer
-      run: echo "start-time=$(date +%s)" >> $GITHUB_OUTPUT
-
-      - name: Checkout code
-      uses: actions/checkout@v4
-
-      - name: Setup PowerShell module cache
-      id: cache
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.local/share/powershell/Modules ~/Documents/PowerShell/Modules
-          ~/.config/powershell ~/.cache/powershell
-          ~/.nuget/packages
-        key: ${{ runner.os }}-ps-common-${{ hashFiles('**/requirements.psd1', 'aither-core/modules/**/*.psd1') }}-${{ inputs.cache-key-suffix }}-v2
-        restore-keys: |
-          ${{ runner.os }}-ps-common-${{ inputs.cache-key-suffix }}-v2 ${{ runner.os }}-ps-common-v2
-          ${{ runner.os }}-ps-common-
-      - name: Install PowerShell modules
-    if: steps.cache.outputs.cache-hit != 'true' shell: pwsh run: | Write-Host "📦 Installing PowerShell modules..." -ForegroundColor Cyan
-         $modules = '${{ inputs.powershell-modules }}' -split ','
-        foreach ($module in $modules) { $module = $module.Trim()
-          if ($module) { Write-Host "Installing $module..." -ForegroundColor Yellow
-            try { Install-Module -Name $module -Force -AllowClobber -Scope CurrentUser -SkipPublisherCheck
-              Write-Host "✅ $module installed successfully" -ForegroundColor Green
-            } catch { Write-Warning "Failed to install $module: $($_.Exception.Message)"
-            }
-          }
-        }
-      - name: Validate PowerShell environment
-      shell: pwsh
-      run: |
-        Write-Host "🔍 Validating PowerShell environment..." -ForegroundColor Cyan
-        # Check PowerShell version $version = $PSVersionTable.PSVersion
-        Write-Host "PowerShell Version: $version" -ForegroundColor White
-         if ($version.Major -lt 7) {
-          throw "PowerShell 7.0+ is required, but found $version"
-        }
-        # Check installed modules $modules = '${{ inputs.powershell-modules }}' -split ','
-        foreach ($module in $modules) { $module = $module.Trim()
-          if ($module) { $installed = Get-Module -ListAvailable -Name $module
-            if ($installed) { Write-Host "✅ $module version $($installed.Version) is available" -ForegroundColor Green
-            } else { Write-Warning "❌ $module is not available"
-            }
-          }
-        }
-      - name: Setup project environment
-    if: inputs.setup-type == 'full' shell: pwsh run: | Write-Host "🏗️ Setting up full project environment..." -ForegroundColor Cyan
-         # Import project root finder
-        if (Test-Path "./aither-core/shared/Find-ProjectRoot.ps1") { . "./aither-core/shared/Find-ProjectRoot.ps1"
-          $projectRoot = Find-ProjectRoot Write-Host "Project root: $projectRoot" -ForegroundColor White
-        }
-        # Load core modules if available $coreModules = @(
-          "Logging", "ParallelExecution",
-          "ProgressTracking"
-        )
-        foreach ($module in $coreModules) { $modulePath = "./aither-core/modules/$module"
-          if (Test-Path $modulePath) { try {
-              Import-Module $modulePath -Force Write-Host "✅ Loaded $module module" -ForegroundColor Green
-            } catch { Write-Warning "Failed to load $module module: $($_.Exception.Message)"
-            }
-          }
-        }
-      - name: Calculate setup duration
-      id: duration
-      run: |
-        if [ "${{ runner.os }}" = "Windows" ]; then end_time=$(date +%s)
-          start_time=${{ steps.timer.outputs.start-time }} duration=$((end_time - start_time))
-          echo "duration=$duration" >> $GITHUB_OUTPUT
-        else end_time=$(date +%s)
-          start_time=${{ steps.timer.outputs.start-time }} duration=$((end_time - start_time))
-          echo "duration=$duration" >> $GITHUB_OUTPUT
-        fi
-      - name: Setup summary
-      shell: pwsh
-      run: |
-        Write-Host "📋 Setup Summary:" -ForegroundColor Cyan
-        Write-Host "  OS: ${{ runner.os }}" -ForegroundColor White
-        Write-Host "  Setup Type: ${{ inputs.setup-type }}" -ForegroundColor White
-        Write-Host "  Cache Hit: ${{ steps.cache.outputs.cache-hit }}" -ForegroundColor White
-        Write-Host "  Duration: ${{ steps.duration.outputs.duration }}s" -ForegroundColor White
-        Write-Host "  PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor White
-         if ('${{ steps.cache.outputs.cache-hit }}' -eq 'true') {
-          Write-Host "🚀 Cache hit - setup optimized!" -ForegroundColor Green
-        } else { Write-Host "📦 Cache miss - modules installed" -ForegroundColor Yellow
-        }
