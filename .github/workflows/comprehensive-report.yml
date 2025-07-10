@@ -6,7 +6,6 @@ on:
     workflows: ["CI - Continuous Integration"]
     types: [completed]
     branches: [main, 'patch/**']
-
   # Keep daily scheduled reports
   schedule:
     # Run daily at 6 AM UTC (comprehensive report)
@@ -53,8 +52,6 @@ permissions:
   contents: write
   actions: read
   security-events: write
-  pages: write
-  id-token: write
 
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
