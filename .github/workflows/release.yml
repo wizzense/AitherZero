@@ -1,6 +1,7 @@
+---
 name: "Release"
 
-on:
+"on":
   workflow_dispatch:
     inputs:
       version:
@@ -48,32 +49,32 @@ jobs:
         id: validate
         run: |
           $version = "${{ github.event.inputs.version }}"
-          
+
           # Validate semantic version format
           if ($version -notmatch '^\d+\.\d+\.\d+(-[a-zA-Z0-9\-\.]+)?$') {
             Write-Host "::error::Invalid version format. Use semantic versioning (e.g., 1.2.3 or 1.2.3-beta.1)"
             exit 1
           }
-          
+
           $tag = "v$version"
-          
+
           # Check if tag already exists
           $existingTags = git tag -l $tag
           if ($existingTags) {
             Write-Host "::error::Tag $tag already exists"
             exit 1
           }
-          
+
           # Validate we're on main branch for non-prerelease
           $currentBranch = git branch --show-current
           if ($currentBranch -ne "main" -and "${{ github.event.inputs.prerelease }}" -eq "false") {
             Write-Host "::error::Production releases must be created from main branch. Current: $currentBranch"
             exit 1
           }
-          
+
           echo "version=$version" >> $env:GITHUB_OUTPUT
           echo "tag=$tag" >> $env:GITHUB_OUTPUT
-          
+
           Write-Host "✅ Version validation passed"
           Write-Host "Version: $version"
           Write-Host "Tag: $tag"
@@ -93,24 +94,24 @@ jobs:
       - name: Update VERSION file
         run: |
           $version = "${{ needs.validate-inputs.outputs.version }}"
-          
+
           # Update VERSION file
           $version | Set-Content "VERSION"
-          
+
           # Verify the update
           $updatedVersion = Get-Content "VERSION" -Raw | ForEach-Object { $_.Trim() }
           if ($updatedVersion -ne $version) {
             Write-Host "::error::Failed to update VERSION file"
             exit 1
           }
-          
+
           Write-Host "✅ VERSION file updated to: $updatedVersion"
 
       - name: Commit version update
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          
+
           git add VERSION
           git commit -m "Release: Update version to ${{ needs.validate-inputs.outputs.version }}"
           git push
@@ -166,12 +167,12 @@ jobs:
         run: |
           $packageDir = "build/output"
           $packages = Get-ChildItem $packageDir -File | Where-Object { $_.Name -like "*${{ matrix.platform }}*" }
-          
+
           if ($packages.Count -eq 0) {
             Write-Host "::error::No package found for ${{ matrix.platform }}"
             exit 1
           }
-          
+
           foreach ($package in $packages) {
             Write-Host "✅ Package created: $($package.Name) ($([math]::Round($package.Length / 1MB, 2)) MB)"
           }
@@ -200,7 +201,7 @@ jobs:
           $version = "${{ needs.validate-inputs.outputs.version }}"
           $description = "${{ github.event.inputs.description }}"
           $date = Get-Date -Format "yyyy-MM-dd"
-          
+
           # Get recent commits since last tag
           $lastTag = git describe --tags --abbrev=0 2>$null
           $commits = if ($lastTag) {
@@ -208,60 +209,48 @@ jobs:
           } else {
             git log --oneline -10 --no-merges
           }
-          
-          $releaseNotes = @"
-# AitherZero $version
 
-Released on $date
+          # Build release notes content
+          $releaseNotesContent = "# AitherZero $version`n`n"
+          $releaseNotesContent += "Released on $date`n`n"
+          $releaseNotesContent += "## Description`n"
+          $releaseNotesContent += "$description`n`n"
+          $releaseNotesContent += "## What's New`n"
 
-## Description
-$description
-
-## What's New
-"@
-          
           if ($commits) {
-            $releaseNotes += "`n"
             foreach ($commit in $commits) {
-              $releaseNotes += "- $commit`n"
+              $releaseNotesContent += "- $commit`n"
             }
           } else {
-            $releaseNotes += "`n- Initial release or no new commits since last tag"
+            $releaseNotesContent += "- Initial release or no new commits since last tag`n"
           }
-          
-          $releaseNotes += @"
 
-## 📦 Downloads
-- **Windows**: AitherZero-v$version-windows.zip
-- **Linux**: AitherZero-v$version-linux.tar.gz
-- **macOS**: AitherZero-v$version-macos.tar.gz
+          $releaseNotesContent += "`n## 📦 Downloads`n"
+          $releaseNotesContent += "- **Windows**: AitherZero-v$version-windows.zip`n"
+          $releaseNotesContent += "- **Linux**: AitherZero-v$version-linux.tar.gz`n"
+          $releaseNotesContent += "- **macOS**: AitherZero-v$version-macos.tar.gz`n`n"
+          $releaseNotesContent += "## 🚀 Quick Start`n"
+          $releaseNotesContent += "1. Download the appropriate package for your platform`n"
+          $releaseNotesContent += "2. Extract the archive`n"
+          $releaseNotesContent += "3. Run \`./Start-AitherZero.ps1\` (or \`Start-AitherZero.cmd\` on Windows)`n"
+          $releaseNotesContent += "4. Follow the setup wizard`n`n"
+          $releaseNotesContent += "## 📋 System Requirements`n"
+          $releaseNotesContent += "- PowerShell 7.0 or later`n"
+          $releaseNotesContent += "- 4GB RAM (8GB recommended)`n"
+          $releaseNotesContent += "- 10GB disk space`n`n"
+          $releaseNotesContent += "## 📚 Documentation`n"
+          $releaseNotesContent += "- [Quick Start Guide](https://github.com/${{ github.repository }}/blob/main/QUICKSTART.md)`n"
+          $releaseNotesContent += "- [Full Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)`n`n"
+          $releaseNotesContent += "---`n"
+          $releaseNotesContent += "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$lastTag...${{ needs.validate-inputs.outputs.tag }}`n"
 
-## 🚀 Quick Start
-1. Download the appropriate package for your platform
-2. Extract the archive
-3. Run `./Start-AitherZero.ps1` (or `Start-AitherZero.cmd` on Windows)
-4. Follow the setup wizard
-
-## 📋 System Requirements
-- PowerShell 7.0 or later
-- 4GB RAM (8GB recommended)
-- 10GB disk space
-
-## 📚 Documentation
-- [Quick Start Guide](https://github.com/${{ github.repository }}/blob/main/QUICKSTART.md)
-- [Full Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)
-
----
-**Full Changelog**: https://github.com/${{ github.repository }}/compare/$lastTag...${{ needs.validate-inputs.outputs.tag }}
-"@
-          
           # Output for use in create-release job
-          $releaseNotes | Set-Content "release-notes.md"
-          
+          $releaseNotesContent | Set-Content "release-notes.md"
+
           # For GitHub Actions output, we need to handle multiline content
           $delimiter = "EOF"
           echo "content<<$delimiter" >> $env:GITHUB_OUTPUT
-          echo $releaseNotes >> $env:GITHUB_OUTPUT
+          echo $releaseNotesContent >> $env:GITHUB_OUTPUT
           echo $delimiter >> $env:GITHUB_OUTPUT
 
       - name: Upload release notes
@@ -298,7 +287,7 @@ $description
           Get-ChildItem packages/ -Recurse -File | ForEach-Object {
             Write-Host "  - $($_.Name) ($([math]::Round($_.Length / 1MB, 2)) MB)"
           }
-          
+
           Write-Host "`n📋 Test results:"
           Get-ChildItem test-results/ -Recurse -File | ForEach-Object {
             Write-Host "  - $($_.Name)"
@@ -306,45 +295,21 @@ $description
 
       - name: Create release
         id: create-release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ needs.validate-inputs.outputs.tag }}
-          release_name: "AitherZero ${{ needs.validate-inputs.outputs.version }}"
+          name: "AitherZero ${{ needs.validate-inputs.outputs.version }}"
           body: ${{ needs.generate-release-notes.outputs.release-notes }}
           draft: ${{ github.event.inputs.draft }}
           prerelease: ${{ github.event.inputs.prerelease }}
-
-      - name: Upload Windows package
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: packages/AitherZero-v${{ needs.validate-inputs.outputs.version }}-windows.zip
-          asset_name: AitherZero-v${{ needs.validate-inputs.outputs.version }}-windows.zip
-          asset_content_type: application/zip
-
-      - name: Upload Linux package
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: packages/AitherZero-v${{ needs.validate-inputs.outputs.version }}-linux.tar.gz
-          asset_name: AitherZero-v${{ needs.validate-inputs.outputs.version }}-linux.tar.gz
-          asset_content_type: application/gzip
-
-      - name: Upload macOS package
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: packages/AitherZero-v${{ needs.validate-inputs.outputs.version }}-macos.tar.gz
-          asset_name: AitherZero-v${{ needs.validate-inputs.outputs.version }}-macos.tar.gz
-          asset_content_type: application/gzip
+          files: |
+            packages/AitherZero-v${{ needs.validate-inputs.outputs.version }}-windows.zip
+            packages/AitherZero-v${{ needs.validate-inputs.outputs.version }}-linux.tar.gz
+            packages/AitherZero-v${{ needs.validate-inputs.outputs.version }}-macos.tar.gz
+          generate_release_notes: true
+          make_latest: ${{ github.event.inputs.prerelease == 'false' }}
 
   post-release:
     name: "Post-Release Tasks"
@@ -359,7 +324,7 @@ $description
         run: |
           $version = "${{ needs.validate-inputs.outputs.version }}"
           $tag = "${{ needs.validate-inputs.outputs.tag }}"
-          
+
           Write-Host "🎉 Release $version completed successfully!"
           Write-Host ""
           Write-Host "📊 Release Summary:"
@@ -375,7 +340,7 @@ $description
           Write-Host "✅ All packages built and uploaded successfully"
           Write-Host "✅ Tests passed"
           Write-Host "✅ Release notes generated"
-          
+
           # Create a success indicator file
           @{
             success = $true
