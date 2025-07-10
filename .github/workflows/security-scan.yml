@@ -89,7 +89,7 @@ jobs:
       - name: PowerShell secrets scan
         run: |
           Write-Host "🔍 Scanning PowerShell files for potential secrets..."
-          
+
           # Define patterns for common secrets
           $secretPatterns = @(
             @{ Name = "API Key"; Pattern = "api[_-]?key\s*[=:]\s*['\"]?[a-zA-Z0-9]{20,}['\"]?" },
@@ -99,21 +99,21 @@ jobs:
             @{ Name = "GitHub Token"; Pattern = "gh[ps]_[a-zA-Z0-9]{36}" },
             @{ Name = "Azure Key"; Pattern = "[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}" }
           )
-          
+
           $findings = @()
           $psFiles = Get-ChildItem -Include "*.ps1", "*.psm1", "*.psd1" -Recurse
-          
+
           foreach ($file in $psFiles) {
             $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
             if (-not $content) { continue }
-            
+
             foreach ($pattern in $secretPatterns) {
               if ($content -match $pattern.Pattern) {
                 # Skip obvious test/example patterns
                 if ($content -match "(test|example|sample|placeholder|dummy)" -and $content -match $pattern.Pattern) {
                   continue
                 }
-                
+
                 $findings += [PSCustomObject]@{
                   File = $file.FullName.Replace((Get-Location).Path, "")
                   Type = $pattern.Name
@@ -122,15 +122,15 @@ jobs:
               }
             }
           }
-          
+
           if ($findings.Count -gt 0) {
             Write-Host "⚠️ Potential secrets found:"
             $findings | Format-Table -AutoSize
-            
+
             foreach ($finding in $findings) {
               Write-Host "::warning file=$($finding.File)::Potential $($finding.Type) detected"
             }
-            
+
             # Don't fail the build for now, just warn
             Write-Host "::notice::Manual review required for potential secrets"
           } else {
@@ -149,22 +149,22 @@ jobs:
       - name: Scan PowerShell module dependencies
         run: |
           Write-Host "🔍 Scanning PowerShell module dependencies..."
-          
+
           # Find all module manifests
           $manifests = Get-ChildItem -Filter "*.psd1" -Recurse
           $allDependencies = @()
-          
+
           foreach ($manifest in $manifests) {
             Write-Host "Analyzing: $($manifest.Name)"
-            
+
             try {
               $manifestData = Import-PowerShellDataFile $manifest.FullName
-              
+
               if ($manifestData.RequiredModules) {
                 foreach ($module in $manifestData.RequiredModules) {
                   $moduleName = if ($module -is [string]) { $module } else { $module.ModuleName }
                   $moduleVersion = if ($module -is [hashtable]) { $module.ModuleVersion } else { "Any" }
-                  
+
                   $allDependencies += [PSCustomObject]@{
                     Manifest = $manifest.Name
                     Module = $moduleName
@@ -173,7 +173,7 @@ jobs:
                   }
                 }
               }
-              
+
               if ($manifestData.ExternalModuleDependencies) {
                 foreach ($module in $manifestData.ExternalModuleDependencies) {
                   $allDependencies += [PSCustomObject]@{
@@ -188,11 +188,11 @@ jobs:
               Write-Host "::warning file=$($manifest.FullName)::Could not parse manifest: $($_.Exception.Message)"
             }
           }
-          
+
           if ($allDependencies.Count -gt 0) {
             Write-Host "📦 Found dependencies:"
             $allDependencies | Format-Table -AutoSize
-            
+
             # Check for known vulnerable modules (basic list)
             $knownVulnerable = @('PSFramework') # Example - update with actual vulnerable modules
             foreach ($vuln in $knownVulnerable) {
@@ -201,7 +201,7 @@ jobs:
                 Write-Host "::error::Known vulnerable module detected: $vuln"
               }
             }
-            
+
             # Check for outdated core modules
             $coreModules = $allDependencies | Where-Object { $_.Module -in @('Pester', 'PSScriptAnalyzer') }
             foreach ($core in $coreModules) {
@@ -214,14 +214,14 @@ jobs:
       - name: Scan for hardcoded paths and credentials
         run: |
           Write-Host "🔍 Scanning for hardcoded paths and potential security issues..."
-          
+
           $securityIssues = @()
           $psFiles = Get-ChildItem -Include "*.ps1", "*.psm1", "*.psd1" -Recurse
-          
+
           foreach ($file in $psFiles) {
             $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
             if (-not $content) { continue }
-            
+
             # Check for hardcoded Windows paths
             if ($content -match 'C:\\[^\\]*\\') {
               $securityIssues += [PSCustomObject]@{
@@ -230,7 +230,7 @@ jobs:
                 Severity = "Medium"
               }
             }
-            
+
             # Check for Invoke-Expression with variables
             if ($content -match 'Invoke-Expression.*\$') {
               $securityIssues += [PSCustomObject]@{
@@ -239,7 +239,7 @@ jobs:
                 Severity = "High"
               }
             }
-            
+
             # Check for Start-Process with user input
             if ($content -match 'Start-Process.*\$') {
               $securityIssues += [PSCustomObject]@{
@@ -248,7 +248,7 @@ jobs:
                 Severity = "High"
               }
             }
-            
+
             # Check for disabled execution policy
             if ($content -match 'Set-ExecutionPolicy.*Unrestricted') {
               $securityIssues += [PSCustomObject]@{
@@ -258,16 +258,16 @@ jobs:
               }
             }
           }
-          
+
           if ($securityIssues.Count -gt 0) {
             Write-Host "⚠️ Security issues found:"
             $securityIssues | Format-Table -AutoSize
-            
+
             foreach ($issue in $securityIssues) {
               $level = if ($issue.Severity -eq "High") { "error" } else { "warning" }
               Write-Host "::$level file=$($issue.File)::$($issue.Issue)"
             }
-            
+
             $highSeverity = ($securityIssues | Where-Object { $_.Severity -eq "High" }).Count
             if ($highSeverity -gt 0) {
               Write-Host "::error::Found $highSeverity high-severity security issues"
@@ -289,45 +289,41 @@ jobs:
 
       - name: Generate security summary
         run: |
-          $summary = @"
-# 🔒 AitherZero Security Scan Report
+          $scanDate = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
+          $trigger = '${{ github.event_name }}'
+          $branch = '${{ github.ref_name }}'
+          $commit = '${{ github.sha }}'
+          $codeqlStatus = '${{ needs.security-analysis.result }}'
+          $secretsStatus = '${{ needs.secrets-scan.result }}'
+          $dependencyStatus = '${{ needs.dependency-scan.result }}'
 
-**Scan Date**: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
-**Trigger**: ${{ github.event_name }}
-**Branch**: ${{ github.ref_name }}
-**Commit**: ${{ github.sha }}
-
-## 📊 Scan Results
-
-### CodeQL Analysis
-- **Status**: ${{ needs.security-analysis.result }}
-- **Language**: JavaScript (for any embedded JS)
-
-### Secrets Detection
-- **Status**: ${{ needs.secrets-scan.result }}
-- **Tool**: Gitleaks + Custom PowerShell scan
-
-### Dependency Scan
-- **Status**: ${{ needs.dependency-scan.result }}
-- **Focus**: PowerShell modules and external dependencies
-
-## 🛡️ Security Recommendations
-
-1. **Regular Updates**: Keep all PowerShell modules updated
-2. **Code Review**: Manual review for any flagged potential secrets
-3. **Access Control**: Ensure proper permissions on sensitive scripts
-4. **Monitoring**: Regular security scans on schedule
-
-## 📋 Next Actions
-
-- Review any warnings or errors above
-- Update dependencies if vulnerabilities found
-- Remove or secure any flagged secrets
-- Consider implementing additional security measures
-
----
-*Generated by AitherZero Security Workflow*
-"@
+          $summary = "# 🔒 AitherZero Security Scan Report`n`n"
+          $summary += "**Scan Date**: $scanDate`n"
+          $summary += "**Trigger**: $trigger`n"
+          $summary += "**Branch**: $branch`n"
+          $summary += "**Commit**: $commit`n`n"
+          $summary += "## 📊 Scan Results`n`n"
+          $summary += "### CodeQL Analysis`n"
+          $summary += "- **Status**: $codeqlStatus`n"
+          $summary += "- **Language**: JavaScript (for any embedded JS)`n`n"
+          $summary += "### Secrets Detection`n"
+          $summary += "- **Status**: $secretsStatus`n"
+          $summary += "- **Tool**: Gitleaks + Custom PowerShell scan`n`n"
+          $summary += "### Dependency Scan`n"
+          $summary += "- **Status**: $dependencyStatus`n"
+          $summary += "- **Focus**: PowerShell modules and external dependencies`n`n"
+          $summary += "## 🛡️ Security Recommendations`n`n"
+          $summary += "1. **Regular Updates**: Keep all PowerShell modules updated`n"
+          $summary += "2. **Code Review**: Manual review for any flagged potential secrets`n"
+          $summary += "3. **Access Control**: Ensure proper permissions on sensitive scripts`n"
+          $summary += "4. **Monitoring**: Regular security scans on schedule`n`n"
+          $summary += "## 📋 Next Actions`n`n"
+          $summary += "- Review any warnings or errors above`n"
+          $summary += "- Update dependencies if vulnerabilities found`n"
+          $summary += "- Remove or secure any flagged secrets`n"
+          $summary += "- Consider implementing additional security measures`n`n"
+          $summary += "---`n"
+          $summary += "*Generated by AitherZero Security Workflow*`n"
 
           $summary | Set-Content "security-report.md"
           Write-Host $summary
@@ -346,7 +342,7 @@ jobs:
           script: |
             const fs = require('fs');
             const report = fs.readFileSync('security-report.md', 'utf8');
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -357,22 +353,22 @@ jobs:
       - name: Security scan summary
         run: |
           $overallStatus = "PASSED"
-          
+
           if ("${{ needs.security-analysis.result }}" -eq "failure") {
             $overallStatus = "FAILED"
             Write-Host "::error::CodeQL analysis failed"
           }
-          
+
           if ("${{ needs.secrets-scan.result }}" -eq "failure") {
             $overallStatus = "FAILED"
             Write-Host "::error::Secrets scan failed"
           }
-          
+
           if ("${{ needs.dependency-scan.result }}" -eq "failure") {
             $overallStatus = "FAILED"
             Write-Host "::error::Dependency scan failed"
           }
-          
+
           if ($overallStatus -eq "PASSED") {
             Write-Host "::notice::All security scans completed successfully"
           } else {

@@ -61,21 +61,21 @@ jobs:
         id: analysis
         run: |
           Write-Host "🔍 Running comprehensive PowerShell code analysis..."
-          
+
           # Get all PowerShell files
           $files = Get-ChildItem -Include "*.ps1", "*.psm1", "*.psd1" -Recurse |
                    Where-Object { $_.FullName -notlike "*\.git*" -and $_.FullName -notlike "*test*" }
-          
+
           Write-Host "Found $($files.Count) PowerShell files to analyze"
-          
+
           $allIssues = @()
           $fixableIssues = @()
-          
+
           foreach ($file in $files) {
             Write-Host "Analyzing: $($file.Name)"
-            
+
             $issues = Invoke-ScriptAnalyzer -Path $file.FullName -Severity Error,Warning,Information -IncludeDefaultRules
-            
+
             if ($issues) {
               foreach ($issue in $issues) {
                 $issueObj = [PSCustomObject]@{
@@ -98,21 +98,21 @@ jobs:
                   )
                 }
                 $allIssues += $issueObj
-                
+
                 if ($issueObj.Fixable) {
                   $fixableIssues += $issueObj
                 }
               }
             }
           }
-          
+
           Write-Host "📊 Analysis Results:"
           Write-Host "  Total issues: $($allIssues.Count)"
           Write-Host "  Fixable issues: $($fixableIssues.Count)"
           Write-Host "  Critical issues: $(($allIssues | Where-Object Severity -eq 'Error').Count)"
           Write-Host "  Warning issues: $(($allIssues | Where-Object Severity -eq 'Warning').Count)"
           Write-Host "  Info issues: $(($allIssues | Where-Object Severity -eq 'Information').Count)"
-          
+
           # Group by rule for summary
           $ruleGroups = $allIssues | Group-Object RuleName | Sort-Object Count -Descending
           if ($ruleGroups) {
@@ -121,13 +121,14 @@ jobs:
               Write-Host "  $($group.Name): $($group.Count) occurrences"
             }
           }
-          
+
           # Export detailed results
           $allIssues | ConvertTo-Json -Depth 3 | Set-Content "quality-analysis.json"
           $fixableIssues | ConvertTo-Json -Depth 3 | Set-Content "fixable-issues.json"
-          
+
           # Set outputs
-          echo "has-issues=$($allIssues.Count -gt 0 ? 'true' : 'false')" >> $env:GITHUB_OUTPUT
+          $hasIssues = if ($allIssues.Count -gt 0) { 'true' } else { 'false' }
+          echo "has-issues=$hasIssues" >> $env:GITHUB_OUTPUT
           echo "issue-count=$($allIssues.Count)" >> $env:GITHUB_OUTPUT
           echo "critical-count=$(($allIssues | Where-Object Severity -eq 'Error').Count)" >> $env:GITHUB_OUTPUT
 
@@ -166,31 +167,31 @@ jobs:
         id: apply-fixes
         run: |
           Write-Host "🔧 Applying automatic fixes..."
-          
+
           $fixableIssues = Get-Content "fixable-issues.json" | ConvertFrom-Json
           $remediationType = "${{ github.event.inputs.remediation_type }}"
-          
+
           Write-Host "Remediation type: $remediationType"
           Write-Host "Fixable issues: $($fixableIssues.Count)"
-          
+
           $fixedFiles = @()
           $appliedFixes = @()
-          
+
           # Group issues by file for efficient processing
           $fileGroups = $fixableIssues | Group-Object File
-          
+
           foreach ($fileGroup in $fileGroups) {
             $filePath = $fileGroup.Name
             Write-Host "Processing: $filePath"
-            
+
             if (-not (Test-Path $filePath)) {
               Write-Host "  ⚠️ File not found: $filePath"
               continue
             }
-            
+
             $fileIssues = $fileGroup.Group
             $fixesToApply = @()
-            
+
             # Filter fixes based on remediation type
             switch ($remediationType) {
               'formatting-only' {
@@ -210,21 +211,21 @@ jobs:
                 $fixesToApply = $fileIssues
               }
             }
-            
+
             if ($fixesToApply.Count -eq 0) {
               Write-Host "  ℹ️ No applicable fixes for this file"
               continue
             }
-            
+
             try {
               # Use Invoke-Formatter to fix formatting issues
               $formattingRules = $fixesToApply | Where-Object {
                 $_.RuleName -in @('PSUseConsistentIndentation', 'PSUseConsistentWhitespace', 'PSPlaceOpenBrace', 'PSPlaceCloseBrace')
               }
-              
+
               if ($formattingRules.Count -gt 0) {
                 Write-Host "  🎨 Applying formatting fixes..."
-                
+
                 $formatterSettings = @{
                   Rules = @{
                     PSUseConsistentIndentation = @{
@@ -259,10 +260,10 @@ jobs:
                     }
                   }
                 }
-                
+
                 $originalContent = Get-Content $filePath -Raw
                 $formattedContent = Invoke-Formatter -ScriptDefinition $originalContent -Settings $formatterSettings
-                
+
                 if ($formattedContent -ne $originalContent) {
                   Set-Content -Path $filePath -Value $formattedContent -NoNewline
                   $fixedFiles += $filePath
@@ -272,12 +273,12 @@ jobs:
                   Write-Host "  ℹ️ No formatting changes needed"
                 }
               }
-              
+
               # Apply other rule-based fixes
               $otherRules = $fixesToApply | Where-Object {
                 $_.RuleName -notin @('PSUseConsistentIndentation', 'PSUseConsistentWhitespace', 'PSPlaceOpenBrace', 'PSPlaceCloseBrace', 'PSAlignAssignmentStatement')
               }
-              
+
               foreach ($rule in $otherRules) {
                 switch ($rule.RuleName) {
                   'PSAvoidTrailingWhitespace' {
@@ -306,23 +307,23 @@ jobs:
                   }
                 }
               }
-              
+
             } catch {
               Write-Host "  ❌ Error processing file: $($_.Exception.Message)"
             }
           }
-          
+
           Write-Host "`n📊 Fix Summary:"
           Write-Host "  Files modified: $($fixedFiles.Count)"
           Write-Host "  Total fixes applied: $($appliedFixes.Count)"
-          
+
           if ($appliedFixes.Count -gt 0) {
             Write-Host "`n🔧 Applied fixes:"
             foreach ($fix in $appliedFixes) {
               Write-Host "  - $fix"
             }
           }
-          
+
           # Save fix summary
           @{
             FilesModified = $fixedFiles
@@ -330,8 +331,9 @@ jobs:
             RemediationType = $remediationType
             Timestamp = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
           } | ConvertTo-Json -Depth 3 | Set-Content "fix-summary.json"
-          
-          echo "fixes-applied=$($appliedFixes.Count -gt 0 ? 'true' : 'false')" >> $env:GITHUB_OUTPUT
+
+          $fixesApplied = if ($appliedFixes.Count -gt 0) { 'true' } else { 'false' }
+          echo "fixes-applied=$fixesApplied" >> $env:GITHUB_OUTPUT
           echo "files-modified=$($fixedFiles.Count)" >> $env:GITHUB_OUTPUT
 
       - name: Upload fix results
@@ -347,78 +349,47 @@ jobs:
           # Configure git
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action - Code Quality Bot"
-          
+
           # Create branch
           $branchName = "code-quality/auto-fix-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
           git checkout -b $branchName
-          
+
           # Stage changes
           git add .
-          
+
           # Check if there are changes to commit
           $changes = git diff --staged --name-only
           if (-not $changes) {
             Write-Host "No changes to commit"
             exit 0
           }
-          
+
           Write-Host "Changes to commit:"
           foreach ($change in $changes) {
             Write-Host "  - $change"
           }
-          
+
           # Commit changes
-          $commitMessage = @"
-          Automated code quality fixes (${{ github.event.inputs.remediation_type }})
-          
-          Applied automatic fixes using PSScriptAnalyzer:
-          - Fixed ${{ steps.apply-fixes.outputs.files-modified }} files
-          - Remediation type: ${{ github.event.inputs.remediation_type }}
-          
-          🤖 Generated by Code Quality Remediation workflow
-          "@ -replace '^\s+', ''
-          
+          $filesModified = "${{ steps.apply-fixes.outputs.files-modified }}"
+          $remedType = "${{ github.event.inputs.remediation_type }}"
+
+          $commitMessage = "Automated code quality fixes ($remedType) - Fixed $filesModified files"
+
           git commit -m $commitMessage
-          
+
           # Push branch
           git push origin $branchName
-          
+
           # Create PR using GitHub CLI
-          $prTitle = "🔧 Automated Code Quality Fixes (${{ github.event.inputs.remediation_type }})"
-          $prBody = @"
-          ## 🤖 Automated Code Quality Fixes
-          
-          This PR contains automatic fixes applied by the Code Quality Remediation workflow.
-          
-          ### 📊 Summary
-          - **Remediation Type**: ${{ github.event.inputs.remediation_type }}
-          - **Files Modified**: ${{ steps.apply-fixes.outputs.files-modified }}
-          - **Triggered By**: ${{ github.actor }}
-          - **Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          
-          ### 🔧 Fixes Applied
-          The following types of issues were automatically fixed:
-          - Code formatting and indentation
-          - Consistent whitespace usage
-          - Brace placement
-          - Trailing whitespace removal
-          - Semicolon cleanup
-          
-          ### ✅ Quality Assurance
-          - All fixes were applied using PSScriptAnalyzer's built-in formatter
-          - No functional changes were made to the code
-          - Only formatting and style improvements
-          
-          ### 📋 Next Steps
-          1. Review the changes in this PR
-          2. Run tests to ensure no functionality is broken
-          3. Merge when satisfied with the improvements
-          
-          *This PR was automatically created by the Code Quality Remediation workflow.*
-          "@ -replace '^\s+', ''
-          
+          $prTitle = "🔧 Automated Code Quality Fixes ($remedType)"
+          $serverUrl = "${{ github.server_url }}"
+          $repository = "${{ github.repository }}"
+          $runId = "${{ github.run_id }}"
+
+          $prBody = "## Automated Code Quality Fixes`n`nThis PR contains automatic fixes applied by the Code Quality Remediation workflow.`n`n### Summary`n- Remediation Type: $remedType`n- Files Modified: $filesModified`n- Triggered By: $actor`n- Workflow Run: $serverUrl/$repository/actions/runs/$runId`n`n### Fixes Applied`nThe following types of issues were automatically fixed:`n- Code formatting and indentation`n- Consistent whitespace usage`n- Brace placement`n- Trailing whitespace removal`n- Semicolon cleanup`n`n### Quality Assurance`n- All fixes were applied using PSScriptAnalyzer's built-in formatter`n- No functional changes were made to the code`n- Only formatting and style improvements`n`n### Next Steps`n1. Review the changes in this PR`n2. Run tests to ensure no functionality is broken`n3. Merge when satisfied with the improvements`n`n*This PR was automatically created by the Code Quality Remediation workflow.*"
+
           gh pr create --title $prTitle --body $prBody --head $branchName --base main
-          
+
           Write-Host "✅ Pull request created successfully"
 
   generate-report:
@@ -439,72 +410,37 @@ jobs:
       - name: Generate comprehensive report
         run: |
           Write-Host "📊 Generating code quality report..."
-          
-          $report = @"
-# 🔧 AitherZero Code Quality Report
 
-**Generated**: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
-**Workflow**: ${{ github.workflow }}
-**Run ID**: ${{ github.run_id }}
-**Triggered By**: ${{ github.actor }}
+          $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
+          $workflow = "${{ github.workflow }}"
+          $runId = "${{ github.run_id }}"
+          $actor = "${{ github.actor }}"
+          $issueCount = "${{ needs.analyze-quality.outputs.issue-count }}"
+          $criticalCount = "${{ needs.analyze-quality.outputs.critical-count }}"
+          $analysisResult = "${{ needs.analyze-quality.result }}"
+          $fixResult = "${{ needs.auto-fix.result }}"
+          $remediationType = "${{ github.event.inputs.remediation_type }}"
+          $dryRun = "${{ github.event.inputs.dry_run }}"
+          $createPR = "${{ github.event.inputs.create_pr }}"
 
-## 📈 Quality Metrics
+          $criticalStatus = if ($criticalCount -eq '0') { '✅' } else { '❌' }
+          $issueStatus = if ([int]$issueCount -lt 50) { '✅' } else { '❌' }
 
-### Analysis Results
-- **Total Issues**: ${{ needs.analyze-quality.outputs.issue-count }}
-- **Critical Issues**: ${{ needs.analyze-quality.outputs.critical-count }}
-- **Analysis Status**: ${{ needs.analyze-quality.result }}
+          $report = "# AitherZero Code Quality Report`n`n**Generated**: $timestamp`n**Workflow**: $workflow`n**Run ID**: $runId`n**Triggered By**: $actor`n`n## Quality Metrics`n`n### Analysis Results`n- **Total Issues**: $issueCount`n- **Critical Issues**: $criticalCount`n- **Analysis Status**: $analysisResult`n`n### Remediation Results`n- **Remediation Status**: $fixResult`n- **Remediation Type**: $remediationType`n- **Dry Run**: $dryRun`n- **Create PR**: $createPR`n`n## Quality Targets`n`n| Metric | Current | Target | Status |`n|--------|---------|--------|--------|`n| Critical Issues | $criticalCount | 0 | $criticalStatus |`n| Total Issues | $issueCount | < 50 | $issueStatus |`n`n## Automated Fixes`n`nThe workflow can automatically fix the following types of issues:`n- Code formatting and indentation`n- Consistent whitespace usage`n- Brace placement standardization`n- Trailing whitespace removal`n- Semicolon cleanup`n- Assignment alignment`n`n## Recommendations`n"
 
-### Remediation Results
-- **Remediation Status**: ${{ needs.auto-fix.result }}
-- **Remediation Type**: ${{ github.event.inputs.remediation_type }}
-- **Dry Run**: ${{ github.event.inputs.dry_run }}
-- **Create PR**: ${{ github.event.inputs.create_pr }}
-
-## 🎯 Quality Targets
-
-| Metric | Current | Target | Status |
-|--------|---------|--------|--------|
-| Critical Issues | ${{ needs.analyze-quality.outputs.critical-count }} | 0 | ${{ needs.analyze-quality.outputs.critical-count == '0' ? '✅' : '❌' }} |
-| Total Issues | ${{ needs.analyze-quality.outputs.issue-count }} | < 50 | ${{ needs.analyze-quality.outputs.issue-count < 50 ? '✅' : '❌' }} |
-
-## 🔧 Automated Fixes
-
-The workflow can automatically fix the following types of issues:
-- ✅ Code formatting and indentation
-- ✅ Consistent whitespace usage  
-- ✅ Brace placement standardization
-- ✅ Trailing whitespace removal
-- ✅ Semicolon cleanup
-- ✅ Assignment alignment
-
-## 📋 Recommendations
-
-"@
-
-          if ([int]"${{ needs.analyze-quality.outputs.critical-count }}" -gt 0) {
-            $report += "`n### 🚨 Critical Issues Detected`n"
+          if ([int]$criticalCount -gt 0) {
+            $report += "`n### Critical Issues Detected`n"
             $report += "- Review and fix critical issues manually`n"
             $report += "- Critical issues may indicate functional problems`n"
           }
-          
-          if ([int]"${{ needs.analyze-quality.outputs.issue-count }}" -gt 50) {
-            $report += "`n### 📈 High Issue Count`n"
+
+          if ([int]$issueCount -gt 50) {
+            $report += "`n### High Issue Count`n"
             $report += "- Consider running remediation more frequently`n"
             $report += "- Review coding standards and practices`n"
           }
-          
-          $report += @"
 
-### ✅ Next Actions
-1. Review any critical issues manually
-2. Run automated remediation if needed
-3. Consider updating coding guidelines
-4. Schedule regular quality checks
-
----
-*Report generated by AitherZero Code Quality Remediation workflow*
-"@
+          $report += "`n`n### Next Actions`n1. Review any critical issues manually`n2. Run automated remediation if needed`n3. Consider updating coding guidelines`n4. Schedule regular quality checks`n`n---`n*Report generated by AitherZero Code Quality Remediation workflow*"
 
           $report | Set-Content "quality-report.md"
           Write-Host $report
@@ -520,14 +456,19 @@ The workflow can automatically fix the following types of issues:
         run: |
           Write-Host "📊 Code Quality Remediation Summary"
           Write-Host "=================================="
-          Write-Host "Analysis: ${{ needs.analyze-quality.result }}"
-          Write-Host "Auto-fix: ${{ needs.auto-fix.result }}"
-          Write-Host "Issues found: ${{ needs.analyze-quality.outputs.issue-count }}"
-          Write-Host "Critical issues: ${{ needs.analyze-quality.outputs.critical-count }}"
-          
-          if ("${{ needs.analyze-quality.result }}" -eq "failure") {
+          $analysisResult = "${{ needs.analyze-quality.result }}"
+          $fixResult = "${{ needs.auto-fix.result }}"
+          $issueCount = "${{ needs.analyze-quality.outputs.issue-count }}"
+          $criticalCount = "${{ needs.analyze-quality.outputs.critical-count }}"
+
+          Write-Host "Analysis: $analysisResult"
+          Write-Host "Auto-fix: $fixResult"
+          Write-Host "Issues found: $issueCount"
+          Write-Host "Critical issues: $criticalCount"
+
+          if ($analysisResult -eq "failure") {
             Write-Host "::error::Code quality analysis failed"
             exit 1
           }
-          
+
           Write-Host "::notice::Code quality remediation completed"
