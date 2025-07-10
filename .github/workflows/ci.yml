@@ -104,7 +104,7 @@ jobs:
           $files = Get-ChildItem -Include "*.ps1","*.psm1","*.psd1" -Recurse | 
                    Where-Object { $_.FullName -notlike "*test*" -and $_.FullName -notlike "*build*" }
           
-          $results = Invoke-ScriptAnalyzer -Path $files -Severity Error,Warning
+          $results = Invoke-ScriptAnalyzer -Path $files.FullName -Severity Error,Warning
           
           if ($results) {
             Write-Host "Quality issues found: $($results.Count)"
