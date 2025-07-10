@@ -5,6 +5,9 @@ on:
     branches:
       - main
       - develop
+      - 'patch/**'
+      - 'feature/**'
+      - 'hotfix/**'
     paths-ignore:
       - '*.md'
       - 'docs/**'
