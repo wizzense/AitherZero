@@ -1,12 +1,17 @@
 name: Release
 
 on:
-  # Trigger comprehensive report workflow for releases
+  # PRIMARY: Tag-based release trigger (AUTOMATIC)
+  push:
+    tags:
+      - 'v*'
+  # SECONDARY: CI completion trigger (VERSION file change detection)
   workflow_run:
     workflows: ["CI - Optimized & Reliable"]
     types:
       - completed
     branches: [main, 'patch/**']
+  # MANUAL: Emergency manual release
   workflow_dispatch:
     inputs:
       version:
@@ -40,12 +45,14 @@ jobs:
     name: Validate Release Requirements
     runs-on: ubuntu-latest
     if: |
+      github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch' || 
       (github.event.workflow_run.conclusion == 'success') ||
       (github.event.workflow_run.conclusion == 'failure' && contains(github.event.workflow_run.head_branch, 'main'))
     outputs:
       should-release: ${{ steps.check.outputs.should-release }}
       version-number: ${{ steps.version.outputs.version }}
+      is-tag-release: ${{ steps.check.outputs.is-tag-release }}
     
     steps:
     - name: Checkout code
@@ -66,16 +73,27 @@ jobs:
       shell: pwsh
       run: |
         Write-Host "🔍 Checking release readiness..." -ForegroundColor Cyan
+        Write-Host "  Event Name: ${{ github.event_name }}" -ForegroundColor Gray
+        Write-Host "  Ref: ${{ github.ref }}" -ForegroundColor Gray
         
         $shouldRelease = $false
+        $isTagRelease = $false
         
-        if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
+        # Check the trigger type
+        if ('${{ github.event_name }}' -eq 'push' -and '${{ github.ref }}' -like 'refs/tags/v*') {
+          Write-Host "🏷️ Tag-based release triggered: ${{ github.ref }}" -ForegroundColor Green
+          $shouldRelease = $true
+          $isTagRelease = $true
+        } elseif ('${{ github.event_name }}' -eq 'workflow_dispatch') {
           Write-Host "📝 Manual release triggered" -ForegroundColor Yellow
           $shouldRelease = $true
-        } else {
+        } elseif ('${{ github.event_name }}' -eq 'workflow_run') {
+          Write-Host "🔄 Workflow run triggered release check" -ForegroundColor Cyan
           # Check if VERSION file was changed in the CI run
           $headSha = '${{ github.event.workflow_run.head_sha }}'
-          $changedFiles = git diff-tree --no-commit-id --name-only -r $headSha 2>$null
+          if ($headSha) {
+            $changedFiles = git diff-tree --no-commit-id --name-only -r $headSha 2>$null
+          }
           if (-not $changedFiles) {
             # Fallback: check against previous commit
             $changedFiles = git diff --name-only HEAD~1 HEAD 2>$null
@@ -98,14 +116,27 @@ jobs:
         
         Write-Host "📊 Release Decision:" -ForegroundColor Cyan
         Write-Host "  Should Release: $shouldRelease" -ForegroundColor White
+        Write-Host "  Is Tag Release: $isTagRelease" -ForegroundColor White
         
         echo "should-release=$shouldRelease" >> $env:GITHUB_OUTPUT
+        echo "is-tag-release=$isTagRelease" >> $env:GITHUB_OUTPUT
         
     - name: Get version information
       id: version
       shell: pwsh
       run: |
         $version = '${{ github.event.inputs.version }}'
+        
+        # Handle tag-based releases
+        if ('${{ steps.check.outputs.is-tag-release }}' -eq 'true') {
+          $tagRef = '${{ github.ref }}'
+          if ($tagRef -match 'refs/tags/v(.+)') {
+            $version = $matches[1]
+            Write-Host "🏷️ Version from tag: $version" -ForegroundColor Green
+          } else {
+            Write-Host "⚠️ Could not extract version from tag: $tagRef" -ForegroundColor Yellow
+          }
+        }
         
         # If not provided, get from VERSION file
         if (-not $version) {
@@ -116,10 +147,24 @@ jobs:
             Write-Host "⚠️ VERSION file not found, using default" -ForegroundColor Yellow
             $version = "0.0.1"
           }
-        } else {
+        } elseif ('${{ github.event.inputs.version }}') {
           Write-Host "📝 Version from manual input: $version" -ForegroundColor Cyan
         }
         
+        # Validate version format
+        if ($version -notmatch '^\d+\.\d+\.\d+$') {
+          Write-Host "⚠️ Invalid version format: $version, attempting to fix..." -ForegroundColor Yellow
+          # Try to extract just the version number
+          if ($version -match '(\d+\.\d+\.\d+)') {
+            $version = $matches[1]
+            Write-Host "✅ Fixed version format: $version" -ForegroundColor Green
+          } else {
+            Write-Host "❌ Could not fix version format, using default" -ForegroundColor Red
+            $version = "0.0.1"
+          }
+        }
+        
+        Write-Host "📦 Final version: $version" -ForegroundColor White
         echo "version=$version" >> $env:GITHUB_OUTPUT
 
   # Trigger comprehensive report workflow for complete release
