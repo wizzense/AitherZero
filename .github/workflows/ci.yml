@@ -1,6 +1,6 @@
 name: "CI - Optimized & Reliable"
 
-on:
+"on":
   push:
     branches:
       - main

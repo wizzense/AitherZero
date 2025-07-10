@@ -1,6 +1,7 @@
+---
 name: "Code Quality Remediation"
 
-on:
+"on":
   schedule:
     # Run weekly on Saturdays at 3 AM UTC
     - cron: '0 3 * * 6'

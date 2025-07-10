@@ -1,6 +1,7 @@
+---
 name: "Security Scan"
 
-on:
+"on":
   push:
     branches: [main, develop]
     paths:

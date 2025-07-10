@@ -1,6 +1,7 @@
+---
 name: Comprehensive Auditing & Reporting
 
-on:
+"on":
   # Trigger on successful CI completion (for releases)
   workflow_run:
     workflows: ["CI - Optimized & Reliable"]
@@ -80,7 +81,7 @@ jobs:
         run: |
           $reportType = '${{ github.event.inputs.report_type || ''comprehensive'' }}'
           $eventName = '${{ github.event_name }}'
-          
+
           # Check if VERSION file changed (for workflow_run trigger)
           $versionChanged = $false
           if ($eventName -eq 'workflow_run') {
@@ -485,7 +486,7 @@ jobs:
             if (Test-Path "./scripts/reporting/Generate-ComprehensiveReport.ps1") {
               # Ensure output directory exists
               New-Item -ItemType Directory -Path "./output" -Force | Out-Null
-              
+
               $result = & "./scripts/reporting/Generate-ComprehensiveReport.ps1" @params
             } else {
               Write-Warning "Comprehensive report generator not found"
@@ -572,7 +573,7 @@ jobs:
           New-Item -ItemType Directory -Path "./output" -Force | Out-Null
           $htmlContent = "<html><head><title>AitherZero CI/CD Dashboard</title></head><body><h1>AitherZero CI/CD Dashboard</h1><p>Generated: $(Get-Date)</p></body></html>"
           $htmlContent | Set-Content -Path "./output/comprehensive-ci-dashboard.html"
-          
+
           Write-Host "✅ CI dashboard generated" -ForegroundColor Green
 
       - name: Copy comprehensive report with correct filename
@@ -605,7 +606,7 @@ jobs:
 
           $reportType = '${{ github.event.inputs.report_type }}'
           if (-not $reportType) { $reportType = 'comprehensive' }
-          
+
           $summary = @{
             version = '${{ needs.initialize-reporting.outputs.version-number }}'
             timestamp = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ')
