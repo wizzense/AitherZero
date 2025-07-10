@@ -111,14 +111,38 @@ function Install-PowerShell7 {
     Write-BootstrapLog "This is a one-time setup process." -Level 'Info'
     Write-Host ""
 
-    # Check if we're on Windows
-    $isWindows = [System.Environment]::OSVersion.Platform -eq 'Win32NT' -or $PSVersionTable.PSVersion.Major -le 5
+    # Enhanced cross-platform detection
+    $isWindows = $false
+    $isLinux = $false
+    $isMacOS = $false
+    
+    if ($PSVersionTable.PSVersion.Major -ge 6) {
+        # PowerShell 6+ has built-in platform variables
+        $isWindows = $IsWindows
+        $isLinux = $IsLinux
+        $isMacOS = $IsMacOS
+    } else {
+        # PowerShell 5.x fallback detection
+        $isWindows = [System.Environment]::OSVersion.Platform -eq 'Win32NT'
+        # Assume non-Windows for PowerShell 5.x since it's primarily Windows
+    }
 
     if (-not $isWindows) {
-        Write-BootstrapLog "Non-Windows platform detected. Please install PowerShell 7 manually:" -Level 'Warning'
-        Write-Host "  Linux: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux"
-        Write-Host "  macOS: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-macos"
-        throw "PowerShell 7 installation not supported on this platform via bootstrap"
+        Write-BootstrapLog "Non-Windows platform detected." -Level 'Info'
+        if ($isLinux) {
+            Write-BootstrapLog "Linux detected. Please install PowerShell 7 using your package manager:" -Level 'Warning'
+            Write-Host "  Ubuntu/Debian: apt install powershell"
+            Write-Host "  CentOS/RHEL/Fedora: dnf install powershell"
+            Write-Host "  Or visit: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-linux"
+        } elseif ($isMacOS) {
+            Write-BootstrapLog "macOS detected. Please install PowerShell 7 via Homebrew or direct download:" -Level 'Warning'
+            Write-Host "  Homebrew: brew install powershell"
+            Write-Host "  Or visit: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-macos"
+        } else {
+            Write-BootstrapLog "Unknown platform detected. Please install PowerShell 7 manually:" -Level 'Warning'
+            Write-Host "  Visit: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell"
+        }
+        throw "PowerShell 7 installation on this platform requires manual installation"
     }
 
     $installSuccess = $false

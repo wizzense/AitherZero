@@ -1,4 +1,4 @@
-﻿# Experience Functions - Consolidated into AitherCore Experience Domain
+# Experience Functions - Consolidated into AitherCore Experience Domain
 # Unified startup experience and setup wizard functionality
 # Write-CustomLog is guaranteed to be available from AitherCore orchestration
 
@@ -9,7 +9,7 @@ using namespace System.Collections.Generic
 using namespace System.Management.Automation
 
 # Import shared Find-ProjectRoot utility
-. "$PSScriptRoot/../../shared/Find-ProjectRoot.ps1"
+. (Join-Path $PSScriptRoot ".." ".." "shared" "Find-ProjectRoot.ps1")
 
 # ============================================================================
 # MODULE CONSTANTS AND VARIABLES
@@ -2048,7 +2048,7 @@ Platform: $($SetupState.Platform.OS) $($SetupState.Platform.Version)
 #### Deploy Infrastructure
 ``````powershell
 # Initialize OpenTofu provider
-Import-Module ./aither-core/modules/OpenTofuProvider
+# CONSOLIDATED: Functions now available in infrastructure domain
 Initialize-OpenTofuProvider
 
 # Deploy a lab

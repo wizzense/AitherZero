@@ -290,9 +290,8 @@ function Standardize-ImportPaths {
 
     # Define standard import patterns
     $importPatterns = @{
-        # LabRunner imports
-        'Import-Module\s+"?\.?/?pwsh/modules/LabRunner/?"\s*(-Force\s*)*' = 'Import-Module "LabRunner" -Force'
-        'Import-Module\s+"?\.?/?pwsh/modules/LabRunner/LabRunner"\s*(-Force\s*)*' = 'Import-Module "LabRunner" -Force'
+        # LabRunner imports (consolidated into infrastructure domain)
+        'Import-Module\s+"?\.?/?pwsh/modules/LabRunner/?"\s*(-Force\s*)*' = '# CONSOLIDATED: Functions now available in infrastructure domain'
 
         # PatchManager imports
         'Import-Module\s+"?\.?/?pwsh/modules/PatchManager/?"\s*(-Force\s*)*' = 'Import-Module "PatchManager" -Force'
@@ -547,3 +546,4 @@ function Fix-PowerShellSyntaxErrors {
         Write-CustomLog "No additional syntax errors found to fix" -Level SUCCESS
     }
 }
+

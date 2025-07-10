@@ -15,7 +15,6 @@ $script:CoreDomains = @(
     # Platform Services
     @{ Name = 'Configuration'; Path = 'domains/configuration'; Description = 'Configuration management (ConfigurationCore, Carousel, Manager, Repository)'; Required = $true },
     @{ Name = 'ModuleCommunication'; Path = 'modules/ModuleCommunication'; Description = 'Scalable inter-module communication bus'; Required = $true },
-    @{ Name = 'OrchestrationEngine'; Path = 'modules/OrchestrationEngine'; Description = 'Advanced workflow and playbook execution'; Required = $false },
     @{ Name = 'ParallelExecution'; Path = 'modules/ParallelExecution'; Description = 'Parallel task execution'; Required = $false },
     @{ Name = 'ProgressTracking'; Path = 'modules/ProgressTracking'; Description = 'Visual progress tracking for operations'; Required = $false },
 
@@ -52,12 +51,12 @@ if (-not (Test-Path $privateFolder)) {
 
 # Import public functions
 $publicFunctions = @(
-    Get-ChildItem -Path "$PSScriptRoot/Public" -Filter '*.ps1' -ErrorAction SilentlyContinue
+    Get-ChildItem -Path (Join-Path $PSScriptRoot 'Public') -Filter '*.ps1' -ErrorAction SilentlyContinue
 )
 
 # Import private functions if they exist
 $privateFunctions = @(
-    Get-ChildItem -Path "$PSScriptRoot/Private" -Filter '*.ps1' -ErrorAction SilentlyContinue
+    Get-ChildItem -Path (Join-Path $PSScriptRoot 'Private') -Filter '*.ps1' -ErrorAction SilentlyContinue
 )
 
 # Load all functions
@@ -395,10 +394,6 @@ if (-not (Get-Command Import-CoreModules -ErrorAction SilentlyContinue)) {
         )
 
         process {
-            # DISABLED: Parallel loading not compatible with domain structure
-            # Using sequential domain loading instead
-            Write-CustomLog -Message "Using sequential domain/module loading..." -Level 'INFO'
-
             $importResults = @{
                 ImportedCount = 0
                 FailedCount = 0
@@ -417,11 +412,23 @@ if (-not (Get-Command Import-CoreModules -ErrorAction SilentlyContinue)) {
 
             Write-CustomLog -Message "Preparing to import $($requestedComponents.Count) domains/modules..." -Level 'INFO'
 
-            # Use simple sequential loading for domains (no dependency resolution needed)
+            # Use optimized loading strategy
             $componentsToImport = $requestedComponents
             $importResults.LoadOrder = $componentsToImport | Select-Object -ExpandProperty Name
 
-            Write-CustomLog -Message "Importing $($componentsToImport.Count) domains/modules in resolved order..." -Level 'INFO'
+            # Performance optimization: Use parallel loading where possible and beneficial
+            if ($UseParallelLoading -and $componentsToImport.Count -gt 3) {
+                Write-CustomLog -Message "Using optimized parallel domain/module loading for $($componentsToImport.Count) components..." -Level 'INFO'
+                $parallelParams = @{
+                    Components = $componentsToImport
+                }
+                if ($Force) {
+                    $parallelParams.Force = $true
+                }
+                return Invoke-ParallelModuleLoading @parallelParams
+            } else {
+                Write-CustomLog -Message "Using sequential domain/module loading for $($componentsToImport.Count) components..." -Level 'INFO'
+            }
 
             # Import domains/modules in the determined order
             foreach ($componentInfo in $componentsToImport) {
@@ -540,6 +547,258 @@ if (-not (Get-Command Import-CoreModules -ErrorAction SilentlyContinue)) {
 
             Write-CustomLog -Message "Domain/Module import complete: $($importResults.ImportedCount) imported, $($importResults.FailedCount) failed, $($importResults.SkippedCount) skipped" -Level 'INFO'
             return $importResults
+        }
+    }
+}
+
+if (-not (Get-Command Invoke-ParallelModuleLoading -ErrorAction SilentlyContinue)) {
+    function Invoke-ParallelModuleLoading {
+        <#
+        .SYNOPSIS
+            High-performance parallel module loading for improved bootstrap times
+        .DESCRIPTION
+            Loads multiple modules in parallel where dependencies allow, significantly reducing startup time
+        #>
+        [CmdletBinding()]
+        param(
+            [Parameter(Mandatory = $true)]
+            [array]$Components,
+            
+            [Parameter()]
+            [switch]$Force
+        )
+        
+        try {
+            $startTime = Get-Date
+            $importResults = @{
+                ImportedCount = 0
+                FailedCount = 0
+                SkippedCount = 0
+                Details = @()
+                LoadOrder = @()
+                DependencyInfo = $null
+            }
+            
+            # Separate components into parallel groups
+            $modules = $Components | Where-Object { $_.Path -notlike "domains/*" }
+            $domains = $Components | Where-Object { $_.Path -like "domains/*" }
+            
+            # Load domains first (they may contain dependencies for modules)
+            if ($domains.Count -gt 0) {
+                Write-CustomLog -Message "Loading $($domains.Count) domains sequentially first..." -Level 'INFO'
+                foreach ($domain in $domains) {
+                    $result = Invoke-SingleComponentLoad -ComponentInfo $domain -Force $Force
+                    if ($result.Success) {
+                        $importResults.ImportedCount++
+                    } else {
+                        $importResults.FailedCount++
+                    }
+                    $importResults.Details += $result
+                }
+            }
+            
+            # Load modules in parallel if we have the ParallelExecution module available
+            if ($modules.Count -gt 0) {
+                # First ensure ParallelExecution is loaded if available
+                $parallelModulePath = Join-Path $PSScriptRoot "modules/ParallelExecution"
+                if ((Test-Path $parallelModulePath) -and -not (Get-Module -Name "ParallelExecution" -ErrorAction SilentlyContinue)) {
+                    try {
+                        Import-Module $parallelModulePath -Force -Global -ErrorAction Stop
+                        Write-CustomLog -Message "ParallelExecution module loaded for parallel loading" -Level 'INFO'
+                    } catch {
+                        Write-CustomLog -Message "Failed to load ParallelExecution: $($_.Exception.Message)" -Level 'WARN'
+                    }
+                }
+                
+                if (Get-Command Start-ParallelExecution -ErrorAction SilentlyContinue) {
+                    Write-CustomLog -Message "Loading $($modules.Count) modules in parallel..." -Level 'INFO'
+                    
+                    # Create parallel jobs for module loading
+                    $moduleJobs = @()
+                    foreach ($module in $modules) {
+                        $moduleJobs += @{
+                            Name = "Load-$($module.Name)"
+                            ScriptBlock = {
+                                param($ModulePath, $ModuleName, $ForceLoad)
+                                try {
+                                    if (-not (Get-Module -Name $ModuleName -ErrorAction SilentlyContinue) -or $ForceLoad) {
+                                        Import-Module $ModulePath -Force:$ForceLoad -Global -ErrorAction Stop
+                                    }
+                                    return @{
+                                        Name = $ModuleName
+                                        Success = $true
+                                        Message = "Loaded successfully (parallel)"
+                                        LoadTime = 0.1  # Approximate
+                                    }
+                                } catch {
+                                    return @{
+                                        Name = $ModuleName
+                                        Success = $false
+                                        Error = $_.Exception.Message
+                                        Message = "Failed to load (parallel)"
+                                        LoadTime = 0
+                                    }
+                                }
+                            }
+                            Arguments = @((Join-Path $PSScriptRoot $module.Path), $module.Name, $Force.IsPresent)
+                        }
+                    }
+                    
+                    # Execute parallel loading
+                    $parallelResult = Start-ParallelExecution -Jobs $moduleJobs -MaxConcurrentJobs 4 -EnableMemoryOptimization
+                    
+                    # Process results
+                    foreach ($result in $parallelResult.Results) {
+                        $jobResult = $result.Result
+                        if ($jobResult.Success) {
+                            $script:LoadedModules[$jobResult.Name] = @{
+                                Path = "parallel-loaded"
+                                ImportTime = Get-Date
+                                Description = "Loaded in parallel"
+                            }
+                            $importResults.ImportedCount++
+                        } else {
+                            $importResults.FailedCount++
+                        }
+                        $importResults.Details += $jobResult
+                    }
+                } else {
+                    # Fall back to sequential loading for modules
+                    Write-CustomLog -Message "ParallelExecution not available, loading $($modules.Count) modules sequentially..." -Level 'WARN'
+                    foreach ($module in $modules) {
+                        $result = Invoke-SingleComponentLoad -ComponentInfo $module -Force $Force
+                        if ($result.Success) {
+                            $importResults.ImportedCount++
+                        } else {
+                            $importResults.FailedCount++
+                        }
+                        $importResults.Details += $result
+                    }
+                }
+            }
+            
+            $duration = ((Get-Date) - $startTime).TotalSeconds
+            Write-CustomLog -Message "Parallel module loading completed in $($duration.ToString('F2'))s: $($importResults.ImportedCount) imported, $($importResults.FailedCount) failed" -Level 'SUCCESS'
+            
+            return $importResults
+            
+        } catch {
+            Write-CustomLog -Message "Parallel module loading failed: $($_.Exception.Message)" -Level 'ERROR'
+            throw
+        }
+    }
+}
+
+if (-not (Get-Command Invoke-SingleComponentLoad -ErrorAction SilentlyContinue)) {
+    function Invoke-SingleComponentLoad {
+        <#
+        .SYNOPSIS
+            Loads a single component (domain or module)
+        #>
+        [CmdletBinding()]
+        param(
+            [Parameter(Mandatory = $true)]
+            [object]$ComponentInfo,
+            
+            [Parameter()]
+            [switch]$Force
+        )
+        
+        try {
+            $componentPath = Join-Path $PSScriptRoot $ComponentInfo.Path
+            $isDomain = $ComponentInfo.Path -like "domains/*"
+            
+            if ($isDomain) {
+                # Domain loading
+                $domainFiles = Get-ChildItem -Path $componentPath -Filter "*.ps1" -ErrorAction SilentlyContinue
+                
+                if ($domainFiles.Count -eq 0) {
+                    return @{
+                        Name = $ComponentInfo.Name
+                        Success = $false
+                        Message = "No domain files found"
+                        LoadTime = 0
+                    }
+                }
+                
+                if ($script:LoadedDomains.ContainsKey($ComponentInfo.Name) -and -not $Force) {
+                    return @{
+                        Name = $ComponentInfo.Name
+                        Success = $true
+                        Message = "Already loaded (cached)"
+                        LoadTime = 0.001
+                    }
+                }
+                
+                $startTime = Get-Date
+                $domainLoadedFiles = 0
+                foreach ($domainFile in $domainFiles) {
+                    . $domainFile.FullName
+                    $domainLoadedFiles++
+                }
+                
+                $script:LoadedDomains[$ComponentInfo.Name] = @{
+                    Path = $componentPath
+                    ImportTime = Get-Date
+                    Description = $ComponentInfo.Description
+                    FilesLoaded = $domainLoadedFiles
+                }
+                
+                $loadTime = ((Get-Date) - $startTime).TotalSeconds
+                return @{
+                    Name = $ComponentInfo.Name
+                    Success = $true
+                    Message = "Domain loaded ($domainLoadedFiles files)"
+                    LoadTime = $loadTime
+                }
+                
+            } else {
+                # Module loading
+                if (-not (Test-Path $componentPath)) {
+                    return @{
+                        Name = $ComponentInfo.Name
+                        Success = $false
+                        Message = "Path not found: $componentPath"
+                        LoadTime = 0
+                    }
+                }
+                
+                if ($script:LoadedModules.ContainsKey($ComponentInfo.Name) -and -not $Force) {
+                    return @{
+                        Name = $ComponentInfo.Name
+                        Success = $true
+                        Message = "Already loaded (cached)"
+                        LoadTime = 0.001
+                    }
+                }
+                
+                $startTime = Get-Date
+                $shouldForceImport = $Force -or -not (Get-Module -Name $ComponentInfo.Name -ErrorAction SilentlyContinue)
+                
+                Import-Module $componentPath -Force:$shouldForceImport -Global -ErrorAction Stop
+                $script:LoadedModules[$ComponentInfo.Name] = @{
+                    Path = $componentPath
+                    ImportTime = Get-Date
+                    Description = $ComponentInfo.Description
+                }
+                
+                $loadTime = ((Get-Date) - $startTime).TotalSeconds
+                return @{
+                    Name = $ComponentInfo.Name
+                    Success = $true
+                    Message = "Module loaded successfully"
+                    LoadTime = $loadTime
+                }
+            }
+            
+        } catch {
+            return @{
+                Name = $ComponentInfo.Name
+                Success = $false
+                Error = $_.Exception.Message
+                Message = "Load failed: $($_.Exception.Message)"
+                LoadTime = 0
+            }
         }
     }
 }
@@ -1254,6 +1513,8 @@ Export-ModuleMember -Function @(
     'Get-ModuleDependencies',
     'Resolve-ModuleLoadOrder',
     'Get-ModuleDependencyReport',
+    'Invoke-ParallelModuleLoading',
+    'Invoke-SingleComponentLoad',
 
     # Unified Platform API Gateway (Phase 4)
     'Initialize-AitherPlatform',

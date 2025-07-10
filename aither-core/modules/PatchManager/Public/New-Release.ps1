@@ -48,11 +48,6 @@ function New-Release {
         $functionName = $MyInvocation.MyCommand.Name
         Write-Verbose "[$functionName] Starting release process for v$Version"
         
-        # Initialize module functions
-        . "$PSScriptRoot/../Private/Initialize-GitEnvironment.ps1"
-        . "$PSScriptRoot/../Private/New-GitHubIssue.ps1"
-        . "$PSScriptRoot/../Private/New-GitHubPullRequest.ps1"
-        
         $result = @{
             Success = $false
             Version = $Version

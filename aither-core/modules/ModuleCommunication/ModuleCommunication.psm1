@@ -1,11 +1,11 @@
+# Import required types - MUST be at very top of file
+using namespace System.Collections.Concurrent
+using namespace System.Threading
+
 # AitherZero ModuleCommunication Module
 # Provides scalable inter-module communication for the platform
 
 #Requires -Version 7.0
-
-# Import required types - MUST be at top of file
-using namespace System.Collections.Concurrent
-using namespace System.Threading
 
 # Initialize logging system with fallback support
 . "$PSScriptRoot/../../shared/Initialize-Logging.ps1"

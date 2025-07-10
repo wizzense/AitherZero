@@ -73,7 +73,7 @@ function Invoke-BackupMaintenance {
         # No explicit Logging import needed - trust the orchestration system
 
         # Try to import LabRunner if available
-        $labRunnerPath = Join-Path $projectRoot "aither-core/modules/LabRunner"
+        $labRunnerPath = Join-Path $projectRoot "aither-core/domains/infrastructure"
         if (Test-Path $labRunnerPath) {
             Import-Module $labRunnerPath -Force -ErrorAction SilentlyContinue
         }
@@ -514,3 +514,4 @@ function Write-BackupMaintenanceResults {
         }
     }
 }
+

@@ -1,10 +1,10 @@
 #Requires -Version 7.0
 
-<#
 # Initialize logging system with fallback support
 . "$PSScriptRoot/../../shared/Initialize-Logging.ps1"
 Initialize-Logging
 
+<#
 .SYNOPSIS
     Generalized remote connection management module for enterprise-wide use.
 

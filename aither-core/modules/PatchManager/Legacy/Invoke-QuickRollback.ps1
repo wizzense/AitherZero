@@ -268,7 +268,7 @@ function Invoke-PostRollbackValidation {
 
     # Check module availability
     try {
-        Import-Module "/pwsh/modules/LabRunner/" -Force -ErrorAction SilentlyContinue
+        # CONSOLIDATED: Functions now available in infrastructure domain
     } catch {
         $issues += "LabRunner module import failed"
     }
@@ -294,3 +294,4 @@ function Invoke-PostRollbackValidation {
 }
 
 # Export the function
+

@@ -248,12 +248,8 @@ function Read-LoggedInput {
         if ($AsSecureString -and -not [string]::IsNullOrEmpty($DefaultValue)) {
             # This is a legitimate use case for test environments where secure input is not available
             # SuppressMessage for PSScriptAnalyzer as this is needed for automation scenarios
-            [System.Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingConvertToSecureStringWithPlainText', 'ConvertTo-SecureString')]
-            return & {
-                [System.Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingConvertToSecureStringWithPlainText', 'ConvertTo-SecureString')]
-                param()
-                ConvertTo-SecureString -String $DefaultValue -AsPlainText -Force
-            }
+            # Using legacy approach without attributes for PowerShell compatibility
+            return ConvertTo-SecureString -String $DefaultValue -AsPlainText -Force
         }
         return $DefaultValue
     }
