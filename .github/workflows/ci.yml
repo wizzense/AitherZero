@@ -599,48 +599,40 @@ jobs:
             $issueAnalysis.total_potential_issues = $issueAnalysis.psscriptanalyzer_issues + $issueAnalysis.test_failure_issues
             
             # Create comprehensive PR comment content
-            $prComment = @"
-## 🔍 **AitherZero ULTRATHINK CI/CD Analysis**
-
-### 📊 **System Environment**
-- **Platform:** $($systemMetadata.environment.platform)
-- **PowerShell:** $($systemMetadata.environment.powershell_version)
-- **OS:** $($systemMetadata.environment.os)
-- **Branch:** $($systemMetadata.project.branch)
-- **Version:** $($systemMetadata.project.version)
-
-### 🤖 **Automated Issue Analysis**
-$(if ($issueAnalysis.total_potential_issues -eq 0) {
-"✅ **No issues detected** - All quality checks passed!"
-} else {
-"⚠️ **$($issueAnalysis.total_potential_issues) potential issues detected:**
-
-- 🔍 **PSScriptAnalyzer Issues:** $($issueAnalysis.psscriptanalyzer_issues)
-- 🧪 **Test Failures:** $($issueAnalysis.test_failure_issues)
-
-📝 **Note:** Issues are automatically created only when merging to main branch. This analysis helps you identify and fix problems before merge."
-})
-
-### 📈 **Quality Metrics**
-- **Code Quality:** $(if ($issueAnalysis.psscriptanalyzer_issues -eq 0) { "✅ Passed" } else { "⚠️ $($issueAnalysis.psscriptanalyzer_issues) violations" })
-- **Test Status:** $(if ($issueAnalysis.test_failure_issues -eq 0) { "✅ All tests passed" } else { "❌ $($issueAnalysis.test_failure_issues) tests failed" })
-- **System Metadata:** ✅ Collected and analyzed
-
-### 🎯 **Next Steps**
-$(if ($issueAnalysis.total_potential_issues -eq 0) {
-"🚀 Your code is ready for merge! All automated checks passed."
-} else {
-"🔧 Fix the identified issues before merging:
-1. Review PSScriptAnalyzer violations in the workflow logs
-2. Fix any failing tests
-3. Re-run CI to verify fixes"
-})
-
----
-🤖 **AitherZero ULTRATHINK System** - Comprehensive automated analysis and issue management  
-📅 **Generated:** $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')  
-🔗 **Workflow:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-"@
+            $prComment = "## 🔍 AitherZero ULTRATHINK CI/CD Analysis`n`n"
+            $prComment += "### 📊 System Environment`n"
+            $prComment += "Platform: $($systemMetadata.environment.platform)`n"
+            $prComment += "PowerShell: $($systemMetadata.environment.powershell_version)`n"
+            $prComment += "OS: $($systemMetadata.environment.os)`n"
+            $prComment += "Branch: $($systemMetadata.project.branch)`n"
+            $prComment += "Version: $($systemMetadata.project.version)`n`n"
+            
+            $prComment += "### 🤖 Automated Issue Analysis`n"
+            if ($issueAnalysis.total_potential_issues -eq 0) {
+              $prComment += "✅ No issues detected - All quality checks passed!`n"
+            } else {
+              $prComment += "⚠️ $($issueAnalysis.total_potential_issues) potential issues detected:`n"
+              $prComment += "🔍 PSScriptAnalyzer Issues: $($issueAnalysis.psscriptanalyzer_issues)`n"
+              $prComment += "🧪 Test Failures: $($issueAnalysis.test_failure_issues)`n"
+              $prComment += "Note: Issues are automatically created only when merging to main branch.`n"
+            }
+            
+            $prComment += "`n### 📈 Quality Metrics`n"
+            $prComment += "Code Quality: $(if ($issueAnalysis.psscriptanalyzer_issues -eq 0) { '✅ Passed' } else { "⚠️ $($issueAnalysis.psscriptanalyzer_issues) violations" })`n"
+            $prComment += "Test Status: $(if ($issueAnalysis.test_failure_issues -eq 0) { '✅ All tests passed' } else { "❌ $($issueAnalysis.test_failure_issues) tests failed" })`n"
+            $prComment += "System Metadata: ✅ Collected and analyzed`n`n"
+            
+            $prComment += "### 🎯 Next Steps`n"
+            if ($issueAnalysis.total_potential_issues -eq 0) {
+              $prComment += "🚀 Your code is ready for merge! All automated checks passed.`n"
+            } else {
+              $prComment += "🔧 Fix the identified issues before merging`n"
+            }
+            
+            $prComment += "`n---`n"
+            $prComment += "🤖 AitherZero ULTRATHINK System - Comprehensive automated analysis`n"
+            $prComment += "📅 Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')`n"
+            $prComment += "🔗 Workflow: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})`n"
             
             # Save PR comment content
             $prComment | Set-Content -Path "./pr-comment-analysis.md" -Encoding UTF8
