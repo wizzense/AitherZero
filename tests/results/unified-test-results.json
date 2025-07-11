@@ -1,0 +1,163 @@
+{
+  "ErrorSummary": {
+    "Warnings": [],
+    "TotalWarnings": 0,
+    "Errors": [],
+    "FailedTests": [
+      {
+        "TestFile": "EntryPoint-Validation.Tests.ps1",
+        "Category": "Validation",
+        "TotalCount": 34,
+        "PassedCount": 19,
+        "FailedCount": 7,
+        "SkippedCount": 8,
+        "Duration": 1.786419,
+        "Result": "Failed",
+        "FailedTests": [
+          "Should implement version checking in Start-DeveloperSetup.ps1",
+          "Should handle various execution contexts for Start-AitherZero.ps1",
+          "Should validate delegation target exists",
+          "Should handle missing core script gracefully",
+          "Should properly delegate parameters to core script",
+          "Should have comprehensive error handling in entry points",
+          "Should handle missing dependencies gracefully"
+        ],
+        "StartTime": "2025-07-10T19:46:56.485323+00:00",
+        "EndTime": "2025-07-10T19:46:58.2765353+00:00"
+      },
+      {
+        "TestFile": "PowerShell-Version.Tests.ps1",
+        "Category": "Platform",
+        "TotalCount": 32,
+        "PassedCount": 31,
+        "FailedCount": 1,
+        "SkippedCount": 0,
+        "Duration": 2.3812541,
+        "Result": "Failed",
+        "FailedTests": "Should validate PowerShell version in Start-DeveloperSetup.ps1",
+        "StartTime": "2025-07-10T19:46:56.4853367+00:00",
+        "EndTime": "2025-07-10T19:46:58.8681588+00:00"
+      }
+    ],
+    "TotalErrors": 0
+  },
+  "Metrics": {
+    "ReportingTime": 0,
+    "SetupTime": 2.6749548,
+    "ExecutionTime": 2.6803831,
+    "AverageTestDuration": 0.035,
+    "ParallelEfficiency": 53.5,
+    "TestsPerSecond": 28.73
+  },
+  "TestResults": [
+    {
+      "TestFile": "Core.Tests.ps1",
+      "Category": "Core",
+      "TotalCount": 11,
+      "PassedCount": 11,
+      "FailedCount": 0,
+      "SkippedCount": 0,
+      "Duration": 1.5964058,
+      "Result": "Passed",
+      "FailedTests": null,
+      "StartTime": "2025-07-10T19:46:56.4853272+00:00",
+      "EndTime": "2025-07-10T19:46:58.0864778+00:00"
+    },
+    {
+      "TestFile": "EntryPoint-Validation.Tests.ps1",
+      "Category": "Validation",
+      "TotalCount": 34,
+      "PassedCount": 19,
+      "FailedCount": 7,
+      "SkippedCount": 8,
+      "Duration": 1.786419,
+      "Result": "Failed",
+      "FailedTests": [
+        "Should implement version checking in Start-DeveloperSetup.ps1",
+        "Should handle various execution contexts for Start-AitherZero.ps1",
+        "Should validate delegation target exists",
+        "Should handle missing core script gracefully",
+        "Should properly delegate parameters to core script",
+        "Should have comprehensive error handling in entry points",
+        "Should handle missing dependencies gracefully"
+      ],
+      "StartTime": "2025-07-10T19:46:56.485323+00:00",
+      "EndTime": "2025-07-10T19:46:58.2765353+00:00"
+    },
+    {
+      "TestFile": "PowerShell-Version.Tests.ps1",
+      "Category": "Platform",
+      "TotalCount": 32,
+      "PassedCount": 31,
+      "FailedCount": 1,
+      "SkippedCount": 0,
+      "Duration": 2.3812541,
+      "Result": "Failed",
+      "FailedTests": "Should validate PowerShell version in Start-DeveloperSetup.ps1",
+      "StartTime": "2025-07-10T19:46:56.4853367+00:00",
+      "EndTime": "2025-07-10T19:46:58.8681588+00:00"
+    }
+  ],
+  "PassedTests": 61,
+  "Platform": {
+    "PowerShellEdition": "Core",
+    "GitBranch": "patch/20250710-150348-Fix-CI-workflow-PowerShell-syntax-error-blocking-all-CI-runs",
+    "OS": "Linux",
+    "WorkingDirectory": "/workspaces/AitherZero",
+    "MachineName": "codespaces-6c6eb1",
+    "GitCommit": "c5e4b55b",
+    "Architecture": "x64",
+    "OSVersion": "Unix 6.8.0.1027",
+    "ProcessorCount": 16,
+    "PowerShellVersion": "7.5.1"
+  },
+  "Success": false,
+  "QualityMetrics": {
+    "Performance": {
+      "ExecutionTime": 2.6803831,
+      "ParallelEfficiency": 53.5,
+      "TestsPerSecond": 28.73,
+      "SetupTime": 2.6749548,
+      "AverageTestDuration": 0.035
+    },
+    "FailureRate": 10.39,
+    "SuccessRate": 79.22,
+    "TestCoverage": {
+      "InstallationTests": 0,
+      "CoreTests": 1,
+      "SetupTests": 0,
+      "ValidationTests": 1,
+      "PlatformTests": 1
+    }
+  },
+  "TotalTests": 77,
+  "EndTime": "2025-07-10 19:46:58",
+  "Duration": 2.6803831,
+  "CIInfo": {
+    "GITHUB_ACTIONS": null,
+    "GITHUB_REF": null,
+    "GITHUB_RUN_NUMBER": null,
+    "GITHUB_RUN_ID": null,
+    "CI_PLATFORM": null,
+    "GITHUB_REPOSITORY": "wizzense/AitherZero",
+    "GITHUB_SHA": null,
+    "GITHUB_WORKFLOW": null
+  },
+  "StartTime": "2025-07-10 19:46:50",
+  "Configuration": {
+    "TimeoutMinutes": 30,
+    "ConsolidatedModule": true,
+    "Performance": true,
+    "CI": true,
+    "FailFast": false,
+    "Distributed": false,
+    "MaxParallelJobs": 4,
+    "Profile": "all",
+    "TestSuite": "CI",
+    "ParallelSupport": true,
+    "OutputFormat": "All",
+    "Platform": "Current"
+  },
+  "SkippedTests": 8,
+  "FailedTests": 8
+}

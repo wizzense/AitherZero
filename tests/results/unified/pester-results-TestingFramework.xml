@@ -1,73 +1,73 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="13" errors="0" failures="5" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-09" time="15:20:05">
-  <environment user-domain="" cwd="/workspaces/AitherZero" clr-version="9.0.4" os-version="6.8.0-1027-azure" nunit-version="2.5.8.0" machine-name="codespaces-6c6eb1" user="codespace" platform="Linux" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="13" errors="0" failures="5" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-10" time="15:52:34">
+  <environment nunit-version="2.5.8.0" user="codespace" user-domain="" platform="Linux" clr-version="9.0.4" cwd="/workspaces/AitherZero" machine-name="codespaces-6c6eb1" os-version="6.8.0-1027-azure" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="1.9118" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="2.0164" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/TestingFramework/tests/TestingFramework.Tests.ps1" executed="True" result="Failure" success="False" time="1.9118" asserts="0" description="/workspaces/AitherZero/aither-core/modules/TestingFramework/tests/TestingFramework.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/TestingFramework/tests/TestingFramework.Tests.ps1" executed="True" result="Failure" success="False" time="2.0164" asserts="0" description="/workspaces/AitherZero/aither-core/modules/TestingFramework/tests/TestingFramework.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="TestingFramework Module Tests" executed="True" result="Failure" success="False" time="1.5128" asserts="0" description="TestingFramework Module Tests">
+          <test-suite type="TestFixture" name="TestingFramework Module Tests" executed="True" result="Failure" success="False" time="1.5611" asserts="0" description="TestingFramework Module Tests">
             <results>
-              <test-suite type="TestFixture" name="TestingFramework Module Tests.Basic Functionality" executed="True" result="Success" success="True" time="0.3738" asserts="0" description="TestingFramework Module Tests.Basic Functionality">
+              <test-suite type="TestFixture" name="TestingFramework Module Tests.Basic Functionality" executed="True" result="Success" success="True" time="0.3758" asserts="0" description="TestingFramework Module Tests.Basic Functionality">
                 <results>
-                  <test-case description="Should load the module successfully" name="TestingFramework Module Tests.Basic Functionality.Should load the module successfully" time="0.1083" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should export expected functions" name="TestingFramework Module Tests.Basic Functionality.Should export expected functions" time="0.2315" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should load the module successfully" name="TestingFramework Module Tests.Basic Functionality.Should load the module successfully" time="0.109" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export expected functions" name="TestingFramework Module Tests.Basic Functionality.Should export expected functions" time="0.2356" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="TestingFramework Module Tests.Configuration Management" executed="True" result="Success" success="True" time="0.4893" asserts="0" description="TestingFramework Module Tests.Configuration Management">
+              <test-suite type="TestFixture" name="TestingFramework Module Tests.Configuration Management" executed="True" result="Success" success="True" time="0.4826" asserts="0" description="TestingFramework Module Tests.Configuration Management">
                 <results>
-                  <test-case description="Should return valid configuration for Development profile" name="TestingFramework Module Tests.Configuration Management.Should return valid configuration for Development profile" time="0.0577" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should return valid configuration for CI profile" name="TestingFramework Module Tests.Configuration Management.Should return valid configuration for CI profile" time="0.0201" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should return valid configuration for Production profile" name="TestingFramework Module Tests.Configuration Management.Should return valid configuration for Production profile" time="0.0145" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return valid configuration for Development profile" name="TestingFramework Module Tests.Configuration Management.Should return valid configuration for Development profile" time="0.0547" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return valid configuration for CI profile" name="TestingFramework Module Tests.Configuration Management.Should return valid configuration for CI profile" time="0.0174" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return valid configuration for Production profile" name="TestingFramework Module Tests.Configuration Management.Should return valid configuration for Production profile" time="0.0144" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="TestingFramework Module Tests.Module Discovery" executed="True" result="Failure" success="False" time="0.7581" asserts="0" description="TestingFramework Module Tests.Module Discovery">
+              <test-suite type="TestFixture" name="TestingFramework Module Tests.Module Discovery" executed="True" result="Failure" success="False" time="0.7717" asserts="0" description="TestingFramework Module Tests.Module Discovery">
                 <results>
-                  <test-case description="Should discover project modules" name="TestingFramework Module Tests.Module Discovery.Should discover project modules" time="0.2135" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should discover project modules" name="TestingFramework Module Tests.Module Discovery.Should discover project modules" time="0.2317" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:39
-at Get-DiscoveredModules, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:335
+                      <stack-trace>at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:43
+at Get-DiscoveredModules, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:339
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/TestingFramework/tests/TestingFramework.Tests.ps1:57</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should include TestingFramework in discovered modules" name="TestingFramework Module Tests.Module Discovery.Should include TestingFramework in discovered modules" time="0.0484" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should include TestingFramework in discovered modules" name="TestingFramework Module Tests.Module Discovery.Should include TestingFramework in discovered modules" time="0.0512" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:39
-at Get-DiscoveredModules, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:335
+                      <stack-trace>at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:43
+at Get-DiscoveredModules, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:339
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/TestingFramework/tests/TestingFramework.Tests.ps1:63</stack-trace>
                     </failure>
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="TestingFramework Module Tests.Test Execution Planning" executed="True" result="Failure" success="False" time="0.889" asserts="0" description="TestingFramework Module Tests.Test Execution Planning">
+              <test-suite type="TestFixture" name="TestingFramework Module Tests.Test Execution Planning" executed="True" result="Failure" success="False" time="0.907" asserts="0" description="TestingFramework Module Tests.Test Execution Planning">
                 <results>
-                  <test-case description="Should create test execution plan for Quick suite" name="TestingFramework Module Tests.Test Execution Planning.Should create test execution plan for Quick suite" time="0.0644" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should create test execution plan for Quick suite" name="TestingFramework Module Tests.Test Execution Planning.Should create test execution plan for Quick suite" time="0.0608" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:39
-at Get-DiscoveredModules, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:335
+                      <stack-trace>at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:43
+at Get-DiscoveredModules, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:339
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/TestingFramework/tests/TestingFramework.Tests.ps1:71</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should create test execution plan for All suite" name="TestingFramework Module Tests.Test Execution Planning.Should create test execution plan for All suite" time="0.0587" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should create test execution plan for All suite" name="TestingFramework Module Tests.Test Execution Planning.Should create test execution plan for All suite" time="0.0678" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>CommandNotFoundException: The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</message>
-                      <stack-trace>at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:39
-at Get-DiscoveredModules, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:335
+                      <stack-trace>at Write-TestLog, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:43
+at Get-DiscoveredModules, /workspaces/AitherZero/aither-core/modules/TestingFramework/TestingFramework.psm1:339
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/TestingFramework/tests/TestingFramework.Tests.ps1:80</stack-trace>
                     </failure>
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="TestingFramework Module Tests.Test Environment" executed="True" result="Failure" success="False" time="0.9949" asserts="0" description="TestingFramework Module Tests.Test Environment">
+              <test-suite type="TestFixture" name="TestingFramework Module Tests.Test Environment" executed="True" result="Failure" success="False" time="1.0279" asserts="0" description="TestingFramework Module Tests.Test Environment">
                 <results>
-                  <test-case description="Should initialize test environment" name="TestingFramework Module Tests.Test Environment.Should initialize test environment" time="0.0996" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should initialize test environment" name="TestingFramework Module Tests.Test Environment.Should initialize test environment" time="0.1144" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected no exception to be thrown, but an exception "The term 'Write-CustomLog' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/TestingFramework/tests/TestingFramework.Tests.ps1:100 char:15
@@ -79,15 +79,15 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/TestingFramew
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="TestingFramework Module Tests.Integration Functions" executed="True" result="Success" success="True" time="1.4431" asserts="0" description="TestingFramework Module Tests.Integration Functions">
+              <test-suite type="TestFixture" name="TestingFramework Module Tests.Integration Functions" executed="True" result="Success" success="True" time="1.5091" asserts="0" description="TestingFramework Module Tests.Integration Functions">
                 <results>
-                  <test-case description="Should provide module structure testing" name="TestingFramework Module Tests.Integration Functions.Should provide module structure testing" time="0.4411" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should provide module structure testing" name="TestingFramework Module Tests.Integration Functions.Should provide module structure testing" time="0.4754" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="TestingFramework Module Tests.Event System" executed="True" result="Success" success="True" time="1.4993" asserts="0" description="TestingFramework Module Tests.Event System">
+              <test-suite type="TestFixture" name="TestingFramework Module Tests.Event System" executed="True" result="Success" success="True" time="1.5474" asserts="0" description="TestingFramework Module Tests.Event System">
                 <results>
-                  <test-case description="Should publish test events" name="TestingFramework Module Tests.Event System.Should publish test events" time="0.0354" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should retrieve published events" name="TestingFramework Module Tests.Event System.Should retrieve published events" time="0.0126" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should publish test events" name="TestingFramework Module Tests.Event System.Should publish test events" time="0.0183" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should retrieve published events" name="TestingFramework Module Tests.Event System.Should retrieve published events" time="0.0128" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>

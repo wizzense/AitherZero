@@ -34,57 +34,63 @@ if (Test-Path $findProjectRootPath) {
     }
 }
 
-# Import the centralized Logging module
-$loggingImported = $false
-
-# Check if Logging module is already available
-if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
-    $loggingImported = $true
-    Write-Verbose "Logging module already available"
-} else {
-    # Robust path resolution using project root
-    $loggingPaths = @(
-        'Logging',  # Try module name first (if in PSModulePath)
-        (Join-Path (Split-Path $PSScriptRoot -Parent) "Logging"),  # Relative to modules directory
-        (Join-Path $script:ProjectRoot "aither-core/modules/Logging")  # Project root based path
-    )
-
-    # Add environment-based paths if available
-    if ($env:PWSH_MODULES_PATH) {
-        $loggingPaths += (Join-Path $env:PWSH_MODULES_PATH "Logging")
-    }
-    if ($env:PROJECT_ROOT) {
-        $loggingPaths += (Join-Path $env:PROJECT_ROOT "aither-core/modules/Logging")
-    }
-
-    foreach ($loggingPath in $loggingPaths) {
-        if ($loggingImported) { break }
-
-        try {
-            if ($loggingPath -eq 'Logging') {
-                # Write-CustomLog is guaranteed to be available from AitherCore orchestration
-                # No explicit Logging import needed - trust the orchestration system
-                $loggingImported = $true
-            } elseif (Test-Path $loggingPath) {
-                Import-Module $loggingPath -Global -ErrorAction Stop
-            } else {
-                continue
-            }
-            Write-Verbose "Successfully imported Logging module from: $loggingPath"
-            $loggingImported = $true
-        } catch {
-            Write-Verbose "Failed to import Logging from $loggingPath : $_"
+# Always provide Write-CustomLog function (fail-safe approach for CI/CD)
+if (-not (Get-Command -Name 'Write-CustomLog' -ErrorAction SilentlyContinue)) {
+    # Fallback logging function - always available
+    function Write-CustomLog {
+        param(
+            [string]$Message, 
+            [string]$Level = "INFO",
+            [string]$Source = "ParallelExecution",
+            [hashtable]$Context = @{}
+        )
+        $timestamp = Get-Date -Format "HH:mm:ss.fff"
+        $prefix = switch ($Level) {
+            'ERROR' { '❌' }
+            'WARN' { '⚠️' }
+            'SUCCESS' { '✅' }
+            'INFO' { 'ℹ️' }
+            'DEBUG' { '🔍' }
+            default { 'ℹ️' }
         }
+        Write-Host "[$timestamp] $prefix [$Level] [$Source] $Message" -ForegroundColor $(
+            switch ($Level) {
+                'ERROR' { 'Red' }
+                'WARN' { 'Yellow' }
+                'SUCCESS' { 'Green' }
+                'INFO' { 'Cyan' }
+                'DEBUG' { 'Gray' }
+                default { 'White' }
+            }
+        )
     }
 }
 
-if (-not $loggingImported) {
-    Write-Warning "Could not import Logging module from any of the attempted paths"
-    # Fallback logging function
-    function Write-CustomLog {
-        param([string]$Message, [string]$Level = "INFO")
-        Write-Host "[$Level] $Message"
+# Try to import the centralized Logging module for enhanced features (optional)
+$loggingImported = $false
+try {
+    if (Get-Module -Name 'Logging' -ErrorAction SilentlyContinue) {
+        $loggingImported = $true
+        Write-Verbose "Logging module already available"
+    } else {
+        # Try common paths for the Logging module
+        $loggingPaths = @(
+            (Join-Path (Split-Path $PSScriptRoot -Parent) "Logging"),  # Relative to modules directory
+            (Join-Path $script:ProjectRoot "aither-core/modules/Logging")  # Project root based path
+        )
+
+        foreach ($loggingPath in $loggingPaths) {
+            if (Test-Path $loggingPath) {
+                Import-Module $loggingPath -Global -ErrorAction Stop
+                $loggingImported = $true
+                Write-Verbose "Successfully imported Logging module from: $loggingPath"
+                break
+            }
+        }
     }
+} catch {
+    Write-Verbose "Logging module import failed, using fallback: $_"
+    # Fallback function is already defined above
 }
 
 function Invoke-ParallelForEach {
@@ -186,10 +192,16 @@ function Invoke-ParallelForEach {
                     $parallelScript = $ScriptBlock
                 }
             } elseif ($hasParameters) {
-                # Original parameter-based handling for scriptblocks without $using: variables
+                # For parameterized scriptblocks, create a new scriptblock with the original code embedded
+                # This preserves parameter structure without using $using: variables
                 $parallelScript = [scriptblock]::Create(@"
-                    `$___item = `$_
-                    & { $scriptText } `$___item
+                    `$currentItem = `$_
+                    if (`$null -eq `$currentItem) {
+                        Write-Warning "Parallel execution received null item"
+                        return `$null
+                    }
+                    # Embedded original script
+                    & { $scriptText } `$currentItem
 "@)
             } else {
                 # Use the original scriptblock as-is (it will use $_)

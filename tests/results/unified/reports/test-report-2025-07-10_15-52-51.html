@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AitherZero Test Report - Enhanced</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        .header { background-color: #2c3e50; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .summary { background-color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .metric { display: inline-block; margin: 10px 20px 10px 0; }
+        .metric-value { font-size: 2em; font-weight: bold; color: red; }
+        .metric-label { font-size: 0.9em; color: #666; }
+        .results { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .failure-analysis { background-color: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ffc107; }
+        .module-result { margin: 10px 0; padding: 15px; border-left: 4px solid #ddd; background-color: #f9f9f9; }
+        .success { border-left-color: #27ae60; }
+        .failure { border-left-color: #e74c3c; }
+        .phase { margin: 5px 0; font-size: 0.9em; }
+        .details { margin-top: 10px; font-size: 0.8em; color: #666; }
+        .performance-metrics { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .chart { display: flex; justify-content: space-around; margin: 20px 0; }
+        .chart-item { text-align: center; }
+        .progress-bar { width: 200px; height: 20px; background-color: #e0e0e0; border-radius: 10px; overflow: hidden; margin: 10px auto; }
+        .progress-fill { height: 100%; background-color: red; transition: width 0.3s ease; }
+        .critical-failure { background-color: #f8d7da; border-left-color: #dc3545; }
+        .expandable { cursor: pointer; }
+        .expandable:hover { background-color: #f0f0f0; }
+        .details-expanded { display: block; }
+        .details-collapsed { display: none; }
+    </style>
+    <script>
+        function toggleDetails(element) {
+            const details = element.nextElementSibling;
+            if (details.classList.contains('details-collapsed')) {
+                details.classList.remove('details-collapsed');
+                details.classList.add('details-expanded');
+                element.textContent = element.textContent.replace('▶', '▼');
+            } else {
+                details.classList.remove('details-expanded');
+                details.classList.add('details-collapsed');
+                element.textContent = element.textContent.replace('▼', '▶');
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="header">
+        <h1>🧪 AitherZero Test Report - Enhanced</h1>
+        <p>Test Suite: Unit | Generated: 07/10/2025 15:52:51</p>
+    </div>
+
+    <div class="summary">
+        <h2>📊 Test Summary</h2>
+        <div class="metric">
+            <div class="metric-value">40.93%</div>
+            <div class="metric-label">Success Rate</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">289</div>
+            <div class="metric-label">Tests Passed</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">135</div>
+            <div class="metric-label">Tests Failed</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value"></div>
+            <div class="metric-label">Tests Skipped</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">8</div>
+            <div class="metric-label">Modules Passed</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">155.14s</div>
+            <div class="metric-label">Total Duration</div>
+        </div>
+    </div>
+
+    <div class="performance-metrics">
+        <h2>⚡ Performance Metrics</h2>
+        <div class="chart">
+            <div class="chart-item">
+                <div class="metric-label">Average Duration</div>
+                <div class="metric-value">7.76s</div>
+            </div>
+            <div class="chart-item">
+                <div class="metric-label">Slowest Module</div>
+                <div class="metric-value">DevEnvironment</div>
+            </div>
+            <div class="chart-item">
+                <div class="metric-label">Fastest Module</div>
+                <div class="metric-value">ProgressTracking</div>
+            </div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: 40.93%"></div>
+        </div>
+    </div>
+
+        <div class="failure-analysis">
+        <h2>🔍 Failure Analysis</h2>
+        <div class="critical-failures">
+            <h3>Critical Failures (>50% failure rate)</h3>
+            <ul><li>PSScriptAnalyzerIntegration</li><li>RepoSync</li></ul></div></div>
+
+    <div class="results">
+        <h2>📋 Detailed Results</h2>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ AIToolsIntegration  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>✅ Unit: 0/22 passed (8.03s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/AIToolsIntegration/tests/AIToolsIntegration.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:07.7172029</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ BackupManager  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 35/57 passed (7.09s)</div><div class='details'><div>• Failed: Should export all expected functions - Expected 'Invoke-AdvancedBackup' to be found in collection @('Get-BackupStatistics', 'Invoke-BackupConsolidation', 'Invoke-BackupMaintenance', 'Invoke-PermanentCleanup', 'New-BackupExclusion', 'Restore-BackupData', 'Start-AutomatedBackup'), but it was not found.</div><div>• Failed: Should create backup directory structure - Expected path '/tmp/99cf3d5b-4c83-4b79-a477-dc2971438116/backup-destination/structure-test' to exist, but it did not exist.</div><div>• Failed: Should handle custom patterns - Expected $true, but got $null.</div><div>• Failed: Should support prevention rules creation - Expected $true, but got $null.</div><div>• Failed: Should perform basic advanced backup - Expected no exception to be thrown, but an exception "The term 'Invoke-AdvancedBackup' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:302 char:15
+    +             { Invoke-AdvancedBackup -SourcePath $script:TestDataPath  …
+    +               ~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should return proper backup context - The term 'Invoke-AdvancedBackup' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should support compression levels - The term 'Invoke-AdvancedBackup' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should support encryption (basic test) - Expected no exception to be thrown, but an exception "The term 'Invoke-AdvancedBackup' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:327 char:15
+    +             { Invoke-AdvancedBackup -SourcePath $script:TestDataPath  …
+    +               ~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should support deduplication - The term 'Invoke-AdvancedBackup' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should create metadata directory - The term 'Invoke-AdvancedBackup' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should support WhatIf parameter - Expected no exception to be thrown, but an exception "The term 'Invoke-AdvancedBackup' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:352 char:15
+    +             { Invoke-AdvancedBackup -SourcePath $script:TestDataPath  …
+    +               ~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should restore backup without errors - The term 'Invoke-AdvancedBackup' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should return proper restoration context - The term 'Invoke-AdvancedBackup' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should support selective restore - The term 'Invoke-AdvancedBackup' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should support verification - The term 'Invoke-AdvancedBackup' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should support WhatIf parameter - The term 'Invoke-AdvancedBackup' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should support WhatIf parameter - Expected no exception to be thrown, but an exception "Cannot find path '/tmp/99cf3d5b-4c83-4b79-a477-dc2971438116/backup-destination/automated-whatif' because it does not exist." was thrown from /workspaces/AitherZero/aither-core/modules/BackupManager/Public/Start-AutomatedBackup.ps1:116 char:23
+    +         $BackupPath = Resolve-Path $BackupPath
+    +                       ~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should handle invalid backup paths gracefully - Expected an exception to be thrown, but no exception was thrown.</div><div>• Failed: Should handle large file operations - Expected no exception to be thrown, but an exception "The term 'Invoke-AdvancedBackup' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:509 char:15
+    +             { Invoke-AdvancedBackup -SourcePath $script:TestDataPath  …
+    +               ~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should complete backup operations within reasonable time - The term 'Invoke-AdvancedBackup' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should handle concurrent operations - Expected no exception to be thrown, but an exception "The term 'Invoke-AdvancedBackup' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:567 char:15
+    +             { Invoke-AdvancedBackup -SourcePath $script:TestDataPath  …
+    +               ~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should support different compression levels - Expected no exception to be thrown, but an exception "The term 'Invoke-AdvancedBackup' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1:608 char:19
+    +                 { Invoke-AdvancedBackup -SourcePath $script:TestDataP …
+    +                   ~~~~~~~~~~~~~~~~~~~~~.</div><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/BackupManager/tests/BackupManager.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:06.7967215</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ DevEnvironment  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>✅ Unit: 0/77 passed (24.32s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/DevEnvironment/tests/DevEnvironment.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:24.0237579</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ LicenseManager  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>✅ Unit: 0/32 passed (7.77s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/LicenseManager/tests/LicenseManager.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:07.4763905</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ Logging  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>✅ Unit: 0/34 passed (8.59s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/Logging/tests/Logging.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:08.4184072</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ ModuleCommunication  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 17/33 passed (4.28s)</div><div class='details'><div>• Failed: Should export all expected functions - Expected 'Remove-MessageChannel' to be found in collection @('Add-APIMiddleware', 'Add-EventFilter', 'Clear-EventHistory', 'Clear-MessageQueue', 'Disable-MessageTracing', 'Enable-CommunicationSecurity', 'Enable-MessageTracing', 'Export-EventHistory', 'Get-APIMiddleware', 'Get-CircuitBreakerStatus', ...22 more), but it was not found.</div><div>• Failed: Should get message channels - Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</div><div>• Failed: Should test message channel connectivity - Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</div><div>• Failed: Should remove a message channel - Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</div><div>• Failed: Should register and unregister message handlers - Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</div><div>• Failed: Should send and receive messages - Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</div><div>• Failed: Should get message subscriptions - Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</div><div>• Failed: Should invoke a module API - The term 'Test-APIParameters' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should test a module API - The term 'Test-ModuleAPI' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should send and receive events - Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</div><div>• Failed: Should unsubscribe from events - Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</div><div>• Failed: Should get API middleware - Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</div><div>• Failed: Should remove API middleware - Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</div><div>• Failed: Should run basic communication tests - The term 'Test-ModuleCommunication' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should handle end-to-end message flow - Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</div><div>• Failed: Should handle invalid channel operations gracefully - Expected no exception to be thrown, but an exception "The term 'Test-MessageChannel' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1:451 char:15
+    +             { Test-MessageChannel -Name "NonExistentChannel" } | Shou …
+    +               ~~~~~~~~~~~~~~~~~~~.</div><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ModuleCommunication/tests/ModuleCommunication.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:04.1078931</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ OrchestrationEngine  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 18/21 passed (0.92s)</div><div class='details'><div>• Failed: Should validate a playbook definition - Expected no exception to be thrown, but an exception "A parameter cannot be found that matches parameter name 'PlaybookDefinition'." was thrown from /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:99 char:47
+    + …             { Validate-PlaybookDefinition -PlaybookDefinition $testPl …
+    +                                             ~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should handle workflow stopping - Expected no exception to be thrown, but an exception "Cannot process command because of one or more missing mandatory parameters: WorkflowId." was thrown from /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:146 char:15
+    +             { Stop-PlaybookWorkflow } | Should -Not -Throw
+    +               ~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should handle invalid playbook definitions gracefully - Expected no exception to be thrown, but an exception "Cannot bind argument to parameter 'Name' because it is an empty string." was thrown from /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1:163 char:44
+    +             { New-PlaybookDefinition -Name "" -Description "Invalid e …
+    +                                            ~~.</div><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/OrchestrationEngine/tests/OrchestrationEngine.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:00.6795892</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ ParallelExecution  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 29/37 passed (17.27s)</div><div class='details'><div>• Failed: Should handle timeout correctly - Expected an exception to be thrown, but no exception was thrown.</div><div>• Failed: Should handle job timeouts - Expected 'Timeout', but got $null.</div><div>• Failed: Should collect errors from failed jobs - Expected $true, but got $false.</div><div>• Failed: Should handle missing test files gracefully - Expected 'Failed', but got $null.</div><div>• Failed: Should merge test results correctly - Expected 7, but got 0.</div><div>• Failed: Should aggregate failures correctly - Expected 1, but got 0.</div><div>• Failed: Should handle script block compilation errors - Expected an exception to be thrown, but no exception was thrown.</div><div>• Failed: Should calculate optimal throttle limits correctly - Expected 48, but got 32.</div><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ParallelExecution/tests/ParallelExecution.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:17.0211467</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ PatchManager  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>✅ Unit: 0/32 passed (20.49s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/PatchManager/tests/PatchManager.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:20.2343560</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ ProgressTracking  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 21/22 passed (0.87s)</div><div class='details'><div>• Failed: Should handle invalid parameters gracefully - Expected no exception to be thrown, but an exception "Cannot validate argument on parameter 'OperationName'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again." was thrown from /workspaces/AitherZero/aither-core/modules/ProgressTracking/tests/ProgressTracking.Tests.ps1:153 char:54
+    +             { Start-ProgressOperation -OperationName "" -TotalSteps 0 …
+    +                                                      ~~.</div><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/ProgressTracking/tests/ProgressTracking.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:00.6988489</div></div></div></div>        <div class="module-result failure critical-failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ PSScriptAnalyzerIntegration 🚨 ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 11/24 passed (2.1s)</div><div class='details'><div>• Failed: Should have PSScriptAnalyzer as required module - Expected 'PSScriptAnalyzer' to be found in collection @(PSScriptAnalyzer), but it was not found.</div><div>• Failed: Should get default configuration - The term 'Get-AnalysisConfiguration' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should analyze directory with PowerShell files - The term 'Invoke-DirectoryAnalysis' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should detect known issues in test module - The term 'Invoke-DirectoryAnalysis' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should handle clean modules with fewer issues - The term 'Invoke-DirectoryAnalysis' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should not overwrite existing status file without Force - Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</div><div>• Failed: Should audit with documentation update - Cannot bind argument to parameter 'Path' because it is null.</div><div>• Failed: Should get analysis status - Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</div><div>• Failed: Should provide rollup summary - Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</div><div>• Failed: Should filter by status - Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</div><div>• Failed: Should export status to file - Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</div><div>• Failed: Should handle corrupt status files - Expected no exception to be thrown, but an exception "Cannot validate argument on parameter 'Level'. The argument "WARNING" does not belong to the set "ERROR,WARN,INFO,SUCCESS,DEBUG,TRACE,VERBOSE" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again." was thrown from /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/Public/Get-AnalysisStatus.ps1:91 char:40
+    +                 Write-CustomLog -Level 'WARNING' -Message "No .pssa-s …
+    +                                        ~~~~~~~~~.</div><div>• Failed: Should cache configuration appropriately - The term 'Get-AnalysisConfiguration' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/PSScriptAnalyzerIntegration/tests/PSScriptAnalyzerIntegration.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:01.9403613</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ RemoteConnection  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>✅ Unit: 0/28 passed (7.75s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/RemoteConnection/tests/RemoteConnection.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:07.5703498</div></div></div></div>        <div class="module-result failure critical-failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ RepoSync 🚨 ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 16/33 passed (2.63s)</div><div class='details'><div>• Failed: Should export expected repository sync functions - Expected 'Get-RepoSyncStatus' to be found in collection @('Get-SyncStatus', 'Sync-FromAitherLab', 'Sync-ToAitherLab'), but it was not found.</div><div>• Failed: Should have proper parameter documentation - Expected a value, but got $null or empty.</div><div>• Failed: Should get repository sync status without errors - Expected no exception to be thrown, but an exception "The term 'Get-RepoSyncStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1:115 char:15
+    +             { Get-RepoSyncStatus } | Should -Not -Throw
+    +               ~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should return proper status structure - The term 'Get-RepoSyncStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should handle missing git gracefully - Expected no exception to be thrown, but an exception "The term 'Get-RepoSyncStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1:131 char:15
+    +             { Get-RepoSyncStatus } | Should -Not -Throw
+    +               ~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should validate Sync-ToAitherLab parameters - Expected no exception to be thrown, but an exception "Working directory has uncommitted changes. Use -Force to override." was thrown from /workspaces/AitherZero/aither-core/modules/RepoSync/RepoSync.psm1:40 char:17
+    + …             throw "Working directory has uncommitted changes. Use -Fo …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should support WhatIf for sync operations - Expected no exception to be thrown, but an exception "Working directory has uncommitted changes. Use -Force to override." was thrown from /workspaces/AitherZero/aither-core/modules/RepoSync/RepoSync.psm1:40 char:17
+    + …             throw "Working directory has uncommitted changes. Use -Fo …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should support selective file sync - Expected no exception to be thrown, but an exception "Working directory has uncommitted changes. Use -Force to override." was thrown from /workspaces/AitherZero/aither-core/modules/RepoSync/RepoSync.psm1:40 char:17
+    + …             throw "Working directory has uncommitted changes. Use -Fo …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should support PR creation flag - Expected no exception to be thrown, but an exception "Working directory has uncommitted changes. Use -Force to override." was thrown from /workspaces/AitherZero/aither-core/modules/RepoSync/RepoSync.psm1:40 char:17
+    + …             throw "Working directory has uncommitted changes. Use -Fo …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should report remote status accurately - The term 'Get-RepoSyncStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should execute status operations within acceptable time limits - The term 'Get-RepoSyncStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should handle concurrent status requests - Expected a collection with size 3, but got an empty collection.</div><div>• Failed: Should maintain consistent behavior across multiple calls - The term 'Get-RepoSyncStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should detect git availability - The term 'Get-RepoSyncStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should handle git repository detection - The term 'Get-RepoSyncStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should not regress existing functionality - Expected 4, but got 3.</div><div>• Failed: Should maintain backward compatibility - Expected a value, but got $null or empty.</div><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/RepoSync/tests/RepoSync.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:02.4510053</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ RestAPIServer  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 11/22 passed (2.34s)</div><div class='details'><div>• Failed: Should export management functions - Expected a value, because Management module should export management-related functions, but got $null or empty.</div><div>• Failed: Should initialize management state properly - Expected no exception to be thrown, but an exception "The term 'Start-RestAPIServerManagement' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1:84 char:15
+    +             { Start-RestAPIServerManagement -TestMode } | Should -Not …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should track resource state accurately - The term 'Get-RestAPIServerStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should handle configuration changes safely - Expected no exception to be thrown, but an exception "The term 'Set-RestAPIServerConfiguration' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1:97 char:15
+    +             { Set-RestAPIServerConfiguration -Configuration $testConf …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should execute operations with proper validation - The term 'Invoke-RestAPIServerOperation' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should maintain consistent state across operations - The term 'Get-RestAPIServerStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should persist state information properly - The term 'Export-RestAPIServerState' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should coordinate with other management modules - The term 'Test-RestAPIServerCoordination' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should handle multiple concurrent management requests - Expected a collection with size 3, but got an empty collection.</div><div>• Failed: Should maintain consistency under concurrent access - The term 'Get-RestAPIServerStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should execute management operations within acceptable time limits - The term 'Get-RestAPIServerStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/RestAPIServer/tests/RestAPIServer.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:02.1687041</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ SemanticVersioning  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 44/60 passed (2.59s)</div><div class='details'><div>• Failed: Should reject invalid semantic versions - Cannot validate argument on parameter 'Version'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.</div><div>• Failed: Should retrieve version history from git tags - Exception calling "Parse" with "1" argument(s): "The string 'Tagger: GitHub <noreply@github.com>' was not recognized as a valid DateTime. There is an unknown word starting at index '0'."</div><div>• Failed: Should limit results to specified count - Exception calling "Parse" with "1" argument(s): "The string 'Tagger: GitHub <noreply@github.com>' was not recognized as a valid DateTime. There is an unknown word starting at index '0'."</div><div>• Failed: Should exclude pre-release versions by default - Exception calling "Parse" with "1" argument(s): "The string 'Tagger: GitHub <noreply@github.com>' was not recognized as a valid DateTime. There is an unknown word starting at index '0'."</div><div>• Failed: Should include pre-release versions when requested - Exception calling "Parse" with "1" argument(s): "The string 'Tagger: GitHub <noreply@github.com>' was not recognized as a valid DateTime. There is an unknown word starting at index '0'."</div><div>• Failed: Should generate markdown release notes - Cannot bind argument to parameter 'Commits' because it is null.</div><div>• Failed: Should generate text release notes - Cannot bind argument to parameter 'Commits' because it is null.</div><div>• Failed: Should generate JSON release notes - Cannot bind argument to parameter 'Commits' because it is null.</div><div>• Failed: Should categorize commits by type - Cannot bind argument to parameter 'Commits' because it is null.</div><div>• Failed: Should handle git repository not available - Expected no exception to be thrown, but an exception "Cannot bind argument to parameter 'Commits' because it is null." was thrown from /workspaces/AitherZero/aither-core/modules/SemanticVersioning/SemanticVersioning.psm1:134 char:76
+    + … ommitAnalysis = ConvertFrom-ConventionalCommits -Commits $commitRange
+    +                                                            ~~~~~~~~~~~~.</div><div>• Failed: Should handle empty commit history - Cannot bind argument to parameter 'Commits' because it is null.</div><div>• Failed: Should handle malformed conventional commits gracefully - Parameter set cannot be resolved using the specified named parameters. One or more parameters issued cannot be used together or an insufficient number of parameters were provided.</div><div>• Failed: Should handle path operations cross-platform - Cannot bind argument to parameter 'Commits' because it is null.</div><div>• Failed: Should handle large version histories efficiently - Exception calling "Parse" with "1" argument(s): "The string 'Tagger: GitHub <noreply@github.com>' was not recognized as a valid DateTime. There is an unknown word starting at index '0'."</div><div>• Failed: Should perform end-to-end version workflow - Cannot bind argument to parameter 'Commits' because it is null.</div><div>• Failed: Should generate comprehensive release notes workflow - Cannot bind argument to parameter 'Commits' because it is null.</div><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SemanticVersioning/tests/SemanticVersioning.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:02.4447119</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ SetupWizard  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 65/71 passed (21.25s)</div><div class='details'><div>• Failed: Should test security settings - Cannot bind argument to parameter 'Path' because it is null.</div><div>• Failed: Should check platform-specific security features - Cannot bind argument to parameter 'Path' because it is null.</div><div>• Failed: Should count passed, failed, and warning steps - Expected regular expression 'Passed: 1' to match 'Setup completed with:   ✅ Passed: 2   ❌ Failed: 2   ⚠️ Warnings: 2  ⚠️ Setup completed with limited functionality Total time: 30 seconds', but it did not match.</div><div>• Failed: Should gather detailed system information - Expected a value, but got $null or empty.</div><div>• Failed: Should test network connectivity - Expected the value to have type [bool] or any of its subtypes, but got $null with type $null.</div><div>• Failed: Should complete basic tests efficiently - Cannot bind argument to parameter 'Path' because it is null.</div><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/SetupWizard/tests/SetupWizard.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:21.1125236</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ StartupExperience  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 11/22 passed (2.12s)</div><div class='details'><div>• Failed: Should export management functions - Expected a value, because Management module should export management-related functions, but got $null or empty.</div><div>• Failed: Should initialize management state properly - Expected no exception to be thrown, but an exception "The term 'Start-StartupExperienceManagement' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:84 char:15
+    +             { Start-StartupExperienceManagement -TestMode } | Should  …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should track resource state accurately - The term 'Get-StartupExperienceStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should handle configuration changes safely - Expected no exception to be thrown, but an exception "The term 'Set-StartupExperienceConfiguration' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1:97 char:15
+    +             { Set-StartupExperienceConfiguration -Configuration $test …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should execute operations with proper validation - The term 'Invoke-StartupExperienceOperation' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should maintain consistent state across operations - The term 'Get-StartupExperienceStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should persist state information properly - The term 'Export-StartupExperienceState' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should coordinate with other management modules - The term 'Test-StartupExperienceCoordination' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should handle multiple concurrent management requests - Expected a collection with size 3, but got an empty collection.</div><div>• Failed: Should maintain consistency under concurrent access - The term 'Get-StartupExperienceStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should execute management operations within acceptable time limits - The term 'Get-StartupExperienceStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/StartupExperience/tests/StartupExperience.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:01.9694329</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ TestingFramework  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>✅ Unit: 0/13 passed (4.84s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/TestingFramework/tests/TestingFramework.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:04.7356876</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ UnifiedMaintenance  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>❌ Unit: 11/22 passed (1.81s)</div><div class='details'><div>• Failed: Should export management functions - Expected a value, because Management module should export management-related functions, but got $null or empty.</div><div>• Failed: Should initialize management state properly - Expected no exception to be thrown, but an exception "The term 'Start-UnifiedMaintenanceManagement' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/UnifiedMaintenance/tests/UnifiedMaintenance.Tests.ps1:84 char:15
+    +             { Start-UnifiedMaintenanceManagement -TestMode } | Should …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should track resource state accurately - The term 'Get-UnifiedMaintenanceStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should handle configuration changes safely - Expected no exception to be thrown, but an exception "The term 'Set-UnifiedMaintenanceConfiguration' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again." was thrown from /workspaces/AitherZero/aither-core/modules/UnifiedMaintenance/tests/UnifiedMaintenance.Tests.ps1:97 char:15
+    +             { Set-UnifiedMaintenanceConfiguration -Configuration $tes …
+    +               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.</div><div>• Failed: Should execute operations with proper validation - The term 'Invoke-UnifiedMaintenanceOperation' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should maintain consistent state across operations - The term 'Get-UnifiedMaintenanceStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should persist state information properly - The term 'Export-UnifiedMaintenanceState' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should coordinate with other management modules - The term 'Test-UnifiedMaintenanceCoordination' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should handle multiple concurrent management requests - Expected a collection with size 3, but got an empty collection.</div><div>• Failed: Should maintain consistency under concurrent access - The term 'Get-UnifiedMaintenanceStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Failed: Should execute management operations within acceptable time limits - The term 'Get-UnifiedMaintenanceStatus' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.</div><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/UnifiedMaintenance/tests/UnifiedMaintenance.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:01.7053591</div></div></div></div>        <div class="module-result failure">
+            <div class="expandable" onclick="toggleDetails(this)">
+                <h3>❌ UtilityServices  ▶</h3>
+            </div>
+            <div class="details details-collapsed"><div class='phase'>✅ Unit: 0/44 passed (8.06s)</div><div class='details'><div>• Pester tests executed from: /workspaces/AitherZero/aither-core/modules/UtilityServices/tests/UtilityServices.Tests.ps1 (File)</div><div>• Pester version: 5.7.1</div><div>• Execution time: 00:00:07.9351624</div></div></div></div>    </div>
+
+    <div class="footer" style="text-align: center; margin-top: 20px; color: #666;">
+        <p>Generated by AitherZero TestingFramework v1.0.0 | 07/10/2025 15:52:51</p>
+    </div>
+</body>
+</html>

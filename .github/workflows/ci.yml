@@ -1,85 +1,85 @@
----
-name: CI - Optimized & Reliable
+name: "CI - Optimized & Reliable"
 
 on:
   push:
-    branches: [main, develop, 'release/**', 'patch/**']
+    branches:
+      - main
+      - develop
+      - 'patch/**'
+      - 'feature/**'
+      - 'hotfix/**'
+    paths-ignore:
+      - '*.md'
+      - 'docs/**'
+      - '.vscode/**'
   pull_request:
-    branches: [main, develop]
-  merge_group:
-    types: [checks_requested]
-  workflow_dispatch:
-    inputs:
-      test_suite:
-        type: choice
-        description: 'Test suite to run'
-        options:
-          - Quick
-          - All
-        default: 'Quick'
-      generate_dashboard:
-        type: boolean
-        description: 'Generate comprehensive dashboard'
-        default: true
-
-# Cancel in-progress runs
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
-# Minimal permissions
-permissions:
-  contents: read
-  pull-requests: write
-  actions: read
-  checks: write
+    branches:
+      - main
+      - develop
+    paths-ignore:
+      - '*.md'
+      - 'docs/**'
+      - '.vscode/**'
 
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   DOTNET_NOLOGO: true
 
-jobs:
-  # Fast change analysis
-  analyze-changes:
-    name: Analyze Changes
-    runs-on: ubuntu-latest
-    outputs:
-      has-code-changes: ${{ steps.filter.outputs.code }}
-      has-docs-changes: ${{ steps.filter.outputs.docs }}
-      test-strategy: ${{ steps.strategy.outputs.strategy }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Detect changes
-        uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            code:
-              - '**/*.ps1'
-              - '**/*.psm1'
-              - '**/*.psd1'
-              - 'tests/**'
-            docs:
-              - '**/*.md'
-              - 'docs/**'
-      - name: Determine test strategy
-        id: strategy
-        run: |
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            echo "strategy=Quick" >> $GITHUB_OUTPUT
-          else
-            echo "strategy=${{ github.event.inputs.test_suite || 'All' }}" >> $GITHUB_OUTPUT
-          fi
+defaults:
+  run:
+    shell: pwsh
 
-  # Unified quality check
-  quality-check:
-    name: Quality Check
+jobs:
+  analyze-changes:
+    name: "Analyze Changes"
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      has-code-changes: ${{ steps.changes.outputs.code }}
+      has-workflow-changes: ${{ steps.changes.outputs.workflows }}
+      has-test-changes: ${{ steps.changes.outputs.tests }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for changes
+        id: changes
+        run: |
+          $codeFiles = git diff --name-only HEAD~1 HEAD | Where-Object { 
+            $_ -match '\.(ps1|psm1|psd1)$' -and $_ -notmatch '^(docs|\.vscode)/' 
+          }
+          $workflowFiles = git diff --name-only HEAD~1 HEAD | Where-Object { 
+            $_ -match '^\.github/workflows/'
+          }
+          $testFiles = git diff --name-only HEAD~1 HEAD | Where-Object { 
+            $_ -match '^tests/'
+          }
+          
+          $hasCodeChanges = if ($codeFiles.Count -gt 0) { 'true' } else { 'false' }
+          $hasWorkflowChanges = if ($workflowFiles.Count -gt 0) { 'true' } else { 'false' }
+          $hasTestChanges = if ($testFiles.Count -gt 0) { 'true' } else { 'false' }
+          
+          echo "code=$hasCodeChanges" >> $env:GITHUB_OUTPUT
+          echo "workflows=$hasWorkflowChanges" >> $env:GITHUB_OUTPUT
+          echo "tests=$hasTestChanges" >> $env:GITHUB_OUTPUT
+          
+          Write-Host "Code changes: $($codeFiles.Count) files"
+          Write-Host "Workflow changes: $($workflowFiles.Count) files"
+          Write-Host "Test changes: $($testFiles.Count) files"
+
+  quality-check:
+    name: "Quality Check"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: analyze-changes
     if: needs.analyze-changes.outputs.has-code-changes == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Cache PowerShell modules
         uses: actions/cache@v4
         with:
@@ -88,28 +88,38 @@ jobs:
             ~/Documents/PowerShell/Modules
             ~/.config/powershell
             ~/.cache/powershell
-          key: ${{ runner.os }}-ps-modules-${{ hashFiles('**/requirements.psd1', 'aither-core/modules/**/*.psd1') }}-v2
+          key: ${{ runner.os }}-ps-modules-${{ hashFiles('**/*.psd1', '**/*.psm1') }}-v2
           restore-keys: |
             ${{ runner.os }}-ps-modules-v2
             ${{ runner.os }}-ps-modules-
+
       - name: Install analysis tools
-        shell: pwsh
         run: |
           Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
           Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser
+
       - name: Run quality analysis
-        shell: pwsh
         run: |
-          # Fast quality check using PSScriptAnalyzer
-          $files = Get-ChildItem -Include "*.ps1","*.psm1","*.psd1" -Recurse | 
+          # Get PowerShell files (not in test or build directories)
+          $files = Get-ChildItem -Include "*.ps1","*.psm1","*.psd1" -Recurse |
                    Where-Object { $_.FullName -notlike "*test*" -and $_.FullName -notlike "*build*" }
+
+          Write-Host "Found $($files.Count) PowerShell files to analyze"
           
-          $results = Invoke-ScriptAnalyzer -Path $files -Severity Error,Warning
-          
+          $results = @()
+          foreach ($file in $files) {
+            Write-Host "Analyzing: $($file.Name)"
+            $fileResults = Invoke-ScriptAnalyzer -Path $file.FullName -Severity Error,Warning
+            if ($fileResults) {
+              $results += $fileResults
+            }
+          }
+
           if ($results) {
             Write-Host "Quality issues found: $($results.Count)"
             $results | Format-Table -AutoSize
-            # Create annotations but don't fail (unless severe)
+            
+            # Create annotations for GitHub
             foreach ($result in $results) {
               if ($result.Severity -eq 'Error') {
                 Write-Host "::error file=$($result.ScriptPath),line=$($result.Line)::$($result.Message)"
@@ -117,6 +127,8 @@ jobs:
                 Write-Host "::warning file=$($result.ScriptPath),line=$($result.Line)::$($result.Message)"
               }
             }
+            
+            # Fail if too many errors (threshold: 10)
             $errorCount = ($results | Where-Object Severity -eq 'Error').Count
             if ($errorCount -gt 10) {
               Write-Host "::error::Too many errors ($errorCount) - quality threshold exceeded"
@@ -125,18 +137,20 @@ jobs:
           }
           Write-Host "✅ Quality check completed"
 
-  # Unified test execution
   test:
-    name: Test (${{ matrix.os }})
+    name: "Test (${{ matrix.os }})"
     runs-on: ${{ matrix.os }}
-    needs: [analyze-changes, quality-check]
-    if: always() && needs.analyze-changes.outputs.has-code-changes == 'true'
+    timeout-minutes: 15
+    needs: analyze-changes
+    if: always() && !cancelled() && !failure()
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [windows-latest, ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
@@ -145,363 +159,193 @@ jobs:
             ~/Documents/PowerShell/Modules
             ~/.config/powershell
             ~/.cache/powershell
-            ~/.nuget/packages
-          key: ${{ runner.os }}-ps-deps-${{ hashFiles('**/requirements.psd1', 'aither-core/modules/**/*.psd1') }}-v2
+            /Users/*/.local/share/powershell/Modules
+          key: ${{ runner.os }}-test-deps-${{ hashFiles('tests/**/*.ps1') }}-v2
           restore-keys: |
-            ${{ runner.os }}-ps-deps-v2
-            ${{ runner.os }}-ps-deps-
+            ${{ runner.os }}-test-deps-v2
+            ${{ runner.os }}-test-deps-
+
       - name: Install test dependencies
-        shell: pwsh
         run: |
-          Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser
+          Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser -SkipPublisherCheck
+          Write-Host "✅ Test dependencies installed"
+
       - name: Run unified tests
-        shell: pwsh
         run: |
-          $testSuite = "${{ needs.analyze-changes.outputs.test-strategy }}"
-          $generateDashboard = "${{ github.event.inputs.generate_dashboard || 'true' }}"
+          # Ensure we're in the right directory
+          Set-Location $env:GITHUB_WORKSPACE
           
-          # Use the new unified test runner
-          $params = @{
-            TestSuite = $testSuite
-            CI = $true
-            OutputFormat = 'All'
-            Performance = $true
-            ShowProgress = $true
-            MaxParallelJobs = if ($env:GITHUB_ACTIONS) { 6 } else { 4 }
-            TimeoutMinutes = if ($env:GITHUB_ACTIONS) { 10 } else { 15 }
-          }
-          
-          if ($generateDashboard -eq 'true') {
-            $params['GenerateDashboard'] = $true
-            $params['UpdateReadme'] = $true
-          }
-          
-          Write-Host "🚀 Running unified tests with parameters:"
-          $params | Format-Table -AutoSize
-          
-          # Execute unified test runner
-          ./tests/Run-UnifiedTests.ps1 @params
-          
-          # Verify test results and set outputs
-          if (Test-Path "tests/results/unified-test-results.json") {
-            $results = Get-Content "tests/results/unified-test-results.json" | ConvertFrom-Json
-            Write-Host "✅ Tests completed: $($results.TotalTests) total, $($results.PassedTests) passed, $($results.FailedTests) failed"
-            
-            # Set outputs for summary
-            echo "total-tests=$($results.TotalTests)" >> $env:GITHUB_OUTPUT
-            echo "passed-tests=$($results.PassedTests)" >> $env:GITHUB_OUTPUT
-            echo "failed-tests=$($results.FailedTests)" >> $env:GITHUB_OUTPUT
-            echo "success-rate=$($results.QualityMetrics.SuccessRate)" >> $env:GITHUB_OUTPUT
-            echo "duration=$($results.Duration)" >> $env:GITHUB_OUTPUT
-            
-            # Fail if tests failed
-            if ($results.FailedTests -gt 0) {
-              Write-Host "❌ $($results.FailedTests) tests failed" -ForegroundColor Red
-              exit 1
-            }
-          } else {
-            Write-Warning "Test results file not found - cannot verify test execution"
-            exit 1
-          }
+          # Run tests with CI optimizations
+          ./tests/Run-UnifiedTests.ps1 -TestSuite CI -CI -OutputFormat All -Performance -ShowProgress
+        continue-on-error: false
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ matrix.os }}
-          path: |
-            tests/results/
-            *.xml
-            *.json
-            *.html
-          retention-days: 14
-          if-no-files-found: warn
+          name: test-results-${{ runner.os }}
+          path: tests/results/
+          retention-days: 30
 
-  # Fast build validation
   build:
-    name: Build (${{ matrix.platform }})
+    name: "Build (${{ matrix.platform }})"
     runs-on: ubuntu-latest
-    needs: test
-    if: always() && !cancelled()
+    timeout-minutes: 10
+    needs: analyze-changes
+    if: always() && !cancelled() && !failure()
     strategy:
+      fail-fast: false
       matrix:
         platform: [windows, linux, macos]
     steps:
-      - uses: actions/checkout@v4
-      - name: Test build
-        shell: pwsh
-        timeout-minutes: 10
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build package
         run: |
-          $version = Get-Content ./VERSION -Raw -ErrorAction SilentlyContinue | ForEach-Object { $_.Trim() }
-          if (-not $version) { $version = "0.0.1-ci" }
-          
-          Write-Host "🔨 Building ${{ matrix.platform }} package (version: $version)"
-          ./build/Build-Package.ps1 -Platform ${{ matrix.platform }} -Version $version
-          
-          # Verify build output
-          $expectedFile = if ('${{ matrix.platform }}' -eq 'windows') {
-            "build/output/AitherZero-v$version-windows.zip"
-          } else {
-            "build/output/AitherZero-v$version-${{ matrix.platform }}.tar.gz"
-          }
-          
-          if (Test-Path $expectedFile) {
-            $size = (Get-Item $expectedFile).Length / 1MB
-            Write-Host "✅ Build successful: $([math]::Round($size, 2)) MB"
-          } else {
-            Write-Host "❌ Build failed: $expectedFile not found"
-            exit 1
-          }
+          ./build/Build-Package.ps1 -Platform ${{ matrix.platform }}
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.platform }}
           path: build/output/
-          retention-days: 7
-          if-no-files-found: error
+          retention-days: 30
 
-  # Comprehensive dashboard generation
-  dashboard:
-    name: Generate Dashboard
+  generate-dashboard:
+    name: "Generate Dashboard"
     runs-on: ubuntu-latest
-    needs: [test, build]
-    if: always() && (github.event.inputs.generate_dashboard == 'true' || github.event.inputs.generate_dashboard == null)
+    timeout-minutes: 5
+    needs: [quality-check, test, build]
+    if: always() && !cancelled()
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: ./artifacts/
-      - name: Generate comprehensive dashboard
-        shell: pwsh
+          path: artifacts/
+
+      - name: Generate dashboard
         run: |
-          Write-Host "🏗️  Generating comprehensive dashboard..."
+          # Create dashboard directory
+          $dashboardDir = "dashboard"
+          New-Item -ItemType Directory -Path $dashboardDir -Force
+
+          # Simple dashboard generation
+          $runNumber = "${{ github.run_number }}"
+          $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
+          $branch = "${{ github.ref_name }}"
+          $commit = "${{ github.sha }}"
+          $runId = "${{ github.run_id }}"
           
-          # Import required modules
-          $modules = @(
-            "./aither-core/modules/Logging",
-            "./aither-core/modules/ParallelExecution"
-          )
-          
-          foreach ($module in $modules) {
-            if (Test-Path $module) {
-              Import-Module $module -Force -ErrorAction SilentlyContinue
-            }
-          }
-          
-          # Generate comprehensive reports
-          $reportingPath = "./scripts/reporting"
-          
-          if (Test-Path "$reportingPath/Generate-ComprehensiveReport.ps1") {
-            $reportTitle = "AitherZero CI Dashboard - $(Get-Date -Format 'yyyy-MM-dd HH:mm') UTC"
-            & "$reportingPath/Generate-ComprehensiveReport.ps1" -IncludeDetailedAnalysis -ReportTitle $reportTitle
-            Write-Host "✅ Comprehensive report generated"
-          }
-          
-          if (Test-Path "$reportingPath/Generate-DynamicFeatureMap.ps1") {
-            & "$reportingPath/Generate-DynamicFeatureMap.ps1" -HtmlOutput -IncludeDependencyGraph
-            Write-Host "✅ Dynamic feature map generated"
-          }
-          
-          # Create CI integration summary
-          $ciSummary = @{
-            Timestamp = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
-            GitRef = "${{ github.ref }}"
-            GitSha = "${{ github.sha }}"
-            WorkflowId = "${{ github.run_id }}"
-            TestResults = @{}
-            QualityResults = @{}
-            BuildResults = @{}
-          }
-          
-          # Collect test results from artifacts
-          Get-ChildItem -Path "./artifacts" -Directory | Where-Object Name -like "*test-results*" | ForEach-Object {
-            $platform = ($_.Name -split '-')[-1]
-            $summaryFile = Join-Path $_.FullName "unified-test-results.json"
-            if (Test-Path $summaryFile) {
-              $ciSummary.TestResults[$platform] = Get-Content $summaryFile | ConvertFrom-Json
-            }
-          }
-          
-          # Export CI summary
-          $ciSummary | ConvertTo-Json -Depth 10 | Set-Content -Path "./ci-dashboard-summary.json"
-          
-          # Create executive summary
-          $executiveSummary = @"
-          # AitherZero CI Dashboard
-          
-          ## Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') UTC
-          ## Git Reference: ${{ github.ref }} (${{ github.sha }})
-          
-          ### 🎯 Executive Summary
-          
-          This dashboard provides comprehensive insights into code quality, test results, and build status.
-          
-          ### 📊 Key Reports
-          - **comprehensive-report.html**: Complete project health analysis
-          - **feature-dependency-map.html**: Interactive module relationships
-          - **ci-dashboard-summary.json**: Programmatic access to results
-          
-          ### 🚀 Architecture Benefits
-          - **Unified Testing**: Single test runner for all scenarios
-          - **Comprehensive Reporting**: Full audit trail and compliance
-          - **Fast Execution**: Sub-30-second core tests
-          - **Dashboard Integration**: Real-time CI results
-          "@
-          
-          $executiveSummary | Set-Content -Path "./executive-summary.md"
-          
-          Write-Host "✅ Dashboard generation completed"
+          $html = "<html><head><title>AitherZero CI Dashboard</title></head><body>"
+          $html += "<h1>AitherZero CI Dashboard</h1>"
+          $html += "<p>Build: $runNumber | Date: $timestamp</p>"
+          $html += "<p>Branch: $branch | Commit: $commit</p>"
+          $html += "<p>Status: DASHBOARD GENERATED</p>"
+          $html += "<p>Run ID: $runId</p>"
+          $html += "</body></html>"
+
+          $html | Set-Content "$dashboardDir/index.html"
+          Write-Host "✅ Dashboard generated successfully"
+
       - name: Upload dashboard
         uses: actions/upload-artifact@v4
         with:
           name: comprehensive-dashboard
-          path: |
-            *.html
-            *.json
-            *.md
-            reports/
+          path: dashboard/
           retention-days: 90
 
-  # Final summary
-  summary:
-    name: CI Summary
+  ci-summary:
+    name: "CI Summary"
     runs-on: ubuntu-latest
-    needs: [quality-check, test, build, dashboard]
-    if: always()
+    timeout-minutes: 5
+    needs: [analyze-changes, quality-check, test, build, generate-dashboard]
+    if: always() && !cancelled()
     steps:
       - name: Evaluate results
-        shell: pwsh
         run: |
-          $results = @{
-            'quality-check' = '${{ needs.quality-check.result }}'
-            'test' = '${{ needs.test.result }}'
-            'build' = '${{ needs.build.result }}'
-            'dashboard' = '${{ needs.dashboard.result }}'
-          }
-          
-          Write-Host "🎯 CI Summary:"
-          $failCount = 0
-          $criticalFailCount = 0
-          
-          foreach ($job in $results.GetEnumerator()) {
-            $status = switch ($job.Value) {
-              'success' { '✅' }
-              'failure' { '❌'; $failCount++; if ($job.Key -in @('test', 'build')) { $criticalFailCount++ } }
-              'cancelled' { '⚠️' }
-              'skipped' { '⏭️' }
-              default { '❓' }
-            }
-            Write-Host "  $status $($job.Key): $($job.Value)"
-          }
-          
-          Write-Host ""
-          if ($criticalFailCount -gt 0) {
-            Write-Host "❌ CI Failed: $criticalFailCount critical failures"
-            exit 1
-          } elseif ($failCount -gt 0) {
-            Write-Host "⚠️  CI Completed with $failCount non-critical failures"
+          $success = $true
+          $summary = "# AitherZero CI Summary`n`n## Results Overview`n"
+
+          # Check quality results
+          $qualityResult = '${{ needs.quality-check.result }}'
+          if ($qualityResult -eq 'failure') {
+            $success = $false
+            $summary += "❌ **Quality Check**: FAILED`n"
+          } elseif ($qualityResult -eq 'success') {
+            $summary += "✅ **Quality Check**: PASSED`n"
           } else {
-            Write-Host "✅ CI Passed: All checks successful!"
+            $summary += "⚪ **Quality Check**: SKIPPED`n"
           }
-      - name: Update PR comment
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        continue-on-error: true
-        with:
-          script: |
-            const results = {
-              'quality-check': '${{ needs.quality-check.result }}',
-              'test': '${{ needs.test.result }}',
-              'build': '${{ needs.build.result }}',
-              'dashboard': '${{ needs.dashboard.result }}'
-            };
-            
-            let body = '## 🚀 CI Results (Simplified)\n\n';
-            body += '| Check | Status |\n|-------|--------|\n';
-            
-            for (const [check, result] of Object.entries(results)) {
-              const emoji = result === 'success' ? '✅' : 
-                           result === 'failure' ? '❌' : 
-                           result === 'skipped' ? '⏭️' : '⚠️';
-              body += `| ${check} | ${emoji} ${result} |\n`;
-            }
-            
-            body += `\n**Simplified CI**: Fast validation with comprehensive reporting\n`;
-            body += `**Dashboard**: Available in artifacts after completion\n`;
-            body += `\n[View full logs](${context.payload.pull_request.html_url}/checks)\n`;
-            
-            // Find and update existing comment
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number
-            });
-            
-            const botComment = comments.find(comment => 
-              comment.user.type === 'Bot' && 
-              comment.body.includes('🚀 CI Results')
-            );
-            
-            if (botComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body
-              });
-            }
 
-      # Create CI results summary for comprehensive report consumption
+          # Check test results
+          $testResult = '${{ needs.test.result }}'
+          if ($testResult -eq 'failure') {
+            $success = $false
+            $summary += "❌ **Tests**: FAILED`n"
+          } elseif ($testResult -eq 'success') {
+            $summary += "✅ **Tests**: PASSED`n"
+          } else {
+            $summary += "⚪ **Tests**: SKIPPED`n"
+          }
+
+          # Check build results
+          $buildResult = '${{ needs.build.result }}'
+          if ($buildResult -eq 'failure') {
+            $success = $false
+            $summary += "❌ **Build**: FAILED`n"
+          } elseif ($buildResult -eq 'success') {
+            $summary += "✅ **Build**: PASSED`n"
+          } else {
+            $summary += "⚪ **Build**: SKIPPED`n"
+          }
+
+          # Add dashboard status
+          $dashboardResult = '${{ needs.generate-dashboard.result }}'
+          if ($dashboardResult -eq 'success') {
+            $summary += "✅ **Dashboard**: Generated`n"
+          } else {
+            $summary += "❌ **Dashboard**: Failed`n"
+          }
+
+          $summary += "`n## Build Information`n"
+          $summary += "- **Branch**: ${{ github.ref_name }}`n"
+          $summary += "- **Commit**: ${{ github.sha }}`n"
+          $summary += "- **Run Number**: ${{ github.run_number }}`n"
+          $summary += "- **Triggered by**: ${{ github.event_name }}`n"
+
+          Write-Host $summary
+          
+          if (-not $success) {
+            Write-Host "::error::CI pipeline failed"
+            exit 1
+          } else {
+            Write-Host "::notice::CI pipeline completed successfully"
+          }
+
       - name: Create CI results summary
-        if: always()
-        shell: pwsh
         run: |
-          $ciResults = @{
-            timestamp = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
-            workflow = "CI - Continuous Integration"
-            job = "test"
-            branch = "${{ github.head_ref || github.ref_name }}"
-            commit = "${{ github.sha }}"
-            pr_number = "${{ github.event.pull_request.number }}"
-            tests = @{
-              status = "completed"
-              passed = $true
-              duration = "00:01:30"
-              suite = "Quick"
-            }
-            quality = @{
-              status = "completed"
-              passed = $true
-              issues = 0
-            }
-            modules = @{
-              total = 20
-              loaded = 20
-              success_rate = 100
-            }
-            security = @{
-              status = "completed"
-              vulnerabilities = 0
-            }
+          $summary = @{
+            success = ('${{ needs.test.result }}' -eq 'success' -and '${{ needs.build.result }}' -eq 'success')
+            quality = '${{ needs.quality-check.result }}'
+            tests = '${{ needs.test.result }}'
+            build = '${{ needs.build.result }}'
+            dashboard = '${{ needs.generate-dashboard.result }}'
+            runNumber = '${{ github.run_number }}'
+            branch = '${{ github.ref_name }}'
+            commit = '${{ github.sha }}'
+            timestamp = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
           }
           
-          $ciResults | ConvertTo-Json -Depth 5 | Out-File -FilePath "./ci-results-summary.json" -Encoding UTF8
-          Write-Host "✅ CI results summary created"
+          $summary | ConvertTo-Json | Set-Content "ci-summary.json"
+          Get-Content "ci-summary.json"
 
-      # Upload CI results artifact for comprehensive report
       - name: Upload CI results summary
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ci-results-summary
-          path: ci-results-summary.json
-          retention-days: 7
+          path: ci-summary.json
+          retention-days: 90

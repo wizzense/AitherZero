@@ -1,67 +1,67 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="34" errors="0" failures="3" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-09" time="16:34:35">
-  <environment user-domain="" clr-version="9.0.4" os-version="6.8.0-1027-azure" platform="Linux" machine-name="codespaces-6c6eb1" cwd="/workspaces/AitherZero" nunit-version="2.5.8.0" user="codespace" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="34" errors="0" failures="3" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-07-10" time="15:52:14">
+  <environment os-version="6.8.0-1027-azure" platform="Linux" clr-version="9.0.4" machine-name="codespaces-6c6eb1" user-domain="" nunit-version="2.5.8.0" user="codespace" cwd="/workspaces/AitherZero" />
   <culture-info current-culture="" current-uiculture="" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="3.5555" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="3.623" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/Logging/tests/Logging.Tests.ps1" executed="True" result="Failure" success="False" time="3.5555" asserts="0" description="/workspaces/AitherZero/aither-core/modules/Logging/tests/Logging.Tests.ps1">
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/aither-core/modules/Logging/tests/Logging.Tests.ps1" executed="True" result="Failure" success="False" time="3.623" asserts="0" description="/workspaces/AitherZero/aither-core/modules/Logging/tests/Logging.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality" executed="True" result="Failure" success="False" time="2.4269" asserts="0" description="Logging Module v2.1.0 - Core Functionality">
+          <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality" executed="True" result="Failure" success="False" time="2.4986" asserts="0" description="Logging Module v2.1.0 - Core Functionality">
             <results>
-              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Module Import and Structure" executed="True" result="Success" success="True" time="0.1881" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Module Import and Structure">
+              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Module Import and Structure" executed="True" result="Success" success="True" time="0.2605" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Module Import and Structure">
                 <results>
-                  <test-case description="Should export all required functions" name="Logging Module v2.1.0 - Core Functionality.Module Import and Structure.Should export all required functions" time="0.1276" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should have correct module version" name="Logging Module v2.1.0 - Core Functionality.Module Import and Structure.Should have correct module version" time="0.0267" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should require PowerShell 7.0 or higher" name="Logging Module v2.1.0 - Core Functionality.Module Import and Structure.Should require PowerShell 7.0 or higher" time="0.0079" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should export all required functions" name="Logging Module v2.1.0 - Core Functionality.Module Import and Structure.Should export all required functions" time="0.1731" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should have correct module version" name="Logging Module v2.1.0 - Core Functionality.Module Import and Structure.Should have correct module version" time="0.0406" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should require PowerShell 7.0 or higher" name="Logging Module v2.1.0 - Core Functionality.Module Import and Structure.Should require PowerShell 7.0 or higher" time="0.0133" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Basic Logging Operations" executed="True" result="Success" success="True" time="0.3437" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Basic Logging Operations">
+              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Basic Logging Operations" executed="True" result="Success" success="True" time="0.4183" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Basic Logging Operations">
                 <results>
-                  <test-case description="Should write log messages without errors" name="Logging Module v2.1.0 - Core Functionality.Basic Logging Operations.Should write log messages without errors" time="0.0665" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle all log levels" name="Logging Module v2.1.0 - Core Functionality.Basic Logging Operations.Should handle all log levels" time="0.031" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should write to both console and file by default" name="Logging Module v2.1.0 - Core Functionality.Basic Logging Operations.Should write to both console and file by default" time="0.0244" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should include context information" name="Logging Module v2.1.0 - Core Functionality.Basic Logging Operations.Should include context information" time="0.0144" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle NoConsole and NoFile switches" name="Logging Module v2.1.0 - Core Functionality.Basic Logging Operations.Should handle NoConsole and NoFile switches" time="0.0121" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should write log messages without errors" name="Logging Module v2.1.0 - Core Functionality.Basic Logging Operations.Should write log messages without errors" time="0.07" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle all log levels" name="Logging Module v2.1.0 - Core Functionality.Basic Logging Operations.Should handle all log levels" time="0.0278" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should write to both console and file by default" name="Logging Module v2.1.0 - Core Functionality.Basic Logging Operations.Should write to both console and file by default" time="0.0232" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include context information" name="Logging Module v2.1.0 - Core Functionality.Basic Logging Operations.Should include context information" time="0.018" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle NoConsole and NoFile switches" name="Logging Module v2.1.0 - Core Functionality.Basic Logging Operations.Should handle NoConsole and NoFile switches" time="0.0123" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Exception Handling (Enhanced in v2.1.0)" executed="True" result="Success" success="True" time="0.4145" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Exception Handling (Enhanced in v2.1.0)">
+              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Exception Handling (Enhanced in v2.1.0)" executed="True" result="Success" success="True" time="0.4859" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Exception Handling (Enhanced in v2.1.0)">
                 <results>
-                  <test-case description="Should log exceptions with enhanced details" name="Logging Module v2.1.0 - Core Functionality.Exception Handling (Enhanced in v2.1.0).Should log exceptions with enhanced details" time="0.0417" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle nested exception chains" name="Logging Module v2.1.0 - Core Functionality.Exception Handling (Enhanced in v2.1.0).Should handle nested exception chains" time="0.0217" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should log exceptions with enhanced details" name="Logging Module v2.1.0 - Core Functionality.Exception Handling (Enhanced in v2.1.0).Should log exceptions with enhanced details" time="0.0357" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle nested exception chains" name="Logging Module v2.1.0 - Core Functionality.Exception Handling (Enhanced in v2.1.0).Should handle nested exception chains" time="0.0262" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Performance Tracing" executed="True" result="Success" success="True" time="0.6213" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Performance Tracing">
+              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Performance Tracing" executed="True" result="Success" success="True" time="0.6951" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Performance Tracing">
                 <results>
-                  <test-case description="Should track performance when enabled" name="Logging Module v2.1.0 - Core Functionality.Performance Tracing.Should track performance when enabled" time="0.1066" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle multiple concurrent traces" name="Logging Module v2.1.0 - Core Functionality.Performance Tracing.Should handle multiple concurrent traces" time="0.0559" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should include context in performance traces" name="Logging Module v2.1.0 - Core Functionality.Performance Tracing.Should include context in performance traces" time="0.0384" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should track performance when enabled" name="Logging Module v2.1.0 - Core Functionality.Performance Tracing.Should track performance when enabled" time="0.1109" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle multiple concurrent traces" name="Logging Module v2.1.0 - Core Functionality.Performance Tracing.Should handle multiple concurrent traces" time="0.0557" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include context in performance traces" name="Logging Module v2.1.0 - Core Functionality.Performance Tracing.Should include context in performance traces" time="0.0368" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Bulk Logging (NEW in v2.1.0)" executed="True" result="Success" success="True" time="0.8389" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Bulk Logging (NEW in v2.1.0)">
+              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Bulk Logging (NEW in v2.1.0)" executed="True" result="Success" success="True" time="0.9425" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Bulk Logging (NEW in v2.1.0)">
                 <results>
-                  <test-case description="Should process bulk log entries" name="Logging Module v2.1.0 - Core Functionality.Bulk Logging (NEW in v2.1.0).Should process bulk log entries" time="0.0189" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle default level and context" name="Logging Module v2.1.0 - Core Functionality.Bulk Logging (NEW in v2.1.0).Should handle default level and context" time="0.0061" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should support parallel processing for large batches" name="Logging Module v2.1.0 - Core Functionality.Bulk Logging (NEW in v2.1.0).Should support parallel processing for large batches" time="0.1873" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should process bulk log entries" name="Logging Module v2.1.0 - Core Functionality.Bulk Logging (NEW in v2.1.0).Should process bulk log entries" time="0.0195" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle default level and context" name="Logging Module v2.1.0 - Core Functionality.Bulk Logging (NEW in v2.1.0).Should handle default level and context" time="0.0067" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should support parallel processing for large batches" name="Logging Module v2.1.0 - Core Functionality.Bulk Logging (NEW in v2.1.0).Should support parallel processing for large batches" time="0.2147" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Performance Testing (NEW in v2.1.0)" executed="True" result="Success" success="True" time="1.3877" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Performance Testing (NEW in v2.1.0)">
+              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Performance Testing (NEW in v2.1.0)" executed="True" result="Success" success="True" time="1.421" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Performance Testing (NEW in v2.1.0)">
                 <results>
-                  <test-case description="Should run performance tests and return metrics" name="Logging Module v2.1.0 - Core Functionality.Performance Testing (NEW in v2.1.0).Should run performance tests and return metrics" time="0.3464" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should test console-only performance" name="Logging Module v2.1.0 - Core Functionality.Performance Testing (NEW in v2.1.0).Should test console-only performance" time="0.0949" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should include configuration in metrics" name="Logging Module v2.1.0 - Core Functionality.Performance Testing (NEW in v2.1.0).Should include configuration in metrics" time="0.0995" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should run performance tests and return metrics" name="Logging Module v2.1.0 - Core Functionality.Performance Testing (NEW in v2.1.0).Should run performance tests and return metrics" time="0.2962" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should test console-only performance" name="Logging Module v2.1.0 - Core Functionality.Performance Testing (NEW in v2.1.0).Should test console-only performance" time="0.0843" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should include configuration in metrics" name="Logging Module v2.1.0 - Core Functionality.Performance Testing (NEW in v2.1.0).Should include configuration in metrics" time="0.09" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Configuration Management" executed="True" result="Success" success="True" time="1.4772" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Configuration Management">
+              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Configuration Management" executed="True" result="Success" success="True" time="1.5145" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Configuration Management">
                 <results>
-                  <test-case description="Should get current configuration" name="Logging Module v2.1.0 - Core Functionality.Configuration Management.Should get current configuration" time="0.0122" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should update configuration" name="Logging Module v2.1.0 - Core Functionality.Configuration Management.Should update configuration" time="0.0228" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should enable and disable performance tracking" name="Logging Module v2.1.0 - Core Functionality.Configuration Management.Should enable and disable performance tracking" time="0.0279" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should enable and disable trace logging" name="Logging Module v2.1.0 - Core Functionality.Configuration Management.Should enable and disable trace logging" time="0.0187" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should get current configuration" name="Logging Module v2.1.0 - Core Functionality.Configuration Management.Should get current configuration" time="0.0248" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should update configuration" name="Logging Module v2.1.0 - Core Functionality.Configuration Management.Should update configuration" time="0.0206" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should enable and disable performance tracking" name="Logging Module v2.1.0 - Core Functionality.Configuration Management.Should enable and disable performance tracking" time="0.0177" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should enable and disable trace logging" name="Logging Module v2.1.0 - Core Functionality.Configuration Management.Should enable and disable trace logging" time="0.0253" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Environment Variable Support (Enhanced in v2.1.0)" executed="True" result="Failure" success="False" time="1.6196" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Environment Variable Support (Enhanced in v2.1.0)">
+              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Environment Variable Support (Enhanced in v2.1.0)" executed="True" result="Failure" success="False" time="1.6699" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Environment Variable Support (Enhanced in v2.1.0)">
                 <results>
-                  <test-case description="Should prioritize AITHER_* over LAB_* environment variables" name="Logging Module v2.1.0 - Core Functionality.Environment Variable Support (Enhanced in v2.1.0).Should prioritize AITHER_* over LAB_* environment variables" time="0.0877" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should prioritize AITHER_* over LAB_* environment variables" name="Logging Module v2.1.0 - Core Functionality.Environment Variable Support (Enhanced in v2.1.0).Should prioritize AITHER_* over LAB_* environment variables" time="0.0955" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected strings to be the same, but they were different.
 Expected length: 5
@@ -74,7 +74,7 @@ But was:  'INFO'
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/Logging/tests/Logging.Tests.ps1:294</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should fall back to LAB_* when AITHER_* not set" name="Logging Module v2.1.0 - Core Functionality.Environment Variable Support (Enhanced in v2.1.0).Should fall back to LAB_* when AITHER_* not set" time="0.0214" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should fall back to LAB_* when AITHER_* not set" name="Logging Module v2.1.0 - Core Functionality.Environment Variable Support (Enhanced in v2.1.0).Should fall back to LAB_* when AITHER_* not set" time="0.0233" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected strings to be the same, but they were different.
 String lengths are both 4.
@@ -86,7 +86,7 @@ But was:  'INFO'
 at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/Logging/tests/Logging.Tests.ps1:302</stack-trace>
                     </failure>
                   </test-case>
-                  <test-case description="Should default performance tracking to enabled" name="Logging Module v2.1.0 - Core Functionality.Environment Variable Support (Enhanced in v2.1.0).Should default performance tracking to enabled" time="0.0228" asserts="0" success="False" result="Failure" executed="True">
+                  <test-case description="Should default performance tracking to enabled" name="Logging Module v2.1.0 - Core Functionality.Environment Variable Support (Enhanced in v2.1.0).Should default performance tracking to enabled" time="0.031" asserts="0" success="False" result="Failure" executed="True">
                     <failure>
                       <message>Expected $true, but got $false.</message>
                       <stack-trace>at $config.EnablePerformance | Should -Be $true, /workspaces/AitherZero/aither-core/modules/Logging/tests/Logging.Tests.ps1:308
@@ -95,40 +95,40 @@ at &lt;ScriptBlock&gt;, /workspaces/AitherZero/aither-core/modules/Logging/tests
                   </test-case>
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Trace and Debug Logging" executed="True" result="Success" success="True" time="1.6531" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Trace and Debug Logging">
+              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Trace and Debug Logging" executed="True" result="Success" success="True" time="1.7058" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Trace and Debug Logging">
                 <results>
-                  <test-case description="Should write trace logs when enabled" name="Logging Module v2.1.0 - Core Functionality.Trace and Debug Logging.Should write trace logs when enabled" time="0.0195" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should write debug context information" name="Logging Module v2.1.0 - Core Functionality.Trace and Debug Logging.Should write debug context information" time="0.0088" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should write trace logs when enabled" name="Logging Module v2.1.0 - Core Functionality.Trace and Debug Logging.Should write trace logs when enabled" time="0.0211" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should write debug context information" name="Logging Module v2.1.0 - Core Functionality.Trace and Debug Logging.Should write debug context information" time="0.0098" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Thread Safety" executed="True" result="Success" success="True" time="2.3733" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Thread Safety">
+              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Thread Safety" executed="True" result="Success" success="True" time="2.4443" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Thread Safety">
                 <results>
-                  <test-case description="Should handle concurrent logging operations" name="Logging Module v2.1.0 - Core Functionality.Thread Safety.Should handle concurrent logging operations" time="0.7148" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle concurrent logging operations" name="Logging Module v2.1.0 - Core Functionality.Thread Safety.Should handle concurrent logging operations" time="0.7334" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Log Rotation" executed="True" result="Success" success="True" time="2.3924" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Log Rotation">
+              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Log Rotation" executed="True" result="Success" success="True" time="2.4629" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Log Rotation">
                 <results>
-                  <test-case description="Should handle log file rotation when size limit exceeded" name="Logging Module v2.1.0 - Core Functionality.Log Rotation.Should handle log file rotation when size limit exceeded" time="0.0135" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle log file rotation when size limit exceeded" name="Logging Module v2.1.0 - Core Functionality.Log Rotation.Should handle log file rotation when size limit exceeded" time="0.0138" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Cross-Platform Compatibility" executed="True" result="Success" success="True" time="2.4139" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Cross-Platform Compatibility">
+              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Core Functionality.Cross-Platform Compatibility" executed="True" result="Success" success="True" time="2.4841" asserts="0" description="Logging Module v2.1.0 - Core Functionality.Cross-Platform Compatibility">
                 <results>
-                  <test-case description="Should work on current platform" name="Logging Module v2.1.0 - Core Functionality.Cross-Platform Compatibility.Should work on current platform" time="0.0149" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should work on current platform" name="Logging Module v2.1.0 - Core Functionality.Cross-Platform Compatibility.Should work on current platform" time="0.0151" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>
           </test-suite>
-          <test-suite type="TestFixture" name="Logging Module v2.1.0 - Integration Tests" executed="True" result="Success" success="True" time="3.0477" asserts="0" description="Logging Module v2.1.0 - Integration Tests">
+          <test-suite type="TestFixture" name="Logging Module v2.1.0 - Integration Tests" executed="True" result="Success" success="True" time="3.0659" asserts="0" description="Logging Module v2.1.0 - Integration Tests">
             <results>
-              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Integration Tests.Module Integration" executed="True" result="Success" success="True" time="0.0259" asserts="0" description="Logging Module v2.1.0 - Integration Tests.Module Integration">
+              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Integration Tests.Module Integration" executed="True" result="Success" success="True" time="0.025" asserts="0" description="Logging Module v2.1.0 - Integration Tests.Module Integration">
                 <results>
                   <test-case description="Should integrate with Import-ProjectModule" name="Logging Module v2.1.0 - Integration Tests.Module Integration.Should integrate with Import-ProjectModule" time="0.0204" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Integration Tests.Real-world Usage Scenarios" executed="True" result="Success" success="True" time="0.6157" asserts="0" description="Logging Module v2.1.0 - Integration Tests.Real-world Usage Scenarios">
+              <test-suite type="TestFixture" name="Logging Module v2.1.0 - Integration Tests.Real-world Usage Scenarios" executed="True" result="Success" success="True" time="0.563" asserts="0" description="Logging Module v2.1.0 - Integration Tests.Real-world Usage Scenarios">
                 <results>
-                  <test-case description="Should handle high-volume logging scenario" name="Logging Module v2.1.0 - Integration Tests.Real-world Usage Scenarios.Should handle high-volume logging scenario" time="0.5041" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="Should handle mixed log levels and contexts" name="Logging Module v2.1.0 - Integration Tests.Real-world Usage Scenarios.Should handle mixed log levels and contexts" time="0.0794" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle high-volume logging scenario" name="Logging Module v2.1.0 - Integration Tests.Real-world Usage Scenarios.Should handle high-volume logging scenario" time="0.4594" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should handle mixed log levels and contexts" name="Logging Module v2.1.0 - Integration Tests.Real-world Usage Scenarios.Should handle mixed log levels and contexts" time="0.0741" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>
