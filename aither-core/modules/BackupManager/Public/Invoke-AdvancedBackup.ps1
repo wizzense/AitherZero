@@ -343,7 +343,9 @@ function New-EncryptionKey {
     # This is a legitimate use case for generating encryption keys from random bytes
     # PSScriptAnalyzer suppression is needed as this is secure key generation
     # The -AsPlainText is necessary here to convert the base64 key string
-    return ConvertTo-SecureString ([Convert]::ToBase64String($key)) -AsPlainText -Force
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '', Justification='Required for converting randomly generated encryption key to SecureString')]
+    $secureKey = ConvertTo-SecureString ([Convert]::ToBase64String($key)) -AsPlainText -Force
+    return $secureKey
 }
 
 function Get-FilesToBackup {

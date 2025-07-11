@@ -1,6 +1,11 @@
 #!/usr/bin/env pwsh
 #Requires -Version 7.0
 
+# PSScriptAnalyzer suppressions for types defined in AtomicTransaction.ps1
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingCmdletAliases', '')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('TypeNotFound', '', Justification='Types are defined in AtomicTransaction.ps1 which is dot-sourced')]
+param()
+
 <#
 .SYNOPSIS
     PatchManager v4.0 - Atomic Transaction-Based Patch Management

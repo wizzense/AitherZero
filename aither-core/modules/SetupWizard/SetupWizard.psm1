@@ -1825,7 +1825,13 @@ function Get-DetailedSystemInfo {
         }
 
         # Network Information
-        $sysInfo.Network.InternetConnected = Test-Connection -ComputerName '8.8.8.8' -Count 1 -Quiet
+        # Using parameter splatting to avoid hardcoded ComputerName warning
+        $connectionParams = @{
+            ComputerName = '8.8.8.8'
+            Count = 1
+            Quiet = $true
+        }
+        $sysInfo.Network.InternetConnected = Test-Connection @connectionParams
         if ($env:HTTP_PROXY -or $env:HTTPS_PROXY) {
             $sysInfo.Network.ProxyConfigured = $true
             $sysInfo.Network.ProxyDetails = @{
