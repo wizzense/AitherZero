@@ -579,7 +579,7 @@ function Show-OfflineInstallationGuidance {
 }
 
 function Show-ManualInstallationGuidance {
-    $isWindows = $IsWindows -or $PSVersionTable.Platform -eq 'Win32NT' -or $PSVersionTable.PSEdition -eq 'Desktop'
+    $isWindowsOS = $IsWindows -or $PSVersionTable.Platform -eq 'Win32NT' -or $PSVersionTable.PSEdition -eq 'Desktop'
     
     Write-Host @"
 
@@ -591,7 +591,7 @@ function Show-ManualInstallationGuidance {
 │                                                                                 │
 "@ -ForegroundColor Yellow
     
-    if ($isWindows) {
+    if ($isWindowsOS) {
         Write-Host @"
 │  WINDOWS INSTALLATION OPTIONS:                                                 │
 │                                                                                 │
@@ -741,8 +741,8 @@ function Show-BootstrapSummary {
     
     if ($script:BootstrapState.Errors.Count -gt 0) {
         Write-Host "│  ERROR DETAILS:                                                                 │" -ForegroundColor Red
-        foreach ($error in $script:BootstrapState.Errors) {
-            $truncated = if ($error.Length -gt 73) { $error.Substring(0, 70) + "..." } else { $error }
+        foreach ($errorItem in $script:BootstrapState.Errors) {
+            $truncated = if ($errorItem.Length -gt 73) { $errorItem.Substring(0, 70) + "..." } else { $errorItem }
             Write-Host "│  • $($truncated.PadRight(73))  │" -ForegroundColor Red
         }
     }
