@@ -931,59 +931,32 @@ jobs:
 
         # Create enhanced index.html
         $branches = $env:BRANCHES_ANALYZED -split ','
-        $indexHtml = @"
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AitherZero Enhanced Dashboard</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h1 { color: #333; }
-        .branch-list { margin: 20px 0; }
-        .branch-item { padding: 10px; margin: 5px 0; background: #f0f0f0; border-radius: 4px; }
-        .report-links { margin-top: 20px; }
-        .report-link { display: inline-block; margin: 5px 10px 5px 0; padding: 8px 16px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; }
-        .report-link:hover { background: #0056b3; }
-        .timestamp { color: #666; font-size: 0.9em; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>AitherZero Enhanced Dashboard</h1>
-        <p class="timestamp">Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')</p>
         
-        <div class="report-links">
-            <h2>Main Reports</h2>
-            <a href="aitherZero-dashboard.html" class="report-link">📊 Unified Dashboard</a>
-            <a href="aitherZero-comprehensive-report.html" class="report-link">📋 Comprehensive Report</a>
-            <a href="feature-dependency-map.html" class="report-link">🗺️ Feature Map</a>
-            <a href="comprehensive-ci-dashboard.html" class="report-link">🚀 CI Dashboard</a>
-        </div>
+        # Build HTML content
+        $htmlHead = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AitherZero Enhanced Dashboard</title>'
+        $htmlStyle = '<style>body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; } .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); } h1 { color: #333; } .branch-list { margin: 20px 0; } .branch-item { padding: 10px; margin: 5px 0; background: #f0f0f0; border-radius: 4px; } .report-links { margin-top: 20px; } .report-link { display: inline-block; margin: 5px 10px 5px 0; padding: 8px 16px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; } .report-link:hover { background: #0056b3; } .timestamp { color: #666; font-size: 0.9em; }</style>'
+        $htmlBodyStart = '</head><body><div class="container"><h1>AitherZero Enhanced Dashboard</h1>'
+        $timestamp = '<p class="timestamp">Generated: ' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC') + '</p>'
         
-        <div class="branch-list">
-            <h2>Branch Analysis</h2>
-            <p>Branches analyzed: $($branches -join ', ')</p>
-            <p>Health Grade: $env:HEALTH_GRADE | Score: $env:HEALTH_SCORE%</p>
-"@
+        $reportLinks = '<div class="report-links"><h2>Main Reports</h2>'
+        $reportLinks += '<a href="aitherZero-dashboard.html" class="report-link">📊 Unified Dashboard</a>'
+        $reportLinks += '<a href="aitherZero-comprehensive-report.html" class="report-link">📋 Comprehensive Report</a>'
+        $reportLinks += '<a href="feature-dependency-map.html" class="report-link">🗺️ Feature Map</a>'
+        $reportLinks += '<a href="comprehensive-ci-dashboard.html" class="report-link">🚀 CI Dashboard</a></div>'
+        
+        $branchList = '<div class="branch-list"><h2>Branch Analysis</h2>'
+        $branchList += '<p>Branches analyzed: ' + ($branches -join ', ') + '</p>'
+        $branchList += '<p>Health Grade: ' + $env:HEALTH_GRADE + ' | Score: ' + $env:HEALTH_SCORE + '%</p>'
         
         foreach ($branch in $branches) {
           $branchDirName = $branch -replace '/', '-'
-          $indexHtml += @"
-            <div class="branch-item">
-                <strong>$branch</strong> - <a href="branches/$branchDirName/dashboard.html">View Dashboard</a>
-            </div>
-"@
+          $branchList += '<div class="branch-item"><strong>' + $branch + '</strong> - <a href="branches/' + $branchDirName + '/dashboard.html">View Dashboard</a></div>'
         }
         
-        $indexHtml += @"
-        </div>
-    </div>
-</body>
-</html>
-"@
+        $branchList += '</div>'
+        $htmlEnd = '</div></body></html>'
+        
+        $indexHtml = $htmlHead + $htmlStyle + $htmlBodyStart + $timestamp + $reportLinks + $branchList + $htmlEnd
         Set-Content -Path "./docs/index.html" -Value $indexHtml
         Write-Host "✅ Created enhanced index.html" -ForegroundColor Green
 
@@ -1014,31 +987,25 @@ jobs:
         $emoji = if ($isSuccess) { '🎉' } else { '⚠️' }
         $status = if ($isSuccess) { 'SUCCESS' } else { 'PARTIAL SUCCESS' }
 
-        $workflowSummary = @"
-# AitherZero Enhanced Dashboard - $status
-
-Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
-
-## Dashboard Summary
-- **Health Grade**: $env:HEALTH_GRADE
-- **Health Score**: $env:HEALTH_SCORE%
-- **Branches Analyzed**: $env:BRANCHES_ANALYZED
-- **Total Modules**: $env:TOTAL_MODULES
-- **Analyzed Modules**: $env:ANALYZED_MODULES
-
-## Features
-- 📊 Enhanced unified dashboard with multi-branch support
-- 🔄 Historical trend analysis
-- 🌐 GitHub API integration for real-time data
-- 📱 Mobile-responsive design
-- 🎯 Interactive visualizations
-- 📈 Performance metrics across branches
-
-## Access Reports
-- [GitHub Pages Dashboard](https://pages.github.com/${{ github.repository }}/reports/)
-- [Download Artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-$emoji Report generation completed with status: $status
-"@
+        # Build workflow summary
+        $workflowSummary = "# AitherZero Enhanced Dashboard - $status`n`n"
+        $workflowSummary += "Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')`n`n"
+        $workflowSummary += "## Dashboard Summary`n"
+        $workflowSummary += "- **Health Grade**: $env:HEALTH_GRADE`n"
+        $workflowSummary += "- **Health Score**: $env:HEALTH_SCORE%`n"
+        $workflowSummary += "- **Branches Analyzed**: $env:BRANCHES_ANALYZED`n"
+        $workflowSummary += "- **Total Modules**: $env:TOTAL_MODULES`n"
+        $workflowSummary += "- **Analyzed Modules**: $env:ANALYZED_MODULES`n`n"
+        $workflowSummary += "## Features`n"
+        $workflowSummary += "- 📊 Enhanced unified dashboard with multi-branch support`n"
+        $workflowSummary += "- 🔄 Historical trend analysis`n"
+        $workflowSummary += "- 🌐 GitHub API integration for real-time data`n"
+        $workflowSummary += "- 📱 Mobile-responsive design`n"
+        $workflowSummary += "- 🎯 Interactive visualizations`n"
+        $workflowSummary += "- 📈 Performance metrics across branches`n`n"
+        $workflowSummary += "## Access Reports`n"
+        $workflowSummary += "- [GitHub Pages Dashboard](https://pages.github.com/${{ github.repository }}/reports/)`n"
+        $workflowSummary += "- [Download Artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`n`n"
+        $workflowSummary += "$emoji Report generation completed with status: $status"
 
         echo $workflowSummary >> $env:GITHUB_STEP_SUMMARY
