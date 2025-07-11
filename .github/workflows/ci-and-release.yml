@@ -42,14 +42,11 @@ jobs:
       - name: Run tests
         shell: pwsh
         run: |
-          if (Test-Path ./tests/Run-BulletproofValidation.ps1) {
-            Write-Host 'Running bulletproof validation...'
-            ./tests/Run-BulletproofValidation.ps1 -ValidationLevel Standard
-          } elseif (Test-Path ./tests/Run-Tests.ps1) {
-            Write-Host 'Running legacy test runner...'
-            ./tests/Run-Tests.ps1 -Type Integration -FailFast
+          if (Test-Path ./tests/Run-Tests.ps1) {
+            Write-Host 'Running modern test runner...'
+            ./tests/Run-Tests.ps1 -Type All -Coverage -FailFast
           } else {
-            Write-Error 'No test runner found!'
+            Write-Error 'Test runner not found!'
             exit 1
           }
 
@@ -59,10 +56,10 @@ jobs:
           # Create dist directory
           New-Item -Path './dist' -ItemType Directory -Force
 
-          # First try bulletproof validation to ensure system is healthy
-          if (Test-Path './tests/Run-BulletproofValidation.ps1') {
+          # Run quick tests to ensure system is healthy
+          if (Test-Path './tests/Run-Tests.ps1') {
             Write-Host 'Pre-build validation...'
-            ./tests/Run-BulletproofValidation.ps1 -ValidationLevel Quick
+            ./tests/Run-Tests.ps1 -Type Unit -FailFast
           }
 
           # Build packages with better error handling

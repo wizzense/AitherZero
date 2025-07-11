@@ -40,28 +40,28 @@ Set-StrictMode -Version Latest
 Write-Host "🚀 Starting Production Tests - Suite: $TestSuite" -ForegroundColor Cyan
 
 try {
-    # Find the bulletproof validation script
-    $scriptPath = Join-Path $PSScriptRoot "Run-BulletproofValidation.ps1"
+    # Find the modern test runner script
+    $scriptPath = Join-Path $PSScriptRoot "Run-Tests.ps1"
     
     if (-not (Test-Path $scriptPath)) {
-        throw "CRITICAL: Run-BulletproofValidation.ps1 not found at: $scriptPath"
+        throw "CRITICAL: Run-Tests.ps1 not found at: $scriptPath"
     }
     
-    # Map test suite to validation level
-    $validationLevel = switch ($TestSuite) {
-        'Critical' { 'Quick' }
-        'Standard' { 'Standard' }
-        'Complete' { 'Complete' }
-        'All' { 'Complete' }
-        default { 'Standard' }
+    # Map test suite to test type
+    $testType = switch ($TestSuite) {
+        'Critical' { 'Unit' }
+        'Standard' { 'Integration' }
+        'Complete' { 'All' }
+        'All' { 'All' }
+        default { 'Integration' }
     }
     
-    Write-Host "📋 Mapped $TestSuite suite to $validationLevel validation level" -ForegroundColor Yellow
+    Write-Host "📋 Mapped $TestSuite suite to $testType test type" -ForegroundColor Yellow
     
-    # Build parameters for bulletproof validation
+    # Build parameters for modern test runner
     $params = @{
-        ValidationLevel = $validationLevel
-        CI = $true
+        Type = $testType
+        Coverage = $true
     }
     
     if ($FailFast) {
@@ -69,7 +69,7 @@ try {
     }
     
     # Run the tests
-    Write-Host "🧪 Executing bulletproof validation..." -ForegroundColor Yellow
+    Write-Host "🧪 Executing tests..." -ForegroundColor Yellow
     & $scriptPath @params
     
     # Check exit code

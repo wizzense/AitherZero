@@ -103,14 +103,14 @@ function Get-ExampleFunction {
 
 ### Running Tests
 ```powershell
-# Quick validation
-./tests/Run-BulletproofValidation.ps1 -ValidationLevel 'Quick'
+# Quick validation (unit tests only)
+./tests/Run-Tests.ps1 -Type Unit
 
-# Standard test suite
-./tests/Run-BulletproofValidation.ps1 -ValidationLevel 'Standard'
+# Standard test suite (integration tests)
+./tests/Run-Tests.ps1 -Type Integration -Coverage
 
-# Complete testing
-./tests/Run-BulletproofValidation.ps1 -ValidationLevel 'Complete'
+# Complete testing (all tests with coverage)
+./tests/Run-Tests.ps1 -Type All -Coverage
 ```
 
 ### Test Guidelines
@@ -126,7 +126,7 @@ function Get-ExampleFunction {
 # Complete workflow with PR creation
 Invoke-PatchWorkflow -PatchDescription "Your feature description" -PatchOperation {
     # Your changes
-} -CreatePR -TestCommands @("./tests/Run-BulletproofValidation.ps1 -ValidationLevel 'Standard'")
+} -CreatePR -TestCommands @("./tests/Run-Tests.ps1 -Type Integration -Coverage")
 ```
 
 ### Manual Process (Alternative)

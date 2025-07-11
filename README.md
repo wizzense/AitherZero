@@ -120,7 +120,7 @@ aither dev patch "Bug fix"
 pwsh -File ./aither-core/aither-core.ps1
 
 # Run tests:
-./tests/Run-BulletproofValidation.ps1 -ValidationLevel Quick
+./tests/Run-Tests.ps1 -Type Unit
 
 # Build packages:
 ./build/Build-Package.ps1

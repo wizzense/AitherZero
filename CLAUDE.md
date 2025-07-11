@@ -39,40 +39,34 @@ AitherZero is a **standalone PowerShell automation framework** for OpenTofu/Terr
 ### Testing Commands
 
 ```powershell
-# Quick validation (30 seconds) - Use for rapid feedback during development
-./tests/Run-BulletproofValidation.ps1 -ValidationLevel Quick
+# Run all tests (default) - Use for comprehensive testing
+./tests/Run-Tests.ps1
 
-# Standard validation (2-5 minutes) - Use before creating PRs
-./tests/Run-BulletproofValidation.ps1 -ValidationLevel Standard
+# Run unit tests only (fastest) - Use for rapid feedback during development
+./tests/Run-Tests.ps1 -Type Unit
 
-# Complete validation (10-15 minutes) - Use for release preparation
-./tests/Run-BulletproofValidation.ps1 -ValidationLevel Complete
+# Run integration tests - Use before creating PRs
+./tests/Run-Tests.ps1 -Type Integration -Coverage
+
+# Run all tests with coverage - Use for release preparation
+./tests/Run-Tests.ps1 -Type All -Coverage
 
 # CI mode with fail-fast
-./tests/Run-BulletproofValidation.ps1 -ValidationLevel Standard -CI -FailFast
+./tests/Run-Tests.ps1 -Type All -Coverage -FailFast
 
-# Run all module tests
+# Run tests for specific module
+./tests/Run-Tests.ps1 -Module PatchManager
+./tests/Run-Tests.ps1 -Module SetupWizard -Coverage
+./tests/Run-Tests.ps1 -Module ProgressTracking -Type Unit
+
+# Run all module tests (legacy)
 ./tests/Run-AllModuleTests.ps1
 
-# Run specific module tests
-./tests/Invoke-DynamicTests.ps1 -ModuleName "PatchManager"
-./tests/Invoke-DynamicTests.ps1 -ModuleName "SetupWizard"
-./tests/Invoke-DynamicTests.ps1 -ModuleName "ProgressTracking"
+# Run tests in parallel (default behavior)
+./tests/Run-Tests.ps1 -Parallel
 
-# Test change detection
-./tests/Test-ChangeDetection.ps1
-
-# Code coverage analysis
-./tests/Run-CodeCoverage.ps1
-
-# Launcher functionality tests
-./tests/Test-LauncherFunctionality.ps1
-
-# Performance monitoring tests
-./Test-PerformanceMonitoring.ps1
-
-# Quickstart experience testing
-./tests/Run-BulletproofValidation.ps1 -QuickstartSimulation -CrossPlatformTesting
+# Run tests sequentially (for debugging)
+./tests/Run-Tests.ps1 -Parallel:$false
 ```
 
 ### Linting Commands
