@@ -8,6 +8,11 @@
             "type": "command",
             "command": "~/.claude/scripts/check-git-command.sh",
             "timeout": 2000
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/scripts/check-release-command.sh",
+            "timeout": 2000
           }
         ]
       },
