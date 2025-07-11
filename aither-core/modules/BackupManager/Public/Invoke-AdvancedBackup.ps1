@@ -341,9 +341,8 @@ function New-EncryptionKey {
     [System.Security.Cryptography.RNGCryptoServiceProvider]::Create().GetBytes($key)
     
     # This is a legitimate use case for generating encryption keys from random bytes
-    # SuppressMessage for PSScriptAnalyzer as this is needed for secure key generation
-    [System.Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingConvertToSecureStringWithPlainText', 'ConvertTo-SecureString')]
-    param()
+    # PSScriptAnalyzer suppression is needed as this is secure key generation
+    # The -AsPlainText is necessary here to convert the base64 key string
     return ConvertTo-SecureString ([Convert]::ToBase64String($key)) -AsPlainText -Force
 }
 
