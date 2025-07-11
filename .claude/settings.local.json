@@ -26,7 +26,9 @@
       "Bash(/mnt/c/Program Files/PowerShell/7/pwsh.exe -NoProfile -Command \"chmod +x tests/performance/Domain-Performance-Benchmark.ps1; ./tests/performance/Domain-Performance-Benchmark.ps1 -BenchmarkMode DomainVsModule -Iterations 3 -DetailedOutput\")",
       "Bash(yamllint:*)",
       "Bash(gh workflow run:*)",
-      "Bash(gh workflow:*)"
+      "Bash(gh workflow:*)",
+      "Bash(gh pr:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": []
   }

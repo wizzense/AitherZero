@@ -155,7 +155,7 @@ function Write-CustomLog {
         [string]$Message,
 
         [Parameter()]
-        [ValidateSet("ERROR", "WARN", "WARNING", "INFO", "SUCCESS", "DEBUG", "TRACE", "VERBOSE")]
+        [ValidateSet("ERROR", "WARN", "INFO", "SUCCESS", "DEBUG", "TRACE", "VERBOSE")]
         [string]$Level = "INFO",
 
         [Parameter()]
@@ -186,7 +186,7 @@ function Write-CustomLog {
     # Check if we should log this level
     $currentLogLevel = $script:LogLevels[$script:LoggingConfig.LogLevel]
     # Convert WARNING to WARN for backward compatibility
-    if ($Level -eq "WARNING") { $Level = "WARN" }
+    if ($Level -eq "WARNING") { $Level = "WARNING" } 
     $currentConsoleLevel = $script:LogLevels[$script:LoggingConfig.ConsoleLevel]
     $messageLevel = $script:LogLevels[$Level]
 
