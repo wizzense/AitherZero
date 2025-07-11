@@ -79,6 +79,11 @@ jobs:
   initialize-reporting:
     name: Initialize Comprehensive Reporting
     runs-on: ubuntu-latest
+    # Only run if manually triggered, scheduled, or CI workflow succeeded
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     outputs:
       report-scope: ${{ steps.scope.outputs.scope }}
       version-number: ${{ steps.version.outputs.version }}
@@ -515,14 +520,18 @@ jobs:
 
         $params = @{
           OutputPath = './output/aitherZero-dashboard.html'
-          SingleFileOutput = $true
-          GitHubPagesOutput = $true
-          IncludeHistoricalData = '${{ github.event.inputs.enable_historical_analysis }}' -ne 'false'
-          HistoricalDataPath = './historical-data'
           Branches = $branches
-          Repository = '${{ github.repository }}'
+          SingleFile = $true
+          AutoRefreshInterval = 0
           GitHubToken = $env:GITHUB_TOKEN
+          ArtifactsPath = './audit-reports'
+          ExternalArtifactsPath = './external-artifacts'
           VerboseOutput = $true
+        }
+        
+        # Add IncludeHistory switch if enabled
+        if ('${{ github.event.inputs.enable_historical_analysis }}' -ne 'false') {
+          $params['IncludeHistory'] = $true
         }
 
         try {
@@ -531,13 +540,23 @@ jobs:
             New-Item -ItemType Directory -Path "./output" -Force | Out-Null
             New-Item -ItemType Directory -Path "./output/dashboard-assets" -Force | Out-Null
             
-            $result = & "./scripts/reporting/Generate-EnhancedUnifiedDashboard.ps1" @params
+            Write-Host "📊 Running enhanced dashboard generator with parameters:" -ForegroundColor Cyan
+            $params.GetEnumerator() | ForEach-Object {
+              Write-Host "  $($_.Key): $($_.Value)" -ForegroundColor White
+            }
+            
+            # Run with error action to ensure errors are caught
+            $result = & "./scripts/reporting/Generate-EnhancedUnifiedDashboard.ps1" @params -ErrorAction Stop
+            
+            if (-not $result) {
+              throw "Dashboard generator returned null result"
+            }
           } else {
             Write-Warning "Enhanced dashboard generator not found - using legacy report"
             if (Test-Path "./scripts/reporting/Generate-ComprehensiveReport.ps1") {
-              $result = & "./scripts/reporting/Generate-ComprehensiveReport.ps1" -ReportPath './output/aitherZero-dashboard.html'
+              $result = & "./scripts/reporting/Generate-ComprehensiveReport.ps1" -ReportPath './output/aitherZero-dashboard.html' -ErrorAction Stop
             } else {
-              $result = $null
+              throw "No dashboard generator script found"
             }
           }
 
@@ -575,17 +594,24 @@ jobs:
             echo "analyzed-modules=0" >> $env:GITHUB_OUTPUT
           }
         } catch {
-          Write-Warning "Dashboard generation failed: $($_.Exception.Message)"
-          Write-Warning $_.ScriptStackTrace
-          # Set default values
+          Write-Error "Dashboard generation failed: $($_.Exception.Message)"
+          Write-Error "Stack trace: $($_.ScriptStackTrace)"
+          
+          # Set default values for outputs
           echo "HEALTH_GRADE=Unknown" >> $env:GITHUB_ENV
           echo "HEALTH_SCORE=0" >> $env:GITHUB_ENV
           echo "TOTAL_MODULES=0" >> $env:GITHUB_ENV
           echo "ANALYZED_MODULES=0" >> $env:GITHUB_ENV
           echo "BRANCHES_ANALYZED=${{ github.ref_name }}" >> $env:GITHUB_ENV
+          echo "health-grade=Unknown" >> $env:GITHUB_OUTPUT
+          echo "health-score=0" >> $env:GITHUB_OUTPUT
+          echo "total-modules=0" >> $env:GITHUB_OUTPUT
+          echo "analyzed-modules=0" >> $env:GITHUB_OUTPUT
+          
+          # Mark this step as failed
+          Write-Host "::error::Dashboard generation failed: $($_.Exception.Message)"
+          exit 1
         }
-
-        Write-Host "✅ Enhanced dashboard generation completed" -ForegroundColor Green
 
     - name: Generate feature map visualization
       shell: pwsh

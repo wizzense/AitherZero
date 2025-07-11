@@ -62,11 +62,47 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 3.0
 
 # Import required modules
-. "$PSScriptRoot/../../aither-core/shared/Find-ProjectRoot.ps1"
-$projectRoot = Find-ProjectRoot
+try {
+    . "$PSScriptRoot/../../aither-core/shared/Find-ProjectRoot.ps1"
+    $projectRoot = Find-ProjectRoot
+    if (-not $projectRoot) {
+        throw "Failed to find project root"
+    }
+} catch {
+    Write-Error "Failed to load Find-ProjectRoot: $($_.Exception.Message)"
+    throw
+}
 
 # Import base functionality from Generate-ComprehensiveReport.ps1
-. "$PSScriptRoot/Generate-ComprehensiveReport.ps1"
+try {
+    $comprehensiveReportPath = "$PSScriptRoot/Generate-ComprehensiveReport.ps1"
+    if (-not (Test-Path $comprehensiveReportPath)) {
+        throw "Required script not found: $comprehensiveReportPath"
+    }
+    
+    . $comprehensiveReportPath
+    
+    # Validate required functions are available
+    $requiredFunctions = @(
+        'Get-AitherZeroVersion',
+        'Import-ExternalArtifacts',
+        'Import-AuditData',
+        'Get-DynamicFeatureMap',
+        'Get-OverallHealthScore',
+        'Write-ReportLog'
+    )
+    
+    foreach ($func in $requiredFunctions) {
+        if (-not (Get-Command $func -ErrorAction SilentlyContinue)) {
+            throw "Required function '$func' not found after importing Generate-ComprehensiveReport.ps1"
+        }
+    }
+    
+    Write-Host "✅ Successfully loaded all required dependencies" -ForegroundColor Green
+} catch {
+    Write-Error "Failed to load dependencies: $($_.Exception.Message)"
+    throw
+}
 
 # Enhanced logging function
 [CmdletBinding()]
@@ -1160,6 +1196,7 @@ theme: jekyll-theme-minimal
 }
 
 # Main execution
+$versionNumber = "Unknown"
 try {
     Write-DashboardLog "Starting enhanced dashboard generation..." -Level 'INFO'
     
@@ -1193,7 +1230,30 @@ try {
         Get-HistoricalData -DaysBack 30
     } else { @{} }
     
+    # Add verbose debugging if requested
+    if ($VerboseOutput) {
+        Write-DashboardLog "Debug - Audit data keys: $($auditData.Keys -join ', ')" -Level 'DEBUG'
+        Write-DashboardLog "Debug - Feature map modules: $($featureMap.AnalyzedModules)" -Level 'DEBUG'
+        Write-DashboardLog "Debug - Health score: $($healthScore.OverallScore)" -Level 'DEBUG'
+        Write-DashboardLog "Debug - Branch data count: $($branchData.Count)" -Level 'DEBUG'
+        Write-DashboardLog "Debug - GitHub issues: $($githubData.TotalIssues)" -Level 'DEBUG'
+    }
+    
+    # Validate data before generating HTML
+    if (-not $auditData -or $auditData.Count -eq 0) {
+        throw "Audit data is empty or missing"
+    }
+    
+    if (-not $featureMap -or -not $featureMap.AnalyzedModules) {
+        throw "Feature map is empty or missing"
+    }
+    
+    if (-not $healthScore -or -not $healthScore.OverallScore) {
+        throw "Health score is empty or missing"
+    }
+    
     # Generate enhanced HTML dashboard
+    Write-DashboardLog "Generating HTML dashboard..." -Level 'INFO'
     $htmlContent = New-EnhancedHtmlDashboard -BranchData $branchData `
         -GitHubData $githubData `
         -DocAudit $docAudit `
@@ -1204,11 +1264,36 @@ try {
         -Version $versionNumber `
         -AutoRefreshInterval $AutoRefreshInterval
     
+    # Validate HTML content
+    if ([string]::IsNullOrWhiteSpace($htmlContent)) {
+        throw "Generated HTML content is empty"
+    }
+    
+    if ($htmlContent.Length -lt 1000) {
+        throw "Generated HTML content is too small (${htmlContent.Length} bytes), likely incomplete"
+    }
+    
+    Write-DashboardLog "HTML content generated successfully (${htmlContent.Length} bytes)" -Level 'SUCCESS'
+    
     # Save output
     if ($SingleFile) {
+        # Ensure output directory exists
+        $outputDir = Split-Path $OutputPath -Parent
+        if ($outputDir -and -not (Test-Path $outputDir)) {
+            New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+            Write-DashboardLog "Created output directory: $outputDir" -Level 'DEBUG'
+        }
+        
         # Single file output
-        $htmlContent | Set-Content -Path $OutputPath -Encoding UTF8
-        Write-DashboardLog "Enhanced dashboard saved to: $OutputPath" -Level 'SUCCESS'
+        $htmlContent | Set-Content -Path $OutputPath -Encoding UTF8 -Force
+        
+        # Verify file was written
+        if (-not (Test-Path $OutputPath)) {
+            throw "Failed to write output file: $OutputPath"
+        }
+        
+        $fileSize = (Get-Item $OutputPath).Length
+        Write-DashboardLog "Enhanced dashboard saved to: $OutputPath ($fileSize bytes)" -Level 'SUCCESS'
     } else {
         # Multi-file GitHub Pages structure
         $additionalData = @{
@@ -1222,12 +1307,16 @@ try {
         Write-DashboardLog "GitHub Pages structure created at: $OutputPath" -Level 'SUCCESS'
     }
     
-    # Return summary
+    # Return summary with enhanced output structure
     $summary = @{
         OutputPath = $OutputPath
+        SingleFilePath = $OutputPath
+        GitHubPagesPath = if ($SingleFile) { $null } else { $OutputPath }
         Version = $versionNumber
         OverallHealth = $healthScore
-        BranchesAnalyzed = $branchData.Count
+        BranchesAnalyzed = @($branchData.Keys)
+        ModuleCount = $featureMap.AnalyzedModules
+        ModulesAnalyzed = $featureMap.AnalyzedModules
         IssuesFound = $githubData.TotalIssues
         DocumentationScore = $docAudit.DocumentationScore
         Timestamp = Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ'
@@ -1239,5 +1328,12 @@ try {
     
 } catch {
     Write-DashboardLog "Dashboard generation failed: $($_.Exception.Message)" -Level 'ERROR'
+    Write-DashboardLog "Stack trace: $($_.ScriptStackTrace)" -Level 'DEBUG'
+    
+    # Ensure error is visible in CI/CD environments
+    Write-Error "Dashboard generation failed: $($_.Exception.Message)"
+    Write-Host "::error::Dashboard generation failed: $($_.Exception.Message)" -ForegroundColor Red
+    
+    # Re-throw the error to ensure workflow fails properly
     throw
 }
