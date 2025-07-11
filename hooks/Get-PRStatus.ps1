@@ -47,7 +47,7 @@ $InformationPreference = 'Continue'
 
 # Find project root
 $scriptPath = $PSScriptRoot
-$projectRoot = Split-Path (Split-Path $scriptPath -Parent) -Parent
+$projectRoot = Split-Path $scriptPath -Parent
 . "$projectRoot/aither-core/shared/Find-ProjectRoot.ps1"
 $projectRoot = Find-ProjectRoot
 
@@ -94,7 +94,7 @@ function Get-PRDetails {
     
     Write-Information "Fetching PR #$Number details..." -InformationAction Continue
     
-    $pr = gh pr view $Number --json state,title,author,createdAt,updatedAt,mergeable,mergeStateStatus,reviews,statusCheckRollup,labels,milestone,assignees,comments,reactions,isDraft,headRefName,baseRefName,additions,deletions,changedFiles
+    $pr = gh pr view $Number --json state,title,author,createdAt,updatedAt,mergeable,mergeStateStatus,reviews,statusCheckRollup,labels,milestone,assignees,comments,reactionGroups,isDraft,headRefName,baseRefName,additions,deletions,changedFiles
     return $pr | ConvertFrom-Json
 }
 
