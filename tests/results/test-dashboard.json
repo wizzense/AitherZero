@@ -1,0 +1,13 @@
+{
+  "failed": 8,
+  "passed": 61,
+  "successRate": 79.22,
+  "testSuite": "CI",
+  "success": false,
+  "skipped": 8,
+  "testsPerSecond": 21.0,
+  "platform": "Linux",
+  "totalTests": 77,
+  "timestamp": "2025-07-10 22:47:18",
+  "duration": 3.6673962
+}

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="AitherZero Unified Tests" tests="77" failures="8" skipped="8" time="3.6673962">    <testsuite name="Core.Tests.ps1" tests="11" failures="0" skipped="0" time="1.4383457">    </testsuite>    <testsuite name="EntryPoint-Validation.Tests.ps1" tests="34" failures="6" skipped="8" time="0.9714282">        <testcase name="Should handle various execution contexts for Start-AitherZero.ps1" classname="Validation">
+            <failure message="Test failed"></failure>
+        </testcase>        <testcase name="Should validate delegation target exists" classname="Validation">
+            <failure message="Test failed"></failure>
+        </testcase>        <testcase name="Should handle missing core script gracefully" classname="Validation">
+            <failure message="Test failed"></failure>
+        </testcase>        <testcase name="Should properly delegate parameters to core script" classname="Validation">
+            <failure message="Test failed"></failure>
+        </testcase>        <testcase name="Should have comprehensive error handling in entry points" classname="Validation">
+            <failure message="Test failed"></failure>
+        </testcase>        <testcase name="Should handle missing dependencies gracefully" classname="Validation">
+            <failure message="Test failed"></failure>
+        </testcase>    </testsuite>    <testsuite name="PowerShell-Version.Tests.ps1" tests="32" failures="2" skipped="0" time="1.2061371">        <testcase name="Should load and execute version checking utility" classname="Platform">
+            <failure message="Test failed"></failure>
+        </testcase>        <testcase name="Should validate PowerShell version in Start-DeveloperSetup.ps1" classname="Platform">
+            <failure message="Test failed"></failure>
+        </testcase>    </testsuite></testsuites>
