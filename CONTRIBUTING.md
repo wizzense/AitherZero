@@ -246,7 +246,7 @@ Get-Error
 ### Test Failures
 ```powershell
 # Run specific module tests
-./tests/Run-BulletproofValidation.ps1 -ValidationLevel 'Quick' -FailFast
+./tests/Run-Tests.ps1 -Module PatchManager -FailFast
 
 # Check test logs
 Get-ChildItem 'tests/results' -Filter '*.xml'
@@ -255,7 +255,7 @@ Get-ChildItem 'tests/results' -Filter '*.xml'
 ## 🌟 Best Practices
 
 1. **Use PatchManager** for all changes - it handles Git, issues, and PRs automatically
-2. **Test thoroughly** - use the bulletproof testing framework
+2. **Test thoroughly** - use the modern test runner
 3. **Follow logging standards** - use Write-CustomLog consistently
 4. **Document changes** - update relevant documentation
 5. **Cross-platform compatibility** - test on Windows, Linux, macOS when possible
