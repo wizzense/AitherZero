@@ -155,7 +155,7 @@ function Write-CustomLog {
         [string]$Message,
 
         [Parameter()]
-        [ValidateSet("ERROR", "WARN", "WARNING", "INFO", "SUCCESS", "DEBUG", "TRACE", "VERBOSE")]
+        [ValidateSet("ERROR", "WARNING", "INFO", "SUCCESS", "DEBUG", "TRACE", "VERBOSE")]
         [string]$Level = "INFO",
 
         [Parameter()]
