@@ -67,7 +67,9 @@ jobs:
     name: "Documentation Audit"
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: github.event.inputs.audit_type != 'test-only' && github.event.inputs.audit_type != 'structure-only' && github.event.inputs.audit_type != 'dependencies-only'
+    if: |
+      github.event_name != 'workflow_dispatch' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.audit_type != 'test-only' && github.event.inputs.audit_type != 'structure-only' && github.event.inputs.audit_type != 'dependencies-only')
     outputs:
       doc-coverage: ${{ steps.audit.outputs.coverage }}
       missing-docs: ${{ steps.audit.outputs.missing-count }}
@@ -193,7 +195,9 @@ jobs:
     name: "Test Coverage Audit"
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: github.event.inputs.audit_type != 'documentation-only' && github.event.inputs.audit_type != 'structure-only' && github.event.inputs.audit_type != 'dependencies-only'
+    if: |
+      github.event_name != 'workflow_dispatch' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.audit_type != 'documentation-only' && github.event.inputs.audit_type != 'structure-only' && github.event.inputs.audit_type != 'dependencies-only')
     outputs:
       test-coverage: ${{ steps.audit.outputs.coverage }}
       missing-tests: ${{ steps.audit.outputs.missing-count }}
@@ -304,7 +308,9 @@ jobs:
     name: "Project Structure Audit"
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event.inputs.audit_type != 'documentation-only' && github.event.inputs.audit_type != 'test-only' && github.event.inputs.audit_type != 'dependencies-only'
+    if: |
+      github.event_name != 'workflow_dispatch' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.audit_type != 'documentation-only' && github.event.inputs.audit_type != 'test-only' && github.event.inputs.audit_type != 'dependencies-only')
     outputs:
       structure-score: ${{ steps.audit.outputs.score }}
       issues-found: ${{ steps.audit.outputs.issues }}
@@ -456,7 +462,9 @@ jobs:
     name: "Dependency Audit"
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event.inputs.audit_type != 'documentation-only' && github.event.inputs.audit_type != 'test-only' && github.event.inputs.audit_type != 'structure-only'
+    if: |
+      github.event_name != 'workflow_dispatch' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.audit_type != 'documentation-only' && github.event.inputs.audit_type != 'test-only' && github.event.inputs.audit_type != 'structure-only')
     outputs:
       dependency-issues: ${{ steps.audit.outputs.issues }}
     steps:
