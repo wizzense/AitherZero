@@ -53,6 +53,11 @@ permissions:
   contents: read
   issues: write
 
+# Prevent duplicate runs
+concurrency:
+  group: audit-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
