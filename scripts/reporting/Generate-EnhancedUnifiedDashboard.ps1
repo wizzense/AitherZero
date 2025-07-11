@@ -69,6 +69,7 @@ $projectRoot = Find-ProjectRoot
 . "$PSScriptRoot/Generate-ComprehensiveReport.ps1"
 
 # Enhanced logging function
+[CmdletBinding()]
 function Write-DashboardLog {
     param(
         [string]$Message,
