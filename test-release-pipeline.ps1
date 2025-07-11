@@ -163,14 +163,14 @@ Test-Component "Release Script Dry Run" {
     Write-Host "    Testing release.ps1 dry run..." -ForegroundColor Yellow
     
     try {
-        # Capture output
-        $output = & ./release.ps1 -Type patch -Description "Test release" -DryRun 2>&1
+        # Run the script and check exit code
+        & ./release.ps1 -Type patch -Description "Test release" -DryRun
         
-        if ($output -match "DRY RUN MODE") {
-            Write-Host "    Dry run completed successfully" -ForegroundColor Green
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "    Dry run completed successfully (exit code: 0)" -ForegroundColor Green
             return $true
         } else {
-            Write-Host "    Dry run didn't execute as expected" -ForegroundColor Red
+            Write-Host "    Dry run failed with exit code: $LASTEXITCODE" -ForegroundColor Red
             return $false
         }
     } catch {

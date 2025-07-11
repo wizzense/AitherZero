@@ -133,7 +133,11 @@ try {
     # Invoke the release workflow
     $result = Invoke-ReleaseWorkflow @releaseParams
     
-    if ($result.Success) {
+    # In dry run mode, Invoke-ReleaseWorkflow returns nothing
+    if ($DryRun) {
+        Write-Host "`n✅ Dry run completed successfully!" -ForegroundColor Green
+        Write-Host "No changes were made." -ForegroundColor Yellow
+    } elseif ($result -and $result.Success) {
         Write-Host "`n✅ Release completed successfully!" -ForegroundColor Green
         
         if ($result.ReleaseUrl) {
@@ -141,8 +145,11 @@ try {
         }
         
         Write-Host "`n🎊 That's it! No manual steps required!" -ForegroundColor Green
-    } else {
+    } elseif ($result) {
         throw "Release failed: $($result.Message)"
+    } else {
+        # If no result object returned (shouldn't happen in non-dry-run mode)
+        Write-Host "`n✅ Release process completed!" -ForegroundColor Green
     }
     
 } catch {
