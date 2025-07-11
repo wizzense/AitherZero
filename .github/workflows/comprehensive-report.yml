@@ -5,13 +5,18 @@ on:
   workflow_run:
     workflows: ["CI - Optimized & Reliable"]
     types: [completed]
-    branches: [main, 'patch/**']
+    branches: [main, 'patch/**', 'feature/**', develop]
   # Keep daily scheduled reports
   schedule:
     # Run daily at 6 AM UTC (comprehensive report)
     - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
+      branches:
+        description: 'Branches to analyze (comma-separated, e.g., main,develop,feature/xyz)'
+        required: false
+        default: 'main'
+        type: string
       report_type:
         description: 'Type of report to generate'
         required: true
@@ -22,6 +27,7 @@ on:
           - health-check
           - feature-map
           - version-test
+          - enhanced-dashboard
       version_test:
         description: 'Version to test (for version-test type)'
         required: false
@@ -41,22 +47,32 @@ on:
         required: false
         default: false
         type: boolean
+      enable_historical_analysis:
+        description: 'Enable historical trend analysis'
+        required: false
+        default: true
+        type: boolean
 
-# Ensure only one comprehensive report runs at a time
+# Ensure only one comprehensive report runs at a time per branch
 concurrency:
-  group: comprehensive-report
+  group: comprehensive-report-${{ github.ref }}
   cancel-in-progress: false
 
-# Permissions for GITHUB_TOKEN
+# Permissions for GITHUB_TOKEN with expanded access
 permissions:
   contents: write
   actions: read
   security-events: write
+  issues: read
+  pull-requests: read
+  pages: write
+  id-token: write
 
 env:
   POWERSHELL_TELEMETRY_OPTOUT: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   DOTNET_NOLOGO: true
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   # Initialize reporting state and determine scope
@@ -78,7 +94,7 @@ jobs:
       id: scope
       shell: pwsh
       run: |
-        $reportType = '${{ github.event.inputs.report_type || ''comprehensive'' }}'
+        $reportType = '${{ github.event.inputs.report_type || 'comprehensive' }}'
         $eventName = '${{ github.event_name }}'
         
         # Check if VERSION file changed (for workflow_run trigger)

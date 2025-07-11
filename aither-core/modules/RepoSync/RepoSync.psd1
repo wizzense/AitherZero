@@ -11,7 +11,8 @@
     FunctionsToExport = @(
         'Sync-ToAitherLab',
         'Sync-FromAitherLab',
-        'Get-SyncStatus'
+        'Get-SyncStatus',
+        'Get-RepoSyncStatus'
     )
 
     CmdletsToExport = @()

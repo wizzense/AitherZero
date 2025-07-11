@@ -232,7 +232,7 @@ function Invoke-AdvancedBackup {
                 foreach ($file in $batch) {
                     try {
                         # Full backup processing with compression/encryption
-                        $fileResult = Backup-SingleFile -File $file -Context $using:backupContext -EncryptionKey $using:EncryptionKey
+                        $fileResult = Backup-SingleFile -File $file -Context $backupContext -EncryptionKey $EncryptionKey
 
                         $batchResult.ProcessedFiles += 1
                         $batchResult.CompressedSize += $fileResult.CompressedSize

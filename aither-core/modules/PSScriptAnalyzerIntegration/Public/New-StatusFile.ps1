@@ -44,7 +44,7 @@ function New-StatusFile {
         # Check if file exists and Force not specified
         if ((Test-Path $statusFilePath) -and -not $Force) {
             if ($script:UseCustomLogging) {
-                Write-CustomLog -Level 'WARNING' -Message "Status file already exists at $statusFilePath. Use -Force to overwrite."
+                Write-CustomLog -Level 'WARN' -Message "Status file already exists at $statusFilePath. Use -Force to overwrite."
             }
             return $false
         }
