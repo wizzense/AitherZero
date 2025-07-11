@@ -1,0 +1,90 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/scripts/check-git-command.sh",
+            "timeout": 2000
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/scripts/validate-powershell.sh",
+            "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/scripts/validate-yaml.sh",
+            "timeout": 3000
+          },
+          {
+            "type": "command",
+            "command": "mkdir -p ~/.claude && echo '1' >> ~/.claude/edit-count.log && count=$(wc -l < ~/.claude/edit-count.log) && if [ \"$count\" -ge 10 ]; then echo \"WARNING: You have made $count file edits without committing!\" >&2; echo \"Please commit your work using PatchManager:\" >&2; echo \"  pwsh -c 'Import-Module ./aither-core/modules/PatchManager; New-QuickFix -Description \\\"Save progress\\\" -Changes { }'\" >&2; exit 2; fi",
+            "timeout": 1000
+          },
+          {
+            "type": "command",
+            "command": "file=$(echo \"$1\" | jq -r '.tool_input.file_path // .tool_input.file // \"\"'); if [[ \"$file\" =~ (\\.env|\\.secrets|credentials|password|token) ]]; then echo \"ERROR: Attempting to edit sensitive file: $file\" >&2; echo \"This action has been blocked for security reasons.\" >&2; exit 2; fi",
+            "timeout": 1000
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] File modified: $(echo \"$1\" | jq -r '.tool_input.file_path // .tool_input.file // \"unknown\"')\" >> ~/.claude/activity.log"
+          },
+          {
+            "type": "command",
+            "command": "file=$(echo \"$1\" | jq -r '.tool_input.file_path // .tool_input.file // \"\"'); if [[ \"$file\" =~ \\.ps1$ ]] && command -v pwsh &>/dev/null; then pwsh -NoProfile -Command \"if (Get-Module -ListAvailable PSScriptAnalyzer) { Import-Module PSScriptAnalyzer -Force; \\$results = Invoke-ScriptAnalyzer -Path '$file' -Severity Error 2>\\$null; if (\\$results) { Write-Host 'PSScriptAnalyzer found errors after edit:'; \\$results | ForEach-Object { Write-Host \\\"  Line \\$_.Line: \\$_.Message\\\" } } }\" 2>/dev/null || true; fi",
+            "timeout": 5000
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Command: $(echo \"$1\" | jq -r '.tool_input.command')\" >> ~/.claude/activity.log"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /workspaces/AitherZero 2>/dev/null && changes=$(git status --porcelain 2>/dev/null | wc -l) && if [ \"$changes\" -gt 0 ]; then echo '{}' | jq -c '{decision: \"block\", reason: \"You have '\"$changes\"' uncommitted changes. Please commit using: Import-Module ./aither-core/modules/PatchManager; New-QuickFix -Description \\\"Save work\\\" -Changes { }\"}'; else rm -f ~/.claude/edit-count.log; fi",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "msg=$(echo \"$1\" | jq -r '.message // \"\"'); if [[ \"$msg\" =~ \"waiting for your input\" ]]; then echo \"⏰ Claude is waiting for your input!\" >&2; fi; notify-send 'Claude Code' \"$msg\" 2>/dev/null || echo \"Claude: $msg\"",
+            "timeout": 1000
+          }
+        ]
+      }
+    ]
+  }
+}
