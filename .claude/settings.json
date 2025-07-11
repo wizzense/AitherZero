@@ -1,0 +1,58 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"$1\" | jq -r '.tool_input.command' | grep -E '^git\\s+(add|commit|push|checkout|merge|pull|fetch|branch|reset|rebase)' >/dev/null && { echo 'ERROR: Direct git commands are not allowed!' >&2; echo 'Use PatchManager instead:' >&2; echo '  - New-QuickFix for minor changes' >&2; echo '  - New-Feature for new functionality' >&2; echo '  - New-Patch for other changes' >&2; exit 2; } || exit 0",
+            "timeout": 2000
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "mkdir -p ~/.claude && echo '1' >> ~/.claude/edit-count.log && count=$(wc -l < ~/.claude/edit-count.log) && if [ \"$count\" -ge 10 ]; then echo \"WARNING: You have made $count file edits without committing!\" >&2; echo \"Please commit your work using PatchManager:\" >&2; echo \"  pwsh -c 'Import-Module ./aither-core/modules/PatchManager; New-QuickFix -Description \\\"Save progress\\\" -Changes { }'\" >&2; exit 2; fi",
+            "timeout": 2000
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] File modified: $(echo \"$1\" | jq -r '.tool_input.file_path // .tool_input.file // \"unknown\"')\" >> ~/.claude/activity.log"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Command: $(echo \"$1\" | jq -r '.tool_input.command')\" >> ~/.claude/activity.log"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /workspaces/AitherZero 2>/dev/null && changes=$(git status --porcelain 2>/dev/null | wc -l) && if [ \"$changes\" -gt 0 ]; then echo '{}' | jq -c '{decision: \"block\", reason: \"You have '\"$changes\"' uncommitted changes. Please commit using: Import-Module ./aither-core/modules/PatchManager; New-QuickFix -Description \\\"Save work\\\" -Changes { }\"}'; fi",
+            "timeout": 5000
+          }
+        ]
+      }
+    ]
+  }
+}
