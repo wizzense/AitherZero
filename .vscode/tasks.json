@@ -723,6 +723,340 @@
             },
             "problemMatcher": [],
             "options": {"cwd": "${workspaceFolder}"}
+        },
+
+        // ========================================
+        // Comprehensive Validation (10 tasks)
+        // ========================================
+        {
+            "label": "🛡️ Validate Everything - Comprehensive Check",
+            "type": "shell",
+            "command": "pwsh",
+            "args": ["-File", "./scripts/validation/Run-ComprehensiveValidation.ps1", "-Scope", "All", "-Pipeline", "CI", "-GenerateReport"],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "⚡ Validate Changed Files - Quick Check",
+            "type": "shell",
+            "command": "pwsh",
+            "args": ["-File", "./scripts/validation/Run-ComprehensiveValidation.ps1", "-Scope", "ChangedFiles", "-AutoFix"],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🔧 Validate & Fix - Auto-remediation",
+            "type": "shell",
+            "command": "pwsh",
+            "args": ["-File", "./scripts/validation/Run-ComprehensiveValidation.ps1", "-AutoFix", "-GenerateReport"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🎯 Validate Current Module",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "$currentFile = '${file}'; if ($currentFile -match 'aither-core[/\\\\]modules[/\\\\]([^/\\\\]+)') { $moduleName = $matches[1]; & ./scripts/validation/Run-ComprehensiveValidation.ps1 -Scope Module -Target $moduleName } else { Write-Host '⚠️  Current file is not in a module directory' -ForegroundColor Yellow }"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "📊 Generate Validation Dashboard",
+            "type": "shell",
+            "command": "pwsh",
+            "args": ["-File", "./scripts/reporting/Generate-ValidationDashboard.ps1", "-IncludeHistory"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🚨 Create Issue from Validation Failures",
+            "type": "shell",
+            "command": "pwsh",
+            "args": ["-File", "./scripts/validation/Run-ComprehensiveValidation.ps1", "-CreateIssues"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🔍 Pre-commit Validation",
+            "type": "shell",
+            "command": "pwsh",
+            "args": ["-File", "./.githooks/pre-commit"],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🏃 Quick Validation - CI Pipeline",
+            "type": "shell",
+            "command": "pwsh",
+            "args": ["-File", "./scripts/validation/Run-ComprehensiveValidation.ps1", "-Pipeline", "QuickFix", "-FailFast"],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "📈 Issue Metrics Report",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module ./aither-core/modules/IssueLifecycleManager -Force; Get-IssueMetrics | Format-List"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🔄 Check & Close Resolved Issues",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module ./aither-core/modules/IssueLifecycleManager -Force; Invoke-IssueResolutionCheck"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+
+        // ========================================
+        // Comprehensive Validation (7 tasks)
+        // ========================================
+        {
+            "label": "🔍 MEGA VALIDATION - All Checks & Fixes",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File", 
+                "scripts/validation/Run-ComprehensiveValidation.ps1",
+                "-IncludeTests",
+                "-GenerateReport",
+                "-FixIssues"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "new",
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "⚡ Quick Validation - Syntax Only",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File", 
+                "scripts/validation/Run-ComprehensiveValidation.ps1"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🔧 Validate & Fix Issues",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File", 
+                "scripts/validation/Run-ComprehensiveValidation.ps1",
+                "-FixIssues"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "📋 Validate GitHub Actions YAML",
+            "type": "shell",
+            "command": "yamllint",
+            "args": [
+                ".github/workflows/*.yml"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🛡️ PSScriptAnalyzer - Full Scan",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Import-Module PSScriptAnalyzer -Force; Invoke-ScriptAnalyzer -Path . -Recurse -ReportSummary | Format-Table -AutoSize"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "📊 Generate Validation Report",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File", 
+                "scripts/validation/Run-ComprehensiveValidation.ps1",
+                "-GenerateReport"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
+        },
+        {
+            "label": "🚦 Pre-Commit Validation Test",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                ".githooks/pre-commit"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "options": {"cwd": "${workspaceFolder}"}
         }
     ],
     "inputs": [

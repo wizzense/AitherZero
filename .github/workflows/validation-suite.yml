@@ -1,0 +1,313 @@
+name: "Comprehensive Validation Suite"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+    inputs:
+      create_issues:
+        description: 'Create GitHub issues for failures'
+        required: false
+        default: 'true'
+        type: boolean
+      auto_fix:
+        description: 'Attempt automatic fixes'
+        required: false
+        default: 'true'
+        type: boolean
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: true
+
+jobs:
+  comprehensive-validation:
+    name: "Validate & Audit"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      checks: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for analysis
+          
+      - name: Setup PowerShell
+        shell: bash
+        run: |
+          # Install PowerShell if not present
+          if ! command -v pwsh &> /dev/null; then
+            wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb
+            sudo dpkg -i packages-microsoft-prod.deb
+            sudo apt-get update
+            sudo apt-get install -y powershell
+          fi
+          
+      - name: Install Dependencies
+        shell: pwsh
+        run: |
+          # Install required modules
+          Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+          Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser
+          
+          # Install yamllint
+          sudo apt-get update
+          sudo apt-get install -y yamllint
+          
+      - name: Cache PowerShell Modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/powershell/Modules
+            ~/Documents/PowerShell/Modules
+          key: ${{ runner.os }}-ps-modules-${{ hashFiles('**/*.psd1') }}-v3
+          restore-keys: |
+            ${{ runner.os }}-ps-modules-v3
+            
+      - name: Run Comprehensive Validation
+        id: validation
+        shell: pwsh
+        run: |
+          $results = ./scripts/validation/Run-ComprehensiveValidation.ps1 `
+            -Scope All `
+            -Pipeline CI `
+            -OutputFormat All `
+            -GenerateReport `
+            -AutoFix:$${{ github.event.inputs.auto_fix || 'true' }} `
+            -CreateIssues:$false  # Will handle separately
+            
+          # Set outputs
+          echo "status=$($LASTEXITCODE -eq 0 ? 'passed' : 'failed')" >> $env:GITHUB_OUTPUT
+          
+          # Upload results
+          if (Test-Path "validation-report.json") {
+            $report = Get-Content "validation-report.json" | ConvertFrom-Json
+            echo "errors=$($report.Errors.Count)" >> $env:GITHUB_OUTPUT
+            echo "warnings=$($report.Warnings.Count)" >> $env:GITHUB_OUTPUT
+            echo "auto_fixed=$($report.Fixes.Count)" >> $env:GITHUB_OUTPUT
+          }
+          
+      - name: Upload Validation Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-report
+          path: |
+            validation-report.html
+            validation-report.json
+            logs/pre-commit-validation.log
+          retention-days: 30
+          
+      - name: Generate Dashboard
+        if: always()
+        shell: pwsh
+        run: |
+          ./scripts/reporting/Generate-ValidationDashboard.ps1 -IncludeHistory
+          
+      - name: Upload Dashboard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-dashboard
+          path: validation-dashboard.html
+          retention-days: 30
+          
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const status = '${{ steps.validation.outputs.status }}';
+            const errors = '${{ steps.validation.outputs.errors }}' || '0';
+            const warnings = '${{ steps.validation.outputs.warnings }}' || '0';
+            const autoFixed = '${{ steps.validation.outputs.auto_fixed }}' || '0';
+            
+            let statusEmoji = status === 'passed' ? '✅' : '❌';
+            let statusText = status === 'passed' ? 'All Validations Passed' : 'Validation Failed';
+            
+            const comment = `## ${statusEmoji} Validation Results
+            
+            **Status**: ${statusText}
+            **Errors**: ${errors}
+            **Warnings**: ${warnings}
+            **Auto-Fixed**: ${autoFixed}
+            
+            ### Summary
+            ${status === 'passed' 
+              ? '✨ All validation checks passed successfully!' 
+              : `⚠️ Found ${errors} errors and ${warnings} warnings that need attention.`}
+            
+            ${autoFixed > 0 ? `\n🔧 **Auto-fixes applied**: ${autoFixed} issues were automatically fixed.` : ''}
+            
+            ### Reports
+            📊 [Download Validation Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)
+            📈 [View Dashboard](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)
+            
+            ---
+            *Generated by Comprehensive Validation Suite*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+            
+      - name: Create Issues for Failures
+        if: |
+          failure() && 
+          (github.event.inputs.create_issues == 'true' || github.event_name == 'push')
+        shell: pwsh
+        run: |
+          # Re-run validation with issue creation enabled
+          ./scripts/validation/Run-ComprehensiveValidation.ps1 `
+            -Scope ChangedFiles `
+            -CreateIssues `
+            -OutputFormat JSON
+            
+      - name: Commit Auto-Fixes
+        if: |
+          steps.validation.outputs.auto_fixed != '0' && 
+          github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          if [[ -n $(git status -s) ]]; then
+            git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git add -A
+            git commit -m "🔧 Auto-fix validation issues
+            
+            Applied automatic fixes for:
+            - Code formatting
+            - Trailing whitespace
+            - PSScriptAnalyzer auto-fixable rules
+            
+            Co-authored-by: Validation Suite <noreply@github.com>"
+            git push
+          fi
+          
+      - name: Update Check Status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ steps.validation.outputs.status }}';
+            const errors = '${{ steps.validation.outputs.errors }}' || '0';
+            const warnings = '${{ steps.validation.outputs.warnings }}' || '0';
+            
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'Validation Suite',
+              head_sha: context.sha,
+              status: 'completed',
+              conclusion: status === 'passed' ? 'success' : 'failure',
+              output: {
+                title: `Validation ${status === 'passed' ? 'Passed' : 'Failed'}`,
+                summary: `Found ${errors} errors and ${warnings} warnings`,
+                text: 'See artifacts for detailed reports'
+              }
+            });
+
+  security-validation:
+    name: "Security Scan"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Run Security Validation
+        shell: pwsh
+        run: |
+          # Run security-focused validation
+          ./scripts/validation/Run-ComprehensiveValidation.ps1 `
+            -Scope All `
+            -Pipeline Hotfix `
+            -OutputFormat JSON
+            
+      - name: Check for Secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          
+  performance-check:
+    name: "Performance Analysis"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Measure Validation Performance
+        shell: pwsh
+        run: |
+          $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+          
+          # Run performance benchmarks
+          $results = @{
+            QuickValidation = Measure-Command {
+              ./scripts/validation/Run-ComprehensiveValidation.ps1 -Pipeline QuickFix -Scope ChangedFiles
+            }
+            FullValidation = Measure-Command {
+              ./scripts/validation/Run-ComprehensiveValidation.ps1 -Pipeline CI -Scope All
+            }
+            TestExecution = Measure-Command {
+              ./tests/Run-UnifiedTests.ps1 -TestSuite Quick
+            }
+          }
+          
+          $stopwatch.Stop()
+          
+          # Create performance report
+          @{
+            TotalTime = $stopwatch.Elapsed.TotalSeconds
+            Metrics = $results
+            Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+          } | ConvertTo-Json | Set-Content "performance-report.json"
+          
+      - name: Upload Performance Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-report
+          path: performance-report.json
+          retention-days: 30
+
+  merge-gate:
+    name: "Merge Gate Check"
+    needs: [comprehensive-validation, security-validation]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Check Validation Results
+        run: |
+          if [[ "${{ needs.comprehensive-validation.result }}" != "success" ]]; then
+            echo "❌ Comprehensive validation failed - merge blocked"
+            exit 1
+          fi
+          
+          if [[ "${{ needs.security-validation.result }}" != "success" ]]; then
+            echo "❌ Security validation failed - merge blocked"
+            exit 1
+          fi
+          
+          echo "✅ All validations passed - merge allowed"

@@ -1,0 +1,85 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -Command \"$file = (echo '$1' | jq -r '.tool_input.file_path // .tool_input.file'); if ($file -and $file -match '\\.yml$' -and $file -match '\\.github/workflows/') { yamllint \\\"$file\\\" 2>&1 | head -10; if ($LASTEXITCODE -ne 0) { echo 'YAML validation failed. Fix syntax errors before editing.'; exit 2; } }\"",
+            "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -Command \"$file = (echo '$1' | jq -r '.tool_input.file_path // .tool_input.file'); if ($file -and $file -match '\\.(ps1|psm1|psd1)$') { $content = Get-Content \\\"$file\\\" -Raw -ErrorAction SilentlyContinue; if ($content) { $errors = $null; $null = [System.Management.Automation.PSParser]::Tokenize($content, [ref]$errors); if ($errors.Count -gt 0) { echo 'PowerShell syntax errors found:'; $errors | Select-Object -First 3 | ForEach-Object { echo \\\"  Line $($_.Token.StartLine): $($_.Message)\\\" }; exit 2; } } }\"",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -Command \"$file = (echo '$1' | jq -r '.tool_input.file_path // .tool_input.file'); if ($file -and $file -match '\\.yml$' -and $file -match '\\.github/workflows/') { yamllint \\\"$file\\\" 2>&1 | head -10; if ($LASTEXITCODE -ne 0) { echo 'WARNING: YAML file has syntax errors after edit. Please fix:'; yamllint \\\"$file\\\" 2>&1 | head -5; } }\"",
+            "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -Command \"$file = (echo '$1' | jq -r '.tool_input.file_path // .tool_input.file'); if ($file -and $file -match '\\.(ps1|psm1|psd1)$' -and (Get-Module -ListAvailable -Name PSScriptAnalyzer)) { Import-Module PSScriptAnalyzer -Force; $results = Invoke-ScriptAnalyzer -Path \\\"$file\\\" -Severity Error -ErrorAction SilentlyContinue; if ($results) { echo 'PSScriptAnalyzer found errors:'; $results | Select-Object -First 3 | ForEach-Object { echo \\\"  [$($_.Severity)] Line $($_.Line): $($_.Message)\\\" }; } }\"",
+            "timeout": 10000
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command' | tee -a ~/.claude/bash-command-log.txt >/dev/null",
+            "timeout": 1000
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -Command \"Write-Host 'Session complete. Running post-session validation...'; $projectRoot = git rev-parse --show-toplevel 2>$null; if ($projectRoot -and (Test-Path \\\"$projectRoot/scripts/validation/Run-ComprehensiveValidation.ps1\\\")) { & \\\"$projectRoot/scripts/validation/Run-ComprehensiveValidation.ps1\\\" -GenerateReport } else { echo 'Validation script not found' }\"",
+            "timeout": 60000
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "notify-send 'Claude Code' \"$(jq -r '.message')\" || echo \"Claude: $(jq -r '.message')\"",
+            "timeout": 1000
+          }
+        ]
+      }
+    ]
+  },
+  "validation": {
+    "autoFix": true,
+    "blockOnError": true,
+    "validateBeforeCommit": true,
+    "runTestsOnChange": false,
+    "generateReports": true
+  },
+  "development": {
+    "enforceConventions": true,
+    "requireDocumentation": true,
+    "checkSecurity": true,
+    "trackMetrics": true
+  }
+}

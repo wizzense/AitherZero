@@ -1,0 +1,185 @@
+{
+  "autoClose": {
+    "enabled": true,
+    "checkInterval": 3600,
+    "resolutionPatterns": [
+      "fixes #(\\d+)",
+      "resolves #(\\d+)",
+      "closes #(\\d+)",
+      "fix #(\\d+)",
+      "resolve #(\\d+)",
+      "close #(\\d+)"
+    ],
+    "validationRequired": true,
+    "requireAllChecksPass": true
+  },
+  "assignment": {
+    "useCodeOwners": true,
+    "autoAssign": true,
+    "defaultAssignee": null,
+    "roundRobin": false,
+    "maxAssignees": 2,
+    "assignByExpertise": true,
+    "expertiseMapping": {
+      "PatchManager": ["@patchmanager-team"],
+      "PSScriptAnalyzer": ["@code-quality-team"],
+      "Security": ["@security-team"],
+      "Testing": ["@testing-team"]
+    }
+  },
+  "labeling": {
+    "autoApply": true,
+    "severityLabels": true,
+    "categoryLabels": true,
+    "stateLabels": true,
+    "moduleLabels": true,
+    "sourceLabels": true,
+    "priorityMapping": {
+      "Critical": ["security", "production-down", "data-loss"],
+      "High": ["test-failure", "build-failure", "regression"],
+      "Medium": ["code-quality", "performance", "documentation"],
+      "Low": ["enhancement", "style", "minor-bug"]
+    },
+    "stateProgression": [
+      "needs-triage",
+      "triaged",
+      "in-progress",
+      "needs-review",
+      "ready-to-close",
+      "closed"
+    ]
+  },
+  "metrics": {
+    "trackResolutionTime": true,
+    "trackAssignmentTime": true,
+    "trackStateTransitions": true,
+    "generateReports": true,
+    "reportSchedule": "daily",
+    "slaTargets": {
+      "Critical": {
+        "assignment": 1,
+        "firstResponse": 2,
+        "resolution": 24
+      },
+      "High": {
+        "assignment": 4,
+        "firstResponse": 8,
+        "resolution": 72
+      },
+      "Medium": {
+        "assignment": 24,
+        "firstResponse": 48,
+        "resolution": 168
+      },
+      "Low": {
+        "assignment": 72,
+        "firstResponse": 168,
+        "resolution": 720
+      }
+    }
+  },
+  "automation": {
+    "enableBots": true,
+    "staleIssueHandling": {
+      "enabled": true,
+      "daysUntilStale": 30,
+      "daysUntilClose": 7,
+      "staleLabel": "stale",
+      "exemptLabels": ["pinned", "security", "critical"],
+      "staleMessage": "This issue has been automatically marked as stale because it has not had recent activity. It will be closed if no further activity occurs."
+    },
+    "duplicateDetection": {
+      "enabled": true,
+      "similarityThreshold": 0.85,
+      "checkTitle": true,
+      "checkBody": true,
+      "autoLink": true
+    },
+    "dependencyTracking": {
+      "enabled": true,
+      "blockClosureOnDependencies": true,
+      "autoUpdateDependents": true,
+      "visualizeDependencyGraph": true
+    }
+  },
+  "notifications": {
+    "enabled": true,
+    "channels": {
+      "email": false,
+      "slack": false,
+      "webhook": null
+    },
+    "events": [
+      "issue_created",
+      "issue_assigned",
+      "issue_closed",
+      "sla_breach",
+      "critical_issue"
+    ]
+  },
+  "templates": {
+    "issueTemplates": {
+      "validation-failure": {
+        "title": "[Validation] {type} in {location}",
+        "labels": ["validation-failure", "automated"],
+        "body": "templates/validation-failure.md"
+      },
+      "test-failure": {
+        "title": "[Test] {module} - {test} failing",
+        "labels": ["test-failure", "automated"],
+        "body": "templates/test-failure.md"
+      },
+      "security-issue": {
+        "title": "[Security] {severity} - {type}",
+        "labels": ["security", "automated"],
+        "body": "templates/security-issue.md"
+      },
+      "code-quality": {
+        "title": "[Code Quality] {rule} violations",
+        "labels": ["code-quality", "automated"],
+        "body": "templates/code-quality.md"
+      }
+    }
+  },
+  "integrations": {
+    "validation": {
+      "enabled": true,
+      "createIssuesForFailures": true,
+      "updateExistingIssues": true,
+      "closeOnResolution": true
+    },
+    "ci": {
+      "enabled": true,
+      "trackBuildFailures": true,
+      "linkToRuns": true,
+      "embedLogs": true
+    },
+    "codeAnalysis": {
+      "enabled": true,
+      "tools": ["PSScriptAnalyzer", "CodeQL"],
+      "createIssuesForFindings": true,
+      "severityThreshold": "Warning"
+    }
+  },
+  "audit": {
+    "enabled": true,
+    "logAllActions": true,
+    "retentionDays": 90,
+    "includeMetadata": true,
+    "complianceMode": false,
+    "exportFormat": "json"
+  },
+  "rateLimits": {
+    "issueCreation": {
+      "enabled": true,
+      "maxPerHour": 50,
+      "maxPerDay": 200,
+      "exemptSources": ["Security", "CI"]
+    },
+    "apiCalls": {
+      "enabled": true,
+      "maxPerHour": 1000,
+      "backoffStrategy": "exponential"
+    }
+  }
+}

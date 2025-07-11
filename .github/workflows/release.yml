@@ -185,22 +185,22 @@ jobs:
           }
           
           # Create dashboard index
-          @"
+          $indexHtml = @'
           <!DOCTYPE html>
           <html>
           <head>
-              <title>AitherZero v${{ needs.validate-inputs.outputs.version }} Release Dashboard</title>
+              <title>AitherZero v{0} Release Dashboard</title>
               <style>
-                  body { font-family: Arial, sans-serif; margin: 40px; }
-                  h1 { color: #333; }
-                  .dashboard-links { list-style-type: none; padding: 0; }
-                  .dashboard-links li { margin: 10px 0; }
-                  .dashboard-links a { color: #0066cc; text-decoration: none; font-size: 18px; }
-                  .dashboard-links a:hover { text-decoration: underline; }
+                  body {{ font-family: Arial, sans-serif; margin: 40px; }}
+                  h1 {{ color: #333; }}
+                  .dashboard-links {{ list-style-type: none; padding: 0; }}
+                  .dashboard-links li {{ margin: 10px 0; }}
+                  .dashboard-links a {{ color: #0066cc; text-decoration: none; font-size: 18px; }}
+                  .dashboard-links a:hover {{ text-decoration: underline; }}
               </style>
           </head>
           <body>
-              <h1>AitherZero v${{ needs.validate-inputs.outputs.version }} Release Dashboard</h1>
+              <h1>AitherZero v{0} Release Dashboard</h1>
               <ul class="dashboard-links">
                   <li><a href="comprehensive-report.html">📊 Comprehensive Project Report</a></li>
                   <li><a href="dynamic-feature-map.html">🗺️ Dynamic Feature Map</a></li>
@@ -209,7 +209,8 @@ jobs:
               </ul>
           </body>
           </html>
-"@ | Set-Content "$dashboardDir/index.html"
+'@ -f "${{ needs.validate-inputs.outputs.version }}"
+          $indexHtml | Set-Content "$dashboardDir/index.html"
           
           # Create dashboard package
           Compress-Archive -Path $dashboardDir/* -DestinationPath "AitherZero-v${{ needs.validate-inputs.outputs.version }}-dashboard.zip" -Force

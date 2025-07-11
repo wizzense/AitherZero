@@ -1,0 +1,196 @@
+{
+  "validation": {
+    "enabled": true,
+    "runBeforeChanges": true,
+    "blockOnCriticalErrors": true,
+    "autoFixMinorIssues": true,
+    "createIssuesForFailures": true,
+    "auditAllActions": true
+  },
+  "preChangeValidation": {
+    "syntaxCheck": {
+      "enabled": true,
+      "languages": ["powershell", "yaml", "json", "markdown"],
+      "blockOnError": true
+    },
+    "codeAnalysis": {
+      "enabled": true,
+      "tool": "PSScriptAnalyzer",
+      "settingsFile": "PSScriptAnalyzerSettings.psd1",
+      "severityThreshold": "Warning",
+      "autoFix": ["PSAvoidTrailingWhitespace", "PSUseConsistentWhitespace", "PSUseConsistentIndentation"]
+    },
+    "testValidation": {
+      "enabled": true,
+      "requireTestsForModuleChanges": true,
+      "runAffectedTests": true,
+      "blockOnTestFailure": true
+    },
+    "securityCheck": {
+      "enabled": true,
+      "scanForSecrets": true,
+      "scanForVulnerabilities": true,
+      "blockOnHighSeverity": true
+    }
+  },
+  "issueCreation": {
+    "enabled": true,
+    "thresholds": {
+      "syntaxError": "always",
+      "analysisError": "always",
+      "analysisWarning": "accumulate:5",
+      "testFailure": "always",
+      "securityIssue": "always",
+      "performanceIssue": "accumulate:3"
+    },
+    "templates": {
+      "syntaxError": "syntax-error",
+      "codeQuality": "code-quality",
+      "testFailure": "test-failure",
+      "security": "security-issue"
+    },
+    "assignment": {
+      "useCodeOwners": true,
+      "defaultAssignee": null,
+      "autoAssignByModule": true
+    },
+    "labels": {
+      "autoApply": true,
+      "severityLabels": true,
+      "categoryLabels": true,
+      "moduleLabels": true,
+      "priorityLabels": true
+    }
+  },
+  "auditTrail": {
+    "enabled": true,
+    "logLevel": "detailed",
+    "logPath": "logs/claude-code-audit.log",
+    "includeStackTraces": true,
+    "includeDiffs": true,
+    "retentionDays": 90,
+    "compressOldLogs": true
+  },
+  "validationPipelines": {
+    "default": {
+      "steps": [
+        "syntaxCheck",
+        "codeAnalysis",
+        "testValidation",
+        "securityCheck"
+      ],
+      "continueOnWarning": true,
+      "stopOnError": true
+    },
+    "quickFix": {
+      "steps": [
+        "syntaxCheck",
+        "codeAnalysis"
+      ],
+      "continueOnWarning": true,
+      "stopOnError": true,
+      "autoFix": true
+    },
+    "feature": {
+      "steps": [
+        "syntaxCheck",
+        "codeAnalysis",
+        "testValidation",
+        "securityCheck",
+        "documentationCheck"
+      ],
+      "continueOnWarning": false,
+      "stopOnError": true
+    },
+    "hotfix": {
+      "steps": [
+        "syntaxCheck",
+        "securityCheck",
+        "criticalTestValidation"
+      ],
+      "continueOnWarning": true,
+      "stopOnError": true,
+      "fastTrack": true
+    }
+  },
+  "autoRemediation": {
+    "enabled": true,
+    "strategies": {
+      "formatting": {
+        "enabled": true,
+        "tools": ["PSScriptAnalyzer", "prettier"],
+        "autoCommit": false
+      },
+      "imports": {
+        "enabled": true,
+        "sortImports": true,
+        "removeUnused": true
+      },
+      "security": {
+        "enabled": true,
+        "removeHardcodedSecrets": true,
+        "updateDependencies": true
+      }
+    }
+  },
+  "reporting": {
+    "enabled": true,
+    "formats": ["json", "html", "markdown"],
+    "includeMetrics": true,
+    "includeTrends": true,
+    "emailOnCritical": false,
+    "slackWebhook": null,
+    "generateDashboard": true
+  },
+  "performance": {
+    "parallelValidation": true,
+    "maxParallelJobs": 4,
+    "cacheResults": true,
+    "cacheDuration": 3600,
+    "skipUnchangedFiles": true,
+    "incrementalAnalysis": true
+  },
+  "integration": {
+    "vscode": {
+      "enabled": true,
+      "showProblemsPanel": true,
+      "decorateEditor": true,
+      "quickFixSuggestions": true
+    },
+    "github": {
+      "enabled": true,
+      "createCheckRuns": true,
+      "commentOnPR": true,
+      "blockMergeOnFailure": true
+    },
+    "patchManager": {
+      "enabled": true,
+      "validateBeforePatch": true,
+      "includeValidationInCommit": true
+    }
+  },
+  "customRules": {
+    "enabled": true,
+    "rulesPath": "validation/custom-rules",
+    "severity": {
+      "naming-convention": "warning",
+      "module-structure": "error",
+      "test-coverage": "warning",
+      "documentation": "info"
+    }
+  },
+  "exceptions": {
+    "ignorePaths": [
+      "*.md",
+      "docs/**",
+      ".vscode/**",
+      "logs/**",
+      "*.log"
+    ],
+    "allowedViolations": {
+      "PSAvoidUsingWriteHost": ["StartupExperience", "Logging"],
+      "PSAvoidGlobalVars": ["ModuleCommunication"],
+      "PSUseSingularNouns": ["Credentials", "Services"]
+    }
+  }
+}

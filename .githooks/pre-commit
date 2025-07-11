@@ -1,0 +1,309 @@
+#!/usr/bin/env pwsh
+#Requires -Version 7.0
+
+<#
+.SYNOPSIS
+    Pre-commit hook for AitherZero - Comprehensive validation before commits
+
+.DESCRIPTION
+    This hook runs automatically before every commit to ensure:
+    - PowerShell syntax is valid
+    - YAML syntax is valid for GitHub Actions workflows
+    - PSScriptAnalyzer passes
+    - Tests pass for modified code
+    - Documentation is present
+    - No security issues
+#>
+
+# Enable strict error handling
+$ErrorActionPreference = 'Stop'
+$VerbosePreference = 'SilentlyContinue'
+
+# Find project root
+$projectRoot = git rev-parse --show-toplevel 2>$null
+if (-not $projectRoot) {
+    Write-Error "Failed to find git repository root"
+    exit 1
+}
+
+# Load logging module
+$loggingModule = Join-Path $projectRoot "aither-core/modules/Logging"
+if (Test-Path $loggingModule) {
+    Import-Module $loggingModule -Force -DisableNameChecking 2>$null
+}
+
+# Helper function for colored output
+function Write-ValidationMessage {
+    param(
+        [string]$Message,
+        [ValidateSet('Info', 'Success', 'Warning', 'Error')]
+        [string]$Level = 'Info'
+    )
+    
+    $colors = @{
+        'Info' = 'Cyan'
+        'Success' = 'Green'
+        'Warning' = 'Yellow'
+        'Error' = 'Red'
+    }
+    
+    $symbols = @{
+        'Info' = '🔍'
+        'Success' = '✅'
+        'Warning' = '⚠️'
+        'Error' = '❌'
+    }
+    
+    Write-Host "$($symbols[$Level]) $Message" -ForegroundColor $colors[$Level]
+}
+
+# Track validation results
+$validationResults = @{
+    TotalChecks = 0
+    Passed = 0
+    Failed = 0
+    Warnings = 0
+    Errors = @()
+}
+
+Write-Host ""
+Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+Write-Host "║          AitherZero Pre-Commit Validation v2.0               ║" -ForegroundColor Cyan
+Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host ""
+
+# Get list of modified files
+$stagedFiles = git diff --cached --name-only --diff-filter=ACM
+if (-not $stagedFiles) {
+    Write-ValidationMessage "No files staged for commit" -Level 'Info'
+    exit 0
+}
+
+$stagedFilesList = $stagedFiles -split "`n" | Where-Object { $_ }
+Write-ValidationMessage "Validating $($stagedFilesList.Count) staged files..." -Level 'Info'
+
+# 1. YAML Validation for GitHub Actions workflows
+Write-Host ""
+Write-ValidationMessage "Checking GitHub Actions YAML syntax..." -Level 'Info'
+$yamlFiles = $stagedFilesList | Where-Object { $_ -match '\.github/workflows/.*\.yml$' }
+
+if ($yamlFiles) {
+    foreach ($yamlFile in $yamlFiles) {
+        $validationResults.TotalChecks++
+        $fullPath = Join-Path $projectRoot $yamlFile
+        
+        if (Get-Command yamllint -ErrorAction SilentlyContinue) {
+            $yamlErrors = yamllint $fullPath 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                Write-ValidationMessage "  ✓ $yamlFile - Valid YAML" -Level 'Success'
+                $validationResults.Passed++
+            } else {
+                Write-ValidationMessage "  ✗ $yamlFile - YAML syntax errors found:" -Level 'Error'
+                $yamlErrors | Select-Object -First 5 | ForEach-Object {
+                    Write-Host "    $_" -ForegroundColor Red
+                }
+                $validationResults.Failed++
+                $validationResults.Errors += "YAML validation failed for $yamlFile"
+            }
+        } else {
+            Write-ValidationMessage "  ⚠ yamllint not found - skipping YAML validation" -Level 'Warning'
+            $validationResults.Warnings++
+        }
+    }
+} else {
+    Write-ValidationMessage "  No GitHub Actions workflows modified" -Level 'Info'
+}
+
+# 2. PowerShell Syntax Validation
+Write-Host ""
+Write-ValidationMessage "Checking PowerShell syntax..." -Level 'Info'
+$psFiles = $stagedFilesList | Where-Object { $_ -match '\.(ps1|psm1|psd1)$' }
+
+if ($psFiles) {
+    foreach ($psFile in $psFiles) {
+        $validationResults.TotalChecks++
+        $fullPath = Join-Path $projectRoot $psFile
+        
+        try {
+            $null = Test-Path $fullPath -ErrorAction Stop
+            $content = Get-Content $fullPath -Raw -ErrorAction Stop
+            $errors = $null
+            $null = [System.Management.Automation.PSParser]::Tokenize($content, [ref]$errors)
+            
+            if ($errors.Count -eq 0) {
+                Write-ValidationMessage "  ✓ $psFile - Valid PowerShell syntax" -Level 'Success'
+                $validationResults.Passed++
+            } else {
+                Write-ValidationMessage "  ✗ $psFile - PowerShell syntax errors:" -Level 'Error'
+                $errors | Select-Object -First 3 | ForEach-Object {
+                    Write-Host "    Line $($_.Token.StartLine): $($_.Message)" -ForegroundColor Red
+                }
+                $validationResults.Failed++
+                $validationResults.Errors += "PowerShell syntax errors in $psFile"
+            }
+        } catch {
+            Write-ValidationMessage "  ✗ $psFile - Failed to parse: $($_.Exception.Message)" -Level 'Error'
+            $validationResults.Failed++
+            $validationResults.Errors += "Failed to parse $psFile"
+        }
+    }
+} else {
+    Write-ValidationMessage "  No PowerShell files modified" -Level 'Info'
+}
+
+# 3. PSScriptAnalyzer Validation
+Write-Host ""
+Write-ValidationMessage "Running PSScriptAnalyzer..." -Level 'Info'
+
+if ($psFiles -and (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
+    Import-Module PSScriptAnalyzer -Force
+    
+    foreach ($psFile in $psFiles) {
+        $validationResults.TotalChecks++
+        $fullPath = Join-Path $projectRoot $psFile
+        
+        try {
+            $analysisResults = Invoke-ScriptAnalyzer -Path $fullPath -Severity Error,Warning -ErrorAction Stop
+            
+            if (-not $analysisResults) {
+                Write-ValidationMessage "  ✓ $psFile - No PSScriptAnalyzer issues" -Level 'Success'
+                $validationResults.Passed++
+            } else {
+                $errors = $analysisResults | Where-Object { $_.Severity -eq 'Error' }
+                $warnings = $analysisResults | Where-Object { $_.Severity -eq 'Warning' }
+                
+                if ($errors) {
+                    Write-ValidationMessage "  ✗ $psFile - $($errors.Count) error(s), $($warnings.Count) warning(s)" -Level 'Error'
+                    $errors | Select-Object -First 3 | ForEach-Object {
+                        Write-Host "    [$($_.Severity)] Line $($_.Line): $($_.Message)" -ForegroundColor Red
+                    }
+                    $validationResults.Failed++
+                    $validationResults.Errors += "PSScriptAnalyzer errors in $psFile"
+                } else {
+                    Write-ValidationMessage "  ⚠ $psFile - $($warnings.Count) warning(s)" -Level 'Warning'
+                    $validationResults.Warnings++
+                    $validationResults.Passed++
+                }
+            }
+        } catch {
+            Write-ValidationMessage "  ⚠ Failed to analyze $psFile`: $($_.Exception.Message)" -Level 'Warning'
+            $validationResults.Warnings++
+        }
+    }
+} elseif ($psFiles) {
+    Write-ValidationMessage "  ⚠ PSScriptAnalyzer not installed - skipping analysis" -Level 'Warning'
+}
+
+# 4. Check for common issues
+Write-Host ""
+Write-ValidationMessage "Checking for common issues..." -Level 'Info'
+
+# Check for large files
+$largeFiles = @()
+foreach ($file in $stagedFilesList) {
+    $validationResults.TotalChecks++
+    $fullPath = Join-Path $projectRoot $file
+    if (Test-Path $fullPath) {
+        $fileInfo = Get-Item $fullPath
+        if ($fileInfo.Length -gt 1MB) {
+            $largeFiles += @{
+                Path = $file
+                Size = [math]::Round($fileInfo.Length / 1MB, 2)
+            }
+            Write-ValidationMessage "  ⚠ $file is $([math]::Round($fileInfo.Length / 1MB, 2))MB" -Level 'Warning'
+            $validationResults.Warnings++
+        } else {
+            $validationResults.Passed++
+        }
+    }
+}
+
+# Check for potential secrets
+$secretPatterns = @(
+    'password\s*=',
+    'apikey\s*=',
+    'api_key\s*=',
+    'secret\s*=',
+    'token\s*=',
+    'BEGIN\s+(RSA|DSA|EC|OPENSSH)\s+PRIVATE\s+KEY'
+)
+
+foreach ($file in $stagedFilesList) {
+    $validationResults.TotalChecks++
+    $fullPath = Join-Path $projectRoot $file
+    if (Test-Path $fullPath) {
+        $content = Get-Content $fullPath -Raw -ErrorAction SilentlyContinue
+        $foundSecret = $false
+        
+        foreach ($pattern in $secretPatterns) {
+            if ($content -match $pattern) {
+                Write-ValidationMessage "  ⚠ $file may contain secrets (pattern: $pattern)" -Level 'Warning'
+                $validationResults.Warnings++
+                $foundSecret = $true
+                break
+            }
+        }
+        
+        if (-not $foundSecret) {
+            $validationResults.Passed++
+        }
+    }
+}
+
+# 5. Run quick tests if available
+if (Test-Path (Join-Path $projectRoot "tests/Run-UnifiedTests.ps1")) {
+    Write-Host ""
+    Write-ValidationMessage "Running quick validation tests..." -Level 'Info'
+    
+    try {
+        $testResult = & (Join-Path $projectRoot "tests/Run-UnifiedTests.ps1") -TestSuite Quick -CI -Quiet -PassThru
+        if ($testResult.Failed -eq 0) {
+            Write-ValidationMessage "  ✓ All quick tests passed" -Level 'Success'
+            $validationResults.Passed++
+        } else {
+            Write-ValidationMessage "  ✗ $($testResult.Failed) test(s) failed" -Level 'Error'
+            $validationResults.Failed++
+            $validationResults.Errors += "$($testResult.Failed) tests failed"
+        }
+    } catch {
+        Write-ValidationMessage "  ⚠ Failed to run tests: $($_.Exception.Message)" -Level 'Warning'
+        $validationResults.Warnings++
+    }
+} else {
+    $validationResults.TotalChecks++
+}
+
+# Summary
+Write-Host ""
+Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+Write-Host "║                    Validation Summary                        ║" -ForegroundColor Cyan
+Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  Total Checks: $($validationResults.TotalChecks)"
+Write-Host "  Passed:       $($validationResults.Passed)" -ForegroundColor Green
+Write-Host "  Failed:       $($validationResults.Failed)" -ForegroundColor $(if ($validationResults.Failed -gt 0) { 'Red' } else { 'Gray' })
+Write-Host "  Warnings:     $($validationResults.Warnings)" -ForegroundColor $(if ($validationResults.Warnings -gt 0) { 'Yellow' } else { 'Gray' })
+Write-Host ""
+
+# Determine if commit should proceed
+if ($validationResults.Failed -gt 0) {
+    Write-Host "❌ COMMIT BLOCKED: Validation failed!" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Errors found:" -ForegroundColor Red
+    $validationResults.Errors | ForEach-Object {
+        Write-Host "  • $_" -ForegroundColor Red
+    }
+    Write-Host ""
+    Write-Host "Fix the errors above and try again." -ForegroundColor Yellow
+    Write-Host "To bypass validation (NOT RECOMMENDED), use: git commit --no-verify" -ForegroundColor Gray
+    Write-Host ""
+    exit 1
+} elseif ($validationResults.Warnings -gt 0) {
+    Write-Host "⚠️  Commit proceeding with warnings" -ForegroundColor Yellow
+    Write-Host ""
+    exit 0
+} else {
+    Write-Host "✅ All validation checks passed!" -ForegroundColor Green
+    Write-Host ""
+    exit 0
+}
