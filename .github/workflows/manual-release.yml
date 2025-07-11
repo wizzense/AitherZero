@@ -1,0 +1,148 @@
+name: 🚀 Manual Release Creator
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: 'patch'
+      
+      release_description:
+        description: 'Release description'
+        required: true
+        default: 'Bug fixes and improvements'
+      
+      custom_version:
+        description: 'Custom version (optional, overrides release type)'
+        required: false
+        type: string
+      
+      dry_run:
+        description: 'Dry run (preview only)'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  create_release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    
+    steps:
+      - name: 🔍 Validate inputs
+        run: |
+          if [[ -n "${{ inputs.custom_version }}" ]]; then
+            if ! [[ "${{ inputs.custom_version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "❌ Invalid version format. Must be X.Y.Z (e.g., 1.2.3)"
+              exit 1
+            fi
+          fi
+      
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 🔧 Setup PowerShell
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+      
+      - name: 📦 Install PowerShell modules
+        shell: pwsh
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module -Name Pester -MinimumVersion 5.0 -Force -Scope CurrentUser
+      
+      - name: 🚀 Create release
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          Write-Host "🎯 Manual Release Creator" -ForegroundColor Cyan
+          Write-Host "========================" -ForegroundColor Cyan
+          
+          # Import PatchManager
+          Import-Module ./aither-core/modules/PatchManager -Force
+          
+          # Build parameters
+          $params = @{
+            Description = "${{ inputs.release_description }}"
+          }
+          
+          # Use custom version if provided
+          if ("${{ inputs.custom_version }}") {
+            $params['Version'] = "${{ inputs.custom_version }}"
+            Write-Host "📌 Using custom version: ${{ inputs.custom_version }}" -ForegroundColor Green
+          } else {
+            $params['ReleaseType'] = "${{ inputs.release_type }}"
+            Write-Host "📌 Creating ${{ inputs.release_type }} release" -ForegroundColor Green
+          }
+          
+          # Add dry run if specified
+          if ($${{ inputs.dry_run }}) {
+            $params['DryRun'] = $true
+            Write-Host "🔍 DRY RUN MODE - No changes will be made" -ForegroundColor Magenta
+          }
+          
+          Write-Host "📝 Description: ${{ inputs.release_description }}" -ForegroundColor Yellow
+          Write-Host ""
+          
+          try {
+            # Invoke release workflow
+            Write-Host "🎯 Starting release process..." -ForegroundColor Cyan
+            $result = Invoke-ReleaseWorkflow @params
+            
+            if ($result.Success) {
+              Write-Host "`n✅ Release completed successfully!" -ForegroundColor Green
+              
+              if ($result.ReleaseUrl) {
+                Write-Host "🎉 Release URL: $($result.ReleaseUrl)" -ForegroundColor Cyan
+                
+                # Set output for job summary
+                echo "RELEASE_URL=$($result.ReleaseUrl)" >> $env:GITHUB_ENV
+                echo "RELEASE_VERSION=$($result.Version)" >> $env:GITHUB_ENV
+              }
+            } else {
+              throw "Release failed: $($result.Message)"
+            }
+          } catch {
+            Write-Host "`n❌ Release failed!" -ForegroundColor Red
+            Write-Host "Error: $_" -ForegroundColor Red
+            exit 1
+          }
+      
+      - name: 📋 Create job summary
+        if: success()
+        run: |
+          if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+            echo "## 🔍 Dry Run Summary" >> $GITHUB_STEP_SUMMARY
+            echo "This was a dry run. No actual release was created." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ✅ Release Created Successfully!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            if [[ -n "$RELEASE_URL" ]]; then
+              echo "🎉 **Release URL**: $RELEASE_URL" >> $GITHUB_STEP_SUMMARY
+              echo "📌 **Version**: $RELEASE_VERSION" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Release Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Type**: ${{ inputs.release_type }}" >> $GITHUB_STEP_SUMMARY
+          if [[ -n "${{ inputs.custom_version }}" ]]; then
+            echo "- **Custom Version**: ${{ inputs.custom_version }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "- **Description**: ${{ inputs.release_description }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY

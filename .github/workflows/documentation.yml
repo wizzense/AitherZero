@@ -1,0 +1,201 @@
+name: =Ú Documentation & Sync Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'docs/**'
+      - '**.md'
+      - 'aither-core/modules/**/README.md'
+      - '.github/workflows/documentation.yml'
+  
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday at midnight UTC
+  
+  workflow_dispatch:
+    inputs:
+      generate_api_docs:
+        description: 'Generate API documentation'
+        required: false
+        type: boolean
+        default: true
+      
+      sync_wiki:
+        description: 'Sync documentation to wiki'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  generate_docs:
+    name: Generate Documentation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+    
+    steps:
+      - name: =å Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: =' Setup PowerShell
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+      
+      - name: =æ Install documentation tools
+        shell: pwsh
+        run: |
+          # Install PlatyPS for PowerShell documentation
+          Install-Module -Name platyPS -Force -Scope CurrentUser
+          
+          # Install other required modules
+          Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+      
+      - name: =Ý Generate module documentation
+        if: github.event.inputs.generate_api_docs != 'false'
+        shell: pwsh
+        run: |
+          Write-Host "Generating API documentation..." -ForegroundColor Cyan
+          
+          # Create docs directory if it doesn't exist
+          $docsPath = "./docs/api"
+          if (-not (Test-Path $docsPath)) {
+            New-Item -Path $docsPath -ItemType Directory -Force
+          }
+          
+          # Import PlatyPS
+          Import-Module platyPS -Force
+          
+          # Generate documentation for each module
+          $modules = Get-ChildItem "./aither-core/modules" -Directory
+          
+          foreach ($module in $modules) {
+            Write-Host "Processing module: $($module.Name)" -ForegroundColor Yellow
+            
+            $modulePath = Join-Path $module.FullName "$($module.Name).psd1"
+            if (Test-Path $modulePath) {
+              try {
+                # Import module
+                Import-Module $modulePath -Force
+                
+                # Generate markdown help
+                $moduleDocsPath = Join-Path $docsPath $module.Name
+                New-Item -Path $moduleDocsPath -ItemType Directory -Force -ErrorAction SilentlyContinue
+                
+                New-MarkdownHelp -Module $module.Name -OutputFolder $moduleDocsPath -Force
+                
+                Write-Host " Generated docs for $($module.Name)" -ForegroundColor Green
+              } catch {
+                Write-Host "  Failed to generate docs for $($module.Name): $_" -ForegroundColor Yellow
+              }
+            }
+          }
+      
+      - name: =Ê Generate module overview
+        shell: pwsh
+        run: |
+          Write-Host "Generating module overview..." -ForegroundColor Cyan
+          
+          $overview = @"
+          # AitherZero Modules Overview
+          
+          Generated on: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+          
+          ## Available Modules
+          
+          | Module | Description | Functions | Version |
+          |--------|-------------|-----------|---------|
+          "@
+          
+          $modules = Get-ChildItem "./aither-core/modules" -Directory
+          
+          foreach ($module in $modules) {
+            $manifestPath = Join-Path $module.FullName "$($module.Name).psd1"
+            if (Test-Path $manifestPath) {
+              try {
+                $manifest = Import-PowerShellDataFile $manifestPath
+                $description = $manifest.Description -replace '\r?\n', ' '
+                $functionCount = if ($manifest.FunctionsToExport) { $manifest.FunctionsToExport.Count } else { 0 }
+                $version = $manifest.ModuleVersion
+                
+                $overview += "`n| $($module.Name) | $description | $functionCount | $version |"
+              } catch {
+                $overview += "`n| $($module.Name) | Error reading manifest | - | - |"
+              }
+            }
+          }
+          
+          $overview | Set-Content "./docs/MODULES.md"
+          Write-Host " Module overview generated" -ForegroundColor Green
+      
+      - name: = Update documentation index
+        shell: pwsh
+        run: |
+          Write-Host "Updating documentation index..." -ForegroundColor Cyan
+          
+          # Check if docs/README.md exists
+          $indexPath = "./docs/README.md"
+          if (-not (Test-Path $indexPath)) {
+            # Create a basic index
+            @"
+          # AitherZero Documentation
+          
+          Welcome to the AitherZero documentation!
+          
+          ## Quick Links
+          
+          - [Getting Started](../README.md)
+          - [Module Overview](MODULES.md)
+          - [API Documentation](api/)
+          - [Contributing](../CONTRIBUTING.md)
+          - [Architecture](ARCHITECTURE.md)
+          
+          ## Documentation Structure
+          
+          - `/docs` - Main documentation
+          - `/docs/api` - Auto-generated API documentation
+          - `/docs/guides` - User guides and tutorials
+          - `/docs/architecture` - System design documentation
+          
+          Last updated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+          "@ | Set-Content $indexPath
+          }
+      
+      - name: =¾ Commit documentation changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Check if there are changes
+          if [[ -n $(git status --porcelain docs/) ]]; then
+            git add docs/
+            git commit -m "=Ú Update documentation [skip ci]"
+            git push
+            echo " Documentation updated and pushed"
+          else
+            echo "9 No documentation changes to commit"
+          fi
+      
+      - name: < Sync to wiki
+        if: github.event.inputs.sync_wiki != 'false' && github.ref == 'refs/heads/main'
+        run: |
+          echo "Wiki sync would happen here (not implemented yet)"
+          # TODO: Implement wiki sync using GitHub API
+      
+      - name: =Ë Create job summary
+        if: always()
+        run: |
+          echo "## =Ú Documentation Generation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Generated Documentation" >> $GITHUB_STEP_SUMMARY
+          echo "- Module API documentation: " >> $GITHUB_STEP_SUMMARY
+          echo "- Module overview: " >> $GITHUB_STEP_SUMMARY
+          echo "- Documentation index: " >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Details" >> $GITHUB_STEP_SUMMARY
+          echo "- Triggered by: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Time: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
