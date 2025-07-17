@@ -30,7 +30,8 @@
       "Bash(gh pr:*)",
       "mcp__ide__getDiagnostics",
       "Bash(git checkout:*)",
-      "Bash(./tests/Run-UnifiedTests.ps1 -TestSuite Quick -WhatIf)"
+      "Bash(./tests/Run-UnifiedTests.ps1 -TestSuite Quick -WhatIf)",
+      "Bash(gh run download:*)"
     ],
     "deny": []
   }

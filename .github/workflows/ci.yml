@@ -153,6 +153,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install PowerShell (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            # Download and install fresh PowerShell on Linux
+            wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb
+            sudo dpkg -i packages-microsoft-prod.deb
+            sudo apt-get update
+            sudo apt-get install -y powershell
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
+            # Install PowerShell on macOS
+            brew install --cask powershell
+          fi
+        shell: bash
+
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
@@ -176,9 +191,6 @@ jobs:
         run: |
           # Ensure we're in the right directory
           Set-Location $env:GITHUB_WORKSPACE
-          
-          # Set preference to skip autoloading problematic modules
-          $env:PSModuleAutoloadingPreference = 'None'
           
           # Run tests with CI optimizations
           ./tests/Run-UnifiedTests.ps1 -TestSuite CI -CI -OutputFormat All -Performance -ShowProgress
@@ -238,9 +250,6 @@ jobs:
           $dashboardDir = "dashboard"
           New-Item -ItemType Directory -Path $dashboardDir -Force
 
-          # Set environment variable to skip module autoloading
-          $env:PSModuleAutoloadingPreference = 'None'
-          
           # Generate comprehensive report using the reporting script
           try {
             # The script expects artifacts in audit-reports directory
