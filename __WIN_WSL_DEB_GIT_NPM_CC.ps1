@@ -1,3 +1,4 @@
+
 # Complete Development Environment Setup Script
 # Run this script as Administrator
 
@@ -30,7 +31,8 @@ if (!(Test-CommandExists choco)) {
 Write-Host 'Installing Visual Studio Code...' -ForegroundColor Yellow
 if (!(Test-Path "$env:LOCALAPPDATA\Programs\Microsoft VS Code\Code.exe")) {
     choco install vscode -y
-} else {
+}
+else {
     Write-Host 'VS Code already installed' -ForegroundColor Green
 }
 
@@ -38,7 +40,8 @@ if (!(Test-Path "$env:LOCALAPPDATA\Programs\Microsoft VS Code\Code.exe")) {
 Write-Host 'Installing GitHub Desktop...' -ForegroundColor Yellow
 if (!(Test-Path "$env:LOCALAPPDATA\GitHubDesktop\GitHubDesktop.exe")) {
     choco install github-desktop -y
-} else {
+}
+else {
     Write-Host 'GitHub Desktop already installed' -ForegroundColor Green
 }
 
@@ -77,7 +80,8 @@ if (!$debianInstalled) {
     Write-Host 'Please complete Debian setup in the window that opens (create username/password)' -ForegroundColor Cyan
     Start-Process debian.exe
     Read-Host "Press Enter after you've completed Debian setup"
-} else {
+}
+else {
     Write-Host 'Debian already installed' -ForegroundColor Green
 }
 
