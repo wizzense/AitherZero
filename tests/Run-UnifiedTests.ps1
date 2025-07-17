@@ -201,6 +201,11 @@ param(
 $ErrorActionPreference = 'Stop'
 $VerbosePreference = if ($VerboseOutput) { 'Continue' } else { 'SilentlyContinue' }
 
+# Prevent autoloading of problematic modules in CI environments
+if ($env:GITHUB_ACTIONS -or $CI) {
+    $PSModuleAutoloadingPreference = 'None'
+}
+
 # Global test session tracking
 $script:TestSession = @{
     StartTime = Get-Date
