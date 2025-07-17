@@ -238,23 +238,33 @@ jobs:
           $dashboardDir = "dashboard"
           New-Item -ItemType Directory -Path $dashboardDir -Force
 
-          # Simple dashboard generation
-          $runNumber = "${{ github.run_number }}"
-          $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
-          $branch = "${{ github.ref_name }}"
-          $commit = "${{ github.sha }}"
-          $runId = "${{ github.run_id }}"
+          # Set environment variable to skip module autoloading
+          $env:PSModuleAutoloadingPreference = 'None'
           
-          $html = "<html><head><title>AitherZero CI Dashboard</title></head><body>"
-          $html += "<h1>AitherZero CI Dashboard</h1>"
-          $html += "<p>Build: $runNumber | Date: $timestamp</p>"
-          $html += "<p>Branch: $branch | Commit: $commit</p>"
-          $html += "<p>Status: DASHBOARD GENERATED</p>"
-          $html += "<p>Run ID: $runId</p>"
-          $html += "</body></html>"
-
-          $html | Set-Content "$dashboardDir/index.html"
-          Write-Host "✅ Dashboard generated successfully"
+          # Generate comprehensive report using the reporting script
+          try {
+            ./scripts/reporting/Generate-ComprehensiveReport.ps1 -ReportPath "$dashboardDir/index.html" -IncludeDetailedAnalysis
+            Write-Host "✅ Comprehensive dashboard generated successfully"
+          } catch {
+            Write-Host "⚠️ Comprehensive report generation failed, creating fallback dashboard"
+            Write-Host "Error: $_"
+            
+            # Fallback to simple dashboard
+            $runNumber = "${{ github.run_number }}"
+            $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
+            $branch = "${{ github.ref_name }}"
+            $commit = "${{ github.sha }}"
+            
+            $html = "<html><head><title>AitherZero CI Dashboard</title></head><body>"
+            $html += "<h1>AitherZero CI Dashboard</h1>"
+            $html += "<p>Build: $runNumber | Date: $timestamp</p>"
+            $html += "<p>Branch: $branch | Commit: $commit</p>"
+            $html += "<p>Status: FALLBACK DASHBOARD (Comprehensive report failed)</p>"
+            $html += "<p>Error: $_</p>"
+            $html += "</body></html>"
+            
+            $html | Set-Content "$dashboardDir/index.html"
+          }
 
       - name: Upload dashboard
         uses: actions/upload-artifact@v4
