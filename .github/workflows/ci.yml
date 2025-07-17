@@ -153,19 +153,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Fix PowerShell Module (Linux/macOS)
-        if: runner.os != 'Windows'
-        run: |
-          # Fix the corrupted Microsoft.PowerShell.Utility module in GitHub Actions
-          # The module manifest has an invalid NestedModule entry that we need to fix
-          MODULE_PATH="/opt/microsoft/powershell/7/Modules/Microsoft.PowerShell.Utility/Microsoft.PowerShell.Utility.psd1"
-          if [ -f "$MODULE_PATH" ]; then
-            echo "Fixing corrupted PowerShell module manifest..."
-            # Remove the problematic NestedModule entry
-            sudo sed -i '/Microsoft.PowerShell.Commands.Utility.dll/d' "$MODULE_PATH"
-          fi
-        shell: bash
-
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
@@ -180,73 +167,21 @@ jobs:
             ${{ runner.os }}-test-deps-v2
             ${{ runner.os }}-test-deps-
 
-      - name: Skip test dependencies
+      - name: Install test dependencies
         run: |
-          echo "⚠️ Skipping Pester installation due to GitHub Actions PowerShell corruption"
-          echo "Will run basic validation instead of full test suite"
+          Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser -SkipPublisherCheck
+          Write-Host "✅ Test dependencies installed"
 
       - name: Run unified tests
         run: |
           # Ensure we're in the right directory
           Set-Location $env:GITHUB_WORKSPACE
           
-          # For now, just run a basic test to verify the project structure
-          # The GitHub Actions PowerShell is too broken to run full tests
-          echo "Running basic CI validation..."
+          # Disable parallel execution to avoid module loading issues
+          $env:AITHERZERO_DISABLE_PARALLEL = "true"
           
-          # Verify key files exist
-          $requiredFiles = @(
-            "Start-AitherZero.ps1",
-            "aither-core/aither-core.ps1",
-            "VERSION"
-          )
-          
-          $allExist = $true
-          foreach ($file in $requiredFiles) {
-            if (-not (Test-Path $file)) {
-              echo "❌ Missing required file: $file"
-              $allExist = $false
-            } else {
-              echo "✅ Found: $file"
-            }
-          }
-          
-          # Verify key directories
-          $requiredDirs = @(
-            "aither-core/modules",
-            "tests",
-            "configs",
-            "opentofu",
-            "scripts"
-          )
-          
-          foreach ($dir in $requiredDirs) {
-            if (-not (Test-Path $dir)) {
-              echo "❌ Missing required directory: $dir"
-              $allExist = $false
-            } else {
-              echo "✅ Found: $dir"
-            }
-          }
-          
-          # Basic syntax check on main script
-          echo "`nValidating PowerShell syntax..."
-          $errors = $null
-          $ast = [System.Management.Automation.Language.Parser]::ParseFile("Start-AitherZero.ps1", [ref]$null, [ref]$errors)
-          if ($errors) {
-            echo "❌ Syntax errors found in Start-AitherZero.ps1"
-            $allExist = $false
-          } else {
-            echo "✅ PowerShell syntax valid"
-          }
-          
-          if (-not $allExist) {
-            echo "`n❌ CI validation failed"
-            exit 1
-          }
-          
-          echo "`n✅ Basic CI validation passed"
-          echo "Note: Full test suite skipped due to GitHub Actions PowerShell issues"
+          # Run tests with CI optimizations
+          ./tests/Run-UnifiedTests.ps1 -TestSuite CI -CI -OutputFormat All -ShowProgress
         continue-on-error: false
 
       - name: Upload test results

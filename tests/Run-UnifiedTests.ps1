@@ -409,19 +409,24 @@ function Test-Prerequisites {
         return $false
     }
     
-    # Check for ParallelExecution module
-    $parallelPath = Join-Path $script:ProjectRoot "aither-core/modules/ParallelExecution"
-    if (Test-Path $parallelPath) {
-        try {
-            Import-Module $parallelPath -Force
-            Write-TestLog "ParallelExecution module loaded" -Level 'Success'
-            $script:TestSession.Configuration.ParallelSupport = $true
-        } catch {
-            Write-TestLog "ParallelExecution module failed to load: $($_.Exception.Message)" -Level 'Warning'
+    # Check for ParallelExecution module (skip if disabled by environment)
+    if ($env:AITHERZERO_DISABLE_PARALLEL -eq "true") {
+        Write-TestLog "ParallelExecution disabled by environment variable" -Level 'Info'
+        $script:TestSession.Configuration.ParallelSupport = $false
+    } else {
+        $parallelPath = Join-Path $script:ProjectRoot "aither-core/modules/ParallelExecution"
+        if (Test-Path $parallelPath) {
+            try {
+                Import-Module $parallelPath -Force
+                Write-TestLog "ParallelExecution module loaded" -Level 'Success'
+                $script:TestSession.Configuration.ParallelSupport = $true
+            } catch {
+                Write-TestLog "ParallelExecution module failed to load: $($_.Exception.Message)" -Level 'Warning'
+                $script:TestSession.Configuration.ParallelSupport = $false
+            }
+        } else {
             $script:TestSession.Configuration.ParallelSupport = $false
         }
-    } else {
-        $script:TestSession.Configuration.ParallelSupport = $false
     }
     
     Write-TestLog "Prerequisites validation completed" -Level 'Success'
