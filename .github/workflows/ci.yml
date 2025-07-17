@@ -156,8 +156,14 @@ jobs:
       - name: Fix PowerShell Module (Linux/macOS)
         if: runner.os != 'Windows'
         run: |
-          # Remove the corrupted Microsoft.PowerShell.Utility module that causes issues in GitHub Actions
-          sudo rm -rf /opt/microsoft/powershell/7/Modules/Microsoft.PowerShell.Utility
+          # Fix the corrupted Microsoft.PowerShell.Utility module in GitHub Actions
+          # The module manifest has an invalid NestedModule entry that we need to fix
+          MODULE_PATH="/opt/microsoft/powershell/7/Modules/Microsoft.PowerShell.Utility/Microsoft.PowerShell.Utility.psd1"
+          if [ -f "$MODULE_PATH" ]; then
+            echo "Fixing corrupted PowerShell module manifest..."
+            # Remove the problematic NestedModule entry
+            sudo sed -i '/Microsoft.PowerShell.Commands.Utility.dll/d' "$MODULE_PATH"
+          fi
         shell: bash
 
       - name: Cache dependencies
