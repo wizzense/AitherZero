@@ -153,19 +153,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install PowerShell (Linux/macOS)
+      - name: Fix PowerShell Module (Linux/macOS)
         if: runner.os != 'Windows'
         run: |
-          if [[ "${{ runner.os }}" == "Linux" ]]; then
-            # Download and install fresh PowerShell on Linux
-            wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb
-            sudo dpkg -i packages-microsoft-prod.deb
-            sudo apt-get update
-            sudo apt-get install -y powershell
-          elif [[ "${{ runner.os }}" == "macOS" ]]; then
-            # Install PowerShell on macOS
-            brew install --cask powershell
-          fi
+          # Remove the corrupted Microsoft.PowerShell.Utility module that causes issues in GitHub Actions
+          sudo rm -rf /opt/microsoft/powershell/7/Modules/Microsoft.PowerShell.Utility
         shell: bash
 
       - name: Cache dependencies
