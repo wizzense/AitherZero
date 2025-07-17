@@ -243,7 +243,8 @@ jobs:
           
           # Generate comprehensive report using the reporting script
           try {
-            ./scripts/reporting/Generate-ComprehensiveReport.ps1 -ReportPath "$dashboardDir/index.html" -IncludeDetailedAnalysis
+            # The script expects artifacts in audit-reports directory
+            ./scripts/reporting/Generate-ComprehensiveReport.ps1 -ReportPath "$dashboardDir/index.html" -ArtifactsPath "./artifacts" -IncludeDetailedAnalysis
             Write-Host "✅ Comprehensive dashboard generated successfully"
           } catch {
             Write-Host "⚠️ Comprehensive report generation failed, creating fallback dashboard"
