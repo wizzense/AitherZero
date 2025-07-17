@@ -28,7 +28,10 @@
       "Bash(gh workflow run:*)",
       "Bash(gh workflow:*)",
       "Bash(gh pr:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(git checkout:*)",
+      "Bash(./tests/Run-UnifiedTests.ps1 -TestSuite Quick -WhatIf)",
+      "Bash(gh run download:*)"
     ],
     "deny": []
   }

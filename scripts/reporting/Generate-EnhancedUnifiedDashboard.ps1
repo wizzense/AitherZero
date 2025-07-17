@@ -105,8 +105,8 @@ try {
 }
 
 # Enhanced logging function
-[CmdletBinding()]
 function Write-DashboardLog {
+    [CmdletBinding()]
     param(
         [string]$Message,
         [ValidateSet('INFO', 'WARNING', 'ERROR', 'SUCCESS', 'DEBUG')]

@@ -15,7 +15,7 @@ RootModule = 'ParallelExecution.psm1'
 ModuleVersion = '1.0.0'
 
 # Supported PSEditions
-CompatiblePSEditions = @('Desktop', 'Core')
+CompatiblePSEditions = @('Core')
 
 # ID used to uniquely identify this module
 GUID = '12345678-90ab-cdef-1234-567890abcdef'

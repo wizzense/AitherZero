@@ -345,6 +345,7 @@ Describe "RemoteConnection Module Tests" {
         It "Should integrate with SecureCredentials module" -Skip:(-not $script:hasSecureCredentials) {
             # Create a test credential
             if (Get-Command New-SecureCredential -ErrorAction SilentlyContinue) {
+                [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '', Justification='Test password required for unit tests')]
                 $securePassword = ConvertTo-SecureString "TestPassword123!" -AsPlainText -Force
                 New-SecureCredential -CredentialName $script:testCredentialName -Username "testuser" -Password $securePassword
 
