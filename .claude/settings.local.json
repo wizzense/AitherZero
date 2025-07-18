@@ -32,7 +32,8 @@
       "Bash(git checkout:*)",
       "Bash(./tests/Run-UnifiedTests.ps1 -TestSuite Quick -WhatIf)",
       "Bash(gh run download:*)",
-      "Bash(/mnt/c/Program Files/PowerShell/7/pwsh.exe -NoProfile -Command \"./Start-AitherZero.ps1 -Help\")"
+      "Bash(/mnt/c/Program Files/PowerShell/7/pwsh.exe -NoProfile -Command \"./Start-AitherZero.ps1 -Help\")",
+      "WebFetch(domain:docs.anthropic.com)"
     ],
     "deny": []
   }
