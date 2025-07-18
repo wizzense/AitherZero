@@ -18,6 +18,36 @@
     Tests the complete setup wizard experience and integration points
 #>
 
+# Global helper functions for all tests
+function Write-SetupTestLog {
+    param([string]$Message, [string]$Level = 'INFO')
+    $colors = @{ 'INFO' = 'White'; 'SUCCESS' = 'Green'; 'WARNING' = 'Yellow'; 'ERROR' = 'Red'; 'DEBUG' = 'Gray' }
+    $timestamp = Get-Date -Format 'HH:mm:ss.fff'
+    Write-Host "[$timestamp] [SetupWizard] [$Level] $Message" -ForegroundColor $colors[$Level]
+}
+
+function Test-SetupWizardModule {
+    $projectRoot = Split-Path $PSScriptRoot -Parent
+    $modulePath = Join-Path $projectRoot "aither-core/modules/SetupWizard"
+    return Test-Path $modulePath
+}
+
+function Import-SetupWizardModule {
+    if (Test-SetupWizardModule) {
+        try {
+            $projectRoot = Split-Path $PSScriptRoot -Parent
+            $manifestPath = Join-Path $projectRoot "aither-core/modules/SetupWizard/SetupWizard.psd1"
+            Import-Module $manifestPath -Force -ErrorAction Stop
+            return $true
+        }
+        catch {
+            Write-SetupTestLog "Failed to import SetupWizard module: $($_.Exception.Message)" -Level 'ERROR'
+            return $false
+        }
+    }
+    return $false
+}
+
 BeforeAll {
     Import-Module Pester -Force
 
@@ -30,7 +60,7 @@ BeforeAll {
         TestTimeout = 120
         MaxSetupSteps = 20
         TestProfiles = @('minimal', 'developer', 'full')
-        TempDir = Join-Path $env:TEMP "AitherZero-SetupWizard-Tests-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+        TempDir = Join-Path ([System.IO.Path]::GetTempPath()) "AitherZero-SetupWizard-Tests-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
     }
 
     # Create temp directory for tests
@@ -38,31 +68,7 @@ BeforeAll {
         New-Item -Path $script:TestConfig.TempDir -ItemType Directory -Force | Out-Null
     }
 
-    # Helper functions
-    function Write-SetupTestLog {
-        param([string]$Message, [string]$Level = 'INFO')
-        $colors = @{ 'INFO' = 'White'; 'SUCCESS' = 'Green'; 'WARNING' = 'Yellow'; 'ERROR' = 'Red'; 'DEBUG' = 'Gray' }
-        $timestamp = Get-Date -Format 'HH:mm:ss.fff'
-        Write-Host "[$timestamp] [SetupWizard] [$Level] $Message" -ForegroundColor $colors[$Level]
-    }
-
-    function Test-SetupWizardModule {
-        return Test-Path $script:TestConfig.SetupWizardPath
-    }
-
-    function Import-SetupWizardModule {
-        if (Test-SetupWizardModule) {
-            try {
-                Import-Module $script:TestConfig.SetupWizardPath -Force -ErrorAction Stop
-                return $true
-            }
-            catch {
-                Write-SetupTestLog "Failed to import SetupWizard module: $($_.Exception.Message)" -Level 'ERROR'
-                return $false
-            }
-        }
-        return $false
-    }
+    # Helper functions have been moved to global scope
 
     function New-MockSetupState {
         param(
@@ -96,9 +102,9 @@ BeforeAll {
         return $baseState
     }
 
-    Write-SetupTestLog "Starting SetupWizard Integration Tests" -Level 'INFO'
-    Write-SetupTestLog "SetupWizard Module Path: $($script:TestConfig.SetupWizardPath)" -Level 'INFO'
-    Write-SetupTestLog "Test Temp Directory: $($script:TestConfig.TempDir)" -Level 'INFO'
+    # Write-SetupTestLog "Starting SetupWizard Integration Tests" -Level 'INFO'
+    # Write-SetupTestLog "SetupWizard Module Path: $($script:TestConfig.SetupWizardPath)" -Level 'INFO'
+    # Write-SetupTestLog "Test Temp Directory: $($script:TestConfig.TempDir)" -Level 'INFO'
 }
 
 Describe "SetupWizard Module Loading and Structure" -Tags @('SetupWizard', 'Module', 'Critical') {
@@ -109,8 +115,9 @@ Describe "SetupWizard Module Loading and Structure" -Tags @('SetupWizard', 'Modu
         }
 
         It "Should import SetupWizard module successfully" {
-            if (Test-Path $script:TestConfig.SetupWizardPath) {
-                { Import-Module $script:TestConfig.SetupWizardPath -Force -ErrorAction Stop } | Should -Not -Throw -Because "SetupWizard module should import without errors"
+            $manifestPath = Join-Path $script:TestConfig.SetupWizardPath "SetupWizard.psd1"
+            if (Test-Path $manifestPath) {
+                { Import-Module $manifestPath -Force -ErrorAction Stop } | Should -Not -Throw -Because "SetupWizard module should import without errors"
             } else {
                 Set-ItResult -Skipped -Because "SetupWizard module not found"
             }
@@ -128,20 +135,27 @@ Describe "SetupWizard Module Loading and Structure" -Tags @('SetupWizard', 'Modu
             }
         }
 
-        It "Should export required functions" -Skip:(-not (Import-SetupWizardModule)) {
-            $requiredFunctions = @(
-                'Start-IntelligentSetup',
-                'Get-PlatformInfo',
-                'Get-SetupSteps'
-            )
+        It "Should export required functions" {
+            $manifestPath = Join-Path $script:TestConfig.SetupWizardPath "SetupWizard.psd1"
+            if (Test-Path $manifestPath) {
+                Import-Module $manifestPath -Force -ErrorAction SilentlyContinue
+                
+                $requiredFunctions = @(
+                    'Start-IntelligentSetup',
+                    'Get-PlatformInfo',
+                    'Get-SetupSteps'
+                )
 
-            foreach ($function in $requiredFunctions) {
-                Get-Command $function -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty -Because "Function $function should be exported"
+                foreach ($function in $requiredFunctions) {
+                    Get-Command $function -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty -Because "Function $function should be exported"
+                }
+            } else {
+                Set-ItResult -Skipped -Because "SetupWizard module not found"
             }
         }
     }
 
-    Context "Module Function Validation" -Skip:(-not (Import-SetupWizardModule)) {
+    Context "Module Function Validation" {
         It "Should validate Start-IntelligentSetup function parameters" {
             $function = Get-Command Start-IntelligentSetup -ErrorAction SilentlyContinue
 
