@@ -1,0 +1,798 @@
+name: "CI - Enhanced with Detailed Metrics"
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths-ignore:
+      - '*.md'
+      - 'docs/**'
+      - '.vscode/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths-ignore:
+      - '*.md'
+      - 'docs/**'
+      - '.vscode/**'
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: true
+
+# Prevent duplicate runs
+concurrency:
+  group: ci-enhanced-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  analyze-changes:
+    name: "Analyze Changes"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      has-code-changes: ${{ steps.changes.outputs.code }}
+      has-workflow-changes: ${{ steps.changes.outputs.workflows }}
+      has-test-changes: ${{ steps.changes.outputs.tests }}
+      changed-files: ${{ steps.changes.outputs.changed-files }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for changes
+        id: changes
+        run: |
+          $codeFiles = git diff --name-only HEAD~1 HEAD | Where-Object { 
+            $_ -match '\.(ps1|psm1|psd1)$' -and $_ -notmatch '^(docs|\.vscode)/' 
+          }
+          $workflowFiles = git diff --name-only HEAD~1 HEAD | Where-Object { 
+            $_ -match '^\.github/workflows/'
+          }
+          $testFiles = git diff --name-only HEAD~1 HEAD | Where-Object { 
+            $_ -match '^tests/'
+          }
+          
+          $hasCodeChanges = if ($codeFiles.Count -gt 0) { 'true' } else { 'false' }
+          $hasWorkflowChanges = if ($workflowFiles.Count -gt 0) { 'true' } else { 'false' }
+          $hasTestChanges = if ($testFiles.Count -gt 0) { 'true' } else { 'false' }
+          
+          # Save changed files list
+          $allChangedFiles = git diff --name-only HEAD~1 HEAD
+          $changedFilesJson = $allChangedFiles | ConvertTo-Json -Compress
+          
+          echo "code=$hasCodeChanges" >> $env:GITHUB_OUTPUT
+          echo "workflows=$hasWorkflowChanges" >> $env:GITHUB_OUTPUT
+          echo "tests=$hasTestChanges" >> $env:GITHUB_OUTPUT
+          echo "changed-files=$changedFilesJson" >> $env:GITHUB_OUTPUT
+          
+          Write-Host "Code changes: $($codeFiles.Count) files"
+          Write-Host "Workflow changes: $($workflowFiles.Count) files"
+          Write-Host "Test changes: $($testFiles.Count) files"
+
+  quality-check:
+    name: "Enhanced Quality Check"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: analyze-changes
+    if: needs.analyze-changes.outputs.has-code-changes == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache PowerShell modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/powershell/Modules
+            ~/Documents/PowerShell/Modules
+            ~/.config/powershell
+            ~/.cache/powershell
+          key: ${{ runner.os }}-ps-modules-${{ hashFiles('**/*.psd1', '**/*.psm1') }}-v3
+          restore-keys: |
+            ${{ runner.os }}-ps-modules-v3
+            ${{ runner.os }}-ps-modules-
+
+      - name: Install analysis tools
+        run: |
+          Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck
+          Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser -SkipPublisherCheck
+
+      - name: Run enhanced quality analysis
+        run: |
+          # Create results directory
+          $resultsDir = "quality-results"
+          New-Item -ItemType Directory -Path $resultsDir -Force
+          
+          # Load PSScriptAnalyzer settings if available
+          $settingsPath = "./PSScriptAnalyzerSettings.psd1"
+          $settingsParam = if (Test-Path $settingsPath) { @{Settings = $settingsPath} } else { @{} }
+          
+          # Get PowerShell files
+          $files = Get-ChildItem -Include "*.ps1","*.psm1","*.psd1" -Recurse |
+                   Where-Object { $_.FullName -notlike "*test*" -and $_.FullName -notlike "*build*" }
+          
+          Write-Host "Found $($files.Count) PowerShell files to analyze"
+          
+          $allResults = @()
+          $resultsByFile = @{}
+          $resultsBySeverity = @{ Error = 0; Warning = 0; Information = 0 }
+          $resultsByRule = @{}
+          
+          foreach ($file in $files) {
+            Write-Host "Analyzing: $($file.Name)"
+            $fileResults = Invoke-ScriptAnalyzer -Path $file.FullName @settingsParam
+            
+            if ($fileResults) {
+              $allResults += $fileResults
+              $resultsByFile[$file.Name] = $fileResults
+              
+              foreach ($result in $fileResults) {
+                $resultsBySeverity[$result.Severity]++
+                
+                if (-not $resultsByRule.ContainsKey($result.RuleName)) {
+                  $resultsByRule[$result.RuleName] = 0
+                }
+                $resultsByRule[$result.RuleName]++
+                
+                # Create GitHub annotation
+                if ($result.Severity -eq 'Error') {
+                  Write-Host "::error file=$($result.ScriptPath),line=$($result.Line)::$($result.Message)"
+                } elseif ($result.Severity -eq 'Warning') {
+                  Write-Host "::warning file=$($result.ScriptPath),line=$($result.Line)::$($result.Message)"
+                }
+              }
+            }
+          }
+          
+          # Generate detailed report
+          $qualityReport = @{
+            Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC"
+            TotalFiles = $files.Count
+            TotalIssues = $allResults.Count
+            BySeverity = $resultsBySeverity
+            ByRule = $resultsByRule
+            Files = @()
+          }
+          
+          foreach ($file in $resultsByFile.Keys) {
+            $fileIssues = $resultsByFile[$file]
+            $qualityReport.Files += @{
+              Name = $file
+              Issues = $fileIssues | ForEach-Object {
+                @{
+                  Line = $_.Line
+                  Column = $_.Column
+                  Severity = $_.Severity.ToString()
+                  Rule = $_.RuleName
+                  Message = $_.Message
+                }
+              }
+            }
+          }
+          
+          # Save detailed results
+          $qualityReport | ConvertTo-Json -Depth 10 | Set-Content "$resultsDir/psscriptanalyzer-results.json"
+          
+          # Save summary for quick reference
+          $summary = @{
+            TotalIssues = $allResults.Count
+            Errors = $resultsBySeverity.Error
+            Warnings = $resultsBySeverity.Warning
+            Information = $resultsBySeverity.Information
+            TopRules = $resultsByRule.GetEnumerator() | Sort-Object Value -Descending | Select-Object -First 5
+          }
+          $summary | ConvertTo-Json | Set-Content "$resultsDir/quality-summary.json"
+          
+          Write-Host "Quality check completed: $($allResults.Count) issues found"
+          Write-Host "Errors: $($resultsBySeverity.Error), Warnings: $($resultsBySeverity.Warning), Info: $($resultsBySeverity.Information)"
+          
+          # Fail if error threshold exceeded
+          $errorThreshold = 25
+          if ($resultsBySeverity.Error -gt $errorThreshold) {
+            Write-Host "::error::Too many errors ($($resultsBySeverity.Error)) - quality threshold exceeded"
+            exit 1
+          }
+
+      - name: Upload quality results
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-results
+          path: quality-results/
+          retention-days: 30
+
+  test:
+    name: "Enhanced Test (${{ matrix.os }})"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    needs: analyze-changes
+    if: always() && !cancelled() && !failure()
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/powershell/Modules
+            ~/Documents/PowerShell/Modules
+            ~/.config/powershell
+            ~/.cache/powershell
+            /Users/*/.local/share/powershell/Modules
+          key: ${{ runner.os }}-test-deps-${{ hashFiles('tests/**/*.ps1') }}-v3
+          restore-keys: |
+            ${{ runner.os }}-test-deps-v3
+            ${{ runner.os }}-test-deps-
+
+      - name: Install test dependencies
+        run: |
+          Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser -SkipPublisherCheck
+          Write-Host "✅ Test dependencies installed"
+
+      - name: Run enhanced unified tests
+        run: |
+          # Create results directory
+          $resultsDir = "test-results-enhanced"
+          New-Item -ItemType Directory -Path $resultsDir -Force
+          
+          # Ensure we're in the right directory
+          Set-Location $env:GITHUB_WORKSPACE
+          
+          # Disable parallel execution to avoid module loading issues
+          $env:AITHERZERO_DISABLE_PARALLEL = "true"
+          
+          # Run tests with detailed output capture
+          $testResults = @{
+            StartTime = Get-Date
+            Platform = "${{ matrix.os }}"
+            TestSuites = @{}
+            Summary = @{
+              Total = 0
+              Passed = 0
+              Failed = 0
+              Skipped = 0
+              Duration = 0
+            }
+          }
+          
+          # Run unified tests and capture output
+          try {
+            # Redirect output to capture detailed results
+            $output = ./tests/Run-UnifiedTests.ps1 -TestSuite CI -CI -OutputFormat JSON *>&1
+            
+            # Parse test results from output
+            $jsonOutput = $output | Where-Object { $_ -match '^\{.*\}$' } | Select-Object -Last 1
+            if ($jsonOutput) {
+              $parsedResults = $jsonOutput | ConvertFrom-Json
+              
+              # Extract test suite details
+              if ($parsedResults.TestSuites) {
+                foreach ($suite in $parsedResults.TestSuites) {
+                  $testResults.TestSuites[$suite.Name] = @{
+                    Total = $suite.Total
+                    Passed = $suite.Passed
+                    Failed = $suite.Failed
+                    Skipped = $suite.Skipped
+                    Duration = $suite.Duration
+                    Failures = $suite.Failures | ForEach-Object {
+                      @{
+                        Test = $_.Test
+                        Error = $_.Error
+                        StackTrace = $_.StackTrace
+                      }
+                    }
+                  }
+                }
+              }
+              
+              # Update summary
+              $testResults.Summary = $parsedResults.Summary
+            }
+          } catch {
+            Write-Host "Error running tests: $_"
+            $testResults.Error = $_.ToString()
+          }
+          
+          $testResults.EndTime = Get-Date
+          $testResults.Summary.Duration = ($testResults.EndTime - $testResults.StartTime).TotalSeconds
+          
+          # Save detailed test results
+          $testResults | ConvertTo-Json -Depth 10 | Set-Content "$resultsDir/detailed-test-results.json"
+          
+          # Generate failure report if any tests failed
+          if ($testResults.Summary.Failed -gt 0) {
+            $failureReport = @{
+              Platform = "${{ matrix.os }}"
+              Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC"
+              FailedSuites = @()
+            }
+            
+            foreach ($suiteName in $testResults.TestSuites.Keys) {
+              $suite = $testResults.TestSuites[$suiteName]
+              if ($suite.Failed -gt 0) {
+                $failureReport.FailedSuites += @{
+                  Suite = $suiteName
+                  FailedCount = $suite.Failed
+                  Failures = $suite.Failures
+                }
+              }
+            }
+            
+            $failureReport | ConvertTo-Json -Depth 10 | Set-Content "$resultsDir/test-failures.json"
+          }
+          
+          # Copy original test results if available
+          if (Test-Path "tests/results") {
+            Copy-Item -Path "tests/results/*" -Destination $resultsDir -Recurse -Force
+          }
+          
+          Write-Host "Test Results Summary:"
+          Write-Host "Total: $($testResults.Summary.Total)"
+          Write-Host "Passed: $($testResults.Summary.Passed)"
+          Write-Host "Failed: $($testResults.Summary.Failed)"
+          Write-Host "Skipped: $($testResults.Summary.Skipped)"
+          
+          # Exit with error if tests failed
+          if ($testResults.Summary.Failed -gt 0) {
+            exit 1
+          }
+
+      - name: Upload enhanced test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-enhanced-${{ runner.os }}
+          path: test-results-enhanced/
+          retention-days: 30
+
+  build:
+    name: "Build (${{ matrix.platform }})"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: analyze-changes
+    if: always() && !cancelled() && !failure()
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [windows, linux, macos]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build package with metrics
+        run: |
+          $buildStart = Get-Date
+          
+          # Create metrics directory
+          $metricsDir = "build-metrics"
+          New-Item -ItemType Directory -Path $metricsDir -Force
+          
+          # Run build
+          ./build/Build-Package.ps1 -Platform ${{ matrix.platform }}
+          
+          $buildEnd = Get-Date
+          $buildDuration = ($buildEnd - $buildStart).TotalSeconds
+          
+          # Collect build metrics
+          $buildMetrics = @{
+            Platform = "${{ matrix.platform }}"
+            StartTime = $buildStart.ToString("yyyy-MM-dd HH:mm:ss UTC")
+            EndTime = $buildEnd.ToString("yyyy-MM-dd HH:mm:ss UTC")
+            Duration = $buildDuration
+            Success = $LASTEXITCODE -eq 0
+          }
+          
+          # Get package size if build succeeded
+          if ($buildMetrics.Success) {
+            $packageFiles = Get-ChildItem -Path "build/output" -File
+            $buildMetrics.Packages = $packageFiles | ForEach-Object {
+              @{
+                Name = $_.Name
+                Size = $_.Length
+                SizeMB = [Math]::Round($_.Length / 1MB, 2)
+              }
+            }
+            $buildMetrics.TotalSize = ($packageFiles | Measure-Object -Property Length -Sum).Sum
+            $buildMetrics.TotalSizeMB = [Math]::Round($buildMetrics.TotalSize / 1MB, 2)
+          }
+          
+          $buildMetrics | ConvertTo-Json -Depth 5 | Set-Content "$metricsDir/build-metrics.json"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.platform }}
+          path: build/output/
+          retention-days: 30
+
+      - name: Upload build metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-metrics-${{ matrix.platform }}
+          path: build-metrics/
+          retention-days: 30
+
+  collect-metrics:
+    name: "Collect CI Metrics"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [quality-check, test, build]
+    if: always() && !cancelled()
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Generate comprehensive metrics
+        run: |
+          $metricsDir = "ci-metrics"
+          New-Item -ItemType Directory -Path $metricsDir -Force
+          
+          # Initialize metrics object
+          $ciMetrics = @{
+            Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC"
+            RunNumber = "${{ github.run_number }}"
+            RunId = "${{ github.run_id }}"
+            Branch = "${{ github.ref_name }}"
+            Commit = "${{ github.sha }}"
+            EventType = "${{ github.event_name }}"
+            Repository = "${{ github.repository }}"
+            Quality = @{}
+            Tests = @{
+              ByPlatform = @{}
+              BySuite = @{}
+              Overall = @{}
+            }
+            Build = @{
+              ByPlatform = @{}
+            }
+            Summary = @{
+              Success = $true
+              QualityPassed = $false
+              TestsPassed = $false
+              BuildPassed = $false
+            }
+          }
+          
+          # Process quality results
+          $qualityFile = Get-ChildItem -Path artifacts -Filter "psscriptanalyzer-results.json" -Recurse | Select-Object -First 1
+          if ($qualityFile) {
+            $qualityData = Get-Content $qualityFile.FullName | ConvertFrom-Json
+            $ciMetrics.Quality = @{
+              TotalFiles = $qualityData.TotalFiles
+              TotalIssues = $qualityData.TotalIssues
+              BySeverity = $qualityData.BySeverity
+              TopRules = $qualityData.ByRule | Select-Object -First 5
+            }
+            $ciMetrics.Summary.QualityPassed = $qualityData.BySeverity.Error -le 25
+          }
+          
+          # Process test results
+          $testResults = Get-ChildItem -Path artifacts -Filter "detailed-test-results.json" -Recurse
+          $totalTests = 0
+          $totalPassed = 0
+          $totalFailed = 0
+          $totalSkipped = 0
+          
+          foreach ($testFile in $testResults) {
+            $testData = Get-Content $testFile.FullName | ConvertFrom-Json
+            $platform = $testData.Platform
+            
+            $ciMetrics.Tests.ByPlatform[$platform] = @{
+              Total = $testData.Summary.Total
+              Passed = $testData.Summary.Passed
+              Failed = $testData.Summary.Failed
+              Skipped = $testData.Summary.Skipped
+              Duration = $testData.Summary.Duration
+              PassRate = if ($testData.Summary.Total -gt 0) { 
+                [Math]::Round(($testData.Summary.Passed / $testData.Summary.Total) * 100, 2) 
+              } else { 0 }
+            }
+            
+            # Aggregate test suite data
+            foreach ($suiteName in $testData.TestSuites.PSObject.Properties.Name) {
+              $suite = $testData.TestSuites.$suiteName
+              if (-not $ciMetrics.Tests.BySuite.ContainsKey($suiteName)) {
+                $ciMetrics.Tests.BySuite[$suiteName] = @{
+                  Total = 0
+                  Passed = 0
+                  Failed = 0
+                  Skipped = 0
+                  Platforms = @()
+                }
+              }
+              
+              $ciMetrics.Tests.BySuite[$suiteName].Total += $suite.Total
+              $ciMetrics.Tests.BySuite[$suiteName].Passed += $suite.Passed
+              $ciMetrics.Tests.BySuite[$suiteName].Failed += $suite.Failed
+              $ciMetrics.Tests.BySuite[$suiteName].Skipped += $suite.Skipped
+              $ciMetrics.Tests.BySuite[$suiteName].Platforms += $platform
+            }
+            
+            $totalTests += $testData.Summary.Total
+            $totalPassed += $testData.Summary.Passed
+            $totalFailed += $testData.Summary.Failed
+            $totalSkipped += $testData.Summary.Skipped
+          }
+          
+          $ciMetrics.Tests.Overall = @{
+            Total = $totalTests
+            Passed = $totalPassed
+            Failed = $totalFailed
+            Skipped = $totalSkipped
+            PassRate = if ($totalTests -gt 0) { 
+              [Math]::Round(($totalPassed / $totalTests) * 100, 2) 
+            } else { 0 }
+          }
+          $ciMetrics.Summary.TestsPassed = $totalFailed -eq 0
+          
+          # Process build metrics
+          $buildMetrics = Get-ChildItem -Path artifacts -Filter "build-metrics.json" -Recurse
+          $allBuildsSucceeded = $true
+          
+          foreach ($buildFile in $buildMetrics) {
+            $buildData = Get-Content $buildFile.FullName | ConvertFrom-Json
+            $ciMetrics.Build.ByPlatform[$buildData.Platform] = @{
+              Success = $buildData.Success
+              Duration = $buildData.Duration
+              TotalSizeMB = $buildData.TotalSizeMB
+              Packages = $buildData.Packages
+            }
+            
+            if (-not $buildData.Success) {
+              $allBuildsSucceeded = $false
+            }
+          }
+          $ciMetrics.Summary.BuildPassed = $allBuildsSucceeded
+          
+          # Overall success
+          $ciMetrics.Summary.Success = $ciMetrics.Summary.QualityPassed -and 
+                                      $ciMetrics.Summary.TestsPassed -and 
+                                      $ciMetrics.Summary.BuildPassed
+          
+          # Save comprehensive metrics
+          $ciMetrics | ConvertTo-Json -Depth 10 | Set-Content "$metricsDir/ci-metrics.json"
+          
+          # Generate markdown summary
+          $summary = "# CI Metrics Summary`n`n"
+          $summary += "**Run**: #${{ github.run_number }} | **Branch**: ${{ github.ref_name }} | **Commit**: $($ciMetrics.Commit.Substring(0,7))`n`n"
+          
+          $summary += "## Overall Status: $(if ($ciMetrics.Summary.Success) { '✅ PASSED' } else { '❌ FAILED' })`n`n"
+          
+          $summary += "### Quality Check`n"
+          if ($ciMetrics.Quality.TotalIssues) {
+            $summary += "- Files Analyzed: $($ciMetrics.Quality.TotalFiles)`n"
+            $summary += "- Total Issues: $($ciMetrics.Quality.TotalIssues)`n"
+            $summary += "- Errors: $($ciMetrics.Quality.BySeverity.Error) | Warnings: $($ciMetrics.Quality.BySeverity.Warning)`n"
+          } else {
+            $summary += "- No results available`n"
+          }
+          
+          $summary += "`n### Test Results`n"
+          $summary += "- Total Tests: $($ciMetrics.Tests.Overall.Total)`n"
+          $summary += "- Pass Rate: $($ciMetrics.Tests.Overall.PassRate)%`n"
+          $summary += "- Passed: $($ciMetrics.Tests.Overall.Passed) | Failed: $($ciMetrics.Tests.Overall.Failed) | Skipped: $($ciMetrics.Tests.Overall.Skipped)`n"
+          
+          $summary += "`n### Build Results`n"
+          foreach ($platform in $ciMetrics.Build.ByPlatform.Keys) {
+            $build = $ciMetrics.Build.ByPlatform[$platform]
+            $status = if ($build.Success) { "✅" } else { "❌" }
+            $summary += "- $platform`: $status (Duration: $([Math]::Round($build.Duration, 1))s, Size: $($build.TotalSizeMB)MB)`n"
+          }
+          
+          $summary | Set-Content "$metricsDir/ci-summary.md"
+          
+          Write-Host $summary
+
+      - name: Upload CI metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-complete
+          path: ci-metrics/
+          retention-days: 90
+
+      - name: Create metrics comment (PR only)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('ci-metrics/ci-summary.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+
+  generate-dashboard:
+    name: "Generate Enhanced Dashboard"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [collect-metrics]
+    if: always() && !cancelled()
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Generate enhanced dashboard
+        run: |
+          # Create dashboard directory
+          $dashboardDir = "dashboard"
+          New-Item -ItemType Directory -Path $dashboardDir -Force
+
+          # Load metrics
+          $metricsFile = Get-ChildItem -Path artifacts -Filter "ci-metrics.json" -Recurse | Select-Object -First 1
+          if ($metricsFile) {
+            $metrics = Get-Content $metricsFile.FullName | ConvertFrom-Json
+            
+            # Generate enhanced HTML dashboard
+            try {
+              # Use the comprehensive report generator with CI metrics
+              ./scripts/reporting/Generate-ComprehensiveReport.ps1 `
+                -ReportPath "$dashboardDir/index.html" `
+                -ArtifactsPath "./artifacts" `
+                -IncludeDetailedAnalysis `
+                -ReportTitle "AitherZero CI Dashboard - Run #$($metrics.RunNumber)"
+                
+              Write-Host "✅ Enhanced dashboard generated successfully"
+            } catch {
+              Write-Host "⚠️ Enhanced dashboard generation failed, creating fallback"
+              Write-Host "Error: $_"
+              
+              # Create a simple fallback dashboard with metrics
+              $html = @"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AitherZero CI Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { background-color: #f0f0f0; padding: 20px; border-radius: 5px; }
+        .metric { display: inline-block; margin: 10px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; }
+        .failure { background-color: #f8d7da; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AitherZero CI Dashboard</h1>
+        <p>Run #$($metrics.RunNumber) | Branch: $($metrics.Branch) | $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')</p>
+    </div>
+    
+    <h2>Overall Status: $(if ($metrics.Summary.Success) { '✅ PASSED' } else { '❌ FAILED' })</h2>
+    
+    <div class="metrics">
+        <div class="metric $(if ($metrics.Summary.QualityPassed) { 'success' } else { 'failure' })">
+            <h3>Quality Check</h3>
+            <p>Issues: $($metrics.Quality.TotalIssues)</p>
+            <p>Errors: $($metrics.Quality.BySeverity.Error)</p>
+        </div>
+        
+        <div class="metric $(if ($metrics.Summary.TestsPassed) { 'success' } else { 'failure' })">
+            <h3>Tests</h3>
+            <p>Pass Rate: $($metrics.Tests.Overall.PassRate)%</p>
+            <p>Failed: $($metrics.Tests.Overall.Failed)</p>
+        </div>
+        
+        <div class="metric $(if ($metrics.Summary.BuildPassed) { 'success' } else { 'failure' })">
+            <h3>Build</h3>
+            <p>Platforms: $(($metrics.Build.ByPlatform.Keys | Measure-Object).Count)</p>
+            <p>All Passed: $($metrics.Summary.BuildPassed)</p>
+        </div>
+    </div>
+    
+    <h2>Detailed Results</h2>
+    <pre>$($metrics | ConvertTo-Json -Depth 10)</pre>
+</body>
+</html>
+"@
+              $html | Set-Content "$dashboardDir/index.html"
+            }
+          } else {
+            Write-Host "No metrics file found, creating minimal dashboard"
+            $html = "<html><body><h1>CI Dashboard - No Metrics Available</h1></body></html>"
+            $html | Set-Content "$dashboardDir/index.html"
+          }
+
+      - name: Upload enhanced dashboard
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-dashboard-enhanced
+          path: dashboard/
+          retention-days: 90
+
+  ci-summary:
+    name: "Enhanced CI Summary"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [analyze-changes, quality-check, test, build, collect-metrics, generate-dashboard]
+    if: always() && !cancelled()
+    steps:
+      - name: Download CI metrics
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-metrics-complete
+          path: metrics/
+        continue-on-error: true
+
+      - name: Create final summary
+        run: |
+          $success = $true
+          
+          # Load metrics if available
+          $metricsFile = "metrics/ci-metrics.json"
+          if (Test-Path $metricsFile) {
+            $metrics = Get-Content $metricsFile | ConvertFrom-Json
+            $success = $metrics.Summary.Success
+            
+            Write-Host "# AitherZero CI Summary - Enhanced"
+            Write-Host ""
+            Write-Host "## Overall Result: $(if ($success) { '✅ SUCCESS' } else { '❌ FAILURE' })"
+            Write-Host ""
+            Write-Host "### Quality Metrics"
+            Write-Host "- Total Issues: $($metrics.Quality.TotalIssues)"
+            Write-Host "- Errors: $($metrics.Quality.BySeverity.Error)"
+            Write-Host "- Status: $(if ($metrics.Summary.QualityPassed) { '✅' } else { '❌' })"
+            Write-Host ""
+            Write-Host "### Test Metrics"
+            Write-Host "- Total Tests: $($metrics.Tests.Overall.Total)"
+            Write-Host "- Pass Rate: $($metrics.Tests.Overall.PassRate)%"
+            Write-Host "- Failed Tests: $($metrics.Tests.Overall.Failed)"
+            Write-Host "- Status: $(if ($metrics.Summary.TestsPassed) { '✅' } else { '❌' })"
+            Write-Host ""
+            Write-Host "### Build Status"
+            foreach ($platform in $metrics.Build.ByPlatform.Keys) {
+              $build = $metrics.Build.ByPlatform[$platform]
+              Write-Host "- $platform`: $(if ($build.Success) { '✅' } else { '❌' }) ($($build.TotalSizeMB)MB)"
+            }
+            Write-Host ""
+            Write-Host "### Artifacts"
+            Write-Host "- 📊 [Quality Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)"
+            Write-Host "- 🧪 [Test Results](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)"
+            Write-Host "- 📈 [CI Dashboard](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)"
+          } else {
+            Write-Host "::warning::CI metrics not available, using fallback summary"
+            
+            # Fallback to checking individual job results
+            $qualityResult = '${{ needs.quality-check.result }}'
+            $testResult = '${{ needs.test.result }}'
+            $buildResult = '${{ needs.build.result }}'
+            
+            if ($qualityResult -eq 'failure' -or $testResult -eq 'failure' -or $buildResult -eq 'failure') {
+              $success = $false
+            }
+          }
+          
+          if (-not $success) {
+            Write-Host "::error::CI pipeline failed - check detailed results in artifacts"
+            exit 1
+          } else {
+            Write-Host "::notice::CI pipeline completed successfully with enhanced metrics"
+          }

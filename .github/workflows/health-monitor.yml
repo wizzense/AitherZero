@@ -1,0 +1,444 @@
+name: "Health Monitor"
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      comparison_days:
+        description: 'Number of days to compare for trend analysis'
+        required: false
+        default: '7'
+        type: string
+      create_report:
+        description: 'Create health report as GitHub issue'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: true
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  collect-metrics:
+    name: "Collect Health Metrics"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      health-score: ${{ steps.calculate.outputs.score }}
+      health-grade: ${{ steps.calculate.outputs.grade }}
+      trend: ${{ steps.calculate.outputs.trend }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for trend analysis
+
+      - name: Install dependencies
+        run: |
+          Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck
+          Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser -SkipPublisherCheck
+
+      - name: Collect code quality metrics
+        id: quality
+        run: |
+          Write-Host "🔍 Collecting code quality metrics..."
+          
+          # Run PSScriptAnalyzer
+          $files = Get-ChildItem -Include "*.ps1","*.psm1","*.psd1" -Recurse |
+                   Where-Object { $_.FullName -notlike "*test*" -and $_.FullName -notlike "*build*" }
+          
+          $totalFiles = $files.Count
+          $issues = @()
+          
+          foreach ($file in $files) {
+            $fileIssues = Invoke-ScriptAnalyzer -Path $file.FullName -Severity Error,Warning
+            if ($fileIssues) {
+              $issues += $fileIssues
+            }
+          }
+          
+          $errorCount = ($issues | Where-Object Severity -eq 'Error').Count
+          $warningCount = ($issues | Where-Object Severity -eq 'Warning').Count
+          
+          # Calculate quality score (0-100)
+          $qualityScore = 100
+          $qualityScore -= ($errorCount * 2)  # Each error costs 2 points
+          $qualityScore -= ($warningCount * 0.5)  # Each warning costs 0.5 points
+          $qualityScore = [Math]::Max(0, $qualityScore)
+          
+          Write-Host "Quality Score: $qualityScore/100"
+          Write-Host "Errors: $errorCount, Warnings: $warningCount"
+          
+          echo "score=$qualityScore" >> $env:GITHUB_OUTPUT
+          echo "errors=$errorCount" >> $env:GITHUB_OUTPUT
+          echo "warnings=$warningCount" >> $env:GITHUB_OUTPUT
+          echo "files=$totalFiles" >> $env:GITHUB_OUTPUT
+
+      - name: Collect test coverage metrics
+        id: tests
+        run: |
+          Write-Host "🧪 Collecting test coverage metrics..."
+          
+          # Count modules and their test coverage
+          $modules = Get-ChildItem "aither-core/modules" -Directory -ErrorAction SilentlyContinue
+          $testFiles = Get-ChildItem -Include "*.Tests.ps1" -Recurse
+          
+          $totalModules = $modules.Count
+          $testedModules = 0
+          
+          foreach ($module in $modules) {
+            $moduleName = $module.Name
+            $hasTests = (Get-ChildItem $module.FullName -Filter "*.Tests.ps1" -Recurse).Count -gt 0 -or
+                       ($testFiles | Where-Object { $_.Name -like "*$moduleName*" }).Count -gt 0
+            
+            if ($hasTests) {
+              $testedModules++
+            }
+          }
+          
+          $testCoverage = if ($totalModules -gt 0) { [Math]::Round(($testedModules / $totalModules) * 100, 1) } else { 100 }
+          
+          Write-Host "Test Coverage: $testCoverage% ($testedModules/$totalModules modules)"
+          
+          echo "coverage=$testCoverage" >> $env:GITHUB_OUTPUT
+          echo "tested_modules=$testedModules" >> $env:GITHUB_OUTPUT
+          echo "total_modules=$totalModules" >> $env:GITHUB_OUTPUT
+
+      - name: Collect documentation metrics
+        id: docs
+        run: |
+          Write-Host "📚 Collecting documentation metrics..."
+          
+          # Check for essential documentation
+          $requiredDocs = @(
+            "README.md",
+            "CHANGELOG.md",
+            "LICENSE",
+            "QUICKSTART.md"
+          )
+          
+          $existingDocs = 0
+          foreach ($doc in $requiredDocs) {
+            if (Test-Path $doc) {
+              $existingDocs++
+            }
+          }
+          
+          # Check module documentation
+          $modules = Get-ChildItem "aither-core/modules" -Directory -ErrorAction SilentlyContinue
+          $modulesWithReadme = 0
+          
+          foreach ($module in $modules) {
+            if (Test-Path (Join-Path $module.FullName "README.md")) {
+              $modulesWithReadme++
+            }
+          }
+          
+          $docScore = 100
+          $docScore -= (($requiredDocs.Count - $existingDocs) * 25)  # 25 points per missing required doc
+          if ($modules.Count -gt 0) {
+            $moduleDocPercent = ($modulesWithReadme / $modules.Count) * 100
+            $docScore = ($docScore + $moduleDocPercent) / 2
+          }
+          $docScore = [Math]::Max(0, [Math]::Min(100, $docScore))
+          
+          Write-Host "Documentation Score: $docScore/100"
+          Write-Host "Required docs: $existingDocs/$($requiredDocs.Count)"
+          Write-Host "Module docs: $modulesWithReadme/$($modules.Count)"
+          
+          echo "score=$docScore" >> $env:GITHUB_OUTPUT
+          echo "required_docs=$existingDocs" >> $env:GITHUB_OUTPUT
+          echo "module_docs=$modulesWithReadme" >> $env:GITHUB_OUTPUT
+
+      - name: Analyze recent CI runs
+        id: ci-health
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const days = parseInt('${{ github.event.inputs.comparison_days }}' || '7');
+            const since = new Date();
+            since.setDate(since.getDate() - days);
+            
+            // Get recent workflow runs
+            const runs = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              created: `>=${since.toISOString()}`,
+              per_page: 100
+            });
+            
+            // Filter CI runs
+            const ciRuns = runs.data.workflow_runs.filter(run => 
+              run.name && run.name.includes('CI') && run.conclusion
+            );
+            
+            const totalRuns = ciRuns.length;
+            const successfulRuns = ciRuns.filter(run => run.conclusion === 'success').length;
+            const failedRuns = ciRuns.filter(run => run.conclusion === 'failure').length;
+            
+            const successRate = totalRuns > 0 ? Math.round((successfulRuns / totalRuns) * 100) : 100;
+            
+            console.log(`CI Success Rate: ${successRate}% (${successfulRuns}/${totalRuns} runs)`;
+            
+            // Calculate CI health score
+            let ciScore = successRate;
+            
+            // Penalize for consecutive failures
+            let consecutiveFailures = 0;
+            for (const run of ciRuns) {
+              if (run.conclusion === 'failure') {
+                consecutiveFailures++;
+              } else {
+                break;
+              }
+            }
+            
+            if (consecutiveFailures >= 3) {
+              ciScore -= 20;  // Heavy penalty for 3+ consecutive failures
+            } else if (consecutiveFailures >= 2) {
+              ciScore -= 10;  // Moderate penalty for 2 consecutive failures
+            }
+            
+            ciScore = Math.max(0, Math.min(100, ciScore));
+            
+            // Set outputs
+            core.setOutput('score', ciScore.toString());
+            core.setOutput('success_rate', successRate.toString());
+            core.setOutput('total_runs', totalRuns.toString());
+            core.setOutput('consecutive_failures', consecutiveFailures.toString());
+
+      - name: Calculate overall health score
+        id: calculate
+        run: |
+          Write-Host "📊 Calculating overall health score..."
+          
+          # Get individual scores
+          $qualityScore = [int]'${{ steps.quality.outputs.score }}'
+          $testScore = [int]'${{ steps.tests.outputs.coverage }}'
+          $docScore = [int]'${{ steps.docs.outputs.score }}'
+          $ciScore = [int]'${{ steps.ci-health.outputs.score }}'
+          
+          # Calculate weighted average
+          $weights = @{
+            Quality = 0.3
+            Tests = 0.3
+            Documentation = 0.2
+            CI = 0.2
+          }
+          
+          $overallScore = (
+            ($qualityScore * $weights.Quality) +
+            ($testScore * $weights.Tests) +
+            ($docScore * $weights.Documentation) +
+            ($ciScore * $weights.CI)
+          )
+          
+          $overallScore = [Math]::Round($overallScore, 1)
+          
+          # Determine grade
+          $grade = switch ($overallScore) {
+            { $_ -ge 90 } { 'A' }
+            { $_ -ge 80 } { 'B' }
+            { $_ -ge 70 } { 'C' }
+            { $_ -ge 60 } { 'D' }
+            default { 'F' }
+          }
+          
+          Write-Host "Overall Health Score: $overallScore/100 (Grade: $grade)"
+          Write-Host "Breakdown:"
+          Write-Host "  - Code Quality: $qualityScore/100"
+          Write-Host "  - Test Coverage: $testScore%"
+          Write-Host "  - Documentation: $docScore/100"
+          Write-Host "  - CI Health: $ciScore/100"
+          
+          # Store metrics for trending
+          $metrics = @{
+            Timestamp = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
+            Overall = @{
+              Score = $overallScore
+              Grade = $grade
+            }
+            Quality = @{
+              Score = $qualityScore
+              Errors = [int]'${{ steps.quality.outputs.errors }}'
+              Warnings = [int]'${{ steps.quality.outputs.warnings }}'
+              Files = [int]'${{ steps.quality.outputs.files }}'
+            }
+            Tests = @{
+              Coverage = $testScore
+              TestedModules = [int]'${{ steps.tests.outputs.tested_modules }}'
+              TotalModules = [int]'${{ steps.tests.outputs.total_modules }}'
+            }
+            Documentation = @{
+              Score = $docScore
+              RequiredDocs = [int]'${{ steps.docs.outputs.required_docs }}'
+              ModuleDocs = [int]'${{ steps.docs.outputs.module_docs }}'
+            }
+            CI = @{
+              Score = $ciScore
+              SuccessRate = [int]'${{ steps.ci-health.outputs.success_rate }}'
+              TotalRuns = [int]'${{ steps.ci-health.outputs.total_runs }}'
+              ConsecutiveFailures = [int]'${{ steps.ci-health.outputs.consecutive_failures }}'
+            }
+          }
+          
+          $metrics | ConvertTo-Json -Depth 5 | Set-Content "health-metrics.json"
+          
+          echo "score=$overallScore" >> $env:GITHUB_OUTPUT
+          echo "grade=$grade" >> $env:GITHUB_OUTPUT
+
+      - name: Analyze health trends
+        id: trends
+        run: |
+          Write-Host "📈 Analyzing health trends..."
+          
+          # This would normally fetch historical data from artifact storage
+          # For now, we'll just indicate if the health is improving/declining
+          
+          $currentScore = [decimal]'${{ steps.calculate.outputs.score }}'
+          $trend = "stable"
+          
+          # Determine trend based on score thresholds
+          if ($currentScore -ge 85) {
+            $trend = "healthy"
+          } elseif ($currentScore -le 70) {
+            $trend = "declining"
+          }
+          
+          Write-Host "Health Trend: $trend"
+          echo "trend=$trend" >> $env:GITHUB_OUTPUT
+
+      - name: Generate health report
+        run: |
+          Write-Host "📄 Generating health report..."
+          
+          $score = '${{ steps.calculate.outputs.score }}'
+          $grade = '${{ steps.calculate.outputs.grade }}'
+          $trend = '${{ steps.trends.outputs.trend }}'
+          
+          $report = "# 🏥 AitherZero Health Report\n\n"
+          $report += "**Date**: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')\n"
+          $report += "**Overall Health**: $score/100 (Grade: $grade)\n"
+          $report += "**Trend**: $trend\n\n"
+          
+          # Add visual health indicator
+          $healthEmoji = switch ($grade) {
+            'A' { '🟢' }  # Green circle
+            'B' { '🟡' }  # Yellow circle
+            'C' { '🟠' }  # Orange circle
+            'D' { '🔴' }  # Red circle
+            'F' { '⛔' }  # No entry
+          }
+          
+          $report += "## $healthEmoji Health Status: $grade\n\n"
+          
+          # Detailed breakdown
+          $report += "## 📊 Metrics Breakdown\n\n"
+          $report += "| Category | Score | Status | Details |\n"
+          $report += "|----------|-------|--------|---------|\n"
+          
+          # Quality metrics
+          $qualityScore = '${{ steps.quality.outputs.score }}'
+          $qualityStatus = if ([int]$qualityScore -ge 80) { '✅' } else { '⚠️' }
+          $report += "| Code Quality | $qualityScore/100 | $qualityStatus | ${{ steps.quality.outputs.errors }} errors, ${{ steps.quality.outputs.warnings }} warnings |\n"
+          
+          # Test metrics
+          $testCoverage = '${{ steps.tests.outputs.coverage }}'
+          $testStatus = if ([decimal]$testCoverage -ge 80) { '✅' } else { '⚠️' }
+          $report += "| Test Coverage | $testCoverage% | $testStatus | ${{ steps.tests.outputs.tested_modules }}/${{ steps.tests.outputs.total_modules }} modules tested |\n"
+          
+          # Documentation metrics
+          $docScore = '${{ steps.docs.outputs.score }}'
+          $docStatus = if ([int]$docScore -ge 80) { '✅' } else { '⚠️' }
+          $report += "| Documentation | $docScore/100 | $docStatus | ${{ steps.docs.outputs.required_docs }}/4 required, ${{ steps.docs.outputs.module_docs }} module docs |\n"
+          
+          # CI metrics
+          $ciScore = '${{ steps.ci-health.outputs.score }}'
+          $ciStatus = if ([int]$ciScore -ge 80) { '✅' } else { '⚠️' }
+          $report += "| CI Health | $ciScore/100 | $ciStatus | ${{ steps.ci-health.outputs.success_rate }}% success rate |\n\n"
+          
+          # Add recommendations
+          $report += "## 💡 Recommendations\n\n"
+          
+          $recommendations = @()
+          
+          if ([int]'${{ steps.quality.outputs.errors }}' -gt 10) {
+            $recommendations += "- 🔴 **High Priority**: Fix ${{ steps.quality.outputs.errors }} PSScriptAnalyzer errors"
+          }
+          
+          if ([decimal]$testCoverage -lt 80) {
+            $recommendations += "- 🟠 **Medium Priority**: Improve test coverage (currently $testCoverage%)"
+          }
+          
+          if ([int]'${{ steps.docs.outputs.required_docs }}' -lt 4) {
+            $recommendations += "- 🟡 **Low Priority**: Add missing required documentation"
+          }
+          
+          if ([int]'${{ steps.ci-health.outputs.consecutive_failures }}' -gt 0) {
+            $recommendations += "- 🔴 **High Priority**: Fix CI pipeline (consecutive failures detected)"
+          }
+          
+          if ($recommendations.Count -eq 0) {
+            $recommendations += "- 🎆 Great job! The project is in excellent health."
+          }
+          
+          foreach ($rec in $recommendations) {
+            $report += "$rec\n"
+          }
+          
+          $report += "\n## 📈 Recent Activity\n\n"
+          $report += "- CI runs in last 7 days: ${{ steps.ci-health.outputs.total_runs }}\n"
+          $report += "- CI success rate: ${{ steps.ci-health.outputs.success_rate }}%\n"
+          
+          if ([int]'${{ steps.ci-health.outputs.consecutive_failures }}' -gt 0) {
+            $report += "- ⚠️  **Alert**: ${{ steps.ci-health.outputs.consecutive_failures }} consecutive CI failures\n"
+          }
+          
+          $report += "\n---\n"
+          $report += "*This report was automatically generated by the Health Monitor workflow*"
+          
+          $report | Set-Content "health-report.md"
+          Write-Host $report
+
+      - name: Upload health artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-monitor-results
+          path: |
+            health-metrics.json
+            health-report.md
+          retention-days: 90
+
+      - name: Create health report issue
+        if: github.event.inputs.create_report == 'true'
+        run: |
+          $grade = '${{ steps.calculate.outputs.grade }}'
+          $score = '${{ steps.calculate.outputs.score }}'
+          
+          # Create issue title with emoji based on grade
+          $emoji = switch ($grade) {
+            'A' { '🌟' }  # Star
+            'B' { '✅' }  # Check
+            'C' { '⚠️' }  # Warning
+            'D' { '🔴' }  # Red circle
+            'F' { '🆘' }  # SOS
+          }
+          
+          $title = "$emoji Health Report - Grade: $grade ($score/100)"
+          
+          gh issue create --title "$title" --body-file health-report.md --label "health-report,automated"
+          
+          Write-Host "📢 Created health report issue: $title"

@@ -1,0 +1,423 @@
+name: "Issue Automation"
+
+on:
+  workflow_run:
+    workflows: ["CI - Enhanced with Detailed Metrics"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run - show what issues would be created without creating them'
+        required: false
+        default: true
+        type: boolean
+      source_run_id:
+        description: 'Specific CI run ID to analyze (optional)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+env:
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: true
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  analyze-ci-results:
+    name: "Analyze CI Results"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: |
+      github.event_name == 'workflow_dispatch' || 
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion != 'success')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get CI run information
+        id: ci-info
+        run: |
+          # Determine which run to analyze
+          if ('${{ github.event_name }}' -eq 'workflow_dispatch' -and '${{ github.event.inputs.source_run_id }}') {
+            $runId = '${{ github.event.inputs.source_run_id }}'
+          } else {
+            $runId = '${{ github.event.workflow_run.id }}'
+          }
+          
+          Write-Host "Analyzing CI run: $runId"
+          echo "run_id=$runId" >> $env:GITHUB_OUTPUT
+
+      - name: Download CI artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runId = '${{ steps.ci-info.outputs.run_id }}';
+            console.log(`Downloading artifacts from run ${runId}`);
+            
+            // Get artifacts from the CI run
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: runId
+            });
+            
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Create artifacts directory
+            const artifactsDir = 'ci-artifacts';
+            if (!fs.existsSync(artifactsDir)) {
+              fs.mkdirSync(artifactsDir);
+            }
+            
+            // Download relevant artifacts
+            const relevantArtifacts = artifacts.data.artifacts.filter(a => 
+              a.name.includes('quality-results') || 
+              a.name.includes('test-results') || 
+              a.name.includes('ci-metrics') ||
+              a.name.includes('build-metrics')
+            );
+            
+            for (const artifact of relevantArtifacts) {
+              console.log(`Downloading ${artifact.name}...`);
+              
+              const download = await github.rest.actions.downloadArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: artifact.id,
+                archive_format: 'zip'
+              });
+              
+              const artifactPath = path.join(artifactsDir, `${artifact.name}.zip`);
+              fs.writeFileSync(artifactPath, Buffer.from(download.data));
+              
+              // Extract the artifact
+              const AdmZip = require('adm-zip');
+              const zip = new AdmZip(artifactPath);
+              const extractPath = path.join(artifactsDir, artifact.name);
+              zip.extractAllTo(extractPath, true);
+              
+              console.log(`Extracted ${artifact.name} to ${extractPath}`);
+            }
+            
+            return relevantArtifacts.length;
+
+      - name: Analyze results and identify issues
+        id: analyze
+        run: |
+          Write-Host "🔍 Analyzing CI results for issue creation..."
+          
+          $artifactsDir = "ci-artifacts"
+          $issuesToCreate = @()
+          $existingIssues = @{}
+          
+          # Get existing issues to avoid duplicates
+          try {
+            $existingIssuesJson = gh issue list --label "automated" --state all --json title,state --limit 1000
+            if ($existingIssuesJson) {
+              $existing = $existingIssuesJson | ConvertFrom-Json
+              foreach ($issue in $existing) {
+                $existingIssues[$issue.title] = $issue.state
+              }
+            }
+          } catch {
+            Write-Warning "Could not fetch existing issues: $_"
+          }
+          
+          # Function to check if we should create an issue
+          function Should-CreateIssue {
+            param($title)
+            
+            if (-not $existingIssues.ContainsKey($title)) {
+              return $true
+            }
+            
+            # Only recreate if the existing issue is closed
+            return $existingIssues[$title] -eq 'CLOSED'
+          }
+          
+          # Analyze quality results
+          $qualityFile = Get-ChildItem -Path $artifactsDir -Filter "psscriptanalyzer-results.json" -Recurse | Select-Object -First 1
+          if ($qualityFile) {
+            $qualityData = Get-Content $qualityFile.FullName | ConvertFrom-Json
+            
+            # Create issues for files with high error counts
+            $filesWithErrors = $qualityData.Files | Where-Object { 
+              ($_.Issues | Where-Object { $_.Severity -eq 'Error' }).Count -gt 5 
+            }
+            
+            foreach ($file in $filesWithErrors) {
+              $errorCount = ($file.Issues | Where-Object { $_.Severity -eq 'Error' }).Count
+              $title = "[Quality] High error count in $($file.Name)"
+              
+              if (Should-CreateIssue $title) {
+                $body = "## PSScriptAnalyzer Quality Issues\n\n"
+                $body += "**File**: ``$($file.Name)``\n"
+                $body += "**Error Count**: $errorCount\n\n"
+                $body += "### Top Issues:\n"
+                
+                $topIssues = $file.Issues | Where-Object { $_.Severity -eq 'Error' } | Select-Object -First 5
+                foreach ($issue in $topIssues) {
+                  $body += "- **Line $($issue.Line)**: [$($issue.Rule)] $($issue.Message)\n"
+                }
+                
+                $body += "\n### Recommended Actions:\n"
+                $body += "1. Review and fix PSScriptAnalyzer errors\n"
+                $body += "2. Run ``./scripts/Run-PSScriptAnalyzer.ps1`` locally\n"
+                $body += "3. Consider updating PSScriptAnalyzerSettings.psd1 if rules are too strict\n\n"
+                $body += "---\n"
+                $body += "*This issue was automatically created from CI run #${{ steps.ci-info.outputs.run_id }}*"
+                
+                $issuesToCreate += @{
+                  Title = $title
+                  Body = $body
+                  Labels = @("automated", "quality", "psscriptanalyzer")
+                  Priority = "high"
+                }
+              }
+            }
+          }
+          
+          # Analyze test results
+          $testResults = Get-ChildItem -Path $artifactsDir -Filter "detailed-test-results.json" -Recurse
+          foreach ($testFile in $testResults) {
+            $testData = Get-Content $testFile.FullName | ConvertFrom-Json
+            
+            # Create issues for failed test suites
+            foreach ($suiteName in $testData.TestSuites.PSObject.Properties.Name) {
+              $suite = $testData.TestSuites.$suiteName
+              
+              if ($suite.Failed -gt 0 -and $suite.Failed -ge 3) {  # Only create issues for suites with 3+ failures
+                $title = "[Test] $suiteName failing on $($testData.Platform)"
+                
+                if (Should-CreateIssue $title) {
+                  $body = "## Test Suite Failures\n\n"
+                  $body += "**Test Suite**: $suiteName\n"
+                  $body += "**Platform**: $($testData.Platform)\n"
+                  $body += "**Failed Tests**: $($suite.Failed)\n"
+                  $body += "**Pass Rate**: $(if ($suite.Total -gt 0) { [Math]::Round(($suite.Passed / $suite.Total) * 100, 2) } else { 0 })%\n\n"
+                  $body += "### Failed Tests:\n"
+                  
+                  $failures = $suite.Failures | Select-Object -First 5
+                  foreach ($failure in $failures) {
+                    $body += "\n#### ❌ $($failure.Test)\n"
+                    $body += "**Error**: ``$($failure.Error)``\n"
+                    if ($failure.StackTrace) {
+                      $body += "<details>\n<summary>Stack Trace</summary>\n\n``````\n$($failure.StackTrace)\n``````\n</details>\n"
+                    }
+                  }
+                  
+                  $body += "\n### Recommended Actions:\n"
+                  $body += "1. Run tests locally: ``./tests/Run-UnifiedTests.ps1 -TestSuite $suiteName``\n"
+                  $body += "2. Check recent changes that might have affected this suite\n"
+                  $body += "3. Review test implementation for platform-specific issues\n\n"
+                  $body += "---\n"
+                  $body += "*This issue was automatically created from CI run #${{ steps.ci-info.outputs.run_id }}*"
+                  
+                  $issuesToCreate += @{
+                    Title = $title
+                    Body = $body
+                    Labels = @("automated", "test-failure", $testData.Platform.ToLower())
+                    Priority = "high"
+                  }
+                }
+              }
+            }
+          }
+          
+          # Analyze build failures
+          $buildMetrics = Get-ChildItem -Path $artifactsDir -Filter "build-metrics.json" -Recurse
+          foreach ($buildFile in $buildMetrics) {
+            $buildData = Get-Content $buildFile.FullName | ConvertFrom-Json
+            
+            if (-not $buildData.Success) {
+              $title = "[Build] Build failure for $($buildData.Platform)"
+              
+              if (Should-CreateIssue $title) {
+                $body = "## Build Failure\n\n"
+                $body += "**Platform**: $($buildData.Platform)\n"
+                $body += "**Duration**: $($buildData.Duration) seconds\n"
+                $body += "**Timestamp**: $($buildData.StartTime)\n\n"
+                $body += "### Build Information:\n"
+                $body += "- Build script: ``./build/Build-Package.ps1``\n"
+                $body += "- Platform target: $($buildData.Platform)\n\n"
+                $body += "### Recommended Actions:\n"
+                $body += "1. Check build logs in CI run #${{ steps.ci-info.outputs.run_id }}\n"
+                $body += "2. Run build locally: ``./build/Build-Package.ps1 -Platform $($buildData.Platform)``\n"
+                $body += "3. Verify all required dependencies are available\n\n"
+                $body += "---\n"
+                $body += "*This issue was automatically created from CI run #${{ steps.ci-info.outputs.run_id }}*"
+                
+                $issuesToCreate += @{
+                  Title = $title
+                  Body = $body
+                  Labels = @("automated", "build-failure", $buildData.Platform.ToLower())
+                  Priority = "critical"
+                }
+              }
+            }
+          }
+          
+          # Analyze overall CI metrics
+          $metricsFile = Get-ChildItem -Path $artifactsDir -Filter "ci-metrics.json" -Recurse | Select-Object -First 1
+          if ($metricsFile) {
+            $metrics = Get-Content $metricsFile.FullName | ConvertFrom-Json
+            
+            # Create issue if overall pass rate is below threshold
+            if ($metrics.Tests.Overall.Total -gt 0) {
+              $passRate = $metrics.Tests.Overall.PassRate
+              if ($passRate -lt 80) {
+                $title = "[CI Health] Test pass rate below 80% threshold"
+                
+                if (Should-CreateIssue $title) {
+                  $body = "## CI Health Alert\n\n"
+                  $body += "The overall test pass rate has fallen below the acceptable threshold.\n\n"
+                  $body += "**Current Pass Rate**: $passRate%\n"
+                  $body += "**Threshold**: 80%\n"
+                  $body += "**Total Tests**: $($metrics.Tests.Overall.Total)\n"
+                  $body += "**Failed Tests**: $($metrics.Tests.Overall.Failed)\n\n"
+                  $body += "### Test Results by Platform:\n"
+                  
+                  foreach ($platform in $metrics.Tests.ByPlatform.PSObject.Properties.Name) {
+                    $platData = $metrics.Tests.ByPlatform.$platform
+                    $platStatus = if ($platData.PassRate -ge 80) { "✅" } else { "❌" }
+                    $body += "- **$platform**: $platStatus $($platData.PassRate)% ($($platData.Failed) failures)\n"
+                  }
+                  
+                  $body += "\n### Failing Test Suites:\n"
+                  $failingSuites = $metrics.Tests.BySuite.PSObject.Properties | Where-Object { $_.Value.Failed -gt 0 } | Sort-Object { $_.Value.Failed } -Descending | Select-Object -First 5
+                  foreach ($suite in $failingSuites) {
+                    $body += "- **$($suite.Name)**: $($suite.Value.Failed) failures\n"
+                  }
+                  
+                  $body += "\n### Recommended Actions:\n"
+                  $body += "1. Review recent changes that might have impacted tests\n"
+                  $body += "2. Run full test suite locally: ``./tests/Run-UnifiedTests.ps1 -TestSuite All``\n"
+                  $body += "3. Focus on fixing the most critical test failures first\n\n"
+                  $body += "---\n"
+                  $body += "*This issue was automatically created from CI run #${{ steps.ci-info.outputs.run_id }}*"
+                  
+                  $issuesToCreate += @{
+                    Title = $title
+                    Body = $body
+                    Labels = @("automated", "ci-health", "critical")
+                    Priority = "critical"
+                  }
+                }
+              }
+            }
+          }
+          
+          # Save issues to create
+          $issuesToCreate | ConvertTo-Json -Depth 10 | Set-Content "issues-to-create.json"
+          
+          Write-Host "Found $($issuesToCreate.Count) issues to create"
+          echo "issue_count=$($issuesToCreate.Count)" >> $env:GITHUB_OUTPUT
+
+      - name: Create GitHub issues
+        if: steps.analyze.outputs.issue_count > 0
+        run: |
+          $dryRun = '${{ github.event.inputs.dry_run }}' -eq 'true'
+          $issues = Get-Content "issues-to-create.json" | ConvertFrom-Json
+          
+          Write-Host "$(if ($dryRun) { '🔍 DRY RUN - Would create' } else { '📋 Creating' }) $($issues.Count) GitHub issues..."
+          
+          foreach ($issue in $issues) {
+            Write-Host "`n$(if ($dryRun) { '[DRY RUN] Would create' } else { 'Creating' }) issue: $($issue.Title)"
+            
+            if ($dryRun) {
+              Write-Host "Labels: $($issue.Labels -join ', ')"
+              Write-Host "Priority: $($issue.Priority)"
+              Write-Host "Body preview:"
+              Write-Host ($issue.Body -split "`n" | Select-Object -First 10 | ForEach-Object { "  $_" })
+              Write-Host "  ..."
+            } else {
+              try {
+                # Create the issue
+                $labels = $issue.Labels -join ','
+                
+                # Use a temporary file for the body to handle complex formatting
+                $bodyFile = "issue-body-temp.md"
+                $issue.Body | Set-Content $bodyFile
+                
+                gh issue create --title "$($issue.Title)" --body-file $bodyFile --label $labels
+                
+                Remove-Item $bodyFile -Force
+                Write-Host "✅ Created issue: $($issue.Title)"
+              } catch {
+                Write-Warning "Failed to create issue '$($issue.Title)': $_"
+              }
+            }
+          }
+          
+          if ($dryRun) {
+            Write-Host "`n⚠️  This was a dry run. To create issues, run workflow with dry_run=false"
+          }
+
+      - name: Create summary report
+        if: always()
+        run: |
+          $issueCount = '${{ steps.analyze.outputs.issue_count }}'
+          $dryRun = '${{ github.event.inputs.dry_run }}' -eq 'true'
+          
+          $summary = "# Issue Automation Summary\n\n"
+          $summary += "**CI Run Analyzed**: #${{ steps.ci-info.outputs.run_id }}\n"
+          $summary += "**Mode**: $(if ($dryRun) { 'Dry Run' } else { 'Live' })\n"
+          $summary += "**Issues Identified**: $issueCount\n\n"
+          
+          if ($issueCount -gt 0 -and (Test-Path "issues-to-create.json")) {
+            $issues = Get-Content "issues-to-create.json" | ConvertFrom-Json
+            
+            $summary += "## Issues by Category\n\n"
+            $issuesByLabel = $issues | ForEach-Object {
+              $labels = $_.Labels -join ','
+              [PSCustomObject]@{
+                Title = $_.Title
+                Category = if ($labels -match 'quality') { 'Quality' }
+                          elseif ($labels -match 'test-failure') { 'Test' }
+                          elseif ($labels -match 'build-failure') { 'Build' }
+                          elseif ($labels -match 'ci-health') { 'CI Health' }
+                          else { 'Other' }
+                Priority = $_.Priority
+              }
+            } | Group-Object Category
+            
+            foreach ($category in $issuesByLabel) {
+              $summary += "### $($category.Name) ($($category.Count))\n"
+              foreach ($issue in $category.Group) {
+                $emoji = switch ($issue.Priority) {
+                  'critical' { '🔴' }
+                  'high' { '🟠' }
+                  'medium' { '🟡' }
+                  default { '⚪' }
+                }
+                $summary += "- $emoji $($issue.Title)\n"
+              }
+              $summary += "\n"
+            }
+          }
+          
+          $summary += "---\n"
+          $summary += "*Generated by Issue Automation workflow*"
+          
+          Write-Host $summary
+          $summary | Set-Content "issue-automation-summary.md"
+
+      - name: Upload automation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-automation-results
+          path: |
+            issues-to-create.json
+            issue-automation-summary.md
+          retention-days: 30
