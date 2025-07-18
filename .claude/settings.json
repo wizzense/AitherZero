@@ -53,6 +53,17 @@
           }
         ]
       }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/workspaces/AitherZero/hooks/enforce-patchmanager.ps1",
+            "timeout": 3000
+          }
+        ]
+      }
     ]
   }
 }
