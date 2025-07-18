@@ -100,6 +100,8 @@ if (Test-Path $versionCheckPath) {
     try {
         . $versionCheckPath
         if (Get-Command Test-PowerShellVersion -ErrorAction SilentlyContinue) {
+            # Create alias for test compatibility
+            Set-Alias -Name Test-PowerShellVersionRequirement -Value Test-PowerShellVersion
             $versionTest = Test-PowerShellVersion -MinimumVersion "7.0" -Quiet
             if (-not $versionTest) {
                 Write-Error "PowerShell 7.0 or higher is required. Current version: $($PSVersionTable.PSVersion)"

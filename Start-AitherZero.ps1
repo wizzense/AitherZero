@@ -251,7 +251,7 @@ function Test-BootstrapHealth {
     $healthChecks = @{
         'PowerShellVersion' = $PSVersionTable.PSVersion.Major -ge 5
         'ExecutionPolicy' = $true  # Will be tested below
-        'FileSystem' = Test-Path $PSScriptRoot
+        'FileSystem' = Test-Path $scriptRoot
         'Permissions' = $true  # Will be tested below
         'NetworkAccess' = $true  # Will be tested if not offline
     }
@@ -269,7 +269,7 @@ function Test-BootstrapHealth {
     
     # Test file system permissions
     try {
-        $testFile = Join-Path $PSScriptRoot "bootstrap_test_$(Get-Date -Format 'yyyyMMddHHmmss').tmp"
+        $testFile = Join-Path $scriptRoot "bootstrap_test_$(Get-Date -Format 'yyyyMMddHHmmss').tmp"
         "test" | Out-File -FilePath $testFile -Force
         Remove-Item $testFile -Force
         $healthChecks['Permissions'] = $true
@@ -375,12 +375,18 @@ function Invoke-WithRetry {
 # ════════════════════════════════════════════════════════════════════════════════
 
 # Load enhanced PowerShell version utilities
-$versionUtilPath = Join-Path $PSScriptRoot "aither-core/shared/Test-PowerShellVersion.ps1"
-if (Test-Path $versionUtilPath) {
-    . $versionUtilPath
+$scriptRoot = $PSScriptRoot
+if (-not $scriptRoot) {
+    # Fallback path resolution using Split-Path and MyInvocation
+    $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+}
+$versionCheckPath = Join-Path $scriptRoot "aither-core/shared/Test-PowerShellVersion.ps1"
+if (Test-Path $versionCheckPath) {
+    . $versionCheckPath
 } else {
-    Write-BootstrapLog "PowerShell version utilities not found at: $versionUtilPath" -Level 'WARNING'
+    Write-BootstrapLog "PowerShell version utilities not found at: $versionCheckPath" -Level 'WARNING'
     Write-BootstrapLog "Using fallback PowerShell detection methods" -Level 'INFO'
+    Write-BootstrapLog "Please ensure AitherZero is properly installed" -Level 'WARNING'
     
     # Fallback function if shared utilities not available
     function Find-PowerShell7 {
@@ -812,13 +818,24 @@ then use the -Help parameter with the main application.
         $coreScript = Join-Path $PSScriptRoot "aither-core/aither-core.ps1"
         
         if (Test-Path $coreScript) {
-            # Pass all parameters to the core script
-            $coreParams = @{}
-            foreach ($key in $PSBoundParameters.Keys) {
-                $coreParams[$key] = $PSBoundParameters[$key]
-            }
+            # Build parameter hashtable for delegation
+            $coreparams = @{}
+            if ($Auto) { $coreparams['Auto'] = $true }
+            if ($Scripts) { $coreparams['Scripts'] = $Scripts }
+            if ($Setup) { $coreparams['Setup'] = $true }
+            if ($InstallationProfile) { $coreparams['InstallationProfile'] = $InstallationProfile }
+            if ($WhatIf) { $coreparams['WhatIf'] = $true }
+            if ($Help) { $coreparams['Help'] = $true }
+            if ($NonInteractive) { $coreparams['NonInteractive'] = $true }
+            if ($Quiet) { $coreparams['Quiet'] = $true }
+            if ($Verbosity) { $coreparams['Verbosity'] = $Verbosity }
+            if ($ConfigFile) { $coreparams['ConfigFile'] = $ConfigFile }
+            if ($Force) { $coreparams['Force'] = $true }
+            if ($EnhancedUI) { $coreparams['EnhancedUI'] = $true }
+            if ($ClassicUI) { $coreparams['ClassicUI'] = $true }
+            if ($UIMode) { $coreparams['UIMode'] = $UIMode }
             
-            & $coreScript @coreParams
+            & $coreScript @coreparams
             $exitCode = $LASTEXITCODE
             
             if ($exitCode -ne 0) {
@@ -826,6 +843,7 @@ then use the -Help parameter with the main application.
                 exit $exitCode
             }
         } else {
+            Write-Error "Core script not found at: $coreScript"
             Write-BootstrapLog "Core script not found at: $coreScript" -Level 'ERROR'
             Write-BootstrapLog "Please ensure AitherZero is properly installed." -Level 'ERROR'
             exit 1
