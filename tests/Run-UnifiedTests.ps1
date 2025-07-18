@@ -193,6 +193,15 @@ param(
     [Parameter(HelpMessage = "Generate comprehensive HTML dashboard")]
     [switch]$GenerateDashboard,
     
+    [Parameter(HelpMessage = "Enable code coverage analysis")]
+    [switch]$CodeCoverage,
+    
+    [Parameter(HelpMessage = "Minimum code coverage threshold percentage")]
+    [int]$CoverageThreshold = 80,
+    
+    [Parameter(HelpMessage = "Include PSScriptAnalyzer quality checks")]
+    [switch]$IncludeQualityChecks,
+    
     [Parameter(HelpMessage = "Update README.md files with results")]
     [switch]$UpdateReadme
 )
@@ -431,6 +440,90 @@ function Test-Prerequisites {
     
     Write-TestLog "Prerequisites validation completed" -Level 'Success'
     return $true
+}
+
+# Quality analysis function
+function Invoke-QualityAnalysis {
+    Write-TestLog "Running PSScriptAnalyzer quality analysis..." -Level 'Info'
+    
+    $qualityResults = @{
+        TotalFiles = 0
+        TotalIssues = 0
+        ErrorCount = 0
+        WarningCount = 0
+        InformationCount = 0
+        Failed = $false
+        Details = @()
+    }
+    
+    try {
+        # Ensure PSScriptAnalyzer is available
+        if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
+            Write-TestLog "Installing PSScriptAnalyzer..." -Level 'Info'
+            Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck
+        }
+        
+        Import-Module PSScriptAnalyzer -Force
+        
+        # Get PowerShell files to analyze
+        $files = Get-ChildItem -Path $projectRoot -Include "*.ps1", "*.psm1", "*.psd1" -Recurse |
+                 Where-Object { $_.FullName -notlike "*test*" -and $_.FullName -notlike "*build*" }
+        
+        $qualityResults.TotalFiles = $files.Count
+        
+        # Load PSScriptAnalyzer settings if available
+        $settingsPath = Join-Path $projectRoot "PSScriptAnalyzerSettings.psd1"
+        $analyzerParams = @{}
+        if (Test-Path $settingsPath) {
+            $analyzerParams['Settings'] = $settingsPath
+        }
+        
+        # Analyze each file
+        foreach ($file in $files) {
+            $fileResults = Invoke-ScriptAnalyzer -Path $file.FullName @analyzerParams
+            
+            foreach ($issue in $fileResults) {
+                $qualityResults.TotalIssues++
+                
+                switch ($issue.Severity) {
+                    'Error' { $qualityResults.ErrorCount++ }
+                    'Warning' { $qualityResults.WarningCount++ }
+                    'Information' { $qualityResults.InformationCount++ }
+                }
+                
+                $qualityResults.Details += [PSCustomObject]@{
+                    File = $file.Name
+                    Line = $issue.Line
+                    Column = $issue.Column
+                    Severity = $issue.Severity
+                    RuleName = $issue.RuleName
+                    Message = $issue.Message
+                }
+            }
+        }
+        
+        # Determine if quality check failed
+        $qualityResults.Failed = $qualityResults.ErrorCount -gt 0
+        
+        # Generate quality report
+        if ($OutputFormat -in @('JSON', 'All')) {
+            $qualityReportPath = Join-Path $testReportPath "psscriptanalyzer-results.json"
+            $qualityResults | ConvertTo-Json -Depth 5 | Set-Content $qualityReportPath
+        }
+        
+        # Display summary
+        Write-TestLog "Quality Analysis Complete:" -Level 'Info'
+        Write-TestLog "  Files Analyzed: $($qualityResults.TotalFiles)" -Level 'Info'
+        Write-TestLog "  Total Issues: $($qualityResults.TotalIssues)" -Level 'Info'
+        Write-TestLog "  Errors: $($qualityResults.ErrorCount)" -Level $(if ($qualityResults.ErrorCount -gt 0) { 'Error' } else { 'Info' })
+        Write-TestLog "  Warnings: $($qualityResults.WarningCount)" -Level $(if ($qualityResults.WarningCount -gt 0) { 'Warning' } else { 'Info' })
+        
+    } catch {
+        Write-TestLog "PSScriptAnalyzer failed: $_" -Level 'Error'
+        $qualityResults.Failed = $true
+    }
+    
+    return $qualityResults
 }
 
 # Test file discovery
@@ -704,6 +797,14 @@ function Invoke-ParallelTestExecution {
         $config.Output.Verbosity = 'Minimal'
         # Timeout not supported in this Pester version
         
+        # Configure code coverage if enabled
+        if ($CodeCoverage) {
+            $config.CodeCoverage.Enabled = $true
+            $config.CodeCoverage.Path = Get-ChildItem -Path (Split-Path $testFile.Path) -Include "*.ps1", "*.psm1" -Exclude "*.Tests.ps1" -Recurse
+            $config.CodeCoverage.OutputFormat = 'CoverageGutters'
+            $config.CodeCoverage.OutputPath = Join-Path $testReportPath "coverage-$($testFile.Name -replace '\.Tests\.ps1$', '').xml"
+        }
+        
         $testStartTime = Get-Date
         
         try {
@@ -771,6 +872,14 @@ function Invoke-SequentialTestExecution {
         $config.Run.PassThru = $true
         $config.Output.Verbosity = if ($CI) { 'Minimal' } else { 'Normal' }
         # Timeout not supported in this Pester version
+        
+        # Configure code coverage if enabled
+        if ($CodeCoverage) {
+            $config.CodeCoverage.Enabled = $true
+            $config.CodeCoverage.Path = Get-ChildItem -Path (Split-Path $testFile.Path) -Include "*.ps1", "*.psm1" -Exclude "*.Tests.ps1" -Recurse
+            $config.CodeCoverage.OutputFormat = 'CoverageGutters'
+            $config.CodeCoverage.OutputPath = Join-Path $testReportPath "coverage-$($testFile.Name -replace '\.Tests\.ps1$', '').xml"
+        }
         
         # Configure tags if specified
         if ($Tags.Count -gt 0) {
@@ -1226,6 +1335,29 @@ function Show-TestSummary {
     Write-Host "    Skipped: $($script:TestSession.SkippedTests)" -ForegroundColor Yellow
     Write-Host ""
     
+    # Code Coverage Results
+    if ($CodeCoverage -and $script:TestSession.CodeCoverageResults) {
+        Write-Host "  Code Coverage:" -ForegroundColor White
+        Write-Host "    Coverage: $($script:TestSession.CodeCoverageResults.CoveragePercent)%" -ForegroundColor $(if ($script:TestSession.CodeCoverageResults.CoveragePercent -ge $CoverageThreshold) { 'Green' } else { 'Red' })
+        Write-Host "    Threshold: $CoverageThreshold%" -ForegroundColor White
+        Write-Host "    Covered Lines: $($script:TestSession.CodeCoverageResults.CoveredLines)/$($script:TestSession.CodeCoverageResults.TotalLines)" -ForegroundColor Cyan
+        Write-Host ""
+    }
+    
+    # Quality Analysis Results
+    if ($IncludeQualityChecks -and $script:TestSession.QualityResults) {
+        Write-Host "  Quality Analysis:" -ForegroundColor White
+        Write-Host "    Files Analyzed: $($script:TestSession.QualityResults.TotalFiles)" -ForegroundColor Cyan
+        Write-Host "    Total Issues: $($script:TestSession.QualityResults.TotalIssues)" -ForegroundColor $(if ($script:TestSession.QualityResults.TotalIssues -eq 0) { 'Green' } else { 'Yellow' })
+        if ($script:TestSession.QualityResults.ErrorCount -gt 0) {
+            Write-Host "    Errors: $($script:TestSession.QualityResults.ErrorCount)" -ForegroundColor Red
+        }
+        if ($script:TestSession.QualityResults.WarningCount -gt 0) {
+            Write-Host "    Warnings: $($script:TestSession.QualityResults.WarningCount)" -ForegroundColor Yellow
+        }
+        Write-Host ""
+    }
+    
     # Performance metrics
     Write-Host "  Performance Metrics:" -ForegroundColor White
     Write-Host "    Duration: $([math]::Round($script:TestSession.Duration.TotalSeconds, 2))s" -ForegroundColor Cyan
@@ -1307,6 +1439,17 @@ function Start-UnifiedTestRunner {
         if (-not (Test-Prerequisites)) {
             Write-TestLog "Prerequisites validation failed" -Level 'Error'
             exit 1
+        }
+        
+        # Run PSScriptAnalyzer if requested
+        if ($IncludeQualityChecks) {
+            Write-TestProgress -Activity "Quality Analysis" -Status "Running PSScriptAnalyzer" -PercentComplete 5
+            $qualityResults = Invoke-QualityAnalysis
+            $script:TestSession.QualityResults = $qualityResults
+            if ($qualityResults.Failed -and $FailFast) {
+                Write-TestLog "Quality analysis failed with $($qualityResults.ErrorCount) errors" -Level 'Error'
+                exit 1
+            }
         }
         
         # Get test files

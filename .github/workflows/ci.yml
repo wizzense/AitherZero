@@ -180,8 +180,8 @@ jobs:
           # Disable parallel execution to avoid module loading issues
           $env:AITHERZERO_DISABLE_PARALLEL = "true"
           
-          # Run tests with CI optimizations
-          ./tests/Run-UnifiedTests.ps1 -TestSuite CI -CI -OutputFormat All -ShowProgress
+          # Run tests with CI optimizations, code coverage, and quality checks
+          ./tests/Run-UnifiedTests.ps1 -TestSuite CI -CI -OutputFormat All -ShowProgress -CodeCoverage -IncludeQualityChecks
         continue-on-error: false
 
       - name: Upload test results
