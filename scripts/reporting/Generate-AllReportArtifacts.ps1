@@ -114,7 +114,46 @@ try {
     
     Write-Host "✅ Feature dependency map created" -ForegroundColor Green
     
-    # 4. Generate CI dashboard
+    # 4. Generate Unified Quality Dashboard
+    Write-Host "🎯 Generating unified quality dashboard..." -ForegroundColor White
+    
+    $qualityDashboardPath = "$PSScriptRoot/Generate-UnifiedQualityDashboard.ps1"
+    if (Test-Path $qualityDashboardPath) {
+        try {
+            $qualityResult = & $qualityDashboardPath -OutputPath "$OutputPath/quality-dashboard.html" -VerboseOutput:$VerboseOutput
+            Write-Host "✅ Unified quality dashboard created" -ForegroundColor Green
+        } catch {
+            Write-Warning "Quality dashboard generation failed: $($_.Exception.Message)"
+            # Create placeholder
+            $placeholderHtml = @"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AitherZero Quality Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { color: #333; }
+        p { color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Quality Dashboard</h1>
+        <p>Quality dashboard is being generated. Please check back later.</p>
+        <p>Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')</p>
+    </div>
+</body>
+</html>
+"@
+            $placeholderHtml | Set-Content -Path "$OutputPath/quality-dashboard.html" -Encoding UTF8
+        }
+    } else {
+        Write-Warning "Quality dashboard generator not found - skipping"
+    }
+    
+    # 5. Generate CI dashboard
     Write-Host "🚀 Generating CI dashboard..." -ForegroundColor White
     
     # Try to get CI data from artifacts
