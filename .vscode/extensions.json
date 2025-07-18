@@ -1,47 +1,55 @@
 {
+    // Recommended VS Code extensions for AitherZero development
     "recommendations": [
-        // Core PowerShell Development
+        // PowerShell
         "ms-vscode.powershell",
-        "ms-vscode.vscode-powershell",
-        // AI and Code Assistance
-        "github.copilot",
-        "github.copilot-chat",
-        // Testing and Quality
-        "pester.pester",
-        "ms-vscode.test-adapter-converter",
-        "hbenl.vscode-test-explorer",
-        // Infrastructure as Code
-        "hashicorp.terraform",
-        "ms-vscode.vscode-json",
-        // Code Quality and Analysis
-        "usernamehw.errorlens",
-        "streetsidesoftware.code-spell-checker",
-        "ms-vsliveshare.vsliveshare",
-        // Git and Version Control
-        "mhutchie.git-graph",
-        "github.vscode-pull-request-github",
+        "ms-vscode.powershell-preview",
+        
+        // Git and GitHub
         "eamodio.gitlens",
-        // Productivity and UI
-        "ms-vscode.vscode-theme-generator",
-        "vscode-icons-team.vscode-icons",
-        "gruntfuggly.todo-tree",
-        "alefragnani.bookmarks",
-        // Documentation and Markdown
+        "GitHub.vscode-pull-request-github",
+        "donjayamanne.githistory",
+        
+        // Markdown
         "yzhang.markdown-all-in-one",
         "davidanson.vscode-markdownlint",
-        "bierner.markdown-mermaid",
-        // File Management and Search
-        "ms-vscode.vscode-file-utils",
+        
+        // Code quality
+        "streetsidesoftware.code-spell-checker",
+        "EditorConfig.EditorConfig",
+        
+        // Development productivity
         "christian-kohler.path-intellisense",
-        "formulahendry.auto-rename-tag",
-        // PowerShell Specific
-        "ms-vscode.powershell-preview",
-        "ironmansoftware.powershellprotools"
+        "aaron-bond.better-comments",
+        "gruntfuggly.todo-tree",
+        "wayou.vscode-todo-highlight",
+        
+        // Testing
+        "hbenl.vscode-test-explorer",
+        "ms-vscode.test-adapter-converter",
+        
+        // YAML/JSON
+        "redhat.vscode-yaml",
+        "eriklynd.json-tools",
+        
+        // Remote development
+        "ms-vscode-remote.remote-wsl",
+        "ms-vscode-remote.remote-ssh",
+        "ms-vscode-remote.remote-containers",
+        
+        // Infrastructure as Code
+        "hashicorp.terraform",
+        "4ops.terraform",
+        
+        // Icons and themes (optional)
+        "vscode-icons-team.vscode-icons",
+        "PKief.material-icon-theme"
     ],
+    
+    // Extensions that should not be recommended
     "unwantedRecommendations": [
-        // Remove conflicting or unnecessary extensions
+        "ms-vscode.csharp",
         "ms-python.python",
-        "ms-python.flake8",
-        "ms-python.pylint"
+        "golang.go"
     ]
 }

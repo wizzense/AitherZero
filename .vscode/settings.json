@@ -1,177 +1,99 @@
 {
-    // GitHub Copilot Configuration
-    "github.copilot.enable": {
-        "*": true,
-        "plaintext": false,
-        "markdown": true,
-        "scminput": false
-    },
-
-    // Copilot Chat Features with new instruction file support
-    "github.copilot.chat.followUps": "on",
-    "github.copilot.chat.localeOverride": "en",
-    "github.copilot.chat.scopeSelection": true,
-
-    // Enable instruction files (key setting!)
-    "github.copilot.chat.codeGeneration.useInstructionFiles": true,
-
-    // Configure instruction and prompt file locations
-    "chat.instructionsFilesLocations": {
-        ".github/instructions": true,
-        ".vscode/instructions": true
-    },
-    "chat.promptFilesLocations": {
-        ".github/prompts": true,
-        ".vscode/prompts": true
-    },
-
-    // Specific instruction types with file references
-    "github.copilot.chat.codeGeneration.instructions": [
-        {
-            "file": ".github/instructions/modules.instructions.md"
-        },
-        {
-            "file": ".github/instructions/patchmanager-workflows.instructions.md"
-        },
-        {
-            "file": ".github/instructions/advanced-architecture.instructions.md"
-        },
-        {
-            "text": "Always use PowerShell 7.0+ cross-platform syntax with Join-Path for paths."
-        }
-    ],
-
-    "github.copilot.chat.testGeneration.instructions": [
-        {
-            "file": ".github/instructions/testing-workflows.instructions.md"
-        },
-        {
-            "file": ".github/prompts/run-bulletproof-tests-updated.prompt.md"
-        },
-        {
-            "text": "Use Pester 5.0+ with proper Describe-Context-It structure and comprehensive mocking."
-        }
-    ],
-
-    // PowerShell Specific Settings
+    // AitherZero VS Code Settings
+    "powershell.codeFormatting.pipelineIndentationStyle": "IncreaseIndentationForFirstPipeline",
     "powershell.codeFormatting.preset": "OTBS",
-    "powershell.codeFormatting.openBraceOnSameLine": true,
-    "powershell.codeFormatting.newLineAfterOpenBrace": true,
+    "powershell.codeFormatting.alignPropertyValuePairs": true,
+    "powershell.codeFormatting.ignoreOneLineBlock": true,
     "powershell.codeFormatting.newLineAfterCloseBrace": true,
+    "powershell.codeFormatting.newLineAfterOpenBrace": true,
+    "powershell.codeFormatting.openBraceOnSameLine": true,
+    "powershell.codeFormatting.whitespaceAfterSeparator": true,
+    "powershell.codeFormatting.whitespaceAroundOperator": true,
     "powershell.codeFormatting.whitespaceBeforeOpenBrace": true,
     "powershell.codeFormatting.whitespaceBeforeOpenParen": true,
-    "powershell.codeFormatting.whitespaceAroundOperator": true,
-    "powershell.codeFormatting.whitespaceAfterSeparator": true,
-    "powershell.codeFormatting.ignoreOneLineBlock": true,
-    "powershell.codeFormatting.alignPropertyValuePairs": true,
-    "powershell.codeFormatting.useConstantStrings": true,
-    "powershell.codeFormatting.useCorrectCasing": true,
-
-    // PowerShell Analysis
+    "powershell.codeFormatting.whitespaceBetweenParameters": false,
+    "powershell.codeFormatting.whitespaceInsideBrace": true,
+    
+    // PSScriptAnalyzer settings
     "powershell.scriptAnalysis.enable": true,
-    "powershell.scriptAnalysis.settingsPath": "core-runner/PSScriptAnalyzerSettings.psd1",
-    "powershell.scriptAnalysis.enableReferencesCodeLens": true,
-    "powershell.debugging.createTemporaryIntegratedConsole": false,
-
-    // File Associations
+    "powershell.scriptAnalysis.settingsPath": "PSScriptAnalyzerSettings.psd1",
+    
+    // Editor settings for PowerShell files
+    "[powershell]": {
+        "editor.defaultFormatter": "ms-vscode.powershell",
+        "editor.formatOnSave": true,
+        "editor.formatOnPaste": true,
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4,
+        "editor.autoIndent": "full",
+        "files.trimTrailingWhitespace": true,
+        "files.trimFinalNewlines": true,
+        "files.insertFinalNewline": true,
+        "editor.rulers": [120],
+        "editor.wordWrapColumn": 120
+    },
+    
+    // File associations
     "files.associations": {
         "*.ps1": "powershell",
         "*.psm1": "powershell",
         "*.psd1": "powershell",
-        "*.tf": "terraform",
-        "*.tfvars": "terraform",
-        "*.hcl": "terraform",
-        "*.instructions.md": "markdown",
-        "*.prompt.md": "markdown"
+        "*.ps1xml": "xml",
+        "*.pssc": "powershell",
+        "*.psrc": "powershell"
     },
-
-    // Editor Configuration for PowerShell
-    "[powershell]": {
-        "editor.insertSpaces": true,
-        "editor.tabSize": 4,
-        "editor.detectIndentation": false,
-        "editor.formatOnSave": true,
-        "editor.formatOnPaste": true,
-        "editor.semanticHighlighting.enabled": true,
-        "editor.rulers": [80, 120],
-        "editor.wordWrap": "bounded",
-        "editor.wordWrapColumn": 120
-    },
-
-    // Terraform/OpenTofu Configuration
-    "[terraform]": {
-        "editor.insertSpaces": true,
-        "editor.tabSize": 2,
-        "editor.formatOnSave": true,
-        "editor.defaultFormatter": "hashicorp.terraform"
-    },
-
-    // Testing Framework Configuration
-    "pester.useLegacyCodeLens": false,
-    "pester.enableCodeLens": true,
-    "pester.outputVerbosity": "Detailed",
-
-    // Search and File Management
-    "search.exclude": {
-        "**/logs/**": true,
-        "**/tests/results/**": true,
-        "**/tests/TestResults/**": true,
-        "**/*.tfstate*": true,
-        "**/.terraform/**": true,
-        "**/coverage.xml": true
-    },
-
+    
+    // Exclude patterns
     "files.exclude": {
-        "**/logs/**": false,
-        "**/tests/results/**": true,
-        "**/.terraform/**": true,
-        "**/*.tfstate.backup": true
+        "**/.git": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "**/*.tmp": true,
+        "**/*.temp": true,
+        "**/backup-*": true,
+        "**/test-results-*": true
     },
-
-    // Git Configuration
+    
+    // Search exclude patterns
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/bower_components": true,
+        "**/*.code-search": true,
+        "**/tests/results": true,
+        "**/backup-*": true
+    },
+    
+    // Terminal settings
+    "terminal.integrated.defaultProfile.windows": "PowerShell 7",
+    "terminal.integrated.defaultProfile.linux": "pwsh",
+    "terminal.integrated.defaultProfile.osx": "pwsh",
+    
+    // Git settings
     "git.ignoreLimitWarning": true,
     "git.autofetch": true,
-    "git.enableSmartCommit": true,
-    "git.confirmSync": false,
-
-    // Terminal Configuration
-    "terminal.integrated.defaultProfile.windows": "PowerShell",
-    "terminal.integrated.profiles.windows": {
-        "PowerShell": {
-            "source": "PowerShell",
-            "icon": "terminal-powershell",
-            "args": ["-NoLogo"]
-        },
-        "PowerShell Core": {
-            "path": "pwsh.exe",
-            "icon": "terminal-powershell",
-            "args": ["-NoLogo"]
-        }
-    },
-
-    // Workspace Settings
-    "explorer.confirmDelete": false,
-    "explorer.confirmDragAndDrop": false,
-    "breadcrumbs.enabled": true,
-    "outline.showVariables": true,
-    "problems.showCurrentInStatus": true,
-
-    // Auto-save and Performance
-    "files.autoSave": "onFocusChange",
-    "files.trimTrailingWhitespace": true,
-    "files.insertFinalNewline": true,
-    "files.trimFinalNewlines": true,
-
-    // IntelliSense and Code Completion
+    
+    // Editor settings
+    "editor.minimap.enabled": true,
+    "editor.renderWhitespace": "boundary",
     "editor.suggestSelection": "first",
     "editor.acceptSuggestionOnCommitCharacter": true,
-    "editor.acceptSuggestionOnEnter": "on",
-    "editor.quickSuggestionsDelay": 10,
-    "editor.parameterHints.enabled": true,
-    "editor.hover.enabled": true,
-
-    // Error Handling and Debugging
-    "debug.allowBreakpointsEverywhere": true,
-    "debug.openDebug": "openOnDebugBreak",
-    "debug.showInStatusBar": "always"
+    "editor.snippetSuggestions": "top",
+    
+    // Workspace recommendations
+    "extensions.ignoreRecommendations": false,
+    
+    // Task settings
+    "task.autoDetect": "on",
+    "task.quickOpen.skip": true,
+    
+    // Debug console
+    "debug.console.wordWrap": false,
+    "debug.console.fontSize": 12,
+    
+    // Problem matcher
+    "problems.decorations.enabled": true,
+    "problems.autoReveal": true,
+    
+    // Telemetry
+    "telemetry.telemetryLevel": "off"
 }
