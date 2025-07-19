@@ -2,63 +2,27 @@
   "agentId": 3,
   "phase": "Code Quality Inspector",
   "date": "2025-01-19",
-  "lastUpdate": "2025-01-19T12:00:00Z",
-  "status": "completed",
-  "progress": "100%",
-  "claimedFiles": [
-    "migration/boilerplate-analysis.md",
-    "migration/boilerplate-inventory.md",
-    "technical-debt/needs-implementation.md",
-    "migration/code-reduction-metrics.md",
-    "migration/phase3-handoff.md"
-  ],
+  "lastUpdate": "2025-01-19T10:00:00Z",
+  "status": "starting",
+  "progress": "0%",
+  "claimedFiles": [],
   "claimedModules": [
-    "all modules - read-only scan completed"
+    "all modules - read-only scan for patterns"
   ],
-  "filesModified": [
-    "migration/boilerplate-analysis.md",
-    "migration/boilerplate-inventory.md",
-    "technical-debt/needs-implementation.md",
-    "migration/code-reduction-metrics.md",
-    "migration/phase3-handoff.md"
-  ],
+  "filesModified": [],
   "filesQueued": [],
-  "issuesFound": [
-    {
-      "type": "management-boilerplate",
-      "modules": ["AIToolsIntegration", "RestAPIServer", "UnifiedMaintenance", "StartupExperience"],
-      "estimatedLines": 2400,
-      "pattern": "Start/Stop/Get/Set/Export/Import/Invoke management functions"
-    },
-    {
-      "type": "error-handling-boilerplate",
-      "estimatedLines": 800,
-      "pattern": "Repetitive try-catch blocks"
-    },
-    {
-      "type": "logging-verbosity",
-      "estimatedLines": 500,
-      "pattern": "Redundant success/failure messages"
-    },
-    {
-      "type": "state-management",
-      "estimatedLines": 400,
-      "pattern": "Duplicate state structures"
-    },
-    {
-      "type": "parameter-validation",
-      "estimatedLines": 300,
-      "pattern": "Manual validation instead of attributes"
-    }
-  ],
+  "issuesFound": [],
   "blockers": [],
-  "nextSteps": [],
-  "estimatedCompletion": "2025-01-19T12:00:00Z",
-  "completionSummary": {
-    "totalBoilerplateFound": 4400,
-    "reductionPotential": 3520,
-    "percentageReduction": 80,
-    "documentationCreated": 5,
-    "recommendationsProvided": true
-  }
+  "nextSteps": [
+    "Review other agents' status files",
+    "Begin scanning for placeholder patterns",
+    "Identify verbose AI-generated comments"
+  ],
+  "estimatedCompletion": "2025-01-21T18:00:00Z",
+  "searchPatterns": [
+    "placeholder.*implement",
+    "TODO:.*Implement",
+    "throw.*NotImplementedException",
+    "(?s)^\\s*#[^#].*\\n(\\s*#[^#].*\\n){5,}"
+  ]
 }
