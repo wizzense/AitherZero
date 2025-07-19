@@ -388,34 +388,46 @@ $step3 = New-ParallelStep -Name "Parallel Tasks" -ParallelSteps @($task1, $task2
 
 ### Module System
 
-AitherZero uses a modular PowerShell architecture with 30+ specialized modules:
+AitherZero uses a modular PowerShell architecture with modules organized into domains and standalone modules:
 
+#### Domain-Organized Modules
+
+**Infrastructure Domain** (`aither-core/domains/infrastructure/`):
 - **LabRunner**: Lab automation orchestration
-- **PatchManager**: Git workflow automation with PR/issue creation (v3.0 - Atomic Operations)
-- **BackupManager**: File backup and consolidation
-- **DevEnvironment**: Development environment setup
 - **OpenTofuProvider**: Infrastructure deployment with cloud provider integrations (AWS, Azure, VMware, Hyper-V)
 - **ISOManager**: ISO management and customization
-- **ParallelExecution**: Runspace-based parallel processing
-- **Logging**: Centralized logging across all operations
-- **TestingFramework**: Pester-based testing integration
-- **SecureCredentials**: Enterprise credential management
-- **RemoteConnection**: Multi-protocol remote connections
 - **SystemMonitoring**: System performance monitoring
-- **SetupWizard**: Enhanced first-time setup with installation profiles
-- **AIToolsIntegration**: AI development tools management (Claude Code, Gemini, etc.)
+
+**Configuration Domain** (`aither-core/domains/configuration/`):
 - **ConfigurationCarousel**: Multi-environment configuration management
 - **ConfigurationCore**: Core configuration management system
 - **ConfigurationManager**: Configuration integrity and management
 - **ConfigurationRepository**: Git-based configuration repository management
+
+**Security Domain** (`aither-core/domains/security/`):
+- **SecurityAutomation**: Security hardening and compliance automation
+- **SecureCredentials**: Enterprise credential management
+
+**Automation Domain** (`aither-core/domains/automation/`):
+- **ScriptManager**: One-off script execution management
+
+#### Standalone Modules (`aither-core/modules/`)
+
+- **PatchManager**: Git workflow automation with PR/issue creation (v3.0 - Atomic Operations)
+- **BackupManager**: File backup and consolidation
+- **DevEnvironment**: Development environment setup
+- **ParallelExecution**: Runspace-based parallel processing
+- **Logging**: Centralized logging across all operations
+- **TestingFramework**: Pester-based testing integration
+- **RemoteConnection**: Multi-protocol remote connections
+- **SetupWizard**: Enhanced first-time setup with installation profiles
+- **AIToolsIntegration**: AI development tools management (Claude Code, Gemini, etc.)
 - **OrchestrationEngine**: Advanced workflow and playbook execution
 - **ProgressTracking**: Visual progress tracking for long-running operations
 - **ModuleCommunication**: Inter-module communication and API system
 - **PSScriptAnalyzerIntegration**: PowerShell code analysis automation
 - **RestAPIServer**: REST API server for external integrations
 - **RepoSync**: Repository synchronization utilities
-- **ScriptManager**: One-off script execution management
-- **SecurityAutomation**: Security hardening and compliance automation
 - **SemanticVersioning**: Semantic versioning utilities
 - **StartupExperience**: Interactive startup and configuration management
 - **UnifiedMaintenance**: Unified maintenance operations
