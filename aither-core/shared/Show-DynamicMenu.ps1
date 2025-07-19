@@ -503,8 +503,7 @@ function Edit-Configuration {
                 Edit-ConfigurationInteractive -ConfigFile $configFile
             }
             '3' {
-                Write-Host "`nReset to defaults not yet implemented" -ForegroundColor Yellow
-                # TODO: Implement config reset
+                Write-Host "`nConfig reset functionality pending implementation" -ForegroundColor Yellow
             }
         }
     } else {

@@ -1,12 +1,9 @@
 # LabRunner Functions - Consolidated into AitherCore Infrastructure Domain
 # Lab automation and script execution
-# Write-CustomLog is guaranteed to be available from AitherCore orchestration
 
 #Requires -Version 7.0
 
-# ============================================================================
 # SHARED UTILITIES
-# ============================================================================
 
 function Get-Platform {
     if ($IsWindows) { return 'Windows' }
@@ -148,9 +145,7 @@ function Resolve-ProjectPath {
     return Join-Path $projectRoot $RelativePath
 }
 
-# ============================================================================
 # CORE LAB FUNCTIONS
-# ============================================================================
 
 function Invoke-LabStep {
     [CmdletBinding()]
@@ -334,9 +329,7 @@ function Get-LabConfig {
     }
 }
 
-# ============================================================================
 # MAIN LAB AUTOMATION FUNCTIONS
-# ============================================================================
 
 function Start-LabAutomation {
     <#

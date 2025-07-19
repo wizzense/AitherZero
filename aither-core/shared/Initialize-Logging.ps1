@@ -79,7 +79,7 @@ function Initialize-Logging {
     # Try to import the centralized Logging module
     $loggingImported = $false
     if (-not $NoImport -and $projectRoot) {
-        $loggingModulePath = Join-Path $projectRoot "aither-core" "modules" "Logging"
+        $loggingModulePath = Join-Path $projectRoot "aither-core" "shared" "Logging"
         if (Test-Path $loggingModulePath) {
             try {
                 Import-Module $loggingModulePath -Force -ErrorAction Stop

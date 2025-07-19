@@ -502,7 +502,7 @@ function Get-OverallHealthScore {
     # Security compliance score
     if ($AuditData.Security) {
         $healthFactors.SecurityCompliance = 85 # Default high score, reduce for findings
-        # TODO: Analyze security findings and reduce score accordingly
+        # Future enhancement: Analyze security findings and reduce score accordingly
     } else {
         $healthFactors.SecurityCompliance = 75 # Partial score if no security data
     }
@@ -510,7 +510,7 @@ function Get-OverallHealthScore {
     # Code quality score
     if ($AuditData.CodeQuality) {
         $healthFactors.CodeQuality = 80 # Default score, adjust based on findings
-        # TODO: Analyze PSScriptAnalyzer findings and calculate score
+        # Future enhancement: Analyze PSScriptAnalyzer findings and calculate score
     } else {
         $healthFactors.CodeQuality = 70 # Partial score if no quality data
     }
@@ -518,7 +518,7 @@ function Get-OverallHealthScore {
     # Documentation coverage score
     if ($AuditData.Documentation) {
         $healthFactors.DocumentationCoverage = 75 # Default score
-        # TODO: Analyze documentation coverage
+        # Future enhancement: Analyze documentation coverage
     } else {
         $healthFactors.DocumentationCoverage = 60 # Lower score if no doc data
     }

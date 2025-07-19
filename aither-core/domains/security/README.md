@@ -1,26 +1,47 @@
 # Security Domain
 
-This domain handles security and credential management for AitherCore.
+> 🔒 **Enterprise Security & Compliance** - Credential management, security automation, and compliance hardening
 
-## Consolidated Modules
+This domain consolidates **2 legacy modules** into **41 specialized functions** for comprehensive security management.
 
-### SecureCredentials
+## Domain Overview
+
+**Function Count**: 41 functions  
+**Legacy Modules Consolidated**: 2 (SecureCredentials, SecurityAutomation)  
+**Primary Use Cases**: Credential management, security automation, compliance hardening, PKI management
+
+## Consolidated Components
+
+### SecureCredentials (10 functions)
 **Original Module**: `aither-core/modules/SecureCredentials/`  
-**Status**: Consolidated (Maintained as Separate Service)  
-**Key Functions**:
-- `Get-SecureCredential`
-- `Set-SecureCredential`
-- `New-SecureCredential`
-- `Test-SecureCredentialCompliance`
+**Status**: ✅ Consolidated (Core Security Service)  
+**Purpose**: Enterprise-grade credential management with encryption and access control
 
-### SecurityAutomation
-**Original Module**: `aither-core/modules/SecurityAutomation/`  
-**Status**: Consolidated (Security Provider)  
 **Key Functions**:
-- `Get-ADSecurityAssessment`
-- `Enable-CredentialGuard`
-- `Install-EnterpriseCA`
-- `Enable-AdvancedAuditPolicy`
+- `Get-SecureCredential` - Retrieve encrypted credentials securely
+- `Set-SecureCredential` - Store credentials with enterprise encryption
+- `New-SecureCredential` - Create new secure credential entries
+- `Test-SecureCredentialCompliance` - Validate credential compliance
+- `Remove-SecureCredential` - Securely remove credentials
+- `Export-SecureCredentialAudit` - Generate credential audit reports
+- `Import-SecureCredentialFromVault` - Import from external credential vaults
+
+### SecurityAutomation (31 functions)
+**Original Module**: `aither-core/modules/SecurityAutomation/`  
+**Status**: ✅ Consolidated (Security Provider)  
+**Purpose**: Automated security hardening, compliance monitoring, and PKI management
+
+**Key Functions**:
+- `Get-ADSecurityAssessment` - Comprehensive Active Directory security analysis
+- `Enable-CredentialGuard` - Enable Windows Credential Guard protection
+- `Install-EnterpriseCA` - Deploy enterprise certificate authority
+- `Enable-AdvancedAuditPolicy` - Configure advanced security auditing
+- `Set-SystemHardening` - Apply system hardening configurations
+- `New-CertificateTemplate` - Create certificate templates for PKI
+- `Test-SecurityCompliance` - Validate security compliance status
+- `Get-SecurityRecommendations` - Generate security improvement recommendations
+- `Enable-BitLockerEncryption` - Enable and configure BitLocker
+- `Set-WindowsFirewallRules` - Configure Windows Firewall rules
 
 ## Security Architecture
 

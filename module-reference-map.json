@@ -1,0 +1,221 @@
+{
+  "moduleReferenceMap": {
+    "description": "Maps old module import paths to new domain-based paths after consolidation",
+    "version": "1.0.0",
+    "created": "2025-01-19",
+    "migratedModules": {
+      "LabRunner": {
+        "oldPath": "./aither-core/modules/LabRunner",
+        "newPath": "./aither-core/domains/infrastructure/LabRunner.ps1",
+        "type": "domain_script",
+        "domain": "infrastructure",
+        "importMethod": "dot_source",
+        "status": "migrated"
+      },
+      "SystemMonitoring": {
+        "oldPath": "./aither-core/modules/SystemMonitoring", 
+        "newPath": "./aither-core/domains/infrastructure/SystemMonitoring.ps1",
+        "type": "domain_script",
+        "domain": "infrastructure", 
+        "importMethod": "dot_source",
+        "status": "migrated"
+      },
+      "ISOManager": {
+        "oldPath": "./aither-core/modules/ISOManager",
+        "newPath": "./aither-core/domains/infrastructure/ISOManager.ps1", 
+        "type": "domain_script",
+        "domain": "infrastructure",
+        "importMethod": "dot_source", 
+        "status": "migrated"
+      },
+      "OpenTofuProvider": {
+        "oldPath": "./aither-core/modules/OpenTofuProvider",
+        "newPath": "./aither-core/domains/infrastructure/OpenTofuProvider.ps1",
+        "type": "domain_script", 
+        "domain": "infrastructure",
+        "importMethod": "dot_source",
+        "status": "migrated"
+      },
+      "ConfigurationCore": {
+        "oldPath": "./aither-core/modules/ConfigurationCore",
+        "newPath": "./aither-core/domains/configuration/Configuration.ps1",
+        "type": "domain_script",
+        "domain": "configuration", 
+        "importMethod": "dot_source",
+        "status": "migrated"
+      },
+      "ConfigurationManager": {
+        "oldPath": "./aither-core/modules/ConfigurationManager", 
+        "newPath": "./aither-core/domains/configuration/Configuration.ps1",
+        "type": "domain_script",
+        "domain": "configuration",
+        "importMethod": "dot_source", 
+        "status": "migrated"
+      },
+      "ConfigurationCarousel": {
+        "oldPath": "./aither-core/modules/ConfigurationCarousel",
+        "newPath": "./aither-core/modules/ConfigurationCarousel", 
+        "type": "standalone_module",
+        "domain": "none",
+        "importMethod": "import_module",
+        "status": "unchanged"
+      },
+      "ConfigurationRepository": {
+        "oldPath": "./aither-core/modules/ConfigurationRepository",
+        "newPath": "./aither-core/modules/ConfigurationRepository",
+        "type": "standalone_module", 
+        "domain": "none",
+        "importMethod": "import_module",
+        "status": "unchanged"
+      },
+      "SecurityAutomation": {
+        "oldPath": "./aither-core/modules/SecurityAutomation",
+        "newPath": "./aither-core/domains/security/Security.ps1",
+        "type": "domain_script",
+        "domain": "security",
+        "importMethod": "dot_source", 
+        "status": "migrated"
+      },
+      "SecureCredentials": {
+        "oldPath": "./aither-core/modules/SecureCredentials", 
+        "newPath": "./aither-core/domains/security/Security.ps1",
+        "type": "domain_script",
+        "domain": "security",
+        "importMethod": "dot_source",
+        "status": "migrated"
+      },
+      "ScriptManager": {
+        "oldPath": "./aither-core/modules/ScriptManager",
+        "newPath": "./aither-core/domains/automation/Automation.ps1",
+        "type": "domain_script", 
+        "domain": "automation",
+        "importMethod": "dot_source",
+        "status": "migrated"
+      }
+    },
+    "unchangedModules": {
+      "PatchManager": {
+        "path": "./aither-core/modules/PatchManager",
+        "type": "standalone_module",
+        "status": "unchanged"
+      },
+      "BackupManager": {
+        "path": "./aither-core/modules/BackupManager", 
+        "type": "standalone_module",
+        "status": "unchanged"
+      },
+      "DevEnvironment": {
+        "path": "./aither-core/modules/DevEnvironment",
+        "type": "standalone_module", 
+        "status": "unchanged"
+      },
+      "Logging": {
+        "path": "./aither-core/modules/Logging",
+        "type": "standalone_module",
+        "status": "unchanged"
+      },
+      "TestingFramework": {
+        "path": "./aither-core/modules/TestingFramework", 
+        "type": "standalone_module",
+        "status": "unchanged"
+      },
+      "SetupWizard": {
+        "path": "./aither-core/modules/SetupWizard",
+        "type": "standalone_module",
+        "status": "unchanged"
+      },
+      "StartupExperience": {
+        "path": "./aither-core/modules/StartupExperience",
+        "type": "standalone_module", 
+        "status": "unchanged"
+      },
+      "ProgressTracking": {
+        "path": "./aither-core/modules/ProgressTracking",
+        "type": "standalone_module",
+        "status": "unchanged"
+      },
+      "OrchestrationEngine": {
+        "path": "./aither-core/modules/OrchestrationEngine",
+        "type": "standalone_module",
+        "status": "unchanged"
+      },
+      "AIToolsIntegration": {
+        "path": "./aither-core/modules/AIToolsIntegration", 
+        "type": "standalone_module",
+        "status": "unchanged"
+      },
+      "ParallelExecution": {
+        "path": "./aither-core/modules/ParallelExecution",
+        "type": "standalone_module",
+        "status": "unchanged"
+      },
+      "RemoteConnection": {
+        "path": "./aither-core/modules/RemoteConnection",
+        "type": "standalone_module",
+        "status": "unchanged"
+      },
+      "ModuleCommunication": {
+        "path": "./aither-core/modules/ModuleCommunication",
+        "type": "standalone_module", 
+        "status": "unchanged"
+      },
+      "LicenseManager": {
+        "path": "./aither-core/modules/LicenseManager",
+        "type": "standalone_module",
+        "status": "unchanged"
+      },
+      "RestAPIServer": {
+        "path": "./aither-core/modules/RestAPIServer",
+        "type": "standalone_module",
+        "status": "unchanged"
+      },
+      "SemanticVersioning": {
+        "path": "./aither-core/modules/SemanticVersioning", 
+        "type": "standalone_module",
+        "status": "unchanged"
+      },
+      "PSScriptAnalyzerIntegration": {
+        "path": "./aither-core/modules/PSScriptAnalyzerIntegration",
+        "type": "standalone_module",
+        "status": "unchanged"
+      },
+      "RepoSync": {
+        "path": "./aither-core/modules/RepoSync",
+        "type": "standalone_module",
+        "status": "unchanged"
+      },
+      "UnifiedMaintenance": {
+        "path": "./aither-core/modules/UnifiedMaintenance",
+        "type": "standalone_module",
+        "status": "unchanged"
+      },
+      "UtilityServices": {
+        "path": "./aither-core/modules/UtilityServices",
+        "type": "standalone_module", 
+        "status": "unchanged"
+      }
+    },
+    "legacyAliases": {
+      "CoreApp": "LabRunner",
+      "CoreApplication": "LabRunner", 
+      "InfrastructureProvider": "OpenTofuProvider",
+      "CredentialManager": "SecureCredentials",
+      "ConnectionManager": "RemoteConnection",
+      "EnvironmentManager": "DevEnvironment",
+      "MaintenanceManager": "UnifiedMaintenance",
+      "ScriptExecutor": "ScriptManager",
+      "TestRunner": "TestingFramework"
+    },
+    "importMethods": {
+      "dot_source": "Use . (dot sourcing) to load domain scripts: . \"./aither-core/domains/domain-name/Script.ps1\"",
+      "import_module": "Use Import-Module for standalone modules: Import-Module \"./aither-core/modules/ModuleName\" -Force",
+      "aither_core": "Use AitherCore.psm1 orchestration: Import-Module \"./aither-core/AitherCore.psm1\" -Force"
+    },
+    "migrationNotes": {
+      "domainConsolidation": "Modules moved to domains are now script files (.ps1) loaded via dot sourcing, not PowerShell modules (.psm1)",
+      "functionAccess": "Domain script functions are available globally after dot sourcing",
+      "loadingOrder": "AitherCore.psm1 handles proper loading order for all domains and modules",
+      "backwardCompatibility": "Use legacy-module-shims.ps1 for automatic redirection of old import paths"
+    }
+  }
+}

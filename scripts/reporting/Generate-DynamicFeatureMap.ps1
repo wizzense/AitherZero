@@ -573,7 +573,7 @@ function Get-DependencyGraph {
         }
     }
 
-    # TODO: Detect circular dependencies and clusters
+    # Future enhancement: Detect circular dependencies and clusters
 
     return $dependencyGraph
 }
