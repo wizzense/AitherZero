@@ -102,7 +102,7 @@
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module ./aither-core/modules/PatchManager -Force; New-QuickFix -Description '${input:patchDescription}' -Changes { ${input:patchOperation} }"
+                ". ./aither-core/domains/automation/Automation.ps1; New-QuickFix -Description '${input:patchDescription}' -Changes { ${input:patchOperation} }"
             ],
             "group": "build",
             "presentation": {
@@ -122,7 +122,7 @@
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module ./aither-core/modules/PatchManager -Force; New-Feature -Description '${input:patchDescription}' -Changes { ${input:patchOperation} }"
+                ". ./aither-core/domains/automation/Automation.ps1; New-Feature -Description '${input:patchDescription}' -Changes { ${input:patchOperation} }"
             ],
             "group": "build",
             "presentation": {
@@ -142,7 +142,7 @@
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module ./aither-core/modules/PatchManager -Force; New-Hotfix -Description '${input:patchDescription}' -Changes { ${input:patchOperation} }"
+                ". ./aither-core/domains/automation/Automation.ps1; New-Hotfix -Description '${input:patchDescription}' -Changes { ${input:patchOperation} }"
             ],
             "group": "build",
             "presentation": {
@@ -162,7 +162,7 @@
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module ./aither-core/modules/PatchManager -Force; New-Patch -Description '${input:patchDescription}' -Changes { ${input:patchOperation} }"
+                ". ./aither-core/domains/automation/Automation.ps1; New-Patch -Description '${input:patchDescription}' -Changes { ${input:patchOperation} }"
             ],
             "group": "build",
             "presentation": {
@@ -203,7 +203,7 @@
             "command": "pwsh",
             "args": [
                 "-Command",
-                ". ./aither-core/shared/Find-ProjectRoot.ps1; $projectRoot = Find-ProjectRoot; Get-ChildItem '$projectRoot/aither-core/modules' -Directory | ForEach-Object { Import-Module $_.FullName -Force; Write-Host \"✅ Loaded: $($_.Name)\" -ForegroundColor Green }"
+                ". ./aither-core/shared/Find-ProjectRoot.ps1; $projectRoot = Find-ProjectRoot; Get-ChildItem '$projectRoot/aither-core/domains' -Directory | ForEach-Object { . \"$($_.FullName)/$($_.Name).ps1\"; Write-Host \"✅ Loaded Domain: $($_.Name)\" -ForegroundColor Green }"
             ],
             "group": "build",
             "presentation": {
@@ -319,7 +319,7 @@
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module ./aither-core/modules/OpenTofuProvider -Force; Invoke-OpenTofuPlan"
+                ". ./aither-core/domains/infrastructure/LabRunner.ps1; Invoke-OpenTofuPlan"
             ],
             "group": "build",
             "presentation": {
@@ -339,7 +339,7 @@
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module ./aither-core/modules/OpenTofuProvider -Force; Invoke-OpenTofuApply"
+                ". ./aither-core/domains/infrastructure/LabRunner.ps1; Invoke-OpenTofuApply"
             ],
             "group": "build",
             "presentation": {
@@ -363,7 +363,7 @@
             "command": "pwsh",
             "args": [
                 "-Command",
-                "Import-Module ./aither-core/modules/PSScriptAnalyzerIntegration -Force; Start-DirectoryAudit -Path . -Recurse -UpdateDocumentation"
+                ". ./aither-core/domains/utilities/Utilities.ps1; Invoke-PSScriptAnalyzerScan -Path . -Recurse -UpdateDocumentation"
             ],
             "group": "test",
             "presentation": {

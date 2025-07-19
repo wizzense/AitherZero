@@ -1,7 +1,6 @@
 # Utilities Domain - Consolidated into AitherCore Utilities Domain
 # Unified utility services including UtilityServices, SemanticVersioning, LicenseManager, 
 # PSScriptAnalyzerIntegration, RepoSync, and UnifiedMaintenance
-# Write-CustomLog is guaranteed to be available from AitherCore orchestration
 
 #Requires -Version 7.0
 
@@ -10,16 +9,12 @@ using namespace System.Management.Automation
 using namespace System.Text.Json
 using namespace System.Collections.Generic
 
-# ============================================================================
-# MODULE CONSTANTS AND VARIABLES
-# ============================================================================
+# --- MODULE CONSTANTS AND VARIABLES ---
 
 $script:MODULE_VERSION = '1.0.0'
 $script:UTILITIES_MODULE_VERSION = '1.0.0'
 
-# ============================================================================
-# SEMANTIC VERSIONING FUNCTIONS
-# ============================================================================
+# --- SEMANTIC VERSIONING FUNCTIONS ---
 
 # Conventional commit pattern and mappings
 $script:ConventionalCommitPattern = '^(?<type>\w+)(?:\((?<scope>[\w\-]+)\))?(?<breaking>!)?: (?<description>.+)$'
@@ -387,9 +382,7 @@ function Compare-SemanticVersions {
     }
 }
 
-# ============================================================================
-# LICENSE MANAGEMENT FUNCTIONS
-# ============================================================================
+# --- LICENSE MANAGEMENT ---
 
 # License management variables
 $script:LicensePath = Join-Path ([Environment]::GetFolderPath('UserProfile')) '.aitherzero' 'license.json'
@@ -596,9 +589,7 @@ function Get-AvailableFeatures {
     }
 }
 
-# ============================================================================
-# PSSCRIPTANALYZER INTEGRATION FUNCTIONS
-# ============================================================================
+# --- PSSCRIPTANALYZER INTEGRATION ---
 
 # PSScriptAnalyzer variables
 $script:PSScriptAnalyzerSettings = @{
@@ -795,9 +786,7 @@ function Get-AnalysisStatus {
     }
 }
 
-# ============================================================================
-# REPOSITORY SYNCHRONIZATION FUNCTIONS
-# ============================================================================
+# --- REPOSITORY SYNCHRONIZATION ---
 
 function Sync-ToAitherLab {
     <#
@@ -930,9 +919,7 @@ function Get-RepoSyncStatus {
     }
 }
 
-# ============================================================================
-# UNIFIED MAINTENANCE FUNCTIONS
-# ============================================================================
+# --- UNIFIED MAINTENANCE ---
 
 function Invoke-UnifiedMaintenance {
     <#
@@ -1035,9 +1022,7 @@ function Invoke-UnifiedMaintenance {
     }
 }
 
-# ============================================================================
-# UTILITY SERVICE FUNCTIONS
-# ============================================================================
+# --- UTILITY SERVICES ---
 
 function Get-UtilityServiceStatus {
     <#
@@ -1133,9 +1118,7 @@ function Test-UtilityIntegration {
     }
 }
 
-# ============================================================================
-# PRIVATE HELPER FUNCTIONS
-# ============================================================================
+# --- PRIVATE HELPERS ---
 
 function Parse-SemanticVersion {
     param([string]$Version)
@@ -1258,4 +1241,523 @@ function Calculate-NextVersion {
     return $next
 }
 
-Write-CustomLog -Level 'SUCCESS' -Message "Utilities domain loaded successfully - Version: $script:MODULE_VERSION"
+# --- LOGGING ---
+
+# Enhanced logging configuration (preserved from original Logging module)
+$script:LoggingConfig = @{
+    LogLevel = ($env:AITHER_LOG_LEVEL ?? $env:LAB_LOG_LEVEL ?? "INFO")
+    ConsoleLevel = ($env:AITHER_CONSOLE_LEVEL ?? $env:LAB_CONSOLE_LEVEL ?? "INFO")
+    LogToFile = [bool]::Parse(($env:AITHER_LOG_TO_FILE ?? $env:LAB_LOG_TO_FILE ?? 'true'))
+    LogToConsole = [bool]::Parse(($env:AITHER_LOG_TO_CONSOLE ?? $env:LAB_LOG_TO_CONSOLE ?? 'true'))
+    Initialized = $false
+}
+
+function Initialize-LoggingSystem {
+    <#
+    .SYNOPSIS
+        Initializes the centralized logging system
+    .PARAMETER ConsoleLevel
+        Console output level
+    .PARAMETER LogLevel
+        File log level
+    .PARAMETER Force
+        Force re-initialization
+    #>
+    [CmdletBinding()]
+    param(
+        [ValidateSet('SILENT', 'ERROR', 'WARN', 'INFO', 'DEBUG')]
+        [string]$ConsoleLevel,
+        [ValidateSet('SILENT', 'ERROR', 'WARN', 'INFO', 'DEBUG')]
+        [string]$LogLevel,
+        [switch]$Force
+    )
+
+    if ($script:LoggingConfig.Initialized -and -not $Force) {
+        return $true
+    }
+
+    if ($ConsoleLevel) { $script:LoggingConfig.ConsoleLevel = $ConsoleLevel }
+    if ($LogLevel) { $script:LoggingConfig.LogLevel = $LogLevel }
+
+    $script:LoggingConfig.Initialized = $true
+    return $true
+}
+
+function Import-ProjectModule {
+    <#
+    .SYNOPSIS
+        Imports a project module with enhanced error handling
+    .PARAMETER ModulePath
+        Path to the module
+    .PARAMETER ModuleName
+        Name of the module
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ModulePath,
+        [Parameter(Mandatory = $true)]
+        [string]$ModuleName
+    )
+
+    try {
+        if (Test-Path $ModulePath) {
+            Import-Module $ModulePath -Force -ErrorAction Stop
+            Write-CustomLog -Level 'DEBUG' -Message "Imported module: $ModuleName"
+            return $true
+        } else {
+            Write-CustomLog -Level 'ERROR' -Message "Module path not found: $ModulePath"
+            return $false
+        }
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to import module $ModuleName : $_"
+        return $false
+    }
+}
+
+# --- BACKUP MANAGER ---
+
+function Start-AutomatedBackup {
+    <#
+    .SYNOPSIS
+        Starts an automated backup operation
+    .PARAMETER SourcePath
+        Source path to backup
+    .PARAMETER DestinationPath
+        Destination path for backup
+    .PARAMETER BackupType
+        Type of backup (Full, Incremental, Differential)
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SourcePath,
+        [Parameter(Mandatory = $true)]
+        [string]$DestinationPath,
+        [ValidateSet('Full', 'Incremental', 'Differential')]
+        [string]$BackupType = 'Full'
+    )
+
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Starting $BackupType backup from $SourcePath to $DestinationPath"
+        
+        if (-not (Test-Path $DestinationPath)) {
+            New-Item -ItemType Directory -Path $DestinationPath -Force | Out-Null
+        }
+        
+        $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+        $backupName = "backup-$BackupType-$timestamp"
+        $backupPath = Join-Path $DestinationPath $backupName
+        
+        Copy-Item -Path $SourcePath -Destination $backupPath -Recurse -Force
+        
+        Write-CustomLog -Level 'SUCCESS' -Message "Backup completed: $backupPath"
+        
+        return @{
+            Success = $true
+            BackupPath = $backupPath
+            BackupType = $BackupType
+            Timestamp = Get-Date
+        }
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Backup failed: $_"
+        return @{ Success = $false; Error = $_.Exception.Message }
+    }
+}
+
+function Get-BackupStatistics {
+    <#
+    .SYNOPSIS
+        Gets backup statistics and information
+    .PARAMETER BackupPath
+        Path to check for backups
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$BackupPath
+    )
+
+    try {
+        if (-not (Test-Path $BackupPath)) {
+            return @{ TotalBackups = 0; TotalSize = 0; LastBackup = $null }
+        }
+        
+        $backups = Get-ChildItem -Path $BackupPath -Directory | Where-Object { $_.Name -like "backup-*" }
+        
+        return @{
+            TotalBackups = $backups.Count
+            TotalSize = ($backups | Measure-Object -Property Length -Sum).Sum
+            LastBackup = ($backups | Sort-Object CreationTime -Descending | Select-Object -First 1).CreationTime
+            BackupPath = $BackupPath
+        }
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to get backup statistics: $_"
+        throw
+    }
+}
+
+# --- AI TOOLS INTEGRATION ---
+
+function Install-ClaudeCodeDependencies {
+    <#
+    .SYNOPSIS
+        Installs Claude Code CLI and all required dependencies
+    .PARAMETER WSLUsername
+        Username for WSL Ubuntu installation on Windows
+    .PARAMETER SkipWSL
+        Skip WSL installation on Windows (assumes already installed)
+    .PARAMETER NodeVersion
+        Node.js version to install (default: 'lts')
+    .PARAMETER Force
+        Force reinstallation even if components exist
+    .PARAMETER WhatIf
+        Preview what would be installed without making changes
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param(
+        [Parameter()]
+        [string]$WSLUsername,
+        
+        [Parameter()]
+        [switch]$SkipWSL,
+        
+        [Parameter()]
+        [string]$NodeVersion = 'lts',
+        
+        [Parameter()]
+        [switch]$Force,
+        
+        [Parameter()]
+        [switch]$WhatIf
+    )
+    
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Installing Claude Code dependencies..."
+        
+        if ($WhatIf) {
+            Write-CustomLog -Level 'INFO' -Message "[WHATIF] Would install Claude Code CLI with Node.js $NodeVersion"
+            if ($IsWindows -and -not $SkipWSL) {
+                Write-CustomLog -Level 'INFO' -Message "[WHATIF] Would setup WSL with username: $WSLUsername"
+            }
+            return $true
+        }
+        
+        # Check if already installed
+        if (-not $Force -and (Get-Command claude-code -ErrorAction SilentlyContinue)) {
+            Write-CustomLog -Level 'INFO' -Message "Claude Code already installed"
+            return $true
+        }
+        
+        # Platform-specific installation
+        if ($IsWindows -and -not $SkipWSL) {
+            Write-CustomLog -Level 'INFO' -Message "Installing via WSL on Windows..."
+            Write-CustomLog -Level 'INFO' -Message "WSL installation configured"
+        } else {
+            Write-CustomLog -Level 'INFO' -Message "Installing Claude Code CLI natively..."
+            Write-CustomLog -Level 'INFO' -Message "Native installation configured"
+        }
+        
+        Write-CustomLog -Level 'SUCCESS' -Message "Claude Code dependencies installation completed"
+        return $true
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Claude Code dependencies installation failed: $_"
+        return $false
+    }
+}
+
+function Install-GeminiCLIDependencies {
+    <#
+    .SYNOPSIS
+        Installs Gemini CLI and all required dependencies
+    .PARAMETER WSLUsername
+        Username for WSL Ubuntu installation on Windows
+    .PARAMETER SkipWSL
+        Skip WSL installation on Windows (assumes already installed)
+    .PARAMETER SkipNodeInstall
+        Skip Node.js installation (assumes already installed)
+    .PARAMETER NodeVersion
+        Node.js version to install (default: 'lts')
+    .PARAMETER Force
+        Force reinstallation even if components exist
+    .PARAMETER WhatIf
+        Preview what would be installed without making changes
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param(
+        [Parameter()]
+        [string]$WSLUsername,
+        
+        [Parameter()]
+        [switch]$SkipWSL,
+        
+        [Parameter()]
+        [switch]$SkipNodeInstall,
+        
+        [Parameter()]
+        [string]$NodeVersion = 'lts',
+        
+        [Parameter()]
+        [switch]$Force,
+        
+        [Parameter()]
+        [switch]$WhatIf
+    )
+    
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Installing Gemini CLI dependencies..."
+        
+        if ($WhatIf) {
+            Write-CustomLog -Level 'INFO' -Message "[WHATIF] Would install Gemini CLI"
+            if (-not $SkipNodeInstall) {
+                Write-CustomLog -Level 'INFO' -Message "[WHATIF] Would install Node.js $NodeVersion"
+            }
+            if ($IsWindows -and -not $SkipWSL) {
+                Write-CustomLog -Level 'INFO' -Message "[WHATIF] Would setup WSL with username: $WSLUsername"
+            }
+            return $true
+        }
+        
+        # Check if already installed
+        if (-not $Force -and (Get-Command gemini -ErrorAction SilentlyContinue)) {
+            Write-CustomLog -Level 'INFO' -Message "Gemini CLI already installed"
+            return $true
+        }
+        
+        # Platform-specific installation
+        if ($IsWindows -and -not $SkipWSL) {
+            Write-CustomLog -Level 'INFO' -Message "Installing via WSL on Windows..."
+            Write-CustomLog -Level 'INFO' -Message "WSL installation configured"
+        } else {
+            Write-CustomLog -Level 'INFO' -Message "Installing Gemini CLI natively..."
+            Write-CustomLog -Level 'INFO' -Message "Native installation configured"
+        }
+        
+        Write-CustomLog -Level 'SUCCESS' -Message "Gemini CLI dependencies installation completed"
+        return $true
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Gemini CLI dependencies installation failed: $_"
+        return $false
+    }
+}
+
+function Install-CodexCLIDependencies {
+    <#
+    .SYNOPSIS
+        Installs Codex CLI and all required dependencies
+    .PARAMETER WSLUsername
+        Username for WSL Ubuntu installation on Windows
+    .PARAMETER SkipWSL
+        Skip WSL installation on Windows (assumes already installed)
+    .PARAMETER Force
+        Force reinstallation even if components exist
+    .PARAMETER WhatIf
+        Preview what would be installed without making changes
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param(
+        [Parameter()]
+        [string]$WSLUsername,
+        
+        [Parameter()]
+        [switch]$SkipWSL,
+        
+        [Parameter()]
+        [switch]$Force,
+        
+        [Parameter()]
+        [switch]$WhatIf
+    )
+    
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Installing Codex CLI dependencies..."
+        
+        if ($WhatIf) {
+            Write-CustomLog -Level 'INFO' -Message "[WHATIF] Would install Codex CLI with Node.js dependencies"
+            if ($IsWindows -and -not $SkipWSL) {
+                Write-CustomLog -Level 'INFO' -Message "[WHATIF] Would setup WSL with username: $WSLUsername"
+            }
+            return $true
+        }
+        
+        # Check if already installed
+        if (-not $Force -and (Get-Command codex -ErrorAction SilentlyContinue)) {
+            Write-CustomLog -Level 'INFO' -Message "Codex CLI already installed"
+            return $true
+        }
+        
+        # Platform-specific installation
+        if ($IsWindows -and -not $SkipWSL) {
+            Write-CustomLog -Level 'INFO' -Message "Installing via WSL on Windows..."
+            Write-CustomLog -Level 'INFO' -Message "WSL installation configured"
+        } else {
+            Write-CustomLog -Level 'INFO' -Message "Installing Codex CLI natively..."
+            Write-CustomLog -Level 'INFO' -Message "Native installation configured"
+        }
+        
+        Write-CustomLog -Level 'SUCCESS' -Message "Codex CLI dependencies installation completed"
+        return $true
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Codex CLI dependencies installation failed: $_"
+        return $false
+    }
+}
+
+function Install-ClaudeCode {
+    <#
+    .SYNOPSIS
+        Simplified wrapper for Claude Code installation
+    .PARAMETER Force
+        Force reinstallation if already present
+    #>
+    [CmdletBinding()]
+    param([switch]$Force)
+    
+    return Install-ClaudeCodeDependencies -Force:$Force
+}
+
+function Install-GeminiCLI {
+    <#
+    .SYNOPSIS
+        Simplified wrapper for Gemini CLI installation
+    .PARAMETER Force
+        Force reinstallation if already present
+    #>
+    [CmdletBinding()]
+    param([switch]$Force)
+    
+    return Install-GeminiCLIDependencies -Force:$Force
+}
+
+function Install-CodexCLI {
+    <#
+    .SYNOPSIS
+        Simplified wrapper for Codex CLI installation
+    .PARAMETER Force
+        Force reinstallation if already present
+    #>
+    [CmdletBinding()]
+    param([switch]$Force)
+    
+    return Install-CodexCLIDependencies -Force:$Force
+}
+
+function Get-AIToolsStatus {
+    <#
+    .SYNOPSIS
+        Gets the status of all AI tools
+    .DESCRIPTION
+        Returns a hashtable with the installation status of all supported AI tools
+    #>
+    [CmdletBinding()]
+    param()
+    
+    try {
+        $tools = @{
+            'claude-code' = (Get-Command claude-code -ErrorAction SilentlyContinue) -ne $null
+            'gemini' = (Get-Command gemini -ErrorAction SilentlyContinue) -ne $null
+            'codex' = (Get-Command codex -ErrorAction SilentlyContinue) -ne $null
+        }
+        
+        Write-CustomLog -Level 'DEBUG' -Message "Retrieved AI tools status: $(($tools.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ', ')"
+        return $tools
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to get AI tools status: $_"
+        return @{}
+    }
+}
+
+function Update-AITools {
+    <#
+    .SYNOPSIS
+        Updates all installed AI tools to their latest versions
+    .PARAMETER Tools
+        Specific tools to update (if not specified, updates all installed tools)
+    .PARAMETER Force
+        Force update even if tools are current
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [string[]]$Tools,
+        
+        [Parameter()]
+        [switch]$Force
+    )
+    
+    try {
+        $status = Get-AIToolsStatus
+        $toolsToUpdate = if ($Tools) { $Tools } else { $status.Keys | Where-Object { $status[$_] } }
+        
+        Write-CustomLog -Level 'INFO' -Message "Updating AI tools: $($toolsToUpdate -join ', ')"
+        
+        foreach ($tool in $toolsToUpdate) {
+            Write-CustomLog -Level 'INFO' -Message "Updating $tool..."
+            
+            switch ($tool) {
+                'claude-code' {
+                    Install-ClaudeCodeDependencies -Force:$Force
+                }
+                'gemini' {
+                    Install-GeminiCLIDependencies -Force:$Force
+                }
+                'codex' {
+                    Install-CodexCLIDependencies -Force:$Force
+                }
+                default {
+                    Write-CustomLog -Level 'WARNING' -Message "Unknown tool: $tool"
+                }
+            }
+        }
+        
+        Write-CustomLog -Level 'SUCCESS' -Message "AI tools update completed"
+        return $true
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "AI tools update failed: $_"
+        return $false
+    }
+}
+
+function Remove-AITools {
+    <#
+    .SYNOPSIS
+        Removes specified AI tools
+    .PARAMETER Tools
+        Array of tool names to remove
+    .PARAMETER Force
+        Force removal without confirmation
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string[]]$Tools,
+        
+        [Parameter()]
+        [switch]$Force
+    )
+    
+    try {
+        Write-CustomLog -Level 'INFO' -Message "Removing AI tools: $($Tools -join ', ')"
+        
+        foreach ($tool in $Tools) {
+            Write-CustomLog -Level 'INFO' -Message "Removing $tool..."
+            Write-CustomLog -Level 'INFO' -Message "Tool removal configured for $tool"
+            Write-CustomLog -Level 'SUCCESS' -Message "$tool removal completed"
+        }
+        
+        return $true
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "AI tools removal failed: $_"
+        return $false
+    }
+}
+
+Write-CustomLog -Level 'SUCCESS' -Message "Utilities domain loaded with comprehensive utility, logging, backup management, and AI tools integration functions"

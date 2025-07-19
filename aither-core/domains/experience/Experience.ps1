@@ -1,6 +1,5 @@
 ﻿# Experience Functions - Consolidated into AitherCore Experience Domain
 # Unified startup experience and setup wizard functionality
-# Write-CustomLog is guaranteed to be available from AitherCore orchestration
 
 #Requires -Version 7.0
 
@@ -11,9 +10,7 @@ using namespace System.Management.Automation
 # Import shared Find-ProjectRoot utility
 . "$PSScriptRoot/../../shared/Find-ProjectRoot.ps1"
 
-# ============================================================================
 # MODULE CONSTANTS AND VARIABLES
-# ============================================================================
 
 $script:MODULE_VERSION = '1.0.0'
 $script:SETUP_METADATA_VERSION = '1.0'
@@ -52,9 +49,7 @@ $script:ExperienceRegistry = @{
     }
 }
 
-# ============================================================================
 # SETUP WIZARD FUNCTIONS
-# ============================================================================
 
 function Start-IntelligentSetup {
     <#
@@ -990,9 +985,7 @@ function Invoke-ErrorRecovery {
     }
 }
 
-# ============================================================================
 # STARTUP EXPERIENCE FUNCTIONS
-# ============================================================================
 
 function Start-InteractiveMode {
     <#
@@ -1494,9 +1487,7 @@ function Show-ContextMenu {
     }
 }
 
-# ============================================================================
 # CONFIGURATION FUNCTIONS
-# ============================================================================
 
 function Edit-Configuration {
     <#
@@ -2150,9 +2141,7 @@ Happy automating! 🚀
     }
 }
 
-# ============================================================================
 # HELPER FUNCTIONS
-# ============================================================================
 
 # Find-ProjectRoot function is now imported from shared utility
 
@@ -2184,9 +2173,7 @@ if (-not (Get-Command Test-FeatureAccess -ErrorAction SilentlyContinue)) {
     Write-CustomLog -Level 'DEBUG' -Message "Using fallback Test-FeatureAccess function"
 }
 
-# ============================================================================
 # MODULE INITIALIZATION
-# ============================================================================
 
 # Initialize the experience domain
 try {
@@ -2201,4 +2188,291 @@ try {
     Write-CustomLog -Level 'ERROR' -Message "Failed to initialize Experience domain: $($_.Exception.Message)"
 }
 
-Write-CustomLog -Level 'SUCCESS' -Message "Experience domain loaded with unified setup wizard and startup experience functions"
+# PROGRESS TRACKING FUNCTIONS - Migrated from modules/ProgressTracking
+
+# Progress tracking variables
+$script:ActiveOperations = @{}
+$script:ProgressBarCache = @{}
+
+function Start-ProgressOperation {
+    <#
+    .SYNOPSIS
+        Start tracking a new operation with progress visualization
+    .PARAMETER OperationName
+        Name of the operation to track
+    .PARAMETER TotalSteps
+        Total number of steps in the operation
+    .PARAMETER ShowTime
+        Show elapsed time in progress display
+    .PARAMETER ShowETA
+        Calculate and show estimated time to completion
+    .EXAMPLE
+        $operationId = Start-ProgressOperation -OperationName "Deploying Infrastructure" -TotalSteps 10 -ShowTime -ShowETA
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$OperationName,
+
+        [Parameter(Mandatory)]
+        [ValidateRange(0, [int]::MaxValue)]
+        [int]$TotalSteps,
+
+        [switch]$ShowTime,
+        [switch]$ShowETA,
+
+        [ValidateSet('Bar', 'Spinner', 'Percentage', 'Detailed')]
+        [string]$Style = 'Bar'
+    )
+
+    try {
+        $operationId = [Guid]::NewGuid().ToString()
+
+        $script:ActiveOperations[$operationId] = @{
+            Name = $OperationName
+            TotalSteps = $TotalSteps
+            CurrentStep = 0
+            StartTime = Get-Date
+            ShowTime = $ShowTime
+            ShowETA = $ShowETA
+            Style = $Style
+            SubOperations = @{}
+            Errors = @()
+            Status = 'Running'
+        }
+
+        Write-CustomLog -Level 'INFO' -Message "Started progress operation: $OperationName (ID: $operationId)"
+        
+        # Show initial progress
+        Show-ProgressUpdate -OperationId $operationId
+
+        return $operationId
+
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to start progress operation: $_"
+        throw
+    }
+}
+
+function Update-ProgressOperation {
+    <#
+    .SYNOPSIS
+        Updates the progress of an operation
+    .PARAMETER OperationId
+        ID of the operation to update
+    .PARAMETER IncrementStep
+        Increment the current step by 1
+    .PARAMETER StepName
+        Name of the current step
+    .EXAMPLE
+        Update-ProgressOperation -OperationId $operationId -IncrementStep -StepName "Creating VMs"
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$OperationId,
+
+        [switch]$IncrementStep,
+
+        [string]$StepName,
+
+        [int]$StepNumber
+    )
+
+    try {
+        if (-not $script:ActiveOperations.ContainsKey($OperationId)) {
+            throw "Operation ID $OperationId not found"
+        }
+
+        $operation = $script:ActiveOperations[$OperationId]
+
+        if ($IncrementStep) {
+            $operation.CurrentStep++
+        } elseif ($StepNumber -ge 0) {
+            $operation.CurrentStep = $StepNumber
+        }
+
+        if ($StepName) {
+            $operation.CurrentStepName = $StepName
+        }
+
+        # Show progress update
+        Show-ProgressUpdate -OperationId $OperationId
+
+        Write-CustomLog -Level 'DEBUG' -Message "Updated progress for operation $OperationId : Step $($operation.CurrentStep)/$($operation.TotalSteps)"
+
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to update progress operation: $_"
+        throw
+    }
+}
+
+function Complete-ProgressOperation {
+    <#
+    .SYNOPSIS
+        Completes a progress operation
+    .PARAMETER OperationId
+        ID of the operation to complete
+    .PARAMETER ShowSummary
+        Show completion summary
+    .EXAMPLE
+        Complete-ProgressOperation -OperationId $operationId -ShowSummary
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$OperationId,
+
+        [switch]$ShowSummary
+    )
+
+    try {
+        if (-not $script:ActiveOperations.ContainsKey($OperationId)) {
+            throw "Operation ID $OperationId not found"
+        }
+
+        $operation = $script:ActiveOperations[$OperationId]
+        $operation.Status = 'Completed'
+        $operation.EndTime = Get-Date
+        $operation.Duration = $operation.EndTime - $operation.StartTime
+
+        if ($ShowSummary) {
+            Write-Host ""
+            Write-Host "✅ Operation Completed: $($operation.Name)" -ForegroundColor Green
+            Write-Host "   Duration: $($operation.Duration.TotalSeconds.ToString('0.0')) seconds" -ForegroundColor Cyan
+            Write-Host "   Steps completed: $($operation.CurrentStep)/$($operation.TotalSteps)" -ForegroundColor Cyan
+            
+            if ($operation.Errors.Count -gt 0) {
+                Write-Host "   Errors encountered: $($operation.Errors.Count)" -ForegroundColor Yellow
+            }
+            Write-Host ""
+        }
+
+        # Remove from active operations
+        $script:ActiveOperations.Remove($OperationId)
+
+        Write-CustomLog -Level 'SUCCESS' -Message "Completed progress operation: $($operation.Name) (Duration: $($operation.Duration.TotalSeconds)s)"
+
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to complete progress operation: $_"
+        throw
+    }
+}
+
+function Start-MultiProgress {
+    <#
+    .SYNOPSIS
+        Starts tracking multiple operations with coordinated progress display
+    .PARAMETER Title
+        Overall title for the multi-progress operation
+    .PARAMETER Operations
+        Array of operation definitions
+    .EXAMPLE
+        $operations = @(
+            @{Name = "Module Loading"; Steps = 5},
+            @{Name = "Environment Setup"; Steps = 8}
+        )
+        $multiOps = Start-MultiProgress -Title "AitherZero Initialization" -Operations $operations
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Title,
+
+        [Parameter(Mandatory)]
+        [array]$Operations
+    )
+
+    try {
+        $multiProgressId = [Guid]::NewGuid().ToString()
+        $operationIds = @()
+
+        Write-CustomLog -Level 'INFO' -Message "Starting multi-progress operation: $Title"
+
+        foreach ($op in $Operations) {
+            $operationId = Start-ProgressOperation -OperationName $op.Name -TotalSteps $op.Steps
+            $operationIds += $operationId
+        }
+
+        $multiProgressContext = @{
+            Id = $multiProgressId
+            Title = $Title
+            OperationIds = $operationIds
+            StartTime = Get-Date
+        }
+
+        Write-Host ""
+        Write-Host "🚀 $Title" -ForegroundColor Cyan
+        Write-Host "=" * ($Title.Length + 4) -ForegroundColor Cyan
+
+        return $multiProgressContext
+
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to start multi-progress operation: $_"
+        throw
+    }
+}
+
+function Show-ProgressUpdate {
+    <#
+    .SYNOPSIS
+        Shows a progress update for an operation
+    .PARAMETER OperationId
+        ID of the operation to show progress for
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$OperationId
+    )
+
+    try {
+        if (-not $script:ActiveOperations.ContainsKey($OperationId)) {
+            return
+        }
+
+        $operation = $script:ActiveOperations[$OperationId]
+        $percentComplete = if ($operation.TotalSteps -gt 0) {
+            [Math]::Round(($operation.CurrentStep / $operation.TotalSteps) * 100, 1)
+        } else { 0 }
+
+        $progressBar = ""
+        $barLength = 30
+        $filledLength = [Math]::Round(($percentComplete / 100) * $barLength)
+        
+        for ($i = 0; $i -lt $barLength; $i++) {
+            if ($i -lt $filledLength) {
+                $progressBar += "█"
+            } else {
+                $progressBar += "░"
+            }
+        }
+
+        $statusLine = "[$progressBar] $percentComplete% ($($operation.CurrentStep)/$($operation.TotalSteps))"
+        
+        if ($operation.CurrentStepName) {
+            $statusLine += " - $($operation.CurrentStepName)"
+        }
+
+        if ($operation.ShowTime) {
+            $elapsed = (Get-Date) - $operation.StartTime
+            $statusLine += " (Elapsed: $($elapsed.TotalSeconds.ToString('0.0'))s)"
+        }
+
+        if ($operation.ShowETA -and $operation.CurrentStep -gt 0) {
+            $elapsed = (Get-Date) - $operation.StartTime
+            $avgTimePerStep = $elapsed.TotalSeconds / $operation.CurrentStep
+            $remainingSteps = $operation.TotalSteps - $operation.CurrentStep
+            $eta = $remainingSteps * $avgTimePerStep
+            $statusLine += " (ETA: $($eta.ToString('0.0'))s)"
+        }
+
+        Write-Host "`r$statusLine" -NoNewline -ForegroundColor Cyan
+
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to show progress update: $_"
+    }
+}
+
+Write-CustomLog -Level 'SUCCESS' -Message "Experience domain loaded with unified setup wizard, startup experience, and progress tracking functions"

@@ -49,12 +49,11 @@ begin {
     . "$PSScriptRoot/../shared/Find-ProjectRoot.ps1"
     $projectRoot = Find-ProjectRoot
 
-    # Import DevEnvironment module
-    $devEnvModulePath = Join-Path $env:PWSH_MODULES_PATH "DevEnvironment"
-    Import-Module $devEnvModulePath -Force
+    # Load utilities domain with consolidated AI tools functions
+    . (Join-Path $projectRoot "aither-core/domains/utilities/Utilities.ps1")
 
-    Write-Host "🤖 Claude Code Dependencies Installation" -ForegroundColor Cyan
-    Write-Host "Using DevEnvironment module for installation..." -ForegroundColor Yellow
+    Write-Host "Claude Code Dependencies Installation" -ForegroundColor Cyan
+    Write-Host "Using consolidated utilities domain for installation..." -ForegroundColor Yellow
 }
 
 process {

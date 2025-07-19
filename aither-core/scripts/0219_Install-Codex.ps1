@@ -72,9 +72,8 @@ begin {
     . "$PSScriptRoot/../shared/Find-ProjectRoot.ps1"
     $projectRoot = Find-ProjectRoot
 
-    # Import required modules
-    Import-Module (Join-Path $env:PWSH_MODULES_PATH "Logging") -Force
-    Import-Module (Join-Path $projectRoot (Join-Path "aither-core" (Join-Path "modules" "DevEnvironment"))) -Force
+    # Load utilities domain with consolidated AI tools functions
+    . (Join-Path $projectRoot "aither-core/domains/utilities/Utilities.ps1")
 
     Write-CustomLog -Level 'INFO' -Message "=== Codex CLI Installation Script ==="
     Write-CustomLog -Level 'INFO' -Message "Script: $($MyInvocation.MyCommand.Name)"

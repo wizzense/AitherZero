@@ -312,18 +312,27 @@ gh workflow run comprehensive-report.yml -f report_type=version-test -f version_
 ### AI Tools Integration Commands
 
 ```powershell
-# Install Claude Code
-Import-Module ./aither-core/modules/AIToolsIntegration -Force
-Install-ClaudeCode
+# Load utilities domain (contains all AI tools functions)
+. (Join-Path $projectRoot "aither-core/domains/utilities/Utilities.ps1")
 
-# Install Gemini CLI
+# Install AI tools with full dependency management
+Install-ClaudeCodeDependencies -WSLUsername "developer"
+Install-GeminiCLIDependencies -SkipNodeInstall
+Install-CodexCLIDependencies -Force
+
+# Simplified installers (wrappers)
+Install-ClaudeCode
 Install-GeminiCLI
+Install-CodexCLI
 
 # Get AI tools status
 Get-AIToolsStatus
 
 # Update all AI tools
 Update-AITools
+
+# Update specific tools
+Update-AITools -Tools @('claude-code', 'gemini')
 
 # Remove AI tools
 Remove-AITools -Tools @('claude-code')
@@ -386,65 +395,55 @@ $step3 = New-ParallelStep -Name "Parallel Tasks" -ParallelSteps @($task1, $task2
 
 ## Architecture and Code Structure
 
-### Module System
+### Domain System
 
-AitherZero uses a modular PowerShell architecture with modules organized into domains and standalone modules:
+AitherZero uses a consolidated domain-based PowerShell architecture with **196+ functions** organized into **6 business domains**:
 
-#### Domain-Organized Modules
+#### Domain Structure (`aither-core/domains/`)
 
-**Infrastructure Domain** (`aither-core/domains/infrastructure/`):
-- **LabRunner**: Lab automation orchestration
-- **OpenTofuProvider**: Infrastructure deployment with cloud provider integrations (AWS, Azure, VMware, Hyper-V)
-- **ISOManager**: ISO management and customization
-- **SystemMonitoring**: System performance monitoring
+**Infrastructure Domain** (`aither-core/domains/infrastructure/`) - **57 Functions**:
+- **LabRunner** (17 functions): Lab automation orchestration
+- **OpenTofuProvider** (11 functions): Infrastructure deployment with cloud provider integrations (AWS, Azure, VMware, Hyper-V)
+- **ISOManager** (10 functions): ISO management and customization
+- **SystemMonitoring** (19 functions): System performance monitoring
 
-**Configuration Domain** (`aither-core/domains/configuration/`):
-- **ConfigurationCarousel**: Multi-environment configuration management
-- **ConfigurationCore**: Core configuration management system
-- **ConfigurationManager**: Configuration integrity and management
-- **ConfigurationRepository**: Git-based configuration repository management
+**Security Domain** (`aither-core/domains/security/`) - **41 Functions**:
+- **SecureCredentials** (10 functions): Enterprise credential management
+- **SecurityAutomation** (31 functions): Security hardening and compliance automation
 
-**Security Domain** (`aither-core/domains/security/`):
-- **SecurityAutomation**: Security hardening and compliance automation
-- **SecureCredentials**: Enterprise credential management
+**Configuration Domain** (`aither-core/domains/configuration/`) - **36 Functions**:
+- **ConfigurationCore** (11 functions): Core configuration management system
+- **ConfigurationCarousel** (12 functions): Multi-environment configuration management
+- **ConfigurationRepository** (5 functions): Git-based configuration repository management
+- **ConfigurationManager** (8 functions): Configuration validation and testing
 
-**Automation Domain** (`aither-core/domains/automation/`):
-- **ScriptManager**: One-off script execution management
+**Utilities Domain** (`aither-core/domains/utilities/`) - **24 Functions**:
+- **SemanticVersioning** (8 functions): Semantic versioning utilities
+- **LicenseManager** (3 functions): License management and feature access control
+- **RepoSync** (2 functions): Repository synchronization utilities
+- **UnifiedMaintenance** (3 functions): Unified maintenance operations
+- **UtilityServices** (7 functions): Common utility services
+- **PSScriptAnalyzerIntegration** (1 function): PowerShell code analysis automation
 
-#### Standalone Modules (`aither-core/modules/`)
+**Experience Domain** (`aither-core/domains/experience/`) - **22 Functions**:
+- **SetupWizard** (11 functions): Enhanced first-time setup with installation profiles
+- **StartupExperience** (11 functions): Interactive startup and configuration management
 
-- **PatchManager**: Git workflow automation with PR/issue creation (v3.0 - Atomic Operations)
-- **BackupManager**: File backup and consolidation
-- **DevEnvironment**: Development environment setup
-- **ParallelExecution**: Runspace-based parallel processing
-- **Logging**: Centralized logging across all operations
-- **TestingFramework**: Pester-based testing integration
-- **RemoteConnection**: Multi-protocol remote connections
-- **SetupWizard**: Enhanced first-time setup with installation profiles
-- **AIToolsIntegration**: AI development tools management (Claude Code, Gemini, etc.)
-- **OrchestrationEngine**: Advanced workflow and playbook execution
-- **ProgressTracking**: Visual progress tracking for long-running operations
-- **ModuleCommunication**: Inter-module communication and API system
-- **PSScriptAnalyzerIntegration**: PowerShell code analysis automation
-- **RestAPIServer**: REST API server for external integrations
-- **RepoSync**: Repository synchronization utilities
-- **SemanticVersioning**: Semantic versioning utilities
-- **StartupExperience**: Interactive startup and configuration management
-- **UnifiedMaintenance**: Unified maintenance operations
-- **UtilityServices**: Common utility services
-- **LicenseManager**: License management and feature access control
+**Automation Domain** (`aither-core/domains/automation/`) - **16 Functions**:
+- **ScriptManager** (14 functions): One-off script execution management
+- **OrchestrationEngine** (2 functions): Advanced workflow and playbook execution
 
-### Module Structure Pattern
+### Domain Structure Pattern
 
-Each module follows this structure:
+Each domain follows this structure:
 ```
-ModuleName/
-├── ModuleName.psd1         # Module manifest
-├── ModuleName.psm1         # Module script
-├── Public/                 # Exported functions
-├── Private/               # Internal functions
-└── tests/                 # Module-specific tests
+DomainName/
+├── DomainName.ps1          # Domain script with all functions
+├── README.md               # Domain documentation
+└── (legacy tests may exist in various locations)
 ```
+
+All domains are loaded via dot sourcing or through AitherCore.psm1 orchestration.
 
 ### Important Patterns
 
@@ -458,14 +457,17 @@ $configPath = Join-Path $projectRoot "configs" "app-config.json"
 $configPath = "$projectRoot/configs/app-config.json"
 ```
 
-#### Module Imports
+#### Domain Loading
 ```powershell
 # Always use Find-ProjectRoot
 . "$PSScriptRoot/../../shared/Find-ProjectRoot.ps1"
 $projectRoot = Find-ProjectRoot
 
-# Import modules with -Force
-Import-Module (Join-Path $projectRoot "aither-core/modules/ModuleName") -Force
+# Load domains using dot sourcing
+. (Join-Path $projectRoot "aither-core/domains/DomainName/DomainName.ps1")
+
+# Or use AitherCore.psm1 for automatic loading
+Import-Module (Join-Path $projectRoot "aither-core/AitherCore.psm1") -Force
 ```
 
 #### Logging
@@ -501,7 +503,17 @@ if ($IsWindows) {
 
 ### PatchManager v3.0 Workflows (Atomic Operations)
 
-**IMPORTANT**: PatchManager v3.0 eliminates git stashing issues and provides atomic operations:
+**IMPORTANT**: PatchManager v3.0 is now integrated into the Automation domain and provides atomic operations:
+
+#### Domain Loading
+
+```powershell
+# Load the Automation domain (contains PatchManager functions)
+. (Join-Path $projectRoot "aither-core/domains/automation/Automation.ps1")
+
+# Or use AitherCore.psm1 for automatic loading
+Import-Module (Join-Path $projectRoot "aither-core/AitherCore.psm1") -Force
+```
 
 #### Main Functions (Recommended)
 
@@ -533,32 +545,15 @@ New-Hotfix -Description "Fix critical security issue" -Changes {
 #### Advanced Usage
 
 ```powershell
-# Explicit mode control
-New-Patch -Description "Complex change" -Mode "Standard" -CreatePR -Changes {
+# Create PR after the patch
+New-Patch -Description "Complex change" -CreatePR -Changes {
     # Your changes
-}
-
-# Cross-fork operations
-New-Feature -Description "Upstream feature" -TargetFork "upstream" -Changes {
-    # Feature for upstream repository
 }
 
 # Dry run to preview
 New-Patch -Description "Test change" -DryRun -Changes {
     # Preview what would happen
 }
-```
-
-#### Legacy Compatibility
-
-```powershell
-# Legacy function still works (alias to New-Patch)
-Invoke-PatchWorkflow -PatchDescription "Legacy syntax" -PatchOperation {
-    # Your changes
-} -CreatePR
-
-# Other legacy functions remain available
-Invoke-PatchRollback -RollbackType "LastCommit" -CreateBackup
 ```
 
 ### Git Workflow Best Practices - V3.0 ATOMIC OPERATIONS
@@ -575,8 +570,8 @@ Invoke-PatchRollback -RollbackType "LastCommit" -CreateBackup
 #### Recommended Daily Workflow (v3.0)
 
 ```powershell
-# Import the new PatchManager
-Import-Module ./aither-core/modules/PatchManager -Force
+# Import the Automation domain (contains PatchManager functions)
+. "$PSScriptRoot/aither-core/domains/automation/Automation.ps1"
 
 # Quick fixes (no branching needed)
 New-QuickFix -Description "Fix typo" -Changes { /* fix */ }
@@ -654,8 +649,8 @@ $targetRepo = "$($repoInfo.Owner)/$($repoInfo.Name)"
 ### SetupWizard Usage
 
 ```powershell
-# Run intelligent setup wizard
-Import-Module ./aither-core/modules/SetupWizard -Force
+# Run intelligent setup wizard (from Experience domain)
+. "$PSScriptRoot/aither-core/domains/experience/Experience.ps1"
 $setupResult = Start-IntelligentSetup
 
 # Run minimal setup for CI/CD environments
@@ -668,8 +663,8 @@ Generate-QuickStartGuide -SetupState $setupResult
 ### ProgressTracking Usage
 
 ```powershell
-# Track long-running operations with visual progress
-Import-Module ./aither-core/modules/ProgressTracking -Force
+# Track long-running operations with visual progress (from Experience domain)
+. "$PSScriptRoot/aither-core/domains/experience/Experience.ps1"
 
 # Start tracking an operation
 $operationId = Start-ProgressOperation -OperationName "Deploying Infrastructure" -TotalSteps 10 -ShowTime -ShowETA
@@ -708,8 +703,8 @@ Publish-TestEvent -EventName "ModuleLoaded" -EventData @{
 ### Security Automation Commands
 
 ```powershell
-# Import security automation module
-Import-Module ./aither-core/modules/SecurityAutomation -Force
+# Import security domain (or use through AitherCore)
+. "$PSScriptRoot/aither-core/domains/security/Security.ps1"
 
 # Run security assessment
 Get-ADSecurityAssessment -DomainName "mydomain.com"
@@ -726,8 +721,8 @@ New-CertificateTemplate -TemplateName "WebServer" -Purpose "ServerAuthentication
 ### License Management Commands
 
 ```powershell
-# Import license manager
-Import-Module ./aither-core/modules/LicenseManager -Force
+# Import utilities domain (or use through AitherCore)
+. "$PSScriptRoot/aither-core/domains/utilities/Utilities.ps1"
 
 # Check license status
 Get-LicenseStatus

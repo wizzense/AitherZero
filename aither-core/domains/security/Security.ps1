@@ -1,6 +1,5 @@
 # Security Functions - Consolidated into AitherCore Security Domain
 # Unified security management including SecureCredentials and SecurityAutomation
-# Write-CustomLog is guaranteed to be available from AitherCore orchestration
 
 #Requires -Version 7.0
 
@@ -10,9 +9,7 @@ using namespace System.Security.Cryptography
 using namespace System.Text
 using namespace System.Text.Json
 
-# ============================================================================
 # MODULE CONSTANTS AND VARIABLES
-# ============================================================================
 
 $script:MODULE_VERSION = '1.0.0'
 $script:CREDENTIAL_STORE_VERSION = '1.0'
@@ -56,9 +53,7 @@ $script:SecurityAutomationSettings = @{
     }
 }
 
-# ============================================================================
 # SECURE CREDENTIAL MANAGEMENT FUNCTIONS
-# ============================================================================
 
 function Initialize-SecureCredentialStore {
     <#
@@ -785,9 +780,7 @@ function Import-SecureCredential {
     }
 }
 
-# ============================================================================
 # SECURITY AUTOMATION FUNCTIONS
-# ============================================================================
 
 # Active Directory Security Functions
 function Get-ADSecurityAssessment {
@@ -2805,9 +2798,7 @@ function Search-SecurityEvents {
     }
 }
 
-# ============================================================================
 # HELPER FUNCTIONS
-# ============================================================================
 
 function Test-SecurityConfiguration {
     <#
@@ -2922,9 +2913,7 @@ function Get-SecuritySummary {
     }
 }
 
-# ============================================================================
 # MODULE INITIALIZATION
-# ============================================================================
 
 # Initialize the security domain
 try {
@@ -2941,4 +2930,312 @@ try {
     Write-CustomLog -Level 'ERROR' -Message "Failed to initialize Security domain: $($_.Exception.Message)"
 }
 
-Write-CustomLog -Level 'SUCCESS' -Message "Security domain loaded with comprehensive security and credential management functions"
+# LICENSE MANAGER FUNCTIONS - Migrated from modules/LicenseManager
+
+# Module-level variables for LicenseManager
+$script:LicensePath = Join-Path ([Environment]::GetFolderPath('UserProfile')) '.aitherzero' 'license.json'
+$script:FeatureRegistryPath = Join-Path $projectRoot 'configs' 'feature-registry.json'
+$script:CurrentLicense = $null
+$script:FeatureRegistry = $null
+
+# Create license directory if it doesn't exist
+$licenseDir = Split-Path -Parent $script:LicensePath
+if (-not (Test-Path $licenseDir)) {
+    New-Item -Path $licenseDir -ItemType Directory -Force | Out-Null
+}
+
+# Load feature registry if it exists
+if (Test-Path $script:FeatureRegistryPath) {
+    try {
+        $script:FeatureRegistry = Get-Content $script:FeatureRegistryPath -Raw | ConvertFrom-Json
+    } catch {
+        Write-Warning "Failed to load feature registry: $_"
+    }
+}
+
+function Get-LicenseStatus {
+    <#
+    .SYNOPSIS
+        Gets the current license status with performance caching
+    .DESCRIPTION
+        Retrieves and validates the current license, returning tier and feature access.
+        Uses intelligent caching to improve performance for repeated calls.
+    .PARAMETER BypassCache
+        Skip cache and force fresh license validation
+    .PARAMETER RefreshCache
+        Refresh the cache after getting current status
+    .EXAMPLE
+        Get-LicenseStatus
+    .EXAMPLE
+        Get-LicenseStatus -BypassCache
+    .OUTPUTS
+        PSCustomObject with license details
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter()]
+        [switch]$BypassCache,
+
+        [Parameter()]
+        [switch]$RefreshCache
+    )
+
+    try {
+        # Check cache first (unless bypassed)
+        if (-not $BypassCache) {
+            $cachedStatus = Get-CachedLicenseStatus
+            if ($cachedStatus) {
+                return $cachedStatus
+            }
+        }
+
+        # Check if license file exists
+        if (-not (Test-Path $script:LicensePath)) {
+            $status = [PSCustomObject]@{
+                IsValid = $false
+                Tier = 'free'
+                Features = @('core', 'development')
+                ExpiryDate = $null
+                IssuedTo = 'Unlicensed'
+                LicenseId = $null
+                Message = 'No license found - using free tier'
+                CacheSource = 'Fresh'
+            }
+
+            # Cache the result
+            Set-CachedLicenseStatus -Status $status
+            return $status
+        }
+
+        # Load and validate license
+        try {
+            $license = Get-Content $script:LicensePath -Raw | ConvertFrom-Json
+
+            # Validate license structure
+            $requiredProperties = @('licenseId', 'tier', 'features', 'issuedTo', 'expiryDate', 'signature')
+            foreach ($prop in $requiredProperties) {
+                if (-not $license.PSObject.Properties.Name -contains $prop) {
+                    throw "Invalid license format - missing $prop"
+                }
+            }
+
+            # Check expiry
+            $expiryDate = [DateTime]::Parse($license.expiryDate)
+            $isExpired = $expiryDate -lt (Get-Date)
+
+            # Validate signature with enhanced security
+            $isValidSignature = Validate-LicenseSignature -License $license
+
+            if ($isExpired) {
+                $status = [PSCustomObject]@{
+                    IsValid = $false
+                    Tier = 'free'
+                    Features = @('core', 'development')
+                    ExpiryDate = $expiryDate
+                    IssuedTo = $license.issuedTo
+                    LicenseId = $license.licenseId
+                    Message = 'License expired'
+                    CacheSource = 'Fresh'
+                }
+
+                # Cache expired license status
+                Set-CachedLicenseStatus -Status $status
+                return $status
+            }
+
+            if (-not $isValidSignature) {
+                $status = [PSCustomObject]@{
+                    IsValid = $false
+                    Tier = 'free'
+                    Features = @('core', 'development')
+                    ExpiryDate = $expiryDate
+                    IssuedTo = $license.issuedTo
+                    LicenseId = $license.licenseId
+                    Message = 'Invalid license signature'
+                    CacheSource = 'Fresh'
+                }
+
+                # Cache invalid signature status
+                Set-CachedLicenseStatus -Status $status
+                return $status
+            }
+
+            # Valid license
+            $status = [PSCustomObject]@{
+                IsValid = $true
+                Tier = $license.tier
+                Features = $license.features
+                ExpiryDate = $expiryDate
+                IssuedTo = $license.issuedTo
+                LicenseId = $license.licenseId
+                Message = 'License valid'
+                CacheSource = 'Fresh'
+            }
+
+            # Cache valid license status
+            Set-CachedLicenseStatus -Status $status
+
+            # Log license validation
+            Write-CustomLog -Message "License status validated" -Level DEBUG
+
+            return $status
+
+        } catch {
+            Write-Warning "Error reading license: $_"
+            $status = [PSCustomObject]@{
+                IsValid = $false
+                Tier = 'free'
+                Features = @('core', 'development')
+                ExpiryDate = $null
+                IssuedTo = 'Unlicensed'
+                LicenseId = $null
+                Message = "License error: $_"
+                CacheSource = 'Fresh'
+            }
+
+            # Cache error status
+            Set-CachedLicenseStatus -Status $status
+            Write-CustomLog -Message "License validation error" -Level ERROR
+
+            return $status
+        }
+
+    } catch {
+        Write-CustomLog -Message "Critical error in license status check" -Level ERROR
+        Write-Error "Error checking license status: $_"
+        throw
+    }
+}
+
+function Test-FeatureAccess {
+    <#
+    .SYNOPSIS
+        Tests if a specific feature is available under the current license
+    .PARAMETER FeatureName
+        Name of the feature to test
+    .EXAMPLE
+        Test-FeatureAccess -FeatureName "AdvancedReporting"
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$FeatureName
+    )
+
+    try {
+        $licenseStatus = Get-LicenseStatus
+        
+        if ($licenseStatus.IsValid -and $licenseStatus.Features -contains $FeatureName) {
+            Write-CustomLog -Message "Feature access granted: $FeatureName" -Level DEBUG
+            return $true
+        }
+        
+        Write-CustomLog -Message "Feature access denied: $FeatureName (Tier: $($licenseStatus.Tier))" -Level DEBUG
+        return $false
+        
+    } catch {
+        Write-CustomLog -Message "Error checking feature access for $FeatureName" -Level ERROR
+        return $false
+    }
+}
+
+function Set-License {
+    <#
+    .SYNOPSIS
+        Sets a new license for the application
+    .PARAMETER LicenseKey
+        The license key string
+    .PARAMETER OrganizationName
+        Organization name for the license
+    .EXAMPLE
+        Set-License -LicenseKey "XXXX-XXXX-XXXX-XXXX" -OrganizationName "MyOrg"
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$LicenseKey,
+        
+        [Parameter(Mandatory = $true)]
+        [string]$OrganizationName
+    )
+
+    try {
+        # Create license object
+        $license = @{
+            licenseId = $LicenseKey
+            tier = 'enterprise'
+            features = @('core', 'development', 'enterprise', 'advanced')
+            issuedTo = $OrganizationName
+            expiryDate = (Get-Date).AddYears(1).ToString('yyyy-MM-dd')
+            signature = "signature-placeholder"
+        }
+
+        # Save license
+        $license | ConvertTo-Json -Depth 3 | Out-File -FilePath $script:LicensePath -Encoding UTF8
+        
+        Write-CustomLog -Message "License set for organization: $OrganizationName" -Level INFO
+        Write-Host "✅ License installed successfully" -ForegroundColor Green
+        
+    } catch {
+        Write-CustomLog -Message "Failed to set license" -Level ERROR
+        Write-Error "Failed to set license: $_"
+    }
+}
+
+function Get-AvailableFeatures {
+    <#
+    .SYNOPSIS
+        Gets all available features and their license requirements
+    .EXAMPLE
+        Get-AvailableFeatures | Format-Table
+    #>
+    [CmdletBinding()]
+    param()
+
+    try {
+        $features = @(
+            [PSCustomObject]@{ Name = 'core'; Tier = 'free'; Description = 'Core functionality' },
+            [PSCustomObject]@{ Name = 'development'; Tier = 'free'; Description = 'Development tools' },
+            [PSCustomObject]@{ Name = 'enterprise'; Tier = 'enterprise'; Description = 'Enterprise features' },
+            [PSCustomObject]@{ Name = 'advanced'; Tier = 'enterprise'; Description = 'Advanced automation' }
+        )
+
+        return $features
+        
+    } catch {
+        Write-CustomLog -Message "Error getting available features" -Level ERROR
+        return @()
+    }
+}
+
+# License cache functions
+function Get-CachedLicenseStatus {
+    [CmdletBinding()]
+    param()
+    
+    # Simple in-memory cache for now
+    return $script:CurrentLicense
+}
+
+function Set-CachedLicenseStatus {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [PSCustomObject]$Status
+    )
+    
+    $script:CurrentLicense = $Status
+}
+
+function Validate-LicenseSignature {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [PSCustomObject]$License
+    )
+    
+    # Simple validation for now - in production this would use cryptographic validation
+    return $true
+}
+
+Write-CustomLog -Level 'SUCCESS' -Message "Security domain loaded with comprehensive security, credential management, and license management functions"

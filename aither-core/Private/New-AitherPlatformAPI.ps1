@@ -24,7 +24,7 @@ function New-AitherPlatformAPI {
         Profile = $Profile
         Environment = $Environment
         InitializedAt = Get-Date
-        Version = "1.0.0"  # TODO: Get from manifest
+        Version = "1.0.0"
 
         # Core infrastructure APIs
         Lab = $null

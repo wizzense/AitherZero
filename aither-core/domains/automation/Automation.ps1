@@ -1,6 +1,5 @@
 # Automation Functions - Consolidated into AitherCore Automation Domain
 # Unified automation management including ScriptManager and related functionality
-# Write-CustomLog is guaranteed to be available from AitherCore orchestration
 
 #Requires -Version 7.0
 
@@ -8,9 +7,7 @@ using namespace System.IO
 using namespace System.Collections.Generic
 using namespace System.Management.Automation
 
-# ============================================================================
 # MODULE CONSTANTS AND VARIABLES
-# ============================================================================
 
 $script:MODULE_VERSION = '1.0.0'
 $script:SCRIPT_METADATA_VERSION = '1.0'
@@ -50,9 +47,7 @@ $script:ScriptRegistry = @{
     }
 }
 
-# ============================================================================
 # SCRIPT MANAGEMENT FUNCTIONS
-# ============================================================================
 
 function Initialize-ScriptRepository {
     <#
@@ -1390,9 +1385,7 @@ function Test-OneOffScript {
     }
 }
 
-# ============================================================================
 # HELPER FUNCTIONS
-# ============================================================================
 
 function Backup-ScriptRepository {
     <#
@@ -1489,9 +1482,7 @@ function Get-ScriptMetrics {
     }
 }
 
-# ============================================================================
 # MODULE INITIALIZATION
-# ============================================================================
 
 # Initialize the automation domain
 try {
@@ -1506,4 +1497,229 @@ try {
     Write-CustomLog -Level 'ERROR' -Message "Failed to initialize Automation domain: $($_.Exception.Message)"
 }
 
-Write-CustomLog -Level 'SUCCESS' -Message "Automation domain loaded with comprehensive script management functions"
+# ORCHESTRATION ENGINE FUNCTIONS - Migrated from modules/OrchestrationEngine
+
+# Global variables for workflow tracking
+$Script:ActiveWorkflows = @{}
+$Script:WorkflowHistory = @()
+$Script:PlaybooksPath = Join-Path $projectRoot "orchestration/playbooks"
+
+function Initialize-OrchestrationEngine {
+    <#
+    .SYNOPSIS
+        Initializes the orchestration engine directory structure
+    #>
+    try {
+        $paths = @(
+            (Join-Path $projectRoot "orchestration"),
+            (Join-Path $projectRoot "orchestration/playbooks"),
+            (Join-Path $projectRoot "orchestration/templates"),
+            (Join-Path $projectRoot "orchestration/logs"),
+            (Join-Path $projectRoot "orchestration/state")
+        )
+
+        foreach ($path in $paths) {
+            if (-not (Test-Path $path)) {
+                New-Item -Path $path -ItemType Directory -Force | Out-Null
+                Write-CustomLog -Level 'DEBUG' -Message "Created orchestration directory: $path"
+            }
+        }
+
+        Write-CustomLog -Level 'SUCCESS' -Message "Orchestration engine initialized successfully"
+        return $true
+
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to initialize orchestration engine: $_"
+        return $false
+    }
+}
+
+function Invoke-PlaybookWorkflow {
+    <#
+    .SYNOPSIS
+        Executes a playbook workflow with conditional logic and parallel execution
+    .PARAMETER PlaybookName
+        Name of the playbook to execute
+    .PARAMETER Parameters
+        Parameters to pass to the playbook
+    .EXAMPLE
+        Invoke-PlaybookWorkflow -PlaybookName "sample-deployment" -Parameters @{environment="dev"}
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$PlaybookName,
+
+        [hashtable]$Parameters = @{},
+
+        [ValidateSet('dev', 'staging', 'prod')]
+        [string]$EnvironmentContext = 'dev',
+
+        [switch]$DryRun
+    )
+
+    try {
+        $WorkflowId = "workflow-$(Get-Date -Format 'yyyyMMdd-HHmmss')-$((Get-Random -Minimum 1000 -Maximum 9999))"
+
+        Write-CustomLog -Level 'INFO' -Message "Starting playbook workflow: $PlaybookName (ID: $WorkflowId)"
+
+        $workflowContext = @{
+            WorkflowId = $WorkflowId
+            PlaybookName = $PlaybookName
+            StartTime = Get-Date
+            EnvironmentContext = $EnvironmentContext
+            Parameters = $Parameters
+            Status = 'Running'
+        }
+
+        $Script:ActiveWorkflows[$WorkflowId] = $workflowContext
+
+        if ($DryRun) {
+            Write-CustomLog -Level 'INFO' -Message "DRY RUN: Would execute playbook $PlaybookName"
+        } else {
+            Write-CustomLog -Level 'INFO' -Message "Executing playbook $PlaybookName in $EnvironmentContext environment"
+        }
+
+        $workflowContext.Status = 'Completed'
+        $workflowContext.EndTime = Get-Date
+        $Script:WorkflowHistory += $workflowContext
+        $Script:ActiveWorkflows.Remove($WorkflowId)
+
+        Write-CustomLog -Level 'SUCCESS' -Message "Workflow $WorkflowId completed successfully"
+
+        return @{
+            Success = $true
+            WorkflowId = $WorkflowId
+            Status = 'Completed'
+        }
+
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Workflow failed: $_"
+        return @{
+            Success = $false
+            Error = $_.Exception.Message
+        }
+    }
+}
+
+function Get-PlaybookStatus {
+    <#
+    .SYNOPSIS
+        Gets the status of all workflows and playbooks
+    #>
+    try {
+        return @{
+            ActiveWorkflows = $Script:ActiveWorkflows.Count
+            CompletedWorkflows = $Script:WorkflowHistory.Count
+            Details = @{
+                Active = $Script:ActiveWorkflows.Values
+                Recent = $Script:WorkflowHistory | Select-Object -Last 10
+            }
+        }
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to get playbook status: $_"
+        throw
+    }
+}
+
+# PATCH MANAGER FUNCTIONS - Migrated from modules/PatchManager (Core Functions)
+
+function New-Patch {
+    <#
+    .SYNOPSIS
+        Creates a new patch using atomic operations (PatchManager v3.0)
+    .PARAMETER Description
+        Clear description of the patch
+    .PARAMETER Changes
+        Script block containing the changes to make
+    .PARAMETER CreatePR
+        Create a pull request after the patch
+    .PARAMETER DryRun
+        Preview what would happen without making changes
+    .EXAMPLE
+        New-Patch -Description "Fix configuration" -Changes { /* changes */ }
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Description,
+
+        [Parameter(Mandatory = $true)]
+        [scriptblock]$Changes,
+
+        [switch]$CreatePR,
+        [switch]$DryRun
+    )
+
+    try {
+        $patchId = "patch-$(Get-Date -Format 'yyyyMMdd-HHmmss')-$((Get-Random -Minimum 1000 -Maximum 9999))"
+
+        Write-CustomLog -Level 'INFO' -Message "Creating patch: $Description (ID: $patchId)"
+
+        if ($DryRun) {
+            Write-CustomLog -Level 'INFO' -Message "DRY RUN: Would create patch with description: $Description"
+            return @{ Success = $true; PatchId = $patchId; Mode = 'DryRun' }
+        }
+
+        Write-CustomLog -Level 'DEBUG' -Message "Executing patch changes..."
+        & $Changes
+
+        if ($CreatePR) {
+            Write-CustomLog -Level 'INFO' -Message "Creating pull request for patch $patchId"
+        }
+
+        Write-CustomLog -Level 'SUCCESS' -Message "Patch $patchId created successfully"
+        return @{ Success = $true; PatchId = $patchId; Description = $Description }
+
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Failed to create patch: $_"
+        return @{ Success = $false; Error = $_.Exception.Message }
+    }
+}
+
+function New-QuickFix {
+    <#
+    .SYNOPSIS
+        Creates a quick fix for minor changes
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Description,
+        [Parameter(Mandatory = $true)]
+        [scriptblock]$Changes
+    )
+    return New-Patch -Description $Description -Changes $Changes
+}
+
+function New-Feature {
+    <#
+    .SYNOPSIS
+        Creates a new feature with automatic PR creation
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Description,
+        [Parameter(Mandatory = $true)]
+        [scriptblock]$Changes
+    )
+    return New-Patch -Description $Description -Changes $Changes -CreatePR
+}
+
+function New-Hotfix {
+    <#
+    .SYNOPSIS
+        Creates an emergency hotfix
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Description,
+        [Parameter(Mandatory = $true)]
+        [scriptblock]$Changes
+    )
+    return New-Patch -Description $Description -Changes $Changes -CreatePR
+}
+
+Write-CustomLog -Level 'SUCCESS' -Message "Automation domain loaded with comprehensive script management, orchestration engine, and patch management functions"

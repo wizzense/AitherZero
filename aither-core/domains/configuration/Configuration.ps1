@@ -1,6 +1,5 @@
 # Configuration Functions - Consolidated into AitherCore Configuration Domain
 # Unified configuration management including Core, Carousel, Manager, and Repository
-# Write-CustomLog is guaranteed to be available from AitherCore orchestration
 
 #Requires -Version 7.0
 
@@ -8,9 +7,7 @@ using namespace System.IO
 using namespace System.Security
 using namespace System.Text.Json
 
-# ============================================================================
 # MODULE CONSTANTS AND VARIABLES
-# ============================================================================
 
 $script:MODULE_VERSION = '1.0.0'
 $script:CONFIG_FILE_VERSION = '1.0'
@@ -66,9 +63,7 @@ $script:ConfigurationEventHistory = @()
 # Configuration watchers
 $script:ConfigurationWatchers = @{}
 
-# ============================================================================
 # SECURITY AND VALIDATION FUNCTIONS
-# ============================================================================
 
 function Test-ConfigurationSecurity {
     <#
@@ -256,9 +251,7 @@ function Test-ConfigurationSchema {
     }
 }
 
-# ============================================================================
 # CONFIGURATION STORAGE AND PERSISTENCE
-# ============================================================================
 
 function Initialize-ConfigurationStorePath {
     <#
@@ -490,9 +483,7 @@ function Invoke-BackupCleanup {
     }
 }
 
-# ============================================================================
 # CONFIGURATION CORE FUNCTIONS
-# ============================================================================
 
 function Initialize-ConfigurationCore {
     <#
@@ -838,9 +829,7 @@ function Register-ModuleConfiguration {
     }
 }
 
-# ============================================================================
 # CONFIGURATION CAROUSEL FUNCTIONS
-# ============================================================================
 
 function Initialize-ConfigurationCarousel {
     <#
@@ -1378,9 +1367,7 @@ function Validate-ConfigurationSet {
     }
 }
 
-# ============================================================================
 # EVENT SYSTEM FUNCTIONS
-# ============================================================================
 
 function Publish-ConfigurationEvent {
     <#
@@ -1528,9 +1515,7 @@ function Get-ConfigurationEventHistory {
     }
 }
 
-# ============================================================================
 # ENVIRONMENT MANAGEMENT FUNCTIONS
-# ============================================================================
 
 function New-ConfigurationEnvironment {
     <#
@@ -1649,9 +1634,7 @@ function Set-ConfigurationEnvironment {
     }
 }
 
-# ============================================================================
 # BACKUP AND RESTORE FUNCTIONS
-# ============================================================================
 
 function Backup-Configuration {
     <#
@@ -1772,9 +1755,7 @@ function Restore-Configuration {
     }
 }
 
-# ============================================================================
 # HELPER FUNCTIONS
-# ============================================================================
 
 function Test-ConfigurationAccessible {
     <#
@@ -1838,9 +1819,7 @@ function New-ConfigurationFromTemplate {
     }
 }
 
-# ============================================================================
 # INITIALIZATION
-# ============================================================================
 
 # Initialize the configuration system
 try {

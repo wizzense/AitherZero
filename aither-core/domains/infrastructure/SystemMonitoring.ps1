@@ -1,12 +1,9 @@
 # SystemMonitoring Functions - Consolidated into AitherCore Infrastructure Domain
 # Comprehensive system monitoring, performance tracking, and health management
-# Write-CustomLog is guaranteed to be available from AitherCore orchestration
 
 #Requires -Version 7.0
 
-# ============================================================================
 # MODULE VARIABLES AND CONFIGURATION
-# ============================================================================
 
 $script:MonitoringData = @{}
 $script:AlertThresholds = @{
@@ -36,9 +33,7 @@ $script:PredictiveConfig = @{}
 $script:IntelligentThresholds = $false
 $script:MonitoringInsights = @{}
 
-# ============================================================================
 # HELPER FUNCTIONS
-# ============================================================================
 
 function Get-CpuUsageLinux {
     if ($IsLinux) {
@@ -473,9 +468,7 @@ function Show-ConsoleDashboard {
     Write-Host "`n" + "=" * 60 -ForegroundColor Cyan
 }
 
-# ============================================================================
 # MAIN SYSTEM MONITORING FUNCTIONS
-# ============================================================================
 
 function Get-SystemDashboard {
     <#

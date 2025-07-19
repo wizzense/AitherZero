@@ -1,12 +1,9 @@
 # OpenTofuProvider Functions - Consolidated into AitherCore Infrastructure Domain
 # Infrastructure deployment and management using OpenTofu/Terraform
-# Write-CustomLog is guaranteed to be available from AitherCore orchestration
 
 #Requires -Version 7.0
 
-# ============================================================================
 # YAML HELPER FUNCTIONS
-# ============================================================================
 
 function ConvertFrom-Yaml {
     <#
@@ -69,9 +66,7 @@ function ConvertTo-Yaml {
     return $yaml -join "`n"
 }
 
-# ============================================================================
 # OPENTOFU INSTALLATION AND VALIDATION
-# ============================================================================
 
 function Test-OpenTofuInstallation {
     <#
@@ -228,9 +223,7 @@ function Install-OpenTofuSecure {
     }
 }
 
-# ============================================================================
 # PROVIDER CONFIGURATION
-# ============================================================================
 
 function New-TaliesinsProviderConfig {
     <#
@@ -482,9 +475,7 @@ function Test-TaliesinsProviderInstallation {
     }
 }
 
-# ============================================================================
 # OPENTOFU COMMAND EXECUTION
-# ============================================================================
 
 function Invoke-OpenTofuCommand {
     <#
@@ -566,9 +557,7 @@ function Invoke-OpenTofuCommand {
     }
 }
 
-# ============================================================================
 # MAIN DEPLOYMENT FUNCTIONS
-# ============================================================================
 
 function Initialize-OpenTofuProvider {
     <#

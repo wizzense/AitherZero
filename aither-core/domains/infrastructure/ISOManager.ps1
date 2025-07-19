@@ -1,12 +1,9 @@
 # ISOManager Functions - Consolidated into AitherCore Infrastructure Domain
 # Enterprise-grade ISO download, management, and organization
-# Write-CustomLog is guaranteed to be available from AitherCore orchestration
 
 #Requires -Version 7.0
 
-# ============================================================================
 # HELPER FUNCTIONS
-# ============================================================================
 
 function Get-WindowsISOUrl {
     <#
@@ -368,9 +365,7 @@ function Compress-ISOFile {
     }
 }
 
-# ============================================================================
 # MAIN ISO MANAGEMENT FUNCTIONS
-# ============================================================================
 
 function Get-ISODownload {
     <#

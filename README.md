@@ -115,22 +115,23 @@ There is **only ONE way** to start AitherZero (no confusion!):
 
 ### 🚀 **Getting Started**
 - **[Quick Start Guide](QUICKSTART.md)** - Fast setup and basic usage
-- **[Setup Wizard Guide](aither-core/modules/SetupWizard/README.md)** - Interactive setup walkthrough
+- **[Setup Wizard Guide](aither-core/domains/experience/README.md)** - Interactive setup walkthrough
 - **[Installation Profiles](configs/carousel/README.md)** - Profile selection and configuration
 
-### 📖 **Module Documentation**  
-- **[Module Architecture](aither-core/modules/README.md)** - 28+ specialized modules overview
-- **[Configuration Management](aither-core/modules/ConfigurationCarousel/README.md)** - Multi-environment config system
-- **[Infrastructure Deployment](aither-core/modules/OpenTofuProvider/README.md)** - OpenTofu/Terraform automation
-- **[Git Workflow Automation](aither-core/modules/PatchManager/README.md)** - Automated patch and release management
-- **[System Monitoring](aither-core/modules/SystemMonitoring/README.md)** - Real-time system monitoring and alerting
-- **[Security Automation](aither-core/modules/SecurityAutomation/README.md)** - Enterprise security hardening
+### 📖 **Domain Architecture Documentation**  
+- **[Domain Architecture](aither-core/domains/README.md)** - Consolidated domain-based architecture overview
+- **[Infrastructure Domain](aither-core/domains/infrastructure/README.md)** - Lab automation, OpenTofu deployment, ISO management, system monitoring
+- **[Security Domain](aither-core/domains/security/README.md)** - Security automation, credential management, compliance hardening
+- **[Configuration Domain](aither-core/domains/configuration/README.md)** - Multi-environment configuration management and switching
+- **[Utilities Domain](aither-core/domains/utilities/README.md)** - Semantic versioning, license management, maintenance utilities
+- **[Experience Domain](aither-core/domains/experience/README.md)** - Setup wizard, startup experience, user onboarding
+- **[Automation Domain](aither-core/domains/automation/README.md)** - Script management and workflow orchestration
 
 ### 🛠️ **Development & Contributing**
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to AitherZero
 - **[GitHub Automation](.github/README.md)** - CI/CD workflows and release process  
-- **[Testing Framework](aither-core/modules/TestingFramework/README.md)** - Testing patterns and validation
-- **[Development Environment](aither-core/modules/DevEnvironment/README.md)** - Development setup and tools
+- **[Testing Framework](tests/README.md)** - Testing patterns and validation
+- **[Development Environment](aither-core/domains/experience/README.md)** - Development setup and tools
 
 ### 🧪 **Testing & Validation**
 - **[Test Runner Guide](tests/README.md)** - Running tests and validation
@@ -143,10 +144,9 @@ There is **only ONE way** to start AitherZero (no confusion!):
 - **[Build System](build/README.md)** - Package building and distribution
 
 ### 🔬 **Advanced Topics**
-- **[Module Communication](aither-core/modules/ModuleCommunication/README.md)** - Inter-module messaging and APIs
-- **[Parallel Execution](aither-core/modules/ParallelExecution/README.md)** - High-performance parallel processing
-- **[License Management](aither-core/modules/LicenseManager/README.md)** - License compliance and management
-- **[API Integration](aither-core/modules/RestAPIServer/README.md)** - REST API server and webhooks
+- **[Utility Services](aither-core/domains/utilities/README.md)** - License management, semantic versioning, maintenance utilities
+- **[Security Automation](aither-core/domains/security/README.md)** - Enterprise security hardening and compliance
+- **[Script Management](aither-core/domains/automation/README.md)** - Advanced script execution and orchestration
 
 ---
 
@@ -203,7 +203,7 @@ aither dev patch "Bug fix"
 - ✨ **Ultra-Simple Installation** - One command gets you running
 - 🚀 **Modern CLI Interface** with clean command structure (`aither [command]`)
 - 🧠 **Intelligent Setup Wizard** with progress tracking
-- 🔧 **23 Consolidated Modules** for infrastructure automation (reduced from 30+)
+- 🔧 **6 Consolidated Domains** with 196+ functions for infrastructure automation (reduced from 30+ modules)
 - ⚡ **Cross-Platform Support** - Windows, Linux, macOS
 - 🔄 **Developer Workflow Automation** - Git, releases, testing
 - 🎯 **No Installation Required** - Portable application packages
@@ -297,15 +297,20 @@ Run platform-specific tests to validate compatibility:
 **Infrastructure Automation Framework:**
 - 🔄 **Cross-Platform**: Windows, Linux, macOS with PowerShell 7.0+
 - 🏗️ **Infrastructure as Code**: OpenTofu/Terraform integration
-- 🧩 **Modular Architecture**: 23 consolidated PowerShell modules with clear boundaries
+- 🧩 **Domain Architecture**: 6 consolidated domains with 196+ functions organized by business logic
 - 🤖 **AI-Powered Automation**: Intelligent infrastructure management
 - 📊 **Enterprise Logging**: Centralized logging with multiple levels
 - 🔧 **Git Workflow**: Automated patch management with PR/issue creation
 - 🧪 **Testing Framework**: Bulletproof validation with Pester integration
 - ⚡ **Performance Optimized**: 50-80% faster CI/CD with parallel execution and caching
 
-**Core Modules:** Logging, ConfigurationCore, ModuleCommunication, LicenseManager
-**Feature Modules:** LabRunner, PatchManager, BackupManager, DevEnvironment, OpenTofuProvider, UserExperience, AIToolsIntegration, TestingFramework, and more.
+**Core Domains:** 
+- **Infrastructure**: LabRunner, OpenTofuProvider, ISOManager, SystemMonitoring (57 functions)
+- **Security**: SecureCredentials, SecurityAutomation (41 functions)
+- **Configuration**: ConfigurationCore, ConfigurationCarousel, ConfigurationRepository, ConfigurationManager (36 functions)
+- **Utilities**: SemanticVersioning, LicenseManager, RepoSync, UnifiedMaintenance, UtilityServices (24 functions)
+- **Experience**: SetupWizard, StartupExperience (22 functions)  
+- **Automation**: ScriptManager, OrchestrationEngine (16 functions)
 
 ### 🎯 Performance Metrics & Optimization
 
@@ -359,7 +364,13 @@ aither lab deploy --config lab-config.json     # Deploy lab environment
 AitherZero/
 ├── aither.ps1              # Modern CLI interface
 ├── aither-core/            # Core application engine
-│   ├── modules/           # 28+ PowerShell modules
+│   ├── domains/           # 6 business domains with 196+ functions
+│   │   ├── infrastructure/    # Lab automation, OpenTofu, ISO, monitoring
+│   │   ├── security/         # Security automation and credentials  
+│   │   ├── configuration/    # Multi-environment configuration
+│   │   ├── utilities/        # Version, license, maintenance utilities
+│   │   ├── experience/       # Setup wizard and startup experience
+│   │   └── automation/       # Script management and orchestration
 │   └── shared/            # Shared utilities
 ├── configs/                # Configuration templates
 └── opentofu/               # Infrastructure templates

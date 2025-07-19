@@ -9,7 +9,7 @@ $ErrorActionPreference = 'Stop'
 # Module-level variables for orchestration using consolidated domain structure
 $script:CoreDomains = @(
     # Core Infrastructure (Required)
-    @{ Name = 'Logging'; Path = 'modules/Logging'; Description = 'Centralized logging system'; Required = $true },
+    @{ Name = 'Logging'; Path = 'shared/Logging'; Description = 'Centralized logging system'; Required = $true },
     @{ Name = 'Infrastructure'; Path = 'domains/infrastructure'; Description = 'Infrastructure management (LabRunner, OpenTofuProvider, ISOManager, SystemMonitoring)'; Required = $true },
     
     # Platform Services
@@ -74,26 +74,21 @@ foreach ($function in $allFunctions) {
 
 # CRITICAL: Load Logging module first to ensure Write-CustomLog is available
 # This replaces the fallback implementation and ensures proper logging is available
-$loggingModulePath = Join-Path $PSScriptRoot "modules/Logging"
-if (Test-Path $loggingModulePath) {
+# Use shared logging initializer
+$loggingInitPath = Join-Path $PSScriptRoot "shared/Initialize-Logging.ps1"
+if (Test-Path $loggingInitPath) {
     try {
-        Write-Verbose "Loading Logging module before other operations..."
-        Import-Module $loggingModulePath -Force -Global -ErrorAction Stop
+        Write-Verbose "Initializing shared logging system..."
+        . $loggingInitPath
+        Initialize-Logging -ErrorAction SilentlyContinue
         
-        # Verify Write-CustomLog is available
-        if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
-            throw "Write-CustomLog not available after loading Logging module"
+        # Verify Write-CustomLog is available  
+        if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+            Write-CustomLog -Message "Logging system initialized successfully in AitherCore" -Level SUCCESS
         }
-        
-        # Initialize logging system
-        if (Get-Command Initialize-LoggingSystem -ErrorAction SilentlyContinue) {
-            Initialize-LoggingSystem -ErrorAction SilentlyContinue
-        }
-        
-        Write-CustomLog -Message "Logging module loaded successfully in AitherCore" -Level SUCCESS
     } catch {
-        # If Logging module fails, create minimal fallback for this session only
-        Write-Warning "Failed to load Logging module: $_"
+        # If logging initialization fails, create minimal fallback
+        Write-Warning "Failed to initialize logging system: $_"
         Write-Warning "Using minimal fallback logging for this session"
         
         function script:Write-CustomLog {
@@ -110,8 +105,18 @@ if (Test-Path $loggingModulePath) {
         }
     }
 } else {
-    Write-Warning "Logging module path not found: $loggingModulePath"
-    Write-Warning "Write-CustomLog will not be available until Logging module is loaded"
+    Write-Warning "Logging initializer not found: $loggingInitPath"  
+    Write-Warning "Using basic fallback logging"
+    
+    # Create basic fallback Write-CustomLog
+    function Global:Write-CustomLog {
+        param([string]$Message, [string]$Level = 'INFO', [string]$Component = 'AitherCore')
+        $color = switch ($Level) {
+            'ERROR' { 'Red' }; 'WARN' { 'Yellow' }; 'INFO' { 'Cyan' }; 'SUCCESS' { 'Green' }
+            'DEBUG' { 'Gray' }; default { 'White' }
+        }
+        Write-Host "[$Level] [$Component] $Message" -ForegroundColor $color
+    }
 }
 
 # Core functions if not defined in Public folder
