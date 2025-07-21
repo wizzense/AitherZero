@@ -76,3 +76,8 @@ runs:
         }
         
         Write-Host "✅ PowerShell modules installed successfully"
+
+outputs:
+  paths:
+    description: 'Cache paths for PowerShell modules'
+    value: ${{ steps.cache-paths.outputs.paths }}
