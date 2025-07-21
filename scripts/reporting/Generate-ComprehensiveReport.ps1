@@ -604,15 +604,27 @@ function New-ComprehensiveHtmlReport {
             }
         }
     } else {
-        # Cache property lists for efficient access
-        $featureMapProperties = if ($FeatureMap -and $FeatureMap.PSObject) { 
-            $FeatureMap.PSObject.Properties.Name 
+        # Cache property lists for efficient access - handle both hashtables and PSObjects
+        $featureMapProperties = if ($FeatureMap) {
+            if ($FeatureMap -is [hashtable]) {
+                $FeatureMap.Keys
+            } elseif ($FeatureMap.PSObject) {
+                $FeatureMap.PSObject.Properties.Name 
+            } else {
+                @()
+            }
         } else { 
             @() 
         }
         
-        $statisticsProperties = if ($FeatureMap.Statistics -and $FeatureMap.Statistics.PSObject) { 
-            $FeatureMap.Statistics.PSObject.Properties.Name 
+        $statisticsProperties = if ($FeatureMap.Statistics) {
+            if ($FeatureMap.Statistics -is [hashtable]) {
+                $FeatureMap.Statistics.Keys
+            } elseif ($FeatureMap.Statistics.PSObject) {
+                $FeatureMap.Statistics.PSObject.Properties.Name 
+            } else {
+                @()
+            }
         } else { 
             @() 
         }
@@ -1092,6 +1104,12 @@ function New-ComprehensiveHtmlReport {
                     <tbody>
 "@
 
+    # Debug: Log the modules count for troubleshooting
+    $moduleCount = if ($FeatureMap.Modules) { $FeatureMap.Modules.Count } else { 0 }
+    $totalModules = if ($FeatureMap.TotalModules) { $FeatureMap.TotalModules } else { 0 }
+    $analyzedModules = if ($FeatureMap.AnalyzedModules) { $FeatureMap.AnalyzedModules } else { 0 }
+    Write-ReportLog "HTML Generation: Modules=$moduleCount, Total=$totalModules, Analyzed=$analyzedModules" -Level 'INFO'
+    
     foreach ($module in $FeatureMap.Modules.GetEnumerator()) {
         $status = if ($module.Value.HasTests) { '✅ Tested' } else { '⚠️ No Tests' }
         $statusClass = if ($module.Value.HasTests) { 'status-healthy' } else { 'status-warning' }
@@ -1644,6 +1662,7 @@ function Get-DynamicFeatureMap {
                 Name = $domainFile.BaseName
                 Version = '1.0.0'  # Default version for domain modules
                 HasTests = $false  # Will be updated in the statistics section
+                HasDocumentation = $false  # Will be updated in the statistics section
                 LastModified = $domainFile.LastWriteTime
                 Functions = @()    # Will be populated in the statistics section
                 Health = 'Good'    # Default health
@@ -1653,6 +1672,7 @@ function Get-DynamicFeatureMap {
         }
         
         Write-ReportLog "Basic domain analysis complete: $($featureMap.TotalModules) modules" -Level 'SUCCESS'
+        Write-ReportLog "DEBUG: Basic analysis populated - Modules.Count=$($featureMap.Modules.Count), Categories.Count=$($featureMap.Categories.Count)" -Level 'INFO'
     } else {
         # Legacy module analysis
         $moduleDirectories = Get-ChildItem $ModulesPath -Directory
@@ -1718,8 +1738,14 @@ function Get-DynamicFeatureMap {
             
             # Check for documentation
             $readmePath = Join-Path (Split-Path $domainFile.FullName -Parent) "README.md"
-            if (Test-Path $readmePath) {
+            $hasDocumentation = Test-Path $readmePath
+            if ($hasDocumentation) {
                 $modulesWithDocumentation++
+            }
+            
+            # Update the module's documentation status
+            if ($featureMap.Modules.ContainsKey($moduleName)) {
+                $featureMap.Modules[$moduleName].HasDocumentation = $hasDocumentation
             }
         }
     }
@@ -1748,6 +1774,7 @@ function Get-DynamicFeatureMap {
     }
     
     Write-ReportLog "Feature map generation complete: $($featureMap.AnalyzedModules)/$($featureMap.TotalModules) successful" -Level 'SUCCESS'
+    Write-ReportLog "DEBUG: Returning feature map - Modules.Count=$($featureMap.Modules.Count), Total=$($featureMap.TotalModules), Analyzed=$($featureMap.AnalyzedModules)" -Level 'INFO'
     
     return $featureMap
 }
@@ -2042,6 +2069,7 @@ try {
     # Calculate health score
     $healthScore = Get-OverallHealthScore -AuditData $auditData -FeatureMap $featureMap
     Write-ReportLog "Overall health score: $($healthScore.OverallScore)% (Grade: $($healthScore.Grade))" -Level 'INFO'
+    Write-ReportLog "DEBUG: After health score calculation - Modules.Count=$($featureMap.Modules.Count), Total=$($featureMap.TotalModules)" -Level 'INFO'
 
     # Generate HTML report
     $htmlContent = New-ComprehensiveHtmlReport -AuditData $auditData -FeatureMap $featureMap -HealthScore $healthScore -Version $versionNumber -ReportTitle $ReportTitle
