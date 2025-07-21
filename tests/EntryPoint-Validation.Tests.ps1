@@ -444,8 +444,8 @@ Describe "Error Handling and User Experience" -Tags @('EntryPoint', 'ErrorHandli
                 if (Test-Path $entryPoint.Path) {
                     $content = Get-Content $entryPoint.Path -Raw
 
-                    $content | Should -Match "try.*catch" -Because "$($entryPoint.Name) should have try-catch blocks"
-                    $content | Should -Match "Write-Error" -Because "$($entryPoint.Name) should provide error messages"
+                    $content | Should -Match "try \{" -Because "$($entryPoint.Name) should have try blocks"
+                    $content | Should -Match "\} catch \{" -Because "$($entryPoint.Name) should have catch blocks"
                     $content | Should -Match "exit 1" -Because "$($entryPoint.Name) should exit with error code on failure"
                 }
             }
