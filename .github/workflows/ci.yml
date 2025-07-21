@@ -271,6 +271,7 @@ jobs:
           } catch {
             Write-Host "⚠️ Comprehensive report generation failed, creating fallback dashboard"
             Write-Host "Error: $_"
+            Write-Host "Stack Trace: $($_.ScriptStackTrace)"
             
             # Fallback to simple dashboard
             $runNumber = "${{ github.run_number }}"
@@ -278,13 +279,30 @@ jobs:
             $branch = "${{ github.ref_name }}"
             $commit = "${{ github.sha }}"
             
-            $html = "<html><head><title>AitherZero CI Dashboard</title></head><body>"
-            $html += "<h1>AitherZero CI Dashboard</h1>"
-            $html += "<p>Build: $runNumber | Date: $timestamp</p>"
-            $html += "<p>Branch: $branch | Commit: $commit</p>"
-            $html += "<p>Status: FALLBACK DASHBOARD (Comprehensive report failed)</p>"
+            # Create fallback dashboard
+            $html = "<html><head><title>AitherZero CI Dashboard - Fallback</title>"
+            $html += "<style>body{font-family:Arial,sans-serif;margin:20px;}.error{background:#fee;padding:15px;border-left:4px solid #f44;}</style></head><body>"
+            $html += "<h1>AitherZero CI Dashboard - Fallback Mode</h1>"
+            $html += "<div><p>Build: #$runNumber | Date: $timestamp</p>"
+            $html += "<p>Branch: $branch | Commit: $($commit.Substring(0, 8))</p></div>"
+            $html += "<div class='error'><h2>Comprehensive Report Generation Failed</h2>"
             $html += "<p>Error: $_</p>"
-            $html += "</body></html>"
+            if ($_.Exception) {
+                $html += "<p>Type: $($_.Exception.GetType().FullName)</p>"
+            }
+            if ($_.ScriptStackTrace) {
+                $html += "<p>Stack Trace:</p><pre>$($_.ScriptStackTrace)</pre>"
+            }
+            $html += "</div>"
+            $html += "<h3>Available Artifacts:</h3><ul>"
+            if (Test-Path "artifacts") {
+                Get-ChildItem "artifacts" -Recurse -File | ForEach-Object {
+                    $html += "<li>$($_.FullName.Replace((Get-Location).Path, '.'))</li>"
+                }
+            } else {
+                $html += "<li>No artifacts directory found</li>"
+            }
+            $html += "</ul></body></html>"
             
             $html | Set-Content "$dashboardDir/index.html"
           }
