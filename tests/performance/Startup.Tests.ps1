@@ -1,6 +1,6 @@
 Describe 'Startup Performance' -Tags 'Performance' {
     BeforeAll {
-        $script:StartScript = Join-Path $PSScriptRoot ".." ".." "Start-AitherZero.ps1"
+        $script:StartScript = Join-Path (Join-Path $PSScriptRoot "..") ".." | Join-Path -ChildPath "Start-AitherZero.ps1"
     }
     
     It 'should start within the performance budget' {
