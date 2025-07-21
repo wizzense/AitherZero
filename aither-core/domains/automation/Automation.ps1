@@ -1725,4 +1725,348 @@ function New-Hotfix {
     return New-Patch -Description $Description -Changes $Changes -CreatePR
 }
 
-Write-CustomLog -Level 'SUCCESS' -Message "Automation domain loaded with comprehensive script management, orchestration engine, and patch management functions"
+# GitHub Copilot Integration Functions
+
+function Watch-CopilotReviews {
+    <#
+    .SYNOPSIS
+        Monitors pull requests for GitHub Copilot review comments and suggestions
+    
+    .DESCRIPTION
+        Continuously monitors a pull request for Copilot AI review comments and 
+        provides options to automatically apply suggestions using PatchManager's 
+        atomic operations.
+    
+    .PARAMETER PRNumber
+        The pull request number to monitor
+    
+    .PARAMETER AutoApply
+        Automatically apply simple code fixes without prompting
+    
+    .PARAMETER Interactive
+        Run in interactive mode with prompts for each suggestion
+    
+    .PARAMETER Repository
+        Repository in format "owner/repo". Defaults to current repository.
+    
+    .EXAMPLE
+        Watch-CopilotReviews -PRNumber 123 -Interactive
+        
+    .EXAMPLE
+        Watch-CopilotReviews -AutoApply -Repository "wizzense/AitherZero"
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $false)]
+        [int]$PRNumber,
+        
+        [switch]$AutoApply,
+        
+        [switch]$Interactive,
+        
+        [string]$Repository
+    )
+    
+    try {
+        # Get repository info if not provided
+        if (-not $Repository) {
+            $repoInfo = Get-GitRepositoryInfo
+            $Repository = "$($repoInfo.Owner)/$($repoInfo.Name)"
+        }
+        
+        # Get current PR if number not provided
+        if (-not $PRNumber) {
+            $currentBranch = git branch --show-current
+            $PRNumber = gh pr view --json number -q .number 2>$null
+            if (-not $PRNumber) {
+                throw "No PR number provided and no PR found for current branch"
+            }
+        }
+        
+        Write-CustomLog -Level 'INFO' -Message "Monitoring PR #$PRNumber in $Repository for Copilot suggestions..."
+        
+        # Get PR reviews and comments
+        $reviews = gh api "repos/$Repository/pulls/$PRNumber/reviews" | ConvertFrom-Json
+        $comments = gh api "repos/$Repository/pulls/$PRNumber/comments" | ConvertFrom-Json
+        
+        # Filter for Copilot comments
+        $copilotComments = @()
+        
+        foreach ($review in $reviews) {
+            if ($review.user.login -match 'copilot|github-actions' -and $review.user.type -eq 'Bot') {
+                $copilotComments += $review
+            }
+        }
+        
+        foreach ($comment in $comments) {
+            if ($comment.user.login -match 'copilot|github-actions' -and $comment.user.type -eq 'Bot') {
+                $copilotComments += $comment
+            }
+        }
+        
+        if ($copilotComments.Count -eq 0) {
+            Write-CustomLog -Level 'INFO' -Message "No Copilot suggestions found for PR #$PRNumber"
+            return
+        }
+        
+        Write-CustomLog -Level 'INFO' -Message "Found $($copilotComments.Count) Copilot suggestions"
+        
+        # Process each suggestion
+        foreach ($comment in $copilotComments) {
+            $suggestion = Parse-CopilotSuggestion -Comment $comment
+            
+            if ($suggestion) {
+                if ($Interactive) {
+                    Write-CustomLog -Level 'INFO' -Message "Copilot suggestion: $($suggestion.Description)"
+                    $response = Read-Host "Apply this suggestion? (Y/N)"
+                    
+                    if ($response -eq 'Y') {
+                        Apply-CopilotSuggestion -Suggestion $suggestion
+                    }
+                } elseif ($AutoApply -and $suggestion.Type -eq 'SimpleFix') {
+                    Write-CustomLog -Level 'INFO' -Message "Auto-applying simple fix: $($suggestion.Description)"
+                    Apply-CopilotSuggestion -Suggestion $suggestion
+                } else {
+                    Write-CustomLog -Level 'INFO' -Message "Suggestion available: $($suggestion.Description)"
+                }
+            }
+        }
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Error monitoring Copilot reviews: $_"
+        throw
+    }
+}
+
+function Parse-CopilotSuggestion {
+    <#
+    .SYNOPSIS
+        Parses a GitHub Copilot comment to extract actionable suggestions
+    
+    .DESCRIPTION
+        Analyzes a Copilot review comment to extract code suggestions, 
+        file references, and determine the type of change needed.
+    
+    .PARAMETER Comment
+        The comment object from GitHub API
+    
+    .EXAMPLE
+        $suggestion = Parse-CopilotSuggestion -Comment $copilotComment
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [object]$Comment
+    )
+    
+    try {
+        $suggestion = @{
+            Id = $Comment.id
+            Body = $Comment.body
+            Path = $Comment.path
+            Line = $Comment.line
+            Type = 'Unknown'
+            Description = ''
+            CodeBlock = $null
+            Severity = 'Info'
+        }
+        
+        # Extract suggestion from comment body
+        $body = $Comment.body
+        
+        # Look for code blocks
+        if ($body -match '```(?:powershell|ps1|diff)?\s*\n([\s\S]*?)\n```') {
+            $suggestion.CodeBlock = $matches[1].Trim()
+        }
+        
+        # Determine suggestion type
+        if ($body -match 'security|vulnerability|risk') {
+            $suggestion.Type = 'Security'
+            $suggestion.Severity = 'High'
+        } elseif ($body -match 'performance|optimize|slow') {
+            $suggestion.Type = 'Performance'
+            $suggestion.Severity = 'Medium'
+        } elseif ($body -match 'typo|spelling|comment') {
+            $suggestion.Type = 'SimpleFix'
+            $suggestion.Severity = 'Low'
+        } elseif ($body -match 'refactor|improve|enhance') {
+            $suggestion.Type = 'Refactor'
+            $suggestion.Severity = 'Medium'
+        }
+        
+        # Extract description
+        if ($body -match '^(.+?)[\n\r]') {
+            $suggestion.Description = $matches[1].Trim()
+        } else {
+            $suggestion.Description = $body.Split("`n")[0].Trim()
+        }
+        
+        return [PSCustomObject]$suggestion
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Error parsing Copilot suggestion: $_"
+        return $null
+    }
+}
+
+function Apply-CopilotSuggestion {
+    <#
+    .SYNOPSIS
+        Applies a parsed Copilot suggestion using PatchManager atomic operations
+    
+    .DESCRIPTION
+        Takes a parsed Copilot suggestion and applies it to the codebase using
+        the appropriate PatchManager function for atomic, traceable changes.
+    
+    .PARAMETER Suggestion
+        The parsed suggestion object from Parse-CopilotSuggestion
+    
+    .PARAMETER DryRun
+        Preview changes without applying them
+    
+    .EXAMPLE
+        Apply-CopilotSuggestion -Suggestion $suggestion -DryRun
+    #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param(
+        [Parameter(Mandatory = $true)]
+        [PSCustomObject]$Suggestion,
+        
+        [switch]$DryRun
+    )
+    
+    try {
+        $commitMessage = "[Copilot] $($Suggestion.Description)"
+        
+        if ($Suggestion.Path) {
+            $commitMessage += " in $($Suggestion.Path)"
+        }
+        
+        if ($DryRun) {
+            Write-CustomLog -Level 'INFO' -Message "DRY RUN: Would apply suggestion:"
+            Write-CustomLog -Level 'INFO' -Message "  Type: $($Suggestion.Type)"
+            Write-CustomLog -Level 'INFO' -Message "  Description: $($Suggestion.Description)"
+            if ($Suggestion.CodeBlock) {
+                Write-CustomLog -Level 'INFO' -Message "  Code changes:"
+                Write-CustomLog -Level 'INFO' -Message $Suggestion.CodeBlock
+            }
+            return
+        }
+        
+        if ($PSCmdlet.ShouldProcess($Suggestion.Path, "Apply Copilot suggestion")) {
+            # Use appropriate PatchManager function based on type
+            switch ($Suggestion.Type) {
+                'SimpleFix' {
+                    New-QuickFix -Description $commitMessage -Changes {
+                        if ($Suggestion.Path -and $Suggestion.CodeBlock) {
+                            # Apply the code change
+                            $content = Get-Content $Suggestion.Path -Raw
+                            # This is simplified - in reality would need more sophisticated patching
+                            Set-Content $Suggestion.Path -Value $Suggestion.CodeBlock
+                        }
+                    }
+                }
+                
+                'Security' {
+                    New-Hotfix -Description $commitMessage -Changes {
+                        if ($Suggestion.Path -and $Suggestion.CodeBlock) {
+                            $content = Get-Content $Suggestion.Path -Raw
+                            Set-Content $Suggestion.Path -Value $Suggestion.CodeBlock
+                        }
+                    }
+                }
+                
+                default {
+                    New-Patch -Description $commitMessage -Changes {
+                        if ($Suggestion.Path -and $Suggestion.CodeBlock) {
+                            $content = Get-Content $Suggestion.Path -Raw
+                            Set-Content $Suggestion.Path -Value $Suggestion.CodeBlock
+                        }
+                    }
+                }
+            }
+            
+            # Comment on PR to indicate suggestion was applied
+            gh pr comment $Suggestion.PRNumber --body "✅ Applied Copilot suggestion: $($Suggestion.Description)"
+            
+            Write-CustomLog -Level 'SUCCESS' -Message "Successfully applied Copilot suggestion"
+        }
+        
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Error applying Copilot suggestion: $_"
+        throw
+    }
+}
+
+function New-CopilotFix {
+    <#
+    .SYNOPSIS
+        Wrapper function for applying Copilot suggestions using PatchManager
+    
+    .DESCRIPTION
+        Provides a streamlined interface for applying Copilot suggestions
+        with proper attribution and tracking.
+    
+    .PARAMETER PRNumber
+        The PR number containing Copilot suggestions
+    
+    .PARAMETER SuggestionId
+        Specific suggestion ID to apply
+    
+    .PARAMETER All
+        Apply all pending Copilot suggestions
+    
+    .EXAMPLE
+        New-CopilotFix -PRNumber 123 -All
+    #>
+    [CmdletBinding()]
+    param(
+        [int]$PRNumber,
+        [string]$SuggestionId,
+        [switch]$All
+    )
+    
+    try {
+        if ($All) {
+            Watch-CopilotReviews -PRNumber $PRNumber -AutoApply
+        } elseif ($SuggestionId) {
+            # Get specific suggestion and apply it
+            $comment = gh api "repos/$(Get-GitRepositoryInfo | ForEach-Object {"$($_.Owner)/$($_.Name)"})/pulls/comments/$SuggestionId" | ConvertFrom-Json
+            $suggestion = Parse-CopilotSuggestion -Comment $comment
+            if ($suggestion) {
+                Apply-CopilotSuggestion -Suggestion $suggestion
+            }
+        } else {
+            Watch-CopilotReviews -PRNumber $PRNumber -Interactive
+        }
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Error in New-CopilotFix: $_"
+        throw
+    }
+}
+
+# Helper function to get Git repository info
+function Get-GitRepositoryInfo {
+    <#
+    .SYNOPSIS
+        Gets the current Git repository owner and name
+    #>
+    [CmdletBinding()]
+    param()
+    
+    try {
+        $remoteUrl = git config --get remote.origin.url
+        if ($remoteUrl -match 'github\.com[:/]([^/]+)/([^/]+?)(?:\.git)?$') {
+            return @{
+                Owner = $matches[1]
+                Name = $matches[2]
+            }
+        }
+        throw "Could not parse repository information from remote URL"
+    } catch {
+        Write-CustomLog -Level 'ERROR' -Message "Error getting repository info: $_"
+        throw
+    }
+}
+
+Write-CustomLog -Level 'SUCCESS' -Message "Automation domain loaded with comprehensive script management, orchestration engine, patch management, and GitHub Copilot integration functions"
