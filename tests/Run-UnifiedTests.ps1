@@ -695,8 +695,10 @@ function Invoke-ParallelTestExecution {
     
     Write-TestLog "Executing $($TestFiles.Count) test files in parallel..." -Level 'Info'
     
-    $parallelResults = Invoke-ParallelForEach -InputObject $TestFiles -ThrottleLimit $MaxParallelJobs -ScriptBlock {
-        param($testFile)
+    # Use ForEach-Object -Parallel for PowerShell 7+
+    $throttleLimit = $script:MaxParallelJobs
+    $parallelResults = $TestFiles | ForEach-Object -Parallel {
+        $testFile = $_
         
         # Defensive path validation
         if (-not $testFile -or -not $testFile.Path -or -not (Test-Path $testFile.Path)) {
@@ -746,7 +748,7 @@ function Invoke-ParallelTestExecution {
                 EndTime = Get-Date
             }
         }
-    }
+    } -ThrottleLimit $throttleLimit
     
     return $parallelResults
 }
