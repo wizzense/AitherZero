@@ -1,4 +1,4 @@
-name: "CI - Optimized & Reliable"
+name: "CI - Parallel & Optimized"
 
 on:
   push:
@@ -33,14 +33,16 @@ defaults:
     shell: pwsh
 
 jobs:
+  # Fast change detection job
   analyze-changes:
     name: "Analyze Changes"
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 2
     outputs:
       has-code-changes: ${{ steps.changes.outputs.code }}
       has-workflow-changes: ${{ steps.changes.outputs.workflows }}
       has-test-changes: ${{ steps.changes.outputs.tests }}
+      matrix-os: ${{ steps.matrix.outputs.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -50,14 +52,29 @@ jobs:
       - name: Check for changes
         id: changes
         run: |
-          $codeFiles = git diff --name-only HEAD~1 HEAD | Where-Object { 
-            $_ -match '\.(ps1|psm1|psd1)$' -and $_ -notmatch '^(docs|\.vscode)/' 
+          # Quick change detection
+          $codeFiles = @()
+          $workflowFiles = @()
+          $testFiles = @()
+          
+          if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
+            $baseRef = "${{ github.event.pull_request.base.sha }}"
+            $headRef = "${{ github.event.pull_request.head.sha }}"
+            $changedFiles = git diff --name-only $baseRef $headRef 2>$null
+          } else {
+            $changedFiles = git diff --name-only HEAD~1 HEAD 2>$null
           }
-          $workflowFiles = git diff --name-only HEAD~1 HEAD | Where-Object { 
-            $_ -match '^\.github/workflows/'
-          }
-          $testFiles = git diff --name-only HEAD~1 HEAD | Where-Object { 
-            $_ -match '^tests/'
+          
+          if ($changedFiles) {
+            $codeFiles = $changedFiles | Where-Object { 
+              $_ -match '\.(ps1|psm1|psd1)$' -and $_ -notmatch '^(docs|\.vscode)/' 
+            }
+            $workflowFiles = $changedFiles | Where-Object { 
+              $_ -match '^\.github/workflows/'
+            }
+            $testFiles = $changedFiles | Where-Object { 
+              $_ -match '^tests/'
+            }
           }
           
           $hasCodeChanges = if ($codeFiles.Count -gt 0) { 'true' } else { 'false' }
@@ -72,48 +89,56 @@ jobs:
           Write-Host "Workflow changes: $($workflowFiles.Count) files"
           Write-Host "Test changes: $($testFiles.Count) files"
 
+      - name: Determine test matrix
+        id: matrix
+        run: |
+          # Optimize OS matrix based on changes
+          if ('${{ steps.changes.outputs.has-workflow-changes }}' -eq 'true' -or 
+              '${{ github.event_name }}' -eq 'pull_request') {
+            # Full matrix for PRs and workflow changes
+            echo 'os=["windows-latest", "ubuntu-latest", "macos-latest"]' >> $env:GITHUB_OUTPUT
+          } else {
+            # Reduced matrix for regular pushes
+            echo 'os=["ubuntu-latest", "windows-latest"]' >> $env:GITHUB_OUTPUT
+          }
+
+  # Parallel quality check
   quality-check:
     name: "Quality Check"
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     needs: analyze-changes
-    if: needs.analyze-changes.outputs.has-code-changes == 'true'
+    if: needs.analyze-changes.outputs.has-code-changes == 'true' || needs.analyze-changes.outputs.has-workflow-changes == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Cache PowerShell modules
-        uses: actions/cache@v4
+      - name: Setup PowerShell with caching
+        uses: ./.github/actions/setup-powershell
         with:
-          path: |
-            ~/.local/share/powershell/Modules
-            ~/Documents/PowerShell/Modules
-            ~/.config/powershell
-            ~/.cache/powershell
-          key: ${{ runner.os }}-ps-modules-${{ hashFiles('**/*.psd1', '**/*.psm1') }}-v2
-          restore-keys: |
-            ${{ runner.os }}-ps-modules-v2
-            ${{ runner.os }}-ps-modules-
+          modules: 'PSScriptAnalyzer'
+          cache-key-suffix: 'quality'
 
-      - name: Install analysis tools
+      - name: Run parallel quality analysis
         run: |
-          Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
-          Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser
-
-      - name: Run quality analysis
-        run: |
-          # Get PowerShell files (not in test or build directories)
+          # Get PowerShell files
           $files = Get-ChildItem -Include "*.ps1","*.psm1","*.psd1" -Recurse |
                    Where-Object { $_.FullName -notlike "*test*" -and $_.FullName -notlike "*build*" }
 
           Write-Host "Found $($files.Count) PowerShell files to analyze"
           
-          $results = @()
-          foreach ($file in $files) {
+          # Run analysis in parallel batches
+          $results = $files | ForEach-Object -Parallel {
+            $file = $_
             Write-Host "Analyzing: $($file.Name)"
-            $fileResults = Invoke-ScriptAnalyzer -Path $file.FullName -Severity Error,Warning
-            if ($fileResults) {
-              $results += $fileResults
+            Invoke-ScriptAnalyzer -Path $file.FullName -Severity Error,Warning
+          } -ThrottleLimit 4
+          
+          # Process results
+          $allResults = @()
+          foreach ($result in $results) {
+            if ($result) {
+              $allResults += $result
             }
           }
 

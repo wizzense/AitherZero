@@ -648,26 +648,32 @@ if (-not (Get-Command Invoke-UnifiedMaintenance -ErrorAction SilentlyContinue)) 
                     Success = $true
                 }
 
-                # Run maintenance based on available modules
-                if ($script:LoadedModules.ContainsKey('BackupManager')) {
-                    if ($PSCmdlet.ShouldProcess('BackupManager', 'Run maintenance')) {
+                # Run maintenance based on available domains
+                if ($script:LoadedDomains.ContainsKey('Utilities')) {
+                    if ($PSCmdlet.ShouldProcess('Backup Maintenance', 'Run maintenance')) {
                         try {
-                            $backupResult = Invoke-BackupMaintenance -ProjectRoot $env:PROJECT_ROOT -Mode $Mode -AutoFix:$AutoFix
-                            $results.Operations += @{ Module = 'BackupManager'; Result = $backupResult }
+                            # Use Start-AutomatedBackup from Utilities domain
+                            if (Get-Command Start-AutomatedBackup -ErrorAction SilentlyContinue) {
+                                $backupResult = Start-AutomatedBackup
+                                $results.Operations += @{ Module = 'Backup'; Result = $backupResult }
+                            }
                         } catch {
-                            Write-CustomLog -Message "BackupManager maintenance failed: $($_.Exception.Message)" -Level 'ERROR'
+                            Write-CustomLog -Message "Backup maintenance failed: $($_.Exception.Message)" -Level 'ERROR'
                             $results.Success = $false
                         }
                     }
                 }
 
-                if ($script:LoadedModules.ContainsKey('UnifiedMaintenance')) {
-                    if ($PSCmdlet.ShouldProcess('UnifiedMaintenance', 'Run maintenance')) {
+                if ($script:LoadedDomains.ContainsKey('Utilities')) {
+                    if ($PSCmdlet.ShouldProcess('Unified Maintenance', 'Run maintenance')) {
                         try {
-                            $unifiedResult = Start-UnifiedMaintenance -Mode $Mode -AutoFix:$AutoFix
-                            $results.Operations += @{ Module = 'UnifiedMaintenance'; Result = $unifiedResult }
+                            # Use Invoke-UnifiedMaintenance from Utilities domain
+                            if (Get-Command Invoke-UnifiedMaintenance -ErrorAction SilentlyContinue) {
+                                $unifiedResult = Invoke-UnifiedMaintenance -Mode $Mode -AutoFix:$AutoFix
+                                $results.Operations += @{ Module = 'UnifiedMaintenance'; Result = $unifiedResult }
+                            }
                         } catch {
-                            Write-CustomLog -Message "UnifiedMaintenance failed: $($_.Exception.Message)" -Level 'ERROR'
+                            Write-CustomLog -Message "Unified maintenance failed: $($_.Exception.Message)" -Level 'ERROR'
                             $results.Success = $false
                         }
                     }
@@ -717,17 +723,20 @@ if (-not (Get-Command Start-DevEnvironmentSetup -ErrorAction SilentlyContinue)) 
             try {
                 Write-CustomLog -Message 'Starting development environment setup through CoreApp...' -Level 'INFO'
 
-                # Import DevEnvironment module if available
+                # Import domains
                 Import-CoreModules -RequiredOnly:$false
 
-                if ($script:LoadedModules.ContainsKey('DevEnvironment')) {
-                    if ($PSCmdlet.ShouldProcess('DevEnvironment', 'Initialize development environment')) {
-                        Initialize-DevelopmentEnvironment -Force:$Force -SkipModuleImportFixes:$SkipModuleImportFixes
-                        Write-CustomLog -Message 'Development environment setup completed' -Level 'SUCCESS'
-                        return $true
+                if ($script:LoadedDomains.ContainsKey('Experience')) {
+                    if ($PSCmdlet.ShouldProcess('Setup Environment', 'Initialize development environment')) {
+                        # Use Start-IntelligentSetup from Experience domain
+                        if (Get-Command Start-IntelligentSetup -ErrorAction SilentlyContinue) {
+                            Start-IntelligentSetup -Force:$Force
+                            Write-CustomLog -Message 'Development environment setup completed' -Level 'SUCCESS'
+                            return $true
+                        }
                     }
                 } else {
-                    Write-CustomLog -Message 'DevEnvironment module not available - basic setup only' -Level 'WARN'
+                    Write-CustomLog -Message 'Experience domain not available - basic setup only' -Level 'WARN'
                     Initialize-CoreApplication -RequiredOnly
                     return $true
                 }
@@ -765,103 +774,100 @@ if (-not (Get-Command Get-IntegratedToolset -ErrorAction SilentlyContinue)) {
                 QuickActions = @{}
             }
 
-            # Analyze each loaded module
-            foreach ($moduleName in $script:LoadedModules.Keys) {
-                $moduleInfo = $script:LoadedModules[$moduleName]
-                $module = Get-Module -Name $moduleName -ErrorAction SilentlyContinue
-
-                if ($module) {
-                    $commands = Get-Command -Module $moduleName -ErrorAction SilentlyContinue
-                    $toolset.CoreModules[$moduleName] = @{
-                        Description = $moduleInfo.Description
-                        CommandCount = $commands.Count
-                        Commands = ($commands | Select-Object -ExpandProperty Name)
-                        LoadTime = $moduleInfo.ImportTime
-                        Status = 'Loaded'
-                    }
-
-                    # Categorize capabilities
-                    switch ($moduleName) {
-                        'ISOManager' {
-                            $toolset.Capabilities['ISOManagement'] = @{
-                                Module = $moduleName
-                                Functions = @('Get-ISODownload', 'Get-ISOInventory', 'New-ISORepository')
-                                Description = 'Complete ISO lifecycle management'
-                            }
-                        }
-                        'ISOManager' {
-                            $toolset.Capabilities['ISOCustomization'] = @{
-                                Module = $moduleName
-                                Functions = @('New-AutounattendFile', 'New-CustomISO')
-                                Description = 'ISO customization and automation'
-                            }
-                        }
-                        'PatchManager' {
-                            $toolset.Capabilities['PatchManagement'] = @{
-                                Module = $moduleName
-                                Functions = @('Invoke-PatchWorkflow', 'New-PatchIssue', 'New-PatchPR')
-                                Description = 'Git-controlled development workflow'
-                            }
-                        }
-                        'LabRunner' {
-                            $toolset.Capabilities['LabAutomation'] = @{
-                                Module = $moduleName
-                                Functions = @('Start-LabAutomation', 'Invoke-LabScript')
-                                Description = 'Infrastructure lab orchestration'
-                            }
-                        }
-                        'TestingFramework' {
-                            $toolset.Capabilities['Testing'] = @{
-                                Module = $moduleName
-                                Functions = @('Invoke-BulletproofTests', 'Start-TestValidation')
-                                Description = 'Comprehensive testing suite'
-                            }
-                        }
-                        'BackupManager' {
-                            $toolset.Capabilities['BackupManagement'] = @{
-                                Module = $moduleName
-                                Functions = @('Start-BackupOperation', 'Remove-OldBackups')
-                                Description = 'Automated backup and cleanup'
-                            }
-                        }
-                        'SecureCredentials' {
-                            $toolset.Capabilities['CredentialManagement'] = @{
-                                Module = $moduleName
-                                Functions = @('Get-SecureCredential', 'Set-SecureCredential')
-                                Description = 'Enterprise credential security'
-                            }
-                        }
-                        'RemoteConnection' {
-                            $toolset.Capabilities['RemoteAccess'] = @{
-                                Module = $moduleName
-                                Functions = @('Connect-RemoteSystem', 'Test-RemoteConnection')
-                                Description = 'Multi-protocol remote connections'
-                            }
-                        }
-                    }
+            # Analyze each loaded domain
+            foreach ($domainName in $script:LoadedDomains.Keys) {
+                $domainInfo = $script:LoadedDomains[$domainName]
+                $toolset.CoreModules[$domainName] = @{
+                    Description = $domainInfo.Description
+                    LoadTime = $domainInfo.ImportTime
+                    Status = 'Loaded'
+                    Type = 'Domain'
                 }
             }
 
-            # Define cross-module integrations
+            # Define capabilities from domains
+            if ($script:LoadedDomains.ContainsKey('Infrastructure')) {
+                $toolset.Capabilities['ISOManagement'] = @{
+                    Domain = 'Infrastructure'
+                    Functions = @('Get-ISODownload', 'Get-ISOInventory', 'New-ISORepository', 'New-AutounattendFile', 'New-CustomISO')
+                    Description = 'Complete ISO lifecycle management and customization'
+                }
+                $toolset.Capabilities['LabAutomation'] = @{
+                    Domain = 'Infrastructure'
+                    Functions = @('Start-LabAutomation', 'Get-LabStatus', 'Start-EnhancedLabDeployment')
+                    Description = 'Infrastructure lab orchestration'
+                }
+                $toolset.Capabilities['OpenTofuDeployment'] = @{
+                    Domain = 'Infrastructure'
+                    Functions = @('Initialize-OpenTofuProvider', 'Start-InfrastructureDeployment', 'New-LabInfrastructure')
+                    Description = 'Infrastructure as Code deployment'
+                }
+                $toolset.Capabilities['SystemMonitoring'] = @{
+                    Domain = 'Infrastructure'
+                    Functions = @('Get-SystemDashboard', 'Start-SystemMonitoring', 'Get-SystemPerformance')
+                    Description = 'System performance monitoring'
+                }
+            }
+
+            if ($script:LoadedDomains.ContainsKey('Automation')) {
+                $toolset.Capabilities['PatchManagement'] = @{
+                    Domain = 'Automation'
+                    Functions = @('New-Patch', 'New-QuickFix', 'New-Feature', 'New-Hotfix')
+                    Description = 'Git-controlled development workflow'
+                }
+                $toolset.Capabilities['WorkflowOrchestration'] = @{
+                    Domain = 'Automation'
+                    Functions = @('Invoke-PlaybookWorkflow', 'Get-PlaybookStatus')
+                    Description = 'Advanced workflow orchestration'
+                }
+            }
+
+            if ($script:LoadedDomains.ContainsKey('Utilities')) {
+                $toolset.Capabilities['BackupManagement'] = @{
+                    Domain = 'Utilities'
+                    Functions = @('Start-AutomatedBackup', 'Get-BackupStatistics')
+                    Description = 'Automated backup and maintenance'
+                }
+                $toolset.Capabilities['AIToolsIntegration'] = @{
+                    Domain = 'Utilities'
+                    Functions = @('Install-ClaudeCode', 'Install-GeminiCLI', 'Get-AIToolsStatus')
+                    Description = 'AI development tools management'
+                }
+            }
+
+            if ($script:LoadedDomains.ContainsKey('Security')) {
+                $toolset.Capabilities['CredentialManagement'] = @{
+                    Domain = 'Security'
+                    Functions = @('Get-SecureCredential', 'New-SecureCredential', 'Initialize-SecureCredentialStore')
+                    Description = 'Enterprise credential security'
+                }
+                $toolset.Capabilities['SecurityAutomation'] = @{
+                    Domain = 'Security'
+                    Functions = @('Get-ADSecurityAssessment', 'Enable-CredentialGuard', 'Set-SystemHardening')
+                    Description = 'Security hardening and compliance'
+                }
+            }
+
+            # Define cross-domain integrations
             $toolset.Integrations = @{
                 'ISOWorkflow' = @{
                     Description = 'Complete ISO management workflow'
-                    Modules = @('ISOManager', 'TestingFramework')
+                    Domains = @('Infrastructure')
                     Workflow = 'Download → Customize → Test → Deploy'
                 }
                 'DevelopmentWorkflow' = @{
                     Description = 'Development and deployment pipeline'
-                    Modules = @('PatchManager', 'TestingFramework', 'BackupManager')
+                    Domains = @('Automation', 'Utilities')
                     Workflow = 'Patch → Test → Backup → Deploy'
                 }
                 'LabDeployment' = @{
                     Description = 'End-to-end lab infrastructure deployment'
-                    Modules = @('LabRunner', 'ISOManager', 'RemoteConnection')
-                    Workflow = 'Plan → Provision → Configure → Connect'
+                    Domains = @('Infrastructure')
+                    Workflow = 'Plan → Provision → Configure → Monitor'
                 }
                 'MaintenanceOperations' = @{
                     Description = 'Automated maintenance and housekeeping'
-                    Modules = @('UnifiedMaintenance', 'BackupManager', 'TestingFramework')
+                    Domains = @('Utilities')
                     Workflow = 'Backup → Clean → Validate → Report'
                 }
             }
