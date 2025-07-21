@@ -525,7 +525,7 @@ function Get-OverallHealthScore {
 
     # Module health score - factor in actual test pass rates
     if ($FeatureMap) {
-        $moduleRatio = if ($FeatureMap.TotalModules -gt 0) {
+        $moduleRatio = if ($FeatureMap -and $FeatureMap.TotalModules -gt 0) {
             ($FeatureMap.AnalyzedModules / $FeatureMap.TotalModules) * 100
         } else { 0 }
         
@@ -582,6 +582,58 @@ function New-ComprehensiveHtmlReport {
     )
 
     Write-ReportLog "Generating HTML report..." -Level 'INFO'
+    
+    # Ensure FeatureMap has required structure with comprehensive validation
+    if (-not $FeatureMap -or $FeatureMap -eq $null) {
+        Write-ReportLog "FeatureMap is null, creating default structure" -Level 'WARNING'
+        $FeatureMap = @{
+            TotalModules = 0
+            AnalyzedModules = 0
+            FailedModules = 0
+            Modules = @{}
+            Categories = @{}
+            Capabilities = @{}
+            Dependencies = @{}
+            Statistics = @{
+                TotalFunctions = 0
+                AverageFunctionsPerModule = 0
+                TestCoveragePercentage = 0
+                DocumentationCoveragePercentage = 0
+                ModulesWithTests = 0
+                ModulesWithDocumentation = 0
+            }
+        }
+    } else {
+        # Ensure all required properties exist with defaults
+        if (-not $FeatureMap.PSObject.Properties['TotalModules']) { $FeatureMap.TotalModules = 0 }
+        if (-not $FeatureMap.PSObject.Properties['AnalyzedModules']) { $FeatureMap.AnalyzedModules = 0 }
+        if (-not $FeatureMap.PSObject.Properties['FailedModules']) { $FeatureMap.FailedModules = 0 }
+        if (-not $FeatureMap.PSObject.Properties['Modules']) { $FeatureMap.Modules = @{} }
+        if (-not $FeatureMap.PSObject.Properties['Categories']) { $FeatureMap.Categories = @{} }
+        if (-not $FeatureMap.PSObject.Properties['Capabilities']) { $FeatureMap.Capabilities = @{} }
+        if (-not $FeatureMap.PSObject.Properties['Dependencies']) { $FeatureMap.Dependencies = @{} }
+        
+        # Ensure Statistics exists with comprehensive validation
+        if (-not $FeatureMap.Statistics -or $FeatureMap.Statistics -eq $null) {
+            Write-ReportLog "FeatureMap.Statistics is null, creating default" -Level 'WARNING'
+            $FeatureMap.Statistics = @{
+                TotalFunctions = 0
+                AverageFunctionsPerModule = 0
+                TestCoveragePercentage = 0
+                DocumentationCoveragePercentage = 0
+                ModulesWithTests = 0
+                ModulesWithDocumentation = 0
+            }
+        } else {
+            # Ensure all required Statistics properties exist
+            if (-not $FeatureMap.Statistics.PSObject.Properties['ModulesWithTests']) { $FeatureMap.Statistics.ModulesWithTests = 0 }
+            if (-not $FeatureMap.Statistics.PSObject.Properties['ModulesWithDocumentation']) { $FeatureMap.Statistics.ModulesWithDocumentation = 0 }
+            if (-not $FeatureMap.Statistics.PSObject.Properties['TotalFunctions']) { $FeatureMap.Statistics.TotalFunctions = 0 }
+            if (-not $FeatureMap.Statistics.PSObject.Properties['AverageFunctionsPerModule']) { $FeatureMap.Statistics.AverageFunctionsPerModule = 0 }
+            if (-not $FeatureMap.Statistics.PSObject.Properties['TestCoveragePercentage']) { $FeatureMap.Statistics.TestCoveragePercentage = 0 }
+            if (-not $FeatureMap.Statistics.PSObject.Properties['DocumentationCoveragePercentage']) { $FeatureMap.Statistics.DocumentationCoveragePercentage = 0 }
+        }
+    }
 
     $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
     $gitSha = try { git rev-parse --short HEAD 2>$null } catch { 'Unknown' }
@@ -837,7 +889,7 @@ function New-ComprehensiveHtmlReport {
                     <div class="progress-fill" style="width: $($HealthScore.Factors.TestCoverage)%"></div>
                 </div>
                 <p style="text-align: center;">
-                    Tests: $(if ($FeatureMap.Statistics -and $FeatureMap.Statistics.ModulesWithTests) { $FeatureMap.Statistics.ModulesWithTests } else { 0 })/$($FeatureMap.AnalyzedModules) modules
+                    Tests: $(if ($FeatureMap.Statistics -and $FeatureMap.Statistics.ModulesWithTests) { $FeatureMap.Statistics.ModulesWithTests } else { 0 })/$(if ($FeatureMap -and $FeatureMap.AnalyzedModules) { $FeatureMap.AnalyzedModules } else { 0 }) modules
                 </p>
             </div>
 
@@ -904,7 +956,7 @@ function New-ComprehensiveHtmlReport {
                     <div class="progress-fill" style="width: $($HealthScore.Factors.ModuleHealth)%"></div>
                 </div>
                 <p style="text-align: center;">
-                    $($FeatureMap.AnalyzedModules)/$($FeatureMap.TotalModules) modules healthy
+                    $(if ($FeatureMap -and $FeatureMap.AnalyzedModules) { $FeatureMap.AnalyzedModules } else { 0 })/$(if ($FeatureMap -and $FeatureMap.TotalModules) { $FeatureMap.TotalModules } else { 0 }) modules healthy
                 </p>
             </div>
         </div>
