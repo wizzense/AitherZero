@@ -582,6 +582,41 @@ function New-ComprehensiveHtmlReport {
     )
 
     Write-ReportLog "Generating HTML report..." -Level 'INFO'
+    
+    # Ensure FeatureMap has required structure
+    if (-not $FeatureMap) {
+        Write-ReportLog "FeatureMap is null, creating default structure" -Level 'WARNING'
+        $FeatureMap = @{
+            TotalModules = 0
+            AnalyzedModules = 0
+            FailedModules = 0
+            Modules = @{}
+            Categories = @{}
+            Capabilities = @{}
+            Dependencies = @{}
+            Statistics = @{
+                TotalFunctions = 0
+                AverageFunctionsPerModule = 0
+                TestCoveragePercentage = 0
+                DocumentationCoveragePercentage = 0
+                ModulesWithTests = 0
+                ModulesWithDocumentation = 0
+            }
+        }
+    }
+    
+    # Ensure Statistics exists
+    if (-not $FeatureMap.Statistics) {
+        Write-ReportLog "FeatureMap.Statistics is null, creating default" -Level 'WARNING'
+        $FeatureMap.Statistics = @{
+            TotalFunctions = 0
+            AverageFunctionsPerModule = 0
+            TestCoveragePercentage = 0
+            DocumentationCoveragePercentage = 0
+            ModulesWithTests = 0
+            ModulesWithDocumentation = 0
+        }
+    }
 
     $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
     $gitSha = try { git rev-parse --short HEAD 2>$null } catch { 'Unknown' }
@@ -904,7 +939,7 @@ function New-ComprehensiveHtmlReport {
                     <div class="progress-fill" style="width: $($HealthScore.Factors.ModuleHealth)%"></div>
                 </div>
                 <p style="text-align: center;">
-                    $($FeatureMap.AnalyzedModules)/$($FeatureMap.TotalModules) modules healthy
+                    $(if ($FeatureMap -and $FeatureMap.AnalyzedModules) { $FeatureMap.AnalyzedModules } else { 0 })/$(if ($FeatureMap -and $FeatureMap.TotalModules) { $FeatureMap.TotalModules } else { 0 }) modules healthy
                 </p>
             </div>
         </div>
@@ -915,7 +950,8 @@ function New-ComprehensiveHtmlReport {
 "@
 
     # Add feature categories
-    foreach ($category in $FeatureMap.Categories.GetEnumerator()) {
+    if ($FeatureMap -and $FeatureMap.Categories) {
+        foreach ($category in $FeatureMap.Categories.GetEnumerator()) {
         $html += @"
                 <div class="feature-item">
                     <h4>$($category.Key)</h4>
@@ -976,6 +1012,7 @@ function New-ComprehensiveHtmlReport {
                 </div>
 "@
     }
+    }
 
     $html += @"
             </div>
@@ -989,10 +1026,12 @@ function New-ComprehensiveHtmlReport {
 
     # Generate dependency visualization
     $dependencies = @{}
-    foreach ($module in $FeatureMap.Modules.GetEnumerator()) {
+    if ($FeatureMap -and $FeatureMap.Modules) {
+        foreach ($module in $FeatureMap.Modules.GetEnumerator()) {
         if ($module.Value.RequiredModules -and @($module.Value.RequiredModules).Count -gt 0) {
             $dependencies[$module.Key] = $module.Value.RequiredModules
         }
+    }
     }
     
     if ($dependencies.Count -gt 0) {
@@ -1027,7 +1066,8 @@ function New-ComprehensiveHtmlReport {
                     <tbody>
 "@
 
-    foreach ($module in $FeatureMap.Modules.GetEnumerator()) {
+    if ($FeatureMap -and $FeatureMap.Modules) {
+        foreach ($module in $FeatureMap.Modules.GetEnumerator()) {
         $status = if ($module.Value.HasTests) { '✅ Tested' } else { '⚠️ No Tests' }
         $statusClass = if ($module.Value.HasTests) { 'status-healthy' } else { 'status-warning' }
         $lastMod = $module.Value.LastModified.ToString('yyyy-MM-dd')
@@ -1042,6 +1082,7 @@ function New-ComprehensiveHtmlReport {
                             <td>$status ($functionCount functions)</td>
                         </tr>
 "@
+    }
     }
 
     $html += @"
@@ -1776,7 +1817,8 @@ function Get-FeatureStatistics {
     $modulesWithTests = 0
     $modulesWithDocs = 0
     
-    foreach ($module in $FeatureMap.Modules.Values) {
+    if ($FeatureMap -and $FeatureMap.Modules) {
+        foreach ($module in $FeatureMap.Modules.Values) {
         $functionCount = @($module.Functions).Count
         if ($functionCount -gt 0) {
             $totalFunctions += $functionCount
