@@ -1,0 +1,56 @@
+name: 'Cache PowerShell Modules'
+description: 'Advanced caching for PowerShell modules with performance optimization'
+inputs:
+  cache-key:
+    description: 'Base cache key'
+    required: false
+    default: 'ps-modules'
+  include-test-results:
+    description: 'Whether to cache test results'
+    required: false
+    default: 'false'
+
+outputs:
+  cache-hit:
+    description: 'Whether cache was hit'
+    value: ${{ steps.cache.outputs.cache-hit }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Generate cache key
+      id: cache-key
+      shell: pwsh
+      run: |
+        # Generate a unique cache key based on module files
+        $moduleFiles = Get-ChildItem -Path . -Include "*.psd1","*.psm1" -Recurse -ErrorAction SilentlyContinue
+        $hashInput = ""
+        foreach ($file in $moduleFiles) {
+          $hashInput += (Get-FileHash -Path $file.FullName -Algorithm SHA256).Hash
+        }
+        
+        # Create a shorter hash for the cache key
+        $shortHash = [System.BitConverter]::ToString(
+          [System.Security.Cryptography.SHA256]::Create().ComputeHash(
+            [System.Text.Encoding]::UTF8.GetBytes($hashInput)
+          )
+        ).Replace("-", "").Substring(0, 16)
+        
+        echo "hash=$shortHash" >> $env:GITHUB_OUTPUT
+
+    - name: Cache modules and test results
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.local/share/powershell/Modules
+          ~/Documents/PowerShell/Modules
+          ~/.config/powershell
+          ~/.cache/powershell
+          /usr/local/share/powershell/Modules
+          ${{ inputs.include-test-results == 'true' && 'tests/.cache' || '' }}
+          ${{ inputs.include-test-results == 'true' && 'tests/results/.cache' || '' }}
+        key: ${{ runner.os }}-${{ inputs.cache-key }}-${{ steps.cache-key.outputs.hash }}-v3
+        restore-keys: |
+          ${{ runner.os }}-${{ inputs.cache-key }}-v3
+          ${{ runner.os }}-ps-modules-v3

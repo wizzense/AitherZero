@@ -1,0 +1,78 @@
+name: 'Setup PowerShell'
+description: 'Sets up PowerShell with caching and common modules'
+inputs:
+  modules:
+    description: 'Comma-separated list of modules to install'
+    required: false
+    default: 'Pester,PSScriptAnalyzer'
+  cache-key-suffix:
+    description: 'Additional suffix for cache key'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Determine cache paths
+      id: cache-paths
+      shell: pwsh
+      run: |
+        # Determine OS-specific module paths
+        $paths = @()
+        if ($env:RUNNER_OS -eq 'Windows') {
+          $paths += "$env:USERPROFILE\Documents\WindowsPowerShell\Modules"
+          $paths += "$env:USERPROFILE\Documents\PowerShell\Modules"
+          $paths += "$env:ProgramFiles\WindowsPowerShell\Modules"
+          $paths += "$env:ProgramFiles\PowerShell\Modules"
+        } elseif ($env:RUNNER_OS -eq 'Linux') {
+          $paths += "$HOME/.local/share/powershell/Modules"
+          $paths += "/usr/local/share/powershell/Modules"
+          $paths += "$HOME/.config/powershell"
+          $paths += "$HOME/.cache/powershell"
+        } elseif ($env:RUNNER_OS -eq 'macOS') {
+          $paths += "$HOME/.local/share/powershell/Modules"
+          $paths += "/usr/local/share/powershell/Modules"
+          $paths += "/usr/local/microsoft/powershell/7/Modules"
+        }
+        
+        # Join paths with newlines for the cache action
+        $cachePaths = $paths -join "`n"
+        echo "paths<<EOF" >> $env:GITHUB_OUTPUT
+        echo $cachePaths >> $env:GITHUB_OUTPUT
+        echo "EOF" >> $env:GITHUB_OUTPUT
+
+    - name: Cache PowerShell modules
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.cache-paths.outputs.paths }}
+        key: ${{ runner.os }}-ps-modules-${{ hashFiles('**/*.psd1', '**/*.psm1') }}-${{ inputs.cache-key-suffix }}-v3
+        restore-keys: |
+          ${{ runner.os }}-ps-modules-${{ hashFiles('**/*.psd1', '**/*.psm1') }}-v3
+          ${{ runner.os }}-ps-modules-v3
+
+    - name: Install PowerShell modules
+      shell: pwsh
+      run: |
+        # Set TLS to 1.2 for PSGallery
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        
+        # Configure PSGallery as trusted
+        if (!(Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+          Register-PSRepository -Default
+        }
+        Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+        
+        # Install modules
+        $modules = '${{ inputs.modules }}' -split ',' | ForEach-Object { $_.Trim() }
+        foreach ($module in $modules) {
+          if ($module) {
+            Write-Host "Installing module: $module"
+            if ($module -eq 'Pester') {
+              Install-Module -Name $module -MinimumVersion 5.0.0 -Force -Scope CurrentUser -SkipPublisherCheck
+            } else {
+              Install-Module -Name $module -Force -Scope CurrentUser -SkipPublisherCheck
+            }
+          }
+        }
+        
+        Write-Host "✅ PowerShell modules installed successfully"
