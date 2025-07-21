@@ -1826,8 +1826,9 @@ function Get-FeatureStatistics {
         if ($module.HasTests) { $modulesWithTests++ }
         if ($module.HasDocumentation) { $modulesWithDocs++ }
     }
+    }
     
-    $analyzedCount = $FeatureMap.AnalyzedModules
+    $analyzedCount = if ($FeatureMap) { $FeatureMap.AnalyzedModules } else { 0 }
     
     return @{
         TotalFunctions = $totalFunctions
