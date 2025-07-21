@@ -496,7 +496,7 @@ Describe "AitherZero Specific Version Requirements" -Tags @('Version', 'AitherZe
                 $content | Should -Match "#Requires -Version 7\.0" -Because "Developer setup should require PowerShell 7.0"
 
                 # Should have version validation function
-                $content | Should -Match "Test-PowerShellVersionRequirement" -Because "Should have version validation"
+                $content | Should -Match "Test-PowerShellVersion" -Because "Should have version validation"
             }
         }
     }

@@ -131,7 +131,7 @@ foreach ($plat in $platforms) {
             "aither-core/shared/Find-ProjectRoot.ps1",
             "aither-core/shared/Initialize-Logging.ps1",
             "aither-core/AitherCore.psm1",
-            "aither-core/domains/infrastructure/Infrastructure.ps1",
+            "aither-core/domains/infrastructure/LabRunner.ps1",
             "aither-core/domains/configuration/Configuration.ps1",
             "configs/default-config.json"
         )
