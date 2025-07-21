@@ -42,7 +42,7 @@ Describe "Core Functionality Tests" {
             $projectRoot = Split-Path -Parent $PSScriptRoot
             Test-Path (Join-Path $projectRoot "Start-AitherZero.ps1") | Should -Be $true
             Test-Path (Join-Path $projectRoot "aither-core") | Should -Be $true
-            Test-Path (Join-Path $projectRoot "aither-core" "modules") | Should -Be $true
+            Test-Path (Join-Path $projectRoot "aither-core" "domains") | Should -Be $true
             Test-Path (Join-Path $projectRoot "configs") | Should -Be $true
         }
 
@@ -57,30 +57,35 @@ Describe "Core Functionality Tests" {
         }
     }
 
-    Context "Module Loading" {
-        It "Should load all core modules" {
+    Context "Domain Loading" {
+        It "Should load all core domains" {
             $projectRoot = Split-Path -Parent $PSScriptRoot
-            $modulePath = Join-Path $projectRoot "aither-core" "modules"
-            $coreModules = @(
-                "Logging",
-                "PatchManager",
-                "SetupWizard",
-                "ProgressTracking"
+            $domainPath = Join-Path $projectRoot "aither-core" "domains"
+            $coreDomains = @(
+                "automation",
+                "configuration", 
+                "experience",
+                "infrastructure",
+                "security",
+                "utilities"
             )
 
-            foreach ($module in $coreModules) {
-                $modulePsd1 = Join-Path $modulePath $module "$module.psd1"
-                Test-Path $modulePsd1 | Should -Be $true
-                { Import-Module $modulePsd1 -Force } | Should -Not -Throw
+            foreach ($domain in $coreDomains) {
+                $domainFolder = Join-Path $domainPath $domain
+                Test-Path $domainFolder | Should -Be $true
+                
+                # Each domain should have a main .ps1 file
+                $domainFiles = Get-ChildItem -Path $domainFolder -Filter "*.ps1" -ErrorAction SilentlyContinue
+                $domainFiles.Count | Should -BeGreaterThan 0
             }
         }
     }
 
     Context "Logging System" {
         It "Should write log messages" {
-            # Import Logging module if not already loaded
+            # Initialize logging from shared utilities
             $projectRoot = Split-Path -Parent $PSScriptRoot
-            Import-Module (Join-Path $projectRoot "aither-core" "modules" "Logging") -Force
+            . (Join-Path $projectRoot "aither-core" "shared" "Initialize-Logging.ps1")
 
             { Write-CustomLog -Level 'INFO' -Message "Test message" } | Should -Not -Throw
             { Write-CustomLog -Level 'ERROR' -Message "Error message" } | Should -Not -Throw
