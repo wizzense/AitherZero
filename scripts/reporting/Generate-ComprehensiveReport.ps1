@@ -837,7 +837,7 @@ function New-ComprehensiveHtmlReport {
                     <div class="progress-fill" style="width: $($HealthScore.Factors.TestCoverage)%"></div>
                 </div>
                 <p style="text-align: center;">
-                    Tests: $($FeatureMap.Statistics.ModulesWithTests)/$($FeatureMap.AnalyzedModules) modules
+                    Tests: $(if ($FeatureMap.Statistics -and $FeatureMap.Statistics.ModulesWithTests) { $FeatureMap.Statistics.ModulesWithTests } else { 0 })/$($FeatureMap.AnalyzedModules) modules
                 </p>
             </div>
 
@@ -1509,6 +1509,18 @@ function Get-DynamicFeatureMap {
     
     # Generate statistics
     $featureMap.Statistics = Get-FeatureStatistics -FeatureMap $featureMap
+    
+    # Ensure Statistics has all required properties
+    if (-not $featureMap.Statistics) {
+        $featureMap.Statistics = @{
+            TotalFunctions = 0
+            AverageFunctionsPerModule = 0
+            TestCoveragePercentage = 0
+            DocumentationCoveragePercentage = 0
+            ModulesWithTests = 0
+            ModulesWithDocumentation = 0
+        }
+    }
     
     Write-ReportLog "Feature map generation complete: $($featureMap.AnalyzedModules)/$($featureMap.TotalModules) successful" -Level 'SUCCESS'
     
