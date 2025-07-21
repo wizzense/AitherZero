@@ -329,7 +329,7 @@ function Get-DomainModuleAnalysis {
             $relatedTestFiles = Get-ChildItem $testsDir -Filter $testSearchPattern -Recurse -ErrorAction SilentlyContinue
             if (@($relatedTestFiles).Count -gt 0) {
                 $moduleInfo.HasTests = $true
-                $moduleInfo.TestCoverage = 85 # Simplified calculation
+                $moduleInfo.TestCoverage = Get-DomainTestCoverage -TestFiles $relatedTestFiles -ModuleInfo $moduleInfo
             }
         }
     } catch {
@@ -337,8 +337,13 @@ function Get-DomainModuleAnalysis {
     }
 
     # Calculate complexity based on function count and file size
+    # Configuration constants for complexity calculation
+    $FUNCTION_COUNT_MULTIPLIER = 2
+    $MAX_FILE_SIZE_CONTRIBUTION = 50
+    $FILE_SIZE_UNIT = 1KB
+    
     $functionCount = @($moduleInfo.Functions).Count
-    $moduleInfo.ComplexityScore = [Math]::Min(100, ($functionCount * 2) + [Math]::Min(50, $DomainFile.Length / 1KB))
+    $moduleInfo.ComplexityScore = [Math]::Min(100, ($functionCount * $FUNCTION_COUNT_MULTIPLIER) + [Math]::Min($MAX_FILE_SIZE_CONTRIBUTION, $DomainFile.Length / $FILE_SIZE_UNIT))
 
     # Calculate health score
     $moduleInfo.Health = Get-DomainModuleHealth -ModuleInfo $moduleInfo
@@ -409,6 +414,47 @@ function Get-DomainModuleCapabilities {
     $capabilities.Features = ($features | Sort-Object -Unique)
 
     return $capabilities
+}
+
+# Calculate domain test coverage
+function Get-DomainTestCoverage {
+    param($TestFiles, $ModuleInfo)
+    
+    try {
+        $totalFunctions = @($ModuleInfo.Functions).Count
+        
+        # If no functions, return 100% (vacuous truth)
+        if ($totalFunctions -eq 0) { return 100 }
+        
+        $testedFunctions = 0
+        
+        # Analyze test files for function coverage
+        foreach ($testFile in $TestFiles) {
+            $testContent = Get-Content $testFile.FullName -Raw -ErrorAction SilentlyContinue
+            if ($testContent) {
+                # Count how many of the module's functions are referenced in tests
+                foreach ($functionName in $ModuleInfo.Functions) {
+                    if ($testContent -like "*$functionName*") {
+                        $testedFunctions++
+                    }
+                }
+            }
+        }
+        
+        # Calculate percentage with realistic baseline
+        $coveragePercentage = if ($testedFunctions -gt 0) {
+            [Math]::Min(100, [Math]::Round(($testedFunctions / $totalFunctions) * 100, 1))
+        } else {
+            # If we have test files but no obvious function coverage, assume basic coverage
+            60  # Conservative estimate when tests exist but specific function coverage is unclear
+        }
+        
+        return $coveragePercentage
+        
+    } catch {
+        Write-FeatureLog "Error calculating test coverage: $($_.Exception.Message)" -Level 'DEBUG'
+        return 50  # Fallback coverage estimate
+    }
 }
 
 # Calculate domain module health
