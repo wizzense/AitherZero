@@ -1668,6 +1668,7 @@ function Get-DynamicFeatureMap {
                 Health = 'Good'    # Default health
                 DomainName = $domainName
                 Path = $domainFile.FullName
+                RequiredModules = @()  # Domain modules typically don't have external dependencies
             }
         }
         
@@ -1746,6 +1747,16 @@ function Get-DynamicFeatureMap {
             # Update the module's documentation status
             if ($featureMap.Modules.ContainsKey($moduleName)) {
                 $featureMap.Modules[$moduleName].HasDocumentation = $hasDocumentation
+            }
+            
+            # Create basic capabilities entry for HTML template
+            if (-not $featureMap.Capabilities.ContainsKey($moduleName)) {
+                $featureMap.Capabilities[$moduleName] = @{
+                    FunctionCount = if ($featureMap.Modules.ContainsKey($moduleName)) { @($featureMap.Modules[$moduleName].Functions).Count } else { 0 }
+                    HasPublicAPI = $true
+                    Features = @('Core', 'Domain')
+                    DomainType = $domainName
+                }
             }
         }
     }
