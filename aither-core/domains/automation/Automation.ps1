@@ -1816,6 +1816,7 @@ function Watch-CopilotReviews {
             $suggestion = Parse-CopilotSuggestion -Comment $comment
             
             if ($suggestion) {
+                $suggestion.PRNumber = $PRNumber
                 if ($Interactive) {
                     Write-CustomLog -Level 'INFO' -Message "Copilot suggestion: $($suggestion.Description)"
                     $response = Read-Host "Apply this suggestion? (Y/N)"
@@ -1869,6 +1870,7 @@ function Parse-CopilotSuggestion {
             Description = ''
             CodeBlock = $null
             Severity = 'Info'
+            PRNumber = $null
         }
         
         # Extract suggestion from comment body
@@ -1959,10 +1961,16 @@ function Apply-CopilotSuggestion {
                 'SimpleFix' {
                     New-QuickFix -Description $commitMessage -Changes {
                         if ($Suggestion.Path -and $Suggestion.CodeBlock) {
+                            # Backup the original file
+                            $backupPath = "$($Suggestion.Path).backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+                            Copy-Item -Path $Suggestion.Path -Destination $backupPath -Force
+                            
                             # Apply the code change
                             $content = Get-Content $Suggestion.Path -Raw
                             # This is simplified - in reality would need more sophisticated patching
                             Set-Content $Suggestion.Path -Value $Suggestion.CodeBlock
+                            
+                            Write-CustomLog -Level 'INFO' -Message "File backed up to: $backupPath"
                         }
                     }
                 }
@@ -1970,8 +1978,14 @@ function Apply-CopilotSuggestion {
                 'Security' {
                     New-Hotfix -Description $commitMessage -Changes {
                         if ($Suggestion.Path -and $Suggestion.CodeBlock) {
+                            # Backup the original file
+                            $backupPath = "$($Suggestion.Path).backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+                            Copy-Item -Path $Suggestion.Path -Destination $backupPath -Force
+                            
                             $content = Get-Content $Suggestion.Path -Raw
                             Set-Content $Suggestion.Path -Value $Suggestion.CodeBlock
+                            
+                            Write-CustomLog -Level 'INFO' -Message "File backed up to: $backupPath"
                         }
                     }
                 }
@@ -1979,8 +1993,14 @@ function Apply-CopilotSuggestion {
                 default {
                     New-Patch -Description $commitMessage -Changes {
                         if ($Suggestion.Path -and $Suggestion.CodeBlock) {
+                            # Backup the original file
+                            $backupPath = "$($Suggestion.Path).backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+                            Copy-Item -Path $Suggestion.Path -Destination $backupPath -Force
+                            
                             $content = Get-Content $Suggestion.Path -Raw
                             Set-Content $Suggestion.Path -Value $Suggestion.CodeBlock
+                            
+                            Write-CustomLog -Level 'INFO' -Message "File backed up to: $backupPath"
                         }
                     }
                 }
@@ -2034,6 +2054,9 @@ function New-CopilotFix {
             $comment = gh api "repos/$(Get-GitRepositoryInfo | ForEach-Object {"$($_.Owner)/$($_.Name)"})/pulls/comments/$SuggestionId" | ConvertFrom-Json
             $suggestion = Parse-CopilotSuggestion -Comment $comment
             if ($suggestion) {
+                # Need to get PR number from comment
+                $prInfo = gh api "repos/$(Get-GitRepositoryInfo | ForEach-Object {"$($_.Owner)/$($_.Name)"})/pulls" --jq ".[] | select(.number) | .number" | Select-Object -First 1
+                $suggestion.PRNumber = $prInfo
                 Apply-CopilotSuggestion -Suggestion $suggestion
             }
         } else {

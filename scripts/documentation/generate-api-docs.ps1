@@ -51,11 +51,16 @@ function Generate-DomainDocs {
     # Load the domain script
     . $DomainScriptPath
     
-    # Get all functions from the domain
-    $functions = Get-Command -Module $null | Where-Object {
-        $_.Source -eq '' -and 
-        $_.CommandType -eq 'Function' -and
-        $_.Definition -match [regex]::Escape($DomainScriptPath)
+    # Get all functions from the domain by parsing the script
+    $scriptContent = Get-Content $DomainScriptPath -Raw
+    $functionPattern = 'function\s+([A-Za-z0-9-_]+)\s*\{'
+    $functionNames = [regex]::Matches($scriptContent, $functionPattern) | ForEach-Object { $_.Groups[1].Value }
+    
+    $functions = @()
+    foreach ($funcName in $functionNames) {
+        if (Get-Command -Name $funcName -ErrorAction SilentlyContinue) {
+            $functions += Get-Command -Name $funcName
+        }
     }
     
     # Generate documentation for each function
