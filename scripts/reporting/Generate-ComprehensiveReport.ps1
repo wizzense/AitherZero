@@ -604,14 +604,27 @@ function New-ComprehensiveHtmlReport {
             }
         }
     } else {
-        # Ensure all required properties exist with defaults
-        if (-not $FeatureMap.PSObject.Properties['TotalModules']) { $FeatureMap.TotalModules = 0 }
-        if (-not $FeatureMap.PSObject.Properties['AnalyzedModules']) { $FeatureMap.AnalyzedModules = 0 }
-        if (-not $FeatureMap.PSObject.Properties['FailedModules']) { $FeatureMap.FailedModules = 0 }
-        if (-not $FeatureMap.PSObject.Properties['Modules']) { $FeatureMap.Modules = @{} }
-        if (-not $FeatureMap.PSObject.Properties['Categories']) { $FeatureMap.Categories = @{} }
-        if (-not $FeatureMap.PSObject.Properties['Capabilities']) { $FeatureMap.Capabilities = @{} }
-        if (-not $FeatureMap.PSObject.Properties['Dependencies']) { $FeatureMap.Dependencies = @{} }
+        # Cache property lists for efficient access
+        $featureMapProperties = if ($FeatureMap -and $FeatureMap.PSObject) { 
+            $FeatureMap.PSObject.Properties.Name 
+        } else { 
+            @() 
+        }
+        
+        $statisticsProperties = if ($FeatureMap.Statistics -and $FeatureMap.Statistics.PSObject) { 
+            $FeatureMap.Statistics.PSObject.Properties.Name 
+        } else { 
+            @() 
+        }
+        
+        # Ensure all required properties exist with defaults using cached property lists
+        if ('TotalModules' -notin $featureMapProperties) { $FeatureMap.TotalModules = 0 }
+        if ('AnalyzedModules' -notin $featureMapProperties) { $FeatureMap.AnalyzedModules = 0 }
+        if ('FailedModules' -notin $featureMapProperties) { $FeatureMap.FailedModules = 0 }
+        if ('Modules' -notin $featureMapProperties) { $FeatureMap.Modules = @{} }
+        if ('Categories' -notin $featureMapProperties) { $FeatureMap.Categories = @{} }
+        if ('Capabilities' -notin $featureMapProperties) { $FeatureMap.Capabilities = @{} }
+        if ('Dependencies' -notin $featureMapProperties) { $FeatureMap.Dependencies = @{} }
         
         # Ensure Statistics exists with comprehensive validation
         if (-not $FeatureMap.Statistics -or $FeatureMap.Statistics -eq $null) {
@@ -625,13 +638,13 @@ function New-ComprehensiveHtmlReport {
                 ModulesWithDocumentation = 0
             }
         } else {
-            # Ensure all required Statistics properties exist
-            if (-not $FeatureMap.Statistics.PSObject.Properties['ModulesWithTests']) { $FeatureMap.Statistics.ModulesWithTests = 0 }
-            if (-not $FeatureMap.Statistics.PSObject.Properties['ModulesWithDocumentation']) { $FeatureMap.Statistics.ModulesWithDocumentation = 0 }
-            if (-not $FeatureMap.Statistics.PSObject.Properties['TotalFunctions']) { $FeatureMap.Statistics.TotalFunctions = 0 }
-            if (-not $FeatureMap.Statistics.PSObject.Properties['AverageFunctionsPerModule']) { $FeatureMap.Statistics.AverageFunctionsPerModule = 0 }
-            if (-not $FeatureMap.Statistics.PSObject.Properties['TestCoveragePercentage']) { $FeatureMap.Statistics.TestCoveragePercentage = 0 }
-            if (-not $FeatureMap.Statistics.PSObject.Properties['DocumentationCoveragePercentage']) { $FeatureMap.Statistics.DocumentationCoveragePercentage = 0 }
+            # Ensure all required Statistics properties exist using cached property list
+            if ('ModulesWithTests' -notin $statisticsProperties) { $FeatureMap.Statistics.ModulesWithTests = 0 }
+            if ('ModulesWithDocumentation' -notin $statisticsProperties) { $FeatureMap.Statistics.ModulesWithDocumentation = 0 }
+            if ('TotalFunctions' -notin $statisticsProperties) { $FeatureMap.Statistics.TotalFunctions = 0 }
+            if ('AverageFunctionsPerModule' -notin $statisticsProperties) { $FeatureMap.Statistics.AverageFunctionsPerModule = 0 }
+            if ('TestCoveragePercentage' -notin $statisticsProperties) { $FeatureMap.Statistics.TestCoveragePercentage = 0 }
+            if ('DocumentationCoveragePercentage' -notin $statisticsProperties) { $FeatureMap.Statistics.DocumentationCoveragePercentage = 0 }
         }
     }
 
@@ -1638,14 +1651,64 @@ function Get-DynamicFeatureMap {
         $featureMap.AnalyzedModules = $featureMap.TotalModules
     }
     
-    # Ensure Statistics has all required properties
+    # Calculate dynamic statistics based on actual analysis
+    $modulesWithTests = 0
+    $modulesWithDocumentation = 0
+    $totalActualFunctions = 0
+    
+    # Analyze domain files to get actual statistics
+    if ((Split-Path $ModulesPath -Leaf) -eq 'domains') {
+        foreach ($domainFile in $allDomainFiles) {
+            # Count functions in domain file
+            try {
+                $functionCount = (Get-FunctionsFromScript -ScriptPath $domainFile.FullName).Count
+                $totalActualFunctions += $functionCount
+            } catch {
+                # Fallback function count estimation
+                $totalActualFunctions += 8
+            }
+            
+            # Check for tests
+            $testSearchPattern = "*$($domainFile.BaseName)*Test*.ps1"
+            $projectRoot = Split-Path (Split-Path $ModulesPath -Parent) -Parent
+            $testsDir = Join-Path $projectRoot "tests"
+            
+            if (Test-Path $testsDir) {
+                $relatedTestFiles = Get-ChildItem $testsDir -Filter $testSearchPattern -Recurse -ErrorAction SilentlyContinue
+                if (@($relatedTestFiles).Count -gt 0) {
+                    $modulesWithTests++
+                }
+            }
+            
+            # Check for documentation
+            $readmePath = Join-Path (Split-Path $domainFile.FullName -Parent) "README.md"
+            if (Test-Path $readmePath) {
+                $modulesWithDocumentation++
+            }
+        }
+    }
+    
+    # Calculate percentages dynamically
+    $testCoveragePercentage = if ($featureMap.TotalModules -gt 0) {
+        [Math]::Round(($modulesWithTests / $featureMap.TotalModules) * 100, 1)
+    } else { 0 }
+    
+    $docCoveragePercentage = if ($featureMap.TotalModules -gt 0) {
+        [Math]::Round(($modulesWithDocumentation / $featureMap.TotalModules) * 100, 1)
+    } else { 0 }
+    
+    $averageFunctionsPerModule = if ($featureMap.TotalModules -gt 0) {
+        [Math]::Round($totalActualFunctions / $featureMap.TotalModules, 1)
+    } else { 0 }
+    
+    # Set dynamic statistics
     $featureMap.Statistics = @{
-        TotalFunctions = $featureMap.TotalModules * 8  # Rough estimate for domains
-        AverageFunctionsPerModule = 8
-        TestCoveragePercentage = 85  # Based on test results showing 31/31 modules with tests
-        DocumentationCoveragePercentage = 80
-        ModulesWithTests = $featureMap.TotalModules  # All domain modules have tests
-        ModulesWithDocumentation = $featureMap.TotalModules  # All domain directories have README
+        TotalFunctions = $totalActualFunctions
+        AverageFunctionsPerModule = $averageFunctionsPerModule
+        TestCoveragePercentage = $testCoveragePercentage
+        DocumentationCoveragePercentage = $docCoveragePercentage
+        ModulesWithTests = $modulesWithTests
+        ModulesWithDocumentation = $modulesWithDocumentation
     }
     
     Write-ReportLog "Feature map generation complete: $($featureMap.AnalyzedModules)/$($featureMap.TotalModules) successful" -Level 'SUCCESS'
