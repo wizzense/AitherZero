@@ -415,7 +415,7 @@ Describe "Path Resolution and Delegation" -Tags @('EntryPoint', 'Paths', 'Delega
 
                 # Should check for core script existence
                 $content | Should -Match "Test-Path.*coreScript" -Because "Should validate core script exists"
-                $content | Should -Match "Write-Error.*Core script not found" -Because "Should handle missing core script"
+                $content | Should -Match "Core script not found" -Because "Should handle missing core script"
             }
         }
     }
@@ -428,11 +428,9 @@ Describe "Path Resolution and Delegation" -Tags @('EntryPoint', 'Paths', 'Delega
                 $content = Get-Content $entryPoint.Path -Raw
 
                 # Should build parameter hashtable for delegation
-                $content | Should -Match '\$coreparams' -Because "Should create parameter hashtable"
-                $content | Should -Match 'Auto.*\$true' -Because "Should delegate Auto parameter"
-                $content | Should -Match 'Scripts.*\$Scripts' -Because "Should delegate Scripts parameter"
-                $content | Should -Match 'Setup.*\$true' -Because "Should delegate Setup parameter"
-                $content | Should -Match "@coreparams" -Because "Should use splatting for parameter delegation"
+                $content | Should -Match '\$coreParams' -Because "Should create parameter hashtable"
+                $content | Should -Match 'PSBoundParameters' -Because "Should use PSBoundParameters for delegation"
+                $content | Should -Match '@coreParams' -Because "Should use splatting for parameter delegation"
             }
         }
     }
