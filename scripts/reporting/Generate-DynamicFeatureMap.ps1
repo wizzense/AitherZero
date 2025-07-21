@@ -97,10 +97,17 @@ function Get-ModuleAnalysis {
         return $moduleAnalysis
     }
 
-    $moduleDirectories = Get-ChildItem $ModulesPath -Directory
-    $moduleAnalysis.TotalModules = $moduleDirectories.Count
-
-    Write-FeatureLog "Found $($moduleAnalysis.TotalModules) module directories" -Level 'INFO'
+    # Detect architecture type
+    $isDomainsArchitecture = (Split-Path $ModulesPath -Leaf) -eq 'domains'
+    
+    if ($isDomainsArchitecture) {
+        Write-FeatureLog "Detected domain-based architecture" -Level 'INFO'
+        $moduleAnalysis = Get-DomainsAnalysis -DomainsPath $ModulesPath
+    } else {
+        Write-FeatureLog "Using legacy module-based analysis" -Level 'INFO'
+        $moduleDirectories = Get-ChildItem $ModulesPath -Directory
+        $moduleAnalysis.TotalModules = $moduleDirectories.Count
+        Write-FeatureLog "Found $($moduleAnalysis.TotalModules) module directories" -Level 'INFO'
 
     foreach ($moduleDir in $moduleDirectories) {
         try {
@@ -164,12 +171,277 @@ function Get-ModuleAnalysis {
         }
     }
 
-    # Generate statistics
-    $moduleAnalysis.Statistics = Get-FeatureStatistics -ModuleAnalysis $moduleAnalysis
-
-    Write-FeatureLog "Module analysis complete: $($moduleAnalysis.AnalyzedModules)/$($moduleAnalysis.TotalModules) successful" -Level 'SUCCESS'
+        # Generate statistics for legacy modules
+        $moduleAnalysis.Statistics = Get-FeatureStatistics -ModuleAnalysis $moduleAnalysis
+        Write-FeatureLog "Module analysis complete: $($moduleAnalysis.AnalyzedModules)/$($moduleAnalysis.TotalModules) successful" -Level 'SUCCESS'
+    }
 
     return $moduleAnalysis
+}
+
+# Analyze domain-based architecture
+function Get-DomainsAnalysis {
+    param([string]$DomainsPath)
+
+    Write-FeatureLog "Analyzing domain-based architecture" -Level 'INFO'
+
+    $moduleAnalysis = @{
+        TotalModules = 0
+        AnalyzedModules = 0
+        FailedModules = 0
+        Modules = @{}
+        Categories = @{}
+        Capabilities = @{}
+        Dependencies = @{}
+        Statistics = @{}
+    }
+
+    # Get all domain directories
+    $domainDirectories = Get-ChildItem $DomainsPath -Directory
+    
+    # Count total modules (domain files)
+    $allDomainFiles = @()
+    foreach ($domainDir in $domainDirectories) {
+        $domainFiles = Get-ChildItem $domainDir.FullName -Filter "*.ps1" | Where-Object { $_.Name -ne "README.md" }
+        $allDomainFiles += $domainFiles
+    }
+    
+    $moduleAnalysis.TotalModules = $allDomainFiles.Count
+    Write-FeatureLog "Found $($moduleAnalysis.TotalModules) domain modules across $($domainDirectories.Count) domains" -Level 'INFO'
+
+    # Analyze each domain file as a module
+    foreach ($domainFile in $allDomainFiles) {
+        try {
+            Write-FeatureLog "Analyzing domain module: $($domainFile.Name)" -Level 'DEBUG'
+
+            $moduleInfo = Get-DomainModuleAnalysis -DomainFile $domainFile
+            
+            if (-not $moduleInfo -or -not $moduleInfo.Name) {
+                Write-FeatureLog "Invalid module info returned for $($domainFile.Name)" -Level 'WARNING'
+                $moduleAnalysis.FailedModules++
+                continue
+            }
+            
+            $moduleName = $moduleInfo.Name
+            $moduleAnalysis.Modules[$moduleName] = $moduleInfo
+            $moduleAnalysis.AnalyzedModules++
+
+            # Categorize domain module
+            try {
+                $category = Get-DomainModuleCategory -ModuleInfo $moduleInfo -DomainFile $domainFile
+                if (-not $moduleAnalysis.Categories[$category]) {
+                    $moduleAnalysis.Categories[$category] = @()
+                }
+                $moduleAnalysis.Categories[$category] += $moduleName
+            } catch {
+                Write-FeatureLog "Failed to categorize module $moduleName : $($_.Exception.Message)" -Level 'DEBUG'
+                if (-not $moduleAnalysis.Categories['Utilities']) {
+                    $moduleAnalysis.Categories['Utilities'] = @()
+                }
+                $moduleAnalysis.Categories['Utilities'] += $moduleName
+            }
+
+            # Extract capabilities
+            try {
+                $capabilities = Get-DomainModuleCapabilities -ModuleInfo $moduleInfo
+                $moduleAnalysis.Capabilities[$moduleName] = $capabilities
+            } catch {
+                Write-FeatureLog "Failed to analyze capabilities for $moduleName : $($_.Exception.Message)" -Level 'DEBUG'
+                $moduleAnalysis.Capabilities[$moduleName] = @{
+                    FunctionCount = 0
+                    HasPublicAPI = $false
+                    Features = @()
+                }
+            }
+
+        } catch {
+            Write-FeatureLog "Failed to analyze domain module $($domainFile.Name): $($_.Exception.Message)" -Level 'WARNING'
+            Write-FeatureLog "Stack trace: $($_.ScriptStackTrace)" -Level 'DEBUG'
+            $moduleAnalysis.FailedModules++
+        }
+    }
+
+    # Generate statistics
+    $moduleAnalysis.Statistics = Get-FeatureStatistics -ModuleAnalysis $moduleAnalysis
+    Write-FeatureLog "Domain analysis complete: $($moduleAnalysis.AnalyzedModules)/$($moduleAnalysis.TotalModules) successful" -Level 'SUCCESS'
+
+    return $moduleAnalysis
+}
+
+# Analyze individual domain module
+function Get-DomainModuleAnalysis {
+    param($DomainFile)
+
+    $moduleInfo = @{
+        Name = $DomainFile.BaseName
+        Path = $DomainFile.FullName
+        LastModified = $DomainFile.LastWriteTime
+        Size = $DomainFile.Length
+        FileCount = 1
+        HasManifest = $false
+        HasModuleFile = $true
+        HasTests = $false
+        HasDocumentation = $false
+        Manifest = $null
+        Functions = @()
+        RequiredModules = @()
+        PowerShellVersion = '7.0'
+        Description = ''
+        Version = '1.0.0'
+        Author = 'AitherZero'
+        CompanyName = 'AitherZero'
+        Health = 'Unknown'
+        TestCoverage = 0
+        ComplexityScore = 0
+        DomainName = (Split-Path (Split-Path $DomainFile.FullName -Parent) -Leaf)
+    }
+
+    # Analyze domain script for functions
+    $moduleInfo.Functions = Get-FunctionsFromScript -ScriptPath $DomainFile.FullName
+
+    # Check for corresponding README in domain directory
+    $readmePath = Join-Path (Split-Path $DomainFile.FullName -Parent) "README.md"
+    if (Test-Path $readmePath) {
+        $moduleInfo.HasDocumentation = $true
+        
+        # Try to extract description from README
+        try {
+            $readmeContent = Get-Content $readmePath -Raw -ErrorAction SilentlyContinue
+            if ($readmeContent) {
+                # Extract first paragraph as description
+                $firstParagraph = ($readmeContent -split "`n`n")[0] -replace '^#[^`n]*`n', '' -replace '`n', ' '
+                if ($firstParagraph.Length -gt 10) {
+                    $moduleInfo.Description = $firstParagraph.Substring(0, [Math]::Min(200, $firstParagraph.Length))
+                }
+            }
+        } catch {
+            Write-FeatureLog "Failed to read README for $($DomainFile.Name): $($_.Exception.Message)" -Level 'DEBUG'
+        }
+    }
+
+    # Check for tests - look for test files related to this domain
+    try {
+        $testSearchPattern = "*$($moduleInfo.Name)*Test*.ps1"
+        $projectRoot = Split-Path (Split-Path (Split-Path $DomainFile.FullName -Parent) -Parent) -Parent
+        $testsDir = Join-Path $projectRoot "tests"
+        
+        if (Test-Path $testsDir) {
+            $relatedTestFiles = Get-ChildItem $testsDir -Filter $testSearchPattern -Recurse -ErrorAction SilentlyContinue
+            if (@($relatedTestFiles).Count -gt 0) {
+                $moduleInfo.HasTests = $true
+                $moduleInfo.TestCoverage = 85 # Simplified calculation
+            }
+        }
+    } catch {
+        Write-FeatureLog "Failed to check tests for $($DomainFile.Name): $($_.Exception.Message)" -Level 'DEBUG'
+    }
+
+    # Calculate complexity based on function count and file size
+    $functionCount = @($moduleInfo.Functions).Count
+    $moduleInfo.ComplexityScore = [Math]::Min(100, ($functionCount * 2) + [Math]::Min(50, $DomainFile.Length / 1KB))
+
+    # Calculate health score
+    $moduleInfo.Health = Get-DomainModuleHealth -ModuleInfo $moduleInfo
+
+    return $moduleInfo
+}
+
+# Get domain module category
+function Get-DomainModuleCategory {
+    param($ModuleInfo, $DomainFile)
+
+    $domainName = $ModuleInfo.DomainName
+    $moduleName = $ModuleInfo.Name
+
+    # Map domain names to categories
+    $domainCategories = @{
+        'infrastructure' = 'Infrastructure'
+        'security' = 'Security'
+        'configuration' = 'Configuration'
+        'utilities' = 'Utilities'
+        'automation' = 'Automation'
+        'experience' = 'Experience'
+    }
+
+    # Use domain mapping first
+    if ($domainCategories.ContainsKey($domainName.ToLower())) {
+        return $domainCategories[$domainName.ToLower()]
+    }
+
+    # Fallback to module name analysis
+    if ($moduleName -like "*Manager" -or $moduleName -like "*Management") {
+        return 'Managers'
+    } elseif ($moduleName -like "*Provider") {
+        return 'Providers'
+    } elseif ($moduleName -like "*Integration") {
+        return 'Integrations'
+    } else {
+        return 'Core'
+    }
+}
+
+# Get domain module capabilities
+function Get-DomainModuleCapabilities {
+    param($ModuleInfo)
+
+    $functionCount = @($ModuleInfo.Functions).Count
+    
+    $capabilities = @{
+        FunctionCount = $functionCount
+        HasPublicAPI = $functionCount -gt 0
+        Features = @()
+        DomainType = $ModuleInfo.DomainName
+        ComplexityLevel = if ($functionCount -le 5) { 'Simple' } elseif ($functionCount -le 15) { 'Moderate' } else { 'Complex' }
+    }
+
+    # Analyze function names for feature detection
+    $features = @()
+    foreach ($func in $ModuleInfo.Functions) {
+        if ($func -like "New-*") { $features += 'Creation' }
+        if ($func -like "Get-*") { $features += 'Retrieval' }
+        if ($func -like "Set-*") { $features += 'Configuration' }
+        if ($func -like "Test-*") { $features += 'Validation' }
+        if ($func -like "Install-*" -or $func -like "Deploy-*") { $features += 'Deployment' }
+        if ($func -like "Start-*" -or $func -like "Stop-*") { $features += 'Management' }
+        if ($func -like "*Security*" -or $func -like "*Credential*") { $features += 'Security' }
+    }
+    
+    $capabilities.Features = ($features | Sort-Object -Unique)
+
+    return $capabilities
+}
+
+# Calculate domain module health
+function Get-DomainModuleHealth {
+    param($ModuleInfo)
+
+    $healthScore = 0
+    $maxScore = 100
+
+    # Function count scoring (0-30 points)
+    $functionCount = @($ModuleInfo.Functions).Count
+    if ($functionCount -gt 0) { $healthScore += 10 }
+    if ($functionCount -gt 3) { $healthScore += 10 }
+    if ($functionCount -gt 8) { $healthScore += 10 }
+
+    # Documentation scoring (0-25 points)
+    if ($ModuleInfo.HasDocumentation) { $healthScore += 25 }
+
+    # Testing scoring (0-25 points)
+    if ($ModuleInfo.HasTests) { $healthScore += 25 }
+
+    # File size/complexity scoring (0-20 points)
+    if ($ModuleInfo.Size -gt 1KB) { $healthScore += 5 }
+    if ($ModuleInfo.Size -gt 5KB) { $healthScore += 10 }
+    if ($ModuleInfo.Size -gt 10KB) { $healthScore += 5 }
+
+    $healthPercentage = [Math]::Round(($healthScore / $maxScore) * 100, 1)
+
+    if ($healthPercentage -ge 85) { return 'Excellent' }
+    elseif ($healthPercentage -ge 70) { return 'Good' }
+    elseif ($healthPercentage -ge 55) { return 'Fair' }
+    elseif ($healthPercentage -ge 40) { return 'Poor' }
+    else { return 'Critical' }
 }
 
 # Analyze individual module
