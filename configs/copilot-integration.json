@@ -1,0 +1,96 @@
+{
+  "$schema": "./config-schema.json",
+  "copilotIntegration": {
+    "enabled": true,
+    "monitoring": {
+      "interval": 300,
+      "checkForUpdates": true
+    },
+    "autoApply": {
+      "enabled": false,
+      "simpleFixes": true,
+      "requireApproval": true,
+      "excludePatterns": [
+        "*test*",
+        "*mock*",
+        "*.md"
+      ]
+    },
+    "suggestions": {
+      "priorityLabels": [
+        "security",
+        "performance",
+        "bug"
+      ],
+      "typeMappings": {
+        "security": {
+          "keywords": ["security", "vulnerability", "risk", "CVE", "exploit"],
+          "severity": "high",
+          "autoApply": false
+        },
+        "performance": {
+          "keywords": ["performance", "optimize", "slow", "bottleneck", "efficient"],
+          "severity": "medium",
+          "autoApply": false
+        },
+        "simpleFix": {
+          "keywords": ["typo", "spelling", "comment", "formatting", "whitespace"],
+          "severity": "low",
+          "autoApply": true
+        },
+        "refactor": {
+          "keywords": ["refactor", "improve", "enhance", "cleanup", "simplify"],
+          "severity": "medium",
+          "autoApply": false
+        }
+      }
+    },
+    "commit": {
+      "prefix": "[Copilot]",
+      "groupRelated": true,
+      "maxChangesPerCommit": 5,
+      "includeReference": true
+    },
+    "notifications": {
+      "onNewSuggestion": true,
+      "onAutoApply": true,
+      "onError": true,
+      "channels": ["pr-comment", "log"]
+    },
+    "security": {
+      "validateSuggestions": true,
+      "sandboxExecution": true,
+      "allowedFilePatterns": [
+        "*.ps1",
+        "*.psm1",
+        "*.psd1",
+        "*.json",
+        "*.yml",
+        "*.yaml"
+      ],
+      "blockedPatterns": [
+        "*secrets*",
+        "*credentials*",
+        "*.key",
+        "*.pem"
+      ]
+    },
+    "integration": {
+      "patchManager": {
+        "useAtomicOperations": true,
+        "createBranch": "auto",
+        "branchPrefix": "copilot/"
+      },
+      "githubActions": {
+        "triggerOnComment": true,
+        "runValidation": true,
+        "requirePassingTests": true
+      }
+    },
+    "audit": {
+      "logAllSuggestions": true,
+      "trackAcceptanceRate": true,
+      "exportPath": "./logs/copilot-audit.log"
+    }
+  }
+}

@@ -409,22 +409,29 @@ function Test-Prerequisites {
         return $false
     }
     
-    # Check for ParallelExecution module (skip if disabled by environment)
+    # Check for PowerShell 7 parallel support (skip if disabled by environment)
     if ($env:AITHERZERO_DISABLE_PARALLEL -eq "true") {
-        Write-TestLog "ParallelExecution disabled by environment variable" -Level 'Info'
+        Write-TestLog "Parallel execution disabled by environment variable" -Level 'Info'
         $script:TestSession.Configuration.ParallelSupport = $false
     } else {
-        $parallelPath = Join-Path $script:ProjectRoot "aither-core/modules/ParallelExecution"
-        if (Test-Path $parallelPath) {
+        # Check if we're running PowerShell 7+ for native parallel support
+        if ($PSVersionTable.PSVersion.Major -ge 7) {
             try {
-                Import-Module $parallelPath -Force
-                Write-TestLog "ParallelExecution module loaded" -Level 'Success'
-                $script:TestSession.Configuration.ParallelSupport = $true
+                # Test if ForEach-Object -Parallel is available
+                $testCommand = Get-Command ForEach-Object -ErrorAction Stop
+                if ($testCommand.Parameters.ContainsKey('Parallel')) {
+                    Write-TestLog "PowerShell 7+ detected - native parallel execution available" -Level 'Success'
+                    $script:TestSession.Configuration.ParallelSupport = $true
+                } else {
+                    Write-TestLog "ForEach-Object -Parallel not available" -Level 'Warning'
+                    $script:TestSession.Configuration.ParallelSupport = $false
+                }
             } catch {
-                Write-TestLog "ParallelExecution module failed to load: $($_.Exception.Message)" -Level 'Warning'
+                Write-TestLog "Failed to detect parallel support: $($_.Exception.Message)" -Level 'Warning'
                 $script:TestSession.Configuration.ParallelSupport = $false
             }
         } else {
+            Write-TestLog "PowerShell version $($PSVersionTable.PSVersion) detected - parallel execution not available (requires PowerShell 7+)" -Level 'Warning'
             $script:TestSession.Configuration.ParallelSupport = $false
         }
     }
@@ -688,8 +695,10 @@ function Invoke-ParallelTestExecution {
     
     Write-TestLog "Executing $($TestFiles.Count) test files in parallel..." -Level 'Info'
     
-    $parallelResults = Invoke-ParallelForEach -InputObject $TestFiles -ThrottleLimit $MaxParallelJobs -ScriptBlock {
-        param($testFile)
+    # Use ForEach-Object -Parallel for PowerShell 7+
+    $throttleLimit = $script:MaxParallelJobs
+    $parallelResults = $TestFiles | ForEach-Object -Parallel {
+        $testFile = $_
         
         # Defensive path validation
         if (-not $testFile -or -not $testFile.Path -or -not (Test-Path $testFile.Path)) {
@@ -739,7 +748,7 @@ function Invoke-ParallelTestExecution {
                 EndTime = Get-Date
             }
         }
-    }
+    } -ThrottleLimit $throttleLimit
     
     return $parallelResults
 }

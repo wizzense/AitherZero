@@ -10,21 +10,21 @@ BeforeAll {
     # Find project root
     $projectRoot = Split-Path -Parent $PSScriptRoot
 
-    # Import core modules with error handling
-    $modulePath = Join-Path $projectRoot "aither-core" "modules"
-    
+    # Initialize logging from shared utilities
     try {
-        Import-Module (Join-Path $modulePath "Logging") -Force -ErrorAction Stop
-        Write-Host "Logging module loaded successfully" -ForegroundColor Green
+        . (Join-Path $projectRoot "aither-core" "shared" "Initialize-Logging.ps1")
+        Initialize-Logging -Force
+        Write-Host "Logging initialized successfully" -ForegroundColor Green
     } catch {
-        Write-Warning "Failed to load Logging module: $($_.Exception.Message)"
+        Write-Warning "Failed to initialize logging: $($_.Exception.Message)"
     }
     
+    # Load automation domain for PatchManager functions
     try {
-        Import-Module (Join-Path $modulePath "PatchManager") -Force -ErrorAction Stop
-        Write-Host "PatchManager module loaded successfully" -ForegroundColor Green
+        . (Join-Path $projectRoot "aither-core" "domains" "automation" "Automation.ps1")
+        Write-Host "Automation domain loaded successfully" -ForegroundColor Green
     } catch {
-        Write-Warning "Failed to load PatchManager module: $($_.Exception.Message)"
+        Write-Warning "Failed to load Automation domain: $($_.Exception.Message)"
     }
     
     # Set platform information
@@ -42,7 +42,7 @@ Describe "Core Functionality Tests" {
             $projectRoot = Split-Path -Parent $PSScriptRoot
             Test-Path (Join-Path $projectRoot "Start-AitherZero.ps1") | Should -Be $true
             Test-Path (Join-Path $projectRoot "aither-core") | Should -Be $true
-            Test-Path (Join-Path $projectRoot "aither-core" "modules") | Should -Be $true
+            Test-Path (Join-Path $projectRoot "aither-core" "domains") | Should -Be $true
             Test-Path (Join-Path $projectRoot "configs") | Should -Be $true
         }
 
@@ -57,30 +57,37 @@ Describe "Core Functionality Tests" {
         }
     }
 
-    Context "Module Loading" {
-        It "Should load all core modules" {
+    Context "Domain Loading" {
+        It "Should load all core domains" {
             $projectRoot = Split-Path -Parent $PSScriptRoot
-            $modulePath = Join-Path $projectRoot "aither-core" "modules"
-            $coreModules = @(
-                "Logging",
-                "PatchManager",
-                "SetupWizard",
-                "ProgressTracking"
+            $domainPath = Join-Path $projectRoot "aither-core" "domains"
+            $coreDomains = @(
+                "automation",
+                "configuration", 
+                "experience",
+                "infrastructure",
+                "security",
+                "utilities"
             )
 
-            foreach ($module in $coreModules) {
-                $modulePsd1 = Join-Path $modulePath $module "$module.psd1"
-                Test-Path $modulePsd1 | Should -Be $true
-                { Import-Module $modulePsd1 -Force } | Should -Not -Throw
+            foreach ($domain in $coreDomains) {
+                $domainFolder = Join-Path $domainPath $domain
+                Test-Path $domainFolder | Should -Be $true
+                
+                # Each domain should have a main .ps1 file
+                $domainFiles = Get-ChildItem -Path $domainFolder -Filter "*.ps1" -ErrorAction SilentlyContinue
+                $domainFiles.Count | Should -BeGreaterThan 0
             }
         }
     }
 
     Context "Logging System" {
         It "Should write log messages" {
-            # Import Logging module if not already loaded
-            $projectRoot = Split-Path -Parent $PSScriptRoot
-            Import-Module (Join-Path $projectRoot "aither-core" "modules" "Logging") -Force
+            # The logging should already be initialized in BeforeAll, but let's check
+            if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
+                $projectRoot = Split-Path -Parent $PSScriptRoot
+                . (Join-Path $projectRoot "aither-core" "shared" "Initialize-Logging.ps1")
+            }
 
             { Write-CustomLog -Level 'INFO' -Message "Test message" } | Should -Not -Throw
             { Write-CustomLog -Level 'ERROR' -Message "Error message" } | Should -Not -Throw

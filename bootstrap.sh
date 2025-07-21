@@ -6,6 +6,9 @@
 #   curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
 #   wget -qO- https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
 #
+# For forks, set AITHER_REPO environment variable:
+#   AITHER_REPO="username/AitherZero" curl -sSL https://raw.githubusercontent.com/username/AitherZero/main/bootstrap.sh | bash
+#
 # This script ensures PowerShell 7+ is used and directly invokes the main
 # Start-AitherZero.ps1 script from the repository.
 #
@@ -62,7 +65,12 @@ main() {
     fi
 
     # Construct the URL to the main bootstrap script
-    START_SCRIPT_URL="https://raw.githubusercontent.com/wizzense/AitherZero/main/Start-AitherZero.ps1"
+    # Use AITHER_REPO environment variable if set, otherwise default to wizzense/AitherZero
+    REPO="${AITHER_REPO:-wizzense/AitherZero}"
+    BRANCH="${AITHER_BRANCH:-main}"
+    START_SCRIPT_URL="https://raw.githubusercontent.com/${REPO}/${BRANCH}/Start-AitherZero.ps1"
+    
+    print_message "$CYAN" "📦 Using repository: $REPO (branch: $BRANCH)"
 
     # Download and execute the script via pwsh
     # The script is piped directly into pwsh for execution.

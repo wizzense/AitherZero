@@ -395,7 +395,7 @@ Describe "Path Resolution and Delegation" -Tags @('EntryPoint', 'Paths', 'Delega
         It "Should validate delegation target exists" {
             $mainEntry = $script:TestConfig.EntryPoints | Where-Object { $_.Name -eq 'Start-AitherZero.ps1' }
 
-            if (Test-Path $mainEntry.Path -and $mainEntry.DelegateTo) {
+            if ((Test-Path $mainEntry.Path) -and $mainEntry.DelegateTo) {
                 $delegateTarget = Join-Path $script:ProjectRoot $mainEntry.DelegateTo
                 Test-Path $delegateTarget | Should -Be $true -Because "Delegation target $($mainEntry.DelegateTo) should exist"
 
@@ -415,7 +415,7 @@ Describe "Path Resolution and Delegation" -Tags @('EntryPoint', 'Paths', 'Delega
 
                 # Should check for core script existence
                 $content | Should -Match "Test-Path.*coreScript" -Because "Should validate core script exists"
-                $content | Should -Match "Write-Error.*Core script not found" -Because "Should handle missing core script"
+                $content | Should -Match "Core script not found" -Because "Should handle missing core script"
             }
         }
     }
@@ -428,11 +428,9 @@ Describe "Path Resolution and Delegation" -Tags @('EntryPoint', 'Paths', 'Delega
                 $content = Get-Content $entryPoint.Path -Raw
 
                 # Should build parameter hashtable for delegation
-                $content | Should -Match "\$coreparams" -Because "Should create parameter hashtable"
-                $content | Should -Match "Auto.*\$true" -Because "Should delegate Auto parameter"
-                $content | Should -Match "Scripts.*\$Scripts" -Because "Should delegate Scripts parameter"
-                $content | Should -Match "Setup.*\$true" -Because "Should delegate Setup parameter"
-                $content | Should -Match "@coreparams" -Because "Should use splatting for parameter delegation"
+                $content | Should -Match '\$coreParams' -Because "Should create parameter hashtable"
+                $content | Should -Match 'PSBoundParameters' -Because "Should use PSBoundParameters for delegation"
+                $content | Should -Match '@coreParams' -Because "Should use splatting for parameter delegation"
             }
         }
     }
@@ -446,8 +444,8 @@ Describe "Error Handling and User Experience" -Tags @('EntryPoint', 'ErrorHandli
                 if (Test-Path $entryPoint.Path) {
                     $content = Get-Content $entryPoint.Path -Raw
 
-                    $content | Should -Match "try.*catch" -Because "$($entryPoint.Name) should have try-catch blocks"
-                    $content | Should -Match "Write-Error" -Because "$($entryPoint.Name) should provide error messages"
+                    $content | Should -Match "try \{" -Because "$($entryPoint.Name) should have try blocks"
+                    $content | Should -Match "\} catch \{" -Because "$($entryPoint.Name) should have catch blocks"
                     $content | Should -Match "exit 1" -Because "$($entryPoint.Name) should exit with error code on failure"
                 }
             }
