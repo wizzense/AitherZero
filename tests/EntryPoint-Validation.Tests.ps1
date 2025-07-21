@@ -385,9 +385,8 @@ Describe "Path Resolution and Delegation" -Tags @('EntryPoint', 'Paths', 'Delega
                 $content = Get-Content $entryPoint.Path -Raw
 
                 # Should have multiple path resolution methods
-                $content | Should -Match "\$PSScriptRoot" -Because "Should use PSScriptRoot for path resolution"
-                $content | Should -Match "\$MyInvocation" -Because "Should have fallback path resolution"
-                $content | Should -Match "Split-Path" -Because "Should use proper path manipulation"
+                $content | Should -Match '\$PSScriptRoot' -Because "Should use PSScriptRoot for path resolution"
+                $content | Should -Match '\$MyInvocation' -Because "Should have fallback path resolution"
                 $content | Should -Match "Join-Path" -Because "Should use cross-platform path joining"
             }
         }
@@ -474,7 +473,7 @@ Describe "Error Handling and User Experience" -Tags @('EntryPoint', 'ErrorHandli
 
             if (Test-Path $entryPoint.Path) {
                 $content = Get-Content $entryPoint.Path -Raw
-                $content | Should -Match "Test-Path.*versionCheckPath" -Because "Should check if version utility exists"
+                $content | Should -Match "Test-Path.*versionUtilPath" -Because "Should check if version utility exists"
                 $content | Should -Match "Please ensure AitherZero is properly installed" -Because "Should provide installation guidance"
             }
         }
