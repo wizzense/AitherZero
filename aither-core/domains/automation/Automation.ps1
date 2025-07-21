@@ -3,6 +3,9 @@
 
 #Requires -Version 7.0
 
+Import-Module (Join-Path $PSScriptRoot ".." ".." "modules" "Logging" "Logging.psd1") -Force
+
+
 using namespace System.IO
 using namespace System.Collections.Generic
 using namespace System.Management.Automation

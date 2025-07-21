@@ -4,33 +4,34 @@
 
 ## 🚀 Ultra-Simple Installation
 
-**Single Entry Point - Only One Command Needed:**
+**One Command for All Platforms (Windows, Linux, macOS):**
 
-```powershell
-# Copy and paste this command:
-iex (irm "https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1")
+```bash
+# Copy and paste this command into your terminal:
+curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
 ```
 
-**That's it!** This command:
-- ✅ Downloads the latest release
-- ✅ Extracts it automatically  
-- ✅ Starts the setup wizard
-- ✅ Works on Windows, Linux, and macOS
-- ✅ Compatible with PowerShell 5.1+
-- ✅ Automatically detects and handles PowerShell version requirements
-- ✅ Provides user-friendly error messages with solutions
+**That's it!** This single command automatically:
+- ✅ Detects your operating system (Windows, Linux, or macOS).
+- ✅ Ensures PowerShell 7+ is available (and helps you install it if needed).
+- ✅ Downloads and starts the AitherZero setup wizard.
+- ✅ Provides user-friendly error messages with solutions.
 
 ## 📦 Alternative: Manual Installation
 
 If you prefer manual control:
 
-1. **Download**: Go to [releases](https://github.com/wizzense/AitherZero/releases/latest)
-2. **Extract**: Unzip the downloaded file
-3. **Run**: `.\Start-AitherZero.ps1 -Setup`
+1.  **Download**: Go to the [latest release](https://github.com/wizzense/AitherZero/releases/latest) and download the source code archive (`.zip` or `.tar.gz`).
+2.  **Extract**: Unzip the downloaded file to a location of your choice.
+3.  **Run**: Open a terminal, navigate to the extracted directory, and run:
+    ```powershell
+    ./Start-AitherZero.ps1 -Setup
+    ```
 
 ## 🏃 Getting Started
 
 ### Single Entry Point - Everything Through One Script
+
 **AitherZero uses ONE entry point for everything:**
 
 ```powershell
@@ -51,38 +52,44 @@ If you prefer manual control:
 ```
 
 ### Installation Profiles
+
 Choose your installation profile during setup:
 
-- **Minimal** (5-8 MB) - Core infrastructure deployment only
-- **Developer** (35-50 MB) - Full development environment with AI tools
-- **Full** (50+ MB) - Everything including advanced features
+-   **Minimal** (5-8 MB) - Core infrastructure deployment only
+-   **Developer** (35-50 MB) - Full development environment with AI tools
+-   **Full** (50+ MB) - Everything including advanced features
 
 ### PowerShell Version Handling
-AitherZero automatically:
-- ✅ Detects your PowerShell version
-- ✅ Provides friendly upgrade guidance if needed
-- ✅ Shows installation instructions for PowerShell 7
-- ✅ Handles execution policy issues gracefully
+
+AitherZero's bootstrap process automatically:
+
+-   ✅ Detects your PowerShell version.
+-   ✅ Provides friendly guidance to install or upgrade to PowerShell 7+ if needed.
+-   ✅ Handles execution policy issues gracefully.
 
 ## 💡 PowerShell Version Notes
 
 ### PowerShell 5.1 (Windows Default)
-- ✅ Basic functionality works
-- ⚠️ Some advanced features may be limited
-- 🔧 `Start-AitherZero.ps1` automatically detects and adapts to your PowerShell version
+
+-   ✅ Basic functionality works.
+-   ⚠️ Some advanced features may be limited.
+-   🔧 `Start-AitherZero.ps1` automatically detects your version and will prompt you to upgrade to PowerShell 7+ for the best experience.
 
 ### PowerShell 7+ (Recommended)
-- ✅ Full feature support
-- ✅ Cross-platform (Windows, Linux, macOS)
-- 📥 Download: https://aka.ms/powershell
+
+-   ✅ Full feature support across Windows, Linux, and macOS.
+-   📥 **Download:** [https://aka.ms/powershell](https://aka.ms/powershell)
 
 ## 🆘 Troubleshooting
 
 **🎉 New: User-Friendly Error Messages!**
+
 AitherZero now automatically shows clear, actionable solutions when things go wrong.
 
 ### "Scripts are disabled on this system"
+
 **AitherZero will show you this friendly message:**
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                                ⚠️  ERROR                                        │
@@ -96,56 +103,48 @@ AitherZero now automatically shows clear, actionable solutions when things go wr
 ```
 
 **Quick fix:**
+
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
 ### "PowerShell version not supported"
+
 **AitherZero automatically detects this and shows:**
-- ✅ Current PowerShell version
-- ✅ Installation instructions for PowerShell 7
-- ✅ Automatic launching if PowerShell 7 is already installed
-- ✅ Direct download links for your platform
 
-### "Module not found" or "Write-CustomLog not recognized"
-**Fixed!** This issue has been resolved with universal logging fallback.
-If you still encounter it:
-```powershell
-./Start-AitherZero.ps1 -Setup
-```
-
-### "Cannot find AitherZero directory"
-**AitherZero will guide you with:**
-```powershell
-# Make sure you're in the right directory
-pwd
-Test-Path ./Start-AitherZero.ps1  # Should return True
-```
+-   ✅ Your current PowerShell version.
+-   ✅ Clear instructions for installing PowerShell 7.
+-   ✅ Direct download links for your platform.
 
 ### Installation Fails
-**AitherZero now provides detailed error analysis and solutions.**
-Common fixes:
-```powershell
-# 1. Try manual download
-# Go to: https://github.com/wizzense/AitherZero/releases/latest
 
-# 2. Check internet connection
+**AitherZero now provides detailed error analysis and solutions.**
+
+Common fixes:
+
+```powershell
+# 1. Check your internet connection
 Test-NetConnection -ComputerName github.com -Port 443
 
-# 3. Reset and try again
+# 2. If you downloaded manually, ensure you are in the correct directory
+pwd
+Test-Path ./Start-AitherZero.ps1  # Should return True
+
+# 3. If all else fails, try a forced setup
 ./Start-AitherZero.ps1 -Setup -Force
 ```
 
 ## 📋 Prerequisites
 
 ### Required
-- Windows PowerShell 5.1+ or PowerShell Core 7+
-- Internet connection for download
+
+-   PowerShell 7+ (the bootstrap script will help you install it).
+-   An internet connection for the initial download.
 
 ### Optional (for full features)
-- Git for version control
-- OpenTofu or Terraform for infrastructure deployment
-- PowerShell 7+ for advanced features
+
+-   Git for version control.
+-   OpenTofu or Terraform for infrastructure deployment.
 
 ## 🎯 Quick Commands
 
@@ -154,13 +153,13 @@ Test-NetConnection -ComputerName github.com -Port 443
 $PSVersionTable.PSVersion
 
 # Quick health check
-.\Start-AitherZero.ps1 -WhatIf
+./Start-AitherZero.ps1 -WhatIf
 
 # Get help
-.\Start-AitherZero.ps1 -Help
+./Start-AitherZero.ps1 -Help
 
 # View available modules
-Get-ChildItem .\aither-core\modules
+Get-ChildItem ./aither-core/modules
 ```
 
 ## 📚 Next Steps
@@ -168,30 +167,35 @@ Get-ChildItem .\aither-core\modules
 **🎯 Choose Your Path:**
 
 ### 🚀 **For New Users:**
-1. **Start Interactive Mode**: `./Start-AitherZero.ps1` (guided experience)
-2. **Try Preview Mode**: `./Start-AitherZero.ps1 -WhatIf` (safe exploration)
-3. **Read the 5-Minute Guide**: [QUICK_START_5MIN.md](QUICK_START_5MIN.md)
+
+1.  **Start Interactive Mode**: `./Start-AitherZero.ps1` (a guided experience).
+2.  **Try Preview Mode**: `./Start-AitherZero.ps1 -WhatIf` (safe exploration).
+3.  **Read the 5-Minute Guide**: [QUICK_START_5MIN.md](QUICK_START_5MIN.md)
 
 ### 🏗️ **For Infrastructure Teams:**
-1. **Set up Lab Environment**: `./Start-AitherZero.ps1 -Scripts "LabRunner"`
-2. **Deploy Infrastructure**: `./Start-AitherZero.ps1 -Scripts "OpenTofuProvider"`
-3. **System Monitoring**: `./Start-AitherZero.ps1 -Scripts "SystemMonitoring"`
+
+1.  **Set up Lab Environment**: `./Start-AitherZero.ps1 -Scripts "LabRunner"`
+2.  **Deploy Infrastructure**: `./Start-AitherZero.ps1 -Scripts "OpenTofuProvider"`
+3.  **System Monitoring**: `./Start-AitherZero.ps1 -Scripts "SystemMonitoring"`
 
 ### 💻 **For Development Teams:**
-1. **Development Environment**: `./Start-AitherZero.ps1 -Scripts "DevEnvironment"`
-2. **Git Workflow Management**: `./Start-AitherZero.ps1 -Scripts "PatchManager"`
-3. **AI Tools Integration**: `./Start-AitherZero.ps1 -Scripts "AIToolsIntegration"`
+
+1.  **Development Environment**: `./Start-AitherZero.ps1 -Scripts "DevEnvironment"`
+2.  **Git Workflow Management**: `./Start-AitherZero.ps1 -Scripts "PatchManager"`
+3.  **AI Tools Integration**: `./Start-AitherZero.ps1 -Scripts "AIToolsIntegration"`
 
 ### 📖 **Learning Resources:**
-- [Full Documentation](README.md) - Complete guide
-- [Module Reference](aither-core/modules/) - All 30+ modules
-- [Configuration Guide](CLAUDE.md) - Advanced settings
-- [Live Reports](https://wizzense.github.io/AitherZero/) - Project health
+
+-   [Full Documentation](README.md) - The complete guide.
+-   [Module Reference](aither-core/modules/) - Details on all 30+ modules.
+-   [Configuration Guide](CLAUDE.md) - Advanced settings.
+-   [Live Reports](https://wizzense.github.io/AitherZero/) - Project health.
 
 **🆘 Getting Help:**
-- [GitHub Issues](https://github.com/wizzense/AitherZero/issues) - Report problems
-- [Discussions](https://github.com/wizzense/AitherZero/discussions) - Ask questions
-- [Community](https://github.com/wizzense/AitherZero/community) - Connect with users
+
+-   [GitHub Issues](https://github.com/wizzense/AitherZero/issues) - Report problems.
+-   [Discussions](https://github.com/wizzense/AitherZero/discussions) - Ask questions.
+-   [Community](https://github.com/wizzense/AitherZero/community) - Connect with other users.
 
 ---
 
