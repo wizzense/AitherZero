@@ -14,25 +14,12 @@ $script:CoreDomains = @(
     
     # Platform Services
     @{ Name = 'Configuration'; Path = 'domains/configuration'; Description = 'Configuration management (ConfigurationCore, Carousel, Manager, Repository)'; Required = $true },
-    @{ Name = 'ModuleCommunication'; Path = 'modules/ModuleCommunication'; Description = 'Scalable inter-module communication bus'; Required = $true },
-    @{ Name = 'OrchestrationEngine'; Path = 'modules/OrchestrationEngine'; Description = 'Advanced workflow and playbook execution'; Required = $false },
-    @{ Name = 'ParallelExecution'; Path = 'modules/ParallelExecution'; Description = 'Parallel task execution'; Required = $false },
-    @{ Name = 'ProgressTracking'; Path = 'modules/ProgressTracking'; Description = 'Visual progress tracking for operations'; Required = $false },
 
     # Domain Services
     @{ Name = 'Security'; Path = 'domains/security'; Description = 'Security services (SecureCredentials, SecurityAutomation)'; Required = $false },
-    @{ Name = 'Automation'; Path = 'domains/automation'; Description = 'Automation services (ScriptManager and automation utilities)'; Required = $false },
-    @{ Name = 'Experience'; Path = 'domains/experience'; Description = 'User experience (SetupWizard, StartupExperience)'; Required = $false },
-    @{ Name = 'Utilities'; Path = 'domains/utilities'; Description = 'Utility services (UtilityServices, SemanticVersioning, LicenseManager, PSScriptAnalyzer, RepoSync, UnifiedMaintenance)'; Required = $false },
-
-    # Individual Modules (Not yet consolidated)
-    @{ Name = 'RemoteConnection'; Path = 'modules/RemoteConnection'; Description = 'Multi-protocol remote connection management'; Required = $false },
-    @{ Name = 'RestAPIServer'; Path = 'modules/RestAPIServer'; Description = 'REST API server and webhook support'; Required = $false },
-    @{ Name = 'DevEnvironment'; Path = 'modules/DevEnvironment'; Description = 'Development environment management'; Required = $false },
-    @{ Name = 'PatchManager'; Path = 'modules/PatchManager'; Description = 'Git-controlled patch management'; Required = $false },
-    @{ Name = 'TestingFramework'; Path = 'modules/TestingFramework'; Description = 'Unified testing framework'; Required = $false },
-    @{ Name = 'AIToolsIntegration'; Path = 'modules/AIToolsIntegration'; Description = 'AI development tools management'; Required = $false },
-    @{ Name = 'BackupManager'; Path = 'modules/BackupManager'; Description = 'Backup and maintenance operations'; Required = $false }
+    @{ Name = 'Automation'; Path = 'domains/automation'; Description = 'Automation services (ScriptManager, OrchestrationEngine, PatchManager)'; Required = $false },
+    @{ Name = 'Experience'; Path = 'domains/experience'; Description = 'User experience (SetupWizard, StartupExperience, ProgressTracking)'; Required = $false },
+    @{ Name = 'Utilities'; Path = 'domains/utilities'; Description = 'Utility services (UtilityServices, SemanticVersioning, LicenseManager, PSScriptAnalyzer, RepoSync, UnifiedMaintenance, AIToolsIntegration, BackupManager)'; Required = $false }
 )
 
 $script:LoadedModules = @{}
