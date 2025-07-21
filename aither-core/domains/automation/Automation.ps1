@@ -1,14 +1,14 @@
 # Automation Functions - Consolidated into AitherCore Automation Domain
 # Unified automation management including ScriptManager and related functionality
 
+using namespace System.IO
+using namespace System.Collections.Generic
+using namespace System.Management.Automation
+
 #Requires -Version 7.0
 
 # Initialize logging
 . (Join-Path $PSScriptRoot ".." ".." "shared" "Initialize-Logging.ps1")
-
-using namespace System.IO
-using namespace System.Collections.Generic
-using namespace System.Management.Automation
 
 # MODULE CONSTANTS AND VARIABLES
 
