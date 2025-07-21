@@ -93,7 +93,7 @@ jobs:
         id: matrix
         run: |
           # Optimize OS matrix based on changes
-          if ('${{ steps.changes.outputs.has-workflow-changes }}' -eq 'true' -or 
+          if ('${{ steps.changes.outputs.workflows }}' -eq 'true' -or 
               '${{ github.event_name }}' -eq 'pull_request') {
             # Full matrix for PRs and workflow changes
             echo 'os=["windows-latest", "ubuntu-latest", "macos-latest"]' >> $env:GITHUB_OUTPUT

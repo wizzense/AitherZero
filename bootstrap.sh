@@ -6,6 +6,9 @@
 #   curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
 #   wget -qO- https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
 #
+# For forks, set AITHER_REPO environment variable:
+#   AITHER_REPO="username/AitherZero" curl -sSL https://raw.githubusercontent.com/username/AitherZero/main/bootstrap.sh | bash
+#
 # This script ensures PowerShell 7+ is used and directly invokes the main
 # Start-AitherZero.ps1 script from the repository.
 #
