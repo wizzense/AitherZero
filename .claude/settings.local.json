@@ -36,7 +36,8 @@
       "WebFetch(domain:docs.anthropic.com)",
       "Bash(git pull:*)",
       "Bash(git fetch:*)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }
