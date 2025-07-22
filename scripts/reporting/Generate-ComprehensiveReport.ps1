@@ -1698,6 +1698,7 @@ function Get-DynamicFeatureMap {
     # Analyze domain files to get actual statistics
     if ((Split-Path $ModulesPath -Leaf) -eq 'domains') {
         foreach ($domainFile in $allDomainFiles) {
+<<<<<<< HEAD
             $moduleName = $domainFile.BaseName
             
             # Count functions in domain file
@@ -1724,10 +1725,26 @@ function Get-DynamicFeatureMap {
             $testsDir = Join-Path $projectRoot "tests"
             
             $hasTests = $false
+=======
+            # Count functions in domain file
+            try {
+                $functionCount = (Get-FunctionsFromScript -ScriptPath $domainFile.FullName).Count
+                $totalActualFunctions += $functionCount
+            } catch {
+                # Fallback function count estimation
+                $totalActualFunctions += 8
+            }
+            
+            # Check for tests
+            $testSearchPattern = "*$($domainFile.BaseName)*Test*.ps1"
+            $projectRoot = Split-Path (Split-Path $ModulesPath -Parent) -Parent
+            $testsDir = Join-Path $projectRoot "tests"
+            
             if (Test-Path $testsDir) {
                 $relatedTestFiles = Get-ChildItem $testsDir -Filter $testSearchPattern -Recurse -ErrorAction SilentlyContinue
                 if (@($relatedTestFiles).Count -gt 0) {
                     $modulesWithTests++
+<<<<<<< HEAD
                     $hasTests = $true
                 }
             }
@@ -1757,6 +1774,15 @@ function Get-DynamicFeatureMap {
                     Features = @('Core', 'Domain')
                     DomainType = $domainName
                 }
+            }
+=======
+                }
+            }
+            
+            # Check for documentation
+            $readmePath = Join-Path (Split-Path $domainFile.FullName -Parent) "README.md"
+            if (Test-Path $readmePath) {
+                $modulesWithDocumentation++
             }
         }
     }
