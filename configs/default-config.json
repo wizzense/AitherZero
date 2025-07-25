@@ -1,143 +1,22 @@
 {
-  "UIPreferences": {
-    "Mode": "auto",
-    "DefaultUI": "enhanced",
-    "FallbackUI": "classic",
-    "ShowUISelector": true,
-    "RememberUIChoice": true
+  "application": {
+    "name": "AitherZero",
+    "version": "0.5-minimal",
+    "description": "Simple Infrastructure Automation"
   },
-  "ComputerName": "default-lab",
-  "SetComputerName": false,
-  "DNSServers": "8.8.8.8,1.1.1.1",
-  "SetDNSServers": false,
-  "TrustedHosts": "",
-  "SetTrustedHosts": false,
-  "DisableTCPIP6": false,
-  "AllowRemoteDesktop": false,
-  "ConfigureFirewall": false,
-  "FirewallPorts": [
-    3389,
-    5985,
-    5986,
-    445,
-    135,
-    "49152-65535"
-  ],
-  "ConfigPXE": false,
-  "InstallGit": true,
-  "InstallGitHubCLI": true,
-  "InstallPwsh": true,
-  "InstallHyperV": false,
-  "InstallWAC": false,
-  "InstallGo": false,
-  "InstallPoetry": false,
-  "PoetryVersion": "latest",
-  "InstallOpenTofu": false,
-  "OpenTofuVersion": "latest",
-  "InitializeOpenTofu": false,
-  "PrepareHyperVHost": false,
-  "InstallCA": false,
-  "InstallCosign": false,
-  "CosignURL": "https://github.com/sigstore/cosign/releases/download/v2.4.3/cosign-windows-amd64.exe",
-  "CosignPath": "C:/temp/cosign",
-  "InstallGPG": false,
-  "InstallPython": false,
-  "InstallDockerDesktop": false,
-  "Install7Zip": false,
-  "InstallVSCode": false,
-  "InstallVSBuildTools": false,
-  "InstallAzureCLI": false,
-  "InstallAWSCLI": false,
-  "InstallPacker": false,
-  "InstallChocolatey": false,
-  "SetupLabProfile": false,
-  "InstallClaudeCode": false,
-  "ClaudeCodeWSLUsername": "",
-  "ClaudeCodeSkipWSL": false,
-  "InstallGeminiCLI": false,
-  "GeminiCLIWSLUsername": "",
-  "GeminiCLISkipWSL": false,
-  "GeminiCLISkipNode": false,
-  "InstallCodexCLI": false,
-  "CodexCLIWSLUsername": "",
-  "CodexCLISkipWSL": false,
-  "CertificateAuthority": {
-    "CommonName": "default-lab-RootCA",
-    "ValidityYears": 5
+  "infrastructure": {
+    "provider": "opentofu",
+    "workingDirectory": "./opentofu",
+    "stateDirectory": "./opentofu/state"
   },
-  "HyperV": {
-    "User": "",
-    "Password": "",
-    "Host": "",
-    "Port": 5986,
-    "Https": true,
-    "Insecure": true,
-    "UseNtlm": true,
-    "EnableManagementTools": true,
-    "TlsServerName": "",
-    "CacertPath": "",
-    "CertPath": "",
-    "KeyPath": "",
-    "ProviderVersion": "1.2.1",
-    "ScriptPath": "C:/Temp/tofu_%RAND%.cmd",
-    "Timeout": "30s"
+  "lab": {
+    "hypervisor": "hyperv",
+    "defaultVMPath": "C:\\VMs",
+    "defaultMemory": "2GB",
+    "defaultCPU": 2
   },
-  "WAC": {
-    "InstallPort": 443
-  },
-  "GitHubCLIInstallerUrl": "https://github.com/cli/cli/releases/download/v2.67.0/gh_2.67.0_windows_amd64.msi",
-  "RepoUrl": "https://github.com/Aitherium/AitherLabs.git",
-  "LocalPath": "C:/temp",
-  "RunnerScriptName": "aither-core/core-runner.ps1",
-  "ConfigFile": "./config_files/default-config.json",
-  "Go": {
-    "InstallerUrl": "https://go.dev/dl/go1.24.1.windows-amd64.msi"
-  },
-  "InfraRepoUrl": "https://github.com/Aitherium/aitherium-base-lab.git",
-  "InfraRepoPath": "C:/Temp/base-infra",
-  "Directories": {
-    "HyperVPath": "C:/HyperV",
-    "IsoSharePath": "C:/iso_share"
-  },
-  "Node_Dependencies": {
-    "InstallNode": true,
-    "InstallYarn": true,
-    "InstallVite": true,
-    "InstallNodemon": true,
-    "InstallNpm": true,
-    "InstallClaudeCode": false,
-    "GlobalPackages": [
-      "yarn",
-      "vite",
-      "nodemon",
-      "@anthropic-ai/claude-code"
-    ],
-    "NpmPath": "C:/Projects/vde-mvp/frontend",
-    "CreateNpmPath": false,
-    "Node": {
-      "InstallerUrl": "https://nodejs.org/dist/latest-v20.x/node-v20-x64.msi"
-    },
-    "ClaudeCode": {
-      "InstallMethod": "npm",
-      "RequireWSL": true,
-      "NodeVersion": "lts",
-      "NvmInstallScript": "https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh"
-    },
-    "GeminiCLI": {
-      "InstallMethod": "npm",
-      "RequireWSL": true,
-      "NodeVersion": "lts",
-      "Package": "@google/gemini-cli",
-      "AuthMethod": "oauth",
-      "ApiKeyUrl": "https://aistudio.google.com"
-    },
-    "CodexCLI": {
-      "InstallMethod": "npm",
-      "RequireWSL": true,
-      "NodeVersion": "lts",
-      "Package": "@openai/codex-cli",
-      "AuthMethod": "apikey",
-      "ApiKeyUrl": "https://platform.openai.com/api-keys"
-    }
+  "logging": {
+    "level": "Info",
+    "path": "./logs"
   }
 }
