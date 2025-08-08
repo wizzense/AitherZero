@@ -1,0 +1,661 @@
+{
+  "Core": {
+    "Name": "AitherZero",
+    "Version": "1.0.0",
+    "Environment": "Development",
+    "Profile": "Standard",
+    "Platform": "auto",
+    "AutoStart": true,
+    "CheckForUpdates": true,
+    "TelemetryEnabled": false,
+    "UsageAnalytics": false,
+    "ErrorReporting": true,
+    "DebugMode": false
+  },
+  "Infrastructure": {
+    "Provider": "opentofu",
+    "WorkingDirectory": "./infrastructure",
+    "DefaultVMPath": "C:\\VMs",
+    "DefaultMemory": "2GB",
+    "DefaultCPU": 2,
+    "Hypervisor": "hyperv",
+    "HyperV": {
+      "User": "",
+      "Password": "",
+      "Host": "",
+      "Port": 5986,
+      "Https": true,
+      "Insecure": true,
+      "UseNtlm": true,
+      "EnableManagementTools": true,
+      "TlsServerName": "",
+      "CacertPath": "",
+      "CertPath": "",
+      "KeyPath": "",
+      "ProviderVersion": "1.2.1",
+      "ScriptPath": "C:/Temp/tofu_%RAND%.cmd",
+      "Timeout": "30s"
+    },
+    "Directories": {
+      "HyperVPath": "C:/HyperV",
+      "IsoSharePath": "C:/iso_share",
+      "LocalPath": "C:/temp",
+      "InfraRepoPath": "C:/Temp/base-infra"
+    },
+    "Repositories": {
+      "InfraRepoUrl": "https://github.com/Aitherium/aitherium-infrastructure.git",
+      "RepoUrl": "https://github.com/Aitherium/AitherLabs.git"
+    }
+  },
+  "System": {
+    "ComputerName": "default-lab",
+    "SetComputerName": false,
+    "DNSServers": "8.8.8.8,1.1.1.1",
+    "SetDNSServers": false,
+    "TrustedHosts": "",
+    "SetTrustedHosts": false,
+    "DisableTCPIP6": false,
+    "AllowRemoteDesktop": false,
+    "ConfigureFirewall": false,
+    "FirewallPorts": [3389, 5985, 5986, 445, 135, "49152-65535"],
+    "ConfigPXE": false,
+    "SetupLabProfile": false
+  },
+  "CertificateAuthority": {
+    "CommonName": "default-lab-RootCA",
+    "ValidityYears": 5,
+    "InstallCA": false
+  },
+  "Logging": {
+    "Level": "Information",
+    "Path": "./logs",
+    "File": "logs/aitherzero.log",
+    "Console": true,
+    "MaxFileSize": "10MB",
+    "RetentionDays": 30,
+    "Targets": ["Console", "File"],
+    "AuditLogging": {
+      "Enabled": true,
+      "Level": "All",
+      "RetentionDays": 90,
+      "IncludeSystemInfo": true,
+      "IncludeUserInfo": true,
+      "IncludeCorrelationId": true,
+      "ComplianceMode": true
+    }
+  },
+  "Automation": {
+    "ScriptsPath": "./automation-scripts",
+    "MaxConcurrency": 4,
+    "DefaultTimeout": 3600,
+    "AutoInstallDependencies": true,
+    "AutoRun": false,
+    "RequiredModules": ["ThreadJob"],
+    "ParallelExecution": true,
+    "ContinueOnError": false,
+    "DryRunByDefault": false,
+    "VerboseOutput": false,
+    "ProgressDisplay": true,
+    "NotificationEnabled": true,
+    "SoundAlerts": false,
+    "Profiles": {
+      "Minimal": {
+        "Description": "Core infrastructure deployment only",
+        "Scripts": ["0000-0099", "0100-0199"]
+      },
+      "Standard": {
+        "Description": "Production-ready automation",
+        "Scripts": ["0000-0299", "0400-0499"]
+      },
+      "Developer": {
+        "Description": "Complete development environment",
+        "Scripts": ["0000-0499"]
+      },
+      "Full": {
+        "Description": "Everything including optional components",
+        "Scripts": ["*"]
+      }
+    }
+  },
+  "InstallationOptions": {
+    "Git": {
+      "Install": true,
+      "Required": true,
+      "Version": "2.0+"
+    },
+    "GitHubCLI": {
+      "Install": true,
+      "Required": false,
+      "InstallerUrl": "https://github.com/cli/cli/releases/download/v2.67.0/gh_2.67.0_windows_amd64.msi"
+    },
+    "PowerShell7": {
+      "Install": true,
+      "Required": true,
+      "Version": "7.0+"
+    },
+    "HyperV": {
+      "Install": false,
+      "PrepareHost": false
+    },
+    "WAC": {
+      "Install": false,
+      "InstallPort": 443
+    },
+    "Go": {
+      "Install": false,
+      "Version": "1.20+",
+      "InstallerUrl": "https://go.dev/dl/go1.24.1.windows-amd64.msi"
+    },
+    "Poetry": {
+      "Install": false,
+      "Version": "latest"
+    },
+    "OpenTofu": {
+      "Install": false,
+      "Version": "latest",
+      "Initialize": false
+    },
+    "Cosign": {
+      "Install": false,
+      "URL": "https://github.com/sigstore/cosign/releases/download/v2.4.3/cosign-windows-amd64.exe",
+      "Path": "C:/temp/cosign"
+    },
+    "GPG": {
+      "Install": false
+    },
+    "Python": {
+      "Install": false
+    },
+    "DockerDesktop": {
+      "Install": false
+    },
+    "7Zip": {
+      "Install": false
+    },
+    "VSCode": {
+      "Install": false
+    },
+    "VSBuildTools": {
+      "Install": false
+    },
+    "AzureCLI": {
+      "Install": false
+    },
+    "AWSCLI": {
+      "Install": false
+    },
+    "Packer": {
+      "Install": false
+    },
+    "Chocolatey": {
+      "Install": false
+    },
+    "Node": {
+      "Install": true,
+      "InstallerUrl": "https://nodejs.org/dist/latest-v20.x/node-v20-x64.msi",
+      "GlobalPackages": ["yarn", "vite", "nodemon"],
+      "InstallYarn": true,
+      "InstallVite": true,
+      "InstallNodemon": true,
+      "InstallNpm": true,
+      "NpmPath": "C:/Projects/vde-mvp/frontend",
+      "CreateNpmPath": false
+    },
+    "WSL2": {
+      "Install": false,
+      "Distribution": "Ubuntu",
+      "Version": "2",
+      "DefaultUser": "",
+      "AdditionalDistros": [],
+      "Settings": {
+        "Memory": "4GB",
+        "Processors": 2,
+        "SwapSize": "2GB",
+        "LocalhostForwarding": true
+      },
+      "InstallTools": true,
+      "Tools": ["curl", "wget", "git", "build-essential", "python3", "python3-pip", "docker.io"]
+    }
+  },
+  "Security": {
+    "CredentialStore": "LocalMachine",
+    "EncryptionType": "AES256",
+    "RequireSecureTransport": true,
+    "EnforceExecutionPolicy": false,
+    "AllowUnsignedScripts": true,
+    "RequireAdminForInstall": false,
+    "PasswordComplexity": "Medium",
+    "SessionTimeout": 3600,
+    "MaxLoginAttempts": 3,
+    "EnableMFA": false
+  },
+  "Testing": {
+    "Framework": "Pester",
+    "MinVersion": "5.0.0",
+    "Parallel": true,
+    "MaxConcurrency": 4,
+    "OutputPath": "./tests/results",
+    "OutputFormat": ["NUnitXml", "JUnitXml"],
+    "ShowProgress": true,
+    "ShowSkipped": true,
+    "ShowPending": true,
+    "ShowInconclusive": true,
+    "ExitOnFailure": false,
+    "GenerateReport": true,
+    "OpenReportAfterRun": false,
+    "NotifyOnCompletion": true,
+    "FailFastThreshold": 10,
+    "CodeCoverage": {
+      "Enabled": true,
+      "MinimumPercent": 80,
+      "OutputPath": "./tests/coverage",
+      "Format": ["JaCoCo", "Cobertura"],
+      "ExcludePaths": ["*/tests/*", "*/legacy-to-migrate/*", "*/examples/*"]
+    },
+    "PSScriptAnalyzer": {
+      "Enabled": true,
+      "SettingsPath": "./PSScriptAnalyzerSettings.psd1",
+      "OutputPath": "./tests/analysis",
+      "Rules": {
+        "Severity": ["Error", "Warning"],
+        "ExcludeRules": ["PSAvoidUsingWriteHost", "PSUseShouldProcessForStateChangingFunctions"]
+      }
+    },
+    "ASTValidation": {
+      "Enabled": true,
+      "CheckSyntax": true,
+      "CheckParameters": true,
+      "CheckModuleDependencies": true,
+      "CheckCommandExistence": true
+    },
+    "Profiles": {
+      "Quick": {
+        "Description": "Fast validation for development",
+        "Categories": ["Unit", "Syntax"],
+        "Timeout": 300,
+        "FailFast": true
+      },
+      "Standard": {
+        "Description": "Default test suite",
+        "Categories": ["Unit", "Integration", "Syntax"],
+        "Timeout": 900,
+        "FailFast": false
+      },
+      "Full": {
+        "Description": "Complete validation including performance",
+        "Categories": ["*"],
+        "Timeout": 3600,
+        "FailFast": false
+      },
+      "CI": {
+        "Description": "Continuous Integration suite",
+        "Categories": ["Unit", "Integration", "E2E"],
+        "Platforms": ["Windows", "Linux", "macOS"],
+        "Timeout": 1800,
+        "FailFast": true,
+        "GenerateReports": true
+      }
+    }
+  },
+  "AI": {
+    "Enabled": true,
+    "Providers": {
+      "Claude": {
+        "Enabled": true,
+        "ApiKeyEnvVar": "ANTHROPIC_API_KEY",
+        "BaseUrl": "https://api.anthropic.com/v1",
+        "Model": "claude-3-sonnet-20240229",
+        "MaxTokens": 4096,
+        "Temperature": 0.7,
+        "Version": "2023-06-01",
+        "RateLimits": {
+          "RequestsPerMinute": 50,
+          "TokensPerMinute": 100000,
+          "ConcurrentRequests": 5
+        },
+        "UsageTracking": true,
+        "Priority": 1
+      },
+      "Gemini": {
+        "Enabled": true,
+        "ApiKeyEnvVar": "GOOGLE_API_KEY",
+        "BaseUrl": "https://generativelanguage.googleapis.com/v1beta",
+        "Model": "gemini-pro",
+        "MaxTokens": 2048,
+        "Temperature": 0.9,
+        "RateLimits": {
+          "RequestsPerMinute": 60,
+          "TokensPerMinute": 120000,
+          "ConcurrentRequests": 10
+        },
+        "UsageTracking": true,
+        "Priority": 2
+      },
+      "Codex": {
+        "Enabled": true,
+        "ApiKeyEnvVar": "OPENAI_API_KEY",
+        "BaseUrl": "https://api.openai.com/v1",
+        "Model": "gpt-4",
+        "MaxTokens": 8192,
+        "Temperature": 0.5,
+        "RateLimits": {
+          "RequestsPerMinute": 60,
+          "TokensPerMinute": 150000,
+          "ConcurrentRequests": 8
+        },
+        "UsageTracking": true,
+        "Priority": 3
+      }
+    },
+    "Fallback": {
+      "Enabled": true,
+      "Strategy": "Sequential",
+      "RetryCount": 3,
+      "RetryDelay": 2
+    },
+    "CodeReview": {
+      "Enabled": true,
+      "Profiles": {
+        "Quick": {
+          "Description": "Fast validation for development",
+          "Providers": ["Codex"],
+          "Checks": ["syntax", "quality"],
+          "Timeout": 60
+        },
+        "Standard": {
+          "Description": "Default review process",
+          "Providers": ["Claude", "Codex"],
+          "Checks": ["security", "quality", "performance"],
+          "Timeout": 300
+        },
+        "Comprehensive": {
+          "Description": "Full analysis with all providers",
+          "Providers": ["Claude", "Gemini", "Codex"],
+          "Checks": ["security", "quality", "performance", "compliance"],
+          "Timeout": 600,
+          "FailOnHighSeverity": true
+        }
+      },
+      "SecurityChecks": {
+        "CredentialExposure": true,
+        "InputValidation": true,
+        "InjectionVulnerabilities": true,
+        "AccessControl": true,
+        "Cryptography": true,
+        "InformationDisclosure": true
+      },
+      "PerformanceChecks": {
+        "IneffientFiltering": true,
+        "ArrayConcatenation": true,
+        "RedundantModuleLoading": true,
+        "MemoryLeaks": true,
+        "CachingOpportunities": true
+      },
+      "QualityChecks": {
+        "TechnicalDebt": true,
+        "Documentation": true,
+        "ErrorHandling": true,
+        "Complexity": true,
+        "DuplicateCode": true,
+        "NamingConventions": true
+      }
+    },
+    "TestGeneration": {
+      "Enabled": true,
+      "Framework": "Pester",
+      "Version": "5.0+",
+      "Provider": "Claude",
+      "GenerateTypes": ["Unit", "Integration", "E2E"],
+      "IncludeMocking": true,
+      "IncludeEdgeCases": true,
+      "IncludeErrorConditions": true,
+      "CoverageTarget": 80
+    },
+    "Documentation": {
+      "Enabled": true,
+      "Provider": "Gemini",
+      "GenerateTypes": ["CommentBasedHelp", "README", "API", "Architecture"],
+      "DiagramFormat": "Mermaid",
+      "IncludeExamples": true,
+      "AutoUpdateChangelog": true
+    },
+    "PerformanceOptimization": {
+      "Enabled": true,
+      "Provider": "Codex",
+      "ProfilingEnabled": true,
+      "BenchmarkEnabled": true,
+      "GenerateComparisons": true,
+      "OptimizationTargets": ["Speed", "Memory", "Efficiency"]
+    },
+    "SecurityAnalysis": {
+      "Enabled": true,
+      "Provider": "Claude",
+      "ComplianceChecks": ["SOC2", "PCI-DSS", "HIPAA"],
+      "GenerateRemediation": true,
+      "VulnerabilityScanning": true,
+      "ThreatModeling": true
+    },
+    "WorkflowGeneration": {
+      "Enabled": true,
+      "Provider": "Gemini",
+      "GeneratePlaybooks": true,
+      "MultiAgentDistribution": true,
+      "DependencyResolution": true,
+      "ErrorHandlingStrategies": true,
+      "VisualizationEnabled": true
+    },
+    "UsageMonitoring": {
+      "Enabled": true,
+      "TrackCosts": true,
+      "GenerateReports": true,
+      "BudgetAlerts": {
+        "Enabled": true,
+        "DailyLimit": 100,
+        "MonthlyLimit": 1000,
+        "AlertThreshold": 80
+      },
+      "OptimizationRecommendations": true
+    },
+    "ContextManagement": {
+      "Enabled": true,
+      "IndexCodebase": true,
+      "CreateEmbeddings": true,
+      "GenerateKnowledgeBase": true,
+      "UpdatePrompts": true,
+      "VersionControl": true,
+      "CacheExpiry": 86400
+    },
+    "OutputValidation": {
+      "Enabled": true,
+      "SyntaxChecking": true,
+      "SecurityValidation": true,
+      "BestPracticesCompliance": true,
+      "PerformanceImpactAssessment": true,
+      "HumanReviewWorkflow": true
+    }
+  },
+  "Development": {
+    "GitAutomation": {
+      "Enabled": true,
+      "AutoCommit": false,
+      "AutoPR": false,
+      "SignCommits": false,
+      "DefaultBranch": "main",
+      "BranchNaming": {
+        "Pattern": "{type}/{issue-number}-{description}",
+        "Types": ["feature", "fix", "docs", "test", "refactor", "chore"],
+        "MaxLength": 63
+      },
+      "CommitConventions": {
+        "Format": "conventional",
+        "Scopes": ["core", "orchestration", "infrastructure", "tests", "config", "domains"],
+        "MaxSubjectLength": 72,
+        "MaxBodyLineLength": 100,
+        "SignOff": true,
+        "IssueReferences": true
+      },
+      "PullRequestTemplates": {
+        "Default": ".github/pull_request_template.md",
+        "Types": {
+          "feature": ".github/PULL_REQUEST_TEMPLATE/feature.md",
+          "bugfix": ".github/PULL_REQUEST_TEMPLATE/bugfix.md",
+          "hotfix": ".github/PULL_REQUEST_TEMPLATE/hotfix.md"
+        }
+      },
+      "IssueTracking": {
+        "AutoCreateIssues": true,
+        "LinkCommits": true,
+        "CloseOnMerge": true,
+        "Labels": {
+          "AutoApply": true,
+          "Categories": ["bug", "enhancement", "documentation", "testing"]
+        }
+      }
+    },
+    "AIAgenticCoding": {
+      "Enabled": true,
+      "Provider": "auto",
+      "ValidationRequired": true,
+      "AutoTestGeneration": true,
+      "CodeReview": {
+        "PSScriptAnalyzer": true,
+        "SecurityScan": true,
+        "DependencyCheck": true,
+        "ComplexityCheck": true
+      },
+      "Guardrails": {
+        "MaxFilesPerCommit": 10,
+        "MaxLinesPerFile": 500,
+        "RequireTests": true,
+        "RequireDocumentation": true,
+        "RequireApproval": true,
+        "BlockPatterns": ["password", "secret", "key", "token"],
+        "AllowedFileTypes": [".ps1", ".psm1", ".psd1", ".json", ".md", ".yml", ".yaml"]
+      },
+      "Prompts": {
+        "TestGeneration": "Generate Pester 5 tests with proper mocking and edge cases",
+        "Documentation": "Generate comment-based help following PowerShell standards",
+        "CodeReview": "Review for security, performance, and PowerShell best practices"
+      }
+    },
+    "CodeQuality": {
+      "EnforceCodingStandards": true,
+      "RequireCommentBasedHelp": true,
+      "MaxCyclomaticComplexity": 10,
+      "MaxFunctionLength": 100,
+      "RequireTypeDeclarations": false,
+      "StrictMode": "Latest"
+    }
+  },
+  "UI": {
+    "Theme": "Default",
+    "EnableColors": true,
+    "EnableEmoji": true,
+    "MenuStyle": "Interactive",
+    "ProgressBarStyle": "Classic",
+    "NotificationPosition": "TopRight",
+    "AutoRefreshInterval": 5,
+    "ShowWelcomeMessage": true,
+    "ShowHints": true,
+    "EnableAnimations": false,
+    "TerminalWidth": "auto",
+    "ClearScreenOnStart": true,
+    "ShowExecutionTime": true,
+    "ShowMemoryUsage": false,
+    "Themes": {
+      "Default": {
+        "Primary": "Cyan",
+        "Secondary": "Blue",
+        "Success": "Green",
+        "Warning": "Yellow",
+        "Error": "Red",
+        "Info": "White",
+        "Muted": "DarkGray"
+      },
+      "Dark": {
+        "Primary": "DarkCyan",
+        "Secondary": "DarkBlue",
+        "Success": "DarkGreen",
+        "Warning": "DarkYellow",
+        "Error": "DarkRed",
+        "Info": "Gray",
+        "Muted": "DarkGray"
+      }
+    }
+  },
+  "Orchestration": {
+    "DefaultMode": "Parallel",
+    "MaxRetries": 3,
+    "RetryDelay": 5,
+    "SkipConfirmation": false,
+    "ShowDependencies": true,
+    "ValidateBeforeRun": true,
+    "CacheExecutionPlans": true,
+    "ExecutionHistory": true,
+    "HistoryRetentionDays": 30,
+    "EnableRollback": false,
+    "CheckpointInterval": 10,
+    "NotifyOnMilestone": true,
+    "EmailNotifications": false,
+    "WebhookNotifications": false,
+    "SlackIntegration": false,
+    "TeamsIntegration": false
+  },
+  "Reporting": {
+    "DefaultFormat": "HTML",
+    "AutoGenerateReports": true,
+    "ReportPath": "./reports",
+    "IncludeSystemInfo": true,
+    "IncludeExecutionLogs": true,
+    "IncludeScreenshots": false,
+    "CompressReports": false,
+    "EmailReports": false,
+    "UploadToCloud": false,
+    "DashboardEnabled": true,
+    "DashboardPort": 8080,
+    "DashboardAutoOpen": false,
+    "MetricsCollection": true,
+    "MetricsRetentionDays": 90,
+    "ExportFormats": ["HTML", "JSON", "CSV", "PDF", "Markdown"],
+    "TemplateEngine": "Default",
+    "TechDebtReporting": {
+      "Enabled": true,
+      "Schedule": "Weekly",
+      "AutoTrack": true,
+      "Thresholds": {
+        "ConfigUsage": 80,
+        "Documentation": 80,
+        "CodeQuality": 70,
+        "Security": 90
+      }
+    }
+  },
+  "Dependencies": {
+    "Modules": {
+      "_comment": "This section is auto-populated by 0521_Update-Documentation.ps1"
+    },
+    "External": {
+      "ThreadJob": {
+        "Version": "2.0.3+",
+        "Required": true,
+        "Description": "Required for parallel execution"
+      },
+      "Pester": {
+        "Version": "5.0.0+",
+        "Required": false,
+        "Description": "Testing framework"
+      },
+      "PSScriptAnalyzer": {
+        "Version": "1.20.0+",
+        "Required": false,
+        "Description": "Code quality analysis"
+      }
+    },
+    "Scripts": {
+      "_comment": "Script dependencies are defined in script metadata"
+    },
+    "UpdateFrequency": "OnChange",
+    "ValidateOnStart": true,
+    "EnforceDependencies": false
+  }
+}
