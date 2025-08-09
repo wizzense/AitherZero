@@ -1,0 +1,4 @@
+#!/usr/bin/env pwsh
+# AitherZero CLI Wrapper
+$env:AITHERZERO_ROOT = '/workspaces/AitherZero'
+& "$env:AITHERZERO_ROOT/Start-AitherZero.ps1" $args

@@ -1,419 +1,173 @@
-````instructions
-# AitherZero Infrastructure Automation - GitHub Copilot Instructions (Updated)
+# AitherZero AI Coding Agent Instructions
 
-This project is a **PowerShell-based infrastructure automation framework** using OpenTofu/Terraform for lab environments. Follow these instructions when generating code or providing assistance.
+## Project Overview
 
-## 🚀 CI/CD & Build System Integration
+AitherZero is an infrastructure automation platform with a **number-based orchestration system** (0000-9999) for systematic script execution. The architecture uses a consolidated domain-based module system that loads through a single entry point.
 
-**GitHub Actions Workflows**: The project uses a comprehensive CI/CD pipeline with these key workflows:
-- **ci-and-release.yml**: Primary CI/CD pipeline with build, test, and release stages
-- **pr-validation.yml**: PR validation with bulletproof testing and build verification
-- **build-release.yml**: Cross-platform package building (Windows, Linux, macOS)
-- **documentation.yml**: Automated documentation generation and deployment
+## Essential Architecture Understanding
 
-**Build System**: Uses `build/Build-Package.ps1` with profiles:
-- **minimal.json**: Core components only (fastest build)
-- **standard.json**: Essential modules and features
-- **development.json**: Full development environment with all tools
-
-**Testing Integration**: Multi-level testing approach:
-```powershell
-# Core validation - Use for rapid feedback
-pwsh -File "tests/Run-Tests.ps1"
-
-# Setup validation - Use for setup/installation testing  
-pwsh -File "tests/Run-Tests.ps1" -Setup
-
-# All tests - Use for comprehensive validation
-pwsh -File "tests/Run-Tests.ps1" -All
-
-# CI mode with fail-fast for automated environments
-pwsh -File "tests/Run-Tests.ps1" -All -CI
+### Core Module Loading Flow
+```
+AitherZero.psd1 (Module Manifest)
+    └── AitherZero.psm1 (Root Module)
+        ├── Sets $env:AITHERZERO_ROOT and $env:AITHERZERO_INITIALIZED
+        ├── Starts transcript logging (logs/transcript-*.log)
+        ├── Loads critical modules first: Logging, Configuration
+        └── Sequentially loads domain modules: experience → development → testing → reporting → automation → infrastructure
 ```
 
-**Build Profile Usage**: When making changes, always test across profiles:
+**Critical**: Always run `./Initialize-AitherEnvironment.ps1` first in new sessions - it loads the module manifest and sets up the environment.
+
+### Number-Based Orchestration System
+
+Scripts in `/automation-scripts/` follow numeric ranges:
+- **0000-0099**: Environment prep (PowerShell 7, directories)
+- **0100-0199**: Infrastructure (Hyper-V, certificates, networking)  
+- **0200-0299**: Dev tools (Git, Node, Python, Docker, VS Code)
+- **0400-0499**: Testing & validation
+- **0500-0599**: Reporting & metrics
+- **0700-0799**: Git automation & AI tools
+- **9000-9999**: Maintenance & cleanup
+
+Use the `az` wrapper for script execution: `az 0402` runs unit tests, `az 0404` runs PSScriptAnalyzer.
+
+## Domain Structure (Consolidated Architecture v2.0)
+
+Located in `/domains/` (legacy references may point to `aither-core/`):
+- **infrastructure/**: Lab automation, OpenTofu/Terraform, VM management (57 functions)
+- **configuration/**: Config management with environment switching (36 functions)  
+- **utilities/**: Logging, maintenance, cross-platform helpers (24 functions)
+- **security/**: Credentials, certificates (41 functions)
+- **experience/**: UI components, menus, wizards (22 functions)
+- **automation/**: Orchestration engine, workflows (16 functions)
+
+## Critical Development Patterns
+
+### Module Scope Issues
+Functions in scriptblocks may lose module scope. Call directly:
 ```powershell
-# Test minimal build (essential functionality)
-pwsh -File "build/Build-Package.ps1" -Profile "minimal" -Platform "current"
+# Wrong - may fail in scriptblocks
+Show-UISpinner { Write-CustomLog "Processing..." }
 
-# Test standard build (typical deployment)
-pwsh -File "build/Build-Package.ps1" -Profile "standard" -Platform "current"
-
-# Test development build (full features)
-pwsh -File "build/Build-Package.ps1" -Profile "development" -Platform "current"
+# Right - call functions directly  
+Write-CustomLog "Processing..."
+Show-UISpinner { Start-Process $command }
 ```
 
-## Core Standards & Requirements
-
-**PowerShell Version**: Always use PowerShell 7.0+ features and cross-platform compatible syntax.
-
-**Path Handling**: Use `Join-Path` for ALL path construction to ensure cross-platform compatibility. Never use hardcoded forward or backward slashes.
-
-**Code Style**: Follow One True Brace Style (OTBS) with consistent indentation and spacing.
-
-**Module Architecture**: Import modules using `$env:PWSH_MODULES_PATH` with `Import-Module` and `-Force` parameter.
-
-**Error Handling**: Always implement comprehensive try-catch blocks with detailed logging using the `Logging` module.
-
-**Testing**: Use the simplified testing framework with `Run-Tests.ps1` for validation.
-
-**Build Integration**: Always consider build profiles when making changes:
-- Test with minimal profile for essential functionality
-- Validate with standard profile for typical deployments
-- Use development profile for full feature testing
-
-## Project Modules & Their Purposes
-
-Use these existing modules instead of creating new functionality:
-
-- **BackupManager**: File backup, cleanup, and consolidation operations
-- **DevEnvironment**: Development environment preparation and validation
-- **ISOCustomizer**: Enterprise-grade ISO customization with autounattend generation
-- **ISOManager**: Enterprise ISO management and download operations
-- **LabRunner**: Lab automation orchestration and test execution coordination
-- **Logging**: Centralized logging with levels (INFO, WARN, ERROR, SUCCESS, DEBUG)
-- **OpenTofuProvider**: OpenTofu/Terraform provider management and integration
-- **ParallelExecution**: Runspace-based parallel task execution
-- **PatchManager**: v2.1 CONSOLIDATED - 4 core functions: Invoke-PatchWorkflow, New-PatchIssue, New-PatchPR, Invoke-PatchRollback
-- **RemoteConnection**: Enterprise remote connection management with security
-- **RepoSync**: Repository synchronization and cross-fork operations
-- **ScriptManager**: Script repository management and template handling
-- **SecureCredentials**: Enterprise credential management and secure storage
-- **TestingFramework**: Bulletproof testing wrapper with project-specific configurations
-- **UnifiedMaintenance**: Unified entry point for all maintenance operations
-
-## 🔧 Code Generation Patterns
-
-**Function Structure**: Use `[CmdletBinding(SupportsShouldProcess)]` with proper parameter validation and begin/process/end blocks.
-
-**Parameter Validation**: Always include `[ValidateNotNullOrEmpty()]` and appropriate validation attributes.
-
-**Logging Integration**: Use `Write-CustomLog -Level 'LEVEL' -Message 'MESSAGE'` for all logging operations.
-
-**Cross-Platform Paths**: Use `Join-Path` and avoid hardcoded Windows-style paths.
-
-**Module Dependencies**: Reference existing modules rather than reimplementing functionality.
-
-**Environment Variables**: Use `$env:PWSH_MODULES_PATH` for module imports and `$env:PROJECT_ROOT` for project paths.
-
-**Shared Utilities**: Always use shared utilities from `aither-core/shared/` directory:
+### Cross-Platform Paths
+Always check platform variables:
 ```powershell
-# Always import Find-ProjectRoot for path detection
-. "$PSScriptRoot/../../shared/Find-ProjectRoot.ps1"
-$projectRoot = Find-ProjectRoot
-
-# Use standardized module imports
-Import-Module (Join-Path $projectRoot "aither-core/modules/ModuleName") -Force
+$path = if ($IsWindows) { 'C:/temp' } else { "$HOME/.aitherzero/temp" }
 ```
 
-## 🧪 Testing & CI/CD Integration
-
-**Pre-commit Testing**: Always run quick validation before committing:
+### Logging Pattern
+Check for command availability:
 ```powershell
-# Quick pre-commit check (30 seconds)
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Quick" -FailFast
-```
-
-**PR Validation**: Use standard validation for pull requests:
-```powershell
-# Standard PR validation (2-5 minutes)
-pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Standard" -CI
-```
-
-**Build Verification**: Test builds across profiles:
-```powershell
-# Build verification workflow
-$profiles = @("minimal", "standard", "development")
-foreach ($profile in $profiles) {
-    pwsh -File "build/Build-Package.ps1" -Profile $profile -Platform "current" -WhatIf
+if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+    Write-CustomLog -Message "..." -Level 'Information'
+} else {
+    Write-Verbose "..."
 }
 ```
 
-**GitHub Actions Integration**: When modifying workflows, always:
-1. Test locally with `act` if available
-2. Use `WhatIf` for verification steps
-3. Include proper error handling and fallback logic
-4. Add comprehensive logging for debugging
+## Key Commands & Workflows
 
-## 🎯 PatchManager Integration Patterns
-
-**Primary Workflow**: Use PatchManager v2.1 for ALL Git operations:
+### Essential Commands
 ```powershell
-# Complete workflow with build validation
-Invoke-PatchWorkflow -PatchDescription "Clear description of changes" -PatchOperation {
-    # Your changes here - ANY working tree state is fine
-    # PatchManager auto-commits existing changes first
-} -CreatePR -TestCommands @(
-    "pwsh -File tests/Run-BulletproofValidation.ps1 -ValidationLevel Quick",
-    "pwsh -File build/Build-Package.ps1 -Profile minimal -Platform current"
-)
+# Environment setup (always first)
+./Initialize-AitherEnvironment.ps1
+
+# Main interactive entry
+./Start-AitherZero.ps1
+
+# Run numbered scripts
+az 0402              # Unit tests
+az 0404              # PSScriptAnalyzer  
+az 0407              # Syntax validation
+az 0510 -ShowAll     # Project report
+
+# Git workflow automation
+az 0701 -Type feature -Name "my-feature"     # Create branch
+az 0702 -Type feat -Message "add feature"    # Commit
+az 0703 -Title "Add feature"                 # PR creation
 ```
 
-**CI/CD Integration**: Coordinate with GitHub Actions:
+### Testing Commands
 ```powershell
-# Workflow that triggers CI/CD pipeline
-Invoke-PatchWorkflow -PatchDescription "Feature with CI/CD integration" -PatchOperation {
-    # Implementation changes
-} -CreatePR -Priority "Medium" -TestCommands @(
-    "pwsh -File tests/Run-BulletproofValidation.ps1 -ValidationLevel Standard -CI",
-    "pwsh -File build/Build-Package.ps1 -Profile standard -Platform current"
-)
+# Run specific test
+Invoke-Pester -Path "./tests/unit/Configuration.Tests.ps1" -Output Detailed
+
+# Domain tests with coverage
+Invoke-Pester -Path "./tests/domains/configuration" -CodeCoverage "./domains/configuration/*.psm1"
+
+# All tests
+Invoke-Pester -Path "./tests"
 ```
 
-## 🏗️ Advanced Architecture Patterns
-
-**Build-Aware Development**: Always consider build implications:
+### Orchestration & Playbooks
 ```powershell
-# Module changes that affect build profiles
-function Update-ModuleForBuild {
-    param(
-        [string]$ModuleName,
-        [string[]]$BuildProfiles = @("minimal", "standard", "development")
-    )
-    
-    foreach ($profile in $BuildProfiles) {
-        # Test module inclusion in each profile
-        $buildConfig = Get-Content "build/profiles/$profile.json" | ConvertFrom-Json
-        if ($buildConfig.modules -contains $ModuleName) {
-            Write-Host "Module $ModuleName is included in $profile profile"
-        }
-    }
-}
+# Run playbook sequences
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick   # Fast validation
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-full    # Complete tests
+
+# Direct sequence execution  
+Invoke-OrchestrationSequence -Sequence "0000-0099" -Configuration $Config
 ```
 
-**Workflow-Aware Changes**: Consider GitHub Actions impact:
-```powershell
-# Function that updates workflows safely
-function Update-WorkflowSafely {
-    param([string]$WorkflowFile, [scriptblock]$Changes)
-    
-    try {
-        # Backup existing workflow
-        $backup = "$WorkflowFile.backup"
-        Copy-Item $WorkflowFile $backup
-        
-        # Apply changes
-        & $Changes
-        
-        # Validate workflow syntax
-        if (Test-Path $WorkflowFile) {
-            Write-Host "Workflow updated successfully"
-        }
-    } catch {
-        # Restore backup on failure
-        Move-Item $backup $WorkflowFile
-        throw
-    }
-}
-```
+## Configuration System
 
-## 📊 VS Code Integration & Available Tools
+Hierarchical config loading:
+1. Default values in code
+2. `/config.json` file  
+3. Playbook variables
+4. Command-line parameters
 
-### Core Development Tasks
-Use these VS Code tasks for primary development workflows:
+Key sections:
+- `Core.Profile`: Minimal, Standard, Developer, Full
+- `Automation.MaxConcurrency`: Parallel execution limit  
+- `Testing.Profile`: Quick, Standard, Full, CI
 
-**Testing & Validation**:
-- `Ctrl+Shift+P → Tasks: Run Task → "🚀 Bulletproof Validation - Quick"` (30 seconds)
-- `Ctrl+Shift+P → Tasks: Run Task → "🔥 Bulletproof Validation - Standard"` (2-5 minutes)
-- `Ctrl+Shift+P → Tasks: Run Task → "🎯 Bulletproof Validation - Complete"` (10-15 minutes)
-- `Ctrl+Shift+P → Tasks: Run Task → "⚡ Bulletproof Validation - Quick (Fail-Fast)"`
+## Common Issues & Solutions
 
-**Build & Package Management**:
-- `Ctrl+Shift+P → Tasks: Run Task → "📦 Local Build: Create Windows Package"`
-- `Ctrl+Shift+P → Tasks: Run Task → "🐧 Local Build: Create Linux Package"`
-- `Ctrl+Shift+P → Tasks: Run Task → "🚀 Local Build: Full Release Simulation"`
-- `Ctrl+Shift+P → Tasks: Run Task → "🔍 Local Build: Test Local Package"`
+### Module Loading Errors
+- Ensure `Logging.psm1` loads first (other modules depend on Write-CustomLog)
+- `BetterMenu.psm1` must load before `UserInterface.psm1`
+- Functions must be in `Export-ModuleMember` lists
 
-**PatchManager Workflows**:
-- `Ctrl+Shift+P → Tasks: Run Task → "PatchManager: Create Feature Patch"`
-- `Ctrl+Shift+P → Tasks: Run Task → "PatchManager: Quick Local Fix (No Issue)"`
-- `Ctrl+Shift+P → Tasks: Run Task → "PatchManager: Emergency Rollback"`
-- `Ctrl+Shift+P → Tasks: Run Task → "PatchManager: Validate All Modules"`
+### Parameter Errors
+- Variables in playbooks shouldn't be script parameters unless accepted
+- Use approved PowerShell verbs (`Get-Verb` to check)
+- Initialize timing variables before try blocks
 
-**Development Environment**:
-- `Ctrl+Shift+P → Tasks: Run Task → "🔧 Development: Setup Complete Environment"`
-- `Ctrl+Shift+P → Tasks: Run Task → "🏗️ Architecture: Validate Complete System"`
-- `Ctrl+Shift+P → Tasks: Run Task → "🌐 Repository: Update All Cross-Fork Configs"`
+### UI Component Issues
+- `Write-UIText` requires `[AllowEmptyString()]` for empty messages
+- `Show-UIMenu` doesn't have `-UseInteractive` parameter (legacy)
 
-### Advanced Workflows
+## File Locations to Know
 
-**Turbo Mode Tasks** (High-Performance):
-- `Ctrl+Shift+P → Tasks: Run Task → "⚡ TURBO: Lightning Module Check (3s)"`
-- `Ctrl+Shift+P → Tasks: Run Task → "🚀 TURBO: Ultra-Fast Test Suite (10-30s)"`
-- `Ctrl+Shift+P → Tasks: Run Task → "🔥 TURBO: Complete Test Suite (30-60s)"`
-- `Ctrl+Shift+P → Tasks: Run Task → "🚀 TURBO: Full CI Simulation (Local)"`
+- **Main entry**: `/Start-AitherZero.ps1`
+- **Environment setup**: `/Initialize-AitherEnvironment.ps1` 
+- **Module manifest**: `/AitherZero.psd1`
+- **Scripts**: `/automation-scripts/` (numbered 0000-9999)
+- **Config**: `/config.json`
+- **Tests**: `/tests/` (organized by domain)
+- **Playbooks**: `/orchestration/playbooks/`
 
-**Release Management**:
-- `Ctrl+Shift+P → Tasks: Run Task → "🚀 Quick Release: Patch Version"`
-- `Ctrl+Shift+P → Tasks: Run Task → "🔧 Quick Release: Minor Version"`
-- `Ctrl+Shift+P → Tasks: Run Task → "🎉 Quick Release: Major Version (v1.0.0 GA Ready!)"`
+## Platform Differences
 
-## 🎛️ Tool Selection Guidelines
+Use platform checks for Windows-specific features:
+- Hyper-V: Windows only
+- WSL2: Windows only  
+- Certificate Authority: Windows only
+- All other tools: Cross-platform (PowerShell 7+)
 
-**When to use VS Code tasks**:
-- Interactive development workflows
-- Quick access to common operations
-- Visual feedback and progress tracking
-- Testing specific modules or components
-- Building and packaging operations
-- Running predefined automation sequences
+Check exit codes: 0=success, 1=error, 3010=restart required
 
-**When to use command line tools directly**:
-- Automated scripts and CI/CD pipelines
-- Custom parameters not covered by tasks
-- Debugging specific issues
-- Advanced workflows requiring multiple commands
-- One-off operations with specific requirements
+## Before Making Changes
 
-**When to use PatchManager**:
-- ALL Git operations (commits, branches, PRs)
-- ANY code changes that should be tracked
-- Cross-fork repository operations
-- Issue creation and linking
-- Rollback and recovery operations
-- Coordinated workflows requiring Git and GitHub integration
+1. Run `./Initialize-AitherEnvironment.ps1` 
+2. Validate with `az 0404` (PSScriptAnalyzer)
+3. Test with appropriate domain tests
+4. Check transcript logs in `logs/transcript-*.log` for errors
 
-**When to use Build System**:
-- Creating distributable packages
-- Testing cross-platform compatibility
-- Validating module dependencies
-- Preparing for releases
-- Testing different deployment scenarios
-
-**When to use Bulletproof Validation**:
-- Before committing any changes (Quick level)
-- Before creating pull requests (Standard level)
-- Before releases (Complete level)
-- In CI/CD pipelines with fail-fast mode
-- When troubleshooting module issues
-
-## 🛠️ Workflow Optimization Patterns
-
-**Development Workflow**:
-```powershell
-# Optimal development cycle
-1. Write code changes
-2. Run quick validation: pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Quick"
-3. Test with minimal build: pwsh -File "build/Build-Package.ps1" -Profile "minimal" -Platform "current"
-4. Use PatchManager for Git operations: Invoke-PatchWorkflow -PatchDescription "..." -CreatePR
-```
-
-**CI/CD Workflow**:
-```powershell
-# Automated pipeline integration
-1. PatchManager creates PR with tests
-2. GitHub Actions runs pr-validation.yml
-3. Build-release.yml creates packages
-4. Documentation.yml updates docs
-5. ci-and-release.yml handles full release
-```
-
-**Release Workflow**:
-```powershell
-# Release preparation
-1. Run complete validation: pwsh -File "tests/Run-BulletproofValidation.ps1" -ValidationLevel "Complete"
-2. Test all build profiles: foreach ($profile in @("minimal","standard","development")) { ... }
-3. Create release: pwsh -File "Quick-Release.ps1" -Type "Minor"
-4. Verify GitHub Actions success
-```
-
-## 🔍 Error Handling & Debugging
-
-**Build Errors**: When build fails, check:
-1. Build profile configuration (build/profiles/*.json)
-2. Module dependencies and imports
-3. Cross-platform path issues
-4. PowerShell version compatibility
-
-**Test Failures**: When tests fail, check:
-1. Module loading and imports
-2. Mocking configuration
-3. Test data and fixtures
-4. Cross-platform compatibility
-
-**Workflow Failures**: When GitHub Actions fail, check:
-1. Workflow syntax and structure
-2. Required secrets and variables
-3. Artifact dependencies
-4. Cross-platform runner compatibility
-
-## 🚀 Performance Optimization
-
-**Parallel Execution**: Use ParallelExecution module for performance:
-```powershell
-# Parallel operations
-Import-Module (Join-Path $projectRoot "aither-core/modules/ParallelExecution") -Force
-$operations = @(
-    { Test-Module "ModuleA" },
-    { Test-Module "ModuleB" },
-    { Test-Module "ModuleC" }
-)
-Invoke-ParallelOperation -Operations $operations -MaxParallelJobs 4
-```
-
-**Build Optimization**: Use appropriate build profiles:
-- **minimal**: For quick testing and CI
-- **standard**: For typical deployments
-- **development**: For full feature development
-
-**Test Optimization**: Use appropriate validation levels:
-- **Quick**: For rapid feedback during development
-- **Standard**: For PR validation and CI
-- **Complete**: For release preparation
-
-## 📚 Documentation Standards
-
-**Module Documentation**: Every module must have:
-- README.md with usage examples
-- Function help documentation
-- Build profile inclusion notes
-- Cross-platform compatibility notes
-
-**Workflow Documentation**: Every workflow must have:
-- Clear description of purpose
-- Input/output specifications
-- Error handling documentation
-- Performance characteristics
-
-**Code Documentation**: Every function must have:
-- Parameter descriptions
-- Return value documentation
-- Example usage
-- Error conditions
-
-## 🔗 Integration Points
-
-**GitHub Actions**: Workflows integrate with:
-- PatchManager for automated Git operations
-- Build system for package creation
-- Testing framework for validation
-- Documentation generation
-
-**VS Code**: Tasks integrate with:
-- PowerShell execution environment
-- Git operations through PatchManager
-- Build system for packaging
-- Testing framework for validation
-
-**Build System**: Profiles integrate with:
-- Module dependency resolution
-- Cross-platform packaging
-- Testing framework validation
-- Release management
-
-## 🎯 Best Practices Summary
-
-1. **Always use PatchManager** for Git operations
-2. **Test across build profiles** before committing
-3. **Run appropriate validation level** for the context
-4. **Use VS Code tasks** for interactive workflows
-5. **Follow cross-platform patterns** for compatibility
-6. **Include comprehensive error handling** in all code
-7. **Document all changes** and integration points
-8. **Optimize for performance** with parallel execution
-9. **Validate GitHub Actions** before pushing
-10. **Use shared utilities** instead of custom implementations
-
-When suggesting code changes or new features, always consider how they integrate with the build system, testing framework, and CI/CD pipeline.
-
-````
+This consolidated architecture ensures reliable module loading and provides powerful orchestration capabilities through the number-based system.

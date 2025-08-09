@@ -1,407 +1,361 @@
-name: "CI - Parallel & Optimized"
+name: CI
 
 on:
   push:
-    branches:
-      - main
-      - develop
-    paths-ignore:
-      - '*.md'
-      - 'docs/**'
-      - '.vscode/**'
+    branches: [ main, develop ]
   pull_request:
-    branches:
-      - main
-      - develop
-    paths-ignore:
-      - '*.md'
-      - 'docs/**'
-      - '.vscode/**'
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      use_self_hosted:
+        description: 'Use self-hosted runners'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - 'auto'
+          - 'true'
+          - 'false'
+      test_profile:
+        description: 'Test profile to run'
+        required: false
+        default: 'standard'
+        type: choice
+        options:
+          - 'quick'
+          - 'standard'
+          - 'full'
+          - 'ci'
 
 env:
-  POWERSHELL_TELEMETRY_OPTOUT: 1
-  DOTNET_CLI_TELEMETRY_OPTOUT: 1
-  DOTNET_NOLOGO: true
-
-# Prevent duplicate runs
-concurrency:
-  group: ci-${{ github.ref }}-${{ github.event_name }}
-  cancel-in-progress: true
-
-defaults:
-  run:
-    shell: pwsh
+  AITHERZERO_CI: true
 
 jobs:
-  # Fast change detection job
-  analyze-changes:
-    name: "Analyze Changes"
+  # Determine runner strategy
+  setup:
+    name: Setup CI Strategy
     runs-on: ubuntu-latest
-    timeout-minutes: 2
     outputs:
-      has-code-changes: ${{ steps.changes.outputs.code }}
-      has-workflow-changes: ${{ steps.changes.outputs.workflows }}
-      has-test-changes: ${{ steps.changes.outputs.tests }}
-      matrix-os: ${{ steps.matrix.outputs.os }}
+      runner-windows: ${{ steps.runners.outputs.runner-windows }}
+      runner-linux: ${{ steps.runners.outputs.runner-linux }}
+      runner-macos: ${{ steps.runners.outputs.runner-macos }}
+      test-profile: ${{ steps.runners.outputs.test-profile }}
+      use-self-hosted: ${{ steps.runners.outputs.use-self-hosted }}
+    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
-      - name: Check for changes
-        id: changes
-        run: |
-          # Quick change detection
-          $codeFiles = @()
-          $workflowFiles = @()
-          $testFiles = @()
-          
-          if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
-            $baseRef = "${{ github.event.pull_request.base.sha }}"
-            $headRef = "${{ github.event.pull_request.head.sha }}"
-            $changedFiles = git diff --name-only $baseRef $headRef 2>$null
-          } else {
-            $changedFiles = git diff --name-only HEAD~1 HEAD 2>$null
-          }
-          
-          if ($changedFiles) {
-            $codeFiles = $changedFiles | Where-Object { 
-              $_ -match '\.(ps1|psm1|psd1)$' -and $_ -notmatch '^(docs|\.vscode)/' 
-            }
-            $workflowFiles = $changedFiles | Where-Object { 
-              $_ -match '^\.github/workflows/'
-            }
-            $testFiles = $changedFiles | Where-Object { 
-              $_ -match '^tests/'
-            }
-          }
-          
-          $hasCodeChanges = if ($codeFiles.Count -gt 0) { 'true' } else { 'false' }
-          $hasWorkflowChanges = if ($workflowFiles.Count -gt 0) { 'true' } else { 'false' }
-          $hasTestChanges = if ($testFiles.Count -gt 0) { 'true' } else { 'false' }
-          
-          echo "code=$hasCodeChanges" >> $env:GITHUB_OUTPUT
-          echo "workflows=$hasWorkflowChanges" >> $env:GITHUB_OUTPUT
-          echo "tests=$hasTestChanges" >> $env:GITHUB_OUTPUT
-          
-          Write-Host "Code changes: $($codeFiles.Count) files"
-          Write-Host "Workflow changes: $($workflowFiles.Count) files"
-          Write-Host "Test changes: $($testFiles.Count) files"
-
-      - name: Determine test matrix
-        id: matrix
-        run: |
-          # Optimize OS matrix based on changes
-          if ('${{ steps.changes.outputs.workflows }}' -eq 'true' -or 
-              '${{ github.event_name }}' -eq 'pull_request') {
-            # Full matrix for PRs and workflow changes
-            echo 'os=["windows-latest", "ubuntu-latest", "macos-latest"]' >> $env:GITHUB_OUTPUT
-          } else {
-            # Reduced matrix for regular pushes
-            echo 'os=["ubuntu-latest", "windows-latest"]' >> $env:GITHUB_OUTPUT
-          }
-
-  # Parallel quality check
-  quality-check:
-    name: "Quality Check"
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    needs: analyze-changes
-    if: needs.analyze-changes.outputs.has-code-changes == 'true' || needs.analyze-changes.outputs.has-workflow-changes == 'true'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup PowerShell with caching
-        uses: ./.github/actions/setup-powershell
-        with:
-          modules: 'PSScriptAnalyzer'
-          cache-key-suffix: 'quality'
-
-      - name: Run parallel quality analysis
-        run: |
-          # Get PowerShell files
-          $files = Get-ChildItem -Include "*.ps1","*.psm1","*.psd1" -Recurse |
-                   Where-Object { $_.FullName -notlike "*test*" -and $_.FullName -notlike "*build*" }
-
-          Write-Host "Found $($files.Count) PowerShell files to analyze"
-          
-          # Run analysis in parallel batches
-          $results = $files | ForEach-Object -Parallel {
-            $file = $_
-            Write-Host "Analyzing: $($file.Name)"
-            Invoke-ScriptAnalyzer -Path $file.FullName -Severity Error,Warning
-          } -ThrottleLimit 4
-          
-          # Process results
-          $allResults = @()
-          foreach ($result in $results) {
-            if ($result) {
-              $allResults += $result
-            }
-          }
-
-          if ($results) {
-            Write-Host "Quality issues found: $($results.Count)"
-            $results | Format-Table -AutoSize
-            
-            # Create annotations for GitHub
-            foreach ($result in $results) {
-              if ($result.Severity -eq 'Error') {
-                Write-Host "::error file=$($result.ScriptPath),line=$($result.Line)::$($result.Message)"
-              } else {
-                Write-Host "::warning file=$($result.ScriptPath),line=$($result.Line)::$($result.Message)"
-              }
-            }
-            
-            # Fail if too many errors (threshold: 25 - temporarily increased)
-            $errorCount = ($results | Where-Object Severity -eq 'Error').Count
-            if ($errorCount -gt 25) {
-              Write-Host "::error::Too many errors ($errorCount) - quality threshold exceeded"
-              exit 1
-            }
-          }
-          Write-Host "✅ Quality check completed"
+    - name: Determine runners and test profile
+      id: runners
+      shell: pwsh
+      run: |
+        $useSelfHosted = ('${{ github.event.inputs.use_self_hosted }}' -eq 'true') -or `
+                        (('${{ github.event.inputs.use_self_hosted }}' -eq 'auto') -and ('${{ github.repository_owner }}' -ne 'github'))
+        
+        $testProfile = if ('${{ github.event.inputs.test_profile }}') { '${{ github.event.inputs.test_profile }}' } else { 'standard' }
+        
+        if ($useSelfHosted) {
+          $runnerWindows = '[self-hosted, windows, standard]'
+          $runnerLinux = '[self-hosted, linux, standard]'
+          $runnerMacos = '[self-hosted, macos, standard]'
+        } else {
+          $runnerWindows = 'windows-latest'
+          $runnerLinux = 'ubuntu-latest'
+          $runnerMacos = 'macos-latest'
+        }
+        
+        "runner-windows=$runnerWindows" >> $env:GITHUB_OUTPUT
+        "runner-linux=$runnerLinux" >> $env:GITHUB_OUTPUT
+        "runner-macos=$runnerMacos" >> $env:GITHUB_OUTPUT
+        "test-profile=$testProfile" >> $env:GITHUB_OUTPUT
+        "use-self-hosted=$useSelfHosted" >> $env:GITHUB_OUTPUT
+        
+        Write-Host "CI Configuration:"
+        Write-Host "  Self-hosted: $useSelfHosted"
+        Write-Host "  Test profile: $testProfile"
+        Write-Host "  Windows runner: $runnerWindows"
+        Write-Host "  Linux runner: $runnerLinux"
+        Write-Host "  macOS runner: $runnerMacos"
 
   test:
-    name: "Test (${{ matrix.os }})"
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
-    needs: analyze-changes
-    if: always() && !cancelled() && !failure()
+    name: Test on ${{ matrix.os.name }}
+    needs: setup
+    runs-on: ${{ matrix.os.runner }}
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        os:
+          - name: ubuntu
+            runner: ${{ needs.setup.outputs.runner-linux }}
+            shell: pwsh
+          - name: windows
+            runner: ${{ needs.setup.outputs.runner-windows }}
+            shell: pwsh
+          - name: macos
+            runner: ${{ needs.setup.outputs.runner-macos }}
+            shell: pwsh
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.local/share/powershell/Modules
-            ~/Documents/PowerShell/Modules
-            ~/.config/powershell
-            ~/.cache/powershell
-            /Users/*/.local/share/powershell/Modules
-          key: ${{ runner.os }}-test-deps-${{ hashFiles('tests/**/*.ps1') }}-v2
-          restore-keys: |
-            ${{ runner.os }}-test-deps-v2
-            ${{ runner.os }}-test-deps-
+    - name: Setup PowerShell (Self-hosted)
+      if: needs.setup.outputs.use-self-hosted == 'true'
+      shell: ${{ matrix.os.shell }}
+      run: |
+        # Initialize AitherZero environment for self-hosted runners
+        if (Test-Path "./Initialize-AitherModules.ps1") {
+          ./Initialize-AitherModules.ps1 -Silent -CI
+        } elseif (Test-Path "./Initialize-AitherEnvironment.ps1") {
+          ./Initialize-AitherEnvironment.ps1 -CI
+        } else {
+          Write-Host "No initialization script found, using basic setup"
+        }
 
-      - name: Install test dependencies
-        run: |
-          Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser -SkipPublisherCheck
-          Write-Host "✅ Test dependencies installed"
+    - name: Setup PowerShell (GitHub-hosted)
+      if: needs.setup.outputs.use-self-hosted != 'true'
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.x'
 
-      - name: Run unified tests
-        run: |
-          # Ensure we're in the right directory
-          Set-Location $env:GITHUB_WORKSPACE
-          
-          # Disable parallel execution to avoid module loading issues
-          $env:AITHERZERO_DISABLE_PARALLEL = "true"
-          
-          # Run tests with CI optimizations
-          ./tests/Run-UnifiedTests.ps1 -TestSuite CI -CI -OutputFormat All -ShowProgress
-        continue-on-error: false
+    - name: Install PowerShell modules
+      shell: ${{ matrix.os.shell }}
+      run: |
+        # Install required PowerShell modules
+        if (-not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+        }
+        
+        $modules = @('Pester', 'PSScriptAnalyzer', 'ThreadJob')
+        foreach ($module in $modules) {
+          if (-not (Get-Module -ListAvailable -Name $module -ErrorAction SilentlyContinue)) {
+            Write-Host "Installing module: $module"
+            Install-Module -Name $module -MinimumVersion 5.0.0 -Force -SkipPublisherCheck -ErrorAction Continue
+          } else {
+            Write-Host "Module already available: $module"
+          }
+        }
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-${{ runner.os }}
-          path: tests/results/
-          retention-days: 30
+    - name: Initialize environment
+      shell: ${{ matrix.os.shell }}
+      run: |
+        # Initialize AitherZero environment
+        if (Test-Path "./Initialize-AitherModules.ps1") {
+          ./Initialize-AitherModules.ps1 -Force -CI
+        } elseif (Test-Path "./Initialize-AitherEnvironment.ps1") {
+          ./Initialize-AitherEnvironment.ps1 -Force -CI
+        } else {
+          Write-Host "Using bootstrap for initialization"
+          if (Test-Path "./bootstrap.ps1") {
+            ./bootstrap.ps1 -Mode Update -InstallProfile Standard -NonInteractive -SkipAutoStart
+          }
+        }
 
-  build:
-    name: "Build (${{ matrix.platform }})"
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: analyze-changes
-    if: always() && !cancelled() && !failure()
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [windows, linux, macos]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Build package
-        run: |
-          ./build/Build-Package.ps1 -Platform ${{ matrix.platform }}
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-${{ matrix.platform }}
-          path: build/output/
-          retention-days: 30
-
-  generate-dashboard:
-    name: "Generate Dashboard"
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    needs: [quality-check, test, build]
-    if: always() && !cancelled()
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts/
-
-      - name: Generate dashboard
-        run: |
-          # Create dashboard directory
-          $dashboardDir = "dashboard"
-          New-Item -ItemType Directory -Path $dashboardDir -Force
-
-          # Generate comprehensive report using the reporting script
-          try {
-            # The script expects artifacts in audit-reports directory
-            ./scripts/reporting/Generate-ComprehensiveReport.ps1 -ReportPath "$dashboardDir/index.html" -ArtifactsPath "./artifacts" -IncludeDetailedAnalysis
-            Write-Host "✅ Comprehensive dashboard generated successfully"
-          } catch {
-            Write-Host "⚠️ Comprehensive report generation failed, creating fallback dashboard"
-            Write-Host "Error: $_"
-            Write-Host "Stack Trace: $($_.ScriptStackTrace)"
-            
-            # Fallback to simple dashboard
-            $runNumber = "${{ github.run_number }}"
-            $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
-            $branch = "${{ github.ref_name }}"
-            $commit = "${{ github.sha }}"
-            
-            # Create fallback dashboard
-            $html = "<html><head><title>AitherZero CI Dashboard - Fallback</title>"
-            $html += "<style>body{font-family:Arial,sans-serif;margin:20px;}.error{background:#fee;padding:15px;border-left:4px solid #f44;}</style></head><body>"
-            $html += "<h1>AitherZero CI Dashboard - Fallback Mode</h1>"
-            $html += "<div><p>Build: #$runNumber | Date: $timestamp</p>"
-            $html += "<p>Branch: $branch | Commit: $($commit.Substring(0, 8))</p></div>"
-            $html += "<div class='error'><h2>Comprehensive Report Generation Failed</h2>"
-            $html += "<p>Error: $_</p>"
-            if ($_.Exception) {
-                $html += "<p>Type: $($_.Exception.GetType().FullName)</p>"
+    - name: Run tests using orchestration
+      shell: ${{ matrix.os.shell }}
+      run: |
+        # Run tests based on selected profile
+        $testProfile = "${{ needs.setup.outputs.test-profile }}"
+        Write-Host "Running test profile: $testProfile" -ForegroundColor Cyan
+        
+        switch ($testProfile) {
+          'quick' {
+            Write-Host "Running quick test suite..." -ForegroundColor Yellow
+            ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick -CI
+          }
+          'full' {
+            Write-Host "Running full test suite..." -ForegroundColor Yellow
+            ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-full -CI
+          }
+          'ci' {
+            Write-Host "Running CI test suite..." -ForegroundColor Yellow
+            ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-ci -CI
+          }
+          default {
+            Write-Host "Running standard tests..." -ForegroundColor Yellow
+            # Run standard test sequence
+            ./az 0404 -CI -ContinueOnError
+            ./az 0402 -CI -NoCoverage:$false
+            if ("${{ matrix.os.name }}" -ne "macos") {
+              ./az 0403 -CI
             }
-            if ($_.ScriptStackTrace) {
-                $html += "<p>Stack Trace:</p><pre>$($_.ScriptStackTrace)</pre>"
-            }
-            $html += "</div>"
-            $html += "<h3>Available Artifacts:</h3><ul>"
-            if (Test-Path "artifacts") {
-                Get-ChildItem "artifacts" -Recurse -File | ForEach-Object {
-                    $html += "<li>$($_.FullName.Replace((Get-Location).Path, '.'))</li>"
-                }
-            } else {
-                $html += "<li>No artifacts directory found</li>"
-            }
-            $html += "</ul></body></html>"
-            
-            $html | Set-Content "$dashboardDir/index.html"
+            ./az 0407 -CI
           }
+        }
 
-      - name: Upload dashboard
-        uses: actions/upload-artifact@v4
-        with:
-          name: comprehensive-dashboard
-          path: dashboard/
-          retention-days: 90
+    - name: Generate test report
+      shell: ${{ matrix.os.shell }}
+      run: |
+        # Generate comprehensive test report
+        ./az 0501 -Format JSON,HTML,Markdown -CI
+      if: always()
 
-  ci-summary:
-    name: "CI Summary"
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-${{ matrix.os }}
+        path: |
+          test-results/
+          TestReport*.html
+          TestReport*.json
+
+    - name: Upload coverage
+      uses: actions/upload-artifact@v4
+      if: matrix.os == 'ubuntu-latest'
+      with:
+        name: coverage-report
+        path: coverage/
+
+  validate-playbooks:
+    name: Validate Playbooks
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    needs: [analyze-changes, quality-check, test, build, generate-dashboard]
-    if: always() && !cancelled()
+    needs: test
+
     steps:
-      - name: Evaluate results
-        run: |
-          $success = $true
-          $summary = "# AitherZero CI Summary`n`n## Results Overview`n"
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-          # Check quality results
-          $qualityResult = '${{ needs.quality-check.result }}'
-          if ($qualityResult -eq 'failure') {
-            $success = $false
-            $summary += "❌ **Quality Check**: FAILED`n"
-          } elseif ($qualityResult -eq 'success') {
-            $summary += "✅ **Quality Check**: PASSED`n"
-          } else {
-            $summary += "⚪ **Quality Check**: SKIPPED`n"
+    - name: Setup PowerShell
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.x'
+
+    - name: Install PowerShell modules
+      shell: pwsh
+      run: |
+        Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+        Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -SkipPublisherCheck
+        Install-Module -Name PSScriptAnalyzer -Force -SkipPublisherCheck
+
+    - name: Initialize environment
+      shell: pwsh
+      run: |
+        ./Initialize-AitherEnvironment.ps1
+
+    - name: Test quick playbook
+      shell: pwsh
+      run: |
+        ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick -CI
+
+    - name: Test CI playbook
+      shell: pwsh
+      run: |
+        ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-ci -CI
+
+  build-release:
+    name: Build Release Package
+    runs-on: windows-latest
+    needs: [test, validate-playbooks]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PowerShell
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.x'
+
+    - name: Initialize environment
+      shell: pwsh
+      run: |
+        ./Initialize-AitherEnvironment.ps1
+
+    - name: Generate project report
+      shell: pwsh
+      run: |
+        ./az 0510 -ShowAll -OutputPath ./build-artifacts
+
+    - name: Build release package
+      shell: pwsh
+      run: |
+        # Create release package
+        $version = Get-Content VERSION
+        $packageName = "AitherZero-$version-$(Get-Date -Format 'yyyyMMdd')"
+        
+        New-Item -ItemType Directory -Path "./release/$packageName" -Force
+        
+        # Copy essential files
+        $essentialItems = @(
+          'Start-AitherZero.ps1',
+          'Initialize-AitherEnvironment.ps1',
+          'bootstrap.ps1',
+          'az',
+          'VERSION',
+          'README.md',
+          'CLAUDE.md',
+          'LICENSE',
+          'domains/',
+          'automation-scripts/',
+          'orchestration/',
+          'configs/',
+          'modules/'
+        )
+    
+        foreach ($item in $essentialItems) {
+          if (Test-Path $item) {
+            Copy-Item -Path $item -Destination "./release/$packageName/" -Recurse -Force
           }
+        }
+        
+        # Create zip
+        Compress-Archive -Path "./release/$packageName/*" -DestinationPath "./release/$packageName.zip" -Force
+        
+        Write-Host "Created release package: $packageName.zip"
 
-          # Check test results
-          $testResult = '${{ needs.test.result }}'
-          if ($testResult -eq 'failure') {
-            $success = $false
-            $summary += "❌ **Tests**: FAILED`n"
-          } elseif ($testResult -eq 'success') {
-            $summary += "✅ **Tests**: PASSED`n"
-          } else {
-            $summary += "⚪ **Tests**: SKIPPED`n"
-          }
+    - name: Upload release artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-package
+        path: |
+          release/*.zip
+          build-artifacts/ProjectReport*.html
+          build-artifacts/ProjectReport*.json
 
-          # Check build results
-          $buildResult = '${{ needs.build.result }}'
-          if ($buildResult -eq 'failure') {
-            $success = $false
-            $summary += "❌ **Build**: FAILED`n"
-          } elseif ($buildResult -eq 'success') {
-            $summary += "✅ **Build**: PASSED`n"
-          } else {
-            $summary += "⚪ **Build**: SKIPPED`n"
-          }
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-          # Add dashboard status
-          $dashboardResult = '${{ needs.generate-dashboard.result }}'
-          if ($dashboardResult -eq 'success') {
-            $summary += "✅ **Dashboard**: Generated`n"
-          } else {
-            $summary += "❌ **Dashboard**: Failed`n"
-          }
+    - name: Run Trivy security scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
 
-          $summary += "`n## Build Information`n"
-          $summary += "- **Branch**: ${{ github.ref_name }}`n"
-          $summary += "- **Commit**: ${{ github.sha }}`n"
-          $summary += "- **Run Number**: ${{ github.run_number }}`n"
-          $summary += "- **Triggered by**: ${{ github.event_name }}`n"
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-results.sarif'
 
-          Write-Host $summary
-          
-          if (-not $success) {
-            Write-Host "::error::CI pipeline failed"
-            exit 1
-          } else {
-            Write-Host "::notice::CI pipeline completed successfully"
-          }
+  notify:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    needs: [test, validate-playbooks, build-release, security-scan]
+    if: always()
 
-      - name: Create CI results summary
-        run: |
-          $summary = @{
-            success = ('${{ needs.test.result }}' -eq 'success' -and '${{ needs.build.result }}' -eq 'success')
-            quality = '${{ needs.quality-check.result }}'
-            tests = '${{ needs.test.result }}'
-            build = '${{ needs.build.result }}'
-            dashboard = '${{ needs.generate-dashboard.result }}'
-            runNumber = '${{ github.run_number }}'
-            branch = '${{ github.ref_name }}'
-            commit = '${{ github.sha }}'
-            timestamp = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
-          }
-          
-          $summary | ConvertTo-Json | Set-Content "ci-summary.json"
-          Get-Content "ci-summary.json"
-
-      - name: Upload CI results summary
-        uses: actions/upload-artifact@v4
-        with:
-          name: ci-results-summary
-          path: ci-summary.json
-          retention-days: 90
+    steps:
+    - name: Check job results
+      shell: pwsh
+      run: |
+        $results = @{
+          test = '${{ needs.test.result }}'
+          validate = '${{ needs.validate-playbooks.result }}'
+          build = '${{ needs.build-release.result }}'
+          security = '${{ needs.security-scan.result }}'
+        }
+        
+        $failed = $results.GetEnumerator() | Where-Object { $_.Value -ne 'success' -and $_.Value -ne 'skipped' }
+        
+        if ($failed) {
+          Write-Host "CI Pipeline failed:" -ForegroundColor Red
+          $failed | ForEach-Object { Write-Host "  - $($_.Key): $($_.Value)" -ForegroundColor Red }
+          exit 1
+        } else {
+          Write-Host "CI Pipeline succeeded!" -ForegroundColor Green
+        }

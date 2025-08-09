@@ -1,88 +1,203 @@
 #!/bin/bash
 #
-# AitherZero Modern Bootstrap Script v4.0 for Linux/macOS
-#
+# AitherZero Bootstrap Script for Linux/macOS
+# 
 # Usage:
-#   curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
-#   wget -qO- https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
+#   curl -sSL https://raw.githubusercontent.com/yourusername/AitherZero/main/bootstrap.sh | bash
+#   wget -qO- https://raw.githubusercontent.com/yourusername/AitherZero/main/bootstrap.sh | bash
 #
-# For forks, set AITHER_REPO environment variable:
-#   AITHER_REPO="username/AitherZero" curl -sSL https://raw.githubusercontent.com/username/AitherZero/main/bootstrap.sh | bash
-#
-# This script ensures PowerShell 7+ is used and directly invokes the main
-# Start-AitherZero.ps1 script from the repository.
+# Environment Variables:
+#   AITHERZERO_PROFILE=minimal|standard|developer|full (default: standard)
+#   AITHERZERO_INSTALL_DIR=/custom/path (default: $HOME/.aitherzero)
+#   AITHERZERO_BRANCH=main|develop (default: main)
+#   AITHERZERO_AUTO_START=true|false (default: true)
 #
 
 set -e
 
-# --- Colors for Output ---
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# --- Helper Functions ---
-print_message() {
-    local color="$1"
-    local message="$2"
-    echo -e "${color}${message}${NC}"
+# Configuration
+REPO_OWNER="yourusername"
+REPO_NAME="AitherZero"
+GITHUB_URL="https://github.com/$REPO_OWNER/$REPO_NAME"
+
+# Functions
+print_log() {
+    local level=$1
+    local message=$2
+    case $level in
+        "ERROR") echo -e "${RED}[-] $message${NC}" ;;
+        "SUCCESS") echo -e "${GREEN}[+] $message${NC}" ;;
+        "WARNING") echo -e "${YELLOW}[!] $message${NC}" ;;
+        "INFO") echo -e "${CYAN}[*] $message${NC}" ;;
+    esac
 }
 
 error_exit() {
-    print_message "$RED" "❌ ERROR: $1"
+    print_log "ERROR" "$1"
     exit 1
 }
 
-# --- Prerequisite Check ---
-check_prerequisites() {
-    print_message "$CYAN" "🔍 Checking for PowerShell..."
-
-    if ! command -v pwsh &> /dev/null; then
-        error_exit "PowerShell (pwsh) not found. Please install PowerShell 7+ from https://aka.ms/powershell"
+# Check and install PowerShell 7
+install_powershell() {
+    if command -v pwsh &> /dev/null; then
+        print_log "SUCCESS" "PowerShell 7 already installed"
+        return 0
     fi
+    
+    print_log "INFO" "Installing PowerShell 7..."
+    
+    case "$(uname -s)" in
+        Linux*)
+            # Detect Linux distribution
+            if [ -f /etc/os-release ]; then
+                . /etc/os-release
+                case "$ID" in
+                    ubuntu|debian)
+                        # Install PowerShell on Ubuntu/Debian
+                        sudo apt-get update
+                        sudo apt-get install -y wget apt-transport-https software-properties-common
+                        wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+                        sudo dpkg -i packages-microsoft-prod.deb
+                        sudo apt-get update
+                        sudo apt-get install -y powershell
+                        rm packages-microsoft-prod.deb
+                        ;;
+                    rhel|centos|fedora)
+                        # Install PowerShell on RHEL/CentOS/Fedora
+                        curl https://packages.microsoft.com/config/rhel/7/prod.repo | sudo tee /etc/yum.repos.d/microsoft.repo
+                        sudo yum install -y powershell
+                        ;;
+                    *)
+                        # Generic installation using Microsoft script
+                        wget -q https://aka.ms/install-powershell.sh -O install-powershell.sh
+                        chmod +x install-powershell.sh
+                        sudo ./install-powershell.sh
+                        rm install-powershell.sh
+                        ;;
+                esac
+            else
+                error_exit "Cannot determine Linux distribution"
+            fi
+            ;;
+        Darwin*)
+            # Install PowerShell on macOS
+            if command -v brew &> /dev/null; then
+                brew install --cask powershell
+            else
+                print_log "WARNING" "Homebrew not found. Installing Homebrew first..."
+                /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+                brew install --cask powershell
+            fi
+            ;;
+        *)
+            error_exit "Unsupported platform: $(uname -s)"
+            ;;
+    esac
 
-    print_message "$GREEN" "✅ PowerShell is available."
+    # Verify installation
+    if command -v pwsh &> /dev/null; then
+        print_log "SUCCESS" "PowerShell 7 installed successfully"
+    else
+        error_exit "PowerShell 7 installation failed"
+    fi
 }
 
-# --- Main Execution ---
+# Check and install Git
+install_git() {
+    if command -v git &> /dev/null; then
+        print_log "SUCCESS" "Git already installed"
+        return 0
+    fi
+    
+    print_log "INFO" "Installing Git..."
+    
+    case "$(uname -s)" in
+        Linux*)
+            if command -v apt-get &> /dev/null; then
+                sudo apt-get update && sudo apt-get install -y git
+            elif command -v yum &> /dev/null; then
+                sudo yum install -y git
+            elif command -v dnf &> /dev/null; then
+                sudo dnf install -y git
+            else
+                error_exit "Cannot determine package manager"
+            fi
+            ;;
+        Darwin*)
+            if command -v brew &> /dev/null; then
+                brew install git
+            else
+                error_exit "Please install Xcode Command Line Tools: xcode-select --install"
+            fi
+            ;;
+    esac
+
+    if command -v git &> /dev/null; then
+        print_log "SUCCESS" "Git installed successfully"
+    else
+        error_exit "Git installation failed"
+    fi
+}
+
+# Main installation
 main() {
-    print_message "$CYAN" "🚀 AitherZero Modern Bootstrap for Linux/macOS v4.0"
-    print_message "$CYAN" "==================================================="
+    print_log "INFO" "AitherZero Bootstrap for Linux/macOS"
+    echo "===================================="
     echo
 
-    check_prerequisites
-
-    print_message "$YELLOW" "⬇️  Downloading and executing the AitherZero start script..."
-
-    # Determine the downloader
-    if command -v curl &> /dev/null; then
-        DOWNLOADER="curl -sSL"
-    elif command -v wget &> /dev/null; then
-        DOWNLOADER="wget -qO-"
-    else
-        error_exit "Neither curl nor wget found. Please install one and try again."
-    fi
-
-    # Construct the URL to the main bootstrap script
-    # Use AITHER_REPO environment variable if set, otherwise default to wizzense/AitherZero
-    REPO="${AITHER_REPO:-wizzense/AitherZero}"
-    BRANCH="${AITHER_BRANCH:-main}"
-    START_SCRIPT_URL="https://raw.githubusercontent.com/${REPO}/${BRANCH}/Start-AitherZero.ps1"
+    # Set defaults
+    PROFILE="${AITHERZERO_PROFILE:-standard}"
+    INSTALL_DIR="${AITHERZERO_INSTALL_DIR:-$HOME/.aitherzero}"
+    BRANCH="${AITHERZERO_BRANCH:-main}"
+    AUTO_START="${AITHERZERO_AUTO_START:-true}"
     
-    print_message "$CYAN" "📦 Using repository: $REPO (branch: $BRANCH)"
+    print_log "INFO" "Profile: $PROFILE"
+    print_log "INFO" "Install directory: $INSTALL_DIR"
+    print_log "INFO" "Branch: $BRANCH"
 
-    # Download and execute the script via pwsh
-    # The script is piped directly into pwsh for execution.
-    # All command-line arguments passed to this bootstrap.sh script ($@) are forwarded.
-    if ! $DOWNLOADER "$START_SCRIPT_URL" | pwsh -NoProfile -ExecutionPolicy Bypass -Command "-"; then
-        error_exit "AitherZero script failed to execute."
+    # Check and install dependencies
+    install_git
+    install_powershell
+
+    # Clone or update repository
+    if [ -d "$INSTALL_DIR/.git" ]; then
+        print_log "INFO" "Updating existing installation..."
+        cd "$INSTALL_DIR"
+        git pull origin "$BRANCH"
+    else
+        print_log "INFO" "Cloning AitherZero repository..."
+        git clone --branch "$BRANCH" "$GITHUB_URL" "$INSTALL_DIR"
+        cd "$INSTALL_DIR"
     fi
 
-    print_message "$GREEN" "✅ AitherZero bootstrap process completed."
+    # Make scripts executable
+    chmod +x *.ps1 2>/dev/null || true
+
+    # Run PowerShell bootstrap
+    print_log "INFO" "Running PowerShell bootstrap..."
+    pwsh -NoProfile -ExecutionPolicy Bypass -File ./bootstrap.ps1 \
+        -Mode New \
+        -InstallProfile "$PROFILE" \
+        -NonInteractive \
+        -SkipAutoStart:$([ "$AUTO_START" = "false" ] && echo "true" || echo "false")
+
+    if [ "$AUTO_START" = "true" ]; then
+        print_log "SUCCESS" "AitherZero installed and started!"
+    else
+        print_log "SUCCESS" "AitherZero installed successfully!"
+        echo
+        print_log "INFO" "To start AitherZero:"
+        echo "  cd $INSTALL_DIR"
+        echo "  pwsh ./Start-AitherZero.ps1"
+    fi
 }
 
-# --- Error Handling and Execution ---
-trap 'error_exit "An unexpected error occurred. Please check your network and permissions."' ERR
-
+# Run main
 main "$@"

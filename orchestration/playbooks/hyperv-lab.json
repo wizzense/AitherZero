@@ -1,0 +1,23 @@
+{
+  "Name": "hyperv-lab",
+  "Description": "Hyper-V lab infrastructure setup",
+  "Sequence": [
+    "0000-0099",
+    "0100-0119",
+    "0105",
+    "0008",
+    "0009"
+  ],
+  "Variables": {
+    "Profile": "Infrastructure",
+    "Environment": "Lab",
+    "Features": ["HyperV", "OpenTofu"],
+    "HyperVConfig": {
+      "DefaultSwitch": "Lab-Internal",
+      "VMPath": "C:/VMs"
+    }
+  },
+  "Profile": "Standard",
+  "Created": "2024-01-01T00:00:00Z",
+  "Version": "1.0"
+}

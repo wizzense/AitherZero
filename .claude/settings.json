@@ -1,69 +1,33 @@
 {
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo \"$1\" | jq -r '.tool_input.command' | grep -E '^git\\s+(add|commit|push|checkout|merge|pull|fetch|branch|reset|rebase)' >/dev/null && { echo 'ERROR: Direct git commands are not allowed!' >&2; echo 'Use PatchManager instead:' >&2; echo '  - New-QuickFix for minor changes' >&2; echo '  - New-Feature for new functionality' >&2; echo '  - New-Patch for other changes' >&2; exit 2; } || exit 0",
-            "timeout": 2000
-          }
-        ]
-      },
-      {
-        "matcher": "Edit|MultiEdit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "mkdir -p ~/.claude && echo '1' >> ~/.claude/edit-count.log && count=$(wc -l < ~/.claude/edit-count.log) && if [ \"$count\" -ge 10 ]; then echo \"WARNING: You have made $count file edits without committing!\" >&2; echo \"Please commit your work using PatchManager:\" >&2; echo \"  pwsh -c 'Import-Module ./aither-core/modules/PatchManager; New-QuickFix -Description \\\"Save progress\\\" -Changes { }'\" >&2; exit 2; fi",
-            "timeout": 2000
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|MultiEdit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] File modified: $(echo \"$1\" | jq -r '.tool_input.file_path // .tool_input.file // \"unknown\"')\" >> ~/.claude/activity.log"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Command: $(echo \"$1\" | jq -r '.tool_input.command')\" >> ~/.claude/activity.log"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd /workspaces/AitherZero 2>/dev/null && changes=$(git status --porcelain 2>/dev/null | wc -l) && if [ \"$changes\" -gt 0 ]; then echo '{}' | jq -c '{decision: \"block\", reason: \"You have '\"$changes\"' uncommitted changes. Please commit using: Import-Module ./aither-core/modules/PatchManager; New-QuickFix -Description \\\"Save work\\\" -Changes { }\"}'; fi",
-            "timeout": 5000
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/workspaces/AitherZero/hooks/enforce-patchmanager.ps1",
-            "timeout": 3000
-          }
-        ]
-      }
-    ]
+    "PreToolUse": ".claude/hooks/pre-tool-use.ps1",
+    "PostToolUse": ".claude/hooks/post-tool-use.ps1",
+    "UserPromptSubmit": ".claude/hooks/user-prompt-submit.ps1",
+    "SessionStart": ".claude/hooks/session-start.ps1",
+    "SubagentStop": ".claude/hooks/subagent-stop.ps1"
+  },
+  "project": {
+    "name": "AitherZero",
+    "type": "infrastructure-automation",
+    "frameworks": ["powershell", "terraform", "github-actions"],
+    "ai_assistance": {
+      "code_review": true,
+      "test_generation": true,
+      "documentation": true,
+      "security_analysis": true
+    }
+  },
+  "development": {
+    "auto_commit": false,
+    "auto_branch": false,
+    "auto_pr": false,
+    "validation_required": true,
+    "test_before_commit": true
+  },
+  "orchestration": {
+    "trigger_on_commit": ["0404", "0407"],
+    "trigger_on_branch": ["0700"],
+    "trigger_on_pr": ["0703"],
+    "ci_monitoring": true
   }
 }

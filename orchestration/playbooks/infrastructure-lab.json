@@ -1,0 +1,39 @@
+{
+  "Name": "infrastructure-lab",
+  "Description": "Infrastructure lab setup with OpenTofu and Hyper-V",
+  "Sequence": [
+    "0000",
+    "0001",
+    "0002",
+    "0007",
+    "0008",
+    "0009",
+    "0105",
+    "0300"
+  ],
+  "Variables": {
+    "Profile": "Infrastructure",
+    "Environment": "Lab",
+    "Features": ["Go", "OpenTofu", "HyperV"],
+    "HyperVConfig": {
+      "DefaultSwitch": "Lab-Internal",
+      "VMPath": "C:/VMs",
+      "EnableNestedVirtualization": true
+    },
+    "OpenTofuConfig": {
+      "Provider": "hyperv",
+      "AutoInit": true
+    }
+  },
+  "Profile": "Infrastructure",
+  "Created": "2025-01-08T00:00:00Z",
+  "Version": "1.0",
+  "Tags": ["infrastructure", "lab", "opentofu", "hyperv"],
+  "Prerequisites": {
+    "Platform": "Windows",
+    "MinPowerShellVersion": "7.0",
+    "RequiredSpace": "50GB",
+    "RequiresAdmin": true,
+    "WindowsFeatures": ["Microsoft-Hyper-V"]
+  }
+}

@@ -1,0 +1,4498 @@
+{
+  "AnalysisType": "DocumentationCoverage",
+  "Timestamp": "2025-08-08T23:49:21.2506268+00:00",
+  "Results": {
+    "ScanEndTime": "2025-08-08T23:49:21.2435109+00:00",
+    "READMEStatus": [
+      {
+        "HasREADME": false,
+        "Status": "Missing",
+        "Directory": "./domains/ai-agents"
+      },
+      {
+        "HasREADME": true,
+        "LastModified": "2025-08-08T00:49:36.9917746+00:00",
+        "Status": "Outdated",
+        "Directory": "./domains/automation"
+      },
+      {
+        "HasREADME": true,
+        "LastModified": "2025-08-08T00:23:45.6146903+00:00",
+        "Status": "Outdated",
+        "Directory": "./domains/configuration"
+      },
+      {
+        "HasREADME": true,
+        "LastModified": "2025-08-08T05:34:34.8837041+00:00",
+        "Status": "Outdated",
+        "Directory": "./domains/development"
+      },
+      {
+        "HasREADME": true,
+        "LastModified": "2025-08-08T17:50:49.40699+00:00",
+        "Status": "Outdated",
+        "Directory": "./domains/experience"
+      },
+      {
+        "HasREADME": true,
+        "LastModified": "2025-08-08T00:23:33.7226896+00:00",
+        "Status": "Outdated",
+        "Directory": "./domains/infrastructure"
+      },
+      {
+        "HasREADME": true,
+        "LastModified": "2025-08-08T04:07:33.2024203+00:00",
+        "Status": "Outdated",
+        "Directory": "./domains/reporting"
+      },
+      {
+        "HasREADME": true,
+        "LastModified": "2025-08-08T00:24:07.5246915+00:00",
+        "Status": "Present",
+        "Directory": "./domains/security"
+      },
+      {
+        "HasREADME": false,
+        "Status": "Missing",
+        "Directory": "./domains/testing"
+      },
+      {
+        "HasREADME": true,
+        "LastModified": "2025-08-08T00:23:59.104691+00:00",
+        "Status": "Outdated",
+        "Directory": "./domains/utilities"
+      }
+    ],
+    "OutdatedDocs": [
+      {
+        "Issue": "Missing parameter documentation: ModulePath, ModuleName",
+        "Name": "New-BaselineTestContent",
+        "Path": "./automation-scripts/0408_Generate-TestCoverage.ps1",
+        "Type": "Function",
+        "Line": 220
+      },
+      {
+        "Issue": "Missing parameter documentation: Data",
+        "Name": "New-ConversionPrompt",
+        "Path": "./automation-scripts/0830_Generate-PromptFromData.ps1",
+        "Type": "Function",
+        "Line": 408
+      },
+      {
+        "Issue": "Missing parameter documentation: Configuration, EnabledAgents",
+        "Name": "Initialize-AIWorkflowOrchestrator",
+        "Path": "./domains/ai-agents/AIWorkflowOrchestrator.psm1",
+        "Type": "Function",
+        "Line": 32
+      },
+      {
+        "Issue": "Missing parameter documentation: Force",
+        "Name": "Start-DeploymentAutomation",
+        "Path": "./domains/automation/DeploymentAutomation.psm1",
+        "Type": "Function",
+        "Line": 81
+      },
+      {
+        "Issue": "Missing parameter documentation: PlaybookProfile, ExecutionProfile, Interactive, Conditions",
+        "Name": "Invoke-OrchestrationSequence",
+        "Path": "./domains/automation/OrchestrationEngine.psm1",
+        "Type": "Function",
+        "Line": 40
+      },
+      {
+        "Issue": "Missing parameter documentation: Numbers",
+        "Name": "Invoke-Sequence",
+        "Path": "./domains/automation/OrchestrationEngine.psm1",
+        "Type": "Function",
+        "Line": 1075
+      },
+      {
+        "Issue": "Missing parameter documentation: Path",
+        "Name": "Get-GitRepository",
+        "Path": "./domains/development/GitAutomation.psm1",
+        "Type": "Function",
+        "Line": 48
+      },
+      {
+        "Issue": "Missing parameter documentation: CoAuthors",
+        "Name": "Invoke-GitCommit",
+        "Path": "./domains/development/GitAutomation.psm1",
+        "Type": "Function",
+        "Line": 229
+      },
+      {
+        "Issue": "Missing parameter documentation: Key, Value, Level",
+        "Name": "Set-GitConfiguration",
+        "Path": "./domains/development/GitAutomation.psm1",
+        "Type": "Function",
+        "Line": 526
+      },
+      {
+        "Issue": "Missing parameter documentation: OpenInBrowser",
+        "Name": "New-GitHubIssue",
+        "Path": "./domains/development/IssueTracker.psm1",
+        "Type": "Function",
+        "Line": 103
+      },
+      {
+        "Issue": "Missing parameter documentation: Number, Title, Body, AddLabels, RemoveLabels, Assignees, State, Milestone",
+        "Name": "Update-GitHubIssue",
+        "Path": "./domains/development/IssueTracker.psm1",
+        "Type": "Function",
+        "Line": 205
+      },
+      {
+        "Issue": "Missing parameter documentation: State, Labels, Assignee, Author, Milestone, Limit, Search",
+        "Name": "Get-GitHubIssues",
+        "Path": "./domains/development/IssueTracker.psm1",
+        "Type": "Function",
+        "Line": 307
+      },
+      {
+        "Issue": "Missing parameter documentation: Number, Body",
+        "Name": "Add-GitHubIssueComment",
+        "Path": "./domains/development/IssueTracker.psm1",
+        "Type": "Function",
+        "Line": 391
+      },
+      {
+        "Issue": "Missing parameter documentation: Number, Comment, Reason",
+        "Name": "Close-GitHubIssue",
+        "Path": "./domains/development/IssueTracker.psm1",
+        "Type": "Function",
+        "Line": 427
+      },
+      {
+        "Issue": "Missing parameter documentation: OpenInBrowser",
+        "Name": "New-PullRequest",
+        "Path": "./domains/development/PullRequestManager.psm1",
+        "Type": "Function",
+        "Line": 50
+      },
+      {
+        "Issue": "Missing parameter documentation: Number, Title, Body, Base, AddLabels, RemoveLabels, AddReviewers, RemoveReviewers, MarkReady, ConvertToDraft",
+        "Name": "Update-PullRequest",
+        "Path": "./domains/development/PullRequestManager.psm1",
+        "Type": "Function",
+        "Line": 203
+      },
+      {
+        "Issue": "Missing parameter documentation: State, Base, Head, Labels, Author, Assignee, Limit, IncludeDrafts",
+        "Name": "Get-PullRequests",
+        "Path": "./domains/development/PullRequestManager.psm1",
+        "Type": "Function",
+        "Line": 306
+      },
+      {
+        "Issue": "Missing parameter documentation: Number, Method",
+        "Name": "Enable-PullRequestAutoMerge",
+        "Path": "./domains/development/PullRequestManager.psm1",
+        "Type": "Function",
+        "Line": 481
+      },
+      {
+        "Issue": "Missing parameter documentation: Number, Body",
+        "Name": "Add-PullRequestComment",
+        "Path": "./domains/development/PullRequestManager.psm1",
+        "Type": "Function",
+        "Line": 525
+      },
+      {
+        "Issue": "Missing parameter documentation: Number, Comment, DeleteBranch",
+        "Name": "Close-PullRequest",
+        "Path": "./domains/development/PullRequestManager.psm1",
+        "Type": "Function",
+        "Line": 558
+      },
+      {
+        "Issue": "Missing parameter documentation: Number",
+        "Name": "Get-PullRequestReviews",
+        "Path": "./domains/development/PullRequestManager.psm1",
+        "Type": "Function",
+        "Line": 606
+      },
+      {
+        "Issue": "Missing parameter documentation: X, Y, Width, Height",
+        "Name": "New-InteractiveMenu",
+        "Path": "./domains/experience/Components/InteractiveMenu.psm1",
+        "Type": "Function",
+        "Line": 14
+      },
+      {
+        "Issue": "Missing parameter documentation: Component, Context",
+        "Name": "Initialize-UIComponent",
+        "Path": "./domains/experience/Core/UIComponent.psm1",
+        "Type": "Function",
+        "Line": 116
+      },
+      {
+        "Issue": "Missing parameter documentation: Component, Context",
+        "Name": "Mount-UIComponent",
+        "Path": "./domains/experience/Core/UIComponent.psm1",
+        "Type": "Function",
+        "Line": 142
+      },
+      {
+        "Issue": "Missing parameter documentation: Component",
+        "Name": "Unmount-UIComponent",
+        "Path": "./domains/experience/Core/UIComponent.psm1",
+        "Type": "Function",
+        "Line": 169
+      },
+      {
+        "Issue": "Missing parameter documentation: Parent, Child",
+        "Name": "Add-UIComponentChild",
+        "Path": "./domains/experience/Core/UIComponent.psm1",
+        "Type": "Function",
+        "Line": 193
+      },
+      {
+        "Issue": "Missing parameter documentation: Parent, Child",
+        "Name": "Remove-UIComponentChild",
+        "Path": "./domains/experience/Core/UIComponent.psm1",
+        "Type": "Function",
+        "Line": 216
+      },
+      {
+        "Issue": "Missing parameter documentation: Root, Id",
+        "Name": "Find-UIComponent",
+        "Path": "./domains/experience/Core/UIComponent.psm1",
+        "Type": "Function",
+        "Line": 241
+      },
+      {
+        "Issue": "Missing parameter documentation: Root, Action",
+        "Name": "Invoke-UIComponentTraversal",
+        "Path": "./domains/experience/Core/UIComponent.psm1",
+        "Type": "Function",
+        "Line": 269
+      },
+      {
+        "Issue": "Missing parameter documentation: Component, RenderChildren, Clear",
+        "Name": "Invoke-UIComponentRender",
+        "Path": "./domains/experience/Core/UIComponent.psm1",
+        "Type": "Function",
+        "Line": 290
+      },
+      {
+        "Issue": "Missing parameter documentation: Component, Context",
+        "Name": "Set-UIComponentFocus",
+        "Path": "./domains/experience/Core/UIComponent.psm1",
+        "Type": "Function",
+        "Line": 348
+      },
+      {
+        "Issue": "Missing parameter documentation: Component, Context",
+        "Name": "Remove-UIComponentFocus",
+        "Path": "./domains/experience/Core/UIComponent.psm1",
+        "Type": "Function",
+        "Line": 371
+      },
+      {
+        "Issue": "Missing parameter documentation: Component, Context",
+        "Name": "Invoke-UIComponentInput",
+        "Path": "./domains/experience/Core/UIComponent.psm1",
+        "Type": "Function",
+        "Line": 394
+      },
+      {
+        "Issue": "Missing parameter documentation: Component, EventName, Data, Bubble",
+        "Name": "Invoke-UIComponentEvent",
+        "Path": "./domains/experience/Core/UIComponent.psm1",
+        "Type": "Function",
+        "Line": 417
+      },
+      {
+        "Issue": "Missing parameter documentation: Component, EventName, Handler",
+        "Name": "Register-UIComponentHandler",
+        "Path": "./domains/experience/Core/UIComponent.psm1",
+        "Type": "Function",
+        "Line": 452
+      },
+      {
+        "Issue": "Missing parameter documentation: Component, State",
+        "Name": "Set-UIComponentState",
+        "Path": "./domains/experience/Core/UIComponent.psm1",
+        "Type": "Function",
+        "Line": 476
+      },
+      {
+        "Issue": "Missing parameter documentation: Component",
+        "Name": "Start-UIComponentBatch",
+        "Path": "./domains/experience/Core/UIComponent.psm1",
+        "Type": "Function",
+        "Line": 507
+      },
+      {
+        "Issue": "Missing parameter documentation: Component",
+        "Name": "Complete-UIComponentBatch",
+        "Path": "./domains/experience/Core/UIComponent.psm1",
+        "Type": "Function",
+        "Line": 522
+      },
+      {
+        "Issue": "Missing parameter documentation: Component, Style",
+        "Name": "Set-UIComponentStyle",
+        "Path": "./domains/experience/Core/UIComponent.psm1",
+        "Type": "Function",
+        "Line": 545
+      },
+      {
+        "Issue": "Missing parameter documentation: Component",
+        "Name": "Get-UIComponentComputedStyle",
+        "Path": "./domains/experience/Core/UIComponent.psm1",
+        "Type": "Function",
+        "Line": 568
+      },
+      {
+        "Issue": "Missing parameter documentation: Context",
+        "Name": "Set-UIContext",
+        "Path": "./domains/experience/Core/UIContext.psm1",
+        "Type": "Function",
+        "Line": 113
+      },
+      {
+        "Issue": "Missing parameter documentation: Context, Configuration, Theme",
+        "Name": "Initialize-UIContext",
+        "Path": "./domains/experience/Core/UIContext.psm1",
+        "Type": "Function",
+        "Line": 127
+      },
+      {
+        "Issue": "Missing parameter documentation: Context, OnUpdate",
+        "Name": "Start-UIContext",
+        "Path": "./domains/experience/Core/UIContext.psm1",
+        "Type": "Function",
+        "Line": 160
+      },
+      {
+        "Issue": "Missing parameter documentation: Context",
+        "Name": "Stop-UIContext",
+        "Path": "./domains/experience/Core/UIContext.psm1",
+        "Type": "Function",
+        "Line": 208
+      },
+      {
+        "Issue": "Missing parameter documentation: Context",
+        "Name": "Process-UIInput",
+        "Path": "./domains/experience/Core/UIContext.psm1",
+        "Type": "Function",
+        "Line": 234
+      },
+      {
+        "Issue": "Missing parameter documentation: Context",
+        "Name": "Process-UIEvents",
+        "Path": "./domains/experience/Core/UIContext.psm1",
+        "Type": "Function",
+        "Line": 263
+      },
+      {
+        "Issue": "Missing parameter documentation: Context",
+        "Name": "Invoke-UIRender",
+        "Path": "./domains/experience/Core/UIContext.psm1",
+        "Type": "Function",
+        "Line": 279
+      },
+      {
+        "Issue": "Missing parameter documentation: Component, Context",
+        "Name": "Render-UIComponent",
+        "Path": "./domains/experience/Core/UIContext.psm1",
+        "Type": "Function",
+        "Line": 324
+      },
+      {
+        "Issue": "Missing parameter documentation: Component, Context",
+        "Name": "Set-UIFocus",
+        "Path": "./domains/experience/Core/UIContext.psm1",
+        "Type": "Function",
+        "Line": 355
+      },
+      {
+        "Issue": "Missing parameter documentation: Component, Input, Context",
+        "Name": "Send-UIInput",
+        "Path": "./domains/experience/Core/UIContext.psm1",
+        "Type": "Function",
+        "Line": 388
+      },
+      {
+        "Issue": "Missing parameter documentation: Component, Context",
+        "Name": "Queue-UIRender",
+        "Path": "./domains/experience/Core/UIContext.psm1",
+        "Type": "Function",
+        "Line": 418
+      },
+      {
+        "Issue": "Missing parameter documentation: Width, Height",
+        "Name": "New-UITerminal",
+        "Path": "./domains/experience/Core/UIContext.psm1",
+        "Type": "Function",
+        "Line": 439
+      },
+      {
+        "Issue": "Missing parameter documentation: Context, EventName, Data",
+        "Name": "Invoke-UIEvent",
+        "Path": "./domains/experience/Core/UIContext.psm1",
+        "Type": "Function",
+        "Line": 579
+      },
+      {
+        "Issue": "Missing parameter documentation: CustomActions",
+        "Name": "Show-BetterMenu",
+        "Path": "./domains/experience/BetterMenu.psm1",
+        "Type": "Function",
+        "Line": 9
+      },
+      {
+        "Issue": "Missing parameter documentation: Prompt, CustomActions",
+        "Name": "Show-UIMenu",
+        "Path": "./domains/experience/UserInterface.psm1",
+        "Type": "Function",
+        "Line": 325
+      },
+      {
+        "Issue": "Missing parameter documentation: Completed",
+        "Name": "Show-UIProgress",
+        "Path": "./domains/experience/UserInterface.psm1",
+        "Type": "Function",
+        "Line": 530
+      },
+      {
+        "Issue": "Missing parameter documentation: Required",
+        "Name": "Show-UIPrompt",
+        "Path": "./domains/experience/UserInterface.psm1",
+        "Type": "Function",
+        "Line": 643
+      },
+      {
+        "Issue": "Missing parameter documentation: Title, Layout, RefreshInterval, AutoRefresh, ShowMetrics, ShowLogs",
+        "Name": "New-ExecutionDashboard",
+        "Path": "./domains/reporting/ReportingEngine.psm1",
+        "Type": "Function",
+        "Line": 109
+      },
+      {
+        "Issue": "Missing parameter documentation: Dashboard, Status, Progress, Metrics, LogEntries",
+        "Name": "Update-ExecutionDashboard",
+        "Path": "./domains/reporting/ReportingEngine.psm1",
+        "Type": "Function",
+        "Line": 183
+      },
+      {
+        "Issue": "Missing parameter documentation: Dashboard",
+        "Name": "Show-Dashboard",
+        "Path": "./domains/reporting/ReportingEngine.psm1",
+        "Type": "Function",
+        "Line": 239
+      },
+      {
+        "Issue": "Missing parameter documentation: Dashboard",
+        "Name": "Start-DashboardRefresh",
+        "Path": "./domains/reporting/ReportingEngine.psm1",
+        "Type": "Function",
+        "Line": 319
+      },
+      {
+        "Issue": "Missing parameter documentation: Dashboard",
+        "Name": "Stop-DashboardRefresh",
+        "Path": "./domains/reporting/ReportingEngine.psm1",
+        "Type": "Function",
+        "Line": 344
+      },
+      {
+        "Issue": "Missing parameter documentation: IncludeSystem, IncludeProcess, IncludeCustom",
+        "Name": "Get-ExecutionMetrics",
+        "Path": "./domains/reporting/ReportingEngine.psm1",
+        "Type": "Function",
+        "Line": 361
+      },
+      {
+        "Issue": "Missing parameter documentation: Format, Title, OutputPath, IncludeTests, IncludeCoverage, IncludeAnalysis, IncludeTrends, TestResults, CoverageData, AnalysisResults",
+        "Name": "New-TestReport",
+        "Path": "./domains/reporting/ReportingEngine.psm1",
+        "Type": "Function",
+        "Line": 414
+      },
+      {
+        "Issue": "Missing parameter documentation: Days, IncludeCoverage, IncludeAnalysis",
+        "Name": "Show-TestTrends",
+        "Path": "./domains/reporting/ReportingEngine.psm1",
+        "Type": "Function",
+        "Line": 918
+      },
+      {
+        "Issue": "Missing parameter documentation: OutputPath, Format, StartDate, EndDate, MetricTypes",
+        "Name": "Export-MetricsReport",
+        "Path": "./domains/reporting/ReportingEngine.psm1",
+        "Type": "Function",
+        "Line": 964
+      },
+      {
+        "Issue": "Missing parameter documentation: CachePath, ResultsPath, MaxCacheAge",
+        "Name": "Initialize-TechDebtAnalysis",
+        "Path": "./domains/reporting/TechDebtAnalysis.psm1",
+        "Type": "Function",
+        "Line": 25
+      },
+      {
+        "Issue": "Missing parameter documentation: Path",
+        "Name": "Get-FileHash",
+        "Path": "./domains/reporting/TechDebtAnalysis.psm1",
+        "Type": "Function",
+        "Line": 56
+      },
+      {
+        "Issue": "Missing parameter documentation: CacheKey, DependentFiles",
+        "Name": "Test-CacheValid",
+        "Path": "./domains/reporting/TechDebtAnalysis.psm1",
+        "Type": "Function",
+        "Line": 75
+      },
+      {
+        "Issue": "Missing parameter documentation: CacheKey",
+        "Name": "Get-CachedResults",
+        "Path": "./domains/reporting/TechDebtAnalysis.psm1",
+        "Type": "Function",
+        "Line": 114
+      },
+      {
+        "Issue": "Missing parameter documentation: CacheKey, Results, DependentFiles",
+        "Name": "Set-CachedResults",
+        "Path": "./domains/reporting/TechDebtAnalysis.psm1",
+        "Type": "Function",
+        "Line": 135
+      },
+      {
+        "Issue": "Missing parameter documentation: Message, Level, Component",
+        "Name": "Write-AnalysisLog",
+        "Path": "./domains/reporting/TechDebtAnalysis.psm1",
+        "Type": "Function",
+        "Line": 170
+      },
+      {
+        "Issue": "Missing parameter documentation: AnalysisType, Results, OutputPath",
+        "Name": "Save-AnalysisResults",
+        "Path": "./domains/reporting/TechDebtAnalysis.psm1",
+        "Type": "Function",
+        "Line": 194
+      },
+      {
+        "Issue": "Missing parameter documentation: AnalysisType, ResultsPath, Latest",
+        "Name": "Get-AnalysisResults",
+        "Path": "./domains/reporting/TechDebtAnalysis.psm1",
+        "Type": "Function",
+        "Line": 230
+      },
+      {
+        "Issue": "Missing parameter documentation: AnalysisTypes, ResultsPath",
+        "Name": "Merge-AnalysisResults",
+        "Path": "./domains/reporting/TechDebtAnalysis.psm1",
+        "Type": "Function",
+        "Line": 269
+      },
+      {
+        "Issue": "Missing parameter documentation: Path, Include, Exclude, ChangedOnly, Since",
+        "Name": "Get-FilesToAnalyze",
+        "Path": "./domains/reporting/TechDebtAnalysis.psm1",
+        "Type": "Function",
+        "Line": 297
+      },
+      {
+        "Issue": "Missing parameter documentation: ScriptBlock, InputObject, MaxConcurrency, JobName",
+        "Name": "Start-ParallelAnalysis",
+        "Path": "./domains/reporting/TechDebtAnalysis.psm1",
+        "Type": "Function",
+        "Line": 326
+      },
+      {
+        "Issue": "Missing parameter documentation: EventType, Action, Target, Details, Result, UserOverride",
+        "Name": "Write-AuditLog",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 467
+      },
+      {
+        "Issue": "Missing parameter documentation: CorrelationId",
+        "Name": "Enable-AuditLogging",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 531
+      },
+      {
+        "Issue": "Missing parameter documentation: StartTime, EndTime, EventType, User, Action, Result, CorrelationId",
+        "Name": "Get-AuditLogs",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 561
+      },
+      {
+        "Issue": "Missing parameter documentation: Message, Properties, Level, Source, Tags, CorrelationId, OperationId, Metrics",
+        "Name": "Write-StructuredLog",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 636
+      },
+      {
+        "Issue": "Missing parameter documentation: Query, LogTypes, StartTime, EndTime, MaxResults, IncludeArchived",
+        "Name": "Search-Logs",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 695
+      },
+      {
+        "Issue": "Missing parameter documentation: StartTime, EndTime, Format, OutputPath, IncludeAudit, IncludeMetrics, GroupBySource",
+        "Name": "Export-LogReport",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 790
+      },
+      {
+        "Issue": "Missing parameter documentation: ShowTranscript, FollowTail",
+        "Name": "Show-LogDashboard",
+        "Path": "./domains/utilities/LoggingDashboard.psm1",
+        "Type": "Function",
+        "Line": 24
+      },
+      {
+        "Issue": "Missing parameter documentation: StartTime, EndTime",
+        "Name": "Get-LogStatistics",
+        "Path": "./domains/utilities/LoggingDashboard.psm1",
+        "Type": "Function",
+        "Line": 516
+      },
+      {
+        "Issue": "Missing parameter documentation: Source",
+        "Name": "Start-LoggedOperation",
+        "Path": "./domains/utilities/LoggingEnhancer.psm1",
+        "Type": "Function",
+        "Line": 20
+      },
+      {
+        "Issue": "Missing parameter documentation: Results",
+        "Name": "Stop-LoggedOperation",
+        "Path": "./domains/utilities/LoggingEnhancer.psm1",
+        "Type": "Function",
+        "Line": 123
+      },
+      {
+        "Issue": "Missing parameter documentation: Source",
+        "Name": "Write-DetailedLog",
+        "Path": "./domains/utilities/LoggingEnhancer.psm1",
+        "Type": "Function",
+        "Line": 194
+      },
+      {
+        "Issue": "Missing parameter documentation: NoColor",
+        "Name": "Show-LogContent",
+        "Path": "./domains/utilities/LogViewer.psm1",
+        "Type": "Function",
+        "Line": 68
+      },
+      {
+        "Issue": "Missing parameter documentation: Path",
+        "Name": "Get-LogStatistics",
+        "Path": "./domains/utilities/LogViewer.psm1",
+        "Type": "Function",
+        "Line": 137
+      },
+      {
+        "Issue": "Missing parameter documentation: AutoRefresh",
+        "Name": "Show-LogDashboard",
+        "Path": "./domains/utilities/LogViewer.psm1",
+        "Type": "Function",
+        "Line": 192
+      },
+      {
+        "Issue": "Missing parameter documentation: Pattern, Type",
+        "Name": "Search-Logs",
+        "Path": "./domains/utilities/LogViewer.psm1",
+        "Type": "Function",
+        "Line": 319
+      },
+      {
+        "Issue": "Missing parameter documentation: DaysToKeep",
+        "Name": "Clear-OldLogs",
+        "Path": "./domains/utilities/LogViewer.psm1",
+        "Type": "Function",
+        "Line": 362
+      },
+      {
+        "Issue": "Missing parameter documentation: OSType, Edition",
+        "Name": "Get-OSImageName",
+        "Path": "./legacy-to-migrate/ISOCustomizer/Private/ISOHelpers.ps1",
+        "Type": "Function",
+        "Line": 17
+      },
+      {
+        "Issue": "Missing parameter documentation: MountPath, Changes",
+        "Name": "Apply-OfflineRegistryChanges",
+        "Path": "./legacy-to-migrate/ISOCustomizer/Private/ISOHelpers.ps1",
+        "Type": "Function",
+        "Line": 61
+      },
+      {
+        "Issue": "Missing parameter documentation: ISOType, ISOName",
+        "Name": "Get-PredefinedISOConfig",
+        "Path": "./legacy-to-migrate/ISOCustomizer/Private/ISOHelpers.ps1",
+        "Type": "Function",
+        "Line": 103
+      },
+      {
+        "Issue": "Missing parameter documentation: FilePath, ISOName, ISOType, DownloadURL",
+        "Name": "Update-ISOInventory",
+        "Path": "./legacy-to-migrate/ISOCustomizer/Private/ISOHelpers.ps1",
+        "Type": "Function",
+        "Line": 134
+      },
+      {
+        "Issue": "Missing parameter documentation: Config",
+        "Name": "Get-DeploymentScriptsFromConfig",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Public/Invoke-ParallelLabRunner.ps1",
+        "Type": "Function",
+        "Line": 367
+      },
+      {
+        "Issue": "Missing parameter documentation: OperationName, Config, ProgressId, UseProgressTracking",
+        "Name": "Invoke-PredefinedLabOperation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Public/Invoke-ParallelLabRunner.ps1",
+        "Type": "Function",
+        "Line": 429
+      },
+      {
+        "Issue": "Missing parameter documentation: Config",
+        "Name": "Test-LabDeploymentHealth",
+        "Path": "./legacy-to-migrate/mig_LabRunner/LabRunner.psm1",
+        "Type": "Function",
+        "Line": 806
+      },
+      {
+        "Issue": "Missing parameter documentation: Result",
+        "Name": "Write-EnhancedDeploymentSummary",
+        "Path": "./legacy-to-migrate/mig_LabRunner/LabRunner.psm1",
+        "Type": "Function",
+        "Line": 857
+      },
+      {
+        "Issue": "Missing parameter documentation: OperationId, StepName, CurrentStep, IncrementStep",
+        "Name": "Update-PatchProgress",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Private/Initialize-ProgressTracking.ps1",
+        "Type": "Function",
+        "Line": 92
+      },
+      {
+        "Issue": "Missing parameter documentation: OperationId, ShowSummary",
+        "Name": "Complete-PatchProgress",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Private/Initialize-ProgressTracking.ps1",
+        "Type": "Function",
+        "Line": 133
+      },
+      {
+        "Issue": "Missing parameter documentation: Message, Level",
+        "Name": "Write-PatchProgressLog",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Private/Initialize-ProgressTracking.ps1",
+        "Type": "Function",
+        "Line": 154
+      },
+      {
+        "Issue": "Missing parameter documentation: PatchDescription, PatchOperation, CreatePR, CreateIssue, Priority",
+        "Name": "Invoke-PatchWorkflowEnhanced",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Show-GitStatusGuidance.ps1",
+        "Type": "Function",
+        "Line": 133
+      },
+      {
+        "Issue": "Outdated - 2 module file(s) modified after README",
+        "ReadmeDate": "2025-08-08T00:49:36.9917746+00:00",
+        "Path": "./domains/automation/README.md",
+        "Type": "README",
+        "ModuleDate": "2025-08-08T22:56:27.1390761+00:00"
+      },
+      {
+        "Issue": "Outdated - 1 module file(s) modified after README",
+        "ReadmeDate": "2025-08-08T00:23:45.6146903+00:00",
+        "Path": "./domains/configuration/README.md",
+        "Type": "README",
+        "ModuleDate": "2025-08-08T23:00:17.8390597+00:00"
+      },
+      {
+        "Issue": "Outdated - 3 module file(s) modified after README",
+        "ReadmeDate": "2025-08-08T05:34:34.8837041+00:00",
+        "Path": "./domains/development/README.md",
+        "Type": "README",
+        "ModuleDate": "2025-08-08T11:31:11.4908673+00:00"
+      },
+      {
+        "Issue": "Outdated - 2 module file(s) modified after README",
+        "ReadmeDate": "2025-08-08T17:50:49.40699+00:00",
+        "Path": "./domains/experience/README.md",
+        "Type": "README",
+        "ModuleDate": "2025-08-08T23:47:07.8908601+00:00"
+      },
+      {
+        "Issue": "Outdated - 1 module file(s) modified after README",
+        "ReadmeDate": "2025-08-08T00:23:33.7226896+00:00",
+        "Path": "./domains/infrastructure/README.md",
+        "Type": "README",
+        "ModuleDate": "2025-08-08T09:43:13.2595151+00:00"
+      },
+      {
+        "Issue": "Outdated - 2 module file(s) modified after README",
+        "ReadmeDate": "2025-08-08T04:07:33.2024203+00:00",
+        "Path": "./domains/reporting/README.md",
+        "Type": "README",
+        "ModuleDate": "2025-08-08T23:47:40.9008577+00:00"
+      },
+      {
+        "Issue": "Outdated - 5 module file(s) modified after README",
+        "ReadmeDate": "2025-08-08T00:23:59.104691+00:00",
+        "Path": "./domains/utilities/README.md",
+        "Type": "README",
+        "ModuleDate": "2025-08-08T23:48:26.1228545+00:00"
+      }
+    ],
+    "Duration": {
+      "Ticks": 185213867,
+      "Days": 0,
+      "Hours": 0,
+      "Milliseconds": 521,
+      "Microseconds": 386,
+      "Nanoseconds": 700,
+      "Minutes": 0,
+      "Seconds": 18,
+      "TotalDays": 0.00021436790162037038,
+      "TotalHours": 0.005144829638888889,
+      "TotalMilliseconds": 18521.3867,
+      "TotalMicroseconds": 18521386.7,
+      "TotalNanoseconds": 18521386700.0,
+      "TotalMinutes": 0.30868977833333333,
+      "TotalSeconds": 18.5213867
+    },
+    "Functions": {},
+    "DocumentedFiles": 142,
+    "OverallCoveragePercentage": 39.33,
+    "FileCoveragePercentage": 54.83,
+    "DocumentedFunctions": 212,
+    "TotalFunctions": 641,
+    "FunctionCoveragePercentage": 33.07,
+    "TotalFiles": 259,
+    "MissingDocs": [
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0000_Cleanup-Environment.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0000_Cleanup-Environment.ps1",
+        "Type": "Function",
+        "Line": 26
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0001_Ensure-PowerShell7.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0001_Ensure-PowerShell7.ps1",
+        "Type": "Function",
+        "Line": 13
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0002_Setup-Directories.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0002_Setup-Directories.ps1",
+        "Type": "Function",
+        "Line": 26
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0006_Install-ValidationTools.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0006_Install-ValidationTools.ps1",
+        "Type": "Function",
+        "Line": 26
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0007_Install-Go.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0007_Install-Go.ps1",
+        "Type": "Function",
+        "Line": 27
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0008_Install-OpenTofu.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0008_Install-OpenTofu.ps1",
+        "Type": "Function",
+        "Line": 26
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0009_Initialize-OpenTofu.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0009_Initialize-OpenTofu.ps1",
+        "Type": "Function",
+        "Line": 27
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0100_Configure-System.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0100_Configure-System.ps1",
+        "Type": "Function",
+        "Line": 26
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0104_Install-CertificateAuthority.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0104_Install-CertificateAuthority.ps1",
+        "Type": "Function",
+        "Line": 28
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0105_Install-HyperV.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0105_Install-HyperV.ps1",
+        "Type": "Function",
+        "Line": 26
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0106_Install-WindowsAdminCenter.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0106_Install-WindowsAdminCenter.ps1",
+        "Type": "Function",
+        "Line": 28
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0106_Install-WSL2.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0106_Install-WSL2.ps1",
+        "Type": "Function",
+        "Line": 28
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0112_Enable-PXE.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0112_Enable-PXE.ps1",
+        "Type": "Function",
+        "Line": 26
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0201_Install-Node.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0201_Install-Node.ps1",
+        "Type": "Function",
+        "Line": 24
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0204_Install-Poetry.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0204_Install-Poetry.ps1",
+        "Type": "Function",
+        "Line": 24
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0205_Install-Sysinternals.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0205_Install-Sysinternals.ps1",
+        "Type": "Function",
+        "Line": 24
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0206_Install-Python.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0206_Install-Python.ps1",
+        "Type": "Function",
+        "Line": 25
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0207_Install-Git.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0207_Install-Git.ps1",
+        "Type": "Function",
+        "Line": 24
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0208_Install-Docker.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0208_Install-Docker.ps1",
+        "Type": "Function",
+        "Line": 25
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0209_Install-7Zip.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0209_Install-7Zip.ps1",
+        "Type": "Function",
+        "Line": 24
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0210_Install-VSCode.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0210_Install-VSCode.ps1",
+        "Type": "Function",
+        "Line": 25
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0211_Install-VSBuildTools.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0211_Install-VSBuildTools.ps1",
+        "Type": "Function",
+        "Line": 24
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0212_Install-AzureCLI.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0212_Install-AzureCLI.ps1",
+        "Type": "Function",
+        "Line": 24
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0213_Install-AWSCLI.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0213_Install-AWSCLI.ps1",
+        "Type": "Function",
+        "Line": 24
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0214_Install-Packer.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0214_Install-Packer.ps1",
+        "Type": "Function",
+        "Line": 24
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0215_Install-Chocolatey.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0215_Install-Chocolatey.ps1",
+        "Type": "Function",
+        "Line": 24
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0216_Set-PowerShellProfile.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0216_Set-PowerShellProfile.ps1",
+        "Type": "Function",
+        "Line": 24
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0217_Install-ClaudeCode.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0217_Install-ClaudeCode.ps1",
+        "Type": "Function",
+        "Line": 24
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0218_Install-GeminiCLI.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0218_Install-GeminiCLI.ps1",
+        "Type": "Function",
+        "Line": 24
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0300_Deploy-Infrastructure.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0300_Deploy-Infrastructure.ps1",
+        "Type": "Function",
+        "Line": 26
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0400_Install-TestingTools.ps1",
+        "Type": "Function",
+        "Line": 49
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0402_Run-UnitTests.ps1",
+        "Type": "Function",
+        "Line": 59
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0403_Run-IntegrationTests.ps1",
+        "Type": "Function",
+        "Line": 58
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0404_Run-PSScriptAnalyzer.ps1",
+        "Type": "Function",
+        "Line": 52
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0405_Validate-AST.ps1",
+        "Type": "Function",
+        "Line": 54
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-PowerShellSyntax",
+        "Path": "./automation-scripts/0405_Validate-AST.ps1",
+        "Type": "Function",
+        "Line": 76
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-ParameterDefinitions",
+        "Path": "./automation-scripts/0405_Validate-AST.ps1",
+        "Type": "Function",
+        "Line": 119
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-CommandUsage",
+        "Path": "./automation-scripts/0405_Validate-AST.ps1",
+        "Type": "Function",
+        "Line": 162
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-ModuleDependencies",
+        "Path": "./automation-scripts/0405_Validate-AST.ps1",
+        "Type": "Function",
+        "Line": 223
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Merge-Hashtables",
+        "Path": "./automation-scripts/0405_Validate-AST.ps1",
+        "Type": "Function",
+        "Line": 497
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0406_Generate-Coverage.ps1",
+        "Type": "Function",
+        "Line": 59
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Convert-CoverageReport",
+        "Path": "./automation-scripts/0406_Generate-Coverage.ps1",
+        "Type": "Function",
+        "Line": 80
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-CoverageHtmlReport",
+        "Path": "./automation-scripts/0406_Generate-Coverage.ps1",
+        "Type": "Function",
+        "Line": 121
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0408_Generate-TestCoverage.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0408_Generate-TestCoverage.ps1",
+        "Type": "Function",
+        "Line": 24
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0500_Validate-Environment.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0500_Validate-Environment.ps1",
+        "Type": "Function",
+        "Line": 25
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0501_Get-SystemInfo.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0501_Get-SystemInfo.ps1",
+        "Type": "Function",
+        "Line": 31
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ReportLog",
+        "Path": "./automation-scripts/0510_Generate-ProjectReport.ps1",
+        "Type": "Function",
+        "Line": 28
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Show-Header",
+        "Path": "./automation-scripts/0511_Show-ProjectDashboard.ps1",
+        "Type": "Function",
+        "Line": 31
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Show-ProjectMetrics",
+        "Path": "./automation-scripts/0511_Show-ProjectDashboard.ps1",
+        "Type": "Function",
+        "Line": 41
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Show-TestResults",
+        "Path": "./automation-scripts/0511_Show-ProjectDashboard.ps1",
+        "Type": "Function",
+        "Line": 78
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Show-RecentLogs",
+        "Path": "./automation-scripts/0511_Show-ProjectDashboard.ps1",
+        "Type": "Function",
+        "Line": 107
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Show-ModuleStatus",
+        "Path": "./automation-scripts/0511_Show-ProjectDashboard.ps1",
+        "Type": "Function",
+        "Line": 141
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Show-RecentActivity",
+        "Path": "./automation-scripts/0511_Show-ProjectDashboard.ps1",
+        "Type": "Function",
+        "Line": 164
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Analyze-ConfigurationUsage",
+        "Path": "./automation-scripts/0520_Analyze-ConfigurationUsage.ps1",
+        "Type": "Function",
+        "Line": 36
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-TodoPatterns",
+        "Path": "./automation-scripts/0522_Analyze-CodeQuality.ps1",
+        "Type": "Function",
+        "Line": 38
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-HardcodedPatterns",
+        "Path": "./automation-scripts/0522_Analyze-CodeQuality.ps1",
+        "Type": "Function",
+        "Line": 49
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Analyze-FileComplexity",
+        "Path": "./automation-scripts/0522_Analyze-CodeQuality.ps1",
+        "Type": "Function",
+        "Line": 65
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Analyze-CodeQuality",
+        "Path": "./automation-scripts/0522_Analyze-CodeQuality.ps1",
+        "Type": "Function",
+        "Line": 162
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-SecurityPatterns",
+        "Path": "./automation-scripts/0523_Analyze-SecurityIssues.ps1",
+        "Type": "Function",
+        "Line": 37
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-ParameterValidation",
+        "Path": "./automation-scripts/0523_Analyze-SecurityIssues.ps1",
+        "Type": "Function",
+        "Line": 115
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Analyze-SecurityIssues",
+        "Path": "./automation-scripts/0523_Analyze-SecurityIssues.ps1",
+        "Type": "Function",
+        "Line": 142
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-AnalysisIfNeeded",
+        "Path": "./automation-scripts/0524_Generate-TechDebtReport.ps1",
+        "Type": "Function",
+        "Line": 39
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-TechDebtSummary",
+        "Path": "./automation-scripts/0524_Generate-TechDebtReport.ps1",
+        "Type": "Function",
+        "Line": 86
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Export-HTMLReport",
+        "Path": "./automation-scripts/0524_Generate-TechDebtReport.ps1",
+        "Type": "Function",
+        "Line": 184
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Export-MarkdownReport",
+        "Path": "./automation-scripts/0524_Generate-TechDebtReport.ps1",
+        "Type": "Function",
+        "Line": 635
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/0530_View-Logs.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/0530_View-Logs.ps1",
+        "Type": "Function",
+        "Line": 47
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-RunnerLog",
+        "Path": "./automation-scripts/0720_Setup-GitHubRunners.ps1",
+        "Type": "Function",
+        "Line": 63
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-RunnerPlatform",
+        "Path": "./automation-scripts/0720_Setup-GitHubRunners.ps1",
+        "Type": "Function",
+        "Line": 72
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-Prerequisites",
+        "Path": "./automation-scripts/0720_Setup-GitHubRunners.ps1",
+        "Type": "Function",
+        "Line": 82
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-GitHubToken",
+        "Path": "./automation-scripts/0720_Setup-GitHubRunners.ps1",
+        "Type": "Function",
+        "Line": 111
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-RunnerRegistrationToken",
+        "Path": "./automation-scripts/0720_Setup-GitHubRunners.ps1",
+        "Type": "Function",
+        "Line": 140
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Install-RunnerBinary",
+        "Path": "./automation-scripts/0720_Setup-GitHubRunners.ps1",
+        "Type": "Function",
+        "Line": 170
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Register-Runner",
+        "Path": "./automation-scripts/0720_Setup-GitHubRunners.ps1",
+        "Type": "Function",
+        "Line": 232
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Install-RunnerService",
+        "Path": "./automation-scripts/0720_Setup-GitHubRunners.ps1",
+        "Type": "Function",
+        "Line": 297
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-RunnerStatus",
+        "Path": "./automation-scripts/0720_Setup-GitHubRunners.ps1",
+        "Type": "Function",
+        "Line": 338
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ServiceLog",
+        "Path": "./automation-scripts/0722_Install-RunnerServices.ps1",
+        "Type": "Function",
+        "Line": 59
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-ServiceType",
+        "Path": "./automation-scripts/0722_Install-RunnerServices.ps1",
+        "Type": "Function",
+        "Line": 68
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Find-RunnerDirectory",
+        "Path": "./automation-scripts/0722_Install-RunnerServices.ps1",
+        "Type": "Function",
+        "Line": 84
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-ServicePrerequisites",
+        "Path": "./automation-scripts/0722_Install-RunnerServices.ps1",
+        "Type": "Function",
+        "Line": 121
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Install-WindowsService",
+        "Path": "./automation-scripts/0722_Install-RunnerServices.ps1",
+        "Type": "Function",
+        "Line": 177
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Install-SystemDService",
+        "Path": "./automation-scripts/0722_Install-RunnerServices.ps1",
+        "Type": "Function",
+        "Line": 248
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Install-LaunchDService",
+        "Path": "./automation-scripts/0722_Install-RunnerServices.ps1",
+        "Type": "Function",
+        "Line": 329
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Install-ServiceMonitoring",
+        "Path": "./automation-scripts/0722_Install-RunnerServices.ps1",
+        "Type": "Function",
+        "Line": 401
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-ServiceInstallation",
+        "Path": "./automation-scripts/0722_Install-RunnerServices.ps1",
+        "Type": "Function",
+        "Line": 465
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-MatrixLog",
+        "Path": "./automation-scripts/0723_Setup-MatrixRunners.ps1",
+        "Type": "Function",
+        "Line": 56
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-PredefinedMatrix",
+        "Path": "./automation-scripts/0723_Setup-MatrixRunners.ps1",
+        "Type": "Function",
+        "Line": 65
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Read-MatrixConfiguration",
+        "Path": "./automation-scripts/0723_Setup-MatrixRunners.ps1",
+        "Type": "Function",
+        "Line": 176
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-MatrixConfiguration",
+        "Path": "./automation-scripts/0723_Setup-MatrixRunners.ps1",
+        "Type": "Function",
+        "Line": 202
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-PlatformSupport",
+        "Path": "./automation-scripts/0723_Setup-MatrixRunners.ps1",
+        "Type": "Function",
+        "Line": 253
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Setup-RunnerConfiguration",
+        "Path": "./automation-scripts/0723_Setup-MatrixRunners.ps1",
+        "Type": "Function",
+        "Line": 267
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Setup-RunnersParallel",
+        "Path": "./automation-scripts/0723_Setup-MatrixRunners.ps1",
+        "Type": "Function",
+        "Line": 376
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Setup-RunnersSequential",
+        "Path": "./automation-scripts/0723_Setup-MatrixRunners.ps1",
+        "Type": "Function",
+        "Line": 443
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-AIConfig",
+        "Path": "./automation-scripts/0730_Setup-AIAgents.ps1",
+        "Type": "Function",
+        "Line": 62
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-AILog",
+        "Path": "./automation-scripts/0730_Setup-AIAgents.ps1",
+        "Type": "Function",
+        "Line": 79
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-APIKey",
+        "Path": "./automation-scripts/0730_Setup-AIAgents.ps1",
+        "Type": "Function",
+        "Line": 100
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-AIConnectivity",
+        "Path": "./automation-scripts/0730_Setup-AIAgents.ps1",
+        "Type": "Function",
+        "Line": 125
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Set-SecureAPIKey",
+        "Path": "./automation-scripts/0730_Setup-AIAgents.ps1",
+        "Type": "Function",
+        "Line": 171
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Initialize-RateLimiting",
+        "Path": "./automation-scripts/0730_Setup-AIAgents.ps1",
+        "Type": "Function",
+        "Line": 198
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Initialize-UsageTracking",
+        "Path": "./automation-scripts/0730_Setup-AIAgents.ps1",
+        "Type": "Function",
+        "Line": 230
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Set-FallbackChain",
+        "Path": "./automation-scripts/0730_Setup-AIAgents.ps1",
+        "Type": "Function",
+        "Line": 263
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Main",
+        "Path": "./automation-scripts/0730_Setup-AIAgents.ps1",
+        "Type": "Function",
+        "Line": 286
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-Tests",
+        "Path": "./automation-scripts/0801_Parse-PesterResults.ps1",
+        "Type": "Function",
+        "Line": 118
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-GitContext",
+        "Path": "./automation-scripts/0820_Save-WorkContext.ps1",
+        "Type": "Function",
+        "Line": 51
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-PowerShellContext",
+        "Path": "./automation-scripts/0820_Save-WorkContext.ps1",
+        "Type": "Function",
+        "Line": 89
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-TestContext",
+        "Path": "./automation-scripts/0820_Save-WorkContext.ps1",
+        "Type": "Function",
+        "Line": 132
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-ProjectContext",
+        "Path": "./automation-scripts/0820_Save-WorkContext.ps1",
+        "Type": "Function",
+        "Line": 179
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Compress-Context",
+        "Path": "./automation-scripts/0820_Save-WorkContext.ps1",
+        "Type": "Function",
+        "Line": 231
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-TokenEstimate",
+        "Path": "./automation-scripts/0821_Generate-ContinuationPrompt.ps1",
+        "Type": "Function",
+        "Line": 48
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-PrioritizedContext",
+        "Path": "./automation-scripts/0821_Generate-ContinuationPrompt.ps1",
+        "Type": "Function",
+        "Line": 55
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-PromptSection",
+        "Path": "./automation-scripts/0821_Generate-ContinuationPrompt.ps1",
+        "Type": "Function",
+        "Line": 122
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-DataType",
+        "Path": "./automation-scripts/0830_Generate-PromptFromData.ps1",
+        "Type": "Function",
+        "Line": 69
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Parse-StructuredData",
+        "Path": "./automation-scripts/0830_Generate-PromptFromData.ps1",
+        "Type": "Function",
+        "Line": 119
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-AnalysisPrompt",
+        "Path": "./automation-scripts/0830_Generate-PromptFromData.ps1",
+        "Type": "Function",
+        "Line": 204
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-ImplementationPrompt",
+        "Path": "./automation-scripts/0830_Generate-PromptFromData.ps1",
+        "Type": "Function",
+        "Line": 314
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-DocumentationPrompt",
+        "Path": "./automation-scripts/0830_Generate-PromptFromData.ps1",
+        "Type": "Function",
+        "Line": 480
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-TestingPrompt",
+        "Path": "./automation-scripts/0830_Generate-PromptFromData.ps1",
+        "Type": "Function",
+        "Line": 547
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Apply-CustomTemplate",
+        "Path": "./automation-scripts/0830_Generate-PromptFromData.ps1",
+        "Type": "Function",
+        "Line": 582
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Compress-Prompt",
+        "Path": "./automation-scripts/0830_Generate-PromptFromData.ps1",
+        "Type": "Function",
+        "Line": 614
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-PromptTemplates",
+        "Path": "./automation-scripts/0831_Prompt-Templates.ps1",
+        "Type": "Function",
+        "Line": 586
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-PromptTemplate",
+        "Path": "./automation-scripts/0831_Prompt-Templates.ps1",
+        "Type": "Function",
+        "Line": 598
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./automation-scripts/9999_Reset-Machine.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ScriptLog",
+        "Path": "./automation-scripts/9999_Reset-Machine.ps1",
+        "Type": "Function",
+        "Line": 24
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-WorkflowLog",
+        "Path": "./domains/ai-agents/AIWorkflowOrchestrator.psm1",
+        "Type": "Function",
+        "Line": 23
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-EstimatedDuration",
+        "Path": "./domains/ai-agents/AIWorkflowOrchestrator.psm1",
+        "Type": "Function",
+        "Line": 370
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Execute-WorkflowTasks",
+        "Path": "./domains/ai-agents/AIWorkflowOrchestrator.psm1",
+        "Type": "Function",
+        "Line": 385
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-AgentTask",
+        "Path": "./domains/ai-agents/AIWorkflowOrchestrator.psm1",
+        "Type": "Function",
+        "Line": 424
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-ResultAggregation",
+        "Path": "./domains/ai-agents/AIWorkflowOrchestrator.psm1",
+        "Type": "Function",
+        "Line": 437
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-AutomationLog",
+        "Path": "./domains/automation/DeploymentAutomation.psm1",
+        "Type": "Function",
+        "Line": 35
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-DeploymentPlatform",
+        "Path": "./domains/automation/DeploymentAutomation.psm1",
+        "Type": "Function",
+        "Line": 65
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Resolve-DeploymentConfiguration",
+        "Path": "./domains/automation/DeploymentAutomation.psm1",
+        "Type": "Function",
+        "Line": 191
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-AutomationScripts",
+        "Path": "./domains/automation/DeploymentAutomation.psm1",
+        "Type": "Function",
+        "Line": 215
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-ScriptMetadata",
+        "Path": "./domains/automation/DeploymentAutomation.psm1",
+        "Type": "Function",
+        "Line": 262
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-DeploymentEnvironment",
+        "Path": "./domains/automation/DeploymentAutomation.psm1",
+        "Type": "Function",
+        "Line": 296
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-ExecutionPlan",
+        "Path": "./domains/automation/DeploymentAutomation.psm1",
+        "Type": "Function",
+        "Line": 342
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-DependencyNode",
+        "Path": "./domains/automation/DeploymentAutomation.psm1",
+        "Type": "Function",
+        "Line": 361
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-ParallelExecution",
+        "Path": "./domains/automation/DeploymentAutomation.psm1",
+        "Type": "Function",
+        "Line": 397
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-SequentialExecution",
+        "Path": "./domains/automation/DeploymentAutomation.psm1",
+        "Type": "Function",
+        "Line": 532
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-ExecutionSummary",
+        "Path": "./domains/automation/DeploymentAutomation.psm1",
+        "Type": "Function",
+        "Line": 591
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-DeploymentSummary",
+        "Path": "./domains/automation/DeploymentAutomation.psm1",
+        "Type": "Function",
+        "Line": 611
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-OrchestrationLog",
+        "Path": "./domains/automation/OrchestrationEngine.psm1",
+        "Type": "Function",
+        "Line": 24
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "ConvertTo-ScriptNumbers",
+        "Path": "./domains/automation/OrchestrationEngine.psm1",
+        "Type": "Function",
+        "Line": 312
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Expand-PlaybookVariables",
+        "Path": "./domains/automation/OrchestrationEngine.psm1",
+        "Type": "Function",
+        "Line": 399
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-OrchestrationScripts",
+        "Path": "./domains/automation/OrchestrationEngine.psm1",
+        "Type": "Function",
+        "Line": 426
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-ScriptMetadata",
+        "Path": "./domains/automation/OrchestrationEngine.psm1",
+        "Type": "Function",
+        "Line": 492
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-OrchestrationCondition",
+        "Path": "./domains/automation/OrchestrationEngine.psm1",
+        "Type": "Function",
+        "Line": 529
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Show-OrchestrationPlan",
+        "Path": "./domains/automation/OrchestrationEngine.psm1",
+        "Type": "Function",
+        "Line": 563
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-ParallelOrchestration",
+        "Path": "./domains/automation/OrchestrationEngine.psm1",
+        "Type": "Function",
+        "Line": 597
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-SequentialOrchestration",
+        "Path": "./domains/automation/OrchestrationEngine.psm1",
+        "Type": "Function",
+        "Line": 730
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Build-DependencyGraph",
+        "Path": "./domains/automation/OrchestrationEngine.psm1",
+        "Type": "Function",
+        "Line": 883
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-DependenciesMet",
+        "Path": "./domains/automation/OrchestrationEngine.psm1",
+        "Type": "Function",
+        "Line": 912
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-OrchestrationConfiguration",
+        "Path": "./domains/automation/OrchestrationEngine.psm1",
+        "Type": "Function",
+        "Line": 931
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Save-OrchestrationPlaybook",
+        "Path": "./domains/automation/OrchestrationEngine.psm1",
+        "Type": "Function",
+        "Line": 1021
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-OrchestrationPlaybook",
+        "Path": "./domains/automation/OrchestrationEngine.psm1",
+        "Type": "Function",
+        "Line": 1062
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ConfigLog",
+        "Path": "./domains/configuration/Configuration.psm1",
+        "Type": "Function",
+        "Line": 19
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-Configuration",
+        "Path": "./domains/configuration/Configuration.psm1",
+        "Type": "Function",
+        "Line": 50
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Set-Configuration",
+        "Path": "./domains/configuration/Configuration.psm1",
+        "Type": "Function",
+        "Line": 152
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-ConfigValue",
+        "Path": "./domains/configuration/Configuration.psm1",
+        "Type": "Function",
+        "Line": 179
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Initialize-ConfigurationSystem",
+        "Path": "./domains/configuration/Configuration.psm1",
+        "Type": "Function",
+        "Line": 200
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Switch-ConfigurationEnvironment",
+        "Path": "./domains/configuration/Configuration.psm1",
+        "Type": "Function",
+        "Line": 232
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-Configuration",
+        "Path": "./domains/configuration/Configuration.psm1",
+        "Type": "Function",
+        "Line": 260
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Export-Configuration",
+        "Path": "./domains/configuration/Configuration.psm1",
+        "Type": "Function",
+        "Line": 298
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Import-Configuration",
+        "Path": "./domains/configuration/Configuration.psm1",
+        "Type": "Function",
+        "Line": 331
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Merge-Configuration",
+        "Path": "./domains/configuration/Configuration.psm1",
+        "Type": "Function",
+        "Line": 380
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Enable-ConfigurationHotReload",
+        "Path": "./domains/configuration/Configuration.psm1",
+        "Type": "Function",
+        "Line": 403
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Disable-ConfigurationHotReload",
+        "Path": "./domains/configuration/Configuration.psm1",
+        "Type": "Function",
+        "Line": 426
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-GitLog",
+        "Path": "./domains/development/GitAutomation.psm1",
+        "Type": "Function",
+        "Line": 32
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-IssueLog",
+        "Path": "./domains/development/IssueTracker.psm1",
+        "Type": "Function",
+        "Line": 32
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-PRLog",
+        "Path": "./domains/development/PullRequestManager.psm1",
+        "Type": "Function",
+        "Line": 36
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Draw-MenuBorder",
+        "Path": "./domains/experience/Components/InteractiveMenu.psm1",
+        "Type": "Function",
+        "Line": 262
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Draw-MenuSearch",
+        "Path": "./domains/experience/Components/InteractiveMenu.psm1",
+        "Type": "Function",
+        "Line": 291
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Build-MenuItemText",
+        "Path": "./domains/experience/Components/InteractiveMenu.psm1",
+        "Type": "Function",
+        "Line": 302
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-VisibleMenuItems",
+        "Path": "./domains/experience/Components/InteractiveMenu.psm1",
+        "Type": "Function",
+        "Line": 332
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Ensure-MenuItemVisible",
+        "Path": "./domains/experience/Components/InteractiveMenu.psm1",
+        "Type": "Function",
+        "Line": 339
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Update-MenuFilter",
+        "Path": "./domains/experience/Components/InteractiveMenu.psm1",
+        "Type": "Function",
+        "Line": 355
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Draw-MenuScrollbar",
+        "Path": "./domains/experience/Components/InteractiveMenu.psm1",
+        "Type": "Function",
+        "Line": 380
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Calculate-FlowLayout",
+        "Path": "./domains/experience/Layout/LayoutManager.psm1",
+        "Type": "Function",
+        "Line": 119
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Calculate-GridLayout",
+        "Path": "./domains/experience/Layout/LayoutManager.psm1",
+        "Type": "Function",
+        "Line": 156
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Calculate-StackLayout",
+        "Path": "./domains/experience/Layout/LayoutManager.psm1",
+        "Type": "Function",
+        "Line": 193
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Calculate-AbsoluteLayout",
+        "Path": "./domains/experience/Layout/LayoutManager.psm1",
+        "Type": "Function",
+        "Line": 225
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Calculate-FlexLayout",
+        "Path": "./domains/experience/Layout/LayoutManager.psm1",
+        "Type": "Function",
+        "Line": 244
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-UILog",
+        "Path": "./domains/experience/UserInterface.psm1",
+        "Type": "Function",
+        "Line": 79
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./domains/infrastructure/Infrastructure.psm1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-InfraLog",
+        "Path": "./domains/infrastructure/Infrastructure.psm1",
+        "Type": "Function",
+        "Line": 6
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-OpenTofu",
+        "Path": "./domains/infrastructure/Infrastructure.psm1",
+        "Type": "Function",
+        "Line": 33
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-InfrastructureTool",
+        "Path": "./domains/infrastructure/Infrastructure.psm1",
+        "Type": "Function",
+        "Line": 54
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-InfrastructurePlan",
+        "Path": "./domains/infrastructure/Infrastructure.psm1",
+        "Type": "Function",
+        "Line": 71
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-InfrastructureApply",
+        "Path": "./domains/infrastructure/Infrastructure.psm1",
+        "Type": "Function",
+        "Line": 94
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-InfrastructureDestroy",
+        "Path": "./domains/infrastructure/Infrastructure.psm1",
+        "Type": "Function",
+        "Line": 122
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ReportLog",
+        "Path": "./domains/reporting/ReportingEngine.psm1",
+        "Type": "Function",
+        "Line": 96
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-MarkdownReport",
+        "Path": "./domains/reporting/ReportingEngine.psm1",
+        "Type": "Function",
+        "Line": 564
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-HtmlReport",
+        "Path": "./domains/reporting/ReportingEngine.psm1",
+        "Type": "Function",
+        "Line": 629
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-TestingLog",
+        "Path": "./domains/testing/TestingFramework.psm1",
+        "Type": "Function",
+        "Line": 26
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-TestingConfiguration",
+        "Path": "./domains/testing/TestingFramework.psm1",
+        "Type": "Function",
+        "Line": 55
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-CustomLog",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 40
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Clear-LogBuffer",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 101
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-LogToConsole",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 128
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-LogToFile",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 150
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-LogToJson",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 179
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-LogToEventLog",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 193
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-LogRotation",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 219
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Set-LogLevel",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 257
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Set-LogTargets",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 268
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Enable-LogRotation",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 279
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Disable-LogRotation",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 293
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Start-PerformanceTrace",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 299
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Stop-PerformanceTrace",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 318
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-Logs",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 345
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Clear-Logs",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 394
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-LogPath",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 413
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Initialize-Logging",
+        "Path": "./domains/utilities/Logging.psm1",
+        "Type": "Function",
+        "Line": 422
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Show-LogSummary",
+        "Path": "./domains/utilities/LoggingDashboard.psm1",
+        "Type": "Function",
+        "Line": 86
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Show-LogMenu",
+        "Path": "./domains/utilities/LoggingDashboard.psm1",
+        "Type": "Function",
+        "Line": 176
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Process-MenuChoice",
+        "Path": "./domains/utilities/LoggingDashboard.psm1",
+        "Type": "Function",
+        "Line": 188
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Show-TodayLog",
+        "Path": "./domains/utilities/LoggingDashboard.psm1",
+        "Type": "Function",
+        "Line": 208
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Show-LogTail",
+        "Path": "./domains/utilities/LoggingDashboard.psm1",
+        "Type": "Function",
+        "Line": 241
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Show-Transcript",
+        "Path": "./domains/utilities/LoggingDashboard.psm1",
+        "Type": "Function",
+        "Line": 270
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Set-LogFilter",
+        "Path": "./domains/utilities/LoggingDashboard.psm1",
+        "Type": "Function",
+        "Line": 290
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Search-InteractiveLogs",
+        "Path": "./domains/utilities/LoggingDashboard.psm1",
+        "Type": "Function",
+        "Line": 314
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Export-InteractiveReport",
+        "Path": "./domains/utilities/LoggingDashboard.psm1",
+        "Type": "Function",
+        "Line": 340
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Clear-OldLogs",
+        "Path": "./domains/utilities/LoggingDashboard.psm1",
+        "Type": "Function",
+        "Line": 370
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Toggle-AutoRefresh",
+        "Path": "./domains/utilities/LoggingDashboard.psm1",
+        "Type": "Function",
+        "Line": 385
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Show-Settings",
+        "Path": "./domains/utilities/LoggingDashboard.psm1",
+        "Type": "Function",
+        "Line": 391
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Show-AuditLogs",
+        "Path": "./domains/utilities/LoggingDashboard.psm1",
+        "Type": "Function",
+        "Line": 470
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Toggle-TranscriptLogging",
+        "Path": "./domains/utilities/LoggingDashboard.psm1",
+        "Type": "Function",
+        "Line": 504
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ModuleLog",
+        "Path": "./domains/utilities/LogViewer.psm1",
+        "Type": "Function",
+        "Line": 14
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./examples/orchestration-examples.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/ISOCustomizer/Private/TemplateHelpers.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-AutounattendTemplate",
+        "Path": "./legacy-to-migrate/ISOCustomizer/Private/TemplateHelpers.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-BootstrapTemplate",
+        "Path": "./legacy-to-migrate/ISOCustomizer/Private/TemplateHelpers.ps1",
+        "Type": "Function",
+        "Line": 27
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-KickstartTemplate",
+        "Path": "./legacy-to-migrate/ISOCustomizer/Private/TemplateHelpers.ps1",
+        "Type": "Function",
+        "Line": 42
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/ISOCustomizer/Public/New-AutounattendFile.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-AutounattendFile",
+        "Path": "./legacy-to-migrate/ISOCustomizer/Public/New-AutounattendFile.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Escape-XmlContent",
+        "Path": "./legacy-to-migrate/ISOCustomizer/Public/New-AutounattendFile.ps1",
+        "Type": "Function",
+        "Line": 112
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/ISOCustomizer/Public/New-CustomISO.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-CustomISO",
+        "Path": "./legacy-to-migrate/ISOCustomizer/Public/New-CustomISO.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/ISOCustomizer/Templates/bootstrap.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/ISOCustomizer/ISOCustomizer.psd1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/ISOManager/Private/Get-LinuxISOUrl.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-LinuxISOUrl",
+        "Path": "./legacy-to-migrate/ISOManager/Private/Get-LinuxISOUrl.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/ISOManager/Private/Get-WindowsISOUrl.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-WindowsISOUrl",
+        "Path": "./legacy-to-migrate/ISOManager/Private/Get-WindowsISOUrl.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/ISOManager/Public/Export-ISOInventory.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Export-ISOInventory",
+        "Path": "./legacy-to-migrate/ISOManager/Public/Export-ISOInventory.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/ISOManager/Public/Get-ISODownload.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-ISODownload",
+        "Path": "./legacy-to-migrate/ISOManager/Public/Get-ISODownload.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/ISOManager/Public/Get-ISOInventory.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-ISOInventory",
+        "Path": "./legacy-to-migrate/ISOManager/Public/Get-ISOInventory.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/ISOManager/Public/Get-ISOMetadata.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-ISOMetadata",
+        "Path": "./legacy-to-migrate/ISOManager/Public/Get-ISOMetadata.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/ISOManager/Public/Import-ISOInventory.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Import-ISOInventory",
+        "Path": "./legacy-to-migrate/ISOManager/Public/Import-ISOInventory.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/ISOManager/Public/New-ISORepository.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-ISORepository",
+        "Path": "./legacy-to-migrate/ISOManager/Public/New-ISORepository.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/ISOManager/Public/Sync-ISORepository.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Sync-ISORepository",
+        "Path": "./legacy-to-migrate/ISOManager/Public/Sync-ISORepository.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/ISOManager/ISOManager.psd1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0001_Reset-Git.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0002_Setup-Directories.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0006_Install-ValidationTools.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0007_Install-Go.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0008_Install-OpenTofu.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0009_Initialize-OpenTofu.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0010_Prepare-HyperVProvider.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0100_Enable-WinRM.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0101_Enable-RemoteDesktop.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0102_Configure-Firewall.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0103_Change-ComputerName.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0104_Install-CA.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0105_Install-HyperV.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0106_Install-WAC.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0111_Disable-TCPIP6.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0112_Enable-PXE.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0113_Config-DNS.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0114_Config-TrustedHosts.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0200_Get-SystemInfo.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-SystemInfo",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0200_Get-SystemInfo.ps1",
+        "Type": "Function",
+        "Line": 33
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0201_Install-NodeCore.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0204_Install-Poetry.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Install-Poetry",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0204_Install-Poetry.ps1",
+        "Type": "Function",
+        "Line": 16
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0205_Install-Sysinternals.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0206_Install-Python.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0207_Install-Git.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0208_Install-DockerDesktop.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0209_Install-7Zip.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0210_Install-VSCode.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0211_Install-VSBuildTools.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0212_Install-AzureCLI.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0213_Install-AWSCLI.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0214_Install-Packer.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0215_Install-Chocolatey.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0216_Set-LabProfile.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Set-LabProfile",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/0216_Set-LabProfile.ps1",
+        "Type": "Function",
+        "Line": 16
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/9999_Reset-Machine.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/scripts/Invoke-CoreApplication.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Download-Archive.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-GhDownloadArgs",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Download-Archive.ps1",
+        "Type": "Function",
+        "Line": 2
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-ArchiveDownload",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Download-Archive.ps1",
+        "Type": "Function",
+        "Line": 18
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Expand-All.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Expand-All",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Expand-All.ps1",
+        "Type": "Function",
+        "Line": 2
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Read-LoggedInput",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Expand-All.ps1",
+        "Type": "Function",
+        "Line": 12
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Format-Config.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Format-Config",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Format-Config.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Get-LabConfig.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Get-Platform.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-Platform",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Get-Platform.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/InvokeOpenTofuInstaller.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-OpenTofuInstaller",
+        "Path": "./legacy-to-migrate/mig_LabRunner/InvokeOpenTofuInstaller.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/LabRunner.psd1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-Platform",
+        "Path": "./legacy-to-migrate/mig_LabRunner/LabRunner.psm1",
+        "Type": "Function",
+        "Line": 125
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-LabStep",
+        "Path": "./legacy-to-migrate/mig_LabRunner/LabRunner.psm1",
+        "Type": "Function",
+        "Line": 194
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-LabDownload",
+        "Path": "./legacy-to-migrate/mig_LabRunner/LabRunner.psm1",
+        "Type": "Function",
+        "Line": 242
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Read-LoggedInput",
+        "Path": "./legacy-to-migrate/mig_LabRunner/LabRunner.psm1",
+        "Type": "Function",
+        "Line": 271
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-LabWebRequest",
+        "Path": "./legacy-to-migrate/mig_LabRunner/LabRunner.psm1",
+        "Type": "Function",
+        "Line": 304
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-LabNpm",
+        "Path": "./legacy-to-migrate/mig_LabRunner/LabRunner.psm1",
+        "Type": "Function",
+        "Line": 321
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Resolve-ProjectPath",
+        "Path": "./legacy-to-migrate/mig_LabRunner/LabRunner.psm1",
+        "Type": "Function",
+        "Line": 332
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-LabConfig",
+        "Path": "./legacy-to-migrate/mig_LabRunner/LabRunner.psm1",
+        "Type": "Function",
+        "Line": 347
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Logger.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-CustomLog",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Logger.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Read-LoggedInput",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Logger.ps1",
+        "Type": "Function",
+        "Line": 33
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Menu.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-MenuSelection",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Menu.ps1",
+        "Type": "Function",
+        "Line": 3
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Network.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-LabWebRequest",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Network.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-WebRequest",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Network.ps1",
+        "Type": "Function",
+        "Line": 14
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-LabNpm",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Network.ps1",
+        "Type": "Function",
+        "Line": 25
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Resolve-ProjectPath.psm1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Resolve-ProjectPath",
+        "Path": "./legacy-to-migrate/mig_LabRunner/Resolve-ProjectPath.psm1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_LabRunner/ScriptTemplate.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_ParallelExecution/ParallelExecution.psd1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-CustomLog",
+        "Path": "./legacy-to-migrate/mig_ParallelExecution/ParallelExecution.psm1",
+        "Type": "Function",
+        "Line": 55
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-IntelligentBranchStrategy",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/BranchStrategy.ps1",
+        "Type": "Function",
+        "Line": 17
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-BranchProtection",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/BranchStrategy.ps1",
+        "Type": "Function",
+        "Line": 99
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-SanitizedBranchName",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/BranchStrategy.ps1",
+        "Type": "Function",
+        "Line": 118
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/ConvertTo-PipelineSyntax.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "ConvertTo-PipelineSyntax",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/ConvertTo-PipelineSyntax.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "StartCopilotMonitoring",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/CopilotIntegration.ps1",
+        "Type": "Function",
+        "Line": 19
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-MonitorLog",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/CopilotIntegration.ps1",
+        "Type": "Function",
+        "Line": 60
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-CopilotSuggestionImplementation",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/CopilotIntegration.ps1",
+        "Type": "Function",
+        "Line": 156
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "HandlePatchError",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/ErrorHandling.ps1",
+        "Type": "Function",
+        "Line": 17
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "CreatePatchBranch",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/GitOperations.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "CommitChanges",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/GitOperations.ps1",
+        "Type": "Function",
+        "Line": 33
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-BranchRollback",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-BranchRollback.ps1",
+        "Type": "Function",
+        "Line": 28
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-CopilotSuggestionHandler",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-CopilotSuggestionHandler.ps1",
+        "Type": "Function",
+        "Line": 46
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-CopilotLog",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-CopilotSuggestionHandler.ps1",
+        "Type": "Function",
+        "Line": 78
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-CopilotSuggestions",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-CopilotSuggestionHandler.ps1",
+        "Type": "Function",
+        "Line": 109
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-SuggestionImplementation",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-CopilotSuggestionHandler.ps1",
+        "Type": "Function",
+        "Line": 171
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Start-MonitoringLoop",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-CopilotSuggestionHandler.ps1",
+        "Type": "Function",
+        "Line": 222
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-CrossPlatformFixer",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-CrossPlatformFixer.ps1",
+        "Type": "Function",
+        "Line": 30
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-PathStandardization",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-CrossPlatformFixer.ps1",
+        "Type": "Function",
+        "Line": 157
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-ImportStandardization",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-CrossPlatformFixer.ps1",
+        "Type": "Function",
+        "Line": 200
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-FilePathFixes",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-CrossPlatformFixer.ps1",
+        "Type": "Function",
+        "Line": 242
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-AdvancedCompatibilityFixes",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-CrossPlatformFixer.ps1",
+        "Type": "Function",
+        "Line": 302
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-FixValidation",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-CrossPlatformFixer.ps1",
+        "Type": "Function",
+        "Line": 365
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-CriticalPathExclusion",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-CrossPlatformFixer.ps1",
+        "Type": "Function",
+        "Line": 389
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-CrossPlatformFixReport",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-CrossPlatformFixer.ps1",
+        "Type": "Function",
+        "Line": 412
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Remove-LockedDirectories",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-EnhancedGitOperations.ps1",
+        "Type": "Function",
+        "Line": 46
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-AutomaticValidation",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-EnhancedGitOperations.ps1",
+        "Type": "Function",
+        "Line": 78
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-ErrorHandler",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ErrorHandler.ps1",
+        "Type": "Function",
+        "Line": 44
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Analyze-ErrorDetails",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ErrorHandler.ps1",
+        "Type": "Function",
+        "Line": 160
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-GitControlledPatch",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-GitControlledPatch.ps1",
+        "Type": "Function",
+        "Line": 58
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-PatchBranch",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-GitControlledPatch.ps1",
+        "Type": "Function",
+        "Line": 326
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-PatchOperation",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-GitControlledPatch.ps1",
+        "Type": "Function",
+        "Line": 359
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-PatchCommit",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-GitControlledPatch.ps1",
+        "Type": "Function",
+        "Line": 377
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-GitControlledPatchPullRequest",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-GitControlledPatch.ps1",
+        "Type": "Function",
+        "Line": 427
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Build-ComprehensivePRBody",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-GitControlledPatch.ps1",
+        "Type": "Function",
+        "Line": 517
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-GitChangeStatistics",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-GitControlledPatch.ps1",
+        "Type": "Function",
+        "Line": 600
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-GitCommitInfo",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-GitControlledPatch.ps1",
+        "Type": "Function",
+        "Line": 666
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-GitHubIssueIntegration",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-GitHubIssueIntegration.ps1",
+        "Type": "Function",
+        "Line": 39
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-GitHubIssueResolution",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-GitHubIssueResolution.ps1",
+        "Type": "Function",
+        "Line": 34
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ResolutionLog",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-GitHubIssueResolution.ps1",
+        "Type": "Function",
+        "Line": 60
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-PullRequestStatus",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-GitHubIssueResolution.ps1",
+        "Type": "Function",
+        "Line": 79
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Resolve-IssueBasedOnPRStatus",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-GitHubIssueResolution.ps1",
+        "Type": "Function",
+        "Line": 102
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Start-ResolutionMonitoring",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-GitHubIssueResolution.ps1",
+        "Type": "Function",
+        "Line": 176
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-IntelligentBranchStrategy.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-IntelligentBranchStrategy",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-IntelligentBranchStrategy.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-MassFileFix.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-MassFileFix",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-MassFileFix.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-MonitoredExecution",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-MonitoredExecution.ps1",
+        "Type": "Function",
+        "Line": 38
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-ErrorType",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-MonitoredExecution.ps1",
+        "Type": "Function",
+        "Line": 228
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-TestFailure",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-MonitoredExecution.ps1",
+        "Type": "Function",
+        "Line": 252
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-PatchValidation.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-PatchValidation",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-PatchValidation.ps1",
+        "Type": "Function",
+        "Line": 1
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-QuickRollback",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-QuickRollback.ps1",
+        "Type": "Function",
+        "Line": 39
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-CommitRollback",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-QuickRollback.ps1",
+        "Type": "Function",
+        "Line": 220
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-BranchRollback",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-QuickRollback.ps1",
+        "Type": "Function",
+        "Line": 240
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-PostRollbackValidation",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-QuickRollback.ps1",
+        "Type": "Function",
+        "Line": 257
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-SimpleIssueForPatch",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-SimplifiedPatchWorkflow.ps1",
+        "Type": "Function",
+        "Line": 44
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-SimplePRForPatch",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-SimplifiedPatchWorkflow.ps1",
+        "Type": "Function",
+        "Line": 152
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-SimplifiedPatchWorkflow",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-SimplifiedPatchWorkflow.ps1",
+        "Type": "Function",
+        "Line": 329
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-UnifiedMaintenance",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-UnifiedMaintenance.ps1",
+        "Type": "Function",
+        "Line": 15
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-ValidationFailureHandler",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ValidationFailureHandler.ps1",
+        "Type": "Function",
+        "Line": 39
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-ValidationFailureAnalysis",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ValidationFailureHandler.ps1",
+        "Type": "Function",
+        "Line": 173
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-FailureCategory",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ValidationFailureHandler.ps1",
+        "Type": "Function",
+        "Line": 227
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-FailureDetails",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ValidationFailureHandler.ps1",
+        "Type": "Function",
+        "Line": 243
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-FailureSeverity",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ValidationFailureHandler.ps1",
+        "Type": "Function",
+        "Line": 256
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-ValidationRecommendations",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ValidationFailureHandler.ps1",
+        "Type": "Function",
+        "Line": 272
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-ValidationSummaryIssue",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ValidationFailureHandler.ps1",
+        "Type": "Function",
+        "Line": 301
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-ValidationSubIssue",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ValidationFailureHandler.ps1",
+        "Type": "Function",
+        "Line": 389
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-CategorySpecificResolutionSteps",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ValidationFailureHandler.ps1",
+        "Type": "Function",
+        "Line": 471
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-CategoryValidationCommands",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ValidationFailureHandler.ps1",
+        "Type": "Function",
+        "Line": 533
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Add-IssueReference",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ValidationFailureHandler.ps1",
+        "Type": "Function",
+        "Line": 567
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Update-SummaryIssueWithSubIssues",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ValidationFailureHandler.ps1",
+        "Type": "Function",
+        "Line": 586
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Find-ExistingValidationIssues",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ValidationFailureHandler.ps1",
+        "Type": "Function",
+        "Line": 627
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-SmartIssueStrategy",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ValidationFailureHandler.ps1",
+        "Type": "Function",
+        "Line": 680
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Update-ExistingValidationIssue",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ValidationFailureHandler.ps1",
+        "Type": "Function",
+        "Line": 744
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Search-ExistingValidationIssues",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ValidationFailureHandler.ps1",
+        "Type": "Function",
+        "Line": 821
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-IssueSimilarityScore",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ValidationFailureHandler.ps1",
+        "Type": "Function",
+        "Line": 886
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-NextValidationCounter",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ValidationFailureHandler.ps1",
+        "Type": "Function",
+        "Line": 951
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-SmartValidationSummaryIssue",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Invoke-ValidationFailureHandler.ps1",
+        "Type": "Function",
+        "Line": 980
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Update-ProjectManifest",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Legacy/Update-ProjectManifest.ps1",
+        "Type": "Function",
+        "Line": 33
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Find-ProjectRoot",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Private/Find-ProjectRoot.ps1",
+        "Type": "Function",
+        "Line": 40
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-GitRepositoryInfo",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Private/Get-GitRepositoryInfo.ps1",
+        "Type": "Function",
+        "Line": 25
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-TestAnalysisContext",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Private/Get-TestAnalysisContext.ps1",
+        "Type": "Function",
+        "Line": 33
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-AnalysisLog",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Private/Get-TestAnalysisContext.ps1",
+        "Type": "Function",
+        "Line": 53
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Initialize-CrossPlatformEnvironment",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Private/Initialize-CrossPlatformEnvironment.ps1",
+        "Type": "Function",
+        "Line": 15
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Initialize-ProgressTracking",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Private/Initialize-ProgressTracking.ps1",
+        "Type": "Function",
+        "Line": 11
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-UnicodeSanitizer",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Private/Invoke-UnicodeSanitizer.ps1",
+        "Type": "Function",
+        "Line": 28
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-AutoMergeLog",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Enable-AutoMerge.ps1",
+        "Type": "Function",
+        "Line": 42
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-AutoMergeLog",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Enable-EnhancedAutoMerge.ps1",
+        "Type": "Function",
+        "Line": 88
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-OptimalMergeMethod",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Enable-EnhancedAutoMerge.ps1",
+        "Type": "Function",
+        "Line": 277
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Start-AutoMergeMonitoring",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Enable-EnhancedAutoMerge.ps1",
+        "Type": "Function",
+        "Line": 302
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ConsolidationLog",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-IntelligentPRConsolidation.ps1",
+        "Type": "Function",
+        "Line": 69
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Select-ConsolidationCandidates",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-IntelligentPRConsolidation.ps1",
+        "Type": "Function",
+        "Line": 266
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Calculate-ConsolidationScore",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-IntelligentPRConsolidation.ps1",
+        "Type": "Function",
+        "Line": 313
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-PRCompatibility",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-IntelligentPRConsolidation.ps1",
+        "Type": "Function",
+        "Line": 345
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Resolve-PRConflicts",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-IntelligentPRConsolidation.ps1",
+        "Type": "Function",
+        "Line": 384
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Merge-PRIntoTarget",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-IntelligentPRConsolidation.ps1",
+        "Type": "Function",
+        "Line": 401
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-ConsolidatedChanges",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-IntelligentPRConsolidation.ps1",
+        "Type": "Function",
+        "Line": 424
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Update-ConsolidatedPRDescriptions",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-IntelligentPRConsolidation.ps1",
+        "Type": "Function",
+        "Line": 449
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-PatchRollback",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-PatchRollback.ps1",
+        "Type": "Function",
+        "Line": 34
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-PatchWorkflow",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-PatchWorkflow.ps1",
+        "Type": "Function",
+        "Line": 113
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-PatchLog",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-PatchWorkflow.ps1",
+        "Type": "Function",
+        "Line": 163
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-PostMergeCleanup",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-PostMergeCleanup.ps1",
+        "Type": "Function",
+        "Line": 43
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-CleanupLog",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-PostMergeCleanup.ps1",
+        "Type": "Function",
+        "Line": 69
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-PRConsolidation",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-PRConsolidation.ps1",
+        "Type": "Function",
+        "Line": 41
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-ConsolidationLog",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-PRConsolidation.ps1",
+        "Type": "Function",
+        "Line": 64
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-CompatiblePRGroups",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-PRConsolidation.ps1",
+        "Type": "Function",
+        "Line": 190
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-SameAuthorPRGroups",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-PRConsolidation.ps1",
+        "Type": "Function",
+        "Line": 215
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-PriorityBasedPRGroups",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-PRConsolidation.ps1",
+        "Type": "Function",
+        "Line": 240
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Find-NonConflictingPRSets",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-PRConsolidation.ps1",
+        "Type": "Function",
+        "Line": 291
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-PRGroupConsolidation",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Invoke-PRConsolidation.ps1",
+        "Type": "Function",
+        "Line": 344
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-CrossForkPR",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/New-CrossForkPR.ps1",
+        "Type": "Function",
+        "Line": 46
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-CrossForkLog",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/New-CrossForkPR.ps1",
+        "Type": "Function",
+        "Line": 72
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-PatchIssue",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/New-PatchIssue.ps1",
+        "Type": "Function",
+        "Line": 40
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-IssueLog",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/New-PatchIssue.ps1",
+        "Type": "Function",
+        "Line": 83
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-PatchPR",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/New-PatchPR.ps1",
+        "Type": "Function",
+        "Line": 39
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-PRLog",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/New-PatchPR.ps1",
+        "Type": "Function",
+        "Line": 61
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Start-PostMergeMonitor",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Start-PostMergeMonitor.ps1",
+        "Type": "Function",
+        "Line": 47
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-MonitorLog",
+        "Path": "./legacy-to-migrate/mig_PatchManager/Public/Start-PostMergeMonitor.ps1",
+        "Type": "Function",
+        "Line": 76
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_PatchManager/bootstrap.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Exit-Bootstrap",
+        "Path": "./legacy-to-migrate/mig_PatchManager/bootstrap.ps1",
+        "Type": "Function",
+        "Line": 24
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-WebRequestWithRetry",
+        "Path": "./legacy-to-migrate/mig_PatchManager/bootstrap.ps1",
+        "Type": "Function",
+        "Line": 51
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Install-PowerShell7",
+        "Path": "./legacy-to-migrate/mig_PatchManager/bootstrap.ps1",
+        "Type": "Function",
+        "Line": 89
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./legacy-to-migrate/mig_PatchManager/PatchManager.psd1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-ShouldCreatePR",
+        "Path": "./legacy-to-migrate/mig_PatchManager/PatchManager.psm1",
+        "Type": "Function",
+        "Line": 64
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-SimilarPRExists",
+        "Path": "./legacy-to-migrate/mig_PatchManager/PatchManager.psm1",
+        "Type": "Function",
+        "Line": 95
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./tests/domains/configuration/Configuration.Tests.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./tests/domains/infrastructure/Infrastructure.Tests.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./tests/domains/utilities/Logging.Tests.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./tests/unit/domains/experience/BetterMenu.Tests.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./tests/unit/domains/experience/UIComponent.Tests.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-MockTerminal",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 10
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Set-MockCursorPosition",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 33
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-MockTerminal",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 44
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-MockTerminalLine",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 78
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-MockTerminalAttributes",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 90
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Clear-MockTerminal",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 107
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-MockKeyboard",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 119
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Add-MockKeyPress",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 127
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Add-MockKeySequence",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 150
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Add-MockTextInput",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 161
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-MockKeyPress",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 172
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-UITestContext",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 185
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-UIComponentLifecycle",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 196
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-UIMenuNavigation",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 215
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-MockEventBus",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 251
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Register-MockEventHandler",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 258
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-MockEvent",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 272
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-ComponentBounds",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 297
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "New-MockLayout",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 335
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-LayoutArrangement",
+        "Path": "./tests/unit/domains/experience/UITestFramework.psm1",
+        "Type": "Function",
+        "Line": 351
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./tests/unit/domains/experience/UITestFramework.Tests.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./tests/unit/Configuration.Tests.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./tests/unit/Start-AitherZero.Tests.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./AitherZero.psd1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-AitherScript",
+        "Path": "./AitherZero.psm1",
+        "Type": "Function",
+        "Line": 112
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./az.ps1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Write-BootstrapLog",
+        "Path": "./bootstrap.ps1",
+        "Type": "Function",
+        "Line": 63
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-IsWindows",
+        "Path": "./bootstrap.ps1",
+        "Type": "Function",
+        "Line": 93
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-IsAdmin",
+        "Path": "./bootstrap.ps1",
+        "Type": "Function",
+        "Line": 100
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-DefaultInstallPath",
+        "Path": "./bootstrap.ps1",
+        "Type": "Function",
+        "Line": 110
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Test-Dependencies",
+        "Path": "./bootstrap.ps1",
+        "Type": "Function",
+        "Line": 129
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Install-Dependencies",
+        "Path": "./bootstrap.ps1",
+        "Type": "Function",
+        "Line": 154
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Install-PowerShell7",
+        "Path": "./bootstrap.ps1",
+        "Type": "Function",
+        "Line": 222
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Install-AitherZero",
+        "Path": "./bootstrap.ps1",
+        "Type": "Function",
+        "Line": 303
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Initialize-Configuration",
+        "Path": "./bootstrap.ps1",
+        "Type": "Function",
+        "Line": 413
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Setup-DevelopmentEnvironment",
+        "Path": "./bootstrap.ps1",
+        "Type": "Function",
+        "Line": 456
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Remove-AitherZero",
+        "Path": "./bootstrap.ps1",
+        "Type": "Function",
+        "Line": 582
+      },
+      {
+        "Issue": "No file-level documentation",
+        "Path": "./PSScriptAnalyzerSettings.psd1",
+        "Type": "File"
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Show-Banner",
+        "Path": "./Start-AitherZero.ps1",
+        "Type": "Function",
+        "Line": 74
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Show-Help",
+        "Path": "./Start-AitherZero.ps1",
+        "Type": "Function",
+        "Line": 90
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Initialize-CoreModules",
+        "Path": "./Start-AitherZero.ps1",
+        "Type": "Function",
+        "Line": 129
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Get-AitherConfiguration",
+        "Path": "./Start-AitherZero.ps1",
+        "Type": "Function",
+        "Line": 164
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Show-InteractiveMenu",
+        "Path": "./Start-AitherZero.ps1",
+        "Type": "Function",
+        "Line": 187
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-QuickSetup",
+        "Path": "./Start-AitherZero.ps1",
+        "Type": "Function",
+        "Line": 299
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-OrchestrationMenu",
+        "Path": "./Start-AitherZero.ps1",
+        "Type": "Function",
+        "Line": 324
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-PlaybookMenu",
+        "Path": "./Start-AitherZero.ps1",
+        "Type": "Function",
+        "Line": 352
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-TestingMenu",
+        "Path": "./Start-AitherZero.ps1",
+        "Type": "Function",
+        "Line": 397
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-InfrastructureMenu",
+        "Path": "./Start-AitherZero.ps1",
+        "Type": "Function",
+        "Line": 449
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-DevelopmentMenu",
+        "Path": "./Start-AitherZero.ps1",
+        "Type": "Function",
+        "Line": 495
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Invoke-ReportsAndLogsMenu",
+        "Path": "./Start-AitherZero.ps1",
+        "Type": "Function",
+        "Line": 538
+      },
+      {
+        "Issue": "No comment-based help",
+        "Name": "Show-AdvancedMenu",
+        "Path": "./Start-AitherZero.ps1",
+        "Type": "Function",
+        "Line": 628
+      },
+      {
+        "Issue": "Missing README.md",
+        "Path": "./domains/ai-agents",
+        "Type": "README"
+      },
+      {
+        "Issue": "Missing README.md",
+        "Path": "./domains/testing",
+        "Type": "README"
+      }
+    ],
+    "Scripts": {},
+    "Modules": {},
+    "ScanStartTime": "2025-08-08T23:49:02.7221242+00:00"
+  },
+  "Duration": {
+    "Ticks": 185213867,
+    "Days": 0,
+    "Hours": 0,
+    "Milliseconds": 521,
+    "Microseconds": 386,
+    "Nanoseconds": 700,
+    "Minutes": 0,
+    "Seconds": 18,
+    "TotalDays": 0.00021436790162037038,
+    "TotalHours": 0.005144829638888889,
+    "TotalMilliseconds": 18521.3867,
+    "TotalMicroseconds": 18521386.7,
+    "TotalNanoseconds": 18521386700.0,
+    "TotalMinutes": 0.30868977833333333,
+    "TotalSeconds": 18.5213867
+  }
+}

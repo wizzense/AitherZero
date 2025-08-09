@@ -1,234 +1,154 @@
-# /test
+---
+allowed-tools: Task, Bash, Read, Glob, TodoWrite
+description: Run tests, analyze coverage, and manage test suites for the project
+argument-hint: [<test_pattern>|--coverage|--watch|--create <test_name>]
+---
 
-Unified testing interface for AitherZero - run tests, generate coverage reports, and validate changes before commits.
+## Context
+- Working directory: !`pwd`
+- Arguments: $ARGUMENTS
 
-## Usage
+## Your Role
+You are a test automation expert specializing in:
+- Test execution and analysis
+- Coverage reporting and improvement
+- Test creation and maintenance
+- CI/CD test integration
+- Performance and load testing
+
+## Your Task
+
+1. **Parse Test Request**:
+   - No args: Run all tests with coverage
+   - Pattern: Run specific tests (e.g., "test_*.py", "validators")
+   - --coverage: Generate detailed coverage report
+   - --watch: Run tests in watch mode
+   - --create: Create new test file/cases
+
+2. **Determine Test Framework**:
+   - Python: pytest, unittest
+   - PowerShell: Pester
+   - JavaScript/TypeScript: Jest, Mocha
+   - Identify framework from project files
+
+3. **Execute Test Strategy**:
+   
+   **For Running Tests**:
+   - Invoke test-runner agent for execution
+   - Capture and analyze results
+   - Generate coverage metrics
+   
+   **For Creating Tests**:
+   - Invoke test-harness-builder for new tests
+   - Use qa-automation-engineer for test strategy
+   
+   **For Coverage Analysis**:
+   - Run with coverage tools
+   - Identify untested code
+   - Suggest priority areas
+
+4. **Parallel Agent Invocation**:
+   ```
+   - test-runner: Execute test suite
+   - qa-automation-engineer: Analyze test quality
+   - performance-analyzer: Check test performance
+   - documentation-curator: Update test docs
+   ```
+
+## Test Patterns
+
+### Pattern 1: Full Test Suite
 ```
-/test [action] [options]
-```
+/test
 
-## Actions
-
-### `run` - Run test suites (default)
-Execute specific test suites with real-time progress tracking and detailed reporting.
-
-**Options:**
-- `--suite [quick|core|setup|all]` - Test suite to run (default: quick)
-- `--module "module-name"` - Test specific module
-- `--coverage` - Generate coverage report
-- `--watch` - Watch mode for continuous testing
-- `--parallel` - Run tests in parallel
-- `--verbose` - Detailed test output
-- `--ci` - CI mode (optimized for pipelines)
-
-**Examples:**
-```bash
-/test run --suite quick
-/test run --suite core --coverage
-/test run --module PatchManager --verbose
-/test run --suite all --parallel --ci
-```
-
-### `validate` - Pre-commit validation
-Comprehensive validation before committing changes, including syntax, style, and functionality checks.
-
-**Options:**
-- `--files "pattern"` - Validate specific files
-- `--fix` - Auto-fix minor issues
-- `--strict` - Strict validation mode
-- `--skip-slow` - Skip time-consuming tests
-
-**Examples:**
-```bash
-/test validate
-/test validate --files "*.ps1" --fix
-/test validate --strict --skip-slow
-```
-
-### `coverage` - Coverage analysis
-Analyze and report test coverage across modules and functions.
-
-**Options:**
-- `--format [console|html|json|cobertura]` - Output format
-- `--threshold [percentage]` - Minimum coverage threshold
-- `--module "module-name"` - Module-specific coverage
-- `--open` - Open HTML report in browser
-
-**Examples:**
-```bash
-/test coverage --format html --open
-/test coverage --threshold 80 --module LabRunner
-/test coverage --format cobertura --ci
-```
-
-### `benchmark` - Performance testing
-Run performance benchmarks and compare with baselines.
-
-**Options:**
-- `--baseline "name"` - Compare with named baseline
-- `--save "name"` - Save results as new baseline
-- `--iterations [number]` - Test iterations (default: 10)
-- `--warmup [number]` - Warmup iterations (default: 3)
-
-**Examples:**
-```bash
-/test benchmark
-/test benchmark --baseline v1.0 --iterations 20
-/test benchmark --save current --warmup 5
+Running complete test suite with coverage...
+- Python tests: pytest with pytest-cov
+- PowerShell tests: Pester with coverage
+- Integration tests: Full pipeline validation
 ```
 
-### `integration` - Integration testing
-Test integration between modules and external systems.
+### Pattern 2: Targeted Testing
+```
+/test validators
 
-**Options:**
-- `--environment [local|staging|production]` - Target environment
-- `--external` - Include external service tests
-- `--timeout [seconds]` - Test timeout (default: 300)
-- `--retry [count]` - Retry failed tests
-
-**Examples:**
-```bash
-/test integration --environment staging
-/test integration --external --timeout 600
-/test integration --retry 3
+Running tests matching 'validators'...
+- Found 15 test files
+- Executing in parallel batches
+- Generating focused coverage report
 ```
 
-### `status` - Test status and history
-View test results, trends, and CI/CD pipeline status.
+### Pattern 3: Test Creation
+```
+/test --create Scripts-analyzer
 
-**Options:**
-- `--history [days]` - Show history (default: 7)
-- `--failed` - Show only failed tests
-- `--trends` - Display trend analysis
-- `--ci` - Include CI/CD status
-
-**Examples:**
-```bash
-/test status
-/test status --history 30 --trends
-/test status --failed --ci
+Creating comprehensive test suite for Scripts-analyzer...
+- Analyzing module structure
+- Generating test cases
+- Creating fixtures and mocks
+- Adding to CI pipeline
 ```
 
-## Test Suites
+## Output Format
 
-### Quick Tests (~30 seconds)
-- Core functionality validation
-- Module loading verification
-- Basic integration checks
-- Syntax validation
+```
+Test Execution Report
+====================
 
-### Core Tests (~2 minutes)
-- Comprehensive module testing
-- Function-level validation
-- Error handling verification
-- Cross-platform compatibility
+📊 Summary:
+- Total Tests: 245
+- ✅ Passed: 240
+- ❌ Failed: 3
+- ⏭️ Skipped: 2
+- ⏱️ Duration: 45.3s
 
-### Setup Tests (~1 minute)
-- Installation validation
-- Environment setup checks
-- Dependency verification
-- Configuration validation
+💥 Failures:
+1. test_security_scanner::test_sql_injection
+   AssertionError: Expected vulnerability not detected
+   File: tests/unit/test_security.py:156
 
-### All Tests (~5 minutes)
-- Complete test suite
-- Integration testing
-- Performance benchmarks
-- Security validation
+📈 Coverage:
+- Overall: 78.5% (+2.3%)
+- New code: 95.2%
+- Uncovered files:
+  - core/parser.py: 45%
+  - utils/helpers.py: 62%
 
-## Integration Features
-
-### GitHub Actions Integration
-- Automatic test runs on PR creation
-- Coverage reports in PR comments
-- Status checks for merge protection
-- Performance regression detection
-
-### VS Code Integration
-- Test explorer integration
-- Inline test results
-- Coverage highlighting
-- Quick test actions
-
-### PatchManager Integration
-- Pre-patch validation
-- Post-patch verification
-- Automatic test runs in workflows
-- Rollback on test failures
-
-## Advanced Features
-
-### Smart Test Selection
-- Run only affected tests based on changes
-- Dependency-aware test execution
-- Historical failure analysis
-- Risk-based test prioritization
-
-### Parallel Execution
-- Automatic test distribution
-- Resource-aware parallelization
-- Result aggregation
-- Load balancing
-
-### Test Data Management
-- Isolated test environments
-- Automatic cleanup
-- Mock data generation
-- State restoration
-
-### Reporting and Analytics
-- Detailed HTML reports
-- Trend analysis dashboards
-- Failure pattern detection
-- Performance tracking
-
-## Configuration
-
-### Test Configuration File
-```powershell
-# .aither-test.json
-{
-  "defaults": {
-    "suite": "quick",
-    "parallel": true,
-    "coverage": {
-      "enabled": true,
-      "threshold": 75
-    }
-  },
-  "modules": {
-    "PatchManager": {
-      "timeout": 120,
-      "retries": 2
-    }
-  }
-}
+🎯 Recommendations:
+1. Add tests for error handling in parser.py
+2. Increase coverage for edge cases in helpers.py
+3. Add integration tests for new API endpoints
 ```
 
-### Environment Variables
-- `AITHER_TEST_SUITE` - Default test suite
-- `AITHER_TEST_PARALLEL` - Enable parallel execution
-- `AITHER_TEST_VERBOSE` - Verbose output
-- `AITHER_TEST_CI` - CI mode
+## Examples
 
-## Best Practices
+### Example 1: Run All Tests
+User: `/test`
 
-1. **Run quick tests before commits** - Catch issues early
-2. **Use coverage reports** - Maintain code quality
-3. **Monitor trends** - Identify degradation patterns
-4. **Test in isolation** - Prevent side effects
-5. **Automate validation** - Integrate with workflows
+Response:
+```
+Running all project tests with coverage analysis...
 
-## Troubleshooting
-
-### Common Issues
-- **Module not found**: Ensure proper module installation
-- **Test timeout**: Increase timeout or optimize tests
-- **Coverage gaps**: Add tests for uncovered code
-- **Flaky tests**: Use retry mechanism or fix root cause
-
-### Debug Mode
-```bash
-/test run --suite core --verbose --debug
+I'll execute tests across all components and generate a comprehensive report.
 ```
 
-This provides detailed logging, stack traces, and diagnostic information for troubleshooting test failures.
+### Example 2: Coverage Focus
+User: `/test --coverage`
+
+Response:
+```
+Generating detailed coverage analysis...
+
+I'll run all tests and create an HTML coverage report with line-by-line details.
+```
+
+### Example 3: Create Missing Tests
+User: `/test --create security-scanner`
+
+Response:
+```
+Creating test suite for security-scanner module...
+
+I'll analyze the module and generate comprehensive test cases with mocks and fixtures.
+```
+
+Remember: Tests are the foundation of reliable software. Aim for high coverage while focusing on meaningful test scenarios.

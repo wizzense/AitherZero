@@ -1,61 +1,120 @@
-# AitherZero Tests
+# AitherZero Test Suite
 
-Simple, fast, focused testing for AitherZero.
+This directory contains all tests for the AitherZero project, organized by domain and test type.
 
 ## Test Structure
 
-- **Core.Tests.ps1** - Essential functionality (runs in <30 seconds)
-- **Setup.Tests.ps1** - Installation & setup validation (runs in <30 seconds)
-- **Run-Tests.ps1** - Single test runner
+```
+tests/
+├── domains/          # Domain-specific unit tests
+│   ├── infrastructure/
+│   ├── configuration/
+│   ├── utilities/
+│   ├── security/
+│   ├── experience/
+│   └── automation/
+├── integration/      # Integration tests
+├── unit/            # Cross-domain unit tests
+├── performance/     # Performance tests
+└── README.md        # This file
+```
 
 ## Running Tests
 
+### All Tests
 ```powershell
-# Quick (default) - Just core functionality
-./tests/Run-Tests.ps1
-
-# Setup tests only
-./tests/Run-Tests.ps1 -Setup
-
-# All tests
-./tests/Run-Tests.ps1 -All
-
-# CI mode (minimal output, exit codes)
-./tests/Run-Tests.ps1 -All -CI
+Invoke-Pester -Path ./tests
 ```
 
-## What We Test
+### Domain-Specific Tests
+```powershell
+# Test a specific domain
+Invoke-Pester -Path ./tests/domains/infrastructure
 
-### Core Tests
-- Project structure validation
-- Module loading
-- Logging system
-- Configuration management
-- Cross-platform compatibility
-- PatchManager operations
-- PowerShell version requirements
+# Test a specific function
+Invoke-Pester -Path ./tests/domains/infrastructure -TestName "New-LabVM"
+```
 
-### Setup Tests
-- PowerShell environment
-- Platform detection (Windows/Linux/macOS/WSL)
-- Required tools (Git, OpenTofu/Terraform)
-- First-time setup experience
-- File permissions
-- Quick start functionality
+### Integration Tests
+```powershell
+Invoke-Pester -Path ./tests/integration
+```
 
-## Design Principles
+### Performance Tests
+```powershell
+Invoke-Pester -Path ./tests/performance
+```
 
-1. **Fast** - All tests complete in under 1 minute
-2. **Simple** - No complex mocking or setup
-3. **Focused** - Test what matters to users
-4. **Readable** - Anyone can understand the tests
-5. **Reliable** - No flaky tests or false positives
+## Test Coverage
 
-## CI Integration
+Generate code coverage reports:
+```powershell
+Invoke-Pester -Path ./tests -CodeCoverage ./domains/**/*.psm1 -CodeCoverageOutputFile coverage.xml
+```
 
-Tests run automatically on:
-- Every push to main/develop
-- All pull requests
-- Manual workflow dispatch
+## Writing Tests
 
-The CI uses `-All -CI` flags for complete validation with minimal output.
+### Naming Convention
+- Test files: `<ModuleName>.Tests.ps1`
+- Test names: Should describe what is being tested
+- Use descriptive Context and It blocks
+
+### Example Test
+```powershell
+BeforeAll {
+    Import-Module ./AitherZeroCore.psm1 -Force
+}
+
+Describe "Configuration Module Tests" {
+    Context "Get-Configuration" {
+        It "Should return default configuration when no file exists" {
+            $config = Get-Configuration
+            $config | Should -Not -BeNullOrEmpty
+            $config.Core.Name | Should -Be "AitherZero"
+        }
+        
+        It "Should return specific section when requested" {
+            $logging = Get-Configuration -Section "Logging"
+            $logging | Should -Not -BeNullOrEmpty
+            $logging.Level | Should -Be "Information"
+        }
+    }
+}
+```
+
+## CI/CD Integration
+
+Tests are automatically run on:
+- Every commit (via GitHub Actions)
+- Pull request creation and updates
+- Nightly scheduled runs
+
+## Test Categories
+
+### Unit Tests
+- Test individual functions in isolation
+- Mock external dependencies
+- Fast execution
+- High code coverage
+
+### Integration Tests
+- Test interactions between modules
+- Test with real dependencies
+- Medium execution time
+- End-to-end scenarios
+
+### Performance Tests
+- Measure execution time
+- Monitor resource usage
+- Identify bottlenecks
+- Establish baselines
+
+## Best Practices
+
+1. **Write tests first** - Follow TDD principles
+2. **Keep tests isolated** - Each test should be independent
+3. **Use meaningful names** - Test names should describe behavior
+4. **Mock external dependencies** - For unit tests
+5. **Clean up after tests** - Remove test artifacts
+6. **Test edge cases** - Include error conditions
+7. **Maintain test data** - Use consistent test fixtures

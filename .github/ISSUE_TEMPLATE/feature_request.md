@@ -1,45 +1,84 @@
 ---
 name: Feature Request
-about: Suggest a new feature for AitherZero
+about: Suggest an idea for AitherZero
 title: '[FEATURE] '
-labels: ['enhancement', 'needs-review']
+labels: enhancement, needs-review
 assignees: ''
----
-
-## 🚀 Feature Description
-A clear and concise description of the feature you'd like to see.
-
-## 💡 Problem Statement
-What problem does this feature solve? Is your feature request related to a problem?
-
-## 🎯 Proposed Solution
-Describe the solution you'd like to see implemented.
-
-## 🔄 Alternative Solutions
-Describe any alternative solutions or features you've considered.
-
-## 📦 Affected Modules
-Which modules would this feature impact?
-- [ ] BackupManager
-- [ ] DevEnvironment
-- [ ] LabRunner
-- [ ] Logging
-- [ ] PatchManager
-- [ ] TestingFramework
-- [ ] Other: ____________
-
-## 🧪 Implementation Considerations
-- **Complexity**: [Low/Medium/High]
-- **Breaking Changes**: [Yes/No]
-- **Testing Requirements**: [Unit/Integration/Manual]
-
-## 📋 Acceptance Criteria
-- [ ] Criterion 1
-- [ ] Criterion 2
-- [ ] Criterion 3
-
-## 🔍 Additional Context
-Add any other context, mockups, or examples about the feature request here.
 
 ---
-*This feature request was created using the AitherZero template. Use PatchManager for implementation.*
+
+## Feature Description
+<!-- Clear and concise description of the feature -->
+
+## Problem Statement
+<!-- What problem does this feature solve? -->
+
+## Proposed Solution
+<!-- How should this feature work? -->
+
+## Acceptance Criteria
+- [ ] Criteria 1: <!-- Specific, measurable requirement -->
+- [ ] Criteria 2: <!-- What defines "done" for this feature -->
+- [ ] Criteria 3: <!-- Include test requirements -->
+
+## Implementation Approach
+### Affected Modules
+- [ ] Module/Domain: <!-- Which modules need changes -->
+
+### New Scripts Required
+- [ ] Script number (0XXX): <!-- Purpose -->
+
+### Configuration Changes
+```json
+// Proposed config.json additions
+{
+  "NewFeature": {
+    "enabled": true,
+    "settings": {}
+  }
+}
+```
+
+## User Story
+**As a** <!-- type of user -->
+**I want** <!-- goal/desire -->
+**So that** <!-- benefit/value -->
+
+## Technical Requirements
+- [ ] PowerShell 7+ compatible
+- [ ] Cross-platform support (Windows/Linux/macOS)
+- [ ] Performance budget: <!-- e.g., < 100ms execution -->
+- [ ] Memory usage: <!-- constraints if any -->
+
+## Testing Strategy
+- [ ] Unit tests required
+- [ ] Integration tests required
+- [ ] Performance tests required
+- [ ] Documentation required
+
+## Examples
+```powershell
+# Example usage of the new feature
+./Start-AitherZero.ps1 -NewFeature
+# or
+seq 0XXX -Parameter Value
+```
+
+## Alternatives Considered
+<!-- What other solutions were considered and why were they rejected? -->
+
+## Dependencies
+- [ ] External modules: <!-- List any new dependencies -->
+- [ ] Breaking changes: <!-- Will this break existing functionality? -->
+- [ ] Migration required: <!-- Do users need to migrate? -->
+
+## Priority
+- [ ] Critical - Blocks major functionality
+- [ ] High - Significant improvement
+- [ ] Medium - Nice to have
+- [ ] Low - Future consideration
+
+## AI Implementation Context
+**Complexity:** <!-- Simple/Medium/Complex -->
+**Estimated Effort:** <!-- Hours/Days -->
+**Skills Required:** <!-- PowerShell, Git, Infrastructure, etc. -->

@@ -1,0 +1,118 @@
+{
+  "name": "Automated Issue Creation",
+  "description": "Automatically creates GitHub issues from test failures and code violations",
+  "version": "1.0.0",
+  "author": "AitherZero",
+  "tags": ["testing", "github", "automation", "ci", "issues"],
+  
+  "profiles": {
+    "test-failures": {
+      "description": "Create issues from test failures only",
+      "stages": ["run-tests", "create-test-issues"]
+    },
+    "code-violations": {
+      "description": "Create issues from PSScriptAnalyzer violations",
+      "stages": ["run-analyzer", "create-violation-issues"]
+    },
+    "full": {
+      "description": "Complete issue creation from all sources",
+      "stages": ["run-tests", "run-analyzer", "create-test-issues", "create-violation-issues", "summary"]
+    },
+    "ci": {
+      "description": "CI/CD automatic issue creation",
+      "stages": ["run-tests", "run-analyzer", "create-all-issues", "post-to-pr"]
+    }
+  },
+  
+  "stages": [
+    {
+      "name": "run-tests",
+      "description": "Run all test suites",
+      "scripts": ["0402", "0403"],
+      "variables": {
+        "OutputFormat": "JSON",
+        "OutputPath": "./tests/results/"
+      },
+      "continueOnError": true
+    },
+    {
+      "name": "run-analyzer",
+      "description": "Run PSScriptAnalyzer",
+      "scripts": ["0404"],
+      "variables": {
+        "OutputFormat": "JSON",
+        "OutputPath": "./tests/results/psscriptanalyzer-results.json"
+      },
+      "continueOnError": true
+    },
+    {
+      "name": "create-test-issues",
+      "description": "Create issues from test failures",
+      "scripts": ["0810"],
+      "variables": {
+        "IssueType": "TestFailure",
+        "AutoCreate": false,
+        "TestResults": "./tests/results/latest-test-results.json"
+      },
+      "condition": "Test-Path './tests/results/latest-test-results.json'"
+    },
+    {
+      "name": "create-violation-issues",
+      "description": "Create issues from code violations",
+      "scripts": ["0810"],
+      "variables": {
+        "IssueType": "CodeViolation",
+        "AutoCreate": false
+      },
+      "condition": "Test-Path './tests/results/psscriptanalyzer-results.json'"
+    },
+    {
+      "name": "create-all-issues",
+      "description": "Automatically create all issues (CI mode)",
+      "scripts": ["0810"],
+      "variables": {
+        "IssueType": "TestFailure",
+        "AutoCreate": true,
+        "GitHubActions": true
+      },
+      "parallel": false
+    },
+    {
+      "name": "post-to-pr",
+      "description": "Post issue links to PR comments",
+      "scripts": [],
+      "command": "gh pr comment --body 'Automated testing found issues. Check created issues for details.'",
+      "condition": "$env:GITHUB_ACTIONS -eq 'true'"
+    },
+    {
+      "name": "summary",
+      "description": "Generate summary report",
+      "scripts": [],
+      "command": "Write-Host 'Issue creation complete. Check GitHub for new issues.' -ForegroundColor Green"
+    }
+  ],
+  
+  "variables": {
+    "TestResultsPath": "./tests/results/",
+    "Labels": ["automated", "needs-triage"],
+    "Assignee": "${GITHUB_ACTOR:}"
+  },
+  
+  "hooks": {
+    "pre": {
+      "script": "Write-Host 'Starting automated issue creation...' -ForegroundColor Cyan"
+    },
+    "post": {
+      "script": "@('\n✅ Issue creation workflow complete!', 'Check GitHub for new issues.') | Write-Host -ForegroundColor Green"
+    },
+    "onError": {
+      "script": "Write-Warning 'Failed to create some issues. Manual review required.'"
+    }
+  },
+  
+  "requirements": {
+    "powershell": "7.0",
+    "commands": ["git", "gh"],
+    "environment": ["GITHUB_TOKEN"]
+  }
+}

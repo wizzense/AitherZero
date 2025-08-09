@@ -1,47 +1,62 @@
 ---
 name: Bug Report
-about: Report a bug or issue with AitherZero
+about: Create a report to help us improve AitherZero
 title: '[BUG] '
-labels: ['bug', 'needs-triage']
+labels: bug, needs-triage
 assignees: ''
+
 ---
 
-## �� Bug Description
-A clear and concise description of what the bug is.
+## Bug Description
+<!-- A clear and concise description of what the bug is -->
 
-## 🔄 Steps to Reproduce
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+## System Context
+**AitherZero Version:** <!-- Run: (Get-Content ./VERSION).Trim() -->
+**PowerShell Version:** <!-- Run: $PSVersionTable.PSVersion -->
+**Operating System:** <!-- Windows/Linux/macOS + version -->
+**Module:** <!-- Which module/domain is affected? -->
 
-## ✅ Expected Behavior
-A clear and concise description of what you expected to happen.
+## Steps To Reproduce
+1. Initialize environment: `./Initialize-AitherModules.ps1`
+2. Run command: <!-- Exact command that causes the issue -->
+3. See error
 
-## ❌ Actual Behavior
-A clear and concise description of what actually happened.
+## Expected Behavior
+<!-- What you expected to happen -->
 
-## 🖼️ Screenshots
-If applicable, add screenshots to help explain your problem.
+## Actual Behavior
+<!-- What actually happened -->
 
-## 💻 Environment Information
-- **OS**: [e.g. Windows 11, Ubuntu 22.04, macOS 14]
-- **PowerShell Version**: [e.g. 7.4.1]
-- **AitherZero Version**: [e.g. 1.0.0]
-- **Module**: [e.g. PatchManager, LabRunner]
+## Error Output
+```powershell
+# Paste error messages here
+# Include full stack trace if available
+```
 
-## 📁 Affected Files
-List any files that seem related to the issue:
-- [ ] File 1
-- [ ] File 2
+## Test Results
+<!-- If running tests, include output from: -->
+```powershell
+seq 0402  # Unit test results
+seq 0404  # PSScriptAnalyzer results
+```
 
-## 🔍 Additional Context
-Add any other context about the problem here.
+## Logs
+<!-- Check ./logs/transcript-YYYY-MM-DD.log for relevant entries -->
+```
+# Relevant log entries
+```
 
-## 🧪 Testing Information
-- [ ] I have run the bulletproof validation tests
-- [ ] The issue is reproducible
+## Additional Context
+- [ ] This worked in a previous version
+- [ ] This is blocking my work
 - [ ] I have checked existing issues
+- [ ] I have updated to the latest version
 
----
-*This issue was created using the AitherZero issue template. PatchManager integration available.*
+## Possible Solution
+<!-- Optional: Suggest a fix/reason for the bug -->
+
+## Session Context for AI
+<!-- For AI continuation, include: -->
+**Git Branch:** <!-- git branch --show-current -->
+**Modified Files:** <!-- git status --short -->
+**Last Command:** <!-- Get-History -Count 1 -->

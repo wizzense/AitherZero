@@ -12,8 +12,6 @@ Test-*
 !tests/Test-WindowsFeatures.ps1
 !tests/Test-LinuxFeatures.ps1
 !tests/Test-MacOSFeatures.ps1
-# Exception: Critical shared utilities
-!aither-core/shared/Test-PowerShellVersion.ps1
 *test.ps1
 *debug.ps1
 cleanup-*
@@ -50,12 +48,6 @@ Thumbs.db
 # Build artifacts
 dist/
 build/
-# Exception: Keep build configuration files
-!build/profiles/
-!build/profiles/*.json
-!build/Build-Package.ps1
-!build/README.md
-!build/Test-*.ps1
 build-output/
 *.egg-info/
 kicker-git-backup.ps1
@@ -64,48 +56,3 @@ kicker-git-backup.ps1
 
 # PowerShell Security Scripts (Private - Never Commit)
 powershellsec/
-
-requirements/
-
-# Prevent root directory mess - ALL analysis/validation/temp files go in output/
-*-FIXES-SUMMARY.md
-*-VALIDATION-REPORT.md
-*-ANALYSIS-REPORT.md
-*ASSESSMENT.md
-*-validation-*.json
-*-compatibility-*.json
-*-analysis.json
-workflow_analysis.json
-change-analysis.json
-duplicate-files*.json
-consolidation-report-*.json
-*-test-results*.xml
-*-test-summary.json
-*-dashboard.json
-*-dashboard.html
-test-*.ps1
-check_*.ps1
-fix-*.ps1
-security_status_report.ps1
-platform-specific-*.ps1
-validate-*.ps1
-configuration-*-validation.ps1
-
-# Keep output directory but ignore contents (except in git)
-/output/*
-!/output/.gitkeep
-
-# Test result files in root
-/ci-test-summary.json
-/testResults.xml
-/comprehensive_code_analysis_report.json
-
-# Temporary/test directories
-/invalid/
-/test-download/
-/TEST-TEMPLATES/
-
-# Temporary release scripts
-Direct-Release.ps1
-Smart-Release.ps1
-Quick-Release.ps1

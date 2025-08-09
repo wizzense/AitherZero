@@ -1,0 +1,35 @@
+#Requires -Version 7.0
+
+<#
+.SYNOPSIS
+    Initialize AitherZero environment - backward compatibility wrapper
+.DESCRIPTION
+    This script is maintained for backward compatibility.
+    It now imports the AitherZero module using the PowerShell
+    module manifest (AitherZero.psd1).
+.PARAMETER Persistent
+    Make environment changes persistent in PowerShell profile
+.PARAMETER Force
+    Force reload of all modules even if already initialized
+#>
+
+[CmdletBinding()]
+param(
+    [switch]$Persistent,
+    [switch]$Force
+)
+
+# Import the AitherZero module using the manifest
+$moduleManifest = Join-Path $PSScriptRoot "AitherZero.psd1"
+
+if (Test-Path $moduleManifest) {
+    Import-Module $moduleManifest -Force:$Force -Global
+    
+    # Handle persistent flag manually if needed
+    if ($Persistent) {
+        Write-Host "Note: Use bootstrap.ps1 for persistent installation" -ForegroundColor Yellow
+    }
+} else {
+    Write-Error "AitherZero.psd1 not found at: $moduleManifest"
+    exit 1
+}

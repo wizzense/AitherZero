@@ -1,0 +1,169 @@
+name: AI Orchestrated Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      playbook:
+        description: 'Playbook to execute'
+        required: true
+        type: choice
+        options:
+          - ai-complete-workflow
+          - ai-git-workflow
+          - git-workflow
+          - test-full
+          - test-ci
+          - tech-debt-analysis
+      branch_name:
+        description: 'Branch name (for git workflows)'
+        required: false
+      commit_message:
+        description: 'Commit message (or "auto" for AI-generated)'
+        required: false
+        default: 'auto'
+      additional_params:
+        description: 'Additional parameters (JSON format)'
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  orchestrate:
+    name: Execute AitherZero Orchestration
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Setup environment
+      shell: pwsh
+      run: |
+        # Setup git
+        git config --global user.name "AitherZero Bot"
+        git config --global user.email "bot@aitherzero.com"
+        
+        # Initialize AitherZero
+        ./Initialize-AitherEnvironment.ps1
+        
+        # Install GitHub CLI if needed
+        if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+          Write-Host "Installing GitHub CLI..."
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          sudo apt update && sudo apt install gh -y
+        }
+        
+        # Authenticate GitHub CLI
+        echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+    
+    - name: Execute orchestration playbook
+      shell: pwsh
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        AITHERZERO_CI: true
+      run: |
+        $playbook = "${{ github.event.inputs.playbook }}"
+        Write-Host "🎭 Executing playbook: $playbook" -ForegroundColor Cyan
+        
+        # Build parameters
+        $params = @{
+          Mode = 'Orchestrate'
+          Playbook = $playbook
+          NonInteractive = $true
+        }
+        
+        # Add branch name if provided
+        if ("${{ github.event.inputs.branch_name }}") {
+          $params['Variables'] = @{
+            branchName = "${{ github.event.inputs.branch_name }}"
+            commitMessage = "${{ github.event.inputs.commit_message }}"
+          }
+        }
+        
+        # Add additional parameters if provided
+        if ("${{ github.event.inputs.additional_params }}") {
+          try {
+            $additionalParams = "${{ github.event.inputs.additional_params }}" | ConvertFrom-Json -AsHashtable
+            if (-not $params['Variables']) {
+              $params['Variables'] = @{}
+            }
+            foreach ($key in $additionalParams.Keys) {
+              $params.Variables[$key] = $additionalParams[$key]
+            }
+          } catch {
+            Write-Warning "Could not parse additional parameters: $_"
+          }
+        }
+        
+        # Execute the playbook
+        ./Start-AitherZero.ps1 @params
+        
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "Playbook execution failed"
+          exit 1
+        }
+    
+    - name: Generate execution report
+      if: always()
+      shell: pwsh
+      run: |
+        # Generate a summary report
+        Write-Host "`n📊 Execution Summary" -ForegroundColor Cyan
+        Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
+        
+        # Check for logs
+        if (Test-Path ./logs) {
+          $latestLog = Get-ChildItem ./logs -Filter "*.log" | 
+            Sort-Object LastWriteTime -Descending | 
+            Select-Object -First 1
+          
+          if ($latestLog) {
+            Write-Host "Latest log: $($latestLog.Name)"
+            
+            # Show errors if any
+            $errors = Select-String -Path $latestLog.FullName -Pattern "\[ERROR\s*\]" | 
+              Select-Object -Last 5
+            
+            if ($errors) {
+              Write-Host "`n❌ Recent Errors:" -ForegroundColor Red
+              $errors | ForEach-Object { Write-Host $_.Line -ForegroundColor Red }
+            }
+          }
+        }
+        
+        # Show git status
+        Write-Host "`n📦 Git Status:" -ForegroundColor Yellow
+        git status --short
+        
+        # Show latest commit
+        Write-Host "`n📝 Latest Commit:" -ForegroundColor Green
+        git log -1 --oneline
+        
+        # Check for PR
+        $prStatus = gh pr status 2>&1
+        if ($prStatus -notmatch "error") {
+          Write-Host "`n🔀 Pull Request Status:" -ForegroundColor Cyan
+          Write-Host $prStatus
+        }
+    
+    - name: Upload logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: execution-logs
+        path: |
+          logs/
+          tests/results/
+          reports/
+        retention-days: 7
+
+# This workflow demonstrates how AitherZero can orchestrate itself
+# The actual work is done by the platform's own automation scripts
+# GitHub Actions is just providing the compute and trigger mechanism
