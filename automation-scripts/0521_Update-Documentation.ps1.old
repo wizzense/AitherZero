@@ -1,0 +1,572 @@
+#Requires -Version 7.0
+<#
+.SYNOPSIS
+    Automated documentation update and audit system
+.DESCRIPTION
+    Monitors code changes and automatically updates documentation,
+    ensures README files are current, and maintains API documentation
+#>
+
+# Script metadata
+# Stage: Reporting
+# Dependencies: 0400,0520
+# Description: Automated documentation management
+# Tags: documentation, automation, quality
+
+param(
+    [string]$Path = $PSScriptRoot,
+    [switch]$AutoFix = $false,
+    [switch]$GenerateMarkdown = $true,
+    [switch]$UpdateReadmes = $true,
+    [switch]$CreateMissing = $false,
+    [switch]$CheckOnly = $false,
+    [switch]$CI
+)
+
+# Initialize
+$ErrorActionPreference = 'Stop'
+$script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+$script:StartTime = Get-Date
+$script:UpdatedFiles = @()
+
+# Import modules
+$modulesToImport = @(
+    'domains/utilities/Logging.psm1'
+    'domains/configuration/Configuration.psm1'
+)
+
+foreach ($module in $modulesToImport) {
+    $modulePath = Join-Path $script:ProjectRoot $module
+    if (Test-Path $modulePath) {
+        Import-Module $modulePath -Force
+    }
+}
+
+function Write-ScriptLog {
+    param([string]$Message, [string]$Level = 'Information')
+
+    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+        Write-CustomLog -Message "[DocUpdate] $Message" -Level $Level
+    } else {
+        Write-Host "[$Level] $Message"
+    }
+}
+
+function Update-FunctionDocumentation {
+    param(
+        [string]$FilePath,
+        [System.Management.Automation.Language.FunctionDefinitionAst]$Function,
+        [string]$Content
+    )
+
+    Write-ScriptLog "Updating documentation for function: $($Function.Name)"
+
+    # Extract parameters
+    $params = @()
+    if ($Function.Body.ParamBlock) {
+        $params = $Function.Body.ParamBlock.Parameters | ForEach-Object {
+            @{
+                Name = $_.Name.VariablePath.UserPath
+                Type = if ($_.StaticType) { $_.StaticType.Name } else { 'Object' }
+                Mandatory = $_.Attributes | Where-Object { $_.TypeName.Name -eq 'Parameter' } | 
+                    ForEach-Object { $_.NamedArguments.ArgumentName -contains 'Mandatory' }
+            }
+        }
+    }
+
+    # Generate comment-based help
+    $help = @"
+<#
+.SYNOPSIS
+    $($Function.Name) - [Add brief description]
+.DESCRIPTION
+    [Add detailed description of what this function does]
+"@
+
+    if ($params) {
+        foreach ($param in $params) {
+            $help += @"
+
+.PARAMETER $($param.Name)
+    [$($param.Type)] $(if ($param.Mandatory) { '(Required) ' })[Add parameter description]
+"@
+        }
+    }
+    
+    $help += @"
+
+.EXAMPLE
+    $($Function.Name)$(if ($params) { ' -' + ($params | Where-Object Mandatory | Select-Object -First 1).Name + ' [value]' })
+    
+    [Add example description]
+.NOTES
+    Author: AitherZero Team
+    Date: $(Get-Date -Format 'yyyy-MM-dd')
+#>
+"@
+
+    # Insert help before function
+    $functionStart = $Function.Extent.StartOffset
+    $newContent = $Content.Substring(0, $functionStart) + $help + "`n" + $Content.Substring($functionStart)
+    
+    return $newContent
+}
+
+function Update-ModuleDocumentation {
+    param(
+        [string]$ModulePath
+    )
+
+    Write-ScriptLog "Updating module documentation: $ModulePath"
+    
+    $moduleDir = Split-Path $ModulePath -Parent
+    $moduleName = [System.IO.Path]::GetFileNameWithoutExtension($ModulePath)
+    $readmePath = Join-Path $moduleDir "README.md"
+
+    # Parse module
+    $content = Get-Content $ModulePath -Raw
+    $ast = [System.Management.Automation.Language.Parser]::ParseInput($content, [ref]$null, [ref]$null)
+
+    # Extract functions
+    $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true) |
+        Where-Object { $_.Name -notlike '*-*Script*' } # Exclude internal functions
+
+    # Generate README content
+    $readme = @"
+# $moduleName Module
+
+## Overview
+$($content -match '<#[\s\S]*?\.DESCRIPTION\s*\n\s*(.+?)[\s\S]*?#>' | Out-Null; if ($Matches[1]) { $Matches[1] } else { "[Add module description]" })
+
+## Installation
+``````powershell
+Import-Module ./$(Split-Path $ModulePath -Leaf) -Force
+``````
+
+## Functions
+
+$(foreach ($func in $functions | Sort-Object Name) {
+    $synopsis = ''
+    $funcContent = $content.Substring($func.Extent.StartOffset, $func.Extent.EndOffset - $func.Extent.StartOffset)
+    if ($funcContent -match '\.SYNOPSIS\s*\n\s*(.+?)(?:\n|\.DESCRIPTION)') {
+        $synopsis = $Matches[1].Trim()
+    }
+    
+    "### $($func.Name)`n`n$synopsis`n"
+})
+
+## Examples
+
+### Basic Usage
+``````powershell
+# Example usage here
+``````
+
+## Dependencies
+$(if (Test-Path (Join-Path $moduleDir "$moduleName.psd1")) {
+    $manifest = Import-PowerShellDataFile (Join-Path $moduleDir "$moduleName.psd1")
+    if ($manifest.RequiredModules) {
+        $manifest.RequiredModules | ForEach-Object { "- $_" }
+    } else {
+        "None"
+    }
+} else {
+    "- PowerShell 7.0+"
+})
+
+## Configuration
+$(if ($moduleName -match 'Configuration|Settings|Config') {
+    "This module uses settings from `config.json`. See [Configuration Documentation](../../docs/configuration.md) for details."
+} else {
+    "No specific configuration required."
+})
+
+---
+*Last Updated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')*
+"@
+
+    if ($CreateMissing -or (Test-Path $readmePath)) {
+        $readme | Set-Content -Path $readmePath
+        $script:UpdatedFiles += $readmePath
+        Write-ScriptLog "Updated README: $readmePath"
+    }
+    
+    return $readme
+}
+
+function Update-ScriptDocumentation {
+    param(
+        [string]$ScriptPath
+    )
+
+    Write-ScriptLog "Checking script documentation: $ScriptPath"
+    
+    $content = Get-Content $ScriptPath -Raw
+    $updated = $false
+
+    # Check for script metadata comments
+    $metadataPattern = @"
+# Script metadata
+# Stage: \w+
+# Dependencies: [\w,\s]*
+# Description: .+
+# Tags: [\w,\s-]+
+"@
+
+    if ($content -notmatch $metadataPattern) {
+        Write-ScriptLog "Missing script metadata in: $ScriptPath" -Level Warning
+        
+        if ($AutoFix) {
+            # Extract script number and name
+            $fileName = [System.IO.Path]::GetFileNameWithoutExtension($ScriptPath)
+            if ($fileName -match '^(\d{4})_(.+)$') {
+                $scriptNum = $Matches[1]
+                $scriptName = $Matches[2] -replace '-', ' '
+                
+                # Determine stage based on number
+                $stage = switch ([int]$scriptNum) {
+                    { $_ -lt 100 } { 'Environment' }
+                    { $_ -lt 200 } { 'Infrastructure' }
+                    { $_ -lt 300 } { 'Development' }
+                    { $_ -lt 400 } { 'Deployment' }
+                    { $_ -lt 500 } { 'Testing' }
+                    { $_ -lt 600 } { 'Reporting' }
+                    default { 'Maintenance' }
+                }
+                
+                $metadata = @"
+# Script metadata
+# Stage: $stage
+# Dependencies: $(if ([int]$scriptNum -gt 0) { "0000" } else { "none" })
+# Description: $scriptName
+# Tags: automation, $($stage.ToLower())
+
+"@
+                
+                $content = $metadata + $content
+                $content | Set-Content -Path $ScriptPath
+                $script:UpdatedFiles += $ScriptPath
+                $updated = $true
+            }
+        }
+    }
+
+    # Check for .SYNOPSIS in param block
+    if ($content -match 'param\s*\(' -and $content -notmatch '<#[\s\S]*?\.SYNOPSIS') {
+        Write-ScriptLog "Missing .SYNOPSIS in: $ScriptPath" -Level Warning
+        
+        if ($AutoFix) {
+            $synopsis = @"
+<#
+.SYNOPSIS
+    $(Split-Path $ScriptPath -LeafBase | ForEach-Object { $_ -replace '_', ' ' -replace '-', ' ' })
+.DESCRIPTION
+    [Add detailed description]
+#>
+
+"@
+            $content = $content -replace '(#Requires[^\n]*\n)', "`$1$synopsis"
+            $content | Set-Content -Path $ScriptPath
+            $script:UpdatedFiles += $ScriptPath
+            $updated = $true
+        }
+    }
+    
+    return $updated
+}
+
+function New-DependencyMap {
+    Write-ScriptLog "Generating dependency map..."
+    
+    $dependencies = @{
+        Modules = @{}
+        Scripts = @{}
+        External = @{}
+    }
+
+    # Analyze module dependencies
+    Get-ChildItem -Path (Join-Path $script:ProjectRoot "domains") -Recurse -Filter "*.psm1" | ForEach-Object {
+        $moduleName = $_.BaseName
+        $content = Get-Content $_.FullName -Raw
+        
+        $deps = @()
+        
+        # Find Import-Module statements
+        $imports = [regex]::Matches($content, 'Import-Module\s+[''"]?([^''";\s]+)')
+        foreach ($import in $imports) {
+            $deps += $import.Groups[1].Value
+        }
+        
+        # Find #Requires statements
+        $requires = [regex]::Matches($content, '#Requires\s+-Modules?\s+(.+)')
+        foreach ($req in $requires) {
+            $deps += $req.Groups[1].Value -split ',\s*'
+        }
+        
+        $dependencies.Modules[$moduleName] = @{
+            Path = $_.FullName.Replace($script:ProjectRoot, '.')
+            Dependencies = $deps | Select-Object -Unique
+            RequiredBy = @()
+        }
+    }
+
+    # Build reverse dependencies
+    foreach ($module in $dependencies.Modules.GetEnumerator()) {
+        foreach ($dep in $module.Value.Dependencies) {
+            if ($dependencies.Modules.ContainsKey($dep)) {
+                $dependencies.Modules[$dep].RequiredBy += $module.Key
+            } else {
+                if (-not $dependencies.External.ContainsKey($dep)) {
+                    $dependencies.External[$dep] = @{
+                        RequiredBy = @()
+                    }
+                }
+                $dependencies.External[$dep].RequiredBy += $module.Key
+            }
+        }
+    }
+
+    # Analyze script dependencies
+    Get-ChildItem -Path (Join-Path $script:ProjectRoot "automation-scripts") -Filter "*.ps1" | ForEach-Object {
+        $scriptName = $_.Name
+        $content = Get-Content $_.FullName -Raw
+        
+        # Extract dependencies from metadata
+        if ($content -match '# Dependencies:\s*(.+)') {
+            $deps = $Matches[1] -split ',\s*' | Where-Object { $_ -ne 'none' }
+            $dependencies.Scripts[$scriptName] = @{
+                Number = if ($scriptName -match '^(\d{4})_') { $Matches[1] } else { '9999' }
+                Dependencies = $deps
+                Path = $_.FullName.Replace($script:ProjectRoot, '.')
+            }
+        }
+    }
+    
+    return $dependencies
+}
+
+function Export-DependencyReport {
+    param(
+        [hashtable]$Dependencies,
+        [string]$OutputPath
+    )
+
+    Write-ScriptLog "Exporting dependency report..."
+    
+    $mermaidGraph = @"
+graph TD
+    %% Module Dependencies
+"@
+    
+    foreach ($module in $Dependencies.Modules.GetEnumerator()) {
+        $moduleId = $module.Key -replace '[^a-zA-Z0-9]', ''
+        foreach ($dep in $module.Value.Dependencies) {
+            $depId = $dep -replace '[^a-zA-Z0-9]', ''
+            $mermaidGraph += "`n    $moduleId --> $depId"
+        }
+    }
+    
+    $mermaidGraph += @"
+
+    %% External Dependencies
+"@
+    
+    foreach ($ext in $Dependencies.External.GetEnumerator()) {
+        $extId = $ext.Key -replace '[^a-zA-Z0-9]', ''
+        $mermaidGraph += "`n    $extId[[$($ext.Key)]]"
+        foreach ($req in $ext.Value.RequiredBy) {
+            $reqId = $req -replace '[^a-zA-Z0-9]', ''
+            $mermaidGraph += "`n    $reqId --> $extId"
+        }
+    }
+
+    # Save dependency graph
+    $graphPath = Join-Path $OutputPath "dependency-graph.mmd"
+    $mermaidGraph | Set-Content -Path $graphPath
+
+    # Generate dependency report
+    $report = @"
+# AitherZero Dependency Map
+
+Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+
+## Module Dependencies
+
+| Module | Dependencies | Required By |
+|--------|--------------|-------------|
+$($Dependencies.Modules.GetEnumerator() | Sort-Object Key | ForEach-Object {
+    "| $($_.Key) | $($_.Value.Dependencies -join ', ') | $($_.Value.RequiredBy -join ', ') |"
+} | Out-String)
+
+## External Dependencies
+
+| Package | Required By |
+|---------|-------------|
+$($Dependencies.External.GetEnumerator() | Sort-Object Key | ForEach-Object {
+    "| $($_.Key) | $($_.Value.RequiredBy -join ', ') |"
+} | Out-String)
+
+## Script Dependencies
+
+| Script | Number | Dependencies |
+|--------|--------|--------------|
+$($Dependencies.Scripts.GetEnumerator() | Sort-Object { [int]$_.Value.Number } | ForEach-Object {
+    "| $($_.Key) | $($_.Value.Number) | $($_.Value.Dependencies -join ', ') |"
+} | Out-String)
+
+## Dependency Graph
+
+\`\`\`mermaid
+$mermaidGraph
+\`\`\`
+
+---
+*Use [Mermaid Live Editor](https://mermaid-js.github.io/mermaid-live-editor/) to visualize the graph*
+"@
+    
+    $reportPath = Join-Path $OutputPath "dependency-map.md"
+    $report | Set-Content -Path $reportPath
+    
+    return @{
+        GraphPath = $graphPath
+        ReportPath = $reportPath
+        Dependencies = $Dependencies
+    }
+}
+
+function Update-ConfigurationDependencies {
+    param(
+        [hashtable]$Dependencies
+    )
+
+    Write-ScriptLog "Updating config.json with dependency information..."
+    
+    $configPath = Join-Path $script:ProjectRoot "config.json"
+    $config = Get-Content $configPath -Raw | ConvertFrom-Json
+
+    # Add Dependencies section if it doesn't exist
+    if (-not $config.Dependencies) {
+        $config | Add-Member -NotePropertyName 'Dependencies' -NotePropertyValue ([PSCustomObject]@{
+            Modules = [PSCustomObject]@{}
+            External = [PSCustomObject]@{}
+            Scripts = [PSCustomObject]@{}
+        })
+    }
+
+    # Update module dependencies
+    foreach ($module in $Dependencies.Modules.GetEnumerator()) {
+        $moduleConfig = [PSCustomObject]@{
+            Dependencies = $module.Value.Dependencies
+            RequiredBy = $module.Value.RequiredBy
+            Path = $module.Value.Path
+        }
+        
+        if ($config.Dependencies.Modules.PSObject.Properties[$module.Key]) {
+            $config.Dependencies.Modules.PSObject.Properties.Remove($module.Key)
+        }
+        $config.Dependencies.Modules | Add-Member -NotePropertyName $module.Key -NotePropertyValue $moduleConfig
+    }
+
+    # Update external dependencies
+    foreach ($ext in $Dependencies.External.GetEnumerator()) {
+        $extConfig = [PSCustomObject]@{
+            RequiredBy = $ext.Value.RequiredBy
+            Version = '*'  # Could be enhanced to detect actual versions
+        }
+        
+        if ($config.Dependencies.External.PSObject.Properties[$ext.Key]) {
+            $config.Dependencies.External.PSObject.Properties.Remove($ext.Key)
+        }
+        $config.Dependencies.External | Add-Member -NotePropertyName $ext.Key -NotePropertyValue $extConfig
+    }
+
+    # Save updated config
+    $config | ConvertTo-Json -Depth 10 | Set-Content -Path $configPath
+    Write-ScriptLog "Updated config.json with dependency information"
+    
+    return $config
+}
+
+# Main execution
+try {
+    Write-ScriptLog "Starting documentation update and audit..."
+    
+    $issues = @{
+        MissingDocs = @()
+        OutdatedDocs = @()
+        UpdatedFiles = @()
+    }
+
+    if (-not $CheckOnly) {
+        # Update PowerShell module documentation
+        if ($UpdateReadmes) {
+            Get-ChildItem -Path (Join-Path $script:ProjectRoot "domains") -Recurse -Filter "*.psm1" | ForEach-Object {
+                Update-ModuleDocumentation -ModulePath $_.FullName
+            }
+        }
+        
+        # Update script documentation
+        Get-ChildItem -Path (Join-Path $script:ProjectRoot "automation-scripts") -Filter "*.ps1" | ForEach-Object {
+            Update-ScriptDocumentation -ScriptPath $_.FullName
+        }
+        
+        # Fix missing function documentation
+        if ($AutoFix) {
+            Get-ChildItem -Path $script:ProjectRoot -Recurse -Include "*.ps1", "*.psm1" -File |
+                Where-Object { $_.FullName -notlike "*\tests\*" -and $_.FullName -notlike "*\legacy-to-migrate\*" } |
+                ForEach-Object {
+                    $content = Get-Content $_.FullName -Raw
+                    $ast = [System.Management.Automation.Language.Parser]::ParseInput($content, [ref]$null, [ref]$null)
+                    $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+                    
+                    $updated = $false
+                    foreach ($function in $functions) {
+                        $funcContent = $content.Substring($function.Extent.StartOffset, $function.Extent.EndOffset - $function.Extent.StartOffset)
+                        if ($funcContent -notmatch '<#[\s\S]*?\.SYNOPSIS') {
+                            $content = Update-FunctionDocumentation -FilePath $_.FullName -Function $function -Content $content
+                            $updated = $true
+                        }
+                    }
+                    
+                    if ($updated) {
+                        $content | Set-Content -Path $_.FullName
+                        $script:UpdatedFiles += $_.FullName
+                    }
+                }
+        }
+    }
+
+    # Generate dependency map
+    $dependencies = New-DependencyMap
+    $depReport = Export-DependencyReport -Dependencies $dependencies -OutputPath (Join-Path $script:ProjectRoot "docs")
+
+    # Update config.json with dependencies
+    if (-not $CheckOnly) {
+        Update-ConfigurationDependencies -Dependencies $dependencies
+    }
+    
+    $duration = New-TimeSpan -Start $script:StartTime -End (Get-Date)
+    Write-ScriptLog "Documentation update completed in $($duration.TotalSeconds) seconds"
+
+    # Display summary
+    Write-Host "`nDocumentation Update Summary:" -ForegroundColor Cyan
+    Write-Host "  Updated Files: $($script:UpdatedFiles.Count)"
+    Write-Host "  Dependency Map: $($depReport.ReportPath)"
+    Write-Host "  Module Dependencies: $($dependencies.Modules.Count)"
+    Write-Host "  External Dependencies: $($dependencies.External.Count)"
+
+    if ($script:UpdatedFiles) {
+        Write-Host "`nUpdated files:" -ForegroundColor Yellow
+        $script:UpdatedFiles | ForEach-Object {
+            Write-Host "  - $_"
+        }
+    }
+    
+    exit 0
+} catch {
+    Write-ScriptLog "Documentation update failed: $_" -Level Error
+    if ($CI) {
+        throw
+    }
+    exit 1
+}

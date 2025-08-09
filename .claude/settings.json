@@ -1,0 +1,33 @@
+{
+  "hooks": {
+    "PreToolUse": ".claude/hooks/pre-tool-use.ps1",
+    "PostToolUse": ".claude/hooks/post-tool-use.ps1",
+    "UserPromptSubmit": ".claude/hooks/user-prompt-submit.ps1",
+    "SessionStart": ".claude/hooks/session-start.ps1",
+    "SubagentStop": ".claude/hooks/subagent-stop.ps1"
+  },
+  "project": {
+    "name": "AitherZero",
+    "type": "infrastructure-automation",
+    "frameworks": ["powershell", "terraform", "github-actions"],
+    "ai_assistance": {
+      "code_review": true,
+      "test_generation": true,
+      "documentation": true,
+      "security_analysis": true
+    }
+  },
+  "development": {
+    "auto_commit": false,
+    "auto_branch": false,
+    "auto_pr": false,
+    "validation_required": true,
+    "test_before_commit": true
+  },
+  "orchestration": {
+    "trigger_on_commit": ["0404", "0407"],
+    "trigger_on_branch": ["0700"],
+    "trigger_on_pr": ["0703"],
+    "ci_monitoring": true
+  }
+}

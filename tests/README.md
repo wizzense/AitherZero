@@ -1,111 +1,82 @@
 # AitherZero Test Suite
 
-## Overview
+This directory contains all tests for the AitherZero project, organized by domain and test type.
 
-This test suite provides comprehensive coverage for the AitherZero infrastructure automation framework using Pester 5.x.
-
-## Directory Structure
+## Test Structure
 
 ```
 tests/
-├── Unit/              # Pure unit tests - one file per module function
-├── Integration/       # Cross-module integration tests
-├── E2E/               # End-to-end scenario tests
-├── Performance/       # Performance benchmarks and load tests
-├── Fixtures/          # Test data, mocks, and test resources
-├── Shared/            # Common test utilities and helpers
-├── Coverage/          # Code coverage reports and analysis
-├── config/            # Test configuration files
-├── helpers/           # Legacy test helpers (being refactored)
-├── tools/             # Test generation and analysis tools
-└── archive/           # Old test structure (reference only)
+├── domains/          # Domain-specific unit tests
+│   ├── infrastructure/
+│   ├── configuration/
+│   ├── utilities/
+│   ├── security/
+│   ├── experience/
+│   └── automation/
+├── integration/      # Integration tests
+├── unit/            # Cross-domain unit tests
+├── performance/     # Performance tests
+└── README.md        # This file
 ```
 
-## Quick Start
+## Running Tests
 
-### Run All Tests
+### All Tests
 ```powershell
-./Run-Tests.ps1
+Invoke-Pester -Path ./tests
 ```
 
-### Run Module Tests
+### Domain-Specific Tests
 ```powershell
-./Run-Tests.ps1 -Module Logging
+# Test a specific domain
+Invoke-Pester -Path ./tests/domains/infrastructure
+
+# Test a specific function
+Invoke-Pester -Path ./tests/domains/infrastructure -TestName "New-LabVM"
 ```
-
-### Run with Coverage
-```powershell
-./Run-Tests.ps1 -Coverage
-```
-
-### Run Specific Test Type
-```powershell
-./Run-Tests.ps1 -Type Unit
-./Run-Tests.ps1 -Type Integration
-./Run-Tests.ps1 -Type E2E
-```
-
-## Test Standards
-
-### Unit Tests
-- One test file per module file
-- Test file naming: `{ModuleName}.{FunctionName}.Tests.ps1`
-- Mock all external dependencies
-- Test execution time < 100ms per test
-- 100% function coverage required
 
 ### Integration Tests
-- Test module interactions
-- Test file naming: `{Feature}.Integration.Tests.ps1`
-- Limited mocking (only external systems)
-- Test execution time < 10s per test
-
-### E2E Tests
-- Complete workflow scenarios
-- Test file naming: `{Scenario}.E2E.Tests.ps1`
-- No mocking (except external services)
-- Test execution time < 60s per test
+```powershell
+Invoke-Pester -Path ./tests/integration
+```
 
 ### Performance Tests
-- Benchmark critical operations
-- Test file naming: `{Component}.Performance.Tests.ps1`
-- Track metrics over time
-- Flag regressions automatically
+```powershell
+Invoke-Pester -Path ./tests/performance
+```
 
-## Coverage Requirements
+## Test Coverage
 
-- **Functions**: 100% coverage required
-- **Lines**: 90% minimum coverage
-- **Branches**: 80% minimum coverage
-- **Modules**: All exported functions must have tests
+Generate code coverage reports:
+```powershell
+Invoke-Pester -Path ./tests -CodeCoverage ./domains/**/*.psm1 -CodeCoverageOutputFile coverage.xml
+```
 
 ## Writing Tests
 
-### Test Template
-```powershell
-#Requires -Version 7.0
-#Requires -Modules Pester
+### Naming Convention
+- Test files: `<ModuleName>.Tests.ps1`
+- Test names: Should describe what is being tested
+- Use descriptive Context and It blocks
 
-BeforeDiscovery {
-    $script:ModulePath = Join-Path $PSScriptRoot '../../../aither-core/modules/ModuleName'
-    $script:ModuleName = 'ModuleName'
+### Example Test
+```powershell
+BeforeAll {
+    Import-Module ./AitherZeroCore.psm1 -Force
 }
 
-Describe 'ModuleName.FunctionName' {
-    BeforeAll {
-        Import-Module $script:ModulePath -Force
-        # Setup mocks
-    }
-    
-    Context 'Normal Operation' {
-        It 'Should perform expected behavior' {
-            # Test implementation
+Describe "Configuration Module Tests" {
+    Context "Get-Configuration" {
+        It "Should return default configuration when no file exists" {
+            $config = Get-Configuration
+            $config | Should -Not -BeNullOrEmpty
+            $config.Core.Name | Should -Be "AitherZero"
         }
-    }
-    
-    Context 'Error Handling' {
-        It 'Should handle specific error gracefully' {
-            # Error test
+        
+        It "Should return specific section when requested" {
+            $logging = Get-Configuration -Section "Logging"
+            $logging | Should -Not -BeNullOrEmpty
+            $logging.Level | Should -Be "Information"
         }
     }
 }
@@ -113,18 +84,37 @@ Describe 'ModuleName.FunctionName' {
 
 ## CI/CD Integration
 
-Tests run automatically on:
-- Every pull request
-- Pushes to main/develop branches
-- Nightly builds
-- Release tags
+Tests are automatically run on:
+- Every commit (via GitHub Actions)
+- Pull request creation and updates
+- Nightly scheduled runs
 
-Failed tests block merges and deployments.
+## Test Categories
 
-## Contributing
+### Unit Tests
+- Test individual functions in isolation
+- Mock external dependencies
+- Fast execution
+- High code coverage
 
-1. Write tests for any new functionality
-2. Ensure all tests pass before committing
-3. Maintain or improve code coverage
-4. Follow the test standards above
-5. Update this README for significant changes
+### Integration Tests
+- Test interactions between modules
+- Test with real dependencies
+- Medium execution time
+- End-to-end scenarios
+
+### Performance Tests
+- Measure execution time
+- Monitor resource usage
+- Identify bottlenecks
+- Establish baselines
+
+## Best Practices
+
+1. **Write tests first** - Follow TDD principles
+2. **Keep tests isolated** - Each test should be independent
+3. **Use meaningful names** - Test names should describe behavior
+4. **Mock external dependencies** - For unit tests
+5. **Clean up after tests** - Remove test artifacts
+6. **Test edge cases** - Include error conditions
+7. **Maintain test data** - Use consistent test fixtures

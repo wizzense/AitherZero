@@ -1,0 +1,134 @@
+{
+  "name": "git-workflow",
+  "description": "Generic automated Git workflow for staging, committing, and creating PRs",
+  "version": "1.0.0",
+  "author": "AitherZero Team",
+  "tags": ["git", "automation", "workflow", "pr"],
+  "requirements": {
+    "modules": ["GitAutomation", "PullRequestManager"],
+    "tools": ["git", "gh"],
+    "minimumVersion": "7.0"
+  },
+  "parameters": {
+    "filePattern": {
+      "description": "Files to stage (space-separated patterns)",
+      "required": true,
+      "example": "*.ps1 config.json docs/*.md"
+    },
+    "commitType": {
+      "description": "Conventional commit type",
+      "required": true,
+      "values": ["feat", "fix", "docs", "style", "refactor", "test", "chore", "perf", "ci", "build", "revert"],
+      "default": "feat"
+    },
+    "commitScope": {
+      "description": "Commit scope",
+      "required": false
+    },
+    "commitMessage": {
+      "description": "Commit message",
+      "required": true
+    },
+    "commitBody": {
+      "description": "Extended commit body",
+      "required": false
+    },
+    "branchName": {
+      "description": "Branch name to push",
+      "required": false,
+      "default": "current"
+    },
+    "prTitle": {
+      "description": "Pull request title",
+      "required": false
+    },
+    "prBody": {
+      "description": "Pull request body",
+      "required": false
+    },
+    "prBase": {
+      "description": "Base branch for PR",
+      "required": false,
+      "default": "main"
+    },
+    "prLabels": {
+      "description": "PR labels (comma-separated)",
+      "required": false
+    }
+  },
+  "variables": {
+    "filePattern": "{{filePattern}}",
+    "commitType": "{{commitType}}",
+    "commitScope": "{{commitScope}}",
+    "commitMessage": "{{commitMessage}}",
+    "commitBody": "{{commitBody}}",
+    "branchName": "{{branchName}}",
+    "prTitle": "{{prTitle:={{commitType}}({{commitScope}}): {{commitMessage}}}}",
+    "prBase": "{{prBase:=main}}",
+    "prBody": "{{prBody:={{commitBody}}}}",
+    "prLabels": "{{prLabels}}"
+  },
+  "stages": [
+    {
+      "name": "Stage Files",
+      "description": "Add specified files to git staging",
+      "sequence": ["0704"],
+      "variables": {
+        "Patterns": "{{filePattern}}",
+        "Force": true
+      },
+      "continueOnError": false
+    },
+    {
+      "name": "Create Commit",
+      "description": "Create conventional commit",
+      "sequence": ["0702"],
+      "variables": {
+        "Type": "{{commitType}}",
+        "Scope": "{{commitScope}}",
+        "Message": "{{commitMessage}}",
+        "Body": "{{commitBody}}",
+        "AutoStage": false,
+        "NonInteractive": true,
+        "Force": true
+      },
+      "continueOnError": false
+    },
+    {
+      "name": "Push Branch",
+      "description": "Push branch to remote",
+      "sequence": ["0705"],
+      "variables": {
+        "Branch": "{{branchName}}",
+        "SetUpstream": true,
+        "NonInteractive": true
+      },
+      "continueOnError": false
+    },
+    {
+      "name": "Create Pull Request",
+      "description": "Create PR if requested",
+      "sequence": ["0703"],
+      "condition": "{{prTitle}}",
+      "variables": {
+        "Title": "{{prTitle}}",
+        "Base": "{{prBase}}",
+        "Body": "{{prBody}}",
+        "Labels": "{{prLabels}}",
+        "NonInteractive": true,
+        "Force": true
+      },
+      "continueOnError": false
+    }
+  ],
+  "notifications": {
+    "onSuccess": {
+      "message": "✅ Git workflow completed successfully!",
+      "level": "Information"
+    },
+    "onFailure": {
+      "message": "❌ Git workflow failed",
+      "level": "Error"
+    }
+  }
+}

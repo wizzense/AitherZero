@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="7" errors="0" failures="1" not-run="75" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-08-08" time="23:29:03">
+  <environment platform="Linux" cwd="/workspaces/AitherZero" os-version="6.8.0-1030-azure" user="codespace" user-domain="" machine-name="codespaces-4ce466" nunit-version="2.5.8.0" clr-version="9.0.4" />
+  <culture-info current-culture="" current-uiculture="" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="1.5647" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="/workspaces/AitherZero/tests/unit/automation-scripts/0218_Install-GeminiCLI.Tests.ps1" executed="True" result="Failure" success="False" time="1.4421" asserts="0" description="/workspaces/AitherZero/tests/unit/automation-scripts/0218_Install-GeminiCLI.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="0218_Install-GeminiCLI" executed="True" result="Failure" success="False" time="0.9301" asserts="0" description="0218_Install-GeminiCLI">
+            <results>
+              <test-suite type="TestFixture" name="0218_Install-GeminiCLI.Script Validation" executed="True" result="Success" success="True" time="0.1678" asserts="0" description="0218_Install-GeminiCLI.Script Validation">
+                <results>
+                  <test-case description="Script file should exist" name="0218_Install-GeminiCLI.Script Validation.Script file should exist" time="0.1273" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Script should have valid PowerShell syntax" name="0218_Install-GeminiCLI.Script Validation.Script should have valid PowerShell syntax" time="0.014" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="0218_Install-GeminiCLI.Parameter Validation" executed="True" result="Success" success="True" time="0.1935" asserts="0" description="0218_Install-GeminiCLI.Parameter Validation">
+                <results>
+                  <test-case description="Should accept -Configuration parameter" name="0218_Install-GeminiCLI.Parameter Validation.Should accept -Configuration parameter" time="0.0195" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="0218_Install-GeminiCLI.Function Tests" executed="True" result="Success" success="True" time="0.2148" asserts="0" description="0218_Install-GeminiCLI.Function Tests">
+                <results>
+                  <test-case description="Function Write-ScriptLog should be defined" name="0218_Install-GeminiCLI.Function Tests.Function Write-ScriptLog should be defined" time="0.0116" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="0218_Install-GeminiCLI.Script Execution" executed="True" result="Failure" success="False" time="0.5144" asserts="0" description="0218_Install-GeminiCLI.Script Execution">
+                <results>
+                  <test-case description="Should not throw when executed with WhatIf" name="0218_Install-GeminiCLI.Script Execution.Should not throw when executed with WhatIf" time="0.2092" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should be in stage: Development" name="0218_Install-GeminiCLI.Script Execution.Should be in stage: Development" time="0.0764" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected regular expression 'Stage:\\s*Development' to match '#Requires -Version 7.0 # Stage: Development # Dependencies: Node, Python # Description: Install Google Gemini CLI and dependencies  [CmdletBinding(SupportsShouldProcess)] param(     [Parameter()]     [hashtable]$Configuration )', but it did not match.</message>
+                      <stack-trace>at $content -join ' ' | Should -Match 'Stage:\\s*Development', /workspaces/AitherZero/tests/unit/automation-scripts/0218_Install-GeminiCLI.Tests.ps1:77
+at &lt;ScriptBlock&gt;, /workspaces/AitherZero/tests/unit/automation-scripts/0218_Install-GeminiCLI.Tests.ps1:77</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should declare dependencies: Node, Python" name="0218_Install-GeminiCLI.Script Execution.Should declare dependencies: Node, Python" time="0.0036" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>

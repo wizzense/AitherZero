@@ -1,0 +1,911 @@
+#Requires -Version 7.0
+<#
+.SYNOPSIS
+    Generates comprehensive tech debt and documentation audit report
+.DESCRIPTION
+    Analyzes codebase for technical debt, configuration usage, documentation coverage,
+    and generates actionable reports for continuous improvement
+#>
+
+# Script metadata
+# Stage: Reporting
+# Dependencies: 0400
+# Description: Tech debt and documentation audit reporting
+# Tags: reporting, tech-debt, documentation, quality
+
+param(
+    [string]$OutputPath = "./reports/tech-debt",
+    [string[]]$Format = @('HTML', 'Markdown', 'JSON'),
+    [switch]$IncludeConfigUsage = $true,
+    [switch]$IncludeDocumentation = $true,
+    [switch]$IncludeCodeQuality = $true,
+    [switch]$IncludeTodos = $true,
+    [switch]$IncludeSecurityIssues = $true,
+    [switch]$AutoUpdate = $false,
+    [switch]$CI
+)
+
+# Initialize
+$ErrorActionPreference = 'Stop'
+$script:ProjectRoot = Split-Path $PSScriptRoot -Parent
+$script:StartTime = Get-Date
+
+# Import modules
+$modulesToImport = @(
+    'domains/utilities/Logging.psm1'
+    'domains/reporting/ReportingEngine.psm1'
+    'domains/configuration/Configuration.psm1'
+)
+
+foreach ($module in $modulesToImport) {
+    $modulePath = Join-Path $script:ProjectRoot $module
+    if (Test-Path $modulePath) {
+        Import-Module $modulePath -Force
+    }
+}
+
+function Write-ScriptLog {
+    param([string]$Message, [string]$Level = 'Information')
+
+    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+        Write-CustomLog -Message "[TechDebt] $Message" -Level $Level
+    } else {
+        Write-Host "[$Level] $Message"
+    }
+}
+
+function Get-ConfigurationUsageAnalysis {
+    Write-ScriptLog "Analyzing configuration usage..."
+    
+    $configPath = Join-Path $script:ProjectRoot "config.json"
+    if (-not (Test-Path $configPath)) {
+        Write-ScriptLog "Config file not found" -Level Warning
+        return @{ Error = "config.json not found" }
+    }
+    
+    $config = Get-Content $configPath -Raw | ConvertFrom-Json
+    $usage = @{
+        TotalSettings = 0
+        UsedSettings = 0
+        UnusedSettings = @()
+        PartiallyImplemented = @()
+        BySection = @{}
+    }
+
+    # Analyze each section
+    foreach ($section in $config.PSObject.Properties) {
+        $sectionName = $section.Name
+        $sectionUsage = @{
+            Total = 0
+            Used = 0
+            Unused = @()
+            Usage = @{}
+        }
+        
+        # Search for usage of each setting
+        foreach ($setting in $section.Value.PSObject.Properties) {
+            $settingPath = "$sectionName.$($setting.Name)"
+            $usage.TotalSettings++
+            $sectionUsage.Total++
+
+            # Search for usage in codebase
+            $searchPatterns = @(
+                "config\.$settingPath"
+                "Configuration\['$sectionName'\]\['$($setting.Name)'\]"
+                "Configuration\.$settingPath"
+                "config\['$sectionName'\]\['$($setting.Name)'\]"
+                "$sectionName\.$($setting.Name)"
+            )
+        
+            $found = $false
+            foreach ($pattern in $searchPatterns) {
+                $results = Get-ChildItem -Path $script:ProjectRoot -Recurse -Include "*.ps1", "*.psm1" -File |
+                    Where-Object { $_.FullName -notlike "*\tests\*" -and $_.FullName -notlike "*\reports\*" } |
+                    Select-String -Pattern $pattern -SimpleMatch
+                
+                if ($results) {
+                    $found = $true
+                    $sectionUsage.Usage[$setting.Name] = @{
+                        Used = $true
+                        Locations = $results | Select-Object -ExpandProperty Path -Unique
+                    }
+                    break
+                }
+            }
+
+            if ($found) {
+                $usage.UsedSettings++
+                $sectionUsage.Used++
+            } else {
+                $usage.UnusedSettings += $settingPath
+                $sectionUsage.Unused += $setting.Name
+                $sectionUsage.Usage[$setting.Name] = @{
+                    Used = $false
+                    Locations = @()
+                }
+            }
+        }
+        
+        $usage.BySection[$sectionName] = $sectionUsage
+    }
+    
+    $usage.UsagePercentage = [Math]::Round(($usage.UsedSettings / $usage.TotalSettings) * 100, 2)
+    return $usage
+}
+
+function Get-DocumentationCoverage {
+    Write-ScriptLog "Analyzing documentation coverage..."
+    
+    $coverage = @{
+        Modules = @{}
+        Functions = @{}
+        Scripts = @{}
+        TotalFiles = 0
+        DocumentedFiles = 0
+        TotalFunctions = 0
+        DocumentedFunctions = 0
+        MissingDocs = @()
+        OutdatedDocs = @()
+    }
+
+    # Analyze PowerShell files
+    Get-ChildItem -Path $script:ProjectRoot -Recurse -Include "*.ps1", "*.psm1", "*.psd1" -File |
+        Where-Object { $_.FullName -notlike "*\tests\*" -and $_.FullName -notlike "*\legacy-to-migrate\*" } |
+        ForEach-Object {
+            $coverage.TotalFiles++
+            $file = $_
+            $content = Get-Content $file.FullName -Raw
+
+            # Check for file-level documentation
+            if ($content -match '<#[\s\S]*?\.SYNOPSIS[\s\S]*?#>') {
+                $coverage.DocumentedFiles++
+            } else {
+                $coverage.MissingDocs += @{
+                    Type = 'File'
+                    Path = $file.FullName.Replace($script:ProjectRoot, '.')
+                    Issue = 'No file-level documentation'
+                }
+            }
+
+            # Extract functions
+            try {
+                $parseErrors = $null
+                $ast = [System.Management.Automation.Language.Parser]::ParseInput($content, [ref]$null, [ref]$parseErrors)
+                
+                if ($parseErrors -and $parseErrors.Count -gt 0) {
+                    Write-ScriptLog "Parse errors in $($file.FullName): $($parseErrors.Count) errors" -Level Warning
+                    continue
+                }
+                
+                if (-not $ast) {
+                    Write-ScriptLog "Failed to parse AST for $($file.FullName)" -Level Warning
+                    continue
+                }
+                
+                $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+            } catch {
+                Write-ScriptLog "Error parsing $($file.FullName): $_" -Level Warning
+                continue
+            }
+            
+            foreach ($function in $functions) {
+                $coverage.TotalFunctions++
+                $funcName = $function.Name
+                
+                # Check for comment-based help
+                $funcContent = $content.Substring($function.Extent.StartOffset, $function.Extent.EndOffset - $function.Extent.StartOffset)
+                if ($funcContent -match '<#[\s\S]*?\.SYNOPSIS[\s\S]*?#>' -or $funcContent -match '\.SYNOPSIS') {
+                    $coverage.DocumentedFunctions++
+                    
+                    # Check if documentation matches parameters
+                    $params = if ($function.Body -and $function.Body.ParamBlock) { $function.Body.ParamBlock.Parameters } else { $null }
+                    if ($params) {
+                        $docParams = [regex]::Matches($funcContent, '\.PARAMETER\s+(\w+)')
+                        $actualParams = $params | ForEach-Object { $_.Name.VariablePath.UserPath }
+                        
+                        $missingParams = $actualParams | Where-Object {
+                            $param = $_
+                            $docParamNames = $docParams | ForEach-Object { $_.Groups[1].Value }
+                            -not ($docParamNames -contains $param)
+                        }
+                        
+                        if ($missingParams) {
+                            $coverage.OutdatedDocs += @{
+                                Type = 'Function'
+                                Name = $funcName
+                                Path = $file.FullName.Replace($script:ProjectRoot, '.')
+                                Issue = "Missing parameter documentation: $($missingParams -join ', ')"
+                            }
+                        }
+                    }
+                } else {
+                    $coverage.MissingDocs += @{
+                        Type = 'Function'
+                        Name = $funcName
+                        Path = $file.FullName.Replace($script:ProjectRoot, '.')
+                        Issue = 'No comment-based help'
+                    }
+                }
+            }
+        }
+
+    # Check for README files in each domain
+    Get-ChildItem -Path (Join-Path $script:ProjectRoot "domains") -Directory | ForEach-Object {
+        $readmePath = Join-Path $_.FullName "README.md"
+        if (-not (Test-Path $readmePath)) {
+            $coverage.MissingDocs += @{
+                Type = 'README'
+                Path = $_.FullName.Replace($script:ProjectRoot, '.')
+                Issue = 'Missing README.md'
+            }
+        } else {
+            # Check if README is up to date
+            $readmeDate = (Get-Item $readmePath).LastWriteTime
+            $moduleFiles = Get-ChildItem $_.FullName -Filter "*.psm1" -File
+            
+            foreach ($moduleFile in $moduleFiles) {
+                if ($moduleFile.LastWriteTime -gt $readmeDate) {
+                    $coverage.OutdatedDocs += @{
+                        Type = 'README'
+                        Path = $readmePath.Replace($script:ProjectRoot, '.')
+                        Issue = "Outdated - module modified after README"
+                        ModuleDate = $moduleFile.LastWriteTime
+                        ReadmeDate = $readmeDate
+                    }
+                    break
+                }
+            }
+        }
+    }
+    
+    $coverage.CoveragePercentage = if ($coverage.TotalFunctions -gt 0) {
+        [Math]::Round(($coverage.DocumentedFunctions / $coverage.TotalFunctions) * 100, 2)
+    } else { 0 }
+    
+    return $coverage
+}
+
+function Get-CodeQualityIssues {
+    Write-ScriptLog "Analyzing code quality issues..."
+    
+    $issues = @{
+        TODOs = @()
+        FIXMEs = @()
+        HACKs = @()
+        Deprecated = @()
+        LongFunctions = @()
+        ComplexFunctions = @()
+        DuplicateCode = @()
+        HardcodedValues = @()
+    }
+
+    # Search for TODO/FIXME/HACK comments
+    $patterns = @{
+        TODOs = 'TODO:|TODO\s*\('
+        FIXMEs = 'FIXME:|FIXME\s*\('
+        HACKs = 'HACK:|HACK\s*\('
+        Deprecated = 'DEPRECATED:|@deprecated'
+    }
+    
+    foreach ($pattern in $patterns.GetEnumerator()) {
+        Get-ChildItem -Path $script:ProjectRoot -Recurse -Include "*.ps1", "*.psm1" -File |
+            Where-Object { $_.FullName -notlike "*\tests\*" -and $_.FullName -notlike "*\legacy-to-migrate\*" } |
+            Select-String -Pattern $pattern.Value |
+            ForEach-Object {
+                $issues[$pattern.Key] += @{
+                    File = $_.Path.Replace($script:ProjectRoot, '.')
+                    Line = $_.LineNumber
+                    Content = $_.Line.Trim()
+                }
+            }
+    }
+
+    # Find long functions (>100 lines)
+    Get-ChildItem -Path $script:ProjectRoot -Recurse -Include "*.ps1", "*.psm1" -File |
+        Where-Object { $_.FullName -notlike "*\tests\*" -and $_.FullName -notlike "*\legacy-to-migrate\*" } |
+        ForEach-Object {
+            $content = Get-Content $_.FullName -Raw
+            try {
+                $parseErrors = $null
+                $ast = [System.Management.Automation.Language.Parser]::ParseInput($content, [ref]$null, [ref]$parseErrors)
+                
+                if ($parseErrors -and $parseErrors.Count -gt 0 -or -not $ast) {
+                    Write-ScriptLog "Skipping $($_.FullName) due to parse errors" -Level Warning
+                    return
+                }
+                
+                $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+            } catch {
+                Write-ScriptLog "Error parsing $($_.FullName): $_" -Level Warning
+                return
+            }
+            
+            foreach ($function in $functions) {
+                $lines = ($function.Extent.EndLineNumber - $function.Extent.StartLineNumber)
+                if ($lines -gt 100) {
+                    $issues.LongFunctions += @{
+                        Function = $function.Name
+                        File = $_.FullName.Replace($script:ProjectRoot, '.')
+                        Lines = $lines
+                    }
+                }
+                
+                # Check cyclomatic complexity (simplified)
+                $conditions = $function.FindAll({
+                    $args[0] -is [System.Management.Automation.Language.IfStatementAst] -or
+                    $args[0] -is [System.Management.Automation.Language.WhileStatementAst] -or
+                    $args[0] -is [System.Management.Automation.Language.ForStatementAst] -or
+                    $args[0] -is [System.Management.Automation.Language.ForEachStatementAst] -or
+                    $args[0] -is [System.Management.Automation.Language.SwitchStatementAst]
+                }, $true)
+                
+                if ($conditions.Count -gt 10) {
+                    $issues.ComplexFunctions += @{
+                        Function = $function.Name
+                        File = $_.FullName.Replace($script:ProjectRoot, '.')
+                        Complexity = $conditions.Count
+                    }
+                }
+            }
+
+            # Find hardcoded values
+            $hardcodedPatterns = @(
+                'http://localhost'
+                'https://localhost'
+                '127\.0\.0\.1'
+                'C:\\\\.*\\\\.*'
+                'password\s*=\s*["\'']*'
+                'apikey\s*=\s*["\'']*'
+            )
+        
+            foreach ($pattern in $hardcodedPatterns) {
+                $matches = Select-String -InputObject $content -Pattern $pattern -AllMatches
+                if ($matches) {
+                    foreach ($match in $matches.Matches) {
+                        $lineNumber = ($content.Substring(0, $match.Index) -split "`n").Count
+                        $issues.HardcodedValues += @{
+                            File = $_.FullName.Replace($script:ProjectRoot, '.')
+                            Line = $lineNumber
+                            Value = $match.Value
+                            Type = switch -Regex ($match.Value) {
+                                'password|apikey' { 'Credential' }
+                                'http|127\.0\.0\.1' { 'URL' }
+                                'C:\\\\' { 'Path' }
+                                default { 'Other' }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    
+    return $issues
+}
+
+function Get-SecurityIssues {
+    Write-ScriptLog "Analyzing security issues..."
+    
+    $security = @{
+        PlainTextCredentials = @()
+        InsecureProtocols = @()
+        MissingParameterValidation = @()
+        UnsafeCommands = @()
+        ExposedSecrets = @()
+    }
+
+    # Search for security issues
+    $securityPatterns = @{
+        PlainTextCredentials = @(
+            'ConvertTo-SecureString.*-AsPlainText'
+            'password\s*=\s*["\'']+\S+["\'']+' 
+            'apikey\s*=\s*["\'']+\S+["\'']+' 
+        )
+    InsecureProtocols = @(
+            'http://'
+            '-UseBasicParsing'
+            '-SkipCertificateCheck'
+            'ServicePointManager.*ServerCertificateValidationCallback'
+        )
+    UnsafeCommands = @(
+            'Invoke-Expression'
+            'iex\s+'
+            '-ExecutionPolicy\s+Bypass'
+            '-ExecutionPolicy\s+Unrestricted'
+        )
+}
+    
+    foreach ($category in $securityPatterns.GetEnumerator()) {
+        foreach ($pattern in $category.Value) {
+            Get-ChildItem -Path $script:ProjectRoot -Recurse -Include "*.ps1", "*.psm1" -File |
+                Where-Object { $_.FullName -notlike "*\tests\*" } |
+                Select-String -Pattern $pattern |
+                ForEach-Object {
+                    $security[$category.Key] += @{
+                        File = $_.Path.Replace($script:ProjectRoot, '.')
+                        Line = $_.LineNumber
+                        Content = $_.Line.Trim()
+                        Pattern = $pattern
+                    }
+                }
+        }
+    }
+
+    # Check for missing parameter validation
+    Get-ChildItem -Path $script:ProjectRoot -Recurse -Include "*.ps1", "*.psm1" -File |
+        Where-Object { $_.FullName -notlike "*\tests\*" -and $_.FullName -notlike "*\legacy-to-migrate\*" } |
+        ForEach-Object {
+            $content = Get-Content $_.FullName -Raw
+            try {
+                $parseErrors = $null
+                $ast = [System.Management.Automation.Language.Parser]::ParseInput($content, [ref]$null, [ref]$parseErrors)
+                
+                if ($parseErrors -and $parseErrors.Count -gt 0 -or -not $ast) {
+                    Write-ScriptLog "Skipping $($_.FullName) due to parse errors" -Level Warning
+                    return
+                }
+                
+                $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+            } catch {
+                Write-ScriptLog "Error parsing $($_.FullName): $_" -Level Warning
+                return
+            }
+            
+            foreach ($function in $functions) {
+                if ($function.Body.ParamBlock) {
+                    foreach ($param in $function.Body.ParamBlock.Parameters) {
+                        $paramName = $param.Name.VariablePath.UserPath
+                        $hasValidation = $param.Attributes | Where-Object {
+                            $_ -is [System.Management.Automation.Language.AttributeAst] -and
+                            $_.TypeName.Name -match 'Validate'
+                        }
+                        
+                        if (-not $hasValidation -and $paramName -match 'path|file|url|email|password') {
+                            $security.MissingParameterValidation += @{
+                                Function = $function.Name
+                                Parameter = $paramName
+                                File = $_.FullName.Replace($script:ProjectRoot, '.')
+                                SuggestedValidation = switch -Regex ($paramName) {
+                                    'path|file' { 'ValidateScript or ValidatePattern' }
+                                    'url' { 'ValidatePattern with URL regex' }
+                                    'email' { 'ValidatePattern with email regex' }
+                                    'password' { 'ValidateLength and complexity' }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    
+    return $security
+}
+
+function Export-TechDebtReport {
+    param(
+        [hashtable]$ConfigUsage,
+        [hashtable]$Documentation,
+        [hashtable]$CodeQuality,
+        [hashtable]$Security,
+        [string[]]$Formats
+    )
+
+    Write-ScriptLog "Generating tech debt reports..."
+
+    # Ensure output directory exists
+    if (-not (Test-Path $OutputPath)) {
+        New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
+    }
+    
+    $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+    $reportData = @{
+        Generated = Get-Date -Format 'o'
+        Platform = if ($IsWindows) { "Windows" } elseif ($IsLinux) { "Linux" } elseif ($IsMacOS) { "macOS" } else { "Unknown" }
+        PowerShellVersion = $PSVersionTable.PSVersion.ToString()
+        ConfigurationUsage = $ConfigUsage
+        Documentation = $Documentation
+        CodeQuality = $CodeQuality
+        Security = $Security
+        Summary = @{
+            ConfigUsageScore = $ConfigUsage.UsagePercentage
+            DocumentationScore = $Documentation.CoveragePercentage
+            TotalTodos = $CodeQuality.TODOs.Count
+            TotalFixmes = $CodeQuality.FIXMEs.Count
+            SecurityIssues = ($Security.Values | ForEach-Object { $_.Count } | Measure-Object -Sum).Sum
+            TechDebtScore = [Math]::Round((
+                $ConfigUsage.UsagePercentage * 0.2 +
+                $Documentation.CoveragePercentage * 0.3 +
+                (100 - [Math]::Min(($CodeQuality.TODOs.Count + $CodeQuality.FIXMEs.Count) * 5, 100)) * 0.3 +
+                (100 - [Math]::Min(($Security.Values | ForEach-Object { $_.Count } | Measure-Object -Sum).Sum * 10, 100)) * 0.2
+            ), 2)
+        }
+    }
+    
+    foreach ($format in $Formats) {
+        $reportPath = Join-Path $OutputPath "TechDebtReport-$timestamp.$($format.ToLower())"
+        
+        switch ($format) {
+            'JSON' {
+                $reportData | ConvertTo-Json -Depth 10 | Set-Content -Path $reportPath
+            }
+            
+            'Markdown' {
+                $md = @"
+# AitherZero Tech Debt Report
+
+Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  
+Platform: $($reportData.Platform) | PowerShell: $($reportData.PowerShellVersion)
+
+## Executive Summary
+
+- **Tech Debt Score**: $($reportData.Summary.TechDebtScore)% (Higher is better)
+- **Configuration Usage**: $($reportData.Summary.ConfigUsageScore)%
+- **Documentation Coverage**: $($reportData.Summary.DocumentationScore)%
+- **Open TODOs**: $($reportData.Summary.TotalTodos)
+- **Open FIXMEs**: $($reportData.Summary.TotalFixmes)
+- **Security Issues**: $($reportData.Summary.SecurityIssues)
+
+## Configuration Usage Analysis
+
+### Overall Statistics
+- Total Settings: $($ConfigUsage.TotalSettings)
+- Used Settings: $($ConfigUsage.UsedSettings)
+- Unused Settings: $($ConfigUsage.UnusedSettings.Count)
+- Usage Rate: $($ConfigUsage.UsagePercentage)%
+
+### Unused Configuration Settings
+$( if ($ConfigUsage.UnusedSettings) {
+    ($ConfigUsage.UnusedSettings | ForEach-Object { "- $_" }) -join "`n"
+} else { 
+    "None - all settings are in use!" 
+})
+
+### Usage by Section
+| Section | Total | Used | Usage % |
+|---------|-------|------|---------|
+$($ConfigUsage.BySection.GetEnumerator() | ForEach-Object {
+    $section = $_.Value
+    $usagePercent = if ($section.Total -gt 0) { [Math]::Round(($section.Used / $section.Total) * 100, 2) } else { 0 }
+    "| $($_.Key) | $($section.Total) | $($section.Used) | $usagePercent% |"
+} | Out-String)
+
+## Documentation Coverage
+
+- **Total Files**: $($Documentation.TotalFiles)
+- **Documented Files**: $($Documentation.DocumentedFiles)
+- **Total Functions**: $($Documentation.TotalFunctions)
+- **Documented Functions**: $($Documentation.DocumentedFunctions)
+- **Coverage**: $($Documentation.CoveragePercentage)%
+
+### Missing Documentation
+$(if ($Documentation.MissingDocs) {
+    $Documentation.MissingDocs | Group-Object Type | ForEach-Object {
+        "`n#### $($_.Name) ($($_.Count) items)`n"
+        $_.Group | ForEach-Object {
+            if ($_.Name) {
+                "- ``$($_.Name)`` in $($_.Path)"
+            } else {
+                "- $($_.Path): $($_.Issue)"
+            }
+        }
+    }
+} else { "None - all code is documented!" }) | Out-String
+
+### Outdated Documentation
+$( if ($Documentation.OutdatedDocs) {
+    ($Documentation.OutdatedDocs | ForEach-Object {
+        "- $($_.Type) ``$($_.Name)`` in $($_.Path): $($_.Issue)"
+    }) -join "`n"
+} else { 
+    "None - all documentation is up to date!" 
+})
+
+## Code Quality Issues
+
+### Open Items
+- **TODOs**: $($CodeQuality.TODOs.Count)
+- **FIXMEs**: $($CodeQuality.FIXMEs.Count)
+- **HACKs**: $($CodeQuality.HACKs.Count)
+- **Deprecated**: $($CodeQuality.Deprecated.Count)
+
+### Code Complexity
+- **Long Functions (>100 lines)**: $($CodeQuality.LongFunctions.Count)
+- **Complex Functions (>10 conditions)**: $($CodeQuality.ComplexFunctions.Count)
+- **Hardcoded Values**: $($CodeQuality.HardcodedValues.Count)
+
+$(if ($CodeQuality.LongFunctions) {
+    @("#### Long Functions") + ($CodeQuality.LongFunctions | ForEach-Object {
+        "- ``$($_.Function)`` in $($_.File): $($_.Lines) lines"
+    }) | Out-String
+} else { "" })
+
+$(if ($CodeQuality.ComplexFunctions) {
+    @("`n#### Complex Functions") + ($CodeQuality.ComplexFunctions | ForEach-Object {
+        "- ``$($_.Function)`` in $($_.File): Complexity score $($_.Complexity)"
+    }) | Out-String
+} else { "" })
+
+## Security Issues
+
+- **Plain Text Credentials**: $($Security.PlainTextCredentials.Count)
+- **Insecure Protocols**: $($Security.InsecureProtocols.Count)
+- **Missing Parameter Validation**: $($Security.MissingParameterValidation.Count)
+- **Unsafe Commands**: $($Security.UnsafeCommands.Count)
+
+$(if ($Security.PlainTextCredentials -or $Security.InsecureProtocols -or $Security.UnsafeCommands) {
+    $securityText = @("### Critical Security Issues")
+
+    if ($Security.PlainTextCredentials) {
+        $securityText += "#### Plain Text Credentials"
+        $securityText += $Security.PlainTextCredentials | ForEach-Object {
+            "- $($_.File):$($_.Line) - ``$($_.Pattern)``"
+        }
+    }
+
+    if ($Security.UnsafeCommands) {
+        $securityText += "`n#### Unsafe Commands"
+        $securityText += $Security.UnsafeCommands | ForEach-Object {
+            "- $($_.File):$($_.Line) - ``$($_.Pattern)``"
+        }
+    }
+    $securityText -join "`n"
+} else { "" })
+
+## Recommendations
+
+1. **Configuration**: $(if ($ConfigUsage.UsagePercentage -lt 80) { "Review and implement unused configuration settings or remove them to reduce complexity" } else { "Good configuration usage - maintain current practices" })
+2. **Documentation**: $(if ($Documentation.CoveragePercentage -lt 80) { "Improve documentation coverage, focusing on public functions and modules" } else { "Good documentation coverage - keep it updated" })
+3. **Code Quality**: $(if ($CodeQuality.TODOs.Count + $CodeQuality.FIXMEs.Count -gt 20) { "Address outstanding TODOs and FIXMEs to reduce technical debt" } else { "Manageable number of open items" })
+4. **Security**: $(if ($reportData.Summary.SecurityIssues -gt 0) { "Address security issues immediately, especially credential handling" } else { "No critical security issues found" })
+
+---
+*Report generated by AitherZero Tech Debt Analyzer*
+"@
+                $md | Set-Content -Path $reportPath
+            }
+            
+            'HTML' {
+                $html = @"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AitherZero Tech Debt Report</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 30px; }
+        h3 { color: #7f8c8d; }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .metric-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        .score-excellent { background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%); }
+        .score-good { background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%); }
+        .score-poor { background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .issue-item {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .security-issue {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #56ab2f 0%, #a8e063 100%);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AitherZero Tech Debt Report</h1>
+        <p>Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') | Platform: $($reportData.Platform) | PowerShell: $($reportData.PowerShellVersion)</p>
+        
+        <h2>Executive Summary</h2>
+        <div class="summary-grid">
+            <div class="metric-card $(if ($reportData.Summary.TechDebtScore -ge 80) { 'score-excellent' } elseif ($reportData.Summary.TechDebtScore -ge 60) { 'score-good' } else { 'score-poor' })">
+                <div class="metric-label">Tech Debt Score</div>
+                <div class="metric-value">$($reportData.Summary.TechDebtScore)%</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Config Usage</div>
+                <div class="metric-value">$($reportData.Summary.ConfigUsageScore)%</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Documentation</div>
+                <div class="metric-value">$($reportData.Summary.DocumentationScore)%</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Open Issues</div>
+                <div class="metric-value">$($reportData.Summary.TotalTodos + $reportData.Summary.TotalFixmes)</div>
+            </div>
+        </div>
+        
+        <h2>Configuration Usage</h2>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: $($ConfigUsage.UsagePercentage)%"></div>
+        </div>
+        <p>$($ConfigUsage.UsedSettings) of $($ConfigUsage.TotalSettings) settings in use ($($ConfigUsage.UsagePercentage)%)</p>
+        
+        <h3>Usage by Section</h3>
+        <table>
+            <tr><th>Section</th><th>Total</th><th>Used</th><th>Usage %</th></tr>
+            $($ConfigUsage.BySection.GetEnumerator() | ForEach-Object {
+                $section = $_.Value
+                $usagePercent = if ($section.Total -gt 0) { [Math]::Round(($section.Used / $section.Total) * 100, 2) } else { 0 }
+                "<tr><td>$($_.Key)</td><td>$($section.Total)</td><td>$($section.Used)</td><td>$usagePercent%</td></tr>"
+            } | Out-String)
+        </table>
+        
+        <h2>Documentation Coverage</h2>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: $($Documentation.CoveragePercentage)%"></div>
+        </div>
+        <p>$($Documentation.DocumentedFunctions) of $($Documentation.TotalFunctions) functions documented ($($Documentation.CoveragePercentage)%)</p>
+        
+        $((if ($Documentation.MissingDocs) {
+            "<h3>Missing Documentation</h3>"
+            $Documentation.MissingDocs | Group-Object Type | ForEach-Object {
+                "<h4>$($_.Name) ($($_.Count) items)</h4>"
+                "<ul>"
+                $_.Group | ForEach-Object {
+                    if ($_.Name) {
+                        "<li><code>$($_.Name)</code> in $($_.Path)</li>"
+                    } else {
+                        "<li>$($_.Path): $($_.Issue)</li>"
+                    }
+                }
+                "</ul>"
+            }
+        }) -join "")
+        
+        <h2>Code Quality</h2>
+        <table>
+            <tr><th>Issue Type</th><th>Count</th></tr>
+            <tr><td>TODOs</td><td>$($CodeQuality.TODOs.Count)</td></tr>
+            <tr><td>FIXMEs</td><td>$($CodeQuality.FIXMEs.Count)</td></tr>
+            <tr><td>HACKs</td><td>$($CodeQuality.HACKs.Count)</td></tr>
+            <tr><td>Deprecated</td><td>$($CodeQuality.Deprecated.Count)</td></tr>
+            <tr><td>Long Functions</td><td>$($CodeQuality.LongFunctions.Count)</td></tr>
+            <tr><td>Complex Functions</td><td>$($CodeQuality.ComplexFunctions.Count)</td></tr>
+        </table>
+        
+        <h2>Security Issues</h2>
+        $((if ($reportData.Summary.SecurityIssues -gt 0) {
+            "<div class='issue-item security-issue'>"
+            "<strong>⚠️ $($reportData.Summary.SecurityIssues) security issues found</strong>"
+            "<ul>"
+            "<li>Plain Text Credentials: $($Security.PlainTextCredentials.Count)</li>"
+            "<li>Insecure Protocols: $($Security.InsecureProtocols.Count)</li>"
+            "<li>Missing Parameter Validation: $($Security.MissingParameterValidation.Count)</li>"
+            "<li>Unsafe Commands: $($Security.UnsafeCommands.Count)</li>"
+            "</ul>"
+            "</div>"
+        } else {
+            "<p>✅ No critical security issues found</p>"
+        }) -join "")
+    </div>
+</body>
+</html>
+"@
+                $html | Set-Content -Path $reportPath
+            }
+        }
+        
+        Write-ScriptLog "Report saved: $reportPath"
+    }
+    
+    return $reportData
+}
+
+# Main execution
+try {
+    Write-ScriptLog "Starting tech debt analysis..."
+
+    # Run analyses
+    $configUsage = if ($IncludeConfigUsage) { Get-ConfigurationUsageAnalysis } else { @{} }
+    $documentation = if ($IncludeDocumentation) { Get-DocumentationCoverage } else { @{} }
+    $codeQuality = if ($IncludeCodeQuality) { Get-CodeQualityIssues } else { @{} }
+    $security = if ($IncludeSecurityIssues) { Get-SecurityIssues } else { @{} }
+
+    # Generate reports
+    $report = Export-TechDebtReport -ConfigUsage $configUsage -Documentation $documentation `
+        -CodeQuality $codeQuality -Security $security -Formats $Format
+
+    # Auto-update documentation if requested
+    if ($AutoUpdate -and $documentation.MissingDocs) {
+        Write-ScriptLog "Auto-updating documentation stubs..."
+        
+        # This could be expanded to actually create documentation templates
+        $updateLog = Join-Path $OutputPath "documentation-updates-$timestamp.log"
+        $documentation.MissingDocs | ConvertTo-Json -Depth 5 | Set-Content -Path $updateLog
+        Write-ScriptLog "Documentation update log saved: $updateLog"
+    }
+    
+    $duration = New-TimeSpan -Start $script:StartTime -End (Get-Date)
+    Write-ScriptLog "Tech debt analysis completed in $($duration.TotalSeconds) seconds"
+
+    # Display summary
+    Write-Host "`nTech Debt Summary:" -ForegroundColor Cyan
+    Write-Host "  Tech Debt Score: $($report.Summary.TechDebtScore)%" -ForegroundColor $(
+        if ($report.Summary.TechDebtScore -ge 80) { 'Green' }
+        elseif ($report.Summary.TechDebtScore -ge 60) { 'Yellow' }
+        else { 'Red' }
+    )
+Write-Host "  Configuration Usage: $($report.Summary.ConfigUsageScore)%"
+    Write-Host "  Documentation Coverage: $($report.Summary.DocumentationScore)%"
+    Write-Host "  Open Issues: $($report.Summary.TotalTodos + $report.Summary.TotalFixmes)"
+    Write-Host "  Security Issues: $($report.Summary.SecurityIssues)"
+    
+    exit 0
+} catch {
+    Write-ScriptLog "Tech debt analysis failed: $_" -Level Error
+    if ($CI) {
+        throw
+    }
+    exit 1
+}

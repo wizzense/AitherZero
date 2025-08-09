@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="0" errors="0" failures="0" not-run="12" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-08-08" time="04:52:52">
+  <environment machine-name="codespaces-4ce466" nunit-version="2.5.8.0" clr-version="9.0.4" platform="Linux" cwd="/workspaces/AitherZero" os-version="6.8.0-1030-azure" user-domain="" user="codespace" />
+  <culture-info current-culture="" current-uiculture="" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Success" success="True" time="0.3157" asserts="0" description="Pester">
+    <results />
+  </test-suite>
+</test-results>

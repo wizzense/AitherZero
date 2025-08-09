@@ -1,87 +1,99 @@
-## 📋 Pull Request Description
+# Pull Request
 
-### 🎯 What does this PR do?
-Brief description of the changes in this pull request.
+## Description
+<!-- Provide a brief description of the changes in this PR -->
 
-### �� Related Issues
-- Closes #[issue number]
-- Related to #[issue number]
+## Related Issues
+<!-- Link to related issues using #issue_number -->
+Fixes #
+Related to #
 
-### 🔄 Type of Change
-- [ ] 🐛 Bug fix (non-breaking change which fixes an issue)
-- [ ] ✨ New feature (non-breaking change which adds functionality)
-- [ ] 💥 Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] 📚 Documentation update
-- [ ] 🔧 Refactoring (no functional changes)
-- [ ] 🧪 Tests (adding missing tests or correcting existing tests)
+## Type of Change
+- [ ] Bug fix (non-breaking change which fixes an issue)
+- [ ] New feature (non-breaking change which adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] Documentation update
+- [ ] Performance improvement
+- [ ] Code refactoring
+- [ ] Test improvement
 
-### 📦 Affected Modules
-- [ ] BackupManager
-- [ ] DevEnvironment
-- [ ] LabRunner
-- [ ] Logging
-- [ ] PatchManager
-- [ ] TestingFramework
-- [ ] OpenTofuProvider
-- [ ] Other: ____________
+## Changes Made
+<!-- List the specific changes made in this PR -->
+- 
+- 
+- 
 
-## 🧪 Testing Checklist
+## Testing
+### Test Results
+```powershell
+# Unit test results
+seq 0402
+# Tests: X Passed, Y Failed, Z Skipped
+# Coverage: XX%
 
-### 🔍 Code Quality
-- [ ] Code follows the project style guidelines
-- [ ] Self-review of code has been performed
-- [ ] Code is properly commented, particularly in hard-to-understand areas
-- [ ] PSScriptAnalyzer passes without errors
+# PSScriptAnalyzer results
+seq 0404
+# Violations: X Error, Y Warning, Z Information
 
-### 🧪 Testing
-- [ ] Tests pass locally with my changes
-- [ ] New tests added for new functionality
-- [ ] Existing tests still pass
-- [ ] Bulletproof validation successful:
-  ```powershell
-  ./tests/Run-BulletproofValidation.ps1 -ValidationLevel 'Standard'
-  ```
+# Integration tests (if applicable)
+seq 0403
+# Result: Pass/Fail
+```
 
-### 📚 Documentation
-- [ ] Documentation has been updated (if applicable)
-- [ ] Help documentation added for new functions
-- [ ] README.md updated (if applicable)
-- [ ] CHANGELOG.md updated (if applicable)
+### Manual Testing
+- [ ] Tested on Windows
+- [ ] Tested on Linux
+- [ ] Tested on macOS
 
-## 🔧 Implementation Details
+## Checklist
+- [ ] My code follows the project's style guidelines
+- [ ] I have performed a self-review of my own code
+- [ ] I have commented my code, particularly in hard-to-understand areas
+- [ ] I have made corresponding changes to the documentation
+- [ ] My changes generate no new PSScriptAnalyzer warnings
+- [ ] I have added tests that prove my fix is effective or that my feature works
+- [ ] New and existing unit tests pass locally with my changes
+- [ ] Any dependent changes have been merged and published
 
-### 📝 Changes Made
-1. Change 1
-2. Change 2
-3. Change 3
+## Performance Impact
+<!-- Describe any performance implications -->
+- [ ] No performance impact
+- [ ] Performance improvement
+- [ ] Potential performance degradation (explain why it's acceptable)
 
-### 🎯 PatchManager Integration
-- [ ] Created using `Invoke-PatchWorkflow`
-- [ ] Issue automatically created and linked
-- [ ] Branch follows naming convention
-- [ ] Commit messages are descriptive
+## Breaking Changes
+<!-- List any breaking changes and migration steps -->
+- [ ] No breaking changes
+- [ ] Breaking changes (list below):
+  - 
+  - Migration steps:
+    1. 
+    2. 
 
-### 🔍 Review Areas
-Please pay special attention to:
-- Area 1
-- Area 2
+## Screenshots (if applicable)
+<!-- Add screenshots to help explain your changes -->
 
-## 🖼️ Screenshots (if applicable)
-Add screenshots to help explain your changes.
+## Additional Context
+<!-- Add any other context about the PR here -->
 
-## 🚨 Breaking Changes
-If this PR contains breaking changes, please describe:
-- What breaks
-- How to migrate
-- Alternative approaches
+## Session Continuation for AI
+<!-- For AI handoff, include context -->
+### Work Completed
+- [ ] Task 1: <!-- What was done -->
+- [ ] Task 2: 
 
-## 📋 Post-Merge Checklist
-- [ ] Verify CI/CD pipeline passes
-- [ ] Monitor for any issues
-- [ ] Update related documentation
-- [ ] Notify team of changes (if needed)
+### Remaining Work
+- [ ] Task 1: <!-- What still needs to be done -->
+- [ ] Task 2: 
+
+### Test Coverage
+**Current Coverage:** X%
+**Target Coverage:** Y%
+
+### Review Focus Areas
+<!-- Areas that need special attention during review -->
+- 
+- 
 
 ---
-
-**Created with AitherZero PatchManager v2.1** 🚀
-*This PR template ensures comprehensive review and integration with our automated workflows.*
+*This PR was created following the AitherZero contribution guidelines.*

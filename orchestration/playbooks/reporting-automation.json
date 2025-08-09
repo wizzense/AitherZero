@@ -1,0 +1,73 @@
+{
+  "name": "reporting-automation",
+  "description": "Comprehensive reporting automation including tech debt, documentation, and dependency analysis",
+  "version": "1.0",
+  "author": "AitherZero Team",
+  "stages": [
+    {
+      "name": "Prerequisites",
+      "description": "Ensure reporting tools are installed",
+      "sequence": ["0400", "0510", "0511"],
+      "continueOnError": false
+    },
+    {
+      "name": "Analysis",
+      "description": "Run all analysis tools",
+      "sequence": ["0520", "0521"],
+      "parallel": true,
+      "variables": {
+        "AutoFix": false,
+        "CheckOnly": false
+      }
+    },
+    {
+      "name": "Reporting",
+      "description": "Generate comprehensive reports",
+      "sequence": ["0520"],
+      "variables": {
+        "Format": ["HTML", "Markdown", "JSON"],
+        "IncludeConfigUsage": true,
+        "IncludeDocumentation": true,
+        "IncludeCodeQuality": true,
+        "IncludeTodos": true,
+        "IncludeSecurityIssues": true
+      }
+    },
+    {
+      "name": "Documentation",
+      "description": "Update documentation and dependency maps",
+      "sequence": ["0521"],
+      "variables": {
+        "UpdateReadmes": true,
+        "GenerateMarkdown": true,
+        "AutoFix": true
+      }
+    },
+    {
+      "name": "Dashboard",
+      "description": "Generate and display project dashboard",
+      "sequence": ["0511"],
+      "variables": {
+        "AutoOpen": true
+      }
+    }
+  ],
+  "schedule": {
+    "frequency": "weekly",
+    "dayOfWeek": "Monday",
+    "time": "09:00"
+  },
+  "notifications": {
+    "onSuccess": {
+      "log": "Reporting automation completed successfully"
+    },
+    "onFailure": {
+      "log": "Reporting automation failed - check logs",
+      "level": "Error"
+    }
+  },
+  "requirements": {
+    "modules": ["Pester", "PSScriptAnalyzer"],
+    "minPowerShellVersion": "7.0"
+  }
+}

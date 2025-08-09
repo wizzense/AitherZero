@@ -1,0 +1,6 @@
+#!/usr/bin/env pwsh
+$root = $PSScriptRoot
+if (-not $env:AITHERZERO_INITIALIZED) {
+    & "$root/Initialize-AitherModules.ps1" -Silent | Out-Null
+}
+& "$root/az.ps1" $args

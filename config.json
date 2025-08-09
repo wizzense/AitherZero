@@ -229,6 +229,61 @@
     "MaxLoginAttempts": 3,
     "EnableMFA": false
   },
+  "TestIssueAutomation": {
+    "Enabled": true,
+    "AutoCreateIssues": true,
+    "AutoLinkToPR": true,
+    "AutoCloseOnMerge": true,
+    "IssueCreation": {
+      "MaxIssuesPerRun": 20,
+      "GroupByFile": true,
+      "UpdateExisting": true,
+      "IncludeLogs": true,
+      "IncludeSystemContext": true,
+      "Labels": {
+        "TestFailure": ["bug", "test-failure", "automated"],
+        "PSScriptAnalyzer": ["code-quality", "automated"],
+        "Performance": ["performance", "automated"],
+        "Coverage": ["coverage", "automated"]
+      },
+      "Priority": {
+        "TestFailure": "P1",
+        "Error": "P1",
+        "Warning": "P2",
+        "Information": "P3"
+      },
+      "Templates": {
+        "TestFailure": ".github/ISSUE_TEMPLATE/test-failure.md",
+        "CodeViolation": ".github/ISSUE_TEMPLATE/code-violation.md"
+      }
+    },
+    "PRLinkage": {
+      "MatchThreshold": 0.7,
+      "UseAIMatching": false,
+      "AutomaticKeywords": ["fix", "fixes", "resolve", "resolves", "close", "closes"],
+      "RequireIssueReference": false,
+      "LinkTypes": {
+        "HighConfidence": "Closes",
+        "MediumConfidence": "Fixes",
+        "LowConfidence": "Refs"
+      }
+    },
+    "LogCollection": {
+      "IncludeTranscripts": true,
+      "IncludeTestLogs": true,
+      "IncludeSystemInfo": true,
+      "MaxLogSize": 1048576,
+      "CompressLogs": true,
+      "RedactSecrets": true
+    },
+    "Notifications": {
+      "OnIssueCreated": true,
+      "OnPRLinked": true,
+      "OnIssueClosed": true,
+      "SlackWebhook": "",
+      "EmailRecipients": []
+    }
+  },
   "Testing": {
     "Framework": "Pester",
     "MinVersion": "5.0.0",
@@ -472,6 +527,47 @@
       "BestPracticesCompliance": true,
       "PerformanceImpactAssessment": true,
       "HumanReviewWorkflow": true
+    },
+    "SessionManagement": {
+      "Enabled": true,
+      "AutoSaveOnExit": true,
+      "AutoRestoreOnStart": false,
+      "ContextPath": "./.claude/session-context.json",
+      "PromptPath": "./.claude/continuation-prompt.md",
+      "HistoryCount": 50,
+      "CompressContext": true,
+      "MaxTokens": 4000,
+      "IncludeInContext": {
+        "GitStatus": true,
+        "ModifiedFiles": true,
+        "CommandHistory": true,
+        "TestResults": true,
+        "Errors": true,
+        "TodoItems": true,
+        "OpenIssues": true,
+        "LoadedModules": true,
+        "EnvironmentVariables": false
+      },
+      "AutoIssueCreation": {
+        "OnTestFailure": true,
+        "OnAnalyzerViolation": true,
+        "OnError": false,
+        "BatchIssues": true,
+        "MaxIssuesPerRun": 10
+      },
+      "ContinuationPrompt": {
+        "GenerateOnSave": true,
+        "IncludePriorities": true,
+        "IncludeNextSteps": true,
+        "IncludeQuickCommands": true,
+        "CopyToClipboard": false
+      },
+      "GitHubActions": {
+        "SaveContextOnFailure": true,
+        "CreateIssuesAutomatically": true,
+        "PostSummaryToPR": true,
+        "UploadArtifacts": true
+      }
     }
   },
   "Development": {
@@ -488,11 +584,30 @@
       },
       "CommitConventions": {
         "Format": "conventional",
-        "Scopes": ["core", "orchestration", "infrastructure", "tests", "config", "domains"],
+        "Scopes": ["core", "orchestration", "infrastructure", "tests", "config", "domains", "ai", "ui", "automation"],
         "MaxSubjectLength": 72,
         "MaxBodyLineLength": 100,
         "SignOff": true,
         "IssueReferences": true
+      },
+      "BranchConflictResolution": "checkout",
+      "BranchConflictOptions": {
+        "DefaultResolution": "checkout",
+        "AIAgentResolution": "suffix",
+        "ResolutionStrategies": ["checkout", "suffix", "recreate", "abort"],
+        "MaxSuffixAttempts": 10,
+        "SuffixPattern": "-{number}",
+        "AutoPullOnCheckout": true,
+        "PreserveUncommittedChanges": true
+      },
+      "AIWorkflowDefaults": {
+        "BranchType": "feature",
+        "CommitType": "feat",
+        "CreatePR": true,
+        "PRBase": "main",
+        "FilePatterns": ["*.ps1", "*.psm1", "*.psd1", "*.json", "*.md"],
+        "NonInteractive": true,
+        "Force": true
       },
       "PullRequestTemplates": {
         "Default": ".github/pull_request_template.md",
