@@ -1,0 +1,218 @@
+name: Tech Debt and Documentation Reporting
+
+on:
+  schedule:
+    # Run every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      autoFix:
+        description: 'Auto-fix documentation issues'
+        required: false
+        default: 'false'
+      fullReport:
+        description: 'Generate full tech debt report'
+        required: false
+        default: 'true'
+
+jobs:
+  tech-debt-analysis:
+    name: Tech Debt Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup PowerShell
+      uses: PowerShell/setup-powershell@v1
+      with:
+        pwsh-version: '7.4.0'
+    
+    - name: Install dependencies
+      run: |
+        pwsh -Command "Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -SkipPublisherCheck"
+        pwsh -Command "Install-Module -Name PSScriptAnalyzer -Force -SkipPublisherCheck"
+        pwsh -Command "Install-Module -Name ThreadJob -Force -SkipPublisherCheck"
+    
+    - name: Run tech debt analysis
+      run: |
+        pwsh -File ./automation-scripts/0520_Generate-TechDebtReport.ps1 `
+          -Format HTML,Markdown,JSON `
+          -CI
+      continue-on-error: true
+    
+    - name: Update documentation
+      if: github.event_name == 'push' || github.event.inputs.autoFix == 'true'
+      run: |
+        pwsh -File ./automation-scripts/0521_Update-Documentation.ps1 `
+          -AutoFix:$${{ github.event.inputs.autoFix == 'true' }} `
+          -UpdateReadmes `
+          -CI
+    
+    - name: Upload tech debt reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: tech-debt-reports-${{ github.run_number }}
+        path: |
+          reports/tech-debt/*.html
+          reports/tech-debt/*.md
+          reports/tech-debt/*.json
+        retention-days: 90
+    
+    - name: Upload dependency map
+      uses: actions/upload-artifact@v4
+      with:
+        name: dependency-map-${{ github.run_number }}
+        path: |
+          docs/dependency-map.md
+          docs/dependency-graph.mmd
+        retention-days: 90
+    
+    - name: Comment PR with tech debt summary
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const reportPath = './reports/tech-debt/TechDebtReport-*.json';
+          const files = require('glob').sync(reportPath);
+          
+          if (files.length > 0) {
+            const report = JSON.parse(fs.readFileSync(files[0], 'utf8'));
+            const summary = report.Summary;
+            
+            const comment = `## 📊 Tech Debt Report
+            
+            - **Tech Debt Score**: ${summary.TechDebtScore}% ${summary.TechDebtScore >= 80 ? '✅' : summary.TechDebtScore >= 60 ? '⚠️' : '❌'}
+            - **Configuration Usage**: ${summary.ConfigUsageScore}%
+            - **Documentation Coverage**: ${summary.DocumentationScore}%
+            - **Open TODOs**: ${summary.TotalTodos}
+            - **Open FIXMEs**: ${summary.TotalFixmes}
+            - **Security Issues**: ${summary.SecurityIssues} ${summary.SecurityIssues === 0 ? '✅' : '⚠️'}
+            
+            View full reports in the workflow artifacts.`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          }
+
+  documentation-check:
+    name: Documentation Coverage Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup PowerShell
+      uses: PowerShell/setup-powershell@v1
+      with:
+        pwsh-version: '7.4.0'
+    
+    - name: Check documentation coverage
+      id: doc-check
+      run: |
+        $result = pwsh -File ./automation-scripts/0521_Update-Documentation.ps1 -CheckOnly -CI
+        echo "::set-output name=status::$LASTEXITCODE"
+    
+    - name: Fail if documentation is missing
+      if: steps.doc-check.outputs.status != '0'
+      run: |
+        echo "Documentation coverage check failed. Please update documentation."
+        exit 1
+
+  weekly-report:
+    name: Weekly Comprehensive Report
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Setup PowerShell
+      uses: PowerShell/setup-powershell@v1
+      with:
+        pwsh-version: '7.4.0'
+    
+    - name: Install dependencies
+      run: |
+        pwsh -Command "Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -SkipPublisherCheck"
+        pwsh -Command "Install-Module -Name PSScriptAnalyzer -Force -SkipPublisherCheck"
+        pwsh -Command "Install-Module -Name ThreadJob -Force -SkipPublisherCheck"
+    
+    - name: Run comprehensive reporting
+      run: |
+        pwsh -Command "./Start-AitherZero.ps1 -Mode Orchestrate -Playbook reporting-automation -CI"
+    
+    - name: Create issue for high-priority items
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const reportPath = './reports/tech-debt/TechDebtReport-*.json';
+          const files = require('glob').sync(reportPath);
+          
+          if (files.length > 0) {
+            const report = JSON.parse(fs.readFileSync(files[0], 'utf8'));
+
+            if (report.Summary.TechDebtScore < 70 || report.Summary.SecurityIssues > 0) {
+              const issueBody = `# 🚨 Weekly Tech Debt Alert
+              
+              The automated tech debt analysis has identified issues requiring attention:
+              
+              ## Summary
+              - **Tech Debt Score**: ${report.Summary.TechDebtScore}%
+              - **Security Issues**: ${report.Summary.SecurityIssues}
+              - **Documentation Coverage**: ${report.Summary.DocumentationScore}%
+              
+              ## High Priority Items
+              ${report.Security && report.Security.PlainTextCredentials && report.Security.PlainTextCredentials.length > 0 ? 
+                `### 🔒 Security Issues\n${report.Security.PlainTextCredentials.slice(0, 5).map(i => `- ${i.File}:${i.Line}`).join('\n')}` : ''}
+              
+              ${report.Documentation && report.Documentation.MissingDocs && report.Documentation.MissingDocs.length > 10 ? 
+                `### 📝 Missing Documentation\n- ${report.Documentation.MissingDocs.length} items need documentation` : ''}
+              
+              ${report.ConfigurationUsage && report.ConfigurationUsage.UnusedSettings && report.ConfigurationUsage.UnusedSettings.length > 20 ? 
+                `### ⚙️ Unused Configuration\n- ${report.ConfigurationUsage.UnusedSettings.length} configuration settings are not being used` : ''}
+              
+              View full reports in the [workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+              
+              ---
+              *This issue was automatically created by the Tech Debt Reporter*`;
+              
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `[Tech Debt] Weekly Report - Score: ${report.Summary.TechDebtScore}%`,
+                body: issueBody,
+                labels: ['tech-debt', 'automated', 'documentation']
+              });
+            }
+          }
+    
+    - name: Commit documentation updates
+      if: github.event.inputs.autoFix == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add -A
+        git diff --staged --quiet || git commit -m "📝 Auto-update documentation and dependencies [skip ci]"
+        git push
