@@ -1,0 +1,2180 @@
+{
+  "Details": [
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "az.ps1",
+      "Line": 25,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "az.ps1",
+      "Line": 16,
+      "Column": 5,
+      "Message": "The variable 'transcriptActive' is assigned but never used."
+    },
+    {
+      "RuleName": "PSAvoidAssignmentToAutomaticVariable",
+      "Severity": 1,
+      "ScriptName": "bootstrap.ps1",
+      "Line": 168,
+      "Column": 9,
+      "Message": "The Variable 'args' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name."
+    },
+    {
+      "RuleName": "PSAvoidAssignmentToAutomaticVariable",
+      "Severity": 1,
+      "ScriptName": "bootstrap.ps1",
+      "Line": 169,
+      "Column": 22,
+      "Message": "The Variable 'args' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name."
+    },
+    {
+      "RuleName": "PSAvoidAssignmentToAutomaticVariable",
+      "Severity": 1,
+      "ScriptName": "bootstrap.ps1",
+      "Line": 170,
+      "Column": 32,
+      "Message": "The Variable 'args' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name."
+    },
+    {
+      "RuleName": "PSAvoidAssignmentToAutomaticVariable",
+      "Severity": 1,
+      "ScriptName": "bootstrap.ps1",
+      "Line": 171,
+      "Column": 29,
+      "Message": "The Variable 'args' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name."
+    },
+    {
+      "RuleName": "PSAvoidAssignmentToAutomaticVariable",
+      "Severity": 1,
+      "ScriptName": "bootstrap.ps1",
+      "Line": 172,
+      "Column": 24,
+      "Message": "The Variable 'args' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name."
+    },
+    {
+      "RuleName": "PSAvoidAssignmentToAutomaticVariable",
+      "Severity": 1,
+      "ScriptName": "bootstrap.ps1",
+      "Line": 173,
+      "Column": 32,
+      "Message": "The Variable 'args' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name."
+    },
+    {
+      "RuleName": "PSAvoidAssignmentToAutomaticVariable",
+      "Severity": 1,
+      "ScriptName": "bootstrap.ps1",
+      "Line": 174,
+      "Column": 33,
+      "Message": "The Variable 'args' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name."
+    },
+    {
+      "RuleName": "PSAvoidAssignmentToAutomaticVariable",
+      "Severity": 1,
+      "ScriptName": "bootstrap.ps1",
+      "Line": 175,
+      "Column": 31,
+      "Message": "The Variable 'args' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name."
+    },
+    {
+      "RuleName": "PSUseApprovedVerbs",
+      "Severity": 1,
+      "ScriptName": "bootstrap.ps1",
+      "Line": 456,
+      "Column": 10,
+      "Message": "The cmdlet 'Setup-DevelopmentEnvironment' uses an unapproved verb."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "bootstrap.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file 'bootstrap.ps1'"
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "bootstrap.ps1",
+      "Line": 129,
+      "Column": 10,
+      "Message": "The cmdlet 'Test-Dependencies' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "bootstrap.ps1",
+      "Line": 154,
+      "Column": 10,
+      "Message": "The cmdlet 'Install-Dependencies' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "bootstrap.ps1",
+      "Line": 41,
+      "Column": 13,
+      "Message": "The parameter 'Branch' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "bootstrap.ps1",
+      "Line": 45,
+      "Column": 13,
+      "Message": "The parameter 'AutoInstallDeps' has been declared but not used."
+    },
+    {
+      "RuleName": "PSAvoidAssignmentToAutomaticVariable",
+      "Severity": 1,
+      "ScriptName": "Start-AitherZero.ps1",
+      "Line": 50,
+      "Column": 13,
+      "Message": "The Variable 'Profile' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name."
+    },
+    {
+      "RuleName": "PSPossibleIncorrectComparisonWithNull",
+      "Severity": 1,
+      "ScriptName": "Start-AitherZero.ps1",
+      "Line": 153,
+      "Column": 23,
+      "Message": "$null should be on the left side of equality comparisons."
+    },
+    {
+      "RuleName": "PSPossibleIncorrectComparisonWithNull",
+      "Severity": 1,
+      "ScriptName": "Start-AitherZero.ps1",
+      "Line": 154,
+      "Column": 29,
+      "Message": "$null should be on the left side of equality comparisons."
+    },
+    {
+      "RuleName": "PSPossibleIncorrectComparisonWithNull",
+      "Severity": 1,
+      "ScriptName": "Start-AitherZero.ps1",
+      "Line": 155,
+      "Column": 18,
+      "Message": "$null should be on the left side of equality comparisons."
+    },
+    {
+      "RuleName": "PSPossibleIncorrectComparisonWithNull",
+      "Severity": 1,
+      "ScriptName": "Start-AitherZero.ps1",
+      "Line": 156,
+      "Column": 29,
+      "Message": "$null should be on the left side of equality comparisons."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "Start-AitherZero.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file 'Start-AitherZero.ps1'"
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "Start-AitherZero.ps1",
+      "Line": 343,
+      "Column": 13,
+      "Message": "The variable 'result' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "Start-AitherZero.ps1",
+      "Line": 445,
+      "Column": 13,
+      "Message": "The variable 'result' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "Start-AitherZero.ps1",
+      "Line": 490,
+      "Column": 17,
+      "Message": "The variable 'result' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "Start-AitherZero.ps1",
+      "Line": 536,
+      "Column": 13,
+      "Message": "The variable 'result' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "Start-AitherZero.ps1",
+      "Line": 626,
+      "Column": 13,
+      "Message": "The variable 'result' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "Start-AitherZero.ps1",
+      "Line": 135,
+      "Column": 10,
+      "Message": "The cmdlet 'Initialize-CoreModules' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSAvoidGlobalVars",
+      "Severity": 1,
+      "ScriptName": "Start-AitherZero.ps1",
+      "Line": 146,
+      "Column": 22,
+      "Message": "Found global variable 'global:AitherUIInitialized'."
+    },
+    {
+      "RuleName": "PSAvoidGlobalVars",
+      "Severity": 1,
+      "ScriptName": "Start-AitherZero.ps1",
+      "Line": 148,
+      "Column": 17,
+      "Message": "Found global variable 'global:AitherUIInitialized'."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "Start-AitherZero.ps1",
+      "Line": 50,
+      "Column": 13,
+      "Message": "The parameter 'Profile' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "Start-AitherZero.ps1",
+      "Line": 72,
+      "Column": 15,
+      "Message": "The parameter 'RemainingArguments' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "demo-better-menu.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file 'demo-better-menu.ps1'"
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "interactive-ui-demo.ps1",
+      "Line": 12,
+      "Column": 13,
+      "Message": "The parameter 'Debug' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "interactive-ui-demo.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file 'interactive-ui-demo.ps1'"
+    },
+    {
+      "RuleName": "PSAvoidUsingCmdletAliases",
+      "Severity": 1,
+      "ScriptName": "orchestration-examples.ps1",
+      "Line": 9,
+      "Column": 1,
+      "Message": "'seq' is an alias of 'Invoke-OrchestrationSequence'. Alias can introduce possible problems and make scripts hard to maintain. Please consider changing alias to its full content."
+    },
+    {
+      "RuleName": "PSAvoidUsingCmdletAliases",
+      "Severity": 1,
+      "ScriptName": "orchestration-examples.ps1",
+      "Line": 13,
+      "Column": 1,
+      "Message": "'seq' is an alias of 'Invoke-OrchestrationSequence'. Alias can introduce possible problems and make scripts hard to maintain. Please consider changing alias to its full content."
+    },
+    {
+      "RuleName": "PSAvoidUsingCmdletAliases",
+      "Severity": 1,
+      "ScriptName": "orchestration-examples.ps1",
+      "Line": 30,
+      "Column": 1,
+      "Message": "'seq' is an alias of 'Invoke-OrchestrationSequence'. Alias can introduce possible problems and make scripts hard to maintain. Please consider changing alias to its full content."
+    },
+    {
+      "RuleName": "PSAvoidUsingCmdletAliases",
+      "Severity": 1,
+      "ScriptName": "orchestration-examples.ps1",
+      "Line": 35,
+      "Column": 1,
+      "Message": "'seq' is an alias of 'Invoke-OrchestrationSequence'. Alias can introduce possible problems and make scripts hard to maintain. Please consider changing alias to its full content."
+    },
+    {
+      "RuleName": "PSAvoidUsingCmdletAliases",
+      "Severity": 1,
+      "ScriptName": "orchestration-examples.ps1",
+      "Line": 38,
+      "Column": 1,
+      "Message": "'seq' is an alias of 'Invoke-OrchestrationSequence'. Alias can introduce possible problems and make scripts hard to maintain. Please consider changing alias to its full content."
+    },
+    {
+      "RuleName": "PSAvoidUsingCmdletAliases",
+      "Severity": 1,
+      "ScriptName": "orchestration-examples.ps1",
+      "Line": 92,
+      "Column": 1,
+      "Message": "'seq' is an alias of 'Invoke-OrchestrationSequence'. Alias can introduce possible problems and make scripts hard to maintain. Please consider changing alias to its full content."
+    },
+    {
+      "RuleName": "PSAvoidUsingCmdletAliases",
+      "Severity": 1,
+      "ScriptName": "orchestration-examples.ps1",
+      "Line": 97,
+      "Column": 1,
+      "Message": "'seq' is an alias of 'Invoke-OrchestrationSequence'. Alias can introduce possible problems and make scripts hard to maintain. Please consider changing alias to its full content."
+    },
+    {
+      "RuleName": "PSAvoidUsingCmdletAliases",
+      "Severity": 1,
+      "ScriptName": "orchestration-examples.ps1",
+      "Line": 100,
+      "Column": 1,
+      "Message": "'seq' is an alias of 'Invoke-OrchestrationSequence'. Alias can introduce possible problems and make scripts hard to maintain. Please consider changing alias to its full content."
+    },
+    {
+      "RuleName": "PSAvoidUsingCmdletAliases",
+      "Severity": 1,
+      "ScriptName": "orchestration-examples.ps1",
+      "Line": 105,
+      "Column": 1,
+      "Message": "'seq' is an alias of 'Invoke-OrchestrationSequence'. Alias can introduce possible problems and make scripts hard to maintain. Please consider changing alias to its full content."
+    },
+    {
+      "RuleName": "PSAvoidUsingCmdletAliases",
+      "Severity": 1,
+      "ScriptName": "orchestration-examples.ps1",
+      "Line": 108,
+      "Column": 1,
+      "Message": "'seq' is an alias of 'Invoke-OrchestrationSequence'. Alias can introduce possible problems and make scripts hard to maintain. Please consider changing alias to its full content."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "orchestration-examples.ps1",
+      "Line": 42,
+      "Column": 1,
+      "Message": "The variable 'result' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "prompt-generation-examples.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file 'prompt-generation-examples.ps1'"
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "test-better-menu.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file 'test-better-menu.ps1'"
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "test-new-ui.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file 'test-new-ui.ps1'"
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "test-new-ui.ps1",
+      "Line": 57,
+      "Column": 5,
+      "Message": "The variable 'context' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "test-new-ui.ps1",
+      "Line": 61,
+      "Column": 5,
+      "Message": "The variable 'menu' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "test-new-ui.ps1",
+      "Line": 116,
+      "Column": 5,
+      "Message": "The variable 'items' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "ui-integration-test.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file 'ui-integration-test.ps1'"
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "ui-integration-test.ps1",
+      "Line": 11,
+      "Column": 13,
+      "Message": "The parameter 'Verbose' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "ui-integration-test.ps1",
+      "Line": 59,
+      "Column": 5,
+      "Message": "The variable 'result' is assigned but never used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0001_Ensure-PowerShell7.ps1",
+      "Line": 9,
+      "Column": 16,
+      "Message": "The parameter 'Configuration' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0106_Install-WindowsAdminCenter.ps1",
+      "Line": 96,
+      "Column": 5,
+      "Message": "The variable 'wacInstalled' is assigned but never used."
+    },
+    {
+      "RuleName": "PSPossibleIncorrectComparisonWithNull",
+      "Severity": 1,
+      "ScriptName": "0106_Install-WSL2.ps1",
+      "Line": 290,
+      "Column": 13,
+      "Message": "$null should be on the left side of equality comparisons."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0201_Install-Node.ps1",
+      "Line": 20,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0204_Install-Poetry.ps1",
+      "Line": 20,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0205_Install-Sysinternals.ps1",
+      "Line": 20,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0206_Install-Python.ps1",
+      "Line": 21,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0207_Install-Git.ps1",
+      "Line": 20,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0208_Install-Docker.ps1",
+      "Line": 21,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0208_Install-Docker.ps1",
+      "Line": 72,
+      "Column": 13,
+      "Message": "The variable 'dockerInfo' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0208_Install-Docker.ps1",
+      "Line": 107,
+      "Column": 17,
+      "Message": "The variable 'wslVersion' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0208_Install-Docker.ps1",
+      "Line": 172,
+      "Column": 13,
+      "Message": "The variable 'version' is assigned but never used."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0209_Install-7Zip.ps1",
+      "Line": 20,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0210_Install-VSCode.ps1",
+      "Line": 21,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0211_Install-VSBuildTools.ps1",
+      "Line": 20,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0212_Install-AzureCLI.ps1",
+      "Line": 20,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSAvoidUsingCmdletAliases",
+      "Severity": 1,
+      "ScriptName": "0212_Install-AzureCLI.ps1",
+      "Line": 77,
+      "Column": 30,
+      "Message": "'az' is an alias of 'Invoke-AitherScript'. Alias can introduce possible problems and make scripts hard to maintain. Please consider changing alias to its full content."
+    },
+    {
+      "RuleName": "PSAvoidUsingCmdletAliases",
+      "Severity": 1,
+      "ScriptName": "0212_Install-AzureCLI.ps1",
+      "Line": 84,
+      "Column": 27,
+      "Message": "'az' is an alias of 'Invoke-AitherScript'. Alias can introduce possible problems and make scripts hard to maintain. Please consider changing alias to its full content."
+    },
+    {
+      "RuleName": "PSAvoidUsingCmdletAliases",
+      "Severity": 1,
+      "ScriptName": "0212_Install-AzureCLI.ps1",
+      "Line": 157,
+      "Column": 30,
+      "Message": "'az' is an alias of 'Invoke-AitherScript'. Alias can introduce possible problems and make scripts hard to maintain. Please consider changing alias to its full content."
+    },
+    {
+      "RuleName": "PSAvoidUsingCmdletAliases",
+      "Severity": 1,
+      "ScriptName": "0212_Install-AzureCLI.ps1",
+      "Line": 239,
+      "Column": 22,
+      "Message": "'az' is an alias of 'Invoke-AitherScript'. Alias can introduce possible problems and make scripts hard to maintain. Please consider changing alias to its full content."
+    },
+    {
+      "RuleName": "PSAvoidUsingCmdletAliases",
+      "Severity": 1,
+      "ScriptName": "0212_Install-AzureCLI.ps1",
+      "Line": 251,
+      "Column": 19,
+      "Message": "'az' is an alias of 'Invoke-AitherScript'. Alias can introduce possible problems and make scripts hard to maintain. Please consider changing alias to its full content."
+    },
+    {
+      "RuleName": "PSAvoidUsingCmdletAliases",
+      "Severity": 1,
+      "ScriptName": "0212_Install-AzureCLI.ps1",
+      "Line": 263,
+      "Column": 19,
+      "Message": "'az' is an alias of 'Invoke-AitherScript'. Alias can introduce possible problems and make scripts hard to maintain. Please consider changing alias to its full content."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0213_Install-AWSCLI.ps1",
+      "Line": 20,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0214_Install-Packer.ps1",
+      "Line": 20,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0215_Install-Chocolatey.ps1",
+      "Line": 20,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSAvoidUsingInvokeExpression",
+      "Severity": 1,
+      "ScriptName": "0215_Install-Chocolatey.ps1",
+      "Line": 141,
+      "Column": 13,
+      "Message": "Invoke-Expression is used. Please remove Invoke-Expression from script and find other options instead."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0216_Set-PowerShellProfile.ps1",
+      "Line": 20,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0217_Install-ClaudeCode.ps1",
+      "Line": 20,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0218_Install-GeminiCLI.ps1",
+      "Line": 20,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0300_Deploy-Infrastructure.ps1",
+      "Line": 22,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSPossibleIncorrectComparisonWithNull",
+      "Severity": 1,
+      "ScriptName": "0400_Install-TestingTools.ps1",
+      "Line": 158,
+      "Column": 18,
+      "Message": "$null should be on the left side of equality comparisons."
+    },
+    {
+      "RuleName": "PSPossibleIncorrectComparisonWithNull",
+      "Severity": 1,
+      "ScriptName": "0400_Install-TestingTools.ps1",
+      "Line": 159,
+      "Column": 28,
+      "Message": "$null should be on the left side of equality comparisons."
+    },
+    {
+      "RuleName": "PSPossibleIncorrectComparisonWithNull",
+      "Severity": 1,
+      "ScriptName": "0400_Install-TestingTools.ps1",
+      "Line": 160,
+      "Column": 19,
+      "Message": "$null should be on the left side of equality comparisons."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0400_Install-TestingTools.ps1",
+      "Line": 31,
+      "Column": 1,
+      "Message": "The variable 'scriptMetadata' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0404_Run-PSScriptAnalyzer.ps1",
+      "Line": 203,
+      "Column": 9,
+      "Message": "The variable 'duration' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0405_Validate-AST.ps1",
+      "Line": 380,
+      "Column": 9,
+      "Message": "The variable 'duration' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0405_Validate-AST.ps1",
+      "Line": 86,
+      "Column": 9,
+      "Message": "The variable 'ast' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0405_Validate-AST.ps1",
+      "Line": 119,
+      "Column": 10,
+      "Message": "The cmdlet 'Test-ParameterDefinitions' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0405_Validate-AST.ps1",
+      "Line": 223,
+      "Column": 10,
+      "Message": "The cmdlet 'Test-ModuleDependencies' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0405_Validate-AST.ps1",
+      "Line": 497,
+      "Column": 10,
+      "Message": "The cmdlet 'Merge-Hashtables' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0406_Generate-Coverage.ps1",
+      "Line": 296,
+      "Column": 13,
+      "Message": "The variable 'duration' is assigned but never used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0406_Generate-Coverage.ps1",
+      "Line": 123,
+      "Column": 19,
+      "Message": "The parameter 'CoverageData' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0407_Validate-Syntax.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0407_Validate-Syntax.ps1'"
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0408_Generate-TestCoverage.ps1",
+      "Line": 20,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0408_Generate-TestCoverage.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0408_Generate-TestCoverage.ps1'"
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0500_Validate-Environment.ps1",
+      "Line": 21,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0500_Validate-Environment.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0500_Validate-Environment.ps1'"
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0500_Validate-Environment.ps1",
+      "Line": 177,
+      "Column": 13,
+      "Message": "The variable 'response' is assigned but never used."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0501_Get-SystemInfo.ps1",
+      "Line": 27,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0501_Get-SystemInfo.ps1",
+      "Line": 55,
+      "Column": 5,
+      "Message": "The variable 'config' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0510_Generate-ProjectReport.ps1",
+      "Line": 147,
+      "Column": 1,
+      "Message": "The variable 'helpCoverage' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0511_Show-ProjectDashboard.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0511_Show-ProjectDashboard.ps1'"
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0511_Show-ProjectDashboard.ps1",
+      "Line": 201,
+      "Column": 1,
+      "Message": "The variable 'col2Width' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0511_Show-ProjectDashboard.ps1",
+      "Line": 204,
+      "Column": 1,
+      "Message": "The variable 'cursorPos' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0511_Show-ProjectDashboard.ps1",
+      "Line": 41,
+      "Column": 10,
+      "Message": "The cmdlet 'Show-ProjectMetrics' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0511_Show-ProjectDashboard.ps1",
+      "Line": 78,
+      "Column": 10,
+      "Message": "The cmdlet 'Show-TestResults' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0511_Show-ProjectDashboard.ps1",
+      "Line": 107,
+      "Column": 10,
+      "Message": "The cmdlet 'Show-RecentLogs' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0520_Analyze-ConfigurationUsage.ps1",
+      "Line": 17,
+      "Column": 13,
+      "Message": "The parameter 'ConfigPath' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0520_Analyze-ConfigurationUsage.ps1",
+      "Line": 19,
+      "Column": 13,
+      "Message": "The parameter 'UseCache' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0520_Analyze-ConfigurationUsage.ps1",
+      "Line": 21,
+      "Column": 15,
+      "Message": "The parameter 'ExcludePaths' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseApprovedVerbs",
+      "Severity": 1,
+      "ScriptName": "0520_Analyze-ConfigurationUsage.ps1",
+      "Line": 36,
+      "Column": 10,
+      "Message": "The cmdlet 'Analyze-ConfigurationUsage' uses an unapproved verb."
+    },
+    {
+      "RuleName": "PSUseUsingScopeModifierInNewRunspaces",
+      "Severity": 1,
+      "ScriptName": "0520_Analyze-ConfigurationUsage.ps1",
+      "Line": 111,
+      "Column": 27,
+      "Message": "The variable '$FileBatch' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier."
+    },
+    {
+      "RuleName": "PSUseUsingScopeModifierInNewRunspaces",
+      "Severity": 1,
+      "ScriptName": "0520_Analyze-ConfigurationUsage.ps1",
+      "Line": 111,
+      "Column": 39,
+      "Message": "The variable '$Patterns' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier."
+    },
+    {
+      "RuleName": "PSAvoidDefaultValueSwitchParameter",
+      "Severity": 1,
+      "ScriptName": "0521_Analyze-DocumentationCoverage.ps1",
+      "Line": 19,
+      "Column": 5,
+      "Message": "File '0521_Analyze-DocumentationCoverage.ps1' has a switch parameter default to true."
+    },
+    {
+      "RuleName": "PSAvoidDefaultValueSwitchParameter",
+      "Severity": 1,
+      "ScriptName": "0521_Analyze-DocumentationCoverage.ps1",
+      "Line": 21,
+      "Column": 5,
+      "Message": "File '0521_Analyze-DocumentationCoverage.ps1' has a switch parameter default to true."
+    },
+    {
+      "RuleName": "PSUseApprovedVerbs",
+      "Severity": 1,
+      "ScriptName": "0521_Analyze-DocumentationCoverage.ps1",
+      "Line": 37,
+      "Column": 10,
+      "Message": "The cmdlet 'Analyze-DocumentationCoverage' uses an unapproved verb."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0521_Analyze-DocumentationCoverage.ps1",
+      "Line": 17,
+      "Column": 13,
+      "Message": "The parameter 'Path' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0521_Analyze-DocumentationCoverage.ps1",
+      "Line": 19,
+      "Column": 13,
+      "Message": "The parameter 'UseCache' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0521_Analyze-DocumentationCoverage.ps1",
+      "Line": 21,
+      "Column": 13,
+      "Message": "The parameter 'CheckOutdated' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0521_Analyze-DocumentationCoverage.ps1",
+      "Line": 22,
+      "Column": 15,
+      "Message": "The parameter 'ExcludePaths' has been declared but not used."
+    },
+    {
+      "RuleName": "PSAvoidAssignmentToAutomaticVariable",
+      "Severity": 1,
+      "ScriptName": "0522_Analyze-CodeQuality.ps1",
+      "Line": 230,
+      "Column": 21,
+      "Message": "The Variable 'matches' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name."
+    },
+    {
+      "RuleName": "PSAvoidAssignmentToAutomaticVariable",
+      "Severity": 1,
+      "ScriptName": "0522_Analyze-CodeQuality.ps1",
+      "Line": 254,
+      "Column": 17,
+      "Message": "The Variable 'matches' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name."
+    },
+    {
+      "RuleName": "PSUseApprovedVerbs",
+      "Severity": 1,
+      "ScriptName": "0522_Analyze-CodeQuality.ps1",
+      "Line": 65,
+      "Column": 10,
+      "Message": "The cmdlet 'Analyze-FileComplexity' uses an unapproved verb."
+    },
+    {
+      "RuleName": "PSUseApprovedVerbs",
+      "Severity": 1,
+      "ScriptName": "0522_Analyze-CodeQuality.ps1",
+      "Line": 162,
+      "Column": 10,
+      "Message": "The cmdlet 'Analyze-CodeQuality' uses an unapproved verb."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0522_Analyze-CodeQuality.ps1",
+      "Line": 38,
+      "Column": 10,
+      "Message": "The cmdlet 'Get-TodoPatterns' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0522_Analyze-CodeQuality.ps1",
+      "Line": 49,
+      "Column": 10,
+      "Message": "The cmdlet 'Get-HardcodedPatterns' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0522_Analyze-CodeQuality.ps1",
+      "Line": 17,
+      "Column": 13,
+      "Message": "The parameter 'Path' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0522_Analyze-CodeQuality.ps1",
+      "Line": 19,
+      "Column": 13,
+      "Message": "The parameter 'UseCache' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0522_Analyze-CodeQuality.ps1",
+      "Line": 21,
+      "Column": 10,
+      "Message": "The parameter 'MaxFunctionLength' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0522_Analyze-CodeQuality.ps1",
+      "Line": 22,
+      "Column": 10,
+      "Message": "The parameter 'MaxComplexity' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0522_Analyze-CodeQuality.ps1",
+      "Line": 23,
+      "Column": 15,
+      "Message": "The parameter 'ExcludePaths' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0522_Analyze-CodeQuality.ps1",
+      "Line": 67,
+      "Column": 17,
+      "Message": "The parameter 'FilePath' has been declared but not used."
+    },
+    {
+      "RuleName": "PSAvoidAssignmentToAutomaticVariable",
+      "Severity": 1,
+      "ScriptName": "0523_Analyze-SecurityIssues.ps1",
+      "Line": 228,
+      "Column": 25,
+      "Message": "The Variable 'matches' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0523_Analyze-SecurityIssues.ps1",
+      "Line": 17,
+      "Column": 13,
+      "Message": "The parameter 'Path' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0523_Analyze-SecurityIssues.ps1",
+      "Line": 19,
+      "Column": 13,
+      "Message": "The parameter 'UseCache' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0523_Analyze-SecurityIssues.ps1",
+      "Line": 21,
+      "Column": 13,
+      "Message": "The parameter 'IncludeInfo' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0523_Analyze-SecurityIssues.ps1",
+      "Line": 22,
+      "Column": 15,
+      "Message": "The parameter 'ExcludePaths' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0523_Analyze-SecurityIssues.ps1",
+      "Line": 117,
+      "Column": 9,
+      "Message": "The parameter 'Function' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseApprovedVerbs",
+      "Severity": 1,
+      "ScriptName": "0523_Analyze-SecurityIssues.ps1",
+      "Line": 142,
+      "Column": 10,
+      "Message": "The cmdlet 'Analyze-SecurityIssues' uses an unapproved verb."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0523_Analyze-SecurityIssues.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0523_Analyze-SecurityIssues.ps1'"
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0523_Analyze-SecurityIssues.ps1",
+      "Line": 344,
+      "Column": 5,
+      "Message": "The variable 'secretPatterns' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0523_Analyze-SecurityIssues.ps1",
+      "Line": 37,
+      "Column": 10,
+      "Message": "The cmdlet 'Get-SecurityPatterns' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0523_Analyze-SecurityIssues.ps1",
+      "Line": 142,
+      "Column": 10,
+      "Message": "The cmdlet 'Analyze-SecurityIssues' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0524_Generate-TechDebtReport.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0524_Generate-TechDebtReport.ps1'"
+    },
+    {
+      "RuleName": "PSAvoidDefaultValueSwitchParameter",
+      "Severity": 1,
+      "ScriptName": "0524_Generate-TechDebtReport.ps1",
+      "Line": 21,
+      "Column": 5,
+      "Message": "File '0524_Generate-TechDebtReport.ps1' has a switch parameter default to true."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0524_Generate-TechDebtReport.ps1",
+      "Line": 20,
+      "Column": 13,
+      "Message": "The parameter 'RunAnalysis' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0524_Generate-TechDebtReport.ps1",
+      "Line": 21,
+      "Column": 13,
+      "Message": "The parameter 'UseLatest' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0530_View-Logs.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0530_View-Logs.ps1'"
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0700_Setup-GitEnvironment.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0700_Setup-GitEnvironment.ps1'"
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0701_Create-FeatureBranch.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0701_Create-FeatureBranch.ps1'"
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0701_Create-FeatureBranch.ps1",
+      "Line": 142,
+      "Column": 13,
+      "Message": "The variable 'result' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0702_Create-Commit.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0702_Create-Commit.ps1'"
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0703_Create-PullRequest.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0703_Create-PullRequest.ps1'"
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0703_Create-PullRequest.ps1",
+      "Line": 73,
+      "Column": 1,
+      "Message": "The variable 'gitRepo' is assigned but never used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0703_Create-PullRequest.ps1",
+      "Line": 37,
+      "Column": 13,
+      "Message": "The parameter 'MergeMethod' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0704_Stage-Files.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0704_Stage-Files.ps1'"
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0705_Push-Branch.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0705_Push-Branch.ps1'"
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0720_Setup-GitHubRunners.ps1",
+      "Line": 39,
+      "Column": 13,
+      "Message": "The parameter 'Platform' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0720_Setup-GitHubRunners.ps1",
+      "Line": 82,
+      "Column": 10,
+      "Message": "The cmdlet 'Test-Prerequisites' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSAvoidAssignmentToAutomaticVariable",
+      "Severity": 1,
+      "ScriptName": "0721_Configure-RunnerEnvironment.ps1",
+      "Line": 34,
+      "Column": 13,
+      "Message": "The Variable 'Profile' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name."
+    },
+    {
+      "RuleName": "PSUseApprovedVerbs",
+      "Severity": 1,
+      "ScriptName": "0721_Configure-RunnerEnvironment.ps1",
+      "Line": 342,
+      "Column": 10,
+      "Message": "The cmdlet 'Configure-RunnerSecurity' uses an unapproved verb."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0721_Configure-RunnerEnvironment.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0721_Configure-RunnerEnvironment.ps1'"
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0721_Configure-RunnerEnvironment.ps1",
+      "Line": 36,
+      "Column": 13,
+      "Message": "The parameter 'Platform' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0721_Configure-RunnerEnvironment.ps1",
+      "Line": 39,
+      "Column": 11,
+      "Message": "The parameter 'ConfigurePowerShell' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0721_Configure-RunnerEnvironment.ps1",
+      "Line": 40,
+      "Column": 13,
+      "Message": "The parameter 'SetupTools' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0721_Configure-RunnerEnvironment.ps1",
+      "Line": 156,
+      "Column": 17,
+      "Message": "The parameter 'TargetPlatform' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0721_Configure-RunnerEnvironment.ps1",
+      "Line": 153,
+      "Column": 10,
+      "Message": "The cmdlet 'Install-RequiredTools' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0721_Configure-RunnerEnvironment.ps1",
+      "Line": 246,
+      "Column": 10,
+      "Message": "The cmdlet 'Install-PowerShellModules' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0721_Configure-RunnerEnvironment.ps1",
+      "Line": 280,
+      "Column": 10,
+      "Message": "The cmdlet 'Set-RunnerEnvironmentVariables' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0722_Install-RunnerServices.ps1",
+      "Line": 36,
+      "Column": 13,
+      "Message": "The parameter 'ServiceType' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0722_Install-RunnerServices.ps1",
+      "Line": 40,
+      "Column": 11,
+      "Message": "The parameter 'EnableMonitoring' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0722_Install-RunnerServices.ps1",
+      "Line": 42,
+      "Column": 13,
+      "Message": "The parameter 'LogLevel' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0722_Install-RunnerServices.ps1",
+      "Line": 182,
+      "Column": 17,
+      "Message": "The parameter 'User' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0722_Install-RunnerServices.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0722_Install-RunnerServices.ps1'"
+    },
+    {
+      "RuleName": "PSPossibleIncorrectComparisonWithNull",
+      "Severity": 1,
+      "ScriptName": "0722_Install-RunnerServices.ps1",
+      "Line": 496,
+      "Column": 30,
+      "Message": "$null should be on the left side of equality comparisons."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0722_Install-RunnerServices.ps1",
+      "Line": 121,
+      "Column": 10,
+      "Message": "The cmdlet 'Test-ServicePrerequisites' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0722_Install-RunnerServices.ps1",
+      "Line": 262,
+      "Column": 5,
+      "Message": "The variable 'startupMap' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseApprovedVerbs",
+      "Severity": 1,
+      "ScriptName": "0723_Setup-MatrixRunners.ps1",
+      "Line": 267,
+      "Column": 10,
+      "Message": "The cmdlet 'Setup-RunnerConfiguration' uses an unapproved verb."
+    },
+    {
+      "RuleName": "PSUseApprovedVerbs",
+      "Severity": 1,
+      "ScriptName": "0723_Setup-MatrixRunners.ps1",
+      "Line": 376,
+      "Column": 10,
+      "Message": "The cmdlet 'Setup-RunnersParallel' uses an unapproved verb."
+    },
+    {
+      "RuleName": "PSUseApprovedVerbs",
+      "Severity": 1,
+      "ScriptName": "0723_Setup-MatrixRunners.ps1",
+      "Line": 443,
+      "Column": 10,
+      "Message": "The cmdlet 'Setup-RunnersSequential' uses an unapproved verb."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0723_Setup-MatrixRunners.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0723_Setup-MatrixRunners.ps1'"
+    },
+    {
+      "RuleName": "PSUseUsingScopeModifierInNewRunspaces",
+      "Severity": 1,
+      "ScriptName": "0723_Setup-MatrixRunners.ps1",
+      "Line": 414,
+      "Column": 23,
+      "Message": "The variable '$RunnerConfig' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier."
+    },
+    {
+      "RuleName": "PSUseUsingScopeModifierInNewRunspaces",
+      "Severity": 1,
+      "ScriptName": "0723_Setup-MatrixRunners.ps1",
+      "Line": 414,
+      "Column": 38,
+      "Message": "The variable '$Organization' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier."
+    },
+    {
+      "RuleName": "PSUseUsingScopeModifierInNewRunspaces",
+      "Severity": 1,
+      "ScriptName": "0723_Setup-MatrixRunners.ps1",
+      "Line": 414,
+      "Column": 53,
+      "Message": "The variable '$Repository' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier."
+    },
+    {
+      "RuleName": "PSUseUsingScopeModifierInNewRunspaces",
+      "Severity": 1,
+      "ScriptName": "0723_Setup-MatrixRunners.ps1",
+      "Line": 414,
+      "Column": 66,
+      "Message": "The variable '$Token' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier."
+    },
+    {
+      "RuleName": "PSUseUsingScopeModifierInNewRunspaces",
+      "Severity": 1,
+      "ScriptName": "0723_Setup-MatrixRunners.ps1",
+      "Line": 414,
+      "Column": 74,
+      "Message": "The variable '$Index' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier."
+    },
+    {
+      "RuleName": "PSUseUsingScopeModifierInNewRunspaces",
+      "Severity": 1,
+      "ScriptName": "0723_Setup-MatrixRunners.ps1",
+      "Line": 414,
+      "Column": 82,
+      "Message": "The variable '$ScriptRoot' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier."
+    },
+    {
+      "RuleName": "PSUseUsingScopeModifierInNewRunspaces",
+      "Severity": 1,
+      "ScriptName": "0723_Setup-MatrixRunners.ps1",
+      "Line": 417,
+      "Column": 20,
+      "Message": "The variable '$ScriptRoot' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier."
+    },
+    {
+      "RuleName": "PSUseUsingScopeModifierInNewRunspaces",
+      "Severity": 1,
+      "ScriptName": "0723_Setup-MatrixRunners.ps1",
+      "Line": 419,
+      "Column": 57,
+      "Message": "The variable '$RunnerConfig' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier."
+    },
+    {
+      "RuleName": "PSUseUsingScopeModifierInNewRunspaces",
+      "Severity": 1,
+      "ScriptName": "0723_Setup-MatrixRunners.ps1",
+      "Line": 419,
+      "Column": 85,
+      "Message": "The variable '$Organization' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier."
+    },
+    {
+      "RuleName": "PSUseUsingScopeModifierInNewRunspaces",
+      "Severity": 1,
+      "ScriptName": "0723_Setup-MatrixRunners.ps1",
+      "Line": 419,
+      "Column": 111,
+      "Message": "The variable '$Repository' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier."
+    },
+    {
+      "RuleName": "PSUseUsingScopeModifierInNewRunspaces",
+      "Severity": 1,
+      "ScriptName": "0723_Setup-MatrixRunners.ps1",
+      "Line": 419,
+      "Column": 130,
+      "Message": "The variable '$Token' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier."
+    },
+    {
+      "RuleName": "PSUseUsingScopeModifierInNewRunspaces",
+      "Severity": 1,
+      "ScriptName": "0723_Setup-MatrixRunners.ps1",
+      "Line": 419,
+      "Column": 144,
+      "Message": "The variable '$Index' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0730_Setup-AIAgents.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0730_Setup-AIAgents.ps1'"
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0730_Setup-AIAgents.ps1",
+      "Line": 30,
+      "Column": 13,
+      "Message": "The parameter 'Provider' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0730_Setup-AIAgents.ps1",
+      "Line": 32,
+      "Column": 13,
+      "Message": "The parameter 'ValidateOnly' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0730_Setup-AIAgents.ps1",
+      "Line": 34,
+      "Column": 13,
+      "Message": "The parameter 'ConfigPath' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0730_Setup-AIAgents.ps1",
+      "Line": 147,
+      "Column": 17,
+      "Message": "The variable 'response' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0730_Setup-AIAgents.ps1",
+      "Line": 180,
+      "Column": 13,
+      "Message": "The variable 'credential' is assigned but never used."
+    },
+    {
+      "RuleName": "PSAvoidAssignmentToAutomaticVariable",
+      "Severity": 1,
+      "ScriptName": "0731_Invoke-AICodeReview.ps1",
+      "Line": 36,
+      "Column": 13,
+      "Message": "The Variable 'Profile' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0731_Invoke-AICodeReview.ps1",
+      "Line": 33,
+      "Column": 13,
+      "Message": "The parameter 'Path' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0731_Invoke-AICodeReview.ps1",
+      "Line": 36,
+      "Column": 13,
+      "Message": "The parameter 'Profile' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0731_Invoke-AICodeReview.ps1",
+      "Line": 39,
+      "Column": 15,
+      "Message": "The parameter 'OutputFormat' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0731_Invoke-AICodeReview.ps1",
+      "Line": 41,
+      "Column": 10,
+      "Message": "The parameter 'PRNumber' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0731_Invoke-AICodeReview.ps1",
+      "Line": 43,
+      "Column": 13,
+      "Message": "The parameter 'SkipSecurity' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0731_Invoke-AICodeReview.ps1",
+      "Line": 44,
+      "Column": 13,
+      "Message": "The parameter 'SkipPerformance' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0731_Invoke-AICodeReview.ps1",
+      "Line": 45,
+      "Column": 13,
+      "Message": "The parameter 'SkipQuality' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0731_Invoke-AICodeReview.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0731_Invoke-AICodeReview.ps1'"
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0731_Invoke-AICodeReview.ps1",
+      "Line": 137,
+      "Column": 5,
+      "Message": "The variable 'results' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0731_Invoke-AICodeReview.ps1",
+      "Line": 138,
+      "Column": 5,
+      "Message": "The variable 'totalIssues' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0731_Invoke-AICodeReview.ps1",
+      "Line": 143,
+      "Column": 9,
+      "Message": "The variable 'analysis' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0731_Invoke-AICodeReview.ps1",
+      "Line": 111,
+      "Column": 10,
+      "Message": "The cmdlet 'Get-CodeFiles' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0733_Create-AIDocs.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0733_Create-AIDocs.ps1'"
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0734_Optimize-AIPerformance.ps1",
+      "Line": 29,
+      "Column": 13,
+      "Message": "The parameter 'GenerateBenchmark' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0734_Optimize-AIPerformance.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0734_Optimize-AIPerformance.ps1'"
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0735_Analyze-AISecurity.ps1",
+      "Line": 29,
+      "Column": 13,
+      "Message": "The parameter 'GenerateRemediation' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0735_Analyze-AISecurity.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0735_Analyze-AISecurity.ps1'"
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0736_Generate-AIWorkflow.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0736_Generate-AIWorkflow.ps1'"
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0737_Monitor-AIUsage.ps1",
+      "Line": 29,
+      "Column": 13,
+      "Message": "The parameter 'SendAlert' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0737_Monitor-AIUsage.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0737_Monitor-AIUsage.ps1'"
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0738_Train-AIContext.ps1",
+      "Line": 28,
+      "Column": 13,
+      "Message": "The parameter 'Force' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0738_Train-AIContext.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0738_Train-AIContext.ps1'"
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0739_Validate-AIOutput.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0739_Validate-AIOutput.ps1'"
+    },
+    {
+      "RuleName": "PSUseApprovedVerbs",
+      "Severity": 1,
+      "ScriptName": "0741_Generate-AICommitMessage.ps1",
+      "Line": 102,
+      "Column": 10,
+      "Message": "The cmdlet 'Analyze-Changes' uses an unapproved verb."
+    },
+    {
+      "RuleName": "PSUseApprovedVerbs",
+      "Severity": 1,
+      "ScriptName": "0741_Generate-AICommitMessage.ps1",
+      "Line": 187,
+      "Column": 10,
+      "Message": "The cmdlet 'Generate-CommitMessage' uses an unapproved verb."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0741_Generate-AICommitMessage.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0741_Generate-AICommitMessage.ps1'"
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0741_Generate-AICommitMessage.ps1",
+      "Line": 63,
+      "Column": 10,
+      "Message": "The cmdlet 'Get-StagedChanges' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0741_Generate-AICommitMessage.ps1",
+      "Line": 102,
+      "Column": 10,
+      "Message": "The cmdlet 'Analyze-Changes' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0742_Create-AIPoweredPR.ps1",
+      "Line": 39,
+      "Column": 13,
+      "Message": "The parameter 'Force' has been declared but not used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0742_Create-AIPoweredPR.ps1",
+      "Line": 221,
+      "Column": 20,
+      "Message": "The parameter 'Changes' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseApprovedVerbs",
+      "Severity": 1,
+      "ScriptName": "0742_Create-AIPoweredPR.ps1",
+      "Line": 92,
+      "Column": 10,
+      "Message": "The cmdlet 'Generate-AIDescription' uses an unapproved verb."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0742_Create-AIPoweredPR.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0742_Create-AIPoweredPR.ps1'"
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0800_Create-TestIssues.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0800_Create-TestIssues.ps1'"
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0800_Create-TestIssues.ps1",
+      "Line": 39,
+      "Column": 13,
+      "Message": "The parameter 'NonInteractive' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0801_Parse-PesterResults.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0801_Parse-PesterResults.ps1'"
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0801_Parse-PesterResults.ps1",
+      "Line": 118,
+      "Column": 14,
+      "Message": "The cmdlet 'Get-Tests' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0801_Parse-PesterResults.ps1",
+      "Line": 22,
+      "Column": 13,
+      "Message": "The parameter 'FailuresOnly' has been declared but not used."
+    },
+    {
+      "RuleName": "PSAvoidAssignmentToAutomaticVariable",
+      "Severity": 1,
+      "ScriptName": "0805_Analyze-OpenIssues.ps1",
+      "Line": 176,
+      "Column": 9,
+      "Message": "The Variable 'matches' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name."
+    },
+    {
+      "RuleName": "PSAvoidAssignmentToAutomaticVariable",
+      "Severity": 2,
+      "ScriptName": "0805_Analyze-OpenIssues.ps1",
+      "Line": 152,
+      "Column": 18,
+      "Message": "The Variable 'error' cannot be assigned since it is a readonly automatic variable that is built into PowerShell, please use a different name."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0805_Analyze-OpenIssues.ps1",
+      "Line": 32,
+      "Column": 13,
+      "Message": "The parameter 'Verbose' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0810_Create-IssueFromTestFailure.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0810_Create-IssueFromTestFailure.ps1'"
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0810_Create-IssueFromTestFailure.ps1",
+      "Line": 30,
+      "Column": 1,
+      "Message": "The variable 'scriptInfo' is assigned but never used."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0810_Create-IssueFromTestFailure.ps1",
+      "Line": 47,
+      "Column": 10,
+      "Message": "The cmdlet 'Test-GitHubActions' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0810_Create-IssueFromTestFailure.ps1",
+      "Line": 72,
+      "Column": 10,
+      "Message": "The cmdlet 'Get-TestFailures' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0810_Create-IssueFromTestFailure.ps1",
+      "Line": 105,
+      "Column": 10,
+      "Message": "The cmdlet 'Get-CodeViolations' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0810_Create-IssueFromTestFailure.ps1",
+      "Line": 26,
+      "Column": 13,
+      "Message": "The parameter 'GitHubActions' has been declared but not used."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "0820_Save-WorkContext.ps1",
+      "Line": 222,
+      "Column": 9,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0820_Save-WorkContext.ps1",
+      "Line": 24,
+      "Column": 10,
+      "Message": "The parameter 'HistoryCount' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0820_Save-WorkContext.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0820_Save-WorkContext.ps1'"
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0820_Save-WorkContext.ps1",
+      "Line": 28,
+      "Column": 1,
+      "Message": "The variable 'scriptInfo' is assigned but never used."
+    },
+    {
+      "RuleName": "PSAvoidAssignmentToAutomaticVariable",
+      "Severity": 2,
+      "ScriptName": "0821_Generate-ContinuationPrompt.ps1",
+      "Line": 207,
+      "Column": 18,
+      "Message": "The Variable 'error' cannot be assigned since it is a readonly automatic variable that is built into PowerShell, please use a different name."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0821_Generate-ContinuationPrompt.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0821_Generate-ContinuationPrompt.ps1'"
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0821_Generate-ContinuationPrompt.ps1",
+      "Line": 31,
+      "Column": 1,
+      "Message": "The variable 'scriptInfo' is assigned but never used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0821_Generate-ContinuationPrompt.ps1",
+      "Line": 58,
+      "Column": 14,
+      "Message": "The parameter 'MaxTokens' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseApprovedVerbs",
+      "Severity": 1,
+      "ScriptName": "0830_Generate-PromptFromData.ps1",
+      "Line": 119,
+      "Column": 10,
+      "Message": "The cmdlet 'Parse-StructuredData' uses an unapproved verb."
+    },
+    {
+      "RuleName": "PSUseApprovedVerbs",
+      "Severity": 1,
+      "ScriptName": "0830_Generate-PromptFromData.ps1",
+      "Line": 582,
+      "Column": 10,
+      "Message": "The cmdlet 'Apply-CustomTemplate' uses an unapproved verb."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0830_Generate-PromptFromData.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0830_Generate-PromptFromData.ps1'"
+    },
+    {
+      "RuleName": "PSUseProcessBlockForPipelineCommand",
+      "Severity": 1,
+      "ScriptName": "0830_Generate-PromptFromData.ps1",
+      "Line": 20,
+      "Column": 13,
+      "Message": "Command accepts pipeline input but has not defined a process block."
+    },
+    {
+      "RuleName": "PSUseDeclaredVarsMoreThanAssignments",
+      "Severity": 1,
+      "ScriptName": "0830_Generate-PromptFromData.ps1",
+      "Line": 52,
+      "Column": 1,
+      "Message": "The variable 'scriptInfo' is assigned but never used."
+    },
+    {
+      "RuleName": "PSReviewUnusedParameter",
+      "Severity": 1,
+      "ScriptName": "0830_Generate-PromptFromData.ps1",
+      "Line": 42,
+      "Column": 13,
+      "Message": "The parameter 'IncludeExamples' has been declared but not used."
+    },
+    {
+      "RuleName": "PSUseBOMForUnicodeEncodedFile",
+      "Severity": 1,
+      "ScriptName": "0831_Prompt-Templates.ps1",
+      "Line": null,
+      "Column": null,
+      "Message": "Missing BOM encoding for non-ASCII encoded file '0831_Prompt-Templates.ps1'"
+    },
+    {
+      "RuleName": "PSUseSingularNouns",
+      "Severity": 1,
+      "ScriptName": "0831_Prompt-Templates.ps1",
+      "Line": 586,
+      "Column": 10,
+      "Message": "The cmdlet 'Get-PromptTemplates' uses a plural noun. A singular noun should be used instead."
+    },
+    {
+      "RuleName": "PSAvoidUsingEmptyCatchBlock",
+      "Severity": 1,
+      "ScriptName": "9999_Reset-Machine.ps1",
+      "Line": 20,
+      "Column": 3,
+      "Message": "Empty catch block is used. Please use Write-Error or throw statements in catch blocks."
+    }
+  ],
+  "Timestamp": "2025-08-09T01:19:20.1967218+00:00",
+  "Summary": {
+    "BySeverity": {
+      "Error": 2,
+      "Warning": 266
+    },
+    "TotalIssues": 268,
+    "ByScript": {
+      "0723_Setup-MatrixRunners.ps1": 16,
+      "orchestration-examples.ps1": 11,
+      "0721_Configure-RunnerEnvironment.ps1": 10,
+      "0522_Analyze-CodeQuality.ps1": 12,
+      "0731_Invoke-AICodeReview.ps1": 13,
+      "0212_Install-AzureCLI.ps1": 7,
+      "0523_Analyze-SecurityIssues.ps1": 11,
+      "0722_Install-RunnerServices.ps1": 8,
+      "Start-AitherZero.ps1": 16,
+      "bootstrap.ps1": 14
+    },
+    "ByRule": {
+      "PSAvoidUsingCmdletAliases": 16,
+      "PSUseBOMForUnicodeEncodedFile": 42,
+      "PSReviewUnusedParameter": 61,
+      "PSAvoidUsingEmptyCatchBlock": 23,
+      "PSUseApprovedVerbs": 15,
+      "PSUseUsingScopeModifierInNewRunspaces": 14,
+      "PSAvoidAssignmentToAutomaticVariable": 17,
+      "PSUseDeclaredVarsMoreThanAssignments": 38,
+      "PSPossibleIncorrectComparisonWithNull": 9,
+      "PSUseSingularNouns": 26
+    }
+  }
+}

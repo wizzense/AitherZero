@@ -61,6 +61,12 @@ param(
     
     [switch]$CI,
     
+    [hashtable]$Variables,
+    
+    [switch]$Sequential,
+    
+    [switch]$Parallel,
+    
     # Catch any extra arguments that might come from shell redirection
     [Parameter(ValueFromRemainingArguments)]
     [object[]]$RemainingArguments
@@ -882,7 +888,12 @@ try {
                 exit 1
             }
         
-            $variables = @{}
+            # Use passed Variables parameter or create empty hashtable
+            if (-not $Variables) {
+                $variables = @{}
+            } else {
+                $variables = $Variables
+            }
             if ($CI) { $variables['CI'] = $true }
 
             if ($Playbook) {
@@ -894,6 +905,12 @@ try {
                 }
             if ($PlaybookProfile) {
                     $params['PlaybookProfile'] = $PlaybookProfile
+                }
+            if ($Sequential) {
+                    $params['Parallel'] = $false
+                }
+            if ($Parallel) {
+                    $params['Parallel'] = $true
                 }
             $result = Invoke-OrchestrationSequence @params
             } else {

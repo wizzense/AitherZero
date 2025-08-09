@@ -213,43 +213,62 @@ function Invoke-OrchestrationSequence {
             # Handle both direct sequences and staged playbooks
             if ($playbook.Sequence) {
                 $Sequence = $playbook.Sequence
-            } elseif ($playbook.stages) {
-                # Store stages for proper variable handling
-                $script:PlaybookStages = $playbook.stages
+            }
+            
+            # Also check for stages (playbook can have both Sequence and Stages)
+            if ($playbook.stages -or $playbook.Stages) {
+                # Store stages for proper variable handling (check both cases)
+                $script:PlaybookStages = if ($playbook.Stages) { $playbook.Stages } else { $playbook.stages }
                 
                 # Flatten all stage sequences for compatibility
                 $Sequence = @()
-                foreach ($stage in $playbook.stages) {
-                    if ($stage.sequence) {
-                        $Sequence += $stage.sequence
+                foreach ($stage in $script:PlaybookStages) {
+                    $stageSeq = if ($stage.Sequence) { $stage.Sequence } else { $stage.sequence }
+                    if ($stageSeq) {
+                        $Sequence += $stageSeq
                     }
                 }
-                Write-OrchestrationLog "Loaded $($playbook.stages.Count) stages from playbook"
+                Write-OrchestrationLog "Loaded $($script:PlaybookStages.Count) stages from playbook" -Level 'Information'
+                Write-OrchestrationLog "Stages: $($script:PlaybookStages | ConvertTo-Json -Compress)" -Level 'Information'
             }
 
+            # First, merge playbook default variables (without expansion)
+            $defaultVars = @{}
             if ($playbook.variables) {
-                # Process playbook variables section and expand variable references
                 foreach ($key in $playbook.variables.Keys) {
-                    $value = $playbook.variables[$key]
-                    # Expand variable references in playbook variables
-                    if ($value -is [string]) {
-                        $value = Expand-PlaybookVariables -Value $value -Variables $Variables
-                    }
-                    # Only set if not already provided
-                    if (-not $Variables.ContainsKey($key)) {
-                        $Variables[$key] = $value
-                    }
+                    $defaultVars[$key] = $playbook.variables[$key]
+                }
+            }
+            if ($playbook.Variables) {
+                foreach ($key in $playbook.Variables.Keys) {
+                    $defaultVars[$key] = $playbook.Variables[$key]
                 }
             }
             
-            # Also check uppercase Variables for backward compatibility
-            if ($playbook.Variables) {
-                foreach ($key in $playbook.Variables.Keys) {
-                    if (-not $Variables.ContainsKey($key)) {
-                        $Variables[$key] = $playbook.Variables[$key]
-                    }
+            # Debug: Show what we have before merging
+            Write-OrchestrationLog "User Variables before merge: $($Variables | ConvertTo-Json -Compress)" -Level 'Information'
+            Write-OrchestrationLog "Playbook default variables: $($defaultVars | ConvertTo-Json -Compress)" -Level 'Information'
+            
+            # Apply defaults only if not provided by user
+            foreach ($key in $defaultVars.Keys) {
+                if (-not $Variables.ContainsKey($key)) {
+                    $Variables[$key] = $defaultVars[$key]
                 }
             }
+            
+            Write-OrchestrationLog "Variables after merge: $($Variables | ConvertTo-Json -Compress)" -Level 'Information'
+            
+            # Now expand any variable references in the merged variables
+            $expandedVars = @{}
+            foreach ($key in $Variables.Keys) {
+                $value = $Variables[$key]
+                if ($value -is [string]) {
+                    $expandedVars[$key] = Expand-PlaybookVariables -Value $value -Variables $Variables
+                } else {
+                    $expandedVars[$key] = $value
+                }
+            }
+            $Variables = $expandedVars
             if ($playbook.Profile) {
                 $ExecutionProfile = $playbook.Profile
             }
@@ -447,17 +466,20 @@ function Get-OrchestrationScripts {
         $stageVariables = $Variables.Clone()
         if ($script:PlaybookStages) {
             foreach ($stage in $script:PlaybookStages) {
-                if ($stage.sequence -contains $number -and $stage.variables) {
+                # Check both lowercase and uppercase for compatibility
+                $stageSequence = if ($stage.Sequence) { $stage.Sequence } else { $stage.sequence }
+                $stageVars = if ($stage.Variables) { $stage.Variables } else { $stage.variables }
+                if ($stageSequence -contains $number -and $stageVars) {
                     # Merge stage-specific variables and expand any variable references
-                    foreach ($key in $stage.variables.Keys) {
-                        $value = $stage.variables[$key]
+                    foreach ($key in $stageVars.Keys) {
+                        $value = $stageVars[$key]
                         # Expand variable references in the value
                         if ($value -is [string]) {
                             $value = Expand-PlaybookVariables -Value $value -Variables $Variables
                         }
                         $stageVariables[$key] = $value
                     }
-                    Write-OrchestrationLog "Applied stage variables for script $number" -Level 'Debug'
+                    Write-OrchestrationLog "Applied stage variables for script $number - Variables: $($stageVariables | ConvertTo-Json -Compress)" -Level 'Information'
                     break
                 }
             }
@@ -655,11 +677,14 @@ function Invoke-ParallelOrchestration {
                         if ($Config) { $params['Configuration'] = $Config }
                     }
                     
-                    # Add any variables as individual parameters
+                    # Add any variables as individual parameters, but only if the script accepts them
                     foreach ($key in $Vars.Keys) {
                         # Skip null or empty values
                         if ($null -ne $Vars[$key] -and $Vars[$key] -ne '') {
-                            $params[$key] = $Vars[$key]
+                            # Check if the script has this parameter
+                            if ($scriptInfo -and $scriptInfo.Parameters.ContainsKey($key)) {
+                                $params[$key] = $Vars[$key]
+                            }
                         }
                     }
                     
