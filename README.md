@@ -1,6 +1,18 @@
-# AitherZero - Minimal Edition
+# AitherZero
 
-Simple infrastructure automation with OpenTofu/Terraform.
+Infrastructure automation platform with AI-powered orchestration.
+
+## Quick Install
+
+### Windows (PowerShell)
+```powershell
+irm https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex
+```
+
+### Linux/macOS (Bash)
+```bash
+curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
+```
 
 ## Requirements
 

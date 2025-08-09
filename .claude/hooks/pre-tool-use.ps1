@@ -74,6 +74,32 @@ try {
                 }
             }
             
+            # ENFORCE ORCHESTRATION FOR GIT OPERATIONS
+            $gitOperationsRequiringOrchestration = @(
+                'git\s+commit',
+                'git\s+push',
+                'git\s+merge',
+                'gh\s+pr\s+create',
+                'gh\s+pr\s+merge'
+            )
+            
+            foreach ($pattern in $gitOperationsRequiringOrchestration) {
+                if ($command -match $pattern) {
+                    Write-HookLog "Git operation requiring orchestration detected: $pattern" "WARN"
+                    $contextToAdd += "⚠️ GIT OPERATION DETECTED: This operation should use orchestrated playbooks!"
+                    $contextToAdd += "Recommended playbooks:"
+                    $contextToAdd += "  • claude-commit-workflow - For commits"
+                    $contextToAdd += "  • git-workflow - For general git operations"
+                    $contextToAdd += "  • claude-feature-workflow - For feature development"
+                    $contextToAdd += "Use: ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook <playbook-name>"
+                    
+                    # Check if orchestration marker exists
+                    if (-not (Test-Path ".claude/.orchestration-active")) {
+                        $contextToAdd += "❌ ORCHESTRATION NOT ACTIVE - Consider using playbook workflow instead!"
+                    }
+                }
+            }
+            
             # Add context for AitherZero commands
             if ($command -match '^(\./)?az\s+\d+' -or $command -match '\.ps1') {
                 $contextToAdd += "AitherZero automation script execution detected. Ensure environment is properly initialized."
