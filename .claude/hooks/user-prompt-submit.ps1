@@ -126,20 +126,36 @@ Use orchestration: ``./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-qui
 "@
     }
     
-    # Git and version control
+    # Git and version control - ENFORCE ORCHESTRATION
     if ($promptLower -match '\b(git|commit|branch|pull\s+request|pr|merge)\b') {
-        Write-HookLog "Git workflow task detected"
+        Write-HookLog "Git workflow task detected - ORCHESTRATION RECOMMENDED"
         $contextToAdd += @"
-**AitherZero Git Workflow Context:**
-Available Git automation:
+**⚠️ ORCHESTRATED GIT WORKFLOW REQUIRED ⚠️**
+
+For Git operations, you MUST use orchestrated playbooks:
+
+📋 **Available Playbooks:**
+- ``claude-commit-workflow`` - For creating commits
+- ``git-workflow`` - For general Git operations  
+- ``claude-feature-workflow`` - For feature development
+- ``claude-development-workflow`` - For complete dev cycle
+
+🚀 **How to Use:**
+``./Start-AitherZero.ps1 -Mode Orchestrate -Playbook claude-commit-workflow``
+
+📝 **Alternative Git Automation:**
 - ``az 0700`` - Setup Git environment
-- ``az 0701`` - Create feature branch
+- ``az 0701`` - Create feature branch  
 - ``az 0702`` - Create conventional commit
 - ``az 0703`` - Create pull request
+- ``az 0704`` - Stage files
+- ``az 0705`` - Push branch
 
-Git hooks and automation available for development workflow.
-Consider using conventional commit format for better CI/CD integration.
+❗ **IMPORTANT:** Direct git commands should be avoided. Use orchestration for consistency and quality assurance.
 "@
+        
+        # Mark as requiring orchestration
+        New-Item -Path ".claude/.git-orchestration-required" -ItemType File -Force -ErrorAction SilentlyContinue | Out-Null
     }
     
     # Performance and optimization

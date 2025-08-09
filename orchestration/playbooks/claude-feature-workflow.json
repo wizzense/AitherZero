@@ -1,300 +1,72 @@
 {
   "Name": "claude-feature-workflow",
-  "Description": "Complete AI-assisted feature development lifecycle",
-  "Version": "1.0", 
-  "Created": "2025-01-08T00:00:00Z",
-  "Tags": ["claude-code", "feature", "development", "lifecycle", "ai-assisted"],
-  "Triggers": {
-    "claude_hooks": ["user-prompt-submit"],
-    "manual": true,
-    "github_issues": ["feature_request", "enhancement"]
-  },
+  "Description": "Complete feature development workflow: branch, commit, push, and PR",
+  "Version": "1.0",
+  "Created": "2025-01-09T00:00:00Z",
+  "Tags": ["claude-code", "git", "feature", "pr", "complete-workflow"],
+  "Sequence": ["0701", "0404", "0702", "0705", "0703"],
   "Stages": [
     {
-      "Name": "Feature Planning",
-      "Description": "AI-assisted feature planning and design",
-      "Sequence": [],
-      "CustomActions": [
-        {
-          "Type": "ai_analysis",
-          "Action": "analyze_requirements",
-          "Prompt": "Analyze this feature request and suggest implementation approach, potential challenges, and testing strategy."
-        },
-        {
-          "Type": "generate_issue",
-          "Conditional": "$(CreateIssue) -eq $true",
-          "Template": "feature_template"
-        }
-      ]
-    },
-    {
-      "Name": "Development Environment Setup",
-      "Description": "Prepare development environment for feature work",
-      "Sequence": ["0700", "0701"],
+      "Name": "Create Feature Branch",
+      "Description": "Create and switch to feature branch",
+      "Sequence": ["0701"],
       "Variables": {
-        "BranchType": "feature",
-        "FeatureName": "$(FeatureName)",
-        "IssueNumber": "$(IssueNumber)",
-        "SetupTracking": true
+        "Type": "{{BranchType:=feature}}",
+        "Name": "{{BranchName}}",
+        "Force": true,
+        "NonInteractive": true
       }
     },
     {
-      "Name": "Initial Validation",
-      "Description": "Baseline validation before development starts", 
-      "Sequence": ["0500", "0404", "0407"],
+      "Name": "Validation",
+      "Description": "Run PSScriptAnalyzer validation",
+      "Sequence": ["0404"],
+      "ContinueOnError": true,
       "Variables": {
-        "BaselineCapture": true,
-        "InitialQualityScore": true
+        "QuickScan": true
       }
     },
     {
-      "Name": "Feature Implementation Guidance",
-      "Description": "AI-assisted development guidance",
-      "Sequence": [],
-      "CustomActions": [
-        {
-          "Type": "ai_guidance",
-          "Action": "implementation_suggestions",
-          "Triggers": ["file_created", "code_written"],
-          "Continuous": true
-        },
-        {
-          "Type": "pattern_analysis",
-          "Action": "suggest_existing_patterns",
-          "ScanDirectories": ["domains", "automation-scripts"]
-        }
-      ]
-    },
-    {
-      "Name": "Continuous Testing",
-      "Description": "Run tests as development progresses",
-      "Sequence": ["0402"],
-      "Conditional": "$(ContinuousTesting) -eq $true",
+      "Name": "Create Commit",
+      "Description": "Create conventional commit",
+      "Sequence": ["0702"],
       "Variables": {
-        "OnlyAffectedTests": true,
-        "WatchMode": true,
-        "FastExecution": true
-      },
-      "Triggers": ["file_saved", "code_modified"]
-    },
-    {
-      "Name": "Feature Completion Validation",
-      "Description": "Comprehensive validation when feature is complete",
-      "Sequence": ["0404", "0407", "0402", "0403", "0523"],
-      "Variables": {
-        "ComprehensiveAnalysis": true,
-        "SecurityFocus": true,
-        "PerformanceAnalysis": true
-      },
-      "SuccessCriteria": {
-        "MaxCriticalIssues": 0,
-        "MinTestCoverage": 85,
-        "MaxSecurityIssues": 0,
-        "CodeQualityScore": 80
+        "Type": "{{CommitType}}",
+        "Message": "{{CommitMessage}}",
+        "NonInteractive": true,
+        "AutoStage": true
       }
     },
     {
-      "Name": "Documentation Generation",
-      "Description": "Generate and update documentation for the feature",
-      "Sequence": ["0521"],
+      "Name": "Push Branch",
+      "Description": "Push feature branch to origin",
+      "Sequence": ["0705"],
       "Variables": {
-        "GenerateHelp": true,
-        "UpdateReadme": true,
-        "CreateExamples": true,
-        "AIAssisted": true
+        "Force": false,
+        "SetUpstream": true
       }
     },
     {
-      "Name": "Pre-Commit Preparation",
-      "Description": "Final preparation before committing feature",
-      "Sequence": [],
-      "CustomActions": [
-        {
-          "Type": "ai_commit_message",
-          "Action": "generate_commit_message",
-          "AnalyzeChanges": true,
-          "ConventionalFormat": true
-        },
-        {
-          "Type": "change_summary",
-          "Action": "summarize_changes",
-          "IncludeImpact": true
-        }
-      ]
-    },
-    {
-      "Name": "Feature Commit and PR",
-      "Description": "Commit feature and create pull request",
-      "Sequence": ["0702", "0703"],
+      "Name": "Create Pull Request",
+      "Description": "Create PR to main branch",
+      "Sequence": ["0703"],
       "Variables": {
-        "ConventionalCommit": true,
-        "CreatePR": true,
-        "PRTemplate": "feature",
-        "RequestReview": true,
-        "LinkIssue": true
+        "Title": "{{PRTitle}}",
+        "Body": "{{PRBody}}",
+        "NonInteractive": true,
+        "TargetBranch": "main"
       }
     }
   ],
-  "PreExecution": {
-    "ValidateInputs": {
-      "FeatureName": "required",
-      "Description": "optional",
-      "IssueNumber": "optional"
-    },
-    "EnvironmentChecks": [
-      "git_repository",
-      "clean_working_tree",
-      "up_to_date_branch"
-    ],
-    "AIContextPreparation": {
-      "AnalyzeExistingCode": true,
-      "IdentifyPatterns": true,
-      "ScanDependencies": true,
-      "LoadProjectContext": true
-    }
-  },
-  "PostExecution": {
-    "Notifications": [
-      {
-        "Type": "console",
-        "Message": "Feature development workflow completed! PR created: $(PRUrl)",
-        "Conditional": "$(PRCreated) -eq $true"
-      },
-      {
-        "Type": "slack",
-        "Channel": "#development",
-        "Message": "🚀 New feature ready for review: $(FeatureName) - $(PRUrl)",
-        "Conditional": "$(NotifyTeam) -eq $true"
-      }
-    ],
-    "Metrics": {
-      "RecordFeatureTime": true,
-      "TrackComplexity": true,
-      "MeasureQualityImprovement": true
-    },
-    "AILearning": {
-      "RecordSuccessfulPatterns": true,
-      "UpdateRecommendations": true,
-      "ImproveGuidance": true
-    }
-  },
-  "AIAssistance": {
-    "FeaturePlanning": {
-      "RequirementAnalysis": true,
-      "ArchitectureGuidance": true,
-      "RiskAssessment": true,
-      "TestStrategyPlanning": true
-    },
-    "DevelopmentGuidance": {
-      "CodeSuggestions": true,
-      "PatternRecommendations": true,
-      "BestPractices": true,
-      "SecurityConsiderations": true
-    },
-    "QualityAssurance": {
-      "CodeReview": true,
-      "TestGeneration": true,
-      "DocumentationGeneration": true,
-      "PerformanceOptimization": true
-    },
-    "ProjectIntegration": {
-      "DependencyAnalysis": true,
-      "ImpactAssessment": true,
-      "MigrationGuidance": true,
-      "BackwardCompatibility": true
-    }
-  },
   "Variables": {
-    "FeatureName": "",
-    "Description": "",
-    "IssueNumber": "",
-    "CreateIssue": true,
-    "ContinuousTesting": true,
-    "NotifyTeam": false,
-    "RequestReview": true,
-    "AutoMerge": false,
-    "RequireApproval": true,
-    "DeleteBranchAfterMerge": true
+    "BranchType": "feature",
+    "BranchName": "automated-update",
+    "CommitType": "feat",
+    "CommitMessage": "Automated update",
+    "PRTitle": "Automated update",
+    "PRBody": "This PR was created via orchestrated workflow",
+    "NonInteractive": true,
+    "AutoStage": true
   },
-  "BranchNaming": {
-    "Pattern": "feature/{issue-number}-{feature-name}",
-    "Fallback": "feature/{feature-name}",
-    "Sanitization": true,
-    "MaxLength": 63
-  },
-  "CommitConventions": {
-    "Type": "feat",
-    "Scope": "auto-detect", 
-    "Description": "AI-generated",
-    "Body": "optional",
-    "Footer": "auto-link-issue"
-  },
-  "PRTemplate": {
-    "Title": "feat: Add {feature-name}",
-    "Body": "## Summary\n{ai-generated-summary}\n\n## Changes\n{change-list}\n\n## Testing\n{test-summary}\n\n## Impact\n{impact-analysis}",
-    "Labels": ["feature", "needs-review"],
-    "Assignees": ["auto-detect"],
-    "Reviewers": ["auto-suggest"]
-  },
-  "Profile": "Developer",
-  "Prerequisites": {
-    "GitRepository": true,
-    "PowerShellVersion": "7.0+",
-    "RequiredModules": ["Pester", "PSScriptAnalyzer"],
-    "InternetConnection": true
-  },
-  "SuccessCriteria": {
-    "FeatureImplemented": true,
-    "TestsPassing": true,
-    "DocumentationUpdated": true,
-    "CodeQualityMaintained": true,
-    "SecurityValidated": true,
-    "PRCreated": true
-  },
-  "OnError": {
-    "RollbackBranch": true,
-    "PreserveDraft": true,
-    "NotifyUser": true,
-    "CreateIssue": true,
-    "LogDetailedError": true,
-    "SuggestRecovery": true
-  },
-  "Integrations": {
-    "GitHub": {
-      "IssueTracking": true,
-      "PRAutomation": true,
-      "BranchProtection": true,
-      "StatusChecks": true
-    },
-    "Jira": {
-      "TicketLinking": true,
-      "StatusUpdates": true,
-      "CommentSync": false
-    },
-    "Teams": {
-      "NotifyChannel": "#features",
-      "Conditional": "$(NotifyTeam) -eq $true"
-    }
-  },
-  "FeatureTypes": {
-    "UI": {
-      "ExtraValidation": ["accessibility", "responsive"],
-      "RequiredTests": ["unit", "integration", "e2e"]
-    },
-    "API": {
-      "ExtraValidation": ["security", "performance"],
-      "RequiredTests": ["unit", "integration", "load"],
-      "Documentation": ["swagger", "examples"]
-    },
-    "Infrastructure": {
-      "ExtraValidation": ["security", "scalability"],
-      "RequiredTests": ["unit", "integration", "deployment"],
-      "Approval": "required"
-    },
-    "Security": {
-      "ExtraValidation": ["penetration", "compliance"],
-      "RequiredTests": ["security", "threat-model"],
-      "Approval": "security-team"
-    }
-  }
+  "Profile": "Standard"
 }
