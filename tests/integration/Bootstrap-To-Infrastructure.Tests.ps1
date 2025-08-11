@@ -19,7 +19,7 @@ BeforeAll {
     }
 
     # Import required modules - these are the REAL modules
-    Import-Module (Join-Path $script:ProjectRoot "AitherZeroCore.psm1") -Force
+    Import-Module (Join-Path $script:ProjectRoot "AitherZero.psm1") -Force
     Import-Module (Join-Path $script:ProjectRoot "domains/automation/OrchestrationEngine.psm1") -Force
     Import-Module (Join-Path $script:ProjectRoot "domains/configuration/Configuration.psm1") -Force
     Import-Module (Join-Path $script:ProjectRoot "domains/infrastructure/Infrastructure.psm1") -Force
@@ -65,11 +65,11 @@ Describe "Bootstrap to Infrastructure Deployment Flow" {
         
         It "Should initialize AitherZero core module" {
             # Test core module initialization
-            $coreModule = Get-Module -Name AitherZeroCore
+            $coreModule = Get-Module -Name AitherZero
             $coreModule | Should -Not -BeNullOrEmpty
 
             # Verify core functions are available
-            Get-Command -Module AitherZeroCore | Should -Not -BeNullOrEmpty
+            Get-Command -Module AitherZero | Should -Not -BeNullOrEmpty
         }
         
         It "Should create initial directory structure" {
@@ -591,7 +591,7 @@ Actual User Commands:
    OR
 4. $directCommand                      # Direct module usage
    OR  
-5. $seqCommand                         # Quick alias
+# 5. $seqCommand                         # Quick alias
 "@
         }
     }

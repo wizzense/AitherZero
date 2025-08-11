@@ -472,10 +472,10 @@ Describe "Claude Code Integration - Test-Driven Development" -Tags @('Integratio
             )
             
             $dangerousPatterns = @(
-                'password\s*=\s*["\'][^"'"'"']*["\']',
-                'secret\s*=\s*["\'][^"'"'"']*["\']',
-                'key\s*=\s*["\'][^"'"'"']*["\']',
-                'token\s*=\s*["\'][^"'"'"']*["\']'
+                'password\s*=\s*["''][^"'']*["'']',
+                'secret\s*=\s*["''][^"'']*["'']',
+                'key\s*=\s*["''][^"'']*["'']',
+                'token\s*=\s*["''][^"'']*["'']'
             )
             
             # Act
