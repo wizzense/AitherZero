@@ -179,6 +179,6 @@ Describe "Infrastructure Module Tests" {
     
     AfterAll {
         # Clean up
-        Remove-Module AitherZeroCore -Force -ErrorAction SilentlyContinue
+        Remove-Module aitherzero -Force -ErrorAction SilentlyContinue
     }
 }

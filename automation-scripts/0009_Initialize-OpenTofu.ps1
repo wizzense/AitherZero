@@ -149,19 +149,50 @@ try {
 
             # Run init
             Write-ScriptLog "Running: tofu $($initArgs -join ' ')" -Level 'Debug'
-            & tofu $initArgs
+            
+            # Check if tofu is available
+            if (-not (Get-Command tofu -ErrorAction SilentlyContinue)) {
+                Write-ScriptLog "OpenTofu (tofu) command not found. Please install OpenTofu first." -Level 'Warning'
+                continue
+            }
+            
+            # Execute tofu with proper argument handling
+            try {
+                if ($initArgs.Count -gt 0) {
+                    $result = & tofu @initArgs 2>&1
+                } else {
+                    $result = & tofu init 2>&1
+                }
+                $exitCode = $LASTEXITCODE
+                
+                if ($result) {
+                    Write-ScriptLog "$result" -Level 'Debug'
+                }
+            } catch {
+                Write-ScriptLog "Error executing tofu: $_" -Level 'Error'
+                continue
+            }
 
-            if ($LASTEXITCODE -eq 0) {
+            if ($exitCode -eq 0) {
                 Write-ScriptLog "Successfully initialized: $tofuDir"
                 
                 # Validate configuration
                 Write-ScriptLog "Validating configuration..." -Level 'Debug'
-                & tofu validate
-                
-                if ($LASTEXITCODE -eq 0) {
-                    Write-ScriptLog "Configuration is valid"
-                } else {
-                    Write-ScriptLog "Configuration validation failed" -Level 'Warning'
+                try {
+                    $validateResult = & tofu validate 2>&1
+                    $validateExitCode = $LASTEXITCODE
+                    
+                    if ($validateResult) {
+                        Write-ScriptLog "$validateResult" -Level 'Debug'
+                    }
+                    
+                    if ($validateExitCode -eq 0) {
+                        Write-ScriptLog "Configuration is valid"
+                    } else {
+                        Write-ScriptLog "Configuration validation failed" -Level 'Warning'
+                    }
+                } catch {
+                    Write-ScriptLog "Error validating configuration: $_" -Level 'Warning'
                 }
             } else {
                 Write-ScriptLog "Failed to initialize: $tofuDir" -Level 'Error'

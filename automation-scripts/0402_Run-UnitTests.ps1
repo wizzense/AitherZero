@@ -175,7 +175,7 @@ try {
         $pesterConfig.CodeCoverage.Enabled = $true
         $pesterConfig.CodeCoverage.Path = @(
             Join-Path $projectRoot 'domains'
-            Join-Path $projectRoot 'AitherZeroCore.psm1'
+            Join-Path $projectRoot 'aitherzero.psm1'
         )
     $pesterConfig.CodeCoverage.OutputPath = Join-Path $OutputPath "Coverage-Unit-$timestamp.xml"
         $pesterConfig.CodeCoverage.OutputFormat = 'JaCoCo'

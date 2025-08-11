@@ -53,7 +53,7 @@ From PSScriptAnalyzer analysis:
 | utilities | 1 | ✓ |
 
 ### 6. Dependencies Identified
-- AitherZeroCore: v1.0.0
+- aitherzero: v1.0.0
 - PatchManager: v3.0.0 (in legacy-to-migrate)
 - ISOManager: v1.0.0 (in legacy-to-migrate)
 - OpenTofuProvider: v1.0.0 (in legacy-to-migrate)

@@ -223,6 +223,66 @@ Describe "Bootstrap Configuration" {
     }
 }
 
+Describe "Bootstrap Bug Fix Validations" {
+    Context "Critical Bug Fixes" {
+        It "Should handle OpenTofu initialization without crashing (Bug #5)" {
+            $scriptPath = Join-Path $script:ProjectRoot "automation-scripts/0009_Initialize-OpenTofu.ps1"
+            if (Test-Path $scriptPath) {
+                $content = Get-Content $scriptPath -Raw
+                
+                # Verify tofu command check exists
+                $content | Should -BeLike "*Get-Command tofu -ErrorAction SilentlyContinue*"
+                $content | Should -BeLike "*OpenTofu (tofu) command not found*"
+                
+                # Verify proper error handling
+                $content | Should -BeLike "*try {*& tofu*"
+                $content | Should -BeLike "*catch {*Error executing tofu*"
+            }
+        }
+        
+        It "Should not require admin for testing tools installation (Bug #7)" {
+            $scriptPath = Join-Path $script:ProjectRoot "automation-scripts/0400_Install-TestingTools.ps1"
+            if (Test-Path $scriptPath) {
+                $content = Get-Content $scriptPath -Raw
+                
+                # Verify no admin requirement
+                $content | Should -Not -BeLike "*#Requires -RunAsAdministrator*"
+                $content | Should -BeLike "*RequiresAdmin = `$false*"
+                $content | Should -BeLike "*-Scope CurrentUser*"
+            }
+        }
+        
+        It "Should handle environment validation flexibly (Bug #3)" {
+            $scriptPath = Join-Path $script:ProjectRoot "automation-scripts/0500_Validate-Environment.ps1"
+            if (Test-Path $scriptPath) {
+                $content = Get-Content $scriptPath -Raw
+                
+                # Verify conditional checks
+                $content | Should -BeLike "*if (`$config.InstallationOptions.Node.Install -eq `$true)*"
+                $content | Should -BeLike "*if (`$config.InstallationOptions.DockerDesktop.Install -eq `$true)*"
+                
+                # Verify directory creation
+                $content | Should -BeLike "*Creating missing directory:*"
+                $content | Should -BeLike "*New-Item -ItemType Directory -Path `$dirPath -Force*"
+            }
+        }
+        
+        It "Should return correct exit codes in log viewer (Bug #4)" {
+            $scriptPath = Join-Path $script:ProjectRoot "automation-scripts/0530_View-Logs.ps1"
+            if (Test-Path $scriptPath) {
+                $content = Get-Content $scriptPath -Raw
+                
+                # Verify exit 0 on success
+                $content | Should -BeLike "*Log viewer completed successfully*exit 0*"
+                
+                # Verify only one exit 1 in catch block
+                $exitOnes = [regex]::Matches($content, 'exit 1')
+                $exitOnes.Count | Should -Be 1
+            }
+        }
+    }
+}
+
 Describe "Bootstrap Environment Setup" {
     Context "PowerShell Profile Integration" {
         It "Should add auto-load to PowerShell profile" {

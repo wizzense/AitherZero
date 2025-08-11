@@ -62,7 +62,7 @@ Invoke-Pester -Path ./tests -CodeCoverage ./domains/**/*.psm1 -CodeCoverageOutpu
 ### Example Test
 ```powershell
 BeforeAll {
-    Import-Module ./AitherZeroCore.psm1 -Force
+    Import-Module ./aitherzero.psm1 -Force
 }
 
 Describe "Configuration Module Tests" {
