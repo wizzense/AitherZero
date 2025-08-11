@@ -97,8 +97,13 @@ try {
         }
     }
 
-    # Check Hyper-V (Windows only, and only if configured)
-    if ($IsWindows -and $config.InstallationOptions.HyperV.Install -eq $true) {
+    # Check Hyper-V (Windows only, optional)
+    if ($IsWindows) {
+        $hypervRequired = $false
+        if ($config.InstallationOptions -and $config.InstallationOptions.HyperV -and $config.InstallationOptions.HyperV.Install -eq $true) {
+            $hypervRequired = $true
+        }
+        
         try {
             $hyperv = Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All -ErrorAction SilentlyContinue
             if ($hyperv.State -eq 'Enabled') {
@@ -108,62 +113,78 @@ try {
                 # Check Hyper-V service
                 $vmms = Get-Service -Name vmms -ErrorAction SilentlyContinue
                 if ($vmms.Status -ne 'Running') {
-                    $issues += "Hyper-V is enabled but VMMS service is not running"
+                    if ($hypervRequired) {
+                        $issues += "Hyper-V is enabled but VMMS service is not running"
+                    }
                 }
             } else {
-                $issues += "Hyper-V expected but not enabled"
+                if ($hypervRequired) {
+                    $issues += "Hyper-V expected but not enabled"
+                }
                 $validationResults.HyperV = $false
+                Write-ScriptLog "Hyper-V: Not enabled (optional)" -Level 'Debug'
             }
         } catch {
-            $issues += "Hyper-V expected but not enabled"
+            if ($hypervRequired) {
+                $issues += "Hyper-V expected but not enabled"
+            }
             $validationResults.HyperV = $false
+            Write-ScriptLog "Hyper-V: Not available (optional)" -Level 'Debug'
         }
-    } elseif ($IsWindows) {
-        Write-ScriptLog "Hyper-V: Not configured for installation" -Level 'Debug'
     }
 
-    # Check Node.js (only if configured to be installed)
-    if ($config.InstallationOptions.Node.Install -eq $true) {
-        try {
-            $nodeVersion = & node --version 2>&1
-            if ($LASTEXITCODE -eq 0) {
-                $validationResults.Node = $true
-                Write-ScriptLog "✓ Node.js: $nodeVersion" -Level 'Debug'
+    # Check Node.js (optional dependency)
+    $nodeRequired = $false
+    if ($config.InstallationOptions -and $config.InstallationOptions.Node -and $config.InstallationOptions.Node.Install -eq $true) {
+        $nodeRequired = $true
+    }
+    
+    try {
+        $nodeVersion = & node --version 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $validationResults.Node = $true
+            Write-ScriptLog "✓ Node.js: $nodeVersion" -Level 'Debug'
 
-                # Check npm
-                $npmVersion = & npm --version 2>&1
-                Write-ScriptLog "✓ npm: v$npmVersion" -Level 'Debug'
-            } else {
+            # Check npm
+            $npmVersion = & npm --version 2>&1
+            Write-ScriptLog "✓ npm: v$npmVersion" -Level 'Debug'
+        } else {
+            if ($nodeRequired) {
                 $issues += "Node.js expected but not found"
-                $validationResults.Node = $false
             }
-        } catch {
-            $issues += "Node.js expected but not found"
             $validationResults.Node = $false
         }
-    } else {
-        # Node.js not required, mark as N/A
-        Write-ScriptLog "Node.js: Not configured for installation" -Level 'Debug'
+    } catch {
+        if ($nodeRequired) {
+            $issues += "Node.js expected but not found"
+        }
+        $validationResults.Node = $false
+        Write-ScriptLog "Node.js: Not installed (optional)" -Level 'Debug'
     }
 
-    # Check Docker (only if configured to be installed)
-    if ($config.InstallationOptions.DockerDesktop.Install -eq $true) {
-        try {
-            $dockerVersion = & docker --version 2>&1
-            if ($LASTEXITCODE -eq 0) {
-                $validationResults.Docker = $true
-                Write-ScriptLog "✓ Docker: $dockerVersion" -Level 'Debug'
-            } else {
+    # Check Docker (optional dependency)
+    $dockerRequired = $false
+    if ($config.InstallationOptions -and $config.InstallationOptions.DockerDesktop -and $config.InstallationOptions.DockerDesktop.Install -eq $true) {
+        $dockerRequired = $true
+    }
+    
+    try {
+        $dockerVersion = & docker --version 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $validationResults.Docker = $true
+            Write-ScriptLog "✓ Docker: $dockerVersion" -Level 'Debug'
+        } else {
+            if ($dockerRequired) {
                 $issues += "Docker expected but not found"
-                $validationResults.Docker = $false
             }
-        } catch {
-            $issues += "Docker expected but not found"
             $validationResults.Docker = $false
         }
-    } else {
-        # Docker not required, mark as N/A
-        Write-ScriptLog "Docker: Not configured for installation" -Level 'Debug'
+    } catch {
+        if ($dockerRequired) {
+            $issues += "Docker expected but not found"
+        }
+        $validationResults.Docker = $false
+        Write-ScriptLog "Docker: Not installed (optional)" -Level 'Debug'
     }
 
     # Check directories (create if missing)

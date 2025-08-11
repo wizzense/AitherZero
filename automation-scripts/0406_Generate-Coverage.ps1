@@ -250,8 +250,8 @@ try {
     }
 
     # Check for existing coverage data or run tests
-    $coverageFiles = Get-ChildItem -Path $OutputPath -Filter "Coverage-*.xml" -ErrorAction SilentlyContinue | 
-        Sort-Object LastWriteTime -Descending
+    $coverageFiles = @(Get-ChildItem -Path $OutputPath -Filter "Coverage-*.xml" -ErrorAction SilentlyContinue | 
+        Sort-Object LastWriteTime -Descending)
     
     $coverageData = $null
     $testResult = $null
@@ -260,7 +260,7 @@ try {
         Write-ScriptLog -Message "Running tests with code coverage..."
         
         # Ensure Pester is available
-        if (-not (Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge '5.0.0' })) {
+        if (-not (Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge [Version]'5.0.0' })) {
             Write-ScriptLog -Level Error -Message "Pester 5.0.0 or higher is required. Run 0400_Install-TestingTools.ps1 first."
             exit 2
         }

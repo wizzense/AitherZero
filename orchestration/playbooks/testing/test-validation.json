@@ -1,0 +1,79 @@
+{
+  "Name": "test-validation",
+  "Description": "Comprehensive test validation with fixes for common issues",
+  "Profile": "Testing",
+  "Variables": {
+    "outputPath": "./tests/results",
+    "failFast": false,
+    "testPath": "./tests",
+    "skipCoverage": false,
+    "continueOnError": true
+  },
+  "Stages": [
+    {
+      "name": "Environment Preparation",
+      "description": "Install and verify testing tools",
+      "sequence": ["0400"],
+      "continueOnError": false
+    },
+    {
+      "name": "Syntax Validation",
+      "description": "Validate PowerShell syntax before running tests",
+      "sequence": ["0407"],
+      "variables": {
+        "CheckSyntax": true,
+        "ExcludePaths": ["legacy-to-migrate"]
+      },
+      "continueOnError": true
+    },
+    {
+      "name": "Unit Tests",
+      "description": "Run unit tests with coverage",
+      "sequence": ["0402"],
+      "variables": {
+        "NoCoverage": false,
+        "OutputFormat": "NUnitXml,JaCoCo"
+      },
+      "continueOnError": true
+    },
+    {
+      "name": "Integration Tests",
+      "description": "Run integration tests",
+      "sequence": ["0403"],
+      "variables": {
+        "IncludeE2E": false
+      },
+      "continueOnError": true
+    },
+    {
+      "name": "PSScriptAnalyzer",
+      "description": "Run static code analysis",
+      "sequence": ["0404"],
+      "variables": {
+        "ExcludePaths": ["tests", "legacy-to-migrate", "examples"],
+        "FailOnWarning": false
+      },
+      "continueOnError": true
+    },
+    {
+      "name": "Coverage Report",
+      "description": "Generate code coverage report",
+      "sequence": ["0406"],
+      "variables": {
+        "RunTests": false,
+        "OutputFormat": "HTML"
+      },
+      "continueOnError": true
+    },
+    {
+      "name": "Test Summary",
+      "description": "Generate comprehensive test report",
+      "sequence": ["0408"],
+      "variables": {
+        "IncludeCoverage": true,
+        "IncludeAnalysis": true
+      },
+      "continueOnError": true
+    }
+  ]
+}

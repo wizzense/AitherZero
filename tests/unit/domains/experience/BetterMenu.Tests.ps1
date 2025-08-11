@@ -9,7 +9,7 @@ BeforeAll {
     Import-Module $script:ModulePath -Force
 }
 
-Describe "Show-BetterMenu" {
+Describe "Show-BetterMenu" -Tag 'Unit' {
     Context "Non-Interactive Mode" {
         BeforeEach {
             $env:AITHERZERO_NONINTERACTIVE = 'true'

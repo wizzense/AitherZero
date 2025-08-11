@@ -68,6 +68,28 @@ function Get-InfrastructureTool {
     }
 }
 
+# Helper function to execute infrastructure tool commands - this makes testing easier
+function Invoke-InfrastructureToolCommand {
+    param(
+        [string]$Tool,
+        [string[]]$Arguments
+    )
+    
+    Write-InfraLog -Level Debug -Message "Executing $Tool with arguments: $($Arguments -join ' ')"
+    
+    try {
+        & $Tool @Arguments
+        Write-InfraLog -Level Debug -Message "Successfully executed: $Tool $($Arguments -join ' ')"
+    }
+    catch {
+        Write-InfraLog -Level Error -Message "Failed to execute $Tool command" -Data @{
+            Arguments = $Arguments
+            Error = $_.Exception.Message
+        }
+        throw
+    }
+}
+
 function Invoke-InfrastructurePlan {
     param(
         [string]$WorkingDirectory = "./infrastructure"
@@ -83,8 +105,8 @@ function Invoke-InfrastructurePlan {
     
     Push-Location $WorkingDirectory
     try {
-        & $tool init
-        & $tool plan
+        Invoke-InfrastructureToolCommand -Tool $tool -Arguments @('init')
+        Invoke-InfrastructureToolCommand -Tool $tool -Arguments @('plan')
     }
     finally {
         Pop-Location
@@ -107,11 +129,11 @@ function Invoke-InfrastructureApply {
     
     Push-Location $WorkingDirectory
     try {
-        & $tool init
+        Invoke-InfrastructureToolCommand -Tool $tool -Arguments @('init')
         if ($AutoApprove) {
-            & $tool apply -auto-approve
+            Invoke-InfrastructureToolCommand -Tool $tool -Arguments @('apply', '-auto-approve')
         } else {
-            & $tool apply
+            Invoke-InfrastructureToolCommand -Tool $tool -Arguments @('apply')
         }
     }
     finally {
@@ -144,9 +166,9 @@ function Invoke-InfrastructureDestroy {
     Push-Location $WorkingDirectory
     try {
         if ($AutoApprove) {
-            & $tool destroy -auto-approve
+            Invoke-InfrastructureToolCommand -Tool $tool -Arguments @('destroy', '-auto-approve')
         } else {
-            & $tool destroy
+            Invoke-InfrastructureToolCommand -Tool $tool -Arguments @('destroy')
         }
     }
     finally {
@@ -154,4 +176,4 @@ function Invoke-InfrastructureDestroy {
     }
 }
 
-Export-ModuleMember -Function Test-OpenTofu, Invoke-InfrastructurePlan, Invoke-InfrastructureApply, Invoke-InfrastructureDestroy
+Export-ModuleMember -Function Test-OpenTofu, Get-InfrastructureTool, Invoke-InfrastructurePlan, Invoke-InfrastructureApply, Invoke-InfrastructureDestroy

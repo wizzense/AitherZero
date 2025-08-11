@@ -9,7 +9,11 @@
   "project": {
     "name": "AitherZero",
     "type": "infrastructure-automation",
-    "frameworks": ["powershell", "terraform", "github-actions"],
+    "frameworks": [
+      "powershell",
+      "terraform",
+      "github-actions"
+    ],
     "ai_assistance": {
       "code_review": true,
       "test_generation": true,
@@ -25,9 +29,26 @@
     "test_before_commit": true
   },
   "orchestration": {
-    "trigger_on_commit": ["0404", "0407"],
-    "trigger_on_branch": ["0700"],
-    "trigger_on_pr": ["0703"],
+    "trigger_on_commit": [
+      "0404",
+      "0407"
+    ],
+    "trigger_on_branch": [
+      "0700"
+    ],
+    "trigger_on_pr": [
+      "0703"
+    ],
     "ci_monitoring": true
+  },
+  "reporting": {
+    "formats": [
+      "HTML",
+      "JSON",
+      "Markdown"
+    ],
+    "onTestRun": true,
+    "retentionDays": 7,
+    "autoGenerate": true
   }
 }

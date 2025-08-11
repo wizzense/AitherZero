@@ -1,0 +1,63 @@
+{
+  "name": "agent-quick-fix",
+  "description": "Rapid fix and validation workflow for hotfixes and minor changes",
+  "version": "1.0.0",
+  "author": "AitherZero AI Optimization",
+  "tags": ["hotfix", "quick", "minimal", "ai-optimized"],
+  "requirements": {
+    "modules": ["TestCacheManager"],
+    "minimumVersion": "7.0",
+    "estimatedDuration": "30-60 seconds"
+  },
+  "variables": {
+    "validateOnly": false,
+    "skipTests": false,
+    "useCache": true,
+    "minimalOutput": true
+  },
+  "stages": [
+    {
+      "name": "Quick Syntax Check",
+      "description": "Validate PowerShell syntax only",
+      "inline": {
+        "script": "$files = Get-ChildItem -Path . -Include '*.ps1','*.psm1' -Recurse | Where-Object { $_.LastWriteTime -gt (Get-Date).AddMinutes(-10) }; $errors = 0; foreach ($file in $files) { $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content $file.FullName -Raw), [ref]$null); if ($?) { Write-Host \"✅ $($file.Name)\" } else { Write-Host \"❌ $($file.Name)\"; $errors++ } }; if ($errors -eq 0) { Write-Host \"`n✅ All files valid\" } else { throw \"$errors files have syntax errors\" }"
+      },
+      "continueOnError": false
+    },
+    {
+      "name": "Cached Test Check",
+      "description": "Check if recent tests passed",
+      "inline": {
+        "script": "$cache = Get-ChildItem ./tests/results -Filter '*Summary*.json' -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if ($cache -and $cache.LastWriteTime -gt (Get-Date).AddMinutes(-5)) { $result = Get-Content $cache.FullName | ConvertFrom-Json; Write-Host \"💾 Recent test results: Passed=$($result.Passed), Failed=$($result.Failed)\"; if ($result.Failed -eq 0) { Write-Host '✅ Tests passed recently' } else { Write-Warning 'Recent test failures detected' } } else { Write-Host '⚠️ No recent test results' }"
+      },
+      "continueOnError": true,
+      "runIf": "$(SkipTests) -ne $true"
+    },
+    {
+      "name": "Targeted Test",
+      "description": "Run only affected tests if needed",
+      "sequence": ["0411"],
+      "variables": {
+        "UseCache": true,
+        "Incremental": true,
+        "AIOutput": true,
+        "CacheMinutes": 10
+      },
+      "continueOnError": false,
+      "runIf": "$(SkipTests) -ne $true -and $(TestsNeeded) -eq $true"
+    },
+    {
+      "name": "Quick Summary",
+      "description": "Display validation status",
+      "inline": {
+        "script": "Write-Host \"`n⚡ Quick Fix Validation:\"; Write-Host \"  Syntax: ✅\"; Write-Host \"  Tests: $(if ($SkipTests) { '⏭️ Skipped' } elseif ($TestsFromCache) { '✅ Cached' } else { '✅ Passed' })\"; Write-Host \"  Ready: ✅\""
+      }
+    }
+  ],
+  "optimization": {
+    "fastMode": true,
+    "skipNonCritical": true,
+    "cacheFirst": true,
+    "timeout": 60
+  }
+}

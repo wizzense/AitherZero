@@ -1,3 +1,9 @@
+---
+name: executive-documentation-generator
+description: Creates executive summaries and detailed technical documentation for AI-powered enterprise systems
+tools: Read, Write, Glob, Task
+---
+
 # Executive Documentation Generator Agent
 
 ## Core Directive

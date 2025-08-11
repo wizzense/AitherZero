@@ -1,0 +1,314 @@
+{
+  "name": "git-standard-workflow",
+  "description": "Comprehensive Git workflow with AI enhancements for staging, committing, and creating PRs",
+  "version": "2.0.0",
+  "author": "AitherZero Team",
+  "tags": ["git", "automation", "workflow", "pr", "ai"],
+  "requirements": {
+    "modules": ["GitAutomation", "PullRequestManager"],
+    "tools": ["git", "gh"],
+    "minimumVersion": "7.0",
+    "estimatedDuration": "5-10 minutes"
+  },
+  "parameters": {
+    "branchType": {
+      "description": "Type of branch to create",
+      "required": false,
+      "values": ["feature", "fix", "docs", "refactor", "test", "chore", "hotfix", "release"],
+      "default": "feature"
+    },
+    "branchName": {
+      "description": "Name for the branch",
+      "required": false,
+      "example": "ai-integration"
+    },
+    "filePattern": {
+      "description": "Files to stage (space-separated patterns)",
+      "required": true,
+      "example": "*.ps1 config.json docs/*.md"
+    },
+    "commitType": {
+      "description": "Conventional commit type",
+      "required": true,
+      "values": ["feat", "fix", "docs", "style", "refactor", "test", "chore", "perf", "ci", "build", "revert"],
+      "default": "feat"
+    },
+    "commitScope": {
+      "description": "Commit scope",
+      "required": false,
+      "example": "ai"
+    },
+    "commitMessage": {
+      "description": "Commit message",
+      "required": true,
+      "example": "Add comprehensive AI integration"
+    },
+    "commitBody": {
+      "description": "Extended commit body",
+      "required": false
+    },
+    "createPR": {
+      "description": "Whether to create a pull request",
+      "required": false,
+      "default": false
+    },
+    "prTitle": {
+      "description": "Pull request title",
+      "required": false
+    },
+    "prBody": {
+      "description": "Pull request body",
+      "required": false
+    },
+    "prBase": {
+      "description": "Base branch for PR",
+      "required": false,
+      "default": "main"
+    },
+    "prLabels": {
+      "description": "PR labels (comma-separated)",
+      "required": false,
+      "example": "enhancement,ai,automation"
+    },
+    "prAssignees": {
+      "description": "PR assignees (comma-separated GitHub usernames)",
+      "required": false
+    },
+    "prReviewers": {
+      "description": "PR reviewers (comma-separated GitHub usernames)",
+      "required": false
+    },
+    "runTests": {
+      "description": "Run tests before committing",
+      "required": false,
+      "default": true
+    },
+    "runAnalysis": {
+      "description": "Run code analysis before committing",
+      "required": false,
+      "default": true
+    }
+  },
+  "variables": {
+    "branchType": "{{branchType:=feature}}",
+    "branchName": "{{branchName}}",
+    "filePattern": "{{filePattern}}",
+    "commitType": "{{commitType:=feat}}",
+    "commitScope": "{{commitScope}}",
+    "commitMessage": "{{commitMessage}}",
+    "commitBody": "{{commitBody}}",
+    "createPR": "{{createPR:=false}}",
+    "prTitle": "{{prTitle:={{commitType}}({{commitScope}}): {{commitMessage}}}}",
+    "prBase": "{{prBase:=main}}",
+    "prBody": "{{prBody:={{commitBody}}}}",
+    "prLabels": "{{prLabels}}",
+    "prAssignees": "{{prAssignees}}",
+    "prReviewers": "{{prReviewers}}",
+    "runTests": "{{runTests:=true}}",
+    "runAnalysis": "{{runAnalysis:=true}}"
+  },
+  "profiles": {
+    "quick": {
+      "description": "Quick commit without branch creation or PR",
+      "variables": {
+        "runTests": false,
+        "runAnalysis": false,
+        "createPR": false
+      },
+      "excludeStages": ["Create Feature Branch", "Run Tests", "Code Analysis", "Create Pull Request"]
+    },
+    "feature": {
+      "description": "Full feature workflow with branch and PR",
+      "variables": {
+        "branchType": "feature",
+        "createPR": true,
+        "runTests": true,
+        "runAnalysis": true
+      }
+    },
+    "hotfix": {
+      "description": "Emergency hotfix workflow",
+      "variables": {
+        "branchType": "hotfix",
+        "createPR": true,
+        "runTests": true,
+        "runAnalysis": false,
+        "prLabels": "hotfix,urgent"
+      }
+    },
+    "docs": {
+      "description": "Documentation updates",
+      "variables": {
+        "branchType": "docs",
+        "commitType": "docs",
+        "runTests": false,
+        "runAnalysis": false,
+        "prLabels": "documentation"
+      }
+    },
+    "ai": {
+      "description": "AI-enhanced workflow with full validation",
+      "variables": {
+        "runTests": true,
+        "runAnalysis": true,
+        "createPR": true,
+        "prLabels": "ai,automation"
+      }
+    }
+  },
+  "stages": [
+    {
+      "name": "Create Feature Branch",
+      "description": "Create and checkout feature branch",
+      "sequence": ["0701"],
+      "condition": "{{branchName}}",
+      "variables": {
+        "Type": "{{branchType}}",
+        "Name": "{{branchName}}",
+        "Checkout": true,
+        "NonInteractive": true,
+        "Force": true
+      },
+      "continueOnError": false
+    },
+    {
+      "name": "Run Tests",
+      "description": "Run tests before committing",
+      "sequence": ["0404"],
+      "condition": "{{runTests}}",
+      "variables": {
+        "CI": true,
+        "QuickMode": true
+      },
+      "continueOnError": false
+    },
+    {
+      "name": "Code Analysis",
+      "description": "Run code analysis",
+      "sequence": ["0407"],
+      "condition": "{{runAnalysis}}",
+      "variables": {
+        "CI": true
+      },
+      "continueOnError": false
+    },
+    {
+      "name": "Stage Files",
+      "description": "Add specified files to git staging",
+      "sequence": ["0704"],
+      "variables": {
+        "Patterns": "{{filePattern}}",
+        "Force": true
+      },
+      "continueOnError": false
+    },
+    {
+      "name": "AI Commit Enhancement",
+      "description": "Use AI to enhance commit message",
+      "sequence": ["0741"],
+      "condition": "{{aiEnhance:=false}}",
+      "variables": {
+        "Type": "{{commitType}}",
+        "Scope": "{{commitScope}}",
+        "Message": "{{commitMessage}}"
+      },
+      "continueOnError": true
+    },
+    {
+      "name": "Create Commit",
+      "description": "Create conventional commit",
+      "sequence": ["0702"],
+      "variables": {
+        "Type": "{{commitType}}",
+        "Scope": "{{commitScope}}",
+        "Message": "{{commitMessage}}",
+        "Body": "{{commitBody}}",
+        "AutoStage": false,
+        "NonInteractive": true,
+        "Force": true
+      },
+      "continueOnError": false
+    },
+    {
+      "name": "Push Branch",
+      "description": "Push branch to remote",
+      "sequence": ["0705"],
+      "variables": {
+        "Branch": "{{branchName}}",
+        "SetUpstream": true,
+        "NonInteractive": true
+      },
+      "continueOnError": false
+    },
+    {
+      "name": "Create Pull Request",
+      "description": "Create PR if requested",
+      "sequence": ["0703"],
+      "condition": "{{createPR}}",
+      "variables": {
+        "Title": "{{prTitle}}",
+        "Base": "{{prBase}}",
+        "Body": "{{prBody}}",
+        "Labels": "{{prLabels}}",
+        "Assignees": "{{prAssignees}}",
+        "Reviewers": "{{prReviewers}}",
+        "NonInteractive": true,
+        "Force": true
+      },
+      "continueOnError": false
+    }
+  ],
+  "hooks": {
+    "pre": [
+      {
+        "description": "Check for uncommitted changes",
+        "type": "script",
+        "inline": "if (git status --porcelain) { Write-Warning 'Uncommitted changes detected' }"
+      }
+    ],
+    "post": [
+      {
+        "description": "Generate project report",
+        "type": "script",
+        "command": "0510",
+        "condition": "{{generateReport:=false}}",
+        "parameters": {
+          "Format": "JSON"
+        }
+      }
+    ]
+  },
+  "notifications": {
+    "onSuccess": {
+      "message": "✅ Git workflow completed successfully!",
+      "level": "Information",
+      "includeUrl": true
+    },
+    "onFailure": {
+      "message": "❌ Git workflow failed",
+      "level": "Error",
+      "includeError": true
+    },
+    "onPRCreated": {
+      "message": "🚀 Pull request created successfully",
+      "level": "Information",
+      "includeUrl": true
+    }
+  },
+  "integrations": {
+    "claudeCode": {
+      "enabled": true,
+      "reviewBeforeCommit": true,
+      "enhanceCommitMessages": true
+    },
+    "github": {
+      "enabled": true,
+      "autoLink": true,
+      "closeIssues": true
+    },
+    "reporting": {
+      "enabled": true,
+      "generateOnSuccess": true
+    }
+  }
+}

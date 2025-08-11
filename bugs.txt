@@ -1,117 +1,96 @@
-# AitherZero Bug Tracker
-Last Updated: 2024-01-11
+# AitherZero Bug Tracking
+Last Updated: 2025-08-11
 
 ## ACTIVE BUGS
 
-(No active bugs - all issues have been resolved)
+### BUG-009: Test Failures
+**Status**: ACTIVE
+**Found**: 2025-08-11
+**Location**: Unit tests
+**Error**: 25 tests failing out of 82 total
+**Impact**: Test suite not fully passing
+**Details**: Configuration tests failing, Start-AitherZero parameter validation tests failing
+**Fix**: Need to fix the actual code issues causing test failures
 
-## RECENTLY FIXED BUGS
+## FIXED BUGS
 
-### 1. Missing Test Dependencies  
-**Status:** FIXED (2024-01-11)
-**Severity:** HIGH
-**Found:** Testing & Validation menu
-**Error:** "Pester 5.0.0 or higher is required. Run 0400_Install-TestingTools.ps1 first"
-**Files Affected:** 
-- automation-scripts/0402_Run-UnitTests.ps1
-- automation-scripts/0403_Run-IntegrationTests.ps1
-**Description:** Unit and integration tests fail because Pester module is not installed
+### BUG-001: Pester Version Check Issue [FIXED]
+**Status**: FIXED
+**Found**: 2025-08-11 10:39:39
+**Fixed**: 2025-08-11
+**Location**: automation-scripts/0402_Run-UnitTests.ps1, automation-scripts/0403_Run-IntegrationTests.ps1
+**Error**: Version comparison failing despite Pester 5.7.1 being installed
+**Fix**: Changed version check to properly cast to [Version] type for comparison
 
-### 2. Missing PSScriptAnalyzer
-**Status:** FIXED (2024-01-11)
-**Severity:** HIGH  
-**Found:** Testing & Validation menu
-**Error:** "PSScriptAnalyzer is required. Run 0400_Install-TestingTools.ps1 first"
-**Files Affected:**
-- automation-scripts/0404_Run-PSScriptAnalyzer.ps1
-**Description:** Code analysis fails because PSScriptAnalyzer module is not installed
+### BUG-002: Test Installation Script Exists [RESOLVED]
+**Status**: RESOLVED - Not a bug
+**Found**: 2025-08-11
+**Location**: automation-scripts/0400_Install-TestingTools.ps1
+**Resolution**: Script exists and is properly implemented
 
-### 3. Environment Validation Failures
-**Status:** FIXED (2024-01-11)
-**Severity:** MEDIUM
-**Found:** Testing & Validation > Validate Environment
-**Failures:**
-- Node.js expected but not found
-- Directory not found: C:/HyperV
-- Directory not found: C:/iso_share  
-- Directory not found: C:/Temp/base-infra
-**Files Affected:**
-- automation-scripts/0500_Validate-Environment.ps1
-**Description:** Validation expects directories that may not exist on all systems
+### BUG-003: PSScriptAnalyzer Errors - Assignment to Automatic Variables [FIXED]
+**Status**: FIXED
+**Found**: 2025-08-11 10:42:19
+**Fixed**: 2025-08-11
+**Location**: 
+  - automation-scripts/0805_Analyze-OpenIssues.ps1:152
+  - automation-scripts/0821_Generate-ContinuationPrompt.ps1:207
+**Error**: "The Variable 'error' cannot be assigned since it is a readonly automatic variable"
+**Fix**: Renamed 'error' variable to 'errorMsg' and 'errorItem'
 
-### 4. Log Viewer Exit Code Issue
-**Status:** FIXED (2024-01-11)
-**Severity:** LOW
-**Found:** Reports & Logs menu (all log viewing options)
-**Error:** Scripts report as failed despite completing successfully
-**Files Affected:**
-- automation-scripts/0530_View-Logs.ps1
-**Description:** Log viewer returns non-zero exit code even when successful
+### BUG-004: Environment Validation Failures [FIXED]
+**Status**: FIXED
+**Found**: 2025-08-11 10:42:54
+**Fixed**: 2025-08-11
+**Location**: automation-scripts/0500_Validate-Environment.ps1
+**Error**: Missing dependencies: Docker, HyperV, Node.js
+**Fix**: Made all dependencies optional - only show as errors if explicitly configured as required
 
-### 5. OpenTofu Initialization Crash
-**Status:** FIXED (2024-01-11)
-**Severity:** CRITICAL
-**Found:** Quick Setup execution
-**Error:** "Fatal error in Start-AitherZero" with RemoteException
-**Files Affected:**
-- automation-scripts/0009_Initialize-OpenTofu.ps1 (line 152)
-**Description:** OpenTofu initialization causes critical crash during Quick Setup
+### BUG-005: Double "Press Enter to continue" Prompt [FIXED]
+**Status**: FIXED
+**Found**: 2025-08-11
+**Fixed**: 2025-08-11
+**Location**: Start-AitherZero.ps1
+**Error**: User has to press Enter twice after UI operations complete
+**Fix**: Removed duplicate prompts after orchestration errors (system already prompts)
 
-### 6. Module Reference Errors in Tests
-**Status:** FIXED (2024-01-11)
-**Severity:** MEDIUM
-**Found:** Test files
-**Issue:** Tests reference "aitherzero.psm1" instead of "AitherZero.psm1"
-**Files Affected:**
-- tests/domains/configuration/Configuration.Tests.ps1
-- tests/domains/infrastructure/Infrastructure.Tests.ps1
-- tests/domains/utilities/Logging.Tests.ps1
-- tests/integration/Bootstrap-To-Infrastructure.Tests.ps1
+### BUG-006: Node.js Installation Failure [FIXED]
+**Status**: FIXED
+**Found**: 2025-08-11 10:43:56
+**Fixed**: 2025-08-11
+**Location**: automation-scripts/0201_Install-Node.ps1
+**Error**: "Failed to download Node.js installer: File not found" from URL https://nodejs.org/dist/latest-v20.x/node-v20-x64.msi
+**Fix**: Updated URL to correct format: https://nodejs.org/dist/v20.18.1/node-v20.18.1-x64.msi
 
-### 7. Missing 0400_Install-TestingTools.ps1
-**Status:** FIXED (2024-01-11)
-**Severity:** HIGH
-**Found:** Multiple test scripts reference this missing script
-**Files Affected:**
-- automation-scripts/0400_Install-TestingTools.ps1 (MISSING)
-**Description:** Critical testing tools installer script is missing
+### BUG-007: Single Script Menu Only Accepts Menu Numbers [FIXED]
+**Status**: FIXED
+**Found**: 2025-08-11
+**Fixed**: 2025-08-11
+**Location**: Start-AitherZero.ps1 (Advanced -> Run Single Script menu)
+**Error**: Cannot directly enter 4-digit script numbers (e.g., 0402), must use menu numbers
+**Fix**: Added prompt to accept 4-digit script numbers directly, or press Enter to browse menu
 
-### 8. Infrastructure Mock Errors
-**Status:** FIXED (2024-01-11)  
-**Severity:** MEDIUM
-**Found:** Infrastructure.Tests.ps1
-**Issue:** Incorrect Mock syntax - using "Mock &" instead of "Mock Invoke-Expression"
-**Files Affected:**
-- tests/domains/infrastructure/Infrastructure.Tests.ps1 (lines 84, 114, 129, 153, 170)
+### BUG-008: Unit Test Failures [FIXED]
+**Status**: FIXED
+**Found**: 2025-08-11 10:49:05
+**Fixed**: 2025-08-11
+**Location**: Unit tests execution infrastructure
+**Error**: Tests not running properly - only 7 of 82 running
+**Fix**: Added proper Unit tags to test files, fixed test path calculations, fixed az command wrapper
 
-## FIXED BUGS (2024-01-11 Session)
+### BUG-010: Test Tag Filtering Issue [FIXED]
+**Status**: FIXED
+**Found**: 2025-08-11
+**Fixed**: 2025-08-11
+**Location**: Unit test files and 0402_Run-UnitTests.ps1
+**Error**: Only 7 tests running because of Unit tag filter, but tests weren't tagged
+**Fix**: Added Unit tags to all unit test Describe blocks, created 0409_Run-AllTests.ps1 for running all tests
 
-### All UI Testing Bugs Fixed
-**Fixed Date:** 2024-01-11
-**Summary:** Fixed all 8 bugs discovered during UI testing session
-**Changes Made:**
-1. **OpenTofu Crash Fix:** Added proper command checking and error handling in 0009_Initialize-OpenTofu.ps1
-2. **Testing Tools:** Removed admin requirement from 0400_Install-TestingTools.ps1
-3. **Module References:** All test files now correctly reference AitherZero.psm1
-4. **Infrastructure Mocks:** Fixed Mock syntax in Infrastructure.Tests.ps1
-5. **Environment Validation:** Made validation conditional based on config, creates missing directories
-6. **Log Viewer:** Fixed exit code to return 0 on success
-7. **Test Integration:** Added bug fix validations to Bootstrap.Tests.ps1
-
-### Bootstrap Dirty Environment Issues
-**Status:** FIXED (2024-01-11)
-**PR:** #591
-**Description:** Bootstrap was failing on non-clean endpoints with CoreApp and other conflicting systems
-**Solution:** Added aggressive environment cleaning at the start of bootstrap.ps1
-
----
-
-## Testing Priority Order
-
-1. **CRITICAL:** Fix OpenTofu crash (#5)
-2. **HIGH:** Create missing 0400_Install-TestingTools.ps1 (#7)
-3. **HIGH:** Install Pester and PSScriptAnalyzer (#1, #2)
-4. **MEDIUM:** Fix module references in tests (#6)
-5. **MEDIUM:** Fix Infrastructure test mocks (#8)
-6. **MEDIUM:** Make environment validation more flexible (#3)
-7. **LOW:** Fix log viewer exit codes (#4)
+## NOTES
+- Test infrastructure now fully functional
+- 82 total unit tests: 56 passing, 25 failing (actual code issues to fix)
+- `./az 0402` runs unit tests only (with Unit tag filter)
+- `./az 0409` runs ALL tests (no tag filtering)
+- `./az 0403` runs integration tests
+- All infrastructure bugs have been fixed
+- Remaining test failures are actual code issues, not infrastructure problems

@@ -1,0 +1,91 @@
+{
+  "name": "agent-test-smart",
+  "description": "Intelligent test execution optimized for AI agents with minimal context usage",
+  "version": "1.0.0",
+  "author": "AitherZero AI Optimization",
+  "tags": ["testing", "smart", "cache", "ai-optimized", "incremental"],
+  "requirements": {
+    "modules": ["TestCacheManager", "Pester"],
+    "minimumVersion": "7.0",
+    "estimatedDuration": "30 seconds - 2 minutes"
+  },
+  "variables": {
+    "useCache": true,
+    "cacheMinutes": 5,
+    "incremental": true,
+    "aiOutput": true,
+    "skipCoverage": true,
+    "conciseResults": true
+  },
+  "stages": [
+    {
+      "name": "Cache Check",
+      "description": "Check for recent test results in cache",
+      "sequence": ["0411"],
+      "variables": {
+        "UseCache": true,
+        "AIOutput": true,
+        "CacheMinutes": 5
+      },
+      "continueOnError": false,
+      "skipIf": "$(ForceRun) -eq $true"
+    },
+    {
+      "name": "Incremental Analysis",
+      "description": "Determine which tests need to run based on changes",
+      "inline": {
+        "script": "Import-Module ./domains/testing/TestCacheManager.psm1 -Force; $scope = Get-IncrementalTestScope -BasePath . -ChangedFiles (Get-ChildItem -Path ./domains -Recurse -File -Include '*.ps1','*.psm1' | Where-Object { $_.LastWriteTime -gt (Get-Date).AddMinutes(-5) }).FullName; Write-Host \"Test scope determined: $(if ($scope.All) { 'All tests' } else { \"Modules: $($scope.Modules -join ', ')\" })\""
+      },
+      "continueOnError": true
+    },
+    {
+      "name": "Smart Test Execution",
+      "description": "Run only necessary tests with caching",
+      "sequence": ["0411"],
+      "variables": {
+        "UseCache": true,
+        "Incremental": true,
+        "AIOutput": true,
+        "Verbose": false
+      },
+      "continueOnError": false,
+      "runIf": "$(SkipTests) -ne $true"
+    },
+    {
+      "name": "Quick Validation",
+      "description": "Fast syntax check if tests are cached",
+      "sequence": ["0407"],
+      "variables": {
+        "QuickCheck": true,
+        "CI": true
+      },
+      "continueOnError": true,
+      "runIf": "$(TestsFromCache) -eq $true"
+    }
+  ],
+  "postExecution": {
+    "notifications": [
+      {
+        "type": "console",
+        "condition": "success",
+        "message": "✅ Smart test validation complete - $(if ($TestsFromCache) { 'from cache' } else { 'fresh run' })"
+      },
+      {
+        "type": "console", 
+        "condition": "failure",
+        "message": "❌ Test failures detected - review required"
+      }
+    ],
+    "cleanupCache": {
+      "enabled": true,
+      "maxAge": 24,
+      "command": "Import-Module ./domains/testing/TestCacheManager.psm1; Clear-TestCache -Expired"
+    }
+  },
+  "optimization": {
+    "parallelExecution": false,
+    "maxDuration": 120,
+    "cacheStrategy": "aggressive",
+    "outputVerbosity": "minimal"
+  }
+}

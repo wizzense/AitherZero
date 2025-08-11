@@ -16,6 +16,11 @@ Describe '0218_Install-GeminiCLI' -Tag 'Unit', 'AutomationScript' {
         $script:ScriptPath = './automation-scripts/0218_Install-GeminiCLI.ps1'
         $script:ScriptName = '0218_Install-GeminiCLI'
 
+        # Create a dummy function for gemini if it doesn't exist
+        if (-not (Get-Command gemini -ErrorAction SilentlyContinue)) {
+            function gemini { param([string]$arg) }
+        }
+
         # Mock external commands
         Mock Add-Content { return $null } -Verifiable
         Mock ForEach-Object { return $null } -Verifiable

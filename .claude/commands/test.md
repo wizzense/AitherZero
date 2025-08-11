@@ -19,31 +19,41 @@ You are a test automation expert specializing in:
 ## Your Task
 
 1. **Parse Test Request**:
-   - No args: Run all tests with coverage
+   - No args: Use smart test runner (0411) for cached/incremental testing
    - Pattern: Run specific tests (e.g., "test_*.py", "validators")
    - --coverage: Generate detailed coverage report
    - --watch: Run tests in watch mode
    - --create: Create new test file/cases
+   - --force: Force fresh test run (bypass cache)
+   - --smart: Use intelligent test runner with caching (default)
 
 2. **Determine Test Framework**:
    - Python: pytest, unittest
-   - PowerShell: Pester
+   - PowerShell: Pester with TestCacheManager
    - JavaScript/TypeScript: Jest, Mocha
    - Identify framework from project files
 
 3. **Execute Test Strategy**:
    
+   **SMART TEST EXECUTION (Default)**:
+   - Use 0411_Test-Smart.ps1 for intelligent testing
+   - Check cache for recent results (5 min window)
+   - Run only changed module tests (incremental)
+   - Provide AI-friendly concise output
+   - Cache results for future use
+   
    **For Running Tests**:
-   - Invoke test-runner agent for execution
-   - Capture and analyze results
-   - Generate coverage metrics
+   - Check if tests ran recently with `Test-ShouldRunTests`
+   - Use cached results if no code changes
+   - Run incremental tests for changed modules
+   - Fall back to full suite only if needed
    
    **For Creating Tests**:
    - Invoke test-harness-builder for new tests
    - Use qa-automation-engineer for test strategy
    
    **For Coverage Analysis**:
-   - Run with coverage tools
+   - Run with coverage tools (skip in smart mode for speed)
    - Identify untested code
    - Suggest priority areas
 
@@ -57,35 +67,49 @@ You are a test automation expert specializing in:
 
 ## Test Patterns
 
-### Pattern 1: Full Test Suite
+### Pattern 1: Smart Test Suite (Default)
 ```
 /test
 
-Running complete test suite with coverage...
-- Python tests: pytest with pytest-cov
+Using intelligent test runner...
+💾 Checking cache for recent results...
+✅ Tests passed 2 minutes ago - using cached results
+📊 Summary: 57 tests, 45 passed, 12 failed
+⏱️ Saved: 29 seconds
+
+Note: Run '/test --force' to bypass cache
+```
+
+### Pattern 2: Incremental Testing
+```
+/test --incremental
+
+Analyzing changed files...
+📝 Changes detected in: domains/testing/
+🎯 Running targeted tests for testing module...
+✅ 12 tests passed
+⏱️ Duration: 3.2s (saved 26s by skipping unchanged modules)
+```
+
+### Pattern 3: Force Fresh Run
+```
+/test --force
+
+Bypassing cache - running full test suite...
 - PowerShell tests: Pester with coverage
 - Integration tests: Full pipeline validation
+📊 Results cached for next 5 minutes
 ```
 
-### Pattern 2: Targeted Testing
+### Pattern 4: Quick Validation
 ```
-/test validators
+/test --quick
 
-Running tests matching 'validators'...
-- Found 15 test files
-- Executing in parallel batches
-- Generating focused coverage report
-```
-
-### Pattern 3: Test Creation
-```
-/test --create Scripts-analyzer
-
-Creating comprehensive test suite for Scripts-analyzer...
-- Analyzing module structure
-- Generating test cases
-- Creating fixtures and mocks
-- Adding to CI pipeline
+Using playbook: agent-quick-fix
+⚡ Quick validation:
+  Syntax: ✅
+  Tests: ✅ (cached from 3 min ago)
+  Ready: ✅
 ```
 
 ## Output Format

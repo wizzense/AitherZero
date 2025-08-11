@@ -329,11 +329,11 @@ function Invoke-QuickSetup {
 
     if ($result.Failed -eq 0) {
         Show-UINotification -Message "Profile setup completed successfully!" -Type 'Success'
+        Show-UIPrompt -Message "Press Enter to continue" | Out-Null
     } else {
         Show-UINotification -Message "Profile setup completed with $($result.Failed) errors" -Type 'Warning'
+        # Don't add another prompt - orchestration errors already prompt
     }
-
-    Show-UIPrompt -Message "Press Enter to continue" | Out-Null
 }
 
 # Orchestration Menu
@@ -375,15 +375,23 @@ function Invoke-PlaybookMenu {
         return
     }
 
-    # Load playbooks
-    $playbooks = Get-ChildItem $playbookDir -Filter "*.json" | ForEach-Object {
+    # Load playbooks (including from subdirectories)
+    $playbooks = Get-ChildItem $playbookDir -Filter "*.json" -Recurse | ForEach-Object {
         $pb = Get-Content $_.FullName | ConvertFrom-Json
+        # Get category from parent directory if in a subdirectory
+        $category = if ($_.Directory.Name -ne 'playbooks') { 
+            $_.Directory.Name 
+        } else { 
+            'general' 
+        }
         [PSCustomObject]@{
-            Name = $pb.Name
+            Name = if ($category -ne 'general' -and $category -ne 'archive') { "[$category] $($pb.Name)" } else { $pb.Name }
             Description = $pb.Description
             Path = $_.FullName
+            Category = $category
+            OriginalName = $pb.Name
         }
-}
+    } | Sort-Object Category, Name
 
     if ($playbooks.Count -eq 0) {
         Show-UINotification -Message "No playbooks found" -Type 'Warning'
@@ -456,9 +464,12 @@ function Invoke-TestingMenu {
         } elseif ($selection.Playbook) {
             $result = Invoke-OrchestrationSequence -LoadPlaybook $selection.Playbook -Configuration $Config
         }
-}
-    
-    Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+        
+        # Only prompt if successful (errors already prompt)
+        if (-not $result -or $result.Failed -eq 0) {
+            Show-UIPrompt -Message "Press Enter to continue" | Out-Null
+        }
+    }
 }
 
 # Infrastructure Menu
@@ -790,25 +801,97 @@ function Show-AdvancedMenu {
             }
         
             'Run Single Script' {
+                # Allow direct 4-digit script number input or category selection
+                Write-UIText "Script Execution Options:" -Color 'Cyan'
+                Write-UIText "1. Enter a 4-digit script number directly (e.g., 0402)" -Color 'Info'
+                Write-UIText "2. Browse by category" -Color 'Info'
+                Write-UIText "3. Search by keyword" -Color 'Info'
+                Write-UIText ""
+                
+                $scriptInput = Show-UIPrompt -Message "Enter script number, keyword, or press Enter for categories"
+                
                 $scriptsPath = Join-Path $script:ProjectRoot "automation-scripts"
-                $scripts = Get-ChildItem $scriptsPath -Filter "*.ps1" | 
-                    Where-Object { $_.Name -match '^\d{4}_' } |
-                    ForEach-Object {
-                        [PSCustomObject]@{
-                            Name = $_.Name
-                            Description = $_.Name -replace '^\d{4}_' -replace '\.ps1$' -replace '-', ' '
+                $selected = $null
+                
+                if ($scriptInput -match '^\d{4}$') {
+                    # Direct script number entered
+                    $scriptFile = Get-ChildItem $scriptsPath -Filter "${scriptInput}_*.ps1" | Select-Object -First 1
+                    if ($scriptFile) {
+                        $selected = [PSCustomObject]@{
+                            Name = $scriptFile.Name
+                            Description = $scriptFile.Name -replace '^\d{4}_' -replace '\.ps1$' -replace '-', ' '
                         }
+                    } else {
+                        Show-UINotification -Message "Script $scriptInput not found" -Type 'Warning'
+                    }
+                } elseif ($scriptInput -and $scriptInput -notmatch '^\d{4}$') {
+                    # Search by keyword
+                    $scripts = Get-ChildItem $scriptsPath -Filter "*.ps1" | 
+                        Where-Object { $_.Name -match '^\d{4}_' -and $_.Name -like "*$scriptInput*" } |
+                        ForEach-Object {
+                            [PSCustomObject]@{
+                                Name = $_.Name
+                                Description = $_.Name -replace '^\d{4}_' -replace '\.ps1$' -replace '-', ' '
+                            }
+                        }
+                    
+                    if ($scripts.Count -eq 0) {
+                        Show-UINotification -Message "No scripts found matching '$scriptInput'" -Type 'Warning'
+                    } elseif ($scripts.Count -eq 1) {
+                        $selected = $scripts[0]
+                    } else {
+                        $selected = Show-UIMenu -Title "Scripts matching '$scriptInput'" -Items $scripts -ShowNumbers
+                    }
+                } else {
+                    # Browse by category
+                    $categories = @(
+                        [PSCustomObject]@{ Name = "0000-0099 - Environment & Cleanup"; Range = "00" }
+                        [PSCustomObject]@{ Name = "0100-0199 - Infrastructure"; Range = "01" }
+                        [PSCustomObject]@{ Name = "0200-0299 - Development Tools"; Range = "02" }
+                        [PSCustomObject]@{ Name = "0300-0399 - Deployment"; Range = "03" }
+                        [PSCustomObject]@{ Name = "0400-0499 - Testing & Validation"; Range = "04" }
+                        [PSCustomObject]@{ Name = "0500-0599 - Reporting & Metrics"; Range = "05" }
+                        [PSCustomObject]@{ Name = "0600-0699 - Monitoring"; Range = "06" }
+                        [PSCustomObject]@{ Name = "0700-0799 - Git & Development"; Range = "07" }
+                        [PSCustomObject]@{ Name = "0800-0899 - Session & Issues"; Range = "08" }
+                        [PSCustomObject]@{ Name = "9000-9999 - Maintenance"; Range = "9" }
+                        [PSCustomObject]@{ Name = "Show All Scripts"; Range = "all" }
+                    )
+                    
+                    $categorySelection = Show-UIMenu -Title "Select Category" -Items $categories -ShowNumbers
+                    
+                    if ($categorySelection) {
+                        $scripts = if ($categorySelection.Range -eq "all") {
+                            Get-ChildItem $scriptsPath -Filter "*.ps1" | 
+                                Where-Object { $_.Name -match '^\d{4}_' }
+                        } else {
+                            Get-ChildItem $scriptsPath -Filter "*.ps1" | 
+                                Where-Object { $_.Name -match "^$($categorySelection.Range)\d{2}_" }
+                        }
+                        
+                        $scripts = $scripts | ForEach-Object {
+                            [PSCustomObject]@{
+                                Name = $_.Name
+                                Description = $_.Name -replace '^\d{4}_' -replace '\.ps1$' -replace '-', ' '
+                            }
+                        }
+                        
+                        if ($scripts.Count -eq 0) {
+                            Show-UINotification -Message "No scripts found in this category" -Type 'Warning'
+                        } else {
+                            $selected = Show-UIMenu -Title "Select Script from $($categorySelection.Name)" -Items $scripts -ShowNumbers
+                        }
+                    }
                 }
-            
-                $selected = Show-UIMenu -Title "Select Script" -Items $scripts -ShowNumbers
                 
                 if ($selected) {
                     $confirm = Show-UIPrompt -Message "Execute $($selected.Name)?" -ValidateSet @('Yes', 'No') -DefaultValue 'No'
                     if ($confirm -eq 'Yes') {
                         $scriptPath = Join-Path $scriptsPath $selected.Name
-                        Show-UISpinner -Message "Executing $($selected.Name)" -ScriptBlock {
-                            & $scriptPath -Configuration $Config
-                        }
+                        # Execute directly without Show-UISpinner to avoid variable scope issues
+                        Write-UIText "Executing $($selected.Name)..." -Color 'Info'
+                        & $scriptPath -Configuration $Config
+                        Write-UIText "Execution completed" -Color 'Success'
                 }
             }
         }

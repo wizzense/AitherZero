@@ -1095,10 +1095,19 @@ function Save-OrchestrationPlaybook {
 function Get-OrchestrationPlaybook {
     param([string]$Name)
     
+    # First try direct path in playbooks root
     $playbookPath = Join-Path $script:OrchestrationPath "playbooks/$Name.json"
-
+    
     if (Test-Path $playbookPath) {
         return Get-Content $playbookPath -Raw | ConvertFrom-Json -AsHashtable
+    }
+    
+    # Then search in subdirectories
+    $playbooksDir = Join-Path $script:OrchestrationPath "playbooks"
+    $foundPlaybook = Get-ChildItem -Path $playbooksDir -Filter "$Name.json" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+    
+    if ($foundPlaybook) {
+        return Get-Content $foundPlaybook.FullName -Raw | ConvertFrom-Json -AsHashtable
     }
     
     return $null

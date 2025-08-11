@@ -1,17 +1,19 @@
 # AitherZero Project Dashboard & Reporting Summary
 
+**Last Updated**: 2025-08-11 19:15:35
+
 ## Comprehensive Reporting Capabilities Implemented
 
 ### 1. Project Status Report (0510_Generate-ProjectReport.ps1)
 Generates comprehensive reports in multiple formats showing:
 
-#### Metrics Tracked:
-- **Total Files**: 259 files in the project
-- **Code Files**: 178 PowerShell files (excluding tests/legacy)
-- **Functions**: 407 functions across all modules
-- **Lines of Code**: 30,643 lines
-- **Comment Ratio**: 10.97% (needs improvement - target 20%+)
-- **Documentation Coverage**: 8.85% (needs significant improvement - target 80%+)
+#### Metrics Tracked (as of 2025-08-11):
+- **Total Files**: 517 files in the project
+- **Code Files**: 264 PowerShell files (excluding tests/legacy)
+- **Functions**: 766 functions across all modules
+- **Lines of Code**: 54,420 lines
+- **Comment Ratio**: 10.94% (needs improvement - target 20%+)
+- **Documentation Coverage**: 11.1% (needs significant improvement - target 80%+)
 
 #### Report Formats:
 - **HTML**: Interactive web-based report with styled metrics
@@ -28,9 +30,10 @@ Live project status display showing:
 - Recently modified files
 
 ### 3. Test Results
-- **Unit Tests**: 2 test files created, 12 tests discovered
-- **PSScriptAnalyzer**: Configured and working, found 8 warnings in Start-AitherZero.ps1
+- **Unit Tests**: 15 test files, tests running regularly (latest: 2025-08-11)
+- **PSScriptAnalyzer**: Configured and working, regular analysis runs
 - **Test Playbooks**: Quick, Full, and CI test suites configured
+- **Coverage Reports**: Generated automatically after test runs
 
 ### 4. Code Quality Issues Found
 From PSScriptAnalyzer analysis:
@@ -58,6 +61,32 @@ From PSScriptAnalyzer analysis:
 - ISOManager: v1.0.0 (in legacy-to-migrate)
 - OpenTofuProvider: v1.0.0 (in legacy-to-migrate)
 - SecureCredentials: v1.0.0 (in legacy-to-migrate)
+
+## Automatic Report Generation
+
+As of 2025-08-11, automatic report generation is now configured:
+
+### Automatic Triggers:
+1. **After Test Runs**: Reports are automatically generated after running tests (0402, 0403, 0411)
+2. **Daily Schedule**: Reports can be scheduled to run daily at 09:00 AM
+3. **Manual Trigger**: Use `./az 0510` to generate reports on-demand
+
+### Configuration:
+- Reports are generated in all formats (HTML, JSON, Markdown)
+- Old reports are automatically cleaned up after 3 days to save space
+- Hook integration ensures reports are triggered after important operations
+
+### Schedule Management:
+```powershell
+# Enable daily reports
+./automation-scripts/0512_Schedule-ReportGeneration.ps1 -Schedule Daily -Time "09:00"
+
+# Generate reports after every test run
+./automation-scripts/0512_Schedule-ReportGeneration.ps1 -Schedule OnTestRun
+
+# Disable automatic generation
+./automation-scripts/0512_Schedule-ReportGeneration.ps1 -Schedule Disable
+```
 
 ## How to Use the Reports
 

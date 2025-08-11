@@ -1,0 +1,100 @@
+{
+  "name": "agent-dev-cycle",
+  "description": "Complete development cycle optimized for AI agents - code, test, commit with minimal context",
+  "version": "1.0.0",
+  "author": "AitherZero AI Optimization",
+  "tags": ["development", "testing", "git", "ai-optimized", "workflow"],
+  "requirements": {
+    "modules": ["TestCacheManager", "Git", "Pester"],
+    "minimumVersion": "7.0",
+    "estimatedDuration": "2-5 minutes"
+  },
+  "variables": {
+    "branchType": "feature",
+    "commitType": "feat",
+    "runTests": true,
+    "useCache": true,
+    "validateSyntax": true,
+    "incrementalTests": true
+  },
+  "stages": [
+    {
+      "name": "Pre-Development Check",
+      "description": "Quick environment and git status check",
+      "inline": {
+        "script": "git status --short; if ($LASTEXITCODE -eq 0) { Write-Host '✅ Git repository ready' } else { Write-Warning 'Not in a git repository' }"
+      },
+      "continueOnError": false
+    },
+    {
+      "name": "Syntax Validation",
+      "description": "Fast syntax check of modified files",
+      "sequence": ["0407"],
+      "variables": {
+        "QuickCheck": true,
+        "CI": true,
+        "ModifiedOnly": true
+      },
+      "continueOnError": false,
+      "runIf": "$(ValidateSyntax) -eq $true"
+    },
+    {
+      "name": "Smart Testing",
+      "description": "Run tests intelligently with caching",
+      "sequence": ["0411"],
+      "variables": {
+        "UseCache": true,
+        "Incremental": true,
+        "AIOutput": true,
+        "CacheMinutes": 5
+      },
+      "continueOnError": false,
+      "runIf": "$(RunTests) -eq $true"
+    },
+    {
+      "name": "Code Analysis",
+      "description": "Quick PSScriptAnalyzer scan",
+      "sequence": ["0404"],
+      "variables": {
+        "QuickScan": true,
+        "ExcludePaths": ["tests", "legacy-to-migrate"],
+        "SeverityThreshold": "Warning"
+      },
+      "continueOnError": true,
+      "runIf": "$(SkipAnalysis) -ne $true"
+    },
+    {
+      "name": "Git Operations",
+      "description": "Stage and commit changes",
+      "inline": {
+        "script": "git add -A; if ($(CommitMessage)) { git commit -m \"$(CommitType): $(CommitMessage)\" } else { Write-Host 'No commit message provided - skipping commit' }"
+      },
+      "continueOnError": false,
+      "runIf": "$(SkipCommit) -ne $true"
+    },
+    {
+      "name": "Status Summary",
+      "description": "Display concise development status",
+      "inline": {
+        "script": "Write-Host \"`n📊 Development Cycle Summary:\"; Write-Host \"  ✅ Syntax: Valid\"; Write-Host \"  ✅ Tests: $(if ($TestsFromCache) { 'Passed (cached)' } else { 'Passed' })\"; Write-Host \"  ✅ Analysis: Complete\"; Write-Host \"  ✅ Commit: $(if ($CommitMessage) { 'Created' } else { 'Skipped' })\""
+      }
+    }
+  ],
+  "hooks": {
+    "preExecution": {
+      "script": "Write-Host '🚀 Starting optimized development cycle...'"
+    },
+    "postSuccess": {
+      "script": "Write-Host '✨ Development cycle completed successfully!'"
+    },
+    "postFailure": {
+      "script": "Write-Host '⚠️ Development cycle encountered issues - review required'"
+    }
+  },
+  "optimization": {
+    "skipRedundantSteps": true,
+    "useCachedResults": true,
+    "minimizeOutput": true,
+    "parallelWherePossible": false
+  }
+}

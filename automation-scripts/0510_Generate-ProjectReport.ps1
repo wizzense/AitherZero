@@ -177,11 +177,13 @@ foreach ($domain in $domains) {
 
 # 7. File Analysis
 Write-ReportLog "Performing file analysis..."
+$allFiles = @(Get-ChildItem -Path $ProjectPath -File -Recurse -ErrorAction SilentlyContinue)
+$configFiles = @(Get-ChildItem -Path $ProjectPath -Filter "*.json" -Recurse -ErrorAction SilentlyContinue)
 $projectReport.FileAnalysis = @{
-    TotalFiles = (Get-ChildItem -Path $ProjectPath -File -Recurse -ErrorAction SilentlyContinue).Count
+    TotalFiles = $allFiles.Count
     PowerShellFiles = @($psFiles).Count + @($psmFiles).Count
     TestFiles = @($testScripts).Count
-    ConfigFiles = (Get-ChildItem -Path $ProjectPath -Filter "*.json" -Recurse -ErrorAction SilentlyContinue).Count
+    ConfigFiles = $configFiles.Count
     LargestFiles = Get-ChildItem -Path $ProjectPath -File -Recurse -ErrorAction SilentlyContinue | 
         Sort-Object Length -Descending | 
         Select-Object -First 10 | 

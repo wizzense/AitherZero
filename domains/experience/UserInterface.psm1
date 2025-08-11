@@ -749,19 +749,31 @@ function Show-UISpinner {
         Code to execute while showing spinner
     .PARAMETER Message
         Message to display with spinner
+    .PARAMETER ArgumentList
+        Arguments to pass to the script block
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [scriptblock]$ScriptBlock,
         
-        [string]$Message = "Processing"
+        [string]$Message = "Processing",
+        
+        [object[]]$ArgumentList = @()
     )
 
     $spinChars = '|/-\'
     $i = 0
     
-    $job = Start-Job -ScriptBlock $ScriptBlock
+    # Pass arguments to the job if provided
+    $jobParams = @{
+        ScriptBlock = $ScriptBlock
+    }
+    if ($ArgumentList.Count -gt 0) {
+        $jobParams['ArgumentList'] = $ArgumentList
+    }
+    
+    $job = Start-Job @jobParams
     
     while ($job.State -eq 'Running') {
         $spinner = $spinChars[$i % $spinChars.Length]
