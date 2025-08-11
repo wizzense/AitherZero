@@ -76,6 +76,16 @@ param(
 $script:ProjectRoot = $PSScriptRoot
 $env:AITHERZERO_ROOT = $script:ProjectRoot
 
+# CRITICAL: Block any conflicting systems
+if ($env:DISABLE_COREAPP -ne "1") {
+    # Force clean environment if not already done
+    @('CoreApp', 'AitherRun', 'StartupExperience', 'ConfigurationCore', 'ConfigurationCarousel') | ForEach-Object {
+        Remove-Module $_ -Force -ErrorAction SilentlyContinue 2>$null
+    }
+    $env:DISABLE_COREAPP = "1"
+    $env:SKIP_AUTO_MODULES = "1"
+}
+
 # ASCII Art Banner
 function Show-Banner {
     $banner = @'

@@ -3,13 +3,19 @@
 BeforeAll {
     # Import the core module which loads all domains
     $projectRoot = Split-Path -Parent -Path $PSScriptRoot | Split-Path -Parent | Split-Path -Parent
-    Import-Module (Join-Path $projectRoot "AitherZeroCore.psm1") -Force
+    Import-Module (Join-Path $projectRoot "AitherZero.psm1") -Force
 }
 
 Describe "Logging Module Tests" {
     BeforeEach {
         # Set test log path
         $script:TestLogPath = Join-Path $TestDrive "logs"
+        
+        # Create the log directory
+        if (-not (Test-Path $script:TestLogPath)) {
+            New-Item -Path $script:TestLogPath -ItemType Directory -Force | Out-Null
+        }
+        
         Set-Variable -Name LogPath -Value $script:TestLogPath -Scope Script -Option AllScope -Force
         
         # Reset log settings

@@ -3,7 +3,7 @@
 BeforeAll {
     # Import the core module which loads all domains
     $projectRoot = Split-Path -Parent -Path $PSScriptRoot | Split-Path -Parent | Split-Path -Parent
-    Import-Module (Join-Path $projectRoot "AitherZeroCore.psm1") -Force
+    Import-Module (Join-Path $projectRoot "AitherZero.psm1") -Force
 }
 
 Describe "Infrastructure Module Tests" {
@@ -81,7 +81,7 @@ Describe "Infrastructure Module Tests" {
             Mock Pop-Location {} -ModuleName Infrastructure
             
             $script:CommandsCalled = @()
-            Mock & {
+            Mock Invoke-Expression {
                 param($Command)
                 $script:CommandsCalled += $Command
             } -ModuleName Infrastructure
@@ -111,7 +111,7 @@ Describe "Infrastructure Module Tests" {
             Mock Pop-Location {} -ModuleName Infrastructure
             
             $script:CommandsAndArgs = @()
-            Mock & {
+            Mock Invoke-Expression {
                 $script:CommandsAndArgs += $args -join ' '
             } -ModuleName Infrastructure
             
@@ -126,7 +126,7 @@ Describe "Infrastructure Module Tests" {
             Mock Pop-Location {} -ModuleName Infrastructure
             
             $script:CommandsAndArgs = @()
-            Mock & {
+            Mock Invoke-Expression {
                 $script:CommandsAndArgs += $args -join ' '
             } -ModuleName Infrastructure
             
@@ -150,7 +150,7 @@ Describe "Infrastructure Module Tests" {
             Mock Pop-Location {} -ModuleName Infrastructure
             
             $script:DestroyExecuted = $false
-            Mock & {
+            Mock Invoke-Expression {
                 if ($args -contains 'destroy') {
                     $script:DestroyExecuted = $true
                 }
@@ -167,7 +167,7 @@ Describe "Infrastructure Module Tests" {
             Mock Pop-Location {} -ModuleName Infrastructure
             
             $script:CommandsAndArgs = @()
-            Mock & {
+            Mock Invoke-Expression {
                 $script:CommandsAndArgs += $args -join ' '
             } -ModuleName Infrastructure
             

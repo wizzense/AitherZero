@@ -3,7 +3,7 @@
 BeforeAll {
     # Import the core module which loads all domains
     $projectRoot = Split-Path -Parent -Path $PSScriptRoot | Split-Path -Parent | Split-Path -Parent
-    Import-Module (Join-Path $projectRoot "AitherZeroCore.psm1") -Force
+    Import-Module (Join-Path $projectRoot "AitherZero.psm1") -Force
 }
 
 Describe "Configuration Module Tests" {

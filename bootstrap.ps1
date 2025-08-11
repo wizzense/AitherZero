@@ -48,7 +48,7 @@ param(
 )
 
 # Script configuration
-$script:RepoOwner = "yourusername"
+$script:RepoOwner = "wizzense"
 $script:RepoName = "AitherZero"
 $script:GitHubUrl = "https://github.com/$script:RepoOwner/$script:RepoName"
 $script:RawContentUrl = "https://raw.githubusercontent.com/$script:RepoOwner/$script:RepoName"
@@ -58,6 +58,37 @@ $script:RawContentUrl = "https://raw.githubusercontent.com/$script:RepoOwner/$sc
 
 # Set error action preference
 $ErrorActionPreference = 'Stop'
+
+# CRITICAL: Clean environment BEFORE anything else
+# Remove ALL conflicting modules and systems
+$conflictingModules = @(
+    'CoreApp', 'AitherRun', 'ConfigurationManager', 'SecurityAutomation',
+    'UtilityServices', 'ConfigurationCore', 'ConfigurationCarousel',
+    'ModuleCommunication', 'ConfigurationRepository', 'StartupExperience'
+)
+
+foreach ($module in $conflictingModules) {
+    Remove-Module $module -Force -ErrorAction SilentlyContinue 2>$null
+}
+
+# Clean PSModulePath of any conflicting paths
+if ($env:PSModulePath) {
+    $cleanPaths = $env:PSModulePath -split [IO.Path]::PathSeparator | 
+        Where-Object { 
+            $_ -notlike "*aither-core*" -and 
+            $_ -notlike "*Aitherium*" -and 
+            $_ -notlike "*AitherRun*" 
+        }
+    $env:PSModulePath = $cleanPaths -join [IO.Path]::PathSeparator
+}
+
+# Remove conflicting environment variables
+@('AITHERIUM_ROOT', 'AITHERRUN_ROOT', 'COREAPP_ROOT', 'AITHER_CORE_PATH') | ForEach-Object {
+    Remove-Item "env:$_" -ErrorAction SilentlyContinue 2>$null
+}
+
+# Block any auto-loading scripts
+$env:AITHERZERO_BOOTSTRAP_RUNNING = "1"
 
 # Helper functions
 function Write-BootstrapLog {
@@ -372,8 +403,8 @@ function Install-AitherZero {
         New-Item -ItemType Directory -Path $installPath -Force | Out-Null
     }
 
-    # Clone repository only if we have a valid GitHub URL
-    if ($script:GitHubUrl -ne "https://github.com/yourusername/AitherZero") {
+    # Clone repository only if we're not in an existing project
+    if ($script:GitHubUrl -and -not (Test-Path ".git")) {
         Write-BootstrapLog "Cloning AitherZero repository..." -Level Info
         
         Push-Location $installPath
@@ -630,7 +661,15 @@ try {
             Write-BootstrapLog "Initializing AitherZero environment..." -Level Info
             Push-Location $installPath
             try {
-                if (Test-Path "./AitherZero.psd1") {
+                # Use clean environment initializer first if available
+                if (Test-Path "./Initialize-CleanEnvironment.ps1") {
+                    pwsh -NoProfile -ExecutionPolicy Bypass -File ./Initialize-CleanEnvironment.ps1 -Force
+                    Write-BootstrapLog "Environment initialized cleanly" -Level Success
+                } elseif (Test-Path "./AitherZero.psd1") {
+                    # Clear any conflicting modules first
+                    @('AitherRun', 'CoreApp', 'ConfigurationManager') | ForEach-Object {
+                        Remove-Module $_ -Force -ErrorAction SilentlyContinue
+                    }
                     Import-Module ./AitherZero.psd1 -Force -Global
                     $modules = Get-Module | Where-Object { $_.Path -like "*AitherZero*" }
                     if ($modules) {
@@ -640,7 +679,7 @@ try {
                     }
                 } elseif (Test-Path "./Initialize-AitherEnvironment.ps1") {
                     # Fallback for backward compatibility
-                    & ./Initialize-AitherEnvironment.ps1 -Force
+                    pwsh -NoProfile -ExecutionPolicy Bypass -File ./Initialize-AitherEnvironment.ps1 -Force
                     Write-BootstrapLog "Environment initialized using legacy script" -Level Success
                 }
             } catch {
@@ -656,10 +695,15 @@ try {
                 try {
                     # Check if launcher exists
                     if (Test-Path "./Start-AitherZero.ps1") {
+                        # Set environment to block conflicting systems
+                        $env:DISABLE_COREAPP = "1"
+                        $env:SKIP_AUTO_MODULES = "1"
+                        $env:AITHERZERO_ONLY = "1"
+                        
                         if ($NonInteractive) {
-                            & ./Start-AitherZero.ps1 -NonInteractive
+                            pwsh -NoProfile -NoLogo -ExecutionPolicy Bypass -Command "& { `$env:DISABLE_COREAPP='1'; `$env:SKIP_AUTO_MODULES='1'; Remove-Module CoreApp,AitherRun,StartupExperience -Force -ErrorAction SilentlyContinue; & ./Start-AitherZero.ps1 -NonInteractive }"
                         } else {
-                            & ./Start-AitherZero.ps1 -Setup
+                            pwsh -NoProfile -NoLogo -ExecutionPolicy Bypass -Command "& { `$env:DISABLE_COREAPP='1'; `$env:SKIP_AUTO_MODULES='1'; Remove-Module CoreApp,AitherRun,StartupExperience -Force -ErrorAction SilentlyContinue; & ./Start-AitherZero.ps1 -Setup }"
                         }
                     } else {
                         Write-BootstrapLog "Launcher not found. Please run manually from: $installPath" -Level Warning
