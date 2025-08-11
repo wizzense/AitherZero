@@ -87,7 +87,8 @@ try {
         $downloadUrl = if ($nodeConfig.InstallerUrl) {
             $nodeConfig.InstallerUrl
         } else {
-            'https://nodejs.org/dist/latest-v20.x/node-v20.18.1-x64.msi'
+            # Get latest v20 LTS version
+            'https://nodejs.org/dist/v20.18.1/node-v20.18.1-x64.msi'
         }
         
         $tempDir = if ($config.Infrastructure -and $config.Infrastructure.Directories -and $config.Infrastructure.Directories.LocalPath) {
@@ -154,7 +155,7 @@ try {
             brew install node
         } else {
             # Download and install pkg
-            $downloadUrl = 'https://nodejs.org/dist/latest-v20.x/node-v20.18.1.pkg'
+            $downloadUrl = 'https://nodejs.org/dist/v20.18.1/node-v20.18.1.pkg'
             $installerPath = '/tmp/node-installer.pkg'
             
             curl -o $installerPath $downloadUrl

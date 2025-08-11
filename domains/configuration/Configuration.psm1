@@ -436,6 +436,7 @@ Export-ModuleMember -Function @(
     'Get-Configuration',
     'Set-Configuration', 
     'Get-ConfigValue',
+    'Merge-Configuration',
     'Initialize-ConfigurationSystem',
     'Switch-ConfigurationEnvironment',
     'Test-Configuration',

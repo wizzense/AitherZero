@@ -130,11 +130,19 @@ function Invoke-AitherScript {
         return
     }
 
-    # Execute the script with all arguments
-    if ($Arguments) {
-        & $scripts[0].FullName @Arguments
+    # Execute the script
+    # Most scripts use Configuration parameter, so pass it if available
+    $scriptParams = @{}
+    if (Get-Variable -Name 'Config' -Scope Global -ErrorAction SilentlyContinue) {
+        $scriptParams['Configuration'] = $global:Config
+    }
+    
+    # Execute with parameters
+    if ($Arguments -and $Arguments.Count -gt 0) {
+        # Pass additional arguments as splatted parameters
+        & $scripts[0].FullName @scriptParams @Arguments
     } else {
-        & $scripts[0].FullName
+        & $scripts[0].FullName @scriptParams
     }
 }
 

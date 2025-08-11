@@ -508,7 +508,7 @@ Focus on practical, actionable advice that fits the AitherZero architecture and 
         $response = Send-ClaudeMessage -Message $fullMessage -SystemPrompt $systemPrompt
         
         if ($response.Success) {
-            Write-ClaudeLog "$AnalysisType analysis completed successfully" -Level Success
+            Write-ClaudeLog "$($AnalysisType) analysis completed successfully" -Level Success
             return @{
                 Analysis = $response.Content
                 AnalysisType = $AnalysisType

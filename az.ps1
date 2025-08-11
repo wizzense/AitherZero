@@ -36,4 +36,8 @@ if ($args.Count -eq 0) {
     exit 1
 }
 
-Invoke-AitherScript @args
+# Pass the first argument as ScriptNumber and rest as additional parameters
+$scriptNumber = [string]$args[0]
+$additionalArgs = if ($args.Count -gt 1) { $args[1..($args.Count-1)] } else { @() }
+
+Invoke-AitherScript -ScriptNumber $scriptNumber @additionalArgs

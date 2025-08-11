@@ -20,7 +20,8 @@ while ($null -ne ($line = $inputStream.ReadLine())) {
 }
 
 if ($hookInput.Count -eq 0) {
-    # No input provided, allow operation
+    # No input provided, allow operation with proper response
+    @{ action = "allow" } | ConvertTo-Json -Compress | Write-Host
     exit 0
 }
 
@@ -71,6 +72,85 @@ try {
                     Write-HookLog "BLOCKED: Potentially dangerous command detected: $pattern" "ERROR"
                     $blocked = $true
                     break
+                }
+            }
+            
+            # INTELLIGENT TEST EXECUTION MANAGEMENT
+            $testPatterns = @(
+                'az\s+040[23]',  # Unit/Integration tests
+                'az\s+0409',     # All tests
+                'Invoke-Pester',
+                'Run-.*Test',
+                '0402_.*\.ps1',
+                '0403_.*\.ps1'
+            )
+            
+            $isTestCommand = $false
+            foreach ($pattern in $testPatterns) {
+                if ($command -match $pattern) {
+                    $isTestCommand = $true
+                    break
+                }
+            }
+            
+            if ($isTestCommand -and -not ($command -match '-ForceRun|-Force')) {
+                Write-HookLog "Test execution detected - checking cache and recent runs" "INFO"
+                
+                # Import test cache module if available
+                $testCacheModule = "$env:CLAUDE_PROJECT_DIR/domains/testing/TestCacheManager.psm1"
+                if (Test-Path $testCacheModule) {
+                    try {
+                        Import-Module $testCacheModule -Force
+                        
+                        # Check if tests should run
+                        $testDecision = Test-ShouldRunTests -SourcePath "$env:CLAUDE_PROJECT_DIR/domains" -MinutesSinceLastRun 5
+                        
+                        if (-not $testDecision.ShouldRun) {
+                            Write-HookLog "Tests recently passed - suggesting cache usage" "WARN"
+                            $contextToAdd += "⚠️ TEST OPTIMIZATION AVAILABLE"
+                            $contextToAdd += ""
+                            $contextToAdd += "Recent successful test run detected ($($testDecision.Reason))."
+                            $contextToAdd += ""
+                            
+                            if ($testDecision.LastRun) {
+                                $contextToAdd += "Last test results:"
+                                $contextToAdd += "  ✅ Passed: $($testDecision.LastRun.Summary.Passed)"
+                                $contextToAdd += "  ❌ Failed: $($testDecision.LastRun.Summary.Failed)"
+                                $contextToAdd += "  ⏱️ Duration: $($testDecision.LastRun.Summary.Duration)s"
+                                $contextToAdd += ""
+                            }
+                            
+                            $contextToAdd += "RECOMMENDED: Use smart test runner instead:"
+                            $contextToAdd += "  ./automation-scripts/0411_Test-Smart.ps1"
+                            $contextToAdd += "  OR: ./az 0411"
+                            $contextToAdd += ""
+                            $contextToAdd += "This will:"
+                            $contextToAdd += "  • Check cache for recent results"
+                            $contextToAdd += "  • Run only changed module tests"
+                            $contextToAdd += "  • Save significant execution time"
+                            $contextToAdd += ""
+                            $contextToAdd += "To force full test run anyway, add -ForceRun parameter"
+                            
+                            # Check recent test results
+                            $resultsPath = "$env:CLAUDE_PROJECT_DIR/tests/results"
+                            if (Test-Path $resultsPath) {
+                                $recentResults = Get-ChildItem -Path $resultsPath -Filter "*Tests-Summary-*.json" -ErrorAction SilentlyContinue |
+                                    Where-Object { $_.LastWriteTime -gt (Get-Date).AddMinutes(-10) } |
+                                    Sort-Object LastWriteTime -Descending |
+                                    Select-Object -First 1
+                                
+                                if ($recentResults) {
+                                    $summary = Get-Content $recentResults.FullName -Raw | ConvertFrom-Json
+                                    if ($summary.Failed -eq 0) {
+                                        $contextToAdd += ""
+                                        $contextToAdd += "✅ All tests passed in recent run - consider skipping redundant execution"
+                                    }
+                                }
+                            }
+                        }
+                    } catch {
+                        Write-HookLog "Could not check test cache: $_" "DEBUG"
+                    }
                 }
             }
             
@@ -238,11 +318,13 @@ try {
         
     } else {
         # Allow operation without changes
+        @{ action = "allow" } | ConvertTo-Json -Compress | Write-Host
         exit 0
     }
     
 } catch {
     Write-Error "Hook execution failed: $_"
-    # On error, allow the operation to proceed
+    # On error, allow the operation to proceed with proper response
+    @{ action = "allow" } | ConvertTo-Json -Compress | Write-Host
     exit 0
 }

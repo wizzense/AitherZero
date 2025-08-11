@@ -204,10 +204,10 @@ try {
     if ($context.PowerShell.RecentErrors -and $context.PowerShell.RecentErrors.Count -gt 0) {
         $prompt += "## ⚠️ Recent Errors"
         $prompt += ""
-        foreach ($error in $context.PowerShell.RecentErrors | Select-Object -First 3) {
-            $prompt += "### Error in $($error.Script):$($error.Line)"
-            $prompt += "**Message:** $($error.Message)"
-            $prompt += "**Category:** $($error.Category)"
+        foreach ($errorItem in $context.PowerShell.RecentErrors | Select-Object -First 3) {
+            $prompt += "### Error in $($errorItem.Script):$($errorItem.Line)"
+            $prompt += "**Message:** $($errorItem.Message)"
+            $prompt += "**Category:** $($errorItem.Category)"
             $prompt += ""
         }
     }

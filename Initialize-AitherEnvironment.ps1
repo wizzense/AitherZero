@@ -11,25 +11,34 @@
     Make environment changes persistent in PowerShell profile
 .PARAMETER Force
     Force reload of all modules even if already initialized
+.PARAMETER Silent
+    Suppress output messages for use in scripts
 #>
 
 [CmdletBinding()]
 param(
     [switch]$Persistent,
-    [switch]$Force
+    [switch]$Force,
+    [switch]$Silent
 )
 
 # Import the AitherZero module using the manifest
 $moduleManifest = Join-Path $PSScriptRoot "AitherZero.psd1"
 
 if (Test-Path $moduleManifest) {
-    Import-Module $moduleManifest -Force:$Force -Global
+    if (-not $Silent) {
+        Import-Module $moduleManifest -Force:$Force -Global
+    } else {
+        Import-Module $moduleManifest -Force:$Force -Global | Out-Null
+    }
     
     # Handle persistent flag manually if needed
-    if ($Persistent) {
+    if ($Persistent -and -not $Silent) {
         Write-Host "Note: Use bootstrap.ps1 for persistent installation" -ForegroundColor Yellow
     }
 } else {
-    Write-Error "AitherZero.psd1 not found at: $moduleManifest"
+    if (-not $Silent) {
+        Write-Error "AitherZero.psd1 not found at: $moduleManifest"
+    }
     exit 1
 }

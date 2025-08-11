@@ -24,7 +24,10 @@ param(
     [switch]$DryRun,
     [switch]$PassThru,
     [switch]$NoCoverage,
-    [switch]$CI
+    [switch]$CI,
+    [switch]$UseCache = $false,
+    [switch]$ForceRun = $false,
+    [int]$CacheMinutes = 5
 )
 
 $ErrorActionPreference = 'Stop'
@@ -44,6 +47,7 @@ $scriptMetadata = @{
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $testingModule = Join-Path $projectRoot "domains/testing/TestingFramework.psm1"
 $loggingModule = Join-Path $projectRoot "domains/utilities/Logging.psm1"
+$testCacheModule = Join-Path $projectRoot "domains/testing/TestCacheManager.psm1"
 
 if (Test-Path $testingModule) {
     Import-Module $testingModule -Force
@@ -54,6 +58,13 @@ if (Test-Path $loggingModule) {
     $script:LoggingAvailable = $true
 } else {
     $script:LoggingAvailable = $false
+}
+
+if (Test-Path $testCacheModule) {
+    Import-Module $testCacheModule -Force
+    $script:CacheAvailable = $true
+} else {
+    $script:CacheAvailable = $false
 }
 
 function Write-ScriptLog {
@@ -80,11 +91,74 @@ function Write-ScriptLog {
 try {
     Write-ScriptLog -Message "Starting unit test execution"
 
+    # Check cache if enabled and not forced
+    if ($UseCache -and -not $ForceRun -and $script:CacheAvailable) {
+        Write-ScriptLog -Message "Checking test cache..."
+        
+        # Generate cache key
+        $cacheKey = Get-TestCacheKey -TestPath $Path -TestType 'Unit'
+        $sourcePath = Join-Path $projectRoot "domains"
+        
+        # Check if tests should run
+        $testDecision = Test-ShouldRunTests -TestPath $Path -SourcePath $sourcePath -MinutesSinceLastRun $CacheMinutes
+        
+        if (-not $testDecision.ShouldRun) {
+            Write-ScriptLog -Message "Tests skipped: $($testDecision.Reason)"
+            
+            if ($testDecision.LastRun) {
+                Write-Host "`n📊 Cached Test Results:" -ForegroundColor Cyan
+                Write-Host "  Total: $($testDecision.LastRun.Summary.TotalTests)"
+                Write-Host "  ✅ Passed: $($testDecision.LastRun.Summary.Passed)" -ForegroundColor Green
+                Write-Host "  ❌ Failed: $($testDecision.LastRun.Summary.Failed)" -ForegroundColor $(if ($testDecision.LastRun.Summary.Failed -gt 0) { 'Red' } else { 'Green' })
+                Write-Host "  ⏱️ Duration: $($testDecision.LastRun.Summary.Duration)s"
+                Write-Host "  💾 From cache ($(([DateTime]::Now - [DateTime]::Parse($testDecision.LastRun.Timestamp)).TotalMinutes) min ago)" -ForegroundColor Cyan
+                
+                if ($PassThru) {
+                    return [PSCustomObject]@{
+                        TotalCount = $testDecision.LastRun.Summary.TotalTests
+                        PassedCount = $testDecision.LastRun.Summary.Passed
+                        FailedCount = $testDecision.LastRun.Summary.Failed
+                        Duration = [TimeSpan]::FromSeconds($testDecision.LastRun.Summary.Duration)
+                        FromCache = $true
+                    }
+                }
+                
+                exit $(if ($testDecision.LastRun.Summary.Failed -eq 0) { 0 } else { 1 })
+            }
+        }
+        
+        # Try to get cached result
+        $cachedResult = Get-CachedTestResult -CacheKey $cacheKey -SourcePath $sourcePath
+        
+        if ($cachedResult) {
+            Write-ScriptLog -Message "Using cached test results"
+            Write-Host "`n📊 Cached Test Results:" -ForegroundColor Cyan
+            Write-Host "  Total: $($cachedResult.TotalTests)"
+            Write-Host "  ✅ Passed: $($cachedResult.Passed)" -ForegroundColor Green
+            Write-Host "  ❌ Failed: $($cachedResult.Failed)" -ForegroundColor $(if ($cachedResult.Failed -gt 0) { 'Red' } else { 'Green' })
+            Write-Host "  ⏱️ Duration: $($cachedResult.Duration)s"
+            Write-Host "  💾 From cache" -ForegroundColor Cyan
+            
+            if ($PassThru) {
+                return [PSCustomObject]@{
+                    TotalCount = $cachedResult.TotalTests
+                    PassedCount = $cachedResult.Passed
+                    FailedCount = $cachedResult.Failed
+                    Duration = [TimeSpan]::FromSeconds($cachedResult.Duration)
+                    FromCache = $true
+                }
+            }
+            
+            exit $(if ($cachedResult.Failed -eq 0) { 0 } else { 1 })
+        }
+    }
+
     # Check if running in DryRun mode
     if ($DryRun) {
         Write-ScriptLog -Message "DRY RUN: Would execute unit tests"
         Write-ScriptLog -Message "Test path: $Path"
         Write-ScriptLog -Message "Coverage enabled: $(-not $NoCoverage)"
+        Write-ScriptLog -Message "Cache enabled: $UseCache"
         
         # List test files that would be run
         if (Test-Path $Path) {
@@ -131,12 +205,15 @@ try {
     }
 
     # Ensure Pester is available
-    if (-not (Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge $testingConfig.MinVersion })) {
+    $pesterModule = Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge [Version]$testingConfig.MinVersion } | Sort-Object Version -Descending | Select-Object -First 1
+    
+    if (-not $pesterModule) {
         Write-ScriptLog -Level Error -Message "Pester $($testingConfig.MinVersion) or higher is required. Run 0400_Install-TestingTools.ps1 first."
         exit 2
     }
     
-    Import-Module Pester -MinimumVersion $testingConfig.MinVersion
+    Write-ScriptLog -Message "Loading Pester version $($pesterModule.Version)"
+    Import-Module Pester -MinimumVersion $testingConfig.MinVersion -Force
 
     # Build Pester configuration
     $pesterConfig = New-PesterConfiguration
@@ -175,7 +252,7 @@ try {
         $pesterConfig.CodeCoverage.Enabled = $true
         $pesterConfig.CodeCoverage.Path = @(
             Join-Path $projectRoot 'domains'
-            Join-Path $projectRoot 'aitherzero.psm1'
+            Join-Path $projectRoot 'AitherZero.psm1'
         )
     $pesterConfig.CodeCoverage.OutputPath = Join-Path $OutputPath "Coverage-Unit-$timestamp.xml"
         $pesterConfig.CodeCoverage.OutputFormat = 'JaCoCo'
@@ -244,7 +321,11 @@ try {
         Write-Host "`nFailed Tests:" -ForegroundColor Red
         $result.Failed | ForEach-Object {
             Write-Host "  - $($_.ExpandedPath)" -ForegroundColor Red
-            Write-Host "    $($_.ErrorRecord.Exception.Message)" -ForegroundColor DarkRed
+            if ($_.ErrorRecord -and $_.ErrorRecord.Exception) {
+                Write-Host "    $($_.ErrorRecord.Exception.Message)" -ForegroundColor DarkRed
+            } elseif ($_.ErrorRecord) {
+                Write-Host "    $($_.ErrorRecord)" -ForegroundColor DarkRed
+            }
         }
     }
 
@@ -268,6 +349,7 @@ try {
     }
 }
 catch {
-    Write-ScriptLog -Level Error -Message "Unit test execution failed: $_" -Data @{ Exception = $_.Exception.Message }
+    $errorMsg = if ($_.Exception) { $_.Exception.Message } else { $_.ToString() }
+    Write-ScriptLog -Level Error -Message "Unit test execution failed: $_" -Data @{ Exception = $errorMsg }
     exit 2
 }

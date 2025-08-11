@@ -20,6 +20,7 @@ while ($null -ne ($line = $inputStream.ReadLine())) {
 }
 
 if ($input.Count -eq 0) {
+    @{ action = "continue" } | ConvertTo-Json -Compress | Write-Host
     exit 0
 }
 
@@ -102,8 +103,55 @@ try {
                         "0404" -or "0407" {
                             Write-HookLog "Code analysis completed, results available for review"
                         }
-                        "0402" -or "0403" {
+                        "0402" -or "0403" -or "0411" {
                             Write-HookLog "Tests completed, consider reviewing coverage and results"
+                            
+                            # Generate project report after test runs
+                            try {
+                                if ($env:CLAUDE_PROJECT_DIR) {
+                                    $reportScript = "$env:CLAUDE_PROJECT_DIR/automation-scripts/0510_Generate-ProjectReport.ps1"
+                                    if (Test-Path $reportScript) {
+                                        Write-HookLog "Triggering automatic project report generation"
+                                        Start-Job -ScriptBlock {
+                                            param($ProjectDir, $ScriptPath)
+                                            Set-Location $ProjectDir
+                                            & pwsh -File $ScriptPath -Format All 2>&1 | Out-Null
+                                        } -ArgumentList $env:CLAUDE_PROJECT_DIR, $reportScript | Out-Null
+                                    }
+                                }
+                            } catch {
+                                Write-HookLog "Auto-report generation failed: $_" "DEBUG"
+                            }
+                            
+                            # Cache test results for future use
+                            try {
+                                $testCacheModule = "$env:CLAUDE_PROJECT_DIR/domains/testing/TestCacheManager.psm1"
+                                if (Test-Path $testCacheModule) {
+                                    Import-Module $testCacheModule -Force
+                                    
+                                    # Find most recent test summary
+                                    $resultsPath = "$env:CLAUDE_PROJECT_DIR/tests/results"
+                                    if (Test-Path $resultsPath) {
+                                        $latestSummary = Get-ChildItem -Path $resultsPath -Filter "*Tests-Summary-*.json" -ErrorAction SilentlyContinue |
+                                            Sort-Object LastWriteTime -Descending |
+                                            Select-Object -First 1
+                                        
+                                        if ($latestSummary -and $latestSummary.LastWriteTime -gt (Get-Date).AddSeconds(-30)) {
+                                            $summary = Get-Content $latestSummary.FullName -Raw | ConvertFrom-Json
+                                            
+                                            # Generate cache key
+                                            $testType = if ($scriptNumber -eq "0402") { "Unit" } elseif ($scriptNumber -eq "0403") { "Integration" } else { "Smart" }
+                                            $cacheKey = Get-TestCacheKey -TestPath "$env:CLAUDE_PROJECT_DIR/tests" -TestType $testType
+                                            
+                                            # Cache the result
+                                            Set-CachedTestResult -CacheKey $cacheKey -Result $summary -SourcePath "$env:CLAUDE_PROJECT_DIR/domains"
+                                            Write-HookLog "Test results cached for future use (key: $cacheKey)" "INFO"
+                                        }
+                                    }
+                                }
+                            } catch {
+                                Write-HookLog "Could not cache test results: $_" "DEBUG"
+                            }
                         }
                         "0700" -or "0701" -or "0702" -or "0703" {
                             Write-HookLog "Git workflow action completed, consider next development steps"
@@ -241,10 +289,12 @@ try {
     }
     
     Write-HookLog "Post-tool processing completed"
+    @{ action = "continue" } | ConvertTo-Json -Compress | Write-Host
     exit 0
     
 } catch {
     Write-Error "Post-tool hook execution failed: $_"
     # On error, don't block anything
+    @{ action = "continue" } | ConvertTo-Json -Compress | Write-Host
     exit 0
 }

@@ -49,20 +49,6 @@ curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.s
 ## Project Structure
 
 ```
-AitherZero/
-├── Start-AitherZero.ps1    # Main entry point
-├── README.md               # This file
-├── VERSION                 # Version info
-├── aither-core/
-│   └── modules/           # Core modules
-│       ├── ConfigurationCore/
-│       ├── LabRunner/
-│       ├── Logging/
-│       ├── OpenTofuProvider/
-│       └── SecureCredentials/
-├── configs/               # Configuration files
-├── opentofu/             # OpenTofu/Terraform templates
-└── tests/                # Test files
 ```
 
 ## Usage

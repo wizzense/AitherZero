@@ -127,12 +127,15 @@ try {
     }
 
     # Ensure Pester is available
-    if (-not (Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge $testingConfig.MinVersion })) {
+    $pesterModule = Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge [Version]$testingConfig.MinVersion } | Sort-Object Version -Descending | Select-Object -First 1
+    
+    if (-not $pesterModule) {
         Write-ScriptLog -Level Error -Message "Pester $($testingConfig.MinVersion) or higher is required. Run 0400_Install-TestingTools.ps1 first."
         exit 2
     }
     
-    Import-Module Pester -MinimumVersion $testingConfig.MinVersion
+    Write-ScriptLog -Message "Loading Pester version $($pesterModule.Version)"
+    Import-Module Pester -MinimumVersion $testingConfig.MinVersion -Force
 
     # Import all domain modules for integration testing
     Write-ScriptLog -Message "Loading domain modules for integration testing"

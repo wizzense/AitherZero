@@ -149,14 +149,14 @@ foreach ($issue in $issues) {
         }
         
         # Check if we're fixing these errors
-        foreach ($error in $issueErrors) {
+        foreach ($errorMsg in $issueErrors) {
             # Simple pattern matching for common error patterns
-            $errorPattern = $error -replace '[^\w\s]', '.*'
+            $errorPattern = $errorMsg -replace '[^\w\s]', '.*'
             
             foreach ($line in $removedLines) {
                 if ($line -match $errorPattern) {
                     $matchScore += 0.3
-                    $matchReasons += "Fixing error: $(($error -split "`n")[0])"
+                    $matchReasons += "Fixing error: $(($errorMsg -split "`n")[0])"
                     break
                 }
             }
