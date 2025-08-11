@@ -237,6 +237,7 @@ try {
     }
     
     Write-ScriptLog "Log viewer completed successfully"
+    exit 0
     
 } catch {
     Write-ScriptLog "Error in log viewer: $_" -Level 'Error'

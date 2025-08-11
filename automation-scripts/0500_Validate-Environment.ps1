@@ -97,8 +97,8 @@ try {
         }
     }
 
-    # Check Hyper-V (Windows only)
-    if ($IsWindows) {
+    # Check Hyper-V (Windows only, and only if configured)
+    if ($IsWindows -and $config.InstallationOptions.HyperV.Install -eq $true) {
         try {
             $hyperv = Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All -ErrorAction SilentlyContinue
             if ($hyperv.State -eq 'Enabled') {
@@ -110,53 +110,81 @@ try {
                 if ($vmms.Status -ne 'Running') {
                     $issues += "Hyper-V is enabled but VMMS service is not running"
                 }
+            } else {
+                $issues += "Hyper-V expected but not enabled"
+                $validationResults.HyperV = $false
             }
         } catch {
-            if ($config.InstallationOptions.HyperV.Install -eq $true) {
-                $issues += "Hyper-V expected but not enabled"
+            $issues += "Hyper-V expected but not enabled"
+            $validationResults.HyperV = $false
+        }
+    } elseif ($IsWindows) {
+        Write-ScriptLog "Hyper-V: Not configured for installation" -Level 'Debug'
+    }
+
+    # Check Node.js (only if configured to be installed)
+    if ($config.InstallationOptions.Node.Install -eq $true) {
+        try {
+            $nodeVersion = & node --version 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $validationResults.Node = $true
+                Write-ScriptLog "✓ Node.js: $nodeVersion" -Level 'Debug'
+
+                # Check npm
+                $npmVersion = & npm --version 2>&1
+                Write-ScriptLog "✓ npm: v$npmVersion" -Level 'Debug'
+            } else {
+                $issues += "Node.js expected but not found"
+                $validationResults.Node = $false
             }
-        }
-    }
-
-    # Check Node.js
-    try {
-        $nodeVersion = & node --version 2>&1
-        if ($LASTEXITCODE -eq 0) {
-            $validationResults.Node = $true
-            Write-ScriptLog "✓ Node.js: $nodeVersion" -Level 'Debug'
-
-            # Check npm
-            $npmVersion = & npm --version 2>&1
-            Write-ScriptLog "✓ npm: v$npmVersion" -Level 'Debug'
-        }
-    } catch {
-        if ($config.InstallationOptions.Node.Install -eq $true) {
+        } catch {
             $issues += "Node.js expected but not found"
+            $validationResults.Node = $false
         }
+    } else {
+        # Node.js not required, mark as N/A
+        Write-ScriptLog "Node.js: Not configured for installation" -Level 'Debug'
     }
 
-    # Check Docker
-    try {
-        $dockerVersion = & docker --version 2>&1
-        if ($LASTEXITCODE -eq 0) {
-            $validationResults.Docker = $true
-            Write-ScriptLog "✓ Docker: $dockerVersion" -Level 'Debug'
-        }
-    } catch {
-        if ($config.InstallationOptions.DockerDesktop.Install -eq $true) {
+    # Check Docker (only if configured to be installed)
+    if ($config.InstallationOptions.DockerDesktop.Install -eq $true) {
+        try {
+            $dockerVersion = & docker --version 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $validationResults.Docker = $true
+                Write-ScriptLog "✓ Docker: $dockerVersion" -Level 'Debug'
+            } else {
+                $issues += "Docker expected but not found"
+                $validationResults.Docker = $false
+            }
+        } catch {
             $issues += "Docker expected but not found"
+            $validationResults.Docker = $false
         }
+    } else {
+        # Docker not required, mark as N/A
+        Write-ScriptLog "Docker: Not configured for installation" -Level 'Debug'
     }
 
-    # Check directories
+    # Check directories (create if missing)
     Write-ScriptLog "Validating directory structure..."
 
     if ($config.Infrastructure -and $config.Infrastructure.Directories) {
+        $validationResults.Directories = $true  # Assume success unless we can't create
+        
         foreach ($dirKey in $config.Infrastructure.Directories.Keys) {
             $dirPath = [System.Environment]::ExpandEnvironmentVariables($config.Infrastructure.Directories[$dirKey])
             if (-not (Test-Path $dirPath)) {
-                $validationResults.Directories = $false
-                $issues += "Directory not found: $dirPath"
+                # Try to create the directory
+                try {
+                    Write-ScriptLog "Creating missing directory: $dirPath" -Level 'Warning'
+                    New-Item -ItemType Directory -Path $dirPath -Force | Out-Null
+                    Write-ScriptLog "✓ Directory created: $dirPath" -Level 'Debug'
+                } catch {
+                    $validationResults.Directories = $false
+                    $issues += "Cannot create directory: $dirPath - $_"
+                    Write-ScriptLog "✗ Failed to create directory: $dirPath" -Level 'Error'
+                }
             } else {
                 Write-ScriptLog "✓ Directory exists: $dirPath" -Level 'Debug'
             }

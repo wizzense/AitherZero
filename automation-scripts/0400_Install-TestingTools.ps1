@@ -1,5 +1,4 @@
 #Requires -Version 7.0
-#Requires -RunAsAdministrator
 
 <#
 .SYNOPSIS
@@ -33,7 +32,7 @@ $scriptMetadata = @{
     Order = 0400
     Dependencies = @('0001')
     Tags = @('testing', 'pester', 'psscriptanalyzer', 'quality')
-    RequiresAdmin = $true
+    RequiresAdmin = $false
     SupportsWhatIf = $true
 }
 
