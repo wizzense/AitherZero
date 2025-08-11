@@ -26,7 +26,7 @@ Core configuration management functionality.
 
 ```powershell
 # Import the core module
-Import-Module ./AitherZeroCore.psm1
+Import-Module ./aitherzero.psm1
 
 # Get a configuration value
 $vmPath = Get-Configuration -Key "Infrastructure.DefaultVMPath"

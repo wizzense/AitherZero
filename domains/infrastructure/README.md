@@ -35,7 +35,7 @@ Handles infrastructure-as-code operations using OpenTofu/Terraform.
 
 ```powershell
 # Import the core module
-Import-Module ./AitherZeroCore.psm1
+Import-Module ./aitherzero.psm1
 
 # Create a new lab VM
 New-LabVM -Name "TestVM" -Memory "4GB" -CPU 4 -OS "Windows"

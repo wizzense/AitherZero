@@ -60,14 +60,14 @@ Will provide workflow automation and orchestration.
 All domains are automatically loaded when you import the core module:
 
 ```powershell
-Import-Module ./AitherZeroCore.psm1
+Import-Module ./aitherzero.psm1
 ```
 
 To load only essential domains:
 
 ```powershell
-Import-Module ./AitherZeroCore.psm1
-Initialize-AitherZeroCore -Minimal
+Import-Module ./aitherzero.psm1
+Initialize-aitherzero -Minimal
 ```
 
 ## Adding New Domains
@@ -76,7 +76,7 @@ Initialize-AitherZeroCore -Minimal
 2. Add your `.psm1` files to the directory
 3. Create a `README.md` documenting the domain
 4. Add tests under `tests/domains/<domain-name>/`
-5. Update `Initialize-AitherZeroCore` to include your domain
+5. Update `Initialize-aitherzero` to include your domain
 
 ## Best Practices
 

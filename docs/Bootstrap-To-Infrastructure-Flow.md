@@ -27,7 +27,7 @@ The flow consists of 7 main phases:
 - OS platform detection (Windows/Linux/macOS)
 - Admin rights check (warns if not admin)
 - Creates initial directory structure
-- Imports AitherZeroCore.psm1
+- Imports aitherzero.psm1
 - Loads initial configuration
 ```
 

@@ -26,7 +26,7 @@ Provides structured logging capabilities for all components.
 
 ```powershell
 # Import the core module
-Import-Module ./AitherZeroCore.psm1
+Import-Module ./aitherzero.psm1
 
 # Write a log entry
 Write-CustomLog -Level "Information" -Message "Starting VM creation" -Source "Lab"

@@ -277,7 +277,7 @@ try {
         $pesterConfig.CodeCoverage.Enabled = $true
         $pesterConfig.CodeCoverage.Path = @(
             $SourcePath,
-            (Join-Path $projectRoot "AitherZeroCore.psm1"),
+            (Join-Path $projectRoot "aitherzero.psm1"),
             (Join-Path $projectRoot "Start-AitherZero.ps1")
         )
     

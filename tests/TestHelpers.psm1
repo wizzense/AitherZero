@@ -23,7 +23,7 @@ function Initialize-TestEnvironment {
     )
 
     # Clean any conflicting modules
-    $conflictingModules = @('AitherRun', 'CoreApp', 'ConfigurationManager', 'AitherZeroCore')
+    $conflictingModules = @('AitherRun', 'CoreApp', 'ConfigurationManager', 'aitherzero')
     foreach ($module in $conflictingModules) {
         if (Get-Module -Name $module -ErrorAction SilentlyContinue) {
             Remove-Module -Name $module -Force -ErrorAction SilentlyContinue
