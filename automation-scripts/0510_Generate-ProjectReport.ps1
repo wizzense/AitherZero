@@ -5,7 +5,7 @@
     Generate comprehensive project status report including dependencies, tests, coverage, and documentation
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$ProjectPath = ($PSScriptRoot | Split-Path -Parent),
     [string]$OutputPath = (Join-Path $ProjectPath "tests/reports"),
@@ -199,8 +199,10 @@ $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 
 if ($Format -eq 'JSON' -or $Format -eq 'All') {
     $jsonPath = Join-Path $OutputPath "ProjectReport-$timestamp.json"
-    $projectReport | ConvertTo-Json -Depth 10 | Set-Content $jsonPath
-    Write-ReportLog "JSON report saved to: $jsonPath"
+    if ($PSCmdlet.ShouldProcess($jsonPath, "Save JSON report")) {
+        $projectReport | ConvertTo-Json -Depth 10 | Set-Content $jsonPath
+        Write-ReportLog "JSON report saved to: $jsonPath"
+    }
 }
 
 if ($Format -eq 'HTML' -or $Format -eq 'All') {
@@ -294,8 +296,10 @@ if ($Format -eq 'HTML' -or $Format -eq 'All') {
 </body>
 </html>
 "@
-    $html | Set-Content $htmlPath
-    Write-ReportLog "HTML report saved to: $htmlPath"
+    if ($PSCmdlet.ShouldProcess($htmlPath, "Save HTML report")) {
+        $html | Set-Content $htmlPath
+        Write-ReportLog "HTML report saved to: $htmlPath"
+    }
 }
 
 if ($Format -eq 'Markdown' -or $Format -eq 'All') {
@@ -341,8 +345,10 @@ Platform: $($projectReport.Platform) | PowerShell: $($projectReport.PSVersion)
         }
     }
     
-    $markdown | Set-Content $mdPath
-    Write-ReportLog "Markdown report saved to: $mdPath"
+    if ($PSCmdlet.ShouldProcess($mdPath, "Save Markdown report")) {
+        $markdown | Set-Content $mdPath
+        Write-ReportLog "Markdown report saved to: $mdPath"
+    }
 }
 
 # Display Summary

@@ -18,6 +18,7 @@
     Tags: testing, code-quality, psscriptanalyzer, static-analysis
 #>
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$Path = (Split-Path $PSScriptRoot -Parent),
     [string]$OutputPath,
@@ -183,20 +184,33 @@ try {
     Write-Host "`nRunning PSScriptAnalyzer. This may take a few minutes..." -ForegroundColor Yellow
 
     # Run analysis
-    if ($analyzerParams.Path -is [array] -and $analyzerParams.Path.Count -gt 1) {
-        # Handle multiple files by analyzing each one and combining results
-        $allResults = @()
-        foreach ($file in $analyzerParams.Path) {
-            $singleFileParams = $analyzerParams.Clone()
-            $singleFileParams['Path'] = $file
-            $fileResults = Invoke-ScriptAnalyzer @singleFileParams
-            if ($fileResults) {
-                $allResults += $fileResults
+    if ($PSCmdlet.ShouldProcess("PowerShell files", "Run PSScriptAnalyzer analysis")) {
+        if ($analyzerParams.Path -is [array] -and $analyzerParams.Path.Count -gt 1) {
+            # Handle multiple files by analyzing each one and combining results
+            $allResults = @()
+            foreach ($file in $analyzerParams.Path) {
+                $singleFileParams = $analyzerParams.Clone()
+                $singleFileParams['Path'] = $file
+                $fileResults = Invoke-ScriptAnalyzer @singleFileParams
+                if ($fileResults) {
+                    $allResults += $fileResults
+                }
+            }
+            $results = $allResults
+        } else {
+            $results = Invoke-ScriptAnalyzer @analyzerParams
+        }
+    } else {
+        Write-ScriptLog -Message "WhatIf: Would run PSScriptAnalyzer analysis"
+        return @{
+            Success = $true
+            Results = @()
+            Summary = @{
+                TotalIssues = 0
+                FilesAnalyzed = 0
+                Message = "WhatIf mode - analysis skipped"
             }
         }
-        $results = $allResults
-    } else {
-        $results = Invoke-ScriptAnalyzer @analyzerParams
     }
 
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
@@ -289,30 +303,38 @@ try {
         }
         
         if (-not (Test-Path $OutputPath)) {
-            New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+            if ($PSCmdlet.ShouldProcess($OutputPath, "Create analysis output directory")) {
+                New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+            }
         }
         
         $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
         
         # Save as CSV for easy analysis
         $csvPath = Join-Path $OutputPath "PSScriptAnalyzer-$timestamp.csv"
-        $results | Export-Csv -Path $csvPath -NoTypeInformation
-        Write-ScriptLog -Message "Analysis results saved to: $csvPath"
+        if ($PSCmdlet.ShouldProcess($csvPath, "Export analysis results to CSV")) {
+            $results | Export-Csv -Path $csvPath -NoTypeInformation
+            Write-ScriptLog -Message "Analysis results saved to: $csvPath"
+        }
         
         # Save as JSON with summary
         $jsonPath = Join-Path $OutputPath "PSScriptAnalyzer-Summary-$timestamp.json"
-        @{
-            Timestamp = Get-Date
-            Summary = $resultSummary
-            Details = $results | Select-Object RuleName, Severity, ScriptName, Line, Column, Message
-        } | ConvertTo-Json -Depth 5 | Set-Content -Path $jsonPath
-        Write-ScriptLog -Message "Analysis summary saved to: $jsonPath"
+        if ($PSCmdlet.ShouldProcess($jsonPath, "Save analysis summary as JSON")) {
+            @{
+                Timestamp = Get-Date
+                Summary = $resultSummary
+                Details = $results | Select-Object RuleName, Severity, ScriptName, Line, Column, Message
+            } | ConvertTo-Json -Depth 5 | Set-Content -Path $jsonPath
+            Write-ScriptLog -Message "Analysis summary saved to: $jsonPath"
+        }
         
         # Generate SARIF format for integration with other tools
         if (Get-Command -Name ConvertTo-SarifReport -ErrorAction SilentlyContinue) {
             $sarifPath = Join-Path $OutputPath "PSScriptAnalyzer-$timestamp.sarif"
-            $results | ConvertTo-SarifReport | Set-Content -Path $sarifPath
-            Write-ScriptLog -Message "SARIF report saved to: $sarifPath"
+            if ($PSCmdlet.ShouldProcess($sarifPath, "Generate SARIF report")) {
+                $results | ConvertTo-SarifReport | Set-Content -Path $sarifPath
+                Write-ScriptLog -Message "SARIF report saved to: $sarifPath"
+            }
         }
     }
 

@@ -3,7 +3,7 @@
 # Dependencies: None
 # Description: Gather and display comprehensive system information
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter()]
     [hashtable]$Configuration,

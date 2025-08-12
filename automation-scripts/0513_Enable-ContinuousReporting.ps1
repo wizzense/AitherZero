@@ -7,7 +7,7 @@
     Sets up file watchers, event triggers, and continuous monitoring for automatic report generation
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$ProjectPath = ($PSScriptRoot | Split-Path -Parent),
     [ValidateSet('Enable', 'Disable', 'Status')]
@@ -91,13 +91,17 @@ if ($Action -eq 'Disable') {
     Write-MonitorLog "Disabling continuous reporting..."
     
     # Stop watchers
-    Get-Job | Where-Object { $_.Name -like "AitherZero-*Watcher" } | Stop-Job -PassThru | Remove-Job
-    Write-MonitorLog "Stopped all file watchers"
+    if ($PSCmdlet.ShouldProcess("AitherZero file watchers", "Stop and remove background jobs")) {
+        Get-Job | Where-Object { $_.Name -like "AitherZero-*Watcher" } | Stop-Job -PassThru | Remove-Job
+        Write-MonitorLog "Stopped all file watchers"
+    }
     
     # Remove monitoring state file
     $stateFile = Join-Path $ProjectPath ".aitherzero/monitoring-state.json"
     if (Test-Path $stateFile) {
-        Remove-Item $stateFile -Force
+        if ($PSCmdlet.ShouldProcess($stateFile, "Remove monitoring state file")) {
+            Remove-Item $stateFile -Force
+        }
     }
     
     Write-Host "`n✅ Continuous reporting disabled" -ForegroundColor Green
@@ -110,7 +114,9 @@ Write-MonitorLog "Enabling continuous reporting..."
 # Create monitoring state file
 $stateDir = Join-Path $ProjectPath ".aitherzero"
 if (-not (Test-Path $stateDir)) {
-    New-Item -ItemType Directory -Path $stateDir -Force | Out-Null
+    if ($PSCmdlet.ShouldProcess($stateDir, "Create monitoring state directory")) {
+        New-Item -ItemType Directory -Path $stateDir -Force | Out-Null
+    }
 }
 
 $monitoringState = @{
@@ -193,8 +199,10 @@ if ($IncludeFileWatcher) {
         }
     }
     
-    $watcherJob = Start-Job -Name "AitherZero-FileWatcher" -ScriptBlock $fileWatcherScript -ArgumentList $ProjectPath, $ReportIntervalMinutes
-    Write-MonitorLog "File watcher started (Job ID: $($watcherJob.Id))"
+    if ($PSCmdlet.ShouldProcess("File watcher background job", "Start monitoring PowerShell files")) {
+        $watcherJob = Start-Job -Name "AitherZero-FileWatcher" -ScriptBlock $fileWatcherScript -ArgumentList $ProjectPath, $ReportIntervalMinutes
+        Write-MonitorLog "File watcher started (Job ID: $($watcherJob.Id))"
+    }
 }
 
 # Setup test result watcher
@@ -236,8 +244,10 @@ if ($IncludeTestWatcher) {
         }
     }
     
-    $testWatcherJob = Start-Job -Name "AitherZero-TestWatcher" -ScriptBlock $testWatcherScript -ArgumentList $ProjectPath
-    Write-MonitorLog "Test watcher started (Job ID: $($testWatcherJob.Id))"
+    if ($PSCmdlet.ShouldProcess("Test watcher background job", "Start monitoring test results")) {
+        $testWatcherJob = Start-Job -Name "AitherZero-TestWatcher" -ScriptBlock $testWatcherScript -ArgumentList $ProjectPath
+        Write-MonitorLog "Test watcher started (Job ID: $($testWatcherJob.Id))"
+    }
 }
 
 # Setup git hooks integration
@@ -256,7 +266,8 @@ if ($IncludeGitHooks) {
     
     # Install post-merge hook for report generation
     $postMergeHook = Join-Path $hooksPath "post-merge"
-    $postMergeContent = @'
+    if ($PSCmdlet.ShouldProcess($postMergeHook, "Install post-merge git hook")) {
+        $postMergeContent = @'
 #!/usr/bin/env pwsh
 # Generate report after merge
 $projectRoot = git rev-parse --show-toplevel
@@ -264,8 +275,9 @@ Set-Location $projectRoot
 & pwsh -File "./automation-scripts/0510_Generate-ProjectReport.ps1" -Format All
 Write-Host "📊 Generated post-merge report" -ForegroundColor Green
 '@
-    $postMergeContent | Set-Content $postMergeHook
-    chmod +x $postMergeHook 2>$null
+        $postMergeContent | Set-Content $postMergeHook
+        chmod +x $postMergeHook 2>$null
+    }
     
     Write-MonitorLog "Git hooks configured"
 }
@@ -303,13 +315,17 @@ $periodicReportScript = {
     }
 }
 
-$periodicJob = Start-Job -Name "AitherZero-PeriodicReporter" -ScriptBlock $periodicReportScript -ArgumentList $ProjectPath, $ReportIntervalMinutes
-Write-MonitorLog "Periodic reporter started (Job ID: $($periodicJob.Id))"
+if ($PSCmdlet.ShouldProcess("Periodic reporter background job", "Start periodic report generation")) {
+    $periodicJob = Start-Job -Name "AitherZero-PeriodicReporter" -ScriptBlock $periodicReportScript -ArgumentList $ProjectPath, $ReportIntervalMinutes
+    Write-MonitorLog "Periodic reporter started (Job ID: $($periodicJob.Id))"
+}
 
 # Save monitoring state
 $stateFile = Join-Path $stateDir "monitoring-state.json"
-$monitoringState.LastReportTime = Get-Date -Format 'o'
-$monitoringState | ConvertTo-Json | Set-Content $stateFile
+if ($PSCmdlet.ShouldProcess($stateFile, "Save monitoring state configuration")) {
+    $monitoringState.LastReportTime = Get-Date -Format 'o'
+    $monitoringState | ConvertTo-Json | Set-Content $stateFile
+}
 
 # Display summary
 Write-Host "`n✅ Continuous Reporting Enabled" -ForegroundColor Green

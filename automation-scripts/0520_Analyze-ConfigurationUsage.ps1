@@ -13,6 +13,7 @@
 # Description: Configuration usage analysis for tech debt reporting
 # Tags: reporting, tech-debt, configuration, analysis
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$ConfigPath = "./config.json",
     [string]$OutputPath = "./reports/tech-debt/analysis",
@@ -31,7 +32,9 @@ Import-Module (Join-Path $script:ProjectRoot 'domains/reporting/TechDebtAnalysis
 Import-Module (Join-Path $script:ProjectRoot 'domains/utilities/Logging.psm1') -Force -ErrorAction SilentlyContinue
 
 # Initialize analysis
-Initialize-TechDebtAnalysis -ResultsPath $OutputPath
+if ($PSCmdlet.ShouldProcess($OutputPath, "Initialize tech debt analysis results directory")) {
+    Initialize-TechDebtAnalysis -ResultsPath $OutputPath
+}
 
 function Analyze-ConfigurationUsage {
     Write-AnalysisLog "Starting configuration usage analysis..." -Component "ConfigUsage"
@@ -191,7 +194,9 @@ function Analyze-ConfigurationUsage {
 
     # Cache results if enabled
     if ($UseCache -and -not $usage.Error) {
-        Set-CachedResults -CacheKey $cacheKey -Results $usage -DependentFiles @($configFullPath)
+        if ($PSCmdlet.ShouldProcess("Analysis cache", "Save configuration usage analysis results")) {
+            Set-CachedResults -CacheKey $cacheKey -Results $usage -DependentFiles @($configFullPath)
+        }
     }
     
     return $usage
@@ -204,7 +209,9 @@ try {
     $results = Analyze-ConfigurationUsage
 
     # Save results
-    $outputFile = Save-AnalysisResults -AnalysisType "ConfigurationUsage" -Results $results -OutputPath $OutputPath
+    if ($PSCmdlet.ShouldProcess($OutputPath, "Save configuration usage analysis results")) {
+        $outputFile = Save-AnalysisResults -AnalysisType "ConfigurationUsage" -Results $results -OutputPath $OutputPath
+    }
 
     # Display summary
     if (-not $results.Error) {

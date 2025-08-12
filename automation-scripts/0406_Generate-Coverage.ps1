@@ -18,6 +18,7 @@
     Tags: testing, coverage, reporting, quality
 #>
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$SourcePath = (Join-Path (Split-Path $PSScriptRoot -Parent) "domains"),
     [string]$TestPath = (Join-Path (Split-Path $PSScriptRoot -Parent) "tests"),
@@ -91,8 +92,10 @@ function Convert-CoverageReport {
         'JaCoCo' {
             # Pester generates JaCoCo natively - copy the file
             if (Test-Path $InputFile) {
-                Copy-Item $InputFile $OutputPath -Force
-                Write-ScriptLog -Message "JaCoCo report copied to $OutputPath"
+                if ($PSCmdlet.ShouldProcess($OutputPath, "Copy JaCoCo coverage report")) {
+                    Copy-Item $InputFile $OutputPath -Force
+                    Write-ScriptLog -Message "JaCoCo report copied to $OutputPath"
+                }
             }
         }
         default {
@@ -221,8 +224,10 @@ function New-CoverageHtmlReport {
 "@
     
     $htmlPath = Join-Path $OutputPath "coverage-report.html"
-    $html | Set-Content -Path $htmlPath
-    Write-ScriptLog -Message "HTML report saved to: $htmlPath"
+    if ($PSCmdlet.ShouldProcess($htmlPath, "Save HTML coverage report")) {
+        $html | Set-Content -Path $htmlPath
+        Write-ScriptLog -Message "HTML report saved to: $htmlPath"
+    }
     
     return $htmlPath
 }
@@ -246,7 +251,9 @@ try {
     }
 
     if (-not (Test-Path $OutputPath)) {
-        New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+        if ($PSCmdlet.ShouldProcess($OutputPath, "Create coverage output directory")) {
+            New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+        }
     }
 
     # Check for existing coverage data or run tests
@@ -383,7 +390,9 @@ Write-Host "  Covered Lines: $($summary.CoveredLines)"
 
     # Save summary JSON
     $summaryPath = Join-Path $OutputPath "coverage-summary.json"
-    $summary | ConvertTo-Json -Depth 5 | Set-Content -Path $summaryPath
+    if ($PSCmdlet.ShouldProcess($summaryPath, "Save coverage summary JSON")) {
+        $summary | ConvertTo-Json -Depth 5 | Set-Content -Path $summaryPath
+    }
     $reports += @{
         Format = 'JSON'
         Path = $summaryPath
@@ -400,7 +409,9 @@ Write-Host "  Covered Lines: $($summary.CoveredLines)"
     # Create coverage badge (simple text version)
     $badgeColor = if ($summary.CoveragePercent -ge 80) { 'green' } elseif ($summary.CoveragePercent -ge 60) { 'yellow' } else { 'red' }
     $badgePath = Join-Path $OutputPath "coverage-badge.txt"
-    "Coverage: $($summary.CoveragePercent)% - $badgeColor" | Set-Content -Path $badgePath
+    if ($PSCmdlet.ShouldProcess($badgePath, "Create coverage badge")) {
+        "Coverage: $($summary.CoveragePercent)% - $badgeColor" | Set-Content -Path $badgePath
+    }
 
     # Check against minimum threshold
     if ($summary.CoveragePercent -lt $MinimumPercent) {

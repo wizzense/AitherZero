@@ -18,6 +18,7 @@
     Tags: testing, pester, psscriptanalyzer, quality
 #>
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [switch]$DryRun,
     [switch]$Force
@@ -94,13 +95,17 @@ try {
     $psGetModule = Get-Module -ListAvailable -Name PowerShellGet | Sort-Object Version -Descending | Select-Object -First 1
     if (-not $psGetModule -or $psGetModule.Version -lt [Version]'2.2.5') {
         Write-ScriptLog -Message "Installing PowerShellGet 2.2.5+"
-        Install-Module -Name PowerShellGet -MinimumVersion 2.2.5 -Force -AllowClobber -Scope CurrentUser
+        if ($PSCmdlet.ShouldProcess("PowerShellGet module", "Install module version 2.2.5+")) {
+            Install-Module -Name PowerShellGet -MinimumVersion 2.2.5 -Force -AllowClobber -Scope CurrentUser
+        }
     }
 
     # Configure PSGallery as trusted
     if ((Get-PSRepository -Name PSGallery).InstallationPolicy -ne 'Trusted') {
         Write-ScriptLog -Message "Setting PSGallery as trusted repository"
-        Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+        if ($PSCmdlet.ShouldProcess("PSGallery repository", "Set installation policy to Trusted")) {
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+        }
     }
 
     # Install Pester
@@ -116,13 +121,17 @@ try {
                 if ($module.Path -like "*\WindowsPowerShell\*") {
                     Write-ScriptLog -Level Warning -Message "Cannot remove built-in Pester from: $($module.Path)"
                 } else {
-                    Remove-Module -Name Pester -Force -ErrorAction SilentlyContinue
-                    Uninstall-Module -Name Pester -MaximumVersion 4.99.99 -Force -ErrorAction SilentlyContinue
+                    if ($PSCmdlet.ShouldProcess("Old Pester module", "Remove module version < 5.0.0")) {
+                        Remove-Module -Name Pester -Force -ErrorAction SilentlyContinue
+                        Uninstall-Module -Name Pester -MaximumVersion 4.99.99 -Force -ErrorAction SilentlyContinue
+                    }
                 }
             }
         }
         
-        Install-Module -Name Pester -MinimumVersion $testingConfig.MinVersion -Force -SkipPublisherCheck -Scope CurrentUser
+        if ($PSCmdlet.ShouldProcess("Pester module", "Install version $($testingConfig.MinVersion)+")) {
+            Install-Module -Name Pester -MinimumVersion $testingConfig.MinVersion -Force -SkipPublisherCheck -Scope CurrentUser
+        }
         Write-ScriptLog -Message "Pester installed successfully"
     } else {
         Write-ScriptLog -Message "Pester $($pesterModule.Version) already installed"
@@ -133,7 +142,9 @@ try {
     $psaModule = Get-Module -ListAvailable -Name PSScriptAnalyzer
 
     if (-not $psaModule -or $Force) {
-        Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+        if ($PSCmdlet.ShouldProcess("PSScriptAnalyzer module", "Install module")) {
+            Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+        }
         Write-ScriptLog -Message "PSScriptAnalyzer installed successfully"
     } else {
         Write-ScriptLog -Message "PSScriptAnalyzer $($psaModule.Version) already installed"
@@ -144,7 +155,9 @@ try {
     $plasterModule = Get-Module -ListAvailable -Name Plaster
 
     if (-not $plasterModule -or $Force) {
-        Install-Module -Name Plaster -Force -Scope CurrentUser
+        if ($PSCmdlet.ShouldProcess("Plaster module", "Install module")) {
+            Install-Module -Name Plaster -Force -Scope CurrentUser
+        }
         Write-ScriptLog -Message "Plaster installed successfully"
     } else {
         Write-ScriptLog -Message "Plaster $($plasterModule.Version) already installed"
@@ -219,7 +232,9 @@ try {
 }
 '@
         
-        $psaSettings | Set-Content -Path $psaSettingsPath -Force
+        if ($PSCmdlet.ShouldProcess($psaSettingsPath, "Create PSScriptAnalyzer settings file")) {
+            $psaSettings | Set-Content -Path $psaSettingsPath -Force
+        }
         Write-ScriptLog -Message "PSScriptAnalyzer settings created at: $psaSettingsPath"
     }
     

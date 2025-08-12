@@ -10,7 +10,7 @@
     Category: Git
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$UserName,
     [string]$UserEmail,
@@ -28,13 +28,17 @@ Write-Host "Configuring Git environment..." -ForegroundColor Cyan
 
 # Set user info if provided
 if ($UserName) {
-    Set-GitConfiguration -Key "user.name" -Value $UserName -Level $(if ($Global) { 'Global' } else { 'Local' })
-    Write-Host "✓ Set user name: $UserName" -ForegroundColor Green
+    if ($PSCmdlet.ShouldProcess("Git configuration", "Set user name to $UserName")) {
+        Set-GitConfiguration -Key "user.name" -Value $UserName -Level $(if ($Global) { 'Global' } else { 'Local' })
+        Write-Host "✓ Set user name: $UserName" -ForegroundColor Green
+    }
 }
 
 if ($UserEmail) {
-    Set-GitConfiguration -Key "user.email" -Value $UserEmail -Level $(if ($Global) { 'Global' } else { 'Local' })
-    Write-Host "✓ Set user email: $UserEmail" -ForegroundColor Green
+    if ($PSCmdlet.ShouldProcess("Git configuration", "Set user email to $UserEmail")) {
+        Set-GitConfiguration -Key "user.email" -Value $UserEmail -Level $(if ($Global) { 'Global' } else { 'Local' })
+        Write-Host "✓ Set user email: $UserEmail" -ForegroundColor Green
+    }
 }
 
 # Set recommended configurations
@@ -65,10 +69,12 @@ $configs = @{
     "diff.algorithm" = "histogram"
 }
 
-foreach ($key in $configs.Keys) {
-    Set-GitConfiguration -Key $key -Value $configs[$key] -Level $(if ($Global) { 'Global' } else { 'Local' })
+if ($PSCmdlet.ShouldProcess("Git configuration", "Apply recommended Git configurations")) {
+    foreach ($key in $configs.Keys) {
+        Set-GitConfiguration -Key $key -Value $configs[$key] -Level $(if ($Global) { 'Global' } else { 'Local' })
+    }
+    Write-Host "✓ Applied recommended Git configurations" -ForegroundColor Green
 }
-Write-Host "✓ Applied recommended Git configurations" -ForegroundColor Green
 
 # Create useful aliases
 $aliases = @{
@@ -97,10 +103,12 @@ $aliases = @{
     "psf" = "push --force-with-lease"
 }
 
-foreach ($alias in $aliases.Keys) {
-    Set-GitConfiguration -Key "alias.$alias" -Value $aliases[$alias] -Level $(if ($Global) { 'Global' } else { 'Local' })
+if ($PSCmdlet.ShouldProcess("Git configuration", "Create Git aliases")) {
+    foreach ($alias in $aliases.Keys) {
+        Set-GitConfiguration -Key "alias.$alias" -Value $aliases[$alias] -Level $(if ($Global) { 'Global' } else { 'Local' })
+    }
+    Write-Host "✓ Created Git aliases" -ForegroundColor Green
 }
-Write-Host "✓ Created Git aliases" -ForegroundColor Green
 
 # Set up commit template
 $templatePath = Join-Path (Split-Path $PSScriptRoot -Parent) ".gitmessage"
@@ -118,14 +126,17 @@ $templateContent = @'
 # Footer: breaking changes, issue references
 '@
 
-$templateContent | Set-Content $templatePath
-Set-GitConfiguration -Key "commit.template" -Value $templatePath -Level 'Local'
-Write-Host "✓ Set up commit message template" -ForegroundColor Green
+if ($PSCmdlet.ShouldProcess($templatePath, "Create commit message template")) {
+    $templateContent | Set-Content $templatePath
+    Set-GitConfiguration -Key "commit.template" -Value $templatePath -Level 'Local'
+    Write-Host "✓ Set up commit message template" -ForegroundColor Green
+}
 
 # Create .gitignore if not exists
 $gitignorePath = Join-Path (Split-Path $PSScriptRoot -Parent) ".gitignore"
 if (-not (Test-Path $gitignorePath)) {
-    $gitignoreContent = @'
+    if ($PSCmdlet.ShouldProcess($gitignorePath, "Create .gitignore file")) {
+        $gitignoreContent = @'
 # Logs
 *.log
 logs/
@@ -165,8 +176,9 @@ Thumbs.db
 .env
 secrets/
 '@
-    $gitignoreContent | Set-Content $gitignorePath
-    Write-Host "✓ Created .gitignore file" -ForegroundColor Green
+        $gitignoreContent | Set-Content $gitignorePath
+        Write-Host "✓ Created .gitignore file" -ForegroundColor Green
+    }
 }
 
 # Set up pre-commit hook
@@ -214,11 +226,13 @@ if ($psFiles) {
 Write-Host "Pre-commit checks passed!" -ForegroundColor Green
 exit 0
 '@
-    $preCommitContent | Set-Content $preCommitPath
-    if (-not $IsWindows) {
-        chmod +x $preCommitPath
+    if ($PSCmdlet.ShouldProcess($preCommitPath, "Create pre-commit hook")) {
+        $preCommitContent | Set-Content $preCommitPath
+        if (-not $IsWindows) {
+            chmod +x $preCommitPath
+        }
+        Write-Host "✓ Set up pre-commit hook" -ForegroundColor Green
     }
-    Write-Host "✓ Set up pre-commit hook" -ForegroundColor Green
 }
 
 # Display current Git status

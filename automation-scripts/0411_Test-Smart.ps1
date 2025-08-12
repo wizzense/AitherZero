@@ -23,6 +23,7 @@
     Tags: testing, smart, cache, incremental, ai-optimized
 #>
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$Path,
     [string]$TestType = 'Unit',
@@ -254,7 +255,18 @@ try {
     }
     
     # Run tests
-    $result = & $testScript @testParams
+    if ($PSCmdlet.ShouldProcess("$TestType tests", "Execute test suite")) {
+        $result = & $testScript @testParams
+    } else {
+        Write-SmartTestLog "WhatIf: Would execute $TestType tests" -Level Information
+        return @{
+            TotalCount = 0
+            PassedCount = 0
+            FailedCount = 0
+            SkippedCount = 0
+            Duration = [TimeSpan]::Zero
+        }
+    }
     
     # Cache successful results
     if ($result -and $UseCache -and $cacheKey) {
@@ -267,8 +279,10 @@ try {
                 Duration = $result.Duration.TotalSeconds
                 Timestamp = (Get-Date).ToString('o')
             }
-            Set-CachedTestResult -CacheKey $cacheKey -Result ([PSCustomObject]$cacheData) -SourcePath $context.SourcePath
-            Write-SmartTestLog "Results cached for future use" -Level Cache
+            if ($PSCmdlet.ShouldProcess("Test results", "Cache test results")) {
+                Set-CachedTestResult -CacheKey $cacheKey -Result ([PSCustomObject]$cacheData) -SourcePath $context.SourcePath
+                Write-SmartTestLog "Results cached for future use" -Level Cache
+            }
         }
     }
     

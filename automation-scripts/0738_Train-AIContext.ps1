@@ -19,6 +19,7 @@
     ./0738_Train-AIContext.ps1 -Action Index -Path ./src
 #>
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [ValidateSet('Index', 'Train', 'Update', 'All')]
     [string]$Action = 'All',
@@ -64,14 +65,23 @@ Write-Host "Path: $Path"
 Write-Host ""
 Start-Sleep -Seconds 1
 
+# State-changing operations for AI context training
 if ($Action -eq 'All' -or $Action -eq 'Index') {
-    Write-Host "✓ Codebase indexed (stub)" -ForegroundColor Green
+    if ($PSCmdlet.ShouldProcess("$Path", "Index codebase and create searchable database")) {
+        Write-Host "✓ Codebase indexed (stub)" -ForegroundColor Green
+    }
 }
+
 if ($Action -eq 'All' -or $Action -eq 'Train') {
-    Write-Host "✓ Embeddings created (stub)" -ForegroundColor Green
+    if ($PSCmdlet.ShouldProcess("embeddings database", "Create and store vector embeddings")) {
+        Write-Host "✓ Embeddings created (stub)" -ForegroundColor Green
+    }
 }
+
 if ($Action -eq 'All' -or $Action -eq 'Update') {
-    Write-Host "✓ Prompts updated (stub)" -ForegroundColor Green
+    if ($PSCmdlet.ShouldProcess("AI prompt templates", "Update prompt templates and knowledge base")) {
+        Write-Host "✓ Prompts updated (stub)" -ForegroundColor Green
+    }
 }
 
 exit 0

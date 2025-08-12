@@ -28,6 +28,7 @@
     ./0731_Invoke-AICodeReview.ps1 -Path ./module.psm1 -PRNumber 123 -OutputFormat Markdown
 #>
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory = $true)]
     [string]$Path,
@@ -571,16 +572,37 @@ function Main {
             # Already displayed
         } elseif ($format -eq 'Markdown') {
             $reportPath = "$projectRoot/reports/ai-code-review-$(Get-Date -Format 'yyyyMMdd-HHmmss').md"
-            $report | Set-Content $reportPath
-            Write-ReviewLog "Markdown report saved to: $reportPath" -Level Information
+            if ($PSCmdlet.ShouldProcess($reportPath, "Save Markdown report")) {
+                # Ensure reports directory exists
+                $reportsDir = Split-Path $reportPath -Parent
+                if (-not (Test-Path $reportsDir) -and $PSCmdlet.ShouldProcess($reportsDir, "Create reports directory")) {
+                    New-Item -ItemType Directory -Path $reportsDir -Force | Out-Null
+                }
+                $report | Set-Content $reportPath
+                Write-ReviewLog "Markdown report saved to: $reportPath" -Level Information
+            }
         } elseif ($format -eq 'JSON') {
             $reportPath = "$projectRoot/reports/ai-code-review-$(Get-Date -Format 'yyyyMMdd-HHmmss').json"
-            $report | Set-Content $reportPath
-            Write-ReviewLog "JSON report saved to: $reportPath" -Level Information
+            if ($PSCmdlet.ShouldProcess($reportPath, "Save JSON report")) {
+                # Ensure reports directory exists
+                $reportsDir = Split-Path $reportPath -Parent
+                if (-not (Test-Path $reportsDir) -and $PSCmdlet.ShouldProcess($reportsDir, "Create reports directory")) {
+                    New-Item -ItemType Directory -Path $reportsDir -Force | Out-Null
+                }
+                $report | Set-Content $reportPath
+                Write-ReviewLog "JSON report saved to: $reportPath" -Level Information
+            }
         } elseif ($format -eq 'HTML') {
             $reportPath = "$projectRoot/reports/ai-code-review-$(Get-Date -Format 'yyyyMMdd-HHmmss').html"
-            $report | Set-Content $reportPath
-            Write-ReviewLog "HTML report saved to: $reportPath" -Level Information
+            if ($PSCmdlet.ShouldProcess($reportPath, "Save HTML report")) {
+                # Ensure reports directory exists
+                $reportsDir = Split-Path $reportPath -Parent
+                if (-not (Test-Path $reportsDir) -and $PSCmdlet.ShouldProcess($reportsDir, "Create reports directory")) {
+                    New-Item -ItemType Directory -Path $reportsDir -Force | Out-Null
+                }
+                $report | Set-Content $reportPath
+                Write-ReviewLog "HTML report saved to: $reportPath" -Level Information
+            }
         }
     }
     

@@ -18,6 +18,7 @@
     Tags: testing, integration-tests, pester, e2e
 #>
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$Path = (Join-Path (Split-Path $PSScriptRoot -Parent) "tests/integration"),
     [string]$OutputPath,
@@ -170,7 +171,9 @@ try {
     }
 
     if (-not (Test-Path $OutputPath)) {
-        New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+        if ($PSCmdlet.ShouldProcess($OutputPath, "Create output directory")) {
+            New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+        }
     }
     
     $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
@@ -188,20 +191,33 @@ try {
 
     # Create test environment
     $testDrive = Join-Path ([System.IO.Path]::GetTempPath()) "AitherZero-IntegrationTest-$timestamp"
-    New-Item -Path $testDrive -ItemType Directory -Force | Out-Null
+    if ($PSCmdlet.ShouldProcess($testDrive, "Create test environment directory")) {
+        New-Item -Path $testDrive -ItemType Directory -Force | Out-Null
+    }
 
     # Set environment variables for tests
-    $env:AITHERZERO_TEST_MODE = "Integration"
-    $env:AITHERZERO_TEST_DRIVE = $testDrive
+    if ($PSCmdlet.ShouldProcess("Environment variables", "Set test mode variables")) {
+        $env:AITHERZERO_TEST_MODE = "Integration"
+        $env:AITHERZERO_TEST_DRIVE = $testDrive
+    }
     
     try {
-        $result = Invoke-Pester -Configuration $pesterConfig
+        if ($PSCmdlet.ShouldProcess("Integration tests in $Path", "Execute Pester tests")) {
+            $result = Invoke-Pester -Configuration $pesterConfig
+        } else {
+            Write-ScriptLog -Message "WhatIf: Would execute integration tests with Pester configuration"
+            return
+        }
     }
     finally {
         # Cleanup test environment
-        Remove-Item -Path $testDrive -Recurse -Force -ErrorAction SilentlyContinue
-        Remove-Item Env:\AITHERZERO_TEST_MODE -ErrorAction SilentlyContinue
-        Remove-Item Env:\AITHERZERO_TEST_DRIVE -ErrorAction SilentlyContinue
+        if ($PSCmdlet.ShouldProcess($testDrive, "Remove test environment")) {
+            Remove-Item -Path $testDrive -Recurse -Force -ErrorAction SilentlyContinue
+        }
+        if ($PSCmdlet.ShouldProcess("Environment variables", "Remove test mode variables")) {
+            Remove-Item Env:\AITHERZERO_TEST_MODE -ErrorAction SilentlyContinue
+            Remove-Item Env:\AITHERZERO_TEST_DRIVE -ErrorAction SilentlyContinue
+        }
     }
 
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
@@ -263,7 +279,9 @@ try {
             }
         }
     }
-    $extendedSummary | ConvertTo-Json -Depth 5 | Set-Content -Path $summaryPath
+    if ($PSCmdlet.ShouldProcess($summaryPath, "Save test summary")) {
+        $extendedSummary | ConvertTo-Json -Depth 5 | Set-Content -Path $summaryPath
+    }
     Write-ScriptLog -Message "Test summary saved to: $summaryPath"
 
     # Return result if PassThru

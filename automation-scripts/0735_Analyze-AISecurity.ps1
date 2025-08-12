@@ -19,6 +19,7 @@
     ./0735_Analyze-AISecurity.ps1 -Path ./src -ComplianceFramework SOC2
 #>
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory = $true)]
     [string]$Path,
@@ -61,7 +62,18 @@ Write-Host ""
 Write-Host "Scanning: $Path"
 Write-Host "Framework: $ComplianceFramework"
 Write-Host ""
-Start-Sleep -Seconds 1
-Write-Host "✓ Security scan complete (stub)" -ForegroundColor Green
+
+# State-changing operations that would occur in a real implementation
+if ($PSCmdlet.ShouldProcess("$Path", "Perform security scan and analysis")) {
+    Start-Sleep -Seconds 1
+    Write-Host "✓ Security scan complete (stub)" -ForegroundColor Green
+    
+    # Additional state-changing operations for remediation if requested
+    if ($GenerateRemediation -and $PSCmdlet.ShouldProcess("remediation scripts", "Generate security remediation scripts")) {
+        Write-Host "✓ Remediation scripts generated (stub)" -ForegroundColor Green
+    }
+} else {
+    Write-Host "Security scan operation cancelled." -ForegroundColor Yellow
+}
 
 exit 0

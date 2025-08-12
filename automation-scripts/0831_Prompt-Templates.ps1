@@ -10,7 +10,7 @@
 .PARAMETER Variables
     Variables to substitute in the template
 #>
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [Parameter(Mandatory = $false)]
     [string]$TemplateName = 'List',
@@ -652,8 +652,10 @@ if ($PSCmdlet.MyInvocation.InvocationName -ne '&') {
         }
         
         if ($OutputPath) {
-            $result | Set-Content $OutputPath -Encoding UTF8
-            Write-Host "✅ Template saved to: $OutputPath" -ForegroundColor Green
+            if ($PSCmdlet.ShouldProcess($OutputPath, 'Save Template')) {
+                $result | Set-Content $OutputPath -Encoding UTF8
+                Write-Host "✅ Template saved to: $OutputPath" -ForegroundColor Green
+            }
         }
         
         if ($CopyToClipboard) {

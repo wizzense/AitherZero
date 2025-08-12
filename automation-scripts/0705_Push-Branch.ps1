@@ -11,7 +11,7 @@
     Category: Git
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$Branch,
     

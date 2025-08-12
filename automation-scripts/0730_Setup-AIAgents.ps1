@@ -25,6 +25,7 @@
     ./0730_Setup-AIAgents.ps1 -Provider Claude -ValidateOnly
 #>
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [ValidateSet('Claude', 'Gemini', 'Codex', 'All')]
     [string]$Provider = 'All',
@@ -186,7 +187,9 @@ function Set-SecureAPIKey {
                 'Gemini' { 'GOOGLE_API_KEY' }
                 'Codex' { 'OPENAI_API_KEY' }
             }
-            [Environment]::SetEnvironmentVariable($envVar, $ApiKey, [EnvironmentVariableTarget]::User)
+            if ($PSCmdlet.ShouldProcess("User environment variable '$envVar'", "Set API key")) {
+                [Environment]::SetEnvironmentVariable($envVar, $ApiKey, [EnvironmentVariableTarget]::User)
+            }
             return $true
         }
     } catch {
@@ -212,15 +215,21 @@ function Initialize-RateLimiting {
     $configPath = "$projectRoot/config/ai-rate-limits.json"
     $configDir = Split-Path $configPath -Parent
     if (-not (Test-Path $configDir)) {
-        New-Item -ItemType Directory -Path $configDir -Force | Out-Null
+        if ($PSCmdlet.ShouldProcess($configDir, "Create directory")) {
+            New-Item -ItemType Directory -Path $configDir -Force | Out-Null
+        }
     }
     
     if (Test-Path $configPath) {
-        $existingConfig = Get-Content $configPath -Raw | ConvertFrom-Json -AsHashtable
-        $existingConfig[$Provider] = $rateLimits
-        $existingConfig | ConvertTo-Json -Depth 10 | Set-Content $configPath
+        if ($PSCmdlet.ShouldProcess($configPath, "Update rate limits configuration")) {
+            $existingConfig = Get-Content $configPath -Raw | ConvertFrom-Json -AsHashtable
+            $existingConfig[$Provider] = $rateLimits
+            $existingConfig | ConvertTo-Json -Depth 10 | Set-Content $configPath
+        }
     } else {
-        @{$Provider = $rateLimits} | ConvertTo-Json -Depth 10 | Set-Content $configPath
+        if ($PSCmdlet.ShouldProcess($configPath, "Create rate limits configuration")) {
+            @{$Provider = $rateLimits} | ConvertTo-Json -Depth 10 | Set-Content $configPath
+        }
     }
     
     Write-AILog "Rate limiting configured for $Provider" -Level Information
@@ -234,7 +243,9 @@ function Initialize-UsageTracking {
     $trackingDir = Split-Path $trackingPath -Parent
     
     if (-not (Test-Path $trackingDir)) {
-        New-Item -ItemType Directory -Path $trackingDir -Force | Out-Null
+        if ($PSCmdlet.ShouldProcess($trackingDir, "Create directory")) {
+            New-Item -ItemType Directory -Path $trackingDir -Force | Out-Null
+        }
     }
     
     $tracking = @{
@@ -249,11 +260,15 @@ function Initialize-UsageTracking {
     }
     
     if (Test-Path $trackingPath) {
-        $existingTracking = Get-Content $trackingPath -Raw | ConvertFrom-Json -AsHashtable
-        $existingTracking[$Provider] = $tracking
-        $existingTracking | ConvertTo-Json -Depth 10 | Set-Content $trackingPath
+        if ($PSCmdlet.ShouldProcess($trackingPath, "Update usage tracking configuration")) {
+            $existingTracking = Get-Content $trackingPath -Raw | ConvertFrom-Json -AsHashtable
+            $existingTracking[$Provider] = $tracking
+            $existingTracking | ConvertTo-Json -Depth 10 | Set-Content $trackingPath
+        }
     } else {
-        @{$Provider = $tracking} | ConvertTo-Json -Depth 10 | Set-Content $trackingPath
+        if ($PSCmdlet.ShouldProcess($trackingPath, "Create usage tracking configuration")) {
+            @{$Provider = $tracking} | ConvertTo-Json -Depth 10 | Set-Content $trackingPath
+        }
     }
     
     Write-AILog "Usage tracking initialized for $Provider" -Level Information
@@ -275,7 +290,9 @@ function Set-FallbackChain {
     }
     
     $configPath = "$projectRoot/config/ai-fallback.json"
-    $fallbackSettings | ConvertTo-Json -Depth 10 | Set-Content $configPath
+    if ($PSCmdlet.ShouldProcess($configPath, "Create fallback chain configuration")) {
+        $fallbackSettings | ConvertTo-Json -Depth 10 | Set-Content $configPath
+    }
     
     Write-AILog "Fallback chain configured: $($Providers -join ' -> ')" -Level Information
     return $true

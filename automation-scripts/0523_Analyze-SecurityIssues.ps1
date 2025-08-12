@@ -13,6 +13,7 @@
 # Description: Security issue analysis for tech debt reporting
 # Tags: reporting, tech-debt, security, analysis
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$Path = ".",
     [string]$OutputPath = "./reports/tech-debt/analysis",
@@ -32,7 +33,9 @@ Import-Module (Join-Path $script:ProjectRoot 'domains/reporting/TechDebtAnalysis
 Import-Module (Join-Path $script:ProjectRoot 'domains/utilities/Logging.psm1') -Force -ErrorAction SilentlyContinue
 
 # Initialize analysis
-Initialize-TechDebtAnalysis -ResultsPath $OutputPath
+if ($PSCmdlet.ShouldProcess($OutputPath, "Initialize tech debt analysis results directory")) {
+    Initialize-TechDebtAnalysis -ResultsPath $OutputPath
+}
 
 function Get-SecurityPatterns {
     return @{
@@ -367,7 +370,9 @@ try {
     $results = Analyze-SecurityIssues
 
     # Save results
-    $outputFile = Save-AnalysisResults -AnalysisType "SecurityIssues" -Results $results -OutputPath $OutputPath
+    if ($PSCmdlet.ShouldProcess($OutputPath, "Save security analysis results")) {
+        $outputFile = Save-AnalysisResults -AnalysisType "SecurityIssues" -Results $results -OutputPath $OutputPath
+    }
 
     # Display summary
     Write-Host "`nSecurity Analysis Summary:" -ForegroundColor Cyan

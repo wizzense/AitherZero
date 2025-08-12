@@ -11,7 +11,7 @@
     Category: GitHub
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory)]
     [string]$Title,

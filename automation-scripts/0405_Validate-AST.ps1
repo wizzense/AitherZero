@@ -18,6 +18,7 @@
     Tags: testing, ast, syntax, validation
 #>
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$Path = (Split-Path $PSScriptRoot -Parent),
     [string]$OutputPath,
@@ -447,28 +448,32 @@ try {
         }
         
         if (-not (Test-Path $OutputPath)) {
-            New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+            if ($PSCmdlet.ShouldProcess($OutputPath, "Create validation output directory")) {
+                New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+            }
         }
         
         $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
         $outputFile = Join-Path $OutputPath "AST-Validation-$timestamp.json"
         
-        @{
-            Timestamp = Get-Date
-            Summary = $summary
-            Issues = $allIssues | ForEach-Object {
-                @{
-                    File = $_.File -replace [regex]::Escape($projectRoot), '.'
-                    Line = $_.Line
-                    Column = $_.Column
-                    Type = $_.Type
-                    Severity = $_.Severity
-                    Message = $_.Message
+        if ($PSCmdlet.ShouldProcess($outputFile, "Save AST validation results")) {
+            @{
+                Timestamp = Get-Date
+                Summary = $summary
+                Issues = $allIssues | ForEach-Object {
+                    @{
+                        File = $_.File -replace [regex]::Escape($projectRoot), '.'
+                        Line = $_.Line
+                        Column = $_.Column
+                        Type = $_.Type
+                        Severity = $_.Severity
+                        Message = $_.Message
+                    }
                 }
-            }
-        } | ConvertTo-Json -Depth 5 | Set-Content -Path $outputFile
-        
-        Write-ScriptLog -Message "Validation results saved to: $outputFile"
+            } | ConvertTo-Json -Depth 5 | Set-Content -Path $outputFile
+            
+            Write-ScriptLog -Message "Validation results saved to: $outputFile"
+        }
     }
 
     # Exit based on results

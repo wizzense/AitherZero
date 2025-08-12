@@ -8,7 +8,7 @@
     Reports are generated daily at 9 AM and after test runs
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$ProjectPath = ($PSScriptRoot | Split-Path -Parent),
     [ValidateSet('Daily', 'Hourly', 'OnTestRun', 'Disable')]
@@ -62,9 +62,13 @@ try {
 $wrapperPath = Join-Path $ProjectPath ".tools/scheduled-report.ps1"
 $wrapperDir = Split-Path $wrapperPath -Parent
 if (-not (Test-Path $wrapperDir)) {
-    New-Item -ItemType Directory -Path $wrapperDir -Force | Out-Null
+    if ($PSCmdlet.ShouldProcess($wrapperDir, "Create directory")) {
+        New-Item -ItemType Directory -Path $wrapperDir -Force | Out-Null
+    }
 }
-$wrapperScript | Set-Content $wrapperPath -Force
+if ($PSCmdlet.ShouldProcess($wrapperPath, "Create wrapper script")) {
+    $wrapperScript | Set-Content $wrapperPath -Force
+}
 
 if ($IsWindows) {
     Write-ScheduleLog "Configuring Windows Task Scheduler"
@@ -84,11 +88,13 @@ if ($IsWindows) {
             return
         }
         'Disable' {
-            try {
-                Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
-                Write-ScheduleLog "Scheduled report generation disabled"
-            } catch {
-                Write-ScheduleLog "No scheduled task found to disable" -Level 'Warning'
+            if ($PSCmdlet.ShouldProcess($taskName, "Remove scheduled task")) {
+                try {
+                    Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
+                    Write-ScheduleLog "Scheduled report generation disabled"
+                } catch {
+                    Write-ScheduleLog "No scheduled task found to disable" -Level 'Warning'
+                }
             }
             return
         }
@@ -96,15 +102,17 @@ if ($IsWindows) {
     
     $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
     
-    try {
-        # Remove existing task if present
-        Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
-        
-        # Register new task
-        Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Description "Automatic report generation for AitherZero project"
-        Write-ScheduleLog "Windows scheduled task created successfully"
-    } catch {
-        Write-ScheduleLog "Failed to create Windows scheduled task: $_" -Level 'Error'
+    if ($PSCmdlet.ShouldProcess($taskName, "Create/update scheduled task")) {
+        try {
+            # Remove existing task if present
+            Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
+            
+            # Register new task
+            Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Description "Automatic report generation for AitherZero project"
+            Write-ScheduleLog "Windows scheduled task created successfully"
+        } catch {
+            Write-ScheduleLog "Failed to create Windows scheduled task: $_" -Level 'Error'
+        }
     }
     
 } else {
@@ -126,16 +134,18 @@ if ($IsWindows) {
         }
         'Disable' {
             # Remove cron job
-            try {
-                $currentCron = crontab -l 2>/dev/null | Where-Object { $_ -notmatch 'AitherZero.*scheduled-report' }
-                if ($currentCron) {
-                    $currentCron | crontab -
-                } else {
-                    crontab -r 2>/dev/null
+            if ($PSCmdlet.ShouldProcess("cron job", "Remove scheduled cron job")) {
+                try {
+                    $currentCron = crontab -l 2>/dev/null | Where-Object { $_ -notmatch 'AitherZero.*scheduled-report' }
+                    if ($currentCron) {
+                        $currentCron | crontab -
+                    } else {
+                        crontab -r 2>/dev/null
+                    }
+                    Write-ScheduleLog "Cron job removed successfully"
+                } catch {
+                    Write-ScheduleLog "No cron job found to remove" -Level 'Warning'
                 }
-                Write-ScheduleLog "Cron job removed successfully"
-            } catch {
-                Write-ScheduleLog "No cron job found to remove" -Level 'Warning'
             }
             return
         }
@@ -143,20 +153,22 @@ if ($IsWindows) {
     
     $cronEntry = "$cronTime cd $ProjectPath && /usr/bin/pwsh $wrapperPath >> $ProjectPath/logs/cron-reports.log 2>&1 # AitherZero scheduled-report"
     
-    try {
-        # Get current crontab
-        $currentCron = @(crontab -l 2>/dev/null | Where-Object { $_ -notmatch 'AitherZero.*scheduled-report' })
-        
-        # Add new entry
-        $newCron = $currentCron + $cronEntry
-        
-        # Set new crontab
-        $newCron | crontab -
-        
-        Write-ScheduleLog "Cron job configured successfully: $cronTime"
-        Write-ScheduleLog "View with: crontab -l"
-    } catch {
-        Write-ScheduleLog "Failed to configure cron job: $_" -Level 'Error'
+    if ($PSCmdlet.ShouldProcess("cron job", "Create/update scheduled cron job")) {
+        try {
+            # Get current crontab
+            $currentCron = @(crontab -l 2>/dev/null | Where-Object { $_ -notmatch 'AitherZero.*scheduled-report' })
+            
+            # Add new entry
+            $newCron = $currentCron + $cronEntry
+            
+            # Set new crontab
+            $newCron | crontab -
+            
+            Write-ScheduleLog "Cron job configured successfully: $cronTime"
+            Write-ScheduleLog "View with: crontab -l"
+        } catch {
+            Write-ScheduleLog "Failed to configure cron job: $_" -Level 'Error'
+        }
     }
 }
 
@@ -179,8 +191,10 @@ if ($Schedule -eq 'OnTestRun' -or $Schedule -eq 'Daily') {
                 retentionDays = 7
             }
             
-            $config | ConvertTo-Json -Depth 10 | Set-Content $hookConfig
-            Write-ScheduleLog "Hook configuration updated for automatic report generation"
+            if ($PSCmdlet.ShouldProcess($hookConfig, "Update hook configuration")) {
+                $config | ConvertTo-Json -Depth 10 | Set-Content $hookConfig
+                Write-ScheduleLog "Hook configuration updated for automatic report generation"
+            }
         } catch {
             Write-ScheduleLog "Failed to update hook configuration: $_" -Level 'Warning'
         }

@@ -5,7 +5,7 @@
     Display comprehensive project dashboard with logs, tests, and metrics
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$ProjectPath = ($PSScriptRoot | Split-Path -Parent),
     [switch]$ShowLogs,
@@ -131,8 +131,10 @@ function Show-RecentLogs {
         
         # Initialize logging to create the file
         if (Get-Command Initialize-Logging -ErrorAction SilentlyContinue) {
-            Initialize-Logging
-            Write-CustomLog -Message "Dashboard initialized logging system" -Level Information
+            if ($PSCmdlet.ShouldProcess("logging system", "Initialize logging")) {
+                Initialize-Logging
+                Write-CustomLog -Message "Dashboard initialized logging system" -Level Information
+            }
         }
     }
     Write-Host ""

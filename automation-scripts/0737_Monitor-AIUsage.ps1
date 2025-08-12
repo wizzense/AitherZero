@@ -19,6 +19,7 @@
     ./0737_Monitor-AIUsage.ps1 -ReportType Cost -Period Daily
 #>
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [ValidateSet('Usage', 'Cost', 'RateLimits', 'All')]
     [string]$ReportType = 'All',
@@ -70,5 +71,18 @@ Write-Host "  Codex: 890 requests, 34,567 tokens, `$8.90" -ForegroundColor White
 Write-Host ""
 Write-Host "Total Cost: `$26.91" -ForegroundColor Yellow
 Write-Host "Budget Usage: 27% of daily limit" -ForegroundColor Green
+Write-Host ""
+
+# State-changing operations for alert sending and report generation
+if ($SendAlert -and $PSCmdlet.ShouldProcess("budget alerts", "Send budget alert notifications")) {
+    Write-Host "✓ Budget alerts sent (stub)" -ForegroundColor Green
+}
+
+# Report file generation (state-changing operation)
+if ($PSCmdlet.ShouldProcess("usage report files", "Generate and save $ReportType usage reports for $Period period")) {
+    Write-Host "✓ Usage reports generated and saved (stub)" -ForegroundColor Green
+} else {
+    Write-Host "Report generation operation cancelled." -ForegroundColor Yellow
+}
 
 exit 0

@@ -11,7 +11,7 @@
     Category: Git
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory)]
     [ValidateSet('feature', 'fix', 'docs', 'refactor', 'test', 'chore')]
@@ -139,8 +139,10 @@ if ($existingBranch -or $remoteBranch) {
             }
             
             Write-Host "Creating new branch: $branchName" -ForegroundColor Cyan
-            $result = New-GitBranch -Name $branchName -Checkout:$doCheckout -Push:$Push
-            Write-Host "✓ Created branch: $branchName" -ForegroundColor Green
+            if ($PSCmdlet.ShouldProcess($branchName, "Create new Git branch")) {
+                $result = New-GitBranch -Name $branchName -Checkout:$doCheckout -Push:$Push
+                Write-Host "✓ Created branch: $branchName" -ForegroundColor Green
+            }
         }
         'recreate' {
             Write-Host "Deleting existing branch..." -ForegroundColor Yellow
@@ -160,8 +162,10 @@ if ($existingBranch -or $remoteBranch) {
             }
             
             # Create fresh branch
-            $result = New-GitBranch -Name $branchName -Checkout:$doCheckout -Push:$Push
-            Write-Host "✓ Recreated branch: $branchName" -ForegroundColor Green
+            if ($PSCmdlet.ShouldProcess($branchName, "Recreate Git branch")) {
+                $result = New-GitBranch -Name $branchName -Checkout:$doCheckout -Push:$Push
+                Write-Host "✓ Recreated branch: $branchName" -ForegroundColor Green
+            }
         }
         'abort' {
             Write-Host "Branch creation aborted" -ForegroundColor Yellow
@@ -176,8 +180,10 @@ if ($existingBranch -or $remoteBranch) {
 } else {
     # Branch doesn't exist, create it normally
     try {
-        $result = New-GitBranch -Name $branchName -Checkout:$doCheckout -Push:$Push
-        Write-Host "✓ Created branch: $branchName" -ForegroundColor Green
+        if ($PSCmdlet.ShouldProcess($branchName, "Create Git branch")) {
+            $result = New-GitBranch -Name $branchName -Checkout:$doCheckout -Push:$Push
+            Write-Host "✓ Created branch: $branchName" -ForegroundColor Green
+        }
     } catch {
         Write-Error "Failed to create branch: $_"
         exit 1
@@ -224,10 +230,12 @@ TODO: Define acceptance criteria
     }
     
     try {
-        $issue = New-GitHubIssue -Title $issueTitle -Body $issueBody -Labels $defaultLabels
-        $issueNumber = $issue.Number
-        Write-Host "✓ Created issue #$issueNumber" -ForegroundColor Green
-        Write-Host "  URL: $($issue.Url)" -ForegroundColor Gray
+        if ($PSCmdlet.ShouldProcess("GitHub issue", "Create issue for $issueTitle")) {
+            $issue = New-GitHubIssue -Title $issueTitle -Body $issueBody -Labels $defaultLabels
+            $issueNumber = $issue.Number
+            Write-Host "✓ Created issue #$issueNumber" -ForegroundColor Green
+            Write-Host "  URL: $($issue.Url)" -ForegroundColor Gray
+        }
     } catch {
         Write-Warning "Failed to create issue: $_"
     }
@@ -251,10 +259,11 @@ TODO: Add implementation notes
 TODO: Describe testing approach
 "@
     
-    $readmeContent | Set-Content $readmePath
+    if ($PSCmdlet.ShouldProcess($readmePath, "Create initial README and commit")) {
+        $readmeContent | Set-Content $readmePath
 
-    # Stage and commit
-    git add $readmePath
+        # Stage and commit
+        git add $readmePath
     
     # Map branch type to commit type
     $commitType = switch ($Type) {
@@ -272,12 +281,13 @@ TODO: Describe testing approach
         $commitMessage += "`n`nRefs #$issueNumber"
     }
     
-    Invoke-GitCommit -Message $commitMessage -Type $commitType -Scope "init"
-    Write-Host "✓ Created initial commit" -ForegroundColor Green
+        Invoke-GitCommit -Message $commitMessage -Type $commitType -Scope "init"
+        Write-Host "✓ Created initial commit" -ForegroundColor Green
 
-    if ($Push) {
-        Sync-GitRepository -Operation Push
-        Write-Host "✓ Pushed branch to remote" -ForegroundColor Green
+        if ($Push) {
+            Sync-GitRepository -Operation Push
+            Write-Host "✓ Pushed branch to remote" -ForegroundColor Green
+        }
     }
 }
 
