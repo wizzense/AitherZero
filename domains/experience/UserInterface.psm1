@@ -233,9 +233,9 @@ function Initialize-AitherUI {
         $script:UIState.Theme = 'Custom'
     }
 
-    # Clear screen if configured
-    if ($script:UIState.ClearScreenOnStart) {
-        Clear-Host
+    # Clear screen if configured (skip in CI/non-interactive environments)
+    if ($script:UIState.ClearScreenOnStart -and -not $env:CI -and -not $env:GITHUB_ACTIONS) {
+        try { Clear-Host } catch { }
     }
 
     # Show welcome message if configured
@@ -811,7 +811,7 @@ function Get-TerminalWidth {
 
     # Calculate and cache
     try {
-        if ($Host.UI.RawUI.WindowSize.Width) {
+        if ($Host.UI.RawUI -and $Host.UI.RawUI.WindowSize -and $Host.UI.RawUI.WindowSize.Width) {
             $script:UIState.TerminalWidth = $Host.UI.RawUI.WindowSize.Width
             return $script:UIState.TerminalWidth
         }
@@ -893,7 +893,9 @@ function Show-UIWizard {
     while ($wizardState.CurrentStep -lt $Steps.Count -and -not $wizardState.Cancelled) {
         $step = $Steps[$wizardState.CurrentStep]
         
-        Clear-Host
+        if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
+            try { Clear-Host } catch { }
+        }
         Show-UIBorder -Title "$Title - Step $($wizardState.CurrentStep + 1) of $($Steps.Count): $($step.Name)" -Style 'Double'
         
         # Show progress

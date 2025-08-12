@@ -753,7 +753,10 @@ function Remove-AitherZero {
 
 # Main execution
 try {
-    Clear-Host
+    # Only clear host in interactive sessions
+    if (-not $NonInteractive -and -not $env:CI -and $host.UI.RawUI) {
+        try { Clear-Host } catch { }
+    }
     Write-BootstrapLog @"
     _    _ _   _               ______               
    / \  (_) |_| |__   ___ _ _|__  /___ _ __ ___  

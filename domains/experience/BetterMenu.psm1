@@ -92,7 +92,7 @@ function Show-BetterMenu {
     # Calculate page size based on terminal height
     $terminalHeight = 25  # Default
     try {
-        if ($host.UI.RawUI.WindowSize.Height) {
+        if ($host.UI.RawUI -and $host.UI.RawUI.WindowSize -and $host.UI.RawUI.WindowSize.Height) {
             $terminalHeight = $host.UI.RawUI.WindowSize.Height
         }
     } catch {}
@@ -110,11 +110,16 @@ function Show-BetterMenu {
     while ($true) {
         # Only clear screen on first draw or when explicitly needed
         if ($firstDraw) {
-            Clear-Host
+            # Skip Clear-Host in CI/non-interactive environments
+            if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
+                try { Clear-Host } catch { }
+            }
             $firstDraw = $false
         } else {
-            # Move cursor to top for redraw without clearing
-            [Console]::SetCursorPosition(0, 0)
+            # Move cursor to top for redraw without clearing (skip in CI)
+            if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
+                try { [Console]::SetCursorPosition(0, 0) } catch { }
+            }
         }
         
         # Draw title

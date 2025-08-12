@@ -144,7 +144,9 @@ function Show-Banner {
 
 # Show help information
 function Show-Help {
-    Clear-Host
+    if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
+        try { Clear-Host } catch { }
+    }
     Show-UIBorder -Title "AitherZero Help" -Style 'Double'
     
     Write-UIText "Quick Commands:" -Color 'Primary'
@@ -246,7 +248,9 @@ function Show-InteractiveMenu {
     # Interactive menus are now always enabled unless in non-interactive mode
     
     # Show banner only once at the start
-    Clear-Host
+    if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
+        try { Clear-Host } catch { }
+    }
     Show-Banner
     
     while ($true) {
@@ -802,7 +806,9 @@ function Show-AdvancedMenu {
         }
         
             'System Information' {
-                Clear-Host
+                if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
+                    try { Clear-Host } catch { }
+                }
                 Show-UIBorder -Title "System Information" -Style 'Double'
                 
                 $sysInfo = @(
