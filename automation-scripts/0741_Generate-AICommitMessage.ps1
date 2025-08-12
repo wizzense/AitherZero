@@ -3,7 +3,7 @@
 # Dependencies: Git
 # Description: Generate AI-enhanced commit messages from staged changes
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter()]
     [ValidateSet('feat', 'fix', 'docs', 'style', 'refactor', 'test', 'chore', 'perf', 'ci', 'build', 'revert')]
@@ -356,39 +356,43 @@ try {
     
     # Copy to clipboard if requested
     if ($CopyToClipboard) {
-        if ($IsWindows) {
-            $commitMessage | Set-Clipboard
-            Write-Host "`n✅ Commit message copied to clipboard!" -ForegroundColor Green
-        } elseif ($IsMacOS) {
-            $commitMessage | pbcopy
-            Write-Host "`n✅ Commit message copied to clipboard!" -ForegroundColor Green
-        } elseif ($IsLinux) {
-            if (Get-Command xclip -ErrorAction SilentlyContinue) {
-                $commitMessage | xclip -selection clipboard
+        if ($PSCmdlet.ShouldProcess("clipboard", "Copy commit message")) {
+            if ($IsWindows) {
+                $commitMessage | Set-Clipboard
                 Write-Host "`n✅ Commit message copied to clipboard!" -ForegroundColor Green
-            } else {
-                Write-Warning "xclip not installed - cannot copy to clipboard"
+            } elseif ($IsMacOS) {
+                $commitMessage | pbcopy
+                Write-Host "`n✅ Commit message copied to clipboard!" -ForegroundColor Green
+            } elseif ($IsLinux) {
+                if (Get-Command xclip -ErrorAction SilentlyContinue) {
+                    $commitMessage | xclip -selection clipboard
+                    Write-Host "`n✅ Commit message copied to clipboard!" -ForegroundColor Green
+                } else {
+                    Write-Warning "xclip not installed - cannot copy to clipboard"
+                }
             }
         }
     }
     
     # Apply directly if requested
     if ($ApplyDirectly) {
-        Write-Host "`n🚀 Creating commit..." -ForegroundColor Yellow
-        
-        $tempFile = [System.IO.Path]::GetTempFileName()
-        $commitMessage | Set-Content -Path $tempFile -Encoding UTF8
-        
-        git commit -F $tempFile
-        Remove-Item $tempFile -Force
-        
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "✅ Commit created successfully!" -ForegroundColor Green
+        if ($PSCmdlet.ShouldProcess("repository", "Create git commit with generated message")) {
+            Write-Host "`n🚀 Creating commit..." -ForegroundColor Yellow
             
-            # Show the commit
-            git log -1 --oneline
-        } else {
-            Write-Error "Failed to create commit"
+            $tempFile = [System.IO.Path]::GetTempFileName()
+            $commitMessage | Set-Content -Path $tempFile -Encoding UTF8
+            
+            git commit -F $tempFile
+            Remove-Item $tempFile -Force
+            
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "✅ Commit created successfully!" -ForegroundColor Green
+                
+                # Show the commit
+                git log -1 --oneline
+            } else {
+                Write-Error "Failed to create commit"
+            }
         }
     } else {
         Write-Host "`nTo use this message:" -ForegroundColor Cyan

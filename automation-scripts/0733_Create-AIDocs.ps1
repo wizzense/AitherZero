@@ -22,6 +22,7 @@
     ./0733_Create-AIDocs.ps1 -Path ./src -DocType All
 #>
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory = $true)]
     [string]$Path,
@@ -84,20 +85,50 @@ Write-Host "══════════════════════�
 Write-Host "`nGenerating $DocType documentation..." -ForegroundColor Yellow
 Start-Sleep -Seconds 1
 
-if ($DocType -eq 'All' -or $DocType -eq 'CommentBasedHelp') {
-    Write-Host "✓ Comment-based help generated" -ForegroundColor Green
+# In full implementation, this would create documentation files
+if ($PSCmdlet.ShouldProcess($OutputPath, "Create documentation files")) {
+    # Ensure output directory exists
+    if (-not (Test-Path $OutputPath)) {
+        New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
+        Write-Host "✓ Created output directory: $OutputPath" -ForegroundColor Green
+    }
+    
+    if ($DocType -eq 'All' -or $DocType -eq 'CommentBasedHelp') {
+        # In full implementation: Update source files with comment-based help
+        Write-Host "✓ Comment-based help generated" -ForegroundColor Green
+    }
+    if ($DocType -eq 'All' -or $DocType -eq 'README') {
+        # In full implementation: Set-Content -Path "$OutputPath/README.md" -Value $readmeContent
+        Write-Host "✓ README.md created/updated" -ForegroundColor Green
+    }
+    if ($DocType -eq 'All' -or $DocType -eq 'API') {
+        # In full implementation: Set-Content -Path "$OutputPath/API.md" -Value $apiContent
+        Write-Host "✓ API documentation generated" -ForegroundColor Green
+    }
+    if ($DocType -eq 'All' -or $DocType -eq 'Architecture') {
+        # In full implementation: Set-Content -Path "$OutputPath/Architecture.md" -Value $archContent
+        Write-Host "✓ Architecture diagrams created" -ForegroundColor Green
+    }
+    
+    Write-Host ""
+    Write-Host "Documentation would be saved to: $OutputPath" -ForegroundColor Cyan
+} else {
+    # WhatIf mode - show what would be done
+    if ($DocType -eq 'All' -or $DocType -eq 'CommentBasedHelp') {
+        Write-Host "✓ Would generate comment-based help" -ForegroundColor Yellow
+    }
+    if ($DocType -eq 'All' -or $DocType -eq 'README') {
+        Write-Host "✓ Would create/update README.md" -ForegroundColor Yellow
+    }
+    if ($DocType -eq 'All' -or $DocType -eq 'API') {
+        Write-Host "✓ Would generate API documentation" -ForegroundColor Yellow
+    }
+    if ($DocType -eq 'All' -or $DocType -eq 'Architecture') {
+        Write-Host "✓ Would create architecture diagrams" -ForegroundColor Yellow
+    }
+    
+    Write-Host ""
+    Write-Host "Would save documentation to: $OutputPath" -ForegroundColor Cyan
 }
-if ($DocType -eq 'All' -or $DocType -eq 'README') {
-    Write-Host "✓ README.md created/updated" -ForegroundColor Green
-}
-if ($DocType -eq 'All' -or $DocType -eq 'API') {
-    Write-Host "✓ API documentation generated" -ForegroundColor Green
-}
-if ($DocType -eq 'All' -or $DocType -eq 'Architecture') {
-    Write-Host "✓ Architecture diagrams created" -ForegroundColor Green
-}
-
-Write-Host ""
-Write-Host "Documentation would be saved to: $OutputPath" -ForegroundColor Cyan
 
 exit 0

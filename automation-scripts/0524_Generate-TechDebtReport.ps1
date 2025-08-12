@@ -13,6 +13,7 @@
 # Description: Tech debt report generation from modular analysis results
 # Tags: reporting, tech-debt, aggregation
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$AnalysisPath = "./reports/tech-debt/analysis",
     [string]$OutputPath = "./reports/tech-debt",
@@ -34,7 +35,9 @@ Import-Module (Join-Path $script:ProjectRoot 'domains/utilities/Logging.psm1') -
 Import-Module (Join-Path $script:ProjectRoot 'domains/reporting/ReportingEngine.psm1') -Force -ErrorAction SilentlyContinue
 
 # Initialize
-Initialize-TechDebtAnalysis -ResultsPath $AnalysisPath
+if ($PSCmdlet.ShouldProcess($AnalysisPath, "Initialize tech debt analysis results directory")) {
+    Initialize-TechDebtAnalysis -ResultsPath $AnalysisPath
+}
 
 function Invoke-AnalysisIfNeeded {
     Write-AnalysisLog "Checking for existing analysis results..." -Component "TechDebtReport"
@@ -71,8 +74,10 @@ function Invoke-AnalysisIfNeeded {
                 $scriptPath = Join-Path $PSScriptRoot $scriptName
                 
                 if (Test-Path $scriptPath) {
-                    Write-AnalysisLog "Running $analysis analysis..." -Component "TechDebtReport"
-                    & $scriptPath -OutputPath $AnalysisPath
+                    if ($PSCmdlet.ShouldProcess($analysis, "Run missing analysis component")) {
+                        Write-AnalysisLog "Running $analysis analysis..." -Component "TechDebtReport"
+                        & $scriptPath -OutputPath $AnalysisPath
+                    }
                 } else {
                     Write-AnalysisLog "Script not found: $scriptPath" -Component "TechDebtReport" -Level Error
                 }
@@ -775,7 +780,9 @@ try {
 
     # Ensure output directory exists
     if (-not (Test-Path $OutputPath)) {
-        New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
+        if ($PSCmdlet.ShouldProcess($OutputPath, "Create output directory")) {
+            New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
+        }
     }
     
     $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
@@ -787,27 +794,33 @@ try {
         switch ($fmt.ToUpper()) {
             'HTML' {
                 $htmlFile = Join-Path $OutputPath "TechDebtReport-$timestamp.html"
-                Export-HTMLReport -Results $mergedResults -Summary $summary -OutputFile $htmlFile
-                Write-AnalysisLog "HTML report saved: $htmlFile" -Component "TechDebtReport" -Level Success
-                
-                if ($OpenReport -and $IsWindows) {
-                    Start-Process $htmlFile
+                if ($PSCmdlet.ShouldProcess($htmlFile, "Generate HTML tech debt report")) {
+                    Export-HTMLReport -Results $mergedResults -Summary $summary -OutputFile $htmlFile
+                    Write-AnalysisLog "HTML report saved: $htmlFile" -Component "TechDebtReport" -Level Success
+                    
+                    if ($OpenReport -and $IsWindows) {
+                        Start-Process $htmlFile
+                    }
                 }
             }
             
             'MARKDOWN' {
                 $mdFile = Join-Path $OutputPath "TechDebtReport-$timestamp.md"
-                Export-MarkdownReport -Results $mergedResults -Summary $summary -OutputFile $mdFile
-                Write-AnalysisLog "Markdown report saved: $mdFile" -Component "TechDebtReport" -Level Success
+                if ($PSCmdlet.ShouldProcess($mdFile, "Generate Markdown tech debt report")) {
+                    Export-MarkdownReport -Results $mergedResults -Summary $summary -OutputFile $mdFile
+                    Write-AnalysisLog "Markdown report saved: $mdFile" -Component "TechDebtReport" -Level Success
+                }
             }
             
             'JSON' {
                 $jsonFile = Join-Path $OutputPath "TechDebtReport-$timestamp.json"
-                @{
-                    Summary = $summary
-                    Results = $mergedResults
-                } | ConvertTo-Json -Depth 10 | Set-Content -Path $jsonFile -Encoding UTF8
-                Write-AnalysisLog "JSON report saved: $jsonFile" -Component "TechDebtReport" -Level Success
+                if ($PSCmdlet.ShouldProcess($jsonFile, "Generate JSON tech debt report")) {
+                    @{
+                        Summary = $summary
+                        Results = $mergedResults
+                    } | ConvertTo-Json -Depth 10 | Set-Content -Path $jsonFile -Encoding UTF8
+                    Write-AnalysisLog "JSON report saved: $jsonFile" -Component "TechDebtReport" -Level Success
+                }
             }
         }
     }

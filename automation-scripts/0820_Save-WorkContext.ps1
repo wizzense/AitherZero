@@ -12,7 +12,7 @@
 .PARAMETER CompressContext
     Compress context for token efficiency
 #>
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [Parameter(Mandatory = $false)]
     [string]$OutputPath = "./.claude/session-context.json",
@@ -44,7 +44,9 @@ if (Test-Path $modulePath) {
 # Ensure output directory exists
 $outputDir = Split-Path $OutputPath -Parent
 if ($outputDir -and -not (Test-Path $outputDir)) {
-    New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+    if ($PSCmdlet.ShouldProcess($outputDir, 'Create Directory')) {
+        New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+    }
 }
 
 # Helper function to get git status
@@ -72,7 +74,11 @@ function Get-GitContext {
             $file = $Matches[2]
             
             if (Test-Path $file) {
-                $lineCount = (Get-Content $file | Measure-Object -Line).Lines
+                if (Test-Path $file -PathType Leaf) {
+                    $lineCount = (Get-Content $file | Measure-Object -Line).Lines
+                } else {
+                    $lineCount = 0
+                }
                 $modifiedFiles[$file] = @{
                     Status = $status
                     Lines = $lineCount
@@ -280,7 +286,9 @@ try {
     }
     
     # Save context to file
-    $context | ConvertTo-Json -Depth 10 | Set-Content $OutputPath -Encoding UTF8
+    if ($PSCmdlet.ShouldProcess($OutputPath, 'Save Context File')) {
+        $context | ConvertTo-Json -Depth 10 | Set-Content $OutputPath -Encoding UTF8
+    }
     
     # Calculate context size
     $contextSize = (Get-Item $OutputPath).Length
@@ -336,7 +344,9 @@ try {
         }
     )
     
-    $mdContent -join "`n" | Set-Content $mdPath -Encoding UTF8
+    if ($PSCmdlet.ShouldProcess($mdPath, 'Save Markdown File')) {
+        $mdContent -join "`n" | Set-Content $mdPath -Encoding UTF8
+    }
     Write-Host "   Markdown version: $mdPath" -ForegroundColor Gray
     
     exit 0

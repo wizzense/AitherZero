@@ -11,7 +11,7 @@
     Category: Git
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory, Position = 0)]
     [ValidateSet('feat', 'fix', 'docs', 'style', 'refactor', 'test', 'chore', 'perf', 'ci', 'build', 'revert')]
@@ -154,10 +154,15 @@ try {
         $commitParams.CoAuthors = $CoAuthors
     }
     
-    $result = Invoke-GitCommit @commitParams
-    
-    Write-Host "✓ Created commit: $($result.Hash.Substring(0, 7))" -ForegroundColor Green
-    Write-Host "  $($result.Message)" -ForegroundColor Gray
+    if ($PSCmdlet.ShouldProcess("Git repository", "Create commit: $commitMessage")) {
+        $result = Invoke-GitCommit @commitParams
+        
+        Write-Host "✓ Created commit: $($result.Hash.Substring(0, 7))" -ForegroundColor Green
+        Write-Host "  $($result.Message)" -ForegroundColor Gray
+    } else {
+        Write-Host "WhatIf: Would create commit: $commitMessage" -ForegroundColor Yellow
+        return
+    }
     
 } catch {
     Write-Error "Failed to create commit: $_"
@@ -168,8 +173,10 @@ try {
 if ($Push) {
     Write-Host "Pushing to remote..." -ForegroundColor Yellow
     try {
-        Sync-GitRepository -Operation Push
-        Write-Host "✓ Pushed to remote" -ForegroundColor Green
+        if ($PSCmdlet.ShouldProcess("Remote repository", "Push commit")) {
+            Sync-GitRepository -Operation Push
+            Write-Host "✓ Pushed to remote" -ForegroundColor Green
+        }
     } catch {
         Write-Warning "Failed to push: $_"
         Write-Host "You can push manually with: git push" -ForegroundColor Yellow

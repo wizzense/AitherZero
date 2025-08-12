@@ -11,7 +11,7 @@
     Category: Git
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Position = 0, ValueFromRemainingArguments)]
     [string[]]$Patterns,

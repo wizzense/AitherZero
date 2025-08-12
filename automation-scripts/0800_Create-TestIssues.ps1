@@ -12,7 +12,7 @@
     Dependencies: 0402, 0404
 #>
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [ValidateSet('Pester', 'PSScriptAnalyzer', 'All')]
     [string]$Source = 'All',

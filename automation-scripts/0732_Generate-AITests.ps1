@@ -22,6 +22,7 @@
     ./0732_Generate-AITests.ps1 -Path ./src/module.psm1 -TestType Unit
 #>
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory = $true)]
     [string]$Path,
@@ -89,6 +90,20 @@ Write-Host "✓ Test structure generated" -ForegroundColor Green
 Write-Host "✓ Mocks created" -ForegroundColor Green
 Write-Host "✓ Edge cases identified" -ForegroundColor Green
 Write-Host ""
-Write-Host "Tests would be saved to: $OutputPath" -ForegroundColor Cyan
+
+# In full implementation, this would create test files
+if ($PSCmdlet.ShouldProcess($OutputPath, "Create test files")) {
+    # Ensure output directory exists
+    if (-not (Test-Path $OutputPath)) {
+        New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
+        Write-Host "✓ Created output directory: $OutputPath" -ForegroundColor Green
+    }
+    
+    # In full implementation, generated test files would be written here
+    # Example: Set-Content -Path "$OutputPath/TestFile.Tests.ps1" -Value $generatedTestContent
+    Write-Host "Tests would be saved to: $OutputPath" -ForegroundColor Cyan
+} else {
+    Write-Host "Would save tests to: $OutputPath" -ForegroundColor Cyan
+}
 
 exit 0

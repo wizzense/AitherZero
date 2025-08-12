@@ -14,7 +14,7 @@
 .PARAMETER OutputPath
     Path to save generated prompt
 #>
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
     [string]$InputPath,
@@ -701,7 +701,9 @@ try {
         if ($response -eq 'Y') {
             # Open in default editor
             $tempFile = [System.IO.Path]::GetTempFileName() + ".md"
-            $generatedPrompt | Set-Content $tempFile
+            if ($PSCmdlet.ShouldProcess($tempFile, 'Create Temporary File')) {
+                $generatedPrompt | Set-Content $tempFile
+            }
             
             if ($IsWindows) {
                 Start-Process notepad.exe -ArgumentList $tempFile -Wait
@@ -717,10 +719,14 @@ try {
     # Save prompt
     $outputDir = Split-Path $OutputPath -Parent
     if ($outputDir -and -not (Test-Path $outputDir)) {
-        New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+        if ($PSCmdlet.ShouldProcess($outputDir, 'Create Directory')) {
+            New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+        }
     }
     
-    $generatedPrompt | Set-Content $OutputPath -Encoding UTF8
+    if ($PSCmdlet.ShouldProcess($OutputPath, 'Save Generated Prompt')) {
+        $generatedPrompt | Set-Content $OutputPath -Encoding UTF8
+    }
     
     # Copy to clipboard if requested
     if ($CopyToClipboard) {

@@ -18,6 +18,7 @@
     Tags: testing, all-tests, pester, coverage
 #>
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$Path = (Join-Path (Split-Path $PSScriptRoot -Parent) "tests"),
     [string]$OutputPath,
@@ -164,7 +165,9 @@ try {
     }
 
     if (-not (Test-Path $OutputPath)) {
-        New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+        if ($PSCmdlet.ShouldProcess($OutputPath, "Create test results directory")) {
+            New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+        }
     }
     
     $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
@@ -191,7 +194,18 @@ try {
     }
     
     Write-ScriptLog -Message "Executing all tests..."
-    $result = Invoke-Pester -Configuration $pesterConfig
+    if ($PSCmdlet.ShouldProcess("All tests", "Execute test suite")) {
+        $result = Invoke-Pester -Configuration $pesterConfig
+    } else {
+        Write-ScriptLog -Message "WhatIf: Would execute all tests"
+        return @{
+            TotalCount = 0
+            PassedCount = 0
+            FailedCount = 0
+            SkippedCount = 0
+            Duration = [TimeSpan]::Zero
+        }
+    }
 
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
         $duration = Stop-PerformanceTrace -Name "AllTests"
@@ -258,8 +272,10 @@ try {
 
     # Save result summary
     $summaryPath = Join-Path $OutputPath "AllTests-Summary-$timestamp.json"
-    $testSummary | ConvertTo-Json | Set-Content -Path $summaryPath
-    Write-ScriptLog -Message "Test summary saved to: $summaryPath"
+    if ($PSCmdlet.ShouldProcess($summaryPath, "Save test summary")) {
+        $testSummary | ConvertTo-Json | Set-Content -Path $summaryPath
+        Write-ScriptLog -Message "Test summary saved to: $summaryPath"
+    }
 
     # Return result if PassThru
     if ($PassThru) {

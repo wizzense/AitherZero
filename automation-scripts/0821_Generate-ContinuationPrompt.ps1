@@ -12,7 +12,7 @@
 .PARAMETER MaxTokens
     Maximum tokens for the prompt (for compression)
 #>
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [Parameter(Mandatory = $false)]
     [string]$ContextPath = "./.claude/session-context.json",
@@ -350,10 +350,14 @@ try {
     # Save prompt
     $outputDir = Split-Path $OutputPath -Parent
     if ($outputDir -and -not (Test-Path $outputDir)) {
-        New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+        if ($PSCmdlet.ShouldProcess($outputDir, 'Create Directory')) {
+            New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+        }
     }
     
-    $promptText | Set-Content $OutputPath -Encoding UTF8
+    if ($PSCmdlet.ShouldProcess($OutputPath, 'Save Continuation Prompt')) {
+        $promptText | Set-Content $OutputPath -Encoding UTF8
+    }
     
     Write-Host "✅ Continuation prompt generated!" -ForegroundColor Green
     Write-Host "   File: $OutputPath" -ForegroundColor Gray

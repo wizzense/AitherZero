@@ -3,7 +3,7 @@
 # Dependencies: LogViewer
 # Description: View and manage AitherZero logs
 
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter()]
     [hashtable]$Configuration,
@@ -96,8 +96,10 @@ try {
                 
                 Write-Host "`nℹ️  Run in interactive mode to access full dashboard features" -ForegroundColor DarkGray
             } else {
-                Write-Host "`n🎯 Starting Log Dashboard..." -ForegroundColor Cyan
-                Show-LogDashboard
+                if ($PSCmdlet.ShouldProcess("Interactive log dashboard", "Start interactive log viewing dashboard")) {
+                    Write-Host "`n🎯 Starting Log Dashboard..." -ForegroundColor Cyan
+                    Show-LogDashboard
+                }
             }
         }
         

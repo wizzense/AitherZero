@@ -12,7 +12,7 @@
 .PARAMETER AutoCreate
     Automatically create issue without prompting
 #>
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory = $false)]
     [string]$TestResults = "./tests/results/latest-test-results.json",

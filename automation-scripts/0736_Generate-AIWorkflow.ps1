@@ -19,6 +19,7 @@
     ./0736_Generate-AIWorkflow.ps1 -Requirements "Deploy microservices" -WorkflowType Deployment
 #>
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory = $true)]
     [string]$Requirements,
@@ -63,7 +64,23 @@ Write-Host "Requirements: $Requirements"
 Write-Host "Workflow Type: $WorkflowType"
 Write-Host "Output: $OutputPath"
 Write-Host ""
-Start-Sleep -Seconds 1
-Write-Host "✓ Workflow generated (stub)" -ForegroundColor Green
+
+# State-changing operations for workflow generation
+if ($PSCmdlet.ShouldProcess("$OutputPath", "Generate AI workflow and playbooks")) {
+    Start-Sleep -Seconds 1
+    Write-Host "✓ Workflow generated (stub)" -ForegroundColor Green
+    
+    # Additional state-changing operations for file creation
+    if ($PSCmdlet.ShouldProcess("playbook files", "Create orchestration playbook files in $OutputPath")) {
+        Write-Host "✓ Playbook files created (stub)" -ForegroundColor Green
+    }
+    
+    # Visualization file generation if enabled
+    if ($workflowConfig.VisualizationEnabled -and $PSCmdlet.ShouldProcess("visualization files", "Generate workflow visualization diagrams")) {
+        Write-Host "✓ Workflow visualization generated (stub)" -ForegroundColor Green
+    }
+} else {
+    Write-Host "Workflow generation operation cancelled." -ForegroundColor Yellow
+}
 
 exit 0

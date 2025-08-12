@@ -13,6 +13,7 @@
 # Description: Code quality analysis for tech debt reporting
 # Tags: reporting, tech-debt, code-quality, analysis
 
+[CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$Path = ".",
     [string]$OutputPath = "./reports/tech-debt/analysis",
@@ -33,7 +34,9 @@ Import-Module (Join-Path $script:ProjectRoot 'domains/reporting/TechDebtAnalysis
 Import-Module (Join-Path $script:ProjectRoot 'domains/utilities/Logging.psm1') -Force -ErrorAction SilentlyContinue
 
 # Initialize analysis
-Initialize-TechDebtAnalysis -ResultsPath $OutputPath
+if ($PSCmdlet.ShouldProcess($OutputPath, "Initialize tech debt analysis results directory")) {
+    Initialize-TechDebtAnalysis -ResultsPath $OutputPath
+}
 
 function Get-TodoPatterns {
     return @{
@@ -396,7 +399,9 @@ try {
     $results = Analyze-CodeQuality
 
     # Save results
-    $outputFile = Save-AnalysisResults -AnalysisType "CodeQuality" -Results $results -OutputPath $OutputPath
+    if ($PSCmdlet.ShouldProcess($OutputPath, "Save code quality analysis results")) {
+        $outputFile = Save-AnalysisResults -AnalysisType "CodeQuality" -Results $results -OutputPath $OutputPath
+    }
 
     # Display summary
     Write-Host "`nCode Quality Summary:" -ForegroundColor Cyan
