@@ -99,12 +99,20 @@ function Write-UILog {
 
 # Log module initialization (only once per session)
 if (-not (Get-Variable -Name 'AitherZeroUIInitialized' -Scope Global -ErrorAction SilentlyContinue)) {
-    Write-UILog -Message "User interface module initialized" -Data @{
-        Theme = $script:UIState.Theme
-        EnableEmoji = $script:UIState.EnableEmoji
-        MenuStyle = $script:UIState.MenuStyle
-        ProgressBarStyle = $script:UIState.ProgressBarStyle
-        Features = @('Emoji', 'Spinners', 'ProgressBars', 'Menus', 'Prompts')
+    # Ensure UIState is properly initialized before accessing its properties
+    if ($script:UIState -and $script:UIState -is [hashtable]) {
+        $logData = @{
+            Features = @('Emoji', 'Spinners', 'ProgressBars', 'Menus', 'Prompts')
+        }
+        # Add properties if they exist
+        if ($script:UIState.ContainsKey('Theme')) { $logData.Theme = $script:UIState.Theme }
+        if ($script:UIState.ContainsKey('EnableEmoji')) { $logData.EnableEmoji = $script:UIState.EnableEmoji }
+        if ($script:UIState.ContainsKey('MenuStyle')) { $logData.MenuStyle = $script:UIState.MenuStyle }
+        if ($script:UIState.ContainsKey('ProgressBarStyle')) { $logData.ProgressBarStyle = $script:UIState.ProgressBarStyle }
+        
+        Write-UILog -Message "User interface module initialized" -Data $logData
+    } else {
+        Write-UILog -Message "User interface module initialized"
     }
     $global:AitherZeroUIInitialized = $true
 }
@@ -175,38 +183,62 @@ function Initialize-AitherUI {
 
     # Apply configuration settings
     if ($uiConfig) {
-        # Override parameters with config values
-        if (-not $PSBoundParameters.ContainsKey('Theme') -and $uiConfig.Theme) {
-            $Theme = $uiConfig.Theme
+        # Override parameters with config values (safe property access)
+        if (-not $PSBoundParameters.ContainsKey('Theme')) {
+            if ($uiConfig -is [hashtable] -and $uiConfig.ContainsKey('Theme')) {
+                $Theme = $uiConfig.Theme
+            } elseif ($uiConfig.PSObject -and $uiConfig.PSObject.Properties['Theme']) {
+                $Theme = $uiConfig.Theme
+            }
         }
-        if (-not $PSBoundParameters.ContainsKey('DisableColors') -and $uiConfig.EnableColors -eq $false) {
-            $DisableColors = $true
+        if (-not $PSBoundParameters.ContainsKey('DisableColors')) {
+            if ($uiConfig -is [hashtable] -and $uiConfig.ContainsKey('EnableColors') -and $uiConfig.EnableColors -eq $false) {
+                $DisableColors = $true
+            } elseif ($uiConfig.PSObject -and $uiConfig.PSObject.Properties['EnableColors'] -and $uiConfig.EnableColors -eq $false) {
+                $DisableColors = $true
+            }
         }
         
         # Store UI configuration in state
         $script:UIState.Config = $uiConfig
-        $script:UIState.EnableEmoji = if ($null -ne $uiConfig.EnableEmoji) { $uiConfig.EnableEmoji } else { $true }
-        $script:UIState.MenuStyle = if ($uiConfig.MenuStyle) { $uiConfig.MenuStyle } else { 'Interactive' }
-        $script:UIState.ProgressBarStyle = if ($uiConfig.ProgressBarStyle) { $uiConfig.ProgressBarStyle } else { 'Classic' }
-        $script:UIState.NotificationPosition = if ($uiConfig.NotificationPosition) { $uiConfig.NotificationPosition } else { 'TopRight' }
-        $script:UIState.AutoRefreshInterval = if ($null -ne $uiConfig.AutoRefreshInterval) { $uiConfig.AutoRefreshInterval } else { 5 }
-        $script:UIState.ShowWelcomeMessage = if ($null -ne $uiConfig.ShowWelcomeMessage) { $uiConfig.ShowWelcomeMessage } else { $true }
-        $script:UIState.ShowHints = if ($null -ne $uiConfig.ShowHints) { $uiConfig.ShowHints } else { $true }
-        $script:UIState.EnableAnimations = if ($null -ne $uiConfig.EnableAnimations) { $uiConfig.EnableAnimations } else { $false }
-        # Don't set TerminalWidth during initialization - let it be lazy-loaded
-        if ($uiConfig.TerminalWidth -and $uiConfig.TerminalWidth -ne 'auto') {
-            $script:UIState.TerminalWidth = $uiConfig.TerminalWidth
+        # Safe property access helper
+        $getProp = { param($name, $default) 
+            if ($uiConfig -is [hashtable] -and $uiConfig.ContainsKey($name)) { 
+                return $uiConfig[$name] 
+            } elseif ($uiConfig.PSObject -and $uiConfig.PSObject.Properties[$name]) { 
+                return $uiConfig.$name 
+            } 
+            return $default 
         }
-        $script:UIState.ClearScreenOnStart = if ($null -ne $uiConfig.ClearScreenOnStart) { $uiConfig.ClearScreenOnStart } else { $true }
-        $script:UIState.ShowExecutionTime = if ($null -ne $uiConfig.ShowExecutionTime) { $uiConfig.ShowExecutionTime } else { $true }
-        $script:UIState.ShowMemoryUsage = if ($null -ne $uiConfig.ShowMemoryUsage) { $uiConfig.ShowMemoryUsage } else { $false }
         
-        # Load custom themes from config
-        if ($uiConfig.Themes) {
-            foreach ($themeName in $uiConfig.Themes.PSObject.Properties.Name) {
+        $script:UIState.EnableEmoji = & $getProp 'EnableEmoji' $true
+        $script:UIState.MenuStyle = & $getProp 'MenuStyle' 'Interactive'
+        $script:UIState.ProgressBarStyle = & $getProp 'ProgressBarStyle' 'Classic'
+        $script:UIState.NotificationPosition = & $getProp 'NotificationPosition' 'TopRight'
+        $script:UIState.AutoRefreshInterval = & $getProp 'AutoRefreshInterval' 5
+        $script:UIState.ShowWelcomeMessage = & $getProp 'ShowWelcomeMessage' $true
+        $script:UIState.ShowHints = & $getProp 'ShowHints' $true
+        $script:UIState.EnableAnimations = & $getProp 'EnableAnimations' $false
+        # Don't set TerminalWidth during initialization - let it be lazy-loaded
+        $termWidth = & $getProp 'TerminalWidth' 'auto'
+        if ($termWidth -and $termWidth -ne 'auto') {
+            $script:UIState.TerminalWidth = $termWidth
+        }
+        $script:UIState.ClearScreenOnStart = & $getProp 'ClearScreenOnStart' $true
+        $script:UIState.ShowExecutionTime = & $getProp 'ShowExecutionTime' $true
+        $script:UIState.ShowMemoryUsage = & $getProp 'ShowMemoryUsage' $false
+        
+        # Load custom themes from config (safe property access)
+        $themes = & $getProp 'Themes' $null
+        if ($themes -and $themes.PSObject -and $themes.PSObject.Properties) {
+            foreach ($themeProp in $themes.PSObject.Properties) {
+                $themeName = $themeProp.Name
+                $themeData = $themeProp.Value
                 $script:Themes[$themeName] = @{}
-                foreach ($colorKey in $uiConfig.Themes.$themeName.PSObject.Properties.Name) {
-                    $script:Themes[$themeName][$colorKey] = $uiConfig.Themes.$themeName.$colorKey
+                if ($themeData.PSObject -and $themeData.PSObject.Properties) {
+                    foreach ($colorProp in $themeData.PSObject.Properties) {
+                        $script:Themes[$themeName][$colorProp.Name] = $colorProp.Value
+                    }
                 }
             }
         }
@@ -229,9 +261,9 @@ function Initialize-AitherUI {
         $script:UIState.Theme = 'Custom'
     }
 
-    # Clear screen if configured
-    if ($script:UIState.ClearScreenOnStart) {
-        Clear-Host
+    # Clear screen if configured (skip in CI/non-interactive environments)
+    if ($script:UIState.ClearScreenOnStart -and -not $env:CI -and -not $env:GITHUB_ACTIONS) {
+        try { Clear-Host } catch { }
     }
 
     # Show welcome message if configured
@@ -807,7 +839,7 @@ function Get-TerminalWidth {
 
     # Calculate and cache
     try {
-        if ($Host.UI.RawUI.WindowSize.Width) {
+        if ($Host.UI.RawUI -and $Host.UI.RawUI.WindowSize -and $Host.UI.RawUI.WindowSize.Width) {
             $script:UIState.TerminalWidth = $Host.UI.RawUI.WindowSize.Width
             return $script:UIState.TerminalWidth
         }
@@ -889,7 +921,9 @@ function Show-UIWizard {
     while ($wizardState.CurrentStep -lt $Steps.Count -and -not $wizardState.Cancelled) {
         $step = $Steps[$wizardState.CurrentStep]
         
-        Clear-Host
+        if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
+            try { Clear-Host } catch { }
+        }
         Show-UIBorder -Title "$Title - Step $($wizardState.CurrentStep + 1) of $($Steps.Count): $($step.Name)" -Style 'Double'
         
         # Show progress

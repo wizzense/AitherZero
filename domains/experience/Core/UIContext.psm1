@@ -173,14 +173,14 @@ function Start-UIContext {
     try {
         while ($Context.IsRunning -and -not $Context.ExitRequested) {
             # Process input
-            $inputStart = [DateTime]::Now
+            $inputValueStart = [DateTime]::Now
             Process-UIInput -Context $Context
-            $Context.PerformanceMetrics.InputTime = ([DateTime]::Now - $inputStart).TotalMilliseconds
+            $Context.PerformanceMetrics.InputTime = ([DateTime]::Now - $inputValueStart).TotalMilliseconds
             
             # Process events
-            $eventStart = [DateTime]::Now
+            $EventNameStart = [DateTime]::Now
             Process-UIEvents -Context $Context
-            $Context.PerformanceMetrics.EventTime = ([DateTime]::Now - $eventStart).TotalMilliseconds
+            $Context.PerformanceMetrics.EventTime = ([DateTime]::Now - $EventNameStart).TotalMilliseconds
             
             # Custom update logic
             if ($OnUpdate) {
@@ -242,21 +242,21 @@ function Process-UIInput {
     )
     
     if ($Context.Keyboard.HasInput()) {
-        $input = $Context.Keyboard.ReadInput()
+        $inputValue = $Context.Keyboard.ReadInput()
         
         # Global hotkeys
-        if ($input.Key -eq "Escape" -and $input.Modifiers.Ctrl) {
+        if ($inputValue.Key -eq "Escape" -and $inputValue.Modifiers.Ctrl) {
             $Context.ExitRequested = $true
             return
         }
         
         # Send to focused component
         if ($Context.FocusedComponent) {
-            Send-UIInput -Component $Context.FocusedComponent -Input $input -Context $Context
+            Send-UIInput -Component $Context.FocusedComponent -Input $inputValue -Context $Context
         }
         
         # Raise input event
-        Invoke-UIEvent -Context $Context -EventName "InputProcessed" -Data @{ Input = $input }
+        Invoke-UIEvent -Context $Context -EventName "InputProcessed" -Data @{ Input = $inputValue }
     }
 }
 
@@ -396,7 +396,7 @@ function Send-UIInput {
         $Component,
         
         [Parameter(Mandatory)]
-        $Input,
+        $inputValue,
         
         $Context = (Get-UIContext)
     )
@@ -404,14 +404,14 @@ function Send-UIInput {
     # Let component handle input
     $handled = $false
     if ($Component.HandleInput) {
-        $handled = $Component.HandleInput($Input)
+        $handled = $Component.HandleInput($inputValue)
     } elseif ($Component.OnKeyPress) {
-        $handled = & $Component.OnKeyPress $Input
+        $handled = & $Component.OnKeyPress $inputValue
     }
     
     # Bubble up if not handled
     if (-not $handled -and $Component.Parent) {
-        Send-UIInput -Component $Component.Parent -Input $Input -Context $Context
+        Send-UIInput -Component $Component.Parent -Input $inputValue -Context $Context
     }
 }
 
@@ -540,24 +540,24 @@ function New-UIEventBus {
         Queue = [System.Collections.Queue]::new()
         
         Subscribe = {
-            param($eventName, $handler)
-            if (-not $this.Handlers.ContainsKey($eventName)) {
-                $this.Handlers[$eventName] = [System.Collections.ArrayList]::new()
+            param($EventNameName, $handler)
+            if (-not $this.Handlers.ContainsKey($EventNameName)) {
+                $this.Handlers[$EventNameName] = [System.Collections.ArrayList]::new()
             }
-            [void]$this.Handlers[$eventName].Add($handler)
+            [void]$this.Handlers[$EventNameName].Add($handler)
         }
         
         Unsubscribe = {
-            param($eventName, $handler)
-            if ($this.Handlers.ContainsKey($eventName)) {
-                $this.Handlers[$eventName].Remove($handler)
+            param($EventNameName, $handler)
+            if ($this.Handlers.ContainsKey($EventNameName)) {
+                $this.Handlers[$EventNameName].Remove($handler)
             }
         }
         
         Emit = {
-            param($eventName, $data)
+            param($EventNameName, $data)
             $this.Queue.Enqueue(@{
-                Name = $eventName
+                Name = $EventNameName
                 Data = $data
                 Timestamp = [DateTime]::Now
             })
@@ -565,10 +565,10 @@ function New-UIEventBus {
         
         Process = {
             while ($this.Queue.Count -gt 0) {
-                $event = $this.Queue.Dequeue()
-                if ($this.Handlers.ContainsKey($event.Name)) {
-                    foreach ($handler in $this.Handlers[$event.Name]) {
-                        & $handler $event.Data
+                $EventName = $this.Queue.Dequeue()
+                if ($this.Handlers.ContainsKey($EventName.Name)) {
+                    foreach ($handler in $this.Handlers[$EventName.Name]) {
+                        & $handler $EventName.Data
                     }
                 }
             }
@@ -584,17 +584,17 @@ function Invoke-UIEvent {
     [CmdletBinding()]
     param(
         $Context = (Get-UIContext),
-        [string]$EventName,
+        [string]$EventNameName,
         [hashtable]$Data = @{}
     )
     
     if ($Context.EventBus -and $Context.EventBus.Emit) {
-        $Context.EventBus.Emit($EventName, $Data)
+        $Context.EventBus.Emit($EventNameName, $Data)
     }
     
     # Track in debug events
     if ($Context.DebugMode) {
-        [void]$Context.Events.Add("$EventName")
+        [void]$Context.Events.Add("$EventNameName")
     }
 }
 

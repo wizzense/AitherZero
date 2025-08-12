@@ -21,8 +21,8 @@ Describe "0737_Monitor-AIUsage" {
             & "/workspaces/AitherZero/automation-scripts/0737_Monitor-AIUsage.ps1" -WhatIf
             
             # Verify mocked commands were not executed inappropriately
-            Should -Not -Invoke git -ParameterFilter { $args[0] -eq 'commit' }
-            Should -Not -Invoke gh -ParameterFilter { $args[0] -eq 'pr' -and $args[1] -eq 'create' }
+            Should -Not -Invoke git -ParameterFilter { $arguments[0] -eq 'commit' }
+            Should -Not -Invoke gh -ParameterFilter { $arguments[0] -eq 'pr' -and $arguments[1] -eq 'create' }
         }
     }
     

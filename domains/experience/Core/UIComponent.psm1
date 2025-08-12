@@ -425,7 +425,7 @@ function Invoke-UIComponentEvent {
         $Component,
         
         [Parameter(Mandatory)]
-        [string]$EventName,
+        [string]$EventNameName,
         
         [hashtable]$Data = @{},
         
@@ -433,8 +433,8 @@ function Invoke-UIComponentEvent {
     )
     
     # Handle custom event
-    if ($Component.CustomHandlers.ContainsKey($EventName)) {
-        foreach ($handler in $Component.CustomHandlers[$EventName]) {
+    if ($Component.CustomHandlers.ContainsKey($EventNameName)) {
+        foreach ($handler in $Component.CustomHandlers[$EventNameName]) {
             & $handler $Component $Data
         }
     }
@@ -442,10 +442,10 @@ function Invoke-UIComponentEvent {
     # Bubble to parent
     if ($Bubble -and $Component.Parent) {
         if ($Component.Parent.OnChildEvent) {
-            & $Component.Parent.OnChildEvent $Component @{ Event = $EventName; Data = $Data }
+            & $Component.Parent.OnChildEvent $Component @{ Event = $EventNameName; Data = $Data }
         }
         
-        Invoke-UIComponentEvent -Component $Component.Parent -EventName $EventName -Data $Data -Bubble
+        Invoke-UIComponentEvent -Component $Component.Parent -EventName $EventNameName -Data $Data -Bubble
     }
 }
 
@@ -460,17 +460,17 @@ function Register-UIComponentHandler {
         $Component,
         
         [Parameter(Mandatory)]
-        [string]$EventName,
+        [string]$EventNameName,
         
         [Parameter(Mandatory)]
         [scriptblock]$Handler
     )
     
-    if (-not $Component.CustomHandlers.ContainsKey($EventName)) {
-        $Component.CustomHandlers[$EventName] = [System.Collections.ArrayList]::new()
+    if (-not $Component.CustomHandlers.ContainsKey($EventNameName)) {
+        $Component.CustomHandlers[$EventNameName] = [System.Collections.ArrayList]::new()
     }
     
-    [void]$Component.CustomHandlers[$EventName].Add($Handler)
+    [void]$Component.CustomHandlers[$EventNameName].Add($Handler)
 }
 
 function Set-UIComponentState {

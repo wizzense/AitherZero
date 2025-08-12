@@ -177,7 +177,7 @@ exit 1  # Failure
 
 ### PowerShell Profile
 ```powershell
-# Add to $PROFILE
+# Add to $ProfileName
 Import-Module C:\AitherZero\domains\automation\OrchestrationEngine.psm1
 ```
 

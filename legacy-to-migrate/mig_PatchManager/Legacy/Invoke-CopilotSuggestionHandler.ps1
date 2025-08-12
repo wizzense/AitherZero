@@ -181,7 +181,7 @@ function Invoke-CopilotSuggestionHandler {
                     # Extract code suggestions (looking for ```suggestion blocks or specific patterns)
                     $codeBlocks = @()
                     if ($suggestion.Body -match '```suggestion\s*\n(.*?)\n```') {
-                        $codeBlocks += $matches[1]
+                        $codeBlocks += $Matches[1]
                     }
                     
                     # Look for specific file suggestions

@@ -322,10 +322,10 @@ function Invoke-LabNpm {
     [CmdletBinding()]
     param(
         [Parameter(ValueFromRemainingArguments=$true)]
-        [string[]]$Args
+        [string[]]$arguments
     )
 
-    Write-CustomLog "Running npm $($Args -join ' ')" 'INFO'
+    Write-CustomLog "Running npm $($arguments -join ' ')" 'INFO'
     npm @Args
 }
 
@@ -370,7 +370,7 @@ function Get-LabConfig {
             $line = $_.Trim()
             if ($line -and -not $line.StartsWith('#')) {
                 if ($line -match '^(\w+):\s*(.+)$') {
-                    $config[$matches[1]] = $matches[2].Trim('"''')
+                    $config[$Matches[1]] = $Matches[2].Trim('"''')
                 }
         }
     }

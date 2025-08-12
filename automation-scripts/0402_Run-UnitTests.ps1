@@ -28,7 +28,8 @@ param(
     [switch]$CI,
     [switch]$UseCache = $false,
     [switch]$ForceRun = $false,
-    [int]$CacheMinutes = 5
+    [int]$CacheMinutes = 5,
+    [int]$CoverageThreshold
 )
 
 $ErrorActionPreference = 'Stop'
@@ -49,6 +50,36 @@ $projectRoot = Split-Path $PSScriptRoot -Parent
 $testingModule = Join-Path $projectRoot "domains/testing/TestingFramework.psm1"
 $loggingModule = Join-Path $projectRoot "domains/utilities/Logging.psm1"
 $testCacheModule = Join-Path $projectRoot "domains/testing/TestCacheManager.psm1"
+$configModule = Join-Path $projectRoot "domains/configuration/Configuration.psm1"
+
+# Import Configuration module to use Get-ConfiguredValue
+if (Test-Path $configModule) {
+    Import-Module $configModule -Force -ErrorAction SilentlyContinue
+}
+
+# Apply configuration defaults
+if (-not $PSBoundParameters.ContainsKey('CoverageThreshold')) {
+    if (Get-Command Get-ConfiguredValue -ErrorAction SilentlyContinue) {
+        $CoverageThreshold = Get-ConfiguredValue -Name 'CoverageThreshold' -Section 'Testing' -Default 80
+    } else {
+        $CoverageThreshold = 80
+    }
+}
+
+if (-not $PSBoundParameters.ContainsKey('CI')) {
+    if (Get-Command Get-ConfiguredValue -ErrorAction SilentlyContinue) {
+        # Configuration module will auto-detect CI
+        $envValue = Get-ConfiguredValue -Name 'Environment' -Section 'Core' -Default 'Development'
+        $CI = ($envValue -eq 'CI')
+    }
+}
+
+if (-not $PSBoundParameters.ContainsKey('NoCoverage')) {
+    if (Get-Command Get-ConfiguredValue -ErrorAction SilentlyContinue) {
+        $runCoverage = Get-ConfiguredValue -Name 'RunCoverage' -Section 'Testing' -Default $true
+        $NoCoverage = -not $runCoverage
+    }
+}
 
 if (Test-Path $testingModule) {
     Import-Module $testingModule -Force
@@ -192,9 +223,9 @@ try {
     Write-ScriptLog -Message "Found $($testFiles.Count) test files"
 
     # Load configuration
-    $configPath = Join-Path $projectRoot "config.json"
+    $configPath = Join-Path $projectRoot "config.psd1"
     $testingConfig = if (Test-Path $configPath) {
-        $config = Get-Content $configPath -Raw | ConvertFrom-Json
+        $config = Import-PowerShellDataFile $configPath
         $config.Testing
     } else {
         @{
@@ -218,22 +249,70 @@ try {
     Write-ScriptLog -Message "Loading Pester version $($pesterModule.Version)"
     Import-Module Pester -MinimumVersion $testingConfig.MinVersion -Force
 
+    # Get Pester settings from configuration
+    $pesterSettings = if (Get-Command Get-Configuration -ErrorAction SilentlyContinue) {
+        $config = Get-Configuration
+        if ($config.Testing -and $config.Testing.Pester) {
+            $config.Testing.Pester
+        } else {
+            @{}
+        }
+    } else {
+        @{}
+    }
+    
     # Build Pester configuration
     $pesterConfig = New-PesterConfiguration
     $pesterConfig.Run.Path = $Path
-    $pesterConfig.Run.PassThru = $true
-    $pesterConfig.Run.Exit = $false
+    $pesterConfig.Run.PassThru = if ($pesterSettings.Run.PassThru -ne $null) { $pesterSettings.Run.PassThru } else { $true }
+    $pesterConfig.Run.Exit = if ($pesterSettings.Run.Exit -ne $null) { $pesterSettings.Run.Exit } else { $false }
+    
 
-    # CI mode adjustments
+    # Apply output settings from config
+    if ($pesterSettings.Output) {
+        if ($pesterSettings.Output.Verbosity) {
+            $pesterConfig.Output.Verbosity = $pesterSettings.Output.Verbosity
+        }
+        if ($pesterSettings.Output.StackTraceVerbosity) {
+            $pesterConfig.Output.StackTraceVerbosity = $pesterSettings.Output.StackTraceVerbosity
+        }
+    }
+    
+    # Apply Should settings from config
+    if ($pesterSettings.Should -and $pesterSettings.Should.ErrorAction) {
+        $pesterConfig.Should.ErrorAction = $pesterSettings.Should.ErrorAction
+    }
+    
+    # CI mode adjustments (override config if in CI)
     if ($CI) {
         Write-ScriptLog -Message "Running in CI mode"
         $pesterConfig.Output.Verbosity = 'Normal'
         $pesterConfig.Should.ErrorAction = 'Continue'
+        if ($pesterSettings.Output -and $pesterSettings.Output.CIFormat) {
+            $pesterConfig.Output.CIFormat = $true
+        }
     }
 
-    # Filter for unit tests only
-    $pesterConfig.Filter.Tag = @('Unit')
-    $pesterConfig.Filter.ExcludeTag = @('Integration', 'E2E', 'Performance')
+    # Apply filter settings from config or use defaults for unit tests
+    if ($pesterSettings.Filter) {
+        # Use config tags if specified, otherwise default to Unit
+        $pesterConfig.Filter.Tag = if ($pesterSettings.Filter.Tag -and $pesterSettings.Filter.Tag.Count -gt 0) {
+            $pesterSettings.Filter.Tag
+        } else {
+            @('Unit')
+        }
+        
+        # Use config exclude tags if specified, otherwise default exclusions
+        $pesterConfig.Filter.ExcludeTag = if ($pesterSettings.Filter.ExcludeTag -and $pesterSettings.Filter.ExcludeTag.Count -gt 0) {
+            $pesterSettings.Filter.ExcludeTag
+        } else {
+            @('Integration', 'E2E', 'Performance')
+        }
+    } else {
+        # Default filters for unit tests
+        $pesterConfig.Filter.Tag = @('Unit')
+        $pesterConfig.Filter.ExcludeTag = @('Integration', 'E2E', 'Performance')
+    }
 
     # Output configuration
     if (-not $OutputPath) {
@@ -269,11 +348,69 @@ try {
     }
     
     Write-ScriptLog -Message "Executing unit tests..."
-    if ($PSCmdlet.ShouldProcess("Unit tests in $Path", "Execute Pester tests")) {
-        $result = Invoke-Pester -Configuration $pesterConfig
-    } else {
+    if (-not $PSCmdlet.ShouldProcess("Unit tests in $Path", "Execute Pester tests")) {
         Write-ScriptLog -Message "WhatIf: Would execute unit tests with Pester configuration"
         return
+    }
+    
+    # Implement parallel test execution using PowerShell 7's ForEach-Object -Parallel
+    $useParallel = $pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled -and $testFiles.Count -gt 1
+    
+    if ($useParallel) {
+        $parallelWorkers = if ($pesterSettings.Parallel.Workers) { $pesterSettings.Parallel.Workers } else { 4 }
+        $parallelBlockSize = if ($pesterSettings.Parallel.BlockSize) { $pesterSettings.Parallel.BlockSize } else { 4 }
+        Write-ScriptLog -Message "Running tests in parallel (Workers: $parallelWorkers, Block size: $parallelBlockSize)"
+        
+        # Split test files into chunks for parallel execution
+        $testChunks = @()
+        for ($i = 0; $i -lt $testFiles.Count; $i += $parallelBlockSize) {
+            $chunk = $testFiles | Select-Object -Skip $i -First $parallelBlockSize
+            $testChunks += ,@($chunk)
+        }
+        
+        # Run test chunks in parallel
+        $parallelResults = $testChunks | ForEach-Object -ThrottleLimit $parallelWorkers -Parallel {
+            $chunk = $_
+            $projectRoot = $using:projectRoot
+            $OutputPath = $using:OutputPath
+            $timestamp = $using:timestamp
+            $CI = $using:CI
+            $NoCoverage = $using:NoCoverage
+            $CoverageThreshold = $using:CoverageThreshold
+            
+            # Import Pester in parallel runspace
+            Import-Module Pester -MinimumVersion 5.0 -Force
+            
+            # Create config for this chunk
+            $chunkConfig = New-PesterConfiguration
+            $chunkConfig.Run.Path = $chunk
+            $chunkConfig.Run.PassThru = $true
+            $chunkConfig.Run.Exit = $false
+            
+            # Apply settings from parent scope
+            $chunkConfig.Output.Verbosity = $using:pesterConfig.Output.Verbosity.Value
+            $chunkConfig.Should.ErrorAction = $using:pesterConfig.Should.ErrorAction.Value
+            $chunkConfig.Filter.Tag = $using:pesterConfig.Filter.Tag.Value
+            $chunkConfig.Filter.ExcludeTag = $using:pesterConfig.Filter.ExcludeTag.Value
+            
+            # Run tests for this chunk
+            Invoke-Pester -Configuration $chunkConfig
+        }
+        
+        # Aggregate results from all parallel runs
+        $result = [PSCustomObject]@{
+            TotalCount = ($parallelResults | Measure-Object -Property TotalCount -Sum).Sum
+            PassedCount = ($parallelResults | Measure-Object -Property PassedCount -Sum).Sum
+            FailedCount = ($parallelResults | Measure-Object -Property FailedCount -Sum).Sum
+            SkippedCount = ($parallelResults | Measure-Object -Property SkippedCount -Sum).Sum
+            NotRunCount = ($parallelResults | Measure-Object -Property NotRunCount -Sum).Sum
+            Duration = ($parallelResults | Measure-Object -Property Duration -Maximum).Maximum
+            Failed = @($parallelResults | ForEach-Object { $_.Failed } | Where-Object { $_ })
+            Tests = @($parallelResults | ForEach-Object { $_.Tests } | Where-Object { $_ })
+        }
+    } else {
+        # Standard sequential execution
+        $result = Invoke-Pester -Configuration $pesterConfig
     }
 
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {

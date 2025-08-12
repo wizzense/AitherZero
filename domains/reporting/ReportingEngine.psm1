@@ -331,7 +331,7 @@ function Start-DashboardRefresh {
     $timer.AutoReset = $true
     
     Register-ObjectEvent -InputObject $timer -EventName Elapsed -Action {
-        $dashboard = $Event.MessageData
+        $dashboard = $EventName.MessageData
         Show-Dashboard -Dashboard $dashboard
     } -MessageData $Dashboard | Out-Null
     
@@ -633,7 +633,7 @@ function New-HtmlReport {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>$($Report.Title)</title>
+    <title>$($Report.Title) - Aitherium™</title>
     <style>
         body { 
             font-family: 'Segoe UI', Arial, sans-serif; 
@@ -648,10 +648,32 @@ function New-HtmlReport {
             box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
         .header {
-            background-color: #007acc;
+            background: linear-gradient(135deg, #add8e6 0%, #e0bbf0 50%, #ffb6c1 100%);
             color: white;
             padding: 30px;
             text-align: center;
+            position: relative;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.1);
+            z-index: 0;
+        }
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+        .brand {
+            font-size: 0.9em;
+            opacity: 0.95;
+            margin-top: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
         .content {
             padding: 30px;
@@ -736,8 +758,11 @@ function New-HtmlReport {
 <body>
     <div class="container">
         <div class="header">
-            <h1>$($Report.Title)</h1>
-            <div class="timestamp">Generated: $($Report.Generated.ToString('yyyy-MM-dd HH:mm:ss'))</div>
+            <div class="header-content">
+                <h1>$($Report.Title)</h1>
+                <div class="brand">Aitherium™ AitherZero Platform</div>
+                <div class="timestamp">Generated: $($Report.Generated.ToString('yyyy-MM-dd HH:mm:ss'))</div>
+            </div>
         </div>
         
         <div class="content">
@@ -834,6 +859,12 @@ function New-HtmlReport {
     }
     
     $html += @"
+        </div>
+        <div style="background: linear-gradient(135deg, #add8e6 0%, #e0bbf0 50%, #ffb6c1 100%); color: white; padding: 20px; text-align: center; margin-top: 40px;">
+            <div style="font-size: 12px; opacity: 0.9;">
+                Powered by <strong>Aitherium™</strong> Enterprise Infrastructure Automation Platform<br>
+                © $(Get-Date -Format 'yyyy') Aitherium Corporation - AitherZero v1.0
+            </div>
         </div>
     </div>
 </body>

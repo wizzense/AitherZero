@@ -37,8 +37,8 @@ $script:Tags = @('ai', 'performance', 'optimization')
 $script:Condition = '$env:ANTHROPIC_API_KEY -or $env:OPENAI_API_KEY -or $env:GOOGLE_API_KEY'
 #endregion
 
-$configPath = Join-Path (Split-Path $PSScriptRoot -Parent) "config.json"
-$config = Get-Content $configPath -Raw | ConvertFrom-Json
+$configPath = Join-Path (Split-Path $PSScriptRoot -Parent) "config.psd1"
+$config = Import-PowerShellDataFile $configPath
 $perfConfig = $config.AI.PerformanceOptimization
 
 Write-Host "═══════════════════════════════════════════════" -ForegroundColor Cyan

@@ -80,20 +80,20 @@ function Write-ScriptLog {
 
 function Convert-CoverageReport {
     param(
-        [string]$InputFile,
+        [string]$inputValueFile,
         [string]$OutputPath,
         [string]$Format,
         [hashtable]$Metadata
     )
 
-    Write-ScriptLog -Message "Converting coverage report from $InputFile to $Format format at $OutputPath"
+    Write-ScriptLog -Message "Converting coverage report from $inputValueFile to $Format format at $OutputPath"
     
     switch ($Format) {
         'JaCoCo' {
             # Pester generates JaCoCo natively - copy the file
-            if (Test-Path $InputFile) {
+            if (Test-Path $inputValueFile) {
                 if ($PSCmdlet.ShouldProcess($OutputPath, "Copy JaCoCo coverage report")) {
-                    Copy-Item $InputFile $OutputPath -Force
+                    Copy-Item $inputValueFile $OutputPath -Force
                     Write-ScriptLog -Message "JaCoCo report copied to $OutputPath"
                 }
             }

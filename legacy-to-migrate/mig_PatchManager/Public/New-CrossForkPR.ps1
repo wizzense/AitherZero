@@ -321,7 +321,7 @@ $($repoInfo.ForkChain | ForEach-Object { "- **$($_.GitHubRepo)** ($($_.Type)): $
                 # Extract PR number from URL
                 $prNumber = $null
                 if ($result -match '/pull/(\d+)') {
-                    $prNumber = $matches[1]
+                    $prNumber = $Matches[1]
                 }
 
                 Write-CrossForkLog "Cross-fork pull request created successfully!" -Level "SUCCESS"
@@ -349,7 +349,7 @@ $($repoInfo.ForkChain | ForEach-Object { "- **$($_.GitHubRepo)** ($($_.Type)): $
 
                     $prNumber = $null
                     if ($existingPrUrl -match '/pull/(\d+)') {
-                        $prNumber = $matches[1]
+                        $prNumber = $Matches[1]
                     }
 
                     Write-CrossForkLog "Cross-fork pull request already exists: $existingPrUrl" -Level "SUCCESS"

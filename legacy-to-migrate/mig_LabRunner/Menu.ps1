@@ -23,10 +23,10 @@ $map = @{}
     }
     for ($i = 0; $i -lt $MaxRetries; $i++) {
         $prompt = if ($AllowAll) { "Enter numbers/prefixes (comma separated), 'all', or 'exit'"    } else { "Enter numbers/prefixes or 'exit'"    }
-        $input = Read-LoggedInput $prompt
-        if ($input -match '^(?i)exit$') { return @() }
-        if ($AllowAll -and $input -eq 'all') { return $Items }
-        $tokens = $input -split ',' | ForEach-Object{ $_.Trim() } | Where-Object{ $_ }
+        $inputValue = Read-LoggedInput $prompt
+        if ($inputValue -match '^(?i)exit$') { return @() }
+        if ($AllowAll -and $inputValue -eq 'all') { return $Items }
+        $tokens = $inputValue -split ',' | ForEach-Object{ $_.Trim() } | Where-Object{ $_ }
         $selected = foreach ($t in $tokens) { if ($map.ContainsKey($t)) { $map[$t] } }
         if ($selected) { return $selected }
         $msg = 'Invalid selection. Try again.'

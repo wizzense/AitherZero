@@ -26,7 +26,7 @@ BeforeAll {
     Import-Module (Join-Path $script:ProjectRoot "domains/experience/UserInterface.psm1") -Force
 
     # Create test configuration that uses DryRun mode
-    $script:TestConfigFile = Join-Path $TestDrive "test-config.json"
+    $script:TestConfigFile = Join-Path $TestDrive "test-config.psd1"
     @{
         Core = @{
             Name = "AitherZero-Test"

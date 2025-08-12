@@ -37,8 +37,8 @@ $script:Tags = @('ai', 'validation', 'quality', 'security')
 $script:Condition = '$true'  # Always available for validation
 #endregion
 
-$configPath = Join-Path (Split-Path $PSScriptRoot -Parent) "config.json"
-$config = Get-Content $configPath -Raw | ConvertFrom-Json
+$configPath = Join-Path (Split-Path $PSScriptRoot -Parent) "config.psd1"
+$config = Import-PowerShellDataFile $configPath
 $validationConfig = $config.AI.OutputValidation
 
 Write-Host "═══════════════════════════════════════════════" -ForegroundColor Cyan

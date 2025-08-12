@@ -121,7 +121,7 @@ $(if ($AffectedFiles.Count -gt 0) {
                 # Extract issue number from URL
                 $issueNumber = $null
                 if ($result -match '/issues/(\d+)') {
-                    $issueNumber = $matches[1]
+                    $issueNumber = $Matches[1]
                 }
 
                 Write-CustomLog "Issue created successfully: $result" -Level SUCCESS
@@ -276,7 +276,7 @@ This patch follows the PatchManager workflow:
                 # Extract PR number from URL
                 $prNumber = $null
                 if ($result -match '/pull/(\d+)') {
-                    $prNumber = $matches[1]
+                    $prNumber = $Matches[1]
                 }                Write-CustomLog "Pull request created successfully: $result" -Level SUCCESS
                 Write-CustomLog "PR number: #$prNumber" -Level INFO
 
@@ -296,7 +296,7 @@ This patch follows the PatchManager workflow:
                     # Extract PR number from URL
                     $prNumber = $null
                     if ($existingPrUrl -match '/pull/(\d+)') {
-                        $prNumber = $matches[1]
+                        $prNumber = $Matches[1]
                     }
 
                     Write-CustomLog "Pull request already exists: $existingPrUrl" -Level SUCCESS

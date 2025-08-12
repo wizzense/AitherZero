@@ -49,7 +49,7 @@ try {
 
     # Check if profile setup is enabled
     $shouldSetup = $false
-    $profileConfig = @{
+    $ProfileNameConfig = @{
         Enable = $false
         ProfileScope = 'CurrentUserAllHosts'
         IncludeAliases = $true
@@ -64,12 +64,12 @@ try {
         $shouldSetup = $psProfileConfig.Enable -eq $true
         
         # Override defaults with config
-        if ($psProfileConfig.ProfileScope) { $profileConfig.ProfileScope = $psProfileConfig.ProfileScope }
-        if ($null -ne $psProfileConfig.IncludeAliases) { $profileConfig.IncludeAliases = $psProfileConfig.IncludeAliases }
-        if ($null -ne $psProfileConfig.IncludeFunctions) { $profileConfig.IncludeFunctions = $psProfileConfig.IncludeFunctions }
-        if ($null -ne $psProfileConfig.IncludeModulePaths) { $profileConfig.IncludeModulePaths = $psProfileConfig.IncludeModulePaths }
-        if ($null -ne $psProfileConfig.CustomPrompt) { $profileConfig.CustomPrompt = $psProfileConfig.CustomPrompt }
-        if ($null -ne $psProfileConfig.BackupExisting) { $profileConfig.BackupExisting = $psProfileConfig.BackupExisting }
+        if ($psProfileConfig.ProfileScope) { $ProfileNameConfig.ProfileScope = $psProfileConfig.ProfileScope }
+        if ($null -ne $psProfileConfig.IncludeAliases) { $ProfileNameConfig.IncludeAliases = $psProfileConfig.IncludeAliases }
+        if ($null -ne $psProfileConfig.IncludeFunctions) { $ProfileNameConfig.IncludeFunctions = $psProfileConfig.IncludeFunctions }
+        if ($null -ne $psProfileConfig.IncludeModulePaths) { $ProfileNameConfig.IncludeModulePaths = $psProfileConfig.IncludeModulePaths }
+        if ($null -ne $psProfileConfig.CustomPrompt) { $ProfileNameConfig.CustomPrompt = $psProfileConfig.CustomPrompt }
+        if ($null -ne $psProfileConfig.BackupExisting) { $ProfileNameConfig.BackupExisting = $psProfileConfig.BackupExisting }
     }
 
     if (-not $shouldSetup) {
@@ -78,31 +78,31 @@ try {
     }
 
     # Determine profile path based on scope
-    $profilePath = switch ($profileConfig.ProfileScope) {
-        'CurrentUserAllHosts' { $PROFILE.CurrentUserAllHosts }
-        'CurrentUserCurrentHost' { $PROFILE.CurrentUserCurrentHost }
-        'AllUsersAllHosts' { $PROFILE.AllUsersAllHosts }
-        'AllUsersCurrentHost' { $PROFILE.AllUsersCurrentHost }
-        default { $PROFILE.CurrentUserAllHosts }
+    $ProfileNamePath = switch ($ProfileNameConfig.ProfileScope) {
+        'CurrentUserAllHosts' { $ProfileName.CurrentUserAllHosts }
+        'CurrentUserCurrentHost' { $ProfileName.CurrentUserCurrentHost }
+        'AllUsersAllHosts' { $ProfileName.AllUsersAllHosts }
+        'AllUsersCurrentHost' { $ProfileName.AllUsersCurrentHost }
+        default { $ProfileName.CurrentUserAllHosts }
     }
     
-    Write-ScriptLog "Profile path: $profilePath"
-    Write-ScriptLog "Profile scope: $($profileConfig.ProfileScope)"
+    Write-ScriptLog "Profile path: $ProfileNamePath"
+    Write-ScriptLog "Profile scope: $($ProfileNameConfig.ProfileScope)"
 
     # Create profile directory if it doesn't exist
-    $profileDir = Split-Path $profilePath -Parent
-    if (-not (Test-Path $profileDir)) {
-        if ($PSCmdlet.ShouldProcess($profileDir, 'Create profile directory')) {
-            New-Item -ItemType Directory -Path $profileDir -Force | Out-Null
-            Write-ScriptLog "Created profile directory: $profileDir"
+    $ProfileNameDir = Split-Path $ProfileNamePath -Parent
+    if (-not (Test-Path $ProfileNameDir)) {
+        if ($PSCmdlet.ShouldProcess($ProfileNameDir, 'Create profile directory')) {
+            New-Item -ItemType Directory -Path $ProfileNameDir -Force | Out-Null
+            Write-ScriptLog "Created profile directory: $ProfileNameDir"
         }
     }
 
     # Backup existing profile if configured
-    if ((Test-Path $profilePath) -and $profileConfig.BackupExisting) {
-        $backupPath = "$profilePath.backup.$(Get-Date -Format 'yyyyMMddHHmmss')"
-        if ($PSCmdlet.ShouldProcess($profilePath, "Backup to $backupPath")) {
-            Copy-Item -Path $profilePath -Destination $backupPath -Force
+    if ((Test-Path $ProfileNamePath) -and $ProfileNameConfig.BackupExisting) {
+        $backupPath = "$ProfileNamePath.backup.$(Get-Date -Format 'yyyyMMddHHmmss')"
+        if ($PSCmdlet.ShouldProcess($ProfileNamePath, "Backup to $backupPath")) {
+            Copy-Item -Path $ProfileNamePath -Destination $backupPath -Force
             Write-ScriptLog "Backed up existing profile to: $backupPath"
         }
     }
@@ -112,7 +112,7 @@ try {
     Write-ScriptLog "Project root: $projectRoot"
 
     # Build profile content
-    $profileContent = @"
+    $ProfileNameContent = @"
 # ==================================================
 # AitherZero PowerShell Profile
 # Generated on: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
@@ -125,8 +125,8 @@ try {
 "@
 
     # Add module paths if configured
-    if ($profileConfig.IncludeModulePaths) {
-        $profileContent += @"
+    if ($ProfileNameConfig.IncludeModulePaths) {
+        $ProfileNameContent += @"
 
 # Add AitherZero modules to PSModulePath
 `$aitherModulePath = Join-Path `$env:AITHERZERO_ROOT 'domains'
@@ -143,8 +143,8 @@ if ((Test-Path `$legacyModulePath) -and (`$env:PSModulePath -notlike "*`$legacyM
     }
 
     # Add aliases if configured
-    if ($profileConfig.IncludeAliases) {
-        $profileContent += @"
+    if ($ProfileNameConfig.IncludeAliases) {
+        $ProfileNameContent += @"
 
 # AitherZero aliases
 Set-Alias -Name aither -Value (Join-Path `$env:AITHERZERO_ROOT 'Start-AitherZero.ps1') -ErrorAction SilentlyContinue
@@ -154,8 +154,8 @@ Set-Alias -Name az0 -Value (Join-Path `$env:AITHERZERO_ROOT 'Start-AitherZero.ps
     }
 
     # Add helper functions if configured
-    if ($profileConfig.IncludeFunctions) {
-        $profileContent += @"
+    if ($ProfileNameConfig.IncludeFunctions) {
+        $ProfileNameContent += @"
 
 # AitherZero helper functions
 function Enter-AitherProject {
@@ -189,8 +189,8 @@ function Import-AitherModule {
     }
 
     # Add custom prompt if configured
-    if ($profileConfig.CustomPrompt) {
-        $profileContent += @"
+    if ($ProfileNameConfig.CustomPrompt) {
+        $ProfileNameContent += @"
 
 # Custom prompt for AitherZero
 function prompt {
@@ -215,7 +215,7 @@ function prompt {
 
     # Add any custom content from configuration
     if ($config.DevelopmentTools.PowerShellProfile.CustomContent) {
-        $profileContent += @"
+        $ProfileNameContent += @"
 
 # Custom content from configuration
 $($config.DevelopmentTools.PowerShellProfile.CustomContent)
@@ -224,20 +224,20 @@ $($config.DevelopmentTools.PowerShellProfile.CustomContent)
     }
 
     # Write profile
-    if ($PSCmdlet.ShouldProcess($profilePath, 'Create/Update PowerShell profile')) {
-        Set-Content -Path $profilePath -Value $profileContent -Encoding UTF8
+    if ($PSCmdlet.ShouldProcess($ProfileNamePath, 'Create/Update PowerShell profile')) {
+        Set-Content -Path $ProfileNamePath -Value $ProfileNameContent -Encoding UTF8
         Write-ScriptLog "PowerShell profile created/updated successfully"
         
         # Display summary
         Write-ScriptLog ""
         Write-ScriptLog "Profile configuration summary:"
-        Write-ScriptLog "  - Location: $profilePath"
-        Write-ScriptLog "  - Module paths: $($profileConfig.IncludeModulePaths)"
-        Write-ScriptLog "  - Aliases: $($profileConfig.IncludeAliases)"
-        Write-ScriptLog "  - Helper functions: $($profileConfig.IncludeFunctions)"
-        Write-ScriptLog "  - Custom prompt: $($profileConfig.CustomPrompt)"
+        Write-ScriptLog "  - Location: $ProfileNamePath"
+        Write-ScriptLog "  - Module paths: $($ProfileNameConfig.IncludeModulePaths)"
+        Write-ScriptLog "  - Aliases: $($ProfileNameConfig.IncludeAliases)"
+        Write-ScriptLog "  - Helper functions: $($ProfileNameConfig.IncludeFunctions)"
+        Write-ScriptLog "  - Custom prompt: $($ProfileNameConfig.CustomPrompt)"
         Write-ScriptLog ""
-        Write-ScriptLog "To activate the profile, run: . `$PROFILE"
+        Write-ScriptLog "To activate the profile, run: . `$ProfileName"
         Write-ScriptLog "Or start a new PowerShell session"
     }
     

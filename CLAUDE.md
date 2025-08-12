@@ -5,14 +5,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Quick Commands
 
 ```powershell
-# Initialize environment (loads all modules, sets up aliases)
-./Initialize-AitherEnvironment.ps1  # Use this - it loads AitherZero.psd1 module manifest
+# Bootstrap - Intelligently installs or initializes based on context
+./bootstrap.ps1                     # PowerShell 7+ (auto-detects if install or init needed)
+./bootstrap.sh                      # Unix/Linux/macOS (auto-detects if install or init needed)
+iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap-ps5.ps1 | iex  # PowerShell 5.1 (installs PS7 first)
 
 # Main entry point - Interactive UI
 ./Start-AitherZero.ps1
 
-# Bootstrap (installs dependencies, sets up environment)
-./bootstrap.ps1
+# Testing - Use orchestration or direct Pester commands
+./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0402     # Run unit tests
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick -NonInteractive  # Quick test suite
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-full -NonInteractive   # Full test suite
+./Start-AitherZero.ps1 -Mode Test                   # Run all tests (Test mode)
 
 # Run single test file
 Invoke-Pester -Path "./tests/unit/Configuration.Tests.ps1" -Output Detailed
@@ -25,7 +30,10 @@ Invoke-Pester -Path "./tests/domains/configuration" -CodeCoverage "./domains/con
 az 0402                 # Run unit tests with coverage
 az 0404                 # Run PSScriptAnalyzer validation
 az 0407                 # Validate PowerShell syntax
+az 0440                 # Validate GitHub Actions workflows
+az 0441 -InstallDependencies  # Set up local workflow testing with act
 az 0510 -ShowAll        # Generate comprehensive project report
+az 0511                 # Show project dashboard
 
 # Git workflow automation
 az 0701 -Type feature -Name "my-feature" -Force           # Create feature branch
@@ -36,6 +44,14 @@ az 0703 -Title "Add feature" -NonInteractive              # Create pull request
 ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick   # Fast validation (4 stages)
 ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-full    # Complete test suite (6 stages)
 ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-ci      # CI/CD pipeline tests
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook tdd-development-cycle  # TDD workflow
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook workflow-validation  # Validate GitHub workflows
+
+# Workflow testing and validation
+az 0440 -Path .github/workflows -All        # Validate all workflows
+az 0440 -Path .github/workflows/ci.yml -Strict  # Strict validation of specific workflow
+az 0441 -WorkflowFile pr-validation.yml -Event pull_request  # Test workflow locally with act
+seq 0440,0407,0404                          # Full workflow validation sequence
 
 # Direct orchestration sequences (bypasses UI)
 Invoke-OrchestrationSequence -Sequence "0000-0099" -Configuration $Config
@@ -51,7 +67,7 @@ az.cmd                  # Windows batch wrapper
 
 ## High-Level Architecture
 
-AitherZero is an infrastructure automation platform using a number-based orchestration system (0000-9999) for systematic script execution.
+AitherZero is an infrastructure automation platform using a **number-based orchestration system** (0000-9999) for systematic script execution.
 
 ### Core Module Loading Architecture
 
@@ -61,9 +77,9 @@ AitherZero.psd1 (Module Manifest)
         ├── Sets $env:AITHERZERO_ROOT and $env:AITHERZERO_INITIALIZED
         ├── Starts PowerShell transcript logging (logs/transcript-*.log)
         ├── Imports all domain modules in specific order:
-        │   1. utilities/Logging.psm1 (first - other modules depend on it)
+        │   1. utilities/Logging.psm1 (CRITICAL - other modules depend on it)
         │   2. configuration/Configuration.psm1
-        │   3. experience/BetterMenu.psm1 (before UserInterface)
+        │   3. experience/BetterMenu.psm1 (MUST load before UserInterface)
         │   4. experience/UserInterface.psm1
         │   5. development/* (Git, Issues, PRs)
         │   6. testing/TestingFramework.psm1
@@ -78,7 +94,8 @@ AitherZero.psd1 (Module Manifest)
 Scripts in `/automation-scripts/` are numbered 0000-9999:
 - **0000-0099**: Environment preparation (cleanup, PowerShell 7, directories)
 - **0100-0199**: Infrastructure (Hyper-V, certificates, networking)
-- **0200-0299**: Development tools (Git, Node, Python, Docker, VS Code)
+- **0200-0299**: Development tools (Git, Node, Python, Docker, VS Code, AI tools)
+- **0300-0399**: Infrastructure deployment (OpenTofu/Terraform)
 - **0400-0499**: Testing & validation (Pester, PSScriptAnalyzer, coverage)
 - **0500-0599**: Reporting & metrics (system info, project reports, dashboards)
 - **0700-0799**: Development automation (Git branches, commits, PRs, AI tools)
@@ -87,11 +104,20 @@ Scripts in `/automation-scripts/` are numbered 0000-9999:
 
 ### Key Architectural Patterns
 
-1. **Module Scoping Issues**: Functions called in scriptblocks (like Show-UISpinner) may not have access to imported functions. Call directly instead.
+1. **Module Scoping Issues**: Functions called in scriptblocks (like Show-UISpinner) may not have access to imported functions. Call directly instead:
+   ```powershell
+   # Wrong - may fail in scriptblocks
+   Show-UISpinner { Write-CustomLog "Processing..." }
+   
+   # Right - call functions directly
+   Write-CustomLog "Processing..."
+   Show-UISpinner { Start-Process $command }
+   ```
 
 2. **Cross-Platform Paths**: Always check `$IsWindows/$IsLinux/$IsMacOS` and use appropriate paths:
    ```powershell
    if ($IsWindows) { 'C:/temp' } else { "$HOME/.aitherzero/temp" }
+   $tempPath = if ($IsWindows) { $env:TEMP } else { '/tmp' }
    ```
 
 3. **Logging Pattern**: Each module should use dynamic command detection:
@@ -101,7 +127,7 @@ Scripts in `/automation-scripts/` are numbered 0000-9999:
    }
    ```
 
-4. **Orchestration Range Expansion**: Ranges like "0000-0199" only include scripts that actually exist (fixed in ConvertTo-ScriptNumbers function)
+4. **Orchestration Range Expansion**: Ranges like "0000-0199" only include scripts that actually exist (handled in ConvertTo-ScriptNumbers function)
 
 5. **UI Components**: 
    - UserInterface.psm1 uses Write-UIText which requires `[AllowEmptyString()]` for empty messages
@@ -122,26 +148,46 @@ Scripts in `/automation-scripts/` are numbered 0000-9999:
 
 5. **Cleanup Safety**: The 0000_Cleanup-Environment.ps1 script has safety guards to prevent deleting the current project.
 
+6. **PowerShell 5.1 Compatibility**: Use separate commands instead of `&&` operator which isn't supported in PS 5.1.
+
+7. **Array Wrapping for Count**: Wrap pipeline results in @() to ensure .Count property works:
+   ```powershell
+   $files = @(Get-ChildItem | Where-Object { ... })
+   ```
+
 ### Configuration System
 
-Configuration is hierarchical:
-1. Default values in code
-2. `/config.json` file
-3. Playbook variables
-4. Command-line parameters
+AitherZero uses PowerShell Data Files (.psd1) for configuration with hierarchical precedence:
+
+1. Command-line parameters (highest priority)
+2. Environment variables (`AITHERZERO_*`)
+3. `config.local.psd1` (local overrides, gitignored)
+4. `config.psd1` (main configuration)
+5. CI defaults (auto-applied when CI detected)
+6. Script defaults (lowest priority)
+
+**Key Features:**
+- **Zero-parameter CI/CD**: Automatically detects CI environments (GitHub Actions, Azure DevOps, GitLab, etc.)
+- **Get-ConfiguredValue Helper**: Unified API for accessing configuration with fallbacks
+- **PSScriptAnalyzer Settings**: Integrated into config.psd1 under `Testing.PSScriptAnalyzer`
+
+```powershell
+# Use in scripts
+Import-Module ./domains/configuration/Configuration.psm1
+$ProfileName = Get-ConfiguredValue -Name 'Profile' -Section 'Core' -Default 'Standard'
+```
 
 Key configuration sections:
 - `Core.Profile`: Minimal, Standard, Developer, Full
+- `Core.Environment`: Development, Testing, Production, CI (auto-detected)
 - `Automation.MaxConcurrency`: Parallel execution limit
-- `Automation.ValidateBeforeRun`: Pre-execution validation
+- `Automation.NonInteractive`: No prompts (auto-true in CI)
 - `Testing.Profile`: Quick, Standard, Full, CI
+- `Testing.PSScriptAnalyzer`: Linting rules and settings
 
 ### Testing Framework
 
 ```powershell
-# PSScriptAnalyzer settings in PSScriptAnalyzerSettings.psd1
-# Excludes: PSAvoidUsingWriteHost, PSUseShouldProcessForStateChangingFunctions
-
 # Common test patterns
 Describe "ModuleName" {
     BeforeAll {
@@ -156,6 +202,15 @@ Describe "ModuleName" {
     }
 }
 ```
+
+Test structure:
+- `/tests/unit/` - Unit tests for individual functions and scripts
+- `/tests/integration/` - Integration tests for module interactions
+- `/tests/domains/` - Domain-specific tests
+
+PSScriptAnalyzer configuration now in `config.psd1`:
+- Excludes: PSAvoidUsingWriteHost, PSUseShouldProcessForStateChangingFunctions
+- Rules: PSProvideCommentHelp, PSUseCompatibleSyntax, PSUseCorrectCasing
 
 ### Playbook System
 
@@ -175,6 +230,13 @@ Create playbooks via UI or:
 Save-OrchestrationPlaybook -Name "test" -Sequence @("0402","0404") -Description "Run tests"
 ```
 
+Notable playbooks:
+- `tdd-development-cycle`: Enforces Test-Driven Development with automatic reporting
+- `test-quick`: Fast validation (4 stages)
+- `test-full`: Complete test suite (6 stages)
+- `test-ci`: CI/CD pipeline tests
+- `workflow-validation`: GitHub Actions validation
+
 ### Important Module Interdependencies
 
 1. **Logging.psm1** must load first - many modules depend on Write-CustomLog
@@ -184,11 +246,12 @@ Save-OrchestrationPlaybook -Name "test" -Sequence @("0402","0404") -Description 
 
 ### Development Workflow Best Practices
 
-1. Always run `./Initialize-AitherEnvironment.ps1` first in new sessions
+1. Run `./bootstrap.ps1` or `./bootstrap.sh` to initialize environment (safe to run multiple times)
 2. Use `az` wrapper for automation scripts - it ensures environment is loaded
 3. Test changes with `seq 0404` (PSScriptAnalyzer) before committing
 4. Create playbooks for repetitive task sequences
 5. Check logs/transcript-*.log for complete session history
+6. Use approved PowerShell verbs (Get-Verb to check)
 
 ### Cross-Platform Considerations
 
@@ -196,3 +259,37 @@ Save-OrchestrationPlaybook -Name "test" -Sequence @("0402","0404") -Description 
 - User detection: `if ($IsWindows) { [System.Security.Principal.WindowsIdentity]::GetCurrent().Name } else { $env:USER }`
 - Computer name: `$env:COMPUTERNAME ?? $env:HOSTNAME`
 - Temp paths: `if ($IsWindows) { $env:TEMP } else { '/tmp' }`
+- Platform-specific features: Hyper-V, WSL2, Certificate Authority are Windows-only
+
+### Exit Codes Convention
+
+- `0`: Success
+- `1`: General error
+- `2`: Execution error
+- `3010`: Restart required (Windows)
+
+### CI/CD Integration
+
+AitherZero automatically detects CI environments and applies appropriate defaults:
+
+**Auto-detected environments:**
+- GitHub Actions (`GITHUB_ACTIONS=true`)
+- Azure DevOps (`TF_BUILD=true`)
+- GitLab CI (`GITLAB_CI=true`)
+- Jenkins (`JENKINS_URL` exists)
+- Generic CI (`CI=true`)
+
+**CI Default Behaviors:**
+- Profile: Full
+- NonInteractive: true
+- Environment: CI
+- WhatIf: false
+- RunCoverage: true
+
+```yaml
+# GitHub Actions - zero configuration needed
+- name: Run AitherZero
+  run: |
+    ./bootstrap.ps1
+    ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-ci
+```

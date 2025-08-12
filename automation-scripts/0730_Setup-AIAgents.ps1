@@ -32,7 +32,7 @@ param(
     
     [switch]$ValidateOnly,
     
-    [string]$ConfigPath = "$PSScriptRoot/../config.json"
+    [string]$ConfigPath = "$PSScriptRoot/../config.psd1"
 )
 
 #region Metadata
@@ -222,7 +222,7 @@ function Initialize-RateLimiting {
     
     if (Test-Path $configPath) {
         if ($PSCmdlet.ShouldProcess($configPath, "Update rate limits configuration")) {
-            $existingConfig = Get-Content $configPath -Raw | ConvertFrom-Json -AsHashtable
+            $existingConfig = Import-PowerShellDataFile $configPath -AsHashtable
             $existingConfig[$Provider] = $rateLimits
             $existingConfig | ConvertTo-Json -Depth 10 | Set-Content $configPath
         }

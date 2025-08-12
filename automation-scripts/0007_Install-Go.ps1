@@ -199,21 +199,21 @@ try {
         sudo tar -C /usr/local -xzf $tarPath
         
         # Set up environment
-        $profilePath = "$HOME/.profile"
+        $ProfileNamePath = "$HOME/.profile"
         if (Test-Path "$HOME/.bashrc") {
-            $profilePath = "$HOME/.bashrc"
+            $ProfileNamePath = "$HOME/.bashrc"
         }
         
         # Add to PATH if not already there
-        $profileContent = Get-Content $profilePath -Raw
-        if ($profileContent -notmatch 'export PATH.*\/usr\/local\/go\/bin') {
+        $ProfileNameContent = Get-Content $ProfileNamePath -Raw
+        if ($ProfileNameContent -notmatch 'export PATH.*\/usr\/local\/go\/bin') {
             @"
 
 # Go programming language
 export PATH=`$PATH:/usr/local/go/bin
 export GOPATH=`$HOME/go
 export PATH=`$PATH:`$GOPATH/bin
-"@ | Add-Content $profilePath
+"@ | Add-Content $ProfileNamePath
         }
         
         # Update current session
@@ -247,21 +247,21 @@ export PATH=`$PATH:`$GOPATH/bin
         }
         
         # Set up environment
-        $profilePath = "$HOME/.zshrc"
-        if (-not (Test-Path $profilePath)) {
-            $profilePath = "$HOME/.bash_profile"
+        $ProfileNamePath = "$HOME/.zshrc"
+        if (-not (Test-Path $ProfileNamePath)) {
+            $ProfileNamePath = "$HOME/.bash_profile"
         }
         
         # Add to PATH if not already there
-        $profileContent = Get-Content $profilePath -Raw -ErrorAction SilentlyContinue
-        if ($profileContent -notmatch 'export PATH.*\/usr\/local\/go\/bin') {
+        $ProfileNameContent = Get-Content $ProfileNamePath -Raw -ErrorAction SilentlyContinue
+        if ($ProfileNameContent -notmatch 'export PATH.*\/usr\/local\/go\/bin') {
             @"
 
 # Go programming language
 export PATH=`$PATH:/usr/local/go/bin
 export GOPATH=`$HOME/go
 export PATH=`$PATH:`$GOPATH/bin
-"@ | Add-Content $profilePath
+"@ | Add-Content $ProfileNamePath
         }
         
     } else {

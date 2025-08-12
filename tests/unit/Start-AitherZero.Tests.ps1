@@ -107,8 +107,8 @@ return $PSBoundParameters
         }
         
         It "Should accept ConfigPath parameter" {
-            $result = & $script:TestScriptPath -ConfigPath "/custom/config.json"
-            $result.ConfigPath | Should -Be "/custom/config.json"
+            $result = & $script:TestScriptPath -ConfigPath "/custom/config.psd1"
+            $result.ConfigPath | Should -Be "/custom/config.psd1"
         }
         
         It "Should accept DryRun switch" {
@@ -192,7 +192,7 @@ Write-Host $config.Core.Name
         }
         
         It "Should load configuration from custom path when specified" {
-            $customConfigPath = Join-Path $TestDrive "custom-config.json"
+            $customConfigPath = Join-Path $TestDrive "custom-config.psd1"
             @{ Core = @{ Name = "CustomConfig" } } | ConvertTo-Json | Set-Content $customConfigPath
             
             $configScript = @'
@@ -226,7 +226,7 @@ try {
             $errorScriptPath = Join-Path $TestDrive "error-test.ps1"
             $errorScript | Set-Content $errorScriptPath
             
-            $output = & $errorScriptPath -ConfigPath "/nonexistent/config.json" 2>&1
+            $output = & $errorScriptPath -ConfigPath "/nonexistent/config.psd1" 2>&1
             $output | Should -Match "Configuration file not found"
         }
         

@@ -4,7 +4,7 @@ Describe "0520_Analyze-ConfigurationUsage" {
     BeforeAll {
         $script:ScriptPath = Join-Path $PSScriptRoot "../../../../automation-scripts/0520_Analyze-ConfigurationUsage.ps1"
         $script:TempDir = [System.IO.Path]::GetTempPath()
-        $script:TestConfigPath = Join-Path $script:TempDir "config.json"
+        $script:TestConfigPath = Join-Path $script:TempDir "config.psd1"
         $script:TestOutputPath = Join-Path $script:TempDir "analysis"
         
         # Create test config file
@@ -43,7 +43,7 @@ Describe "0520_Analyze-ConfigurationUsage" {
         }
         Mock -CommandName Remove-Job -MockWith { }
         Mock -CommandName Get-Content -MockWith {
-            if ($Path -like "*config.json") {
+            if ($Path -like "*config.psd1") {
                 Get-Content $script:TestConfigPath
             } else {
                 "# Sample script with config.Core.Profile usage"
@@ -88,7 +88,7 @@ Describe "0520_Analyze-ConfigurationUsage" {
 
         It "Should load configuration file" {
             & $script:ScriptPath -ConfigPath $script:TestConfigPath -OutputPath $script:TestOutputPath 2>&1
-            Should -Invoke Get-Content -ParameterFilter { $Path -like "*config.json" }
+            Should -Invoke Get-Content -ParameterFilter { $Path -like "*config.psd1" }
         }
 
         It "Should analyze files for configuration usage" {

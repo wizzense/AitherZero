@@ -259,7 +259,7 @@ $(if ($IssueNumber) {
                 # Extract PR number from URL
                 $prNumber = $null
                 if ($result -match '/pull/(\d+)') {
-                    $prNumber = $matches[1]
+                    $prNumber = $Matches[1]
                 }
 
                 Write-PRLog "Pull request created successfully: $result" -Level "SUCCESS"
@@ -283,7 +283,7 @@ $(if ($IssueNumber) {
                     # Extract PR number from URL
                     $prNumber = $null
                     if ($existingPrUrl -match '/pull/(\d+)') {
-                        $prNumber = $matches[1]
+                        $prNumber = $Matches[1]
                     }
 
                     Write-PRLog "Pull request already exists: $existingPrUrl" -Level "SUCCESS"

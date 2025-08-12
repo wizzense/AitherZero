@@ -1,6 +1,9 @@
 #!/usr/bin/env pwsh
 # AitherZero CLI wrapper
 
+# Capture command-line arguments
+$arguments = $args
+
 # Determine the actual directory of this script
 $scriptDir = $null
 
@@ -24,19 +27,19 @@ if (-not (Test-Path "$scriptDir/AitherZero.psd1")) {
     }
 }
 
-# Load module if needed
-if (-not $env:AITHERZERO_INITIALIZED) {
+# Load module if needed (check both env var and function availability)
+if (-not $env:AITHERZERO_INITIALIZED -or -not (Get-Command Invoke-AitherScript -ErrorAction SilentlyContinue)) {
     Import-Module "$scriptDir/AitherZero.psd1" -Force -Global
 }
 
-# Check if we have the function available
+# Double-check we have the function available
 if (-not (Get-Command Invoke-AitherScript -ErrorAction SilentlyContinue)) {
     Write-Error "Invoke-AitherScript command not found. Module may not have loaded correctly."
     exit 1
 }
 
 # Now run the requested script
-if ($args.Count -eq 0) {
+if ($arguments.Count -eq 0) {
     Write-Host "Usage: az <script-number> [arguments]" -ForegroundColor Yellow
     Write-Host "Examples:" -ForegroundColor Gray
     Write-Host "  az 0402              # Run unit tests" -ForegroundColor White
@@ -46,10 +49,10 @@ if ($args.Count -eq 0) {
 }
 
 # Invoke the script with proper parameters
-$scriptNumber = [string]$args[0]
-if ($args.Count -gt 1) {
-    $remainingArgs = $args[1..($args.Count-1)]
-    Invoke-AitherScript -ScriptNumber $scriptNumber -Arguments $remainingArgs
+$scriptNumber = [string]$arguments[0]
+if ($arguments.Count -gt 1) {
+    $remainingArgs = $arguments[1..($arguments.Count-1)]
+    Invoke-AitherScript -ScriptNumber $scriptNumber @remainingArgs
 } else {
     Invoke-AitherScript -ScriptNumber $scriptNumber
 }

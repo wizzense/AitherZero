@@ -92,7 +92,7 @@ function Show-BetterMenu {
     # Calculate page size based on terminal height
     $terminalHeight = 25  # Default
     try {
-        if ($host.UI.RawUI.WindowSize.Height) {
+        if ($host.UI.RawUI -and $host.UI.RawUI.WindowSize -and $host.UI.RawUI.WindowSize.Height) {
             $terminalHeight = $host.UI.RawUI.WindowSize.Height
         }
     } catch {}
@@ -110,11 +110,16 @@ function Show-BetterMenu {
     while ($true) {
         # Only clear screen on first draw or when explicitly needed
         if ($firstDraw) {
-            Clear-Host
+            # Skip Clear-Host in CI/non-interactive environments
+            if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
+                try { Clear-Host } catch { }
+            }
             $firstDraw = $false
         } else {
-            # Move cursor to top for redraw without clearing
-            [Console]::SetCursorPosition(0, 0)
+            # Move cursor to top for redraw without clearing (skip in CI)
+            if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
+                try { [Console]::SetCursorPosition(0, 0) } catch { }
+            }
         }
         
         # Draw title
@@ -220,18 +225,18 @@ function Show-BetterMenu {
             }
             
             Write-Host "`nSelect option: " -ForegroundColor Yellow -NoNewline
-            $input = Read-Host
+            $inputValue = Read-Host
             
-            if ([string]::IsNullOrWhiteSpace($input)) {
+            if ([string]::IsNullOrWhiteSpace($inputValue)) {
                 return $null
             }
             
-            if ($CustomActions -and $CustomActions.ContainsKey($input.ToUpper())) {
-                return @{ Action = $input.ToUpper() }
+            if ($CustomActions -and $CustomActions.ContainsKey($inputValue.ToUpper())) {
+                return @{ Action = $inputValue.ToUpper() }
             }
             
-            if ($input -match '^\d+$') {
-                $num = [int]$input - 1
+            if ($inputValue -match '^\d+$') {
+                $num = [int]$inputValue - 1
                 if ($num -ge 0 -and $num -lt $Items.Count) {
                     return $Items[$num]
                 }

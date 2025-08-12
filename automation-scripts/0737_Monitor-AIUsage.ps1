@@ -37,8 +37,8 @@ $script:Tags = @('ai', 'monitoring', 'usage', 'cost', 'reporting')
 $script:Condition = '$true'  # Always available for monitoring
 #endregion
 
-$configPath = Join-Path (Split-Path $PSScriptRoot -Parent) "config.json"
-$config = Get-Content $configPath -Raw | ConvertFrom-Json
+$configPath = Join-Path (Split-Path $PSScriptRoot -Parent) "config.psd1"
+$config = Import-PowerShellDataFile $configPath
 $monitorConfig = $config.AI.UsageMonitoring
 
 Write-Host "═══════════════════════════════════════════════" -ForegroundColor Cyan

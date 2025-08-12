@@ -47,7 +47,7 @@ function Initialize-ClaudeCodeIntegration {
     .PARAMETER CLIPath
         Path to Claude Code CLI executable
     .EXAMPLE
-        Initialize-ClaudeCodeIntegration -ConfigPath "~/.claude/config.json"
+        Initialize-ClaudeCodeIntegration -ConfigPath "~/.claude/config.psd1"
     #>
     [CmdletBinding()]
     param(
@@ -72,7 +72,7 @@ function Initialize-ClaudeCodeIntegration {
         # Load configuration
         $configPathExpanded = [Environment]::ExpandEnvironmentVariables($ConfigPath)
         if (Test-Path $configPathExpanded) {
-            $script:ClaudeCodeConfig = Get-Content $configPathExpanded -Raw | ConvertFrom-Json
+            $script:ClaudeCodeConfig = Import-PowerShellDataFile $configPathExpanded
             Write-ClaudeLog "Configuration loaded from: $configPathExpanded" -Level Success
         } else {
             Write-ClaudeLog "Configuration not found: $configPathExpanded" -Level Warning
@@ -336,12 +336,12 @@ function Send-ClaudeMessage {
             # Use CLI
             Write-ClaudeLog "Using Claude Code CLI" -Level Information
             
-            $args = @("ask", $Message)
+            $arguments = @("ask", $Message)
             if ($SystemPrompt) {
-                $args += @("--system", $SystemPrompt)
+                $arguments += @("--system", $SystemPrompt)
             }
             
-            $result = Invoke-ClaudeCodeCLI -Command "" -Arguments $args
+            $result = Invoke-ClaudeCodeCLI -Command "" -Arguments $arguments
             
             return @{
                 Content = $result.Output

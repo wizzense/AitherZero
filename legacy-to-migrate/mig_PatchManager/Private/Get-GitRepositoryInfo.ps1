@@ -37,8 +37,8 @@ function Get-GitRepositoryInfo {
         if ($LASTEXITCODE -eq 0) {
             foreach ($line in $remoteOutput) {
                 if ($line -match '(\w+)\s+([^\s]+)\s+\((fetch|push)\)') {
-                    $remoteName = $matches[1]
-                    $remoteUrl = $matches[2]
+                    $remoteName = $Matches[1]
+                    $remoteUrl = $Matches[2]
                     if (-not $remotes.ContainsKey($remoteName)) {
                         $remotes[$remoteName] = $remoteUrl
                     }
@@ -57,8 +57,8 @@ function Get-GitRepositoryInfo {
         $repoName = $null
 
         if ($originUrl -match 'github\.com[:/]([^/]+)/([^/\.]+)') {
-            $owner = $matches[1]
-            $repoName = $matches[2]
+            $owner = $Matches[1]
+            $repoName = $Matches[2]
         }
         else {
             throw "Could not parse GitHub repository from URL: $originUrl"
@@ -84,8 +84,8 @@ function Get-GitRepositoryInfo {
             if ($remotes.ContainsKey('upstream')) {
                 $upstreamUrl = $remotes['upstream']
                 if ($upstreamUrl -match 'github\.com[:/]([^/]+)/([^/\.]+)') {
-                    $upstreamOwner = $matches[1]
-                    $upstreamRepo = $matches[2]
+                    $upstreamOwner = $Matches[1]
+                    $upstreamRepo = $Matches[2]
                     $forkChain += @{ Name = "upstream"; Owner = $upstreamOwner; Repo = $upstreamRepo; GitHubRepo = "$upstreamOwner/$upstreamRepo"; Type = "Public"; Description = "Public staging repository" }
 
                     # If upstream is AitherLabs, add Aitherium as the root

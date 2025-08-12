@@ -173,8 +173,8 @@ function New-CustomISO {
                         # Step 6: Add additional files
                         foreach ($fileSpec in $AdditionalFiles) {
                             if ($fileSpec -match '^(.+)\|(.+)$') {
-                                $sourcePath = $matches[1]
-                                $targetPath = Join-Path $MountPath $matches[2]
+                                $sourcePath = $Matches[1]
+                                $targetPath = Join-Path $MountPath $Matches[2]
                             } else {
                                 $sourcePath = $fileSpec
                                 $targetPath = Join-Path $MountPath "Windows\$(Split-Path $fileSpec -Leaf)"

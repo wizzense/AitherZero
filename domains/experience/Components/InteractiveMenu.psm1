@@ -154,12 +154,12 @@ function New-InteractiveMenu {
     
     # Handle keyboard input
     $menu.OnKeyPress = {
-        param($input)
+        param($inputValue)
         
         $props = $this.Properties
         $handled = $true
         
-        switch ($input.Key) {
+        switch ($inputValue.Key) {
             "UpArrow" {
                 # Move selection up
                 if ($props.SelectedIndex -gt 0) {
@@ -235,15 +235,15 @@ function New-InteractiveMenu {
             
             default {
                 # Handle search input
-                if ($props.ShowSearch -and $input.Char) {
-                    if ($input.Key -eq "Backspace") {
+                if ($props.ShowSearch -and $inputValue.Char) {
+                    if ($inputValue.Key -eq "Backspace") {
                         if ($props.SearchText.Length -gt 0) {
                             $props.SearchText = $props.SearchText.Substring(0, $props.SearchText.Length - 1)
                             Update-MenuFilter -Menu $this
                             Queue-UIRender -Component $this -Context $this.Context
                         }
-                    } elseif ($input.Char -match '[\w\s]') {
-                        $props.SearchText += $input.Char
+                    } elseif ($inputValue.Char -match '[\w\s]') {
+                        $props.SearchText += $inputValue.Char
                         Update-MenuFilter -Menu $this
                         Queue-UIRender -Component $this -Context $this.Context
                     }

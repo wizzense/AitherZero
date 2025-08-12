@@ -74,7 +74,7 @@ BeforeAll {
 
     # Mock external commands
     Mock gh { 
-        switch -Regex ($args -join ' ') {
+        switch -Regex ($arguments -join ' ') {
             'api user --jq' { return 'testuser' }
             default { return '' }
         }
@@ -88,18 +88,18 @@ BeforeAll {
     Mock Read-Host { return 'y' }
     
     # Mock the analyze issues script
-    Mock & { 
+    Mock Invoke-Expression { 
         return @{
             MatchedIssues = @(
                 @{ Number = 123; Title = 'Related issue' }
             )
             PRBodySection = "`n## Related Issues`nCloses #123"
         }
-    } -ParameterFilter { $args[0] -like "*0805_Analyze-OpenIssues.ps1*" }
+    } -ParameterFilter { $Command -like "*0805_Analyze-OpenIssues.ps1*" }
     
     # Mock other automation scripts
-    Mock Invoke-Expression { } -ParameterFilter { $args[0] -like "*0402_Run-UnitTests.ps1*" }
-    Mock Invoke-Expression { } -ParameterFilter { $args[0] -like "*0404_Run-PSScriptAnalyzer.ps1*" }
+    Mock Invoke-Expression { } -ParameterFilter { $Command -like "*0402_Run-UnitTests.ps1*" }
+    Mock Invoke-Expression { } -ParameterFilter { $Command -like "*0404_Run-PSScriptAnalyzer.ps1*" }
     
     # Initialize mock calls tracking
     $script:MockCalls = @{
@@ -457,7 +457,7 @@ Describe "0703_Create-PullRequest" {
         }
         
         It "Should include manual issue references when Closes parameter is provided" {
-            Mock Invoke-Expression { return $null } -ParameterFilter { $args[0] -like "*0805_Analyze-OpenIssues.ps1*" }
+            Mock Invoke-Expression { return $null } -ParameterFilter { $arguments[0] -like "*0805_Analyze-OpenIssues.ps1*" }
             
             & "/workspaces/AitherZero/automation-scripts/0703_Create-PullRequest.ps1" -Title "Test PR" -Closes @(456, 789) -WhatIf
             
@@ -471,14 +471,14 @@ Describe "0703_Create-PullRequest" {
         It "Should run checks when RunChecks switch is used and not draft" {
             & "/workspaces/AitherZero/automation-scripts/0703_Create-PullRequest.ps1" -Title "Test PR" -RunChecks -WhatIf
             
-            Should -Invoke & -ParameterFilter { $args[0] -like "*0402_Run-UnitTests.ps1*" }
-            Should -Invoke & -ParameterFilter { $args[0] -like "*0404_Run-PSScriptAnalyzer.ps1*" }
+            Should -Invoke & -ParameterFilter { $arguments[0] -like "*0402_Run-UnitTests.ps1*" }
+            Should -Invoke & -ParameterFilter { $arguments[0] -like "*0404_Run-PSScriptAnalyzer.ps1*" }
         }
         
         It "Should not run checks for draft PRs" {
             & "/workspaces/AitherZero/automation-scripts/0703_Create-PullRequest.ps1" -Title "Test PR" -Draft -RunChecks -WhatIf
             
-            Should -Not -Invoke & -ParameterFilter { $args[0] -like "*0402_Run-UnitTests.ps1*" }
+            Should -Not -Invoke & -ParameterFilter { $arguments[0] -like "*0402_Run-UnitTests.ps1*" }
         }
     }
     

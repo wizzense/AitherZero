@@ -4,16 +4,23 @@
 .SYNOPSIS
     Centralized configuration management for AitherZero
 .DESCRIPTION
-    Provides a unified configuration store with environment support, validation, and hot-reloading
+    Aitherium™ Enterprise Infrastructure Automation Platform
+    Configuration Module - Provides a unified configuration store with 
+    environment support, validation, and hot-reloading
+.NOTES
+    Copyright © 2025 Aitherium Corporation
 #>
 
 # Script variables
-$script:ConfigPath = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) "config.json"
+$script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+$script:ConfigPath = $null  # Will be determined dynamically
 $script:Config = $null
 $script:ConfigCache = @{}
 $script:ConfigWatcher = $null
 $script:ValidationSchemas = @{}
 $script:CurrentEnvironment = "Development"
+$script:IsCI = $false
+$script:CIDefaults = @{}
 
 # Logging helper for Configuration module
 function Write-ConfigLog {
@@ -47,24 +54,131 @@ if (-not $global:AitherZeroConfigInitialized) {
     $global:AitherZeroConfigInitialized = $true
 }
 
+function Initialize-CIEnvironment {
+    <#
+    .SYNOPSIS
+        Detects if running in CI environment and sets defaults
+    #>
+    
+    # Detect CI environment from well-known variables
+    $script:IsCI = (
+        $env:CI -eq 'true' -or
+        $env:GITHUB_ACTIONS -eq 'true' -or
+        $env:TF_BUILD -eq 'true' -or  # Azure DevOps
+        $env:GITLAB_CI -eq 'true' -or
+        $env:JENKINS_URL -or
+        $env:TEAMCITY_VERSION -or
+        $env:TRAVIS -eq 'true' -or
+        $env:CIRCLECI -eq 'true' -or
+        $env:APPVEYOR -eq 'true' -or
+        $env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI  # Azure DevOps
+    )
+    
+    if ($script:IsCI) {
+        Write-ConfigLog -Message "CI environment detected" -Level Information
+        $script:CurrentEnvironment = "CI"
+        
+        # Set CI defaults
+        $script:CIDefaults = @{
+            Profile = 'Full'
+            NonInteractive = $true
+            CI = $true
+            OutputFormat = 'JSON'
+            VerboseOutput = $false
+            ShowProgress = $false
+            OpenReportAfterRun = $false
+            ClearScreenOnStart = $false
+            EnableAnimations = $false
+            EnableColors = $false
+            DryRun = $false
+            WhatIf = $false
+            ContinueOnError = $false
+        }
+    }
+}
+
+function Get-ConfigurationPath {
+    <#
+    .SYNOPSIS
+        Determines the configuration file path with fallback logic
+    #>
+    
+    # Priority order:
+    # 1. Environment variable
+    if ($env:AITHERZERO_CONFIG_PATH -and (Test-Path $env:AITHERZERO_CONFIG_PATH)) {
+        return $env:AITHERZERO_CONFIG_PATH
+    }
+    
+    # 2. PSD1 file (preferred)
+    $psd1Path = Join-Path $script:ProjectRoot "config.psd1"
+    if (Test-Path $psd1Path) {
+        return $psd1Path
+    }
+    
+    # 3. JSON file (legacy)
+    $jsonPath = Join-Path $script:ProjectRoot "config.json"
+    if (Test-Path $jsonPath) {
+        Write-ConfigLog -Message "Using legacy config.json. Consider converting to config.psd1" -Level Warning
+        return $jsonPath
+    }
+    
+    # 4. No config file found
+    return $null
+}
+
 function Get-Configuration {
     [CmdletBinding()]
     param(
         [string]$Section,
         [string]$Key
     )
+    
+    # Initialize CI environment on first call
+    if ($null -eq $script:ConfigPath) {
+        Initialize-CIEnvironment
+        $script:ConfigPath = Get-ConfigurationPath
+    }
 
     Write-ConfigLog -Level Debug -Message "Loading configuration" -Data @{
         Section = $Section
         Key = $Key
         ConfigPath = $script:ConfigPath
+        IsCI = $script:IsCI
     }
 
     if (-not $script:Config) {
-        if (Test-Path $script:ConfigPath) {
+        if ($script:ConfigPath -and (Test-Path $script:ConfigPath)) {
             Write-ConfigLog -Message "Loading configuration from file" -Data @{ Path = $script:ConfigPath }
             try {
-                $script:Config = Get-Content $script:ConfigPath -Raw | ConvertFrom-Json
+                # Load based on file extension
+                if ($script:ConfigPath -like "*.psd1") {
+                    $script:Config = Import-PowerShellDataFile $script:ConfigPath
+                    
+                    # Check for local overrides
+                    $localPath = $script:ConfigPath -replace '\.psd1$', '.local.psd1'
+                    if (Test-Path $localPath) {
+                        Write-ConfigLog -Message "Loading local overrides from $localPath" -Level Information
+                        $localConfig = Import-PowerShellDataFile $localPath
+                        $script:Config = Merge-Configuration -Current $script:Config -New $localConfig
+                    }
+                } else {
+                    # JSON fallback
+                    $script:Config = Get-Content $script:ConfigPath -Raw | ConvertFrom-Json
+                }
+                
+                # Apply CI defaults if in CI environment
+                if ($script:IsCI -and $script:CIDefaults.Count -gt 0) {
+                    Write-ConfigLog -Message "Applying CI defaults" -Level Information
+                    # Merge CI defaults into Core section
+                    if (-not $script:Config.Core) {
+                        $script:Config | Add-Member -MemberType NoteProperty -Name Core -Value ([PSCustomObject]@{})
+                    }
+                    foreach ($key in $script:CIDefaults.Keys) {
+                        if (-not $script:Config.Core.$key) {
+                            $script:Config.Core | Add-Member -MemberType NoteProperty -Name $key -Value $script:CIDefaults[$key]
+                        }
+                    }
+                }
                 Write-ConfigLog -Message "Configuration loaded successfully" -Data @{ 
                     Sections = ($script:Config.PSObject.Properties.Name -join ', ')
                 }
@@ -76,9 +190,9 @@ function Get-Configuration {
                 throw
             }
         } else {
-            Write-ConfigLog -Message "Configuration file not found, creating default configuration" -Data @{ Path = $script:ConfigPath }
-            # Default configuration with enhanced structure
-            $script:Config = [PSCustomObject]@{
+            # No config file - create minimal defaults
+            Write-ConfigLog -Message "No configuration file found, using defaults" -Level Warning
+            $script:Config = @{
                 Core = [PSCustomObject]@{
                     Name = "AitherZero"
                     Version = "1.0.0"
@@ -110,12 +224,18 @@ function Get-Configuration {
                 }
             }
             
-            Write-ConfigLog -Message "Default configuration created" -Data @{
+            # Apply CI defaults if in CI environment
+            if ($script:IsCI -and $script:CIDefaults.Count -gt 0) {
+                foreach ($key in $script:CIDefaults.Keys) {
+                    if (-not $script:Config.Core.$key) {
+                        $script:Config.Core | Add-Member -MemberType NoteProperty -Name $key -Value $script:CIDefaults[$key]
+                    }
+                }
+            }
+            
+            Write-ConfigLog -Message "Using default configuration" -Data @{
                 Sections = ($script:Config.PSObject.Properties.Name -join ', ')
             }
-
-            # Save default configuration
-            Set-Configuration -Configuration $script:Config
         }
     }
 
@@ -162,8 +282,15 @@ function Set-Configuration {
     
     try {
         $script:Config = $Configuration
-        $json = $Configuration | ConvertTo-Json -Depth 10
-        Set-Content -Path $script:ConfigPath -Value $json
+        # Save as PSD1 if the path ends with .psd1
+        if ($script:ConfigPath -like '*.psd1') {
+            $psd1Content = ConvertTo-Psd1String -InputObject $Configuration
+            Set-Content -Path $script:ConfigPath -Value $psd1Content
+        } else {
+            # Fall back to JSON for compatibility
+            $json = $Configuration | ConvertTo-Json -Depth 10
+            Set-Content -Path $script:ConfigPath -Value $json
+        }
         Write-ConfigLog -Message "Configuration saved successfully" -Data @{ Path = $script:ConfigPath }
     } catch {
         Write-ConfigLog -Level Error -Message "Failed to save configuration" -Data @{
@@ -176,7 +303,70 @@ function Set-Configuration {
     return $script:Config
 }
 
+function Get-ConfiguredValue {
+    <#
+    .SYNOPSIS
+        Gets a configuration value with fallback chain: EnvVar > Config > CI Default > Default
+    .DESCRIPTION
+        Smart configuration resolution that checks environment variables first,
+        then configuration file, then CI defaults (if in CI), then provided default.
+    .PARAMETER Name
+        Configuration key name (e.g., "Profile", "OutputFormat")
+    .PARAMETER Section
+        Configuration section (default: "Core")
+    .PARAMETER Default
+        Default value if not found elsewhere
+    .PARAMETER EnvPrefix
+        Environment variable prefix (default: "AITHERZERO_")
+    .EXAMPLE
+        $ProfileName = Get-ConfiguredValue -Name "Profile" -Default "Standard"
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Name,
+        
+        [string]$Section = "Core",
+        
+        [object]$Default = $null,
+        
+        [string]$EnvPrefix = "AITHERZERO_"
+    )
+    
+    # 1. Check environment variable (highest priority)
+    $envVarName = "${EnvPrefix}${Name}".ToUpper()
+    $envValue = [Environment]::GetEnvironmentVariable($envVarName)
+    if ($envValue) {
+        Write-ConfigLog -Level Debug -Message "Using environment variable $envVarName = $envValue"
+        # Convert string booleans if needed
+        if ($envValue -eq 'true') { return $true }
+        if ($envValue -eq 'false') { return $false }
+        return $envValue
+    }
+    
+    # 2. Check configuration file
+    $config = Get-Configuration -Section $Section
+    if ($config -and $null -ne $config.$Name) {
+        Write-ConfigLog -Level Debug -Message "Using config value $Section.$Name = $($config.$Name)"
+        return $config.$Name
+    }
+    
+    # 3. Check CI defaults (if in CI environment)
+    if ($script:IsCI -and $script:CIDefaults.ContainsKey($Name)) {
+        Write-ConfigLog -Level Debug -Message "Using CI default for $Name = $($script:CIDefaults[$Name])"
+        return $script:CIDefaults[$Name]
+    }
+    
+    # 4. Return provided default
+    Write-ConfigLog -Level Debug -Message "Using default value for $Name = $Default"
+    return $Default
+}
+
 function Get-ConfigValue {
+    <#
+    .SYNOPSIS
+        Legacy function - Gets nested configuration value by path
+    #>
     param(
         [Parameter(Mandatory)]
         [string]$Path
@@ -226,6 +416,7 @@ function Initialize-ConfigurationSystem {
         HotReloadEnabled = $EnableHotReload.IsPresent
     }
     Write-Host "Configuration system initialized for environment: $Environment" -ForegroundColor Green
+    return $true
 }
 
 # Environment switching
@@ -247,7 +438,17 @@ function Switch-ConfigurationEnvironment {
 
     # Reload configuration with new environment
     $script:Config = $null
-    $null = Get-Configuration
+    $config = Get-Configuration
+    
+    # Update the environment in the config
+    if ($config) {
+        if ($config -is [hashtable]) {
+            $config.Core.Environment = $Environment
+        } else {
+            $config.Core.Environment = $Environment
+        }
+        $script:Config = $config
+    }
     
     Write-ConfigLog -Message "Configuration environment switched successfully" -Data @{
         FromEnvironment = $oldEnvironment
@@ -294,6 +495,60 @@ function Test-Configuration {
     return $true
 }
 
+# Helper function to convert object to PSD1 string
+function ConvertTo-Psd1String {
+    param(
+        [Parameter(Mandatory)]
+        $InputObject,
+        [int]$Depth = 0
+    )
+    
+    $indent = '    ' * $Depth
+    
+    if ($null -eq $InputObject) {
+        return '$null'
+    }
+    elseif ($InputObject -is [bool]) {
+        return "$" + $InputObject.ToString()
+    }
+    elseif ($InputObject -is [string]) {
+        return "'" + ($InputObject -replace "'", "''") + "'"
+    }
+    elseif ($InputObject -is [int] -or $InputObject -is [long] -or $InputObject -is [double]) {
+        return $InputObject.ToString()
+    }
+    elseif ($InputObject -is [array] -or $InputObject -is [System.Collections.IEnumerable]) {
+        $items = @()
+        foreach ($item in $InputObject) {
+            $items += ConvertTo-Psd1String -InputObject $item -Depth ($Depth + 1)
+        }
+        if ($items.Count -eq 0) {
+            return '@()'
+        }
+        return "@(`n$indent    " + ($items -join "`n$indent    ") + "`n$indent)"
+    }
+    elseif ($InputObject -is [hashtable]) {
+        $pairs = @()
+        foreach ($key in $InputObject.Keys) {
+            $pairs += "$indent    $key = " + (ConvertTo-Psd1String -InputObject $InputObject[$key] -Depth ($Depth + 1))
+        }
+        if ($pairs.Count -eq 0) {
+            return '@{}'
+        }
+        return "@{`n" + ($pairs -join "`n") + "`n$indent}"
+    }
+    elseif ($InputObject -is [PSCustomObject]) {
+        $hash = @{}
+        foreach ($prop in $InputObject.PSObject.Properties) {
+            $hash[$prop.Name] = $prop.Value
+        }
+        return ConvertTo-Psd1String -InputObject $hash -Depth $Depth
+    }
+    else {
+        return "'" + $InputObject.ToString() + "'"
+    }
+}
+
 # Import/Export
 function Export-Configuration {
     [CmdletBinding()]
@@ -311,12 +566,19 @@ function Export-Configuration {
     try {
         $config = Get-Configuration
         
-        if (-not $IncludeDefaults) {
-            # Export only non-default values
-            $config = $config | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+        # Convert to hashtable if it's a PSCustomObject
+        if ($config -is [PSCustomObject]) {
+            $configHash = @{}
+            foreach ($prop in $config.PSObject.Properties) {
+                $configHash[$prop.Name] = $prop.Value
+            }
+            $config = $configHash
         }
         
-        $config | ConvertTo-Json -Depth 10 | Set-Content -Path $Path
+        # Export as PowerShell Data File
+        $psd1Content = ConvertTo-Psd1String -InputObject $config
+        $psd1Content | Set-Content -Path $Path
+        
         Write-ConfigLog -Message "Configuration exported successfully" -Data @{ Path = $Path }
         Write-Host "Configuration exported to: $Path" -ForegroundColor Green
     } catch {
@@ -347,7 +609,13 @@ function Import-Configuration {
     }
     
     try {
-        $newConfig = Get-Content $Path -Raw | ConvertFrom-Json
+        # Try to import as PowerShell Data File first
+        if ($Path -like '*.psd1') {
+            $newConfig = Import-PowerShellDataFile -Path $Path
+        } else {
+            # Fall back to JSON for compatibility
+            $newConfig = Get-Content $Path -Raw | ConvertFrom-Json
+        }
         
         if ($Merge) {
             Write-ConfigLog -Message "Merging imported configuration with existing configuration"
@@ -417,7 +685,7 @@ function Enable-ConfigurationHotReload {
     $script:ConfigWatcher.Filter = Split-Path $script:ConfigPath -Leaf
     $script:ConfigWatcher.NotifyFilter = [System.IO.NotifyFilters]::LastWrite
     
-    Register-ObjectEvent -InputObject $script:ConfigWatcher -EventName "Changed" -Action $action
+    $null = Register-ObjectEvent -InputObject $script:ConfigWatcher -EventName "Changed" -Action $action
     
     $script:ConfigWatcher.EnableRaisingEvents = $true
     Write-Host "Configuration hot reload enabled" -ForegroundColor Green
@@ -436,6 +704,7 @@ Export-ModuleMember -Function @(
     'Get-Configuration',
     'Set-Configuration', 
     'Get-ConfigValue',
+    'Get-ConfiguredValue',
     'Merge-Configuration',
     'Initialize-ConfigurationSystem',
     'Switch-ConfigurationEnvironment',

@@ -17,7 +17,7 @@
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-    [string]$InputPath,
+    [string]$inputValuePath,
     
     [Parameter(Mandatory = $false)]
     [ValidateSet('Auto', 'JSON', 'XML', 'CSV', 'YAML', 'Tanium', 'TestResults', 'Configuration', 'Orchestration')]
@@ -646,19 +646,19 @@ try {
     Write-Host "🤖 Generating AI prompt from data..." -ForegroundColor Cyan
     
     # Validate input
-    if (-not (Test-Path $InputPath)) {
-        throw "Input path not found: $InputPath"
+    if (-not (Test-Path $inputValuePath)) {
+        throw "Input path not found: $inputValuePath"
     }
     
     # Detect or validate data type
     if ($DataType -eq 'Auto') {
-        $DataType = Get-DataType -Path $InputPath
+        $DataType = Get-DataType -Path $inputValuePath
         Write-Host "   Detected data type: $DataType" -ForegroundColor Gray
     }
     
     # Parse the data
     Write-Host "   Parsing $DataType data..." -ForegroundColor Gray
-    $parsedData = Parse-StructuredData -Path $InputPath -Type $DataType
+    $parsedData = Parse-StructuredData -Path $inputValuePath -Type $DataType
     
     # Add context
     $parsedData.Context = $Context
@@ -682,7 +682,7 @@ try {
     
     # Add footer with metadata
     $generatedPrompt += "`n`n---`n"
-    $generatedPrompt += "*Generated from: $InputPath*`n"
+    $generatedPrompt += "*Generated from: $inputValuePath*`n"
     $generatedPrompt += "*Data Type: $DataType*`n"
     $generatedPrompt += "*Template: $PromptTemplate*`n"
     $generatedPrompt += "*Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')*"

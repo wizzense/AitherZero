@@ -194,7 +194,7 @@ Describe "TestingFramework Module" -Tag @('Unit', 'TestingFramework') {
         }
 
         It "Should use custom config path when provided" {
-            $customPath = '/custom/config.json'
+            $customPath = '/custom/config.psd1'
             Mock Test-Path { $true } -ParameterFilter { $Path -eq $customPath }
             
             $result = Get-TestingConfiguration -ConfigPath $customPath
@@ -739,7 +739,7 @@ Describe "Sample Test" {
     Context "Real Configuration Loading" {
         It "Should load actual configuration if available" {
             # Create a test config file
-            $configPath = Join-Path $TestDrive 'test-config.json'
+            $configPath = Join-Path $TestDrive 'test-config.psd1'
             $testConfig = @{
                 Testing = @{
                     Framework = 'Pester'

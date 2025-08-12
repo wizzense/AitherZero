@@ -32,7 +32,7 @@ BeforeAll {
     
     # Mock GitHub CLI
     Mock gh { 
-        switch -Regex ($args -join ' ') {
+        switch -Regex ($arguments -join ' ') {
             'auth status' { return 'Logged in to github.com' }
             'api' { return '{"login": "testuser"}' }
             default { return '' }

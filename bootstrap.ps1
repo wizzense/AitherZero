@@ -7,7 +7,7 @@
 .DESCRIPTION
     Cross-platform bootstrap script for AitherZero with automatic dependency resolution
 .PARAMETER Mode
-    Installation mode: New, Update, Clean, Remove
+    Operation mode: Remove (uninstall) - otherwise auto-detects install vs initialize
 .PARAMETER InstallProfile
     Installation profile: Minimal, Standard, Developer, Full
 .PARAMETER InstallPath
@@ -34,18 +34,27 @@ param(
     [string]$Mode = 'New',
     
     [ValidateSet('Minimal', 'Standard', 'Developer', 'Full')]
-    [string]$InstallProfile = 'Standard',
+    [string]$InstallProfile,  # Will use config/CI default if not specified
     
     [string]$InstallPath,
     
     [string]$Branch = 'main',
     
-    [switch]$NonInteractive,
+    [switch]$NonInteractive = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true'),
     
     [switch]$AutoInstallDeps,
     
     [switch]$SkipAutoStart
 )
+
+# Auto-detect CI environment and set appropriate defaults
+$script:IsCI = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true')
+if ($script:IsCI -and -not $PSBoundParameters.ContainsKey('InstallProfile')) {
+    $InstallProfile = 'Full'  # CI always uses Full profile
+}
+if (-not $InstallProfile) {
+    $InstallProfile = 'Standard'  # Default for non-CI
+}
 
 # Script configuration
 $script:RepoOwner = "wizzense"
@@ -196,14 +205,14 @@ function Install-Dependencies {
         $scriptPath = $MyInvocation.PSCommandPath
         
         # Build arguments to preserve
-        $args = @()
-        if ($Mode) { $args += "-Mode", $Mode }
-        if ($InstallProfile) { $args += "-InstallProfile", $InstallProfile }
-        if ($InstallPath) { $args += "-InstallPath", $InstallPath }
-        if ($Branch) { $args += "-Branch", $Branch }
-        if ($NonInteractive) { $args += "-NonInteractive" }
-        if ($AutoInstallDeps) { $args += "-AutoInstallDeps" }
-        if ($SkipAutoStart) { $args += "-SkipAutoStart" }
+        $arguments = @()
+        if ($Mode) { $arguments += "-Mode", $Mode }
+        if ($InstallProfile) { $arguments += "-InstallProfile", $InstallProfile }
+        if ($InstallPath) { $arguments += "-InstallPath", $InstallPath }
+        if ($Branch) { $arguments += "-Branch", $Branch }
+        if ($NonInteractive) { $arguments += "-NonInteractive" }
+        if ($AutoInstallDeps) { $arguments += "-AutoInstallDeps" }
+        if ($SkipAutoStart) { $arguments += "-SkipAutoStart" }
         
         & $pwsh -NoProfile -ExecutionPolicy Bypass -File $scriptPath @args
         exit $LASTEXITCODE
@@ -235,7 +244,8 @@ function Install-Dependencies {
                 } else {
                     # Linux
                     if (Get-Command apt -ErrorAction SilentlyContinue) {
-                        sudo apt update && sudo apt install -y git
+                        sudo apt update
+                        sudo apt install -y git
                     } elseif (Get-Command yum -ErrorAction SilentlyContinue) {
                         sudo yum install -y git
                     } else {
@@ -445,7 +455,7 @@ function Initialize-Configuration {
     Write-BootstrapLog "Initializing configuration..." -Level Info
 
     # Create default config if doesn't exist
-    $configPath = "config.json"
+    $configPath = "config.psd1"
     if (-not (Test-Path $configPath)) {
         $config = @{
             Core = @{
@@ -488,7 +498,7 @@ function Setup-DevelopmentEnvironment {
     Write-BootstrapLog "Setting up development environment..." -Level Info
 
     # 1. Add to PowerShell profile for automatic loading
-    $profileContent = @'
+    $ProfileNameContent = @'
 # AitherZero Auto-Load
 if ($PWD.Path -like "*AitherZero*") {
     $azPsd1 = Get-ChildItem -Path $PWD.Path -Filter "AitherZero.psd1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -499,27 +509,27 @@ if ($PWD.Path -like "*AitherZero*") {
 }
 '@
     
-    $profiles = @(
-        $PROFILE.CurrentUserAllHosts,
-        $PROFILE.CurrentUserCurrentHost
+    $ProfileNames = @(
+        $ProfileName.CurrentUserAllHosts,
+        $ProfileName.CurrentUserCurrentHost
     )
 
-    foreach ($profilePath in $profiles) {
-        if ($profilePath -and $profilePath -ne '') {
-            $profileDir = Split-Path $profilePath -Parent -ErrorAction SilentlyContinue
-            if ($profileDir -and -not (Test-Path $profileDir)) {
-                New-Item -ItemType Directory -Path $profileDir -Force | Out-Null
+    foreach ($ProfileNamePath in $ProfileNames) {
+        if ($ProfileNamePath -and $ProfileNamePath -ne '') {
+            $ProfileNameDir = Split-Path $ProfileNamePath -Parent -ErrorAction SilentlyContinue
+            if ($ProfileNameDir -and -not (Test-Path $ProfileNameDir)) {
+                New-Item -ItemType Directory -Path $ProfileNameDir -Force | Out-Null
             }
 
-            if ($profilePath -and (Test-Path $profilePath)) {
-                $currentContent = Get-Content $profilePath -Raw
+            if ($ProfileNamePath -and (Test-Path $ProfileNamePath)) {
+                $currentContent = Get-Content $ProfileNamePath -Raw
                 if ($currentContent -notlike "*AitherZero Auto-Load*") {
-                    Add-Content -Path $profilePath -Value "`n$profileContent"
-                    Write-BootstrapLog "Updated PowerShell profile: $profilePath" -Level Success
+                    Add-Content -Path $ProfileNamePath -Value "`n$ProfileNameContent"
+                    Write-BootstrapLog "Updated PowerShell profile: $ProfileNamePath" -Level Success
                 }
-            } elseif ($profilePath) {
-                Set-Content -Path $profilePath -Value $profileContent
-                Write-BootstrapLog "Created PowerShell profile: $profilePath" -Level Success
+            } elseif ($ProfileNamePath) {
+                Set-Content -Path $ProfileNamePath -Value $ProfileNameContent
+                Write-BootstrapLog "Created PowerShell profile: $ProfileNamePath" -Level Success
             }
         }
     }
@@ -534,7 +544,7 @@ $root = $PSScriptRoot
 if (-not $env:AITHERZERO_INITIALIZED) {
     Import-Module "$root/AitherZero.psd1" -Force -Global
 }
-& "$root/az.ps1" $args
+& "$root/az.ps1" $arguments
 '@
         $azScript | Set-Content "./az" -Force
         chmod +x ./az 2>$null
@@ -610,6 +620,116 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "%~dp0Start-AitherZero.ps1" %*
     Write-BootstrapLog "Created VS Code integration settings" -Level Success
 }
 
+function Initialize-CleanEnvironment {
+    Write-BootstrapLog "Cleaning PowerShell environment..." -Level Info
+    
+    # Extended list of conflicting modules to remove
+    $conflictingModules = @(
+        'AitherRun', 'CoreApp', 'ConfigurationManager', 'SecurityAutomation',
+        'UtilityServices', 'ConfigurationCore', 'ConfigurationCarousel',
+        'ModuleCommunication', 'ConfigurationRepository', 'StartupExperience',
+        'LabRunner', 'OpenTofuProvider', 'PSScriptAnalyzerIntegration',
+        'SemanticVersioning', 'LicenseManager'
+    )
+    
+    # Remove conflicting modules
+    foreach ($module in $conflictingModules) {
+        if (Get-Module -Name $module -ErrorAction SilentlyContinue) {
+            Write-BootstrapLog "Removing conflicting module: $module" -Level Info
+            Remove-Module -Name $module -Force -ErrorAction SilentlyContinue
+        }
+    }
+    
+    # Clean PSModulePath of any conflicting references
+    if ($env:PSModulePath) {
+        $cleanPaths = $env:PSModulePath -split [IO.Path]::PathSeparator | 
+            Where-Object { 
+                $_ -notlike "*Aitherium*" -and 
+                $_ -notlike "*AitherRun*" -and
+                $_ -notlike "*aither-core*" -and
+                $_ -notlike "*CoreApp*"
+            }
+        $env:PSModulePath = $cleanPaths -join [IO.Path]::PathSeparator
+    }
+    
+    # Clean PATH variable
+    if ($env:PATH) {
+        $cleanPaths = $env:PATH -split [IO.Path]::PathSeparator | 
+            Where-Object { 
+                $_ -notlike "*aither-core*" -and
+                $_ -notlike "*Aitherium*"
+            }
+        $env:PATH = $cleanPaths -join [IO.Path]::PathSeparator
+    }
+    
+    # Set AitherZero root
+    $script:ProjectRoot = Get-Location
+    $env:AITHERZERO_ROOT = $script:ProjectRoot
+    
+    # Clean any lingering environment variables
+    @('AITHERIUM_ROOT', 'AITHERRUN_ROOT', 'COREAPP_ROOT', 'AITHER_CORE_PATH', 'PWSH_MODULES_PATH') | ForEach-Object {
+        Remove-Item "env:$_" -ErrorAction SilentlyContinue
+    }
+    
+    # Set flags to prevent auto-loading of conflicting systems
+    $env:DISABLE_COREAPP = "1"
+    $env:SKIP_AUTO_MODULES = "1"
+    $env:AITHERZERO_ONLY = "1"
+    
+    Write-BootstrapLog "Environment cleaned" -Level Success
+    
+    # Now load AitherZero modules
+    Write-BootstrapLog "Loading AitherZero modules..." -Level Info
+    
+    # Check if already initialized (idempotency)
+    if ($env:AITHERZERO_INITIALIZED -eq "1" -and (Get-Module AitherZero -ErrorAction SilentlyContinue)) {
+        Write-BootstrapLog "AitherZero already initialized" -Level Info
+        return
+    }
+    
+    try {
+        # Import the module manifest
+        if (Test-Path "./AitherZero.psd1") {
+            Import-Module ./AitherZero.psd1 -Force -Global
+            
+            # Verify critical functions
+            $criticalFunctions = @(
+                'Write-CustomLog',
+                'Show-UIMenu',
+                'Invoke-OrchestrationSequence'
+            )
+            
+            $missingFunctions = @()
+            foreach ($func in $criticalFunctions) {
+                if (-not (Get-Command $func -ErrorAction SilentlyContinue)) {
+                    $missingFunctions += $func
+                }
+            }
+            
+            if ($missingFunctions.Count -gt 0) {
+                Write-BootstrapLog "Warning: Some functions are missing: $($missingFunctions -join ', ')" -Level Warning
+            } else {
+                Write-BootstrapLog "All critical functions loaded" -Level Success
+            }
+            
+            # Set aliases
+            Set-Alias -Name 'az' -Value (Join-Path $script:ProjectRoot 'az.ps1') -Scope Global -Force
+            Set-Alias -Name 'seq' -Value 'Invoke-OrchestrationSequence' -Scope Global -Force
+            
+            # Show loaded modules count
+            $loadedModules = Get-Module | Where-Object { $_.Path -like "*$script:ProjectRoot*" }
+            Write-BootstrapLog "Environment initialized - $($loadedModules.Count) modules loaded!" -Level Success
+            
+        } else {
+            Write-BootstrapLog "AitherZero.psd1 not found" -Level Error
+            throw "Module manifest not found"
+        }
+    } catch {
+        Write-BootstrapLog "Failed to load AitherZero modules: $_" -Level Error
+        throw
+    }
+}
+
 function Remove-AitherZero {
     $installPath = Get-DefaultInstallPath
 
@@ -633,7 +753,10 @@ function Remove-AitherZero {
 
 # Main execution
 try {
-    Clear-Host
+    # Only clear host in interactive sessions
+    if (-not $NonInteractive -and -not $env:CI -and $host.UI.RawUI) {
+        try { Clear-Host } catch { }
+    }
     Write-BootstrapLog @"
     _    _ _   _               ______               
    / \  (_) |_| |__   ___ _ _|__  /___ _ __ ___  
@@ -644,74 +767,80 @@ try {
         Infrastructure Automation Platform
 "@ -Level Header
 
-    Write-BootstrapLog "Bootstrap Mode: $Mode | Profile: $InstallProfile" -Level Info
-
-    # Test dependencies
-    Test-Dependencies
-
-    # Execute based on mode
-    switch ($Mode) {
-        'Remove' {
-            Remove-AitherZero
+    # Intelligent detection of what needs to be done
+    $currentPath = Get-Location
+    $isInAitherProject = (Test-Path "./Start-AitherZero.ps1") -and 
+                         (Test-Path "./domains") -and 
+                         (Test-Path "./AitherZero.psd1")
+    
+    # Check if modules are already loaded
+    $modulesLoaded = $env:AITHERZERO_INITIALIZED -eq "1" -or 
+                     (Get-Module AitherZero -ErrorAction SilentlyContinue)
+    
+    # Determine what to do
+    if ($Mode -eq 'Remove') {
+        Write-BootstrapLog "Mode: Remove" -Level Info
+        Remove-AitherZero
+    } elseif ($isInAitherProject) {
+        # We're already in an AitherZero project
+        Write-BootstrapLog "Detected existing AitherZero project" -Level Info
+        
+        if ($modulesLoaded) {
+            Write-BootstrapLog "Environment already initialized - refreshing..." -Level Info
         }
-        default {
-            $installPath = Install-AitherZero
-
-            # Initialize environment
-            Write-BootstrapLog "Initializing AitherZero environment..." -Level Info
-            Push-Location $installPath
-            try {
-                # Use clean environment initializer first if available
-                if (Test-Path "./Initialize-CleanEnvironment.ps1") {
-                    pwsh -NoProfile -ExecutionPolicy Bypass -File ./Initialize-CleanEnvironment.ps1 -Force
-                    Write-BootstrapLog "Environment initialized cleanly" -Level Success
-                } elseif (Test-Path "./AitherZero.psd1") {
-                    # Clear any conflicting modules first
-                    @('AitherRun', 'CoreApp', 'ConfigurationManager') | ForEach-Object {
-                        Remove-Module $_ -Force -ErrorAction SilentlyContinue
-                    }
-                    Import-Module ./AitherZero.psd1 -Force -Global
-                    $modules = Get-Module | Where-Object { $_.Path -like "*AitherZero*" }
-                    if ($modules) {
-                        Write-BootstrapLog "Environment initialized - $($modules.Count) modules loaded!" -Level Success
-                    } else {
-                        Write-BootstrapLog "Environment initialization completed with errors" -Level Warning
-                    }
-                } elseif (Test-Path "./Initialize-AitherEnvironment.ps1") {
-                    # Fallback for backward compatibility
-                    pwsh -NoProfile -ExecutionPolicy Bypass -File ./Initialize-AitherEnvironment.ps1 -Force
-                    Write-BootstrapLog "Environment initialized using legacy script" -Level Success
-                }
-            } catch {
-                Write-BootstrapLog "Failed to initialize environment: $_" -Level Warning
-            } finally {
-                Pop-Location
-            }
-
-            if (-not $SkipAutoStart -and $installPath) {
-                Write-BootstrapLog "Starting AitherZero..." -Level Info
+        
+        # Just initialize/refresh the environment
+        Initialize-CleanEnvironment
+        
+        $installPath = $currentPath.Path
+    } else {
+        # Not in a project, need to install/clone
+        Write-BootstrapLog "Installing AitherZero..." -Level Info
+        
+        # Test dependencies
+        Test-Dependencies
+        
+        # Install AitherZero
+        $installPath = Install-AitherZero
+        
+        # Initialize environment in the new installation
+        Write-BootstrapLog "Initializing AitherZero environment..." -Level Info
+        Push-Location $installPath
+        try {
+            Initialize-CleanEnvironment
+        } catch {
+            Write-BootstrapLog "Failed to initialize environment: $_" -Level Warning
+        } finally {
+            Pop-Location
+        }
+    }
+    
+    # Handle auto-start if requested (for both scenarios)
+    if (-not $SkipAutoStart -and $installPath -and $Mode -ne 'Remove') {
+        Write-BootstrapLog "Starting AitherZero..." -Level Info
+        
+        Push-Location $installPath
+        try {
+            # Check if launcher exists
+            if (Test-Path "./Start-AitherZero.ps1") {
+                # Set environment to block conflicting systems
+                $env:DISABLE_COREAPP = "1"
+                $env:SKIP_AUTO_MODULES = "1"
+                $env:AITHERZERO_ONLY = "1"
                 
-                Push-Location $installPath
-                try {
-                    # Check if launcher exists
-                    if (Test-Path "./Start-AitherZero.ps1") {
-                        # Set environment to block conflicting systems
-                        $env:DISABLE_COREAPP = "1"
-                        $env:SKIP_AUTO_MODULES = "1"
-                        $env:AITHERZERO_ONLY = "1"
-                        
-                        if ($NonInteractive) {
-                            pwsh -NoProfile -NoLogo -ExecutionPolicy Bypass -Command "& { `$env:DISABLE_COREAPP='1'; `$env:SKIP_AUTO_MODULES='1'; Remove-Module CoreApp,AitherRun,StartupExperience -Force -ErrorAction SilentlyContinue; & ./Start-AitherZero.ps1 -NonInteractive }"
-                        } else {
-                            pwsh -NoProfile -NoLogo -ExecutionPolicy Bypass -Command "& { `$env:DISABLE_COREAPP='1'; `$env:SKIP_AUTO_MODULES='1'; Remove-Module CoreApp,AitherRun,StartupExperience -Force -ErrorAction SilentlyContinue; & ./Start-AitherZero.ps1 -Setup }"
-                        }
-                    } else {
-                        Write-BootstrapLog "Launcher not found. Please run manually from: $installPath" -Level Warning
-                    }
-                } finally {
-                    Pop-Location
+                if ($NonInteractive) {
+                    pwsh -NoProfile -NoLogo -ExecutionPolicy Bypass -Command "& { `$env:DISABLE_COREAPP='1'; `$env:SKIP_AUTO_MODULES='1'; Remove-Module CoreApp,AitherRun,StartupExperience -Force -ErrorAction SilentlyContinue; & ./Start-AitherZero.ps1 -NonInteractive }"
+                } else {
+                    pwsh -NoProfile -NoLogo -ExecutionPolicy Bypass -Command "& { `$env:DISABLE_COREAPP='1'; `$env:SKIP_AUTO_MODULES='1'; Remove-Module CoreApp,AitherRun,StartupExperience -Force -ErrorAction SilentlyContinue; & ./Start-AitherZero.ps1 -Setup }"
                 }
             } else {
+                Write-BootstrapLog "Launcher not found. Please run manually from: $installPath" -Level Warning
+            }
+        } finally {
+            Pop-Location
+        }
+    } else {
+        if ($Mode -ne 'Remove') {
                 Write-Host "`n" -NoNewline
                 Write-Host "=" * 60 -ForegroundColor Green
                 Write-Host " Installation Complete! " -ForegroundColor Green
@@ -740,7 +869,6 @@ try {
                 Write-Host "`nNext steps:" -ForegroundColor Magenta
                 Write-Host "  cd $installPath" -ForegroundColor White
                 Write-Host "  ./az 0511 -ShowAll    # View project dashboard" -ForegroundColor White
-            }
         }
     }
     

@@ -229,7 +229,7 @@ $($AffectedFiles | ForEach-Object { "- ``$_``" } | Out-String)
                 # GitHub CLI returns URL like: https://github.com/owner/repo/issues/123
                 $issueNumber = $null
                 if ($issueResult -match '/issues/(\d+)') {
-                    $issueNumber = $matches[1]
+                    $issueNumber = $Matches[1]
                     Write-Host "  Issue number extracted: #$issueNumber" -ForegroundColor Cyan
                 }
                 

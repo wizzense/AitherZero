@@ -37,7 +37,7 @@
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('Interactive', 'Orchestrate', 'Validate', 'Deploy')]
+    [ValidateSet('Interactive', 'Orchestrate', 'Validate', 'Deploy', 'Test')]
     [string]$Mode = 'Interactive',
     
     [string[]]$Sequence,
@@ -47,7 +47,7 @@ param(
     [switch]$NonInteractive,
     
     [ValidateSet('Minimal', 'Standard', 'Developer', 'Full')]
-    [string]$Profile = 'Standard',
+    [string]$ProfileName,
     
     [string]$Playbook,
     
@@ -76,6 +76,29 @@ param(
 $script:ProjectRoot = $PSScriptRoot
 $env:AITHERZERO_ROOT = $script:ProjectRoot
 
+# Import Configuration module early to use Get-ConfiguredValue
+$configModulePath = Join-Path $script:ProjectRoot 'domains/configuration/Configuration.psm1'
+if (Test-Path $configModulePath) {
+    Import-Module $configModulePath -Force -ErrorAction SilentlyContinue
+}
+
+# Apply configuration defaults if not provided
+if ([string]::IsNullOrEmpty($ProfileName)) {
+    if (Get-Command Get-ConfiguredValue -ErrorAction SilentlyContinue) {
+        $ProfileName = Get-ConfiguredValue -Name 'Profile' -Section 'Core' -Default 'Standard'
+    } else {
+        $ProfileName = 'Standard'
+    }
+}
+
+# Auto-detect CI if not explicitly set
+if (-not $CI -and -not $NonInteractive) {
+    if (Get-Command Get-ConfiguredValue -ErrorAction SilentlyContinue) {
+        # Let Configuration module detect CI
+        $NonInteractive = Get-ConfiguredValue -Name 'NonInteractive' -Section 'Automation' -Default $false
+    }
+}
+
 # CRITICAL: Block any conflicting systems
 if ($env:DISABLE_COREAPP -ne "1") {
     # Force clean environment if not already done
@@ -86,25 +109,44 @@ if ($env:DISABLE_COREAPP -ne "1") {
     $env:SKIP_AUTO_MODULES = "1"
 }
 
-# ASCII Art Banner
+# ASCII Art Banner with Gradient Colors
 function Show-Banner {
-    $banner = @'
-    _    _ _   _               ______               
-   / \  (_) |_| |__   ___ _ __|__  /___ _ __ ___   
-  / _ \ | | __| '_ \ / _ \ '__| / // _ \ '__/ _ \  
- / ___ \| | |_| | | |  __/ |   / /|  __/ | | (_) | 
-/_/   \_\_|\__|_| |_|\___|_|  /____\___|_|  \___/  
-                                                    
-        Automation Platform v1.0
-        PowerShell 7 | Cross-Platform | Orchestrated
-'@
-    Write-Host $banner -ForegroundColor Cyan
+    # Split banner into lines for gradient coloring
+    $bannerLines = @(
+        "    _    _ _   _               ______               ",
+        "   / \  (_) |_| |__   ___ _ __|__  /___ _ __ ___   ",
+        "  / _ \ | | __| '_ \ / _ \ '__| / // _ \ '__/ _ \  ",
+        " / ___ \| | |_| | | |  __/ |   / /|  __/ | | (_) | ",
+        "/_/   \_\_|\__|_| |_|\___|_|  /____\___|_|  \___/  ",
+        "                                                    ",
+        "        Aitherium™ Automation Platform v1.0",
+        "        PowerShell 7 | Cross-Platform | Orchestrated"
+    )
+    
+    # Define gradient colors from light blue to light pink
+    $gradientColors = @(
+        "`e[38;2;173;216;230m",  # Light Blue
+        "`e[38;2;185;209;234m",  # Blue-Cyan transition
+        "`e[38;2;197;202;238m",  # Cyan-Lavender transition
+        "`e[38;2;209;195;242m",  # Lavender
+        "`e[38;2;221;188;246m",  # Lavender-Pink transition
+        "`e[38;2;233;181;250m",  # Light Purple-Pink
+        "`e[38;2;245;174;254m",  # Pink-Purple
+        "`e[38;2;255;182;193m"   # Light Pink
+    )
+    
+    # Display each line with gradient color
+    for ($i = 0; $i -lt $bannerLines.Count; $i++) {
+        Write-Host "$($gradientColors[$i])$($bannerLines[$i])`e[0m"
+    }
     Write-Host ""
 }
 
 # Show help information
 function Show-Help {
-    Clear-Host
+    if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
+        try { Clear-Host } catch { }
+    }
     Show-UIBorder -Title "AitherZero Help" -Style 'Double'
     
     Write-UIText "Quick Commands:" -Color 'Primary'
@@ -166,7 +208,7 @@ function Initialize-CoreModules {
             Orchestration = (Get-Command Invoke-OrchestrationSequence -ErrorAction SilentlyContinue) -ne $null
         }
     } catch {
-        Write-Error "Failed to import AitherZero module: $_"
+        Write-Error "Failed to import AitherZero module: $($_.Exception.Message)"
         return @{
             Logging = $false
             Configuration = $false
@@ -194,7 +236,7 @@ function Get-AitherConfiguration {
         Core = @{
             Name = "AitherZero"
             Version = "1.0.0"
-            Profile = $Profile
+            Profile = $ProfileName
         }
 }
 }
@@ -206,7 +248,9 @@ function Show-InteractiveMenu {
     # Interactive menus are now always enabled unless in non-interactive mode
     
     # Show banner only once at the start
-    Clear-Host
+    if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
+        try { Clear-Host } catch { }
+    }
     Show-Banner
     
     while ($true) {
@@ -315,7 +359,7 @@ function Show-InteractiveMenu {
 function Invoke-QuickSetup {
     param($Config)
     
-    $profileSequence = switch ($Config.Core.Profile) {
+    $ProfileNameSequence = switch ($Config.Core.Profile) {
         'Minimal' { "0000-0099,0207" }
         'Standard' { "0000-0199,0207,0201" }
         'Developer' { "0000-0299,!0208" }
@@ -325,7 +369,7 @@ function Invoke-QuickSetup {
     Show-UINotification -Message "Starting $($Config.Core.Profile) profile setup" -Type 'Info' -Title "Quick Setup"
     
     # Call directly instead of in scriptblock to avoid scope issues
-    $result = Invoke-OrchestrationSequence -Sequence $profileSequence -Configuration $Config
+    $result = Invoke-OrchestrationSequence -Sequence $ProfileNameSequence -Configuration $Config
 
     if ($result.Failed -eq 0) {
         Show-UINotification -Message "Profile setup completed successfully!" -Type 'Success'
@@ -691,14 +735,14 @@ function Show-AdvancedMenu {
     
         switch ($selection.Name) {
             'Change Profile' {
-                $profiles = @(
+                $ProfileNames = @(
                     [PSCustomObject]@{ Name = 'Minimal'; Description = 'Core infrastructure only' },
                     [PSCustomObject]@{ Name = 'Standard'; Description = 'Production-ready setup' },
                     [PSCustomObject]@{ Name = 'Developer'; Description = 'Full development environment' },
                     [PSCustomObject]@{ Name = 'Full'; Description = 'Everything including optional components' }
                 )
         
-                $newProfile = Show-UIMenu -Title "Select Profile" -Items $profiles -ShowNumbers
+                $newProfile = Show-UIMenu -Title "Select Profile" -Items $ProfileNames -ShowNumbers
                 if ($newProfile) {
                     $Config.Core.Profile = $newProfile.Name
                     Show-UINotification -Message "Profile changed to: $($newProfile.Name)" -Type 'Success'
@@ -706,7 +750,7 @@ function Show-AdvancedMenu {
         }
         
             'Edit Configuration' {
-                $configPath = Join-Path $script:ProjectRoot 'config.json'
+                $configPath = Join-Path $script:ProjectRoot 'config.psd1'
                 if ($IsWindows) {
                     Start-Process notepad.exe -ArgumentList $configPath -Wait
                 } else {
@@ -762,7 +806,9 @@ function Show-AdvancedMenu {
         }
         
             'System Information' {
-                Clear-Host
+                if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
+                    try { Clear-Host } catch { }
+                }
                 Show-UIBorder -Title "System Information" -Style 'Double'
                 
                 $sysInfo = @(
@@ -1032,8 +1078,30 @@ try {
             if ($result.Failed -gt 0) {
                 exit 1
             }
+        }
+        
+        'Test' {
+            # Ensure orchestration module is loaded
+            if (-not (Get-Command Invoke-OrchestrationSequence -ErrorAction SilentlyContinue)) {
+                Write-Error "Orchestration module not loaded. Environment initialization may have failed."
+                exit 1
+            }
+            
+            # Default test sequence - unit tests, PSScriptAnalyzer, and syntax validation
+            $testSequence = if ($Sequence) { $Sequence } else { @("0402", "0404", "0407") }
+            
+            Write-Host "Running tests with sequence: $($testSequence -join ',')" -ForegroundColor Cyan
+            
+            $result = Invoke-OrchestrationSequence -Sequence $testSequence -Configuration $config -DryRun:$DryRun
+            
+            if ($result.Failed -gt 0) {
+                Write-Host "`nTest run completed with $($result.Failed) failures" -ForegroundColor Red
+                exit 1
+            } else {
+                Write-Host "`nAll tests passed successfully!" -ForegroundColor Green
+            }
+        }
     }
-}
     
 } catch {
     $errorMessage = "Fatal error in Start-AitherZero"

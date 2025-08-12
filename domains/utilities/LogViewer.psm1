@@ -367,12 +367,12 @@ function Search-Logs {
     $results = @()
     
     foreach ($file in $logFiles) {
-        $matches = Select-String -Path $file.FullName -Pattern $Pattern
-        if ($matches) {
+        $matchResults = Select-String -Path $file.FullName -Pattern $Pattern
+        if ($matchResults) {
             $results += [PSCustomObject]@{
                 File = $file.Name
-                Matches = $matches.Count
-                Lines = $matches | Select-Object -First 5 | ForEach-Object { $_.Line }
+                Matches = $matchResults.Count
+                Lines = $matchResults | Select-Object -First 5 | ForEach-Object { $_.Line }
             }
         }
     }

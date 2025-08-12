@@ -1,0 +1,109 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main, develop, 'feature/**']
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      playbook:
+        description: 'Playbook to run'
+        type: choice
+        options: 
+          - 'auto'
+          - 'github-cicd'
+          - 'test-quick'
+          - 'test-full'
+          - 'test-ci'
+        default: 'auto'
+      profile:
+        description: 'Playbook profile'
+        type: choice
+        options:
+          - 'auto'
+          - 'quick'
+          - 'full'
+          - 'pr'
+        default: 'auto'
+
+# Prevent duplicate workflow runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+
+jobs:
+  pipeline:
+    name: Pipeline - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: ${{ github.event_name == 'pull_request' }}
+      matrix:
+        os: ${{ github.event_name == 'pull_request' && fromJson('["ubuntu-latest"]') || fromJson('["ubuntu-latest", "windows-latest", "macos-latest"]') }}
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
+    
+    - name: Bootstrap
+      shell: pwsh
+      run: ./bootstrap.ps1 -Mode New -NonInteractive
+    
+    - name: Run Pipeline
+      shell: pwsh
+      run: |
+        # Determine playbook and profile based on context
+        $playbook = '${{ github.event.inputs.playbook }}'
+        $ProfileName = '${{ github.event.inputs.profile }}'
+        
+        if ($playbook -eq '' -or $playbook -eq 'auto') {
+          if ('${{ github.event_name }}' -eq 'pull_request') {
+            $playbook = 'github-cicd'
+            $ProfileName = 'pr'
+          } elseif ('${{ github.ref }}' -eq 'refs/heads/main') {
+            $playbook = 'github-cicd'
+            $ProfileName = 'full'
+          } else {
+            $playbook = 'test-ci'
+            $ProfileName = ''
+          }
+        }
+        
+        # Run orchestration
+        if ($ProfileName -and $ProfileName -ne 'auto') {
+          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook $playbook -PlaybookProfile $ProfileName -CI
+        } else {
+          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook $playbook -CI
+        }
+    
+    - name: Upload Results
+      if: always() && !cancelled()
+      uses: actions/upload-artifact@v4
+      with:
+        name: pipeline-${{ matrix.os }}-${{ github.run_number }}
+        path: |
+          test-results/
+          tests/reports/
+          logs/transcript-*.log
+        retention-days: 30
+    
+    - name: PR Updates
+      if: github.event_name == 'pull_request' && matrix.os == 'ubuntu-latest'
+      shell: pwsh
+      run: |
+        # Post PR comment if results exist
+        if (Test-Path "./test-results/results.json") {
+          ./az 0709 -CI
+        }

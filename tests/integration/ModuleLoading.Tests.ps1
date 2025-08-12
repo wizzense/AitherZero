@@ -91,7 +91,7 @@ Describe "Module Loading Order" {
             # Find module loading order
             $pattern = '(?s)modulesToLoad\s*=\s*@\((.*?)\)'
             if ($content -match $pattern) {
-                $moduleList = $matches[1]
+                $moduleList = $Matches[1]
                 $firstModule = ($moduleList -split '\n' | Where-Object { $_ -like "*'./*" } | Select-Object -First 1)
                 $firstModule | Should -BeLike "*Logging.psm1*"
             }

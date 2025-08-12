@@ -35,7 +35,7 @@ function Install-Poetry {
                     $installScript = $response.Content
 
                     # Execute the install script
-                    $args = @()
+                    $arguments = @()
                     if ($Config.PoetryVersion) {
                         $env:POETRY_VERSION = $Config.PoetryVersion
                     }

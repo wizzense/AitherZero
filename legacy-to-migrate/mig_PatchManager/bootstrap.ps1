@@ -572,8 +572,8 @@ try {
     }
 
     # Determine profile
-    $profile = $env:AITHER_PROFILE
-    if (-not $profile) {
+    $ProfileName = $env:AITHER_PROFILE
+    if (-not $ProfileName) {
         if (-not $env:AITHER_BOOTSTRAP_MODE) {
             Write-Host ""
             Write-Host "Select AitherZero Profile:" -ForegroundColor Cyan
@@ -583,22 +583,22 @@ try {
             Write-Host ""
             
             do {
-                $profileChoice = Read-Host "Enter your choice (1/2/3) [default: 2]"
-                if (-not $profileChoice) { $profileChoice = '2' }
-            } while ($profileChoice -notmatch '^[123]$')
+                $ProfileNameChoice = Read-Host "Enter your choice (1/2/3) [default: 2]"
+                if (-not $ProfileNameChoice) { $ProfileNameChoice = '2' }
+            } while ($ProfileNameChoice -notmatch '^[123]$')
             
-            $profile = switch ($profileChoice) {
+            $ProfileName = switch ($ProfileNameChoice) {
                 '1' { 'minimal' }
                 '2' { 'developer' }
                 '3' { 'full' }
             }
         } else {
             # Non-interactive mode defaults to developer
-            $profile = 'developer'
+            $ProfileName = 'developer'
         }
     }
     
-    Write-Host ">> Downloading AitherZero ($profile profile)..." -ForegroundColor Cyan
+    Write-Host ">> Downloading AitherZero ($ProfileName profile)..." -ForegroundColor Cyan
 
     # Get latest Windows release with retry logic
     $apiUrl = "https://api.github.com/repos/wizzense/AitherZero/releases/latest"
@@ -614,7 +614,7 @@ try {
 
     # Extract version from release tag
     $releaseVersion = if ($release.tag_name -match '^v?(.+)$') {
-        $matches[1]
+        $Matches[1]
     } else {
         Write-Host "[!] Could not extract version from release tag: $($release.tag_name)" -ForegroundColor Yellow
         $release.tag_name
@@ -624,17 +624,17 @@ try {
     # Find Windows ZIP file for the selected profile
     $windowsAsset = $null
     # Map bootstrap profile names to build profile names
-    $buildProfile = switch ($profile) {
+    $buildProfile = switch ($ProfileName) {
         'minimal' { 'minimal' }
         'developer' { 'development' }  # Use development package which includes SetupWizard
         'full' { 'development' }  # Build uses 'development' for full profile
         default { 'standard' }
     }
     # Updated pattern to match versioned files: AitherZero-{version}-{profile}-windows.zip
-    $profilePattern = "AitherZero-.*-$buildProfile-windows\.zip$"
+    $ProfileNamePattern = "AitherZero-.*-$buildProfile-windows\.zip$"
     
     foreach ($asset in $release.assets) {
-        if ($asset.name -match $profilePattern) {
+        if ($asset.name -match $ProfileNamePattern) {
             $windowsAsset = $asset
             break
         }
@@ -748,11 +748,11 @@ try {
     Remove-Item $tempDir -Recurse -Force
     
     Write-Host "[+] Extracted to: $PWD" -ForegroundColor Green
-    Write-Host "[i] Profile: $profile" -ForegroundColor Cyan
+    Write-Host "[i] Profile: $ProfileName" -ForegroundColor Cyan
     Write-Host "[i] To remove later, delete the AitherZero folder or run bootstrap.ps1 again and select Remove" -ForegroundColor Gray
 
     # Auto-start
-    Write-Host ">> Starting AitherZero ($profile profile)..." -ForegroundColor Cyan
+    Write-Host ">> Starting AitherZero ($ProfileName profile)..." -ForegroundColor Cyan
 
     # Ensure we're in the correct directory for the application
     $extractionPath = Get-Location
@@ -764,7 +764,7 @@ try {
         # Use main launcher
         $startScript = ".\Start-AitherZero.ps1"
         # Add -Setup parameter for first-time installation
-        $startParams = @{Setup = $true; InstallationProfile = $profile}
+        $startParams = @{Setup = $true; InstallationProfile = $ProfileName}
         
         # Add non-interactive mode if specified
         if ($env:AITHER_NON_INTERACTIVE -eq 'true' -or $env:AITHER_BOOTSTRAP_MODE) {

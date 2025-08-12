@@ -56,7 +56,7 @@ Write-Host "Creating test cases from structured data" -ForegroundColor Gray
 $testGenExample = @'
 # Generate tests for JSON configuration
 ./automation-scripts/0830_Generate-PromptFromData.ps1 `
-    -InputPath "./config.json" `
+    -InputPath "./config.psd1" `
     -DataType "Configuration" `
     -PromptTemplate "Testing" `
     -MaxTokens 3000 `

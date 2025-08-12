@@ -29,7 +29,11 @@ if (Test-Path $loggingModule) {
 Clear-Host
 
 function Show-Header {
-    $width = $Host.UI.RawUI.WindowSize.Width
+    # Handle non-interactive environments
+    $width = 80  # Default width
+    if ($Host.UI.RawUI -and $Host.UI.RawUI.WindowSize) {
+        try { $width = $Host.UI.RawUI.WindowSize.Width } catch { }
+    }
     $line = "=" * $width
     
     Write-Host $line -ForegroundColor Cyan
@@ -200,10 +204,18 @@ if ($ShowAll -or (!$ShowLogs -and !$ShowTests -and !$ShowMetrics)) {
 }
 
 $col1Width = 60
-$col2Width = $Host.UI.RawUI.WindowSize.Width - $col1Width - 2
+# Handle non-interactive environments
+$windowWidth = 120  # Default width
+if ($Host.UI.RawUI -and $Host.UI.RawUI.WindowSize) {
+    try { $windowWidth = $Host.UI.RawUI.WindowSize.Width } catch { }
+}
+$col2Width = $windowWidth - $col1Width - 2
 
-# Two column layout
-$cursorPos = $Host.UI.RawUI.CursorPosition
+# Two column layout (skip cursor position in non-interactive)
+$cursorPos = $null
+if ($Host.UI.RawUI -and $Host.UI.RawUI.CursorPosition) {
+    try { $cursorPos = $Host.UI.RawUI.CursorPosition } catch { }
+}
 
 if ($ShowMetrics) {
     Show-ProjectMetrics
@@ -221,7 +233,12 @@ if ($ShowLogs) {
 Show-RecentActivity
 
 # Footer
-Write-Host ("=" * $Host.UI.RawUI.WindowSize.Width) -ForegroundColor Cyan
+# Handle non-interactive environments
+$separatorWidth = 80  # Default width
+if ($Host.UI.RawUI -and $Host.UI.RawUI.WindowSize) {
+    try { $separatorWidth = $Host.UI.RawUI.WindowSize.Width } catch { }
+}
+Write-Host ("=" * $separatorWidth) -ForegroundColor Cyan
 Write-Host "Commands: " -NoNewline -ForegroundColor Yellow
 Write-Host "0510 " -NoNewline -ForegroundColor Cyan
 Write-Host "(Generate Report) | " -NoNewline

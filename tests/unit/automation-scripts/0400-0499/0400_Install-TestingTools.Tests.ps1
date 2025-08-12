@@ -10,7 +10,7 @@
 
 BeforeAll {
     # Get script path
-    $scriptPath = Join-Path (Split-Path $PSScriptRoot -Parent -Parent -Parent) "automation-scripts/0400_Install-TestingTools.ps1"
+    $scriptPath = Join-Path (Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent) "automation-scripts/0400_Install-TestingTools.ps1"
     
     # Mock functions that the script uses
     Mock Install-Module {}

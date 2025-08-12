@@ -88,7 +88,7 @@ function Analyze-DocumentationCoverage {
             }
 
             # Find functions
-            $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+            $functions = $ast.FindAll({ $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
             
             foreach ($function in $functions) {
                 $funcInfo = @{

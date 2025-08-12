@@ -116,9 +116,9 @@ try {
     Write-ScriptLog -Message "Found $($testFiles.Count) test files"
 
     # Load configuration
-    $configPath = Join-Path $projectRoot "config.json"
+    $configPath = Join-Path $projectRoot "config.psd1"
     $testingConfig = if (Test-Path $configPath) {
-        $config = Get-Content $configPath -Raw | ConvertFrom-Json
+        $config = Import-PowerShellDataFile $configPath
         $config.Testing
     } else {
         @{

@@ -10,7 +10,7 @@
 
 BeforeAll {
     # Get script path
-    $scriptPath = Join-Path (Split-Path $PSScriptRoot -Parent -Parent -Parent) "automation-scripts/0403_Run-IntegrationTests.ps1"
+    $scriptPath = Join-Path (Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent) "automation-scripts/0403_Run-IntegrationTests.ps1"
     
     # Mock Pester and other functions
     Mock Invoke-Pester {
@@ -247,19 +247,19 @@ Describe "0403_Run-IntegrationTests" -Tag @('Unit', 'Testing', 'Integration') {
     }
 
     Context "Configuration Loading" {
-        It "Should load configuration from config.json if available" {
-            Mock Test-Path { return $true } -ParameterFilter { $Path -like "*config.json" }
+        It "Should load configuration from config.psd1 if available" {
+            Mock Test-Path { return $true } -ParameterFilter { $Path -like "*config.psd1" }
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Integration.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }
             
             & $scriptPath -Path "/integration/tests"
             
-            Assert-MockCalled Get-Content -ParameterFilter { $Path -like "*config.json" }
+            Assert-MockCalled Get-Content -ParameterFilter { $Path -like "*config.psd1" }
         }
 
-        It "Should use default configuration if config.json not found" {
-            Mock Test-Path { return $false } -ParameterFilter { $Path -like "*config.json" }
+        It "Should use default configuration if config.psd1 not found" {
+            Mock Test-Path { return $false } -ParameterFilter { $Path -like "*config.psd1" }
             Mock Get-ChildItem {
                 return @([PSCustomObject]@{ Name = 'Integration.Tests.ps1' })
             } -ParameterFilter { $Filter -eq '*.Tests.ps1' }

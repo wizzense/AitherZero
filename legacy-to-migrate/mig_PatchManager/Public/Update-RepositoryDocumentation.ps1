@@ -150,9 +150,9 @@ function Update-RepositoryDocumentation {
                 $changesMade = $false
 
                 foreach ($update in $file.Updates) {
-                    $matches = [regex]::Matches($content, $update.Pattern)
-                    if ($matches.Count -gt 0) {
-                        Write-CustomLog -Level 'INFO' -Message "  - Updating $($update.Description): $($matches.Count) matches found"
+                    $matchResults = [regex]::Matches($content, $update.Pattern)
+                    if ($matchResults.Count -gt 0) {
+                        Write-CustomLog -Level 'INFO' -Message "  - Updating $($update.Description): $($matchResults.Count) matches found"
                         $content = $content -replace $update.Pattern, $update.Replacement
                         $changesMade = $true
                     }
