@@ -1,14 +1,15 @@
 #!/bin/bash
 #
 # AitherZero Bootstrap Script for Linux/macOS
+# Intelligently detects whether to install or just initialize
 # 
 # Usage:
-#   curl -sSL https://raw.githubusercontent.com/yourusername/AitherZero/main/bootstrap.sh | bash
-#   wget -qO- https://raw.githubusercontent.com/yourusername/AitherZero/main/bootstrap.sh | bash
+#   curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
+#   wget -qO- https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
 #
 # Environment Variables:
 #   AITHERZERO_PROFILE=minimal|standard|developer|full (default: standard)
-#   AITHERZERO_INSTALL_DIR=/custom/path (default: $HOME/.aitherzero)
+#   AITHERZERO_INSTALL_DIR=/custom/path (default: ./AitherZero or current dir if in project)
 #   AITHERZERO_BRANCH=main|develop (default: main)
 #   AITHERZERO_AUTO_START=true|false (default: true)
 #
@@ -23,7 +24,7 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 # Configuration
-REPO_OWNER="yourusername"
+REPO_OWNER="wizzense"
 REPO_NAME="AitherZero"
 GITHUB_URL="https://github.com/$REPO_OWNER/$REPO_NAME"
 
@@ -146,56 +147,135 @@ install_git() {
     fi
 }
 
+# Clean environment
+clean_environment() {
+    print_log "INFO" "Cleaning environment..."
+    
+    # Remove conflicting environment variables
+    unset AITHERIUM_ROOT
+    unset AITHERRUN_ROOT
+    unset COREAPP_ROOT
+    unset AITHER_CORE_PATH
+    unset PWSH_MODULES_PATH
+    
+    # Set AitherZero environment
+    export AITHERZERO_ROOT="$PWD"
+    export DISABLE_COREAPP="1"
+    export SKIP_AUTO_MODULES="1"
+    export AITHERZERO_ONLY="1"
+    
+    print_log "SUCCESS" "Environment cleaned"
+}
+
+# Initialize AitherZero modules
+initialize_modules() {
+    print_log "INFO" "Initializing AitherZero modules..."
+    
+    # Run PowerShell bootstrap which handles initialization
+    pwsh -NoProfile -ExecutionPolicy Bypass -File ./bootstrap.ps1 \
+        -InstallProfile "$ProfileName" \
+        -NonInteractive \
+        -SkipAutoStart:$([ "$AUTO_START" = "false" ] && echo "true" || echo "false")
+    
+    print_log "SUCCESS" "Modules initialized"
+}
+
+# Check if in AitherZero project
+is_aitherzero_project() {
+    [ -f "./Start-AitherZero.ps1" ] && [ -d "./domains" ] && [ -f "./AitherZero.psd1" ]
+}
+
 # Main installation
 main() {
-    print_log "INFO" "AitherZero Bootstrap for Linux/macOS"
-    echo "===================================="
-    echo
+    clear
+    cat << "EOF"
+    _    _ _   _               ______               
+   / \  (_) |_| |__   ___ _ _|__  /___ _ __ ___  
+  / _ \ | | __| '_ \ / _ \ '__/ // _ \ '__/ _ \ 
+ / ___ \| | |_| | | |  __/ | / /|  __/ | | (_) |
+/_/   \_\_|\__|_| |_|\___|_|/____\___|_|  \___/ 
+                                                 
+        Infrastructure Automation Platform
+        
+EOF
 
     # Set defaults
     PROFILE="${AITHERZERO_PROFILE:-standard}"
-    INSTALL_DIR="${AITHERZERO_INSTALL_DIR:-$HOME/.aitherzero}"
     BRANCH="${AITHERZERO_BRANCH:-main}"
     AUTO_START="${AITHERZERO_AUTO_START:-true}"
     
-    print_log "INFO" "Profile: $PROFILE"
-    print_log "INFO" "Install directory: $INSTALL_DIR"
-    print_log "INFO" "Branch: $BRANCH"
-
-    # Check and install dependencies
-    install_git
-    install_powershell
-
-    # Clone or update repository
-    if [ -d "$INSTALL_DIR/.git" ]; then
-        print_log "INFO" "Updating existing installation..."
-        cd "$INSTALL_DIR"
-        git pull origin "$BRANCH"
+    # Intelligent detection
+    if is_aitherzero_project; then
+        # Already in an AitherZero project
+        print_log "INFO" "Detected existing AitherZero project at: $PWD"
+        INSTALL_DIR="$PWD"
+        
+        # Check if modules are loaded
+        if [ -n "$AITHERZERO_INITIALIZED" ]; then
+            print_log "INFO" "Environment already initialized - refreshing..."
+        fi
+        
+        # Clean environment and initialize
+        clean_environment
+        initialize_modules
     else
-        print_log "INFO" "Cloning AitherZero repository..."
-        git clone --branch "$BRANCH" "$GITHUB_URL" "$INSTALL_DIR"
-        cd "$INSTALL_DIR"
+        # Not in a project, need to install
+        INSTALL_DIR="${AITHERZERO_INSTALL_DIR:-./AitherZero}"
+        
+        print_log "INFO" "Installing AitherZero to: $INSTALL_DIR"
+        print_log "INFO" "Profile: $ProfileName"
+        print_log "INFO" "Branch: $BRANCH"
+        
+        # Check and install dependencies
+        install_git
+        install_powershell
+        
+        # Clone or update repository
+        if [ -d "$INSTALL_DIR/.git" ]; then
+            print_log "INFO" "Updating existing installation..."
+            cd "$INSTALL_DIR"
+            git pull origin "$BRANCH"
+        elif [ -d "$INSTALL_DIR" ]; then
+            # Directory exists but not a git repo
+            print_log "WARNING" "Directory exists at $INSTALL_DIR but is not a git repository"
+            read -p "Overwrite? (y/N): " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                rm -rf "$INSTALL_DIR"
+                git clone --branch "$BRANCH" "$GITHUB_URL" "$INSTALL_DIR"
+                cd "$INSTALL_DIR"
+            else
+                print_log "INFO" "Installation cancelled"
+                exit 0
+            fi
+        else
+            print_log "INFO" "Cloning AitherZero repository..."
+            git clone --branch "$BRANCH" "$GITHUB_URL" "$INSTALL_DIR"
+            cd "$INSTALL_DIR"
+        fi
+        
+        # Make scripts executable
+        chmod +x *.ps1 2>/dev/null || true
+        chmod +x *.sh 2>/dev/null || true
+        
+        # Clean environment and initialize
+        clean_environment
+        initialize_modules
     fi
 
-    # Make scripts executable
-    chmod +x *.ps1 2>/dev/null || true
-
-    # Run PowerShell bootstrap
-    print_log "INFO" "Running PowerShell bootstrap..."
-    pwsh -NoProfile -ExecutionPolicy Bypass -File ./bootstrap.ps1 \
-        -Mode New \
-        -InstallProfile "$PROFILE" \
-        -NonInteractive \
-        -SkipAutoStart:$([ "$AUTO_START" = "false" ] && echo "true" || echo "false")
-
     if [ "$AUTO_START" = "true" ]; then
-        print_log "SUCCESS" "AitherZero installed and started!"
+        print_log "INFO" "Starting AitherZero..."
+        pwsh -NoProfile -File ./Start-AitherZero.ps1
     else
-        print_log "SUCCESS" "AitherZero installed successfully!"
+        print_log "SUCCESS" "AitherZero ready!"
+        echo
+        print_log "INFO" "Available commands:"
+        echo "  az <number>     - Run automation script"
+        echo "  ./Start-AitherZero.ps1 - Launch interactive UI"
         echo
         print_log "INFO" "To start AitherZero:"
         echo "  cd $INSTALL_DIR"
-        echo "  pwsh ./Start-AitherZero.ps1"
+        echo "  ./Start-AitherZero.ps1"
     fi
 }
 

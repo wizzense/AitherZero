@@ -103,7 +103,7 @@ Describe "0730_Setup-AIAgents" {
         }
         
         It "Should accept custom ConfigPath" {
-            { & "/workspaces/AitherZero/automation-scripts/0730_Setup-AIAgents.ps1" -Provider "Claude" -ConfigPath "custom/config.json" -WhatIf } | Should -Not -Throw
+            { & "/workspaces/AitherZero/automation-scripts/0730_Setup-AIAgents.ps1" -Provider "Claude" -ConfigPath "custom/config.psd1" -WhatIf } | Should -Not -Throw
         }
     }
     
@@ -111,8 +111,8 @@ Describe "0730_Setup-AIAgents" {
         It "Should read existing configuration file" {
             & "/workspaces/AitherZero/automation-scripts/0730_Setup-AIAgents.ps1" -Provider "Claude" -WhatIf
             
-            Should -Invoke Test-Path -ParameterFilter { $Path -like "*config.json*" }
-            Should -Invoke Get-Content -ParameterFilter { $Path -like "*config.json*" }
+            Should -Invoke Test-Path -ParameterFilter { $Path -like "*config.psd1*" }
+            Should -Invoke Get-Content -ParameterFilter { $Path -like "*config.psd1*" }
         }
         
         It "Should create configuration file if it doesn't exist" {
@@ -120,14 +120,14 @@ Describe "0730_Setup-AIAgents" {
             
             & "/workspaces/AitherZero/automation-scripts/0730_Setup-AIAgents.ps1" -Provider "Claude" -WhatIf
             
-            Should -Invoke Set-Content -ParameterFilter { $Path -like "*config.json*" }
+            Should -Invoke Set-Content -ParameterFilter { $Path -like "*config.psd1*" }
         }
         
         It "Should update configuration with new settings" {
             & "/workspaces/AitherZero/automation-scripts/0730_Setup-AIAgents.ps1" -Provider "Claude" -WhatIf
             
             Should -Invoke ConvertTo-Json
-            Should -Invoke Set-Content -ParameterFilter { $Path -like "*config.json*" }
+            Should -Invoke Set-Content -ParameterFilter { $Path -like "*config.psd1*" }
         }
     }
     
@@ -234,7 +234,7 @@ Describe "0730_Setup-AIAgents" {
             & "/workspaces/AitherZero/automation-scripts/0730_Setup-AIAgents.ps1" -Provider "Claude" -ValidateOnly -WhatIf
             
             # Should not write configuration file in validate-only mode
-            Should -Not -Invoke Set-Content -ParameterFilter { $Path -like "*config.json*" }
+            Should -Not -Invoke Set-Content -ParameterFilter { $Path -like "*config.psd1*" }
         }
         
         It "Should report validation results" {

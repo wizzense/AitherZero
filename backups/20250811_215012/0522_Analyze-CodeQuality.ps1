@@ -93,7 +93,7 @@ function Analyze-FileComplexity {
 
     # Analyze functions
     if ($AST) {
-        $functions = $AST.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+        $functions = $AST.FindAll({ $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
         
         foreach ($function in $functions) {
             $funcComplexity = @{
@@ -108,12 +108,12 @@ function Analyze-FileComplexity {
 
             # Count control flow statements
             $controlFlow = $function.FindAll({
-                $args[0] -is [System.Management.Automation.Language.IfStatementAst] -or
-                $args[0] -is [System.Management.Automation.Language.WhileStatementAst] -or
-                $args[0] -is [System.Management.Automation.Language.ForStatementAst] -or
-                $args[0] -is [System.Management.Automation.Language.ForEachStatementAst] -or
-                $args[0] -is [System.Management.Automation.Language.SwitchStatementAst] -or
-                $args[0] -is [System.Management.Automation.Language.TryStatementAst]
+                $arguments[0] -is [System.Management.Automation.Language.IfStatementAst] -or
+                $arguments[0] -is [System.Management.Automation.Language.WhileStatementAst] -or
+                $arguments[0] -is [System.Management.Automation.Language.ForStatementAst] -or
+                $arguments[0] -is [System.Management.Automation.Language.ForEachStatementAst] -or
+                $arguments[0] -is [System.Management.Automation.Language.SwitchStatementAst] -or
+                $arguments[0] -is [System.Management.Automation.Language.TryStatementAst]
             }, $true)
             
             $funcComplexity.CyclomaticComplexity += $controlFlow.Count
@@ -227,8 +227,8 @@ function Analyze-CodeQuality {
             
             foreach ($category in $todoPatterns.GetEnumerator()) {
                 foreach ($pattern in $category.Value) {
-                    $matches = [regex]::Matches($content, $pattern, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-                    foreach ($match in $matches) {
+                    $matchResults = [regex]::Matches($content, $pattern, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+                    foreach ($match in $matchResults) {
                         $lineNumber = ($content.Substring(0, $match.Index) -split "`n").Count
                         $line = ($content -split "`n")[$lineNumber - 1].Trim()
                         
@@ -251,8 +251,8 @@ function Analyze-CodeQuality {
             )
         
             foreach ($patternInfo in $hardcodedPatterns) {
-                $matches = [regex]::Matches($content, $patternInfo.Pattern)
-                foreach ($match in $matches) {
+                $matchResults = [regex]::Matches($content, $patternInfo.Pattern)
+                foreach ($match in $matchResults) {
                     $lineNumber = ($content.Substring(0, $match.Index) -split "`n").Count
                     
                     $result.Issues.HardcodedValues += @{
@@ -274,7 +274,7 @@ function Analyze-CodeQuality {
                     Functions = @()
                 }
                 
-                $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+                $functions = $ast.FindAll({ $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
                 
                 foreach ($function in $functions) {
                     $funcInfo = @{
@@ -286,11 +286,11 @@ function Analyze-CodeQuality {
                     
                     # Count control flow
                     $controlFlow = $function.FindAll({
-                        $args[0] -is [System.Management.Automation.Language.IfStatementAst] -or
-                        $args[0] -is [System.Management.Automation.Language.WhileStatementAst] -or
-                        $args[0] -is [System.Management.Automation.Language.ForStatementAst] -or
-                        $args[0] -is [System.Management.Automation.Language.ForEachStatementAst] -or
-                        $args[0] -is [System.Management.Automation.Language.SwitchStatementAst]
+                        $arguments[0] -is [System.Management.Automation.Language.IfStatementAst] -or
+                        $arguments[0] -is [System.Management.Automation.Language.WhileStatementAst] -or
+                        $arguments[0] -is [System.Management.Automation.Language.ForStatementAst] -or
+                        $arguments[0] -is [System.Management.Automation.Language.ForEachStatementAst] -or
+                        $arguments[0] -is [System.Management.Automation.Language.SwitchStatementAst]
                     }, $true)
                     
                     $funcInfo.Complexity += $controlFlow.Count

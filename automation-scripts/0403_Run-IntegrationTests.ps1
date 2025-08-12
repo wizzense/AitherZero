@@ -115,9 +115,9 @@ try {
     Write-ScriptLog -Message "Found $($testFiles.Count) integration test files"
 
     # Load configuration
-    $configPath = Join-Path $projectRoot "config.json"
+    $configPath = Join-Path $projectRoot "config.psd1"
     $testingConfig = if (Test-Path $configPath) {
-        $config = Get-Content $configPath -Raw | ConvertFrom-Json
+        $config = Import-PowerShellDataFile $configPath
         $config.Testing
     } else {
         @{
@@ -146,11 +146,32 @@ try {
         Import-Module $module.FullName -Force
     }
 
+    # Get Pester settings from configuration
+    $pesterSettings = if (Get-Command Get-Configuration -ErrorAction SilentlyContinue) {
+        $config = Get-Configuration
+        if ($config.Testing -and $config.Testing.Pester) {
+            $config.Testing.Pester
+        } else {
+            @{}
+        }
+    } else {
+        @{}
+    }
+    
     # Build Pester configuration
     $pesterConfig = New-PesterConfiguration
     $pesterConfig.Run.Path = $Path
-    $pesterConfig.Run.PassThru = $true
-    $pesterConfig.Run.Exit = $false
+    $pesterConfig.Run.PassThru = if ($pesterSettings.Run.PassThru -ne $null) { $pesterSettings.Run.PassThru } else { $true }
+    $pesterConfig.Run.Exit = if ($pesterSettings.Run.Exit -ne $null) { $pesterSettings.Run.Exit } else { $false }
+    
+    # Apply parallel execution settings from config
+    if ($pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled) {
+        $pesterConfig.Run.Parallel = $true
+        if ($pesterSettings.Parallel.BlockSize) {
+            $pesterConfig.Run.ParallelBlockSize = $pesterSettings.Parallel.BlockSize
+        }
+        Write-ScriptLog -Message "Parallel execution enabled with block size: $($pesterSettings.Parallel.BlockSize ?? 4)"
+    }
 
     # Filter for integration tests
     $tags = @('Integration')

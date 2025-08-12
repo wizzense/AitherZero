@@ -206,7 +206,7 @@ function Get-ScriptTestMetadata {
     
     # Extract functions
     $functionAsts = $AST.FindAll({
-        $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst]
+        $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst]
     }, $true)
     
     foreach ($func in $functionAsts) {
@@ -229,7 +229,7 @@ function Get-ScriptTestMetadata {
     
     # Extract external commands
     $commandAsts = $AST.FindAll({
-        $args[0] -is [System.Management.Automation.Language.CommandAst]
+        $arguments[0] -is [System.Management.Automation.Language.CommandAst]
     }, $true)
     
     $externalCommands = @()

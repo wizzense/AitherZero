@@ -26,7 +26,7 @@ function Invoke-LabNpm {
     [CmdletBinding()]
     param(
         [Parameter(ValueFromRemainingArguments=$true)]
-        [string[]]$Args
+        [string[]]$arguments
     )
 npm @Args
 }

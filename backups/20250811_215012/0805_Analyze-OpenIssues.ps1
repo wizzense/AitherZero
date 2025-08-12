@@ -173,8 +173,8 @@ foreach ($issue in $issues) {
     )
     
     foreach ($pattern in $codePatterns) {
-        $matches = [regex]::Matches($issue.body, $pattern)
-        foreach ($match in $matches) {
+        $matchResults = [regex]::Matches($issue.body, $pattern)
+        foreach ($match in $matchResults) {
             $name = $match.Groups[1].Value
             if ($diffContent -match "\b$name\b") {
                 $matchScore += 0.2

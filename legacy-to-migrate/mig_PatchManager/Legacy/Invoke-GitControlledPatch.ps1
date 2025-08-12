@@ -620,7 +620,7 @@ function Get-GitChangeStatistics {
             $summary = $lines[-1]
 
             if ($summary -match '(\d+) file[s]? changed') {
-                $filesChanged = $matches[1]
+                $filesChanged = $Matches[1]
             } else {
                 $filesChanged = 0
             }
@@ -629,11 +629,11 @@ function Get-GitChangeStatistics {
             $linesRemoved = 0
 
             if ($summary -match '(\d+) insertion[s]?') {
-                $linesAdded = $matches[1]
+                $linesAdded = $Matches[1]
             }
 
             if ($summary -match '(\d+) deletion[s]?') {
-                $linesRemoved = $matches[1]
+                $linesRemoved = $Matches[1]
             }
 
             return @{

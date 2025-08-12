@@ -20,10 +20,10 @@ BeforeAll {
     
     # Mock GitHub CLI
     Mock gh -MockWith {
-        if ($args[0] -eq 'issue' -and $args[1] -eq 'create') {
+        if ($arguments[0] -eq 'issue' -and $arguments[1] -eq 'create') {
             return "https://github.com/test/repo/issues/123"
         }
-        if ($args[0] -eq 'issue' -and $args[1] -eq 'list') {
+        if ($arguments[0] -eq 'issue' -and $arguments[1] -eq 'list') {
             return '[]' | ConvertTo-Json
         }
         return ""

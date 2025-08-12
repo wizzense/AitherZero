@@ -120,7 +120,7 @@ function Get-GitHubToken {
         $authStatus = gh auth status --show-token 2>&1 | Out-String
         if ($authStatus -match 'Token: (.*?)(\r|\n|$)') {
             Write-RunnerLog "Using existing GitHub CLI authentication" -Level Information
-            return $matches[1].Trim()
+            return $Matches[1].Trim()
         }
     } catch {
         Write-RunnerLog "No existing GitHub CLI authentication found" -Level Warning

@@ -10,7 +10,7 @@
 
 BeforeAll {
     # Get script path
-    $scriptPath = Join-Path (Split-Path $PSScriptRoot -Parent -Parent -Parent) "automation-scripts/0404_Run-PSScriptAnalyzer.ps1"
+    $scriptPath = Join-Path (Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent) "automation-scripts/0404_Run-PSScriptAnalyzer.ps1"
     
     # Mock PSScriptAnalyzer and other functions
     Mock Invoke-ScriptAnalyzer {
@@ -176,12 +176,12 @@ Describe "0404_Run-PSScriptAnalyzer" -Tag @('Unit', 'Testing', 'StaticAnalysis')
     }
 
     Context "Analysis Configuration" {
-        It "Should load configuration from config.json if available" {
-            Mock Test-Path { return $true } -ParameterFilter { $Path -like "*config.json" }
+        It "Should load configuration from config.psd1 if available" {
+            Mock Test-Path { return $true } -ParameterFilter { $Path -like "*config.psd1" }
             
             & $scriptPath -Path "/test/path"
             
-            Assert-MockCalled Get-Content -ParameterFilter { $Path -like "*config.json" }
+            Assert-MockCalled Get-Content -ParameterFilter { $Path -like "*config.psd1" }
         }
 
         It "Should use PSScriptAnalyzer settings file if available" {
@@ -194,8 +194,8 @@ Describe "0404_Run-PSScriptAnalyzer" -Tag @('Unit', 'Testing', 'StaticAnalysis')
             }
         }
 
-        It "Should use default configuration if config.json not found" {
-            Mock Test-Path { return $false } -ParameterFilter { $Path -like "*config.json" }
+        It "Should use default configuration if config.psd1 not found" {
+            Mock Test-Path { return $false } -ParameterFilter { $Path -like "*config.psd1" }
             
             & $scriptPath -Path "/test/path"
             

@@ -20,7 +20,7 @@ BeforeAll {
 
     # Mock external commands
     Mock git { 
-        switch -Regex ($args -join ' ') {
+        switch -Regex ($arguments -join ' ') {
             'branch -r' { 
                 return @('  origin/main', '  origin/develop')
             }
@@ -33,7 +33,7 @@ BeforeAll {
                     'To https://github.com/test/repo.git',
                     '   abc123..def456  feature/test-branch -> feature/test-branch'
                 )
-                $script:MockCalls['git_push'] += @{ Args = $args }
+                $script:MockCalls['git_push'] += @{ Args = $arguments }
                 return $output
             }
             'rev-parse HEAD' { return 'abc123456' }
@@ -127,7 +127,7 @@ Describe "0705_Push-Branch" {
     
     Context "Remote Branch Detection" {
         It "Should detect when branch doesn't exist on remote" {
-            Mock git { return @() } -ParameterFilter { $args -contains '-r' }
+            Mock git { return @() } -ParameterFilter { $arguments -contains '-r' }
             
             & "/workspaces/AitherZero/automation-scripts/0705_Push-Branch.ps1" -DryRun -WhatIf
             
@@ -135,7 +135,7 @@ Describe "0705_Push-Branch" {
         }
         
         It "Should detect when branch exists on remote" {
-            Mock git { return @('  origin/feature/test-branch') } -ParameterFilter { $args -contains '-r' }
+            Mock git { return @('  origin/feature/test-branch') } -ParameterFilter { $arguments -contains '-r' }
             
             & "/workspaces/AitherZero/automation-scripts/0705_Push-Branch.ps1" -DryRun -WhatIf
             
@@ -189,12 +189,12 @@ Describe "0705_Push-Branch" {
     
     Context "Push Command Building" {
         It "Should include --set-upstream when needed" {
-            Mock git { return @() } -ParameterFilter { $args -contains '-r' }
+            Mock git { return @() } -ParameterFilter { $arguments -contains '-r' }
             
             & "/workspaces/AitherZero/automation-scripts/0705_Push-Branch.ps1" -DryRun -WhatIf
             
             Should -Invoke git -ParameterFilter { 
-                $args -contains 'push' -and $args -contains '--set-upstream' 
+                $arguments -contains 'push' -and $arguments -contains '--set-upstream' 
             }
         }
         
@@ -203,7 +203,7 @@ Describe "0705_Push-Branch" {
             
             Should -Invoke Write-Warning -ParameterFilter { $Message -like "*force push*" }
             Should -Invoke git -ParameterFilter { 
-                $args -contains 'push' -and $args -contains '--force' 
+                $arguments -contains 'push' -and $arguments -contains '--force' 
             }
         }
         
@@ -212,7 +212,7 @@ Describe "0705_Push-Branch" {
             
             Should -Invoke Write-Host -ParameterFilter { $Object -like "*force-with-lease*" }
             Should -Invoke git -ParameterFilter { 
-                $args -contains 'push' -and $args -contains '--force-with-lease' 
+                $arguments -contains 'push' -and $arguments -contains '--force-with-lease' 
             }
         }
         
@@ -221,7 +221,7 @@ Describe "0705_Push-Branch" {
             
             Should -Invoke Write-Host -ParameterFilter { $Object -like "*Including tags*" }
             Should -Invoke git -ParameterFilter { 
-                $args -contains 'push' -and $args -contains '--tags' 
+                $arguments -contains 'push' -and $arguments -contains '--tags' 
             }
         }
         
@@ -230,7 +230,7 @@ Describe "0705_Push-Branch" {
             
             Should -Invoke Write-Host -ParameterFilter { $Object -like "*Pushing all branches*" }
             Should -Invoke git -ParameterFilter { 
-                $args -contains 'push' -and $args -contains '--all' 
+                $arguments -contains 'push' -and $arguments -contains '--all' 
             }
         }
         
@@ -238,7 +238,7 @@ Describe "0705_Push-Branch" {
             & "/workspaces/AitherZero/automation-scripts/0705_Push-Branch.ps1" -Verbose -DryRun -WhatIf
             
             Should -Invoke git -ParameterFilter { 
-                $args -contains 'push' -and $args -contains '--verbose' 
+                $arguments -contains 'push' -and $arguments -contains '--verbose' 
             }
         }
         
@@ -247,7 +247,7 @@ Describe "0705_Push-Branch" {
             
             Should -Invoke Write-Host -ParameterFilter { $Object -like "*DRY RUN MODE*" }
             Should -Invoke git -ParameterFilter { 
-                $args -contains 'push' -and $args -contains '--dry-run' 
+                $arguments -contains 'push' -and $arguments -contains '--dry-run' 
             }
         }
     }
@@ -285,7 +285,7 @@ Describe "0705_Push-Branch" {
     
     Context "Push Output Parsing" {
         It "Should detect 'Everything up-to-date' message" {
-            Mock git { return 'Everything up-to-date' } -ParameterFilter { $args[0] -eq 'push' }
+            Mock git { return 'Everything up-to-date' } -ParameterFilter { $arguments[0] -eq 'push' }
             
             & "/workspaces/AitherZero/automation-scripts/0705_Push-Branch.ps1" -DryRun -WhatIf
             
@@ -293,7 +293,7 @@ Describe "0705_Push-Branch" {
         }
         
         It "Should detect new branch creation" {
-            Mock git { return ' * [new branch]      feature/test -> feature/test' } -ParameterFilter { $args[0] -eq 'push' }
+            Mock git { return ' * [new branch]      feature/test -> feature/test' } -ParameterFilter { $arguments[0] -eq 'push' }
             
             & "/workspaces/AitherZero/automation-scripts/0705_Push-Branch.ps1" -DryRun -WhatIf
             
@@ -301,7 +301,7 @@ Describe "0705_Push-Branch" {
         }
         
         It "Should detect rejected pushes" {
-            Mock git { return 'rejected' } -ParameterFilter { $args[0] -eq 'push' }
+            Mock git { return 'rejected' } -ParameterFilter { $arguments[0] -eq 'push' }
             
             & "/workspaces/AitherZero/automation-scripts/0705_Push-Branch.ps1" -DryRun -WhatIf
             
@@ -317,7 +317,7 @@ Describe "0705_Push-Branch" {
         }
         
         It "Should show upstream tracking message when setting upstream" {
-            Mock git { return @() } -ParameterFilter { $args -contains '-r' }
+            Mock git { return @() } -ParameterFilter { $arguments -contains '-r' }
             
             & "/workspaces/AitherZero/automation-scripts/0705_Push-Branch.ps1" -DryRun -WhatIf
             
@@ -357,7 +357,7 @@ Describe "0705_Push-Branch" {
         }
         
         It "Should suggest pushing tags when unpushed tags exist" {
-            Mock git { return 'v1.0.0' } -ParameterFilter { $args -contains 'tag' -and $args -contains '--contains' }
+            Mock git { return 'v1.0.0' } -ParameterFilter { $arguments -contains 'tag' -and $arguments -contains '--contains' }
             
             & "/workspaces/AitherZero/automation-scripts/0705_Push-Branch.ps1" -DryRun -WhatIf
             
@@ -367,7 +367,7 @@ Describe "0705_Push-Branch" {
     
     Context "Error Handling" {
         It "Should handle push failures with helpful messages" {
-            Mock git { throw "failed to push" } -ParameterFilter { $args[0] -eq 'push' }
+            Mock git { throw "failed to push" } -ParameterFilter { $arguments[0] -eq 'push' }
             
             { & "/workspaces/AitherZero/automation-scripts/0705_Push-Branch.ps1" } | Should -Throw
             Should -Invoke Write-Error -ParameterFilter { $Message -like "*Push failed*" }
@@ -375,7 +375,7 @@ Describe "0705_Push-Branch" {
         }
         
         It "Should handle authentication failures" {
-            Mock git { throw "Permission denied" } -ParameterFilter { $args[0] -eq 'push' }
+            Mock git { throw "Permission denied" } -ParameterFilter { $arguments[0] -eq 'push' }
             
             { & "/workspaces/AitherZero/automation-scripts/0705_Push-Branch.ps1" } | Should -Throw
             Should -Invoke Write-Error -ParameterFilter { $Message -like "*Authentication failed*" }
@@ -383,7 +383,7 @@ Describe "0705_Push-Branch" {
         }
         
         It "Should suggest force-with-lease for failed pushes" {
-            Mock git { throw "failed to push" } -ParameterFilter { $args[0] -eq 'push' }
+            Mock git { throw "failed to push" } -ParameterFilter { $arguments[0] -eq 'push' }
             
             { & "/workspaces/AitherZero/automation-scripts/0705_Push-Branch.ps1" } | Should -Throw
             Should -Invoke Write-Host -ParameterFilter { $Object -like "*ForceWithLease*" }

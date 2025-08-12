@@ -41,8 +41,8 @@ $script:Condition = '$env:ANTHROPIC_API_KEY -or $env:OPENAI_API_KEY -or $env:GOO
 #endregion
 
 #region Configuration Loading
-$configPath = Join-Path (Split-Path $PSScriptRoot -Parent) "config.json"
-$config = Get-Content $configPath -Raw | ConvertFrom-Json
+$configPath = Join-Path (Split-Path $PSScriptRoot -Parent) "config.psd1"
+$config = Import-PowerShellDataFile $configPath
 
 if (-not $config.AI.TestGeneration.Enabled) {
     Write-Warning "AI Test Generation is disabled in configuration"

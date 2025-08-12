@@ -29,8 +29,6 @@ param(
     
     [switch]$DryRun,
     
-    [switch]$Verbose,
-    
     [switch]$NonInteractive
 )
 
@@ -65,8 +63,15 @@ $remoteBranchExists = $remoteBranches -contains "$Remote/$Branch"
 # Check for uncommitted changes
 if (-not $status.Clean -and -not $NonInteractive -and -not $Force) {
     Write-Warning "You have uncommitted changes:"
-    $status.Modified + $status.Untracked | ForEach-Object { 
-        Write-Host "  $($_.Path)" -ForegroundColor Yellow
+    $allChanges = @()
+    if ($status.Modified) { $allChanges += $status.Modified }
+    if ($status.Untracked) { $allChanges += $status.Untracked }
+    
+    $allChanges | ForEach-Object { 
+        if ($_) {
+            $filePath = if ($_.Path) { $_.Path } elseif ($_ -is [string]) { $_ } else { $_.ToString() }
+            Write-Host "  $filePath" -ForegroundColor Yellow
+        }
     }
     
     $response = Read-Host "Continue with push? (y/N)"
@@ -113,7 +118,7 @@ if ($DryRun) {
     Write-Host "[DRY RUN MODE]" -ForegroundColor Magenta
 }
 
-if ($Verbose) {
+if ($VerbosePreference -ne 'SilentlyContinue') {
     $pushArgs += '--verbose'
 }
 
@@ -146,7 +151,7 @@ try {
         elseif ($line -match 'rejected') {
             Write-Warning $line
         }
-        elseif ($Verbose) {
+        elseif ($VerbosePreference -ne 'SilentlyContinue') {
             Write-Host "  $line" -ForegroundColor Gray
         }
     }
@@ -163,8 +168,9 @@ try {
         $localCommit = git rev-parse HEAD 2>$null
         $remoteCommit = git rev-parse "$Remote/$Branch" 2>$null
         
-        if ($localCommit -eq $remoteCommit) {
-            Write-Host "  Local and remote are in sync at $(($localCommit ?? '').Substring(0, 7))" -ForegroundColor Gray
+        if ($localCommit -eq $remoteCommit -and $localCommit) {
+            $shortCommit = if ($localCommit.Length -ge 7) { $localCommit.Substring(0, 7) } else { $localCommit }
+            Write-Host "  Local and remote are in sync at $shortCommit" -ForegroundColor Gray
         }
     }
     

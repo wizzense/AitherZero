@@ -1,0 +1,69 @@
+{
+  "Name": "github-cicd",
+  "Description": "Complete GitHub Actions CI/CD pipeline",
+  "Version": "1.0",
+  "Created": "2025-08-12",
+  "Stages": [
+    {
+      "Name": "Validation",
+      "Description": "Validate code quality and syntax",
+      "Sequence": ["0407", "0404", "0440"],
+      "Variables": {
+        "CI": true,
+        "ContinueOnError": false
+      }
+    },
+    {
+      "Name": "Testing",
+      "Description": "Run test suite",
+      "Sequence": ["0402", "0403"],
+      "Variables": {
+        "CI": true,
+        "Coverage": true,
+        "OutputPath": "./test-results"
+      }
+    },
+    {
+      "Name": "Reporting",
+      "Description": "Generate comprehensive reports",
+      "Sequence": ["0510"],
+      "Variables": {
+        "ShowAll": true,
+        "OutputPath": "./test-results",
+        "Format": "HTML,JSON,Markdown",
+        "CI": true
+      }
+    }
+  ],
+  "Variables": {
+    "CI": true,
+    "NonInteractive": true,
+    "Environment": "CI"
+  },
+  "Options": {
+    "Profiles": {
+      "quick": {
+        "Description": "Quick validation for PRs",
+        "Variables": {
+          "TestScope": "quick",
+          "SkipIntegration": true
+        }
+      },
+      "full": {
+        "Description": "Full test suite for main branch",
+        "Variables": {
+          "TestScope": "full",
+          "Coverage": true,
+          "GenerateReports": true
+        }
+      },
+      "pr": {
+        "Description": "PR validation pipeline",
+        "Variables": {
+          "TestScope": "unit",
+          "PostPRComment": true
+        }
+      }
+    }
+  }
+}

@@ -146,7 +146,7 @@ Describe "AitherZero Root Module (AitherZero.psm1)" -Tag 'Unit', 'RootModule' {
             Import-Module $script:RootModule -Force -DisableNameChecking
             
             # Should not have duplicate entries
-            ($env:PATH -split [regex]::Escape($pathSeparator) | Where-Object { $_ -eq $automationPath }).Count | Should -Be 1
+            @($env:PATH -split [regex]::Escape($pathSeparator) | Where-Object { $_ -eq $automationPath }).Count | Should -Be 1
             
             # Restore original PATH
             $env:PATH = $originalPath
@@ -200,9 +200,9 @@ Describe "AitherZero Root Module (AitherZero.psm1)" -Tag 'Unit', 'RootModule' {
             # Test that all referenced module paths in the code actually exist
             $content = Get-Content $script:RootModule -Raw
             $modulePathPattern = "'\\./domains/[^']+\\.psm1'"
-            $matches = [regex]::Matches($content, $modulePathPattern)
+            $matchResults = [regex]::Matches($content, $modulePathPattern)
             
-            foreach ($match in $matches) {
+            foreach ($match in $matchResults) {
                 $relativePath = $match.Value.Trim("'")
                 $fullPath = Join-Path $script:ProjectRoot $relativePath
                 Test-Path $fullPath | Should -Be $true -Because "Module path $relativePath should exist"
@@ -280,9 +280,10 @@ Describe "AitherZero Root Module (AitherZero.psm1)" -Tag 'Unit', 'RootModule' {
         
         It "Should pass additional arguments to script" {
             $testScript = Join-Path $script:MockScriptPath "0501_Test-Args.ps1"
-            Set-Content -Path $testScript -Value 'param($Configuration, $TestArg) "Arg: $TestArg"'
+            Set-Content -Path $testScript -Value 'param($Configuration, $Message) "Arg: $Message"'
             
-            $result = Invoke-AitherScript -ScriptNumber "0501" -Arguments @("-TestArg", "TestValue")
+            # The function uses dynamic parameters, not -Arguments
+            $result = Invoke-AitherScript -ScriptNumber "0501" -Message "TestValue"
             
             $result | Should -Be "Arg: TestValue"
         }
@@ -332,8 +333,8 @@ Describe "AitherZero Root Module (AitherZero.psm1)" -Tag 'Unit', 'RootModule' {
         It "Should export Invoke-AitherScript function" {
             Import-Module $script:RootModule -Force -DisableNameChecking
             
-            $module = Get-Module AitherZero
-            $module.ExportedFunctions.Keys | Should -Contain 'Invoke-AitherScript'
+            # Function is defined as global:Invoke-AitherScript
+            Get-Command Invoke-AitherScript -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
         }
         
         It "Should export 'az' alias" {
@@ -428,9 +429,9 @@ Describe "AitherZero Root Module (AitherZero.psm1)" -Tag 'Unit', 'RootModule' {
             
             # Extract module paths from the $modulesToLoad array
             $modulePathPattern = "'\./domains/[^']+\.psm1'"
-            $matches = [regex]::Matches($content, $modulePathPattern)
+            $matchResults = [regex]::Matches($content, $modulePathPattern)
             
-            foreach ($match in $matches) {
+            foreach ($match in $matchResults) {
                 $relativePath = $match.Value.Trim("'")
                 $fullPath = Join-Path $script:ProjectRoot $relativePath
                 
@@ -457,41 +458,47 @@ Describe "AitherZero Root Module (AitherZero.psm1)" -Tag 'Unit', 'RootModule' {
     
     Context "Performance and Resource Management" {
         It "Should not leak variables into global scope" {
-            $beforeVariables = Get-Variable | Select-Object -ExpandProperty Name
+            $beforeVariables = Get-Variable -Scope Global | Select-Object -ExpandProperty Name
             
             Import-Module $script:RootModule -Force -DisableNameChecking
             
-            $afterVariables = Get-Variable | Select-Object -ExpandProperty Name
+            $afterVariables = Get-Variable -Scope Global | Select-Object -ExpandProperty Name
             $newVariables = Compare-Object $beforeVariables $afterVariables | 
                 Where-Object { $_.SideIndicator -eq '=>' } |
                 Select-Object -ExpandProperty InputObject
             
             # Should only add environment variables and expected exports
+            # Note: Test framework may add its own variables, so we filter those out
             $allowedVariables = @('AITHERZERO_ROOT', 'AITHERZERO_INITIALIZED')
-            $unexpectedVariables = $newVariables | Where-Object { $_ -notin $allowedVariables }
+            $testVariables = @('beforeVariables', 'afterVariables', 'newVariables', 'unexpectedVariables', 'allowedVariables')
+            $unexpectedVariables = $newVariables | Where-Object { 
+                $_ -notin $allowedVariables -and $_ -notin $testVariables
+            }
             
             $unexpectedVariables | Should -BeNullOrEmpty
         }
         
         It "Should handle concurrent module loading attempts gracefully" {
             # This test simulates what might happen if multiple processes try to load the module
-            Mock Import-Module { 
-                Start-Sleep -Milliseconds 100  # Simulate loading time
-            } -ParameterFilter { $Name -like "*/*.psm1" }
-            
             $jobs = @()
             1..3 | ForEach-Object {
                 $jobs += Start-Job -ScriptBlock {
                     param($ModulePath)
-                    Import-Module $ModulePath -Force -DisableNameChecking
+                    try {
+                        Import-Module $ModulePath -Force -DisableNameChecking -ErrorAction Stop
+                        return "Success"
+                    } catch {
+                        return "Failed: $_"
+                    }
                 } -ArgumentList $script:RootModule
             }
             
             $results = $jobs | Wait-Job | Receive-Job
             $jobs | Remove-Job -Force
             
-            # All jobs should complete without errors
-            $results | Should -Not -Contain $null
+            # All jobs should complete successfully
+            $results | Should -Not -BeNullOrEmpty
+            $results | ForEach-Object { $_ | Should -Be "Success" }
         }
     }
 }

@@ -10,7 +10,7 @@
 
 BeforeAll {
     # Get script path
-    $scriptPath = Join-Path (Split-Path $PSScriptRoot -Parent -Parent -Parent) "automation-scripts/0406_Generate-Coverage.ps1"
+    $scriptPath = Join-Path (Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent) "automation-scripts/0406_Generate-Coverage.ps1"
     
     # Mock Pester and coverage functions
     Mock Invoke-Pester {

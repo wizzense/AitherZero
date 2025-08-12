@@ -234,7 +234,7 @@ function Invoke-ClaudeEnhancement {
 
 _Claude integration pending. To enable:_
 1. Set up Claude API credentials
-2. Configure in `config.json` under `AI.Claude`
+2. Configure in `config.psd1` under `AI.Claude`
 3. Run with `-EnhanceWithClaude` flag
 
 When enabled, Claude will:

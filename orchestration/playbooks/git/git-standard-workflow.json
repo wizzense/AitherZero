@@ -23,9 +23,10 @@
       "example": "ai-integration"
     },
     "filePattern": {
-      "description": "Files to stage (space-separated patterns)",
-      "required": true,
-      "example": "*.ps1 config.json docs/*.md"
+      "description": "Files to stage (space-separated patterns). If not specified, stages all changes.",
+      "required": false,
+      "example": "*.ps1 config.json docs/*.md",
+      "default": ""
     },
     "commitType": {
       "description": "Conventional commit type",
@@ -172,32 +173,23 @@
       "continueOnError": false
     },
     {
-      "name": "Run Tests",
-      "description": "Run tests before committing",
+      "name": "Run Tests and Analysis",
+      "description": "Run tests and code analysis before committing",
       "sequence": ["0404"],
       "condition": "{{runTests}}",
       "variables": {
         "CI": true,
         "QuickMode": true
       },
-      "continueOnError": false
-    },
-    {
-      "name": "Code Analysis",
-      "description": "Run code analysis",
-      "sequence": ["0407"],
-      "condition": "{{runAnalysis}}",
-      "variables": {
-        "CI": true
-      },
-      "continueOnError": false
+      "continueOnError": true
     },
     {
       "name": "Stage Files",
-      "description": "Add specified files to git staging",
+      "description": "Add files to git staging (all changes if no pattern specified)",
       "sequence": ["0704"],
       "variables": {
         "Patterns": "{{filePattern}}",
+        "Type": "All",
         "Force": true
       },
       "continueOnError": false

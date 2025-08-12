@@ -271,18 +271,18 @@ function Get-ScriptMetadata {
 
     # Parse priority from filename (e.g., 0001_ScriptName.ps1)
     if ($metadata.Name -match '^(\d+)_(.+)$') {
-        $metadata.Priority = [int]$matches[1]
-        $metadata.Name = $matches[2].Replace('-', ' ')
+        $metadata.Priority = [int]$Matches[1]
+        $metadata.Name = $Matches[2].Replace('-', ' ')
     }
 
     # Try to read metadata from script comments
     $content = Get-Content $Path -First 20
     foreach ($line in $content) {
         if ($line -match '#\s*Stage:\s*(.+)') {
-            $metadata.Stage = $matches[1].Trim()
+            $metadata.Stage = $Matches[1].Trim()
         }
         if ($line -match '#\s*Dependencies:\s*(.+)') {
-            $metadata.Dependencies = $matches[1].Split(',') | ForEach-Object { $_.Trim() }
+            $metadata.Dependencies = $Matches[1].Split(',') | ForEach-Object { $_.Trim() }
         }
         if ($line -notmatch '^#') {
             break

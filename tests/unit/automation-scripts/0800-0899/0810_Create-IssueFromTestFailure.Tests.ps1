@@ -27,7 +27,7 @@ BeforeAll {
     
     # Mock git commands  
     Mock git -MockWith {
-        switch ($args[0]) {
+        switch ($arguments[0]) {
             "branch" { return "main" }
             "rev-parse" { return "abc123" }
             default { return "" }
@@ -85,8 +85,8 @@ Describe "0810_Create-IssueFromTestFailure" {
         It "Should get system context correctly" {
             & $scriptPath -AutoCreate
             
-            Should -Invoke git -ParameterFilter { $args[0] -eq "branch" }
-            Should -Invoke git -ParameterFilter { $args[0] -eq "rev-parse" }
+            Should -Invoke git -ParameterFilter { $arguments[0] -eq "branch" }
+            Should -Invoke git -ParameterFilter { $arguments[0] -eq "rev-parse" }
         }
     }
     
@@ -239,7 +239,7 @@ Describe "0810_Create-IssueFromTestFailure" {
         It "Should create issue with proper parameters" {
             & $scriptPath -IssueType "TestFailure" -AutoCreate
             
-            Should -Invoke gh -ParameterFilter { $args[0] -eq "issue" -and $args[1] -eq "create" }
+            Should -Invoke gh -ParameterFilter { $arguments[0] -eq "issue" -and $arguments[1] -eq "create" }
         }
         
         It "Should handle GitHub CLI errors" {
@@ -256,7 +256,7 @@ Describe "0810_Create-IssueFromTestFailure" {
         It "Should include proper labels" {
             & $scriptPath -IssueType "TestFailure" -AutoCreate
             
-            Should -Invoke gh -ParameterFilter { $args -contains "--label" }
+            Should -Invoke gh -ParameterFilter { $arguments -contains "--label" }
         }
         
         It "Should add CI failure label in GitHub Actions" {

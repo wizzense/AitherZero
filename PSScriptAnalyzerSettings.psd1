@@ -21,9 +21,16 @@
             Enable = $true
             TargetVersions = @('7.0')
         }
-        
-        PSUseCorrectCasing = @{
-            Enable = $true
-        }
+    }
+
+    # Code formatting settings
+    CodeFormatting = @{
+        UseCorrectCasing = $true
+        WhitespaceInsideBrace = $true
+        WhitespaceAroundOperator = $true
+        WhitespaceAfterSeparator = $true
+        IgnoreOneLineBlock = $true
+        NewLineAfterOpenBrace = $true
+        NewLineAfterCloseBrace = $true
     }
 }

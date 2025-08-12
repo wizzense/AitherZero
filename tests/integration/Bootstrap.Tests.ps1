@@ -79,7 +79,7 @@ Describe "Bootstrap Environment Detection" {
             # Create mock existing installation
             $mockEnv = New-MockBootstrapEnvironment -Path $TestDrive -WithExistingInstall
             
-            Test-Path (Join-Path $mockEnv.Path "config.json") | Should -BeTrue
+            Test-Path (Join-Path $mockEnv.Path "config.psd1") | Should -BeTrue
             Test-Path (Join-Path $mockEnv.Path "Start-AitherZero.ps1") | Should -BeTrue
         }
         
@@ -148,7 +148,7 @@ Describe "Bootstrap Installation Modes" {
         }
         
         It "Should create default configuration" {
-            $script:BootstrapContent | Should -BeLike "*config.json*"
+            $script:BootstrapContent | Should -BeLike "*config.psd1*"
             $script:BootstrapContent | Should -BeLike "*ConvertTo-Json*"
         }
     }

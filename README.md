@@ -1,10 +1,32 @@
-# AitherZero
+<p align="center">
+  <img src="assets/branding/aitherium-logo.png" alt="Aitherium Logo" width="200"/>
+</p>
 
-Infrastructure automation platform with AI-powered orchestration.
+<h1 align="center">AitherZero</h1>
+
+<p align="center">
+  <strong>Aitherium™ Enterprise Infrastructure Automation Platform</strong><br>
+  Infrastructure automation platform with AI-powered orchestration
+</p>
+
+<p align="center">
+  <a href="#quick-install">Quick Install</a> •
+  <a href="#features">Features</a> •
+  <a href="#documentation">Documentation</a> •
+  <a href="#license">License</a>
+</p>
+
+---
 
 ## Quick Install
 
-### Windows (PowerShell)
+### Windows (PowerShell 5.1)
+```powershell
+# Automatically installs PowerShell 7 if needed
+irm https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap-ps5.ps1 | iex
+```
+
+### Windows/Linux/macOS (PowerShell 7+)
 ```powershell
 irm https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex
 ```

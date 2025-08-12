@@ -14,8 +14,8 @@ param()
 
 # Read JSON input from stdin
 $hookInput = @()
-$inputStream = [Console]::In
-while ($null -ne ($line = $inputStream.ReadLine())) {
+$inputValueStream = [Console]::In
+while ($null -ne ($line = $inputValueStream.ReadLine())) {
     $hookInput += $line
 }
 

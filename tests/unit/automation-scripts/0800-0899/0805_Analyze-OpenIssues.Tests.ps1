@@ -11,7 +11,7 @@ BeforeAll {
     
     # Mock git commands
     Mock git -MockWith {
-        switch ($args[0]) {
+        switch ($arguments[0]) {
             "branch" { return "feature-branch" }
             "diff" { return "file1.ps1`nfile2.ps1" }
             "log" { return "fix: update feature`nadd: new functionality" }
@@ -21,7 +21,7 @@ BeforeAll {
     
     # Mock GitHub CLI
     Mock gh -MockWith {
-        if ($args[0] -eq "issue" -and $args[1] -eq "list") {
+        if ($arguments[0] -eq "issue" -and $arguments[1] -eq "list") {
             return '[{"number": 123, "title": "Bug in feature", "body": "Error in file1.ps1", "labels": [{"name": "bug"}]}]'
         }
     }
@@ -54,24 +54,24 @@ Describe "0805_Analyze-OpenIssues" {
         It "Should get current branch if not specified" {
             & $scriptPath
             
-            Should -Invoke git -ParameterFilter { $args[0] -eq "branch" -and $args[1] -eq "--show-current" }
+            Should -Invoke git -ParameterFilter { $arguments[0] -eq "branch" -and $arguments[1] -eq "--show-current" }
         }
         
         It "Should get changed files between branches" {
             & $scriptPath -Branch "feature" -BaseBranch "main"
             
-            Should -Invoke git -ParameterFilter { $args[0] -eq "diff" }
+            Should -Invoke git -ParameterFilter { $arguments[0] -eq "diff" }
         }
         
         It "Should get commit messages" {
             & $scriptPath
             
-            Should -Invoke git -ParameterFilter { $args[0] -eq "log" }
+            Should -Invoke git -ParameterFilter { $arguments[0] -eq "log" }
         }
         
         It "Should analyze diff content for error patterns" {
             Mock git -MockWith {
-                if ($args[0] -eq "diff" -and $args.Count -gt 2) {
+                if ($arguments[0] -eq "diff" -and $arguments.Count -gt 2) {
                     return "+fixed error handling`n-throw new Exception"
                 }
                 return ""
@@ -87,25 +87,25 @@ Describe "0805_Analyze-OpenIssues" {
         It "Should fetch open issues by default" {
             & $scriptPath
             
-            Should -Invoke gh -ParameterFilter { $args -contains "--state" -and $args -contains "open" }
+            Should -Invoke gh -ParameterFilter { $arguments -contains "--state" -and $arguments -contains "open" }
         }
         
         It "Should include closed issues when requested" {
             & $scriptPath -IncludeClosed
             
-            Should -Invoke gh -ParameterFilter { $args -contains "--state" -and $args -contains "all" }
+            Should -Invoke gh -ParameterFilter { $arguments -contains "--state" -and $arguments -contains "all" }
         }
         
         It "Should filter issues by type" {
             & $scriptPath -IssueType "Bug"
             
-            Should -Invoke gh -ParameterFilter { $args -contains "--label" -and $args -contains "bug" }
+            Should -Invoke gh -ParameterFilter { $arguments -contains "--label" -and $arguments -contains "bug" }
         }
         
         It "Should limit number of issues fetched" {
             & $scriptPath -MaxIssues 50
             
-            Should -Invoke gh -ParameterFilter { $args -contains "--limit" -and $args -contains "50" }
+            Should -Invoke gh -ParameterFilter { $arguments -contains "--limit" -and $arguments -contains "50" }
         }
         
         It "Should handle GitHub CLI errors gracefully" {
@@ -124,7 +124,7 @@ Describe "0805_Analyze-OpenIssues" {
         
         It "Should match direct issue references in commits" {
             Mock git -MockWith {
-                if ($args[0] -eq "log") {
+                if ($arguments[0] -eq "log") {
                     return "fix: resolve issue #123"
                 }
                 return ""
@@ -138,7 +138,7 @@ Describe "0805_Analyze-OpenIssues" {
         
         It "Should match file names in issue content" {
             Mock git -MockWith {
-                if ($args[0] -eq "diff" -and $args[1] -notmatch "log|branch") {
+                if ($arguments[0] -eq "diff" -and $arguments[1] -notmatch "log|branch") {
                     return "file1.ps1"
                 }
                 return ""
@@ -171,7 +171,7 @@ Describe "0805_Analyze-OpenIssues" {
         
         It "Should use keyword matching for commit messages" {
             Mock git -MockWith {
-                if ($args[0] -eq "log") {
+                if ($arguments[0] -eq "log") {
                     return "fix: resolve authentication issue"
                 }
                 return ""
@@ -196,7 +196,7 @@ Describe "0805_Analyze-OpenIssues" {
         
         It "Should identify error handling patterns" {
             Mock git -MockWith {
-                if ($args[0] -eq "diff" -and $args.Count -gt 2) {
+                if ($arguments[0] -eq "diff" -and $arguments.Count -gt 2) {
                     return "+try { Get-Data } catch { Write-Error }"
                 }
                 return ""

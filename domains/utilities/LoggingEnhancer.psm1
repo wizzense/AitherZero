@@ -133,7 +133,7 @@ function Stop-LoggedOperation {
     param(
         [bool]$Success = $true,
         
-        [string]$Error,
+        [string]$ErrorMessage,
         
         [hashtable]$Results = @{}
     )
@@ -146,7 +146,7 @@ function Stop-LoggedOperation {
     $operation.EndTime = Get-Date
     $operation.Duration = $operation.EndTime - $operation.StartTime
     $operation.Success = $Success
-    $operation.Error = $Error
+    $operation.Error = $ErrorMessage
     $operation.Results = $Results
     
     # Calculate statistics
@@ -166,7 +166,7 @@ function Stop-LoggedOperation {
             Duration = $operation.Duration.TotalSeconds
             Statistics = $stats
             Results = $Results
-            Error = $Error
+            Error = $ErrorMessage
         }
     }
     

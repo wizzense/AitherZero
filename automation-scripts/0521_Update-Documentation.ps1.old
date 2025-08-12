@@ -128,7 +128,7 @@ function Update-ModuleDocumentation {
     $ast = [System.Management.Automation.Language.Parser]::ParseInput($content, [ref]$null, [ref]$null)
 
     # Extract functions
-    $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true) |
+    $functions = $ast.FindAll({ $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true) |
         Where-Object { $_.Name -notlike '*-*Script*' } # Exclude internal functions
 
     # Generate README content
@@ -176,7 +176,7 @@ $(if (Test-Path (Join-Path $moduleDir "$moduleName.psd1")) {
 
 ## Configuration
 $(if ($moduleName -match 'Configuration|Settings|Config') {
-    "This module uses settings from `config.json`. See [Configuration Documentation](../../docs/configuration.md) for details."
+    "This module uses settings from `config.psd1`. See [Configuration Documentation](../../docs/configuration.md) for details."
 } else {
     "No specific configuration required."
 })
@@ -439,9 +439,9 @@ function Update-ConfigurationDependencies {
         [hashtable]$Dependencies
     )
 
-    Write-ScriptLog "Updating config.json with dependency information..."
+    Write-ScriptLog "Updating config.psd1 with dependency information..."
     
-    $configPath = Join-Path $script:ProjectRoot "config.json"
+    $configPath = Join-Path $script:ProjectRoot "config.psd1"
     $config = Get-Content $configPath -Raw | ConvertFrom-Json
 
     # Add Dependencies section if it doesn't exist
@@ -482,7 +482,7 @@ function Update-ConfigurationDependencies {
 
     # Save updated config
     $config | ConvertTo-Json -Depth 10 | Set-Content -Path $configPath
-    Write-ScriptLog "Updated config.json with dependency information"
+    Write-ScriptLog "Updated config.psd1 with dependency information"
     
     return $config
 }
@@ -517,7 +517,7 @@ try {
                 ForEach-Object {
                     $content = Get-Content $_.FullName -Raw
                     $ast = [System.Management.Automation.Language.Parser]::ParseInput($content, [ref]$null, [ref]$null)
-                    $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+                    $functions = $ast.FindAll({ $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
                     
                     $updated = $false
                     foreach ($function in $functions) {
@@ -540,7 +540,7 @@ try {
     $dependencies = New-DependencyMap
     $depReport = Export-DependencyReport -Dependencies $dependencies -OutputPath (Join-Path $script:ProjectRoot "docs")
 
-    # Update config.json with dependencies
+    # Update config.psd1 with dependencies
     if (-not $CheckOnly) {
         Update-ConfigurationDependencies -Dependencies $dependencies
     }

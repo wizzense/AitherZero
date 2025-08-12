@@ -200,7 +200,7 @@ function Write-LogToEventLog {
             [System.Diagnostics.EventLog]::CreateEventSource($source, "Application")
         }
         
-        $eventType = switch ($Entry.Level) {
+        $EventNameType = switch ($Entry.Level) {
             'Trace' { 'Information' }
             'Debug' { 'Information' }
             'Information' { 'Information' }
@@ -209,7 +209,7 @@ function Write-LogToEventLog {
             'Critical' { 'Error' }
         }
         
-        Write-EventLog -LogName Application -Source $source -EventId 1000 -EntryType $eventType -Message $Entry.Message
+        Write-EventLog -LogName Application -Source $source -EventId 1000 -EntryType $EventNameType -Message $Entry.Message
     }
 }
 
@@ -362,10 +362,10 @@ function Get-Logs {
     $logs = Get-Content $logFile | ForEach-Object {
         if ($_ -match '^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})\] \[(\w+)\s*\] \[(\w+)\] (.*)$') {
             [PSCustomObject]@{
-                Timestamp = [datetime]$matches[1]
-                Level = $matches[2].Trim()
-                Source = $matches[3]
-                Message = $matches[4]
+                Timestamp = [datetime]$Matches[1]
+                Level = $Matches[2].Trim()
+                Source = $Matches[3]
+                Message = $Matches[4]
             }
         }
     }
@@ -475,7 +475,7 @@ function Write-AuditLog {
     param(
         [Parameter(Mandatory)]
         [ValidateSet('ScriptExecution', 'ConfigurationChange', 'AccessControl', 'DataModification', 'SystemChange', 'SecurityEvent')]
-        [string]$EventType,
+        [string]$EventNameType,
         
         [Parameter(Mandatory)]
         [string]$Action,
@@ -497,7 +497,7 @@ function Write-AuditLog {
     $auditEntry = [PSCustomObject]@{
         AuditId = [Guid]::NewGuid().ToString()
         Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
-        EventType = $EventType
+        EventType = $EventNameType
         Action = $Action
         Target = $Target
         Result = $Result
@@ -522,7 +522,7 @@ function Write-AuditLog {
     $auditEntry | ConvertTo-Json -Compress | Add-Content -Path $auditFile -Encoding UTF8
 
     # Also write to regular log for visibility
-    Write-CustomLog -Level 'Information' -Message "AUDIT: $Action on $Target" -Source "Audit-$EventType" -Data @{
+    Write-CustomLog -Level 'Information' -Message "AUDIT: $Action on $Target" -Source "Audit-$EventNameType" -Data @{
         AuditId = $auditEntry.AuditId
         Result = $Result
     }
@@ -567,7 +567,7 @@ function Get-AuditLogs {
     param(
         [datetime]$StartTime,
         [datetime]$EndTime = (Get-Date),
-        [string]$EventType,
+        [string]$EventNameType,
         [string]$User,
         [string]$Action,
         [string]$Result,
@@ -607,8 +607,8 @@ function Get-AuditLogs {
             $entries = $entries | Where-Object { [DateTime]$_.Timestamp -le $EndTime }
         }
         
-        if ($EventType) {
-            $entries = $entries | Where-Object { $_.EventType -eq $EventType }
+        if ($EventNameType) {
+            $entries = $entries | Where-Object { $_.EventType -eq $EventNameType }
         }
         
         if ($User) {
@@ -909,9 +909,9 @@ function Export-LogReport {
 if (-not $script:IsInitialized) {
     try {
         # Try to load configuration if available
-        $configPath = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) "config.json"
+        $configPath = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) "config.psd1"
         if (Test-Path $configPath) {
-            $config = Get-Content $configPath -Raw | ConvertFrom-Json
+            $config = Import-PowerShellDataFile $configPath
             if ($config.Logging) {
                 Initialize-Logging -Configuration $config
             }

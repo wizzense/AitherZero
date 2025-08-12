@@ -28,7 +28,7 @@ BeforeAll {
 
     # Mock external commands
     Mock git { 
-        switch ($args[0]) {
+        switch ($arguments[0]) {
             'config' { return '' }
             'status' { return 'On branch main' }
             'diff' { return '' }
@@ -41,7 +41,7 @@ BeforeAll {
     Mock chmod { }
     Mock Write-Host { }
     Mock Write-Error { }
-    Mock Join-Path { return "/mock/path/$($args[1])" }
+    Mock Join-Path { return "/mock/path/$($arguments[1])" }
     Mock Split-Path { return "/mock" }
     Mock Get-Content { return "mock content" }
     Mock Get-Item { return @{ Length = 1024 } }
@@ -104,7 +104,7 @@ Describe "0700_Setup-GitEnvironment" {
             & "/workspaces/AitherZero/automation-scripts/0700_Setup-GitEnvironment.ps1" -UserName "test" -WhatIf
             
             # Should not actually call git config in whatif mode
-            Should -Not -Invoke git -ParameterFilter { $args[0] -eq 'config' }
+            Should -Not -Invoke git -ParameterFilter { $arguments[0] -eq 'config' }
         }
     }
 }

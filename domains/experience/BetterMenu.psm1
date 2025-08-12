@@ -220,18 +220,18 @@ function Show-BetterMenu {
             }
             
             Write-Host "`nSelect option: " -ForegroundColor Yellow -NoNewline
-            $input = Read-Host
+            $inputValue = Read-Host
             
-            if ([string]::IsNullOrWhiteSpace($input)) {
+            if ([string]::IsNullOrWhiteSpace($inputValue)) {
                 return $null
             }
             
-            if ($CustomActions -and $CustomActions.ContainsKey($input.ToUpper())) {
-                return @{ Action = $input.ToUpper() }
+            if ($CustomActions -and $CustomActions.ContainsKey($inputValue.ToUpper())) {
+                return @{ Action = $inputValue.ToUpper() }
             }
             
-            if ($input -match '^\d+$') {
-                $num = [int]$input - 1
+            if ($inputValue -match '^\d+$') {
+                $num = [int]$inputValue - 1
                 if ($num -ge 0 -and $num -lt $Items.Count) {
                     return $Items[$num]
                 }

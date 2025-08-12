@@ -13,10 +13,10 @@
 param()
 
 # Read JSON input from stdin (may be empty for session start)
-$input = @()
-$inputStream = [Console]::In
-while ($null -ne ($line = $inputStream.ReadLine())) {
-    $input += $line
+$inputValue = @()
+$inputValueStream = [Console]::In
+while ($null -ne ($line = $inputValueStream.ReadLine())) {
+    $inputValue += $line
 }
 
 try {
@@ -158,7 +158,7 @@ $recentActivity
                 $scripts = Get-ChildItem -Filter "*.ps1" | Where-Object { 
                     $name = $_.BaseName
                     if ($name -match '^(\d{4})') {
-                        $num = [int]$matches[1]
+                        $num = [int]$Matches[1]
                         $num -in $range
                     }
                 } | Select-Object -First 5

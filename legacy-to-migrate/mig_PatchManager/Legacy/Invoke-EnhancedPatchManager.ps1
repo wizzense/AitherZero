@@ -538,7 +538,7 @@ Closes #$IssueNumber
 
                         # Fallback to extracting URL from create output
                         if ($prResult -match 'https://[^\s]+') {
-                            $extractedUrl = $matches[0]
+                            $extractedUrl = $Matches[0]
                             Write-PatchLog "Pull request created successfully: $extractedUrl" -Level "SUCCESS"
                             return @{
                                 Success = $true
@@ -562,7 +562,7 @@ Closes #$IssueNumber
 
                             # Try to extract URL directly using a more robust pattern
                             if ($errorMessage -match "https://github\.com/[^/]+/[^/]+/pull/\d+") {
-                                $existingPrUrl = $matches[0]
+                                $existingPrUrl = $Matches[0]
                                 Write-PatchLog "Found existing PR URL: $existingPrUrl" -Level "INFO"
                                 return @{
                                     Success = $true
@@ -610,7 +610,7 @@ Closes #$IssueNumber
                             if ($LASTEXITCODE -eq 0 -and ($prResult -match 'https://[^\s]+')) {
                                 return @{
                                     Success = $true
-                                    PullRequestUrl = $matches[0]
+                                    PullRequestUrl = $Matches[0]
                                     BranchName = $BranchName
                                 }
                             }

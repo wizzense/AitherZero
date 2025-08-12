@@ -33,7 +33,7 @@ param(
     [string]$Path,
     
     [ValidateSet('Quick', 'Standard', 'Comprehensive')]
-    [string]$Profile = 'Standard',
+    [string]$ProfileName = 'Standard',
     
     [ValidateSet('Console', 'HTML', 'Markdown', 'JSON')]
     [string[]]$OutputFormat = @('Console'),
@@ -299,15 +299,15 @@ function Invoke-QualityAnalysis {
         
         # Check for quality issues
         if ($content -match 'TODO|FIXME|HACK') {
-            $matches = [regex]::Matches($content, 'TODO|FIXME|HACK')
+            $matchResults = [regex]::Matches($content, 'TODO|FIXME|HACK')
             $analysis.QualityIssues += @{
                 Type = 'Technical Debt'
                 Severity = 'Low'
-                Count = $matches.Count
-                Description = "Found $($matches.Count) TODO/FIXME/HACK comment(s)"
+                Count = $matchResults.Count
+                Description = "Found $($matchResults.Count) TODO/FIXME/HACK comment(s)"
                 Recommendation = 'Address technical debt items or create issues for tracking'
             }
-            $totalIssues += $matches.Count
+            $totalIssues += $matchResults.Count
         }
         
         if (-not ($content -match '\.SYNOPSIS')) {
@@ -506,7 +506,7 @@ function Post-PRComment {
 
 #region Main Execution
 function Main {
-    Write-ReviewLog "Starting AI Code Review (Profile: $Profile)" -Level Information
+    Write-ReviewLog "Starting AI Code Review (Profile: $ProfileName)" -Level Information
     
     # Load configuration
     $configPath = if ($PSScriptRoot) { 
@@ -522,9 +522,9 @@ function Main {
     }
     
     # Get profile configuration
-    $profileConfig = $aiConfig.CodeReview.Profiles.$Profile
-    if (-not $profileConfig) {
-        Write-ReviewLog "Profile '$Profile' not found in configuration" -Level Error
+    $ProfileNameConfig = $aiConfig.CodeReview.Profiles.$ProfileName
+    if (-not $ProfileNameConfig) {
+        Write-ReviewLog "Profile '$ProfileName' not found in configuration" -Level Error
         exit 1
     }
     
@@ -537,28 +537,28 @@ function Main {
     }
     
     Write-ReviewLog "Found $($files.Count) file(s) to review" -Level Information
-    Write-ReviewLog "Using profile: $($profileConfig.Description)" -Level Information
-    Write-ReviewLog "Providers: $($profileConfig.Providers -join ', ')" -Level Information
+    Write-ReviewLog "Using profile: $($ProfileNameConfig.Description)" -Level Information
+    Write-ReviewLog "Providers: $($ProfileNameConfig.Providers -join ', ')" -Level Information
     
     $analyses = @()
     
     # Run security analysis if configured
-    if (-not $SkipSecurity -and 'security' -in $profileConfig.Checks) {
-        $securityProvider = $aiConfig.SecurityAnalysis.Provider ?? $profileConfig.Providers[0]
+    if (-not $SkipSecurity -and 'security' -in $ProfileNameConfig.Checks) {
+        $securityProvider = $aiConfig.SecurityAnalysis.Provider ?? $ProfileNameConfig.Providers[0]
         $securityAnalysis = Invoke-SecurityAnalysis -Files $files -Provider $securityProvider -SecurityConfig $aiConfig.CodeReview.SecurityChecks
         $analyses += $securityAnalysis
     }
     
     # Run performance analysis if configured
-    if (-not $SkipPerformance -and 'performance' -in $profileConfig.Checks) {
-        $perfProvider = $aiConfig.PerformanceOptimization.Provider ?? $profileConfig.Providers[1]
+    if (-not $SkipPerformance -and 'performance' -in $ProfileNameConfig.Checks) {
+        $perfProvider = $aiConfig.PerformanceOptimization.Provider ?? $ProfileNameConfig.Providers[1]
         $performanceAnalysis = Invoke-PerformanceAnalysis -Files $files -Provider $perfProvider
         $analyses += $performanceAnalysis
     }
     
     # Run quality analysis if configured
-    if (-not $SkipQuality -and 'quality' -in $profileConfig.Checks) {
-        $qualityProvider = $profileConfig.Providers | Select-Object -Last 1
+    if (-not $SkipQuality -and 'quality' -in $ProfileNameConfig.Checks) {
+        $qualityProvider = $ProfileNameConfig.Providers | Select-Object -Last 1
         $qualityAnalysis = Invoke-QualityAnalysis -Files $files -Provider $qualityProvider
         $analyses += $qualityAnalysis
     }
@@ -597,7 +597,7 @@ function Main {
     if ($criticalCount -gt 0) {
         Write-ReviewLog "Review failed: $criticalCount critical issue(s) found" -Level Error
         exit 2
-    } elseif ($highCount -gt 0 -and $profileConfig.FailOnHighSeverity) {
+    } elseif ($highCount -gt 0 -and $ProfileNameConfig.FailOnHighSeverity) {
         Write-ReviewLog "Review failed: $highCount high severity issue(s) found" -Level Error
         exit 1
     } else {

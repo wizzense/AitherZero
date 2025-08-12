@@ -141,8 +141,8 @@ if ($IncludeFileWatcher) {
         $changedFiles = @{}
         
         $action = {
-            $path = $Event.SourceEventArgs.FullPath
-            $changeType = $Event.SourceEventArgs.ChangeType
+            $path = $EventName.SourceEventArgs.FullPath
+            $changeType = $EventName.SourceEventArgs.ChangeType
             
             # Skip test results and reports
             if ($path -match 'tests/(results|reports)' -or $path -match '\.git') {
@@ -211,7 +211,7 @@ if ($IncludeTestWatcher) {
         $watcher.NotifyFilter = [System.IO.NotifyFilters]::LastWrite
         
         $action = {
-            $path = $Event.SourceEventArgs.FullPath
+            $path = $EventName.SourceEventArgs.FullPath
             
             # Wait a moment for file to be written completely
             Start-Sleep -Seconds 2

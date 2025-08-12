@@ -28,9 +28,9 @@ BeforeAll {
 
     # Mock external commands
     Mock git { 
-        switch -Regex ($args -join ' ') {
+        switch -Regex ($arguments -join ' ') {
             'add' { 
-                $script:MockCalls['git_add'] += @{ Files = $args[1..($args.Length-1)] }
+                $script:MockCalls['git_add'] += @{ Files = $arguments[1..($arguments.Length-1)] }
                 return '' 
             }
             'status --short' { return 'M file1.txt' }
@@ -245,20 +245,20 @@ Describe "0704_Stage-Files" {
             & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "Modified" -WhatIf
             
             # In WhatIf mode, git add should not be called
-            Should -Not -Invoke git -ParameterFilter { $args[0] -eq 'add' }
+            Should -Not -Invoke git -ParameterFilter { $arguments[0] -eq 'add' }
         }
         
         It "Should not stage files in dry run mode" {
             & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "Modified" -DryRun -WhatIf
             
             Should -Invoke Write-Host -ParameterFilter { $Object -like "*DRY RUN*" }
-            Should -Not -Invoke git -ParameterFilter { $args[0] -eq 'add' }
+            Should -Not -Invoke git -ParameterFilter { $arguments[0] -eq 'add' }
         }
         
         It "Should show git status after staging when ShowStatus is used" {
             & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "Modified" -ShowStatus -WhatIf
             
-            Should -Invoke git -ParameterFilter { $args -contains 'status' -and $args -contains '--short' }
+            Should -Invoke git -ParameterFilter { $arguments -contains 'status' -and $arguments -contains '--short' }
         }
         
         It "Should output files in verbose mode" {
@@ -335,7 +335,7 @@ Describe "0704_Stage-Files" {
     
     Context "Error Handling" {
         It "Should handle git add failures" {
-            Mock git { throw "Git add failed" } -ParameterFilter { $args[0] -eq 'add' }
+            Mock git { throw "Git add failed" } -ParameterFilter { $arguments[0] -eq 'add' }
             
             { & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "Modified" } | Should -Throw
         }
@@ -358,7 +358,7 @@ Describe "0704_Stage-Files" {
             & "/workspaces/AitherZero/automation-scripts/0704_Stage-Files.ps1" -Type "Modified" -WhatIf
             
             # Should show what would be staged but not actually stage
-            Should -Not -Invoke git -ParameterFilter { $args[0] -eq 'add' }
+            Should -Not -Invoke git -ParameterFilter { $arguments[0] -eq 'add' }
             Should -Invoke Write-Host -ParameterFilter { $Object -like "*Files to stage*" }
         }
     }

@@ -119,7 +119,7 @@ function Get-ScriptCoverageData {
         # Extract script number
         $scriptNumber = $null
         if ($scriptName -match '^(\d{4})_') {
-            $scriptNumber = [int]$matches[1]
+            $scriptNumber = [int]$Matches[1]
         }
         
         $scriptCategory = if ($scriptNumber) { Get-CategoryFromScriptNumber -ScriptNumber $scriptNumber } else { 'Unknown' }
@@ -135,10 +135,10 @@ function Get-ScriptCoverageData {
             $content = Get-Content $script.FullName -First 20
             foreach ($line in $content) {
                 if ($line -match '^\s*#\s*Description:\s*(.+)') {
-                    $description = $matches[1].Trim()
+                    $description = $Matches[1].Trim()
                     break
                 } elseif ($line -match '^\s*#\s+(.+)' -and $line -notmatch '^\s*#Requires' -and $line -notmatch '^\s*#\s*Stage:') {
-                    $description = $matches[1].Trim()
+                    $description = $Matches[1].Trim()
                     break
                 }
             }

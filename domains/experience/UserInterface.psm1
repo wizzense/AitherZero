@@ -202,11 +202,15 @@ function Initialize-AitherUI {
         $script:UIState.ShowMemoryUsage = if ($null -ne $uiConfig.ShowMemoryUsage) { $uiConfig.ShowMemoryUsage } else { $false }
         
         # Load custom themes from config
-        if ($uiConfig.Themes) {
-            foreach ($themeName in $uiConfig.Themes.PSObject.Properties.Name) {
+        if ($uiConfig.Themes -and $uiConfig.Themes.PSObject -and $uiConfig.Themes.PSObject.Properties) {
+            foreach ($themeProp in $uiConfig.Themes.PSObject.Properties) {
+                $themeName = $themeProp.Name
+                $themeData = $themeProp.Value
                 $script:Themes[$themeName] = @{}
-                foreach ($colorKey in $uiConfig.Themes.$themeName.PSObject.Properties.Name) {
-                    $script:Themes[$themeName][$colorKey] = $uiConfig.Themes.$themeName.$colorKey
+                if ($themeData.PSObject -and $themeData.PSObject.Properties) {
+                    foreach ($colorProp in $themeData.PSObject.Properties) {
+                        $script:Themes[$themeName][$colorProp.Name] = $colorProp.Value
+                    }
                 }
             }
         }

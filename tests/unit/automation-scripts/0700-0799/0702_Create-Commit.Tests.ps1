@@ -39,7 +39,7 @@ BeforeAll {
 
     # Mock external commands
     Mock git { 
-        switch -Regex ($args -join ' ') {
+        switch -Regex ($arguments -join ' ') {
             'log -1 --stat' { return 'commit abc123' }
             default { return '' }
         }
@@ -346,7 +346,7 @@ Describe "0702_Create-Commit" {
         It "Should display commit details after successful commit" {
             & "/workspaces/AitherZero/automation-scripts/0702_Create-Commit.ps1" -Type "feat" -Message "test" -WhatIf
             
-            Should -Invoke git -ParameterFilter { $args -contains 'log' -and $args -contains '-1' -and $args -contains '--stat' }
+            Should -Invoke git -ParameterFilter { $arguments -contains 'log' -and $arguments -contains '-1' -and $arguments -contains '--stat' }
         }
     }
 }

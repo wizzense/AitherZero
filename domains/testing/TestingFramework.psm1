@@ -20,7 +20,7 @@ $script:TestingState = @{
 
 # Import dependencies
 $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-$script:ConfigPath = Join-Path $script:ProjectRoot 'config.json'
+$script:ConfigPath = Join-Path $script:ProjectRoot 'config.psd1'
 
 # Logging helper for TestingFramework module
 function Write-TestingLog {
@@ -61,9 +61,43 @@ function Get-TestingConfiguration {
         ConfigPath = $ConfigPath
     }
 
+    # Try to use Configuration module if available
+    if (Get-Command Get-Configuration -ErrorAction SilentlyContinue) {
+        try {
+            Write-TestingLog -Level Debug -Message "Using Configuration module"
+            $testingConfig = Get-Configuration -Section 'Testing'
+            if ($testingConfig) {
+                Write-TestingLog -Message "Testing configuration loaded via Configuration module"
+                return $testingConfig
+            }
+        } catch {
+            Write-TestingLog -Level Warning -Message "Failed to load configuration via Configuration module" -Data @{
+                Error = $_.Exception.Message
+            }
+        }
+    }
+
+    # Fallback to direct file loading with local override support
     if (Test-Path $ConfigPath) {
         try {
-            $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json -AsHashtable
+            Write-TestingLog -Level Debug -Message "Loading configuration directly from file"
+            $config = Import-PowerShellDataFile $ConfigPath
+            
+            # Check for local overrides
+            $localConfigPath = $ConfigPath -replace '\.psd1$', '.local.psd1'
+            if (Test-Path $localConfigPath) {
+                Write-TestingLog -Level Debug -Message "Loading local configuration overrides" -Data @{
+                    LocalConfigPath = $localConfigPath
+                }
+                $localConfig = Import-PowerShellDataFile $localConfigPath
+                if ($localConfig.Testing) {
+                    # Merge local Testing configuration
+                    foreach ($key in $localConfig.Testing.Keys) {
+                        $config.Testing.$key = $localConfig.Testing.$key
+                    }
+                }
+            }
+            
             $testingConfig = $config.Testing ?? @{
                 Framework = 'Pester'
                 MinVersion = '5.0.0'
@@ -109,7 +143,7 @@ function Invoke-TestSuite {
     [CmdletBinding()]
     param(
         [ValidateSet('Quick', 'Standard', 'Full', 'CI')]
-        [string]$Profile = 'Standard',
+        [string]$ProfileName = 'Standard',
         
         [string[]]$Categories,
         
@@ -123,7 +157,7 @@ function Invoke-TestSuite {
     )
 
     Write-TestingLog -Message "Starting test suite execution" -Data @{
-        Profile = $Profile
+        Profile = $ProfileName
         Categories = ($Categories -join ', ')
         Path = $Path
         OutputPath = $OutputPath
@@ -138,28 +172,32 @@ function Invoke-TestSuite {
         }
         
         # Get profile settings
-        $profileConfig = $testConfig.Profiles[$Profile] ?? @{
-            Categories = @('Unit', 'Integration')
-            Timeout = 900
+        $ProfileNameConfig = if ($testConfig -and $testConfig.ContainsKey('Profiles') -and $testConfig.Profiles -and $testConfig.Profiles.ContainsKey($ProfileName)) {
+            $testConfig.Profiles[$ProfileName]
+        } else {
+            @{
+                Categories = @('Unit', 'Integration')
+                Timeout = 900
+            }
         }
         
         # Override with explicit categories
         if ($Categories) {
             Write-TestingLog -Level Debug -Message "Overriding profile categories" -Data @{
-                OriginalCategories = ($profileConfig.Categories -join ', ')
+                OriginalCategories = ($ProfileNameConfig.Categories -join ', ')
                 NewCategories = ($Categories -join ', ')
             }
-            $profileConfig.Categories = $Categories
+            $ProfileNameConfig.Categories = $Categories
         }
         
         Write-TestingLog -Message "Test profile configuration loaded" -Data @{
-            Profile = $Profile
-            Categories = ($profileConfig.Categories -join ', ')
-            Timeout = $profileConfig.Timeout
+            Profile = $ProfileName
+            Categories = ($ProfileNameConfig.Categories -join ', ')
+            Timeout = $ProfileNameConfig.Timeout
         }
         
-        Write-Verbose "Executing test profile: $Profile"
-        Write-Verbose "Categories: $($profileConfig.Categories -join ', ')"
+        Write-Verbose "Executing test profile: $ProfileName"
+        Write-Verbose "Categories: $($ProfileNameConfig.Categories -join ', ')"
         
         # Ensure Pester is available
         Write-TestingLog -Level Debug -Message "Checking Pester availability" -Data @{
@@ -188,11 +226,11 @@ function Invoke-TestSuite {
         $pesterConfig.Run.Exit = $false
         
         # Filter by categories
-        if ($profileConfig.Categories -and $profileConfig.Categories[0] -ne '*') {
+        if ($ProfileNameConfig.Categories -and $ProfileNameConfig.Categories[0] -ne '*') {
             Write-TestingLog -Level Debug -Message "Applying test category filters" -Data @{
-                Categories = ($profileConfig.Categories -join ', ')
+                Categories = ($ProfileNameConfig.Categories -join ', ')
             }
-            $pesterConfig.Filter.Tag = $profileConfig.Categories
+            $pesterConfig.Filter.Tag = $ProfileNameConfig.Categories
         }
         
         # Output configuration
@@ -223,7 +261,7 @@ function Invoke-TestSuite {
         # Execute tests
         Write-TestingLog -Message "Starting Pester test execution" -Data @{
             TestPath = $Path
-            Categories = ($profileConfig.Categories -join ', ')
+            Categories = ($ProfileNameConfig.Categories -join ', ')
             CoverageEnabled = $testConfig.CodeCoverage.Enabled
         }
         $result = Invoke-Pester -Configuration $pesterConfig
@@ -233,7 +271,7 @@ function Invoke-TestSuite {
         
         # Log test execution results
         Write-TestingLog -Message "Test execution completed" -Data @{
-            Profile = $Profile
+            Profile = $ProfileName
             TotalTests = $result.TotalCount
             PassedTests = $result.PassedCount
             FailedTests = $result.FailedCount
@@ -290,7 +328,7 @@ function Invoke-TestSuite {
         
     } catch {
         Write-TestingLog -Level Error -Message "Test suite execution failed" -Data @{
-            Profile = $Profile
+            Profile = $ProfileName
             Path = $Path
             Error = $_.Exception.Message
             StackTrace = $_.ScriptStackTrace
@@ -457,7 +495,7 @@ function Test-ASTValidation {
             # Check parameters
             if ($CheckParameters) {
                 $paramAsts = $ast.FindAll({
-                    $args[0] -is [System.Management.Automation.Language.ParameterAst]
+                    $arguments[0] -is [System.Management.Automation.Language.ParameterAst]
                 }, $true)
                 
                 foreach ($param in $paramAsts) {
@@ -477,7 +515,7 @@ function Test-ASTValidation {
             # Check commands
             if ($CheckCommands) {
                 $commandAsts = $ast.FindAll({
-                    $args[0] -is [System.Management.Automation.Language.CommandAst]
+                    $arguments[0] -is [System.Management.Automation.Language.CommandAst]
                 }, $true)
                 
                 foreach ($cmd in $commandAsts) {

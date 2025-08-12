@@ -15,7 +15,7 @@
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [string]$ConfigPath = "./config.json",
+    [string]$ConfigPath = "./config.psd1",
     [string]$OutputPath = "./reports/tech-debt/analysis",
     [switch]$UseCache,
     [switch]$Detailed = $false,
@@ -54,10 +54,10 @@ function Analyze-ConfigurationUsage {
     $configFullPath = Join-Path $script:ProjectRoot $ConfigPath
     if (-not (Test-Path $configFullPath)) {
         Write-AnalysisLog "Configuration file not found: $ConfigPath" -Component "ConfigUsage" -Level Error
-        return @{ Error = "config.json not found"; Path = $configFullPath }
+        return @{ Error = "config.psd1 not found"; Path = $configFullPath }
     }
     
-    $config = Get-Content $configFullPath -Raw | ConvertFrom-Json
+    $config = Import-PowerShellDataFile $configFullPath
 
     # Initialize results
     $usage = @{

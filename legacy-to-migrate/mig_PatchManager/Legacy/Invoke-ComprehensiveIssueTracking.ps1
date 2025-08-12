@@ -199,7 +199,7 @@ function Invoke-ComprehensiveIssueTracking {
                     # Extract issue number from the URL
                     $issueNumber = $null
                     if ($issueResult -match '/issues/(\d+)') {
-                        $issueNumber = $matches[1]
+                        $issueNumber = $Matches[1]
                     }
 
                     Write-CustomLog "GitHub issue created successfully: $issueResult" -Level SUCCESS

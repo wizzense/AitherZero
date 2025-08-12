@@ -87,7 +87,7 @@ function Get-ISOMetadata {
 
             # Extract version information from filename
             if ($fileName -match '(\d+\.?\d*\.?\d*)') {
-                $metadata.DetectedVersion = $matches[1]
+                $metadata.DetectedVersion = $Matches[1]
             }
 
             # Extract architecture from filename

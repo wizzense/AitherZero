@@ -959,8 +959,8 @@ function Get-NextValidationCounter {
     $counters = @()
     foreach ($issue in $ExistingIssues) {
         if ($issue.title -match "VALIDATION-FAIL-\d{8}-\d{6}(?:-(\d+))?") {
-            if ($matches[1]) {
-                $counters += [int]$matches[1]
+            if ($Matches[1]) {
+                $counters += [int]$Matches[1]
             } else {
                 $counters += 1  # First instance is implicitly counter 1
             }

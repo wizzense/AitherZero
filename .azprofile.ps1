@@ -6,10 +6,10 @@ if ($env:AITHERZERO_INITIALIZED) {
     return
 }
 
-# Initialize AitherZero environment
-$initScript = Join-Path $PSScriptRoot "Initialize-AitherEnvironment.ps1"
-if (Test-Path $initScript) {
-    & $initScript -Force | Out-Null
+# Initialize AitherZero environment via module
+$moduleManifest = Join-Path $PSScriptRoot "AitherZero.psd1"
+if (Test-Path $moduleManifest) {
+    Import-Module $moduleManifest -Force -Global
 }
 
 # Project-specific prompt
@@ -32,5 +32,5 @@ Write-Host "az <num>" -NoNewline -ForegroundColor Cyan
 Write-Host ", " -NoNewline -ForegroundColor Gray
 Write-Host "seq <pattern>" -NoNewline -ForegroundColor Cyan
 Write-Host ", " -NoNewline -ForegroundColor Gray
-Write-Host "./aither" -ForegroundColor Cyan
+Write-Host "./Start-AitherZero.ps1" -ForegroundColor Cyan
 Write-Host ""

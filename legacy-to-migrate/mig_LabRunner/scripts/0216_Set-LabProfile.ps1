@@ -23,12 +23,12 @@ function Set-LabProfile {
     Write-CustomLog "Running $($MyInvocation.MyCommand.Name)"
 
     if ($Config.SetupLabProfile -eq $true) {
-        $profilePath = $PROFILE.CurrentUserAllHosts
-        $profileDir = Split-Path $profilePath
+        $ProfileNamePath = $ProfileName.CurrentUserAllHosts
+        $ProfileNameDir = Split-Path $ProfileNamePath
 
-        if (-not (Test-Path $profileDir)) {
-            if ($PSCmdlet.ShouldProcess($profileDir, 'Create profile directory')) {
-                New-Item -ItemType Directory -Path $profileDir -Force | Out-Null
+        if (-not (Test-Path $ProfileNameDir)) {
+            if ($PSCmdlet.ShouldProcess($ProfileNameDir, 'Create profile directory')) {
+                New-Item -ItemType Directory -Path $ProfileNameDir -Force | Out-Null
             }
         }
 
@@ -39,9 +39,9 @@ function Set-LabProfile {
 `$env:PSModulePath = "$repoRoot/aither-core/modules;`$env:PSModulePath"
 "@
 
-        if ($PSCmdlet.ShouldProcess($profilePath, 'Create PowerShell profile')) {
-            Set-Content -Path $profilePath -Value $content
-            Write-CustomLog "PowerShell profile created at $profilePath"
+        if ($PSCmdlet.ShouldProcess($ProfileNamePath, 'Create PowerShell profile')) {
+            Set-Content -Path $ProfileNamePath -Value $content
+            Write-CustomLog "PowerShell profile created at $ProfileNamePath"
         }
     } else {
         Write-CustomLog "SetupLabProfile flag is disabled. Skipping profile setup."

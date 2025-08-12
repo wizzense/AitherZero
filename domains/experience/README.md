@@ -125,8 +125,8 @@ $component.OnRender = {
 
 # Handle input
 $component.OnKeyPress = {
-    param($input)
-    if ($input.Key -eq "Enter") {
+    param($inputValue)
+    if ($inputValue.Key -eq "Enter") {
         # Handle enter key
         return $true  # Handled
     }

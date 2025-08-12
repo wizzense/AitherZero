@@ -57,10 +57,10 @@ function Write-ScriptLog {
 function Get-ConfigurationUsageAnalysis {
     Write-ScriptLog "Analyzing configuration usage..."
     
-    $configPath = Join-Path $script:ProjectRoot "config.json"
+    $configPath = Join-Path $script:ProjectRoot "config.psd1"
     if (-not (Test-Path $configPath)) {
         Write-ScriptLog "Config file not found" -Level Warning
-        return @{ Error = "config.json not found" }
+        return @{ Error = "config.psd1 not found" }
     }
     
     $config = Get-Content $configPath -Raw | ConvertFrom-Json
@@ -182,7 +182,7 @@ function Get-DocumentationCoverage {
                     continue
                 }
                 
-                $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+                $functions = $ast.FindAll({ $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
             } catch {
                 Write-ScriptLog "Error parsing $($file.FullName): $_" -Level Warning
                 continue
@@ -314,7 +314,7 @@ function Get-CodeQualityIssues {
                     return
                 }
                 
-                $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+                $functions = $ast.FindAll({ $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
             } catch {
                 Write-ScriptLog "Error parsing $($_.FullName): $_" -Level Warning
                 return
@@ -332,11 +332,11 @@ function Get-CodeQualityIssues {
                 
                 # Check cyclomatic complexity (simplified)
                 $conditions = $function.FindAll({
-                    $args[0] -is [System.Management.Automation.Language.IfStatementAst] -or
-                    $args[0] -is [System.Management.Automation.Language.WhileStatementAst] -or
-                    $args[0] -is [System.Management.Automation.Language.ForStatementAst] -or
-                    $args[0] -is [System.Management.Automation.Language.ForEachStatementAst] -or
-                    $args[0] -is [System.Management.Automation.Language.SwitchStatementAst]
+                    $arguments[0] -is [System.Management.Automation.Language.IfStatementAst] -or
+                    $arguments[0] -is [System.Management.Automation.Language.WhileStatementAst] -or
+                    $arguments[0] -is [System.Management.Automation.Language.ForStatementAst] -or
+                    $arguments[0] -is [System.Management.Automation.Language.ForEachStatementAst] -or
+                    $arguments[0] -is [System.Management.Automation.Language.SwitchStatementAst]
                 }, $true)
                 
                 if ($conditions.Count -gt 10) {
@@ -359,9 +359,9 @@ function Get-CodeQualityIssues {
             )
         
             foreach ($pattern in $hardcodedPatterns) {
-                $matches = Select-String -InputObject $content -Pattern $pattern -AllMatches
-                if ($matches) {
-                    foreach ($match in $matches.Matches) {
+                $matchResults = Select-String -InputObject $content -Pattern $pattern -AllMatches
+                if ($matchResults) {
+                    foreach ($match in $matchResults.Matches) {
                         $lineNumber = ($content.Substring(0, $match.Index) -split "`n").Count
                         $issues.HardcodedValues += @{
                             File = $_.FullName.Replace($script:ProjectRoot, '.')
@@ -444,7 +444,7 @@ function Get-SecurityIssues {
                     return
                 }
                 
-                $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+                $functions = $ast.FindAll({ $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
             } catch {
                 Write-ScriptLog "Error parsing $($_.FullName): $_" -Level Warning
                 return

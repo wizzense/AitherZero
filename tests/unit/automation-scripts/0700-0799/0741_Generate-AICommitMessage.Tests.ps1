@@ -67,7 +67,7 @@ index abc123..def456 100644
 
     # Mock external commands
     Mock git { 
-        switch -Regex ($args -join ' ') {
+        switch -Regex ($arguments -join ' ') {
             'diff --staged' { return (Get-GitDiff -Staged $true) }
             'diff' { return (Get-GitDiff) }
             'log -1 --pretty' { return 'feat(api): add user authentication system' }
@@ -118,11 +118,11 @@ Describe "0741_Generate-AICommitMessage" {
         It "Should analyze staged changes for commit message generation" {
             & "/workspaces/AitherZero/automation-scripts/0741_Generate-AICommitMessage.ps1" -WhatIf
             
-            Should -Invoke git -ParameterFilter { $args -contains 'diff' -and $args -contains '--staged' }
+            Should -Invoke git -ParameterFilter { $arguments -contains 'diff' -and $arguments -contains '--staged' }
         }
         
         It "Should handle case with no staged changes" {
-            Mock git { return '' } -ParameterFilter { $args -contains '--staged' }
+            Mock git { return '' } -ParameterFilter { $arguments -contains '--staged' }
             
             & "/workspaces/AitherZero/automation-scripts/0741_Generate-AICommitMessage.ps1" -WhatIf
             
@@ -163,8 +163,8 @@ Describe "0741_Generate-AICommitMessage" {
         It "Should build context from branch name and recent commits" {
             & "/workspaces/AitherZero/automation-scripts/0741_Generate-AICommitMessage.ps1" -IncludeContext -WhatIf
             
-            Should -Invoke git -ParameterFilter { $args -contains 'branch' -and $args -contains '--show-current' }
-            Should -Invoke git -ParameterFilter { $args -contains 'log' }
+            Should -Invoke git -ParameterFilter { $arguments -contains 'branch' -and $arguments -contains '--show-current' }
+            Should -Invoke git -ParameterFilter { $arguments -contains 'log' }
         }
     }
     
@@ -207,7 +207,7 @@ Describe "0741_Generate-AICommitMessage" {
             
             & "/workspaces/AitherZero/automation-scripts/0741_Generate-AICommitMessage.ps1" -AutoCommit -WhatIf
             
-            Should -Invoke git -ParameterFilter { $args[0] -eq 'commit' }
+            Should -Invoke git -ParameterFilter { $arguments[0] -eq 'commit' }
         }
         
         It "Should not create commit when user declines" {
@@ -215,7 +215,7 @@ Describe "0741_Generate-AICommitMessage" {
             
             & "/workspaces/AitherZero/automation-scripts/0741_Generate-AICommitMessage.ps1" -AutoCommit -WhatIf
             
-            Should -Not -Invoke git -ParameterFilter { $args[0] -eq 'commit' }
+            Should -Not -Invoke git -ParameterFilter { $arguments[0] -eq 'commit' }
         }
     }
     
@@ -336,7 +336,7 @@ Describe "0741_Generate-AICommitMessage" {
         }
         
         It "Should warn about large diffs" {
-            Mock git { return ('A' * 10000) } -ParameterFilter { $args -contains '--staged' }
+            Mock git { return ('A' * 10000) } -ParameterFilter { $arguments -contains '--staged' }
             
             & "/workspaces/AitherZero/automation-scripts/0741_Generate-AICommitMessage.ps1" -MaxTokens 100 -WhatIf
             
@@ -348,7 +348,7 @@ Describe "0741_Generate-AICommitMessage" {
         It "Should show commit message generation without creating commit when WhatIf is used" {
             & "/workspaces/AitherZero/automation-scripts/0741_Generate-AICommitMessage.ps1" -AutoCommit -WhatIf
             
-            Should -Not -Invoke git -ParameterFilter { $args[0] -eq 'commit' }
+            Should -Not -Invoke git -ParameterFilter { $arguments[0] -eq 'commit' }
             Should -Invoke Write-Host -ParameterFilter { $Object -like "*Generated commit message:*" }
         }
     }

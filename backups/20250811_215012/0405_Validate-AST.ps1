@@ -126,7 +126,7 @@ function Test-ParameterDefinitions {
 
     # Find all parameter definitions
     $paramAsts = $Ast.FindAll({
-        $args[0] -is [System.Management.Automation.Language.ParameterAst]
+        $arguments[0] -is [System.Management.Automation.Language.ParameterAst]
     }, $true)
     
     foreach ($param in $paramAsts) {
@@ -170,7 +170,7 @@ function Test-CommandUsage {
 
     # Find all command invocations
     $commandAsts = $Ast.FindAll({
-        $args[0] -is [System.Management.Automation.Language.CommandAst]
+        $arguments[0] -is [System.Management.Automation.Language.CommandAst]
     }, $true)
     
     foreach ($cmd in $commandAsts) {
@@ -199,8 +199,8 @@ function Test-CommandUsage {
             if (-not $exists) {
                 # Check if it's a function defined in the same file
                 $functionDefs = $Ast.FindAll({
-                    $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
-                    $args[0].Name -eq $cmdName
+                    $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+                    $arguments[0].Name -eq $cmdName
                 }, $true)
                 
                 if ($functionDefs.Count -eq 0) {
@@ -262,8 +262,8 @@ function Test-ModuleDependencies {
 
     # Check Import-Module statements
     $importModuleAsts = $Ast.FindAll({
-        $args[0] -is [System.Management.Automation.Language.CommandAst] -and
-        $args[0].GetCommandName() -eq 'Import-Module'
+        $arguments[0] -is [System.Management.Automation.Language.CommandAst] -and
+        $arguments[0].GetCommandName() -eq 'Import-Module'
     }, $true)
     
     foreach ($import in $importModuleAsts) {
@@ -496,7 +496,7 @@ catch {
 # Helper function
 function Merge-Hashtables {
     $result = @{}
-    foreach ($hashtable in $input) {
+    foreach ($hashtable in $inputValue) {
         if ($hashtable -is [hashtable]) {
             foreach ($key in $hashtable.Keys) {
                 $result[$key] = $hashtable[$key]

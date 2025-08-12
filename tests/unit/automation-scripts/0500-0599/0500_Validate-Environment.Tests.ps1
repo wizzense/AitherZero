@@ -69,4 +69,3 @@ Describe "0500_Validate-Environment" {
         }
     }
 }
-TESTEOF < /dev/null

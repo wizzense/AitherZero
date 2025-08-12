@@ -25,7 +25,10 @@ param(
     [switch]$DryRun,
     [switch]$Fix,
     [switch]$IncludeSuppressed,
-    [string[]]$ExcludePaths = @('tests', 'legacy-to-migrate')
+    [string[]]$ExcludePaths = @('tests', 'legacy-to-migrate'),
+    [string[]]$Severity,
+    [string[]]$ExcludeRules,
+    [string[]]$IncludeRules
 )
 
 $ErrorActionPreference = 'Stop'
@@ -42,12 +45,17 @@ Set-StrictMode -Version Latest
 # Import modules
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $loggingModule = Join-Path $projectRoot "domains/utilities/Logging.psm1"
+$configModule = Join-Path $projectRoot "domains/configuration/Configuration.psm1"
 
 if (Test-Path $loggingModule) {
     Import-Module $loggingModule -Force
     $script:LoggingAvailable = $true
 } else {
     $script:LoggingAvailable = $false
+}
+
+if (Test-Path $configModule) {
+    Import-Module $configModule -Force -ErrorAction SilentlyContinue
 }
 
 function Write-ScriptLog {
@@ -71,6 +79,8 @@ function Write-ScriptLog {
     }
 }
 
+$settingsPath = $null  # Initialize for cleanup in finally block
+
 try {
     Write-ScriptLog -Message "Starting PSScriptAnalyzer analysis"
 
@@ -82,11 +92,11 @@ try {
         Write-ScriptLog -Message "Excluded paths: $($ExcludePaths -join ', ')"
         
         # List PowerShell files that would be analyzed
-        $psFiles = Get-ChildItem -Path $Path -Include "*.ps1", "*.psm1", "*.psd1" -Recurse | 
+        $psFiles = @(Get-ChildItem -Path $Path -Include "*.ps1", "*.psm1", "*.psd1" -Recurse | 
             Where-Object { 
                 $file = $_
                 -not ($ExcludePaths | Where-Object { $file.FullName -like "*\$_\*" })
-            }
+            })
         Write-ScriptLog -Message "Would analyze $($psFiles.Count) PowerShell files"
         exit 0
     }
@@ -99,18 +109,39 @@ try {
     
     Import-Module PSScriptAnalyzer
 
-    # Load configuration
-    $configPath = Join-Path $projectRoot "config.json"
-    $analysisConfig = if (Test-Path $configPath) {
-        $config = Get-Content $configPath -Raw | ConvertFrom-Json
-        $config.Testing.PSScriptAnalyzer
-    } else {
-        @{
-            Enabled = $true
-            Rules = @{
-                Severity = @('Error', 'Warning')
-                ExcludeRules = @('PSAvoidUsingWriteHost', 'PSUseShouldProcessForStateChangingFunctions')
-            }
+    # Load configuration from config.psd1
+    $analysisConfig = @{}
+    
+    # Try to get configuration from config.psd1
+    if (Get-Command Get-Configuration -ErrorAction SilentlyContinue) {
+        $config = Get-Configuration
+        if ($config -and $config.Testing -and $config.Testing.PSScriptAnalyzer) {
+            $analysisConfig = $config.Testing.PSScriptAnalyzer
+        }
+    }
+    
+    # Apply parameter overrides or use config defaults
+    if (-not $PSBoundParameters.ContainsKey('Severity')) {
+        $Severity = if ($analysisConfig.Severity) {
+            $analysisConfig.Severity
+        } else {
+            @('Error', 'Warning', 'Information')
+        }
+    }
+    
+    if (-not $PSBoundParameters.ContainsKey('ExcludeRules')) {
+        $ExcludeRules = if ($analysisConfig.ExcludeRules) {
+            $analysisConfig.ExcludeRules
+        } else {
+            @('PSAvoidUsingWriteHost', 'PSUseShouldProcessForStateChangingFunctions')
+        }
+    }
+    
+    if (-not $PSBoundParameters.ContainsKey('IncludeRules')) {
+        $IncludeRules = if ($analysisConfig.IncludeRules) {
+            $analysisConfig.IncludeRules
+        } else {
+            @('*')
         }
     }
 
@@ -118,16 +149,59 @@ try {
     $analyzerParams = @{
         Path = $Path
         Recurse = $true
-        Severity = $analysisConfig.Rules.Severity
-        ExcludeRule = $analysisConfig.Rules.ExcludeRules
+        Severity = $Severity
+        ExcludeRule = $ExcludeRules
+    }
+    
+    # Add IncludeRule if not all rules
+    if ($IncludeRules -and $IncludeRules -ne @('*')) {
+        $analyzerParams['IncludeRule'] = $IncludeRules
+    }
+    
+    # Add rule-specific settings if available
+    if ($analysisConfig.Rules) {
+        # Create settings object if we have rule-specific settings
+        $tempPath = if ($IsWindows) { $env:TEMP } else { '/tmp' }
+        $settingsPath = Join-Path $tempPath "PSScriptAnalyzer-Settings-$(Get-Random).psd1"
+        $settingsContent = "@{"
+        $settingsContent += "`n    IncludeRules = @($($IncludeRules | ForEach-Object { "'$_'" } | Join-String -Separator ', '))"
+        $settingsContent += "`n    ExcludeRules = @($($ExcludeRules | ForEach-Object { "'$_'" } | Join-String -Separator ', '))"
+        if ($analysisConfig.Rules) {
+            $settingsContent += "`n    Rules = @{"
+            foreach ($rule in $analysisConfig.Rules.GetEnumerator()) {
+                $settingsContent += "`n        '$($rule.Key)' = @{"
+                foreach ($setting in $rule.Value.GetEnumerator()) {
+                    if ($setting.Value -is [bool]) {
+                        $settingsContent += "`n            $($setting.Key) = `$$($setting.Value)"
+                    } elseif ($setting.Value -is [array]) {
+                        $settingsContent += "`n            $($setting.Key) = @($($setting.Value | ForEach-Object { "'$_'" } | Join-String -Separator ', '))"
+                    } else {
+                        $settingsContent += "`n            $($setting.Key) = '$($setting.Value)'"
+                    }
+                }
+                $settingsContent += "`n        }"
+            }
+            $settingsContent += "`n    }"
+        }
+        $settingsContent += "`n}"
+        
+        # Write settings file temporarily
+        $settingsContent | Out-File -FilePath $settingsPath -Encoding UTF8
+        
+        # Use settings file instead of individual parameters
+        $analyzerParams = @{
+            Path = $Path
+            Recurse = $true
+            Settings = $settingsPath
+        }
     }
 
     # Add exclude paths using file filtering instead
     $filesToAnalyze = $null
     if ($ExcludePaths) {
         Write-ScriptLog -Message "Filtering files to exclude paths: $($ExcludePaths -join ', ')"
-        # Get all PS1 files and filter out excluded paths
-        $allFiles = Get-ChildItem -Path $Path -Recurse -Filter "*.ps1" | Where-Object {
+        # Get all PowerShell files and filter out excluded paths
+        $allFiles = Get-ChildItem -Path $Path -Recurse -Include "*.ps1", "*.psm1", "*.psd1" | Where-Object {
             $file = $_.FullName
             $exclude = $false
             foreach ($excludePath in $ExcludePaths) {
@@ -157,12 +231,8 @@ try {
         }
     }
 
-    # Check for settings file
-    $settingsPath = Join-Path $projectRoot "PSScriptAnalyzerSettings.psd1"
-    if (Test-Path $settingsPath) {
-        Write-ScriptLog -Message "Using PSScriptAnalyzer settings from: $settingsPath"
-        $analyzerParams['Settings'] = $settingsPath
-    }
+    # Settings file is already set if rule-specific settings exist (from config.psd1)
+    # No need to check for PSScriptAnalyzerSettings.psd1 anymore
 
     # Add fix parameter if requested
     if ($Fix) {
@@ -189,7 +259,13 @@ try {
             # Handle multiple files by analyzing each one and combining results
             $allResults = @()
             foreach ($file in $analyzerParams.Path) {
-                $singleFileParams = $analyzerParams.Clone()
+                # Create a proper hashtable copy
+                $singleFileParams = @{}
+                foreach ($key in $analyzerParams.Keys) {
+                    if ($key -ne 'Path') {
+                        $singleFileParams[$key] = $analyzerParams[$key]
+                    }
+                }
                 $singleFileParams['Path'] = $file
                 $fileResults = Invoke-ScriptAnalyzer @singleFileParams
                 if ($fileResults) {
@@ -359,6 +435,12 @@ catch {
         ScriptStackTrace = $_.ScriptStackTrace
     }
     exit 2
+}
+finally {
+    # Clean up temporary settings file if created
+    if ($settingsPath -and $settingsPath -like "*\PSScriptAnalyzer-Settings-*.psd1" -and (Test-Path $settingsPath)) {
+        Remove-Item -Path $settingsPath -Force -ErrorAction SilentlyContinue
+    }
 }
 
 # Helper function to merge hashtables - removed as unused

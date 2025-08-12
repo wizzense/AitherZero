@@ -112,7 +112,7 @@ Describe "Infrastructure Module Tests" {
             
             $script:CommandsAndArgs = @()
             Mock Invoke-Expression {
-                $script:CommandsAndArgs += $args -join ' '
+                $script:CommandsAndArgs += $arguments -join ' '
             } -ModuleName Infrastructure
             
             Invoke-InfrastructureApply -WorkingDirectory $script:TestInfraDir -AutoApprove
@@ -127,7 +127,7 @@ Describe "Infrastructure Module Tests" {
             
             $script:CommandsAndArgs = @()
             Mock Invoke-Expression {
-                $script:CommandsAndArgs += $args -join ' '
+                $script:CommandsAndArgs += $arguments -join ' '
             } -ModuleName Infrastructure
             
             Invoke-InfrastructureApply -WorkingDirectory $script:TestInfraDir
@@ -151,7 +151,7 @@ Describe "Infrastructure Module Tests" {
             
             $script:DestroyExecuted = $false
             Mock Invoke-Expression {
-                if ($args -contains 'destroy') {
+                if ($arguments -contains 'destroy') {
                     $script:DestroyExecuted = $true
                 }
             } -ModuleName Infrastructure
@@ -168,7 +168,7 @@ Describe "Infrastructure Module Tests" {
             
             $script:CommandsAndArgs = @()
             Mock Invoke-Expression {
-                $script:CommandsAndArgs += $args -join ' '
+                $script:CommandsAndArgs += $arguments -join ' '
             } -ModuleName Infrastructure
             
             Invoke-InfrastructureDestroy -WorkingDirectory $script:TestInfraDir -AutoApprove

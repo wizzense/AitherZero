@@ -172,19 +172,19 @@ try {
                     [Environment]::SetEnvironmentVariable('GEMINI_API_KEY', $geminiConfig.ApiKey, 'User')
                 } else {
                     # For Linux/macOS, add to profile
-                    $profilePaths = @(
+                    $ProfileNamePaths = @(
                         "~/.bashrc",
                         "~/.zshrc",
                         "~/.profile"
                     )
                 
-                    foreach ($profilePath in $profilePaths) {
-                        $expandedPath = [System.Environment]::ExpandEnvironmentVariables($profilePath)
+                    foreach ($ProfileNamePath in $ProfileNamePaths) {
+                        $expandedPath = [System.Environment]::ExpandEnvironmentVariables($ProfileNamePath)
                         if (Test-Path $expandedPath) {
                             $exportLine = "export GEMINI_API_KEY='$($geminiConfig.ApiKey)'"
                             if (-not (Select-String -Path $expandedPath -Pattern "GEMINI_API_KEY" -Quiet)) {
                                 Add-Content -Path $expandedPath -Value $exportLine
-                                Write-ScriptLog "Added API key to $profilePath" -Level 'Debug'
+                                Write-ScriptLog "Added API key to $ProfileNamePath" -Level 'Debug'
                             }
                         }
                     }

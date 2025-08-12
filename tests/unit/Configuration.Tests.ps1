@@ -20,7 +20,7 @@ AfterAll {
 Describe "Configuration Module" -Tag 'Unit' {
     BeforeEach {
         # Setup test data
-        $script:TestConfigPath = Join-Path $TestDrive "test-config.json"
+        $script:TestConfigPath = Join-Path $TestDrive "test-config.psd1"
         $script:TestConfig = @{
             Core = @{
                 Name = "TestAither"
@@ -32,7 +32,19 @@ Describe "Configuration Module" -Tag 'Unit' {
                 MinVersion = "5.0.0"
             }
         }
-        $script:TestConfig | ConvertTo-Json -Depth 5 | Set-Content $script:TestConfigPath
+        # Create a proper PowerShell Data File instead of JSON
+        $psd1Content = "@{
+    Core = @{
+        Name = 'TestAither'
+        Version = '1.0.0'
+        Environment = 'Test'
+    }
+    Testing = @{
+        Framework = 'Pester'
+        MinVersion = '5.0.0'
+    }
+}"
+        $psd1Content | Set-Content $script:TestConfigPath
     }
     
     Context "Initialize-ConfigurationSystem" {
@@ -42,7 +54,7 @@ Describe "Configuration Module" -Tag 'Unit' {
         }
         
         It "Should handle missing config file gracefully" {
-            $missingPath = Join-Path $TestDrive "missing-config.json"
+            $missingPath = Join-Path $TestDrive "missing-config.psd1"
             { Initialize-ConfigurationSystem -ConfigPath $missingPath -Environment "Test" } | Should -Not -Throw
         }
         
@@ -74,8 +86,8 @@ Describe "Configuration Module" -Tag 'Unit' {
             $result | Should -BeNullOrEmpty
         }
         
-        It "Should handle malformed JSON gracefully" {
-            "{ invalid json }" | Set-Content $script:TestConfigPath
+        It "Should handle malformed PSD1 gracefully" {
+            "{ invalid psd1 }" | Set-Content $script:TestConfigPath
             { Initialize-ConfigurationSystem -ConfigPath $script:TestConfigPath -Environment "Test" } | Should -Not -Throw
         }
     }
@@ -102,7 +114,7 @@ Describe "Configuration Module" -Tag 'Unit' {
             Set-Configuration -Configuration $config -SaveToFile
             
             # Reload from file
-            $fileContent = Get-Content $script:TestConfigPath -Raw | ConvertFrom-Json
+            $fileContent = Import-PowerShellDataFile $script:TestConfigPath
             $fileContent.Core.Version | Should -Be "3.0.0"
         }
         
@@ -194,8 +206,8 @@ Describe "Configuration Module" -Tag 'Unit' {
         
         It "Should reload configuration for new environment" {
             # Create production config
-            $prodConfigPath = Join-Path $TestDrive "config.production.json"
-            @{ Core = @{ Name = "ProdAither" } } | ConvertTo-Json | Set-Content $prodConfigPath
+            $prodConfigPath = Join-Path $TestDrive "config.production.psd1"
+            "@{ Core = @{ Name = 'ProdAither' } }" | Set-Content $prodConfigPath
             
             Switch-ConfigurationEnvironment -Environment "Production"
             
@@ -211,18 +223,18 @@ Describe "Configuration Module" -Tag 'Unit' {
         }
         
         It "Should export configuration to file" {
-            $exportPath = Join-Path $TestDrive "exported-config.json"
+            $exportPath = Join-Path $TestDrive "exported-config.psd1"
             
             Export-Configuration -Path $exportPath
             
             Test-Path $exportPath | Should -Be $true
-            $exported = Get-Content $exportPath -Raw | ConvertFrom-Json
+            $exported = Import-PowerShellDataFile $exportPath
             $exported.Core.Name | Should -Be "TestAither"
         }
         
         It "Should import configuration from file" {
-            $importPath = Join-Path $TestDrive "import-config.json"
-            @{ Core = @{ Name = "ImportedAither"; Version = "5.0.0" } } | ConvertTo-Json | Set-Content $importPath
+            $importPath = Join-Path $TestDrive "import-config.psd1"
+            "@{ Core = @{ Name = 'ImportedAither'; Version = '5.0.0' } }" | Set-Content $importPath
             
             Import-Configuration -Path $importPath
             
@@ -232,8 +244,8 @@ Describe "Configuration Module" -Tag 'Unit' {
         }
         
         It "Should merge imported configuration when specified" {
-            $importPath = Join-Path $TestDrive "merge-config.json"
-            @{ Core = @{ Version = "6.0.0" }; NewSection = @{ Value = "Test" } } | ConvertTo-Json | Set-Content $importPath
+            $importPath = Join-Path $TestDrive "merge-config.psd1"
+            "@{ Core = @{ Version = '6.0.0' }; NewSection = @{ Value = 'Test' } }" | Set-Content $importPath
             
             Import-Configuration -Path $importPath -Merge
             

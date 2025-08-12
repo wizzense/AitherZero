@@ -92,7 +92,7 @@ function Invoke-ParallelForEach {
     param(
         [Parameter(Mandatory = $false, ValueFromPipeline = $true)]
         [AllowEmptyCollection()]
-        [object[]]$InputObject = @(),
+        [object[]]$inputValueObject = @(),
 
         [Parameter(Mandatory = $true)]
         [scriptblock]$ScriptBlock,
@@ -110,8 +110,8 @@ function Invoke-ParallelForEach {
     }
 
     process {
-        if ($InputObject) {
-            $items += $InputObject
+        if ($inputValueObject) {
+            $items += $inputValueObject
         }
     }
 

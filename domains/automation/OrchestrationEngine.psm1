@@ -1,8 +1,14 @@
 #Requires -Version 7.0
 
-# OrchestrationEngine.psm1
-# Number-based orchestration language for AitherZero
-# Execute complex workflows using simple number sequences
+<#
+.SYNOPSIS
+    OrchestrationEngine.psm1 - Number-based orchestration for AitherZero
+.DESCRIPTION
+    Aitherium™ Enterprise Infrastructure Automation Platform
+    Orchestration Engine - Execute complex workflows using simple number sequences
+.NOTES
+    Copyright © 2025 Aitherium Corporation
+#>
 
 # Initialize module
 $script:ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
@@ -195,13 +201,13 @@ function Invoke-OrchestrationSequence {
             # Handle playbook profiles
             if ($PlaybookProfile -and $playbook.options -and $playbook.options.profiles) {
                 if ($playbook.options.profiles.ContainsKey($PlaybookProfile)) {
-                    $profileConfig = $playbook.options.profiles[$PlaybookProfile]
-                    Write-OrchestrationLog "Applying playbook profile: $PlaybookProfile - $($profileConfig.description)"
+                    $ProfileNameConfig = $playbook.options.profiles[$PlaybookProfile]
+                    Write-OrchestrationLog "Applying playbook profile: $PlaybookProfile - $($ProfileNameConfig.description)"
                     
                     # Apply profile variables
-                    if ($profileConfig.variables) {
-                        foreach ($key in $profileConfig.variables.Keys) {
-                            $Variables[$key] = $profileConfig.variables[$key]
+                    if ($ProfileNameConfig.variables) {
+                        foreach ($key in $ProfileNameConfig.variables.Keys) {
+                            $Variables[$key] = $ProfileNameConfig.variables[$key]
                         }
                     }
                 } else {
@@ -340,8 +346,8 @@ function ConvertTo-ScriptNumbers {
 
     # Handle profile-based sequences
     if ($ExecutionProfile -and $Configuration.Automation.Profiles.$ExecutionProfile) {
-        $profileScripts = $Configuration.Automation.Profiles.$ExecutionProfile.Scripts
-        $Sequence = $profileScripts
+        $ProfileNameScripts = $Configuration.Automation.Profiles.$ExecutionProfile.Scripts
+        $Sequence = $ProfileNameScripts
     }
     
     foreach ($seq in $Sequence) {
@@ -463,26 +469,35 @@ function Get-OrchestrationScripts {
         $metadata = Get-ScriptMetadata -Path $scriptFile.FullName
         
         # Check if this script has stage-specific variables
-        $stageVariables = $Variables.Clone()
+        # Use stage-specific variables if defined, otherwise use global variables
+        $stageVariables = @{}
+        $foundStageVars = $false
+        
         if ($script:PlaybookStages) {
             foreach ($stage in $script:PlaybookStages) {
                 # Check both lowercase and uppercase for compatibility
                 $stageSequence = if ($stage.Sequence) { $stage.Sequence } else { $stage.sequence }
                 $stageVars = if ($stage.Variables) { $stage.Variables } else { $stage.variables }
                 if ($stageSequence -contains $number -and $stageVars) {
-                    # Merge stage-specific variables and expand any variable references
+                    # Use ONLY stage-specific variables (don't merge with global)
                     foreach ($key in $stageVars.Keys) {
                         $value = $stageVars[$key]
-                        # Expand variable references in the value
+                        # Expand variable references in the value using global variables for lookups
                         if ($value -is [string]) {
                             $value = Expand-PlaybookVariables -Value $value -Variables $Variables
                         }
                         $stageVariables[$key] = $value
                     }
                     Write-OrchestrationLog "Applied stage variables for script $number - Variables: $($stageVariables | ConvertTo-Json -Compress)" -Level 'Information'
+                    $foundStageVars = $true
                     break
                 }
             }
+        }
+        
+        # Only use global variables if no stage-specific variables were defined
+        if (-not $foundStageVars) {
+            $stageVariables = $Variables.Clone()
         }
         
         # Check conditions
@@ -778,12 +793,13 @@ function Invoke-SequentialOrchestration {
         Write-OrchestrationLog "Executing: [$($script.Number)] $($script.Name)"
         
         $retryCount = 0
-        $maxRetries = if ($Configuration.Automation.MaxRetries) { $Configuration.Automation.MaxRetries } else { 0 }
-        $retryDelay = if ($Configuration.Automation.RetryDelay) { $Configuration.Automation.RetryDelay } else { 5 }
+        $maxRetries = 0  # Disabled retries per user request
+        $retryDelay = 0
         $succeeded = $false
         $scriptStart = Get-Date  # Initialize before the try block to avoid null reference
         
-        while ($retryCount -le $maxRetries -and -not $succeeded) {
+        # Execute at least once, then retry up to maxRetries times
+        while ($retryCount -eq 0 -or ($retryCount -le $maxRetries -and -not $succeeded)) {
             try {
                 if ($retryCount -gt 0) {
                     Write-OrchestrationLog "Retry attempt $retryCount/$maxRetries for [$($script.Number)] $($script.Name)"
@@ -794,7 +810,7 @@ function Invoke-SequentialOrchestration {
                 
                 # Write audit log for script execution
                 if ($script:LoggingAvailable -and (Get-Command Write-AuditLog -ErrorAction SilentlyContinue)) {
-                    Write-AuditLog -EventType 'ScriptExecution' -Action 'StartScript' -Target $script.Path -Details @{
+                    Write-AuditLog -EventNameType 'ScriptExecution' -Action 'StartScript' -Target $script.Path -Details @{
                         ScriptName = $script.Name
                         ScriptNumber = $script.Number
                         Configuration = $Configuration
@@ -815,6 +831,9 @@ function Invoke-SequentialOrchestration {
                 $scriptInfo = Get-Command $script.Path -ErrorAction SilentlyContinue
                 $params = @{}
                 
+                # Debug logging
+                Write-OrchestrationLog "Script: $($script.Number) - Variables available: $($scriptVars.Keys -join ', ')" -Level 'Debug'
+                
                 if ($scriptInfo) {
                     # Only add Configuration if the script accepts it
                     if ($scriptInfo.Parameters.ContainsKey('Configuration')) {
@@ -832,6 +851,7 @@ function Invoke-SequentialOrchestration {
                     }
                 } else {
                     # Fallback if Get-Command fails - pass all non-empty variables
+                    Write-OrchestrationLog "Warning: Could not get script info for $($script.Path), passing all variables" -Level 'Warning'
                     foreach ($key in $scriptVars.Keys) {
                         if ($null -ne $scriptVars[$key] -and $scriptVars[$key] -ne '') {
                             $params[$key] = $scriptVars[$key]
@@ -839,6 +859,7 @@ function Invoke-SequentialOrchestration {
                     }
                 }
                 
+                Write-OrchestrationLog "Script: $($script.Number) - Parameters being passed: $($params.Keys -join ', ')" -Level 'Debug'
                 & $script.Path @params
                 
                 if ($LASTEXITCODE -ne 0) {
@@ -852,7 +873,7 @@ function Invoke-SequentialOrchestration {
                 
                 # Write audit log for successful completion
                 if ($script:LoggingAvailable -and (Get-Command Write-AuditLog -ErrorAction SilentlyContinue)) {
-                    Write-AuditLog -EventType 'ScriptExecution' -Action 'CompleteScript' -Target $script.Path -Result 'Success' -Details @{
+                    Write-AuditLog -EventNameType 'ScriptExecution' -Action 'CompleteScript' -Target $script.Path -Result 'Success' -Details @{
                         ScriptName = $script.Name
                         ScriptNumber = $script.Number
                         Duration = $duration.TotalSeconds
@@ -875,7 +896,7 @@ function Invoke-SequentialOrchestration {
                     
                     # Write audit log for failure
                     if ($script:LoggingAvailable -and (Get-Command Write-AuditLog -ErrorAction SilentlyContinue)) {
-                        Write-AuditLog -EventType 'ScriptExecution' -Action 'FailScript' -Target $script.Path -Result 'Failure' -Details @{
+                        Write-AuditLog -EventNameType 'ScriptExecution' -Action 'FailScript' -Target $script.Path -Result 'Failure' -Details @{
                             ScriptName = $script.Name
                             ScriptNumber = $script.Number
                             Error = $_.ToString()
@@ -966,16 +987,16 @@ function Get-OrchestrationConfiguration {
 
     if (-not $Configuration) {
         # Load default configuration
-        $configPath = Join-Path $script:ProjectRoot 'config.json'
+        $configPath = Join-Path $script:ProjectRoot 'config.psd1'
         if (Test-Path $configPath) {
-            $Configuration = Get-Content $configPath -Raw | ConvertFrom-Json -AsHashtable
+            $Configuration = Import-PowerShellDataFile $configPath
         } else {
             $Configuration = @{}
         }
     } elseif ($Configuration -is [string]) {
         # Load from file path
         if (Test-Path $Configuration) {
-            $Configuration = Get-Content $Configuration -Raw | ConvertFrom-Json -AsHashtable
+            $Configuration = Import-PowerShellDataFile $Configuration
         } else {
             throw "Configuration file not found: $Configuration"
         }
@@ -986,7 +1007,7 @@ function Get-OrchestrationConfiguration {
         $Configuration.Automation = @{}
     }
 
-    # Also check for Orchestration section (from config.json)
+    # Also check for Orchestration section (from config.psd1)
     if ($Configuration.Orchestration) {
         # Merge Orchestration settings into Automation for backward compatibility
         if (-not $Configuration.Automation.DefaultMode -and $Configuration.Orchestration.DefaultMode) {

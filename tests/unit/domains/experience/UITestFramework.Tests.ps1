@@ -176,34 +176,34 @@ Describe "UI Test Framework" -Tag 'Unit' {
     
     Context "Event System Mocking" {
         It "Should create a mock event bus" -Skip {
-            $eventBus = New-MockEventBus
-            $eventBus | Should -Not -BeNullOrEmpty
-            $eventBus.Handlers | Should -Not -BeNullOrEmpty
-            $eventBus.History.Count | Should -Be 0
+            $EventNameBus = New-MockEventBus
+            $EventNameBus | Should -Not -BeNullOrEmpty
+            $EventNameBus.Handlers | Should -Not -BeNullOrEmpty
+            $EventNameBus.History.Count | Should -Be 0
         }
         
         It "Should register and trigger events" -Skip {
-            $eventBus = New-MockEventBus
+            $EventNameBus = New-MockEventBus
             $handled = $false
             
-            Register-MockEventHandler -EventBus $eventBus -EventName "TestEvent" -Handler {
-                param($sender, $args)
+            Register-MockEventHandler -EventBus $EventNameBus -EventName "TestEvent" -Handler {
+                param($sender, $arguments)
                 $handled = $true
             }
             
-            Invoke-MockEvent -EventBus $eventBus -EventName "TestEvent"
+            Invoke-MockEvent -EventBus $EventNameBus -EventName "TestEvent"
             $handled | Should -Be $true
         }
         
         It "Should track event history" {
-            $eventBus = New-MockEventBus
+            $EventNameBus = New-MockEventBus
             
-            Invoke-MockEvent -EventBus $eventBus -EventName "Event1" -Data @{ Value = 1 }
-            Invoke-MockEvent -EventBus $eventBus -EventName "Event2" -Data @{ Value = 2 }
+            Invoke-MockEvent -EventBus $EventNameBus -EventName "Event1" -Data @{ Value = 1 }
+            Invoke-MockEvent -EventBus $EventNameBus -EventName "Event2" -Data @{ Value = 2 }
             
-            $eventBus.History.Count | Should -Be 2
-            $eventBus.History[0].Name | Should -Be "Event1"
-            $eventBus.History[1].Name | Should -Be "Event2"
+            $EventNameBus.History.Count | Should -Be 2
+            $EventNameBus.History[0].Name | Should -Be "Event1"
+            $EventNameBus.History[1].Name | Should -Be "Event2"
         }
     }
     

@@ -9,7 +9,7 @@
 
 BeforeAll {
     # Get script path
-    $scriptPath = Join-Path (Split-Path $PSScriptRoot -Parent -Parent -Parent) "automation-scripts/0407_Validate-Syntax.ps1"
+    $scriptPath = Join-Path (Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent) "automation-scripts/0407_Validate-Syntax.ps1"
     
     # Create test files
     $testScriptValid = Join-Path $TestDrive "ValidScript.ps1"

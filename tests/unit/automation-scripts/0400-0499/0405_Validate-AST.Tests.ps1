@@ -10,7 +10,7 @@
 
 BeforeAll {
     # Get script path
-    $scriptPath = Join-Path (Split-Path $PSScriptRoot -Parent -Parent -Parent) "automation-scripts/0405_Validate-AST.ps1"
+    $scriptPath = Join-Path (Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent) "automation-scripts/0405_Validate-AST.ps1"
     
     # Mock AST parser and other functions
     Mock Test-PowerShellSyntax {

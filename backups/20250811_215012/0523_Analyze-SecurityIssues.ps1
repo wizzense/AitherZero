@@ -225,9 +225,9 @@ function Analyze-SecurityIssues {
             foreach ($category in $patterns.GetEnumerator()) {
                 foreach ($severity in $category.Value.GetEnumerator()) {
                     foreach ($patternInfo in $severity.Value) {
-                        $matches = [regex]::Matches($content, $patternInfo.Pattern, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+                        $matchResults = [regex]::Matches($content, $patternInfo.Pattern, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
                         
-                        foreach ($match in $matches) {
+                        foreach ($match in $matchResults) {
                             $lineNumber = ($content.Substring(0, $match.Index) -split "`n").Count
                             $line = ($content -split "`n")[$lineNumber - 1].Trim()
                             
@@ -248,7 +248,7 @@ function Analyze-SecurityIssues {
             $ast = [System.Management.Automation.Language.Parser]::ParseInput($content, [ref]$null, [ref]$parseErrors)
 
             if (-not $parseErrors -or $parseErrors.Count -eq 0) {
-                $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+                $functions = $ast.FindAll({ $arguments[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
                 
                 foreach ($function in $functions) {
                     if ($function.Body -and $function.Body.ParamBlock -and $function.Body.ParamBlock.Parameters) {

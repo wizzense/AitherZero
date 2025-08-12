@@ -49,7 +49,7 @@ BeforeAll {
 
     # Mock external commands
     Mock git { 
-        switch -Regex ($args -join ' ') {
+        switch -Regex ($arguments -join ' ') {
             'branch --list' { return '' }
             'branch -r --list' { return '' }
             'checkout' { return '' }
@@ -155,22 +155,22 @@ Describe "0701_Create-FeatureBranch" {
     
     Context "Existing Branch Handling" {
         It "Should handle existing local branch in non-interactive mode with checkout default" {
-            Mock git { return "feature/test" } -ParameterFilter { $args[1] -eq "--list" }
+            Mock git { return "feature/test" } -ParameterFilter { $arguments[1] -eq "--list" }
             Mock Get-AitherConfiguration { 
                 return @{ Development = @{ GitAutomation = @{ BranchConflictResolution = 'checkout' } } }
             }
             
             & "/workspaces/AitherZero/automation-scripts/0701_Create-FeatureBranch.ps1" -Type "feature" -Name "test" -NonInteractive -WhatIf
             
-            Should -Invoke git -ParameterFilter { $args[0] -eq 'checkout' }
+            Should -Invoke git -ParameterFilter { $arguments[0] -eq 'checkout' }
         }
         
         It "Should handle existing branch with Force parameter" {
-            Mock git { return "feature/test" } -ParameterFilter { $args[1] -eq "--list" }
+            Mock git { return "feature/test" } -ParameterFilter { $arguments[1] -eq "--list" }
             
             & "/workspaces/AitherZero/automation-scripts/0701_Create-FeatureBranch.ps1" -Type "feature" -Name "test" -Force -WhatIf
             
-            Should -Invoke git -ParameterFilter { $args[0] -eq 'checkout' }
+            Should -Invoke git -ParameterFilter { $arguments[0] -eq 'checkout' }
         }
     }
     
@@ -293,7 +293,7 @@ Describe "0701_Create-FeatureBranch" {
         It "Should show branch operations without executing them when WhatIf is used" {
             & "/workspaces/AitherZero/automation-scripts/0701_Create-FeatureBranch.ps1" -Type "feature" -Name "test" -WhatIf
             
-            Should -Not -Invoke git -ParameterFilter { $args[0] -eq 'checkout' -and $args.Count -eq 2 }
+            Should -Not -Invoke git -ParameterFilter { $arguments[0] -eq 'checkout' -and $arguments.Count -eq 2 }
         }
         
         It "Should show issue creation without executing when WhatIf is used" {
@@ -327,5 +327,4 @@ Describe "0701_Create-FeatureBranch" {
             Should -Invoke Write-Warning
         }
     }
-}
 }

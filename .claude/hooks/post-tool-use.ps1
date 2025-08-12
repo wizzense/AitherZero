@@ -13,19 +13,19 @@
 param()
 
 # Read JSON input from stdin
-$input = @()
-$inputStream = [Console]::In
-while ($null -ne ($line = $inputStream.ReadLine())) {
-    $input += $line
+$inputValue = @()
+$inputValueStream = [Console]::In
+while ($null -ne ($line = $inputValueStream.ReadLine())) {
+    $inputValue += $line
 }
 
-if ($input.Count -eq 0) {
+if ($inputValue.Count -eq 0) {
     @{ action = "continue" } | ConvertTo-Json -Compress | Write-Host
     exit 0
 }
 
 try {
-    $hookData = $input -join "`n" | ConvertFrom-Json
+    $hookData = $inputValue -join "`n" | ConvertFrom-Json
     
     # Initialize logging
     $logPath = "$env:CLAUDE_PROJECT_DIR/logs/claude-hooks.log"
@@ -95,7 +95,7 @@ try {
             if ($success) {
                 # Check for specific command patterns
                 if ($command -match '^(\./)?az\s+(\d+)') {
-                    $scriptNumber = $matches[2]
+                    $scriptNumber = $Matches[2]
                     Write-HookLog "AitherZero script $scriptNumber executed successfully"
                     
                     # Trigger follow-up actions for specific scripts

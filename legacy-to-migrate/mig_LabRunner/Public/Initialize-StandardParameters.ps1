@@ -31,7 +31,7 @@ function Initialize-StandardParameters {
         [object]$Config,
         
         [Parameter()]
-        [hashtable]$InputParameters = @{},
+        [hashtable]$inputValueParameters = @{},
         
         [Parameter()]
         [string[]]$RequiredParameters = @(),
@@ -68,8 +68,8 @@ function Initialize-StandardParameters {
     # ----------------------------
 
     # Handle Verbosity parameter
-    if ($InputParameters.ContainsKey('Verbosity')) {
-        $scriptParams.Verbosity = $InputParameters.Verbosity
+    if ($inputValueParameters.ContainsKey('Verbosity')) {
+        $scriptParams.Verbosity = $inputValueParameters.Verbosity
     }
     elseif ($env:LAB_CONSOLE_LEVEL) {
         # Map numeric level back to string
@@ -82,12 +82,12 @@ function Initialize-StandardParameters {
     }
 
     # Handle WhatIf parameter
-    $scriptParams.IsWhatIfMode = $WhatIfPreference -or ($InputParameters.ContainsKey('WhatIf') -and $InputParameters.WhatIf)
+    $scriptParams.IsWhatIfMode = $WhatIfPreference -or ($inputValueParameters.ContainsKey('WhatIf') -and $inputValueParameters.WhatIf)
 
     # Handle NonInteractive
     $scriptParams.IsNonInteractive = $false
-    if ($InputParameters.ContainsKey('NonInteractive')) {
-        $scriptParams.IsNonInteractive = $InputParameters.NonInteractive
+    if ($inputValueParameters.ContainsKey('NonInteractive')) {
+        $scriptParams.IsNonInteractive = $inputValueParameters.NonInteractive
     }
     else {
         # Auto-detect non-interactive mode if not explicitly set
@@ -98,24 +98,24 @@ function Initialize-StandardParameters {
     }
 
     # Handle Auto parameter
-    if ($InputParameters.ContainsKey('Auto')) {
-        $scriptParams.IsAutoMode = $InputParameters.Auto
+    if ($inputValueParameters.ContainsKey('Auto')) {
+        $scriptParams.IsAutoMode = $inputValueParameters.Auto
         if ($scriptParams.IsAutoMode) {
             $scriptParams.IsNonInteractive = $true
         }
     }
 
     # Handle Force parameter
-    if ($InputParameters.ContainsKey('Force')) {
-        $scriptParams.IsForceMode = $InputParameters.Force
+    if ($inputValueParameters.ContainsKey('Force')) {
+        $scriptParams.IsForceMode = $inputValueParameters.Force
     }
 
     # Handle Config parameter
     if ($null -ne $Config) {
         $scriptParams.Config = $Config
     }
-    elseif ($InputParameters.ContainsKey('Config') -and $null -ne $InputParameters.Config) {
-        $scriptParams.Config = $InputParameters.Config
+    elseif ($inputValueParameters.ContainsKey('Config') -and $null -ne $inputValueParameters.Config) {
+        $scriptParams.Config = $inputValueParameters.Config
     }
     else {
         # Use default config if no config was provided
@@ -128,7 +128,7 @@ function Initialize-StandardParameters {
 
     # Handle required parameters
     foreach ($param in $RequiredParameters) {
-        if (-not $InputParameters.ContainsKey($param) -or $null -eq $InputParameters[$param]) {
+        if (-not $inputValueParameters.ContainsKey($param) -or $null -eq $inputValueParameters[$param]) {
             $errorMessage = "Required parameter '$param' missing for script: $ScriptName"
             if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
                 Write-CustomLog $errorMessage -Level ERROR

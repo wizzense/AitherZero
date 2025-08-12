@@ -3,7 +3,12 @@
 .SYNOPSIS
     AitherZero root module that loads all nested modules
 .DESCRIPTION
-    Imports all modules and re-exports their functions
+    Aitherium™ Enterprise Infrastructure Automation Platform
+    AitherZero - Imports all modules and re-exports their functions
+    
+.NOTES
+    Copyright © 2025 Aitherium Corporation
+    Version: 1.0.0
 #>
 
 # Set environment variables
@@ -108,41 +113,101 @@ foreach ($modulePath in $parallelModules) {
     }
 }
 
-# Create the az/Invoke-AitherScript function
-function Invoke-AitherScript {
-    [CmdletBinding()]
+# Create the az/Invoke-AitherScript function with dynamic parameters
+function global:Invoke-AitherScript {
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Position = 0, Mandatory = $true)]
-        [string]$ScriptNumber,
-        [Parameter(Position = 1, ValueFromRemainingArguments)]
-        [string[]]$Arguments
+        [string]$ScriptNumber
     )
-
-    $scriptPath = Join-Path $env:AITHERZERO_ROOT "automation-scripts"
-    $scripts = Get-ChildItem -Path $scriptPath -Filter "${ScriptNumber}*.ps1" -ErrorAction SilentlyContinue
-
-    if ($scripts.Count -eq 0) {
-        Write-Error "No script found matching pattern: ${ScriptNumber}*.ps1"
-        return
-    } elseif ($scripts.Count -gt 1) {
-        Write-Host "Multiple scripts found:" -ForegroundColor Yellow
-        $scripts | ForEach-Object { Write-Host "  $_" }
-        return
-    }
-
-    # Execute the script
-    # Most scripts use Configuration parameter, so pass it if available
-    $scriptParams = @{}
-    if (Get-Variable -Name 'Config' -Scope Global -ErrorAction SilentlyContinue) {
-        $scriptParams['Configuration'] = $global:Config
+    
+    DynamicParam {
+        $paramDictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
+        
+        # Common parameters that many scripts accept
+        $commonParams = @{
+            'Path' = [string]
+            'OutputPath' = [string]
+            'DryRun' = [switch]
+            'PassThru' = [switch]
+            'NoCoverage' = [switch]
+            'CI' = [switch]
+            'UseCache' = [switch]
+            'ForceRun' = [switch]
+            'CacheMinutes' = [int]
+            'CoverageThreshold' = [int]
+            'ShowAll' = [switch]
+            'NonInteractive' = [switch]
+            'Force' = [switch]
+            'Type' = [string]
+            'Name' = [string]
+            'Message' = [string]
+            'Title' = [string]
+            'All' = [switch]
+            'Strict' = [switch]
+            'AutoFix' = [switch]
+            'CheckDependencies' = [switch]
+            'CheckSecrets' = [switch]
+            'CheckDeprecated' = [switch]
+            'CheckBestPractices' = [switch]
+            'OutputFormat' = [string]
+            'InstallDependencies' = [switch]
+            'WorkflowFile' = [string]
+            'Event' = [string]
+            'Job' = [string]
+            'VerboseOutput' = [switch]
+            'NoCache' = [switch]
+        }
+        
+        foreach ($paramName in $commonParams.Keys) {
+            $paramType = $commonParams[$paramName]
+            $paramAttribute = New-Object System.Management.Automation.ParameterAttribute
+            $paramAttribute.Mandatory = $false
+            
+            $attributeCollection = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
+            $attributeCollection.Add($paramAttribute)
+            
+            $param = New-Object System.Management.Automation.RuntimeDefinedParameter($paramName, $paramType, $attributeCollection)
+            $paramDictionary.Add($paramName, $param)
+        }
+        
+        return $paramDictionary
     }
     
-    # Execute with parameters
-    if ($Arguments -and $Arguments.Count -gt 0) {
-        # Pass additional arguments as splatted parameters
-        & $scripts[0].FullName @scriptParams @Arguments
-    } else {
-        & $scripts[0].FullName @scriptParams
+    Process {
+        # Capture all parameters including dynamic ones
+        $allParams = @{}
+        foreach ($key in $PSBoundParameters.Keys) {
+            if ($key -ne 'ScriptNumber') {
+                $allParams[$key] = $PSBoundParameters[$key]
+            }
+        }
+        
+        # Pass global Config as Configuration if it exists and not already specified
+        if ($global:Config -and -not $allParams.ContainsKey('Configuration')) {
+            $allParams['Configuration'] = $global:Config
+        }
+        
+        $scriptPath = Join-Path $env:AITHERZERO_ROOT "automation-scripts"
+        $scripts = Get-ChildItem -Path $scriptPath -Filter "${ScriptNumber}*.ps1" -ErrorAction SilentlyContinue
+
+        if ($scripts.Count -eq 0) {
+            Write-Error "No script found matching pattern: ${ScriptNumber}*.ps1"
+            return
+        } elseif ($scripts.Count -gt 1) {
+            Write-Host "Multiple scripts found:" -ForegroundColor Yellow
+            $scripts | ForEach-Object { Write-Host "  $_" }
+            return
+        }
+
+        # Execute the script with all parameters
+        $scriptFile = $scripts[0].FullName
+        
+        if ($allParams.Count -gt 0) {
+            & $scriptFile @allParams
+        } else {
+            & $scriptFile
+        }
     }
 }
 

@@ -31,7 +31,7 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [ValidateSet('Minimal', 'Standard', 'Developer', 'Full')]
-    [string]$Profile = 'Standard',
+    [string]$ProfileName = 'Standard',
     [ValidateSet('Windows', 'Linux', 'macOS', 'Auto')]
     [string]$Platform = 'Auto',
     [string]$RunnerUser = $env:USER,
@@ -74,9 +74,9 @@ function Get-TargetPlatform {
 }
 
 function Get-ProfileConfiguration {
-    param([string]$ProfileName)
+    param([string]$ProfileNameName)
     
-    $profiles = @{
+    $ProfileNames = @{
         'Minimal' = @{
             Tools = @('PowerShell7', 'Git')
             Modules = @('ThreadJob')
@@ -99,7 +99,7 @@ function Get-ProfileConfiguration {
         }
     }
     
-    return $profiles[$ProfileName]
+    return $ProfileNames[$ProfileNameName]
 }
 
 function Test-RunnerEnvironment {
@@ -156,7 +156,7 @@ function Install-RequiredTools {
         [string]$TargetPlatform
     )
     
-    Write-RunnerLog "Installing required tools for $Profile profile..." -Level Information
+    Write-RunnerLog "Installing required tools for $ProfileName profile..." -Level Information
     
     foreach ($tool in $Tools) {
         Write-RunnerLog "Checking tool: $tool" -Level Information
@@ -285,7 +285,7 @@ function Set-RunnerEnvironmentVariables {
     $envVars = @{
         'AITHERZERO_RUNNER' = 'true'
         'AITHERZERO_PLATFORM' = $TargetPlatform
-        'AITHERZERO_PROFILE' = $Profile
+        'AITHERZERO_PROFILE' = $ProfileName
         'CI' = 'true'
         'RUNNER_ENVIRONMENT' = 'GitHub-Actions'
     }
@@ -323,15 +323,15 @@ function Set-RunnerEnvironmentVariables {
             [Environment]::SetEnvironmentVariable($key, $value, 'Machine')
         } else {
             # Add to shell profiles
-            $profileFiles = @('~/.bashrc', '~/.zshrc', '~/.profile')
-            foreach ($profileFile in $profileFiles) {
-                $expandedPath = [Environment]::ExpandEnvironmentVariables($profileFile)
+            $ProfileNameFiles = @('~/.bashrc', '~/.zshrc', '~/.profile')
+            foreach ($ProfileNameFile in $ProfileNameFiles) {
+                $expandedPath = [Environment]::ExpandEnvironmentVariables($ProfileNameFile)
                 if (Test-Path $expandedPath) {
                     $exportLine = "export $key='$value'"
                     $content = Get-Content $expandedPath -Raw -ErrorAction SilentlyContinue
                     if ($content -notlike "*export $key=*") {
                         Add-Content -Path $expandedPath -Value $exportLine
-                        Write-RunnerLog "Added to $profileFile" -Level Information
+                        Write-RunnerLog "Added to $ProfileNameFile" -Level Information
                     }
                 }
             }
@@ -437,7 +437,7 @@ try {
     $targetPlatform = Get-TargetPlatform
     
     Write-RunnerLog "Configuring GitHub Actions runner environment..." -Level Information
-    Write-RunnerLog "Profile: $Profile" -Level Information
+    Write-RunnerLog "Profile: $ProfileName" -Level Information
     Write-RunnerLog "Platform: $targetPlatform" -Level Information
     Write-RunnerLog "Runner User: $RunnerUser" -Level Information
     
@@ -455,16 +455,16 @@ try {
     }
     
     # Get profile configuration
-    $profileConfig = Get-ProfileConfiguration -ProfileName $Profile
+    $ProfileNameConfig = Get-ProfileConfiguration -ProfileName $ProfileName
     
     # Install required tools
-    if ($profileConfig.Tools) {
-        Install-RequiredTools -Tools $profileConfig.Tools -TargetPlatform $targetPlatform
+    if ($ProfileNameConfig.Tools) {
+        Install-RequiredTools -Tools $ProfileNameConfig.Tools -TargetPlatform $targetPlatform
     }
     
     # Install PowerShell modules
-    if ($profileConfig.Modules) {
-        Install-PowerShellModules -Modules $profileConfig.Modules
+    if ($ProfileNameConfig.Modules) {
+        Install-PowerShellModules -Modules $ProfileNameConfig.Modules
     }
     
     # Set environment variables
@@ -487,7 +487,7 @@ try {
     
     if (-not $CI) {
         Write-Host "`nRunner environment setup complete!" -ForegroundColor Green
-        Write-Host "Profile: $Profile" -ForegroundColor Cyan
+        Write-Host "Profile: $ProfileName" -ForegroundColor Cyan
         Write-Host "Platform: $targetPlatform" -ForegroundColor Cyan
         
         Write-Host "`nNext steps:" -ForegroundColor Yellow

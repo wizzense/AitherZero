@@ -347,7 +347,7 @@ $(if ($analysisResult.TechnicalDetails.RawErrorSample) {
                 # Extract issue number from URL
                 $issueNumber = $null
                 if ($result -match '/issues/(\d+)') {
-                    $issueNumber = $matches[1]
+                    $issueNumber = $Matches[1]
                 }
 
                 Write-IssueLog "Issue created successfully: $result" -Level 'SUCCESS'

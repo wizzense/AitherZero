@@ -78,9 +78,9 @@ try {
     }
 
     # Load configuration
-    $configPath = Join-Path (Split-Path $PSScriptRoot -Parent) "config.json"
+    $configPath = Join-Path (Split-Path $PSScriptRoot -Parent) "config.psd1"
     if (Test-Path $configPath) {
-        $config = Get-Content $configPath -Raw | ConvertFrom-Json
+        $config = Import-PowerShellDataFile $configPath
         $testingConfig = $config.Testing
     } else {
         Write-ScriptLog -Level Warning -Message "Configuration file not found, using defaults"

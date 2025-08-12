@@ -19,11 +19,11 @@ Invoke-LabStep -Config $Config -Body {
 
     if ($Config.SetTrustedHosts -eq $true) {
         $trustedHosts = if ($Config.TrustedHosts) { $Config.TrustedHosts } else { '*' }
-        $args = "/d /c winrm set winrm/config/client @{TrustedHosts=`"$trustedHosts`"}"
-        Write-CustomLog "Configuring TrustedHosts with: $args"
+        $arguments = "/d /c winrm set winrm/config/client @{TrustedHosts=`"$trustedHosts`"}"
+        Write-CustomLog "Configuring TrustedHosts with: $arguments"
 
         if ($PSCmdlet.ShouldProcess($trustedHosts, 'Configure WinRM TrustedHosts')) {
-            Start-Process -FilePath cmd.exe -ArgumentList $args -Wait
+            Start-Process -FilePath cmd.exe -ArgumentList $arguments -Wait
         }
         Write-CustomLog 'TrustedHosts configured'
     } else {

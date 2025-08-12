@@ -188,7 +188,7 @@ Describe "0007_Install-Go" {
             Mock Invoke-WebRequest { }
             Mock Test-Path { $false }
             Mock Start-Process { }
-            Mock Get-Content { "export PATH=$PATH:/usr/local/go/bin" }
+            Mock Get-Content { 'export PATH=$PATH:/usr/local/go/bin' }
             Mock Add-Content { }
             Mock Write-ScriptLog { }
             

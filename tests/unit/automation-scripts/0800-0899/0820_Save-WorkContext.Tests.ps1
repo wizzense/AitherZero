@@ -12,7 +12,7 @@ BeforeAll {
     
     # Mock git commands
     Mock git -MockWith {
-        switch ($args[0]) {
+        switch ($arguments[0]) {
             "branch" { return "main" }
             "status" { return "M file1.ps1`nA file2.ps1" }
             "log" { return "abc123 Initial commit" }
@@ -138,43 +138,43 @@ Describe "0820_Save-WorkContext" {
         It "Should collect git branch information" {
             & $scriptPath
             
-            Should -Invoke git -ParameterFilter { $args[0] -eq "branch" -and $args[1] -eq "--show-current" }
+            Should -Invoke git -ParameterFilter { $arguments[0] -eq "branch" -and $arguments[1] -eq "--show-current" }
         }
         
         It "Should collect git status" {
             & $scriptPath
             
-            Should -Invoke git -ParameterFilter { $args[0] -eq "status" -and $args[1] -eq "--short" }
+            Should -Invoke git -ParameterFilter { $arguments[0] -eq "status" -and $arguments[1] -eq "--short" }
         }
         
         It "Should collect recent commits" {
             & $scriptPath
             
-            Should -Invoke git -ParameterFilter { $args[0] -eq "log" -and $args[1] -eq "--oneline" }
+            Should -Invoke git -ParameterFilter { $arguments[0] -eq "log" -and $arguments[1] -eq "--oneline" }
         }
         
         It "Should collect remote information" {
             & $scriptPath
             
-            Should -Invoke git -ParameterFilter { $args[0] -eq "remote" -and $args[1] -eq "-v" }
+            Should -Invoke git -ParameterFilter { $arguments[0] -eq "remote" -and $arguments[1] -eq "-v" }
         }
         
         It "Should collect diff summary" {
             & $scriptPath
             
-            Should -Invoke git -ParameterFilter { $args[0] -eq "diff" -and $args[1] -eq "--stat" }
+            Should -Invoke git -ParameterFilter { $arguments[0] -eq "diff" -and $arguments[1] -eq "--stat" }
         }
         
         It "Should collect staged and untracked files" {
             & $scriptPath
             
-            Should -Invoke git -ParameterFilter { $args[0] -eq "diff" -and $args[1] -eq "--cached" }
-            Should -Invoke git -ParameterFilter { $args[0] -eq "ls-files" }
+            Should -Invoke git -ParameterFilter { $arguments[0] -eq "diff" -and $arguments[1] -eq "--cached" }
+            Should -Invoke git -ParameterFilter { $arguments[0] -eq "ls-files" }
         }
         
         It "Should analyze modified files with line counts" {
             Mock git -MockWith {
-                if ($args[0] -eq "status" -and $args[1] -eq "--porcelain") {
+                if ($arguments[0] -eq "status" -and $arguments[1] -eq "--porcelain") {
                     return "M  file1.ps1`nA  file2.ps1"
                 }
                 return ""
@@ -182,7 +182,7 @@ Describe "0820_Save-WorkContext" {
             
             & $scriptPath
             
-            Should -Invoke git -ParameterFilter { $args[0] -eq "status" -and $args[1] -eq "--porcelain" }
+            Should -Invoke git -ParameterFilter { $arguments[0] -eq "status" -and $arguments[1] -eq "--porcelain" }
         }
     }
     
@@ -298,7 +298,7 @@ Describe "0820_Save-WorkContext" {
             & $scriptPath
             
             Should -Invoke Get-Command -ParameterFilter { $Name -eq "gh" }
-            Should -Invoke gh -ParameterFilter { $args[0] -eq "issue" -and $args[1] -eq "list" }
+            Should -Invoke gh -ParameterFilter { $arguments[0] -eq "issue" -and $arguments[1] -eq "list" }
         }
         
         It "Should handle missing GitHub CLI gracefully" {

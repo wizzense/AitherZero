@@ -65,7 +65,7 @@ function New-TestConfiguration {
     #>
     [CmdletBinding()]
     param(
-        [string]$Profile = 'Standard',
+        [string]$ProfileName = 'Standard',
         [hashtable]$Overrides = @{}
     )
 
@@ -73,7 +73,7 @@ function New-TestConfiguration {
         Core = @{
             Name = "AitherZero-Test"
             Version = "1.0.0"
-            Profile = $Profile
+            Profile = $ProfileName
             Environment = "Test"
         }
         Automation = @{
@@ -144,7 +144,7 @@ function New-MockBootstrapEnvironment {
         "Profile": "Standard"
     }
 }
-'@ | Set-Content (Join-Path $Path "config.json")
+'@ | Set-Content (Join-Path $Path "config.psd1")
         
         # Create dummy module files
         "# Existing module" | Set-Content (Join-Path $Path "AitherZero.psm1")

@@ -8,8 +8,10 @@ BeforeAll {
 
 Describe "Configuration Module Tests" {
     BeforeEach {
-        # Reset configuration for each test
-        $script:TestConfigPath = Join-Path $TestDrive "test-config.json"
+        # Use a copy of config.psd1 for testing to avoid overwriting the real file
+        $script:TestConfigPath = Join-Path $TestDrive "test-config.psd1"
+        $realConfigPath = Join-Path $PSScriptRoot "../../../config.psd1" | Resolve-Path
+        Copy-Item $realConfigPath $script:TestConfigPath -Force
         Initialize-ConfigurationSystem -ConfigPath $script:TestConfigPath
     }
     
@@ -46,8 +48,8 @@ Describe "Configuration Module Tests" {
     
     Context "Set-Configuration" {
         It "Should update configuration and save to file" {
-            $newConfig = [PSCustomObject]@{
-                Core = [PSCustomObject]@{
+            $newConfig = @{
+                Core = @{
                     Name = "TestProject"
                     Version = "2.0.0"
                 }
@@ -87,7 +89,7 @@ Describe "Configuration Module Tests" {
         
         It "Should fail validation for invalid configuration" {
             # Set invalid configuration
-            $invalidConfig = [PSCustomObject]@{
+            $invalidConfig = @{
                 InvalidSection = @{
                     SomeKey = "SomeValue"
                 }
@@ -101,7 +103,7 @@ Describe "Configuration Module Tests" {
         
         It "Should throw on validation error when requested" {
             # Set invalid configuration
-            $invalidConfig = [PSCustomObject]@{
+            $invalidConfig = @{
                 InvalidSection = @{
                     SomeKey = "SomeValue"
                 }
@@ -114,7 +116,7 @@ Describe "Configuration Module Tests" {
     
     Context "Import/Export Configuration" {
         It "Should export configuration to file" {
-            $exportPath = Join-Path $TestDrive "exported-config.json"
+            $exportPath = Join-Path $TestDrive "exported-config.psd1"
             
             Export-Configuration -Path $exportPath
             
@@ -125,10 +127,10 @@ Describe "Configuration Module Tests" {
         }
         
         It "Should import configuration from file" {
-            $importPath = Join-Path $TestDrive "import-config.json"
+            $importPath = Join-Path $TestDrive "import-config.psd1"
             
-            $importConfig = [PSCustomObject]@{
-                Core = [PSCustomObject]@{
+            $importConfig = @{
+                Core = @{
                     Name = "ImportedProject"
                     Version = "3.0.0"
                 }
@@ -150,9 +152,9 @@ Describe "Configuration Module Tests" {
             Set-Configuration -Configuration $initialConfig
 
             # Create import config
-            $importPath = Join-Path $TestDrive "merge-config.json"
-            $mergeConfig = [PSCustomObject]@{
-                Core = [PSCustomObject]@{
+            $importPath = Join-Path $TestDrive "merge-config.psd1"
+            $mergeConfig = @{
+                Core = @{
                     Version = "4.0.0"
                 }
             }

@@ -322,11 +322,11 @@ function Search-InteractiveLogs {
         $results = @()
         
         foreach ($file in $logFiles) {
-            $matches = Select-String -Path $file.FullName -Pattern $searchTerm
-            if ($matches) {
-                $results += $matches
+            $matchResults = Select-String -Path $file.FullName -Pattern $searchTerm
+            if ($matchResults) {
+                $results += $matchResults
                 Write-Host "`n📁 $($file.Name):" -ForegroundColor Cyan
-                $matches | Select-Object -First 10 | ForEach-Object {
+                $matchResults | Select-Object -First 10 | ForEach-Object {
                     Write-Host "  Line $($_.LineNumber): $($_.Line)"
                 }
             }
