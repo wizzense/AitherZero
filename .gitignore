@@ -32,6 +32,7 @@ __pycache__/
 # Backup files
 *.bak
 *.backup
+backups/
 
 # Test artifacts
 test-output/

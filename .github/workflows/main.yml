@@ -59,7 +59,7 @@ jobs:
     
     - name: Bootstrap
       shell: pwsh
-      run: ./bootstrap.ps1 -Mode Init -NonInteractive -CI
+      run: ./bootstrap.ps1 -Mode New -NonInteractive
     
     - name: Run Pipeline
       shell: pwsh
