@@ -623,12 +623,12 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "%~dp0Start-AitherZero.ps1" %*
 function Initialize-CleanEnvironment {
     Write-BootstrapLog "Cleaning PowerShell environment..." -Level Info
     
-    # Extended list of conflicting modules to remove
+    # Extended list of conflicting modules to remove (legacy modules that might interfere)
     $conflictingModules = @(
         'AitherRun', 'CoreApp', 'ConfigurationManager', 'SecurityAutomation',
         'UtilityServices', 'ConfigurationCore', 'ConfigurationCarousel',
         'ModuleCommunication', 'ConfigurationRepository', 'StartupExperience',
-        'LabRunner', 'OpenTofuProvider', 'PSScriptAnalyzerIntegration',
+        'OpenTofuProvider', 'PSScriptAnalyzerIntegration',
         'SemanticVersioning', 'LicenseManager'
     )
     
@@ -662,8 +662,26 @@ function Initialize-CleanEnvironment {
         $env:PATH = $cleanPaths -join [IO.Path]::PathSeparator
     }
     
-    # Set AitherZero root
-    $script:ProjectRoot = Get-Location
+    # Set AitherZero root - use the directory containing AitherZero.psd1
+    $currentPath = Get-Location
+    if (Test-Path "./AitherZero.psd1") {
+        $script:ProjectRoot = $currentPath.Path
+    } elseif ($env:AITHERZERO_ROOT -and (Test-Path "$env:AITHERZERO_ROOT/AitherZero.psd1")) {
+        $script:ProjectRoot = $env:AITHERZERO_ROOT
+    } else {
+        # Try to find AitherZero.psd1 in parent directories
+        $testPath = $currentPath
+        while ($testPath -and $testPath.Path -ne $testPath.Drive.Root) {
+            if (Test-Path (Join-Path $testPath "AitherZero.psd1")) {
+                $script:ProjectRoot = $testPath.Path
+                break
+            }
+            $testPath = Split-Path $testPath -Parent
+        }
+        if (-not $script:ProjectRoot) {
+            $script:ProjectRoot = $currentPath.Path
+        }
+    }
     $env:AITHERZERO_ROOT = $script:ProjectRoot
     
     # Clean any lingering environment variables
@@ -688,9 +706,11 @@ function Initialize-CleanEnvironment {
     }
     
     try {
-        # Import the module manifest
-        if (Test-Path "./AitherZero.psd1") {
-            Import-Module ./AitherZero.psd1 -Force -Global
+        # Import the module manifest - use the resolved project root
+        $manifestPath = Join-Path $script:ProjectRoot "AitherZero.psd1"
+        if (Test-Path $manifestPath) {
+            Write-BootstrapLog "Loading module from: $manifestPath" -Level Info
+            Import-Module $manifestPath -Force -Global
             
             # Verify critical functions
             $criticalFunctions = @(

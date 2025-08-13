@@ -181,55 +181,51 @@ function Initialize-AitherUI {
         $uiConfig = Get-Configuration -Section 'UI'
     }
 
+    # Safe property access helper (defined outside to be available always)
+    $getProp = { param($name, $default, $config) 
+        if (-not $config) { return $default }
+        if ($config -is [hashtable] -and $config.ContainsKey($name)) { 
+            return $config[$name] 
+        } elseif ($config.PSObject -and $config.PSObject.Properties[$name]) { 
+            return $config.$name 
+        } 
+        return $default 
+    }
+
     # Apply configuration settings
     if ($uiConfig) {
         # Override parameters with config values (safe property access)
         if (-not $PSBoundParameters.ContainsKey('Theme')) {
-            if ($uiConfig -is [hashtable] -and $uiConfig.ContainsKey('Theme')) {
-                $Theme = $uiConfig.Theme
-            } elseif ($uiConfig.PSObject -and $uiConfig.PSObject.Properties['Theme']) {
-                $Theme = $uiConfig.Theme
-            }
+            $themeValue = & $getProp 'Theme' $null $uiConfig
+            if ($themeValue) { $Theme = $themeValue }
         }
         if (-not $PSBoundParameters.ContainsKey('DisableColors')) {
-            if ($uiConfig -is [hashtable] -and $uiConfig.ContainsKey('EnableColors') -and $uiConfig.EnableColors -eq $false) {
-                $DisableColors = $true
-            } elseif ($uiConfig.PSObject -and $uiConfig.PSObject.Properties['EnableColors'] -and $uiConfig.EnableColors -eq $false) {
-                $DisableColors = $true
-            }
+            $enableColors = & $getProp 'EnableColors' $true $uiConfig
+            if ($enableColors -eq $false) { $DisableColors = $true }
         }
         
         # Store UI configuration in state
         $script:UIState.Config = $uiConfig
-        # Safe property access helper
-        $getProp = { param($name, $default) 
-            if ($uiConfig -is [hashtable] -and $uiConfig.ContainsKey($name)) { 
-                return $uiConfig[$name] 
-            } elseif ($uiConfig.PSObject -and $uiConfig.PSObject.Properties[$name]) { 
-                return $uiConfig.$name 
-            } 
-            return $default 
-        }
         
-        $script:UIState.EnableEmoji = & $getProp 'EnableEmoji' $true
-        $script:UIState.MenuStyle = & $getProp 'MenuStyle' 'Interactive'
-        $script:UIState.ProgressBarStyle = & $getProp 'ProgressBarStyle' 'Classic'
-        $script:UIState.NotificationPosition = & $getProp 'NotificationPosition' 'TopRight'
-        $script:UIState.AutoRefreshInterval = & $getProp 'AutoRefreshInterval' 5
-        $script:UIState.ShowWelcomeMessage = & $getProp 'ShowWelcomeMessage' $true
-        $script:UIState.ShowHints = & $getProp 'ShowHints' $true
-        $script:UIState.EnableAnimations = & $getProp 'EnableAnimations' $false
+        $script:UIState.EnableEmoji = & $getProp 'EnableEmoji' $true $uiConfig
+        $script:UIState.MenuStyle = & $getProp 'MenuStyle' 'Interactive' $uiConfig
+        $script:UIState.ProgressBarStyle = & $getProp 'ProgressBarStyle' 'Classic' $uiConfig
+        $script:UIState.NotificationPosition = & $getProp 'NotificationPosition' 'TopRight' $uiConfig
+        $script:UIState.AutoRefreshInterval = & $getProp 'AutoRefreshInterval' 5 $uiConfig
+        $script:UIState.ShowWelcomeMessage = & $getProp 'ShowWelcomeMessage' $true $uiConfig
+        $script:UIState.ShowHints = & $getProp 'ShowHints' $true $uiConfig
+        $script:UIState.EnableAnimations = & $getProp 'EnableAnimations' $false $uiConfig
         # Don't set TerminalWidth during initialization - let it be lazy-loaded
-        $termWidth = & $getProp 'TerminalWidth' 'auto'
+        $termWidth = & $getProp 'TerminalWidth' 'auto' $uiConfig
         if ($termWidth -and $termWidth -ne 'auto') {
             $script:UIState.TerminalWidth = $termWidth
         }
-        $script:UIState.ClearScreenOnStart = & $getProp 'ClearScreenOnStart' $true
-        $script:UIState.ShowExecutionTime = & $getProp 'ShowExecutionTime' $true
-        $script:UIState.ShowMemoryUsage = & $getProp 'ShowMemoryUsage' $false
+        $script:UIState.ClearScreenOnStart = & $getProp 'ClearScreenOnStart' $true $uiConfig
+        $script:UIState.ShowExecutionTime = & $getProp 'ShowExecutionTime' $true $uiConfig
+        $script:UIState.ShowMemoryUsage = & $getProp 'ShowMemoryUsage' $false $uiConfig
         
         # Load custom themes from config (safe property access)
-        $themes = & $getProp 'Themes' $null
+        $themes = & $getProp 'Themes' $null $uiConfig
         if ($themes -and $themes.PSObject -and $themes.PSObject.Properties) {
             foreach ($themeProp in $themes.PSObject.Properties) {
                 $themeName = $themeProp.Name
