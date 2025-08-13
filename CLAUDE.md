@@ -8,7 +8,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Bootstrap - Intelligently installs or initializes based on context
 ./bootstrap.ps1                     # PowerShell 7+ (auto-detects if install or init needed)
 ./bootstrap.sh                      # Unix/Linux/macOS (auto-detects if install or init needed)
+./bootstrap-ps5.ps1                 # PowerShell 5.1 local bootstrap (installs PS7 first)
+
+# One-liner bootstrap commands (for fresh installations)
 iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap-ps5.ps1 | iex  # PowerShell 5.1 (installs PS7 first)
+iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex       # PowerShell 7+ direct bootstrap
+
+# Diagnostic and repair tools
+./Fix-Bootstrap.ps1                 # Diagnose and fix common bootstrap issues (works with PS 5.1 and 7+)
 
 # Main entry point - Interactive UI
 ./Start-AitherZero.ps1

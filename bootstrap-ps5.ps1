@@ -1,299 +1,238 @@
-#!/usr/bin/env powershell
-# PowerShell 5.1 Bootstrap for AitherZero
-# This minimal script ensures PowerShell 7 is installed, then runs the main bootstrap
+# Bootstrap script specifically for PowerShell 5.1 on Windows
+# This handles the PS5.1 -> PS7 transition more gracefully
 
 <#
 .SYNOPSIS
-    Minimal bootstrap script for PowerShell 5.1 that installs PowerShell 7 and runs main bootstrap
+    PowerShell 5.1 Bootstrap Wrapper for AitherZero
 .DESCRIPTION
-    This script is designed to work with PowerShell 5.1 on Windows. It will:
-    1. Check if PowerShell 7 is installed
-    2. Install PowerShell 7 if missing
-    3. Re-launch the main bootstrap script in PowerShell 7
+    Handles installation and upgrade from PowerShell 5.1 to PowerShell 7
 .EXAMPLE
     # One-liner for PowerShell 5.1
     iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap-ps5.ps1 | iex
-    
-    # Or download and run
-    Invoke-WebRequest -Uri https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap-ps5.ps1 -OutFile bootstrap-ps5.ps1
-    .\bootstrap-ps5.ps1
 #>
 
-[CmdletBinding()]
 param(
     [string]$InstallProfile = 'Standard',
-    [string]$InstallPath,
     [string]$Branch = 'main',
-    [switch]$NonInteractive,
-    [switch]$AutoInstallDeps = $true,
-    [switch]$SkipAutoStart
+    [switch]$NonInteractive = ($env:CI -eq 'true')
 )
 
-# Enable TLS 1.2
+$ErrorActionPreference = 'Stop'
+
+# Enable TLS 1.2 for downloads
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-function Write-Message {
-    param(
-        [string]$Message,
-        [string]$Level = 'Info'
-    )
-    
-    $colors = @{
-        'Info' = 'Cyan'
-        'Success' = 'Green'
-        'Warning' = 'Yellow'
-        'Error' = 'Red'
-    }
-    
-    Write-Host $Message -ForegroundColor $colors[$Level]
-}
-
-function Test-PowerShell7 {
-    # Check if pwsh.exe exists in common locations
-    $pwshPaths = @(
-        "$env:ProgramFiles\PowerShell\7\pwsh.exe",
-        "$env:ProgramFiles\PowerShell\7-preview\pwsh.exe",
-        "$env:ProgramFiles (x86)\PowerShell\7\pwsh.exe"
-    )
-    
-    foreach ($path in $pwshPaths) {
-        if (Test-Path $path) {
-            return $path
-        }
-    }
-    
-    # Check if pwsh is in PATH
-    $pwsh = Get-Command pwsh -ErrorAction SilentlyContinue
-    if ($pwsh) {
-        return $pwsh.Source
-    }
-    
-    return $null
-}
-
-function Install-PowerShell7 {
-    Write-Message "Installing PowerShell 7..." -Level Info
-    
-    try {
-        # Try winget first (available on Windows 10 1709+)
-        $winget = Get-Command winget -ErrorAction SilentlyContinue
-        if ($winget) {
-            Write-Message "Using winget to install PowerShell 7..." -Level Info
-            
-            # Accept source agreements silently
-            $wingetArgs = @(
-                "install",
-                "--id", "Microsoft.PowerShell",
-                "--source", "winget",
-                "--accept-source-agreements",
-                "--accept-package-agreements"
-            )
-            
-            if ($NonInteractive) {
-                $wingetArgs += "--silent"
-            }
-            
-            $process = Start-Process -FilePath "winget" -ArgumentList $wingetArgs -Wait -PassThru -NoNewWindow
-            
-            if ($process.ExitCode -eq 0) {
-                Write-Message "PowerShell 7 installed successfully via winget!" -Level Success
-                return $true
-            } else {
-                Write-Message "Winget installation failed, trying MSI method..." -Level Warning
-            }
-        }
-        
-        # Fallback to MSI download
-        Write-Message "Downloading PowerShell 7 MSI installer..." -Level Info
-        
-        # Get latest release URL
-        $apiUrl = "https://api.github.com/repos/PowerShell/PowerShell/releases/latest"
-        $release = Invoke-RestMethod -Uri $apiUrl -UseBasicParsing
-        
-        # Find the Windows x64 MSI
-        $msiAsset = $release.assets | Where-Object { 
-            $_.name -like "*win-x64.msi" -and $_.name -notlike "*preview*" 
-        } | Select-Object -First 1
-        
-        if (-not $msiAsset) {
-            # Fallback to hardcoded URL
-            $downloadUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/PowerShell-7-win-x64.msi"
-        } else {
-            $downloadUrl = $msiAsset.browser_download_url
-        }
-        
-        $msiPath = "$env:TEMP\PowerShell-7-win-x64.msi"
-        
-        Write-Message "Downloading from: $downloadUrl" -Level Info
-        Invoke-WebRequest -Uri $downloadUrl -OutFile $msiPath -UseBasicParsing
-        
-        if (-not (Test-Path $msiPath)) {
-            throw "Failed to download PowerShell 7 installer"
-        }
-        
-        Write-Message "Installing PowerShell 7 MSI..." -Level Info
-        
-        # Prepare MSI arguments
-        $msiArgs = @(
-            "/i",
-            "`"$msiPath`"",
-            "/quiet",
-            "ADD_EXPLORER_CONTEXT_MENU_OPENPOWERSHELL=1",
-            "ENABLE_PSREMOTING=0",
-            "REGISTER_MANIFEST=1"
-        )
-        
-        # Check if we need admin rights
-        $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-        
-        if ($isAdmin) {
-            $process = Start-Process -FilePath "msiexec.exe" -ArgumentList $msiArgs -Wait -PassThru
-        } else {
-            Write-Message "Requesting administrator privileges for installation..." -Level Warning
-            $process = Start-Process -FilePath "msiexec.exe" -ArgumentList $msiArgs -Wait -PassThru -Verb RunAs
-        }
-        
-        if ($process.ExitCode -eq 0) {
-            Write-Message "PowerShell 7 installed successfully!" -Level Success
-            
-            # Clean up
-            Remove-Item $msiPath -Force -ErrorAction SilentlyContinue
-            return $true
-        } else {
-            throw "MSI installation failed with exit code: $($process.ExitCode)"
-        }
-        
-    } catch {
-        Write-Message "Failed to install PowerShell 7: $_" -Level Error
-        return $false
-    }
-}
-
-# Main execution
-Clear-Host
 Write-Host @"
 
-    _    _ _   _               ______               
-   / \  (_) |_| |__   ___ _ _|__  /___ _ __ ___  
-  / _ \ | | __| '_ \ / _ \ '__/ // _ \ '__/ _ \ 
- / ___ \| | |_| | | |  __/ | / /|  __/ | | (_) |
-/_/   \_\_|\__|_| |_|\___|_|/____\___|_|  \___/ 
-                                                 
-        PowerShell 5.1 Bootstrap
-
+    ___   _ _   _               ____                
+   / _ \ (_) |_| |__   ___ _ __|_  /___ _ __ ___   
+  / /_\ \| | __| '_ \ / _ \ '__/ // _ \ '__/ _ \  
+ / /_\\  \| | |_| | | |  __/ | / /|  __/ | | (_) | 
+ \____/  |_|\__|_| |_|\___|_|/____\___|_|  \___/  
+                                                    
+    PowerShell 5.1 Bootstrap Installer
+    =====================================
 "@ -ForegroundColor Cyan
 
-Write-Message "Checking PowerShell version..." -Level Info
-Write-Message "Current version: $($PSVersionTable.PSVersion)" -Level Info
+# Check PowerShell version
+Write-Host "[*] Current PowerShell version: $($PSVersionTable.PSVersion)" -ForegroundColor Yellow
 
-# Check if we're already running PowerShell 7+
 if ($PSVersionTable.PSVersion.Major -ge 7) {
-    Write-Message "Already running PowerShell 7+, downloading main bootstrap..." -Level Success
+    Write-Host "[+] PowerShell 7+ detected. Running main bootstrap..." -ForegroundColor Green
     
-    # Download and run main bootstrap
-    $mainBootstrapUrl = "https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1"
-    $scriptContent = Invoke-WebRequest -Uri $mainBootstrapUrl -UseBasicParsing | Select-Object -ExpandProperty Content
+    # Already on PS7, just run the main bootstrap
+    $bootstrapUrl = "https://raw.githubusercontent.com/wizzense/AitherZero/$Branch/bootstrap.ps1"
+    $bootstrapScript = Invoke-WebRequest -Uri $bootstrapUrl -UseBasicParsing
     
-    # Build arguments
-    $scriptArgs = @{}
-    if ($InstallProfile) { $scriptArgs['InstallProfile'] = $InstallProfile }
-    if ($InstallPath) { $scriptArgs['InstallPath'] = $InstallPath }
-    if ($Branch) { $scriptArgs['Branch'] = $Branch }
-    if ($NonInteractive) { $scriptArgs['NonInteractive'] = $true }
-    if ($AutoInstallDeps) { $scriptArgs['AutoInstallDeps'] = $true }
-    if ($SkipAutoStart) { $scriptArgs['SkipAutoStart'] = $true }
-    
-    # Execute the script
-    $scriptBlock = [scriptblock]::Create($scriptContent)
-    & $scriptBlock @scriptArgs
-    
+    # Execute with original parameters
+    $scriptBlock = [scriptblock]::Create($bootstrapScript.Content)
+    & $scriptBlock -InstallProfile $InstallProfile -Branch $Branch -NonInteractive:$NonInteractive
     exit $LASTEXITCODE
 }
 
-# We're on PowerShell 5.1, need to check/install PowerShell 7
-Write-Message "PowerShell 7 is required for AitherZero" -Level Warning
+Write-Host "[!] PowerShell 5.1 detected. Checking for PowerShell 7..." -ForegroundColor Yellow
 
-$pwshPath = Test-PowerShell7
+# Check if PowerShell 7 is already installed
+$pwshPath = $null
+$possiblePaths = @(
+    "$env:ProgramFiles\PowerShell\7\pwsh.exe",
+    "$env:ProgramFiles\PowerShell\7-preview\pwsh.exe",
+    "${env:ProgramFiles(x86)}\PowerShell\7\pwsh.exe",
+    "$env:LOCALAPPDATA\Microsoft\PowerShell\pwsh.exe"
+)
 
-if (-not $pwshPath) {
-    Write-Message "PowerShell 7 not found" -Level Warning
-    
-    if (-not $NonInteractive) {
-        $response = Read-Host "Install PowerShell 7 now? (Y/n)"
-        if ($response -eq 'n') {
-            Write-Message "Installation cancelled. PowerShell 7 is required for AitherZero." -Level Error
-            exit 1
-        }
+foreach ($path in $possiblePaths) {
+    if (Test-Path $path) {
+        $pwshPath = $path
+        Write-Host "[+] Found PowerShell 7 at: $pwshPath" -ForegroundColor Green
+        break
     }
-    
-    $installed = Install-PowerShell7
-    
-    if (-not $installed) {
-        Write-Message "Failed to install PowerShell 7. Please install manually from:" -Level Error
-        Write-Message "https://github.com/PowerShell/PowerShell/releases" -Level Info
-        exit 1
-    }
-    
-    # Re-check for PowerShell 7
-    $pwshPath = Test-PowerShell7
-    
-    if (-not $pwshPath) {
-        # Default path after installation
-        $pwshPath = "$env:ProgramFiles\PowerShell\7\pwsh.exe"
-        
-        if (-not (Test-Path $pwshPath)) {
-            Write-Message "PowerShell 7 installed but not found. Please restart your terminal and try again." -Level Error
-            exit 1
-        }
-    }
-} else {
-    Write-Message "Found PowerShell 7 at: $pwshPath" -Level Success
 }
 
-# Download main bootstrap script
-Write-Message "Downloading main bootstrap script..." -Level Info
-$mainBootstrapUrl = "https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1"
-$tempBootstrap = "$env:TEMP\aitherzero-bootstrap.ps1"
+# Check in PATH
+if (-not $pwshPath) {
+    $pwshCmd = Get-Command pwsh -ErrorAction SilentlyContinue
+    if ($pwshCmd) {
+        $pwshPath = $pwshCmd.Source
+        Write-Host "[+] Found PowerShell 7 in PATH: $pwshPath" -ForegroundColor Green
+    }
+}
 
-try {
-    Invoke-WebRequest -Uri $mainBootstrapUrl -OutFile $tempBootstrap -UseBasicParsing
+# Install PowerShell 7 if not found
+if (-not $pwshPath) {
+    Write-Host "[!] PowerShell 7 not found. Installing..." -ForegroundColor Yellow
     
-    if (-not (Test-Path $tempBootstrap)) {
-        throw "Failed to download bootstrap script"
+    # Check for winget first (faster and cleaner)
+    $hasWinget = Get-Command winget -ErrorAction SilentlyContinue
+    
+    if ($hasWinget) {
+        Write-Host "[*] Installing PowerShell 7 via winget..." -ForegroundColor Cyan
+        
+        try {
+            # Accept source agreements silently
+            winget install --id Microsoft.PowerShell --source winget --accept-source-agreements --accept-package-agreements --silent
+            
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "[+] PowerShell 7 installed successfully via winget!" -ForegroundColor Green
+                
+                # Find the installed path
+                foreach ($path in $possiblePaths) {
+                    if (Test-Path $path) {
+                        $pwshPath = $path
+                        break
+                    }
+                }
+            } else {
+                throw "Winget install failed with exit code: $LASTEXITCODE"
+            }
+        } catch {
+            Write-Host "[!] Winget install failed: $_" -ForegroundColor Yellow
+            Write-Host "[*] Falling back to MSI installer..." -ForegroundColor Yellow
+        }
     }
     
-    Write-Message "Launching AitherZero bootstrap in PowerShell 7..." -Level Success
+    # Fallback to MSI installer
+    if (-not $pwshPath) {
+        Write-Host "[*] Downloading PowerShell 7 MSI installer..." -ForegroundColor Cyan
+        
+        $msiUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/PowerShell-7-win-x64.msi"
+        $msiPath = Join-Path $env:TEMP "PowerShell-7-win-x64.msi"
+        
+        try {
+            # Download with progress
+            $webClient = New-Object System.Net.WebClient
+            $webClient.DownloadFile($msiUrl, $msiPath)
+            
+            Write-Host "[*] Installing PowerShell 7..." -ForegroundColor Cyan
+            
+            # Check if running as admin
+            $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+            
+            if ($isAdmin) {
+                # Install silently
+                $arguments = "/i `"$msiPath`" /quiet ADD_EXPLORER_CONTEXT_MENU_OPENPOWERSHELL=1 ENABLE_PSREMOTING=0 REGISTER_MANIFEST=1"
+                Start-Process msiexec.exe -ArgumentList $arguments -Wait -NoNewWindow
+            } else {
+                # Request elevation
+                Write-Host "[!] Administrator privileges required for installation." -ForegroundColor Yellow
+                
+                if (-not $NonInteractive) {
+                    $response = Read-Host "Elevate to administrator? (Y/n)"
+                    if ($response -ne 'n') {
+                        $arguments = "/i `"$msiPath`" /quiet ADD_EXPLORER_CONTEXT_MENU_OPENPOWERSHELL=1 ENABLE_PSREMOTING=0 REGISTER_MANIFEST=1"
+                        Start-Process msiexec.exe -ArgumentList $arguments -Verb RunAs -Wait
+                    } else {
+                        Write-Host "[-] Installation cancelled. Please run as administrator." -ForegroundColor Red
+                        exit 1
+                    }
+                } else {
+                    Write-Host "[-] Cannot install without admin rights in non-interactive mode." -ForegroundColor Red
+                    exit 1
+                }
+            }
+            
+            # Clean up
+            Remove-Item $msiPath -Force -ErrorAction SilentlyContinue
+            
+            Write-Host "[+] PowerShell 7 installed successfully!" -ForegroundColor Green
+            
+            # Find the installed path
+            foreach ($path in $possiblePaths) {
+                if (Test-Path $path) {
+                    $pwshPath = $path
+                    break
+                }
+            }
+            
+        } catch {
+            Write-Host "[-] Failed to install PowerShell 7: $_" -ForegroundColor Red
+            exit 1
+        }
+    }
+}
+
+# Verify PowerShell 7 is available
+if (-not $pwshPath -or -not (Test-Path $pwshPath)) {
+    Write-Host "[-] PowerShell 7 installation completed but executable not found." -ForegroundColor Red
+    Write-Host "[!] Please restart your terminal and run this script again." -ForegroundColor Yellow
+    exit 1
+}
+
+Write-Host "[+] PowerShell 7 is available at: $pwshPath" -ForegroundColor Green
+
+# Download and run the main bootstrap script in PowerShell 7
+Write-Host "[*] Launching AitherZero bootstrap in PowerShell 7..." -ForegroundColor Cyan
+
+# Download the main bootstrap script
+$bootstrapUrl = "https://raw.githubusercontent.com/wizzense/AitherZero/$Branch/bootstrap.ps1"
+$localBootstrap = Join-Path $env:TEMP "aitherzero-bootstrap.ps1"
+
+try {
+    Write-Host "[*] Downloading bootstrap script..." -ForegroundColor White
+    Invoke-WebRequest -Uri $bootstrapUrl -OutFile $localBootstrap -UseBasicParsing
     
-    # Build arguments for PowerShell 7
-    $pwshArgs = @(
+    # Build arguments
+    $arguments = @(
         "-NoProfile",
         "-ExecutionPolicy", "Bypass",
-        "-File", $tempBootstrap
+        "-File", "`"$localBootstrap`"",
+        "-InstallProfile", $InstallProfile,
+        "-Branch", $Branch
     )
     
-    # Add our parameters
-    if ($InstallProfile) { $pwshArgs += "-InstallProfile", $InstallProfile }
-    if ($InstallPath) { $pwshArgs += "-InstallPath", $InstallPath }
-    if ($Branch) { $pwshArgs += "-Branch", $Branch }
-    if ($NonInteractive) { $pwshArgs += "-NonInteractive" }
-    if ($AutoInstallDeps) { $pwshArgs += "-AutoInstallDeps" }
-    if ($SkipAutoStart) { $pwshArgs += "-SkipAutoStart" }
+    if ($NonInteractive) {
+        $arguments += "-NonInteractive"
+    }
     
-    # Launch PowerShell 7 with the main bootstrap
-    Write-Message "Starting PowerShell 7..." -Level Info
-    Start-Process -FilePath $pwshPath -ArgumentList $pwshArgs -Wait -NoNewWindow
+    Write-Host "[*] Starting PowerShell 7 with bootstrap..." -ForegroundColor Cyan
+    Write-Host "[*] Command: $pwshPath $($arguments -join ' ')" -ForegroundColor Gray
+    
+    # Launch PowerShell 7 with the bootstrap script
+    $process = Start-Process -FilePath $pwshPath -ArgumentList $arguments -PassThru -NoNewWindow -Wait
     
     # Clean up
-    Remove-Item $tempBootstrap -Force -ErrorAction SilentlyContinue
+    Remove-Item $localBootstrap -Force -ErrorAction SilentlyContinue
     
-    Write-Message "Bootstrap completed!" -Level Success
+    if ($process.ExitCode -eq 0) {
+        Write-Host "[+] Bootstrap completed successfully!" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "Next steps:" -ForegroundColor Cyan
+        Write-Host "  1. Close this PowerShell 5.1 window" -ForegroundColor White
+        Write-Host "  2. Open PowerShell 7 (pwsh)" -ForegroundColor White
+        Write-Host "  3. Navigate to your AitherZero directory" -ForegroundColor White
+        Write-Host "  4. Run: ./Start-AitherZero.ps1" -ForegroundColor White
+    } else {
+        Write-Host "[-] Bootstrap failed with exit code: $($process.ExitCode)" -ForegroundColor Red
+    }
+    
+    exit $process.ExitCode
     
 } catch {
-    Write-Message "Failed to run bootstrap: $_" -Level Error
+    Write-Host "[-] Failed to run bootstrap: $_" -ForegroundColor Red
     
     # Clean up on error
-    if (Test-Path $tempBootstrap) {
-        Remove-Item $tempBootstrap -Force -ErrorAction SilentlyContinue
+    if (Test-Path $localBootstrap) {
+        Remove-Item $localBootstrap -Force -ErrorAction SilentlyContinue
     }
     
     exit 1

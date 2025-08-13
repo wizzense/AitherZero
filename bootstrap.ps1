@@ -1,5 +1,5 @@
-#!/usr/bin/env pwsh
-# Supports PowerShell 5.1+ but will install PowerShell 7
+# This script supports PowerShell 5.1+ and will upgrade to PowerShell 7 if needed
+# No shebang to ensure compatibility with PowerShell 5.1
 
 <#
 .SYNOPSIS
@@ -202,7 +202,18 @@ function Install-Dependencies {
         Write-BootstrapLog "Re-launching bootstrap in PowerShell 7..." -Level Info
         
         $pwsh = if (Test-IsWindows) { "pwsh.exe" } else { "pwsh" }
-        $scriptPath = $MyInvocation.PSCommandPath
+        
+        # For PS 5.1, we might not have PSCommandPath, so handle that
+        $scriptPath = if ($MyInvocation.PSCommandPath) {
+            $MyInvocation.PSCommandPath
+        } elseif ($MyInvocation.MyCommand.Path) {
+            $MyInvocation.MyCommand.Path
+        } else {
+            # Running from a download or memory - save to temp and run from there
+            $tempScript = Join-Path ([System.IO.Path]::GetTempPath()) "bootstrap-aitherzero.ps1"
+            $MyInvocation.MyCommand.ScriptBlock.ToString() | Set-Content -Path $tempScript -Force
+            $tempScript
+        }
         
         # Build arguments to preserve
         $arguments = @()
@@ -214,7 +225,30 @@ function Install-Dependencies {
         if ($AutoInstallDeps) { $arguments += "-AutoInstallDeps" }
         if ($SkipAutoStart) { $arguments += "-SkipAutoStart" }
         
-        & $pwsh -NoProfile -ExecutionPolicy Bypass -File $scriptPath @args
+        # Check if pwsh exists before trying to run it
+        $pwshPath = Get-Command $pwsh -ErrorAction SilentlyContinue
+        if (-not $pwshPath) {
+            # Try known locations on Windows
+            if (Test-IsWindows) {
+                $possiblePaths = @(
+                    "$env:ProgramFiles\PowerShell\7\pwsh.exe",
+                    "$env:ProgramFiles\PowerShell\7-preview\pwsh.exe",
+                    "${env:ProgramFiles(x86)}\PowerShell\7\pwsh.exe"
+                )
+                foreach ($path in $possiblePaths) {
+                    if (Test-Path $path) {
+                        $pwsh = $path
+                        break
+                    }
+                }
+            }
+        }
+        
+        if (Test-Path $scriptPath) {
+            & $pwsh -NoProfile -ExecutionPolicy Bypass -File $scriptPath @arguments
+        } else {
+            Write-BootstrapLog "Cannot re-launch: Script path not found. Please run bootstrap.ps1 again." -Level Error
+        }
         exit $LASTEXITCODE
     }
     
@@ -664,22 +698,42 @@ function Initialize-CleanEnvironment {
     
     # Set AitherZero root - use the directory containing AitherZero.psd1
     $currentPath = Get-Location
-    if (Test-Path "./AitherZero.psd1") {
-        $script:ProjectRoot = $currentPath.Path
-    } elseif ($env:AITHERZERO_ROOT -and (Test-Path "$env:AITHERZERO_ROOT/AitherZero.psd1")) {
+    
+    # More robust path handling for PS 5.1 compatibility
+    $currentPathString = if ($currentPath.Path) { $currentPath.Path } else { $currentPath.ToString() }
+    
+    if (Test-Path (Join-Path $currentPathString "AitherZero.psd1")) {
+        $script:ProjectRoot = $currentPathString
+    } elseif ($env:AITHERZERO_ROOT -and (Test-Path (Join-Path $env:AITHERZERO_ROOT "AitherZero.psd1"))) {
         $script:ProjectRoot = $env:AITHERZERO_ROOT
     } else {
         # Try to find AitherZero.psd1 in parent directories
-        $testPath = $currentPath
-        while ($testPath -and $testPath.Path -ne $testPath.Drive.Root) {
+        $testPath = $currentPathString
+        $maxDepth = 10  # Prevent infinite loops
+        $depth = 0
+        
+        while ($testPath -and $depth -lt $maxDepth) {
             if (Test-Path (Join-Path $testPath "AitherZero.psd1")) {
-                $script:ProjectRoot = $testPath.Path
+                $script:ProjectRoot = $testPath
                 break
             }
-            $testPath = Split-Path $testPath -Parent
+            
+            $parentPath = Split-Path $testPath -Parent
+            if (-not $parentPath -or $parentPath -eq $testPath) {
+                break  # Reached root
+            }
+            $testPath = $parentPath
+            $depth++
         }
+        
         if (-not $script:ProjectRoot) {
-            $script:ProjectRoot = $currentPath.Path
+            # Last resort - check if bootstrap.ps1 is in same directory as AitherZero.psd1
+            $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path -ErrorAction SilentlyContinue
+            if ($scriptDir -and (Test-Path (Join-Path $scriptDir "AitherZero.psd1"))) {
+                $script:ProjectRoot = $scriptDir
+            } else {
+                $script:ProjectRoot = $currentPathString
+            }
         }
     }
     $env:AITHERZERO_ROOT = $script:ProjectRoot
