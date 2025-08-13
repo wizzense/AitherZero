@@ -22,10 +22,10 @@
     Don't auto-start AitherZero after installation
 .EXAMPLE
     # One-liner installation (PowerShell 5.1+)
-    iwr -useb https://raw.githubusercontent.com/yourusername/AitherZero/main/bootstrap.ps1 | iex
+    iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex
 
     # One-liner with options
-    & ([scriptblock]::Create((iwr -useb https://raw.githubusercontent.com/yourusername/AitherZero/main/bootstrap.ps1))) -InstallProfile Developer -AutoInstallDeps
+    & ([scriptblock]::Create((iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1))) -InstallProfile Developer -AutoInstallDeps
 #>
 
 [CmdletBinding()]
