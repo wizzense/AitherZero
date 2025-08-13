@@ -1,0 +1,952 @@
+name: Production CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop, 'release/**']
+    tags: ['v*']
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  schedule:
+    - cron: '0 2 * * *'  # Nightly builds at 2 AM UTC
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target Environment'
+        type: choice
+        options: ['development', 'staging', 'production']
+        default: 'development'
+      skip_tests:
+        description: 'Skip Tests'
+        type: boolean
+        default: false
+
+# Prevent duplicate runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+  issues: write
+  pages: write
+  id-token: write
+  packages: write
+  actions: read
+  statuses: write
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+  DOTNET_NOLOGO: true
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+
+jobs:
+  # === STAGE 1: BUILD & VALIDATE ===
+  build:
+    name: Build & Validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+      should_release: ${{ steps.version.outputs.should_release }}
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for version calculation
+        
+    - name: 🔍 Calculate Version
+      id: version
+      shell: pwsh
+      run: |
+        # Semantic versioning based on git history
+        $version = Get-Content ./VERSION -Raw
+        $buildNumber = "${{ github.run_number }}"
+        $sha = "${{ github.sha }}".Substring(0, 7)
+        
+        if ("${{ github.ref }}" -match "^refs/tags/v") {
+          $version = "${{ github.ref }}".Replace("refs/tags/v", "")
+          $prerelease = "false"
+          $shouldRelease = "true"
+        } elseif ("${{ github.ref }}" -eq "refs/heads/main") {
+          $version = "$version.$buildNumber"
+          $prerelease = "false"
+          $shouldRelease = "true"
+        } elseif ("${{ github.ref }}" -match "^refs/heads/release/") {
+          $version = "$version-rc.$buildNumber"
+          $prerelease = "true"
+          $shouldRelease = "true"
+        } else {
+          $version = "$version-dev.$buildNumber+$sha"
+          $prerelease = "true"
+          $shouldRelease = "false"
+        }
+        
+        Write-Host "Version: $version"
+        Write-Host "Prerelease: $prerelease"
+        Write-Host "Should Release: $shouldRelease"
+        
+        echo "version=$version" >> $env:GITHUB_OUTPUT
+        echo "prerelease=$prerelease" >> $env:GITHUB_OUTPUT
+        echo "should_release=$shouldRelease" >> $env:GITHUB_OUTPUT
+        
+        # Update module manifest
+        $manifest = Get-Content ./AitherZero.psd1 -Raw
+        $manifest = $manifest -replace "ModuleVersion\s*=\s*'[\d\.]+'", "ModuleVersion = '$version'"
+        $manifest | Set-Content ./AitherZero.psd1
+    
+    - name: 🔧 Bootstrap Environment
+      shell: pwsh
+      run: ./bootstrap.ps1 -Mode New -NonInteractive
+    
+    - name: 🧪 Syntax Validation
+      shell: pwsh
+      run: ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0407 -CI
+    
+    - name: 📊 PSScriptAnalyzer
+      shell: pwsh
+      run: |
+        ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0404 -CI
+        
+        # Convert to SARIF for GitHub Code Scanning
+        if (Test-Path ./tests/analysis/PSScriptAnalyzer-*.csv) {
+          $latest = Get-ChildItem ./tests/analysis/PSScriptAnalyzer-*.csv | 
+                    Sort-Object LastWriteTime -Descending | 
+                    Select-Object -First 1
+          
+          # Convert to SARIF format
+          $sarif = @{
+            version = "2.1.0"
+            runs = @(@{
+              tool = @{
+                driver = @{
+                  name = "PSScriptAnalyzer"
+                  version = "1.21.0"
+                }
+              }
+              results = @()
+            })
+          }
+          
+          Import-Csv $latest | ForEach-Object {
+            $sarif.runs[0].results += @{
+              ruleId = $_.RuleName
+              level = if ($_.Severity -eq "Error") { "error" } elseif ($_.Severity -eq "Warning") { "warning" } else { "note" }
+              message = @{ text = $_.Message }
+              locations = @(@{
+                physicalLocation = @{
+                  artifactLocation = @{ uri = $_.ScriptName }
+                  region = @{
+                    startLine = [int]$_.Line
+                    startColumn = [int]$_.Column
+                  }
+                }
+              })
+            }
+          }
+          
+          $sarif | ConvertTo-Json -Depth 10 | Set-Content ./psscriptanalyzer.sarif
+        }
+    
+    - name: 📤 Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: |
+          AitherZero.psd1
+          psscriptanalyzer.sarif
+        retention-days: 7
+    
+    - name: 🔍 Upload Code Scanning Results
+      if: always()
+      uses: github/codeql-action/upload-sarif@v3
+      continue-on-error: true
+      with:
+        sarif_file: psscriptanalyzer.sarif
+        category: PSScriptAnalyzer
+
+  # === STAGE 2: COMPREHENSIVE TESTING ===
+  test:
+    name: Test - ${{ matrix.name }}
+    needs: build
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    if: ${{ !github.event.inputs.skip_tests }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows Latest
+            os: windows-latest
+            pwsh: pwsh
+          - name: Ubuntu Latest
+            os: ubuntu-latest
+            pwsh: pwsh
+          - name: macOS Latest
+            os: macos-latest
+            pwsh: pwsh
+          - name: Windows PS 5.1
+            os: windows-2019
+            pwsh: powershell
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: 🔧 Bootstrap
+      shell: ${{ matrix.pwsh }}
+      run: |
+        if ("${{ matrix.pwsh }}" -eq "powershell") {
+          # Use PS5.1 bootstrap
+          iwr -useb https://raw.githubusercontent.com/${{ github.repository }}/main/bootstrap-ps5.ps1 | iex
+        } else {
+          ./bootstrap.ps1 -Mode New -NonInteractive
+        }
+    
+    - name: 🧪 Unit Tests
+      shell: ${{ matrix.pwsh }}
+      run: |
+        ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0402 -CI
+        
+        # Generate JUnit XML for test reporting
+        if (Test-Path ./tests/results/UnitTests-*.xml) {
+          $latest = Get-ChildItem ./tests/results/UnitTests-*.xml | 
+                    Sort-Object LastWriteTime -Descending | 
+                    Select-Object -First 1
+          Copy-Item $latest ./junit-unit.xml
+        }
+    
+    - name: 🔗 Integration Tests
+      shell: ${{ matrix.pwsh }}
+      run: |
+        ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0403 -CI
+        
+        if (Test-Path ./tests/results/IntegrationTests-*.xml) {
+          $latest = Get-ChildItem ./tests/results/IntegrationTests-*.xml | 
+                    Sort-Object LastWriteTime -Descending | 
+                    Select-Object -First 1
+          Copy-Item $latest ./junit-integration.xml
+        }
+    
+    - name: 📊 Code Coverage
+      shell: ${{ matrix.pwsh }}
+      run: |
+        ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0406 -CI
+        
+        if (Test-Path ./tests/coverage/Coverage-*.xml) {
+          $latest = Get-ChildItem ./tests/coverage/Coverage-*.xml | 
+                    Sort-Object LastWriteTime -Descending | 
+                    Select-Object -First 1
+          Copy-Item $latest ./coverage.xml
+        }
+    
+    - name: 📈 Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Test Results - ${{ matrix.name }}
+        path: 'junit-*.xml'
+        reporter: java-junit
+        fail-on-error: false
+    
+    - name: 📊 Upload Coverage to Codecov
+      uses: codecov/codecov-action@v4
+      if: matrix.os == 'ubuntu-latest'
+      continue-on-error: true
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-${{ matrix.name }}
+    
+    - name: 📤 Upload Test Artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ matrix.os }}-${{ github.run_number }}
+        path: |
+          tests/results/
+          tests/reports/
+          tests/coverage/
+          junit-*.xml
+          coverage.xml
+        retention-days: 30
+
+  # === STAGE 3: SECURITY SCANNING ===
+  security:
+    name: Security Scanning
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: 🔒 Run Trivy Security Scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: 🔍 Upload Security Results
+      uses: github/codeql-action/upload-sarif@v3
+      continue-on-error: true
+      with:
+        sarif_file: trivy-results.sarif
+        category: Trivy
+    
+    - name: 🔐 OWASP Dependency Check
+      uses: dependency-check/Dependency-Check_Action@main
+      continue-on-error: true
+      with:
+        project: 'AitherZero'
+        path: '.'
+        format: 'HTML'
+        args: >
+          --enableRetired
+          --enableExperimental
+    
+    - name: 📤 Upload Security Reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-reports
+        path: |
+          trivy-results.sarif
+          reports/
+        retention-days: 30
+
+  # === STAGE 4: PERFORMANCE TESTING ===
+  performance:
+    name: Performance Testing
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: 🔧 Bootstrap
+      shell: pwsh
+      run: ./bootstrap.ps1 -Mode New -NonInteractive
+    
+    - name: ⚡ Performance Tests
+      shell: pwsh
+      run: |
+        # Run performance benchmarks
+        $results = @{
+          Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+          Benchmarks = @()
+        }
+        
+        # Module loading performance
+        $loadTime = Measure-Command {
+          Import-Module ./AitherZero.psd1 -Force
+        }
+        $results.Benchmarks += @{
+          Name = "Module Load Time"
+          Duration = $loadTime.TotalMilliseconds
+          Unit = "ms"
+        }
+        
+        # Orchestration performance
+        $orchTime = Measure-Command {
+          ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0501 -CI -WhatIf
+        }
+        $results.Benchmarks += @{
+          Name = "Orchestration Overhead"
+          Duration = $orchTime.TotalMilliseconds
+          Unit = "ms"
+        }
+        
+        # Save results
+        $results | ConvertTo-Json -Depth 10 | Set-Content ./performance-results.json
+        
+        # Check against thresholds
+        $failed = $false
+        foreach ($benchmark in $results.Benchmarks) {
+          Write-Host "$($benchmark.Name): $($benchmark.Duration) $($benchmark.Unit)"
+          
+          # Define thresholds
+          $thresholds = @{
+            "Module Load Time" = 5000  # 5 seconds
+            "Orchestration Overhead" = 2000  # 2 seconds
+          }
+          
+          if ($thresholds.ContainsKey($benchmark.Name)) {
+            if ($benchmark.Duration -gt $thresholds[$benchmark.Name]) {
+              Write-Warning "$($benchmark.Name) exceeded threshold: $($benchmark.Duration) > $($thresholds[$benchmark.Name])"
+              $failed = $true
+            }
+          }
+        }
+        
+        if ($failed) {
+          exit 1
+        }
+    
+    - name: 📤 Upload Performance Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-results
+        path: performance-results.json
+        retention-days: 30
+
+  # === STAGE 5: DOCUMENTATION & REPORTING ===
+  documentation:
+    name: Generate Documentation
+    needs: [build, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: always()
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: 📥 Download All Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+    
+    - name: 🔧 Bootstrap
+      shell: pwsh
+      run: ./bootstrap.ps1 -Mode New -NonInteractive
+    
+    - name: 📊 Generate Comprehensive Report
+      shell: pwsh
+      run: |
+        # Aggregate all test results
+        $testResults = @{
+          Summary = @{
+            Date = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+            RunNumber = "${{ github.run_number }}"
+            RunId = "${{ github.run_id }}"
+            Repository = "${{ github.repository }}"
+            Branch = "${{ github.ref_name }}"
+            Commit = "${{ github.sha }}"
+            CommitMessage = "${{ github.event.head_commit.message }}"
+            Author = "${{ github.actor }}"
+            Version = "${{ needs.build.outputs.version }}"
+          }
+          Tests = @{
+            Unit = @()
+            Integration = @()
+            Coverage = @()
+          }
+          Analysis = @{
+            PSScriptAnalyzer = @()
+            Security = @()
+            Performance = @()
+          }
+        }
+        
+        # Process test results from artifacts
+        Get-ChildItem -Path ./artifacts -Recurse -Filter "*.xml" | ForEach-Object {
+          if ($_.Name -match "UnitTests") {
+            $testResults.Tests.Unit += [xml](Get-Content $_.FullName)
+          } elseif ($_.Name -match "IntegrationTests") {
+            $testResults.Tests.Integration += [xml](Get-Content $_.FullName)
+          } elseif ($_.Name -match "Coverage") {
+            $testResults.Tests.Coverage += [xml](Get-Content $_.FullName)
+          }
+        }
+        
+        # Generate HTML report
+        ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0510 -CI
+        
+        # Create dashboard
+        ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0511 -CI
+        
+        # Save aggregated results
+        $testResults | ConvertTo-Json -Depth 10 | Set-Content ./test-results-aggregated.json
+    
+    - name: 📚 Generate API Documentation
+      shell: pwsh
+      run: |
+        # Generate PowerShell help documentation
+        Import-Module ./AitherZero.psd1 -Force
+        
+        $modules = Get-Module AitherZero | Select-Object -ExpandProperty NestedModules
+        $documentation = @{
+          Modules = @()
+          Functions = @()
+          Generated = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        }
+        
+        foreach ($module in $modules) {
+          $functions = Get-Command -Module $module.Name -CommandType Function
+          
+          $moduleDoc = @{
+            Name = $module.Name
+            Version = $module.Version
+            Description = $module.Description
+            Functions = @()
+          }
+          
+          foreach ($function in $functions) {
+            $help = Get-Help $function.Name -Full -ErrorAction SilentlyContinue
+            
+            $functionDoc = @{
+              Name = $function.Name
+              Synopsis = $help.Synopsis
+              Description = $help.Description
+              Parameters = $help.Parameters
+              Examples = $help.Examples
+            }
+            
+            $moduleDoc.Functions += $functionDoc
+            $documentation.Functions += $functionDoc
+          }
+          
+          $documentation.Modules += $moduleDoc
+        }
+        
+        # Save as JSON
+        $documentation | ConvertTo-Json -Depth 10 | Set-Content ./api-documentation.json
+        
+        # Generate Markdown
+        $markdown = "# AitherZero API Documentation`n`n"
+        $markdown += "Generated: $($documentation.Generated)`n`n"
+        
+        foreach ($module in $documentation.Modules) {
+          $markdown += "## Module: $($module.Name)`n`n"
+          $markdown += "$($module.Description)`n`n"
+          
+          foreach ($function in $module.Functions) {
+            $markdown += "### $($function.Name)`n`n"
+            $markdown += "$($function.Synopsis)`n`n"
+            $markdown += "$($function.Description)`n`n"
+          }
+        }
+        
+        $markdown | Set-Content ./api-documentation.md
+    
+    - name: 📤 Upload Documentation
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation
+        path: |
+          test-results-aggregated.json
+          api-documentation.*
+          tests/reports/
+        retention-days: 30
+
+  # === STAGE 6: RELEASE MANAGEMENT ===
+  release:
+    name: Create Release
+    needs: [build, test, security, performance]
+    runs-on: ubuntu-latest
+    if: needs.build.outputs.should_release == 'true' && github.event_name == 'push'
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: 📥 Download Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+    
+    - name: 📦 Package Module
+      shell: pwsh
+      run: |
+        # Create release package
+        $version = "${{ needs.build.outputs.version }}"
+        $packageName = "AitherZero-v$version"
+        
+        # Create package directory
+        New-Item -ItemType Directory -Path "./$packageName" -Force
+        
+        # Copy files
+        Copy-Item -Path @(
+          "*.psd1", "*.psm1", "*.ps1",
+          "domains", "automation-scripts", "orchestration",
+          "config.example.psd1", "README.md", "LICENSE", "CHANGELOG.md"
+        ) -Destination "./$packageName" -Recurse
+        
+        # Create ZIP
+        Compress-Archive -Path "./$packageName" -DestinationPath "./$packageName.zip"
+        
+        # Create TAR.GZ for Unix systems
+        tar -czf "./$packageName.tar.gz" "./$packageName"
+        
+        # Generate checksums
+        $zipHash = (Get-FileHash "./$packageName.zip" -Algorithm SHA256).Hash
+        $tarHash = (Get-FileHash "./$packageName.tar.gz" -Algorithm SHA256).Hash
+        
+        @"
+        $zipHash  $packageName.zip
+        $tarHash  $packageName.tar.gz
+        "@ | Set-Content ./checksums.txt
+    
+    - name: 📝 Generate Release Notes
+      shell: pwsh
+      run: |
+        $version = "${{ needs.build.outputs.version }}"
+        $previousTag = git describe --tags --abbrev=0 HEAD^ 2>$null || "HEAD~20"
+        
+        $releaseNotes = @"
+        # Release v$version
+        
+        ## 📊 Test Results
+        
+        View the full test report at: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/reports/v$version/
+        
+        ## 🎯 What's Changed
+        
+        "@ 
+        
+        # Get commits since last tag
+        $commits = git log "$previousTag..HEAD" --pretty=format:"- %s (%an)" --no-merges
+        $releaseNotes += $commits -join "`n"
+        
+        $releaseNotes += @"
+        
+        ## 📦 Installation
+        
+        \`\`\`powershell
+        # Download and extract
+        Invoke-WebRequest -Uri "https://github.com/${{ github.repository }}/releases/download/v$version/AitherZero-v$version.zip" -OutFile AitherZero.zip
+        Expand-Archive -Path AitherZero.zip -DestinationPath ./
+        
+        # Or use the bootstrap script
+        iwr -useb https://raw.githubusercontent.com/${{ github.repository }}/v$version/bootstrap.ps1 | iex
+        \`\`\`
+        
+        ## 📄 Checksums
+        
+        \`\`\`
+        $(Get-Content ./checksums.txt -Raw)
+        \`\`\`
+        
+        ## 📈 Statistics
+        
+        - **Run Number**: #${{ github.run_number }}
+        - **Commit**: ${{ github.sha }}
+        - **Author**: @${{ github.actor }}
+        
+        ---
+        
+        **Full Changelog**: https://github.com/${{ github.repository }}/compare/$previousTag...v$version
+        "@
+        
+        $releaseNotes | Set-Content ./release-notes.md
+    
+    - name: 🏷️ Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ needs.build.outputs.version }}
+        name: Release v${{ needs.build.outputs.version }}
+        body_path: ./release-notes.md
+        draft: false
+        prerelease: ${{ needs.build.outputs.prerelease == 'true' }}
+        files: |
+          AitherZero-*.zip
+          AitherZero-*.tar.gz
+          checksums.txt
+    
+    - name: 📦 Publish to PowerShell Gallery
+      if: needs.build.outputs.prerelease == 'false'
+      shell: pwsh
+      env:
+        PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
+      run: |
+        if ($env:PSGALLERY_API_KEY) {
+          # Update manifest with release metadata
+          Update-ModuleManifest -Path ./AitherZero.psd1 `
+            -ReleaseNotes "https://github.com/${{ github.repository }}/releases/tag/v${{ needs.build.outputs.version }}"
+          
+          # Publish to gallery
+          Publish-Module -Path . -NuGetApiKey $env:PSGALLERY_API_KEY -Repository PSGallery
+        } else {
+          Write-Warning "PSGallery API key not configured - skipping publication"
+        }
+
+  # === STAGE 7: DEPLOY DOCUMENTATION ===
+  deploy-docs:
+    name: Deploy Documentation
+    needs: [documentation, release]
+    runs-on: ubuntu-latest
+    if: always() && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+    
+    permissions:
+      pages: write
+      id-token: write
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: 📥 Download Documentation
+      uses: actions/download-artifact@v4
+      with:
+        name: documentation
+        path: docs-temp/
+    
+    - name: 🔧 Setup Pages
+      uses: actions/configure-pages@v5
+    
+    - name: 📚 Prepare GitHub Pages Content
+      shell: pwsh
+      run: |
+        # Create docs structure
+        $docsPath = "./github-pages"
+        New-Item -ItemType Directory -Path $docsPath -Force
+        
+        # Create index page
+        @"
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>AitherZero - CI/CD Dashboard</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { 
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    min-height: 100vh;
+                    padding: 2rem;
+                }
+                .container {
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    background: white;
+                    border-radius: 1rem;
+                    padding: 2rem;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                }
+                h1 {
+                    color: #333;
+                    margin-bottom: 2rem;
+                    text-align: center;
+                    font-size: 2.5rem;
+                }
+                .metrics {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                    gap: 1.5rem;
+                    margin-bottom: 2rem;
+                }
+                .metric {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 1.5rem;
+                    border-radius: 0.5rem;
+                    text-align: center;
+                }
+                .metric-value {
+                    font-size: 2rem;
+                    font-weight: bold;
+                    margin-bottom: 0.5rem;
+                }
+                .metric-label {
+                    font-size: 0.9rem;
+                    opacity: 0.9;
+                }
+                .section {
+                    margin-bottom: 2rem;
+                }
+                .section h2 {
+                    color: #333;
+                    margin-bottom: 1rem;
+                    padding-bottom: 0.5rem;
+                    border-bottom: 2px solid #667eea;
+                }
+                .links {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 1rem;
+                }
+                .link-card {
+                    display: block;
+                    padding: 1rem;
+                    background: #f7f7f7;
+                    border-radius: 0.5rem;
+                    text-decoration: none;
+                    color: #333;
+                    transition: transform 0.2s, box-shadow 0.2s;
+                    text-align: center;
+                }
+                .link-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                    background: #667eea;
+                    color: white;
+                }
+                .badge {
+                    display: inline-block;
+                    padding: 0.25rem 0.5rem;
+                    background: #28a745;
+                    color: white;
+                    border-radius: 0.25rem;
+                    font-size: 0.8rem;
+                    margin: 0.25rem;
+                }
+                .badge.warning { background: #ffc107; }
+                .badge.error { background: #dc3545; }
+                iframe {
+                    width: 100%;
+                    height: 600px;
+                    border: 1px solid #ddd;
+                    border-radius: 0.5rem;
+                    margin-top: 1rem;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🚀 AitherZero CI/CD Dashboard</h1>
+                
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value">${{ github.run_number }}</div>
+                        <div class="metric-label">Build Number</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">${{ needs.build.outputs.version || 'N/A' }}</div>
+                        <div class="metric-label">Version</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="test-pass-rate">--%</div>
+                        <div class="metric-label">Test Pass Rate</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="code-coverage">--%</div>
+                        <div class="metric-label">Code Coverage</div>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2>📊 Latest Reports</h2>
+                    <div class="links">
+                        <a href="./reports/latest/test-report.html" class="link-card">Test Results</a>
+                        <a href="./reports/latest/coverage-report.html" class="link-card">Coverage Report</a>
+                        <a href="./reports/latest/performance-report.html" class="link-card">Performance Metrics</a>
+                        <a href="./reports/latest/security-report.html" class="link-card">Security Scan</a>
+                        <a href="./api-documentation.html" class="link-card">API Documentation</a>
+                        <a href="./reports/latest/dashboard.html" class="link-card">Full Dashboard</a>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2>🏷️ Build Status</h2>
+                    <p>
+                        <img src="https://github.com/${{ github.repository }}/actions/workflows/ci-cd-pipeline.yml/badge.svg" alt="CI/CD Pipeline">
+                        <img src="https://codecov.io/gh/${{ github.repository }}/branch/main/graph/badge.svg" alt="Code Coverage">
+                        <img src="https://img.shields.io/github/v/release/${{ github.repository }}" alt="Latest Release">
+                        <img src="https://img.shields.io/powershellgallery/v/AitherZero" alt="PowerShell Gallery">
+                    </p>
+                </div>
+                
+                <div class="section">
+                    <h2>📈 Test Trends</h2>
+                    <iframe src="./reports/trends/test-trends.html"></iframe>
+                </div>
+                
+                <div class="section">
+                    <h2>🔗 Quick Links</h2>
+                    <div class="links">
+                        <a href="https://github.com/${{ github.repository }}" class="link-card">GitHub Repository</a>
+                        <a href="https://github.com/${{ github.repository }}/actions" class="link-card">Actions</a>
+                        <a href="https://github.com/${{ github.repository }}/releases" class="link-card">Releases</a>
+                        <a href="https://github.com/${{ github.repository }}/issues" class="link-card">Issues</a>
+                    </div>
+                </div>
+            </div>
+            
+            <script>
+                // Load test metrics from JSON
+                fetch('./test-results-aggregated.json')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Update metrics
+                        if (data.Tests && data.Tests.Unit) {
+                            const total = data.Tests.Unit.reduce((sum, t) => sum + t.TotalTests, 0);
+                            const passed = data.Tests.Unit.reduce((sum, t) => sum + t.Passed, 0);
+                            const passRate = total > 0 ? Math.round((passed / total) * 100) : 0;
+                            document.getElementById('test-pass-rate').textContent = passRate + '%';
+                        }
+                        
+                        if (data.Tests && data.Tests.Coverage) {
+                            const coverage = data.Tests.Coverage[0]?.CoveragePercent || 0;
+                            document.getElementById('code-coverage').textContent = coverage + '%';
+                        }
+                    })
+                    .catch(console.error);
+            </script>
+        </body>
+        </html>
+        "@ | Set-Content "$docsPath/index.html"
+        
+        # Copy reports
+        if (Test-Path ./docs-temp) {
+          Copy-Item -Path ./docs-temp/* -Destination "$docsPath/" -Recurse -Force
+        }
+        
+        # Create reports directory structure
+        New-Item -ItemType Directory -Path "$docsPath/reports/latest" -Force
+        New-Item -ItemType Directory -Path "$docsPath/reports/trends" -Force
+        New-Item -ItemType Directory -Path "$docsPath/reports/archive" -Force
+    
+    - name: 📤 Upload Pages Artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./github-pages
+    
+    - name: 🚀 Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+
+  # === STAGE 8: NOTIFICATIONS ===
+  notify:
+    name: Send Notifications
+    needs: [build, test, security, performance, release]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: 📧 Slack Notification
+      if: vars.SLACK_WEBHOOK_URL
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        text: |
+          Pipeline ${{ job.status == 'success' && 'succeeded' || 'failed' }}
+          Version: ${{ needs.build.outputs.version }}
+          Commit: ${{ github.sha }}
+          Author: ${{ github.actor }}
+        webhook_url: ${{ vars.SLACK_WEBHOOK_URL }}
+    
+    - name: 📨 Email Notification
+      if: failure() && vars.EMAIL_NOTIFICATIONS == 'true'
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 465
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: AitherZero Pipeline Failed - Build #${{ github.run_number }}
+        to: ${{ vars.EMAIL_RECIPIENTS }}
+        from: AitherZero CI/CD
+        body: |
+          Pipeline failed for commit ${{ github.sha }}
+          
+          Repository: ${{ github.repository }}
+          Branch: ${{ github.ref_name }}
+          Author: ${{ github.actor }}
+          
+          View details: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}

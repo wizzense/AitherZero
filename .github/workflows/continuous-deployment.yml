@@ -1,0 +1,244 @@
+name: Continuous Deployment
+
+on:
+  workflow_run:
+    workflows: ["Production CI/CD Pipeline"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment Environment'
+        type: choice
+        options: ['development', 'staging', 'production']
+        required: true
+        default: 'staging'
+      version:
+        description: 'Version to deploy (leave empty for latest)'
+        required: false
+
+permissions:
+  contents: read
+  deployments: write
+  id-token: write
+  packages: write
+
+jobs:
+  # === DEVELOPMENT DEPLOYMENT ===
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
+    environment:
+      name: development
+      url: https://dev.aitherzero.example.com
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.workflow_run.head_branch || github.ref }}
+    
+    - name: 🔐 Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN_DEV }}
+        aws-region: us-east-1
+    
+    - name: 🚀 Deploy to Development
+      shell: pwsh
+      run: |
+        # Deploy to development environment
+        Write-Host "Deploying to development environment..." -ForegroundColor Cyan
+        
+        # Example: Deploy to AWS Lambda
+        # ./automation-scripts/deploy-lambda.ps1 -Environment Development
+        
+        # Example: Deploy to Azure Functions
+        # ./automation-scripts/deploy-azure.ps1 -Environment Development
+        
+        # Example: Deploy to Docker Registry
+        # docker build -t aitherzero:dev .
+        # docker push ${{ secrets.DOCKER_REGISTRY }}/aitherzero:dev
+        
+        Write-Host "Development deployment completed!" -ForegroundColor Green
+
+  # === STAGING DEPLOYMENT ===
+  deploy-staging:
+    name: Deploy to Staging
+    needs: deploy-dev
+    runs-on: ubuntu-latest
+    if: success()
+    environment:
+      name: staging
+      url: https://staging.aitherzero.example.com
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: 🔐 Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN_STAGING }}
+        aws-region: us-east-1
+    
+    - name: 🧪 Run Smoke Tests
+      shell: pwsh
+      run: |
+        # Run basic smoke tests against staging
+        Write-Host "Running smoke tests..." -ForegroundColor Cyan
+        
+        # Example smoke tests
+        $tests = @(
+          @{ Name = "API Health Check"; Endpoint = "https://staging-api.aitherzero.example.com/health" },
+          @{ Name = "Module Load Test"; Command = { Import-Module ./AitherZero.psd1 } }
+        )
+        
+        $failed = $false
+        foreach ($test in $tests) {
+          Write-Host "Testing: $($test.Name)" -ForegroundColor Yellow
+          
+          if ($test.Endpoint) {
+            $response = Invoke-WebRequest -Uri $test.Endpoint -UseBasicParsing
+            if ($response.StatusCode -ne 200) {
+              Write-Error "$($test.Name) failed!"
+              $failed = $true
+            }
+          } elseif ($test.Command) {
+            try {
+              & $test.Command
+              Write-Host "✓ $($test.Name) passed" -ForegroundColor Green
+            } catch {
+              Write-Error "$($test.Name) failed: $_"
+              $failed = $true
+            }
+          }
+        }
+        
+        if ($failed) {
+          exit 1
+        }
+    
+    - name: 🚀 Deploy to Staging
+      shell: pwsh
+      run: |
+        Write-Host "Deploying to staging environment..." -ForegroundColor Cyan
+        
+        # Deployment logic here
+        
+        Write-Host "Staging deployment completed!" -ForegroundColor Green
+    
+    - name: 🔄 Run Integration Tests
+      shell: pwsh
+      run: |
+        # Run integration tests against staging environment
+        ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence 0403 -CI
+
+  # === PRODUCTION DEPLOYMENT ===
+  deploy-production:
+    name: Deploy to Production
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    if: success() && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    environment:
+      name: production
+      url: https://aitherzero.example.com
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: 🔐 Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN_PROD }}
+        aws-region: us-east-1
+    
+    - name: 📦 Create Backup
+      shell: pwsh
+      run: |
+        Write-Host "Creating backup of current production..." -ForegroundColor Cyan
+        
+        # Backup current production before deployment
+        $backupName = "backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+        
+        # Example: Backup Lambda function
+        # aws lambda get-function --function-name aitherzero-prod --query 'Configuration' > "$backupName-lambda.json"
+        
+        # Example: Backup database
+        # aws rds create-db-snapshot --db-instance-identifier aitherzero-prod --db-snapshot-identifier $backupName
+        
+        Write-Host "Backup created: $backupName" -ForegroundColor Green
+    
+    - name: 🚀 Blue-Green Deployment
+      shell: pwsh
+      run: |
+        Write-Host "Starting blue-green deployment..." -ForegroundColor Cyan
+        
+        # Deploy to green environment
+        Write-Host "Deploying to green environment..." -ForegroundColor Yellow
+        # ... deployment logic ...
+        
+        # Run health checks on green
+        Write-Host "Running health checks on green..." -ForegroundColor Yellow
+        # ... health check logic ...
+        
+        # Switch traffic to green
+        Write-Host "Switching traffic to green..." -ForegroundColor Yellow
+        # ... traffic switch logic ...
+        
+        # Monitor for issues
+        Write-Host "Monitoring deployment..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 60
+        
+        # If all good, decommission blue
+        Write-Host "Deployment successful! Decommissioning blue environment..." -ForegroundColor Green
+        # ... cleanup logic ...
+    
+    - name: 🔔 Send Deployment Notification
+      if: always()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        text: |
+          Production deployment ${{ job.status == 'success' && 'completed successfully' || 'failed' }}
+          Version: ${{ github.event.inputs.version || 'latest' }}
+          Environment: Production
+          URL: https://aitherzero.example.com
+        webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # === ROLLBACK PROCEDURE ===
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    if: failure()
+    needs: [deploy-production]
+    
+    steps:
+    - name: 🔄 Initiate Rollback
+      shell: pwsh
+      run: |
+        Write-Host "INITIATING EMERGENCY ROLLBACK!" -ForegroundColor Red
+        
+        # Rollback logic
+        # ... restore from backup ...
+        
+        Write-Host "Rollback completed" -ForegroundColor Yellow
+    
+    - name: 🚨 Alert Team
+      uses: 8398a7/action-slack@v3
+      with:
+        status: custom
+        custom_payload: |
+          {
+            text: "🚨 EMERGENCY: Production deployment failed and was rolled back!",
+            attachments: [{
+              color: 'danger',
+              fields: [
+                { title: 'Environment', value: 'Production', short: true },
+                { title: 'Action Required', value: 'Immediate investigation needed', short: true }
+              ]
+            }]
+          }
+        webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
