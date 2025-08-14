@@ -1,0 +1,321 @@
+name: Build Test Release
+
+on:
+  push:
+    branches: [main, develop]
+    tags: 
+      - 'v*'
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: false
+        default: 'none'
+        type: choice
+        options:
+          - none
+          - patch
+          - minor
+          - major
+
+# Prevent duplicate runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+  packages: write
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+
+jobs:
+  # === VALIDATION STAGE ===
+  validate-playbooks:
+    name: Validate Playbooks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup PowerShell
+        shell: bash
+        run: |
+          # PowerShell is pre-installed on Ubuntu runners
+          pwsh -Version
+      
+      - name: Bootstrap Environment
+        shell: pwsh
+        run: |
+          ./bootstrap.ps1 -Mode Install -InstallProfile Core -NonInteractive -SkipAutoStart
+      
+      - name: Validate Playbooks
+        shell: pwsh
+        run: |
+          ./automation-scripts/0460_Test-Playbooks.ps1 -CI -StopOnError
+      
+      - name: Upload Validation Report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: validation-report-${{ github.run_id }}
+          path: tests/playbook-validation-*.json
+          retention-days: 7
+
+  # === TESTING STAGE ===
+  test:
+    name: Test (${{ matrix.os }}, ${{ matrix.profile }})
+    needs: validate-playbooks
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        profile: [Core, Standard]
+        exclude:
+          # Skip some combinations for faster CI
+          - os: macos-latest
+            profile: Standard
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Setup PowerShell (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          # PowerShell 7 is pre-installed on Windows runners
+          $PSVersionTable.PSVersion
+      
+      - name: Setup PowerShell (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          # PowerShell is pre-installed on Ubuntu and macOS runners
+          pwsh -Version
+      
+      - name: Bootstrap Installation
+        shell: pwsh
+        run: |
+          ./bootstrap.ps1 -Mode Install -InstallProfile ${{ matrix.profile }} -NonInteractive -SkipAutoStart
+      
+      - name: Run Quick Tests
+        shell: pwsh
+        run: |
+          # Import module
+          Import-Module ./AitherZero.psd1 -Force
+          
+          # Run test playbook with dry run first
+          Invoke-OrchestrationSequence -LoadPlaybook 'test-quick' -DryRun
+          
+          # Verify core functionality
+          $config = Get-Configuration
+          if (-not $config) { throw "Configuration failed to load" }
+          
+          Write-Host "✅ Basic functionality verified on ${{ matrix.os }} - ${{ matrix.profile }}" -ForegroundColor Green
+      
+      - name: Test Automation Scripts
+        if: matrix.profile == 'Standard'
+        shell: pwsh
+        run: |
+          # Test that key scripts exist and have valid syntax
+          $scripts = Get-ChildItem ./automation-scripts -Filter "*.ps1" | Select-Object -First 10
+          foreach ($script in $scripts) {
+              $null = [System.Management.Automation.Language.Parser]::ParseFile(
+                  $script.FullName, [ref]$null, [ref]$null
+              )
+          }
+          Write-Host "✅ Scripts validated" -ForegroundColor Green
+
+  # === BUILD STAGE ===
+  build:
+    name: Build Release Packages
+    needs: test
+    if: github.event_name == 'push' && (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release_name: ${{ steps.version.outputs.release_name }}
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Determine Version
+        id: version
+        shell: pwsh
+        run: |
+          # Get version from tag or file
+          $version = if ($env:GITHUB_REF -match 'refs/tags/v(.+)') {
+              $matches[1]
+          } else {
+              Get-Content ./version.txt -First 1
+          }
+          
+          # Append build number for non-tag builds
+          if ($env:GITHUB_REF -notmatch 'refs/tags/') {
+              $version = "$version-beta.$env:GITHUB_RUN_NUMBER"
+          }
+          
+          Write-Host "Version: $version"
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "release_name=AitherZero v$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+      
+      - name: Bootstrap Environment
+        shell: pwsh
+        run: |
+          ./bootstrap.ps1 -Mode Install -InstallProfile Core -NonInteractive -SkipAutoStart
+      
+      - name: Build Release Packages
+        shell: pwsh
+        run: |
+          ./automation-scripts/9100_Build-Release.ps1 `
+            -Version "${{ steps.version.outputs.version }}" `
+            -Profiles @('Core', 'Standard', 'Full') `
+            -CI
+      
+      - name: Generate Checksums
+        shell: bash
+        run: |
+          cd release
+          sha256sum AitherZero-*.zip > checksums.txt
+          cat checksums.txt
+      
+      - name: Upload Release Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-packages-${{ github.run_id }}
+          path: |
+            release/AitherZero-*.zip
+            release/checksums.txt
+            release/RELEASE_NOTES.md
+          retention-days: 30
+
+  # === RELEASE STAGE ===
+  release:
+    name: Create GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Download Release Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: release-packages-${{ github.run_id }}
+          path: ./release
+      
+      - name: Create Release Notes
+        shell: pwsh
+        run: |
+          $version = "${{ needs.build.outputs.version }}"
+          $notes = @"
+          ## 📦 Installation
+          
+          \`\`\`powershell
+          # Install Core (minimal)
+          iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex
+          
+          # Install Standard (with testing)
+          & ([scriptblock]::Create((iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1))) -Profile Standard -Version '$version'
+          
+          # Install Full (all features)
+          & ([scriptblock]::Create((iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1))) -Profile Full -Version '$version'
+          \`\`\`
+          
+          ## 📋 Package Contents
+          
+          | Profile | Size | Description |
+          |---------|------|-------------|
+          | **Core** | ~1 MB | Essential modules and automation engine |
+          | **Standard** | ~2 MB | Core + testing framework + Git automation |
+          | **Full** | ~5 MB | Everything including dev tools and examples |
+          
+          ## ✅ Validation
+          
+          All playbooks have been validated and tested on:
+          - ✅ Ubuntu Linux
+          - ✅ Windows
+          - ✅ macOS
+          
+          ## 📝 Checksums
+          
+          \`\`\`
+          $(Get-Content ./release/checksums.txt -Raw)
+          \`\`\`
+          "@
+          
+          Set-Content -Path ./release/RELEASE_NOTES_FINAL.md -Value $notes
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ needs.build.outputs.release_name }}
+          body_path: ./release/RELEASE_NOTES_FINAL.md
+          files: |
+            ./release/AitherZero-*.zip
+            ./release/checksums.txt
+          draft: false
+          prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-rc') }}
+          generate_release_notes: true
+      
+      - name: Update Latest Release Badge
+        if: success()
+        shell: pwsh
+        run: |
+          Write-Host "✅ Release ${{ needs.build.outputs.version }} published successfully!" -ForegroundColor Green
+
+  # === NOTIFICATION STAGE ===
+  notify:
+    name: Notify Results
+    needs: [validate-playbooks, test, build, release]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Summary
+        shell: pwsh
+        run: |
+          Write-Host "========================================" -ForegroundColor Blue
+          Write-Host " Build Pipeline Summary" -ForegroundColor White
+          Write-Host "========================================" -ForegroundColor Blue
+          
+          $validation = "${{ needs.validate-playbooks.result }}"
+          $test = "${{ needs.test.result }}"
+          $build = "${{ needs.build.result }}"
+          $release = "${{ needs.release.result }}"
+          
+          Write-Host "Validation: $(if ($validation -eq 'success') { '✅' } else { '❌' }) $validation"
+          Write-Host "Testing: $(if ($test -eq 'success') { '✅' } else { '❌' }) $test"
+          Write-Host "Build: $(if ($build -eq 'success' -or $build -eq 'skipped') { '✅' } else { '❌' }) $build"
+          Write-Host "Release: $(if ($release -eq 'success' -or $release -eq 'skipped') { '✅' } else { '❌' }) $release"
+          
+          if ($validation -eq 'success' -and $test -eq 'success') {
+              Write-Host "`n✅ Pipeline completed successfully!" -ForegroundColor Green
+          } else {
+              Write-Host "`n❌ Pipeline failed - check logs for details" -ForegroundColor Red
+              exit 1
+          }

@@ -1,5 +1,6 @@
 #!/usr/bin/env pwsh
-# Supports PowerShell 5.1+ but will install PowerShell 7
+# Universal Bootstrap - Works with PowerShell 5.1 and PowerShell 7
+# Automatically handles PowerShell 7 installation if needed
 
 <#
 .SYNOPSIS
@@ -21,11 +22,14 @@
 .PARAMETER SkipAutoStart
     Don't auto-start AitherZero after installation
 .EXAMPLE
-    # One-liner installation (PowerShell 5.1+)
+    # One-liner installation (Works on PowerShell 5.1 and 7)
     iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex
 
-    # One-liner with options
+    # One-liner with options (PowerShell 5.1)
     & ([scriptblock]::Create((iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1))) -InstallProfile Developer -AutoInstallDeps
+    
+    # Local file execution
+    .\bootstrap.ps1 -InstallProfile Developer -AutoInstallDeps
 #>
 
 [CmdletBinding()]
@@ -46,6 +50,24 @@ param(
     
     [switch]$SkipAutoStart
 )
+
+# PowerShell Version Check and Auto-Upgrade
+# If running on PowerShell 5.1, we need to install PowerShell 7 first
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Blue
+    Write-Host " PowerShell 5.1 Detected - Upgrading to PowerShell 7" -ForegroundColor Yellow
+    Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Blue
+    Write-Host ""
+    
+    # Enable TLS 1.2 for downloads (critical for PS 5.1)
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    
+    # We'll handle the PS7 installation in the dependencies check below
+    # Set flag to force PS7 installation
+    $script:ForcePowerShell7Install = $true
+} else {
+    $script:ForcePowerShell7Install = $false
+}
 
 # Auto-detect CI environment and set appropriate defaults
 $script:IsCI = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true')
@@ -177,12 +199,13 @@ function Test-Dependencies {
     }
 
     # Check PowerShell version - we NEED PowerShell 7
-    if ($PSVersionTable.PSVersion.Major -lt 7) {
+    if ($PSVersionTable.PSVersion.Major -lt 7 -or $script:ForcePowerShell7Install) {
         $missing += 'PowerShell7'
         Write-BootstrapLog "PowerShell 7 is required. Current version: $($PSVersionTable.PSVersion)" -Level Warning
     }
 
     if ($missing.Count -gt 0) {
+        # Always auto-install PowerShell 7 if it's missing (critical dependency)
         if ($AutoInstallDeps -or $missing -contains 'PowerShell7') {
             Install-Dependencies -Missing $missing
         } else {
@@ -201,20 +224,48 @@ function Install-Dependencies {
         # Re-launch in PowerShell 7
         Write-BootstrapLog "Re-launching bootstrap in PowerShell 7..." -Level Info
         
-        $pwsh = if (Test-IsWindows) { "pwsh.exe" } else { "pwsh" }
+        # Find PowerShell 7 executable
+        $pwshPath = $null
+        if (Test-IsWindows) {
+            # Check common Windows locations
+            $possiblePaths = @(
+                "$env:ProgramFiles\PowerShell\7\pwsh.exe",
+                "$env:ProgramFiles\PowerShell\7-preview\pwsh.exe",
+                (Get-Command pwsh -ErrorAction SilentlyContinue).Source
+            )
+            foreach ($path in $possiblePaths) {
+                if ($path -and (Test-Path $path)) {
+                    $pwshPath = $path
+                    break
+                }
+            }
+        } else {
+            $pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
+        }
+        
+        if (-not $pwshPath) {
+            throw "PowerShell 7 installation completed but pwsh executable not found"
+        }
+        
         $scriptPath = $MyInvocation.PSCommandPath
+        if (-not $scriptPath) {
+            # If running from iwr|iex, save to temp and run from there
+            $scriptPath = "$env:TEMP\bootstrap-temp.ps1"
+            $MyInvocation.MyCommand.ScriptContents | Set-Content $scriptPath
+        }
         
         # Build arguments to preserve
-        $arguments = @()
+        $arguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$scriptPath`"")
         if ($Mode) { $arguments += "-Mode", $Mode }
         if ($InstallProfile) { $arguments += "-InstallProfile", $InstallProfile }
-        if ($InstallPath) { $arguments += "-InstallPath", $InstallPath }
+        if ($InstallPath) { $arguments += "-InstallPath", "`"$InstallPath`"" }
         if ($Branch) { $arguments += "-Branch", $Branch }
         if ($NonInteractive) { $arguments += "-NonInteractive" }
         if ($AutoInstallDeps) { $arguments += "-AutoInstallDeps" }
         if ($SkipAutoStart) { $arguments += "-SkipAutoStart" }
         
-        & $pwsh -NoProfile -ExecutionPolicy Bypass -File $scriptPath @args
+        Write-BootstrapLog "Launching: $pwshPath $($arguments -join ' ')" -Level Info
+        Start-Process -FilePath $pwshPath -ArgumentList $arguments -NoNewWindow -Wait
         exit $LASTEXITCODE
     }
     

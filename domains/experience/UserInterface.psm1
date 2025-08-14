@@ -184,11 +184,15 @@ function Initialize-AitherUI {
     # Safe property access helper (defined outside to be available always)
     $getProp = { param($name, $default, $config) 
         if (-not $config) { return $default }
-        if ($config -is [hashtable] -and $config.ContainsKey($name)) { 
-            return $config[$name] 
-        } elseif ($config.PSObject -and $config.PSObject.Properties[$name]) { 
-            return $config.$name 
-        } 
+        try {
+            if ($config -is [hashtable] -and $config.ContainsKey($name)) { 
+                return $config[$name] 
+            } elseif ($config.PSObject -and $config.PSObject.Properties[$name]) { 
+                return $config.$name 
+            }
+        } catch {
+            # If property access fails, return default
+        }
         return $default 
     }
 

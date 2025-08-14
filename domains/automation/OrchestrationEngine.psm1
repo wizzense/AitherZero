@@ -161,7 +161,16 @@ function Invoke-OrchestrationSequence {
         [switch]$Interactive,
         
         [Parameter()]
-        [hashtable]$Conditions = @{}
+        [hashtable]$Conditions = @{},
+        
+        [Parameter()]
+        [int]$Timeout = 300,
+        
+        [Parameter()]
+        [switch]$ValidateFirst,
+        
+        [Parameter()]
+        [int]$MaxRetries = 3
     )
 
     begin {
@@ -200,7 +209,7 @@ function Invoke-OrchestrationSequence {
 
             # Handle playbook profiles
             if ($PlaybookProfile -and $playbook.options -and $playbook.options.profiles) {
-                if ($playbook.options.profiles.ContainsKey($PlaybookProfile)) {
+                if ($playbook.options.profiles.$PlaybookProfile) {
                     $ProfileNameConfig = $playbook.options.profiles[$PlaybookProfile]
                     Write-OrchestrationLog "Applying playbook profile: $PlaybookProfile - $($ProfileNameConfig.description)"
                     
@@ -217,6 +226,7 @@ function Invoke-OrchestrationSequence {
             }
 
             # Handle both direct sequences and staged playbooks
+            # Use property checks instead of ContainsKey for PSD1 compatibility
             if ($playbook.Sequence) {
                 $Sequence = $playbook.Sequence
             }
@@ -226,16 +236,23 @@ function Invoke-OrchestrationSequence {
                 # Store stages for proper variable handling (check both cases)
                 $script:PlaybookStages = if ($playbook.Stages) { $playbook.Stages } else { $playbook.stages }
                 
-                # Flatten all stage sequences for compatibility
-                $Sequence = @()
-                foreach ($stage in $script:PlaybookStages) {
-                    $stageSeq = if ($stage.Sequence) { $stage.Sequence } else { $stage.sequence }
-                    if ($stageSeq) {
-                        $Sequence += $stageSeq
+                # Flatten all stage sequences for compatibility - only if Sequence wasn't already set
+                if (-not $Sequence) {
+                    $Sequence = @()
+                    foreach ($stage in $script:PlaybookStages) {
+                        $stageSeq = if ($stage.Sequence) { $stage.Sequence } elseif ($stage.sequence) { $stage.sequence } else { @() }
+                        if ($stageSeq) {
+                            $Sequence += $stageSeq
+                        }
                     }
                 }
                 Write-OrchestrationLog "Loaded $($script:PlaybookStages.Count) stages from playbook" -Level 'Information'
                 Write-OrchestrationLog "Stages: $($script:PlaybookStages | ConvertTo-Json -Compress)" -Level 'Information'
+            }
+            
+            # If still no sequence, this is an error
+            if (-not $Sequence) {
+                throw "Playbook '$LoadPlaybook' has no executable sequences defined"
             }
 
             # First, merge playbook default variables (without expansion)
@@ -299,6 +316,45 @@ function Invoke-OrchestrationSequence {
         }
         
         Write-OrchestrationLog "Resolved to $($scriptNumbers.Count) scripts: $($scriptNumbers -join ', ')"
+        
+        # Validate scripts first if requested
+        if ($ValidateFirst) {
+            Write-OrchestrationLog "Validating scripts before execution..."
+            $validationErrors = @()
+            
+            foreach ($scriptNum in $scriptNumbers) {
+                $scriptPath = Join-Path $script:ScriptsPath "${scriptNum}_*.ps1"
+                $scriptFile = Get-ChildItem -Path $scriptPath -ErrorAction SilentlyContinue | Select-Object -First 1
+                
+                if (-not $scriptFile) {
+                    $validationErrors += "Script $scriptNum not found"
+                    continue
+                }
+                
+                # Basic syntax check
+                try {
+                    $null = [System.Management.Automation.Language.Parser]::ParseFile(
+                        $scriptFile.FullName, [ref]$null, [ref]$null
+                    )
+                    Write-OrchestrationLog "  ✓ Script $scriptNum validated" -Level 'Debug'
+                } catch {
+                    $validationErrors += "Script $scriptNum has syntax errors: $_"
+                }
+            }
+            
+            if ($validationErrors.Count -gt 0) {
+                Write-OrchestrationLog "Validation failed with $($validationErrors.Count) error(s)" -Level 'Error'
+                foreach ($error in $validationErrors) {
+                    Write-OrchestrationLog "  - $error" -Level 'Error'
+                }
+                
+                if (-not $ContinueOnError) {
+                    throw "Script validation failed. Use -ContinueOnError to proceed anyway."
+                }
+            } else {
+                Write-OrchestrationLog "All scripts validated successfully"
+            }
+        }
         
         # Get script metadata
         $scripts = Get-OrchestrationScripts -Numbers $scriptNumbers -Variables $Variables -Conditions $Conditions
@@ -793,7 +849,12 @@ function Invoke-SequentialOrchestration {
         Write-OrchestrationLog "Executing: [$($script.Number)] $($script.Name)"
         
         $retryCount = 0
-        $maxRetries = 0  # Disabled retries per user request
+        # Use MaxRetries parameter if provided, otherwise default to 0 (no retries)
+        $scriptMaxRetries = if ($PSBoundParameters.ContainsKey('MaxRetries')) { 
+            $MaxRetries 
+        } else { 
+            0  # Default: no retries
+        }
         $retryDelay = 0
         $succeeded = $false
         $scriptStart = Get-Date  # Initialize before the try block to avoid null reference
@@ -891,8 +952,8 @@ function Invoke-SequentialOrchestration {
                 
             } catch {
                 $retryCount++
-                if ($retryCount -gt $maxRetries) {
-                    Write-OrchestrationLog "Failed: [$($script.Number)] $($script.Name) - $_ (after $maxRetries retries)" -Level 'Error'
+                if ($retryCount -gt $scriptMaxRetries) {
+                    Write-OrchestrationLog "Failed: [$($script.Number)] $($script.Name) - $_ (after $scriptMaxRetries retries)" -Level 'Error'
                     
                     # Write audit log for failure
                     if ($script:LoggingAvailable -and (Get-Command Write-AuditLog -ErrorAction SilentlyContinue)) {
@@ -1078,10 +1139,18 @@ function Save-OrchestrationPlaybook {
         [string[]]$Sequence,
         [hashtable]$Variables,
         [string]$ExecutionProfile,
-        [string]$Description
+        [string]$Description,
+        [ValidateSet('PSD1', 'JSON')]
+        [string]$Format = 'PSD1'
     )
 
-    $playbookDir = Join-Path $script:OrchestrationPath 'playbooks'
+    # Use new PSD1 directory for PSD1 format
+    $playbookDir = if ($Format -eq 'PSD1') {
+        Join-Path $script:OrchestrationPath 'playbooks-psd1'
+    } else {
+        Join-Path $script:OrchestrationPath 'playbooks'
+    }
+    
     if (-not (Test-Path $playbookDir)) {
         New-Item -ItemType Directory -Path $playbookDir -Force | Out-Null
     }
@@ -1097,38 +1166,114 @@ function Save-OrchestrationPlaybook {
         $Description = "Orchestration playbook created $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
     }
     
-    $playbook = @{
-        Name = $Name
-        Description = $Description
-        Sequence = $Sequence
-        Variables = $Variables
-        Profile = $ExecutionProfile
-        Created = Get-Date -Format 'o'
-        Version = '1.0'
+    if ($Format -eq 'PSD1') {
+        $playbookPath = Join-Path $playbookDir "$Name.psd1"
+        
+        # Build PSD1 content
+        $psd1Content = @"
+#Requires -Version 7.0
+<#
+.SYNOPSIS
+    $Name - AitherZero Orchestration Playbook
+.DESCRIPTION
+    $Description
+#>
+
+@{
+    # Metadata
+    Name = '$Name'
+    Description = '$Description'
+    Version = '2.0.0'
+    Author = 'AitherZero Orchestration Engine'
+    Created = '$(Get-Date -Format 'o')'
+    
+    # Execution Profile
+    Profile = '$(if ($ExecutionProfile) { $ExecutionProfile } else { 'Standard' })'
+    
+    # Sequence
+    Sequence = @($(($Sequence | ForEach-Object { "'$_'" }) -join ', '))
+    
+    # Variables
+    Variables = @{
+$(
+    if ($Variables -and $Variables.Count -gt 0) {
+        ($Variables.GetEnumerator() | ForEach-Object {
+            $value = if ($_.Value -is [string]) { "'$($_.Value)'" } 
+            elseif ($_.Value -is [bool]) { if ($_.Value) { '$true' } else { '$false' } }
+            elseif ($_.Value -is [array]) { "@($(($_.Value | ForEach-Object { "'$_'" }) -join ', '))" }
+            elseif ($null -eq $_.Value) { '$null' }
+            else { $_.Value }
+            "        $($_.Key) = $value"
+        }) -join "`n"
+    } else {
+        "        # No variables defined"
     }
-    
-    $playbookPath = Join-Path $playbookDir "$Name.json"
-    $playbook | ConvertTo-Json -Depth 10 | Set-Content -Path $playbookPath
-    
-    Write-OrchestrationLog "Saved playbook: $playbookPath"
+)
+    }
+}
+"@
+        
+        Set-Content -Path $playbookPath -Value $psd1Content -Encoding UTF8
+        Write-OrchestrationLog "Saved PSD1 playbook: $playbookPath"
+    } else {
+        # Save as JSON for backward compatibility
+        $playbook = @{
+            Name = $Name
+            Description = $Description
+            Sequence = $Sequence
+            Variables = $Variables
+            Profile = $ExecutionProfile
+            Created = Get-Date -Format 'o'
+            Version = '1.0'
+        }
+        
+        $playbookPath = Join-Path $playbookDir "$Name.json"
+        $playbook | ConvertTo-Json -Depth 10 | Set-Content -Path $playbookPath
+        Write-OrchestrationLog "Saved JSON playbook: $playbookPath"
+    }
 }
 
 function Get-OrchestrationPlaybook {
     param([string]$Name)
     
-    # First try direct path in playbooks root
-    $playbookPath = Join-Path $script:OrchestrationPath "playbooks/$Name.json"
+    # Check for PSD1 format first (preferred)
+    $psd1Paths = @(
+        Join-Path $script:OrchestrationPath "playbooks-psd1/$Name.psd1"
+        Join-Path $script:OrchestrationPath "playbooks/$Name.psd1"
+    )
     
-    if (Test-Path $playbookPath) {
-        return Get-Content $playbookPath -Raw | ConvertFrom-Json -AsHashtable
+    foreach ($psd1Path in $psd1Paths) {
+        if (Test-Path $psd1Path) {
+            Write-OrchestrationLog "Loading PSD1 playbook: $psd1Path"
+            return Import-PowerShellDataFile -Path $psd1Path
+        }
     }
     
-    # Then search in subdirectories
-    $playbooksDir = Join-Path $script:OrchestrationPath "playbooks"
-    $foundPlaybook = Get-ChildItem -Path $playbooksDir -Filter "$Name.json" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+    # Search for PSD1 in subdirectories
+    $playbooksDir = Join-Path $script:OrchestrationPath "playbooks-psd1"
+    if (Test-Path $playbooksDir) {
+        $foundPsd1 = Get-ChildItem -Path $playbooksDir -Filter "$Name.psd1" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($foundPsd1) {
+            Write-OrchestrationLog "Loading PSD1 playbook: $($foundPsd1.FullName)"
+            return Import-PowerShellDataFile -Path $foundPsd1.FullName
+        }
+    }
     
-    if ($foundPlaybook) {
-        return Get-Content $foundPlaybook.FullName -Raw | ConvertFrom-Json -AsHashtable
+    # Fall back to JSON format for backward compatibility
+    $jsonPath = Join-Path $script:OrchestrationPath "playbooks/$Name.json"
+    
+    if (Test-Path $jsonPath) {
+        Write-OrchestrationLog "Loading JSON playbook (legacy): $jsonPath"
+        return Get-Content $jsonPath -Raw | ConvertFrom-Json -AsHashtable
+    }
+    
+    # Search for JSON in subdirectories
+    $playbooksDir = Join-Path $script:OrchestrationPath "playbooks"
+    $foundJson = Get-ChildItem -Path $playbooksDir -Filter "$Name.json" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+    
+    if ($foundJson) {
+        Write-OrchestrationLog "Loading JSON playbook (legacy): $($foundJson.FullName)"
+        return Get-Content $foundJson.FullName -Raw | ConvertFrom-Json -AsHashtable
     }
     
     return $null

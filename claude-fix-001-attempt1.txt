@@ -1,0 +1,18 @@
+Fix this ONE specific PowerShell test failure:
+
+Test Name: Configuration Module.Get-Configuration.Should load configuration from file
+File: /workspaces/AitherZero/tests/unit/Configuration.Tests.ps1
+Line: 37
+
+Error Message:
+ParameterBindingException: A parameter cannot be found that matches parameter name 'Path'.
+
+Stack Trace:
+at <ScriptBlock>, /workspaces/AitherZero/tests/unit/Configuration.Tests.ps1:37
+
+Requirements:
+1. Fix ONLY this specific test failure
+2. Make minimal changes to fix the issue
+3. Do not modify other tests or unrelated code
+4. Ensure the fix is correct and complete
+5. Follow existing code patterns and conventions
