@@ -22,7 +22,7 @@
 param(
     [string]$TrackerPath = './test-fix-tracker.json',
     [string]$Repository,  # Override repo (default: current repo)
-    [string[]]$Labels = @('bug', 'automated', 'test-failure'),
+    [string[]]$Labels = @('bug'),
     [string]$Assignee = '@me',
     [switch]$CreateAll,  # Create issues for all open items
     [switch]$PassThru
@@ -79,12 +79,18 @@ try {
     }
     
     $tracker = Get-Content $TrackerPath -Raw | ConvertFrom-Json -AsHashtable
+    
+    # Ensure issues is an array
+    if ($tracker.issues -isnot [array]) {
+        $tracker.issues = @($tracker.issues)
+    }
+    
     Write-ScriptLog -Message "Loaded tracker with $($tracker.issues.Count) issues"
     
     # Find issues without GitHub issues
-    $issuesToCreate = $tracker.issues | Where-Object { 
+    $issuesToCreate = @($tracker.issues | Where-Object { 
         $_.status -eq 'open' -and -not $_.githubIssue 
-    }
+    })
     
     if ($issuesToCreate.Count -eq 0) {
         Write-ScriptLog -Message "No issues need GitHub issues created"

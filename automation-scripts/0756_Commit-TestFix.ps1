@@ -82,17 +82,23 @@ try {
     }
     
     $tracker = Get-Content $TrackerPath -Raw | ConvertFrom-Json -AsHashtable
+    
+    # Ensure issues is an array
+    if ($tracker.issues -isnot [array]) {
+        $tracker.issues = @($tracker.issues)
+    }
+    
     Write-ScriptLog -Message "Loaded tracker with $($tracker.issues.Count) issues"
     
     # Find issues to commit
-    $issuesToCommit = if ($IssueId) {
-        @($tracker.issues | Where-Object { $_.id -eq $IssueId -and $_.status -eq 'resolved' -and -not $_.fixCommit })
+    $issuesToCommit = @(if ($IssueId) {
+        $tracker.issues | Where-Object { $_.id -eq $IssueId -and $_.status -eq 'resolved' -and -not $_.fixCommit }
     } elseif ($CommitAll) {
-        @($tracker.issues | Where-Object { $_.status -eq 'resolved' -and -not $_.fixCommit })
+        $tracker.issues | Where-Object { $_.status -eq 'resolved' -and -not $_.fixCommit }
     } else {
         # Default: commit the most recently resolved issue
-        @($tracker.issues | Where-Object { $_.status -eq 'resolved' -and -not $_.fixCommit } | Select-Object -First 1)
-    }
+        $tracker.issues | Where-Object { $_.status -eq 'resolved' -and -not $_.fixCommit } | Select-Object -First 1
+    })
     
     if ($issuesToCommit.Count -eq 0) {
         Write-ScriptLog -Message "No resolved issues to commit"
@@ -138,8 +144,14 @@ try {
     foreach ($issue in $issuesToCommit) {
         Write-Host "`n📝 Committing fix for issue $($issue.id): $($issue.testName)" -ForegroundColor Cyan
         
-        # Find files related to this test
+        # Use files tracked from Claude's changes if available
         $filesToCommit = @()
+        if ($issue.changedFiles -and $issue.changedFiles.Count -gt 0) {
+            Write-ScriptLog -Message "Using Claude's tracked changes: $($issue.changedFiles -join ', ')"
+            $filesToCommit = @($issue.changedFiles)
+        } else {
+            Write-ScriptLog -Message "No tracked changes from Claude, looking for related files"
+        }
         
         if ($issue.file -and (Test-Path $issue.file)) {
             # Check if the test file has changes
@@ -167,10 +179,17 @@ try {
             }
         }
         
+        # If no specific files found from Claude's changes, skip this commit
         if ($filesToCommit.Count -eq 0) {
             Write-ScriptLog -Level Warning -Message "No files to commit for issue $($issue.id)"
-            Write-ScriptLog -Message "Committing all changes instead"
-            $filesToCommit = @('.')
+            Write-ScriptLog -Message "This issue may have been fixed in a previous commit or no files were changed"
+            
+            # Mark as committed anyway since it's resolved
+            $issue.fixCommit = git rev-parse HEAD 2>&1
+            $issue.committedAt = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+            
+            # Skip to next issue
+            continue
         }
         
         # Truncate long test names for commit message

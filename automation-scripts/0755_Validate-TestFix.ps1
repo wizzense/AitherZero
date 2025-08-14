@@ -106,17 +106,23 @@ try {
     }
     
     $tracker = Get-Content $TrackerPath -Raw | ConvertFrom-Json -AsHashtable
+    
+    # Ensure issues is an array
+    if ($tracker.issues -isnot [array]) {
+        $tracker.issues = @($tracker.issues)
+    }
+    
     Write-ScriptLog -Message "Loaded tracker with $($tracker.issues.Count) issues"
     
     # Find issues to validate
-    $issuesToValidate = if ($IssueId) {
-        @($tracker.issues | Where-Object { $_.id -eq $IssueId })
+    $issuesToValidate = @(if ($IssueId) {
+        $tracker.issues | Where-Object { $_.id -eq $IssueId }
     } elseif ($ValidateAll) {
-        @($tracker.issues | Where-Object { $_.status -in @('validating', 'fixing') })
+        $tracker.issues | Where-Object { $_.status -in @('validating', 'fixing') }
     } else {
         # Default: validate the most recent 'validating' or 'fixing' issue
-        @($tracker.issues | Where-Object { $_.status -in @('validating', 'fixing') } | Select-Object -First 1)
-    }
+        $tracker.issues | Where-Object { $_.status -in @('validating', 'fixing') } | Select-Object -First 1
+    })
     
     if ($issuesToValidate.Count -eq 0) {
         Write-ScriptLog -Message "No issues to validate"
@@ -154,6 +160,19 @@ try {
         # Run the specific test
         Write-ScriptLog -Message "Running test: $($issue.testName)"
         
+        # Update GitHub issue that validation is starting
+        if ($issue.githubIssue) {
+            Update-GitHubIssue -Issue $issue -Comment @"
+🔍 **Starting validation...**
+
+- 🧪 Running test: ``$($issue.testName)``
+- 📍 Location: ``$($issue.file):$($issue.line)``
+- 🔄 Attempt: $($issue.attempts) of 3
+
+_Checking if the fix resolved the issue..._
+"@
+        }
+        
         if ($PSCmdlet.ShouldProcess($issue.testName, "Run Pester test")) {
             $testResult = Invoke-Pester -Path $issue.file -FullNameFilter "*$($issue.testName)*" -PassThru -Output None
             
@@ -165,18 +184,70 @@ try {
                 $issue.resolvedAt = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
                 $passed++
                 
-                # Update GitHub issue
+                # Get Claude's response if available
+                $responseFile = "./claude-artifacts/fix-$($issue.id)-attempt$($issue.attempts)-response.txt"
+                $claudeResponse = if (Test-Path $responseFile) {
+                    $content = Get-Content $responseFile -Raw
+                    # Truncate if too long for GitHub comment
+                    if ($content.Length -gt 3000) {
+                        $content.Substring(0, 3000) + "`n`n... (truncated)"
+                    } else {
+                        $content
+                    }
+                } else {
+                    "(Claude response not available)"
+                }
+                
+                # Get the actual changes made
+                $changedFiles = git diff --name-only HEAD~1 HEAD 2>&1 | Out-String
+                $diffSummary = git diff --stat HEAD~1 HEAD 2>&1 | Out-String
+                
+                # Update GitHub issue with detailed information
                 $comment = @"
 ✅ **Fixed!**
 
 Test is now passing after attempt #$($issue.attempts).
 
-**Validation Results:**
-- Test: PASSING ✅
-- Validated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
-- File: ``$($issue.file)``
+## Fix Details
 
-The issue has been automatically resolved by Claude Code.
+**Test:** ``$($issue.testName)``
+**File:** ``$($issue.file):$($issue.line)``
+**Original Error:** 
+\`\`\`
+$($issue.error)
+\`\`\`
+
+## Claude's Solution
+
+<details>
+<summary>Claude's Response (click to expand)</summary>
+
+\`\`\`
+$claudeResponse
+\`\`\`
+
+</details>
+
+## Changes Made
+
+**Modified Files:**
+\`\`\`
+$changedFiles
+\`\`\`
+
+**Change Summary:**
+\`\`\`
+$diffSummary
+\`\`\`
+
+## Validation
+- ✅ Test: PASSING
+- 📅 Validated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+- ⏱️ Fix Duration: ~$($issue.attempts * 5) minutes
+- 🤖 Automated by: Claude Code
+
+---
+*This issue was automatically resolved by the AitherZero test automation system.*
 "@
                 Update-GitHubIssue -Issue $issue -Comment $comment -AddLabels @('fixed', 'auto-resolved')
                 

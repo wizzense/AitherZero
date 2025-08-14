@@ -48,6 +48,12 @@ Thumbs.db
 
 # Build artifacts
 dist/
+
+# Claude artifacts
+/claude-artifacts/
+claude-fix-*.txt
+claude-response-*.txt
+test-fix-tracker.json
 build/
 build-output/
 *.egg-info/
