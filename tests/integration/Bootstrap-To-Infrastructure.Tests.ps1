@@ -591,7 +591,7 @@ Actual User Commands:
    OR
 4. $directCommand                      # Direct module usage
    OR  
-# 5. $seqCommand                         # Quick alias
+5. $seqCommand                         # Quick alias
 "@
         }
     }

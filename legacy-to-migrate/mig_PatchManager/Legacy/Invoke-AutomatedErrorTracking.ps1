@@ -432,13 +432,12 @@ $(if ($Analysis.ErrorDetails.ErrorMessage) {
 })
 
 $(if ($Analysis.ErrorDetails.ScriptStackTrace) {
-@"
-
+    "
 ### Stack Trace
-```
+``````
 $($Analysis.ErrorDetails.ScriptStackTrace)
-```
-"@
+``````
+"
 })
 
 $(if ($Analysis.ErrorDetails.TestName) {

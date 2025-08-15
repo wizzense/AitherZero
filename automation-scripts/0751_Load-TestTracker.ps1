@@ -107,9 +107,18 @@ try {
         $content = Get-Content $TrackerPath -Raw | ConvertFrom-Json
         
         # Convert to hashtable for easier manipulation
+        # Ensure currentBranch is set - use existing, or create new one
+        $currentBranchValue = if ($content.PSObject.Properties['currentBranch'] -and $content.currentBranch) {
+            $content.currentBranch
+        } else {
+            # Generate branch name if missing
+            $branchDate = Get-Date -Format 'yyyyMMdd-HHmmss'
+            "$BranchPrefix-$branchDate"
+        }
+        
         $trackerData = @{
             lastProcessedResults = $content.lastProcessedResults
-            currentBranch = $content.currentBranch
+            currentBranch = $currentBranchValue
             issues = @($content.issues)
             createdAt = $content.createdAt
             updatedAt = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'

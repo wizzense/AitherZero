@@ -201,7 +201,7 @@ The test is still failing with the same error. Continuing automated fix attempts
 **Test:** ``$($issue.testName)``
 **File:** ``$($issue.file):$($issue.line)``
 **Tracker ID:** ``$($issue.id)``
-**Branch:** ``$($tracker.currentBranch)``
+**Branch:** ``$(if ($tracker.PSObject.Properties['currentBranch'] -and $tracker.currentBranch) { $tracker.currentBranch } else { git rev-parse --abbrev-ref HEAD 2>$null })``
 
 ### Error Message
 \`\`\`

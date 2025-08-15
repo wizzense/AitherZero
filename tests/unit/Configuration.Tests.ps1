@@ -67,7 +67,8 @@ Describe "Configuration Module" -Tag 'Unit' {
         }
         
         It "Should handle malformed JSON gracefully" {
-            # This test doesn't apply as we use PSD1 files
+            # Initialize first, then test
+            Initialize-ConfigurationSystem -ConfigPath $script:TestConfigPath -Environment "Test"
             { Get-Configuration } | Should -Not -Throw
         }
         

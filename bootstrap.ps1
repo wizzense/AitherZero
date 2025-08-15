@@ -791,6 +791,20 @@ function Initialize-CleanEnvironment {
             $loadedModules = Get-Module | Where-Object { $_.Path -like "*$script:ProjectRoot*" }
             Write-BootstrapLog "Environment initialized - $($loadedModules.Count) modules loaded!" -Level Success
             
+            # Create global command symlinks (for Unix-like systems)
+            if (-not $IsWindows) {
+                try {
+                    # Create symlinks for az and seq commands
+                    if (Test-Path "./az" -and (Get-Command sudo -ErrorAction SilentlyContinue)) {
+                        $null = sudo ln -sf "$PWD/az" /usr/local/bin/az 2>&1
+                        $null = sudo ln -sf "$PWD/seq" /usr/local/bin/seq 2>&1
+                        Write-BootstrapLog "Created global command symlinks (az, seq)" -Level Success
+                    }
+                } catch {
+                    Write-BootstrapLog "Could not create global symlinks (may need sudo)" -Level Info
+                }
+            }
+            
         } else {
             Write-BootstrapLog "AitherZero.psd1 not found" -Level Error
             throw "Module manifest not found"

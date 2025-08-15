@@ -5,8 +5,8 @@ if (-not $PSScriptRoot) {
 #Param(object$Config)
 
 function Invoke-LabStep {
-    param(scriptblock$Body, object$Config)
-    if ($Config -is string) {
+    param([scriptblock]$Body, [object]$Config)
+    if ($Config -is [string]) {
         if (Test-Path $Config) {
             $Config = Get-Content -Raw -Path $Config | ConvertFrom-Json} else {
             try { $Config = $Config | ConvertFrom-Json} catch {}

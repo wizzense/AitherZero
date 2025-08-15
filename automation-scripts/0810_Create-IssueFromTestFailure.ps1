@@ -330,7 +330,7 @@ try {
         
         $result = New-GitHubIssue @issue
         
-        if ($result -and Test-GitHubActions) {
+        if ($result -and (Test-GitHubActions)) {
             # Output for GitHub Actions
             Write-Host "::notice::Created issue: $result"
         }
