@@ -1,74 +1,34 @@
 @{
     Name = 'test-fix-workflow'
-    Description = 'Automated test fixing workflow with Claude Code and GitHub integration'
-    Version = '1.0.0'
+    Description = 'Automated test fixing workflow with Claude Code and GitHub integration - processes one issue per run'
+    Version = '2.0.0'
     Author = 'AitherZero Automation'
     Tags = @('testing', 'automation', 'claude', 'github', 'bugfix')
     
     Variables = @{
         TrackerFile = './test-fix-tracker.json'
-        TestResultsPath = './tests/results'
+        TestResultsPath = './tests/reports'
+        TestResultsMaxAge = 1  # Days
         CreateGitHubIssues = $true
         MaxAttempts = 3
+        MaxLoops = 1  # Process only one issue per playbook run
         BaseBranch = 'main'
+        NonInteractive = $true
+        UseClaudeAgents = $true
+        LogPath = './logs/test-fix'
     }
     
     Stages = @(
         @{
-            Name = 'InitializeTracker'
-            Description = 'Load or create test tracker with branch'
-            Sequence = @('0751')
-            Parameters = @{
-                TrackerPath = '$Variables.TrackerFile'
-                CreateBranch = $true
-            }
-        }
-        
-        @{
-            Name = 'ProcessResults'
-            Description = 'Process test results and add failures'
-            Sequence = @('0752')
-            Parameters = @{
-                TrackerPath = '$Variables.TrackerFile'
-                TestResultsPath = '$Variables.TestResultsPath'
-            }
-        }
-        
-        @{
-            Name = 'CreateIssue'
-            Description = 'Create GitHub issue for next failure'
-            Sequence = @('0753')
-            Parameters = @{
-                TrackerPath = '$Variables.TrackerFile'
-            }
-            Condition = '$Variables.CreateGitHubIssues'
-        }
-        
-        @{
-            Name = 'FixIssue'
-            Description = 'Fix single test failure with Claude'
-            Sequence = @('0754')
-            Parameters = @{
-                TrackerPath = '$Variables.TrackerFile'
-                MaxAttempts = '$Variables.MaxAttempts'
-            }
-        }
-        
-        @{
-            Name = 'ValidateFix'
-            Description = 'Validate the fix was successful'
-            Sequence = @('0755')
-            Parameters = @{
-                TrackerPath = '$Variables.TrackerFile'
-            }
-        }
-        
-        @{
-            Name = 'CommitFix'
-            Description = 'Commit successful fixes'
-            Sequence = @('0756')
-            Parameters = @{
-                TrackerPath = '$Variables.TrackerFile'
+            Name = 'RunTestFixLoop'
+            Description = 'Run complete test-fix loop for one issue'
+            Sequence = @('0758')
+            Variables = @{
+                TrackerPath = './test-fix-tracker.json'
+                MaxLoops = 1  # Process only one issue
+                MaxAttempts = 3
+                CreateGitHubIssues = $true
+                NonInteractive = $true
             }
         }
     )

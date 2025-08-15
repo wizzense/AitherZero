@@ -1,0 +1,172 @@
+{
+  "Result": "Failed",
+  "Duration": "00:00:15.5847123",
+  "TotalCount": 12,
+  "PassedCount": 0,
+  "FailedCount": 12,
+  "SkippedCount": 0,
+  "NotRunCount": 0,
+  "Tests": [
+    {
+      "ExpandedPath": "Configuration Module.Get-Configuration.Should load configuration from file",
+      "Result": "Failed",
+      "Duration": "00:00:00.0234567",
+      "ErrorRecord": {
+        "Exception": {
+          "Message": "ParameterBindingException: A parameter cannot be found that matches parameter name 'Path'."
+        },
+        "ScriptStackTrace": "at <ScriptBlock>, /workspaces/AitherZero/tests/unit/Configuration.Tests.ps1:37"
+      },
+      "File": "/workspaces/AitherZero/tests/unit/Configuration.Tests.ps1",
+      "Line": 37
+    },
+    {
+      "ExpandedPath": "Configuration Module.Get-Configuration.Should return default configuration when file not found",
+      "Result": "Failed",
+      "Duration": "00:00:00.0134567",
+      "ErrorRecord": {
+        "Exception": {
+          "Message": "ParameterBindingException: A parameter cannot be found that matches parameter name 'Path'."
+        },
+        "ScriptStackTrace": "at <ScriptBlock>, /workspaces/AitherZero/tests/unit/Configuration.Tests.ps1:43"
+      },
+      "File": "/workspaces/AitherZero/tests/unit/Configuration.Tests.ps1",
+      "Line": 43
+    },
+    {
+      "ExpandedPath": "Configuration Module.Get-Configuration.Should handle malformed JSON gracefully",
+      "Result": "Failed",
+      "Duration": "00:00:00.0234567",
+      "ErrorRecord": {
+        "Exception": {
+          "Message": "Expected no exception to be thrown, but an exception \"A parameter cannot be found that matches parameter name 'Path'.\" was thrown from /workspaces/AitherZero/tests/unit/Configuration.Tests.ps1:50 char:33"
+        },
+        "ScriptStackTrace": "at { Get-Configuration -Path $script:TestConfigPath } | Should -Not -Throw, /workspaces/AitherZero/tests/unit/Configuration.Tests.ps1:50\nat <ScriptBlock>, /workspaces/AitherZero/tests/unit/Configuration.Tests.ps1:50"
+      },
+      "File": "/workspaces/AitherZero/tests/unit/Configuration.Tests.ps1",
+      "Line": 50
+    },
+    {
+      "ExpandedPath": "Configuration Module.Merge-Configuration.Should merge configurations correctly",
+      "Result": "Failed",
+      "Duration": "00:00:00.0334567",
+      "ErrorRecord": {
+        "Exception": {
+          "Message": "PropertyNotFoundException: The property 'Core' cannot be found on this object. Verify that the property exists."
+        },
+        "ScriptStackTrace": "at <ScriptBlock>, /workspaces/AitherZero/tests/unit/Configuration.Tests.ps1:61"
+      },
+      "File": "/workspaces/AitherZero/tests/unit/Configuration.Tests.ps1",
+      "Line": 61
+    },
+    {
+      "ExpandedPath": "Configuration Module.Merge-Configuration.Should handle null configurations",
+      "Result": "Failed",
+      "Duration": "00:00:00.0234567",
+      "ErrorRecord": {
+        "Exception": {
+          "Message": "PropertyNotFoundException: The property 'Core' cannot be found on this object. Verify that the property exists."
+        },
+        "ScriptStackTrace": "at <ScriptBlock>, /workspaces/AitherZero/tests/unit/Configuration.Tests.ps1:69"
+      },
+      "File": "/workspaces/AitherZero/tests/unit/Configuration.Tests.ps1",
+      "Line": 69
+    },
+    {
+      "ExpandedPath": "Configuration Module.Get-ConfigValue.Should retrieve nested configuration values",
+      "Result": "Failed",
+      "Duration": "00:00:00.0134567",
+      "ErrorRecord": {
+        "Exception": {
+          "Message": "ParameterBindingException: A parameter cannot be found that matches parameter name 'Path'."
+        },
+        "ScriptStackTrace": "at <ScriptBlock>, /workspaces/AitherZero/tests/unit/Configuration.Tests.ps1:75"
+      },
+      "File": "/workspaces/AitherZero/tests/unit/Configuration.Tests.ps1",
+      "Line": 75
+    },
+    {
+      "ExpandedPath": "Configuration Module.Get-ConfigValue.Should return default for missing values",
+      "Result": "Failed",
+      "Duration": "00:00:00.0234567",
+      "ErrorRecord": {
+        "Exception": {
+          "Message": "ParameterBindingException: A parameter cannot be found that matches parameter name 'Path'."
+        },
+        "ScriptStackTrace": "at <ScriptBlock>, /workspaces/AitherZero/tests/unit/Configuration.Tests.ps1:81"
+      },
+      "File": "/workspaces/AitherZero/tests/unit/Configuration.Tests.ps1",
+      "Line": 81
+    },
+    {
+      "ExpandedPath": "Start-AitherZero Script.Parameter Validation.Should have correct parameter sets",
+      "Result": "Failed",
+      "Duration": "00:00:00.0134567",
+      "ErrorRecord": {
+        "Exception": {
+          "Message": "RuntimeException: The variable '$script:EntryScript' cannot be retrieved because it has not been set."
+        },
+        "ScriptStackTrace": "at <ScriptBlock>, /workspaces/AitherZero/tests/unit/Start-AitherZero.Tests.ps1:24"
+      },
+      "File": "/workspaces/AitherZero/tests/unit/Start-AitherZero.Tests.ps1",
+      "Line": 24
+    },
+    {
+      "ExpandedPath": "Start-AitherZero Script.Parameter Validation.Should support Interactive mode",
+      "Result": "Failed",
+      "Duration": "00:00:00.0234567",
+      "ErrorRecord": {
+        "Exception": {
+          "Message": "RuntimeException: The variable '$script:EntryScript' cannot be retrieved because it has not been set."
+        },
+        "ScriptStackTrace": "at <ScriptBlock>, /workspaces/AitherZero/tests/unit/Start-AitherZero.Tests.ps1:33"
+      },
+      "File": "/workspaces/AitherZero/tests/unit/Start-AitherZero.Tests.ps1",
+      "Line": 33
+    },
+    {
+      "ExpandedPath": "Start-AitherZero Script.Parameter Validation.Should support Orchestrate mode",
+      "Result": "Failed",
+      "Duration": "00:00:00.0134567",
+      "ErrorRecord": {
+        "Exception": {
+          "Message": "RuntimeException: The variable '$script:EntryScript' cannot be retrieved because it has not been set."
+        },
+        "ScriptStackTrace": "at <ScriptBlock>, /workspaces/AitherZero/tests/unit/Start-AitherZero.Tests.ps1:39"
+      },
+      "File": "/workspaces/AitherZero/tests/unit/Start-AitherZero.Tests.ps1",
+      "Line": 39
+    },
+    {
+      "ExpandedPath": "Start-AitherZero Script.Configuration Loading.Should attempt to load configuration",
+      "Result": "Failed",
+      "Duration": "00:00:00.0234567",
+      "ErrorRecord": {
+        "Exception": {
+          "Message": "RuntimeException: The variable '$script:EntryScript' cannot be retrieved because it has not been set."
+        },
+        "ScriptStackTrace": "at <ScriptBlock>, /workspaces/AitherZero/tests/unit/Start-AitherZero.Tests.ps1:47"
+      },
+      "File": "/workspaces/AitherZero/tests/unit/Start-AitherZero.Tests.ps1",
+      "Line": 47
+    },
+    {
+      "ExpandedPath": "Start-AitherZero Script.Help System.Should display help when requested",
+      "Result": "Failed",
+      "Duration": "00:00:00.0134567",
+      "ErrorRecord": {
+        "Exception": {
+          "Message": "RuntimeException: The variable '$script:EntryScript' cannot be retrieved because it has not been set."
+        },
+        "ScriptStackTrace": "at <ScriptBlock>, /workspaces/AitherZero/tests/unit/Start-AitherZero.Tests.ps1:55"
+      },
+      "File": "/workspaces/AitherZero/tests/unit/Start-AitherZero.Tests.ps1",
+      "Line": 55
+    }
+  ],
+  "Failed": 12,
+  "Passed": 0,
+  "Skipped": 0,
+  "Total": 12,
+  "Timestamp": "2025-08-14T18:15:00Z"
+}

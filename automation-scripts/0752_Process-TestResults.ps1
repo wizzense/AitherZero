@@ -21,9 +21,11 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$TrackerPath = './test-fix-tracker.json',
-    [string]$TestResultsPath = './tests/results',
+    [string]$TestResultsPath = './tests/reports',  # Changed to reports directory
     [string]$ResultsFile,  # Specific file to process
+    [int]$MaxAgeHours = 24,  # Maximum age of test results in hours
     [switch]$RunTestsFirst,
+    [switch]$ForceRunTests,  # Force running tests even if recent results exist
     [switch]$PassThru
 )
 
@@ -66,17 +68,43 @@ try {
     $tracker = Get-Content $TrackerPath -Raw | ConvertFrom-Json -AsHashtable
     Write-ScriptLog -Message "Loaded tracker with $($tracker.issues.Count) existing issues"
     
-    # Run tests if requested
-    if ($RunTestsFirst) {
-        Write-ScriptLog -Message "Running unit tests first..."
+    # Check for recent test results first
+    $needNewTests = $false
+    
+    if (-not $ResultsFile) {
+        # Look for JSON reports first, then XML
+        $jsonResults = Get-ChildItem "$TestResultsPath/TestReport-*.json" -ErrorAction SilentlyContinue | 
+            Sort-Object LastWriteTime -Descending | 
+            Select-Object -First 1
+        
+        if ($jsonResults) {
+            $resultAge = (Get-Date) - $jsonResults.LastWriteTime
+            if ($resultAge.TotalHours -gt $MaxAgeHours) {
+                Write-ScriptLog -Level Warning -Message "Test results are $([int]$resultAge.TotalHours) hours old (max: $MaxAgeHours)"
+                $needNewTests = $true
+            } else {
+                Write-ScriptLog -Message "Found recent JSON test results: $($jsonResults.Name) (age: $([int]$resultAge.TotalHours) hours)"
+            }
+        } else {
+            Write-ScriptLog -Level Warning -Message "No JSON test results found in $TestResultsPath"
+            $needNewTests = $true
+        }
+    }
+    
+    # Run tests if needed or requested
+    if ($RunTestsFirst -or $ForceRunTests -or $needNewTests) {
+        Write-ScriptLog -Message "Running unit tests..."
         $testScript = Join-Path (Split-Path $PSScriptRoot -Parent) "automation-scripts/0402_Run-UnitTests.ps1"
         
         if ($PSCmdlet.ShouldProcess($testScript, "Run unit tests")) {
             & $testScript
+            
+            # Wait for results to be generated
+            Start-Sleep -Seconds 2
         }
     }
     
-    # Find test results
+    # Find test results - prefer JSON over XML
     $latestResults = if ($ResultsFile) {
         if (Test-Path $ResultsFile) {
             Get-Item $ResultsFile
@@ -85,9 +113,20 @@ try {
             exit 1
         }
     } else {
-        Get-ChildItem "$TestResultsPath/UnitTests-*.xml" -ErrorAction SilentlyContinue | 
+        # First try JSON reports
+        $jsonResults = Get-ChildItem "$TestResultsPath/TestReport-*.json" -ErrorAction SilentlyContinue | 
             Sort-Object LastWriteTime -Descending | 
             Select-Object -First 1
+        
+        if ($jsonResults) {
+            $jsonResults
+        } else {
+            # Fall back to XML if no JSON found
+            Write-ScriptLog -Message "No JSON results found, looking for XML..."
+            Get-ChildItem "$TestResultsPath/UnitTests-*.xml" -ErrorAction SilentlyContinue | 
+                Sort-Object LastWriteTime -Descending | 
+                Select-Object -First 1
+        }
     }
     
     if (-not $latestResults) {
@@ -118,9 +157,38 @@ try {
         exit 0
     }
     
-    # Parse XML results
-    [xml]$testXml = Get-Content $latestResults.FullName
-    $failures = $testXml.SelectNodes("//test-case[@result='Failure']")
+    # Parse results based on format
+    $failures = @()
+    
+    if ($latestResults.Extension -eq '.json') {
+        Write-ScriptLog -Message "Parsing JSON test results"
+        $testJson = Get-Content $latestResults.FullName -Raw | ConvertFrom-Json
+        
+        # Extract failures from Pester JSON format
+        if ($testJson.Failed -gt 0 -and $testJson.Tests) {
+            $failures = @($testJson.Tests | Where-Object { $_.Result -eq 'Failed' })
+        }
+    } elseif ($latestResults.Extension -eq '.xml') {
+        Write-ScriptLog -Message "Parsing XML test results"
+        [xml]$testXml = Get-Content $latestResults.FullName
+        $xmlFailures = $testXml.SelectNodes("//test-case[@result='Failure']")
+        
+        # Convert XML failures to consistent format
+        $failures = @($xmlFailures | ForEach-Object {
+            [PSCustomObject]@{
+                ExpandedPath = $_.GetAttribute('name')
+                ErrorRecord = @{
+                    Exception = @{
+                        Message = $_.SelectSingleNode('failure/message').InnerText
+                    }
+                    ScriptStackTrace = $_.SelectSingleNode('failure/stack-trace').InnerText
+                }
+            }
+        })
+    } else {
+        Write-ScriptLog -Level Error -Message "Unsupported results format: $($latestResults.Extension)"
+        exit 1
+    }
     
     Write-ScriptLog -Message "Found $($failures.Count) failing tests in results"
     
@@ -149,7 +217,12 @@ try {
     $skippedIssues = 0
     
     foreach ($failure in $failures) {
-        $testName = $failure.GetAttribute('name')
+        # Handle both JSON and XML formats
+        $testName = if ($failure.ExpandedPath) { 
+            $failure.ExpandedPath 
+        } else { 
+            $failure.GetAttribute('name') 
+        }
         
         # Check if already tracked (not resolved)
         $existing = $tracker.issues | Where-Object { 
@@ -162,9 +235,16 @@ try {
             continue
         }
         
-        # Extract failure details
-        $errorMsg = $failure.SelectSingleNode('failure/message').InnerText
-        $stackTrace = $failure.SelectSingleNode('failure/stack-trace').InnerText
+        # Extract failure details (handle both formats)
+        if ($failure.ErrorRecord) {
+            # JSON format
+            $errorMsg = $failure.ErrorRecord.Exception.Message
+            $stackTrace = $failure.ErrorRecord.ScriptStackTrace
+        } else {
+            # XML format
+            $errorMsg = $failure.SelectSingleNode('failure/message').InnerText
+            $stackTrace = $failure.SelectSingleNode('failure/stack-trace').InnerText
+        }
         
         # Try to extract file and line from stack trace
         $file = ''

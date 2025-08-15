@@ -23,6 +23,8 @@ param(
     [string]$TrackerPath = './test-fix-tracker.json',
     [string]$IssueId,  # Specific issue to validate
     [switch]$ValidateAll,  # Validate all 'validating' status issues
+    [switch]$RetryOnFailure,  # Automatically retry failed validations
+    [int]$MaxRetries = 3,  # Maximum retry attempts
     [switch]$PassThru
 )
 
@@ -106,23 +108,17 @@ try {
     }
     
     $tracker = Get-Content $TrackerPath -Raw | ConvertFrom-Json -AsHashtable
-    
-    # Ensure issues is an array
-    if ($tracker.issues -isnot [array]) {
-        $tracker.issues = @($tracker.issues)
-    }
-    
     Write-ScriptLog -Message "Loaded tracker with $($tracker.issues.Count) issues"
     
     # Find issues to validate
-    $issuesToValidate = @(if ($IssueId) {
-        $tracker.issues | Where-Object { $_.id -eq $IssueId }
+    $issuesToValidate = if ($IssueId) {
+        @($tracker.issues | Where-Object { $_.id -eq $IssueId })
     } elseif ($ValidateAll) {
-        $tracker.issues | Where-Object { $_.status -in @('validating', 'fixing') }
+        @($tracker.issues | Where-Object { $_.status -in @('validating', 'fixing') })
     } else {
         # Default: validate the most recent 'validating' or 'fixing' issue
-        $tracker.issues | Where-Object { $_.status -in @('validating', 'fixing') } | Select-Object -First 1
-    })
+        @($tracker.issues | Where-Object { $_.status -in @('validating', 'fixing') } | Select-Object -First 1)
+    }
     
     if ($issuesToValidate.Count -eq 0) {
         Write-ScriptLog -Message "No issues to validate"
@@ -157,24 +153,16 @@ try {
             continue
         }
         
-        # Run the specific test
+        # Run the specific test with detailed output
         Write-ScriptLog -Message "Running test: $($issue.testName)"
         
-        # Update GitHub issue that validation is starting
-        if ($issue.githubIssue) {
-            Update-GitHubIssue -Issue $issue -Comment @"
-🔍 **Starting validation...**
-
-- 🧪 Running test: ``$($issue.testName)``
-- 📍 Location: ``$($issue.file):$($issue.line)``
-- 🔄 Attempt: $($issue.attempts) of 3
-
-_Checking if the fix resolved the issue..._
-"@
-        }
-        
         if ($PSCmdlet.ShouldProcess($issue.testName, "Run Pester test")) {
-            $testResult = Invoke-Pester -Path $issue.file -FullNameFilter "*$($issue.testName)*" -PassThru -Output None
+            # Capture detailed test output
+            $testOutput = @()
+            $testResult = Invoke-Pester -Path $issue.file -FullNameFilter "*$($issue.testName)*" -PassThru -Output Detailed 4>&1 | Tee-Object -Variable testOutput
+            
+            # Convert output to string
+            $testOutputString = $testOutput -join "`n"
             
             $validated++
             
@@ -184,95 +172,150 @@ _Checking if the fix resolved the issue..._
                 $issue.resolvedAt = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
                 $passed++
                 
-                # Get Claude's response if available
-                $responseFile = "./claude-artifacts/fix-$($issue.id)-attempt$($issue.attempts)-response.txt"
-                $claudeResponse = if (Test-Path $responseFile) {
-                    $content = Get-Content $responseFile -Raw
-                    # Truncate if too long for GitHub comment
-                    if ($content.Length -gt 3000) {
-                        $content.Substring(0, 3000) + "`n`n... (truncated)"
-                    } else {
-                        $content
-                    }
-                } else {
-                    "(Claude response not available)"
-                }
-                
-                # Get the actual changes made
-                $changedFiles = git diff --name-only HEAD~1 HEAD 2>&1 | Out-String
-                $diffSummary = git diff --stat HEAD~1 HEAD 2>&1 | Out-String
-                
-                # Update GitHub issue with detailed information
+                # Update GitHub issue
                 $comment = @"
-✅ **Fixed!**
+✅ **Test Fixed Successfully!**
 
-Test is now passing after attempt #$($issue.attempts).
+Test is now PASSING after attempt #$($issue.attempts).
 
-## Fix Details
+## Validation Results
+- **Status:** ✅ PASSING
+- **Duration:** $($testResult.Duration.TotalSeconds) seconds
+- **Validated:** $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+- **Test File:** ``$($issue.file):$($issue.line)``
 
-**Test:** ``$($issue.testName)``
-**File:** ``$($issue.file):$($issue.line)``
-**Original Error:** 
-\`\`\`
-$($issue.error)
-\`\`\`
-
-## Claude's Solution
-
+## Test Output
 <details>
-<summary>Claude's Response (click to expand)</summary>
+<summary>Full Pester Output</summary>
 
-\`\`\`
-$claudeResponse
+\`\`\`powershell
+$testOutputString
 \`\`\`
 
 </details>
 
-## Changes Made
-
-**Modified Files:**
-\`\`\`
-$changedFiles
-\`\`\`
-
-**Change Summary:**
-\`\`\`
-$diffSummary
-\`\`\`
-
-## Validation
-- ✅ Test: PASSING
-- 📅 Validated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
-- ⏱️ Fix Duration: ~$($issue.attempts * 5) minutes
-- 🤖 Automated by: Claude Code
+## Next Steps
+- ✅ Test is now passing
+- 📝 Changes are ready for commit
+- 🔀 A Pull Request can be created to merge the fix
+- ⚠️ **Issue will remain open until PR is merged**
 
 ---
-*This issue was automatically resolved by the AitherZero test automation system.*
+*The test has been successfully fixed by Claude Code automation. Issue will be closed when the PR is merged.*
 "@
-                Update-GitHubIssue -Issue $issue -Comment $comment -AddLabels @('fixed', 'auto-resolved')
+                Update-GitHubIssue -Issue $issue -Comment $comment -AddLabels @('fixed', 'ready-for-pr')
                 
             } else {
                 Write-Host "❌ Test still failing after attempt $($issue.attempts)" -ForegroundColor Red
                 $issue.status = 'open'
                 $failed++
                 
+                # Extract current failure details from test
+                $currentError = if ($testResult.Tests -and $testResult.Tests.Count -gt 0) {
+                    $failedTest = $testResult.Tests | Where-Object { $_.Result -eq 'Failed' } | Select-Object -First 1
+                    if ($failedTest -and $failedTest.ErrorRecord) {
+                        $failedTest.ErrorRecord.Exception.Message
+                    } else {
+                        "Test failed but no error details available"
+                    }
+                } else {
+                    "Unable to extract error details"
+                }
+                
+                # Include test output in failure message
+                $failureComment = @"
+❌ **Test Still Failing After Fix Attempt**
+
+## Test Results
+- **Status:** ❌ FAILING
+- **Attempt:** #$($issue.attempts)
+- **Duration:** $($testResult.Duration.TotalSeconds) seconds
+- **Failed Count:** $($testResult.FailedCount)
+
+## Current Error
+\`\`\`
+$currentError
+\`\`\`
+
+## Test Output
+<details>
+<summary>Full Pester Output</summary>
+
+\`\`\`powershell
+$testOutputString
+\`\`\`
+
+</details>
+
+$(if ($RetryOnFailure -and $issue.attempts -lt $maxAttempts) { "🔄 Will automatically retry with a different approach..." } else { "💡 Manual intervention may be required" })
+"@
+                
                 # Check if max attempts reached
-                $maxAttempts = 3
+                $maxAttempts = if ($MaxRetries -gt 0) { $MaxRetries } else { 3 }
                 if ($issue.attempts -ge $maxAttempts) {
                     Write-ScriptLog -Level Warning -Message "Max attempts ($maxAttempts) reached for issue $($issue.id)"
                     $issue.status = 'failed'
                     
-                    $comment = @"
-❌ **Failed to auto-fix after $($issue.attempts) attempts**
-
-This issue requires manual intervention.
-Test is still failing after multiple automated fix attempts.
-
-**Status:** Needs manual fix
-"@
-                    Update-GitHubIssue -Issue $issue -Comment $comment -AddLabels @('needs-manual-fix')
+                    # Post the failure comment with max attempts message
+                    Update-GitHubIssue -Issue $issue -Comment $failureComment -AddLabels @('needs-manual-fix')
                 } else {
-                    Update-GitHubIssue -Issue $issue -Comment "❌ Attempt #$($issue.attempts) failed. Test still not passing."
+                    # Update issue with current failure
+                    Update-GitHubIssue -Issue $issue -Comment $failureComment
+                    
+                    # Automatically retry if requested
+                    if ($RetryOnFailure -and $issue.attempts -lt $maxAttempts) {
+                        Write-ScriptLog -Message "Automatically retrying fix for issue $($issue.id)..."
+                        
+                        # Brief pause before retry
+                        Start-Sleep -Seconds 5
+                        
+                        # Update issue status
+                        Update-GitHubIssue -Issue $issue -Comment "🔄 **Retrying fix with attempt #$($issue.attempts + 1)**"
+                        
+                        # Call the fix script again
+                        $fixScript = Join-Path $PSScriptRoot "0754_Fix-SingleTestFailure.ps1"
+                        if (Test-Path $fixScript) {
+                            Write-ScriptLog -Message "Invoking fix script: $fixScript"
+                            
+                            if ($PSCmdlet.ShouldProcess($fixScript, "Retry fix for issue $($issue.id)")) {
+                                & $fixScript -TrackerPath $TrackerPath -IssueId $issue.id -MaxAttempts $maxAttempts
+                                
+                                # Reload tracker to get updated data
+                                $tracker = Get-Content $TrackerPath -Raw | ConvertFrom-Json -AsHashtable
+                                
+                                # Re-validate after retry
+                                Write-ScriptLog -Message "Re-validating after retry..."
+                                Start-Sleep -Seconds 2
+                                
+                                # Run test again
+                                $retryTestResult = Invoke-Pester -Path $issue.file -FullNameFilter "*$($issue.testName)*" -PassThru -Output None
+                                
+                                if ($retryTestResult.FailedCount -eq 0) {
+                                    Write-Host "✅ TEST PASSED after retry! Issue $($issue.id) is resolved!" -ForegroundColor Green
+                                    $issue.status = 'resolved'
+                                    $issue.resolvedAt = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+                                    $passed++
+                                    $failed--  # Adjust the count
+                                    
+                                    Update-GitHubIssue -Issue $issue -Comment @"
+✅ **Fixed on retry!**
+
+Test is now passing after retry attempt #$($issue.attempts + 1).
+
+**Validation Results:**
+- Test: PASSING ✅
+- Validated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+
+The issue has been automatically resolved by Claude Code.
+"@ -AddLabels @('fixed', 'auto-resolved')
+                                } else {
+                                    Write-ScriptLog -Level Warning -Message "Test still failing after retry"
+                                }
+                            }
+                        } else {
+                            Write-ScriptLog -Level Error -Message "Fix script not found: $fixScript"
+                        }
+                    }
                 }
             }
         }

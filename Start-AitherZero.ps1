@@ -76,28 +76,10 @@ param(
 $script:ProjectRoot = $PSScriptRoot
 $env:AITHERZERO_ROOT = $script:ProjectRoot
 
-# CRITICAL: Import main AitherZero module first
-$mainModulePath = Join-Path $script:ProjectRoot 'AitherZero.psd1'
-if (Test-Path $mainModulePath) {
-    try {
-        Import-Module $mainModulePath -Force -Global
-    } catch {
-        Write-Warning "Failed to load AitherZero module. Running bootstrap..."
-        & (Join-Path $script:ProjectRoot 'bootstrap.ps1') -Mode New -NonInteractive -SkipAutoStart
-        Import-Module $mainModulePath -Force -Global
-    }
-} else {
-    Write-Error "AitherZero module not found at: $mainModulePath"
-    exit 1
-}
-
-# Configuration module should now be loaded via main module
-if (-not (Get-Command Get-ConfiguredValue -ErrorAction SilentlyContinue)) {
-    # Fallback: Import Configuration module directly
-    $configModulePath = Join-Path $script:ProjectRoot 'domains/configuration/Configuration.psm1'
-    if (Test-Path $configModulePath) {
-        Import-Module $configModulePath -Force -ErrorAction SilentlyContinue
-    }
+# Import Configuration module early to use Get-ConfiguredValue
+$configModulePath = Join-Path $script:ProjectRoot 'domains/configuration/Configuration.psm1'
+if (Test-Path $configModulePath) {
+    Import-Module $configModulePath -Force -ErrorAction SilentlyContinue
 }
 
 # Apply configuration defaults if not provided
@@ -437,37 +419,8 @@ function Invoke-PlaybookMenu {
         return
     }
 
-    # Load playbooks - prioritize PSD1 format, fall back to JSON
-    $psd1Dir = Join-Path (Split-Path $playbookDir) 'playbooks-psd1'
-    $playbooks = @()
-    
-    # Load PSD1 playbooks first (preferred format)
-    if (Test-Path $psd1Dir) {
-        $playbooks += Get-ChildItem $psd1Dir -Filter "*.psd1" -Recurse | ForEach-Object {
-            $pb = Import-PowerShellDataFile $_.FullName
-            # Get category from parent directory if in a subdirectory
-            $category = if ($_.Directory.Name -ne 'playbooks-psd1') { 
-                $_.Directory.Name 
-            } else { 
-                'general' 
-            }
-            [PSCustomObject]@{
-                Name = if ($category -ne 'general' -and $category -ne 'archive') { "[$category] $($pb.Name)" } else { $pb.Name }
-                Description = $pb.Description
-                Path = $_.FullName
-                Category = $category
-                OriginalName = $pb.Name
-                Format = 'PSD1'
-            }
-        }
-    }
-    
-    # Load JSON playbooks for backward compatibility
-    $playbooks += Get-ChildItem $playbookDir -Filter "*.json" -Recurse | Where-Object {
-        # Skip if PSD1 version exists
-        $psd1Equivalent = Join-Path $psd1Dir ($_.FullName.Replace($playbookDir, '').Replace('.json', '.psd1'))
-        -not (Test-Path $psd1Equivalent)
-    } | ForEach-Object {
+    # Load playbooks (including from subdirectories)
+    $playbooks = Get-ChildItem $playbookDir -Filter "*.json" -Recurse | ForEach-Object {
         $pb = Get-Content $_.FullName | ConvertFrom-Json
         # Get category from parent directory if in a subdirectory
         $category = if ($_.Directory.Name -ne 'playbooks') { 
@@ -476,16 +429,13 @@ function Invoke-PlaybookMenu {
             'general' 
         }
         [PSCustomObject]@{
-            Name = if ($category -ne 'general' -and $category -ne 'archive') { "[$category] $($pb.Name) (JSON)" } else { "$($pb.Name) (JSON)" }
+            Name = if ($category -ne 'general' -and $category -ne 'archive') { "[$category] $($pb.Name)" } else { $pb.Name }
             Description = $pb.Description
             Path = $_.FullName
             Category = $category
             OriginalName = $pb.Name
-            Format = 'JSON'
         }
-    }
-    
-    $playbooks = $playbooks | Sort-Object Category, Name
+    } | Sort-Object Category, Name
 
     if ($playbooks.Count -eq 0) {
         Show-UINotification -Message "No playbooks found" -Type 'Warning'
@@ -499,7 +449,7 @@ function Invoke-PlaybookMenu {
         Show-UINotification -Message "Executing playbook: $($selection.Name)" -Type 'Info'
         $variables = @{}
         if ($CI) { $variables['CI'] = $true }
-        $result = Invoke-OrchestrationSequence -LoadPlaybook $selection.OriginalName -Configuration $Config -Variables $variables
+        $result = Invoke-OrchestrationSequence -LoadPlaybook $selection.Name -Configuration $Config -Variables $variables
         
         if ($result.Failed -eq 0) {
             Show-UINotification -Message "Playbook completed successfully!" -Type 'Success'

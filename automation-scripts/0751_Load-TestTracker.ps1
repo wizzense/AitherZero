@@ -22,8 +22,11 @@
 param(
     [string]$TrackerPath = './test-fix-tracker.json',
     [string]$BranchPrefix = 'fix/auto-test-fixes',
+    [string]$TestResultsPath = './tests/reports',
+    [int]$TestResultsMaxAgeHours = 24,
     [switch]$CreateBranch,
     [switch]$Reset,
+    [switch]$CheckTestResults,  # Check if test results need updating
     [switch]$PassThru
 )
 
@@ -66,18 +69,88 @@ try {
         }
     }
     
+    # Check for recent test results if requested
+    $needNewTests = $false
+    if ($CheckTestResults) {
+        Write-ScriptLog -Message "Checking test results age..."
+        
+        # Look for most recent test results
+        $latestResults = Get-ChildItem "$TestResultsPath/TestReport-*.json" -ErrorAction SilentlyContinue | 
+            Sort-Object LastWriteTime -Descending | 
+            Select-Object -First 1
+        
+        if ($latestResults) {
+            $resultAge = (Get-Date) - $latestResults.LastWriteTime
+            if ($resultAge.TotalHours -gt $TestResultsMaxAgeHours) {
+                Write-ScriptLog -Level Warning -Message "Test results are $([int]$resultAge.TotalHours) hours old (max: $TestResultsMaxAgeHours)"
+                $needNewTests = $true
+            } else {
+                Write-ScriptLog -Message "Found recent test results: $($latestResults.Name) (age: $([int]$resultAge.TotalHours) hours)"
+            }
+        } else {
+            Write-ScriptLog -Level Warning -Message "No test results found in $TestResultsPath"
+            $needNewTests = $true
+        }
+        
+        if ($needNewTests) {
+            Write-ScriptLog -Message "Running tests to get fresh results..."
+            $testScript = Join-Path (Split-Path $PSScriptRoot -Parent) "automation-scripts/0402_Run-UnitTests.ps1"
+            if (Test-Path $testScript) {
+                & $testScript
+                Start-Sleep -Seconds 2  # Wait for results to be written
+            }
+        }
+    }
+    
     $tracker = if (Test-Path $TrackerPath) {
         Write-ScriptLog -Message "Loading existing tracker"
         $content = Get-Content $TrackerPath -Raw | ConvertFrom-Json
         
         # Convert to hashtable for easier manipulation
-        @{
+        $trackerData = @{
             lastProcessedResults = $content.lastProcessedResults
             currentBranch = $content.currentBranch
             issues = @($content.issues)
             createdAt = $content.createdAt
             updatedAt = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+            lastTestRun = if ($content.lastTestRun) { $content.lastTestRun } else { $null }
+            currentIssueIndex = if ($content.currentIssueIndex) { $content.currentIssueIndex } else { 0 }
         }
+        
+        # Check if we should select the next issue
+        if ($trackerData.issues.Count -gt 0) {
+            $openIssues = @($trackerData.issues | Where-Object { $_.status -eq 'open' })
+            if ($openIssues.Count -gt 0) {
+                # Find the next issue that hasn't been attempted recently
+                $nextIssue = $null
+                for ($i = $trackerData.currentIssueIndex; $i -lt $trackerData.issues.Count; $i++) {
+                    $issue = $trackerData.issues[$i]
+                    if ($issue.status -eq 'open' -and $issue.attempts -lt 3) {
+                        $nextIssue = $issue
+                        $trackerData.currentIssueIndex = $i + 1
+                        break
+                    }
+                }
+                
+                # Wrap around if needed
+                if (-not $nextIssue -and $trackerData.currentIssueIndex -gt 0) {
+                    for ($i = 0; $i -lt $trackerData.currentIssueIndex; $i++) {
+                        $issue = $trackerData.issues[$i]
+                        if ($issue.status -eq 'open' -and $issue.attempts -lt 3) {
+                            $nextIssue = $issue
+                            $trackerData.currentIssueIndex = $i + 1
+                            break
+                        }
+                    }
+                }
+                
+                if ($nextIssue) {
+                    Write-ScriptLog -Message "Next issue to process: $($nextIssue.id) - $($nextIssue.testName)"
+                }
+            }
+        }
+        
+        $trackerData
     } else {
         Write-ScriptLog -Message "Creating new tracker"
         $branchDate = Get-Date -Format 'yyyyMMdd-HHmmss'
@@ -89,6 +162,8 @@ try {
             issues = @()
             createdAt = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
             updatedAt = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+            lastTestRun = $null
+            currentIssueIndex = 0
         }
     }
     
@@ -129,6 +204,8 @@ try {
     Write-Host "  Branch: $($tracker.currentBranch)" -ForegroundColor Gray
     Write-Host "  Issues: $($tracker.issues.Count)" -ForegroundColor Gray
     Write-Host "  Last Results: $($tracker.lastProcessedResults ?? 'None')" -ForegroundColor Gray
+    Write-Host "  Last Test Run: $($tracker.lastTestRun ?? 'Never')" -ForegroundColor Gray
+    Write-Host "  Current Index: $($tracker.currentIssueIndex)" -ForegroundColor Gray
     Write-Host "  Updated: $($tracker.updatedAt)" -ForegroundColor Gray
     
     if ($tracker.issues.Count -gt 0) {

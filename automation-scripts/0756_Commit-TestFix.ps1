@@ -82,23 +82,17 @@ try {
     }
     
     $tracker = Get-Content $TrackerPath -Raw | ConvertFrom-Json -AsHashtable
-    
-    # Ensure issues is an array
-    if ($tracker.issues -isnot [array]) {
-        $tracker.issues = @($tracker.issues)
-    }
-    
     Write-ScriptLog -Message "Loaded tracker with $($tracker.issues.Count) issues"
     
     # Find issues to commit
-    $issuesToCommit = @(if ($IssueId) {
-        $tracker.issues | Where-Object { $_.id -eq $IssueId -and $_.status -eq 'resolved' -and -not $_.fixCommit }
+    $issuesToCommit = if ($IssueId) {
+        @($tracker.issues | Where-Object { $_.id -eq $IssueId -and $_.status -eq 'resolved' -and -not $_.fixCommit })
     } elseif ($CommitAll) {
-        $tracker.issues | Where-Object { $_.status -eq 'resolved' -and -not $_.fixCommit }
+        @($tracker.issues | Where-Object { $_.status -eq 'resolved' -and -not $_.fixCommit })
     } else {
         # Default: commit the most recently resolved issue
-        $tracker.issues | Where-Object { $_.status -eq 'resolved' -and -not $_.fixCommit } | Select-Object -First 1
-    })
+        @($tracker.issues | Where-Object { $_.status -eq 'resolved' -and -not $_.fixCommit } | Select-Object -First 1)
+    }
     
     if ($issuesToCommit.Count -eq 0) {
         Write-ScriptLog -Message "No resolved issues to commit"

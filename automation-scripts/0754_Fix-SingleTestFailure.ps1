@@ -21,9 +21,10 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$TrackerPath = './test-fix-tracker.json',
-    [string]$ClaudeCLI = 'claude',
+    [string]$ClaudeCLI = './automation-scripts/claude-wrapper.sh',
     [string]$IssueId,  # Specific issue ID to fix
     [int]$MaxAttempts = 3,
+    [switch]$UseTaskAgent = $true,  # Use Task tool with test-runner agent
     [switch]$DemoMode,  # Run without actually invoking Claude
     [switch]$PassThru
 )
@@ -64,16 +65,20 @@ function Update-GitHubIssue {
         [string[]]$Labels
     )
     
-    if (-not $Issue.githubIssue) {
+    # Check if githubIssue exists and has a value
+    if (-not $Issue.ContainsKey('githubIssue') -or -not $Issue.githubIssue) {
+        Write-ScriptLog -Level Warning -Message "No GitHub issue number found for issue $($Issue.id)"
         return
     }
     
     try {
         if ($Comment) {
+            Write-ScriptLog -Message "Updating GitHub issue #$($Issue.githubIssue) with comment"
             gh issue comment $Issue.githubIssue --body "$Comment" 2>&1 | Out-Null
         }
         
         if ($Labels) {
+            Write-ScriptLog -Message "Adding labels to GitHub issue #$($Issue.githubIssue): $($Labels -join ', ')"
             gh issue edit $Issue.githubIssue --add-label ($Labels -join ',') 2>&1 | Out-Null
         }
     }
@@ -83,11 +88,10 @@ function Update-GitHubIssue {
 }
 
 try {
-    # Check for Claude CLI (unless in demo mode)
-    if (-not $DemoMode -and -not (Get-Command $ClaudeCLI -ErrorAction SilentlyContinue)) {
-        Write-ScriptLog -Level Warning -Message "Claude CLI not found. Install from: https://github.com/anthropics/claude-cli"
-        Write-ScriptLog -Message "Running in demo mode instead"
-        $DemoMode = $true
+    # Check for Claude CLI (unless in demo mode or using Task agent)
+    if (-not $DemoMode -and -not $UseTaskAgent -and -not (Get-Command $ClaudeCLI -ErrorAction SilentlyContinue)) {
+        Write-ScriptLog -Level Warning -Message "Claude CLI not found. Will use Task agent instead."
+        $UseTaskAgent = $true
     }
     
     # Load tracker
@@ -97,12 +101,6 @@ try {
     }
     
     $tracker = Get-Content $TrackerPath -Raw | ConvertFrom-Json -AsHashtable
-    
-    # Ensure issues is an array
-    if ($tracker.issues -isnot [array]) {
-        $tracker.issues = @($tracker.issues)
-    }
-    
     Write-ScriptLog -Message "Loaded tracker with $($tracker.issues.Count) issues"
     
     # Find issue to fix
@@ -162,14 +160,25 @@ try {
 - **Test:** ``$($issueToFix.testName)``
 - **Location:** ``$($issueToFix.file):$($issueToFix.line)``
 - **Error Type:** ``$($issueToFix.error -split ':' | Select-Object -First 1)``
+- **Method:** $(if ($UseTaskAgent) { "Claude Task Agent (test-runner)" } else { "Claude CLI Direct" })
 
 ## Error Message
 \`\`\`
 $($issueToFix.error)
 \`\`\`
 
+## Stack Trace
+<details>
+<summary>Click to expand</summary>
+
+\`\`\`
+$($issueToFix.stackTrace)
+\`\`\`
+
+</details>
+
 ## Automation Process
-1. 🤖 Invoking Claude Code with remediation-assistant persona
+1. 🤖 Invoking Claude Code to analyze and fix
 2. 🔍 Claude will analyze the test and source code
 3. 🔨 Claude will apply minimal fixes to resolve the issue
 4. ✅ Automated validation will verify the fix
@@ -179,23 +188,11 @@ $($issueToFix.error)
 "@
     Update-GitHubIssue -Issue $issueToFix -Comment $startComment
     
-    # Load remediation assistant persona if available
-    $personaPath = Join-Path $PSScriptRoot '../../.claude/agents/remediation-assistant.md'
-    $personaContent = if (Test-Path $personaPath) {
-        Get-Content $personaPath -Raw
-        Write-ScriptLog -Message "Loaded remediation-assistant persona from: $personaPath"
-    } else {
-        Write-ScriptLog -Level Warning -Message "Persona file not found: $personaPath"
-        ""
-    }
-    
-    # Build Claude prompt with persona
+    # Build Claude prompt with explicit instructions
     $prompt = @"
-$personaContent
+You are an expert PowerShell developer fixing a specific test failure. 
 
 ## SPECIFIC TASK: Fix PowerShell Test Failure
-
-You are acting as a remediation specialist to fix a specific test failure.
 
 Test Name: $($issueToFix.testName)
 File: $($issueToFix.file)
@@ -215,25 +212,29 @@ $($issueToFix.stackTrace)
 5. Follow existing code patterns and conventions
 6. Use proper PowerShell error handling
 7. Add appropriate logging using Write-CustomLog if available
+8. After fixing, provide a brief summary of what was changed and why
+
+CRITICAL: You MUST make the actual code changes needed to fix this issue. Do NOT ask for permission or confirmation. Do NOT just explain what needs to be fixed - actually fix it by editing the necessary files. This is an automated workflow and you have full permission to make all necessary changes immediately.
 
 ## Context:
-This is attempt $($issueToFix.attempts + 1) of $MaxAttempts to fix this issue.
+This is attempt $($issueToFix.attempts) of $MaxAttempts to fix this issue.
+$(if ($issueToFix.attempts -gt 1) { "Previous attempts have failed. Try a different approach." })
 
-Apply your remediation expertise to safely fix this test failure.
+Start by reading the test file to understand the failure, then make the necessary fixes.
 "@
+    
+    # Save prompt for debugging/reference
+    $promptFile = "./claude-fix-$($issueToFix.id)-attempt$($issueToFix.attempts).txt"
+    if ($PSCmdlet.ShouldProcess($promptFile, "Save Claude prompt")) {
+        $prompt | Out-File $promptFile
+        Write-ScriptLog -Message "Prompt saved to: $promptFile"
+    }
     
     # Create directory for Claude artifacts if it doesn't exist
     $claudeDir = './claude-artifacts'
     if (-not (Test-Path $claudeDir)) {
         New-Item -ItemType Directory -Path $claudeDir -Force | Out-Null
         Write-ScriptLog -Message "Created Claude artifacts directory: $claudeDir"
-    }
-    
-    # Save prompt for debugging/reference
-    $promptFile = Join-Path $claudeDir "fix-$($issueToFix.id)-attempt$($issueToFix.attempts)-prompt.txt"
-    if ($PSCmdlet.ShouldProcess($promptFile, "Save Claude prompt")) {
-        $prompt | Out-File $promptFile
-        Write-ScriptLog -Message "Prompt saved to: $promptFile"
     }
     
     # Invoke Claude
@@ -244,6 +245,159 @@ Apply your remediation expertise to safely fix this test failure.
         
         # In demo mode, mark as attempted but still open
         $issueToFix.status = 'open'
+    } elseif ($UseTaskAgent) {
+        Write-Host "`n🤖 Invoking Claude via Task Agent (test-runner)..." -ForegroundColor Magenta
+        
+        if ($PSCmdlet.ShouldProcess("Task Agent", "Invoke test-runner agent to fix test failure")) {
+            Write-ScriptLog -Message "Using Task tool with test-runner agent"
+            
+            # Update GitHub issue that Claude is processing
+            Update-GitHubIssue -Issue $issueToFix -Comment @"
+🤖 **Claude Task Agent is now analyzing the code...**
+
+- 🕰️ Started: $(Get-Date -Format 'HH:mm:ss')
+- 📝 Agent: test-runner
+- 🔍 Analyzing test failure pattern
+- 💡 Determining optimal fix strategy
+
+_This may take 2-5 minutes depending on complexity..._
+"@
+            
+            $startTime = Get-Date
+            
+            # Save the prompt for the agent
+            $agentPromptFile = "./claude-agent-prompt-$($issueToFix.id).txt"
+            $prompt | Out-File $agentPromptFile
+            
+            # Use Claude CLI directly with the prompt
+            Write-ScriptLog -Message "Executing Claude CLI with prompt"
+            
+            # Execute using Claude CLI
+            Write-ScriptLog -Message "Running Claude to fix the test failure"
+            
+            # Read the test file and pipe it to Claude with a focused prompt
+            $fixPrompt = "Fix this PowerShell test failure: $($issueToFix.testName) at line $($issueToFix.line). Error: $($issueToFix.error). Make the necessary code changes to fix this specific test."
+            
+            Write-ScriptLog -Message "Reading test file: $($issueToFix.file)"
+            $testContent = Get-Content $issueToFix.file -Raw
+            
+            # Use Claude wrapper with proper syntax - pipe the file content and use -p for the prompt
+            $claudeResult = $testContent | & $ClaudeCLI -p $fixPrompt 2>&1
+            
+            $endTime = Get-Date
+            $duration = $endTime - $startTime
+            Write-ScriptLog -Message "Task agent completed in: $($duration.TotalSeconds) seconds"
+            
+            # Save response
+            $responseFile = Join-Path $claudeDir "agent-fix-$($issueToFix.id)-attempt$($issueToFix.attempts)-response.txt"
+            $claudeResult | Out-File $responseFile
+            Write-ScriptLog -Message "Agent response saved to: $responseFile"
+            
+            # Extract summary from response if available
+            $summary = if ($claudeResult -match "SUMMARY: (.+)") {
+                $Matches[1]
+            } else {
+                "Fix applied successfully"
+            }
+            
+            if ($LASTEXITCODE -eq 0) {
+                Write-ScriptLog -Message "Task agent completed successfully"
+                $issueToFix.status = 'validating'
+                
+                # Get the actual diff to show in GitHub
+                $gitDiff = git diff 2>&1 | Select-Object -First 100
+                $filesChanged = git diff --name-only 2>&1 | Out-String
+                
+                # Update GitHub issue with completion and code changes
+                $promptPreview = if ($prompt.Length -gt 500) {
+                    $prompt.Substring(0, 500) + "... (truncated)"
+                } else {
+                    $prompt
+                }
+                
+                Update-GitHubIssue -Issue $issueToFix -Comment @"
+✅ **Claude Task Agent has completed the fix!**
+
+- ⏱️ Duration: $([math]::Round($duration.TotalSeconds)) seconds
+- 🤖 Agent: Claude CLI via wrapper
+- 📝 Summary: $summary
+
+## Prompt Sent to Claude:
+<details>
+<summary>View prompt</summary>
+
+\`\`\`
+$promptPreview
+\`\`\`
+
+Full prompt saved to: $promptFile
+
+</details>
+
+## Files Modified:
+\`\`\`
+$filesChanged
+\`\`\`
+
+## Code Changes Applied:
+<details>
+<summary>View diff (first 100 lines)</summary>
+
+\`\`\`diff
+$($gitDiff -join "`n")
+\`\`\`
+
+</details>
+
+## Claude's Full Response:
+<details>
+<summary>Claude's Analysis and Changes</summary>
+
+\`\`\`
+$($claudeResult | Out-String)
+\`\`\`
+
+Response saved to: $responseFile
+
+</details>
+
+- 🎯 Status: Moving to validation phase
+
+_The fix will now be validated by running the test..._
+"@
+                
+                # Store changed files
+                $claudeChangedFiles = @(git diff --name-only 2>&1 | Where-Object { $_ -match '\.(ps1|psm1|psd1)$' })
+                if (-not $issueToFix.ContainsKey('changedFiles')) {
+                    $issueToFix.Add('changedFiles', @($claudeChangedFiles))
+                } else {
+                    $issueToFix.changedFiles = @($claudeChangedFiles)
+                }
+            } else {
+                Write-ScriptLog -Level Warning -Message "Task agent returned non-zero exit code: $LASTEXITCODE"
+                $issueToFix.status = 'open'
+                
+                Update-GitHubIssue -Issue $issueToFix -Comment @"
+⚠️ **Task Agent encountered an issue**
+
+- Exit code: $LASTEXITCODE
+- Duration: $([math]::Round($duration.TotalSeconds)) seconds
+- Status: Will retry if attempts remaining
+
+<details>
+<summary>Error Details</summary>
+
+\`\`\`
+$($claudeResult -join "`n" | Select-Object -First 50)
+\`\`\`
+
+</details>
+"@
+            }
+            
+            # Clean up temp file
+            Remove-Item $agentPromptFile -Force -ErrorAction SilentlyContinue
+        }
     } else {
         Write-Host "`n🤖 Invoking Claude Code to fix the issue..." -ForegroundColor Magenta
         
@@ -252,10 +406,6 @@ Apply your remediation expertise to safely fix this test failure.
             Write-ScriptLog -Message "Invoking Claude CLI: $ClaudeCLI -p <prompt>"
             Write-ScriptLog -Message "Prompt file: $promptFile"
             Write-ScriptLog -Message "Prompt length: $($prompt.Length) characters"
-            
-            # Run Claude with the prompt in print mode and capture output
-            $startTime = Get-Date
-            Write-ScriptLog -Message "Starting Claude at: $startTime"
             
             # Update GitHub issue that Claude is processing
             Update-GitHubIssue -Issue $issueToFix -Comment @"
@@ -266,21 +416,21 @@ Apply your remediation expertise to safely fix this test failure.
 - 🔍 Examining source code
 - 💡 Determining optimal fix strategy
 
-_This may take 3-7 minutes depending on complexity..._
+_This may take 2-5 minutes depending on complexity..._
 "@
             
             # Start a background job to provide periodic updates
             $updateJob = Start-Job -ScriptBlock {
                 param($issueId, $githubIssue, $startTime)
                 $elapsed = 0
-                while ($elapsed -lt 600) { # Max 10 minutes
-                    Start-Sleep -Seconds 60
-                    $elapsed += 60
-                    $minutes = [math]::Round($elapsed / 60, 1)
+                while ($elapsed -lt 300) { # Max 5 minutes
+                    Start-Sleep -Seconds 30
+                    $elapsed += 30
                     
                     # Try to update (will fail when main process completes)
                     try {
                         if ($githubIssue) {
+                            $minutes = [math]::Round($elapsed / 60, 1)
                             $updateMsg = "⌚ Claude is still working... ($minutes minutes elapsed)"
                             gh issue comment $githubIssue --body "$updateMsg" 2>&1 | Out-Null
                         }
@@ -288,9 +438,25 @@ _This may take 3-7 minutes depending on complexity..._
                         break
                     }
                 }
-            } -ArgumentList $issueToFix.id, $issueToFix.githubIssue, $startTime
+            } -ArgumentList $issueToFix.id, $(if ($issueToFix.PSObject.Properties.Name -contains 'githubIssue') { $issueToFix.githubIssue } else { $null }), (Get-Date)
             
-            $claudeResult = & $ClaudeCLI -p "$prompt" 2>&1
+            # Run Claude with the prompt passed via stdin
+            $startTime = Get-Date
+            Write-ScriptLog -Message "Starting Claude at: $startTime"
+            
+            # Read the test file for context
+            Write-ScriptLog -Message "Reading test file for context: $($issueToFix.file)"
+            $testContent = if (Test-Path $issueToFix.file) {
+                Get-Content $issueToFix.file -Raw
+            } else {
+                "# Test file not found at $($issueToFix.file)"
+            }
+            
+            # Create a focused prompt for Claude
+            $fixPrompt = "Fix this PowerShell test failure: $($issueToFix.testName) at line $($issueToFix.line). Error: $($issueToFix.error). The test file content is provided. Make the necessary code changes to fix this specific test."
+            
+            # Use Claude wrapper with proper syntax - pipe the test content and use -p for the prompt
+            $claudeResult = $testContent | & $ClaudeCLI -p $fixPrompt 2>&1
             
             # Stop the update job
             Stop-Job -Job $updateJob -ErrorAction SilentlyContinue
@@ -341,7 +507,10 @@ _This may take 3-7 minutes depending on complexity..._
                 
                 Write-ScriptLog -Message "Claude modified files: $($claudeChangedFiles -join ', ')"
                 
-                # Update GitHub issue with completion
+                # Get the actual diff to show in GitHub
+                $gitDiff = git diff 2>&1 | Select-Object -First 100
+                
+                # Update GitHub issue with completion and code changes
                 $filesChanged = git diff --name-only 2>&1 | Out-String
                 Update-GitHubIssue -Issue $issueToFix -Comment @"
 ✅ **Claude has completed the fix!**
@@ -351,6 +520,17 @@ _This may take 3-7 minutes depending on complexity..._
 \`\`\`
 $filesChanged
 \`\`\`
+
+## Code Changes Applied:
+<details>
+<summary>View diff (first 100 lines)</summary>
+
+\`\`\`diff
+$($gitDiff -join "`n")
+\`\`\`
+
+</details>
+
 - 🎯 Status: Moving to validation phase
 
 _The fix will now be validated by running the test..._
@@ -372,7 +552,7 @@ _The fix will now be validated by running the test..._
 <summary>Error Details</summary>
 
 \`\`\`
-$($claudeResult -join "`n" | Select-Object -First 500)
+$($claudeResult -join "`n" | Select-Object -First 50)
 \`\`\`
 
 </details>

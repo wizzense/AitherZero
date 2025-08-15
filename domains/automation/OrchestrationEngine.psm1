@@ -236,24 +236,22 @@ function Invoke-OrchestrationSequence {
                 # Store stages for proper variable handling (check both cases)
                 $script:PlaybookStages = if ($playbook.Stages) { $playbook.Stages } else { $playbook.stages }
                 
-                # For staged playbooks, we'll process stages sequentially
-                # Create a unique sequence by collecting all scripts without duplicates
+                # Flatten all stage sequences for compatibility - only if Sequence wasn't already set
                 if (-not $Sequence) {
                     $Sequence = @()
-                    $uniqueScripts = @{}
+                    $seenScripts = @{}  # Track scripts we've already added
                     foreach ($stage in $script:PlaybookStages) {
                         $stageSeq = if ($stage.Sequence) { $stage.Sequence } elseif ($stage.sequence) { $stage.sequence } else { @() }
-                        foreach ($script in $stageSeq) {
-                            if (-not $uniqueScripts.ContainsKey($script)) {
-                                $uniqueScripts[$script] = $true
-                                $Sequence += $script
+                        foreach ($scriptNum in $stageSeq) {
+                            if (-not $seenScripts.ContainsKey($scriptNum)) {
+                                $Sequence += $scriptNum
+                                $seenScripts[$scriptNum] = $true
                             }
                         }
                     }
                 }
                 Write-OrchestrationLog "Loaded $($script:PlaybookStages.Count) stages from playbook" -Level 'Information'
                 Write-OrchestrationLog "Stages: $($script:PlaybookStages | ConvertTo-Json -Compress)" -Level 'Information'
-                Write-OrchestrationLog "Unique sequence: $($Sequence -join ', ')" -Level 'Information'
             }
             
             # If still no sequence, this is an error
@@ -530,48 +528,40 @@ function Get-OrchestrationScripts {
         # Parse script metadata
         $metadata = Get-ScriptMetadata -Path $scriptFile.FullName
         
-        # Check if this script has stage-specific variables and parameters
+        # Check if this script has stage-specific variables
         # Use stage-specific variables if defined, otherwise use global variables
         $stageVariables = @{}
-        $stageParameters = @{}
         $foundStageVars = $false
         
         if ($script:PlaybookStages) {
             foreach ($stage in $script:PlaybookStages) {
                 # Check both lowercase and uppercase for compatibility
                 $stageSequence = if ($stage.Sequence) { $stage.Sequence } else { $stage.sequence }
-                $stageVars = if ($stage.Variables) { $stage.Variables } else { $stage.variables }
-                $stageParams = if ($stage.Parameters) { $stage.Parameters } else { $stage.parameters }
+                # Check for Variables or Parameters (for backward compatibility)
+                $stageVars = if ($stage.Variables) { 
+                    $stage.Variables 
+                } elseif ($stage.variables) { 
+                    $stage.variables 
+                } elseif ($stage.Parameters) {
+                    $stage.Parameters
+                } elseif ($stage.parameters) {
+                    $stage.parameters
+                } else {
+                    $null
+                }
                 
-                if ($stageSequence -contains $number) {
-                    # Handle stage variables
-                    if ($stageVars) {
-                        # Use ONLY stage-specific variables (don't merge with global)
-                        foreach ($key in $stageVars.Keys) {
-                            $value = $stageVars[$key]
-                            # Expand variable references in the value using global variables for lookups
-                            if ($value -is [string]) {
-                                $value = Expand-PlaybookVariables -Value $value -Variables $Variables
-                            }
-                            $stageVariables[$key] = $value
+                if ($stageSequence -contains $number -and $stageVars) {
+                    # Use ONLY stage-specific variables (don't merge with global)
+                    foreach ($key in $stageVars.Keys) {
+                        $value = $stageVars[$key]
+                        # Expand variable references in the value using global variables for lookups
+                        if ($value -is [string]) {
+                            $value = Expand-PlaybookVariables -Value $value -Variables $Variables
                         }
-                        Write-OrchestrationLog "Applied stage variables for script $number - Variables: $($stageVariables | ConvertTo-Json -Compress)" -Level 'Information'
-                        $foundStageVars = $true
+                        $stageVariables[$key] = $value
                     }
-                    
-                    # Handle stage parameters
-                    if ($stageParams) {
-                        foreach ($key in $stageParams.Keys) {
-                            $value = $stageParams[$key]
-                            # Expand variable references in parameters
-                            if ($value -is [string] -and $value -like '*$Variables.*') {
-                                $value = Expand-PlaybookVariables -Value $value -Variables $Variables
-                            }
-                            $stageParameters[$key] = $value
-                        }
-                        Write-OrchestrationLog "Applied stage parameters for script $number - Parameters: $($stageParameters | ConvertTo-Json -Compress)" -Level 'Debug'
-                    }
-                    
+                    Write-OrchestrationLog "Applied stage variables for script $number - Variables: $($stageVariables | ConvertTo-Json -Compress)" -Level 'Information'
+                    $foundStageVars = $true
                     break
                 }
             }
@@ -602,7 +592,6 @@ function Get-OrchestrationScripts {
             Tags = $metadata.Tags
             Priority = [int]$number
             Variables = $stageVariables  # Include stage-specific variables
-            Parameters = $stageParameters  # Include stage-specific parameters
         }
     }
     
@@ -866,37 +855,34 @@ function Invoke-SequentialOrchestration {
         [switch]$ContinueOnError
     )
 
-    Write-OrchestrationLog "Starting sequential orchestration with $($Scripts.Count) scripts"
+    Write-OrchestrationLog "Starting sequential orchestration"
     
     $completed = @{}
     $failed = @{}
     $startTime = Get-Date
     
-    foreach ($script in $Scripts) {
+    foreach ($script in $Scripts | Sort-Object Priority) {
         Write-OrchestrationLog "Executing: [$($script.Number)] $($script.Name)"
         
-        $retryCount = 0
-        # Use MaxRetries parameter if provided, otherwise default to 0 (no retries)
-        $scriptMaxRetries = if ($PSBoundParameters.ContainsKey('MaxRetries')) { 
-            $MaxRetries 
-        } else { 
-            0  # Default: no retries
-        }
+        # Default: no retries unless specified
+        $scriptMaxRetries = 0
         $retryDelay = 0
         $succeeded = $false
-        $scriptStart = Get-Date  # Initialize before the try block to avoid null reference
+        $attemptCount = 0
+        $maxAttempts = $scriptMaxRetries + 1  # Total attempts = initial + retries
         
-        # Execute at least once, then retry up to scriptMaxRetries times
-        while (-not $succeeded -and $retryCount -le $scriptMaxRetries) {
+        # Execute script with retry logic
+        while (-not $succeeded -and $attemptCount -lt $maxAttempts) {
+            $attemptCount++
+            $scriptStart = Get-Date
+            
             try {
-                if ($retryCount -gt 0) {
-                    Write-OrchestrationLog "Retry attempt $retryCount/$scriptMaxRetries for [$($script.Number)] $($script.Name)"
-                    Start-Sleep -Seconds $retryDelay
+                if ($attemptCount -gt 1) {
+                    Write-OrchestrationLog "Retry attempt $($attemptCount - 1)/$scriptMaxRetries for [$($script.Number)] $($script.Name)"
+                    if ($retryDelay -gt 0) {
+                        Start-Sleep -Seconds $retryDelay
+                    }
                 }
-                
-                $retryCount++
-                
-                $scriptStart = Get-Date  # Update for each retry
                 
                 # Write audit log for script execution
                 if ($script:LoggingAvailable -and (Get-Command Write-AuditLog -ErrorAction SilentlyContinue)) {
@@ -905,7 +891,7 @@ function Invoke-SequentialOrchestration {
                         ScriptNumber = $script.Number
                         Configuration = $Configuration
                         DryRun = $DryRun
-                        RetryAttempt = $retryCount
+                        RetryAttempt = $attemptCount
                     }
                 }
                 
@@ -923,9 +909,6 @@ function Invoke-SequentialOrchestration {
                 
                 # Debug logging
                 Write-OrchestrationLog "Script: $($script.Number) - Variables available: $($scriptVars.Keys -join ', ')" -Level 'Debug'
-                if ($script.Parameters) {
-                    Write-OrchestrationLog "Script: $($script.Number) - Stage parameters: $($script.Parameters.Keys -join ', ')" -Level 'Debug'
-                }
                 
                 if ($scriptInfo) {
                     # Only add Configuration if the script accepts it
@@ -933,28 +916,9 @@ function Invoke-SequentialOrchestration {
                         if ($Configuration) { $params['Configuration'] = $Configuration }
                     }
                     
-                    # First add stage-specific parameters if available
-                    if ($script.Parameters) {
-                        foreach ($key in $script.Parameters.Keys) {
-                            if ($scriptInfo.Parameters.ContainsKey($key)) {
-                                $value = $script.Parameters[$key]
-                                # Expand variable references if needed
-                                if ($value -is [string] -and $value -like '$Variables.*') {
-                                    $varName = $value -replace '^\$Variables\.', ''
-                                    if ($Variables.ContainsKey($varName)) {
-                                        $value = $Variables[$varName]
-                                    }
-                                }
-                                if ($null -ne $value -and $value -ne '') {
-                                    $params[$key] = $value
-                                }
-                            }
-                        }
-                    }
-                    
-                    # Then add variables that match script parameters (if not already set by parameters)
+                    # Only add variables that match script parameters
                     foreach ($key in $scriptVars.Keys) {
-                        if ($scriptInfo.Parameters.ContainsKey($key) -and -not $params.ContainsKey($key)) {
+                        if ($scriptInfo.Parameters.ContainsKey($key)) {
                             # Skip null or empty values
                             if ($null -ne $scriptVars[$key] -and $scriptVars[$key] -ne '') {
                                 $params[$key] = $scriptVars[$key]
@@ -964,29 +928,9 @@ function Invoke-SequentialOrchestration {
                 } else {
                     # Fallback if Get-Command fails - pass all non-empty variables
                     Write-OrchestrationLog "Warning: Could not get script info for $($script.Path), passing all variables" -Level 'Warning'
-                    
-                    # Add stage parameters first
-                    if ($script.Parameters) {
-                        foreach ($key in $script.Parameters.Keys) {
-                            $value = $script.Parameters[$key]
-                            if ($value -is [string] -and $value -like '$Variables.*') {
-                                $varName = $value -replace '^\$Variables\.', ''
-                                if ($Variables.ContainsKey($varName)) {
-                                    $value = $Variables[$varName]
-                                }
-                            }
-                            if ($null -ne $value -and $value -ne '') {
-                                $params[$key] = $value
-                            }
-                        }
-                    }
-                    
-                    # Then variables
                     foreach ($key in $scriptVars.Keys) {
-                        if (-not $params.ContainsKey($key)) {
-                            if ($null -ne $scriptVars[$key] -and $scriptVars[$key] -ne '') {
-                                $params[$key] = $scriptVars[$key]
-                            }
+                        if ($null -ne $scriptVars[$key] -and $scriptVars[$key] -ne '') {
+                            $params[$key] = $scriptVars[$key]
                         }
                     }
                 }
@@ -1010,7 +954,7 @@ function Invoke-SequentialOrchestration {
                         ScriptNumber = $script.Number
                         Duration = $duration.TotalSeconds
                         ExitCode = $LASTEXITCODE
-                        RetryAttempt = $retryCount
+                        RetryAttempt = $attemptCount
                     }
                 }
                 
@@ -1018,11 +962,11 @@ function Invoke-SequentialOrchestration {
                     Success = $true
                     ExitCode = 0
                     Duration = $duration
-                    RetryCount = $retryCount
+                    RetryCount = $attemptCount - 1
                 }
                 
             } catch {
-                if ($retryCount -gt $scriptMaxRetries) {
+                if ($attemptCount -ge $maxAttempts) {
                     Write-OrchestrationLog "Failed: [$($script.Number)] $($script.Name) - $_ (after $scriptMaxRetries retries)" -Level 'Error'
                     
                     # Write audit log for failure
