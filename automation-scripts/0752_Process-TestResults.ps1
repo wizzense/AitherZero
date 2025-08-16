@@ -165,8 +165,17 @@ try {
         $testJson = Get-Content $latestResults.FullName -Raw | ConvertFrom-Json
         
         # Extract failures from Pester JSON format
-        if ($testJson.Failed -gt 0 -and $testJson.Tests) {
-            $failures = @($testJson.Tests | Where-Object { $_.Result -eq 'Failed' })
+        # Handle both old and new Pester JSON formats
+        if ($testJson.FailedCount -gt 0) {
+            # New format - check for Tests property
+            if ($testJson.Tests) {
+                $failures = @($testJson.Tests | Where-Object { $_.Result -eq 'Failed' })
+            }
+        } elseif ($testJson.Failed -gt 0) {
+            # Old format - check for Tests property
+            if ($testJson.Tests) {
+                $failures = @($testJson.Tests | Where-Object { $_.Result -eq 'Failed' })
+            }
         }
     } elseif ($latestResults.Extension -eq '.xml') {
         Write-ScriptLog -Message "Parsing XML test results"

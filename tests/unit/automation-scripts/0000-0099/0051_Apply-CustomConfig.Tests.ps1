@@ -15,6 +15,9 @@ BeforeAll {
     
     # Create temp config for testing
     $script:TempConfigPath = Join-Path ([System.IO.Path]::GetTempPath()) "test-config-$(Get-Random).psd1"
+
+    # Create the actual temp file so ValidateScript passes
+    '@{ Test = "Value" }' | Set-Content -Path $script:TempConfigPath -Force
     
     # Define Write-CustomLog function if it doesn't exist
     if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {

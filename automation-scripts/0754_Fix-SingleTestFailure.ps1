@@ -70,7 +70,7 @@ function Write-ScriptLog {
     
     # Also log to main orchestration log if available
     if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Level $Level -Message "[0754] $Message" -Component "TestFix"
+        Write-CustomLog -Level $Level -Message "[0754] $Message"
     }
 }
 
