@@ -178,72 +178,109 @@ $($issueToFix.stackTrace)
         New-Item -ItemType Directory -Path $claudeDir -Force | Out-Null
     }
     
-    Write-Host "`n🤖 Invoking Claude CLI to fix the test..." -ForegroundColor Magenta
+    Write-Host "`n🤖 Invoking Claude test-runner agent to fix the test..." -ForegroundColor Magenta
     
-    if ($PSCmdlet.ShouldProcess("Claude CLI", "Fix test failure")) {
+    if ($PSCmdlet.ShouldProcess("Claude test-runner agent", "Fix test failure")) {
         $startTime = Get-Date
         
-        # Build the prompt for Claude
-        $fixPrompt = @"
-Fix this PowerShell test failure. You are an expert PowerShell developer.
-
-Test: $($issueToFix.testName)
-File: $($issueToFix.file)
-Line: $($issueToFix.line)
-Error: $($issueToFix.error)
-
-Stack Trace:
-$($issueToFix.stackTrace)
-
-Instructions:
-1. Analyze the test failure
-2. Identify the root cause
-3. Fix ONLY this specific test failure
-4. Make minimal changes
-5. Follow existing code patterns
-
-The test file content is provided below. Fix the issue.
-"@
+        # Determine if this is likely a test bug vs implementation bug
+        $testBugIndicators = @(
+            'Expected .* to be .*, but got',
+            'Expected an exception to be thrown, but no exception was thrown',
+            'Should -Be',
+            'Should -Throw',
+            'Assert-Mock',
+            'property .* cannot be found'
+        )
         
-        Write-Host "`n📝 Sending test failure to Claude CLI..." -ForegroundColor Cyan
+        $isLikelyTestBug = $false
+        foreach ($indicator in $testBugIndicators) {
+            if ($issueToFix.error -match $indicator) {
+                $isLikelyTestBug = $true
+                break
+            }
+        }
+        
+        # Build a comprehensive prompt for Claude
+        Write-Host "`n📝 Preparing test failure details for Claude..." -ForegroundColor Cyan
         Write-Host "  Test: $($issueToFix.testName)" -ForegroundColor Gray
         Write-Host "  File: $($issueToFix.file)" -ForegroundColor Gray
         Write-Host "  Error: $($issueToFix.error)" -ForegroundColor Gray
-        
-        # Use the claude command directly - it's available in the environment
-        $claudeWrapper = "claude"
+        Write-Host "  Likely test bug: $isLikelyTestBug" -ForegroundColor Gray
         
         # Build a clear, actionable prompt for Claude
-        Write-Host "`n🤖 Calling Claude CLI to fix the test..." -ForegroundColor Cyan
+        Write-Host "`n🤖 Calling Claude test-runner agent to fix the test..." -ForegroundColor Cyan
         
         $claudePrompt = @"
-Fix this PowerShell test failure:
+You are a PowerShell test expert using the test-runner agent. Fix this test failure.
 
-Test: $($issueToFix.testName)
-File: $($issueToFix.file)  
-Line: $($issueToFix.line)
-Error: $($issueToFix.error)
+## Test Failure Details
+- **Test Name**: $($issueToFix.testName)
+- **Test File**: $($issueToFix.file)
+- **Line Number**: $($issueToFix.line)
+- **Error Message**: $($issueToFix.error)
+- **Stack Trace**: $($issueToFix.stackTrace)
+- **Attempt**: $($issueToFix.attempts) of $MaxAttempts
 
-Stack trace: $($issueToFix.stackTrace)
+## Important Context
+$(if ($isLikelyTestBug) {
+@"
+⚠️ **This appears to be a test bug, not an implementation bug.**
+The test expectations may be incorrect. Common issues:
+- Test expects wrong exit code or exception behavior
+- Mock setup is missing or incorrect  
+- Test has wrong assertions
+- Test is duplicated multiple times
+"@
+} else {
+@"
+This appears to be an implementation bug where the code doesn't match test expectations.
+Fix the implementation to make the test pass.
+"@
+})
 
-Instructions:
-1. Read the test file at $($issueToFix.file)
-2. Analyze what's causing the error at line $($issueToFix.line)
-3. Fix ONLY this specific test failure - make minimal changes
-4. Use the Edit or MultiEdit tool to make the necessary changes
-5. Follow existing code patterns
+## Your Task
+1. First, read the test file at: $($issueToFix.file)
+2. If the test references other files, read those too
+3. Analyze the root cause - is it the test or the implementation?
+4. Fix the issue using Edit or MultiEdit tools
+5. Make minimal changes - fix ONLY this specific failure
+6. Follow existing code patterns and conventions
 
-This is attempt $($issueToFix.attempts) of $MaxAttempts.
-$(if ($issueToFix.attempts -gt 1) { "Previous attempts failed - try a different approach." })
+## Special Instructions
+$(if ($issueToFix.attempts -gt 1) {
+@"
+⚠️ Previous fix attempts failed. Try a different approach:
+- If you tried fixing the implementation, try fixing the test instead
+- If you tried fixing the test, ensure you understand what it's actually testing
+- Check for duplicate test cases with the same name
+- Verify mock setups match the test assertions
+"@
+})
 
-Fix this test now.
+$(if ($issueToFix.testName -match 'Should require FilePath parameter') {
+@"
+Note: This specific test has had issues with:
+- Being duplicated multiple times (remove duplicates)
+- Using Assert-MockCalled without proper Mock setup
+- Wrong expectations about exit codes
+"@
+})
+
+Remember:
+- Tests can be wrong - don't assume the test is correct
+- Check if the test makes sense for what it's testing
+- Some tests expect exceptions but the code handles errors gracefully
+- Exit codes depend on actual behavior, not test assumptions
+
+Fix this test failure now using the most appropriate approach.
 "@
         
         # Call Claude CLI directly with the prompt
-        Write-Host "  Invoking Claude with fix request..." -ForegroundColor Gray
+        Write-Host "  Invoking Claude with test-runner agent..." -ForegroundColor Gray
         try {
             # Call Claude and give it time to work
-            Write-Host "  ⏳ Waiting for Claude to analyze and fix (this may take 30-60 seconds)..." -ForegroundColor Yellow
+            Write-Host "  ⏳ Waiting for Claude to analyze and fix (this may take 30-90 seconds)..." -ForegroundColor Yellow
             
             # Write prompt to temp file and invoke Claude
             $promptFile = [System.IO.Path]::GetTempFileName()
@@ -256,8 +293,8 @@ Fix this test now.
                 bash -c "claude < '$promptFile'" 2>&1
             } -ArgumentList $promptFile
             
-            # Wait up to 90 seconds for Claude to complete
-            $waitResult = Wait-Job -Job $claudeJob -Timeout 90
+            # Wait up to 120 seconds for Claude to complete (give more time for complex fixes)
+            $waitResult = Wait-Job -Job $claudeJob -Timeout 120
             
             if ($waitResult) {
                 Write-Host "✅ Claude completed execution" -ForegroundColor Green
@@ -269,9 +306,9 @@ Fix this test now.
                     Remove-Item $promptFile -Force
                 }
                 
-                Write-ScriptLog -Message "Claude executed successfully for issue $($issueToFix.id)"
+                Write-ScriptLog -Message "Claude test-runner agent executed successfully for issue $($issueToFix.id)"
             } else {
-                Write-Host "⚠️ Claude is still running after 90 seconds, continuing..." -ForegroundColor Yellow
+                Write-Host "⚠️ Claude is still running after 120 seconds, continuing..." -ForegroundColor Yellow
                 Stop-Job -Job $claudeJob
                 Remove-Job -Job $claudeJob -Force
                 
@@ -280,7 +317,7 @@ Fix this test now.
                     Remove-Item $promptFile -Force
                 }
                 
-                Write-ScriptLog -Level Warning -Message "Claude timed out after 90 seconds"
+                Write-ScriptLog -Level Warning -Message "Claude timed out after 120 seconds"
             }
         }
         catch {
