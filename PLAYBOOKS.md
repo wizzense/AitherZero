@@ -2,14 +2,34 @@
 
 ## How to Run Playbooks
 
-```bash
-# Basic usage
-./run-playbook.sh <playbook-name>
+### Using the Universal `az` Command:
 
-# With options
-./run-playbook.sh <playbook-name> -WhatIf        # Preview without running
-./run-playbook.sh <playbook-name> -Verbose       # Detailed output
-./run-playbook.sh <playbook-name> -Variables @{Key='Value'}  # Pass variables
+#### Single Scripts:
+```bash
+az 0402              # Run unit tests
+az 0404              # Run PSScriptAnalyzer
+az 0407              # Validate syntax
+az 0510              # Generate project report
+```
+
+#### Sequences:
+```bash
+az 0402,0404,0407    # Run test, lint, validate
+az 0400-0409         # Run all testing scripts
+az 0500-0599         # Run all reporting scripts
+```
+
+#### Playbooks:
+```bash
+az playbook test-quick        # Fast validation
+az pb test-fix-workflow       # AI test fixing
+az playbook build-release     # Build release
+az pb audit-full              # Complete audit
+```
+
+### Direct PowerShell (if needed):
+```powershell
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook <name> -NonInteractive
 ```
 
 ## Available Playbooks
