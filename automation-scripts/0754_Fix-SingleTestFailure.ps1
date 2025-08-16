@@ -6,6 +6,7 @@
 .DESCRIPTION
     Invokes Claude Code's Task tool with test-runner agent to fix the next open test failure.
     Updates the tracker with fix attempts and status.
+    Logs everything to GitHub issues AND local logs.
     
     Exit Codes:
     0   - Fix attempted or no issues to fix
@@ -39,20 +40,38 @@ $scriptMetadata = @{
     SupportsWhatIf = $true
 }
 
+# Create detailed log file for this session
+$sessionId = [Guid]::NewGuid().ToString().Substring(0, 8)
+$detailedLogPath = "./logs/test-fix/claude-fix-$sessionId.log"
+if (-not (Test-Path "./logs/test-fix")) {
+    New-Item -ItemType Directory -Path "./logs/test-fix" -Force | Out-Null
+}
+
 function Write-ScriptLog {
     param(
         [string]$Level = 'Information',
         [string]$Message
     )
     
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
     $color = @{
         'Error' = 'Red'
         'Warning' = 'Yellow'
         'Information' = 'White'
         'Debug' = 'Gray'
     }[$Level]
+    
+    # Console output
     Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
+    
+    # Detailed file logging
+    $logEntry = "[$timestamp] [$Level] [0754_Fix-SingleTestFailure] $Message"
+    Add-Content -Path $detailedLogPath -Value $logEntry -Force
+    
+    # Also log to main orchestration log if available
+    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
+        Write-CustomLog -Level $Level -Message "[0754] $Message" -Component "TestFix"
+    }
 }
 
 function Update-GitHubIssue {
@@ -71,6 +90,13 @@ function Update-GitHubIssue {
     try {
         if ($Comment) {
             Write-ScriptLog -Message "Updating GitHub issue #$($Issue.githubIssue) with comment"
+            
+            # Log comment to file as well
+            Add-Content -Path $detailedLogPath -Value "`n=== GitHub Issue Update ===" -Force
+            Add-Content -Path $detailedLogPath -Value "Issue: #$($Issue.githubIssue)" -Force
+            Add-Content -Path $detailedLogPath -Value "Comment:`n$Comment" -Force
+            Add-Content -Path $detailedLogPath -Value "=== End Issue Update ===`n" -Force
+            
             gh issue comment $Issue.githubIssue --body "$Comment" 2>&1 | Out-Null
         }
         
@@ -85,7 +111,8 @@ function Update-GitHubIssue {
 }
 
 try {
-    Write-ScriptLog -Message "Claude Code test-runner agent will fix test failures"
+    Write-ScriptLog -Message "Starting Claude Code test-runner agent fix session (ID: $sessionId)"
+    Write-ScriptLog -Message "Detailed log: $detailedLogPath"
     
     # Load tracker
     if (-not (Test-Path $TrackerPath)) {
@@ -134,6 +161,14 @@ try {
     Write-Host "  Error: $($issueToFix.error)" -ForegroundColor Red
     Write-Host "  Attempt: $($issueToFix.attempts + 1) of $MaxAttempts" -ForegroundColor Cyan
     
+    # Log to detailed file
+    Add-Content -Path $detailedLogPath -Value "`n=== Starting Fix Attempt ===" -Force
+    Add-Content -Path $detailedLogPath -Value "Issue ID: $($issueToFix.id)" -Force
+    Add-Content -Path $detailedLogPath -Value "Test: $($issueToFix.testName)" -Force
+    Add-Content -Path $detailedLogPath -Value "File: $($issueToFix.file):$($issueToFix.line)" -Force
+    Add-Content -Path $detailedLogPath -Value "Error: $($issueToFix.error)" -Force
+    Add-Content -Path $detailedLogPath -Value "Attempt: $($issueToFix.attempts + 1) of $MaxAttempts" -Force
+    
     # Update status
     $issueToFix.status = 'fixing'
     $issueToFix.attempts++
@@ -145,13 +180,18 @@ try {
     
     # Update GitHub issue with start information
     $startComment = @"
-🔧 **Starting Fix Attempt #$($issueToFix.attempts)**
+# 🔧 Starting Fix Attempt #$($issueToFix.attempts)
+
+## Session Information
+- **Session ID**: $sessionId
+- **Timestamp**: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+- **Agent**: Claude Code test-runner
+- **Log File**: logs/test-fix/claude-fix-$sessionId.log
 
 ## Test Failure Details
-- **Test:** ``$($issueToFix.testName)``
-- **Location:** ``$($issueToFix.file):$($issueToFix.line)``
-- **Error Type:** ``$($issueToFix.error -split ':' | Select-Object -First 1)``
-- **Method:** Claude Code Task Agent (test-runner)
+- **Test**: \`$($issueToFix.testName)\`
+- **Location**: \`$($issueToFix.file):$($issueToFix.line)\`
+- **Error Type**: \`$($issueToFix.error -split ':' | Select-Object -First 1)\`
 
 ## Error Message
 \`\`\`
@@ -168,7 +208,7 @@ $($issueToFix.stackTrace)
 
 </details>
 
-🤖 Claude Code test-runner agent is analyzing and fixing the issue...
+🤖 Invoking Claude Code test-runner agent...
 "@
     Update-GitHubIssue -Issue $issueToFix -Comment $startComment
     
@@ -207,6 +247,8 @@ $($issueToFix.stackTrace)
         Write-Host "  File: $($issueToFix.file)" -ForegroundColor Gray
         Write-Host "  Error: $($issueToFix.error)" -ForegroundColor Gray
         Write-Host "  Likely test bug: $isLikelyTestBug" -ForegroundColor Gray
+        
+        Write-ScriptLog -Message "Preparing Claude prompt (likely test bug: $isLikelyTestBug)"
         
         # Build a clear, actionable prompt for Claude
         Write-Host "`n🤖 Calling Claude test-runner agent to fix the test..." -ForegroundColor Cyan
@@ -258,15 +300,6 @@ $(if ($issueToFix.attempts -gt 1) {
 "@
 })
 
-$(if ($issueToFix.testName -match 'Should require FilePath parameter') {
-@"
-Note: This specific test has had issues with:
-- Being duplicated multiple times (remove duplicates)
-- Using Assert-MockCalled without proper Mock setup
-- Wrong expectations about exit codes
-"@
-})
-
 Remember:
 - Tests can be wrong - don't assume the test is correct
 - Check if the test makes sense for what it's testing
@@ -275,6 +308,11 @@ Remember:
 
 Fix this test failure now using the most appropriate approach.
 "@
+        
+        # Log the prompt
+        Add-Content -Path $detailedLogPath -Value "`n=== Claude Prompt ===" -Force
+        Add-Content -Path $detailedLogPath -Value $claudePrompt -Force
+        Add-Content -Path $detailedLogPath -Value "=== End Prompt ===`n" -Force
         
         # Call Claude CLI directly with the prompt
         Write-Host "  Invoking Claude with test-runner agent..." -ForegroundColor Gray
@@ -306,15 +344,82 @@ Fix this test failure now using the most appropriate approach.
                     Remove-Item $promptFile -Force
                 }
                 
+                # Log Claude's complete response
+                if ($claudeOutput) {
+                    $claudeResponse = $claudeOutput -join "`n"
+                    
+                    # Log to file
+                    Add-Content -Path $detailedLogPath -Value "`n=== Claude Response ===" -Force
+                    Add-Content -Path $detailedLogPath -Value $claudeResponse -Force
+                    Add-Content -Path $detailedLogPath -Value "=== End Response ===`n" -Force
+                    
+                    # Update GitHub issue with Claude's full response
+                    $claudeComment = @"
+## 🤖 Claude Test-Runner Agent Response
+
+### Prompt Sent to Claude:
+<details>
+<summary>Click to expand prompt (Session: $sessionId)</summary>
+
+\`\`\`
+$claudePrompt
+\`\`\`
+
+</details>
+
+### Claude's Full Response:
+<details>
+<summary>Click to expand full response</summary>
+
+\`\`\`
+$claudeResponse
+\`\`\`
+
+</details>
+
+### Execution Details
+- ⏱️ Processing time: 120 seconds or less
+- 📝 Status: Analyzing changes...
+- 📁 Log file: logs/test-fix/claude-fix-$sessionId.log
+"@
+                    Update-GitHubIssue -Issue $issueToFix -Comment $claudeComment
+                }
+                
                 Write-ScriptLog -Message "Claude test-runner agent executed successfully for issue $($issueToFix.id)"
             } else {
                 Write-Host "⚠️ Claude is still running after 120 seconds, continuing..." -ForegroundColor Yellow
                 Stop-Job -Job $claudeJob
+                $partialOutput = Receive-Job -Job $claudeJob
                 Remove-Job -Job $claudeJob -Force
                 
                 # Clean up temp file
                 if (Test-Path $promptFile) {
                     Remove-Item $promptFile -Force
+                }
+                
+                # Log partial output
+                if ($partialOutput) {
+                    Add-Content -Path $detailedLogPath -Value "`n=== Claude Partial Response (Timeout) ===" -Force
+                    Add-Content -Path $detailedLogPath -Value ($partialOutput -join "`n") -Force
+                    Add-Content -Path $detailedLogPath -Value "=== End Partial Response ===`n" -Force
+                    
+                    $timeoutComment = @"
+⚠️ **Claude Timeout After 120 Seconds**
+
+### Partial Output Received:
+<details>
+<summary>Click to expand partial output</summary>
+
+\`\`\`
+$($partialOutput -join "`n")
+\`\`\`
+
+</details>
+
+The agent may still be processing. Checking for file changes...
+Session log: logs/test-fix/claude-fix-$sessionId.log
+"@
+                    Update-GitHubIssue -Issue $issueToFix -Comment $timeoutComment
                 }
                 
                 Write-ScriptLog -Level Warning -Message "Claude timed out after 120 seconds"
@@ -323,6 +428,11 @@ Fix this test failure now using the most appropriate approach.
         catch {
             Write-Host "⚠️ Error calling Claude: $_" -ForegroundColor Yellow
             Write-ScriptLog -Level Warning -Message "Claude execution error: $_"
+            
+            # Log error to file
+            Add-Content -Path $detailedLogPath -Value "`n=== Claude Error ===" -Force
+            Add-Content -Path $detailedLogPath -Value $_.ToString() -Force
+            Add-Content -Path $detailedLogPath -Value "=== End Error ===`n" -Force
         }
         
         # Give additional time for file system to sync
@@ -351,6 +461,8 @@ Fix this test failure now using the most appropriate approach.
             Write-Host "`n✅ Claude Code has made changes to fix the issue!" -ForegroundColor Green
             Write-Host "Files modified: $($changedFiles -join ', ')" -ForegroundColor Gray
             
+            Write-ScriptLog -Message "Claude made changes to $($changedFiles.Count) file(s): $($changedFiles -join ', ')"
+            
             $issueToFix.status = 'validating'
             
             # Store changed files for commit step
@@ -360,23 +472,31 @@ Fix this test failure now using the most appropriate approach.
                 $issueToFix.changedFiles = @($changedFiles)
             }
             
-            # Get diff for GitHub
-            $gitDiff = git diff 2>&1 | Select-Object -First 100
+            # Get diff for GitHub and logging
+            $gitDiff = git diff 2>&1 | Select-Object -First 200
             $filesChanged = git diff --name-only 2>&1 | Out-String
             
+            # Log diff to file
+            Add-Content -Path $detailedLogPath -Value "`n=== Git Diff ===" -Force
+            Add-Content -Path $detailedLogPath -Value (git diff 2>&1 | Out-String) -Force
+            Add-Content -Path $detailedLogPath -Value "=== End Diff ===`n" -Force
+            
             Update-GitHubIssue -Issue $issueToFix -Comment @"
-✅ **Claude Code has completed the fix!**
+## ✅ Claude Code has completed the fix!
 
+### Execution Summary
 - ⏱️ Duration: $([math]::Round($duration.TotalSeconds)) seconds
 - 🤖 Agent: test-runner
-- 📁 Files modified:
+- 📁 Session log: logs/test-fix/claude-fix-$sessionId.log
+
+### Files Modified:
 \`\`\`
 $filesChanged
 \`\`\`
 
-## Code Changes Applied:
+### Code Changes Applied:
 <details>
-<summary>View diff (first 100 lines)</summary>
+<summary>View diff (first 200 lines)</summary>
 
 \`\`\`diff
 $($gitDiff -join "`n")
@@ -384,13 +504,17 @@ $($gitDiff -join "`n")
 
 </details>
 
+### Next Steps
 - 🎯 Status: Moving to validation phase
+- 🧪 The fix will now be validated by running the test
 
-_The fix will now be validated by running the test..._
+_Full session details available in: logs/test-fix/claude-fix-$sessionId.log_
 "@
         } else {
             Write-Host "`n⚠️ No changes detected yet" -ForegroundColor Yellow
             Write-Host "Claude Code may need more time or manual intervention" -ForegroundColor Yellow
+            
+            Write-ScriptLog -Level Warning -Message "No changes detected after Claude execution"
             
             $issueToFix.status = 'open'
             
@@ -400,6 +524,7 @@ _The fix will now be validated by running the test..._
 - Duration: $([math]::Round($duration.TotalSeconds)) seconds
 - Attempts: $($issueToFix.attempts) of $MaxAttempts
 - Status: Will retry if attempts remaining
+- Session log: logs/test-fix/claude-fix-$sessionId.log
 
 The test-runner agent may need additional context or the issue may require manual intervention.
 "@
@@ -427,6 +552,7 @@ The test-runner agent may need additional context or the issue may require manua
         }
     )
     Write-Host "  Attempts: $($issueToFix.attempts)/$MaxAttempts" -ForegroundColor Gray
+    Write-Host "  Log: $detailedLogPath" -ForegroundColor Gray
     
     if ($issueToFix.status -eq 'validating') {
         Write-Host "`n💡 Next step: Run 0755_Validate-TestFix.ps1 to verify the fix" -ForegroundColor Yellow
@@ -435,10 +561,16 @@ The test-runner agent may need additional context or the issue may require manua
         
         # Mark as failed
         $issueToFix.status = 'failed'
-        Update-GitHubIssue -Issue $issueToFix -Comment "❌ Failed to auto-fix after $MaxAttempts attempts. Manual intervention required." -Labels @('needs-manual-fix')
+        Update-GitHubIssue -Issue $issueToFix -Comment "❌ Failed to auto-fix after $MaxAttempts attempts. Manual intervention required. Check logs: logs/test-fix/" -Labels @('needs-manual-fix')
         
         $tracker | ConvertTo-Json -Depth 10 | Set-Content $TrackerPath
     }
+    
+    # Final log entry
+    Add-Content -Path $detailedLogPath -Value "`n=== Session Complete ===" -Force
+    Add-Content -Path $detailedLogPath -Value "End Time: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff')" -Force
+    Add-Content -Path $detailedLogPath -Value "Status: $($issueToFix.status)" -Force
+    Add-Content -Path $detailedLogPath -Value "=== End Session ===`n" -Force
     
     if ($PassThru) {
         return $tracker
@@ -448,5 +580,14 @@ The test-runner agent may need additional context or the issue may require manua
 }
 catch {
     Write-ScriptLog -Level Error -Message "Failed to fix test failure: $_"
+    
+    # Log error to file
+    if ($detailedLogPath) {
+        Add-Content -Path $detailedLogPath -Value "`n=== FATAL ERROR ===" -Force
+        Add-Content -Path $detailedLogPath -Value $_.ToString() -Force
+        Add-Content -Path $detailedLogPath -Value $_.ScriptStackTrace -Force
+        Add-Content -Path $detailedLogPath -Value "=== End Error ===`n" -Force
+    }
+    
     exit 1
 }
