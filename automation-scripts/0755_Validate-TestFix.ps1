@@ -120,7 +120,7 @@ try {
         @($tracker.issues | Where-Object { $_.status -in @('validating', 'fixing') } | Select-Object -First 1)
     }
     
-    if ($issuesToValidate.Count -eq 0) {
+    if (@($issuesToValidate).Count -eq 0) {
         Write-ScriptLog -Message "No issues to validate"
         
         $validating = @($tracker.issues | Where-Object { $_.status -eq 'validating' }).Count
@@ -136,7 +136,7 @@ try {
         exit 0
     }
     
-    Write-ScriptLog -Message "Validating $($issuesToValidate.Count) issue(s)"
+    Write-ScriptLog -Message "Validating $(@($issuesToValidate).Count) issue(s)"
     
     $validated = 0
     $passed = 0
@@ -211,7 +211,7 @@ $testOutputString
                 $failed++
                 
                 # Extract current failure details from test
-                $currentError = if ($testResult.Tests -and $testResult.Tests.Count -gt 0) {
+                $currentError = if ($testResult.Tests -and @($testResult.Tests).Count -gt 0) {
                     $failedTest = $testResult.Tests | Where-Object { $_.Result -eq 'Failed' } | Select-Object -First 1
                     if ($failedTest -and $failedTest.ErrorRecord) {
                         $failedTest.ErrorRecord.Exception.Message

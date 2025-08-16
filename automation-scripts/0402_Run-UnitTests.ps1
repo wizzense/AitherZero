@@ -354,7 +354,8 @@ try {
     }
     
     # Implement parallel test execution using PowerShell 7's ForEach-Object -Parallel
-    $useParallel = $pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled -and $testFiles.Count -gt 1
+    # TEMPORARILY DISABLED: Parallel execution not properly aggregating test results for TestReport
+    $useParallel = $false # $pesterSettings.Parallel -and $pesterSettings.Parallel.Enabled -and $testFiles.Count -gt 1
     
     if ($useParallel) {
         $parallelWorkers = if ($pesterSettings.Parallel.Workers) { $pesterSettings.Parallel.Workers } else { 4 }
@@ -398,6 +399,17 @@ try {
         }
         
         # Aggregate results from all parallel runs
+        $allTests = @()
+        $allFailed = @()
+        foreach ($pr in $parallelResults) {
+            if ($pr.Tests) {
+                $allTests += $pr.Tests
+            }
+            if ($pr.Failed) {
+                $allFailed += $pr.Failed
+            }
+        }
+        
         $result = [PSCustomObject]@{
             TotalCount = ($parallelResults | Measure-Object -Property TotalCount -Sum).Sum
             PassedCount = ($parallelResults | Measure-Object -Property PassedCount -Sum).Sum
@@ -405,8 +417,8 @@ try {
             SkippedCount = ($parallelResults | Measure-Object -Property SkippedCount -Sum).Sum
             NotRunCount = ($parallelResults | Measure-Object -Property NotRunCount -Sum).Sum
             Duration = ($parallelResults | Measure-Object -Property Duration -Maximum).Maximum
-            Failed = @($parallelResults | ForEach-Object { $_.Failed } | Where-Object { $_ })
-            Tests = @($parallelResults | ForEach-Object { $_.Tests } | Where-Object { $_ })
+            Failed = $allFailed
+            Tests = $allTests
         }
     } else {
         # Standard sequential execution
@@ -482,12 +494,45 @@ try {
         $testSummary | ConvertTo-Json | Set-Content -Path $summaryPath
     }
     Write-ScriptLog -Message "Test summary saved to: $summaryPath"
+    
+    # Save detailed test report for test-fix workflow
+    $reportPath = Join-Path $projectRoot "tests/reports"
+    if (-not (Test-Path $reportPath)) {
+        New-Item -Path $reportPath -ItemType Directory -Force | Out-Null
+    }
+    $testReportPath = Join-Path $reportPath "TestReport-$timestamp.json"
+    if ($PSCmdlet.ShouldProcess($testReportPath, "Save detailed test report")) {
+        # Create report in format expected by test-fix workflow
+        $detailedReport = @{
+            Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+            TotalCount = $result.TotalCount
+            PassedCount = $result.PassedCount
+            FailedCount = $result.FailedCount
+            Failed = $result.FailedCount
+            Tests = @($result.Tests)
+            Duration = $result.Duration
+        }
+        $detailedReport | ConvertTo-Json -Depth 10 | Set-Content -Path $testReportPath
+        Write-ScriptLog -Message "Detailed test report saved to: $testReportPath"
+    }
 
     # Return result if PassThru
     if ($PassThru) {
         return $result
     }
 
+    # Save test results to cache if available
+    if ($script:CacheAvailable -and $UseCache) {
+        try {
+            $cacheKey = Get-TestCacheKey -TestPath $Path -TestType 'Unit'
+            Save-TestResultToCache -CacheKey $cacheKey -TestResult $result -TestType 'Unit'
+            Write-ScriptLog -Message "Test results saved to cache"
+        }
+        catch {
+            Write-ScriptLog -Level Warning -Message "Failed to save test results to cache: $_"
+        }
+    }
+    
     # Exit based on test results
     if ($result.FailedCount -eq 0) {
         Write-ScriptLog -Message "All unit tests passed!"

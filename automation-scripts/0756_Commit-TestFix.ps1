@@ -94,7 +94,7 @@ try {
         @($tracker.issues | Where-Object { $_.status -eq 'resolved' -and -not $_.fixCommit } | Select-Object -First 1)
     }
     
-    if ($issuesToCommit.Count -eq 0) {
+    if (@($issuesToCommit).Count -eq 0) {
         Write-ScriptLog -Message "No resolved issues to commit"
         
         $resolved = @($tracker.issues | Where-Object { $_.status -eq 'resolved' })
@@ -112,7 +112,7 @@ try {
         exit 0
     }
     
-    Write-ScriptLog -Message "Found $($issuesToCommit.Count) resolved issue(s) to commit"
+    Write-ScriptLog -Message "Found $(@($issuesToCommit).Count) resolved issue(s) to commit"
     
     # Check for uncommitted changes
     $gitStatus = git status --porcelain 2>&1
@@ -140,7 +140,7 @@ try {
         
         # Use files tracked from Claude's changes if available
         $filesToCommit = @()
-        if ($issue.changedFiles -and $issue.changedFiles.Count -gt 0) {
+        if ($issue.changedFiles -and @($issue.changedFiles).Count -gt 0) {
             Write-ScriptLog -Message "Using Claude's tracked changes: $($issue.changedFiles -join ', ')"
             $filesToCommit = @($issue.changedFiles)
         } else {
@@ -176,7 +176,7 @@ try {
         }
         
         # If no specific files found from Claude's changes, skip this commit
-        if ($filesToCommit.Count -eq 0) {
+        if (@($filesToCommit).Count -eq 0) {
             Write-ScriptLog -Level Warning -Message "No files to commit for issue $($issue.id)"
             Write-ScriptLog -Message "This issue may have been fixed in a previous commit or no files were changed"
             
