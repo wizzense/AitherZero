@@ -1,0 +1,217 @@
+name: CD Pipeline
+
+on:
+  push:
+    branches: [main]
+    tags: [v*]
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create a release'
+        type: boolean
+        default: false
+      version:
+        description: 'Version to release (leave empty for auto)'
+        type: string
+        required: false
+
+# Only one deployment at a time
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+  pages: write
+  id-token: write
+  packages: write
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+
+jobs:
+  build-and-release:
+    name: Build & Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    outputs:
+      version: ${{ steps.pipeline.outputs.version }}
+      created_release: ${{ steps.pipeline.outputs.create_release }}
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: 🔧 Bootstrap Environment
+      shell: pwsh
+      run: ./bootstrap.ps1 -Mode Install -NonInteractive
+    
+    - name: 🚀 Run CD Pipeline
+      id: pipeline
+      shell: pwsh
+      run: |
+        # Determine if we should create a release
+        $createRelease = $false
+        $version = ""
+        
+        if ("${{ github.ref }}" -match "^refs/tags/v(.+)$") {
+          $createRelease = $true
+          $version = $Matches[1]
+          Write-Host "📦 Tagged release: v$version"
+        } elseif ("${{ github.event.inputs.create_release }}" -eq "true") {
+          $createRelease = $true
+          $version = "${{ github.event.inputs.version }}"
+          if (-not $version) {
+            $version = Get-Content ./VERSION -Raw
+          }
+          Write-Host "📦 Manual release: v$version"
+        } else {
+          Write-Host "📝 Regular build (no release)"
+        }
+        
+        # Set outputs for GitHub Actions
+        echo "version=$version" >> $env:GITHUB_OUTPUT
+        echo "create_release=$createRelease" >> $env:GITHUB_OUTPUT
+        
+        # Run the complete pipeline
+        ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-cd-complete -CI `
+          -Variables @{
+            RunValidation = $true
+            RunTests = $true
+            RunSecurity = $true
+            RunBuild = $true
+            CreateRelease = $createRelease
+            DeployDocs = $true  # Always deploy docs from main
+            Version = $version
+            TestProfile = 'Full'  # Complete testing for releases
+            BuildProfiles = @('Core', 'Standard', 'Full')
+          }
+    
+    - name: 🏷️ Create GitHub Release
+      if: steps.pipeline.outputs.create_release == 'true'
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ steps.pipeline.outputs.version }}
+        name: Release v${{ steps.pipeline.outputs.version }}
+        body_path: ./release/release-notes.md
+        draft: false
+        prerelease: false
+        files: |
+          release/*.zip
+          release/*.tar.gz
+          release/checksums.txt
+    
+    - name: 📤 Upload Release Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-artifacts-${{ github.run_number }}
+        path: |
+          release/
+          reports/
+        retention-days: 30
+
+  deploy-docs:
+    name: Deploy Documentation
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+    
+    permissions:
+      pages: write
+      id-token: write
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: 📥 Download Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: release-artifacts-${{ github.run_number }}
+        path: artifacts/
+    
+    - name: 🔧 Setup Pages
+      uses: actions/configure-pages@v5
+    
+    - name: 📚 Prepare Pages Content
+      shell: pwsh
+      run: |
+        # The playbook already prepared github-pages directory
+        if (Test-Path ./artifacts/reports) {
+          if (-not (Test-Path ./github-pages)) {
+            New-Item -ItemType Directory -Path ./github-pages -Force
+          }
+          Copy-Item -Path ./artifacts/reports/* -Destination ./github-pages/ -Recurse -Force
+        }
+        
+        # Ensure index.html exists
+        if (-not (Test-Path ./github-pages/index.html)) {
+          if (Test-Path ./artifacts/reports/index.html) {
+            Copy-Item ./artifacts/reports/index.html ./github-pages/
+          } else {
+            # Create a simple index
+            @"
+            <!DOCTYPE html>
+            <html>
+            <head><title>AitherZero CI/CD</title></head>
+            <body>
+              <h1>AitherZero CI/CD Dashboard</h1>
+              <p>Reports are being generated...</p>
+            </body>
+            </html>
+        "@ | Set-Content ./github-pages/index.html
+          }
+        }
+    
+    - name: 📤 Upload Pages Artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./github-pages
+    
+    - name: 🚀 Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+
+  notify:
+    name: Notifications
+    needs: [build-and-release, deploy-docs]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: 📊 Summary
+      shell: pwsh
+      run: |
+        Write-Host "════════════════════════════════════════" -ForegroundColor Blue
+        Write-Host " Pipeline Summary" -ForegroundColor White
+        Write-Host "════════════════════════════════════════" -ForegroundColor Blue
+        
+        $status = "${{ needs.build-and-release.result }}"
+        if ($status -eq "success") {
+          Write-Host "✅ Pipeline completed successfully" -ForegroundColor Green
+          
+          if ("${{ needs.build-and-release.outputs.created_release }}" -eq "true") {
+            Write-Host "📦 Released version: ${{ needs.build-and-release.outputs.version }}" -ForegroundColor Cyan
+          }
+          
+          if ("${{ needs.deploy-docs.result }}" -eq "success") {
+            Write-Host "📚 Documentation deployed to GitHub Pages" -ForegroundColor Cyan
+          }
+        } else {
+          Write-Host "❌ Pipeline failed" -ForegroundColor Red
+        }
+        
+        Write-Host "`nRepository: ${{ github.repository }}"
+        Write-Host "Branch: ${{ github.ref_name }}"
+        Write-Host "Commit: ${{ github.sha }}"
+        Write-Host "Author: ${{ github.actor }}"
+        Write-Host "Run: ${{ github.run_number }}"

@@ -48,6 +48,12 @@ az 0511                                                   # Show dashboard
 # Direct orchestration
 Invoke-OrchestrationSequence -Sequence "0402,0404,0407"
 seq 0000-0099                       # Run environment prep scripts
+
+# Common Issue Fix Commands  
+fix-tests                           # Fix all failing tests automatically
+fix-tests --reset                   # Reset tracker and start fresh
+fix-tests --loops 5                 # Fix specific number of issues
+fix-tests --status                  # Show current fix status
 ```
 
 ## High-Level Architecture

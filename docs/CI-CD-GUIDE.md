@@ -1,326 +1,292 @@
-# 🚀 AitherZero CI/CD Guide
+# AitherZero CI/CD System Guide
 
 ## Overview
 
-AitherZero implements a comprehensive, production-grade CI/CD pipeline that ensures code quality, automates testing, manages releases, and provides complete visibility into the development lifecycle.
+The AitherZero CI/CD system uses a **single comprehensive playbook** (`ci-cd-complete`) that handles the entire pipeline from validation to release. This unified approach ensures consistency and simplicity.
 
-## 📊 Pipeline Architecture
+## Quick Start
 
-```mermaid
-graph TB
-    subgraph "Continuous Integration"
-        A[Code Push] --> B[Build & Validate]
-        B --> C[Unit Tests]
-        B --> D[Integration Tests]
-        B --> E[Security Scanning]
-        B --> F[Performance Tests]
-    end
-    
-    subgraph "Quality Gates"
-        C --> G{Pass?}
-        D --> G
-        E --> G
-        F --> G
-    end
-    
-    subgraph "Continuous Deployment"
-        G -->|Yes| H[Deploy to Dev]
-        H --> I[Smoke Tests]
-        I --> J[Deploy to Staging]
-        J --> K[Integration Tests]
-        K --> L[Deploy to Production]
-    end
-    
-    subgraph "Monitoring & Reporting"
-        L --> M[Monitor]
-        M --> N[Generate Reports]
-        N --> O[Update Dashboard]
-        O --> P[Send Notifications]
-    end
-    
-    G -->|No| Q[Notify & Rollback]
-```
+### Run Complete CI/CD Pipeline
 
-## 🔧 Workflows
-
-### 1. **Production CI/CD Pipeline** (`ci-cd-pipeline.yml`)
-   - **Trigger**: Push, PR, Tags, Schedule, Manual
-   - **Stages**:
-     - Build & Validate
-     - Multi-platform Testing
-     - Security Scanning
-     - Performance Testing
-     - Documentation Generation
-     - Release Management
-     - Dashboard Deployment
-
-### 2. **Continuous Deployment** (`continuous-deployment.yml`)
-   - **Trigger**: Successful CI/CD Pipeline
-   - **Environments**:
-     - Development (auto-deploy)
-     - Staging (with smoke tests)
-     - Production (with approval)
-   - **Features**:
-     - Blue-green deployments
-     - Automatic rollback
-     - Backup creation
-
-### 3. **Monitoring & Reporting** (`monitoring-reporting.yml`)
-   - **Trigger**: Schedule (6h, weekly), Manual
-   - **Features**:
-     - Metrics collection
-     - Report generation
-     - Issue creation
-     - Dashboard updates
-
-## 📈 Test Results & Reporting
-
-### Accessing Reports
-
-1. **GitHub Pages Dashboard**
-   ```
-   https://<username>.github.io/AitherZero/
-   ```
-
-2. **Direct Report Links**
-   - Test Results: `/reports/latest/test-report.html`
-   - Coverage: `/reports/latest/coverage-report.html`
-   - Performance: `/reports/latest/performance-report.html`
-   - Security: `/reports/latest/security-report.html`
-
-3. **Artifacts**
-   - Available in Actions tab
-   - Retained for 30 days
-   - Downloadable as ZIP
-
-### Report Types
-
-| Report | Frequency | Content |
-|--------|-----------|---------|
-| Test Results | Every run | Pass/fail, duration, details |
-| Code Coverage | Every run | Line/branch coverage |
-| Performance | Every run | Benchmarks, thresholds |
-| Security | Every run | Vulnerabilities, CVEs |
-| Tech Debt | Weekly | Code quality metrics |
-| Executive | Weekly | High-level summary |
-
-## 🎯 Quality Gates
-
-### Required Checks
-- ✅ All tests passing
-- ✅ Code coverage > 70%
-- ✅ No critical security issues
-- ✅ PSScriptAnalyzer passing
-- ✅ Performance within thresholds
-
-### Branch Protection
-```yaml
-main:
-  - Require PR reviews (2)
-  - Require status checks
-  - Require up-to-date branches
-  - Include administrators
-
-develop:
-  - Require PR reviews (1)
-  - Require status checks
-  
-feature/*:
-  - No restrictions
-```
-
-## 🚀 Deployment Process
-
-### Environments
-
-| Environment | URL | Auto-Deploy | Approval |
-|------------|-----|-------------|----------|
-| Development | dev.aitherzero.example.com | Yes | No |
-| Staging | staging.aitherzero.example.com | After Dev | No |
-| Production | aitherzero.example.com | After Staging | Yes |
-
-### Deployment Strategy
-
-1. **Blue-Green Deployment**
-   - Deploy to inactive environment
-   - Run health checks
-   - Switch traffic
-   - Monitor for issues
-   - Rollback if needed
-
-2. **Rollback Procedure**
-   - Automatic on failure
-   - Restores from backup
-   - Notifies team
-   - Creates incident issue
-
-## 📦 Release Management
-
-### Versioning
-- **Format**: `MAJOR.MINOR.PATCH-PRERELEASE+BUILD`
-- **Examples**:
-  - Release: `1.2.3`
-  - Pre-release: `1.2.3-rc.1`
-  - Development: `1.2.3-dev.456+abc123`
-
-### Release Process
-1. Tag creation triggers release
-2. Build and test
-3. Generate release notes
-4. Create GitHub release
-5. Publish to PowerShell Gallery
-6. Deploy to production
-
-### Release Artifacts
-- ZIP package (Windows)
-- TAR.GZ package (Unix)
-- SHA256 checksums
-- Release notes
-- API documentation
-
-## 🔔 Notifications
-
-### Channels
-- **Slack**: Build status, deployments
-- **Email**: Failures, weekly reports
-- **GitHub Issues**: Weekly metrics
-- **Dashboard**: Real-time status
-
-### Configuration
-Set these secrets/variables in GitHub:
-```yaml
-Secrets:
-  - SLACK_WEBHOOK_URL
-  - EMAIL_USERNAME
-  - EMAIL_PASSWORD
-  - PSGALLERY_API_KEY
-  - AWS_ROLE_ARN_*
-
-Variables:
-  - EMAIL_RECIPIENTS
-  - REPORT_RECIPIENTS
-  - SLACK_CHANNEL
-```
-
-## 📊 Metrics & KPIs
-
-### Build Metrics
-- Success rate
-- Average duration
-- Failure patterns
-- Recovery time
-
-### Code Metrics
-- Lines of code
-- Complexity
-- Duplication
-- Technical debt
-
-### Test Metrics
-- Total tests
-- Pass rate
-- Coverage
-- Execution time
-
-### Deployment Metrics
-- Frequency
-- Lead time
-- MTTR
-- Change failure rate
-
-## 🛠️ Local Testing
-
-### Run CI/CD Locally
 ```powershell
-# Install act for local GitHub Actions
-./az 0441 -InstallDependencies
+# Run the complete CI/CD pipeline
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-cd-complete
 
-# Test specific workflow
-act -W .github/workflows/ci-cd-pipeline.yml
+# Using the az shortcut
+az playbook ci-cd-complete
 
-# Test with specific event
-act pull_request -W .github/workflows/ci-cd-pipeline.yml
+# For CI environments (automated)
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-cd-complete -CI
 ```
 
-### Generate Reports Locally
+### Control What Runs
+
+The same playbook adapts to different scenarios through variables:
+
 ```powershell
-# Run tests and generate reports
-./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-full
+# For Pull Requests (no build/release)
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-cd-complete -CI `
+  -Variables @{
+    RunBuild = $false
+    CreateRelease = $false
+    TestProfile = 'Standard'
+  }
 
-# Publish results
-./az 0450  # Publish test results
+# For Main Branch (full pipeline with docs)
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-cd-complete -CI `
+  -Variables @{
+    RunBuild = $true
+    DeployDocs = $true
+    TestProfile = 'Full'
+  }
 
-# View locally
-Start-Process "./docs/reports/latest/test-report.html"
+# For Tagged Releases
+./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-cd-complete -CI `
+  -Variables @{
+    CreateRelease = $true
+    Version = 'v1.2.3'
+  }
 ```
 
-## 🔒 Security
+## The Single Playbook Architecture
 
-### Secrets Management
-- Use GitHub Secrets for sensitive data
-- Rotate credentials regularly
-- Use OIDC for cloud providers
-- Implement least privilege
+### One Playbook, Multiple Scenarios
 
-### Scanning
-- Trivy for container scanning
-- OWASP dependency check
-- PSScriptAnalyzer for code
-- GitHub Advanced Security
+The `ci-cd-complete` playbook (`/orchestration/playbooks-psd1/ops/ci-cd-complete.psd1`) contains all stages:
 
-## 🎯 Best Practices
+1. **Environment Setup** - Initialize and detect configuration
+2. **Validation** - Syntax, workflows, playbooks
+3. **Static Analysis** - PSScriptAnalyzer
+4. **Testing** - Unit and integration tests with coverage
+5. **Security** - Vulnerability scanning
+6. **Build** - Create release packages
+7. **Package Validation** - Test built packages
+8. **Documentation** - Generate reports and dashboards
+9. **Release** - Create GitHub releases
 
-1. **Keep Workflows DRY**
-   - Use reusable workflows
-   - Share common actions
-   - Centralize configuration
+### Intelligent Stage Control
 
-2. **Optimize Performance**
-   - Use caching
-   - Parallelize tests
-   - Conditional steps
-   - Matrix strategies
+Stages automatically adapt based on:
+- **Variables**: Control flags like `RunTests`, `RunBuild`, etc.
+- **Environment**: CI vs local, branch detection
+- **Context**: Pull request vs main branch vs tagged release
 
-3. **Ensure Reliability**
-   - Implement retries
-   - Add timeouts
-   - Handle failures gracefully
-   - Monitor flaky tests
+## GitHub Actions Integration
 
-4. **Maintain Visibility**
-   - Comprehensive logging
-   - Clear status badges
-   - Detailed reports
-   - Actionable notifications
+### Simple Workflows, Complex Playbook
 
-## 📚 Resources
+Our GitHub workflows are intentionally simple - they just call the playbook:
 
-- [GitHub Actions Documentation](https://docs.github.com/actions)
-- [PowerShell Testing Guide](https://pester.dev)
-- [CI/CD Best Practices](https://www.atlassian.com/continuous-delivery/principles/continuous-integration-vs-delivery-vs-deployment)
-- [AitherZero Dashboard](https://aitherzero.github.io)
+**CI Workflow** (`.github/workflows/ci.yml`):
+```yaml
+steps:
+  - name: Checkout
+    uses: actions/checkout@v4
+    
+  - name: Bootstrap
+    run: ./bootstrap.ps1
+    
+  - name: Run CI/CD Pipeline
+    run: |
+      ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-cd-complete -CI `
+        -Variables @{ 
+          RunBuild = $false      # Don't build on PRs
+          CreateRelease = $false # Don't release on PRs
+          TestProfile = 'Standard'
+        }
+```
 
-## 🤝 Contributing
+**CD Workflow** (`.github/workflows/cd.yml`):
+```yaml
+steps:
+  - name: Run CI/CD Pipeline
+    run: |
+      # Detect if this is a release
+      $createRelease = "${{ github.ref }}" -match "^refs/tags/v"
+      
+      ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-cd-complete -CI `
+        -Variables @{ 
+          RunBuild = $true
+          CreateRelease = $createRelease
+          DeployDocs = $true
+          TestProfile = 'Full'
+        }
+```
 
-### Adding New Workflows
-1. Create workflow in `.github/workflows/`
-2. Follow naming convention
-3. Add documentation
-4. Test locally with `act`
-5. Submit PR
+## Configuration Through Variables
 
-### Modifying Pipelines
-1. Test changes in feature branch
-2. Use workflow_dispatch for testing
-3. Validate all quality gates
-4. Update documentation
+### Control Flags
 
-## 📞 Support
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `RunValidation` | `$true` | Run syntax and workflow validation |
+| `RunTests` | `$true` | Run test suite |
+| `RunSecurity` | `$true` | Run security scanning |
+| `RunBuild` | `$true` | Build release packages |
+| `CreateRelease` | `$false` | Create GitHub release |
+| `DeployDocs` | `$false` | Deploy to GitHub Pages |
 
-- **Issues**: [GitHub Issues](https://github.com/wizzense/AitherZero/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/wizzense/AitherZero/discussions)
-- **Dashboard**: [Live Status](https://wizzense.github.io/AitherZero)
+### Configuration Options
 
----
+| Variable | Options | Purpose |
+|----------|---------|---------|
+| `TestProfile` | Quick, Standard, Full | Test thoroughness |
+| `BuildProfiles` | Core, Standard, Full | Package types to build |
+| `CoverageThreshold` | 0-100 | Required code coverage % |
+| `Version` | String | Override version detection |
 
-*Last Updated: 2025-08-13*
+## Local Development Workflow
+
+### Before Committing
+```powershell
+# Quick validation
+az playbook ci-cd-complete -Variables @{
+  RunTests = $true
+  RunBuild = $false
+  TestProfile = 'Quick'
+}
+```
+
+### Before Pull Request
+```powershell
+# Standard testing
+az playbook ci-cd-complete -Variables @{
+  RunTests = $true
+  RunSecurity = $true
+  RunBuild = $false
+  TestProfile = 'Standard'
+}
+```
+
+### Test Full Pipeline
+```powershell
+# Everything except release
+az playbook ci-cd-complete -Variables @{
+  CreateRelease = $false
+  DeployDocs = $false
+  TestProfile = 'Full'
+}
+```
+
+## Quality Gates
+
+The playbook enforces quality standards automatically:
+
+- **Validation**: All code must pass syntax checks
+- **Testing**: 95% minimum test pass rate
+- **Coverage**: 80% code coverage threshold
+- **Analysis**: Zero errors, maximum 20 warnings
+- **Security**: No critical vulnerabilities
+
+## Reports and Artifacts
+
+### Generated Reports
+- Test results: `./tests/results/`
+- Coverage reports: `./tests/coverage/`
+- Security scans: `./tests/security/`
+- Analysis reports: `./tests/analysis/`
+- Project dashboard: `./reports/dashboard.html`
+
+### GitHub Pages Dashboard
+When `DeployDocs = $true`, the pipeline deploys:
+- Live test results
+- Coverage trends
+- Security status
+- Release history
+
+## Troubleshooting
+
+### Test the Playbook
+```powershell
+# Validate playbook syntax
+Import-PowerShellDataFile './orchestration/playbooks-psd1/ops/ci-cd-complete.psd1'
+
+# Dry run to see what would execute
+az playbook ci-cd-complete -WhatIf
+
+# Run specific stages only
+az playbook ci-cd-complete -Variables @{
+  RunValidation = $true
+  RunTests = $false
+  RunSecurity = $false
+  RunBuild = $false
+}
+```
+
+### Common Issues and Solutions
+
+**Tests failing?**
+```powershell
+# Use AI-powered test fixing
+az playbook test-fix-workflow
+```
+
+**Security scan too slow?**
+```powershell
+# Use quick scan level
+-Variables @{ ScanLevel = 'Quick' }
+```
+
+**Build failing?**
+```powershell
+# Test without building
+-Variables @{ RunBuild = $false }
+```
+
+## Best Practices
+
+1. **One Playbook Rule**: Always use `ci-cd-complete` for CI/CD
+2. **Control Through Variables**: Don't create new playbooks, use variables
+3. **Test Locally**: Run the playbook locally before pushing
+4. **Progressive Testing**: Start with Quick, then Standard, then Full
+5. **Monitor Quality Gates**: Keep metrics high
+
+## Examples
+
+### PR Validation
+```powershell
+az playbook ci-cd-complete -Variables @{
+  RunBuild = $false
+  CreateRelease = $false
+  TestProfile = 'Standard'
+}
+```
+
+### Nightly Build
+```powershell
+az playbook ci-cd-complete -Variables @{
+  RunBuild = $true
+  CreateRelease = $false
+  TestProfile = 'Full'
+}
+```
+
+### Release Build
+```powershell
+az playbook ci-cd-complete -Variables @{
+  CreateRelease = $true
+  DeployDocs = $true
+  Version = '1.0.0'
+  TestProfile = 'Full'
+}
+```
+
+### Security Audit Only
+```powershell
+az playbook ci-cd-complete -Variables @{
+  RunValidation = $false
+  RunTests = $false
+  RunSecurity = $true
+  RunBuild = $false
+}
+```
+
+## Summary
+
+The AitherZero CI/CD system's strength lies in its simplicity:
+- **One playbook** handles everything
+- **Variables** control what runs
+- **Same commands** work locally and in CI
+- **GitHub workflows** are just thin wrappers
+
+This approach eliminates complexity while providing full enterprise CI/CD capabilities.

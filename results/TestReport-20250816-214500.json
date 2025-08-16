@@ -1,0 +1,5 @@
+
+cmdlet ConvertTo-Json at command pipeline position 1
+Supply values for the following parameters:
+InputObject: [2025-08-16 21:45:19.923] [INFORMATION] [Logging] Logging system initialized with configuration | Data: {"Path":"./logs","Targets":"Console, File","Level":"Information","AuditEnabled":true}
+"[2025-08-16 21:45:19.923] [INFORMATION] [Logging] Logging system initialized with configuration | Data: {\"Path\":\"./logs\",\"Targets\":\"Console, File\",\"Level\":\"Information\",\"AuditEnabled\":true}"

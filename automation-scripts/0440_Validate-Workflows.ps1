@@ -263,11 +263,13 @@ function Test-WorkflowSchema {
                 }
                 
                 # Check for matrix strategy issues
-                if ($job.strategy -and $job.strategy.matrix) {
-                    if ($job.'runs-on' -match '\$\{\{.*matrix.*\}\}') {
-                        # This is fine, using matrix in runs-on
-                    } elseif ($job.'runs-on' -is [array]) {
-                        $warnings += "Job '$jobName' uses array for runs-on without matrix reference"
+                if ($job.PSObject.Properties.Name -contains 'strategy') {
+                    if ($job.strategy -and $job.strategy.PSObject.Properties.Name -contains 'matrix') {
+                        if ($job.'runs-on' -match '\$\{\{.*matrix.*\}\}') {
+                            # This is fine, using matrix in runs-on
+                        } elseif ($job.'runs-on' -is [array]) {
+                            $warnings += "Job '$jobName' uses array for runs-on without matrix reference"
+                        }
                     }
                 }
             }
