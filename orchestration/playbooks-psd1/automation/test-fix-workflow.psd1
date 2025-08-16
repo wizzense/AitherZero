@@ -26,7 +26,8 @@
                 TrackerPath = './test-fix-tracker.json'
                 TestResultsPath = './tests/reports'
                 CreateBranch = $true
-                MaxAgeHours = 1
+                MaxAgeHours = 24  # Increased to avoid re-running tests too often
+                CheckTestResults = $false  # Don't automatically re-run tests
             }
         }
         
