@@ -39,6 +39,7 @@ BeforeAll {
             }
             Automation = @{
                 MaxConcurrency = 4
+                DefaultTimeout = 300
             }
         }
     }

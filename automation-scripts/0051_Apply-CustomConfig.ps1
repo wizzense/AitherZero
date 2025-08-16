@@ -109,11 +109,11 @@ function Test-ConfigurationValid {
     
     # Validate Automation section
     if ($Config.Automation) {
-        if ($Config.Automation.MaxConcurrency -and $Config.Automation.MaxConcurrency -lt 1) {
+        if ($null -ne $Config.Automation.MaxConcurrency -and $Config.Automation.MaxConcurrency -lt 1) {
             $errors += "MaxConcurrency must be at least 1"
         }
         
-        if ($Config.Automation.DefaultTimeout -and $Config.Automation.DefaultTimeout -lt 0) {
+        if ($null -ne $Config.Automation.DefaultTimeout -and $Config.Automation.DefaultTimeout -lt 0) {
             $errors += "DefaultTimeout cannot be negative"
         }
     }
