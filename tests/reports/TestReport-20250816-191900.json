@@ -1,0 +1,42 @@
+{
+  "Timestamp": "2025-08-16 19:19:00",
+  "TotalCount": 2045,
+  "PassedCount": 1969,
+  "FailedCount": 76,
+  "Failed": 76,
+  "Duration": {
+    "TotalSeconds": 120
+  },
+  "Tests": [
+    {
+      "ExpandedPath": "0051_Apply-CustomConfig.ps1 Tests.Parameter Validation.Should accept local config file path",
+      "Result": "Failed",
+      "ErrorRecord": {
+        "Exception": {
+          "Message": "The property 'DefaultTimeout' cannot be found on this object. Verify that the property exists."
+        },
+        "ScriptStackTrace": "at <ScriptBlock>, /workspaces/AitherZero/tests/unit/automation-scripts/0000-0099/0051_Apply-CustomConfig.Tests.ps1:72"
+      }
+    },
+    {
+      "ExpandedPath": "0051_Apply-CustomConfig.ps1 Tests.Configuration Loading.Should load configuration from file",
+      "Result": "Failed",
+      "ErrorRecord": {
+        "Exception": {
+          "Message": "The property 'Environment' cannot be found on this object. Verify that the property exists."
+        },
+        "ScriptStackTrace": "at Test-ConfigurationValid, /workspaces/AitherZero/automation-scripts/0051_Apply-CustomConfig.ps1:102"
+      }
+    },
+    {
+      "ExpandedPath": "0407_Validate-Syntax.Parameter Validation.Should require FilePath parameter",
+      "Result": "Failed",
+      "ErrorRecord": {
+        "Exception": {
+          "Message": "Expected an exception to be thrown, but no exception was thrown."
+        },
+        "ScriptStackTrace": "at <ScriptBlock>, /workspaces/AitherZero/tests/unit/automation-scripts/0400-0499/0407_Validate-Syntax.Tests.ps1:49"
+      }
+    }
+  ]
+}

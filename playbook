@@ -1,0 +1,3 @@
+#!/bin/bash
+# Playbook executor - allows Claude to run playbooks as tools
+exec /workspaces/AitherZero/.claude/hooks/playbook.sh "$@"
