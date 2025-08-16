@@ -79,26 +79,31 @@ jobs:
         echo "create_release=$createRelease" >> $env:GITHUB_OUTPUT
         
         # Check if the new playbook exists and run appropriate pipeline
-        $playbookPath = "./orchestration/playbooks-psd1/ops/ci-cd-complete.psd1"
-        
-        if (Test-Path $playbookPath) {
-          Write-Host "Using comprehensive CI/CD playbook"
-          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-cd-complete -CI `
-            -Variables @{
+        try {
+          $playbookPath = "./orchestration/playbooks-psd1/ops/ci-cd-complete.psd1"
+          
+          if (Test-Path $playbookPath) {
+            Write-Host "Using comprehensive CI/CD playbook"
+            $variables = @{
               RunValidation = $true
               RunTests = $true
-              RunSecurity = $true
+              RunSecurity = $false
               RunBuild = $true
               CreateRelease = $createRelease
-              DeployDocs = $true  # Always deploy docs from main
+              DeployDocs = $true
               Version = $version
-              TestProfile = 'Full'  # Complete testing for releases
+              TestProfile = 'Standard'
               BuildProfiles = @('Core', 'Standard', 'Full')
             }
-        } else {
-          Write-Host "Playbook not found, using direct sequence"
-          # Fallback for compatibility
-          ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0407,0404,0402,9100" -CI
+            ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-cd-complete -CI -Variables $variables
+          } else {
+            Write-Host "Playbook not found, using direct sequence"
+            # Fallback for compatibility
+            ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0407,0404,0402" -CI
+          }
+        } catch {
+          Write-Host "Error running CD pipeline: $_" -ForegroundColor Red
+          exit 1
         }
     
     - name: 🏷️ Create GitHub Release

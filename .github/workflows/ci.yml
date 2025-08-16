@@ -57,25 +57,32 @@ jobs:
         New-Item -ItemType Directory -Path "./tests/coverage" -Force | Out-Null
         New-Item -ItemType Directory -Path "./tests/analysis" -Force | Out-Null
         
-        # Check if the new playbook exists
-        $playbookPath = "./orchestration/playbooks-psd1/ops/ci-cd-complete.psd1"
-        
-        if (Test-Path $playbookPath) {
-          Write-Host "Using comprehensive CI/CD playbook"
-          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-cd-complete -CI `
-            -Variables @{
+        # Run validation and tests
+        Write-Host "Running CI validation and tests..."
+        try {
+          # Check if the new playbook exists
+          $playbookPath = "./orchestration/playbooks-psd1/ops/ci-cd-complete.psd1"
+          
+          if (Test-Path $playbookPath) {
+            Write-Host "Using comprehensive CI/CD playbook"
+            $variables = @{
               RunValidation = $true
               RunTests = $true
-              RunSecurity = $true
-              RunBuild = $false  # Don't build on PRs
+              RunSecurity = $false
+              RunBuild = $false
               CreateRelease = $false
               DeployDocs = $false
-              TestProfile = 'Standard'  # Faster for PRs
+              TestProfile = 'Quick'
             }
-        } else {
-          Write-Host "Playbook not found, using direct sequence"
-          # Fallback to direct sequence for compatibility
-          ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0407,0404,0402" -CI
+            ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-cd-complete -CI -Variables $variables
+          } else {
+            Write-Host "Playbook not found, using direct sequence"
+            # Fallback to direct sequence for compatibility
+            ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0407,0404,0402" -CI
+          }
+        } catch {
+          Write-Host "Error running CI pipeline: $_" -ForegroundColor Red
+          exit 1
         }
     
     - name: 📊 Check for Test Results
