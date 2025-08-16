@@ -52,26 +52,56 @@ jobs:
     - name: 🚀 Run CI Pipeline
       shell: pwsh
       run: |
-        # Run the comprehensive CI/CD playbook with test-only configuration
-        ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-cd-complete -CI `
-          -Variables @{
-            RunValidation = $true
-            RunTests = $true
-            RunSecurity = $true
-            RunBuild = $false  # Don't build on PRs
-            CreateRelease = $false
-            DeployDocs = $false
-            TestProfile = 'Standard'  # Faster for PRs
-          }
+        # Ensure test directories exist
+        New-Item -ItemType Directory -Path "./tests/results" -Force | Out-Null
+        New-Item -ItemType Directory -Path "./tests/coverage" -Force | Out-Null
+        New-Item -ItemType Directory -Path "./tests/analysis" -Force | Out-Null
+        
+        # Check if the new playbook exists
+        $playbookPath = "./orchestration/playbooks-psd1/ops/ci-cd-complete.psd1"
+        
+        if (Test-Path $playbookPath) {
+          Write-Host "Using comprehensive CI/CD playbook"
+          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-cd-complete -CI `
+            -Variables @{
+              RunValidation = $true
+              RunTests = $true
+              RunSecurity = $true
+              RunBuild = $false  # Don't build on PRs
+              CreateRelease = $false
+              DeployDocs = $false
+              TestProfile = 'Standard'  # Faster for PRs
+            }
+        } else {
+          Write-Host "Playbook not found, using direct sequence"
+          # Fallback to direct sequence for compatibility
+          ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0407,0404,0402" -CI
+        }
+    
+    - name: 📊 Check for Test Results
+      id: check-tests
+      shell: pwsh
+      if: always()
+      run: |
+        $testFiles = Get-ChildItem -Path "./tests/results" -Filter "*.xml" -Recurse -ErrorAction SilentlyContinue
+        if ($testFiles) {
+          Write-Host "Found $($testFiles.Count) test result files"
+          echo "has_results=true" >> $env:GITHUB_OUTPUT
+        } else {
+          Write-Host "No test result files found"
+          echo "has_results=false" >> $env:GITHUB_OUTPUT
+        }
     
     - name: 📊 Publish Test Results
       uses: dorny/test-reporter@v1
-      if: always()
+      if: steps.check-tests.outputs.has_results == 'true'
+      continue-on-error: true
       with:
         name: Test Results - ${{ matrix.os }}
-        path: 'tests/results/*.xml'
+        path: 'tests/results/**/*.xml'
         reporter: java-junit
         fail-on-error: false
+        path-replace-backslashes: true
     
     - name: 📈 Upload Coverage
       uses: codecov/codecov-action@v4

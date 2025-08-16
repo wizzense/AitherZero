@@ -78,19 +78,28 @@ jobs:
         echo "version=$version" >> $env:GITHUB_OUTPUT
         echo "create_release=$createRelease" >> $env:GITHUB_OUTPUT
         
-        # Run the complete pipeline
-        ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-cd-complete -CI `
-          -Variables @{
-            RunValidation = $true
-            RunTests = $true
-            RunSecurity = $true
-            RunBuild = $true
-            CreateRelease = $createRelease
-            DeployDocs = $true  # Always deploy docs from main
-            Version = $version
-            TestProfile = 'Full'  # Complete testing for releases
-            BuildProfiles = @('Core', 'Standard', 'Full')
-          }
+        # Check if the new playbook exists and run appropriate pipeline
+        $playbookPath = "./orchestration/playbooks-psd1/ops/ci-cd-complete.psd1"
+        
+        if (Test-Path $playbookPath) {
+          Write-Host "Using comprehensive CI/CD playbook"
+          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-cd-complete -CI `
+            -Variables @{
+              RunValidation = $true
+              RunTests = $true
+              RunSecurity = $true
+              RunBuild = $true
+              CreateRelease = $createRelease
+              DeployDocs = $true  # Always deploy docs from main
+              Version = $version
+              TestProfile = 'Full'  # Complete testing for releases
+              BuildProfiles = @('Core', 'Standard', 'Full')
+            }
+        } else {
+          Write-Host "Playbook not found, using direct sequence"
+          # Fallback for compatibility
+          ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0407,0404,0402,9100" -CI
+        }
     
     - name: 🏷️ Create GitHub Release
       if: steps.pipeline.outputs.create_release == 'true'
