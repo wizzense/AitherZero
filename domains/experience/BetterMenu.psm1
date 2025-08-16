@@ -106,6 +106,59 @@ function Show-BetterMenu {
     $lastSelectedIndex = -1
     $firstDraw = $true
     
+    # Check if we can actually use interactive mode
+    $canInteract = $true
+    try {
+        # Test if we can actually read keys in this environment
+        if ([Console]::IsInputRedirected -or -not [Environment]::UserInteractive) {
+            $canInteract = $false
+        }
+    } catch {
+        $canInteract = $false
+    }
+    
+    # If we can't interact, use simple menu
+    if (-not $canInteract) {
+        # Simple numbered menu
+        if ($Title) {
+            Write-Host "`n$Title" -ForegroundColor Cyan
+            Write-Host ("=" * $Title.Length) -ForegroundColor DarkCyan
+        }
+        
+        for ($i = 0; $i -lt $Items.Count; $i++) {
+            $item = $Items[$i]
+            $displayText = if ($item -is [string]) { $item } else { $item.Name }
+            Write-Host "[$($i + 1)] $displayText" -ForegroundColor White
+            
+            if ($item -isnot [string] -and $item.PSObject.Properties['Description'] -and $item.Description) {
+                Write-Host "    $($item.Description)" -ForegroundColor DarkGray
+            }
+        }
+        
+        if ($CustomActions.Count -gt 0) {
+            Write-Host ""
+            foreach ($action in $CustomActions.GetEnumerator()) {
+                Write-Host "[$($action.Key)] $($action.Value)" -ForegroundColor Cyan
+            }
+        }
+        
+        Write-Host "`nSelect an option: " -ForegroundColor Yellow -NoNewline
+        $selection = Read-Host
+        
+        if ($CustomActions -and $selection -and $CustomActions.ContainsKey($selection.ToUpper())) {
+            return @{ Action = $selection.ToUpper() }
+        }
+        
+        if ($selection -match '^\d+$') {
+            $index = [int]$selection - 1
+            if ($index -ge 0 -and $index -lt $Items.Count) {
+                return $Items[$index]
+            }
+        }
+        
+        return $null
+    }
+    
     # Main menu loop  
     while ($true) {
         # Only clear screen on first draw or when explicitly needed
@@ -116,9 +169,15 @@ function Show-BetterMenu {
             }
             $firstDraw = $false
         } else {
-            # Move cursor to top for redraw without clearing (skip in CI)
+            # Clear screen properly for Linux/Unix terminals
             if (-not $env:CI -and -not $env:GITHUB_ACTIONS) {
-                try { [Console]::SetCursorPosition(0, 0) } catch { }
+                if ($IsLinux -or $IsMacOS) {
+                    # Use ANSI escape sequences for Unix-like systems
+                    Write-Host "`e[H`e[2J" -NoNewline
+                } else {
+                    # Windows - use SetCursorPosition
+                    try { [Console]::SetCursorPosition(0, 0) } catch { }
+                }
             }
         }
         
@@ -202,51 +261,34 @@ function Show-BetterMenu {
         }
         
         # Read key - blocking is actually better for menus
+        $keyInfo = $null
+        $virtualKeyCode = 0
+        $keyChar = ''
+        
         try {
             $key = $host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+            $virtualKeyCode = $key.VirtualKeyCode
+            $keyChar = $key.Character
         } catch {
-            # If ReadKey fails, we can't use interactive mode
-            # Return to non-interactive fallback
-            Write-Host "`nInteractive mode not available. Using simple menu." -ForegroundColor Yellow
-            
-            # Display simple menu
-            Write-Host ""
-            for ($i = 0; $i -lt $Items.Count; $i++) {
-                $item = $Items[$i]
-                $displayText = if ($item -is [string]) { $item } else { $item.Name }
-                Write-Host "[$($i + 1)] $displayText" -ForegroundColor White
+            # If ReadKey fails, try alternative method
+            $consoleKey = [Console]::ReadKey($true)
+            # Map ConsoleKey to VirtualKeyCode equivalents
+            switch ($consoleKey.Key) {
+                'UpArrow' { $virtualKeyCode = 38 }
+                'DownArrow' { $virtualKeyCode = 40 }
+                'PageUp' { $virtualKeyCode = 33 }
+                'PageDown' { $virtualKeyCode = 34 }
+                'Home' { $virtualKeyCode = 36 }
+                'End' { $virtualKeyCode = 35 }
+                'Enter' { $virtualKeyCode = 13 }
+                'Spacebar' { $virtualKeyCode = 32 }
+                'Escape' { $virtualKeyCode = 27 }
+                default { $keyChar = $consoleKey.KeyChar }
             }
-            
-            if ($CustomActions.Count -gt 0) {
-                Write-Host ""
-                foreach ($action in $CustomActions.GetEnumerator()) {
-                    Write-Host "[$($action.Key)] $($action.Value)" -ForegroundColor Cyan
-                }
-            }
-            
-            Write-Host "`nSelect option: " -ForegroundColor Yellow -NoNewline
-            $inputValue = Read-Host
-            
-            if ([string]::IsNullOrWhiteSpace($inputValue)) {
-                return $null
-            }
-            
-            if ($CustomActions -and $CustomActions.ContainsKey($inputValue.ToUpper())) {
-                return @{ Action = $inputValue.ToUpper() }
-            }
-            
-            if ($inputValue -match '^\d+$') {
-                $num = [int]$inputValue - 1
-                if ($num -ge 0 -and $num -lt $Items.Count) {
-                    return $Items[$num]
-                }
-            }
-            
-            return $null
         }
         
         # Process key
-        switch ($key.VirtualKeyCode) {
+        switch ($virtualKeyCode) {
             38 { # Up arrow
                 if ($selectedIndex -gt 0) {
                     $selectedIndex--
@@ -313,7 +355,7 @@ function Show-BetterMenu {
             
             default {
                 # Check for character input
-                $char = $key.Character
+                $char = if ($keyChar) { $keyChar } else { $key.Character }
                 
                 # Handle vim-style navigation
                 if ($char -eq 'j') {

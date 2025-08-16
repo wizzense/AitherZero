@@ -1,0 +1,140 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [develop, feature/*, fix/*]
+  workflow_dispatch:
+
+# Prevent duplicate runs
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  statuses: write
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+
+jobs:
+  ci:
+    name: CI - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: 🔧 Bootstrap Environment
+      shell: pwsh
+      run: |
+        if ($IsWindows -and $PSVersionTable.PSVersion.Major -lt 7) {
+          # Use PS5.1 bootstrap for older Windows
+          iwr -useb https://raw.githubusercontent.com/${{ github.repository }}/main/bootstrap-ps5.ps1 | iex
+        } else {
+          ./bootstrap.ps1 -Mode Install -NonInteractive
+        }
+    
+    - name: 🚀 Run CI Pipeline
+      shell: pwsh
+      run: |
+        # Ensure test directories exist
+        New-Item -ItemType Directory -Path "./tests/results" -Force | Out-Null
+        New-Item -ItemType Directory -Path "./tests/coverage" -Force | Out-Null
+        New-Item -ItemType Directory -Path "./tests/analysis" -Force | Out-Null
+        
+        # Run validation and tests
+        Write-Host "Running CI validation and tests..."
+        try {
+          # Check if the new playbook exists
+          $playbookPath = "./orchestration/playbooks-psd1/ops/ci-cd-complete.psd1"
+          
+          if (Test-Path $playbookPath) {
+            Write-Host "Using comprehensive CI/CD playbook"
+            $variables = @{
+              RunValidation = $true
+              RunTests = $true
+              RunSecurity = $false
+              RunBuild = $false
+              CreateRelease = $false
+              DeployDocs = $false
+              TestProfile = 'Quick'
+            }
+            ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook ci-cd-complete -CI -Variables $variables
+          } else {
+            Write-Host "Playbook not found, using direct sequence"
+            # Fallback to direct sequence for compatibility
+            ./Start-AitherZero.ps1 -Mode Orchestrate -Sequence "0407,0404,0402" -CI
+          }
+        } catch {
+          Write-Host "Error running CI pipeline: $_" -ForegroundColor Red
+          exit 1
+        }
+    
+    - name: 📊 Check for Test Results
+      id: check-tests
+      shell: pwsh
+      if: always()
+      run: |
+        $testFiles = Get-ChildItem -Path "./tests/results" -Filter "*.xml" -Recurse -ErrorAction SilentlyContinue
+        if ($testFiles) {
+          Write-Host "Found $($testFiles.Count) test result files"
+          echo "has_results=true" >> $env:GITHUB_OUTPUT
+        } else {
+          Write-Host "No test result files found"
+          echo "has_results=false" >> $env:GITHUB_OUTPUT
+        }
+    
+    - name: 📊 Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: steps.check-tests.outputs.has_results == 'true'
+      continue-on-error: true
+      with:
+        name: Test Results - ${{ matrix.os }}
+        path: 'tests/results/**/*.xml'
+        reporter: java-junit
+        fail-on-error: false
+        path-replace-backslashes: true
+    
+    - name: 📈 Upload Coverage
+      uses: codecov/codecov-action@v4
+      if: matrix.os == 'ubuntu-latest'
+      continue-on-error: true
+      with:
+        files: ./tests/coverage/coverage.xml
+        flags: unittests
+        name: coverage-${{ matrix.os }}
+    
+    - name: 🔍 Upload Code Scanning Results
+      if: matrix.os == 'ubuntu-latest' && always()
+      uses: github/codeql-action/upload-sarif@v3
+      continue-on-error: true
+      with:
+        sarif_file: ./tests/analysis/psscriptanalyzer.sarif
+        category: PSScriptAnalyzer
+    
+    - name: 📤 Upload Artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ci-artifacts-${{ matrix.os }}-${{ github.run_number }}
+        path: |
+          tests/results/
+          tests/coverage/
+          tests/analysis/
+          reports/
+        retention-days: 7

@@ -1,0 +1,348 @@
+#Requires -Version 7.0
+
+<#
+.SYNOPSIS
+    Create pull request with resolved test fixes
+.DESCRIPTION
+    Creates a GitHub pull request with all resolved issues from the tracker.
+    Links the PR to the GitHub issues and optionally archives the tracker.
+    
+    Exit Codes:
+    0   - PR created or nothing to create
+    1   - Error creating PR
+    
+.NOTES
+    Stage: Testing
+    Order: 0757
+    Dependencies: 0751, 0756, gh CLI
+    Tags: testing, github, pr, automation
+#>
+
+[CmdletBinding(SupportsShouldProcess)]
+param(
+    [string]$TrackerPath = './test-fix-tracker.json',
+    [string]$BaseBranch = 'main',
+    [string]$Repository,  # Override repo (default: current)
+    [string[]]$Labels = @('automated', 'bug-fix', 'claude'),
+    [string]$Assignee = '@me',
+    [switch]$ArchiveTracker,  # Archive and reset tracker after PR
+    [switch]$PassThru
+)
+
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+# Script metadata
+$scriptMetadata = @{
+    Stage = 'Testing'
+    Order = 0757
+    Dependencies = @('0751', '0756')
+    Tags = @('testing', 'github', 'pr', 'automation')
+    RequiresAdmin = $false
+    SupportsWhatIf = $true
+}
+
+function Write-ScriptLog {
+    param(
+        [string]$Level = 'Information',
+        [string]$Message
+    )
+    
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $color = @{
+        'Error' = 'Red'
+        'Warning' = 'Yellow'
+        'Information' = 'White'
+        'Debug' = 'Gray'
+    }[$Level]
+    Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
+}
+
+try {
+    # Check for gh CLI
+    if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+        Write-ScriptLog -Level Error -Message "GitHub CLI (gh) is not installed. Install it first."
+        Write-ScriptLog -Message "Visit: https://cli.github.com/"
+        exit 1
+    }
+    
+    # Check gh auth status
+    $authStatus = gh auth status 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-ScriptLog -Level Error -Message "GitHub CLI is not authenticated. Run: gh auth login"
+        exit 1
+    }
+    
+    # Load tracker
+    if (-not (Test-Path $TrackerPath)) {
+        Write-ScriptLog -Level Error -Message "Tracker file not found. Run 0751_Load-TestTracker.ps1 first."
+        exit 1
+    }
+    
+    $tracker = Get-Content $TrackerPath -Raw | ConvertFrom-Json -AsHashtable
+    Write-ScriptLog -Message "Loaded tracker with $($tracker.issues.Count) issues"
+    
+    # Get issue counts
+    $resolved = @($tracker.issues | Where-Object { $_.status -eq 'resolved' })
+    $open = @($tracker.issues | Where-Object { $_.status -eq 'open' })
+    $failed = @($tracker.issues | Where-Object { $_.status -eq 'failed' })
+    
+    Write-Host "`n📊 Issue Summary:" -ForegroundColor Cyan
+    Write-Host "  ✅ Resolved: $($resolved.Count)" -ForegroundColor Green
+    Write-Host "  ⏳ Still Open: $($open.Count)" -ForegroundColor Yellow
+    Write-Host "  ❌ Failed: $($failed.Count)" -ForegroundColor Red
+    
+    if ($resolved.Count -eq 0) {
+        Write-ScriptLog -Level Warning -Message "No resolved issues to create PR for"
+        Write-ScriptLog -Message "Fix some issues first with the test-fix workflow"
+        
+        if ($PassThru) {
+            return $null
+        }
+        exit 0
+    }
+    
+    # Check for uncommitted changes
+    $gitStatus = git status --porcelain 2>&1
+    if ($gitStatus) {
+        Write-Host "`n⚠️ Uncommitted changes detected:" -ForegroundColor Yellow
+        Write-Host $gitStatus
+        
+        if ($PSCmdlet.ShouldProcess("All changes", "Commit before PR")) {
+            Write-Host "`n📝 Committing remaining changes..." -ForegroundColor Cyan
+            git add -A 2>&1 | Out-Null
+            git commit -m "chore: Additional test fixes and cleanup" 2>&1 | Out-Null
+        }
+    }
+    
+    # Push branch
+    Write-Host "`n🚀 Pushing branch to origin..." -ForegroundColor Cyan
+    $branchName = git rev-parse --abbrev-ref HEAD 2>&1
+    
+    if ($branchName -eq $BaseBranch) {
+        Write-ScriptLog -Level Error -Message "Cannot create PR from $BaseBranch to itself"
+        Write-ScriptLog -Message "Switch to a feature branch first"
+        exit 1
+    }
+    
+    if ($PSCmdlet.ShouldProcess("origin $branchName", "Push branch")) {
+        git push -u origin $branchName 2>&1
+        
+        if ($LASTEXITCODE -ne 0) {
+            Write-ScriptLog -Level Error -Message "Failed to push branch"
+            exit 1
+        }
+        
+        Write-Host "✅ Branch pushed successfully" -ForegroundColor Green
+    }
+    
+    # Build PR title
+    $prTitle = if ($resolved.Count -eq 1) {
+        "🤖 fix: Automated test fix (1 issue resolved)"
+    } else {
+        "🤖 fix: Automated test fixes ($($resolved.Count) issues resolved)"
+    }
+    
+    # Build PR body
+    $prBody = @"
+## 🤖 Automated Test Fixes
+
+This PR contains automated fixes for failing tests generated by Claude Code CLI.
+
+### Branch Information
+- **Branch:** ``$branchName``
+- **Base:** ``$BaseBranch``
+- **Test Results:** ``$($tracker.lastProcessedResults)``
+
+---
+
+### ✅ Resolved Issues ($($resolved.Count))
+
+| Issue | Test | File | Commit |
+|-------|------|------|--------|
+$($resolved | ForEach-Object {
+    $issueLink = if ($_.githubIssue) { "#$($_.githubIssue)" } else { "N/A" }
+    $shortTest = if ($_.testName.Length -gt 40) { 
+        $_.testName.Substring(0, 40) + "..." 
+    } else { 
+        $_.testName 
+    }
+    $shortFile = Split-Path $_.file -Leaf
+    $commitLink = if ($_.fixCommit) { 
+        "``$($_.fixCommit.Substring(0, 8))``" 
+    } else { 
+        "N/A" 
+    }
+    "| $issueLink | ``$shortTest`` | ``$shortFile`` | $commitLink |"
+} | Out-String)
+
+"@
+    
+    # Add still open section if any
+    if ($open.Count -gt 0) {
+        $prBody += @"
+
+---
+
+### ⏳ Still Open ($($open.Count))
+
+These issues could not be automatically fixed and require manual intervention:
+
+| Issue | Test | Attempts |
+|-------|------|----------|
+$($open | ForEach-Object {
+    $issueLink = if ($_.githubIssue) { "#$($_.githubIssue)" } else { "N/A" }
+    $shortTest = if ($_.testName.Length -gt 50) { 
+        $_.testName.Substring(0, 50) + "..." 
+    } else { 
+        $_.testName 
+    }
+    "| $issueLink | ``$shortTest`` | $($_.attempts) |"
+} | Out-String)
+
+"@
+    }
+    
+    # Add failed section if any
+    if ($failed.Count -gt 0) {
+        $prBody += @"
+
+---
+
+### ❌ Failed After Max Attempts ($($failed.Count))
+
+These issues failed after 3 automated fix attempts:
+
+| Issue | Test |
+|-------|------|
+$($failed | ForEach-Object {
+    $issueLink = if ($_.githubIssue) { "#$($_.githubIssue)" } else { "N/A" }
+    $shortTest = if ($_.testName.Length -gt 60) { 
+        $_.testName.Substring(0, 60) + "..." 
+    } else { 
+        $_.testName 
+    }
+    "| $issueLink | ``$shortTest`` |"
+} | Out-String)
+
+"@
+    }
+    
+    # Add footer
+    $prBody += @"
+
+---
+
+### 🔧 Automation Details
+
+- **Automated by:** Claude Code CLI
+- **Workflow:** Test Fix Automation
+- **Tracker:** ``test-fix-tracker.json``
+- **Total Attempts:** $($resolved | Measure-Object -Property attempts -Sum | Select-Object -ExpandProperty Sum)
+
+### Closes Issues
+
+$($resolved | Where-Object { $_.githubIssue } | ForEach-Object { "Fixes #$($_.githubIssue)" } | Out-String)
+
+---
+
+*This PR was automatically generated by the AitherZero test automation system using Claude Code.*
+"@
+    
+    # Create the PR
+    Write-Host "`n📝 Creating pull request..." -ForegroundColor Cyan
+    Write-Host "  Title: $prTitle" -ForegroundColor Gray
+    
+    if ($PSCmdlet.ShouldProcess($prTitle, "Create pull request")) {
+        try {
+            # Save body to temp file (gh cli can have issues with complex strings)
+            $bodyFile = [System.IO.Path]::GetTempFileName()
+            $prBody | Out-File $bodyFile -Encoding UTF8
+            
+            # Build gh command
+            $ghArgs = @(
+                'pr', 'create',
+                '--base', $BaseBranch,
+                '--title', $prTitle,
+                '--body-file', $bodyFile,
+                '--label', ($Labels -join ',')
+            )
+            
+            if ($Assignee) {
+                $ghArgs += '--assignee', $Assignee
+            }
+            
+            if ($Repository) {
+                $ghArgs += '--repo', $Repository
+            }
+            
+            $prUrl = & gh @ghArgs 2>&1
+            
+            Remove-Item $bodyFile -Force -ErrorAction SilentlyContinue
+            
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "✅ Pull request created successfully!" -ForegroundColor Green
+                Write-Host "  URL: $prUrl" -ForegroundColor Cyan
+                
+                # Update resolved issues with PR link
+                if ($prUrl -match '/pull/(\d+)') {
+                    $prNumber = $Matches[1]
+                    
+                    foreach ($issue in $resolved | Where-Object { $_.githubIssue }) {
+                        $comment = "🔗 PR created: #$prNumber"
+                        gh issue comment $issue.githubIssue --body "$comment" 2>&1 | Out-Null
+                    }
+                }
+                
+                # Archive tracker if requested
+                if ($ArchiveTracker) {
+                    Write-Host "`n🧹 Archiving tracker..." -ForegroundColor Cyan
+                    
+                    $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+                    $archivePath = "./test-fix-tracker-$timestamp.json"
+                    Copy-Item $TrackerPath $archivePath -Force
+                    Write-Host "✅ Tracker archived to: $archivePath" -ForegroundColor Green
+                    
+                    # Reset tracker if all issues resolved
+                    if ($open.Count -eq 0 -and $failed.Count -eq 0) {
+                        $newTracker = @{
+                            lastProcessedResults = $tracker.lastProcessedResults
+                            currentBranch = $null
+                            issues = @()
+                            previousPR = $prUrl
+                            archivedFrom = $archivePath
+                            createdAt = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+                            updatedAt = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+                        }
+                        
+                        $newTracker | ConvertTo-Json -Depth 10 | Set-Content $TrackerPath
+                        Write-Host "✅ Tracker reset for next batch of fixes" -ForegroundColor Green
+                    }
+                }
+                
+                if ($PassThru) {
+                    return @{
+                        PRUrl = $prUrl
+                        PRNumber = $prNumber
+                        ResolvedCount = $resolved.Count
+                        OpenCount = $open.Count
+                        FailedCount = $failed.Count
+                    }
+                }
+            } else {
+                Write-ScriptLog -Level Error -Message "Failed to create PR: $prUrl"
+                exit 1
+            }
+        }
+        catch {
+            Write-ScriptLog -Level Error -Message "Error creating PR: $_"
+            exit 1
+        }
+    }
+    
+    exit 0
+}
+catch {
+    Write-ScriptLog -Level Error -Message "Failed to create PR: $_"
+    exit 1
+}

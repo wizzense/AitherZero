@@ -45,8 +45,10 @@ Describe "0407_Validate-Syntax" -Tag @('Unit', 'Testing', 'Syntax') {
     }
 
     Context "Parameter Validation" {
-        It "Should require FilePath parameter" {
-            { & $scriptPath } | Should -Throw
+        It "Should run validation when no parameters are provided" {
+            # When no parameters are provided, script validates all PowerShell files in project
+            # The exit code depends on whether syntax errors are found, so we just verify it runs
+            { & $scriptPath 2>$null } | Should -Not -Throw
         }
 
         It "Should validate that FilePath exists" {

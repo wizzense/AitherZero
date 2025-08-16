@@ -611,7 +611,7 @@ function Import-Configuration {
     try {
         # Try to import as PowerShell Data File first
         if ($Path -like '*.psd1') {
-            $newConfig = Import-PowerShellDataFile -Path $Path
+            $newConfig = Import-PowerShellDataFile $Path
         } else {
             # Fall back to JSON for compatibility
             $newConfig = Get-Content $Path -Raw | ConvertFrom-Json

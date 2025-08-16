@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# AitherZero CLI wrapper
+# AitherZero Universal CLI - Combines az, seq, and playbook functionality
 
 # Capture command-line arguments
 $arguments = $args
@@ -27,32 +27,98 @@ if (-not (Test-Path "$scriptDir/AitherZero.psd1")) {
     }
 }
 
-# Load module if needed (check both env var and function availability)
-if (-not $env:AITHERZERO_INITIALIZED -or -not (Get-Command Invoke-AitherScript -ErrorAction SilentlyContinue)) {
+# Load module if needed
+if (-not $env:AITHERZERO_INITIALIZED) {
     Import-Module "$scriptDir/AitherZero.psd1" -Force -Global
 }
 
-# Double-check we have the function available
-if (-not (Get-Command Invoke-AitherScript -ErrorAction SilentlyContinue)) {
-    Write-Error "Invoke-AitherScript command not found. Module may not have loaded correctly."
-    exit 1
-}
-
-# Now run the requested script
+# Show usage if no arguments
 if ($arguments.Count -eq 0) {
-    Write-Host "Usage: az <script-number> [arguments]" -ForegroundColor Yellow
-    Write-Host "Examples:" -ForegroundColor Gray
-    Write-Host "  az 0402              # Run unit tests" -ForegroundColor White
-    Write-Host "  az 0510              # Generate project report" -ForegroundColor White
-    Write-Host "  az 0511 -ShowAll     # Show project dashboard" -ForegroundColor White
+    Write-Host "`nAitherZero Universal Command (az)" -ForegroundColor Cyan
+    Write-Host "==================================`n" -ForegroundColor Cyan
+    
+    Write-Host "Single Scripts:" -ForegroundColor Yellow
+    Write-Host "  az 0402                    # Run unit tests" -ForegroundColor White
+    Write-Host "  az 0510                    # Generate project report" -ForegroundColor White
+    Write-Host "  az 0511 -ShowAll           # Show dashboard with options`n" -ForegroundColor White
+    
+    Write-Host "Sequences:" -ForegroundColor Yellow
+    Write-Host "  az 0402,0404,0407          # Run multiple scripts" -ForegroundColor White
+    Write-Host "  az 0400-0409               # Run range of scripts" -ForegroundColor White
+    Write-Host "  az 0000-0099               # Run all environment prep`n" -ForegroundColor White
+    
+    Write-Host "Playbooks:" -ForegroundColor Yellow
+    Write-Host "  az playbook test-quick     # Run test-quick playbook" -ForegroundColor White
+    Write-Host "  az pb test-fix-workflow    # Run test fix workflow" -ForegroundColor White
+    Write-Host "  az playbook audit-full     # Run full audit`n" -ForegroundColor White
+    
+    Write-Host "Available Playbooks:" -ForegroundColor Gray
+    Write-Host "  test-quick, test-full, test-fix-workflow" -ForegroundColor White
+    Write-Host "  build-release, audit-full, report-dashboard" -ForegroundColor White
+    
     exit 1
 }
 
-# Invoke the script with proper parameters
-$scriptNumber = [string]$arguments[0]
+$firstArg = [string]$arguments[0]
+
+# Check if this is a playbook command
+if ($firstArg -eq 'playbook' -or $firstArg -eq 'pb') {
+    if ($arguments.Count -lt 2) {
+        Write-Host "Error: Playbook name required" -ForegroundColor Red
+        Write-Host "Usage: az playbook <name> [options]" -ForegroundColor Yellow
+        exit 1
+    }
+    
+    $playbookName = $arguments[1]
+    $additionalArgs = @()
+    if ($arguments.Count -gt 2) {
+        $additionalArgs = $arguments[2..($arguments.Count-1)]
+    }
+    
+    Write-Host "🎭 Running playbook: $playbookName" -ForegroundColor Cyan
+    & "$scriptDir/Start-AitherZero.ps1" -Mode Orchestrate -Playbook $playbookName -NonInteractive @additionalArgs
+    exit $LASTEXITCODE
+}
+
+# Check if this is a sequence (contains comma or dash with numbers)
+if ($firstArg -match '[,\-]' -and $firstArg -match '^\d+') {
+    # This is a sequence pattern
+    if (-not (Get-Command Invoke-OrchestrationSequence -ErrorAction SilentlyContinue)) {
+        Write-Error "Invoke-OrchestrationSequence command not found."
+        exit 1
+    }
+    
+    $additionalParams = @{}
+    if ($arguments.Count -gt 1) {
+        # Parse remaining arguments as parameters
+        for ($i = 1; $i -lt $arguments.Count; $i++) {
+            $arg = $arguments[$i]
+            if ($arg -match '^-(\w+)$') {
+                $paramName = $Matches[1]
+                if ($i + 1 -lt $arguments.Count -and $arguments[$i + 1] -notmatch '^-') {
+                    $additionalParams[$paramName] = $arguments[$i + 1]
+                    $i++
+                } else {
+                    $additionalParams[$paramName] = $true
+                }
+            }
+        }
+    }
+    
+    Write-Host "🔄 Running sequence: $firstArg" -ForegroundColor Cyan
+    Invoke-OrchestrationSequence -Sequence $firstArg @additionalParams
+    exit $LASTEXITCODE
+}
+
+# Otherwise, treat as single script number
+if (-not (Get-Command Invoke-AitherScript -ErrorAction SilentlyContinue)) {
+    Write-Error "Invoke-AitherScript command not found."
+    exit 1
+}
+
 if ($arguments.Count -gt 1) {
     $remainingArgs = $arguments[1..($arguments.Count-1)]
-    Invoke-AitherScript -ScriptNumber $scriptNumber @remainingArgs
+    Invoke-AitherScript -ScriptNumber $firstArg @remainingArgs
 } else {
-    Invoke-AitherScript -ScriptNumber $scriptNumber
+    Invoke-AitherScript -ScriptNumber $firstArg
 }

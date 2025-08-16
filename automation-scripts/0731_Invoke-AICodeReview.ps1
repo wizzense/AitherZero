@@ -149,11 +149,11 @@ function Invoke-SecurityAnalysis {
         
         # Check each enabled security check from config
         if ($SecurityConfig.CredentialExposure) {
-            if ($content -match 'password\s*=\s*["\']|apikey\s*=\s*["\']|secret\s*=\s*["\']') {
+            if ($content -match 'password\s*=\s*["'']|apikey\s*=\s*["'']|secret\s*=\s*["'']') {
                 $analysis.SecurityIssues += @{
                     Type = 'Credential Exposure'
                     Severity = 'Critical'
-                    Line = ($content | Select-String 'password\s*=\s*["\']|apikey\s*=\s*["\']').LineNumber
+                    Line = ($content | Select-String 'password\s*=\s*["'']|apikey\s*=\s*["'']').LineNumber
                     Description = 'Hardcoded credentials detected'
                     Recommendation = 'Use secure credential storage (e.g., Azure Key Vault, AWS Secrets Manager)'
                 }
@@ -451,7 +451,7 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
         
         'HTML' {
             # Generate HTML report (simplified)
-            $html = @"
+            $html = @'
 <!DOCTYPE html>
 <html>
 <head>
@@ -469,9 +469,10 @@ Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
 <body>
     <div class="header">
         <h1>AI Code Review Report</h1>
-        <p>Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")</p>
+        <p>Generated: %%DATETIME%%</p>
     </div>
-"@
+'@
+            $html = $html -replace '%%DATETIME%%', (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
             
             foreach ($analysis in $Analyses) {
                 $html += "<div class='section'><h2>$($analysis.Type) Analysis</h2>"
