@@ -1,71 +1,71 @@
 {
-  "createdAt": "2025-08-16T20:00:00Z",
-  "lastProcessedResults": "TestReport-20250816-191900.json",
-  "updatedAt": "2025-08-16 20:28:03",
   "currentBranch": "fix/auto-test-fixes-20250815",
+  "createdAt": "2025-08-16T20:00:00Z",
   "lastTestRun": null,
-  "currentIssueIndex": 3,
   "issues": [
     {
-      "lastAttempt": "2025-08-16 19:55:13",
-      "fixCommit": "85c294c8052407bf9f3823ee1d312fa78e09cc93",
-      "createdAt": "2025-08-16 19:55:08",
+      "githubIssue": 651,
+      "attempts": 1,
       "stackTrace": "at <ScriptBlock>, /workspaces/AitherZero/tests/unit/automation-scripts/0000-0099/0051_Apply-CustomConfig.Tests.ps1:72",
+      "lastAttempt": "2025-08-16 21:49:32",
+      "line": 72,
       "id": "001",
       "testName": "0051_Apply-CustomConfig.ps1 Tests.Parameter Validation.Should accept local config file path",
-      "attempts": 1,
-      "line": 72,
-      "status": "resolved",
+      "createdAt": "2025-08-16 21:49:26",
+      "fullError": "The property 'DefaultTimeout' cannot be found on this object. Verify that the property exists.",
+      "fixCommit": "e543b8cc244c0c1b3dae8a4107afe93d28aecede",
       "error": "The property 'DefaultTimeout' cannot be found on this object. Verify that the property exists.",
       "file": "/workspaces/AitherZero/tests/unit/automation-scripts/0000-0099/0051_Apply-CustomConfig.Tests.ps1",
-      "fullError": "The property 'DefaultTimeout' cannot be found on this object. Verify that the property exists.",
-      "githubIssue": 651,
+      "status": "resolved",
       "changedFiles": [
-        "automation-scripts/0051_Apply-CustomConfig.ps1",
+        "automation-scripts/0752_Process-TestResults.ps1",
+        "automation-scripts/0754_Fix-SingleTestFailure.ps1",
         "tests/unit/automation-scripts/0000-0099/0051_Apply-CustomConfig.Tests.ps1"
       ],
-      "resolvedAt": "2025-08-16 19:56:42",
-      "committedAt": "2025-08-16 19:56:48"
+      "resolvedAt": "2025-08-16 21:51:42",
+      "committedAt": "2025-08-16 21:51:48"
     },
     {
-      "lastAttempt": "2025-08-16 20:09:28",
-      "fixCommit": "4987a924dfe96cee1f1f606cacb778d073f38e97",
-      "createdAt": "2025-08-16 19:55:08",
+      "githubIssue": 652,
+      "attempts": 1,
       "stackTrace": "at Test-ConfigurationValid, /workspaces/AitherZero/automation-scripts/0051_Apply-CustomConfig.ps1:102",
+      "lastAttempt": "2025-09-03 20:55:56",
+      "line": 102,
       "id": "002",
       "testName": "0051_Apply-CustomConfig.ps1 Tests.Configuration Loading.Should load configuration from file",
-      "attempts": 1,
-      "line": 102,
-      "status": "resolved",
+      "createdAt": "2025-08-16 21:49:26",
+      "fullError": "The property 'Environment' cannot be found on this object. Verify that the property exists.",
+      "fixCommit": "4888da83267f787f36ea5beea82fd9775830e3da",
       "error": "The property 'Environment' cannot be found on this object. Verify that the property exists.",
       "file": "/workspaces/AitherZero/automation-scripts/0051_Apply-CustomConfig.ps1",
-      "fullError": "The property 'Environment' cannot be found on this object. Verify that the property exists.",
-      "githubIssue": 652,
+      "status": "resolved",
       "changedFiles": [
-        "orchestration/playbooks-psd1/automation/test-fix-workflow.psd1"
+        "domains/ai-agents/ClaudeCodeIntegration.psm1",
+        "run-test-fix-continuously.ps1",
+        "tests/integration/Bootstrap-To-Infrastructure.Tests.ps1",
+        "tests/unit/automation-scripts/0000-0099/0051_Apply-CustomConfig.Tests.ps1",
+        "test-syntax.ps1"
       ],
-      "resolvedAt": "2025-08-16 20:11:08",
-      "committedAt": "2025-08-16 20:11:13"
+      "resolvedAt": "2025-09-03 20:58:10",
+      "committedAt": "2025-09-03 20:58:18"
     },
     {
-      "lastAttempt": "2025-08-16 20:18:30",
-      "fixCommit": "e74504011aa8e80532a0e785ca980f5eab005ca8",
-      "createdAt": "2025-08-16 19:55:08",
+      "githubIssue": 653,
+      "attempts": 0,
       "stackTrace": "at <ScriptBlock>, /workspaces/AitherZero/tests/unit/automation-scripts/0400-0499/0407_Validate-Syntax.Tests.ps1:49",
+      "lastAttempt": null,
+      "line": 49,
       "id": "003",
       "testName": "0407_Validate-Syntax.Parameter Validation.Should require FilePath parameter",
-      "attempts": 2,
-      "line": 49,
-      "status": "resolved",
+      "createdAt": "2025-08-16 21:49:26",
+      "fullError": "Expected an exception to be thrown, but no exception was thrown.",
+      "fixCommit": null,
       "error": "Expected an exception to be thrown, but no exception was thrown.",
       "file": "/workspaces/AitherZero/tests/unit/automation-scripts/0400-0499/0407_Validate-Syntax.Tests.ps1",
-      "fullError": "Expected an exception to be thrown, but no exception was thrown.",
-      "githubIssue": 653,
-      "changedFiles": [
-        "tests/unit/automation-scripts/0400-0499/0407_Validate-Syntax.Tests.ps1"
-      ],
-      "resolvedAt": "2025-08-16 20:18:30",
-      "committedAt": "2025-08-16 20:28:02"
+      "status": "open"
     }
-  ]
+  ],
+  "lastProcessedResults": "TestReport-20250816-191900.json",
+  "currentIssueIndex": 3,
+  "updatedAt": "2025-09-03 20:58:20"
 }

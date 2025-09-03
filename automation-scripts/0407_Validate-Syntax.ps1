@@ -83,17 +83,11 @@ try {
     $targetFile = if ($FilePath) { $FilePath } elseif ($Path) { $Path } else { $null }
     
     if (-not $targetFile) {
-        Write-Host "No file specified. Use -FilePath, -Path, or -All parameter." -ForegroundColor Yellow
-        Write-Host "Examples:" -ForegroundColor Gray
-        Write-Host "  ./0407_Validate-Syntax.ps1 -FilePath ./script.ps1" -ForegroundColor Gray
-        Write-Host "  ./0407_Validate-Syntax.ps1 -All" -ForegroundColor Gray
-        Write-Host "  az 0407 -All" -ForegroundColor Gray
-        exit 0
+        throw "FilePath parameter is required when -All is not specified. Use -FilePath, -Path, or -All parameter."
     }
     
     if (-not (Test-Path $targetFile -PathType Leaf)) {
-        Write-Host "File not found: $targetFile" -ForegroundColor Red
-        exit 1
+        throw "File not found: $targetFile"
     }
     
     $parseErrors = $null
