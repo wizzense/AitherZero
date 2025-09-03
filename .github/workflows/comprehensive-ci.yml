@@ -113,7 +113,6 @@ jobs:
           fetch-depth: 0
       
       - name: 📋 System Info
-        shell: ${{ matrix.shell }}
         run: |
           echo "========================================="
           echo "Platform: ${{ matrix.os }}"
@@ -147,7 +146,7 @@ jobs:
           
       - name: 🧪 Test Core Module Loading
         if: matrix.pwsh_version != 'bash'
-        shell: ${{ matrix.shell }}
+        shell: pwsh
         run: |
           Import-Module ./AitherZero.psd1 -Force
           $config = Get-Configuration
@@ -156,7 +155,7 @@ jobs:
           
       - name: 🎭 Test Interactive CLI
         if: matrix.pwsh_version != 'bash'
-        shell: ${{ matrix.shell }}
+        shell: pwsh
         run: |
           # Test that CLI can start in non-interactive mode
           $result = & ./Start-AitherZero.ps1 -Version
@@ -165,7 +164,7 @@ jobs:
           
       - name: 🎯 Test Orchestration Engine
         if: matrix.pwsh_version != 'bash'
-        shell: ${{ matrix.shell }}
+        shell: pwsh
         run: |
           Import-Module ./AitherZero.psd1 -Force
           # Dry run of a simple sequence
@@ -174,7 +173,7 @@ jobs:
           
       - name: 📚 Test Playbook System
         if: matrix.pwsh_version != 'bash'
-        shell: ${{ matrix.shell }}
+        shell: pwsh
         run: |
           # Validate playbook loading
           ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick -DryRun -NonInteractive
@@ -182,7 +181,7 @@ jobs:
           
       - name: 🧪 Run Unit Tests
         if: matrix.pwsh_version != 'bash' && matrix.pwsh_version != '5.1'
-        shell: ${{ matrix.shell }}
+        shell: pwsh
         run: |
           Import-Module Pester -MinimumVersion 5.0
           $config = [PesterConfiguration]@{
@@ -217,7 +216,7 @@ jobs:
           
       - name: 📊 Generate Test Report
         if: always() && matrix.pwsh_version != 'bash'
-        shell: ${{ matrix.shell }}
+        shell: pwsh
         run: |
           $report = @{
             Platform = "${{ matrix.os }}"
