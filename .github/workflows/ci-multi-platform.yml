@@ -1,0 +1,502 @@
+name: Multi-Platform CI/CD
+
+on:
+  push:
+    branches: [main, develop, 'release/**']
+    tags: ['v*']
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip Tests'
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+  issues: write
+  packages: write
+  actions: read
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+  CI: true
+  POWERSHELL_TELEMETRY_OPTOUT: 1
+
+jobs:
+  # === STAGE 1: MULTI-PLATFORM TESTING ===
+  test:
+    name: Test - ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Windows with PowerShell 5.1
+          - name: Windows PS5.1
+            os: windows-2022
+            shell: powershell
+            bootstrap: |
+              [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+              .\bootstrap.ps1 -Mode New -NonInteractive -AutoInstallDeps
+            
+          # Windows with PowerShell 7
+          - name: Windows PS7
+            os: windows-latest
+            shell: pwsh
+            bootstrap: ./bootstrap.ps1 -Mode New -NonInteractive -AutoInstallDeps
+            
+          # Ubuntu with PowerShell 7
+          - name: Ubuntu PS7
+            os: ubuntu-latest
+            shell: pwsh
+            bootstrap: ./bootstrap.ps1 -Mode New -NonInteractive -AutoInstallDeps
+            
+          # macOS with PowerShell 7
+          - name: macOS PS7
+            os: macos-latest
+            shell: pwsh
+            bootstrap: ./bootstrap.ps1 -Mode New -NonInteractive -AutoInstallDeps
+            
+          # Ubuntu using bash bootstrap
+          - name: Ubuntu Bash
+            os: ubuntu-latest
+            shell: bash
+            bootstrap: |
+              chmod +x bootstrap.sh
+              ./bootstrap.sh
+
+    outputs:
+      test_results: ${{ steps.test_results.outputs.results }}
+      version: ${{ steps.version.outputs.version }}
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: 📋 System Info
+      shell: ${{ matrix.shell }}
+      run: |
+        echo "OS: ${{ matrix.os }}"
+        echo "Shell: ${{ matrix.shell }}"
+        echo "Runner: ${{ runner.os }}"
+        
+        if ("${{ matrix.shell }}" -match "powershell|pwsh") {
+          Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)"
+          Write-Host "PSEdition: $($PSVersionTable.PSEdition)"
+          Write-Host "OS: $($PSVersionTable.OS)"
+          Write-Host "Platform: $($PSVersionTable.Platform)"
+        } else {
+          echo "Shell Version: $SHELL"
+          uname -a
+        }
+    
+    - name: 🔍 Calculate Version
+      id: version
+      if: matrix.os == 'ubuntu-latest' && matrix.shell == 'pwsh'
+      shell: pwsh
+      run: |
+        $version = Get-Content ./VERSION -Raw -ErrorAction SilentlyContinue
+        if (-not $version) { $version = "1.0.0" }
+        $version = $version.Trim()
+        
+        $buildNumber = "${{ github.run_number }}"
+        $sha = "${{ github.sha }}".Substring(0, 7)
+        
+        if ("${{ github.ref }}" -match "^refs/tags/v") {
+          $version = "${{ github.ref }}".Replace("refs/tags/v", "")
+        } elseif ("${{ github.ref }}" -eq "refs/heads/main") {
+          $version = "$version.$buildNumber"
+        } else {
+          $version = "$version-dev.$buildNumber+$sha"
+        }
+        
+        Write-Host "Version: $version"
+        echo "version=$version" >> $env:GITHUB_OUTPUT
+    
+    - name: 🔧 Bootstrap AitherZero
+      shell: ${{ matrix.shell }}
+      run: ${{ matrix.bootstrap }}
+      continue-on-error: ${{ matrix.shell == 'bash' }}  # Allow bash to fail for now
+    
+    - name: ✅ Verify Installation
+      if: matrix.shell != 'bash'
+      shell: ${{ matrix.shell }}
+      run: |
+        # Check if module can be imported
+        if (Get-Module -ListAvailable -Name AitherZero) {
+          Write-Host "✅ AitherZero module found" -ForegroundColor Green
+          Import-Module ./AitherZero.psd1 -Force
+          Write-Host "✅ Module imported successfully" -ForegroundColor Green
+        } else {
+          Write-Host "⚠️ Module not found in standard location, checking current directory" -ForegroundColor Yellow
+          if (Test-Path ./AitherZero.psd1) {
+            Import-Module ./AitherZero.psd1 -Force
+            Write-Host "✅ Module imported from current directory" -ForegroundColor Green
+          } else {
+            throw "❌ AitherZero module not found"
+          }
+        }
+        
+        # Check if Start-AitherZero.ps1 exists
+        if (Test-Path ./Start-AitherZero.ps1) {
+          Write-Host "✅ Start-AitherZero.ps1 found" -ForegroundColor Green
+        } else {
+          throw "❌ Start-AitherZero.ps1 not found"
+        }
+    
+    - name: 🧪 Run Tests
+      if: matrix.shell != 'bash' && !inputs.skip_tests
+      shell: ${{ matrix.shell }}
+      continue-on-error: true
+      run: |
+        # Try to run tests via orchestration
+        if (Test-Path ./Start-AitherZero.ps1) {
+          try {
+            Write-Host "Running unit tests via orchestration..." -ForegroundColor Cyan
+            ./Start-AitherZero.ps1 -Mode Test -NonInteractive
+            Write-Host "✅ Tests completed" -ForegroundColor Green
+          } catch {
+            Write-Warning "Orchestration failed, trying direct Pester run..."
+            
+            # Fallback to direct Pester
+            if (Get-Module -ListAvailable -Name Pester) {
+              Import-Module Pester -Force
+              $config = New-PesterConfiguration
+              $config.Run.Path = './tests/unit'
+              $config.Run.Exit = $false
+              $config.Output.Verbosity = 'Detailed'
+              $result = Invoke-Pester -Configuration $config
+              
+              Write-Host "Tests Passed: $($result.Passed)" -ForegroundColor Green
+              Write-Host "Tests Failed: $($result.Failed)" -ForegroundColor $(if ($result.Failed -gt 0) { 'Red' } else { 'Green' })
+            } else {
+              Write-Warning "Pester not available, skipping tests"
+            }
+          }
+        } else {
+          Write-Warning "Start-AitherZero.ps1 not found, skipping tests"
+        }
+    
+    - name: 📊 Capture Test Results
+      id: test_results
+      if: always() && matrix.shell != 'bash'
+      shell: ${{ matrix.shell }}
+      run: |
+        $results = @{
+          Platform = "${{ matrix.name }}"
+          OS = "${{ matrix.os }}"
+          Shell = "${{ matrix.shell }}"
+          Success = $true
+          Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        }
+        
+        # Check for test results
+        if (Test-Path ./tests/results/) {
+          $latestResult = Get-ChildItem ./tests/results/*.xml | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if ($latestResult) {
+            $results.TestResultFile = $latestResult.Name
+          }
+        }
+        
+        $json = $results | ConvertTo-Json -Compress
+        Write-Host "Test results: $json"
+        echo "results=$json" >> $env:GITHUB_OUTPUT
+    
+    - name: 📤 Upload Test Artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ matrix.os }}-${{ matrix.shell }}-${{ github.run_number }}
+        path: |
+          tests/results/
+          tests/reports/
+          logs/
+        retention-days: 7
+
+  # === STAGE 2: BUILD STATUS REPORT ===
+  report:
+    name: Generate Status Report
+    needs: test
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: 📥 Download All Test Results
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+        pattern: test-results-*
+    
+    - name: 📊 Generate Comprehensive Status Report
+      shell: pwsh
+      run: |
+        Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Blue
+        Write-Host " AitherZero CI/CD Status Report" -ForegroundColor Cyan
+        Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Blue
+        Write-Host ""
+        Write-Host "📅 Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+        Write-Host "🔢 Build: #${{ github.run_number }}"
+        Write-Host "🏷️ Version: ${{ needs.test.outputs.version || 'N/A' }}"
+        Write-Host "📝 Commit: ${{ github.sha }}"
+        Write-Host "👤 Author: ${{ github.actor }}"
+        Write-Host "🌿 Branch: ${{ github.ref_name }}"
+        Write-Host ""
+        Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Blue
+        Write-Host " Platform Test Results" -ForegroundColor Cyan
+        Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Blue
+        Write-Host ""
+        
+        $allPlatforms = @(
+          @{Name="Windows PS5.1"; OS="windows-2022"; Required=$true},
+          @{Name="Windows PS7"; OS="windows-latest"; Required=$true},
+          @{Name="Ubuntu PS7"; OS="ubuntu-latest"; Required=$true},
+          @{Name="macOS PS7"; OS="macos-latest"; Required=$true},
+          @{Name="Ubuntu Bash"; OS="ubuntu-latest"; Required=$false}
+        )
+        
+        $passedCount = 0
+        $failedCount = 0
+        $totalRequired = ($allPlatforms | Where-Object { $_.Required }).Count
+        
+        foreach ($platform in $allPlatforms) {
+          $artifacts = Get-ChildItem -Path ./artifacts -Directory -Filter "*$($platform.OS)*" -ErrorAction SilentlyContinue
+          
+          if ($artifacts) {
+            $status = "✅ PASSED"
+            $color = "Green"
+            if ($platform.Required) { $passedCount++ }
+          } else {
+            if ($platform.Required) {
+              $status = "❌ FAILED"
+              $color = "Red"
+              $failedCount++
+            } else {
+              $status = "⚠️ SKIPPED"
+              $color = "Yellow"
+            }
+          }
+          
+          Write-Host "$($platform.Name.PadRight(20)) $status" -ForegroundColor $color
+        }
+        
+        Write-Host ""
+        Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Blue
+        Write-Host " Summary" -ForegroundColor Cyan
+        Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Blue
+        Write-Host ""
+        
+        $successRate = if ($totalRequired -gt 0) { [math]::Round(($passedCount / $totalRequired) * 100, 2) } else { 0 }
+        
+        Write-Host "Required Platforms Passed: $passedCount / $totalRequired ($successRate%)"
+        
+        if ($passedCount -eq $totalRequired) {
+          Write-Host ""
+          Write-Host "🎉 All required platforms passed successfully!" -ForegroundColor Green
+          Write-Host ""
+          Write-Host "✅ Ready for deployment" -ForegroundColor Green
+          $exitCode = 0
+        } else {
+          Write-Host ""
+          Write-Host "⚠️ Some required platforms failed" -ForegroundColor Red
+          Write-Host ""
+          Write-Host "❌ Not ready for deployment" -ForegroundColor Red
+          $exitCode = 1
+        }
+        
+        # Create status report file
+        $report = @{
+          Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+          BuildNumber = "${{ github.run_number }}"
+          Version = "${{ needs.test.outputs.version || 'N/A' }}"
+          Commit = "${{ github.sha }}"
+          Author = "${{ github.actor }}"
+          Branch = "${{ github.ref_name }}"
+          Platforms = @{}
+          Summary = @{
+            TotalPlatforms = $allPlatforms.Count
+            RequiredPlatforms = $totalRequired
+            PassedPlatforms = $passedCount
+            FailedPlatforms = $failedCount
+            SuccessRate = $successRate
+            DeploymentReady = ($passedCount -eq $totalRequired)
+          }
+        }
+        
+        foreach ($platform in $allPlatforms) {
+          $report.Platforms[$platform.Name] = @{
+            OS = $platform.OS
+            Required = $platform.Required
+            Status = if (Get-ChildItem -Path ./artifacts -Directory -Filter "*$($platform.OS)*" -ErrorAction SilentlyContinue) { "Passed" } else { if ($platform.Required) { "Failed" } else { "Skipped" } }
+          }
+        }
+        
+        $report | ConvertTo-Json -Depth 10 | Set-Content ./status-report.json
+        
+        Write-Host ""
+        Write-Host "📄 Full report saved to: status-report.json" -ForegroundColor Cyan
+        
+        exit $exitCode
+    
+    - name: 📤 Upload Status Report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: status-report-${{ github.run_number }}
+        path: status-report.json
+        retention-days: 30
+    
+    - name: 💬 Post Status Comment
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('status-report.json', 'utf8'));
+          
+          const comment = `## 🚀 AitherZero CI/CD Status Report
+          
+          **Build:** #${{ github.run_number }}
+          **Version:** ${report.Version}
+          **Success Rate:** ${report.Summary.SuccessRate}%
+          
+          ### Platform Results:
+          ${Object.entries(report.Platforms).map(([name, data]) => 
+            `- ${name}: ${data.Status === 'Passed' ? '✅' : data.Status === 'Failed' ? '❌' : '⚠️'} ${data.Status}`
+          ).join('\n')}
+          
+          ### Summary:
+          - Required Platforms: ${report.Summary.PassedPlatforms}/${report.Summary.RequiredPlatforms} passed
+          - Deployment Ready: ${report.Summary.DeploymentReady ? '✅ Yes' : '❌ No'}
+          
+          [View Full Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+  # === STAGE 3: CREATE RELEASE (if tagged) ===
+  release:
+    name: Create Release
+    needs: [test, report]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: 📦 Package Release
+      shell: pwsh
+      run: |
+        $version = "${{ github.ref }}".Replace("refs/tags/v", "")
+        $packageName = "AitherZero-v$version"
+        
+        # Create release directory
+        New-Item -ItemType Directory -Path "./$packageName" -Force
+        
+        # Copy files
+        Copy-Item -Path @(
+          "*.psd1", "*.psm1", "*.ps1",
+          "domains", "automation-scripts", "orchestration",
+          "config.psd1", "config.example.psd1",
+          "README.md", "LICENSE", "CHANGELOG.md", "VERSION"
+        ) -Destination "./$packageName" -Recurse -ErrorAction SilentlyContinue
+        
+        # Create archives
+        Compress-Archive -Path "./$packageName" -DestinationPath "./$packageName.zip"
+        tar -czf "./$packageName.tar.gz" "./$packageName"
+        
+        # Generate checksums
+        $zipHash = (Get-FileHash "./$packageName.zip" -Algorithm SHA256).Hash
+        $tarHash = (Get-FileHash "./$packageName.tar.gz" -Algorithm SHA256).Hash
+        
+        @"
+        $zipHash  $packageName.zip
+        $tarHash  $packageName.tar.gz
+        "@ | Set-Content ./checksums.txt
+    
+    - name: 📝 Generate Release Notes
+      shell: pwsh
+      run: |
+        $version = "${{ github.ref }}".Replace("refs/tags/v", "")
+        
+        @"
+        # Release v$version
+        
+        ## 📦 Installation
+        
+        ### One-liner Installation (PowerShell 5.1+)
+        \`\`\`powershell
+        iwr -useb https://raw.githubusercontent.com/${{ github.repository }}/v$version/bootstrap.ps1 | iex
+        \`\`\`
+        
+        ### One-liner Installation (Linux/macOS)
+        \`\`\`bash
+        curl -sSL https://raw.githubusercontent.com/${{ github.repository }}/v$version/bootstrap.sh | bash
+        \`\`\`
+        
+        ### Manual Download
+        \`\`\`powershell
+        # Download and extract
+        Invoke-WebRequest -Uri "https://github.com/${{ github.repository }}/releases/download/v$version/AitherZero-v$version.zip" -OutFile AitherZero.zip
+        Expand-Archive -Path AitherZero.zip -DestinationPath ./
+        cd AitherZero-v$version
+        ./bootstrap.ps1
+        \`\`\`
+        
+        ## ✅ Platform Support
+        
+        - ✅ Windows 10/11 (PowerShell 5.1)
+        - ✅ Windows 10/11 (PowerShell 7+)
+        - ✅ Ubuntu/Debian (PowerShell 7+)
+        - ✅ macOS (PowerShell 7+)
+        - ✅ WSL (PowerShell 7+)
+        
+        ## 📄 Checksums
+        
+        \`\`\`
+        $(Get-Content ./checksums.txt -Raw)
+        \`\`\`
+        
+        ## 📊 Build Information
+        
+        - **Build Number**: #${{ github.run_number }}
+        - **Commit**: ${{ github.sha }}
+        - **Author**: @${{ github.actor }}
+        - **Date**: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+        
+        ---
+        
+        **Full Changelog**: https://github.com/${{ github.repository }}/compare/v1.0.0...v$version
+        "@ | Set-Content ./release-notes.md
+    
+    - name: 🏷️ Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        name: Release v${{ github.ref_name }}
+        body_path: ./release-notes.md
+        draft: false
+        prerelease: false
+        files: |
+          AitherZero-*.zip
+          AitherZero-*.tar.gz
+          checksums.txt

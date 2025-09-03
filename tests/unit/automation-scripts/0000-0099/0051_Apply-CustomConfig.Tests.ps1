@@ -87,7 +87,7 @@ Describe "0051_Apply-CustomConfig.ps1 Tests" -Tag 'Unit' {
         
         It "Should load configuration from file" {
             Mock Import-PowerShellDataFile { 
-                return @{ Core = @{ Profile = 'FileConfig' } }
+                return @{ Core = @{ Profile = 'FileConfig'; Environment = 'Testing' } }
             }
             
             & $script:ScriptPath -ConfigPath $script:TempConfigPath -WhatIf

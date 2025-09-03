@@ -552,7 +552,7 @@ function Get-ClaudeCodeSuggestions {
     Write-ClaudeLog "Getting suggestions for task: $Task" -Level Information
     
     try {
-        $systemPrompt = @"
+        $systemPrompt = @'
 You are an expert software architect and PowerShell developer working with AitherZero, a comprehensive infrastructure automation platform.
 
 Project characteristics:
@@ -565,13 +565,13 @@ Project characteristics:
 - Security and compliance focus
 
 Provide practical, implementable suggestions that fit the AitherZero patterns and architecture.
-"@
+'@
         
+        $contextLine = if ($Context) { "Additional Context: $Context`n" } else { "" }
         $message = @"
 Development Task: $Task
 
-$(if ($Context) { "Additional Context: $Context`n" })
-Please provide:
+$($contextLine)Please provide:
 
 1. **Implementation Approach**: Recommended strategy and methodology
 2. **Code Structure**: How to organize the code within AitherZero's architecture

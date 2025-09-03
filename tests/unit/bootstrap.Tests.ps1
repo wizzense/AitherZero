@@ -254,26 +254,67 @@ Describe "Bootstrap.ps1 Tests" -Tag 'Unit' {
         }
         
         It "Should detect CI environment correctly" {
-            # Save original values
-            $originalCI = $env:CI
-            $originalGHA = $env:GITHUB_ACTIONS
+            # This test verifies that bootstrap.ps1's CI detection logic works correctly
+            # It should detect CI when any of the standard CI variables are set to 'true'
+            
+            # Save ALL original values before testing
+            $originalEnv = @{
+                CI = $env:CI
+                GITHUB_ACTIONS = $env:GITHUB_ACTIONS
+                TF_BUILD = $env:TF_BUILD
+                GITLAB_CI = $env:GITLAB_CI
+            }
             
             try {
-                # Test with CI set
-                $env:CI = 'true'
-                $isCI = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true')
-                $isCI | Should -Be $true
+                # Test 1: CI environment variable set
+                # Clear all CI indicators first - use SetEnvironmentVariable for reliable clearing
+                @('CI', 'GITHUB_ACTIONS', 'TF_BUILD', 'GITLAB_CI') | ForEach-Object {
+                    [Environment]::SetEnvironmentVariable($_, $null, 'Process')
+                }
                 
-                # Test with CI unset
-                Remove-Item Env:CI -ErrorAction SilentlyContinue
-                Remove-Item Env:GITHUB_ACTIONS -ErrorAction SilentlyContinue
-                $isCI = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true')
-                $isCI | Should -Be $false
+                $env:CI = 'true'
+                $isCI = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true')
+                $isCI | Should -Be $true -Because "CI='true' should be detected as CI environment"
+                
+                # Test 2: GitHub Actions environment
+                [Environment]::SetEnvironmentVariable('CI', $null, 'Process')
+                $env:GITHUB_ACTIONS = 'true'
+                $isCI = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true')
+                $isCI | Should -Be $true -Because "GITHUB_ACTIONS='true' should be detected as CI environment"
+                
+                # Test 3: Azure DevOps environment
+                [Environment]::SetEnvironmentVariable('GITHUB_ACTIONS', $null, 'Process')
+                $env:TF_BUILD = 'true'
+                $isCI = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true')
+                $isCI | Should -Be $true -Because "TF_BUILD='true' should be detected as CI environment"
+                
+                # Test 4: Non-CI environment (all variables cleared)
+                @('CI', 'GITHUB_ACTIONS', 'TF_BUILD', 'GITLAB_CI') | ForEach-Object {
+                    [Environment]::SetEnvironmentVariable($_, $null, 'Process')
+                }
+                
+                # After removal, env vars might be null or empty string - both are fine
+                # What matters is they don't equal 'true'
+                $env:CI -ne 'true' | Should -Be $true -Because "CI should not be 'true' after clearing"
+                $env:GITHUB_ACTIONS -ne 'true' | Should -Be $true -Because "GITHUB_ACTIONS should not be 'true' after clearing"
+                $env:TF_BUILD -ne 'true' | Should -Be $true -Because "TF_BUILD should not be 'true' after clearing"
+                
+                $isCI = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true')
+                $isCI | Should -Be $false -Because "No CI variables set to 'true' means not a CI environment"
+                
+                # Note: CODESPACES is NOT a CI indicator - it's a development environment
+                # GitLab CI uses GITLAB_CI but bootstrap.ps1 doesn't check for it (yet)
             }
             finally {
-                # Restore original values
-                if ($null -ne $originalCI) { $env:CI = $originalCI }
-                if ($null -ne $originalGHA) { $env:GITHUB_ACTIONS = $originalGHA }
+                # Restore ALL original values exactly as they were
+                foreach ($key in $originalEnv.Keys) {
+                    if ($null -eq $originalEnv[$key] -or $originalEnv[$key] -eq '') {
+                        # Use SetEnvironmentVariable to properly clear
+                        [Environment]::SetEnvironmentVariable($key, $null, 'Process')
+                    } else {
+                        [Environment]::SetEnvironmentVariable($key, $originalEnv[$key], 'Process')
+                    }
+                }
             }
         }
     }

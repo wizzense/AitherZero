@@ -594,8 +594,6 @@ Actual User Commands:
 5. $seqCommand                         # Quick alias
 "@
         }
-    }
-}
 
 AfterAll {
     # Cleanup test artifacts
