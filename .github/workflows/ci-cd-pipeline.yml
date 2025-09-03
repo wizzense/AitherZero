@@ -191,7 +191,7 @@ jobs:
             os: macos-latest
             pwsh: pwsh
           - name: Windows PS 5.1
-            os: windows-2019
+            os: windows-2022
             pwsh: powershell
     
     steps:
