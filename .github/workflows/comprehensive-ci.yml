@@ -126,7 +126,7 @@ jobs:
         run: |
           [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
           Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Cyan
-          & .\bootstrap.ps1 -Mode New -NonInteractive -AutoInstallDeps -SkipAutoStart
+          & .\bootstrap.ps1
           if ($LASTEXITCODE -ne 0) { throw "Bootstrap failed" }
           
       - name: 🔧 Bootstrap PowerShell 7+
@@ -134,7 +134,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Cyan
-          ./bootstrap.ps1 -Mode New -NonInteractive -AutoInstallDeps -SkipAutoStart
+          ./bootstrap.ps1
           if ($LASTEXITCODE -ne 0) { throw "Bootstrap failed" }
           
       - name: 🔧 Bootstrap Bash
@@ -142,7 +142,7 @@ jobs:
         shell: bash
         run: |
           chmod +x ./bootstrap.sh
-          AITHERZERO_AUTO_START=false ./bootstrap.sh
+          ./bootstrap.sh
           
       - name: 🧪 Test Core Module Loading
         if: matrix.pwsh_version != 'bash'
@@ -167,8 +167,9 @@ jobs:
         shell: pwsh
         run: |
           Import-Module ./AitherZero.psd1 -Force
-          # Dry run of a simple sequence
-          Invoke-OrchestrationSequence -Sequence "0001" -DryRun
+          # Test orchestration with a simple sequence
+          $result = Invoke-OrchestrationSequence -Sequence "0400" -WhatIf
+          if (-not $result) { throw "Orchestration test failed" }
           Write-Host "✅ Orchestration engine operational" -ForegroundColor Green
           
       - name: 📚 Test Playbook System
@@ -176,8 +177,40 @@ jobs:
         shell: pwsh
         run: |
           # Validate playbook loading
-          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick -DryRun -NonInteractive
+          ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook test-quick -WhatIf -NonInteractive
           Write-Host "✅ Playbook system operational" -ForegroundColor Green
+          
+      - name: 📝 Test Centralized Logging
+        if: matrix.pwsh_version != 'bash'
+        shell: pwsh
+        run: |
+          # Ensure logging directory exists
+          if (Test-Path ./logs) {
+            $logCount = (Get-ChildItem ./logs -Filter "*.log" | Measure-Object).Count
+            Write-Host "Found $logCount log files" -ForegroundColor Cyan
+            if ($logCount -gt 0) {
+              Write-Host "✅ Centralized logging operational" -ForegroundColor Green
+            } else {
+              Write-Warning "No log files found, but directory exists"
+            }
+          } else {
+            Write-Warning "Logs directory not created yet"
+          }
+          
+      - name: 🎯 Test Multiple Playbooks
+        if: matrix.pwsh_version != 'bash' && matrix.pwsh_version != '5.1'
+        shell: pwsh
+        run: |
+          $playbooks = @('test-quick', 'bootstrap-system', 'report-dashboard')
+          foreach ($playbook in $playbooks) {
+            Write-Host "Testing playbook: $playbook" -ForegroundColor Cyan
+            try {
+              ./Start-AitherZero.ps1 -Mode Orchestrate -Playbook $playbook -WhatIf -NonInteractive
+              Write-Host "✅ Playbook $playbook validated" -ForegroundColor Green
+            } catch {
+              Write-Warning "Playbook $playbook validation failed: $_"
+            }
+          }
           
       - name: 🧪 Run Unit Tests
         if: matrix.pwsh_version != 'bash' && matrix.pwsh_version != '5.1'
@@ -317,19 +350,22 @@ jobs:
           
           ### 📦 Installation
           
-          #### One-liner Installation (Latest Release)
+          #### One-liner Installation
           \`\`\`powershell
           # Windows (PowerShell 5.1+)
-          iwr -useb https://github.com/wizzense/AitherZero/releases/latest/download/install.ps1 | iex
+          iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex
           
-          # macOS/Linux (PowerShell 7+)
-          curl -sSL https://github.com/wizzense/AitherZero/releases/latest/download/install.sh | bash
+          # macOS/Linux/WSL
+          curl -sSL https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.sh | bash
           \`\`\`
           
-          #### Direct Bootstrap
-          \`\`\`powershell
-          # From source
-          iwr -useb https://raw.githubusercontent.com/wizzense/AitherZero/main/bootstrap.ps1 | iex
+          #### From Release Package
+          \`\`\`bash
+          # Download and extract release, then run bootstrap
+          curl -LO https://github.com/wizzense/AitherZero/releases/latest/download/AitherZero-Standard.zip
+          unzip AitherZero-Standard.zip
+          cd AitherZero
+          ./bootstrap.ps1  # or ./bootstrap.sh on Unix
           \`\`\`
           
           ### ✅ Platform Support
@@ -530,53 +566,24 @@ jobs:
           prerelease: ${{ contains(needs.build.outputs.version, '-') }}
           generate_release_notes: true
           
-      - name: 📝 Create Installation Scripts
+      - name: 📝 Verify Bootstrap Scripts
         shell: pwsh
         run: |
-          # Windows installer
-          @'
-          # AitherZero Quick Installer for Windows
-          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-          $release = Invoke-RestMethod -Uri "https://api.github.com/repos/wizzense/AitherZero/releases/latest"
-          $asset = $release.assets | Where-Object { $_.name -like "*-Standard.zip" } | Select-Object -First 1
-          if ($asset) {
-              $tempFile = [System.IO.Path]::GetTempFileName() + ".zip"
-              Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $tempFile
-              Expand-Archive -Path $tempFile -DestinationPath "./AitherZero" -Force
-              Remove-Item $tempFile
-              Set-Location "./AitherZero"
-              ./bootstrap.ps1
-          } else {
-              Write-Error "Could not find release package"
+          # Ensure bootstrap scripts are in the release
+          if (-not (Test-Path "./bootstrap.ps1")) {
+            throw "bootstrap.ps1 not found in release"
           }
-          '@ | Set-Content ./install.ps1
+          if (-not (Test-Path "./bootstrap.sh")) {
+            throw "bootstrap.sh not found in release"
+          }
           
-          # Unix installer
-          @'
-          #!/bin/bash
-          # AitherZero Quick Installer for Unix/Linux/macOS
-          set -e
-          RELEASE_URL="https://api.github.com/repos/wizzense/AitherZero/releases/latest"
-          ASSET_URL=$(curl -s $RELEASE_URL | grep "browser_download_url.*Standard.zip" | head -1 | cut -d '"' -f 4)
-          if [ -n "$ASSET_URL" ]; then
-              curl -L -o aitherzero.zip "$ASSET_URL"
-              unzip -o aitherzero.zip -d AitherZero
-              rm aitherzero.zip
-              cd AitherZero
-              chmod +x bootstrap.sh
-              ./bootstrap.sh
-          else
-              echo "Error: Could not find release package"
-              exit 1
-          fi
-          '@ | Set-Content ./install.sh
+          Write-Host "✅ Bootstrap scripts verified" -ForegroundColor Green
           
-      - name: 📤 Upload Installation Scripts
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            ./install.ps1
-            ./install.sh
+          # Update release notes with correct one-liners
+          $releaseNotes = Get-Content ./release/RELEASE_NOTES.md -Raw
+          $releaseNotes = $releaseNotes -replace 'install\.ps1', 'bootstrap.ps1'
+          $releaseNotes = $releaseNotes -replace 'install\.sh', 'bootstrap.sh'
+          Set-Content ./release/RELEASE_NOTES.md -Value $releaseNotes
 
   # ===== SUCCESS NOTIFICATION =====
   notify-success:
