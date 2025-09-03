@@ -1,0 +1,10 @@
+Analyze this PowerShell code for refactoring opportunities:
+
+1. Code duplication elimination
+2. Function extraction possibilities
+3. Complexity reduction strategies
+4. Design pattern applications
+5. Module structure improvements
+6. Technical debt identification
+
+Suggest specific refactoring approaches with examples.

@@ -1,0 +1,10 @@
+Analyze this PowerShell code for security vulnerabilities and issues:
+
+1. Credential handling and secrets exposure
+2. Input validation and sanitization
+3. Execution safety and injection risks
+4. File system operations and permissions
+5. Network operations and data transmission
+6. Privilege escalation possibilities
+
+Provide specific recommendations for improvement.

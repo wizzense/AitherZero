@@ -1,7 +1,5 @@
 {
-  "currentBranch": "fix/auto-test-fixes-20250815",
-  "createdAt": "2025-08-16T20:00:00Z",
-  "lastTestRun": null,
+  "currentIssueIndex": 3,
   "issues": [
     {
       "githubIssue": 651,
@@ -51,9 +49,9 @@
     },
     {
       "githubIssue": 653,
-      "attempts": 0,
+      "attempts": 1,
       "stackTrace": "at <ScriptBlock>, /workspaces/AitherZero/tests/unit/automation-scripts/0400-0499/0407_Validate-Syntax.Tests.ps1:49",
-      "lastAttempt": null,
+      "lastAttempt": "2025-09-03 22:25:23",
       "line": 49,
       "id": "003",
       "testName": "0407_Validate-Syntax.Parameter Validation.Should require FilePath parameter",
@@ -62,10 +60,16 @@
       "fixCommit": null,
       "error": "Expected an exception to be thrown, but no exception was thrown.",
       "file": "/workspaces/AitherZero/tests/unit/automation-scripts/0400-0499/0407_Validate-Syntax.Tests.ps1",
-      "status": "open"
+      "status": "resolved",
+      "changedFiles": [
+        "tests/unit/automation-scripts/0400-0499/0407_Validate-Syntax.Tests.ps1"
+      ],
+      "resolvedAt": "2025-09-03 22:31:00"
     }
   ],
   "lastProcessedResults": "TestReport-20250816-191900.json",
-  "currentIssueIndex": 3,
-  "updatedAt": "2025-09-03 20:58:20"
+  "lastTestRun": null,
+  "updatedAt": "2025-09-03 22:27:32",
+  "createdAt": "2025-08-16T20:00:00Z",
+  "currentBranch": "fix/auto-test-fixes-20250815"
 }

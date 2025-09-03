@@ -1,0 +1,10 @@
+Analyze this PowerShell code for quality and maintainability:
+
+1. Code structure and organization
+2. Naming conventions and clarity
+3. Error handling completeness
+4. Modularity and reusability
+5. Dependency management
+6. Code complexity metrics
+
+Provide improvement recommendations.

@@ -1,0 +1,10 @@
+Analyze this PowerShell code and suggest comprehensive testing approach:
+
+1. Unit test scenarios and edge cases
+2. Mocking requirements and strategies
+3. Integration test considerations
+4. Test data requirements
+5. Coverage goals and metrics
+6. Regression test scenarios
+
+Provide Pester test examples where applicable.

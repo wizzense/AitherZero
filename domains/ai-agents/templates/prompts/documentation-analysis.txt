@@ -1,0 +1,10 @@
+Analyze this PowerShell code for documentation completeness:
+
+1. Comment-based help completeness
+2. Parameter descriptions and examples
+3. Function purpose and usage clarity
+4. Inline comment quality
+5. Return value documentation
+6. Module/script overview documentation
+
+Suggest documentation improvements.

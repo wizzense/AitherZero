@@ -1,0 +1,10 @@
+Analyze this PowerShell code for performance optimization opportunities:
+
+1. Execution efficiency and bottlenecks
+2. Memory usage patterns
+3. Loop and iteration optimizations
+4. Pipeline efficiency and streaming
+5. Parallel processing opportunities
+6. Caching and data structure choices
+
+Suggest specific performance improvements.

@@ -359,6 +359,31 @@ function Send-ClaudeMessage {
     }
 }
 
+function Get-ClaudeTemplate {
+    <#
+    .SYNOPSIS
+        Load a template file from the templates directory
+    .DESCRIPTION
+        Helper function to load template content from file
+    .PARAMETER TemplatePath
+        Relative path to template file from templates directory
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [string]$TemplatePath
+    )
+    
+    $templateDir = Join-Path $PSScriptRoot "templates"
+    $fullPath = Join-Path $templateDir $TemplatePath
+    
+    if (Test-Path $fullPath) {
+        return Get-Content $fullPath -Raw
+    } else {
+        Write-ClaudeLog "Template not found: $fullPath" -Level Warning
+        return ""
+    }
+}
+
 function Get-ClaudeCodeAnalysis {
     <#
     .SYNOPSIS
@@ -385,7 +410,7 @@ function Get-ClaudeCodeAnalysis {
         [switch]$IncludeContext
     )
     
-    Write-ClaudeLog "Performing $AnalysisType analysis" -Level Information
+    Write-ClaudeLog "Performing analysis: ${AnalysisType}" -Level Information
     
     try {
         # Get content to analyze
@@ -400,85 +425,16 @@ function Get-ClaudeCodeAnalysis {
         
         # Build analysis prompt based on type
         $prompts = @{
-            security = @"
-Analyze this PowerShell code for security vulnerabilities and issues:
-
-1. Credential handling and secrets exposure
-2. Input validation and sanitization
-3. Execution safety and injection risks
-4. Permission and privilege escalation
-5. Network security considerations
-
-Provide specific recommendations for improvement.
-"@
-            performance = @"
-Analyze this PowerShell code for performance optimization opportunities:
-
-1. Execution efficiency and bottlenecks
-2. Memory usage patterns
-3. Loop and iteration optimizations
-4. Pipeline usage improvements
-5. Caching and memoization opportunities
-
-Suggest specific performance improvements.
-"@
-            quality = @"
-Analyze this PowerShell code for quality and maintainability:
-
-1. Code structure and organization
-2. Naming conventions and clarity
-3. Error handling completeness
-4. PowerShell best practices adherence
-5. Modularity and reusability
-
-Provide improvement recommendations.
-"@
-            documentation = @"
-Analyze this PowerShell code for documentation completeness:
-
-1. Comment-based help completeness
-2. Parameter descriptions and examples
-3. Function purpose and usage clarity
-4. Code comment quality
-5. README and usage documentation needs
-
-Suggest documentation improvements.
-"@
-            testing = @"
-Analyze this PowerShell code and suggest comprehensive testing approach:
-
-1. Unit test scenarios and edge cases
-2. Mocking requirements and strategies
-3. Integration test considerations
-4. Performance test needs
-5. Error condition testing
-
-Provide Pester test examples where applicable.
-"@
-            refactoring = @"
-Analyze this PowerShell code for refactoring opportunities:
-
-1. Code duplication elimination
-2. Function extraction possibilities
-3. Complexity reduction strategies
-4. Design pattern applications
-5. Modularity improvements
-
-Suggest specific refactoring steps.
-"@
+            security = Get-ClaudeTemplate "prompts/security-analysis.txt"
+            performance = Get-ClaudeTemplate "prompts/performance-analysis.txt"
+            quality = Get-ClaudeTemplate "prompts/quality-analysis.txt"
+            documentation = Get-ClaudeTemplate "prompts/documentation-analysis.txt"
+            testing = Get-ClaudeTemplate "prompts/testing-analysis.txt"
+            refactoring = Get-ClaudeTemplate "prompts/refactoring-analysis.txt"
         }
         
-        $systemPrompt = @"
-You are an expert PowerShell developer and DevOps engineer working with the AitherZero infrastructure automation platform. 
-
-Context:
-- This is part of a comprehensive PowerShell-based automation system
-- The platform uses domain-driven architecture with numbered automation scripts
-- Cross-platform compatibility (Windows, Linux, macOS) is important
-- Security and reliability are critical requirements
-
-Focus on practical, actionable advice that fits the AitherZero architecture and patterns.
-"@
+        # Load system prompt from template
+        $systemPrompt = Get-ClaudeTemplate "system/analysis-prompt.txt"
         
         if ($IncludeContext -and $script:SessionContext.ProjectRoot) {
             # Add project context
@@ -503,12 +459,12 @@ Focus on practical, actionable advice that fits the AitherZero architecture and 
         }
         
         $analysisPrompt = $prompts[$AnalysisType]
-        $fullMessage = "$analysisPrompt`n`nCode to analyze:`n```powershell`n$Content`n```"
+        $fullMessage = "$analysisPrompt`n`nCode to analyze:`n``````powershell`n$Content`n``````"
         
         $response = Send-ClaudeMessage -Message $fullMessage -SystemPrompt $systemPrompt
         
         if ($response.Success) {
-            Write-ClaudeLog "$($AnalysisType) analysis completed successfully" -Level Success
+            Write-ClaudeLog "Analysis completed successfully: ${AnalysisType}" -Level Success
             return @{
                 Analysis = $response.Content
                 AnalysisType = $AnalysisType
@@ -517,11 +473,12 @@ Focus on practical, actionable advice that fits the AitherZero architecture and 
                 Timestamp = Get-Date
             }
         } else {
-            throw "Analysis failed: $($response.Error)"
+            $errorMsg = "Analysis failed: " + $response.Error
+            throw $errorMsg
         }
         
     } catch {
-        Write-ClaudeLog "$AnalysisType analysis failed: $_" -Level Error
+        Write-ClaudeLog "Analysis failed for ${AnalysisType} : $_" -Level Error
         throw
     }
 }
@@ -552,36 +509,14 @@ function Get-ClaudeCodeSuggestions {
     Write-ClaudeLog "Getting suggestions for task: $Task" -Level Information
     
     try {
-        $systemPrompt = @'
-You are an expert software architect and PowerShell developer working with AitherZero, a comprehensive infrastructure automation platform.
-
-Project characteristics:
-- PowerShell-based automation scripts (0000-9999 numbering)
-- Domain-driven architecture with modular design
-- Cross-platform compatibility (Windows, Linux, macOS)
-- Orchestration and workflow automation
-- Testing with Pester, validation with PSScriptAnalyzer
-- GitHub Actions CI/CD integration
-- Security and compliance focus
-
-Provide practical, implementable suggestions that fit the AitherZero patterns and architecture.
-'@
+        # Load system prompt from template
+        $systemPrompt = Get-ClaudeTemplate "system/development-prompt.txt"
+        
+        # Load development task template and replace placeholders
+        $messageTemplate = Get-ClaudeTemplate "prompts/development-task.txt"
         
         $contextLine = if ($Context) { "Additional Context: $Context`n" } else { "" }
-        $message = @"
-Development Task: $Task
-
-$($contextLine)Please provide:
-
-1. **Implementation Approach**: Recommended strategy and methodology
-2. **Code Structure**: How to organize the code within AitherZero's architecture
-3. **Key Considerations**: Important factors to consider (security, performance, maintainability)
-4. **Testing Strategy**: How to test the implementation effectively
-5. **Integration Points**: How this connects with existing AitherZero components
-6. **Best Practices**: PowerShell and automation-specific recommendations
-
-Format your response with clear sections and actionable advice.
-"@
+        $message = $messageTemplate -replace '{TASK}', $Task -replace '{CONTEXT}', $contextLine
         
         $response = Send-ClaudeMessage -Message $message -SystemPrompt $systemPrompt
         

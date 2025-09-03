@@ -1,0 +1,12 @@
+Development Task: {TASK}
+
+{CONTEXT}Please provide:
+
+1. **Implementation Approach**: Recommended strategy and methodology
+2. **Code Structure**: How to organize the code within AitherZero's architecture
+3. **Key Considerations**: Important factors to consider (security, performance, maintainability)
+4. **Testing Strategy**: How to test the implementation effectively
+5. **Integration Points**: How this connects with existing AitherZero components
+6. **Best Practices**: PowerShell and automation-specific recommendations
+
+Format your response with clear sections and actionable advice.
