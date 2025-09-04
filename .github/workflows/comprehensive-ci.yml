@@ -98,14 +98,20 @@ jobs:
           echo "Runner: ${{ runner.os }}"
           echo "========================================="
           
+      - name: 🔧 Setup PowerShell (Windows)
+        if: runner.os == 'Windows'
+        uses: PowerShell/setup-powershell@v1
+        with:
+          powershell-version: '7.4'
+          
       - name: 🔧 Bootstrap System (Windows)
         if: runner.os == 'Windows'
-        shell: powershell
+        shell: pwsh
         run: |
-          # Windows: Bootstrap will install PS7 if not present and use it
-          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          # Windows: Now using PowerShell 7
+          Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Cyan
           Write-Host "Starting Windows bootstrap..." -ForegroundColor Cyan
-          ./bootstrap.ps1
+          ./bootstrap.ps1 -NonInteractive
           if ($LASTEXITCODE -ne 0) { throw "Bootstrap failed" }
           
       - name: 🔧 Bootstrap System (Unix)

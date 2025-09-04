@@ -182,7 +182,7 @@ initialize_modules() {
     
     # Run PowerShell bootstrap which handles initialization
     pwsh -NoProfile -ExecutionPolicy Bypass -File ./bootstrap.ps1 \
-        -InstallProfile "$ProfileName" \
+        -InstallProfile "$PROFILE" \
         -NonInteractive \
         -SkipAutoStart:$([ "$AUTO_START" = "false" ] && echo "true" || echo "false")
     
@@ -232,7 +232,7 @@ EOF
         INSTALL_DIR="${AITHERZERO_INSTALL_DIR:-./AitherZero}"
         
         print_log "INFO" "Installing AitherZero to: $INSTALL_DIR"
-        print_log "INFO" "Profile: $ProfileName"
+        print_log "INFO" "Profile: $PROFILE"
         print_log "INFO" "Branch: $BRANCH"
         
         # Check and install dependencies

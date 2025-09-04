@@ -315,12 +315,73 @@ function Install-PowerShell7 {
     Write-BootstrapLog "Installing PowerShell 7..." -Level Info
 
     if (Test-IsWindows) {
-        # Windows installation
-        $installUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/PowerShell-7-win-x64.msi"
-        $msiPath = "$env:TEMP\PowerShell-7-win-x64.msi"
+        # Windows installation with GitHub Actions optimizations
         
+        # Method 1: Check for pre-installed PowerShell 7 (GitHub Actions has it)
+        if ($env:GITHUB_ACTIONS -eq 'true') {
+            Write-BootstrapLog "Detected GitHub Actions environment" -Level Info
+            
+            $pwshPaths = @(
+                "C:\Program Files\PowerShell\7\pwsh.exe",
+                "C:\Program Files\PowerShell\7-preview\pwsh.exe",
+                "$env:ProgramFiles\PowerShell\7\pwsh.exe"
+            )
+            
+            foreach ($path in $pwshPaths) {
+                if (Test-Path $path) {
+                    Write-BootstrapLog "Found pre-installed PowerShell 7 at: $path" -Level Success
+                    $env:Path = "$([System.IO.Path]::GetDirectoryName($path));$env:Path"
+                    return
+                }
+            }
+            
+            # Method 2: Download portable ZIP for CI (no admin, faster)
+            Write-BootstrapLog "Downloading portable PowerShell 7 for CI..." -Level Info
+            try {
+                $zipUrl = "https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/PowerShell-7.4.6-win-x64.zip"
+                $zipPath = "$env:TEMP\pwsh7.zip"
+                $extractPath = "$env:TEMP\PowerShell7"
+                
+                # Download with retry
+                $maxAttempts = 3
+                for ($i = 1; $i -le $maxAttempts; $i++) {
+                    try {
+                        Write-BootstrapLog "Download attempt $i of $maxAttempts..." -Level Info
+                        $ProgressPreference = 'SilentlyContinue'
+                        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                        Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing -TimeoutSec 60
+                        Write-BootstrapLog "Download successful" -Level Success
+                        break
+                    } catch {
+                        if ($i -eq $maxAttempts) { throw "Failed to download after $maxAttempts attempts: $_" }
+                        Write-BootstrapLog "Download failed, retrying in 2 seconds..." -Level Warning
+                        Start-Sleep -Seconds 2
+                    }
+                }
+                
+                # Extract ZIP
+                Write-BootstrapLog "Extracting PowerShell 7 to $extractPath..." -Level Info
+                if (Test-Path $extractPath) { Remove-Item $extractPath -Recurse -Force }
+                Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
+                
+                # Add to PATH
+                $env:Path = "$extractPath;$env:Path"
+                
+                # Create pwsh.cmd wrapper
+                $wrapperContent = "@echo off`r`n`"$extractPath\pwsh.exe`" %*"
+                Set-Content -Path "$env:TEMP\pwsh.cmd" -Value $wrapperContent
+                
+                Write-BootstrapLog "PowerShell 7 portable installed successfully" -Level Success
+                return
+                
+            } catch {
+                Write-BootstrapLog "Portable install failed: $_" -Level Warning
+                # Fall through to other methods
+            }
+        }
+        
+        # Method 3: Try winget (for local dev)
         try {
-            # Try winget first
             if (Get-Command winget -ErrorAction SilentlyContinue) {
                 Write-BootstrapLog "Installing via winget..." -Level Info
                 winget install --id Microsoft.PowerShell --source winget --accept-source-agreements --accept-package-agreements
@@ -329,10 +390,17 @@ function Install-PowerShell7 {
                     return
                 }
             }
+        } catch {
+            Write-BootstrapLog "Winget install failed: $_" -Level Warning
+        }
 
-            # Fallback to MSI
-            Write-BootstrapLog "Downloading PowerShell 7 MSI..." -Level Info
-            Invoke-WebRequest -Uri $installUrl -OutFile $msiPath -UseBasicParsing
+        # Method 4: Traditional MSI (last resort)
+        try {
+            $msiUrl = "https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/PowerShell-7.4.6-win-x64.msi"
+            $msiPath = "$env:TEMP\PowerShell-7-win-x64.msi"
+            
+            Write-BootstrapLog "Downloading PowerShell 7 MSI as last resort..." -Level Info
+            Invoke-WebRequest -Uri $msiUrl -OutFile $msiPath -UseBasicParsing -TimeoutSec 120
             
             Write-BootstrapLog "Installing PowerShell 7 MSI..." -Level Info
             $arguments = "/i `"$msiPath`" /quiet ADD_EXPLORER_CONTEXT_MENU_OPENPOWERSHELL=1 ENABLE_PSREMOTING=0 REGISTER_MANIFEST=1"
@@ -340,15 +408,14 @@ function Install-PowerShell7 {
             if (Test-IsAdmin) {
                 Start-Process msiexec.exe -ArgumentList $arguments -Wait
             } else {
-                # Try to elevate
                 Start-Process msiexec.exe -ArgumentList $arguments -Verb RunAs -Wait
             }
             
             Remove-Item $msiPath -Force -ErrorAction SilentlyContinue
-            Write-BootstrapLog "PowerShell 7 installed successfully" -Level Success
+            Write-BootstrapLog "PowerShell 7 installed successfully via MSI" -Level Success
             
         } catch {
-            Write-BootstrapLog "Failed to install PowerShell 7: $_" -Level Error
+            Write-BootstrapLog "All PowerShell 7 installation methods failed: $_" -Level Error
             throw
         }
         
