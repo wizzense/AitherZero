@@ -1028,6 +1028,10 @@ try {
         }
     }
     
+    # Explicit success exit
+    Write-BootstrapLog "Bootstrap completed successfully" -Level Success
+    exit 0
+    
 } catch {
     Write-BootstrapLog "Bootstrap failed: $_" -Level Error
     exit 1
