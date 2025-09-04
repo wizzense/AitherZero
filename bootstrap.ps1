@@ -37,8 +37,8 @@ param(
     [ValidateSet('New', 'Update', 'Clean', 'Remove')]
     [string]$Mode = 'New',
     
-    [ValidateSet('Minimal', 'Standard', 'Developer', 'Full')]
-    [string]$InstallProfile,  # Will use config/CI default if not specified
+    [ValidateSet('', 'Minimal', 'Standard', 'Developer', 'Full')]
+    [string]$InstallProfile = '',  # Will use config/CI default if not specified
     
     [string]$InstallPath,
     
