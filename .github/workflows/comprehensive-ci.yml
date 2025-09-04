@@ -228,31 +228,28 @@ jobs:
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "release_name=AitherZero-v$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           
-      - name: 📦 Build Release Packages
+      - name: 📦 Build Release Package
         shell: pwsh
         run: |
           # Create release directory
           New-Item -Path ./release -ItemType Directory -Force
           
-          # Build packages for different profiles
-          $profiles = @('Core', 'Standard', 'Full')
-          foreach ($profile in $profiles) {
-            Write-Host "Building $profile package..." -ForegroundColor Cyan
-            
-            $packagePath = "./release/AitherZero-${{ steps.version.outputs.version }}-$profile.zip"
-            
-            # Create package based on profile
-            $exclude = switch ($profile) {
-              'Core' { @('tests', 'examples', 'docs', '.github') }
-              'Standard' { @('examples', '.github') }
-              'Full' { @('.github') }
-            }
-            
-            # Use Compress-Archive to create package
-            $files = Get-ChildItem -Path . -Exclude $exclude
-            Compress-Archive -Path $files -DestinationPath $packagePath -Force
-            
-            Write-Host "✅ Created $packagePath" -ForegroundColor Green
+          Write-Host "Building AitherZero package v${{ steps.version.outputs.version }}..." -ForegroundColor Cyan
+          
+          # Create single complete package (excluding only .git and GitHub workflows)
+          $packagePath = "./release/AitherZero-${{ steps.version.outputs.version }}.zip"
+          
+          # Get all files except .git and workflow files
+          $files = Get-ChildItem -Path . -Exclude @('.git', '.github', '*.tmp', '*.log')
+          Compress-Archive -Path $files -DestinationPath $packagePath -Force
+          
+          Write-Host "✅ Created $packagePath" -ForegroundColor Green
+          
+          # Also create a source tarball for Unix systems
+          if (-not $IsWindows) {
+            tar -czf "./release/AitherZero-${{ steps.version.outputs.version }}.tar.gz" \
+              --exclude='.git' --exclude='.github' --exclude='*.tmp' --exclude='*.log' .
+            Write-Host "✅ Created tarball for Unix systems" -ForegroundColor Green
           }
           
       - name: 🔐 Generate Checksums
@@ -295,11 +292,10 @@ jobs:
           - ✅ WSL2
           
           ### 📋 Packages
-          | Profile | Size | Description |
-          |---------|------|-------------|
-          | Core | ~1MB | Essential modules and orchestration |
-          | Standard | ~3MB | Core + testing + Git automation |
-          | Full | ~10MB | Everything including dev tools |
+          | Package | Format | Description |
+          |---------|--------|-------------|
+          | AitherZero-${{ steps.version.outputs.version }}.zip | ZIP | Complete platform for Windows/PowerShell |
+          | AitherZero-${{ steps.version.outputs.version }}.tar.gz | TAR.GZ | Complete platform for Unix/Linux/macOS |
           
           ### 🧪 Test Results
           All tests passed on:
@@ -313,9 +309,10 @@ jobs:
       - name: 📤 Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: release-packages-${{ github.run_id }}
+          name: AitherZero-${{ steps.version.outputs.version }}
           path: |
             ./release/*.zip
+            ./release/*.tar.gz
             ./release/checksums.txt
             ./release/RELEASE_NOTES.md
           retention-days: 30
@@ -474,7 +471,7 @@ jobs:
       - name: 📥 Download Release Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: release-packages-${{ github.run_id }}
+          name: AitherZero-${{ needs.build.outputs.version }}
           path: ./release
           
       - name: 🚀 Create GitHub Release
@@ -484,6 +481,7 @@ jobs:
           body_path: ./release/RELEASE_NOTES.md
           files: |
             ./release/AitherZero-*.zip
+            ./release/AitherZero-*.tar.gz
             ./release/checksums.txt
           draft: false
           prerelease: ${{ contains(needs.build.outputs.version, '-') }}
