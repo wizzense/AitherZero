@@ -247,8 +247,8 @@ jobs:
           
           # Also create a source tarball for Unix systems
           if (-not $IsWindows) {
-            tar -czf "./release/AitherZero-${{ steps.version.outputs.version }}.tar.gz" \
-              --exclude='.git' --exclude='.github' --exclude='*.tmp' --exclude='*.log' .
+            $tarCmd = "tar -czf `"./release/AitherZero-${{ steps.version.outputs.version }}.tar.gz`" --exclude='.git' --exclude='.github' --exclude='*.tmp' --exclude='*.log' ."
+            Invoke-Expression $tarCmd
             Write-Host "✅ Created tarball for Unix systems" -ForegroundColor Green
           }
           
