@@ -97,22 +97,25 @@ jobs:
           echo "Runner: ${{ runner.os }}"
           echo "========================================="
           
-      - name: 🔧 Bootstrap System
-        shell: ${{ runner.os == 'Windows' && 'powershell' || 'bash' }}
+      - name: 🔧 Bootstrap System (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
         run: |
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            # Windows: Bootstrap will install PS7 if not present and use it
-            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            Write-Host "Starting Windows bootstrap..." -ForegroundColor Cyan
-            ./bootstrap.ps1
-            if ($LASTEXITCODE -ne 0) { throw "Bootstrap failed" }
-          else
-            # Linux/macOS: Bootstrap will install pwsh and use it
-            echo "Starting Unix bootstrap..."
-            chmod +x ./bootstrap.sh
-            ./bootstrap.sh
-            if [ $? -ne 0 ]; then exit 1; fi
-          fi
+          # Windows: Bootstrap will install PS7 if not present and use it
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          Write-Host "Starting Windows bootstrap..." -ForegroundColor Cyan
+          ./bootstrap.ps1
+          if ($LASTEXITCODE -ne 0) { throw "Bootstrap failed" }
+          
+      - name: 🔧 Bootstrap System (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          # Linux/macOS: Bootstrap will install pwsh and use it
+          echo "Starting Unix bootstrap..."
+          chmod +x ./bootstrap.sh
+          ./bootstrap.sh
+          if [ $? -ne 0 ]; then exit 1; fi
           
       - name: 🧪 Test Core Module Loading
         shell: pwsh
