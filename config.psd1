@@ -893,6 +893,7 @@
         VerboseOutput = $false
     }
     Reporting = @{
+        ClearScreenOnStart = $false  # Default for CI environments
         TechDebtReporting = @{
             Thresholds = @{
                 Documentation = 80
