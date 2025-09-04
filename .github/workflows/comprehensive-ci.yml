@@ -71,40 +71,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Windows PowerShell 5.1
-          - name: Win-PS5.1
-            os: windows-2022
-            shell: powershell
-            pwsh_version: '5.1'
-            test_wsl: false
-            
-          # Windows PowerShell 7+
-          - name: Win-PS7
+          # Windows - Bootstrap will install PowerShell 7 if needed
+          - name: Windows
             os: windows-latest
-            shell: pwsh
-            pwsh_version: '7+'
-            test_wsl: true
             
-          # Ubuntu with PowerShell 7
-          - name: Ubuntu-PS7
+          # Ubuntu - Bootstrap will install PowerShell 7
+          - name: Ubuntu
             os: ubuntu-latest
-            shell: pwsh
-            pwsh_version: '7+'
-            test_wsl: false
             
-          # macOS with PowerShell 7
-          - name: macOS-PS7
-            os: macos-latest  
-            shell: pwsh
-            pwsh_version: '7+'
-            test_wsl: false
-            
-          # Ubuntu with Bash bootstrap
-          - name: Ubuntu-Bash
-            os: ubuntu-latest
-            shell: bash
-            pwsh_version: 'bash'
-            test_wsl: false
+          # macOS - Bootstrap will install PowerShell 7
+          - name: macOS
+            os: macos-latest
     
     steps:
       - name: 📥 Checkout
@@ -113,44 +90,31 @@ jobs:
           fetch-depth: 0
       
       - name: 📋 System Info
+        shell: bash
         run: |
           echo "========================================="
           echo "Platform: ${{ matrix.os }}"
-          echo "Shell: ${{ matrix.shell }}"
           echo "Runner: ${{ runner.os }}"
           echo "========================================="
           
-      - name: 🔧 Bootstrap PowerShell 5.1
-        if: matrix.pwsh_version == '5.1'
-        shell: powershell
+      - name: 🔧 Bootstrap System
+        shell: ${{ runner.os == 'Windows' && 'powershell' || 'bash' }}
         run: |
-          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-          Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Cyan
-          # PS 5.1 doesn't need full bootstrap, just module load
-          try {
-            Import-Module ./AitherZero.psd1 -Force
-            Write-Host "✅ Modules loaded for PS 5.1" -ForegroundColor Green
-          } catch {
-            Write-Warning "Some modules may not be compatible with PS 5.1: $_"
-          }
-          
-      - name: 🔧 Bootstrap PowerShell 7+
-        if: matrix.pwsh_version == '7+'
-        shell: pwsh
-        run: |
-          Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Cyan
-          ./bootstrap.ps1
-          if ($LASTEXITCODE -ne 0) { throw "Bootstrap failed" }
-          
-      - name: 🔧 Bootstrap Bash
-        if: matrix.pwsh_version == 'bash'
-        shell: bash
-        run: |
-          chmod +x ./bootstrap.sh
-          ./bootstrap.sh
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            # Windows: Bootstrap will install PS7 if not present and use it
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            Write-Host "Starting Windows bootstrap..." -ForegroundColor Cyan
+            ./bootstrap.ps1
+            if ($LASTEXITCODE -ne 0) { throw "Bootstrap failed" }
+          else
+            # Linux/macOS: Bootstrap will install pwsh and use it
+            echo "Starting Unix bootstrap..."
+            chmod +x ./bootstrap.sh
+            ./bootstrap.sh
+            if [ $? -ne 0 ]; then exit 1; fi
+          fi
           
       - name: 🧪 Test Core Module Loading
-        if: matrix.pwsh_version != 'bash'
         shell: pwsh
         run: |
           Import-Module ./AitherZero.psd1 -Force
@@ -159,16 +123,17 @@ jobs:
           Write-Host "✅ Core modules loaded successfully" -ForegroundColor Green
           
       - name: 🎭 Test Interactive CLI
-        if: matrix.pwsh_version != 'bash'
         shell: pwsh
         run: |
           # Test that CLI can start in non-interactive mode
-          $result = & ./Start-AitherZero.ps1 -Version
-          if (-not $result) { throw "CLI version check failed" }
-          Write-Host "✅ Interactive CLI operational" -ForegroundColor Green
+          $result = & ./Start-AitherZero.ps1 -Version 2>&1
+          if ($result -match "AitherZero" -or $result -match "v1") {
+            Write-Host "✅ Interactive CLI operational: $result" -ForegroundColor Green
+          } else {
+            throw "CLI version check failed: $result"
+          }
           
       - name: 🎯 Test Orchestration Engine
-        if: matrix.pwsh_version != 'bash'
         shell: pwsh
         run: |
           Import-Module ./AitherZero.psd1 -Force
@@ -178,7 +143,6 @@ jobs:
           Write-Host "✅ Orchestration engine operational" -ForegroundColor Green
           
       - name: 📚 Test Playbook System
-        if: matrix.pwsh_version != 'bash'
         shell: pwsh
         run: |
           # Validate playbook loading
@@ -186,7 +150,6 @@ jobs:
           Write-Host "✅ Playbook system operational" -ForegroundColor Green
           
       - name: 📝 Test Centralized Logging
-        if: matrix.pwsh_version != 'bash'
         shell: pwsh
         run: |
           # Ensure logging directory exists
@@ -203,7 +166,6 @@ jobs:
           }
           
       - name: 🎯 Test Multiple Playbooks
-        if: matrix.pwsh_version != 'bash' && matrix.pwsh_version != '5.1'
         shell: pwsh
         run: |
           $playbooks = @('test-quick', 'bootstrap-system', 'report-dashboard')
@@ -218,7 +180,6 @@ jobs:
           }
           
       - name: 🧪 Run Unit Tests
-        if: matrix.pwsh_version != 'bash' && matrix.pwsh_version != '5.1'
         shell: pwsh
         run: |
           Import-Module Pester -MinimumVersion 5.0
@@ -239,7 +200,7 @@ jobs:
           Write-Host "✅ Unit tests completed" -ForegroundColor Green
           
       - name: 🐧 Test WSL Integration (Windows)
-        if: matrix.test_wsl && runner.os == 'Windows'
+        if: runner.os == 'Windows'
         shell: pwsh
         run: |
           Write-Host "Testing WSL integration..." -ForegroundColor Cyan
@@ -253,13 +214,11 @@ jobs:
           }
           
       - name: 📊 Generate Test Report
-        if: always() && matrix.pwsh_version != 'bash'
+        if: always()
         shell: pwsh
         run: |
           $report = @{
             Platform = "${{ matrix.os }}"
-            Shell = "${{ matrix.shell }}"
-            PowerShellVersion = "${{ matrix.pwsh_version }}"
             TestsRun = $true
             Timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
           }
@@ -440,11 +399,9 @@ jobs:
             }
             
             PlatformTests = @{
-              Windows_PS51 = if (Test-Path ./artifacts/test-results-Win-PS5.1) { "✅ Passed" } else { "⚠️ No results" }
-              Windows_PS7 = if (Test-Path ./artifacts/test-results-Win-PS7) { "✅ Passed" } else { "⚠️ No results" }
-              Ubuntu_PS7 = if (Test-Path ./artifacts/test-results-Ubuntu-PS7) { "✅ Passed" } else { "⚠️ No results" }
-              macOS_PS7 = if (Test-Path ./artifacts/test-results-macOS-PS7) { "✅ Passed" } else { "⚠️ No results" }
-              Ubuntu_Bash = if (Test-Path ./artifacts/test-results-Ubuntu-Bash) { "✅ Passed" } else { "⚠️ No results" }
+              Windows = if (Test-Path ./artifacts/test-results-Windows) { "✅ Passed" } else { "⚠️ No results" }
+              Ubuntu = if (Test-Path ./artifacts/test-results-Ubuntu) { "✅ Passed" } else { "⚠️ No results" }
+              macOS = if (Test-Path ./artifacts/test-results-macOS) { "✅ Passed" } else { "⚠️ No results" }
             }
             
             Build = @{
@@ -467,49 +424,49 @@ jobs:
           $report | ConvertTo-Json -Depth 10 | Set-Content ./project-status.json
           
           # Generate Markdown report
-          $markdown = @"
-          # 📊 AitherZero Project Status Report
+          $markdownLines = @(
+            "# 📊 AitherZero Project Status Report",
+            "",
+            "**Generated:** $($report.Timestamp)",
+            "**Run:** [#$($report.RunNumber)](https://github.com/${{ github.repository }}/actions/runs/$($report.RunId))",
+            "**Branch:** $($report.Branch)",
+            "**Commit:** $($report.Commit[0..7] -join '')",
+            "",
+            "## ✅ Validation Status",
+            "- Syntax Check: $($report.ValidationStatus.SyntaxCheck)",
+            "",
+            "## 🧪 Platform Test Results",
+            "| Platform | Status |",
+            "|----------|--------|",
+            "| Windows | $($report.PlatformTests.Windows) |",
+            "| Ubuntu | $($report.PlatformTests.Ubuntu) |",
+            "| macOS | $($report.PlatformTests.macOS) |")
           
-          **Generated:** $($report.Timestamp)  
-          **Run:** [#$($report.RunNumber)](https://github.com/${{ github.repository }}/actions/runs/$($report.RunId))  
-          **Branch:** $($report.Branch)  
-          **Commit:** $($report.Commit[0..7] -join '')
+            "",
+            "## 📦 Build Status",
+            "- Status: $($report.Build.Status)",
+            "- Version: $($report.Build.Version)",
+            "- Packages: $($report.Build.Packages -join ', ')",
+            "",
+            "## 🎯 Feature Validation",
+            "| Feature | Status |",
+            "|---------|--------|",
+            "| Interactive CLI | $($report.Features.InteractiveCLI) |",
+            "| Non-Interactive CLI | $($report.Features.NonInteractiveCLI) |",
+            "| Playbook Orchestration | $($report.Features.PlaybookOrchestration) |",
+            "| Config-Driven Operations | $($report.Features.ConfigDriven) |",
+            "| Centralized Logging | $($report.Features.CentralizedLogging) |",
+            "| Multi-Platform Support | $($report.Features.MultiPlatform) |",
+            "",
+            "## 🚀 Quick Start",
+            '```powershell',
+            "# Install latest release",
+            "iwr -useb https://github.com/wizzense/AitherZero/releases/latest/download/install.ps1 | iex",
+            '```'
+          )
           
-          ## ✅ Validation Status
-          - Syntax Check: $($report.ValidationStatus.SyntaxCheck)
-          
-          ## 🧪 Platform Test Results
-          | Platform | Status |
-          |----------|--------|
-          | Windows PS 5.1 | $($report.PlatformTests.Windows_PS51) |
-          | Windows PS 7+ | $($report.PlatformTests.Windows_PS7) |
-          | Ubuntu PS 7 | $($report.PlatformTests.Ubuntu_PS7) |
-          | macOS PS 7 | $($report.PlatformTests.macOS_PS7) |
-          | Ubuntu Bash | $($report.PlatformTests.Ubuntu_Bash) |
-          
-          ## 📦 Build Status
-          - Status: $($report.Build.Status)
-          - Version: $($report.Build.Version)
-          - Packages: $($report.Build.Packages -join ', ')
-          
-          ## 🎯 Feature Validation
-          | Feature | Status |
-          |---------|--------|
-          | Interactive CLI | $($report.Features.InteractiveCLI) |
-          | Non-Interactive CLI | $($report.Features.NonInteractiveCLI) |
-          | Playbook Orchestration | $($report.Features.PlaybookOrchestration) |
-          | Config-Driven Operations | $($report.Features.ConfigDriven) |
-          | Centralized Logging | $($report.Features.CentralizedLogging) |
-          | Multi-Platform Support | $($report.Features.MultiPlatform) |
-          
-          ## 🚀 Quick Start
-          \`\`\`powershell
-          # Install latest release
-          iwr -useb https://github.com/wizzense/AitherZero/releases/latest/download/install.ps1 | iex
-          \`\`\`
-          "@
-          
-          Set-Content -Path ./project-status.md -Value $markdown
+          $markdownContent = $markdownLines -join "`n"
+          Set-Content -Path ./project-status.md -Value $markdownContent
           Write-Host "✅ Status report generated" -ForegroundColor Green
           
       - name: 📤 Upload Status Report
