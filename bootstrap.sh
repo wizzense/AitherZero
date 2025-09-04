@@ -16,12 +16,21 @@
 
 set -e
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m'
+# Colors (only if TERM is set)
+if [ -n "$TERM" ] && [ "$TERM" != "dumb" ]; then
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[1;33m'
+    CYAN='\033[0;36m'
+    NC='\033[0m'
+else
+    # No colors in CI or when TERM is not set
+    RED=''
+    GREEN=''
+    YELLOW=''
+    CYAN=''
+    NC=''
+fi
 
 # Configuration
 REPO_OWNER="wizzense"

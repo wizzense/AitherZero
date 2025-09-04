@@ -870,11 +870,15 @@ try {
         # We're already in an AitherZero project
         Write-BootstrapLog "Detected existing AitherZero project" -Level Info
         
+        # CRITICAL: Check dependencies BEFORE trying to load modules
+        # This ensures PowerShell 7 is installed if needed
+        Test-Dependencies
+        
         if ($modulesLoaded) {
             Write-BootstrapLog "Environment already initialized - refreshing..." -Level Info
         }
         
-        # Just initialize/refresh the environment
+        # Now safe to initialize/refresh the environment
         Initialize-CleanEnvironment
         
         $installPath = $currentPath.Path
