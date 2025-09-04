@@ -105,7 +105,7 @@ jobs:
           # Windows: GitHub Actions runners have PowerShell 7 pre-installed
           Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Cyan
           Write-Host "Starting Windows bootstrap..." -ForegroundColor Cyan
-          ./bootstrap.ps1 -NonInteractive -AutoInstallDeps
+          ./bootstrap.ps1 -NonInteractive -AutoInstallDeps -SkipAutoStart
           if ($LASTEXITCODE -ne 0) { throw "Bootstrap failed" }
           
       - name: 🔧 Bootstrap System (Unix)
@@ -115,6 +115,7 @@ jobs:
           # Linux/macOS: Bootstrap will install pwsh and use it
           echo "Starting Unix bootstrap..."
           chmod +x ./bootstrap.sh
+          export AITHERZERO_AUTO_START=false
           ./bootstrap.sh
           if [ $? -ne 0 ]; then exit 1; fi
           
@@ -130,11 +131,19 @@ jobs:
         shell: pwsh
         run: |
           # Test that CLI can start in non-interactive mode
-          $result = & ./Start-AitherZero.ps1 -Version 2>&1
-          if ($result -match "AitherZero" -or $result -match "v1") {
-            Write-Host "✅ Interactive CLI operational: $result" -ForegroundColor Green
-          } else {
-            throw "CLI version check failed: $result"
+          try {
+            Write-Host "Testing CLI version command..." -ForegroundColor Cyan
+            $result = & ./Start-AitherZero.ps1 -Version 2>&1 | Out-String
+            Write-Host "CLI output: $result" -ForegroundColor Yellow
+            
+            if ($result -match "AitherZero" -and $result -match "v1") {
+              Write-Host "✅ Interactive CLI operational" -ForegroundColor Green
+            } else {
+              throw "CLI version check failed. Expected 'AitherZero' and 'v1' in output, got: $result"
+            }
+          } catch {
+            Write-Host "CLI test failed with error: $_" -ForegroundColor Red
+            throw
           }
           
       - name: 🎯 Test Orchestration Engine
