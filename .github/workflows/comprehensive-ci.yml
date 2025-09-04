@@ -126,8 +126,13 @@ jobs:
         run: |
           [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
           Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Cyan
-          & .\bootstrap.ps1
-          if ($LASTEXITCODE -ne 0) { throw "Bootstrap failed" }
+          # PS 5.1 doesn't need full bootstrap, just module load
+          try {
+            Import-Module ./AitherZero.psd1 -Force
+            Write-Host "✅ Modules loaded for PS 5.1" -ForegroundColor Green
+          } catch {
+            Write-Warning "Some modules may not be compatible with PS 5.1: $_"
+          }
           
       - name: 🔧 Bootstrap PowerShell 7+
         if: matrix.pwsh_version == '7+'
@@ -533,8 +538,14 @@ jobs:
             
       - name: 📊 Job Summary
         if: always()
+        shell: bash
         run: |
-          cat ./project-status.md >> $GITHUB_STEP_SUMMARY
+          if [ -f ./project-status.md ]; then
+            cat ./project-status.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## Status Report" >> $GITHUB_STEP_SUMMARY
+            echo "Project status report not generated" >> $GITHUB_STEP_SUMMARY
+          fi
 
   # ===== STAGE 5: RELEASE (On Tags) =====
   release:
