@@ -1,58 +1,6 @@
 #!/usr/bin/env pwsh
-# AitherZero CLI wrapper
-
-# Capture command-line arguments
-$arguments = $args
-
-# Determine the actual directory of this script
-$scriptDir = $null
-
-# Try different methods to get the script directory
-if ($PSScriptRoot) {
-    $scriptDir = $PSScriptRoot
-} elseif ($MyInvocation.MyCommand.Path) {
-    $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-} else {
-    # When run as ./az, we're already in the right directory
-    $scriptDir = Get-Location
+$root = $PSScriptRoot
+if (-not $env:AITHERZERO_INITIALIZED) {
+    Import-Module "$root/AitherZero.psd1" -Force -Global
 }
-
-# Verify we found the AitherZero root
-if (-not (Test-Path "$scriptDir/AitherZero.psd1")) {
-    if (Test-Path "./AitherZero.psd1") {
-        $scriptDir = Get-Location
-    } else {
-        Write-Error "Cannot find AitherZero.psd1. Please run from the AitherZero directory."
-        exit 1
-    }
-}
-
-# Load module if needed (check both env var and function availability)
-if (-not $env:AITHERZERO_INITIALIZED -or -not (Get-Command Invoke-AitherScript -ErrorAction SilentlyContinue)) {
-    Import-Module "$scriptDir/AitherZero.psd1" -Force -Global
-}
-
-# Double-check we have the function available
-if (-not (Get-Command Invoke-AitherScript -ErrorAction SilentlyContinue)) {
-    Write-Error "Invoke-AitherScript command not found. Module may not have loaded correctly."
-    exit 1
-}
-
-# Now run the requested script
-if ($arguments.Count -eq 0) {
-    Write-Host "Usage: az <script-number> [arguments]" -ForegroundColor Yellow
-    Write-Host "Examples:" -ForegroundColor Gray
-    Write-Host "  az 0402              # Run unit tests" -ForegroundColor White
-    Write-Host "  az 0510              # Generate project report" -ForegroundColor White
-    Write-Host "  az 0511 -ShowAll     # Show project dashboard" -ForegroundColor White
-    exit 1
-}
-
-# Invoke the script with proper parameters
-$scriptNumber = [string]$arguments[0]
-if ($arguments.Count -gt 1) {
-    $remainingArgs = $arguments[1..($arguments.Count-1)]
-    Invoke-AitherScript -ScriptNumber $scriptNumber @remainingArgs
-} else {
-    Invoke-AitherScript -ScriptNumber $scriptNumber
-}
+& "$root/az.ps1" $arguments
