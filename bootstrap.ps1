@@ -32,28 +32,38 @@
 param(
     [ValidateSet('New', 'Update', 'Clean', 'Remove')]
     [string]$Mode = 'New',
-    
-    [ValidateSet('Minimal', 'Standard', 'Developer', 'Full')]
-    [string]$InstallProfile,  # Will use config/CI default if not specified
-    
+
+    # NOTE: Removed ValidateSet here to allow graceful handling of blank / malformed values coming
+    # from external bootstrap wrappers (an empty string was causing immediate validation failure
+    # before we could apply defaults). We perform our own validation immediately after param binding.
+    [string]$InstallProfile = 'Standard',  # Default for non-CI; CI logic below may override
+
     [string]$InstallPath,
-    
+
     [string]$Branch = 'main',
-    
+
     [switch]$NonInteractive = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true'),
-    
+
     [switch]$AutoInstallDeps,
-    
+
     [switch]$SkipAutoStart
 )
 
-# Auto-detect CI environment and set appropriate defaults
+# Detect CI early so normalization logic has accurate context
 $script:IsCI = ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true' -or $env:TF_BUILD -eq 'true')
-if ($script:IsCI -and -not $PSBoundParameters.ContainsKey('InstallProfile')) {
-    $InstallProfile = 'Full'  # CI always uses Full profile
+
+# Robust profile normalization & validation (must run immediately after param binding & CI detection)
+$validProfiles = @('Minimal','Standard','Developer','Full')
+if ([string]::IsNullOrWhiteSpace($InstallProfile)) {
+    $InstallProfile = if ($script:IsCI) { 'Full' } else { 'Standard' }
+} elseif ($validProfiles -notcontains $InstallProfile) {
+    Write-Host "[!] Provided InstallProfile '$InstallProfile' is not valid. Falling back to 'Standard'" -ForegroundColor Yellow
+    $InstallProfile = 'Standard'
 }
-if (-not $InstallProfile) {
-    $InstallProfile = 'Standard'  # Default for non-CI
+
+# (Already detected above) Auto-adjust if CI and user did not explicitly pass InstallProfile
+if ($script:IsCI -and -not $PSBoundParameters.ContainsKey('InstallProfile')) {
+    $InstallProfile = 'Full'  # CI always uses Full profile if not explicitly set (even if blank passed we normalized above)
 }
 
 # Script configuration
@@ -82,11 +92,11 @@ foreach ($module in $conflictingModules) {
 
 # Clean PSModulePath of any conflicting paths
 if ($env:PSModulePath) {
-    $cleanPaths = $env:PSModulePath -split [IO.Path]::PathSeparator | 
-        Where-Object { 
-            $_ -notlike "*aither-core*" -and 
-            $_ -notlike "*Aitherium*" -and 
-            $_ -notlike "*AitherRun*" 
+    $cleanPaths = $env:PSModulePath -split [IO.Path]::PathSeparator |
+        Where-Object {
+            $_ -notlike "*aither-core*" -and
+            $_ -notlike "*Aitherium*" -and
+            $_ -notlike "*AitherRun*"
         }
     $env:PSModulePath = $cleanPaths -join [IO.Path]::PathSeparator
 }
@@ -113,7 +123,7 @@ function Write-BootstrapLog {
         'Warning' = 'Yellow'
         'Error' = 'Red'
     }
-    
+
     $prefix = @{
         'Header' = ''
         'Info' = '[*]'
@@ -150,7 +160,7 @@ function Test-IsAdmin {
 function Get-DefaultInstallPath {
     if (-not $InstallPath) {
         $currentPath = Get-Location
-        
+
         # Check if in system directory on Windows
         if (Test-IsWindows) {
             $systemPaths = @('C:\Windows', 'C:\Program Files', 'C:\Program Files (x86)')
@@ -160,7 +170,7 @@ function Get-DefaultInstallPath {
                 }
             }
         }
-        
+
         return Join-Path $currentPath 'AitherZero'
     }
     return $InstallPath
@@ -168,7 +178,7 @@ function Get-DefaultInstallPath {
 
 function Test-Dependencies {
     Write-BootstrapLog "Checking dependencies..." -Level Info
-    
+
     $missing = @()
 
     # Check Git
@@ -197,13 +207,13 @@ function Install-Dependencies {
     # Install PowerShell 7 first if needed
     if ($Missing -contains 'PowerShell7') {
         Install-PowerShell7
-        
+
         # Re-launch in PowerShell 7
         Write-BootstrapLog "Re-launching bootstrap in PowerShell 7..." -Level Info
-        
+
         $pwsh = if (Test-IsWindows) { "pwsh.exe" } else { "pwsh" }
         $scriptPath = $MyInvocation.PSCommandPath
-        
+
         # Build arguments to preserve
         $arguments = @()
         if ($Mode) { $arguments += "-Mode", $Mode }
@@ -213,14 +223,17 @@ function Install-Dependencies {
         if ($NonInteractive) { $arguments += "-NonInteractive" }
         if ($AutoInstallDeps) { $arguments += "-AutoInstallDeps" }
         if ($SkipAutoStart) { $arguments += "-SkipAutoStart" }
-        
-        & $pwsh -NoProfile -ExecutionPolicy Bypass -File $scriptPath @args
+
+    # IMPORTANT: Use the constructed $arguments array (the previous implementation mistakenly
+    # referenced the automatic @args which lost our preserved parameters when upgrading from
+    # Windows PowerShell 5 to PowerShell 7). This fixes cross-version bootstrap continuation.
+    & $pwsh -NoProfile -ExecutionPolicy Bypass -File $scriptPath @arguments
         exit $LASTEXITCODE
     }
-    
+
     foreach ($dep in $Missing) {
         Write-BootstrapLog "Installing $dep..." -Level Info
-        
+
         switch ($dep) {
             'Git' {
                 if (Test-IsWindows) {
@@ -252,7 +265,7 @@ function Install-Dependencies {
                         throw "Please install Git manually for your distribution"
                     }
                 }
-                
+
                 # Refresh PATH
                 $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
             }
@@ -267,7 +280,7 @@ function Install-PowerShell7 {
         # Windows installation
         $installUrl = "https://github.com/PowerShell/PowerShell/releases/latest/download/PowerShell-7-win-x64.msi"
         $msiPath = "$env:TEMP\PowerShell-7-win-x64.msi"
-        
+
         try {
             # Try winget first
             if (Get-Command winget -ErrorAction SilentlyContinue) {
@@ -282,7 +295,7 @@ function Install-PowerShell7 {
             # Fallback to MSI
             Write-BootstrapLog "Downloading PowerShell 7 MSI..." -Level Info
             Invoke-WebRequest -Uri $installUrl -OutFile $msiPath -UseBasicParsing
-            
+
             Write-BootstrapLog "Installing PowerShell 7 MSI..." -Level Info
             $arguments = "/i `"$msiPath`" /quiet ADD_EXPLORER_CONTEXT_MENU_OPENPOWERSHELL=1 ENABLE_PSREMOTING=0 REGISTER_MANIFEST=1"
 
@@ -292,15 +305,15 @@ function Install-PowerShell7 {
                 # Try to elevate
                 Start-Process msiexec.exe -ArgumentList $arguments -Verb RunAs -Wait
             }
-            
+
             Remove-Item $msiPath -Force -ErrorAction SilentlyContinue
             Write-BootstrapLog "PowerShell 7 installed successfully" -Level Success
-            
+
         } catch {
             Write-BootstrapLog "Failed to install PowerShell 7: $_" -Level Error
             throw
         }
-        
+
     } elseif ($IsMacOS) {
         # macOS installation
         if (Get-Command brew -ErrorAction SilentlyContinue) {
@@ -311,11 +324,11 @@ function Install-PowerShell7 {
             /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
             brew install --cask powershell
         }
-        
+
     } else {
         # Linux installation
         Write-BootstrapLog "Installing PowerShell 7 for Linux..." -Level Info
-        
+
         # Download and run Microsoft's install script
         $installScript = "$env:HOME/install-powershell.sh"
         Invoke-WebRequest -Uri https://aka.ms/install-powershell.sh -OutFile $installScript
@@ -325,10 +338,10 @@ function Install-PowerShell7 {
     }
 
     # Verify installation
-    $pwshPath = if (Test-IsWindows) { 
-        "$env:ProgramFiles\PowerShell\7\pwsh.exe" 
-    } else { 
-        "/usr/bin/pwsh" 
+    $pwshPath = if (Test-IsWindows) {
+        "$env:ProgramFiles\PowerShell\7\pwsh.exe"
+    } else {
+        "/usr/bin/pwsh"
     }
 
     if (-not (Test-Path $pwshPath)) {
@@ -337,47 +350,73 @@ function Install-PowerShell7 {
             throw "PowerShell 7 installation completed but pwsh not found"
         }
     }
-    
+
     Write-BootstrapLog "PowerShell 7 installed successfully!" -Level Success
 }
 
 function Install-AitherZero {
     # Check if we're already in an AitherZero project
     $currentPath = Get-Location
-    $isAitherProject = (Test-Path "./Start-AitherZero.ps1") -or 
-                       (Test-Path "./domains") -or 
+    $isAitherProject = (Test-Path "./Start-AitherZero.ps1") -or
+                       (Test-Path "./domains") -or
                        (Test-Path "./automation-scripts")
+
+    # If script resides inside an existing project but user executed from parent directory,
+    # prefer the script's directory as the install/initialize target. This prevents creating
+    # a sibling empty AitherZero folder that lacks the manifest.
+    $scriptRootPath = $null
+    try {
+        if ($MyInvocation -and $MyInvocation.MyCommand -and $MyInvocation.MyCommand.Path) {
+            $scriptRootPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+        } elseif ($PSCommandPath) {
+            $scriptRootPath = Split-Path -Parent $PSCommandPath
+        }
+    } catch { $scriptRootPath = $null }
+    if (-not $scriptRootPath -or -not (Test-Path $scriptRootPath)) {
+        # Fallback: relative path of bootstrap file name within current directory
+        $candidate = Join-Path (Get-Location) 'aitherzero/AitherZero'
+        if (Test-Path (Join-Path $candidate 'AitherZero.psd1')) { $scriptRootPath = $candidate }
+    }
+    if ($scriptRootPath -and -not $isAitherProject -and (Test-Path (Join-Path $scriptRootPath 'AitherZero.psd1'))) {
+        Write-BootstrapLog "Detected existing project at script location: $scriptRootPath" -Level Info
+        Push-Location $scriptRootPath
+        try {
+            Initialize-Configuration
+            Setup-DevelopmentEnvironment
+            return $scriptRootPath
+        } finally { Pop-Location }
+    }
 
     if ($isAitherProject) {
         Write-BootstrapLog "Detected existing AitherZero project at: $currentPath" -Level Info
         $installPath = $currentPath.Path
-        
+
         # Just set up the environment, don't clone anything
         Write-BootstrapLog "Setting up development environment..." -Level Info
-        
+
         # Initialize configuration
         Initialize-Configuration
-        
-        # Set up development environment  
+
+        # Set up development environment
         Setup-DevelopmentEnvironment
-        
+
         return $installPath
     }
 
     # If not in a project, then do the normal install
     $installPath = Get-DefaultInstallPath
-    
+
     Write-BootstrapLog "Installing AitherZero to: $installPath" -Level Info
 
     # Check if exists
     if ((Test-Path $installPath) -and $Mode -eq 'New') {
         # Check if it's already an AitherZero project
         Push-Location $installPath
-        $existingProject = (Test-Path "./Start-AitherZero.ps1") -or 
-                          (Test-Path "./domains") -or 
+        $existingProject = (Test-Path "./Start-AitherZero.ps1") -or
+                          (Test-Path "./domains") -or
                           (Test-Path "./automation-scripts")
         Pop-Location
-        
+
         if ($existingProject) {
             Write-BootstrapLog "Found existing AitherZero project" -Level Info
             Push-Location $installPath
@@ -390,7 +429,7 @@ function Install-AitherZero {
             }
             return $installPath
         }
-        
+
         if (-not $NonInteractive) {
             $response = Read-Host "Directory exists at $installPath. Overwrite? (y/N)"
             if ($response -ne 'y') {
@@ -413,20 +452,20 @@ function Install-AitherZero {
         New-Item -ItemType Directory -Path $installPath -Force | Out-Null
     }
 
-    # Clone repository only if we're not in an existing project
-    if ($script:GitHubUrl -and -not (Test-Path ".git")) {
+    # Clone repository only if target directory itself is not already a git repo
+    $targetGitDir = Join-Path $installPath '.git'
+    if ($script:GitHubUrl -and -not (Test-Path $targetGitDir)) {
         Write-BootstrapLog "Cloning AitherZero repository..." -Level Info
-        
         Push-Location $installPath
         try {
-            if (Test-Path ".git") {
+            if (Test-Path '.git') {
                 # Update existing
                 git pull origin $Branch
             } else {
                 # Fresh clone
                 git clone --branch $Branch $script:GitHubUrl .
             }
-            
+
             Write-BootstrapLog "Repository cloned successfully" -Level Success
         } catch {
             Write-BootstrapLog "Clone failed - assuming local development" -Level Warning
@@ -434,20 +473,24 @@ function Install-AitherZero {
             Pop-Location
         }
     } else {
-        Write-BootstrapLog "No repository URL configured - setting up for local development" -Level Info
+        if (-not (Test-Path (Join-Path $installPath 'AitherZero.psd1'))) {
+            Write-BootstrapLog "Skipping clone: target path appears inside another git repo (parent .git detected). If you intended a fresh clone, run from a clean directory or specify -InstallPath." -Level Warning
+        } else {
+            Write-BootstrapLog "Repository already present - skipping clone" -Level Info
+        }
     }
-    
+
     Push-Location $installPath
     try {
         # Initialize configuration
         Initialize-Configuration
-        
+
         # Set up development environment
         Setup-DevelopmentEnvironment
     } finally {
         Pop-Location
     }
-    
+
     return $installPath
 }
 
@@ -479,7 +522,7 @@ function Initialize-Configuration {
                 DefaultTimeout = 30
             }
         }
-        
+
         $config | ConvertTo-Json -Depth 10 | Set-Content $configPath
         Write-BootstrapLog "Created default configuration" -Level Success
     }
@@ -508,7 +551,7 @@ if ($PWD.Path -like "*AitherZero*") {
     }
 }
 '@
-    
+
     $ProfileNames = @(
         $ProfileName.CurrentUserAllHosts,
         $ProfileName.CurrentUserCurrentHost
@@ -548,7 +591,7 @@ if (-not $env:AITHERZERO_INITIALIZED) {
 '@
         $azScript | Set-Content "./az" -Force
         chmod +x ./az 2>$null
-        
+
         # Create shell activation script
         $activateScript = @'
 #!/bin/bash
@@ -562,7 +605,7 @@ echo "  Commands: az <num>, aither"
 '@
         $activateScript | Set-Content "./activate.sh" -Force
         chmod +x ./activate.sh 2>$null
-        
+
         Write-BootstrapLog "Created Unix shell helpers (./az, ./activate.sh)" -Level Success
     }
 
@@ -573,13 +616,13 @@ echo "  Commands: az <num>, aither"
 @echo off
 pwsh -NoProfile -ExecutionPolicy Bypass -File "%~dp0az.ps1" %*
 '@ | Set-Content "./az.cmd" -Force
-        
-        # aither.cmd  
+
+        # aither.cmd
         @'
 @echo off
 pwsh -NoProfile -ExecutionPolicy Bypass -File "%~dp0Start-AitherZero.ps1" %*
 '@ | Set-Content "./aither.cmd" -Force
-        
+
         Write-BootstrapLog "Created Windows command helpers (az.cmd, aither.cmd)" -Level Success
     }
 
@@ -588,7 +631,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "%~dp0Start-AitherZero.ps1" %*
     if (-not (Test-Path $vscodeDir)) {
         New-Item -ItemType Directory -Path $vscodeDir -Force | Out-Null
     }
-    
+
     $vscodeSettings = @{
         "terminal.integrated.env.windows" = @{
             "AITHERZERO_ROOT" = "`${workspaceFolder}"
@@ -614,7 +657,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "%~dp0Start-AitherZero.ps1" %*
             }
         }
     }
-    
+
     $settingsPath = Join-Path $vscodeDir "settings.json"
     $vscodeSettings | ConvertTo-Json -Depth 10 | Set-Content $settingsPath -Force
     Write-BootstrapLog "Created VS Code integration settings" -Level Success
@@ -622,7 +665,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "%~dp0Start-AitherZero.ps1" %*
 
 function Initialize-CleanEnvironment {
     Write-BootstrapLog "Cleaning PowerShell environment..." -Level Info
-    
+
     # Extended list of conflicting modules to remove (legacy modules that might interfere)
     $conflictingModules = @(
         'AitherRun', 'CoreApp', 'ConfigurationManager', 'SecurityAutomation',
@@ -631,7 +674,7 @@ function Initialize-CleanEnvironment {
         'OpenTofuProvider', 'PSScriptAnalyzerIntegration',
         'SemanticVersioning', 'LicenseManager'
     )
-    
+
     # Remove conflicting modules
     foreach ($module in $conflictingModules) {
         if (Get-Module -Name $module -ErrorAction SilentlyContinue) {
@@ -639,29 +682,29 @@ function Initialize-CleanEnvironment {
             Remove-Module -Name $module -Force -ErrorAction SilentlyContinue
         }
     }
-    
+
     # Clean PSModulePath of any conflicting references
     if ($env:PSModulePath) {
-        $cleanPaths = $env:PSModulePath -split [IO.Path]::PathSeparator | 
-            Where-Object { 
-                $_ -notlike "*Aitherium*" -and 
+        $cleanPaths = $env:PSModulePath -split [IO.Path]::PathSeparator |
+            Where-Object {
+                $_ -notlike "*Aitherium*" -and
                 $_ -notlike "*AitherRun*" -and
                 $_ -notlike "*aither-core*" -and
                 $_ -notlike "*CoreApp*"
             }
         $env:PSModulePath = $cleanPaths -join [IO.Path]::PathSeparator
     }
-    
+
     # Clean PATH variable
     if ($env:PATH) {
-        $cleanPaths = $env:PATH -split [IO.Path]::PathSeparator | 
-            Where-Object { 
+        $cleanPaths = $env:PATH -split [IO.Path]::PathSeparator |
+            Where-Object {
                 $_ -notlike "*aither-core*" -and
                 $_ -notlike "*Aitherium*"
             }
         $env:PATH = $cleanPaths -join [IO.Path]::PathSeparator
     }
-    
+
     # Set AitherZero root - use the directory containing AitherZero.psd1
     $currentPath = Get-Location
     if (Test-Path "./AitherZero.psd1") {
@@ -683,63 +726,63 @@ function Initialize-CleanEnvironment {
         }
     }
     $env:AITHERZERO_ROOT = $script:ProjectRoot
-    
+
     # Clean any lingering environment variables
     @('AITHERIUM_ROOT', 'AITHERRUN_ROOT', 'COREAPP_ROOT', 'AITHER_CORE_PATH', 'PWSH_MODULES_PATH') | ForEach-Object {
         Remove-Item "env:$_" -ErrorAction SilentlyContinue
     }
-    
+
     # Set flags to prevent auto-loading of conflicting systems
     $env:DISABLE_COREAPP = "1"
     $env:SKIP_AUTO_MODULES = "1"
     $env:AITHERZERO_ONLY = "1"
-    
+
     Write-BootstrapLog "Environment cleaned" -Level Success
-    
+
     # Now load AitherZero modules
     Write-BootstrapLog "Loading AitherZero modules..." -Level Info
-    
+
     # Check if already initialized (idempotency)
     if ($env:AITHERZERO_INITIALIZED -eq "1" -and (Get-Module AitherZero -ErrorAction SilentlyContinue)) {
         Write-BootstrapLog "AitherZero already initialized" -Level Info
         return
     }
-    
+
     try {
         # Import the module manifest - use the resolved project root
         $manifestPath = Join-Path $script:ProjectRoot "AitherZero.psd1"
         if (Test-Path $manifestPath) {
             Write-BootstrapLog "Loading module from: $manifestPath" -Level Info
             Import-Module $manifestPath -Force -Global
-            
+
             # Verify critical functions
             $criticalFunctions = @(
                 'Write-CustomLog',
                 'Show-UIMenu',
                 'Invoke-OrchestrationSequence'
             )
-            
+
             $missingFunctions = @()
             foreach ($func in $criticalFunctions) {
                 if (-not (Get-Command $func -ErrorAction SilentlyContinue)) {
                     $missingFunctions += $func
                 }
             }
-            
+
             if ($missingFunctions.Count -gt 0) {
                 Write-BootstrapLog "Warning: Some functions are missing: $($missingFunctions -join ', ')" -Level Warning
             } else {
                 Write-BootstrapLog "All critical functions loaded" -Level Success
             }
-            
+
             # Set aliases
             Set-Alias -Name 'az' -Value (Join-Path $script:ProjectRoot 'az.ps1') -Scope Global -Force
             Set-Alias -Name 'seq' -Value 'Invoke-OrchestrationSequence' -Scope Global -Force
-            
+
             # Show loaded modules count
             $loadedModules = Get-Module | Where-Object { $_.Path -like "*$script:ProjectRoot*" }
             Write-BootstrapLog "Environment initialized - $($loadedModules.Count) modules loaded!" -Level Success
-            
+
         } else {
             Write-BootstrapLog "AitherZero.psd1 not found" -Level Error
             throw "Module manifest not found"
@@ -765,7 +808,7 @@ function Remove-AitherZero {
             return
         }
     }
-    
+
     Write-BootstrapLog "Removing AitherZero..." -Level Info
     Remove-Item $installPath -Recurse -Force
     Write-BootstrapLog "AitherZero removed successfully" -Level Success
@@ -778,25 +821,25 @@ try {
         try { Clear-Host } catch { }
     }
     Write-BootstrapLog @"
-    _    _ _   _               ______               
-   / \  (_) |_| |__   ___ _ _|__  /___ _ __ ___  
-  / _ \ | | __| '_ \ / _ \ '__/ // _ \ '__/ _ \ 
+    _    _ _   _               ______
+   / \  (_) |_| |__   ___ _ _|__  /___ _ __ ___
+  / _ \ | | __| '_ \ / _ \ '__/ // _ \ '__/ _ \
  / ___ \| | |_| | | |  __/ | / /|  __/ | | (_) |
-/_/   \_\_|\__|_| |_|\___|_|/____\___|_|  \___/ 
-                                                 
+/_/   \_\_|\__|_| |_|\___|_|/____\___|_|  \___/
+
         Infrastructure Automation Platform
 "@ -Level Header
 
     # Intelligent detection of what needs to be done
     $currentPath = Get-Location
-    $isInAitherProject = (Test-Path "./Start-AitherZero.ps1") -and 
-                         (Test-Path "./domains") -and 
+    $isInAitherProject = (Test-Path "./Start-AitherZero.ps1") -and
+                         (Test-Path "./domains") -and
                          (Test-Path "./AitherZero.psd1")
-    
+
     # Check if modules are already loaded
-    $modulesLoaded = $env:AITHERZERO_INITIALIZED -eq "1" -or 
+    $modulesLoaded = $env:AITHERZERO_INITIALIZED -eq "1" -or
                      (Get-Module AitherZero -ErrorAction SilentlyContinue)
-    
+
     # Determine what to do
     if ($Mode -eq 'Remove') {
         Write-BootstrapLog "Mode: Remove" -Level Info
@@ -804,25 +847,25 @@ try {
     } elseif ($isInAitherProject) {
         # We're already in an AitherZero project
         Write-BootstrapLog "Detected existing AitherZero project" -Level Info
-        
+
         if ($modulesLoaded) {
             Write-BootstrapLog "Environment already initialized - refreshing..." -Level Info
         }
-        
+
         # Just initialize/refresh the environment
         Initialize-CleanEnvironment
-        
+
         $installPath = $currentPath.Path
     } else {
         # Not in a project, need to install/clone
         Write-BootstrapLog "Installing AitherZero..." -Level Info
-        
+
         # Test dependencies
         Test-Dependencies
-        
+
         # Install AitherZero
         $installPath = Install-AitherZero
-        
+
         # Initialize environment in the new installation
         Write-BootstrapLog "Initializing AitherZero environment..." -Level Info
         Push-Location $installPath
@@ -834,11 +877,11 @@ try {
             Pop-Location
         }
     }
-    
+
     # Handle auto-start if requested (for both scenarios)
     if (-not $SkipAutoStart -and $installPath -and $Mode -ne 'Remove') {
         Write-BootstrapLog "Starting AitherZero..." -Level Info
-        
+
         Push-Location $installPath
         try {
             # Check if launcher exists
@@ -847,7 +890,7 @@ try {
                 $env:DISABLE_COREAPP = "1"
                 $env:SKIP_AUTO_MODULES = "1"
                 $env:AITHERZERO_ONLY = "1"
-                
+
                 if ($NonInteractive) {
                     pwsh -NoProfile -NoLogo -ExecutionPolicy Bypass -Command "& { `$env:DISABLE_COREAPP='1'; `$env:SKIP_AUTO_MODULES='1'; Remove-Module CoreApp,AitherRun,StartupExperience -Force -ErrorAction SilentlyContinue; & ./Start-AitherZero.ps1 -NonInteractive }"
                 } else {
@@ -865,13 +908,13 @@ try {
                 Write-Host "=" * 60 -ForegroundColor Green
                 Write-Host " Installation Complete! " -ForegroundColor Green
                 Write-Host "=" * 60 -ForegroundColor Green
-                
+
                 Write-Host "`nAitherZero is ready to use!" -ForegroundColor Cyan
                 Write-Host "The environment will auto-load when you:" -ForegroundColor Gray
                 Write-Host "  • Open a new PowerShell terminal in this directory" -ForegroundColor White
                 Write-Host "  • Use VS Code with the integrated terminal" -ForegroundColor White
                 Write-Host "  • Run any az command" -ForegroundColor White
-                
+
                 Write-Host "`nAvailable commands:" -ForegroundColor Yellow
                 Write-Host "  az <number>    " -NoNewline -ForegroundColor Cyan
                 Write-Host "- Run automation script (e.g., az 0511)"
@@ -879,19 +922,19 @@ try {
                 Write-Host "- Launch interactive UI"
                 Write-Host "  seq <pattern>  " -NoNewline -ForegroundColor Cyan
                 Write-Host "- Run orchestration sequence"
-                
+
                 if (-not (Test-IsWindows)) {
                     Write-Host "`nFor bash/zsh users:" -ForegroundColor Yellow
                     Write-Host "  source ./activate.sh  " -NoNewline -ForegroundColor Cyan
                     Write-Host "- Activate in current shell"
                 }
-                
+
                 Write-Host "`nNext steps:" -ForegroundColor Magenta
                 Write-Host "  cd $installPath" -ForegroundColor White
                 Write-Host "  ./az 0511 -ShowAll    # View project dashboard" -ForegroundColor White
         }
     }
-    
+
 } catch {
     Write-BootstrapLog "Bootstrap failed: $_" -Level Error
     exit 1
