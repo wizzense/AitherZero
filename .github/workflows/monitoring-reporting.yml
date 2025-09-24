@@ -22,8 +22,19 @@ permissions:
 jobs:
   # === COLLECT METRICS ===
   collect-metrics:
-    name: Collect Metrics
-    runs-on: ubuntu-latest
+    name: Collect Metrics - ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - platform: Windows-Server-2022
+            os: windows-2022
+          - platform: Windows-Server-2025
+            os: windows-latest
+          - platform: Ubuntu-Latest
+            os: ubuntu-latest
+          - platform: macOS-Latest
+            os: macos-latest
     outputs:
       metrics: ${{ steps.metrics.outputs.data }}
     
@@ -96,6 +107,14 @@ jobs:
         $metrics.CodeMetrics.TotalFiles = $files.Count
         $metrics.CodeMetrics.TotalLines = ($files | Get-Content | Measure-Object -Line).Lines
         
+        # Platform-specific metrics
+        $metrics.Platform = @{
+          OS = "${{ matrix.platform }}"
+          Runner = "${{ matrix.os }}"
+          PowerShell = $PSVersionTable.PSVersion.ToString()
+          Architecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
+        }
+        
         # Workflow runs
         $runs = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/actions/runs?per_page=100" -Headers $headers
         $successfulRuns = ($runs.workflow_runs | Where-Object conclusion -eq 'success').Count
@@ -114,7 +133,7 @@ jobs:
     - name: 📤 Upload Metrics
       uses: actions/upload-artifact@v4
       with:
-        name: metrics-data
+        name: metrics-data-${{ matrix.platform }}
         path: metrics.json
 
   # === GENERATE REPORTS ===
@@ -130,7 +149,8 @@ jobs:
     - name: 📥 Download Metrics
       uses: actions/download-artifact@v4
       with:
-        name: metrics-data
+        path: metrics-data/
+        pattern: metrics-data-*
     
     - name: 🔧 Bootstrap
       shell: pwsh
@@ -139,8 +159,23 @@ jobs:
     - name: 📊 Generate Comprehensive Report
       shell: pwsh
       run: |
-        # Load metrics
-        $metrics = Get-Content ./metrics.json | ConvertFrom-Json
+        Write-Host "📊 Generating comprehensive report..." -ForegroundColor Cyan
+        
+        # Load metrics from all platforms
+        $allMetrics = @()
+        Get-ChildItem -Path ./metrics-data -Recurse -Filter "metrics.json" | ForEach-Object {
+          $platformMetrics = Get-Content $_.FullName | ConvertFrom-Json
+          $allMetrics += $platformMetrics
+        }
+        
+        # Aggregate metrics across platforms
+        $aggregatedMetrics = @{
+          Platforms = $allMetrics
+          Summary = @{
+            TotalPlatforms = $allMetrics.Count
+            LastUpdated = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+          }
+        }
         
         # Generate different report types
         $reportType = "${{ github.event.inputs.report_type || 'daily' }}"

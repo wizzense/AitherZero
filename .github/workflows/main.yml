@@ -43,13 +43,21 @@ env:
 
 jobs:
   pipeline:
-    name: Pipeline - ${{ matrix.os }}
+    name: Pipeline - ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       fail-fast: ${{ github.event_name == 'pull_request' }}
       matrix:
-        os: ${{ github.event_name == 'pull_request' && fromJson('["ubuntu-latest"]') || fromJson('["ubuntu-latest", "windows-latest", "macos-latest"]') }}
+        include:
+          - os: ubuntu-latest
+            name: Ubuntu-Latest
+          - os: windows-2022
+            name: Windows-Server-2022
+          - os: windows-latest
+            name: Windows-Server-2025
+          - os: macos-latest
+            name: macOS-Latest
     
     steps:
     - name: Checkout
@@ -92,7 +100,7 @@ jobs:
       if: always() && !cancelled()
       uses: actions/upload-artifact@v4
       with:
-        name: pipeline-${{ matrix.os }}-${{ github.run_number }}
+        name: pipeline-${{ matrix.name }}-${{ github.run_number }}
         path: |
           test-results/
           tests/reports/

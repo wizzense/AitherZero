@@ -81,9 +81,15 @@ jobs:
         $matrix = @{
           include = @(
             @{
-              name = "Windows-Latest-PowerShell7"
-              os = "windows-latest"
+              name = "Windows-Server-2022-PowerShell7"
+              os = "windows-2022"
               pwsh = "pwsh"
+              shell = "powershell"
+            },
+            @{
+              name = "Windows-Server-2025-PowerShell7"
+              os = "windows-latest"
+              pwsh = "pwsh"  
               shell = "powershell"
             },
             @{

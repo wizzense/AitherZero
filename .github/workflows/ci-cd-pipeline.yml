@@ -181,7 +181,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Windows Latest
+          - name: Windows Server 2022
+            os: windows-2022
+            pwsh: pwsh
+          - name: Windows Server 2025  
             os: windows-latest
             pwsh: pwsh
           - name: Ubuntu Latest

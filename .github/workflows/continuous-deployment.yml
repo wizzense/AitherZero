@@ -26,12 +26,23 @@ permissions:
 jobs:
   # === DEVELOPMENT DEPLOYMENT ===
   deploy-dev:
-    name: Deploy to Development
-    runs-on: ubuntu-latest
+    name: Deploy to Development - ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
     if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
+    strategy:
+      matrix:
+        include:
+          - platform: Windows-Server-2022
+            os: windows-2022
+          - platform: Windows-Server-2025
+            os: windows-latest
+          - platform: Ubuntu-Latest
+            os: ubuntu-latest
+          - platform: macOS-Latest
+            os: macos-latest
     environment:
-      name: development
-      url: https://dev.aitherzero.example.com
+      name: development-${{ matrix.platform }}
+      url: https://dev-${{ matrix.platform }}.aitherzero.example.com
     
     steps:
     - name: 📥 Checkout Code
@@ -49,19 +60,24 @@ jobs:
       shell: pwsh
       run: |
         # Deploy to development environment
-        Write-Host "Deploying to development environment..." -ForegroundColor Cyan
+        Write-Host "Deploying to development environment on ${{ matrix.platform }}..." -ForegroundColor Cyan
         
-        # Example: Deploy to AWS Lambda
-        # ./automation-scripts/deploy-lambda.ps1 -Environment Development
+        # Platform-specific deployment logic
+        if ("${{ matrix.platform }}" -match "Windows") {
+          Write-Host "Windows deployment steps..."
+          # Example: Deploy to Windows Server/IIS
+          # ./automation-scripts/deploy-windows.ps1 -Environment Development
+        } elseif ("${{ matrix.platform }}" -match "Ubuntu") {
+          Write-Host "Linux deployment steps..."
+          # Example: Deploy to Linux/Docker
+          # ./automation-scripts/deploy-linux.ps1 -Environment Development
+        } elseif ("${{ matrix.platform }}" -match "macOS") {
+          Write-Host "macOS deployment steps..."
+          # Example: Deploy to macOS
+          # ./automation-scripts/deploy-macos.ps1 -Environment Development
+        }
         
-        # Example: Deploy to Azure Functions
-        # ./automation-scripts/deploy-azure.ps1 -Environment Development
-        
-        # Example: Deploy to Docker Registry
-        # docker build -t aitherzero:dev .
-        # docker push ${{ secrets.DOCKER_REGISTRY }}/aitherzero:dev
-        
-        Write-Host "Development deployment completed!" -ForegroundColor Green
+        Write-Host "Development deployment completed on ${{ matrix.platform }}!" -ForegroundColor Green
 
   # === STAGING DEPLOYMENT ===
   deploy-staging:
